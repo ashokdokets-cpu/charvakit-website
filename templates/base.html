@@ -9,43 +9,52 @@
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-                <div class="collapse navbar-collapse" id="navbarNav">
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <img src="/static/images/logo.png" alt="Logo" height="30">
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Company</a>
+                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Company</a>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="/about">About</a></li>
                             <li><a class="dropdown-item" href="/team">Our Team</a></li>
                         </ul>
                     </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Services</a>
+                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Services</a>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="/services/web-design">Web Designing</a></li>
                             <li><a class="dropdown-item" href="/services/staff-augmentation">Staff Augmentation</a></li>
                         </ul>
                     </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Products</a>
+                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Products</a>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="/products">All Products</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="/products/dokets-vouchai">Dokets VouchAI</a></li>
-                            <li><a class="dropdown-item" href="https://dokets.shop" target="_blank">Dokets Shop <i class="bi bi-box-arrow-up-right small"></i></a></li>
-                            <li><a class="dropdown-item" href="https://doketsrb.com" target="_blank">Dokets RB <i class="bi bi-box-arrow-up-right small"></i></a></li>
+                            <li><a class="dropdown-item" href="https://dokets.shop" target="_blank">Dokets Shop</a></li>
+                            <li><a class="dropdown-item" href="https://doketsrb.com" target="_blank">Dokets RB</a></li>
                         </ul>
                     </li>
                     <li class="nav-item"><a class="nav-link" href="/careers">Careers</a></li>
                     <li class="nav-item"><a class="nav-link" href="/contact">Contact</a></li>
                 </ul>
             </div>
-    <!-- Main Content -->
+        </div>
+    </nav>
+
     <main>
         {% block content %}{% endblock %}
     </main>
 
-    <!-- Footer -->
     <footer class="bg-dark text-white py-5">
         <div class="container">
             <div class="row">
