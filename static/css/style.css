@@ -184,10 +184,34 @@ footer {
     background: var(--dark);
     font-size: 14px;
 }
-footer h5 { color: var(--white); font-weight: 600; margin-bottom: 20px; }
-footer a { color: #999; text-decoration: none; }
-footer a:hover { color: var(--primary) !important; }
-
+footer h5 { 
+    color: #ffffff !important; 
+    font-weight: 600; 
+    margin-bottom: 20px; 
+}
+footer a { 
+    color: #cccccc !important; 
+    text-decoration: none; 
+}
+footer a:hover { 
+    color: var(--primary) !important; 
+}
+footer p, footer li, footer .text-muted { 
+    color: #cccccc !important; 
+}
+footer .bi { 
+    color: var(--primary); 
+}
+footer hr { 
+    border-color: rgba(255,255,255,0.1); 
+}
+footer .social-links a {
+    color: #ffffff !important;
+    transition: 0.3s;
+}
+footer .social-links a:hover {
+    color: var(--primary) !important;
+}
 /* Badges */
 .badge.bg-success { background: var(--primary) !important; }
 .badge.bg-primary { background: var(--blue) !important; }
