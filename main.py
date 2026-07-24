@@ -54,6 +54,36 @@ async def web_design(request: Request):
 async def staff_augmentation(request: Request):
     return templates.TemplateResponse("staff-augmentation.html", {"request": request, "title": "Staff Augmentation Services"})
 
+@app.get("/products", response_class=HTMLResponse)
+async def products(request: Request):
+    products_data = [
+        {
+            "name": "Dokets VouchAI",
+            "description": "AI-powered escrow platform with intelligent payment protection",
+            "features": ["1% Transaction Fee", "WhatsApp Integration", "34 Languages", "13 Currencies", "AI Dispute Resolution"],
+            "link": "https://dokets.com",
+            "icon": "shield-check",
+            "badge": "Featured"
+        },
+        {
+            "name": "Dokets Shop",
+            "description": "Modern e-commerce store solution for your business",
+            "features": ["Easy Setup", "Secure Payments", "Inventory Management", "Mobile Ready"],
+            "link": "https://dokets.shop",
+            "icon": "cart",
+            "badge": "New"
+        },
+        {
+            "name": "Dokets RB",
+            "description": "Professional resume builder to land your dream job",
+            "features": ["AI-Powered Templates", "ATS-Friendly", "Quick Export", "Multiple Formats"],
+            "link": "https://doketsrb.com",
+            "icon": "file-text",
+            "badge": "New"
+        }
+    ]
+    return templates.TemplateResponse("products.html", {"request": request, "title": "Our Products - Dokets Suite", "products": products_data})
+
 @app.get("/products/dokets-vouchai", response_class=HTMLResponse)
 async def dokets_vouchai(request: Request):
     product = {

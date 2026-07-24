@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Our Products - Dokets Suite | Charvak IT Consulting{% endblock %}
+
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4">
+        <h1 class="display-4 fw-bold">Our Products</h1>
+        <p class="lead">Innovative solutions developed by Charvak IT Consulting under the Dokets brand</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row text-center mb-5">
+        <div class="col-12">
+            <h2 class="fw-bold">Dokets Suite</h2>
+            <p class="text-muted">Powerful tools to help you transact, sell, and grow</p>
+        </div>
+    </div>
+    
+    <div class="row g-4">
+        {% for product in products %}
+        <div class="col-lg-4 col-md-6">
+            <div class="card service-card h-100 border-0 shadow-sm {% if product.badge == 'Featured' %}highlighted-card{% endif %}">
+                {% if product.badge %}
+                <div class="featured-badge">{{ product.badge }}</div>
+                {% endif %}
+                <div class="card-body p-4 text-center">
+                    <div class="service-icon mb-3">
+                        {% if product.icon == 'shield-check' %}
+                        <i class="bi bi-shield-check display-3 text-primary"></i>
+                        {% elif product.icon == 'cart' %}
+                        <i class="bi bi-cart display-3 text-primary"></i>
+                        {% elif product.icon == 'file-text' %}
+                        <i class="bi bi-file-text display-3 text-primary"></i>
+                        {% endif %}
+                    </div>
+                    <h3 class="card-title mb-3">{{ product.name }}</h3>
+                    <p class="text-muted">{{ product.description }}</p>
+                    <ul class="list-unstyled text-start">
+                        {% for feature in product.features %}
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> {{ feature }}</li>
+                        {% endfor %}
+                    </ul>
+                    <a href="{{ product.link }}" target="_blank" class="btn btn-primary mt-3">
+                        Visit Website <i class="bi bi-arrow-up-right"></i>
+                    </a>
+                    {% if product.name == "Dokets VouchAI" %}
+                    <a href="/products/dokets-vouchai" class="btn btn-outline-primary mt-3 ms-2">View Details</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <div class="text-center mt-5 p-5 bg-light rounded">
+        <h3>Powered by Charvak IT Consulting</h3>
+        <p class="mb-0">All Dokets products are developed and maintained by Charvak IT Consulting with the same commitment to quality and innovation.</p>
+    </div>
+</div>
+{% endblock %}
