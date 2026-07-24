@@ -82,7 +82,7 @@ async def products(request: Request):
             "badge": "New"
         }
     ]
-    return templates.TemplateResponse("products.html", {"request": request, "title": "Our Products - Dokets Suite", "products": products_data})
+    return templates.TemplateResponse("products-list.html", {"request": request, "title": "Our Products - Dokets Suite", "products": products_data})
 
 @app.get("/products/dokets-vouchai", response_class=HTMLResponse)
 async def dokets_vouchai(request: Request):
