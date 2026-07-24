@@ -115,8 +115,9 @@ body {
 .brand-text {
     font-size: 1.5rem;
     font-weight: 700;
-    color: var(--white) !important;
-    -webkit-text-fill-color: var(--white);
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff;
+}
 }
 .nav-link {
     font-weight: 500;
@@ -150,16 +151,16 @@ body {
 }
 
 /* Hero / Page Hero */
-.hero-section, .page-hero, .bg-gradient-primary {
+.page-hero, .bg-gradient-primary {
     background: var(--dark) !important;
+    color: #ffffff !important;
 }
-.page-hero {
-    padding: 100px 0 60px;
-    text-align: center;
+.page-hero h1, .page-hero p, .page-hero .lead,
+.bg-gradient-primary h1, .bg-gradient-primary p, .bg-gradient-primary .lead {
+    color: #ffffff !important;
 }
-.page-hero h1 {
-    font-size: 48px;
-    font-weight: 700;
+.page-hero .text-primary {
+    color: var(--primary) !important;
 }
 
 /* Cards & Features */
@@ -341,6 +342,14 @@ footer .social-links a:hover {
 }
 .pricing-banner {
     word-wrap: break-word;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark)) !important;
+    color: #ffffff !important;
+}
+.pricing-banner h2, 
+.pricing-banner h3, 
+.pricing-banner p,
+.pricing-banner .fw-bold {
+    color: #ffffff !important;
 }
 
 /* Prevent text overflow */
