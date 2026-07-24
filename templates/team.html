@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4">
+        <h1 class="display-4 fw-bold">Our Team</h1>
+        <p class="lead">Meet the experts behind Charvak IT Consulting</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <h2>A Team of Creative Minds</h2>
+        <p class="lead text-muted">Driven by technology that promises you the best workforce and digital landscape</p>
+    </div>
+    <div class="row g-4">
+        <div class="col-md-6 col-lg-4">
+            <div class="card text-center shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="mb-3">
+                        <i class="bi bi-person-circle display-1 text-primary"></i>
+                    </div>
+                    <h5>Bhavya M</h5>
+                    <p class="text-muted">Founder & Director</p>
+                    <p class="small">Leadership, Strategy & Business Development</p>
+                    <div class="mt-3">
+                        <a href="https://www.linkedin.com/in/bhavya-m-charvakit/" class="btn btn-outline-primary btn-sm" target="_blank">
+                            <i class="bi bi-linkedin me-1"></i> LinkedIn
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+            <div class="card text-center shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="mb-3">
+                        <i class="bi bi-person-circle display-1 text-primary"></i>
+                    </div>
+                    <h5>Team Member</h5>
+                    <p class="text-muted">Senior Web Developer</p>
+                    <p class="small">Full-Stack Development, UI/UX Design</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+            <div class="card text-center shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="mb-3">
+                        <i class="bi bi-person-circle display-1 text-primary"></i>
+                    </div>
+                    <h5>Team Member</h5>
+                    <p class="text-muted">Talent Acquisition Lead</p>
+                    <p class="small">Recruitment, HR & Client Relations</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="text-center mt-5 p-5 bg-light rounded">
+        <h3>Want to Join Our Team?</h3>
+        <p class="mb-4">We're always looking for talented individuals to join us.</p>
+        <a href="/careers" class="btn btn-primary btn-lg">View Open Positions</a>
+    </div>
+</div>
+{% endblock %}

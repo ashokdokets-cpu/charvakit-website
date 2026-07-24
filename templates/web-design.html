@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<!-- Breadcrumbs -->
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4">
+        <h1 class="display-4 fw-bold">Web Designing</h1>
+        <p class="lead">Future-focused and intuitive websites and custom applications</p>
+    </div>
+</div>
+
+<!-- Web Design Content -->
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8">
+            <img src="/static/images/web-design.png" alt="Web Designing" style="width:80px;" class="mb-4">
+            <h2 class="mb-4">Web Designing Services</h2>
+            <p class="lead">In the current digital era, a website is crucial to showcase your business and gain new customers. But not all websites are built equally to build momentum online.</p>
+            <p>At Charvak, we develop future-focused and intuitive websites and custom applications that can attract, engage, nurture, and convert users into valuable prospects.</p>
+            <p>Our comprehensive web design services ensure you have a responsive and scalable web application with inspirational designs and appealing graphics.</p>
+            
+            <h4 class="mt-5 mb-3">Our Web Design Services Include:</h4>
+            <ul class="list-unstyled">
+                <li class="mb-3"><i class="bi bi-check-circle-fill text-success me-2"></i> Custom Website Development</li>
+                <li class="mb-3"><i class="bi bi-check-circle-fill text-success me-2"></i> E-commerce Solutions (Shopify, WooCommerce, Magento)</li>
+                <li class="mb-3"><i class="bi bi-check-circle-fill text-success me-2"></i> Responsive & Mobile-First Design</li>
+                <li class="mb-3"><i class="bi bi-check-circle-fill text-success me-2"></i> Web Application Development</li>
+                <li class="mb-3"><i class="bi bi-check-circle-fill text-success me-2"></i> UI/UX Design</li>
+                <li class="mb-3"><i class="bi bi-check-circle-fill text-success me-2"></i> Website Maintenance & Support</li>
+                <li class="mb-3"><i class="bi bi-check-circle-fill text-success me-2"></i> API Integration</li>
+                <li class="mb-3"><i class="bi bi-check-circle-fill text-success me-2"></i> SEO Optimization</li>
+            </ul>
+            
+            <h4 class="mt-5 mb-3">Technologies We Use:</h4>
+            <div class="row g-3">
+                <div class="col-6 col-md-3 text-center">
+                    <div class="card p-3 shadow-sm">
+                        <img src="/static/images/technologies/user-interface.png" style="width:40px;" class="mb-2">
+                        <small class="fw-bold">UI / UX</small>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3 text-center">
+                    <div class="card p-3 shadow-sm">
+                        <img src="/static/images/technologies/5.png" style="width:40px;" class="mb-2">
+                        <small class="fw-bold">DevOps</small>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3 text-center">
+                    <div class="card p-3 shadow-sm">
+                        <img src="/static/images/technologies/6.png" style="width:40px;" class="mb-2">
+                        <small class="fw-bold">Azure</small>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3 text-center">
+                    <div class="card p-3 shadow-sm">
+                        <img src="/static/images/technologies/cloud.png" style="width:40px;" class="mb-2">
+                        <small class="fw-bold">Cloud</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card bg-light p-4 sticky-top" style="top: 100px;">
+                <h5 class="mb-3">Our Services</h5>
+                <ul class="list-unstyled">
+                    <li class="mb-2"><a href="/services/web-design" class="text-primary fw-bold">Web Designing</a></li>
+                    <li class="mb-2"><a href="/services/staff-augmentation" class="text-decoration-none">Staff Augmentation</a></li>
+                    <li class="mb-2"><a href="/products/dokets-vouchai" class="text-decoration-none">Dokets VouchAI</a></li>
+                </ul>
+                <hr>
+                <h6 class="mb-3">Contact Us</h6>
+                <p class="small"><i class="bi bi-envelope me-2"></i> hr@charvakit.com</p>
+                <p class="small"><i class="bi bi-telephone me-2"></i> +91 799 7871 701</p>
+                <a href="/contact" class="btn btn-primary btn-sm w-100">Get a Quote</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
