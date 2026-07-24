@@ -268,7 +268,6 @@ footer .social-links a:hover {
 }
 
 /* Responsive */
-/* Responsive */
 @media (max-width: 768px) {
     main {
         padding-top: 60px;
@@ -285,11 +284,7 @@ footer .social-links a:hover {
     .page-hero h1 { font-size: 32px; }
     h2 { font-size: 28px; }
 }
-    .page-hero h1 { font-size: 32px; }
-    h2 { font-size: 28px; }
-    .carousel-item > div { height: 400px !important; }
-}
-
+    
 /* CTA Section */
 .cta-section {
     background: linear-gradient(135deg, var(--primary), var(--primary-dark));
@@ -307,3 +302,39 @@ footer .social-links a:hover {
     to { opacity: 1; transform: translateY(0); }
 }
 .fade-in-up { animation: fadeInUp 0.6s ease-out; }
+
+/* Product page fixes */
+.product-hero {
+    padding-top: 100px;
+}
+.feature-box {
+    margin-bottom: 20px;
+    word-wrap: break-word;
+}
+.ai-feature-card {
+    word-wrap: break-word;
+}
+.step-card {
+    min-height: 200px;
+}
+.pricing-banner {
+    word-wrap: break-word;
+}
+
+/* Prevent text overflow */
+p, h1, h2, h3, h4, h5, h6, li, span, a {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+/* Card body overflow fix */
+.card-body {
+    word-wrap: break-word;
+    overflow: hidden;
+}
+
+/* Feature list items */
+.feature-list li {
+    word-wrap: break-word;
+    padding: 8px 0;
+}
