@@ -3,140 +3,107 @@
 {% block title %}{{ title }}{% endblock %}
 
 {% block content %}
-<!-- Contact Hero -->
-<section class="page-hero bg-gradient-primary text-white py-5">
-    <div class="container py-5">
-        <div class="row">
-            <div class="col-12 text-center">
-                <h1 class="display-4 fw-bold">Contact Us</h1>
-                <p class="lead">Let's discuss how we can help your business grow</p>
-            </div>
-        </div>
+<!-- Page Hero -->
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4">
+        <h1 class="display-4 fw-bold">Have Questions - Contact Us</h1>
+        <p class="lead">Our headquarters are located in Guntur, Andhra Pradesh and offering services in different corners of India.</p>
     </div>
-</section>
+</div>
 
 <!-- Contact Section -->
-<section class="contact-section py-5">
-    <div class="container">
-        <div class="row g-5">
-            <div class="col-lg-5">
-                <h2 class="fw-bold mb-4">Get in Touch</h2>
-                <p class="text-muted mb-4">Have a question or want to discuss a project? We'd love to hear from you. Reach out to us through any of the following channels.</p>
-                
-                <div class="contact-info">
-                    <div class="d-flex mb-4">
-                        <div class="me-3">
-                            <i class="bi bi-envelope-fill fs-4 text-primary"></i>
+<div class="container py-5">
+    <div class="row mb-5">
+        <div class="col-12">
+            <p class="lead">We have our presence in <strong>Visakhapatnam, Hyderabad, Bengaluru</strong></p>
+            <p>If you are a business looking for a customized software application or a company looking for the best talent or a job aspirant, you can reach us at any time through this form.</p>
+            <p class="fw-bold text-primary">Let us help your business to move forward.</p>
+        </div>
+    </div>
+    
+    <div class="row g-5">
+        <!-- Contact Form -->
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h3 class="mb-4">Send Us a Message</h3>
+                    <form>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="name" class="form-label">Name</label>
+                                <input type="text" class="form-control" id="name" placeholder="Your name" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">E-Mail</label>
+                                <input type="email" class="form-control" id="email" placeholder="Your email" required>
+                            </div>
+                            <div class="col-12">
+                                <label for="phone" class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" id="phone" placeholder="Your phone number">
+                            </div>
+                            <div class="col-12">
+                                <label for="subject" class="form-label">Subject</label>
+                                <input type="text" class="form-control" id="subject" placeholder="Subject" required>
+                            </div>
+                            <div class="col-12">
+                                <label for="message" class="form-label">Your Message Here</label>
+                                <textarea class="form-control" id="message" rows="5" placeholder="Tell us about your project or query..." required></textarea>
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary btn-lg px-5">
+                                    <i class="bi bi-send me-2"></i>Send Message
+                                </button>
+                            </div>
                         </div>
-                        <div>
-                            <h5>Email</h5>
-                            <p class="text-muted mb-0">hr@charvakit.com</p>
-                        </div>
-                    </div>
-                    
-                    <div class="d-flex mb-4">
-                        <div class="me-3">
-                            <i class="bi bi-geo-alt-fill fs-4 text-primary"></i>
-                        </div>
-                        <div>
-                            <h5>Location</h5>
-                            <p class="text-muted mb-0">India</p>
-                        </div>
-                    </div>
-                    
-                    <div class="d-flex mb-4">
-                        <div class="me-3">
-                            <i class="bi bi-globe fs-4 text-primary"></i>
-                        </div>
-                        <div>
-                            <h5>Website</h5>
-                            <p class="text-muted mb-0">www.charvakit.com</p>
-                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Contact Info Sidebar -->
+        <div class="col-lg-5">
+            <div class="card bg-dark text-white p-4 mb-4">
+                <h4 class="mb-3">Contact Info</h4>
+                <div class="d-flex mb-3">
+                    <i class="bi bi-geo-alt-fill fs-4 text-primary me-3"></i>
+                    <div>
+                        <h6 class="mb-1">Address</h6>
+                        <p class="mb-0 text-white-50">#301, Sri Padmavati Towers,<br>3rd Lane, Seetaram Nagar<br>Guntur 522001<br>Andhra Pradesh</p>
                     </div>
                 </div>
-                
-                <div class="social-links mt-4">
-                    <h5 class="mb-3">Follow Us</h5>
-                    <a href="#" class="btn btn-outline-primary me-2"><i class="bi bi-linkedin"></i></a>
-                    <a href="#" class="btn btn-outline-primary me-2"><i class="bi bi-twitter"></i></a>
-                    <a href="#" class="btn btn-outline-primary me-2"><i class="bi bi-github"></i></a>
+                <div class="d-flex mb-3">
+                    <i class="bi bi-telephone-fill fs-4 text-primary me-3"></i>
+                    <div>
+                        <h6 class="mb-1">Phone</h6>
+                        <p class="mb-0"><a href="tel:+917997871701" class="text-white-50">+91 799 7871 701</a></p>
+                    </div>
+                </div>
+                <div class="d-flex mb-3">
+                    <i class="bi bi-envelope-fill fs-4 text-primary me-3"></i>
+                    <div>
+                        <h6 class="mb-1">Email</h6>
+                        <p class="mb-0"><a href="mailto:hr@charvakit.com" class="text-white-50">hr@charvakit.com</a></p>
+                    </div>
+                </div>
+                <div class="d-flex">
+                    <i class="bi bi-clock-fill fs-4 text-primary me-3"></i>
+                    <div>
+                        <h6 class="mb-1">Working Hours</h6>
+                        <p class="mb-0 text-white-50">Monday - Friday / 10AM - 7PM</p>
+                    </div>
                 </div>
             </div>
             
-            <div class="col-lg-7">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-body p-4">
-                        <h3 class="mb-4">Send Us a Message</h3>
-                        <form>
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label for="name" class="form-label">Full Name *</label>
-                                    <input type="text" class="form-control" id="name" placeholder="John Doe" required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="email" class="form-label">Email Address *</label>
-                                    <input type="email" class="form-control" id="email" placeholder="john@example.com" required>
-                                </div>
-                                <div class="col-12">
-                                    <label for="phone" class="form-label">Phone Number</label>
-                                    <input type="tel" class="form-control" id="phone" placeholder="+91 1234567890">
-                                </div>
-                                <div class="col-12">
-                                    <label for="subject" class="form-label">Subject *</label>
-                                    <input type="text" class="form-control" id="subject" placeholder="How can we help?" required>
-                                </div>
-                                <div class="col-12">
-                                    <label for="message" class="form-label">Message *</label>
-                                    <textarea class="form-control" id="message" rows="5" placeholder="Tell us about your project or query..." required></textarea>
-                                </div>
-                                <div class="col-12">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="privacy" required>
-                                        <label class="form-check-label" for="privacy">
-                                            I agree to the privacy policy and terms of service
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="col-12">
-                                    <button type="submit" class="btn btn-primary btn-lg px-5">
-                                        <i class="bi bi-send me-2"></i>Send Message
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+            <div class="card border-0 shadow-sm p-4">
+                <h5 class="mb-3">Our Presence</h5>
+                <ul class="list-unstyled">
+                    <li class="mb-2"><i class="bi bi-check-circle-fill text-primary me-2"></i> Guntur (Headquarters)</li>
+                    <li class="mb-2"><i class="bi bi-check-circle-fill text-primary me-2"></i> Visakhapatnam</li>
+                    <li class="mb-2"><i class="bi bi-check-circle-fill text-primary me-2"></i> Hyderabad</li>
+                    <li class="mb-2"><i class="bi bi-check-circle-fill text-primary me-2"></i> Bengaluru</li>
+                </ul>
             </div>
         </div>
     </div>
-</section>
-
-<!-- Map/Info Section -->
-<section class="bg-light py-5">
-    <div class="container">
-        <div class="row text-center">
-            <div class="col-md-4 mb-4">
-                <div class="p-4">
-                    <i class="bi bi-headset display-4 text-primary mb-3"></i>
-                    <h5>Customer Support</h5>
-                    <p class="text-muted">We're here to help with any questions about our products and services.</p>
-                </div>
-            </div>
-            <div class="col-md-4 mb-4">
-                <div class="p-4">
-                    <i class="bi bi-clock display-4 text-primary mb-3"></i>
-                    <h5>Business Hours</h5>
-                    <p class="text-muted">Monday - Friday: 9:00 AM - 6:00 PM IST</p>
-                </div>
-            </div>
-            <div class="col-md-4 mb-4">
-                <div class="p-4">
-                    <i class="bi bi-rocket display-4 text-primary mb-3"></i>
-                    <h5>Quick Response</h5>
-                    <p class="text-muted">We typically respond within 24 hours on business days.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
+</div>
 {% endblock %}

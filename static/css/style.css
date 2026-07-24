@@ -168,6 +168,21 @@ footer a:hover { color: var(--primary) !important; }
     z-index: 1;
 }
 
+/* Step Numbers */
+.step-number {
+    width: 50px; height: 50px;
+    background: var(--primary);
+    color: var(--white);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; font-weight: 700;
+}
+
+/* 5 columns for approach */
+@media (min-width: 768px) {
+    .col-md-2-4 { flex: 0 0 20%; max-width: 20%; }
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .page-hero h1 { font-size: 32px; }
