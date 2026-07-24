@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400"> 
+<defs><linearGradient id="g" x1="0%%" y1="0%%" x2="100%%" y2="100%%"><stop offset="0%%" style="stop-color:#667eea"/><stop offset="100%%" style="stop-color:#764ba2"/></linearGradient></defs> 
+<rect width="600" height="400" fill="#f8fafc" rx="20"/> 
+<circle cx="300" cy="180" r="120" fill="url(#g)" opacity="0.9"/> 
+<text x="300" y="200" text-anchor="middle" fill="white" font-size="80" font-weight="bold" font-family="Arial">CK</text> 
+</svg> 
