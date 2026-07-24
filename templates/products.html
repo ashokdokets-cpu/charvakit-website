@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<!-- Product Hero -->
+<section class="product-hero bg-gradient-primary text-white py-5">
+    <div class="container py-5">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <div class="mb-3">
+                    <span class="badge bg-light text-primary fs-6">Featured Product</span>
+                </div>
+                <h1 class="display-3 fw-bold mb-3">{{ product.name }}</h1>
+                <p class="lead mb-2">{{ product.tagline }}</p>
+                <p class="mb-4">{{ product.description }}</p>
+                <div class="product-highlights mb-4">
+                    <span class="badge bg-success fs-6 me-2 mb-2">
+                        <i class="bi bi-tag"></i> Only {{ product.fee }} Fee
+                    </span>
+                    <span class="badge bg-info fs-6 me-2 mb-2">
+                        <i class="bi bi-translate"></i> {{ product.features.languages }} Languages
+                    </span>
+                    <span class="badge bg-warning text-dark fs-6 me-2 mb-2">
+                        <i class="bi bi-cash-coin"></i> {{ product.features.currencies }} Currencies
+                    </span>
+                    <span class="badge bg-light text-dark fs-6 mb-2">
+                        <i class="bi bi-whatsapp text-success"></i> {{ product.features.integration }}
+                    </span>
+                </div>
+                <a href="{{ product.website }}" class="btn btn-light btn-lg me-3" target="_blank">
+                    Visit Dokets.com <i class="bi bi-arrow-right"></i>
+                </a>
+                <a href="/contact" class="btn btn-outline-light btn-lg">
+                    Get in Touch
+                </a>
+            </div>
+            <div class="col-lg-4 text-center mt-4 mt-lg-0">
+                <div class="product-logo-placeholder">
+                    <i class="bi bi-shield-check display-1"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Key Features -->
+<section class="key-features py-5">
+    <div class="container">
+        <div class="row text-center mb-5">
+            <div class="col-12">
+                <h2 class="fw-bold">Key Features</h2>
+                <p class="text-muted lead">Why Dokets VouchAI is the smart choice for secure transactions</p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="feature-box text-center p-4 h-100">
+                    <div class="feature-icon-lg mb-3">
+                        <i class="bi bi-whatsapp text-success"></i>
+                    </div>
+                    <h4>WhatsApp Integration</h4>
+                    <p class="text-muted">Manage your escrow transactions directly through WhatsApp. No additional apps needed.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-box text-center p-4 h-100">
+                    <div class="feature-icon-lg mb-3">
+                        <i class="bi bi-translate text-primary"></i>
+                    </div>
+                    <h4>34 Languages Support</h4>
+                    <p class="text-muted">Break language barriers with support for 34 languages, making global transactions seamless.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-box text-center p-4 h-100">
+                    <div class="feature-icon-lg mb-3">
+                        <i class="bi bi-cash-stack text-warning"></i>
+                    </div>
+                    <h4>13 Currencies</h4>
+                    <p class="text-muted">Send and receive payments in 13 different currencies with competitive exchange rates.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- AI Features -->
+<section class="ai-features bg-light py-5">
+    <div class="container">
+        <div class="row mb-5">
+            <div class="col-12 text-center">
+                <h2 class="fw-bold">AI-Powered Intelligence</h2>
+                <p class="text-muted lead">Advanced artificial intelligence protecting every transaction</p>
+            </div>
+        </div>
+        <div class="row g-4">
+            {% for ai_feature in product.features.ai_features %}
+            <div class="col-md-6">
+                <div class="ai-feature-card d-flex align-items-center p-4 bg-white rounded-3 shadow-sm">
+                    <div class="me-3">
+                        <i class="bi bi-cpu text-primary fs-3"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-1">{{ ai_feature }}</h5>
+                        <p class="text-muted mb-0">Powered by advanced machine learning algorithms</p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- How It Works -->
+<section class="how-it-works py-5">
+    <div class="container">
+        <div class="row text-center mb-5">
+            <div class="col-12">
+                <h2 class="fw-bold">How It Works</h2>
+                <p class="text-muted lead">Simple, secure, and fast escrow process</p>
+            </div>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-3">
+                <div class="step-card text-center p-4">
+                    <div class="step-number mb-3">1</div>
+                    <h5>Create Transaction</h5>
+                    <p class="text-muted">Set up your escrow transaction in minutes</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="step-card text-center p-4">
+                    <div class="step-number mb-3">2</div>
+                    <h5>Secure Payment</h5>
+                    <p class="text-muted">Buyer deposits funds securely</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="step-card text-center p-4">
+                    <div class="step-number mb-3">3</div>
+                    <h5>Complete Deal</h5>
+                    <p class="text-muted">Seller delivers product/service</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="step-card text-center p-4">
+                    <div class="step-number mb-3">4</div>
+                    <h5>Release Funds</h5>
+                    <p class="text-muted">AI verifies and releases payment</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Pricing Banner -->
+<section class="pricing-banner py-5 bg-gradient-primary text-white">
+    <div class="container text-center py-4">
+        <h2 class="display-4 fw-bold mb-3">Only {{ product.fee }} Transaction Fee</h2>
+        <p class="lead mb-4">One of the lowest fees in the escrow industry with no hidden charges</p>
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="row g-3">
+                    <div class="col-sm-4">
+                        <div class="p-3">
+                            <h3 class="fw-bold">1%</h3>
+                            <p class="mb-0">Transaction Fee</p>
+                        </div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="p-3">
+                            <h3 class="fw-bold">0</h3>
+                            <p class="mb-0">Hidden Charges</p>
+                        </div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="p-3">
+                            <h3 class="fw-bold">24/7</h3>
+                            <p class="mb-0">AI Protection</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="mt-5">
+            <a href="{{ product.website }}" class="btn btn-light btn-lg px-5" target="_blank">
+                Get Started with Dokets VouchAI <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}

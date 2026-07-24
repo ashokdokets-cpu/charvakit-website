@@ -1,0 +1,384 @@
+/* ========== Google Fonts Import ========== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+/* ========== CSS Variables ========== */
+:root {
+    --primary-color: #2563eb;
+    --primary-dark: #1e40af;
+    --primary-light: #3b82f6;
+    --secondary-color: #7c3aed;
+    --accent-color: #06b6d4;
+    --success-color: #10b981;
+    --warning-color: #f59e0b;
+    --danger-color: #ef4444;
+    --dark-color: #0f172a;
+    --dark-light: #1e293b;
+    --gray-color: #64748b;
+    --light-color: #f8fafc;
+    --white: #ffffff;
+    --border-radius: 1rem;
+    --box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    --box-shadow-hover: 0 20px 60px rgba(0, 0, 0, 0.15);
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ========== Global Styles ========== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.7;
+    color: var(--dark-color);
+    overflow-x: hidden;
+}
+
+/* ========== Navigation ========== */
+.navbar {
+    background: rgba(15, 23, 42, 0.95) !important;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    padding: 1rem 0;
+    transition: var(--transition);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.navbar.scrolled {
+    background: rgba(15, 23, 42, 0.98) !important;
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
+}
+
+.brand-text {
+    font-size: 1.75rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #60a5fa, #a78bfa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.5px;
+}
+
+.nav-link {
+    font-weight: 500;
+    margin: 0 0.25rem;
+    padding: 0.5rem 1rem !important;
+    border-radius: 0.5rem;
+    transition: var(--transition);
+}
+
+.nav-link:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* ========== Hero Section ========== */
+.hero-section {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e1b4b 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(37, 99, 235, 0.1) 0%, transparent 70%);
+    animation: pulse 4s ease-in-out infinite;
+}
+
+.hero-section h1 {
+    background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+/* ========== Page Hero ========== */
+.page-hero {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+}
+
+/* ========== Feature Cards ========== */
+.feature-card {
+    background: var(--white);
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    transition: var(--transition);
+    height: 100%;
+    border: 1px solid #e2e8f0;
+}
+
+.feature-card:hover {
+    transform: translateY(-10px);
+    box-shadow: var(--box-shadow-hover);
+}
+
+.feature-icon-wrapper {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #dbeafe, #ede9fe);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+}
+
+.feature-icon-wrapper i {
+    font-size: 2rem;
+    color: var(--primary-color);
+}
+
+/* ========== Service Cards ========== */
+.service-card {
+    border-radius: var(--border-radius);
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.service-card:hover {
+    transform: translateY(-10px);
+    box-shadow: var(--box-shadow-hover);
+}
+
+.service-card.highlighted-card {
+    border: 2px solid var(--primary-color);
+    background: linear-gradient(135deg, #eff6ff 0%, #faf5ff 100%);
+}
+
+.featured-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: linear-gradient(135deg, #f59e0b, #ef4444);
+    color: var(--white);
+    padding: 0.5rem 1.25rem;
+    border-radius: 2rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    z-index: 1;
+}
+
+.service-icon {
+    font-size: 3rem;
+    color: var(--primary-color);
+}
+
+.feature-list li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #e2e8f0;
+    color: var(--gray-color);
+}
+
+.feature-list li:last-child {
+    border-bottom: none;
+}
+
+/* ========== Product Page Styles ========== */
+.product-hero {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+}
+
+.feature-box {
+    background: var(--white);
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    transition: var(--transition);
+    height: 100%;
+    border: 1px solid #e2e8f0;
+}
+
+.feature-box:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--box-shadow-hover);
+}
+
+.feature-icon-lg {
+    font-size: 3.5rem;
+}
+
+.ai-feature-card {
+    transition: var(--transition);
+    border-left: 4px solid var(--primary-color);
+}
+
+.ai-feature-card:hover {
+    transform: translateX(10px);
+    box-shadow: var(--box-shadow);
+}
+
+.step-card {
+    position: relative;
+}
+
+.step-number {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: var(--white);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 auto;
+}
+
+/* ========== Stats Grid ========== */
+.stat-card {
+    transition: var(--transition);
+    border: 1px solid #e2e8f0;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--box-shadow-hover);
+}
+
+/* ========== CTA Section ========== */
+.cta-section {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: var(--white);
+}
+
+/* ========== Buttons ========== */
+.btn {
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.75rem;
+    transition: var(--transition);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    border: none;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, var(--primary-dark), var(--secondary-color));
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3);
+}
+
+.btn-light {
+    background: var(--white);
+    color: var(--primary-color);
+}
+
+.btn-light:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(255, 255, 255, 0.3);
+}
+
+.btn-outline-primary {
+    border: 2px solid var(--primary-color);
+    color: var(--primary-color);
+}
+
+.btn-outline-primary:hover {
+    background: var(--primary-color);
+    color: var(--white);
+    transform: translateY(-2px);
+}
+
+/* ========== Footer ========== */
+footer {
+    background: var(--dark-color) !important;
+}
+
+footer a:hover {
+    color: var(--primary-light) !important;
+    transition: var(--transition);
+}
+
+/* ========== Animations ========== */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+/* ========== Responsive Design ========== */
+@media (max-width: 768px) {
+    .hero-section {
+        text-align: center;
+        padding-top: 6rem;
+    }
+    
+    .hero-section .hero-image {
+        margin-top: 2rem;
+    }
+    
+    .display-3 {
+        font-size: 2.5rem;
+    }
+    
+    .display-4 {
+        font-size: 2rem;
+    }
+    
+    .feature-card, .service-card {
+        margin-bottom: 1rem;
+    }
+    
+    .navbar {
+        padding: 0.5rem 0;
+    }
+}
+
+/* ========== Scroll to Top Button ========== */
+.scroll-to-top {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: var(--primary-color);
+    color: var(--white);
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    visibility: hidden;
+    transition: var(--transition);
+    z-index: 1000;
+    border: none;
+    box-shadow: 0 5px 20px rgba(37, 99, 235, 0.3);
+}
+
+.scroll-to-top.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.scroll-to-top:hover {
+    background: var(--primary-dark);
+    transform: translateY(-3px);
+}

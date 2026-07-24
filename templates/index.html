@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center min-vh-100">
+            <div class="col-lg-6" data-aos="fade-right">
+                <h1 class="display-3 fw-bold mb-4">Transform Your Business Digitally</h1>
+                <p class="lead mb-4">Charvakit delivers innovative digital solutions to help your business thrive in the modern world. From AI-powered platforms to custom web development.</p>
+                <div class="hero-buttons">
+                    <a href="/services" class="btn btn-light btn-lg me-3">Our Services</a>
+                    <a href="/contact" class="btn btn-outline-light btn-lg">Get in Touch</a>
+                </div>
+            </div>
+            <div class="col-lg-6" data-aos="fade-left">
+                <div class="hero-image text-center">
+                    <img src="/static/images/hero-illustration.svg" alt="Charvakit Digital Solutions" class="img-fluid">
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features-section py-5">
+    <div class="container">
+        <div class="row text-center mb-5">
+            <div class="col-12">
+                <h2 class="fw-bold display-5">Why Choose Charvakit?</h2>
+                <p class="text-muted lead">We deliver excellence through innovation and expertise</p>
+            </div>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="feature-card text-center p-4">
+                    <div class="feature-icon-wrapper mb-3">
+                        <i class="bi bi-lightning-charge"></i>
+                    </div>
+                    <h4>Fast Delivery</h4>
+                    <p class="text-muted">Quick turnaround times without compromising on quality. We understand the importance of time in business.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card text-center p-4">
+                    <div class="feature-icon-wrapper mb-3">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                    <h4>Secure Solutions</h4>
+                    <p class="text-muted">Enterprise-grade security for all our digital products. Your data and transactions are always protected.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card text-center p-4">
+                    <div class="feature-icon-wrapper mb-3">
+                        <i class="bi bi-globe"></i>
+                    </div>
+                    <h4>Global Reach</h4>
+                    <p class="text-muted">Solutions designed for international markets with multi-language and multi-currency support.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Product Section -->
+<section class="featured-product py-5 bg-light">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6 mb-4 mb-lg-0">
+                <div class="product-showcase p-4 bg-white rounded-4 shadow-sm">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="product-icon me-3">
+                            <i class="bi bi-shield-check"></i>
+                        </div>
+                        <h3 class="mb-0">Dokets VouchAI</h3>
+                    </div>
+                    <p class="lead">AI-Powered Escrow Platform</p>
+                    <p>Secure your transactions with intelligent escrow protection. Only 1% fee with WhatsApp integration.</p>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> 1% Transaction Fee</li>
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> 34 Languages Support</li>
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> 13 Currencies</li>
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> WhatsApp Integration</li>
+                    </ul>
+                    <a href="/products/dokets-vouchai" class="btn btn-primary btn-lg">Learn More</a>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="stats-grid">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="stat-card bg-white p-4 rounded-4 shadow-sm text-center">
+                                <h2 class="display-4 fw-bold text-primary">1%</h2>
+                                <p class="text-muted mb-0">Low Transaction Fee</p>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-card bg-white p-4 rounded-4 shadow-sm text-center">
+                                <h2 class="display-4 fw-bold text-primary">34</h2>
+                                <p class="text-muted mb-0">Languages</p>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-card bg-white p-4 rounded-4 shadow-sm text-center">
+                                <h2 class="display-4 fw-bold text-primary">13</h2>
+                                <p class="text-muted mb-0">Currencies</p>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-card bg-white p-4 rounded-4 shadow-sm text-center">
+                                <h2 class="display-4 fw-bold text-primary">24/7</h2>
+                                <p class="text-muted mb-0">AI Protection</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section py-5">
+    <div class="container text-center py-5">
+        <h2 class="display-4 fw-bold mb-4">Ready to Start Your Digital Journey?</h2>
+        <p class="lead mb-4">Let's discuss how we can help transform your business with cutting-edge technology</p>
+        <a href="/contact" class="btn btn-light btn-lg px-5">Contact Us Today</a>
+    </div>
+</section>
+{% endblock %}

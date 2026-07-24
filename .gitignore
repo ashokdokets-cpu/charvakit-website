@@ -1,0 +1,8 @@
+__pycache__/ 
+*.pyc 
+.env 
+venv/ 
+*.log 
+charvakit-old-backup/ 
+wget.exe 
+download_website.py 

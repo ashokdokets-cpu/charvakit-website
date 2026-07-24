@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<!-- Services Hero -->
+<section class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-5">
+        <div class="row">
+            <div class="col-12 text-center">
+                <h1 class="display-4 fw-bold">Our Services</h1>
+                <p class="lead">Comprehensive digital solutions for your business growth</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Services Grid -->
+<section class="services-list py-5">
+    <div class="container">
+        <div class="row g-4">
+            {% for service in services %}
+            <div class="col-lg-4 col-md-6">
+                <div class="card service-card h-100 border-0 shadow-sm {% if service.get('highlight') %}highlighted-card{% endif %}">
+                    {% if service.get('highlight') %}
+                    <div class="featured-badge">
+                        <i class="bi bi-star-fill"></i> Featured Product
+                    </div>
+                    {% endif %}
+                    <div class="card-body p-4">
+                        <div class="service-icon mb-3">
+                            {% if service.icon == 'shield-check' %}
+                            <i class="bi bi-shield-check"></i>
+                            {% elif service.icon == 'code' %}
+                            <i class="bi bi-code-slash"></i>
+                            {% elif service.icon == 'lightbulb' %}
+                            <i class="bi bi-lightbulb"></i>
+                            {% endif %}
+                        </div>
+                        <h3 class="card-title mb-3">{{ service.name }}</h3>
+                        <p class="card-text text-muted">{{ service.description }}</p>
+                        
+                        {% if service.name == "Dokets VouchAI" %}
+                        <div class="special-features mb-3">
+                            <span class="badge bg-success me-2 mb-2">1% Fee Only</span>
+                            <span class="badge bg-info me-2 mb-2">34 Languages</span>
+                            <span class="badge bg-warning text-dark mb-2">13 Currencies</span>
+                        </div>
+                        {% endif %}
+                        
+                        <ul class="feature-list list-unstyled">
+                            {% for feature in service.features %}
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                {{ feature }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        
+                        <div class="mt-4">
+                            {% if service.get('link') %}
+                            <a href="{{ service.link }}" class="btn btn-primary" target="_blank">
+                                Visit Website <i class="bi bi-arrow-up-right"></i>
+                            </a>
+                            {% if service.get('highlight') %}
+                            <a href="/products/dokets-vouchai" class="btn btn-outline-primary ms-2">
+                                View Details
+                            </a>
+                            {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Why Our Services -->
+<section class="why-us bg-light py-5">
+    <div class="container">
+        <div class="row text-center mb-5">
+            <div class="col-12">
+                <h2 class="fw-bold">Why Our Services Stand Out</h2>
+                <p class="text-muted">We combine innovation with reliability</p>
+            </div>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="text-center p-4">
+                    <i class="bi bi-cpu display-4 text-primary mb-3"></i>
+                    <h5>AI-Powered</h5>
+                    <p class="text-muted">Leveraging artificial intelligence for smarter solutions</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center p-4">
+                    <i class="bi bi-headset display-4 text-primary mb-3"></i>
+                    <h5>24/7 Support</h5>
+                    <p class="text-muted">Round-the-clock assistance for all your needs</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center p-4">
+                    <i class="bi bi-graph-up display-4 text-primary mb-3"></i>
+                    <h5>Scalable</h5>
+                    <p class="text-muted">Solutions that grow with your business</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section py-5">
+    <div class="container text-center py-4">
+        <h2 class="fw-bold mb-3">Need a Custom Solution?</h2>
+        <p class="lead mb-4">Let's create something amazing together</p>
+        <a href="/contact" class="btn btn-light btn-lg">Get Started</a>
+    </div>
+</section>
+{% endblock %}
