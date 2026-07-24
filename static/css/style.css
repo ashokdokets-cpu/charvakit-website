@@ -16,6 +16,66 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+/* ============ FIXES ============ */
+/* Fix navbar overlap */
+main {
+    padding-top: 80px;
+}
+
+/* Page hero spacing */
+.page-hero {
+    padding: 120px 0 60px;
+}
+
+/* Fix sticky sidebar overlap */
+.sticky-top {
+    z-index: 100;
+}
+
+/* Fix container overflow */
+body {
+    overflow-x: hidden;
+}
+
+/* Fix navbar z-index */
+.navbar {
+    z-index: 1030;
+}
+
+/* Fix images */
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Fix 5-column grid */
+@media (min-width: 768px) {
+    .col-md-2-4 {
+        flex: 0 0 20%;
+        max-width: 20%;
+    }
+}
+@media (max-width: 767px) {
+    .col-md-2-4 {
+        flex: 0 0 100%;
+        max-width: 100%;
+        margin-bottom: 15px;
+    }
+}
+
+/* Fix form inputs */
+.form-control {
+    border: 1px solid #ddd;
+    padding: 12px;
+}
+.form-control:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 0.2rem rgba(59, 165, 145, 0.25);
+}
+
+/* ============ END FIXES ============ */
+
+
 body {
     font-family: var(--font);
     font-size: 15px;
@@ -184,7 +244,23 @@ footer a:hover { color: var(--primary) !important; }
 }
 
 /* Responsive */
+/* Responsive */
 @media (max-width: 768px) {
+    main {
+        padding-top: 60px;
+    }
+    .page-hero {
+        padding: 100px 0 40px;
+    }
+    .display-4 {
+        font-size: 1.8rem !important;
+    }
+    .carousel-item > div {
+        height: 400px !important;
+    }
+    .page-hero h1 { font-size: 32px; }
+    h2 { font-size: 28px; }
+}
     .page-hero h1 { font-size: 32px; }
     h2 { font-size: 28px; }
     .carousel-item > div { height: 400px !important; }
