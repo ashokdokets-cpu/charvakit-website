@@ -20,26 +20,39 @@
 /* Fix navbar overlap */
 main {
     padding-top: 80px;
+    position: relative;
+    z-index: 1;
 }
 
 /* Page hero spacing */
 .page-hero {
     padding: 120px 0 60px;
+    position: relative;
+    z-index: 1;
 }
 
 /* Fix sticky sidebar overlap */
 .sticky-top {
-    z-index: 100;
+    z-index: 10;
 }
 
 /* Fix container overflow */
 body {
     overflow-x: hidden;
 }
+html {
+    scroll-behavior: smooth;
+}
 
 /* Fix navbar z-index */
 .navbar {
     z-index: 1030;
+}
+
+/* Fix all sections to be visible */
+section, .container, .row, .col-lg-8, .col-lg-6, .col-md-6, .col-12 {
+    position: relative;
+    z-index: 1;
 }
 
 /* Fix images */
@@ -73,8 +86,17 @@ img {
     box-shadow: 0 0 0 0.2rem rgba(59, 165, 145, 0.25);
 }
 
-/* ============ END FIXES ============ */
+/* Fix carousel */
+.carousel {
+    position: relative;
+    z-index: 1;
+}
+.carousel-inner {
+    position: relative;
+    z-index: 1;
+}
 
+/* ============ END FIXES ============ */
 
 body {
     font-family: var(--font);
@@ -330,7 +352,6 @@ p, h1, h2, h3, h4, h5, h6, li, span, a {
 /* Card body overflow fix */
 .card-body {
     word-wrap: break-word;
-    overflow: hidden;
 }
 
 /* Feature list items */
