@@ -47,23 +47,25 @@ scrollToTopBtn.addEventListener('click', function() {
 // ========== Intersection Observer for Animations ==========
 const observerOptions = {
     threshold: 0.1,
-    rootMargin: '0px 0px -50px 0px'
+    rootMargin: '0px'
 };
 
 const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
         if (entry.isIntersecting) {
-            entry.target.classList.add('fade-in-up');
-            observer.unobserve(entry.target);
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateY(0)';
+            // Don't unobserve - keep elements visible after animation
         }
     });
 }, observerOptions);
 
 // Observe elements for animation
 document.addEventListener('DOMContentLoaded', function() {
-    const elementsToAnimate = document.querySelectorAll('.feature-card, .service-card, .stat-card, .step-card, .ai-feature-card, .value-card');
+    const elementsToAnimate = document.querySelectorAll('.feature-card, .service-card, .stat-card, .step-card, .ai-feature-card, .value-card, .feature-box');
     elementsToAnimate.forEach(element => {
-        element.style.opacity = '0';
+        element.style.opacity = '1'; // Start visible
+        element.style.transform = 'translateY(0)';
         observer.observe(element);
     });
 });
