@@ -57,16 +57,20 @@
                             {% endfor %}
                         </ul>
                         
-                        <div class="mt-4">
+                                                <div class="mt-4">
                             {% if service.get('link') %}
-                            <a href="{{ service.link }}" class="btn btn-primary" target="_blank">
-                                Visit Website <i class="bi bi-arrow-up-right"></i>
-                            </a>
-                            {% if service.get('highlight') %}
-                            <a href="/products/dokets-vouchai" class="btn btn-outline-primary ms-2">
-                                View Details
-                            </a>
-                            {% endif %}
+                                {% if service.get('highlight') %}
+                                <a href="{{ service.link }}" class="btn btn-primary">
+                                    Learn More <i class="bi bi-arrow-right"></i>
+                                </a>
+                                <a href="/products/dokets-vouchai" class="btn btn-outline-primary ms-2">
+                                    View Details
+                                </a>
+                                {% else %}
+                                <a href="{{ service.link }}" class="btn btn-primary">
+                                    Read More <i class="bi bi-arrow-right"></i>
+                                </a>
+                                {% endif %}
                             {% endif %}
                         </div>
                     </div>
