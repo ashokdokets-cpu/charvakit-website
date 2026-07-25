@@ -1,7 +1,9 @@
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, PlainTextResponse, FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+import os
+import json
 
 app = FastAPI(title="Charvak IT Consulting Pvt Ltd - Web Designing | Staff Augmentation")
 
@@ -128,6 +130,34 @@ async def refund(request: Request):
 @app.get("/voice-to-web", response_class=HTMLResponse)
 async def voice_to_web(request: Request):
     return templates.TemplateResponse("voice-to-web.html", {"request": request, "title": "Voice-to-Web Engine - Charvak"})
+from whatsapp_bot import whatsapp_handler, VERIFY_TOKEN
+import json
+
+# WhatsApp Webhook - Verification
+@app.get("/webhook/whatsapp")
+async def verify_whatsapp(request: Request):
+    mode = request.query_params.get("hub.mode")
+    token = request.query_params.get("hub.verify_token")
+    challenge = request.query_params.get("hub.challenge")
+    
+    if mode == "subscribe" and token == VERIFY_TOKEN:
+        return PlainTextResponse(challenge)
+    return JSONResponse({"error": "Verification failed"}, status_code=403)
+
+# WhatsApp Webhook - Messages
+@app.post("/webhook/whatsapp")
+async def receive_whatsapp(request: Request):
+    data = await request.json()
+    await whatsapp_handler(data)
+    return {"status": "ok"}
+
+# Serve generated sites
+@app.get("/sites/{site_id}")
+async def view_site(site_id: str):
+    site_path = f"static/sites/{site_id}.html"
+    if os.path.exists(site_path):
+        return FileResponse(site_path)
+    return HTMLResponse("<h1>Site not found</h1>", status_code=404)
 
 @app.get("/health")
 async def health_check():
