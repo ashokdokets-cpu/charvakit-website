@@ -159,6 +159,14 @@ async def view_site(site_id: str):
         return FileResponse(site_path)
     return HTMLResponse("<h1>Site not found</h1>", status_code=404)
 
+@app.get("/cloud-waste-calculator", response_class=HTMLResponse)
+async def cloud_waste_calculator(request: Request):
+    return templates.TemplateResponse("cloud-waste-calculator.html", {"request": request, "title": "Cloud Waste Calculator - Charvak"})
+
+@app.get("/lock-in-breaker", response_class=HTMLResponse)
+async def lock_in_breaker(request: Request):
+    return templates.TemplateResponse("lock-in-breaker.html", {"request": request, "title": "Vendor Lock-In Breaker - Charvak"})
+
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
