@@ -167,6 +167,10 @@ async def cloud_waste_calculator(request: Request):
 async def lock_in_breaker(request: Request):
     return templates.TemplateResponse("lock-in-breaker.html", {"request": request, "title": "Vendor Lock-In Breaker - Charvak"})
 
+@app.get("/lock-in-breaker-pricing", response_class=HTMLResponse)
+async def lock_in_breaker_pricing(request: Request):
+    return templates.TemplateResponse("lock-in-breaker-pricing.html", {"request": request, "title": "Lock-In Breaker Plans - Charvak"})
+
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}

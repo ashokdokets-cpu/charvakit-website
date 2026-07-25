@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Lock-In Breaker Plans - Charvak IT Consulting Pvt Ltd{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4">
+        <h1 class="display-4 fw-bold">Lock-In Breaker Plans</h1>
+        <p class="lead">Performance-based pricing — you only pay when we save you money</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row g-4 mb-5">
+        <!-- Free Audit -->
+        <div class="col-md-4">
+            <div class="card h-100 p-4 text-center border">
+                <h4 class="text-primary">🔍 Free Cloud Audit</h4>
+                <h2 class="display-4 fw-bold">₹0</h2>
+                <p class="text-muted">One-time</p>
+                <ul class="list-unstyled text-start mb-4">
+                    <li class="mb-2">✅ Cloud waste scan</li>
+                    <li class="mb-2">✅ Detailed PDF report</li>
+                    <li class="mb-2">✅ Savings estimate</li>
+                    <li class="mb-2">✅ 30-min consultation call</li>
+                    <li class="mb-2">❌ No migration scripts</li>
+                    <li class="mb-2">❌ No ongoing monitoring</li>
+                </ul>
+                <a href="/cloud-waste-calculator" class="btn btn-outline-primary btn-lg">Start Free Audit</a>
+            </div>
+        </div>
+        
+        <!-- One-Time Migration -->
+        <div class="col-md-4">
+            <div class="card h-100 p-4 text-center border-primary" style="border-width:2px;">
+                <span class="badge bg-primary mb-2">Most Popular</span>
+                <h4>⚡ One-Time Migration</h4>
+                <h2 class="display-4 fw-bold">10%</h2>
+                <p class="text-muted">of verified annual savings</p>
+                <ul class="list-unstyled text-start mb-4">
+                    <li class="mb-2">✅ Everything in Free</li>
+                    <li class="mb-2">✅ AI migration scripts</li>
+                    <li class="mb-2">✅ Resource optimization</li>
+                    <li class="mb-2">✅ Reserved instance setup</li>
+                    <li class="mb-2">✅ 90-day support</li>
+                    <li class="mb-2">❌ No ongoing monitoring</li>
+                </ul>
+                <a href="/contact" class="btn btn-primary btn-lg">Get Started</a>
+            </div>
+        </div>
+        
+        <!-- Continuous Protection -->
+        <div class="col-md-4">
+            <div class="card h-100 p-4 text-center border">
+                <h4 class="text-success">🛡️ Continuous Protection</h4>
+                <h2 class="display-4 fw-bold">₹4,999</h2>
+                <p class="text-muted">/month</p>
+                <ul class="list-unstyled text-start mb-4">
+                    <li class="mb-2">✅ Everything in Migration</li>
+                    <li class="mb-2">✅ 24/7 cloud monitoring</li>
+                    <li class="mb-2">✅ Auto-cost optimization</li>
+                    <li class="mb-2">✅ Monthly savings report</li>
+                    <li class="mb-2">✅ Vendor negotiation support</li>
+                    <li class="mb-2">✅ Priority support</li>
+                </ul>
+                <a href="/contact" class="btn btn-success btn-lg">Subscribe Now</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trust Section -->
+    <div class="row text-center mb-5">
+        <div class="col-md-4"><div class="p-3"><h3 class="text-success">30-50%</h3><p>Average cloud cost reduction</p></div></div>
+        <div class="col-md-4"><div class="p-3"><h3 class="text-success">₹0</h3><p>Upfront cost — pay from savings</p></div></div>
+        <div class="col-md-4"><div class="p-3"><h3 class="text-success">10 min</h3><p>Read-only scan, zero risk</p></div></div>
+    </div>
+
+    <div class="text-center p-5 bg-dark text-white rounded">
+        <h3>You Only Pay If We Save You Money</h3>
+        <p class="mb-4">No savings, no fee. That's the Charvak guarantee.</p>
+        <a href="/cloud-waste-calculator" class="btn btn-primary btn-lg me-2">Calculate My Savings</a>
+        <a href="/contact" class="btn btn-outline-light btn-lg">Talk to Sales</a>
+    </div>
+</div>
+{% endblock %}
