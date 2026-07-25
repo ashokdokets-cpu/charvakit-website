@@ -125,6 +125,10 @@ async def privacy(request: Request):
 async def refund(request: Request):
     return templates.TemplateResponse("refund.html", {"request": request, "title": "Refund & Cancellation Policy"})
 
+@app.get("/voice-to-web", response_class=HTMLResponse)
+async def voice_to_web(request: Request):
+    return templates.TemplateResponse("voice-to-web.html", {"request": request, "title": "Voice-to-Web Engine - Charvak"})
+
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
