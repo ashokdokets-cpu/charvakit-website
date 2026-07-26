@@ -179,6 +179,14 @@ async def reverse_staffing(request: Request):
 async def code_quality_checker(request: Request):
     return templates.TemplateResponse("code-quality-checker.html", {"request": request, "title": "Code Quality Checker - Charvak"})
 
+@app.get("/developer-signup", response_class=HTMLResponse)
+async def developer_signup(request: Request):
+    return templates.TemplateResponse("developer-signup.html", {"request": request, "title": "Join Developer Pool - Charvak"})
+
+@app.get("/hire-talent", response_class=HTMLResponse)
+async def hire_talent(request: Request):
+    return templates.TemplateResponse("hire-talent.html", {"request": request, "title": "Hire Vetted Talent - Charvak"})
+
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
