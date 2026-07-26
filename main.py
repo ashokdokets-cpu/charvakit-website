@@ -187,6 +187,14 @@ async def developer_signup(request: Request):
 async def hire_talent(request: Request):
     return templates.TemplateResponse("hire-talent.html", {"request": request, "title": "Hire Vetted Talent - Charvak"})
 
+@app.get("/auditbot", response_class=HTMLResponse)
+async def auditbot(request: Request):
+    return templates.TemplateResponse("auditbot.html", {"request": request, "title": "AuditBot - Charvak"})
+
+@app.get("/digital-health-checker", response_class=HTMLResponse)
+async def digital_health_checker(request: Request):
+    return templates.TemplateResponse("digital-health-checker.html", {"request": request, "title": "Digital Health Checker - Charvak"})
+
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}

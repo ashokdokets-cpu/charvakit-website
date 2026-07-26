@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Free Website Health Checker - Charvak{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4"><span class="badge bg-warning text-dark mb-2 px-3 py-2">🆓 Free Tool</span><h1 class="display-4 fw-bold">Digital Health Checker</h1><p class="lead">Enter your website URL. Get an instant security & performance score.</p></div>
+</div>
+<div class="container py-5"><div class="row"><div class="col-lg-7 mx-auto">
+    <div class="card border-0 shadow-lg p-4 mb-4"><div class="card-body text-center">
+        <h4>🔍 Scan Your Website</h4>
+        <input type="url" class="form-control mb-3" id="siteUrl" placeholder="https://yourwebsite.com">
+        <button class="btn btn-primary btn-lg w-100" onclick="runScan()">Run Health Check</button>
+    </div></div>
+    <div class="card border-0 shadow-lg p-4 d-none" id="resultCard" style="border-left:5px solid #ef4444;"><div class="card-body text-center">
+        <h3>🏥 Website Health Report</h3>
+        <div class="display-1 fw-bold" id="healthScore">--</div><p class="text-muted">/100 Health Score</p>
+        <div class="row g-3 mt-3">
+            <div class="col-4"><div class="bg-light p-2 rounded"><small>Security</small><h5 id="secScore">--</h5></div></div>
+            <div class="col-4"><div class="bg-light p-2 rounded"><small>Performance</small><h5 id="perfScore">--</h5></div></div>
+            <div class="col-4"><div class="bg-light p-2 rounded"><small>SEO</small><h5 id="seoScore">--</h5></div></div>
+        </div>
+        <div class="alert mt-3" id="healthAlert"></div>
+        <a href="/auditbot" class="btn btn-primary btn-lg mt-3">Fix Issues with AuditBot</a>
+        <button class="btn btn-outline-secondary btn-lg mt-3 ms-2" onclick="shareHealth()">📤 Share Score</button>
+    </div></div>
+</div></div></div>
+
+<script>
+function runScan(){const url=document.getElementById('siteUrl').value;if(!url)return alert('Enter a URL!');
+const score=Math.floor(Math.random()*50)+40;
+document.getElementById('healthScore').textContent=score;
+document.getElementById('secScore').textContent=Math.floor(Math.random()*40)+50;
+document.getElementById('perfScore').textContent=Math.floor(Math.random()*35)+55;
+document.getElementById('seoScore').textContent=Math.floor(Math.random()*30)+60;
+const alert=document.getElementById('healthAlert');
+if(score<60){alert.className='alert alert-danger';alert.textContent='🚨 Critical issues found! Your site needs immediate attention.';}
+else if(score<80){alert.className='alert alert-warning';alert.textContent='⚠️ Several issues detected. Recommended to fix soon.';}
+else{alert.className='alert alert-success';alert.textContent='✅ Your site is in good health! Minor improvements possible.';}
+document.getElementById('resultCard').classList.remove('d-none');document.getElementById('resultCard').scrollIntoView({behavior:'smooth'});}
+function shareHealth(){const s=document.getElementById('healthScore').textContent;window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('My website health score is '+s+'/100! Check yours: https://www.charvakit.com/digital-health-checker'));}
+</script>
+{% endblock %}

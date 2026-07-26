@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}AuditBot - Charvak IT Consulting Pvt Ltd{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4">
+        <span class="badge bg-info text-dark mb-2 px-3 py-2">💡 New Product</span>
+        <h1 class="display-4 fw-bold">AuditBot</h1>
+        <p class="lead">AI-powered security & code health scanner. Find and fix vulnerabilities in 10 minutes.</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row mb-5">
+        <div class="col-lg-6"><h2>Your Code Has Hidden Problems</h2><p class="lead">Every website has security flaws, broken dependencies, and performance bottlenecks. Most founders don't discover them until it's too late.</p><p>AuditBot connects to your GitHub repo or website URL, runs a deep health check, and generates one-click patch scripts to fix everything.</p></div>
+        <div class="col-lg-6"><div class="bg-dark text-white p-4 rounded"><h4>What AuditBot Scans</h4><ul><li>🔒 Security vulnerabilities (OWASP Top 10)</li><li>📦 Outdated dependencies</li><li>🐛 Bug patterns & code smells</li><li>⚡ Performance bottlenecks</li><li>♿ Accessibility (WCAG) issues</li><li>🔑 Exposed API keys & secrets</li></ul></div></div>
+    </div>
+
+    <div class="row g-4 mb-5 text-center">
+        <div class="col-md-3"><div class="card h-100 p-4"><h3 class="text-danger">10 min</h3><p>Scan time</p></div></div>
+        <div class="col-md-3"><div class="card h-100 p-4"><h3 class="text-danger">100+</h3><p>Checks run</p></div></div>
+        <div class="col-md-3"><div class="card h-100 p-4"><h3 class="text-success">1-Click</h3><p>Auto-fix patches</p></div></div>
+        <div class="col-md-3"><div class="card h-100 p-4"><h3 class="text-success">24/7</h3><p>Continuous monitoring</p></div></div>
+    </div>
+
+    <div class="text-center p-5 bg-light rounded">
+        <h3>See Your Website's Health Score</h3>
+        <p class="mb-4">Free scan. No credit card. Results in 10 minutes.</p>
+        <a href="/digital-health-checker" class="btn btn-primary btn-lg">Free Website Health Check</a>
+    </div>
+</div>
+{% endblock %}
