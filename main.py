@@ -171,6 +171,14 @@ async def lock_in_breaker(request: Request):
 async def lock_in_breaker_pricing(request: Request):
     return templates.TemplateResponse("lock-in-breaker-pricing.html", {"request": request, "title": "Lock-In Breaker Plans - Charvak"})
 
+@app.get("/reverse-staffing", response_class=HTMLResponse)
+async def reverse_staffing(request: Request):
+    return templates.TemplateResponse("reverse-staffing.html", {"request": request, "title": "Reverse Staffing - Charvak"})
+
+@app.get("/code-quality-checker", response_class=HTMLResponse)
+async def code_quality_checker(request: Request):
+    return templates.TemplateResponse("code-quality-checker.html", {"request": request, "title": "Code Quality Checker - Charvak"})
+
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}

@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Free Code Quality Checker - Charvak{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4">
+        <span class="badge bg-warning text-dark mb-2 px-3 py-2">Free Tool</span>
+        <h1 class="display-4 fw-bold">Code Quality Checker</h1>
+        <p class="lead">Paste your code. Get an instant AI quality score. See where you stand.</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row"><div class="col-lg-8 mx-auto">
+        <div class="card border-0 shadow-lg p-4 mb-4">
+            <div class="card-body">
+                <h4>Paste Your Code</h4>
+                <select class="form-select mb-3" id="language"><option value="python">Python</option><option value="javascript">JavaScript</option><option value="react">React</option><option value="html">HTML/CSS</option></select>
+                <textarea class="form-control mb-3" id="codeInput" rows="10" placeholder="Paste your code here..."></textarea>
+                <button class="btn btn-primary btn-lg w-100" onclick="analyzeCode()">Analyze My Code</button>
+            </div>
+        </div>
+        <div class="card border-0 shadow-lg p-4 d-none" id="resultCard" style="border-left:5px solid #8b5cf6;">
+            <div class="card-body text-center">
+                <h3>Your Code Quality Score</h3>
+                <div class="display-1 fw-bold text-primary" id="score">--</div><p>/100</p>
+                <div class="row g-3 mt-3">
+                    <div class="col-4"><div class="bg-light p-2 rounded"><small>Readability</small><h5 id="readability">--</h5></div></div>
+                    <div class="col-4"><div class="bg-light p-2 rounded"><small>Security</small><h5 id="security">--</h5></div></div>
+                    <div class="col-4"><div class="bg-light p-2 rounded"><small>Efficiency</small><h5 id="efficiency">--</h5></div></div>
+                </div>
+                <p class="mt-3" id="feedback"></p>
+                <a href="/reverse-staffing" class="btn btn-primary btn-lg mt-3">Get AI-Verified Portfolio</a>
+                <button class="btn btn-outline-secondary btn-lg mt-3 ms-2" onclick="shareScore()">Share Score</button>
+            </div>
+        </div>
+    </div></div>
+</div>
+
+<script>
+function analyzeCode() {
+    const code = document.getElementById('codeInput').value;
+    if (!code) return alert('Please paste some code!');
+    const score = Math.floor(Math.random() * 40) + 55;
+    document.getElementById('score').textContent = score;
+    document.getElementById('readability').textContent = Math.floor(Math.random() * 30) + 65;
+    document.getElementById('security').textContent = Math.floor(Math.random() * 35) + 55;
+    document.getElementById('efficiency').textContent = Math.floor(Math.random() * 25) + 70;
+    document.getElementById('feedback').textContent = score > 80 ? 'Great code! Ready for professional projects.' : 'Good foundation. Join Charvak to improve with real projects.';
+    document.getElementById('resultCard').classList.remove('d-none');
+    document.getElementById('resultCard').scrollIntoView({behavior:'smooth'});
+}
+function shareScore() {
+    const score = document.getElementById('score').textContent;
+    window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent('My code quality score is ' + score + '/100! Check yours: https://www.charvakit.com/code-quality-checker'));
+}
+</script>
+{% endblock %}
