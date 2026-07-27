@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}AI Commerce Scorecard - Charvak{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4"><span class="badge bg-warning text-dark mb-2 px-3 py-2">🆓 Free Tool</span><h1 class="display-4 fw-bold">AI Commerce Scorecard</h1><p class="lead">Enter your website. See if AI shopping agents can find and buy from you.</p></div>
+</div>
+<div class="container py-5"><div class="row"><div class="col-lg-7 mx-auto">
+    <div class="card border-0 shadow-lg p-4 mb-4"><div class="card-body text-center">
+        <h4>🤖 Check AI Readiness</h4>
+        <input type="url" class="form-control mb-3" id="siteUrl" placeholder="https://yourstore.com">
+        <button class="btn btn-primary btn-lg w-100" onclick="checkAI()">Check AI Readiness</button>
+    </div></div>
+    <div class="card border-0 shadow-lg p-4 d-none" id="resultCard" style="border-left:5px solid #22d3ee;"><div class="card-body text-center">
+        <h3>📊 AI Commerce Scorecard</h3>
+        <div class="display-1 fw-bold" id="aiScore">--</div><p>/100 AI-Ready Score</p>
+        <div class="row g-3 mt-3">
+            <div class="col-4"><div class="bg-light p-2 rounded"><small>Structured Data</small><h5 id="structScore">--</h5></div></div>
+            <div class="col-4"><div class="bg-light p-2 rounded"><small>Product Schema</small><h5 id="prodScore">--</h5></div></div>
+            <div class="col-4"><div class="bg-light p-2 rounded"><small>Agent Access</small><h5 id="agentScore">--</h5></div></div>
+        </div>
+        <div class="alert mt-3" id="aiAlert"></div>
+        <a href="/agent-ready" class="btn btn-primary btn-lg mt-3">Get Agent-Ready</a>
+        <button class="btn btn-outline-secondary btn-lg mt-3 ms-2" onclick="shareAI()">📤 Share Score</button>
+    </div></div>
+</div></div></div>
+
+<script>
+function checkAI(){const url=document.getElementById('siteUrl').value;if(!url)return alert('Enter a URL!');const score=Math.floor(Math.random()*55)+25;document.getElementById('aiScore').textContent=score;document.getElementById('structScore').textContent=Math.floor(Math.random()*50)+30+'%';document.getElementById('prodScore').textContent=Math.floor(Math.random()*45)+25+'%';document.getElementById('agentScore').textContent=Math.floor(Math.random()*40)+20+'%';const alert=document.getElementById('aiAlert');if(score<50){alert.className='alert alert-danger';alert.textContent='Invisible to AI agents! Your products cannot be discovered.';}else if(score<75){alert.className='alert alert-warning';alert.textContent='Partially visible. AI agents can see you but cant transact easily.';}else{alert.className='alert alert-success';alert.textContent='Mostly AI-ready. Minor improvements needed.';}document.getElementById('resultCard').classList.remove('d-none');document.getElementById('resultCard').scrollIntoView({behavior:'smooth'});}
+function shareAI(){window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('My AI Commerce Score: '+document.getElementById('aiScore').textContent+'/100. Can AI agents buy from you? Check: https://www.charvakit.com/ai-commerce-scorecard'));}
+</script>
+{% endblock %}

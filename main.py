@@ -259,6 +259,14 @@ async def legacy_shift(request: Request):
 async def time_machine_checker(request: Request):
     return templates.TemplateResponse("time-machine-checker.html", {"request": request, "title": "Time Machine Checker - Charvak"})
 
+@app.get("/agent-ready", response_class=HTMLResponse)
+async def agent_ready(request: Request):
+    return templates.TemplateResponse("agent-ready.html", {"request": request, "title": "Agent-Ready Wrapper - Charvak"})
+
+@app.get("/ai-commerce-scorecard", response_class=HTMLResponse)
+async def ai_commerce_scorecard(request: Request):
+    return templates.TemplateResponse("ai-commerce-scorecard.html", {"request": request, "title": "AI Commerce Scorecard - Charvak"})
+
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
