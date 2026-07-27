@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Neural Wireframe-to-Prod - Charvak{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4">
+        <span class="badge bg-warning text-dark mb-2 px-3 py-2">📋 Coming Soon</span>
+        <h1 class="display-4 fw-bold">Neural Wireframe-to-Prod</h1>
+        <p class="lead">Draw your idea on a napkin. Our AI turns it into production-ready code in seconds.</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row align-items-center mb-5">
+        <div class="col-lg-6">
+            <h2 class="fw-bold mb-4">From Sketch to Live Site</h2>
+            <div class="d-flex mb-4"><span class="step-number me-3">1</span><div><h5>Upload Your Sketch</h5><p class="text-muted">Hand-drawn wireframe, whiteboard photo, or reference screenshot.</p></div></div>
+            <div class="d-flex mb-4"><span class="step-number me-3">2</span><div><h5>AI Parses the Layout</h5><p class="text-muted">Vision AI detects UI elements, structure, and intent.</p></div></div>
+            <div class="d-flex mb-4"><span class="step-number me-3">3</span><div><h5>Production Code Generated</h5><p class="text-muted">Clean React + Tailwind CSS. Responsive. Deployable instantly.</p></div></div>
+            <div class="d-flex"><span class="step-number me-3">4</span><div><h5>Go Live with One Click</h5><p class="text-muted">Custom domain, SSL, and hosting included.</p></div></div>
+        </div>
+        <div class="col-lg-6 text-center">
+            <div class="bg-dark text-white p-5 rounded-4">
+                <i class="bi bi-pencil-square display-1 mb-3"></i>
+                <h4>Napkin-to-Live Challenge</h4>
+                <p class="text-white-50">Draw → Upload → Live Site. We dare you to try it.</p>
+                <a href="/napkin-challenge" class="btn btn-primary btn-lg mt-3">Try the Challenge</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5 text-center">
+        <div class="col-md-3"><div class="card h-100 p-4"><i class="bi bi-pencil display-4 text-primary mb-3"></i><h5>Hand-Drawn Input</h5><p class="text-muted">Napkin, whiteboard, or Figma screenshot</p></div></div>
+        <div class="col-md-3"><div class="card h-100 p-4"><i class="bi bi-cpu display-4 text-primary mb-3"></i><h5>AI Vision Engine</h5><p class="text-muted">Detects layout, components, and styling</p></div></div>
+        <div class="col-md-3"><div class="card h-100 p-4"><i class="bi bi-code-slash display-4 text-primary mb-3"></i><h5>React + Tailwind</h5><p class="text-muted">Modern, clean, production-ready code</p></div></div>
+        <div class="col-md-3"><div class="card h-100 p-4"><i class="bi bi-rocket display-4 text-primary mb-3"></i><h5>Instant Deploy</h5><p class="text-muted">Live on your domain in seconds</p></div></div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-md-6"><div class="card h-100 p-4 text-center"><h3>🆓 Free Generation</h3><h2 class="display-4 fw-bold">₹0</h2><p>3 generations/month</p><a href="/napkin-challenge" class="btn btn-outline-primary mt-3">Try Free</a></div></div>
+        <div class="col-md-6"><div class="card h-100 p-4 text-center bg-light"><h3>⭐ Pro Launch</h3><h2 class="display-4 fw-bold">₹999</h2><p>Per site launch</p><p class="text-muted">Custom domain, no branding, priority support</p><a href="/contact" class="btn btn-primary mt-3">Get Pro</a></div></div>
+    </div>
+</div>
+{% endblock %}

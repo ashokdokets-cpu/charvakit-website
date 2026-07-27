@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Napkin-to-Live Challenge - Charvak{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4"><span class="badge bg-warning text-dark mb-2 px-3 py-2">🎨 Viral Challenge</span><h1 class="display-4 fw-bold">Napkin-to-Live Challenge</h1><p class="lead">Upload a hand-drawn sketch. Get a live website. Share your transformation.</p></div>
+</div>
+<div class="container py-5"><div class="row"><div class="col-lg-7 mx-auto">
+    <div class="card border-0 shadow-lg p-4 mb-4"><div class="card-body text-center">
+        <h4 class="mb-3">📤 Upload Your Sketch</h4>
+        <div class="border-dashed p-5 mb-3 bg-light rounded" id="dropZone">
+            <i class="bi bi-cloud-upload display-3 text-primary"></i>
+            <p class="mt-2">Drag & drop your sketch or click to upload</p>
+            <input type="file" id="sketchUpload" accept="image/*" class="d-none">
+            <button class="btn btn-outline-primary mt-2" onclick="document.getElementById('sketchUpload').click()">Choose File</button>
+        </div>
+        <div class="mb-3"><label class="form-label">What are you building?</label><input type="text" class="form-control" placeholder="e.g. Landing page for my bakery"></div>
+        <button class="btn btn-primary btn-lg w-100" onclick="generateSite()">✨ Generate My Website</button>
+    </div></div>
+    <div class="card border-0 shadow-lg p-4 d-none" id="resultCard" style="border-left:5px solid #10b981;"><div class="card-body text-center">
+        <h3>🎉 Your Website is Ready!</h3>
+        <div class="bg-light p-5 rounded my-3"><i class="bi bi-check-circle display-1 text-success"></i><h4 class="mt-2">Preview Generated</h4><p class="text-muted">Your napkin sketch is now a live website!</p></div>
+        <div class="row g-3">
+            <div class="col-6"><a href="#" class="btn btn-primary btn-lg w-100">🚀 Launch Site</a></div>
+            <div class="col-6"><button class="btn btn-outline-primary btn-lg w-100" onclick="shareChallenge()">📤 Share Transformation</button></div>
+        </div>
+    </div></div>
+</div></div></div>
+
+<script>
+function generateSite(){document.getElementById('resultCard').classList.remove('d-none');document.getElementById('resultCard').scrollIntoView({behavior:'smooth'});}
+function shareChallenge(){window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('I turned a napkin sketch into a live website with Charvak Neural Wireframe! Try the #NapkinToLive challenge: https://www.charvakit.com/napkin-challenge'));}
+</script>
+{% endblock %}

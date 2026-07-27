@@ -195,6 +195,14 @@ async def auditbot(request: Request):
 async def digital_health_checker(request: Request):
     return templates.TemplateResponse("digital-health-checker.html", {"request": request, "title": "Digital Health Checker - Charvak"})
 
+@app.get("/neural-wireframe", response_class=HTMLResponse)
+async def neural_wireframe(request: Request):
+    return templates.TemplateResponse("neural-wireframe.html", {"request": request, "title": "Neural Wireframe-to-Prod - Charvak"})
+
+@app.get("/napkin-challenge", response_class=HTMLResponse)
+async def napkin_challenge(request: Request):
+    return templates.TemplateResponse("napkin-challenge.html", {"request": request, "title": "Napkin-to-Live Challenge - Charvak"})
+
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
