@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 {% block title %}Napkin-to-Live Challenge - Charvak{% endblock %}
 {% block content %}
+<style>
+.border-dashed { border: 3px dashed #ccc; cursor: pointer; transition: 0.3s; }
+.border-dashed:hover { border-color: var(--primary); background: #f0faf7; }
+</style>
 <div class="page-hero bg-gradient-primary text-white py-5">
     <div class="container py-4"><span class="badge bg-warning text-dark mb-2 px-3 py-2">🎨 Viral Challenge</span><h1 class="display-4 fw-bold">Napkin-to-Live Challenge</h1><p class="lead">Upload a hand-drawn sketch. Get a live website. Share your transformation.</p></div>
 </div>
@@ -27,7 +31,61 @@
 </div></div></div>
 
 <script>
-function generateSite(){document.getElementById('resultCard').classList.remove('d-none');document.getElementById('resultCard').scrollIntoView({behavior:'smooth'});}
-function shareChallenge(){window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('I turned a napkin sketch into a live website with Charvak Neural Wireframe! Try the #NapkinToLive challenge: https://www.charvakit.com/napkin-challenge'));}
+function generateSite(){
+    const fileInput = document.getElementById('sketchUpload');
+    const desc = document.querySelector('input[placeholder*="bakery"]').value;
+    
+    if (!fileInput.files.length && !desc) {
+        alert('Please upload a sketch or describe what you are building!');
+        return;
+    }
+    
+    // Show loading
+    const btn = event.target;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generating...';
+    btn.disabled = true;
+    
+    // Simulate AI processing
+    setTimeout(() => {
+        document.getElementById('resultCard').classList.remove('d-none');
+        document.getElementById('resultCard').scrollIntoView({behavior:'smooth'});
+        btn.innerHTML = '✨ Generate My Website';
+        btn.disabled = false;
+        
+        // Show demo preview based on description
+        const previewArea = document.querySelector('#resultCard .bg-light');
+        if (desc) {
+            previewArea.innerHTML = `
+                <i class="bi bi-check-circle display-1 text-success"></i>
+                <h4 class="mt-2">🎨 ${desc} — Generated!</h4>
+                <p class="text-muted">Your sketch has been converted to a responsive React + Tailwind website.</p>
+                <div class="row g-2 mt-3">
+                    <div class="col-6"><span class="badge bg-success w-100 py-2">📱 Mobile Ready</span></div>
+                    <div class="col-6"><span class="badge bg-primary w-100 py-2">⚡ Fast Load</span></div>
+                    <div class="col-6"><span class="badge bg-info w-100 py-2">🎨 Custom Design</span></div>
+                    <div class="col-6"><span class="badge bg-warning text-dark w-100 py-2">🔍 SEO Optimized</span></div>
+                </div>
+            `;
+        }
+    }, 2000);
+}
+
+function shareChallenge(){
+    window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('I turned a napkin sketch into a live website with Charvak Neural Wireframe! Try the #NapkinToLive challenge: https://www.charvakit.com/napkin-challenge'));
+}
+
+// Drag & drop
+const dropZone = document.getElementById('dropZone');
+dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-primary'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('border-primary'));
+dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('border-primary');
+    document.getElementById('sketchUpload').files = e.dataTransfer.files;
+    dropZone.querySelector('p').textContent = '✅ File ready: ' + e.dataTransfer.files[0].name;
+});
+document.getElementById('sketchUpload').addEventListener('change', function() {
+    dropZone.querySelector('p').textContent = '✅ File ready: ' + this.files[0].name;
+});
 </script>
 {% endblock %}
