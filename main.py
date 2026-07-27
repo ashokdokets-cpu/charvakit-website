@@ -327,6 +327,10 @@ async def job_board(request: Request):
 async def application_dashboard(request: Request):
     return templates.TemplateResponse("application-dashboard.html", {"request": request, "title": "Application Dashboard - Charvak"})
 
+@app.get("/admin-dashboard", response_class=HTMLResponse)
+async def admin_dashboard(request: Request):
+    return templates.TemplateResponse("admin-dashboard.html", {"request": request, "title": "Admin Dashboard - Charvak"})
+
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}

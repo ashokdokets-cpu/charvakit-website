@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard - Charvak{% endblock %}
+{% block content %}
+<div class="page-hero bg-dark text-white py-5">
+    <div class="container py-4">
+        <span class="badge bg-danger mb-2 px-3 py-2">Admin Only</span>
+        <h1 class="display-4 fw-bold">Admin Dashboard</h1>
+        <p class="lead">Internal revenue tracking & system overview</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <!-- Revenue Summary -->
+    <h3 class="mb-4">Revenue at Every Step</h3>
+    <div class="row g-3 mb-5">
+        <div class="col-md-4"><div class="card p-4 text-center bg-success text-white"><h5>Resume Pro</h5><h2>$499/mo</h2></div></div>
+        <div class="col-md-4"><div class="card p-4 text-center bg-primary text-white"><h5>Job Post</h5><h2>$999/post</h2></div></div>
+        <div class="col-md-4"><div class="card p-4 text-center bg-info text-white"><h5>Mock Interview</h5><h2>$199/session</h2></div></div>
+        <div class="col-md-4"><div class="card p-4 text-center bg-warning"><h5>Courses</h5><h2>20% commission</h2></div></div>
+        <div class="col-md-4"><div class="card p-4 text-center bg-danger text-white"><h5>Verification</h5><h2>$499-3,999</h2></div></div>
+        <div class="col-md-4"><div class="card p-4 text-center bg-dark text-white"><h5>Placement</h5><h2>8-15% CTC</h2></div></div>
+    </div>
+
+    <!-- All Models Status -->
+    <h3 class="mb-4">All Models Status</h3>
+    <div class="table-responsive mb-5">
+        <table class="table table-bordered table-sm">
+            <thead class="table-dark"><tr><th>#</th><th>Model</th><th>Page</th><th>Tool</th><th>Revenue</th><th>Status</th></tr></thead>
+            <tbody>
+                <tr><td>1</td><td>Voice-to-Web</td><td>/voice-to-web</td><td>WhatsApp Bot</td><td>$0-499/mo</td><td><span class="badge bg-success">Live</span></td></tr>
+                <tr><td>2</td><td>Lock-In Breaker</td><td>/lock-in-breaker</td><td>Cloud Waste Calc</td><td>10%/$4,999</td><td><span class="badge bg-success">Live</span></td></tr>
+                <tr><td>3</td><td>Reverse Staffing</td><td>/reverse-staffing</td><td>Code Quality Check</td><td>Placement</td><td><span class="badge bg-success">Live</span></td></tr>
+                <tr><td>4</td><td>AuditBot</td><td>/auditbot</td><td>Digital Health</td><td>$2,999/$1,999</td><td><span class="badge bg-success">Live</span></td></tr>
+                <tr><td>5</td><td>Neural Wireframe</td><td>/neural-wireframe</td><td>Napkin Challenge</td><td>$0-999</td><td><span class="badge bg-success">Live</span></td></tr>
+                <tr><td>6</td><td>Skill-Twin</td><td>/skill-twin</td><td>Skill Check</td><td>$0-499</td><td><span class="badge bg-success">Live</span></td></tr>
+                <tr><td>7</td><td>Globalize.ai</td><td>/globalize</td><td>Revenue Leak</td><td>$0-4,999</td><td><span class="badge bg-success">Live</span></td></tr>
+                <tr><td>8</td><td>Micro-Squads</td><td>/micro-squads</td><td>Scope Simulator</td><td>$39,999-99,999</td><td><span class="badge bg-success">Live</span></td></tr>
+                <tr><td>9</td><td>Agency-Twin</td><td>/agency-twin</td><td>Burnout Calc</td><td>$0-999</td><td><span class="badge bg-success">Live</span></td></tr>
+                <tr><td>10</td><td>Geo-Compliance</td><td>/geo-compliance</td><td>Contract Risk</td><td>$999/3%</td><td><span class="badge bg-success">Live</span></td></tr>
+                <tr><td>11</td><td>Design-Token Sentinel</td><td>/design-token-sentinel</td><td>Brand Drift</td><td>$0-7,999</td><td><span class="badge bg-success">Live</span></td></tr>
+                <tr><td>12</td><td>Legacy-Shift</td><td>/legacy-shift</td><td>Time Machine</td><td>$0-19,999</td><td><span class="badge bg-success">Live</span></td></tr>
+                <tr><td>13</td><td>Agent-Ready</td><td>/agent-ready</td><td>AI Commerce</td><td>$0-4,999</td><td><span class="badge bg-success">Live</span></td></tr>
+                <tr><td>14</td><td>Silent-Killer</td><td>/silent-killer</td><td>Dead Link</td><td>$0-3,499</td><td><span class="badge bg-success">Live</span></td></tr>
+                <tr><td>15</td><td>AI-Slop Quarantine</td><td>/ai-slop-quarantine</td><td>AI-Slop Detector</td><td>$0-5,999</td><td><span class="badge bg-success">Live</span></td></tr>
+                <tr><td>16</td><td>Developer Entropy</td><td>/developer-entropy</td><td>Team Entropy</td><td>$0-999/dev</td><td><span class="badge bg-success">Live</span></td></tr>
+                <tr><td>17</td><td>Career Engine</td><td>/career-engine</td><td>Job Board</td><td>Multi-stream</td><td><span class="badge bg-success">Live</span></td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- System Stats -->
+    <h3 class="mb-4">System Overview</h3>
+    <div class="row g-3 text-center">
+        <div class="col-4"><div class="bg-light p-3 rounded"><h3>19</h3><small>Models</small></div></div>
+        <div class="col-4"><div class="bg-light p-3 rounded"><h3>60+</h3><small>Routes</small></div></div>
+        <div class="col-4"><div class="bg-light p-3 rounded"><h3>55+</h3><small>Templates</small></div></div>
+    </div>
+</div>
+{% endblock %}
