@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Job Board - Charvak Career Engine{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4">
+        <span class="badge bg-success mb-2 px-3 py-2">Step 2 of 6</span>
+        <h1 class="display-4 fw-bold">Job Board</h1>
+        <p class="lead">Find jobs. Post jobs. Track applications. All in one place.</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <!-- Stats Bar -->
+    <div class="row g-3 mb-4 text-center">
+        <div class="col-4"><div class="bg-light p-3 rounded"><h4>150+</h4><small>Active Jobs</small></div></div>
+        <div class="col-4"><div class="bg-light p-3 rounded"><h4>10,000+</h4><small>Candidates</small></div></div>
+        <div class="col-4"><div class="bg-light p-3 rounded"><h4>48hrs</h4><small>Avg Response</small></div></div>
+    </div>
+
+    <!-- Search -->
+    <div class="card border-0 shadow-sm p-3 mb-4">
+        <div class="row g-2">
+            <div class="col-md-4"><input type="text" class="form-control" placeholder="Job title or keyword"></div>
+            <div class="col-md-3"><select class="form-select"><option>All Types</option><option>Permanent</option><option>Contract</option><option>Contract-to-Hire</option></select></div>
+            <div class="col-md-3"><select class="form-select"><option>All Locations</option><option>Remote</option><option>Guntur</option><option>Hyderabad</option><option>Bengaluru</option><option>Visakhapatnam</option></select></div>
+            <div class="col-md-2"><button class="btn btn-primary w-100">Search Jobs</button></div>
+        </div>
+    </div>
+
+    <!-- Job Listings -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-6"><div class="card h-100 p-3"><span class="badge bg-primary mb-2">Permanent</span><h5>Senior React Developer</h5><p class="text-muted mb-1">Bengaluru - 15-25 LPA</p><small>React, TypeScript, Node.js - 5+ yrs</small><div class="mt-2"><a href="/contact" class="btn btn-outline-primary btn-sm">Apply</a><button class="btn btn-outline-secondary btn-sm ms-1">Save</button></div></div></div>
+        <div class="col-md-6"><div class="card h-100 p-3"><span class="badge bg-warning text-dark mb-2">Contract</span><h5>Python Backend Developer</h5><p class="text-muted mb-1">Remote - 6 months</p><small>FastAPI, PostgreSQL, AWS</small><div class="mt-2"><a href="/contact" class="btn btn-outline-primary btn-sm">Apply</a><button class="btn btn-outline-secondary btn-sm ms-1">Save</button></div></div></div>
+        <div class="col-md-6"><div class="card h-100 p-3"><span class="badge bg-info text-dark mb-2">Contract-to-Hire</span><h5>Full Stack Developer</h5><p class="text-muted mb-1">Hyderabad - 10-18 LPA</p><small>MERN Stack - 3+ yrs</small><div class="mt-2"><a href="/contact" class="btn btn-outline-primary btn-sm">Apply</a><button class="btn btn-outline-secondary btn-sm ms-1">Save</button></div></div></div>
+        <div class="col-md-6"><div class="card h-100 p-3"><span class="badge bg-primary mb-2">Permanent</span><h5>DevOps Engineer</h5><p class="text-muted mb-1">Remote - 12-20 LPA</p><small>AWS, Docker, K8s, CI/CD</small><div class="mt-2"><a href="/contact" class="btn btn-outline-primary btn-sm">Apply</a><button class="btn btn-outline-secondary btn-sm ms-1">Save</button></div></div></div>
+    </div>
+
+    <!-- Three Action Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4"><div class="card h-100 p-4 text-center bg-primary text-white"><i class="bi bi-briefcase display-4 mb-3"></i><h4>Post a Job</h4><p>Hiring? Reach 10,000+ candidates.</p><h5>999/post</h5><a href="/contact" class="btn btn-light">Post Job</a></div></div>
+        <div class="col-md-4"><div class="card h-100 p-4 text-center bg-success text-white"><i class="bi bi-link-45deg display-4 mb-3"></i><h4>Track Application</h4><p>Applied on LinkedIn/Naukri? Add URL here. We track everything.</p><a href="/contact" class="btn btn-light">Add Application URL</a></div></div>
+        <div class="col-md-4"><div class="card h-100 p-4 text-center bg-info text-white"><i class="bi bi-share display-4 mb-3"></i><h4>Submit Referral</h4><p>Know an opening? Share it. Earn rewards on successful hires.</p><a href="/contact" class="btn btn-light">Submit Referral</a></div></div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="text-center">
+        <a href="/career-engine" class="btn btn-outline-primary me-2">Back to Career Engine</a>
+        <a href="https://doketsrb.com" target="_blank" class="btn btn-primary">Track on DoketsRB</a>
+    </div>
+</div>
+{% endblock %}
