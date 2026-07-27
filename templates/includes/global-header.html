@@ -1,0 +1,86 @@
+<!-- Global Bar -->
+<div class="global-bar bg-dark text-white py-1" id="globalBar">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <small class="me-3"><i class="bi bi-globe me-1"></i> Global Platform</small>
+                <small class="me-3"><i class="bi bi-translate me-1"></i> 34 Languages</small>
+                <small><i class="bi bi-cash-coin me-1"></i> 13 Currencies</small>
+            </div>
+            <div class="col-md-6 text-end">
+                <select class="form-select form-select-sm d-inline-block w-auto me-2" id="langSelector" onchange="changeLanguage(this.value)">
+                    <option value="en">English</option>
+                    <option value="hi">हिन्दी</option>
+                    <option value="te">తెలుగు</option>
+                    <option value="es">Español</option>
+                    <option value="fr">Français</option>
+                    <option value="de">Deutsch</option>
+                    <option value="ar">العربية</option>
+                    <option value="ja">日本語</option>
+                    <option value="zh">中文</option>
+                </select>
+                <select class="form-select form-select-sm d-inline-block w-auto" id="currencySelector" onchange="changeCurrency(this.value)">
+                    <option value="INR">₹ INR</option>
+                    <option value="USD">$ USD</option>
+                    <option value="EUR">€ EUR</option>
+                    <option value="GBP">£ GBP</option>
+                    <option value="AED">د.إ AED</option>
+                    <option value="SGD">S$ SGD</option>
+                    <option value="JPY">¥ JPY</option>
+                    <option value="AUD">A$ AUD</option>
+                    <option value="CAD">C$ CAD</option>
+                    <option value="BRL">R$ BRL</option>
+                    <option value="NGN">₦ NGN</option>
+                    <option value="ZAR">R ZAR</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function changeLanguage(lang) {
+    // Store preference
+    localStorage.setItem('charvak_lang', lang);
+    // Reload with language param or use translation API
+    window.location.search = '?lang=' + lang;
+}
+
+function changeCurrency(curr) {
+    localStorage.setItem('charvak_currency', curr);
+    // Update all prices on page
+    updatePrices(curr);
+}
+
+function updatePrices(currency) {
+    const rates = {
+        INR: 1, USD: 0.012, EUR: 0.011, GBP: 0.0095, AED: 0.044,
+        SGD: 0.016, AUD: 0.018, CAD: 0.016, JPY: 1.75, BRL: 0.059,
+        NGN: 18.5, ZAR: 0.22
+    };
+    const symbols = {
+        INR: '₹', USD: '$', EUR: '€', GBP: '£', AED: 'د.إ',
+        SGD: 'S$', AUD: 'A$', CAD: 'C$', JPY: '¥', BRL: 'R$',
+        NGN: '₦', ZAR: 'R'
+    };
+    
+    document.querySelectorAll('.price-amount').forEach(el => {
+        const inrAmount = parseFloat(el.dataset.inr);
+        if (inrAmount) {
+            const converted = Math.round(inrAmount * (rates[currency] || 1));
+            el.textContent = (symbols[currency] || '$') + converted.toLocaleString();
+        }
+    });
+}
+
+// Load saved preferences
+document.addEventListener('DOMContentLoaded', function() {
+    const savedLang = localStorage.getItem('charvak_lang');
+    const savedCurrency = localStorage.getItem('charvak_currency');
+    if (savedLang) document.getElementById('langSelector').value = savedLang;
+    if (savedCurrency) {
+        document.getElementById('currencySelector').value = savedCurrency;
+        updatePrices(savedCurrency);
+    }
+});
+</script>

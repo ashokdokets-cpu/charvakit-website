@@ -11,6 +11,7 @@ from api_sync import (
 )
 from auth import register_user, login_user, logout_user, verify_token, get_current_user
 from database import db
+from global_config import detect_user_region, get_pricing, LANGUAGES, CURRENCIES
 
 app = FastAPI(title="Charvak IT Consulting Pvt Ltd - Web Designing | Staff Augmentation")
 
@@ -467,6 +468,17 @@ async def api_get_jobs():
 @app.get("/sitemap.xml")
 async def sitemap():
     return FileResponse("templates/sitemap.xml", media_type="application/xml")
+
+@app.get("/api/region")
+async def detect_region(request: Request):
+    accept_lang = request.headers.get("accept-language", "en")
+    region = detect_user_region(accept_language=accept_lang)
+    return JSONResponse(region)
+
+@app.get("/api/pricing/{service}")
+async def get_service_pricing(service: str, request: Request, currency: str = "INR", country: str = "IN"):
+    pricing = get_pricing(service, currency, country)
+    return JSONResponse(pricing)
 
 @app.get("/health")
 async def health_check():
