@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Application Dashboard - Charvak Career Engine{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4"><h1 class="display-4 fw-bold">Application Dashboard</h1><p class="lead">Track every application. From applied to hired. All in one place.</p></div>
+</div>
+<div class="container py-5">
+    <!-- Stats -->
+    <div class="row g-3 mb-4 text-center">
+        <div class="col-3"><div class="bg-light p-3 rounded"><h4 id="totalApps">12</h4><small>Total Applied</small></div></div>
+        <div class="col-3"><div class="bg-warning p-3 rounded"><h4 id="shortlisted">5</h4><small>Shortlisted</small></div></div>
+        <div class="col-3"><div class="bg-info text-white p-3 rounded"><h4 id="interviewing">3</h4><small>Interviewing</small></div></div>
+        <div class="col-3"><div class="bg-success text-white p-3 rounded"><h4 id="offers">1</h4><small>Offers</small></div></div>
+    </div>
+
+    <!-- Add Application -->
+    <div class="card border-0 shadow-sm p-3 mb-4"><div class="row g-2 align-items-end">
+        <div class="col-md-3"><label class="form-label small">Job Title</label><input type="text" class="form-control" id="jobTitle" placeholder="e.g. React Developer"></div>
+        <div class="col-md-3"><label class="form-label small">Company</label><input type="text" class="form-control" id="company" placeholder="e.g. Google"></div>
+        <div class="col-md-2"><label class="form-label small">Status</label><select class="form-select" id="status"><option>Applied</option><option>Shortlisted</option><option>Interviewing</option><option>Offer</option><option>Rejected</option></select></div>
+        <div class="col-md-2"><label class="form-label small">Job URL</label><input type="url" class="form-control" id="jobUrl" placeholder="https://..."></div>
+        <div class="col-md-2"><button class="btn btn-primary w-100" onclick="addApplication()">+ Add</button></div>
+    </div></div>
+
+    <!-- Applications Table -->
+    <div class="card border-0 shadow-sm"><div class="card-body">
+        <h5 class="mb-3">Your Applications</h5>
+        <div class="table-responsive"><table class="table table-hover" id="appTable">
+            <thead><tr><th>Job Title</th><th>Company</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+            <tbody id="appBody">
+                <tr><td>Senior React Developer</td><td>Google</td><td><span class="badge bg-warning text-dark">Shortlisted</span></td><td>2026-07-20</td><td><button class="btn btn-sm btn-outline-success">Update</button></td></tr>
+                <tr><td>Python Backend Dev</td><td>Amazon</td><td><span class="badge bg-info text-white">Interviewing</span></td><td>2026-07-18</td><td><button class="btn btn-sm btn-outline-success">Update</button></td></tr>
+                <tr><td>Full Stack Developer</td><td>Microsoft</td><td><span class="badge bg-primary">Applied</span></td><td>2026-07-22</td><td><button class="btn btn-sm btn-outline-success">Update</button></td></tr>
+            </tbody>
+        </table></div>
+    </div></div>
+
+    <div class="text-center mt-4">
+        <p><i class="bi bi-arrow-repeat me-2"></i> Syncs with <strong>DoketsRB Job Tracker</strong> for full visibility.</p>
+        <a href="/job-board" class="btn btn-outline-primary me-2">Job Board</a>
+        <a href="https://doketsrb.com" target="_blank" class="btn btn-primary">Open DoketsRB Tracker</a>
+    </div>
+</div>
+
+<script>
+function addApplication(){
+    const title=document.getElementById('jobTitle').value;
+    const company=document.getElementById('company').value;
+    const status=document.getElementById('status').value;
+    const url=document.getElementById('jobUrl').value;
+    if(!title||!company)return alert('Enter job title and company!');
+    const badges={Applied:'bg-primary',Shortlisted:'bg-warning text-dark',Interviewing:'bg-info text-white',Offer:'bg-success text-white',Rejected:'bg-danger'};
+    const row=`<tr><td>${title}</td><td>${company}</td><td><span class="badge ${badges[status]}">${status}</span></td><td>${new Date().toISOString().split('T')[0]}</td><td><button class="btn btn-sm btn-outline-success">Update</button> <button class="btn btn-sm btn-outline-danger">Delete</button></td></tr>`;
+    document.getElementById('appBody').insertAdjacentHTML('afterbegin',row);
+    document.getElementById('totalApps').textContent=parseInt(document.getElementById('totalApps').textContent)+1;
+    document.getElementById('jobTitle').value='';document.getElementById('company').value='';document.getElementById('jobUrl').value='';
+}
+</script>
+{% endblock %}
