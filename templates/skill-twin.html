@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Skill-Twin Engine - Charvak IT Consulting Pvt Ltd{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4">
+        <span class="badge bg-info text-dark mb-2 px-3 py-2">💡 Concept</span>
+        <h1 class="display-4 fw-bold">Skill-Twin Engine</h1>
+        <p class="lead">Take an AI-powered coding simulation. Get a verified Skill-Twin Scorecard. Share it. Get hired.</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row align-items-center mb-5">
+        <div class="col-lg-6">
+            <h2 class="fw-bold mb-4">Your Resume Doesn't Prove Skill. This Does.</h2>
+            <p class="lead">Companies are tired of fake resumes and interview roulette. Skill-Twin puts you through an adversarial AI simulation that tests real coding ability — and produces a tamper-proof scorecard.</p>
+            <div class="d-flex mb-3"><span class="step-number me-3">1</span><div><h5>Choose Your Stack</h5><p class="text-muted">Python, JavaScript, React, Java, or 20+ technologies.</p></div></div>
+            <div class="d-flex mb-3"><span class="step-number me-3">2</span><div><h5>Face the AI Simulator</h5><p class="text-muted">Real-time coding challenges, debugging, and system design.</p></div></div>
+            <div class="d-flex"><span class="step-number me-3">3</span><div><h5>Get Your Scorecard</h5><p class="text-muted">Share your verified Skill-Twin Badge on LinkedIn & GitHub.</p></div></div>
+        </div>
+        <div class="col-lg-6 text-center">
+            <div class="bg-dark text-white p-5 rounded-4">
+                <i class="bi bi-robot display-1 mb-3"></i>
+                <h4>Ready to Prove Yourself?</h4>
+                <p class="text-white-50">Take a free 10-min assessment and see your score.</p>
+                <a href="/skill-check" class="btn btn-primary btn-lg mt-3">Take Free Skill Check</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5 text-center">
+        <div class="col-md-4"><div class="card h-100 p-4"><i class="bi bi-shield-lock display-4 text-primary mb-3"></i><h5>Tamper-Proof</h5><p class="text-muted">AI-proctored, impossible to fake</p></div></div>
+        <div class="col-md-4"><div class="card h-100 p-4"><i class="bi bi-linkedin display-4 text-primary mb-3"></i><h5>Share Anywhere</h5><p class="text-muted">LinkedIn, GitHub, portfolio</p></div></div>
+        <div class="col-md-4"><div class="card h-100 p-4"><i class="bi bi-graph-up display-4 text-primary mb-3"></i><h5>Benchmarked</h5><p class="text-muted">See how you rank against peers</p></div></div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-md-4"><div class="card h-100 p-4 text-center"><h4>🆓 Free Check</h4><h2 class="display-4 fw-bold">₹0</h2><p>Basic assessment</p><a href="/skill-check" class="btn btn-outline-primary">Try Free</a></div></div>
+        <div class="col-md-4"><div class="card h-100 p-4 text-center border-primary" style="border-width:2px;"><span class="badge bg-primary mb-2">Popular</span><h4>⭐ Verified Badge</h4><h2 class="display-4 fw-bold">₹499</h2><p>Full simulation + badge</p><a href="/contact" class="btn btn-primary">Get Verified</a></div></div>
+        <div class="col-md-4"><div class="card h-100 p-4 text-center"><h4>🏢 Enterprise</h4><h2 class="display-4 fw-bold">Custom</h2><p>Bulk assessments</p><a href="/contact" class="btn btn-outline-primary">Contact Us</a></div></div>
+    </div>
+</div>
+{% endblock %}

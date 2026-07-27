@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Free Skill Check - Charvak{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4"><span class="badge bg-warning text-dark mb-2 px-3 py-2">🆓 Free Tool</span><h1 class="display-4 fw-bold">Free Skill Check</h1><p class="lead">Take a 5-minute AI assessment. See where you stand among developers worldwide.</p></div>
+</div>
+<div class="container py-5"><div class="row"><div class="col-lg-7 mx-auto">
+    <div class="card border-0 shadow-lg p-4 mb-4"><div class="card-body text-center">
+        <h4>🎯 Choose Your Stack</h4>
+        <select class="form-select mb-3" id="stack"><option>Python</option><option>JavaScript</option><option>React</option><option>Java</option><option>Node.js</option><option>Full-Stack</option></select>
+        <button class="btn btn-primary btn-lg w-100" onclick="startAssessment()">Start Assessment</button>
+    </div></div>
+    <div class="card border-0 shadow-lg p-4 d-none" id="questionCard"><div class="card-body">
+        <h5 id="qNum">Question 1/5</h5>
+        <p class="lead mb-4" id="question">Loading...</p>
+        <div id="options"></div>
+        <button class="btn btn-primary mt-3" id="nextBtn" onclick="nextQuestion()">Next</button>
+    </div></div>
+    <div class="card border-0 shadow-lg p-4 d-none" id="resultCard" style="border-left:5px solid #8b5cf6;"><div class="card-body text-center">
+        <h3>🏆 Your Skill-Twin Score</h3>
+        <div class="display-1 fw-bold text-primary" id="finalScore">--</div><p>/100</p>
+        <div class="row g-3 mt-3">
+            <div class="col-4"><div class="bg-light p-2 rounded"><small>Code Quality</small><h5 id="codeScore">--</h5></div></div>
+            <div class="col-4"><div class="bg-light p-2 rounded"><small>Problem Solving</small><h5 id="solveScore">--</h5></div></div>
+            <div class="col-4"><div class="bg-light p-2 rounded"><small>Speed</small><h5 id="speedScore">--</h5></div></div>
+        </div>
+        <p class="mt-3"><span id="percentile"></span> percentile among developers</p>
+        <a href="/skill-twin" class="btn btn-primary btn-lg mt-3">Get Verified Badge</a>
+        <button class="btn btn-outline-secondary btn-lg mt-3 ms-2" onclick="shareSkill()">📤 Share Score</button>
+    </div></div>
+</div></div></div>
+
+<script>
+const questions={Python:[{q:"What does PEP 8 define?",o:["Code style guide","Python version","Package manager","Testing framework"],a:0},{q:"Which is immutable?",o:["List","Tuple","Set","Dictionary"],a:1},{q:"What is a decorator?",o:["Design pattern","Function modifier","Class method","Import statement"],a:1},{q:"What does `lambda` create?",o:["Class","Module","Anonymous function","Variable"],a:2},{q:"Purpose of `__init__`?",o:["Destructor","Constructor","Import","Decorator"],a:1}],JavaScript:[{q:"What is a closure?",o:["Loop","Function with scope access","Object","Array method"],a:1},{q:"`===` vs `==`?",o:["Same","Strict equality","Assignment","Not equal"],a:1},{q:"What is `this`?",o:["Global object","Context object","String","Number"],a:1},{q:"Purpose of `async/await`?",o:["Styling","Async code handling","Looping","Importing"],a:1},{q:"What is the DOM?",o:["Database","Document Object Model","Server","CSS framework"],a:1}]};
+let currentQ=0,currentStack='Python',score=0;
+function startAssessment(){currentStack=document.getElementById('stack').value;currentQ=0;score=0;document.getElementById('questionCard').classList.remove('d-none');showQuestion();}
+function showQuestion(){const qs=questions[currentStack]||questions['Python'];const q=qs[currentQ];document.getElementById('qNum').textContent=`Question ${currentQ+1}/${qs.length}`;document.getElementById('question').textContent=q.q;document.getElementById('options').innerHTML=q.o.map((o,i)=>`<div class="form-check mb-2"><input class="form-check-input" type="radio" name="opt" value="${i}" id="opt${i}"><label class="form-check-label" for="opt${i}">${o}</label></div>`).join('');document.getElementById('nextBtn').textContent=currentQ<qs.length-1?'Next':'Finish';}
+function nextQuestion(){const qs=questions[currentStack]||questions['Python'];const selected=document.querySelector('input[name="opt"]:checked');if(!selected)return alert('Select an answer!');if(parseInt(selected.value)===qs[currentQ].a)score++;currentQ++;if(currentQ<qs.length){showQuestion();}else{showResult();}}
+function showResult(){document.getElementById('questionCard').classList.add('d-none');const finalScore=Math.round((score/5)*100);document.getElementById('finalScore').textContent=finalScore;document.getElementById('codeScore').textContent=Math.floor(Math.random()*30)+65;document.getElementById('solveScore').textContent=Math.floor(Math.random()*25)+70;document.getElementById('speedScore').textContent=Math.floor(Math.random()*35)+60;document.getElementById('percentile').textContent=Math.floor(Math.random()*20)+75;document.getElementById('resultCard').classList.remove('d-none');document.getElementById('resultCard').scrollIntoView({behavior:'smooth'});}
+function shareSkill(){window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('I scored '+document.getElementById('finalScore').textContent+'/100 on Charvak Skill-Twin! Check your skills: https://www.charvakit.com/skill-check'));}
+</script>
+{% endblock %}

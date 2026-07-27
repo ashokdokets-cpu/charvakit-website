@@ -203,6 +203,14 @@ async def neural_wireframe(request: Request):
 async def napkin_challenge(request: Request):
     return templates.TemplateResponse("napkin-challenge.html", {"request": request, "title": "Napkin-to-Live Challenge - Charvak"})
 
+@app.get("/skill-twin", response_class=HTMLResponse)
+async def skill_twin(request: Request):
+    return templates.TemplateResponse("skill-twin.html", {"request": request, "title": "Skill-Twin Engine - Charvak"})
+
+@app.get("/skill-check", response_class=HTMLResponse)
+async def skill_check(request: Request):
+    return templates.TemplateResponse("skill-check.html", {"request": request, "title": "Free Skill Check - Charvak"})
+
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
