@@ -464,6 +464,10 @@ async def api_get_jobs():
     jobs = db.get_active_jobs()
     return JSONResponse({"status": "success", "jobs": jobs, "count": len(jobs)})
 
+@app.get("/sitemap.xml")
+async def sitemap():
+    return FileResponse("templates/sitemap.xml", media_type="application/xml")
+
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
