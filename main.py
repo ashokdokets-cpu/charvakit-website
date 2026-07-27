@@ -1,9 +1,14 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends
 from fastapi.responses import HTMLResponse, PlainTextResponse, FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import os
 import json
+from api_sync import (
+    handle_resume_sync, handle_application_sync, handle_get_jobs,
+    handle_skill_sync, handle_get_status, api_health,
+    ResumeSync, ApplicationSync, SkillGapSync, verify_api_key
+)
 
 app = FastAPI(title="Charvak IT Consulting Pvt Ltd - Web Designing | Staff Augmentation")
 
@@ -330,6 +335,32 @@ async def application_dashboard(request: Request):
 @app.get("/admin-dashboard", response_class=HTMLResponse)
 async def admin_dashboard(request: Request):
     return templates.TemplateResponse("admin-dashboard.html", {"request": request, "title": "Admin Dashboard - Charvak"})
+
+# ============ API SYNC ENDPOINTS ============
+
+@app.post("/api/sync/resume")
+async def sync_resume(data: ResumeSync, request: Request, auth=Depends(verify_api_key)):
+    return await handle_resume_sync(data, request)
+
+@app.post("/api/sync/application")
+async def sync_application(data: ApplicationSync, request: Request, auth=Depends(verify_api_key)):
+    return await handle_application_sync(data, request)
+
+@app.get("/api/sync/jobs")
+async def sync_get_jobs(request: Request, auth=Depends(verify_api_key)):
+    return await handle_get_jobs(request)
+
+@app.post("/api/sync/skills")
+async def sync_skills(data: SkillGapSync, request: Request, auth=Depends(verify_api_key)):
+    return await handle_skill_sync(data, request)
+
+@app.get("/api/sync/status/{user_id}")
+async def sync_get_status(user_id: str, request: Request, auth=Depends(verify_api_key)):
+    return await handle_get_status(user_id, request)
+
+@app.get("/api/sync/health")
+async def sync_health():
+    return await api_health()
 
 @app.get("/health")
 async def health_check():
