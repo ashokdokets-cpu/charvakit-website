@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Request Training - Charvak Training Engine{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4"><h1 class="display-4 fw-bold">Request Training</h1><p class="lead">Need a specific course? Tell us what you want to learn. We'll find the best trainer.</p></div>
+</div>
+<div class="container py-5"><div class="row"><div class="col-lg-7 mx-auto">
+    <div class="card border-0 shadow-lg p-4"><div class="card-body">
+        <h4 class="mb-3">What Do You Want to Learn?</h4>
+        <form onsubmit="submitRequest(event)">
+            <div class="mb-3"><label class="form-label">Topic/Skill</label><input type="text" class="form-control" id="reqTopic" placeholder="e.g. Machine Learning, Kubernetes" required></div>
+            <div class="row g-2 mb-3">
+                <div class="col-md-6"><label class="form-label">Current Level</label><select class="form-select" id="reqLevel"><option>Beginner</option><option>Intermediate</option><option>Advanced</option></select></div>
+                <div class="col-md-6"><label class="form-label">Preferred Format</label><select class="form-select" id="reqFormat"><option>Live Online</option><option>Self-paced</option><option>Any</option></select></div>
+            </div>
+            <div class="mb-3"><label class="form-label">Budget (INR)</label><input type="number" class="form-control" id="reqBudget" placeholder="e.g. 5000"></div>
+            <div class="mb-3"><label class="form-label">Your Name</label><input type="text" class="form-control" id="reqName" placeholder="Your full name" required></div>
+            <div class="mb-3"><label class="form-label">Email</label><input type="email" class="form-control" id="reqEmail" placeholder="you@email.com" required></div>
+            <div class="mb-3"><label class="form-label">Why do you want to learn this?</label><textarea class="form-control" id="reqReason" rows="2" placeholder="Career growth, new job, project requirement..."></textarea></div>
+            <button type="submit" class="btn btn-primary btn-lg w-100">Request Training</button>
+            <p class="text-success mt-2 text-center" id="reqMsg" style="display:none;"></p>
+        </form>
+    </div></div>
+</div></div></div>
+<script>
+function submitRequest(e){
+    e.preventDefault();
+    const topic=document.getElementById('reqTopic').value;
+    const email=document.getElementById('reqEmail').value;
+    if(!topic||!email)return;
+    const requests=JSON.parse(localStorage.getItem('charvak_requests')||'[]');
+    requests.push({topic,level:document.getElementById('reqLevel').value,format:document.getElementById('reqFormat').value,budget:document.getElementById('reqBudget').value,name:document.getElementById('reqName').value,email,date:new Date().toISOString()});
+    localStorage.setItem('charvak_requests',JSON.stringify(requests));
+    document.getElementById('reqMsg').textContent='Request submitted! We will find a trainer and notify you at '+email;
+    document.getElementById('reqMsg').style.display='block';
+    document.querySelector('form').reset();
+}
+</script>
+{% endblock %}

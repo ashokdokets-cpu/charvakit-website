@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Post Your Course - Charvak Training Engine{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4"><h1 class="display-4 fw-bold">Post Your Course</h1><p class="lead">Share your expertise. Earn 80% of every enrollment. We handle marketing & payments.</p></div>
+</div>
+<div class="container py-5"><div class="row"><div class="col-lg-7 mx-auto">
+    <div class="card border-0 shadow-lg p-4"><div class="card-body">
+        <h4 class="mb-3">Course Details</h4>
+        <form onsubmit="submitCourse(event)">
+            <div class="row g-2 mb-3">
+                <div class="col-md-8"><label class="form-label">Course Title</label><input type="text" class="form-control" id="courseTitle" placeholder="e.g. Advanced Python Programming" required></div>
+                <div class="col-md-4"><label class="form-label">Category</label><select class="form-select" id="courseCategory"><option>Python</option><option>React</option><option>DevOps</option><option>Java</option><option>Data Science</option><option>Other</option></select></div>
+            </div>
+            <div class="row g-2 mb-3">
+                <div class="col-md-6"><label class="form-label">Duration</label><input type="text" class="form-control" id="courseDuration" placeholder="e.g. 12 weeks"></div>
+                <div class="col-md-6"><label class="form-label">Format</label><select class="form-select" id="courseFormat"><option>Live Online</option><option>Self-paced</option><option>Live + Lab</option><option>In-Person</option></select></div>
+            </div>
+            <div class="mb-3"><label class="form-label">Price (INR)</label><input type="number" class="form-control" id="coursePrice" placeholder="e.g. 4999" required></div>
+            <div class="mb-3"><label class="form-label">Your Name</label><input type="text" class="form-control" id="trainerName" placeholder="Your full name" required></div>
+            <div class="mb-3"><label class="form-label">Email</label><input type="email" class="form-control" id="trainerEmail" placeholder="you@email.com" required></div>
+            <div class="mb-3"><label class="form-label">Course Description</label><textarea class="form-control" id="courseDesc" rows="3" placeholder="What will students learn?"></textarea></div>
+            <div class="alert alert-info">You earn <strong>80%</strong> of every enrollment. Charvak handles marketing, payments via Dokets VouchAI, and student support.</div>
+            <button type="submit" class="btn btn-primary btn-lg w-100">Submit Course</button>
+            <p class="text-success mt-2 text-center" id="courseMsg" style="display:none;"></p>
+        </form>
+    </div></div>
+</div></div></div>
+<script>
+function submitCourse(e){
+    e.preventDefault();
+    const title=document.getElementById('courseTitle').value;
+    const email=document.getElementById('trainerEmail').value;
+    if(!title||!email)return;
+    const courses=JSON.parse(localStorage.getItem('charvak_courses')||'[]');
+    courses.push({title,category:document.getElementById('courseCategory').value,duration:document.getElementById('courseDuration').value,price:document.getElementById('coursePrice').value,trainer:document.getElementById('trainerName').value,email,date:new Date().toISOString()});
+    localStorage.setItem('charvak_courses',JSON.stringify(courses));
+    document.getElementById('courseMsg').textContent='Course submitted! We will review and publish within 48 hours.';
+    document.getElementById('courseMsg').style.display='block';
+    document.querySelector('form').reset();
+}
+</script>
+{% endblock %}

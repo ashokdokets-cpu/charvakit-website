@@ -480,6 +480,14 @@ async def cookie_policy(request: Request):
 async def accessibility(request: Request):
     return templates.TemplateResponse("accessibility.html", {"request": request, "title": "Accessibility Statement - Charvak"})
 
+@app.get("/post-course", response_class=HTMLResponse)
+async def post_course(request: Request):
+    return templates.TemplateResponse("post-course.html", {"request": request, "title": "Post Your Course - Charvak"})
+
+@app.get("/request-training", response_class=HTMLResponse)
+async def request_training(request: Request):
+    return templates.TemplateResponse("request-training.html", {"request": request, "title": "Request Training - Charvak"})
+
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
