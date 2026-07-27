@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Partner With Us - Charvak Background Verification{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4"><h1 class="display-4 fw-bold">Partner With Charvak</h1><p class="lead">Are you a verification agency? Join our network and get clients from our career pipeline.</p></div>
+</div>
+<div class="container py-5"><div class="row"><div class="col-lg-7 mx-auto">
+    <div class="card border-0 shadow-lg p-4"><div class="card-body">
+        <h4 class="mb-3">Partner Registration</h4>
+        <form onsubmit="submitPartner(event)">
+            <div class="mb-3"><label class="form-label">Agency Name</label><input type="text" class="form-control" id="agencyName" required></div>
+            <div class="mb-3"><label class="form-label">Contact Person</label><input type="text" class="form-control" id="contactPerson" required></div>
+            <div class="mb-3"><label class="form-label">Email</label><input type="email" class="form-control" id="partnerEmail" required></div>
+            <div class="mb-3"><label class="form-label">Phone</label><input type="tel" class="form-control" id="partnerPhone"></div>
+            <div class="mb-3"><label class="form-label">Services Offered</label>
+                <div class="row g-2">
+                    <div class="col-6"><label class="form-check"><input type="checkbox" class="form-check-input"> Identity Verification</label></div>
+                    <div class="col-6"><label class="form-check"><input type="checkbox" class="form-check-input"> Education Verification</label></div>
+                    <div class="col-6"><label class="form-check"><input type="checkbox" class="form-check-input"> Employment Verification</label></div>
+                    <div class="col-6"><label class="form-check"><input type="checkbox" class="form-check-input"> Criminal Record Check</label></div>
+                </div>
+            </div>
+            <div class="mb-3"><label class="form-label">Coverage Areas</label><input type="text" class="form-control" id="coverage" placeholder="e.g. Pan India, Andhra Pradesh, Global"></div>
+            <div class="alert alert-info">Charvak provides clients via Career Engine. All payments secured via Dokets VouchAI Escrow. You earn per verification.</div>
+            <button type="submit" class="btn btn-primary btn-lg w-100">Submit Partner Application</button>
+            <p class="text-success mt-2 text-center" id="partnerMsg" style="display:none;"></p>
+        </form>
+    </div></div>
+</div></div></div>
+<script>
+function submitPartner(e){
+    e.preventDefault();
+    const name=document.getElementById('agencyName').value;
+    const email=document.getElementById('partnerEmail').value;
+    if(!name||!email)return;
+    const partners=JSON.parse(localStorage.getItem('charvak_partners')||'[]');
+    partners.push({name,contact:document.getElementById('contactPerson').value,email,phone:document.getElementById('partnerPhone').value,coverage:document.getElementById('coverage').value,date:new Date().toISOString()});
+    localStorage.setItem('charvak_partners',JSON.stringify(partners));
+    document.getElementById('partnerMsg').textContent='Application submitted! We will contact you within 48 hours.';
+    document.getElementById('partnerMsg').style.display='block';
+    document.querySelector('form').reset();
+}
+</script>
+{% endblock %}

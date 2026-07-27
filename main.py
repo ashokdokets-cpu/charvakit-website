@@ -488,6 +488,10 @@ async def post_course(request: Request):
 async def request_training(request: Request):
     return templates.TemplateResponse("request-training.html", {"request": request, "title": "Request Training - Charvak"})
 
+@app.get("/partner-verification", response_class=HTMLResponse)
+async def partner_verification(request: Request):
+    return templates.TemplateResponse("partner-verification.html", {"request": request, "title": "Partner With Us - Charvak"})
+
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
