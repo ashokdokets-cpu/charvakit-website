@@ -55,8 +55,31 @@
     <!-- CTA -->
     <div class="text-center p-5 bg-dark text-white rounded">
         <h3>Be Among the First 100 Businesses</h3>
-        <p class="mb-4">Join our beta program and get 3 months of Pro free.</p>
-        <a href="/contact" class="btn btn-primary btn-lg px-5">Apply for Beta Access</a>
+<p class="mb-4">Join our beta program and get 3 months of Pro free.</p>
+<div class="row justify-content-center"><div class="col-md-6">
+    <input type="text" class="form-control mb-2" id="betaName" placeholder="Your Name">
+    <input type="email" class="form-control mb-2" id="betaEmail" placeholder="Your Email">
+    <input type="tel" class="form-control mb-2" id="betaPhone" placeholder="WhatsApp Number">
+    <button class="btn btn-primary btn-lg w-100" onclick="submitBeta()">Apply for Beta Access</button>
+    <p class="small mt-2" id="betaMsg"></p>
+</div></div>
+
+<script>
+function submitBeta() {
+    const name = document.getElementById('betaName').value;
+    const email = document.getElementById('betaEmail').value;
+    if (!name || !email) {
+        document.getElementById('betaMsg').textContent = 'Please fill name and email.';
+        document.getElementById('betaMsg').style.color = '#e94d65';
+        return;
+    }
+    document.getElementById('betaMsg').textContent = 'You are on the beta list! We will notify you at ' + email;
+    document.getElementById('betaMsg').style.color = '#3ba591';
+    const betaUsers = JSON.parse(localStorage.getItem('voice_to_web_beta') || '[]');
+    betaUsers.push({name, email, date: new Date().toISOString()});
+    localStorage.setItem('voice_to_web_beta', JSON.stringify(betaUsers));
+}
+</script>
     </div>
 </div>
 {% endblock %}
