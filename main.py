@@ -9,6 +9,8 @@ from api_sync import (
     handle_skill_sync, handle_get_status, api_health,
     ResumeSync, ApplicationSync, SkillGapSync, verify_api_key
 )
+from auth import register_user, login_user, logout_user, verify_token, get_current_user
+from database import db
 
 app = FastAPI(title="Charvak IT Consulting Pvt Ltd - Web Designing | Staff Augmentation")
 
@@ -361,6 +363,106 @@ async def sync_get_status(user_id: str, request: Request, auth=Depends(verify_ap
 @app.get("/api/sync/health")
 async def sync_health():
     return await api_health()
+
+# ============ AUTH ROUTES ============
+
+@app.post("/api/auth/register")
+async def api_register(request: Request):
+    data = await request.json()
+    result = register_user(
+        email=data.get("email"),
+        password=data.get("password"),
+        name=data.get("name"),
+        role=data.get("role", "candidate"),
+        phone=data.get("phone")
+    )
+    return JSONResponse(result)
+
+@app.post("/api/auth/login")
+async def api_login(request: Request):
+    data = await request.json()
+    result = login_user(data.get("email"), data.get("password"))
+    return JSONResponse(result)
+
+@app.post("/api/auth/logout")
+async def api_logout(request: Request):
+    data = await request.json()
+    result = logout_user(data.get("token"))
+    return JSONResponse(result)
+
+@app.get("/api/auth/me")
+async def api_me(request: Request):
+    token = request.headers.get("Authorization", "").replace("Bearer ", "")
+    user = get_current_user(token)
+    if user:
+        return JSONResponse({"status": "success", "user": user})
+    return JSONResponse({"status": "error", "message": "Not authenticated"}, status_code=401)
+
+# ============ FORM SUBMISSIONS ============
+
+@app.post("/api/contact")
+async def submit_contact(request: Request):
+    data = await request.json()
+    result = db.save_contact(
+        name=data.get("name"),
+        email=data.get("email"),
+        phone=data.get("phone", ""),
+        subject=data.get("subject", ""),
+        message=data.get("message", "")
+    )
+    return JSONResponse(result)
+
+@app.post("/api/jobs/post")
+async def api_post_job(request: Request):
+    token = request.headers.get("Authorization", "").replace("Bearer ", "")
+    user = get_current_user(token)
+    if not user:
+        return JSONResponse({"status": "error", "message": "Login required"}, status_code=401)
+    
+    data = await request.json()
+    result = db.post_job(
+        title=data.get("title"),
+        company=data.get("company"),
+        job_type=data.get("type", "Permanent"),
+        location=data.get("location", "Remote"),
+        salary=data.get("salary", ""),
+        description=data.get("description", ""),
+        skills=data.get("skills", ""),
+        posted_by=user["user_id"]
+    )
+    return JSONResponse(result)
+
+@app.post("/api/applications/add")
+async def api_add_application(request: Request):
+    token = request.headers.get("Authorization", "").replace("Bearer ", "")
+    user = get_current_user(token)
+    if not user:
+        return JSONResponse({"status": "error", "message": "Login required"}, status_code=401)
+    
+    data = await request.json()
+    result = db.add_application(
+        user_id=user["user_id"],
+        job_title=data.get("job_title"),
+        company=data.get("company"),
+        job_url=data.get("job_url"),
+        source=data.get("source", "charvakit")
+    )
+    return JSONResponse(result)
+
+@app.get("/api/applications")
+async def api_get_applications(request: Request):
+    token = request.headers.get("Authorization", "").replace("Bearer ", "")
+    user = get_current_user(token)
+    if not user:
+        return JSONResponse({"status": "error", "message": "Login required"}, status_code=401)
+    
+    apps = db.get_user_applications(user["user_id"])
+    return JSONResponse({"status": "success", "applications": apps, "count": len(apps)})
+
+@app.get("/api/jobs")
+async def api_get_jobs():
+    jobs = db.get_active_jobs()
+    return JSONResponse({"status": "success", "jobs": jobs, "count": len(jobs)})
 
 @app.get("/health")
 async def health_check():
