@@ -480,6 +480,14 @@ async def get_service_pricing(service: str, request: Request, currency: str = "I
     pricing = get_pricing(service, currency, country)
     return JSONResponse(pricing)
 
+@app.get("/cookie-policy", response_class=HTMLResponse)
+async def cookie_policy(request: Request):
+    return templates.TemplateResponse("cookie-policy.html", {"request": request, "title": "Cookie Policy - Charvak"})
+
+@app.get("/accessibility", response_class=HTMLResponse)
+async def accessibility(request: Request):
+    return templates.TemplateResponse("accessibility.html", {"request": request, "title": "Accessibility Statement - Charvak"})
+
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}

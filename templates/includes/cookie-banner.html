@@ -1,0 +1,45 @@
+<!-- Cookie Consent Banner -->
+<div id="cookieBanner" class="fixed-bottom bg-dark text-white p-3" style="z-index:9999; display:none;">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <p class="mb-0 small">
+                    🍪 We use cookies to enhance your experience. By continuing, you agree to our 
+                    <a href="/privacy" class="text-primary">Privacy Policy</a>, 
+                    <a href="/terms" class="text-primary">Terms</a>, and 
+                    <a href="/cookie-policy" class="text-primary">Cookie Policy</a>.
+                    We comply with GDPR, CCPA, and global privacy regulations.
+                </p>
+            </div>
+            <div class="col-md-4 text-end mt-2 mt-md-0">
+                <button class="btn btn-primary btn-sm me-2" onclick="acceptCookies()">Accept All</button>
+                <button class="btn btn-outline-light btn-sm me-2" onclick="essentialCookies()">Essential Only</button>
+                <button class="btn btn-outline-light btn-sm" onclick="cookiePreferences()">Preferences</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showCookieBanner() {
+    if (!localStorage.getItem('cookie_consent')) {
+        document.getElementById('cookieBanner').style.display = 'block';
+    }
+}
+
+function acceptCookies() {
+    localStorage.setItem('cookie_consent', 'all');
+    document.getElementById('cookieBanner').style.display = 'none';
+}
+
+function essentialCookies() {
+    localStorage.setItem('cookie_consent', 'essential');
+    document.getElementById('cookieBanner').style.display = 'none';
+}
+
+function cookiePreferences() {
+    window.location.href = '/cookie-policy';
+}
+
+document.addEventListener('DOMContentLoaded', showCookieBanner);
+</script>
