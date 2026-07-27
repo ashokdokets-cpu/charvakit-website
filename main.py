@@ -211,6 +211,14 @@ async def skill_twin(request: Request):
 async def skill_check(request: Request):
     return templates.TemplateResponse("skill-check.html", {"request": request, "title": "Free Skill Check - Charvak"})
 
+@app.get("/globalize", response_class=HTMLResponse)
+async def globalize_ai(request: Request):
+    return templates.TemplateResponse("globalize.html", {"request": request, "title": "Globalize.ai - Charvak"})
+
+@app.get("/revenue-leak-detector", response_class=HTMLResponse)
+async def revenue_leak_detector(request: Request):
+    return templates.TemplateResponse("revenue-leak-detector.html", {"request": request, "title": "Revenue Leak Detector - Charvak"})
+
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}

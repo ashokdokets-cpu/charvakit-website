@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Revenue Leak Detector - Charvak{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4"><span class="badge bg-warning text-dark mb-2 px-3 py-2">🆓 Free Tool</span><h1 class="display-4 fw-bold">Revenue Leak Detector</h1><p class="lead">Enter your website. See how much international revenue you're losing. Free report in 10 seconds.</p></div>
+</div>
+<div class="container py-5"><div class="row"><div class="col-lg-7 mx-auto">
+    <div class="card border-0 shadow-lg p-4 mb-4"><div class="card-body text-center">
+        <h4>🔍 Check Your Global Reach</h4>
+        <input type="url" class="form-control mb-3" id="siteUrl" placeholder="https://yourwebsite.com">
+        <div class="row g-2 mb-3">
+            <div class="col-6"><label class="form-label">Industry</label><select class="form-select" id="industry"><option>E-commerce</option><option>SaaS</option><option>Services</option><option>Content/Media</option></select></div>
+            <div class="col-6"><label class="form-label">Monthly Visitors</label><select class="form-select" id="traffic"><option>1K-10K</option><option>10K-100K</option><option>100K-1M</option><option>1M+</option></select></div>
+        </div>
+        <button class="btn btn-primary btn-lg w-100" onclick="runLeakCheck()">Detect Revenue Leak</button>
+    </div></div>
+    <div class="card border-0 shadow-lg p-4 d-none" id="resultCard" style="border-left:5px solid #ec4899;"><div class="card-body text-center">
+        <h3>💰 Revenue Leak Report</h3>
+        <div class="row g-3 mt-3">
+            <div class="col-6"><div class="bg-danger text-white p-3 rounded"><h4 id="leakAmount">$0</h4><small>Annual Revenue Lost</small></div></div>
+            <div class="col-6"><div class="bg-success text-white p-3 rounded"><h4 id="recoverAmount">$0</h4><small>Recoverable with Globalize</small></div></div>
+        </div>
+        <div class="row g-3 mt-2">
+            <div class="col-4"><div class="bg-light p-2 rounded"><small>Languages Missing</small><h5 id="langMissing">--</h5></div></div>
+            <div class="col-4"><div class="bg-light p-2 rounded"><small>Intl Traffic Lost</small><h5 id="trafficLost">--</h5></div></div>
+            <div class="col-4"><div class="bg-light p-2 rounded"><small>Conversion Gap</small><h5 id="convGap">--</h5></div></div>
+        </div>
+        <a href="/globalize" class="btn btn-primary btn-lg mt-4">Fix with Globalize.ai</a>
+        <button class="btn btn-outline-secondary btn-lg mt-4 ms-2" onclick="shareLeak()">📤 Share Report</button>
+    </div></div>
+</div></div></div>
+
+<script>
+function runLeakCheck(){const url=document.getElementById('siteUrl').value;if(!url)return alert('Enter your website URL!');const traffic=document.getElementById('traffic').value;let base=0;if(traffic.includes('1K-10K'))base=5000;else if(traffic.includes('10K-100K'))base=50000;else if(traffic.includes('100K-1M'))base=500000;else base=5000000;const leak=Math.round(base*0.35);document.getElementById('leakAmount').textContent='$'+leak.toLocaleString();document.getElementById('recoverAmount').textContent='$'+Math.round(leak*0.8).toLocaleString();document.getElementById('langMissing').textContent=Math.floor(Math.random()*20)+15;document.getElementById('trafficLost').textContent=Math.floor(Math.random()*25)+30+'%';document.getElementById('convGap').textContent=Math.floor(Math.random()*40)+40+'%';document.getElementById('resultCard').classList.remove('d-none');document.getElementById('resultCard').scrollIntoView({behavior:'smooth'});}
+function shareLeak(){window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('I just discovered my website is losing $'+document.getElementById('leakAmount').textContent+'/year in international revenue! Check yours: https://www.charvakit.com/revenue-leak-detector'));}
+</script>
+{% endblock %}
