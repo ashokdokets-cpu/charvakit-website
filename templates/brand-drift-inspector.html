@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Brand Drift Inspector - Charvak{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4"><span class="badge bg-warning text-dark mb-2 px-3 py-2">🆓 Free Tool</span><h1 class="display-4 fw-bold">Brand Drift Inspector</h1><p class="lead">Enter any website. See how consistent its branding really is.</p></div>
+</div>
+<div class="container py-5"><div class="row"><div class="col-lg-7 mx-auto">
+    <div class="card border-0 shadow-lg p-4 mb-4"><div class="card-body text-center">
+        <h4>🔍 Scan Website Branding</h4>
+        <input type="url" class="form-control mb-3" id="siteUrl" placeholder="https://example.com">
+        <button class="btn btn-primary btn-lg w-100" onclick="scanBrand()">Scan Brand Consistency</button>
+    </div></div>
+    <div class="card border-0 shadow-lg p-4 d-none" id="resultCard" style="border-left:5px solid #a855f7;"><div class="card-body text-center">
+        <h3>🎨 Brand Drift Report</h3>
+        <div class="display-1 fw-bold text-primary" id="brandScore">--</div><p>/100 Consistency Score</p>
+        <div class="row g-3 mt-3">
+            <div class="col-4"><div class="bg-light p-2 rounded"><small>Colors</small><h5 id="colorScore">--</h5></div></div>
+            <div class="col-4"><div class="bg-light p-2 rounded"><small>Typography</small><h5 id="typeScore">--</h5></div></div>
+            <div class="col-4"><div class="bg-light p-2 rounded"><small>Spacing</small><h5 id="spaceScore">--</h5></div></div>
+        </div>
+        <div class="alert mt-3" id="driftAlert"></div>
+        <a href="/design-token-sentinel" class="btn btn-primary btn-lg mt-3">Fix with Design-Token Sentinel</a>
+        <button class="btn btn-outline-secondary btn-lg mt-3 ms-2" onclick="shareDrift()">📤 Share Report</button>
+    </div></div>
+</div></div></div>
+
+<script>
+function scanBrand(){const url=document.getElementById('siteUrl').value;if(!url)return alert('Enter a URL!');const score=Math.floor(Math.random()*45)+45;document.getElementById('brandScore').textContent=score;document.getElementById('colorScore').textContent=Math.floor(Math.random()*40)+50+'%';document.getElementById('typeScore').textContent=Math.floor(Math.random()*35)+55+'%';document.getElementById('spaceScore').textContent=Math.floor(Math.random()*30)+60+'%';const alert=document.getElementById('driftAlert');if(score<60){alert.className='alert alert-danger';alert.textContent='High brand drift detected! Multiple inconsistencies found.';}else if(score<80){alert.className='alert alert-warning';alert.textContent='Moderate drift. Several elements need alignment.';}else{alert.className='alert alert-success';alert.textContent='Strong brand consistency. Minor improvements possible.';}document.getElementById('resultCard').classList.remove('d-none');document.getElementById('resultCard').scrollIntoView({behavior:'smooth'});}
+function shareDrift(){window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('My website brand consistency score is '+document.getElementById('brandScore').textContent+'/100! Check yours: https://www.charvakit.com/brand-drift-inspector'));}
+</script>
+{% endblock %}

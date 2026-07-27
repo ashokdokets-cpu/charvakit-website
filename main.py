@@ -243,6 +243,14 @@ async def geo_compliance(request: Request):
 async def contract_risk_radar(request: Request):
     return templates.TemplateResponse("contract-risk-radar.html", {"request": request, "title": "Contract Risk Radar - Charvak"})
 
+@app.get("/design-token-sentinel", response_class=HTMLResponse)
+async def design_token_sentinel(request: Request):
+    return templates.TemplateResponse("design-token-sentinel.html", {"request": request, "title": "Design-Token Sentinel - Charvak"})
+
+@app.get("/brand-drift-inspector", response_class=HTMLResponse)
+async def brand_drift_inspector(request: Request):
+    return templates.TemplateResponse("brand-drift-inspector.html", {"request": request, "title": "Brand Drift Inspector - Charvak"})
+
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}

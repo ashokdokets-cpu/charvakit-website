@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Design-Token Sentinel - Charvak IT Consulting Pvt Ltd{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4">
+        <span class="badge bg-info text-dark mb-2 px-3 py-2">💡 Concept</span>
+        <h1 class="display-4 fw-bold">Design-Token Sentinel</h1>
+        <p class="lead">Connect Figma + GitHub. Never let brand drift destroy your UI consistency again.</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row mb-5">
+        <div class="col-lg-6"><h2 class="fw-bold">Your Brand Is Drifting Right Now</h2><p class="lead">Every time a developer hardcodes a color or a designer updates Figma without syncing code, your brand fragments. One page uses #3ba591, another uses #3ba590. Customers notice.</p><p>Design-Token Sentinel connects your Figma design system to your GitHub repositories. When a font, color, or spacing token changes, it scans ALL your web apps, flags inconsistencies, and pushes automated pull requests to fix them.</p></div>
+        <div class="col-lg-6"><div class="bg-dark text-white p-4 rounded"><h4>What It Monitors</h4><ul><li>🎨 Color tokens & palettes</li><li>📝 Font families, weights, sizes</li><li>📐 Spacing & layout grids</li><li>🔘 Component variants & states</li><li>♿ Accessibility (WCAG contrast)</li><li>🖼️ Logo & asset versions</li></ul></div></div>
+    </div>
+
+    <div class="row g-4 mb-5 text-center">
+        <div class="col-md-3"><div class="card h-100 p-4"><i class="bi bi-palette display-4 text-primary mb-3"></i><h5>Figma Sync</h5><p class="text-muted">Real-time design token extraction</p></div></div>
+        <div class="col-md-3"><div class="card h-100 p-4"><i class="bi bi-git display-4 text-primary mb-3"></i><h5>GitHub Integration</h5><p class="text-muted">Auto PRs to fix inconsistencies</p></div></div>
+        <div class="col-md-3"><div class="card h-100 p-4"><i class="bi bi-search display-4 text-primary mb-3"></i><h5>Multi-Domain Scan</h5><p class="text-muted">Monitors all connected web apps</p></div></div>
+        <div class="col-md-3"><div class="card h-100 p-4"><i class="bi bi-shield display-4 text-primary mb-3"></i><h5>WCAG Checker</h5><p class="text-muted">Auto accessibility compliance</p></div></div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-md-4"><div class="card h-100 p-4 text-center"><h4>🆓 Starter</h4><h2 class="display-4 fw-bold">₹0</h2><p>1 domain · Weekly scan</p><a href="/brand-drift-inspector" class="btn btn-outline-primary">Scan Free</a></div></div>
+        <div class="col-md-4"><div class="card h-100 p-4 text-center border-primary" style="border-width:2px;"><span class="badge bg-primary mb-2">Popular</span><h4>⭐ Pro</h4><h2 class="display-4 fw-bold">₹2,499</h2><p>/month · 5 domains</p><a href="/contact" class="btn btn-primary">Get Pro</a></div></div>
+        <div class="col-md-4"><div class="card h-100 p-4 text-center"><h4>🏢 Enterprise</h4><h2 class="display-4 fw-bold">₹7,999</h2><p>/month · Unlimited</p><a href="/contact" class="btn btn-outline-primary">Contact Sales</a></div></div>
+    </div>
+
+    <div class="text-center p-5 bg-light rounded">
+        <h3>See Your Brand Drift Score</h3>
+        <p class="mb-4">Free scan checks any website for visual inconsistencies.</p>
+        <a href="/brand-drift-inspector" class="btn btn-primary btn-lg">Free Brand Drift Inspector</a>
+    </div>
+</div>
+{% endblock %}
