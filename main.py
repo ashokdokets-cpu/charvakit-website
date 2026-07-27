@@ -291,6 +291,10 @@ async def developer_entropy(request: Request):
 async def team_entropy_scorecard(request: Request):
     return templates.TemplateResponse("team-entropy-scorecard.html", {"request": request, "title": "Team Entropy Scorecard - Charvak"})
 
+@app.get("/career-engine", response_class=HTMLResponse)
+async def career_engine(request: Request):
+    return templates.TemplateResponse("career-engine.html", {"request": request, "title": "Career Engine - Charvak"})
+
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}

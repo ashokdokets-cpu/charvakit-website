@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% block title %}Career Engine - Charvak IT Consulting Pvt Ltd{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4">
+        <span class="badge bg-success mb-2 px-3 py-2">Model 19</span>
+        <h1 class="display-4 fw-bold">Charvak Career Engine</h1>
+        <p class="lead">Complete Talent Lifecycle — Resume to Hired. Powered by DoketsRB + Charvakit.</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <!-- Integration Note -->
+    <div class="alert alert-info mb-5">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h5>Two Platforms, One Journey</h5>
+                <p class="mb-0"><strong>DoketsRB.com</strong> handles Resume Building, Job Tracking & Skill Analysis. <strong>Charvakit.com</strong> handles Job Board, Training, Verification & Placement. They sync seamlessly.</p>
+            </div>
+            <div class="col-md-4 text-center">
+                <a href="https://doketsrb.com" target="_blank" class="btn btn-outline-primary me-2">Go to DoketsRB</a>
+                <a href="#steps" class="btn btn-primary">Start Journey</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6-Step Pipeline -->
+    <h3 id="steps" class="mb-4 text-center">Your Career Journey — 6 Steps</h3>
+    
+    <div class="row g-4">
+        <!-- Step 1 -->
+        <div class="col-lg-4 col-md-6">
+            <div class="card h-100 border-0 shadow-sm" style="border-top:4px solid #3b82f6;">
+                <div class="card-body p-4">
+                    <span class="badge bg-info text-dark mb-2">DoketsRB</span>
+                    <h3>Step 1: Build Your Resume</h3>
+                    <p class="text-muted">AI-powered resume builder. Professional templates. ATS-friendly formats. Get your resume ready in minutes.</p>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">AI Resume Generator</li>
+                        <li class="mb-2">Multiple Templates</li>
+                        <li class="mb-2">Download & Share</li>
+                    </ul>
+                    <a href="https://doketsrb.com" target="_blank" class="btn btn-primary w-100">Build Resume on DoketsRB</a>
+                    <p class="small text-muted mt-2">Free / Pro at $499/mo</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="col-lg-4 col-md-6">
+            <div class="card h-100 border-0 shadow-sm" style="border-top:4px solid #10b981;">
+                <div class="card-body p-4">
+                    <span class="badge bg-primary mb-2">Charvakit</span>
+                    <h3>Step 2: Find & Track Jobs</h3>
+                    <p class="text-muted">Browse jobs posted by companies. Submit your DoketsRB resume. Track every application.</p>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">Browse Open Positions</li>
+                        <li class="mb-2">Post Jobs (for Employers)</li>
+                        <li class="mb-2">Track Applications</li>
+                    </ul>
+                    <a href="/job-board" class="btn btn-primary w-100">Go to Job Board</a>
+                    <p class="small text-muted mt-2">Free to browse | Post jobs at 999</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="col-lg-4 col-md-6">
+            <div class="card h-100 border-0 shadow-sm" style="border-top:4px solid #f59e0b;">
+                <div class="card-body p-4">
+                    <span class="badge bg-info text-dark mb-2">DoketsRB</span>
+                    <h3>Step 3: Prepare for Interviews</h3>
+                    <p class="text-muted">AI mock interviews. Question banks. Skill gap analysis. Get job-ready.</p>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">AI Mock Interviews</li>
+                        <li class="mb-2">500+ Question Bank</li>
+                        <li class="mb-2">Skill Gap Analyzer</li>
+                    </ul>
+                    <a href="https://doketsrb.com" target="_blank" class="btn btn-primary w-100">Prepare on DoketsRB</a>
+                    <p class="small text-muted mt-2">Mock interviews at 199/session</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="col-lg-4 col-md-6">
+            <div class="card h-100 border-0 shadow-sm" style="border-top:4px solid #8b5cf6;">
+                <div class="card-body p-4">
+                    <span class="badge bg-primary mb-2">Charvakit + Global</span>
+                    <h3>Step 4: Train & Upskill</h3>
+                    <p class="text-muted">Courses from Charvak trainers + Coursera, Udemy, edX, Pluralsight. Fill skill gaps.</p>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">Charvak Trainers</li>
+                        <li class="mb-2">Third-Party Providers</li>
+                        <li class="mb-2">Request Custom Training</li>
+                    </ul>
+                    <a href="/training-engine" class="btn btn-primary w-100">Explore Training</a>
+                    <p class="small text-muted mt-2">20% commission on all enrollments</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 5 -->
+        <div class="col-lg-4 col-md-6">
+            <div class="card h-100 border-0 shadow-sm" style="border-top:4px solid #ef4444;">
+                <div class="card-body p-4">
+                    <span class="badge bg-primary mb-2">Charvakit</span>
+                    <h3>Step 5: Background Verification</h3>
+                    <p class="text-muted">Identity, education, employment checks. Third-party agencies welcome.</p>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">6 Types of Checks</li>
+                        <li class="mb-2">Third-Party Providers</li>
+                        <li class="mb-2">Escrow Protected</li>
+                    </ul>
+                    <a href="/background-verification" class="btn btn-primary w-100">Start Verification</a>
+                    <p class="small text-muted mt-2">499 - 3,999 per check</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 6 -->
+        <div class="col-lg-4 col-md-6">
+            <div class="card h-100 border-0 shadow-sm" style="border-top:4px solid #ec4899;">
+                <div class="card-body p-4">
+                    <span class="badge bg-primary mb-2">Charvakit</span>
+                    <h3>Step 6: Get Hired!</h3>
+                    <p class="text-muted">Placement by Charvak. Pay only on success. Escrow protected.</p>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">Permanent: 8.33% CTC</li>
+                        <li class="mb-2">Contract-to-Hire: 12%</li>
+                        <li class="mb-2">Contract: 15%</li>
+                    </ul>
+                    <a href="/reverse-staffing" class="btn btn-primary w-100">Get Placed</a>
+                    <p class="small text-muted mt-2">Powered by Dokets VouchAI Escrow</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Revenue Summary -->
+    <div class="card border-0 shadow-lg p-4 mt-5 bg-dark text-white">
+        <h4 class="mb-3 text-center">Revenue at Every Step</h4>
+        <div class="row g-3 text-center">
+            <div class="col-4 col-md-2"><small>Resume Pro</small><h6>$499/mo</h6></div>
+            <div class="col-4 col-md-2"><small>Job Post</small><h6>$999/post</h6></div>
+            <div class="col-4 col-md-2"><small>Mock Interview</small><h6>$199/session</h6></div>
+            <div class="col-4 col-md-2"><small>Courses</small><h6>20% commission</h6></div>
+            <div class="col-4 col-md-2"><small>Verification</small><h6>$499-3,999</h6></div>
+            <div class="col-4 col-md-2"><small>Placement</small><h6>8-15% CTC</h6></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
