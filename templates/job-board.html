@@ -30,28 +30,66 @@
 <div class="container py-5">
     <!-- Stats Bar -->
     <div class="row g-3 mb-4 text-center">
-        <div class="col-4"><div class="bg-light p-3 rounded"><h4>150+</h4><small>Active Jobs</small></div></div>
-        <div class="col-4"><div class="bg-light p-3 rounded"><h4>10,000+</h4><small>Candidates</small></div></div>
-        <div class="col-4"><div class="bg-light p-3 rounded"><h4>48hrs</h4><small>Avg Response</small></div></div>
-    </div>
+    <div class="col-4"><div class="bg-light p-3 rounded"><h4 id="activeJobs">6</h4><small>Active Jobs</small></div></div>
+    <div class="col-4"><div class="bg-light p-3 rounded"><h4>10,000+</h4><small>Candidates</small></div></div>
+    <div class="col-4"><div class="bg-light p-3 rounded"><h4>48hrs</h4><small>Avg Response</small></div></div>
+</div>
 
-    <!-- Search -->
+        <!-- Search -->
     <div class="card border-0 shadow-sm p-3 mb-4">
         <div class="row g-2">
-            <div class="col-md-4"><input type="text" class="form-control" placeholder="Job title or keyword"></div>
-            <div class="col-md-3"><select class="form-select"><option>All Types</option><option>Permanent</option><option>Contract</option><option>Contract-to-Hire</option></select></div>
-            <div class="col-md-3"><select class="form-select"><option>All Locations</option><option>Remote</option><option>Guntur</option><option>Hyderabad</option><option>Bengaluru</option><option>Visakhapatnam</option></select></div>
-            <div class="col-md-2"><button class="btn btn-primary w-100">Search Jobs</button></div>
+            <div class="col-md-3"><input type="text" class="form-control" id="jobSearch" placeholder="Job title or keyword" onkeyup="filterJobs()"></div>
+            <div class="col-md-2"><select class="form-select" id="jobType" onchange="filterJobs()"><option value="">All Types</option><option>Permanent</option><option>Contract</option><option>Contract-to-Hire</option><option>Freelance</option><option>Internship</option></select></div>
+            <div class="col-md-3">
+                <select class="form-select" id="jobLocation" onchange="filterJobs()">
+                    <option value="">All Locations</option>
+                    <option>Remote</option>
+                    <option>Bengaluru</option><option>Hyderabad</option><option>Mumbai</option><option>Delhi NCR</option><option>Chennai</option><option>Pune</option><option>Guntur</option><option>Visakhapatnam</option>
+                    <option>🇺🇸 United States</option><option>🇬🇧 United Kingdom</option><option>🇦🇪 UAE</option><option>🇸🇬 Singapore</option><option>🇨🇦 Canada</option><option>🇦🇺 Australia</option>
+                </select>
+            </div>
+            <div class="col-md-2"><input type="text" class="form-control" id="customLocation" placeholder="Or type location..."></div>
+            <div class="col-md-2"><button class="btn btn-primary w-100" onclick="filterJobs()">Search Jobs</button></div>
         </div>
+        <small class="text-muted mt-1">Can't find your location? Type it in "Or type location" and press Search.</small>
     </div>
 
     <!-- Job Listings -->
-    <div class="row g-3 mb-4">
-        <div class="col-md-6"><div class="card h-100 p-3"><span class="badge bg-primary mb-2">Permanent</span><h5>Senior React Developer</h5><p class="text-muted mb-1">Bengaluru - 15-25 LPA</p><small>React, TypeScript, Node.js - 5+ yrs</small><div class="mt-2"><a href="/contact" class="btn btn-outline-primary btn-sm">Apply</a><button class="btn btn-outline-secondary btn-sm ms-1">Save</button></div></div></div>
-        <div class="col-md-6"><div class="card h-100 p-3"><span class="badge bg-warning text-dark mb-2">Contract</span><h5>Python Backend Developer</h5><p class="text-muted mb-1">Remote - 6 months</p><small>FastAPI, PostgreSQL, AWS</small><div class="mt-2"><a href="/contact" class="btn btn-outline-primary btn-sm">Apply</a><button class="btn btn-outline-secondary btn-sm ms-1">Save</button></div></div></div>
-        <div class="col-md-6"><div class="card h-100 p-3"><span class="badge bg-info text-dark mb-2">Contract-to-Hire</span><h5>Full Stack Developer</h5><p class="text-muted mb-1">Hyderabad - 10-18 LPA</p><small>MERN Stack - 3+ yrs</small><div class="mt-2"><a href="/contact" class="btn btn-outline-primary btn-sm">Apply</a><button class="btn btn-outline-secondary btn-sm ms-1">Save</button></div></div></div>
-        <div class="col-md-6"><div class="card h-100 p-3"><span class="badge bg-primary mb-2">Permanent</span><h5>DevOps Engineer</h5><p class="text-muted mb-1">Remote - 12-20 LPA</p><small>AWS, Docker, K8s, CI/CD</small><div class="mt-2"><a href="/contact" class="btn btn-outline-primary btn-sm">Apply</a><button class="btn btn-outline-secondary btn-sm ms-1">Save</button></div></div></div>
+    <div class="row g-3 mb-4" id="jobListings">
+        <div class="col-md-6 job-card" data-type="Permanent" data-location="Bengaluru" data-title="Senior React Developer"><div class="card h-100 p-3"><span class="badge bg-primary mb-2">Permanent</span><h5>Senior React Developer</h5><p class="text-muted mb-1">Bengaluru - 15-25 LPA</p><small>React, TypeScript, Node.js - 5+ yrs</small><div class="mt-2"><a href="/contact" class="btn btn-outline-primary btn-sm">Apply</a><button class="btn btn-outline-secondary btn-sm ms-1">Save</button></div></div></div>
+        <div class="col-md-6 job-card" data-type="Contract" data-location="Remote" data-title="Python Backend Developer"><div class="card h-100 p-3"><span class="badge bg-warning text-dark mb-2">Contract</span><h5>Python Backend Developer</h5><p class="text-muted mb-1">Remote - 6 months</p><small>FastAPI, PostgreSQL, AWS</small><div class="mt-2"><a href="/contact" class="btn btn-outline-primary btn-sm">Apply</a><button class="btn btn-outline-secondary btn-sm ms-1">Save</button></div></div></div>
+        <div class="col-md-6 job-card" data-type="Contract-to-Hire" data-location="Hyderabad" data-title="Full Stack Developer"><div class="card h-100 p-3"><span class="badge bg-info text-dark mb-2">Contract-to-Hire</span><h5>Full Stack Developer</h5><p class="text-muted mb-1">Hyderabad - 10-18 LPA</p><small>MERN Stack - 3+ yrs</small><div class="mt-2"><a href="/contact" class="btn btn-outline-primary btn-sm">Apply</a><button class="btn btn-outline-secondary btn-sm ms-1">Save</button></div></div></div>
+        <div class="col-md-6 job-card" data-type="Permanent" data-location="Remote" data-title="DevOps Engineer"><div class="card h-100 p-3"><span class="badge bg-primary mb-2">Permanent</span><h5>DevOps Engineer</h5><p class="text-muted mb-1">Remote - 12-20 LPA</p><small>AWS, Docker, K8s, CI/CD</small><div class="mt-2"><a href="/contact" class="btn btn-outline-primary btn-sm">Apply</a><button class="btn btn-outline-secondary btn-sm ms-1">Save</button></div></div></div>
+        <div class="col-md-6 job-card" data-type="Permanent" data-location="🇸🇬 Singapore" data-title="AI Engineer"><div class="card h-100 p-3"><span class="badge bg-primary mb-2">Permanent</span><h5>AI/ML Engineer</h5><p class="text-muted mb-1">Singapore - SGD 80-120K</p><small>Python, TensorFlow, PyTorch - 3+ yrs</small><div class="mt-2"><a href="/contact" class="btn btn-outline-primary btn-sm">Apply</a><button class="btn btn-outline-secondary btn-sm ms-1">Save</button></div></div></div>
+        <div class="col-md-6 job-card" data-type="Contract" data-location="🇦🇪 UAE" data-title="Cloud Architect"><div class="card h-100 p-3"><span class="badge bg-warning text-dark mb-2">Contract</span><h5>Cloud Architect</h5><p class="text-muted mb-1">Dubai - 12 months</p><small>AWS, Azure, GCP - 7+ yrs</small><div class="mt-2"><a href="/contact" class="btn btn-outline-primary btn-sm">Apply</a><button class="btn btn-outline-secondary btn-sm ms-1">Save</button></div></div></div>
     </div>
+    <p class="text-center text-muted d-none" id="noJobs">No jobs match your filters. Try different keywords or <a href="/post-job">post a job</a>.</p>
+
+<script>
+function filterJobs(){
+    const keyword = document.getElementById('jobSearch').value.toLowerCase();
+    const type = document.getElementById('jobType').value;
+    const location = document.getElementById('jobLocation').value;
+    const customLoc = document.getElementById('customLocation').value.toLowerCase();
+    let visible = 0;
+    document.querySelectorAll('.job-card').forEach(card => {
+        const title = card.dataset.title.toLowerCase();
+        const cardType = card.dataset.type;
+        const cardLoc = card.dataset.location.toLowerCase();
+        const matchKeyword = !keyword || title.includes(keyword);
+        const matchType = !type || cardType === type;
+        const matchLoc = !location || cardLoc.includes(location.toLowerCase());
+        const matchCustom = !customLoc || cardLoc.includes(customLoc);
+        if(matchKeyword && matchType && (matchLoc || matchCustom)){
+            card.style.display = 'block';
+            visible++;
+        } else {
+            card.style.display = 'none';
+        }
+    });
+    document.getElementById('noJobs').classList.toggle('d-none', visible > 0);
+}
+</script>
 
     <!-- Three Action Cards -->
     <div class="row g-3 mb-4">
