@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Training & Learning Engine - Charvak Career Engine{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4">
+        <span class="badge bg-success mb-2 px-3 py-2">Step 4 of 6</span>
+        <h1 class="display-4 fw-bold">Training & Learning Engine</h1>
+        <p class="lead">Upskill, reskill, get job-ready. Charvak trainers + global third-party providers.</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row g-4 mb-5">
+        <div class="col-md-6"><div class="card h-100 p-4 bg-success text-white"><h3>Interview Cleared - Upgrade</h3><p>Enhance skills for the next level. Learn advanced topics and stay ahead.</p><a href="#courses" class="btn btn-light">Browse Advanced Courses</a></div></div>
+        <div class="col-md-6"><div class="card h-100 p-4 bg-warning"><h3>Interview Not Cleared - Reskill</h3><p>Fill skill gaps from DoketsRB analyzer. Targeted learning for your dream job.</p><a href="#courses" class="btn btn-dark">View Recommended Courses</a></div></div>
+    </div>
+
+    <h3 id="courses" class="mb-4">Course Marketplace</h3>
+    <div class="row g-4 mb-5">
+        <div class="col-md-4"><div class="card h-100 p-4"><span class="badge bg-primary mb-2">Python</span><h5>Advanced FastAPI Development</h5><p class="text-muted">By TechGuru Academy - 4.8 (120 reviews)</p><p>12 weeks - Live Online</p><h4 class="text-primary">4,999</h4><a href="/contact" class="btn btn-outline-primary btn-sm">Enroll Now</a></div></div>
+        <div class="col-md-4"><div class="card h-100 p-4"><span class="badge bg-info mb-2">React</span><h5>React & Next.js Masterclass</h5><p class="text-muted">By CodeMentor - 4.7 (85 reviews)</p><p>8 weeks - Self-paced</p><h4 class="text-primary">3,499</h4><a href="/contact" class="btn btn-outline-primary btn-sm">Enroll Now</a></div></div>
+        <div class="col-md-4"><div class="card h-100 p-4"><span class="badge bg-warning text-dark mb-2">DevOps</span><h5>AWS Solutions Architect Prep</h5><p class="text-muted">By CloudExpert - 4.9 (200 reviews)</p><p>6 weeks - Live + Lab</p><h4 class="text-primary">6,999</h4><a href="/contact" class="btn btn-outline-primary btn-sm">Enroll Now</a></div></div>
+    </div>
+
+    <h4 class="mb-3">Third-Party Global Training Partners</h4>
+    <div class="row g-3 mb-5 text-center">
+        <div class="col-6 col-md-2"><div class="card p-3"><i class="bi bi-mortarboard display-4 text-primary"></i><small>Coursera</small></div></div>
+        <div class="col-6 col-md-2"><div class="card p-3"><i class="bi bi-laptop display-4 text-danger"></i><small>Udemy</small></div></div>
+        <div class="col-6 col-md-2"><div class="card p-3"><i class="bi bi-globe display-4 text-info"></i><small>edX</small></div></div>
+        <div class="col-6 col-md-2"><div class="card p-3"><i class="bi bi-display display-4 text-warning"></i><small>Pluralsight</small></div></div>
+        <div class="col-6 col-md-2"><div class="card p-3"><i class="bi bi-linkedin display-4 text-primary"></i><small>LinkedIn Learning</small></div></div>
+        <div class="col-6 col-md-2"><div class="card p-3"><i class="bi bi-person-video3 display-4 text-success"></i><small>Local Trainers</small></div></div>
+    </div>
+    <p class="text-muted mb-4">20% commission on every enrollment through Charvakit. We track and pay automatically.</p>
+
+    <div class="row g-4 mb-5">
+        <div class="col-md-6"><div class="card h-100 p-4 text-center bg-light"><h4>Are You a Trainer?</h4><p>Post your courses. Earn 80% of every enrollment.</p><a href="/contact" class="btn btn-primary btn-lg">Post Your Course</a></div></div>
+        <div class="col-md-6"><div class="card h-100 p-4 text-center bg-light"><h4>Need Specific Training?</h4><p>Request a course. We'll find the best trainer.</p><a href="/contact" class="btn btn-primary btn-lg">Request Training</a></div></div>
+    </div>
+
+    <div class="text-center">
+        <a href="/interview-prep" class="btn btn-outline-primary me-2">Back to Interview Prep</a>
+        <a href="/background-verification" class="btn btn-primary">Next: Background Verification</a>
+    </div>
+</div>
+{% endblock %}

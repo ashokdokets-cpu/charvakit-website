@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Background Verification - Charvak Career Engine{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4">
+        <span class="badge bg-success mb-2 px-3 py-2">Step 5 of 6</span>
+        <h1 class="display-4 fw-bold">Background Verification System</h1>
+        <p class="lead">Complete background checks. Third-party providers welcome. Escrow protected.</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row g-4 mb-5">
+        <div class="col-md-4"><div class="card h-100 p-4 text-center"><i class="bi bi-check-circle display-3 text-primary mb-3"></i><h4>Identity Verification</h4><p class="text-muted">Aadhaar, PAN, Passport</p><h3 class="text-primary">499</h3><a href="/contact" class="btn btn-outline-primary">Start Check</a></div></div>
+        <div class="col-md-4"><div class="card h-100 p-4 text-center"><i class="bi bi-mortarboard display-3 text-primary mb-3"></i><h4>Education Verification</h4><p class="text-muted">Degree, diploma, certifications</p><h3 class="text-primary">799</h3><a href="/contact" class="btn btn-outline-primary">Start Check</a></div></div>
+        <div class="col-md-4"><div class="card h-100 p-4 text-center"><i class="bi bi-briefcase display-3 text-primary mb-3"></i><h4>Employment Verification</h4><p class="text-muted">Previous employer, role, duration</p><h3 class="text-primary">999</h3><a href="/contact" class="btn btn-outline-primary">Start Check</a></div></div>
+        <div class="col-md-4"><div class="card h-100 p-4 text-center"><i class="bi bi-shield-lock display-3 text-primary mb-3"></i><h4>Criminal Record Check</h4><p class="text-muted">Police verification, court records</p><h3 class="text-primary">1,499</h3><a href="/contact" class="btn btn-outline-primary">Start Check</a></div></div>
+        <div class="col-md-4"><div class="card h-100 p-4 text-center"><i class="bi bi-credit-card display-3 text-primary mb-3"></i><h4>Credit & Financial Check</h4><p class="text-muted">CIBIL score, financial history</p><h3 class="text-primary">1,299</h3><a href="/contact" class="btn btn-outline-primary">Start Check</a></div></div>
+        <div class="col-md-4"><div class="card h-100 p-4 text-center"><i class="bi bi-building display-3 text-primary mb-3"></i><h4>Complete Package</h4><p class="text-muted">All checks bundled</p><h3 class="text-primary">3,999</h3><a href="/contact" class="btn btn-primary">Get Complete Check</a></div></div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-md-6"><div class="card h-100 p-4 text-center bg-light"><h4>Third-Party Providers</h4><p>Are you a verification agency? Partner with us.</p><a href="/contact" class="btn btn-primary btn-lg">Partner With Us</a></div></div>
+        <div class="col-md-6"><div class="card h-100 p-4 text-center bg-light"><h4>Powered by Dokets VouchAI</h4><p>Payments held in escrow until verification complete.</p><a href="/products/dokets-vouchai" class="btn btn-outline-primary btn-lg">Learn More</a></div></div>
+    </div>
+
+    <div class="text-center">
+        <a href="/training-engine" class="btn btn-outline-primary me-2">Back to Training</a>
+        <a href="/reverse-staffing" class="btn btn-primary">Next: Placement</a>
+    </div>
+</div>
+{% endblock %}

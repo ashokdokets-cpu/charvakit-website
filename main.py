@@ -311,6 +311,14 @@ async def track_application(request: Request):
 async def submit_referral(request: Request):
     return templates.TemplateResponse("submit-referral.html", {"request": request, "title": "Submit Referral - Charvak"})
 
+@app.get("/training-engine", response_class=HTMLResponse)
+async def training_engine(request: Request):
+    return templates.TemplateResponse("training-engine.html", {"request": request, "title": "Training Engine - Charvak Career Engine"})
+
+@app.get("/background-verification", response_class=HTMLResponse)
+async def background_verification(request: Request):
+    return templates.TemplateResponse("background-verification.html", {"request": request, "title": "Background Verification - Charvak Career Engine"})
+
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
