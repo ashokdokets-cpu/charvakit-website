@@ -38,12 +38,57 @@
                     <small><i class="bi bi-cash-coin me-1"></i> 13 Currencies</small>
                 </div>
                 <div class="col-md-6 text-end">
-                    <select class="form-select form-select-sm d-inline-block w-auto me-2 bg-dark text-white border-secondary">
-                        <option>English</option><option>हिन्दी</option><option>తెలుగు</option><option>Español</option><option>العربية</option>
-                    </select>
-                    <select class="form-select form-select-sm d-inline-block w-auto bg-dark text-white border-secondary">
-                        <option>₹ INR</option><option>$ USD</option><option>€ EUR</option><option>£ GBP</option>
-                    </select>
+                    <select class="form-select form-select-sm d-inline-block w-auto me-2 bg-dark text-white border-secondary" id="langSelector" onchange="changeLanguage(this.value)">
+    <option value="en">English</option>
+    <option value="hi">हिन्दी</option>
+    <option value="te">తెలుగు</option>
+    <option value="ta">தமிழ்</option>
+    <option value="kn">ಕನ್ನಡ</option>
+    <option value="ml">മലയാളം</option>
+    <option value="mr">मराठी</option>
+    <option value="bn">বাংলা</option>
+    <option value="gu">ગુજરાતી</option>
+    <option value="pa">ਪੰਜਾਬੀ</option>
+    <option value="es">Español</option>
+    <option value="fr">Français</option>
+    <option value="de">Deutsch</option>
+    <option value="pt">Português</option>
+    <option value="it">Italiano</option>
+    <option value="nl">Nederlands</option>
+    <option value="ru">Русский</option>
+    <option value="ar">العربية</option>
+    <option value="zh">中文</option>
+    <option value="ja">日本語</option>
+    <option value="ko">한국어</option>
+    <option value="tr">Türkçe</option>
+    <option value="vi">Tiếng Việt</option>
+    <option value="th">ไทย</option>
+    <option value="id">Bahasa Indonesia</option>
+    <option value="ms">Bahasa Melayu</option>
+    <option value="fil">Filipino</option>
+    <option value="sw">Kiswahili</option>
+    <option value="am">አማርኛ</option>
+    <option value="ha">Hausa</option>
+    <option value="yo">Yorùbá</option>
+    <option value="ig">Igbo</option>
+    <option value="zu">isiZulu</option>
+    <option value="so">Soomaali</option>
+</select>
+                    <select class="form-select form-select-sm d-inline-block w-auto bg-dark text-white border-secondary" id="currencySelector" onchange="changeCurrency(this.value)">
+    <option value="INR">₹ INR</option>
+    <option value="USD">$ USD</option>
+    <option value="EUR">€ EUR</option>
+    <option value="GBP">£ GBP</option>
+    <option value="AED">د.إ AED</option>
+    <option value="SGD">S$ SGD</option>
+    <option value="AUD">A$ AUD</option>
+    <option value="CAD">C$ CAD</option>
+    <option value="JPY">¥ JPY</option>
+    <option value="CNY">¥ CNY</option>
+    <option value="BRL">R$ BRL</option>
+    <option value="NGN">₦ NGN</option>
+    <option value="ZAR">R ZAR</option>
+</select>
                 </div>
             </div>
         </div>
@@ -211,6 +256,7 @@
                         <li class="mb-2"><i class="bi bi-telephone me-2"></i> +91 799 7871 701</li>
                         <li class="mb-2"><i class="bi bi-envelope me-2"></i> hr@charvakit.com</li>
                     </ul>
+                <p class="small text-muted mt-3"><i class="bi bi-shield-check me-1"></i> Payments via <strong>Razorpay</strong> & <strong>PayPal</strong> through Dokets VouchAI</p>
                 </div>
             </div>
             <hr class="my-4">
@@ -227,5 +273,54 @@
         <div class="container"><div class="row align-items-center"><div class="col-md-8"><p class="mb-0 small">🍪 We use cookies. By continuing, you agree to our <a href="/privacy" class="text-primary">Privacy Policy</a> and <a href="/terms" class="text-primary">Terms</a>.</p></div><div class="col-md-4 text-end"><button class="btn btn-primary btn-sm me-2" onclick="localStorage.setItem('cookie_consent','all');document.getElementById('cookieBanner').style.display='none'">Accept</button></div></div></div>
     </div>
     <script>if(!localStorage.getItem('cookie_consent')){document.getElementById('cookieBanner').style.display='block';}</script>
+<script>
+// Language translation
+function changeLanguage(lang) {
+    localStorage.setItem('charvak_lang', lang);
+    // For real translation, integrate Google Translate API
+    if (lang !== 'en') {
+        // Google Translate fallback
+        window.location.href = 'https://translate.google.com/translate?hl=' + lang + '&sl=auto&tl=' + lang + '&u=' + encodeURIComponent(window.location.href);
+    }
+}
+
+// Currency conversion
+function changeCurrency(curr) {
+    localStorage.setItem('charvak_currency', curr);
+    updateAllPrices(curr);
+}
+
+function updateAllPrices(currency) {
+    const rates = {
+        INR: 1, USD: 0.012, EUR: 0.011, GBP: 0.0095, AED: 0.044,
+        SGD: 0.016, AUD: 0.018, CAD: 0.016, JPY: 1.75, CNY: 0.087,
+        BRL: 0.059, NGN: 18.5, ZAR: 0.22
+    };
+    const symbols = {
+        INR: '₹', USD: '$', EUR: '€', GBP: '£', AED: 'د.إ',
+        SGD: 'S$', AUD: 'A$', CAD: 'C$', JPY: '¥', CNY: '¥',
+        BRL: 'R$', NGN: '₦', ZAR: 'R'
+    };
+    
+    document.querySelectorAll('.price-amount, [data-inr]').forEach(el => {
+        const inrAmount = parseFloat(el.getAttribute('data-inr') || el.textContent.replace(/[^0-9]/g,''));
+        if (inrAmount && rates[currency]) {
+            const converted = Math.round(inrAmount * rates[currency]);
+            el.textContent = (symbols[currency] || '$') + converted.toLocaleString();
+        }
+    });
+}
+
+// Load saved preferences
+document.addEventListener('DOMContentLoaded', function() {
+    const savedLang = localStorage.getItem('charvak_lang');
+    const savedCurrency = localStorage.getItem('charvak_currency');
+    if (savedLang) document.getElementById('langSelector').value = savedLang;
+    if (savedCurrency) {
+        document.getElementById('currencySelector').value = savedCurrency;
+        updateAllPrices(savedCurrency);
+    }
+});
+</script>
 </body>
 </html>
