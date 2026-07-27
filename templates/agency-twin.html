@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Agency-Twin - Charvak IT Consulting Pvt Ltd{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4">
+        <span class="badge bg-info text-dark mb-2 px-3 py-2">💡 Concept</span>
+        <h1 class="display-4 fw-bold">Agency-Twin</h1>
+        <p class="lead">Your AI-powered virtual COO. Stop doing admin. Start building. We handle the rest.</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row mb-5">
+        <div class="col-lg-6"><h2 class="fw-bold">Freelancers Lose 20+ Hours/Week on Admin</h2><p class="lead">Scoping projects, writing proposals, managing client emails, invoicing — all uncompensated work that burns you out.</p><p>Agency-Twin connects to your communication channels (email, Slack, WhatsApp) and automatically drafts project scopes, estimates timelines, creates tasks, and provisions vetted talent from Charvak's pool when you're over capacity.</p></div>
+        <div class="col-lg-6"><div class="bg-dark text-white p-4 rounded"><h4>What Agency-Twin Does</h4><ul><li>📧 Auto-drafts proposals from client emails</li><li>⏱️ Estimates timelines & costs</li><li>📋 Creates granular task breakdowns</li><li>👥 Provisions freelancers from Charvak pool</li><li>💰 Handles invoicing & payments</li></ul></div></div>
+    </div>
+
+    <div class="row g-4 mb-5 text-center">
+        <div class="col-md-3"><div class="card h-100 p-4"><i class="bi bi-envelope display-4 text-primary mb-3"></i><h5>Email Integration</h5><p class="text-muted">Auto-reads client requests</p></div></div>
+        <div class="col-md-3"><div class="card h-100 p-4"><i class="bi bi-list-check display-4 text-primary mb-3"></i><h5>Auto-Tasking</h5><p class="text-muted">Breaks projects into tasks</p></div></div>
+        <div class="col-md-3"><div class="card h-100 p-4"><i class="bi bi-people display-4 text-primary mb-3"></i><h5>Talent Provisioning</h5><p class="text-muted">Finds help when you need it</p></div></div>
+        <div class="col-md-3"><div class="card h-100 p-4"><i class="bi bi-cash display-4 text-primary mb-3"></i><h5>Auto-Invoicing</h5><p class="text-muted">Never chase payments again</p></div></div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-md-6"><div class="card h-100 p-4 text-center"><h4>🆓 Solo</h4><h2 class="display-4 fw-bold">₹0</h2><p>5 projects/month</p><a href="/burnout-calculator" class="btn btn-outline-primary">Start Free</a></div></div>
+        <div class="col-md-6"><div class="card h-100 p-4 text-center bg-light"><h4>⭐ Pro</h4><h2 class="display-4 fw-bold">₹999</h2><p>/month · Unlimited projects</p><a href="/contact" class="btn btn-primary">Go Pro</a></div></div>
+    </div>
+
+    <div class="text-center p-5 bg-light rounded">
+        <h3>How Much Time Are You Losing?</h3>
+        <p class="mb-4">Calculate your annual uncompensated admin hours.</p>
+        <a href="/burnout-calculator" class="btn btn-primary btn-lg">Free Burnout Calculator</a>
+    </div>
+</div>
+{% endblock %}

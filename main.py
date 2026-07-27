@@ -227,6 +227,14 @@ async def micro_squads(request: Request):
 async def scope_simulator(request: Request):
     return templates.TemplateResponse("scope-simulator.html", {"request": request, "title": "Scope Simulator - Charvak"})
 
+@app.get("/agency-twin", response_class=HTMLResponse)
+async def agency_twin(request: Request):
+    return templates.TemplateResponse("agency-twin.html", {"request": request, "title": "Agency-Twin - Charvak"})
+
+@app.get("/burnout-calculator", response_class=HTMLResponse)
+async def burnout_calculator(request: Request):
+    return templates.TemplateResponse("burnout-calculator.html", {"request": request, "title": "Burnout Calculator - Charvak"})
+
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Solo Burnout Calculator - Charvak{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4"><span class="badge bg-warning text-dark mb-2 px-3 py-2">🆓 Free Tool</span><h1 class="display-4 fw-bold">Solo Burnout Calculator</h1><p class="lead">How many unpaid hours do you lose to admin every year? The number will shock you.</p></div>
+</div>
+<div class="container py-5"><div class="row"><div class="col-lg-7 mx-auto">
+    <div class="card border-0 shadow-lg p-4 mb-4"><div class="card-body">
+        <h4>⏱️ Calculate Your Lost Time</h4>
+        <div class="mb-3"><label class="form-label">How many client projects per month?</label><input type="number" class="form-control" id="projects" value="5" min="1"></div>
+        <div class="mb-3"><label class="form-label">Average hours spent on admin per project (email, scoping, invoicing)</label><input type="number" class="form-control" id="adminHours" value="4" min="1"></div>
+        <div class="mb-3"><label class="form-label">Your hourly rate (₹)</label><input type="number" class="form-control" id="hourlyRate" value="1500" min="500"></div>
+        <button class="btn btn-primary btn-lg w-100" onclick="calculateBurnout()">Calculate My Lost Revenue</button>
+    </div></div>
+    <div class="card border-0 shadow-lg p-4 d-none" id="resultCard" style="border-left:5px solid #ef4444;"><div class="card-body text-center">
+        <h3>🚨 Your Burnout Report</h3>
+        <div class="row g-3 mt-3">
+            <div class="col-6"><div class="bg-danger text-white p-3 rounded"><h4 id="lostHours">--</h4><small>Unpaid Hours/Year</small></div></div>
+            <div class="col-6"><div class="bg-danger text-white p-3 rounded"><h4 id="lostRevenue">--</h4><small>Lost Revenue/Year</small></div></div>
+        </div>
+        <div class="alert alert-warning mt-3">That's <span id="workWeeks">--</span> full work weeks of FREE work!</div>
+        <a href="/agency-twin" class="btn btn-primary btn-lg mt-3">Reclaim Your Time with Agency-Twin</a>
+        <button class="btn btn-outline-secondary btn-lg mt-3 ms-2" onclick="shareBurnout()">📤 Share Report</button>
+    </div></div>
+</div></div></div>
+
+<script>
+function calculateBurnout(){const p=parseInt(document.getElementById('projects').value)||5;const h=parseInt(document.getElementById('adminHours').value)||4;const r=parseInt(document.getElementById('hourlyRate').value)||1500;const annual=p*h*12;const revenue=annual*r;document.getElementById('lostHours').textContent=annual.toLocaleString()+' hrs';document.getElementById('lostRevenue').textContent='₹'+revenue.toLocaleString();document.getElementById('workWeeks').textContent=Math.round(annual/40);document.getElementById('resultCard').classList.remove('d-none');document.getElementById('resultCard').scrollIntoView({behavior:'smooth'});}
+function shareBurnout(){window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('I lose '+document.getElementById('lostHours').textContent+'/year to admin! Check your burnout: https://www.charvakit.com/burnout-calculator'));}
+</script>
+{% endblock %}
