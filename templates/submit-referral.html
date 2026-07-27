@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Submit Referral - Charvak Career Engine{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4"><h1 class="display-4 fw-bold">Submit Referral</h1><p class="lead">Know an opening? Share it. Earn rewards when the candidate gets hired.</p></div>
+</div>
+<div class="container py-5"><div class="row"><div class="col-lg-7 mx-auto">
+    <div class="card border-0 shadow-lg p-4"><div class="card-body">
+        <h4 class="mb-3">Referral Details</h4>
+        <form>
+            <div class="mb-3"><label class="form-label">Your Name</label><input type="text" class="form-control" placeholder="Your full name"></div>
+            <div class="mb-3"><label class="form-label">Your Email</label><input type="email" class="form-control" placeholder="you@email.com"></div>
+            <div class="mb-3"><label class="form-label">Job Title / Opening</label><input type="text" class="form-control" placeholder="e.g. Frontend Developer at Amazon"></div>
+            <div class="mb-3"><label class="form-label">Job URL or Company Career Page</label><input type="url" class="form-control" placeholder="https://..."></div>
+            <div class="mb-3"><label class="form-label">Any additional info</label><textarea class="form-control" rows="2" placeholder="Referral code, contact person, etc."></textarea></div>
+            <div class="alert alert-success">Earn up to 5,000 per successful hire through your referral!</div>
+            <button type="submit" class="btn btn-primary btn-lg w-100">Submit Referral</button>
+        </form>
+    </div></div>
+    <div class="text-center mt-3"><a href="/job-board" class="btn btn-outline-primary">Back to Job Board</a></div>
+</div></div></div>
+{% endblock %}

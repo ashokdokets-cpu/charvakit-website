@@ -299,6 +299,18 @@ async def career_engine(request: Request):
 async def interview_prep(request: Request):
     return templates.TemplateResponse("interview-prep.html", {"request": request, "title": "Interview Prep - Charvak Career Engine"})
 
+@app.get("/post-job", response_class=HTMLResponse)
+async def post_job(request: Request):
+    return templates.TemplateResponse("post-job.html", {"request": request, "title": "Post a Job - Charvak"})
+
+@app.get("/track-application", response_class=HTMLResponse)
+async def track_application(request: Request):
+    return templates.TemplateResponse("track-application.html", {"request": request, "title": "Track Application - Charvak"})
+
+@app.get("/submit-referral", response_class=HTMLResponse)
+async def submit_referral(request: Request):
+    return templates.TemplateResponse("submit-referral.html", {"request": request, "title": "Submit Referral - Charvak"})
+
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
