@@ -319,6 +319,10 @@ async def training_engine(request: Request):
 async def background_verification(request: Request):
     return templates.TemplateResponse("background-verification.html", {"request": request, "title": "Background Verification - Charvak Career Engine"})
 
+@app.get("/job-board", response_class=HTMLResponse)
+async def job_board(request: Request):
+    return templates.TemplateResponse("job-board.html", {"request": request, "title": "Job Board - Charvak Career Engine"})
+
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
