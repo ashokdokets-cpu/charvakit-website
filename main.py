@@ -295,6 +295,10 @@ async def team_entropy_scorecard(request: Request):
 async def career_engine(request: Request):
     return templates.TemplateResponse("career-engine.html", {"request": request, "title": "Career Engine - Charvak"})
 
+@app.get("/interview-prep", response_class=HTMLResponse)
+async def interview_prep(request: Request):
+    return templates.TemplateResponse("interview-prep.html", {"request": request, "title": "Interview Prep - Charvak Career Engine"})
+
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}

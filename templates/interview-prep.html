@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Interview Preparation - Charvak Career Engine{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4">
+        <span class="badge bg-success mb-2 px-3 py-2">Step 3 of 6</span>
+        <h1 class="display-4 fw-bold">Interview Preparation</h1>
+        <p class="lead">Get job-ready with AI mock interviews, question banks, and skill gap analysis.</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row g-4 mb-5">
+        <div class="col-md-4"><div class="card h-100 p-4 text-center"><i class="bi bi-mic display-3 text-primary mb-3"></i><h4>AI Mock Interview</h4><p class="text-muted">Practice with AI. Real-time feedback on answers, tone, and confidence.</p><h3>199/session</h3><a href="/contact" class="btn btn-primary">Start Mock Interview</a></div></div>
+        <div class="col-md-4"><div class="card h-100 p-4 text-center"><i class="bi bi-journal-check display-3 text-primary mb-3"></i><h4>Question Bank</h4><p class="text-muted">500+ curated questions by role, company, and difficulty level.</p><h3>Free</h3><a href="/contact" class="btn btn-primary">Browse Questions</a></div></div>
+        <div class="col-md-4"><div class="card h-100 p-4 text-center"><i class="bi bi-graph-up display-3 text-primary mb-3"></i><h4>Skill Gap Analyzer</h4><p class="text-muted">Compare skills vs job requirements. Get personalized learning path.</p><h3>Free</h3><a href="/skill-check" class="btn btn-primary">Analyze Skills</a></div></div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-6"><div class="card p-4 bg-success text-white"><h4>Cleared the Interview?</h4><p>Plan your upgrade path or proceed to verification.</p><a href="/training-engine" class="btn btn-light me-2">Upgrade Skills</a><a href="/background-verification" class="btn btn-outline-light">Start Verification</a></div></div>
+        <div class="col-md-6"><div class="card p-4 bg-warning"><h4>Didn't Clear?</h4><p>We analyze the gap and build a training plan just for you.</p><a href="/training-engine" class="btn btn-dark">View Training Plan</a></div></div>
+    </div>
+
+    <div class="text-center">
+        <a href="/career-engine" class="btn btn-outline-primary me-2">Career Engine Hub</a>
+        <a href="https://doketsrb.com" target="_blank" class="btn btn-primary">Prepare on DoketsRB</a>
+    </div>
+</div>
+{% endblock %}
