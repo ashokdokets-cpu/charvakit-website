@@ -267,6 +267,14 @@ async def agent_ready(request: Request):
 async def ai_commerce_scorecard(request: Request):
     return templates.TemplateResponse("ai-commerce-scorecard.html", {"request": request, "title": "AI Commerce Scorecard - Charvak"})
 
+@app.get("/silent-killer", response_class=HTMLResponse)
+async def silent_killer(request: Request):
+    return templates.TemplateResponse("silent-killer.html", {"request": request, "title": "Silent-Killer Sentinel - Charvak"})
+
+@app.get("/dead-link-auditor", response_class=HTMLResponse)
+async def dead_link_auditor(request: Request):
+    return templates.TemplateResponse("dead-link-auditor.html", {"request": request, "title": "Dead Link Auditor - Charvak"})
+
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}

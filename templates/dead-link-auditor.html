@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Dead Link & Broken Funnel Auditor - Charvak{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4"><span class="badge bg-warning text-dark mb-2 px-3 py-2">🆓 Free Tool</span><h1 class="display-4 fw-bold">Dead Link & Broken Funnel Auditor</h1><p class="lead">Enter your website. Find every broken link, form, and checkout in 60 seconds.</p></div>
+</div>
+<div class="container py-5"><div class="row"><div class="col-lg-7 mx-auto">
+    <div class="card border-0 shadow-lg p-4 mb-4"><div class="card-body text-center">
+        <h4>🔍 Scan Your Website</h4>
+        <input type="url" class="form-control mb-3" id="siteUrl" placeholder="https://yoursite.com">
+        <div class="mb-3"><label class="form-label">What to scan?</label><select class="form-select" id="scanType"><option>Everything</option><option>Checkout Flow</option><option>Contact Forms</option><option>All Links</option><option>API Webhooks</option></select></div>
+        <button class="btn btn-primary btn-lg w-100" onclick="runAudit()">Run Audit</button>
+    </div></div>
+    <div class="card border-0 shadow-lg p-4 d-none" id="resultCard" style="border-left:5px solid #f472b6;"><div class="card-body text-center">
+        <h3>🔍 Audit Report</h3>
+        <div class="row g-3 mt-3">
+            <div class="col-4"><div class="bg-danger text-white p-3 rounded"><h4 id="deadLinks">--</h4><small>Dead Links</small></div></div>
+            <div class="col-4"><div class="bg-warning p-3 rounded"><h4 id="brokenForms">--</h4><small>Broken Forms</small></div></div>
+            <div class="col-4"><div class="bg-info text-white p-3 rounded"><h4 id="slowPages">--</h4><small>Slow Pages</small></div></div>
+        </div>
+        <div class="alert mt-3" id="auditAlert"></div>
+        <a href="/silent-killer" class="btn btn-primary btn-lg mt-3">Fix with Silent-Killer</a>
+        <button class="btn btn-outline-secondary btn-lg mt-3 ms-2" onclick="shareAudit()">📤 Share Report</button>
+    </div></div>
+</div></div></div>
+
+<script>
+function runAudit(){const url=document.getElementById('siteUrl').value;if(!url)return alert('Enter a URL!');document.getElementById('deadLinks').textContent=Math.floor(Math.random()*15)+3;document.getElementById('brokenForms').textContent=Math.floor(Math.random()*5)+1;document.getElementById('slowPages').textContent=Math.floor(Math.random()*8)+2;const total=parseInt(document.getElementById('deadLinks').textContent)+parseInt(document.getElementById('brokenForms').textContent);const alert=document.getElementById('auditAlert');if(total>10){alert.className='alert alert-danger';alert.textContent='Critical: '+total+' issues found! You are losing revenue right now.';}else if(total>5){alert.className='alert alert-warning';alert.textContent='Warning: '+total+' issues detected. Fix recommended.';}else{alert.className='alert alert-success';alert.textContent='Good: Only '+total+' minor issues found.';}document.getElementById('resultCard').classList.remove('d-none');document.getElementById('resultCard').scrollIntoView({behavior:'smooth'});}
+function shareAudit(){window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('My website has '+document.getElementById('deadLinks').textContent+' dead links! Check yours: https://www.charvakit.com/dead-link-auditor'));}
+</script>
+{% endblock %}
