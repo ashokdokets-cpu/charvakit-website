@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Micro-Squads - Charvak IT Consulting Pvt Ltd{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4">
+        <span class="badge bg-info text-dark mb-2 px-3 py-2">💡 Concept</span>
+        <h1 class="display-4 fw-bold">On-Demand Micro-Squads</h1>
+        <p class="lead">AI-orchestrated human teams. 14-day sprints. Pay only for delivered milestones.</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row align-items-center mb-5">
+        <div class="col-lg-6">
+            <h2 class="fw-bold mb-4">Elite Teams. Zero Overhead.</h2>
+            <p class="lead">Growing startups need specialized execution for short-term milestones — API integration, database migration, MVP feature — but can't afford full-time hires or slow agencies.</p>
+            <p>Micro-Squads assembles a handpicked team of fractional experts backed by AI sub-agents. We manage task delegation, code reviews, and milestone delivery — you just approve the output.</p>
+            <div class="d-flex mb-3"><span class="step-number me-3">1</span><div><h5>Define Your Sprint</h5><p class="text-muted">Tell us what you need built. AI scopes the project.</p></div></div>
+            <div class="d-flex mb-3"><span class="step-number me-3">2</span><div><h5>Squad Assembles</h5><p class="text-muted">AI matches the perfect team from Charvak's vetted pool.</p></div></div>
+            <div class="d-flex"><span class="step-number me-3">3</span><div><h5>14-Day Delivery</h5><p class="text-muted">Milestone delivered. You pay only on success.</p></div></div>
+        </div>
+        <div class="col-lg-6 text-center">
+            <div class="bg-dark text-white p-5 rounded-4">
+                <i class="bi bi-people display-1 mb-3"></i>
+                <h4>Project Scope Simulator</h4>
+                <p class="text-white-50">Describe your project. Get an instant blueprint and cost estimate.</p>
+                <a href="/scope-simulator" class="btn btn-primary btn-lg mt-3">Try Scope Simulator</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5 text-center">
+        <div class="col-md-3"><div class="card h-100 p-4"><i class="bi bi-calendar-check display-4 text-primary mb-3"></i><h5>14-Day Sprints</h5><p class="text-muted">Fixed timeline, clear deliverables</p></div></div>
+        <div class="col-md-3"><div class="card h-100 p-4"><i class="bi bi-cpu display-4 text-primary mb-3"></i><h5>AI-Managed</h5><p class="text-muted">Auto tasking & code review</p></div></div>
+        <div class="col-md-3"><div class="card h-100 p-4"><i class="bi bi-shield-check display-4 text-primary mb-3"></i><h5>Outcome-Based</h5><p class="text-muted">Pay only for delivered work</p></div></div>
+        <div class="col-md-3"><div class="card h-100 p-4"><i class="bi bi-lightning display-4 text-primary mb-3"></i><h5>72-Hour Assembly</h5><p class="text-muted">Squad ready in 3 days</p></div></div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-md-4"><div class="card h-100 p-4 text-center"><h4>🚀 Starter Sprint</h4><h2 class="display-4 fw-bold">₹49,999</h2><p>2 devs + 1 QA · 14 days</p><a href="/scope-simulator" class="btn btn-outline-primary">Scope Your Project</a></div></div>
+        <div class="col-md-4"><div class="card h-100 p-4 text-center border-primary" style="border-width:2px;"><span class="badge bg-primary mb-2">Popular</span><h4>⚡ Growth Squad</h4><h2 class="display-4 fw-bold">₹99,999</h2><p>4 devs + 1 PM + 1 QA · 14 days</p><a href="/scope-simulator" class="btn btn-primary">Scope Your Project</a></div></div>
+        <div class="col-md-4"><div class="card h-100 p-4 text-center"><h4>🏢 Enterprise</h4><h2 class="display-4 fw-bold">Custom</h2><p>Dedicated squad · Flexible timeline</p><a href="/contact" class="btn btn-outline-primary">Contact Us</a></div></div>
+    </div>
+
+    <div class="text-center p-5 bg-dark text-white rounded">
+        <h3>What Can a Micro-Squad Build in 14 Days?</h3>
+        <div class="row mt-3"><div class="col-4">🔌 API Integration</div><div class="col-4">📊 Dashboard MVP</div><div class="col-4">🔄 Database Migration</div></div>
+        <a href="/scope-simulator" class="btn btn-primary btn-lg mt-4">Scope Your Sprint Now</a>
+    </div>
+</div>
+{% endblock %}

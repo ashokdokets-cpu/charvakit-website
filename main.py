@@ -219,6 +219,14 @@ async def globalize_ai(request: Request):
 async def revenue_leak_detector(request: Request):
     return templates.TemplateResponse("revenue-leak-detector.html", {"request": request, "title": "Revenue Leak Detector - Charvak"})
 
+@app.get("/micro-squads", response_class=HTMLResponse)
+async def micro_squads(request: Request):
+    return templates.TemplateResponse("micro-squads.html", {"request": request, "title": "Micro-Squads - Charvak"})
+
+@app.get("/scope-simulator", response_class=HTMLResponse)
+async def scope_simulator(request: Request):
+    return templates.TemplateResponse("scope-simulator.html", {"request": request, "title": "Scope Simulator - Charvak"})
+
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
