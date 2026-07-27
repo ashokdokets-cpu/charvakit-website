@@ -235,6 +235,14 @@ async def agency_twin(request: Request):
 async def burnout_calculator(request: Request):
     return templates.TemplateResponse("burnout-calculator.html", {"request": request, "title": "Burnout Calculator - Charvak"})
 
+@app.get("/geo-compliance", response_class=HTMLResponse)
+async def geo_compliance(request: Request):
+    return templates.TemplateResponse("geo-compliance.html", {"request": request, "title": "Geo-Compliance Shield - Charvak"})
+
+@app.get("/contract-risk-radar", response_class=HTMLResponse)
+async def contract_risk_radar(request: Request):
+    return templates.TemplateResponse("contract-risk-radar.html", {"request": request, "title": "Contract Risk Radar - Charvak"})
+
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}

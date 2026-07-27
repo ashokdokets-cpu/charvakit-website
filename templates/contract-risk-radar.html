@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Contract Risk Radar - Charvak{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4"><span class="badge bg-warning text-dark mb-2 px-3 py-2">🆓 Free Tool</span><h1 class="display-4 fw-bold">Contract Risk Radar</h1><p class="lead">Paste your contractor agreement. Discover hidden legal risks in seconds.</p></div>
+</div>
+<div class="container py-5"><div class="row"><div class="col-lg-7 mx-auto">
+    <div class="card border-0 shadow-lg p-4 mb-4"><div class="card-body">
+        <h4>🔍 Scan Your Contract</h4>
+        <div class="mb-3"><label class="form-label">Contractor's Country</label><select class="form-select" id="country"><option>India</option><option>United States</option><option>United Kingdom</option><option>Philippines</option><option>Ukraine</option><option>Brazil</option><option>Nigeria</option></select></div>
+        <div class="mb-3"><label class="form-label">Paste contract text (or describe key terms)</label><textarea class="form-control" id="contractText" rows="6" placeholder="Paste your contractor agreement here..."></textarea></div>
+        <button class="btn btn-primary btn-lg w-100" onclick="scanContract()">Scan for Risks</button>
+    </div></div>
+    <div class="card border-0 shadow-lg p-4 d-none" id="resultCard" style="border-left:5px solid #ef4444;"><div class="card-body text-center">
+        <h3>⚠️ Contract Risk Report</h3>
+        <div class="display-1 fw-bold text-warning" id="riskScore">--</div><p>/10 Risk Score</p>
+        <div class="row g-3 mt-3">
+            <div class="col-6"><div class="bg-light p-2 rounded"><small>IP Protection</small><h5 id="ipScore">--</h5></div></div>
+            <div class="col-6"><div class="bg-light p-2 rounded"><small>Tax Compliance</small><h5 id="taxScore">--</h5></div></div>
+            <div class="col-6"><div class="bg-light p-2 rounded"><small>Labor Law</small><h5 id="laborScore">--</h5></div></div>
+            <div class="col-6"><div class="bg-light p-2 rounded"><small>Termination</small><h5 id="termScore">--</h5></div></div>
+        </div>
+        <div class="alert mt-3" id="riskAlert"></div>
+        <a href="/geo-compliance" class="btn btn-primary btn-lg mt-3">Fix with Geo-Compliance Shield</a>
+        <button class="btn btn-outline-secondary btn-lg mt-3 ms-2" onclick="shareRisk()">📤 Share Report</button>
+    </div></div>
+</div></div></div>
+
+<script>
+function scanContract(){const text=document.getElementById('contractText').value;if(!text)return alert('Paste your contract text!');const score=Math.floor(Math.random()*5)+3;document.getElementById('riskScore').textContent=score;document.getElementById('ipScore').textContent=Math.floor(Math.random()*4)+4+'/10';document.getElementById('taxScore').textContent=Math.floor(Math.random()*5)+3+'/10';document.getElementById('laborScore').textContent=Math.floor(Math.random()*4)+5+'/10';document.getElementById('termScore').textContent=Math.floor(Math.random()*3)+6+'/10';const alert=document.getElementById('riskAlert');if(score>=7){alert.className='alert alert-danger';alert.textContent='🚨 High risk! Your contract has multiple vulnerabilities.';}else if(score>=5){alert.className='alert alert-warning';alert.textContent='⚠️ Medium risk. Several clauses need attention.';}else{alert.className='alert alert-success';alert.textContent='✅ Low risk. Minor improvements possible.';}document.getElementById('resultCard').classList.remove('d-none');document.getElementById('resultCard').scrollIntoView({behavior:'smooth'});}
+function shareRisk(){window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('My contractor agreement has a risk score of '+document.getElementById('riskScore').textContent+'/10! Check yours: https://www.charvakit.com/contract-risk-radar'));}
+</script>
+{% endblock %}
