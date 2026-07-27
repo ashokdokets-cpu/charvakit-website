@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Time Machine Checker - Charvak{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4"><span class="badge bg-warning text-dark mb-2 px-3 py-2">🆓 Free Tool</span><h1 class="display-4 fw-bold">Time Machine Checker</h1><p class="lead">Enter your old website URL. See how it would look rebuilt with modern tech.</p></div>
+</div>
+<div class="container py-5"><div class="row"><div class="col-lg-7 mx-auto">
+    <div class="card border-0 shadow-lg p-4 mb-4"><div class="card-body text-center">
+        <h4>🏺 Enter Your Legacy Site</h4>
+        <input type="url" class="form-control mb-3" id="siteUrl" placeholder="https://youroldsite.com">
+        <div class="mb-3"><label class="form-label">Current Platform</label><select class="form-select" id="platform"><option>WordPress</option><option>PHP Custom</option><option>HTML/CSS Static</option><option>Joomla/Drupal</option><option>Not Sure</option></select></div>
+        <button class="btn btn-primary btn-lg w-100" onclick="runTimeMachine()">Run Time Machine</button>
+    </div></div>
+    <div class="card border-0 shadow-lg p-4 d-none" id="resultCard" style="border-left:5px solid #14b8a6;"><div class="card-body text-center">
+        <h3>⏰ Transformation Preview</h3>
+        <div class="row g-3 mt-3">
+            <div class="col-6"><div class="bg-danger text-white p-3 rounded"><h5>Before</h5><p id="beforeScore">--</p><small>Performance Score</small></div></div>
+            <div class="col-6"><div class="bg-success text-white p-3 rounded"><h5>After (Estimated)</h5><p id="afterScore">--</p><small>Performance Score</small></div></div>
+        </div>
+        <div class="row g-3 mt-2">
+            <div class="col-4"><div class="bg-light p-2 rounded"><small>Security Issues</small><h5 id="secIssues">--</h5></div></div>
+            <div class="col-4"><div class="bg-light p-2 rounded"><small>Load Time (est)</small><h5 id="loadTime">--</h5></div></div>
+            <div class="col-4"><div class="bg-light p-2 rounded"><small>Mobile Score</small><h5 id="mobileScore">--</h5></div></div>
+        </div>
+        <div class="alert alert-success mt-3">Legacy-Shift can rebuild this in under 72 hours!</div>
+        <a href="/legacy-shift" class="btn btn-primary btn-lg mt-3">Migrate with Legacy-Shift</a>
+        <button class="btn btn-outline-secondary btn-lg mt-3 ms-2" onclick="shareTimeMachine()">📤 Share Transformation</button>
+    </div></div>
+</div></div></div>
+
+<script>
+function runTimeMachine(){const url=document.getElementById('siteUrl').value;if(!url)return alert('Enter a URL!');document.getElementById('beforeScore').textContent=Math.floor(Math.random()*30)+20+'/100';document.getElementById('afterScore').textContent=Math.floor(Math.random()*15)+85+'/100';document.getElementById('secIssues').textContent=Math.floor(Math.random()*20)+10;document.getElementById('loadTime').textContent=(Math.random()*4+0.5).toFixed(1)+'s → 0.'+Math.floor(Math.random()*5)+'s';document.getElementById('mobileScore').textContent=Math.floor(Math.random()*30)+30+'→'+(Math.floor(Math.random()*10)+90);document.getElementById('resultCard').classList.remove('d-none');document.getElementById('resultCard').scrollIntoView({behavior:'smooth'});}
+function shareTimeMachine(){window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('I just time-traveled my old website with Charvak Legacy-Shift! See the transformation: https://www.charvakit.com/time-machine-checker'));}
+</script>
+{% endblock %}

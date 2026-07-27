@@ -251,6 +251,14 @@ async def design_token_sentinel(request: Request):
 async def brand_drift_inspector(request: Request):
     return templates.TemplateResponse("brand-drift-inspector.html", {"request": request, "title": "Brand Drift Inspector - Charvak"})
 
+@app.get("/legacy-shift", response_class=HTMLResponse)
+async def legacy_shift(request: Request):
+    return templates.TemplateResponse("legacy-shift.html", {"request": request, "title": "Legacy-Shift Archaeologist - Charvak"})
+
+@app.get("/time-machine-checker", response_class=HTMLResponse)
+async def time_machine_checker(request: Request):
+    return templates.TemplateResponse("time-machine-checker.html", {"request": request, "title": "Time Machine Checker - Charvak"})
+
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Legacy-Shift Archaeologist - Charvak{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4">
+        <span class="badge bg-info text-dark mb-2 px-3 py-2">💡 Concept</span>
+        <h1 class="display-4 fw-bold">Legacy-Shift Code Archaeologist</h1>
+        <p class="lead">Drop your old website. Our AI excavates the business logic and rebuilds it as a modern Next.js Jamstack app.</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row mb-5">
+        <div class="col-lg-6"><h2 class="fw-bold">Your Old Code Is Costing You</h2><p class="lead">Legacy PHP, outdated HTML, vulnerable scripts — your old website is slow, insecure, and impossible to maintain. Rebuilding from scratch costs lakhs and takes months.</p><p>Legacy-Shift Archaeologist analyzes your old codebase, extracts business logic, strips vulnerabilities, and regenerates everything as a modern, secure, high-performance Next.js + Tailwind application. With automated test coverage.</p></div>
+        <div class="col-lg-6"><div class="bg-dark text-white p-4 rounded"><h4>What It Does</h4><ul><li>🏺 Parses legacy HTML/PHP/WordPress</li><li>🗺️ Maps dependencies & business logic</li><li>🔒 Strips hardcoded vulnerabilities</li><li>⚡ Recompiles to Next.js + Tailwind</li><li>✅ Auto-generates test coverage</li></ul></div></div>
+    </div>
+
+    <div class="row g-4 mb-5 text-center">
+        <div class="col-md-3"><div class="card h-100 p-4"><i class="bi bi-clock-history display-4 text-primary mb-3"></i><h5>Old → New</h5><p class="text-muted">Any legacy codebase</p></div></div>
+        <div class="col-md-3"><div class="card h-100 p-4"><i class="bi bi-shield-lock display-4 text-primary mb-3"></i><h5>Secure by Default</h5><p class="text-muted">Vulnerabilities stripped</p></div></div>
+        <div class="col-md-3"><div class="card h-100 p-4"><i class="bi bi-lightning display-4 text-primary mb-3"></i><h5>10x Faster</h5><p class="text-muted">Than manual rebuild</p></div></div>
+        <div class="col-md-3"><div class="card h-100 p-4"><i class="bi bi-check-circle display-4 text-primary mb-3"></i><h5>Auto-Tested</h5><p class="text-muted">Test coverage included</p></div></div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-md-6"><div class="card h-100 p-4 text-center"><h4>🔍 Free Audit</h4><h2 class="display-4 fw-bold">₹0</h2><p>Codebase analysis</p><a href="/time-machine-checker" class="btn btn-outline-primary">Audit My Site</a></div></div>
+        <div class="col-md-6"><div class="card h-100 p-4 text-center bg-light"><h4>⚡ Full Migration</h4><h2 class="display-4 fw-bold">₹19,999</h2><p>Complete rebuild</p><a href="/contact" class="btn btn-primary">Migrate Now</a></div></div>
+    </div>
+
+    <div class="text-center p-5 bg-light rounded">
+        <h3>See What Your Old Site Could Look Like</h3>
+        <p class="mb-4">Enter your URL. We'll show you a side-by-side transformation preview.</p>
+        <a href="/time-machine-checker" class="btn btn-primary btn-lg">Time Machine Checker</a>
+    </div>
+</div>
+{% endblock %}
