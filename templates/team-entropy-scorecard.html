@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Team Entropy Scorecard - Charvak{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4"><span class="badge bg-warning text-dark mb-2 px-3 py-2">Free Tool</span><h1 class="display-4 fw-bold">Team Entropy Scorecard</h1><p class="lead">How fast are your developers' skills becoming obsolete? Find out in 30 seconds.</p></div>
+</div>
+<div class="container py-5"><div class="row"><div class="col-lg-7 mx-auto">
+    <div class="card border-0 shadow-lg p-4 mb-4"><div class="card-body text-center">
+        <h4>Assess Your Team</h4>
+        <div class="mb-3"><label class="form-label">Team Size</label><select class="form-select" id="teamSize"><option>1-5 devs</option><option>5-20 devs</option><option>20-50 devs</option><option>50+ devs</option></select></div>
+        <div class="mb-3"><label class="form-label">Primary Stack Age</label><select class="form-select" id="stackAge"><option>0-2 years (Modern)</option><option>2-5 years (Maturing)</option><option>5-10 years (Aging)</option><option>10+ years (Legacy)</option></select></div>
+        <div class="mb-3"><label class="form-label">Upskilling Frequency</label><select class="form-select" id="upskill"><option>Weekly</option><option>Monthly</option><option>Quarterly</option><option>Rarely/Never</option></select></div>
+        <button class="btn btn-primary btn-lg w-100" onclick="calcEntropy()">Calculate Entropy</button>
+    </div></div>
+    <div class="card border-0 shadow-lg p-4 d-none" id="resultCard" style="border-left:5px solid #e879f9;"><div class="card-body text-center">
+        <h3>Entropy Report</h3>
+        <div class="display-1 fw-bold text-danger" id="entropyScore">--</div><p>% Annual Skill Decay</p>
+        <div class="row g-3 mt-3">
+            <div class="col-6"><div class="bg-light p-2 rounded"><small>Replacement Cost</small><h5 id="replaceCost">--</h5></div></div>
+            <div class="col-6"><div class="bg-light p-2 rounded"><small>Upskilling Cost</small><h5 id="upskillCost">--</h5></div></div>
+        </div>
+        <div class="alert mt-3" id="entropyAlert"></div>
+        <a href="/developer-entropy" class="btn btn-primary btn-lg mt-3">Fix with Entropy Engine</a>
+        <button class="btn btn-outline-secondary btn-lg mt-3 ms-2" onclick="shareEntropy()">Share Score</button>
+    </div></div>
+</div></div></div>
+
+<script>
+function calcEntropy(){const size=document.getElementById('teamSize').value;const age=document.getElementById('stackAge').value;const upskill=document.getElementById('upskill').value;let rate=15;if(age.includes('5-10')||age.includes('10+'))rate+=10;if(upskill.includes('Rarely')||upskill.includes('Quarterly'))rate+=8;if(size.includes('20-50')||size.includes('50+'))rate+=5;const teamCount=size.includes('1-5')?3:size.includes('5-20')?12:size.includes('20-50')?35:75;const replaceCost=teamCount*500000;const upskillCost=teamCount*50000;document.getElementById('entropyScore').textContent=rate+'%';document.getElementById('replaceCost').textContent='₹'+replaceCost.toLocaleString();document.getElementById('upskillCost').textContent='₹'+upskillCost.toLocaleString();document.getElementById('entropyAlert').textContent='Upskilling saves you ₹'+(replaceCost-upskillCost).toLocaleString()+' vs replacing your team!';document.getElementById('resultCard').classList.remove('d-none');document.getElementById('resultCard').scrollIntoView({behavior:'smooth'});}
+function shareEntropy(){window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('My dev team has '+document.getElementById('entropyScore').textContent+' annual skill decay! Check yours: https://www.charvakit.com/team-entropy-scorecard'));}
+</script>
+{% endblock %}

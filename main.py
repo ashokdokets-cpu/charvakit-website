@@ -275,6 +275,22 @@ async def silent_killer(request: Request):
 async def dead_link_auditor(request: Request):
     return templates.TemplateResponse("dead-link-auditor.html", {"request": request, "title": "Dead Link Auditor - Charvak"})
 
+@app.get("/ai-slop-quarantine", response_class=HTMLResponse)
+async def ai_slop_quarantine(request: Request):
+    return templates.TemplateResponse("ai-slop-quarantine.html", {"request": request, "title": "AI-Slop Quarantine - Charvak"})
+
+@app.get("/ai-contamination-detector", response_class=HTMLResponse)
+async def ai_contamination_detector(request: Request):
+    return templates.TemplateResponse("ai-contamination-detector.html", {"request": request, "title": "AI-Contamination Detector - Charvak"})
+
+@app.get("/developer-entropy", response_class=HTMLResponse)
+async def developer_entropy(request: Request):
+    return templates.TemplateResponse("developer-entropy.html", {"request": request, "title": "Developer Entropy Engine - Charvak"})
+
+@app.get("/team-entropy-scorecard", response_class=HTMLResponse)
+async def team_entropy_scorecard(request: Request):
+    return templates.TemplateResponse("team-entropy-scorecard.html", {"request": request, "title": "Team Entropy Scorecard - Charvak"})
+
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}

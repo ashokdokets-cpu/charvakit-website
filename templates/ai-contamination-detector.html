@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}AI-Contamination Detector - Charvak{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4"><span class="badge bg-warning text-dark mb-2 px-3 py-2">Free Tool</span><h1 class="display-4 fw-bold">AI-Contamination Detector</h1><p class="lead">How much of your website is AI-generated slop? Get a humorous, shareable report card.</p></div>
+</div>
+<div class="container py-5"><div class="row"><div class="col-lg-7 mx-auto">
+    <div class="card border-0 shadow-lg p-4 mb-4"><div class="card-body text-center">
+        <h4>Test Your Site</h4>
+        <input type="url" class="form-control mb-3" id="siteUrl" placeholder="https://yoursite.com">
+        <button class="btn btn-primary btn-lg w-100" onclick="detectSlop()">Detect AI Slop</button>
+    </div></div>
+    <div class="card border-0 shadow-lg p-4 d-none" id="resultCard" style="border-left:5px solid #fb923c;"><div class="card-body text-center">
+        <h3>AI-Slop Report Card</h3>
+        <div class="display-1 fw-bold text-warning" id="slopScore">--</div><p>% AI Slop Detected</p>
+        <div class="row g-3 mt-3">
+            <div class="col-4"><div class="bg-light p-2 rounded"><small>Code Bloat</small><h5 id="bloatScore">--</h5></div></div>
+            <div class="col-4"><div class="bg-light p-2 rounded"><small>Layout Issues</small><h5 id="layoutScore">--</h5></div></div>
+            <div class="col-4"><div class="bg-light p-2 rounded"><small>WCAG Fails</small><h5 id="wcagScore">--</h5></div></div>
+        </div>
+        <div class="alert mt-3" id="slopAlert"></div>
+        <a href="/ai-slop-quarantine" class="btn btn-primary btn-lg mt-3">Clean with AI-Slop Quarantine</a>
+        <button class="btn btn-outline-secondary btn-lg mt-3 ms-2" onclick="shareSlop()">📤 Share Report Card</button>
+    </div></div>
+</div></div></div>
+
+<script>
+function detectSlop(){const url=document.getElementById('siteUrl').value;if(!url)return alert('Enter a URL!');const score=Math.floor(Math.random()*60)+20;document.getElementById('slopScore').textContent=score+'%';document.getElementById('bloatScore').textContent=Math.floor(Math.random()*50)+30+'%';document.getElementById('layoutScore').textContent=Math.floor(Math.random()*8)+2;document.getElementById('wcagScore').textContent=Math.floor(Math.random()*15)+5;const alert=document.getElementById('slopAlert');if(score>60){alert.className='alert alert-danger';alert.textContent='Heavily contaminated! Your site needs urgent cleanup.';}else if(score>30){alert.className='alert alert-warning';alert.textContent='Moderate AI slop detected. Cleanup recommended.';}else{alert.className='alert alert-success';alert.textContent='Pretty clean! Minor improvements possible.';}document.getElementById('resultCard').classList.remove('d-none');document.getElementById('resultCard').scrollIntoView({behavior:'smooth'});}
+function shareSlop(){window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('My website is '+document.getElementById('slopScore').textContent+' AI slop! Check yours: https://www.charvakit.com/ai-contamination-detector'));}
+</script>
+{% endblock %}

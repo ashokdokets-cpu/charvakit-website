@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Developer Entropy Engine - Charvak{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4">
+        <span class="badge bg-info text-dark mb-2 px-3 py-2">Concept</span>
+        <h1 class="display-4 fw-bold">Developer Entropy Engine</h1>
+        <p class="lead">Track your team's skill decay. Auto-upskill or hire. Stay ahead of technology obsolescence.</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row mb-5">
+        <div class="col-lg-6"><h2 class="fw-bold">Your Team's Skills Are Decaying Daily</h2><p class="lead">Technology moves fast. Your developers' skills decay 20% per year without active learning. Companies waste lakhs firing and rehiring when they could be upskilling.</p><p>Developer Entropy Engine connects to your repositories and project boards, tracks output patterns, detects skill drift, and automatically crafts micro-learning simulations — or triggers hiring from Charvak's vetted pool.</p></div>
+        <div class="col-lg-6"><div class="bg-dark text-white p-4 rounded"><h4>What It Tracks</h4><ul><li>Code quality trends over time</li><li>Technology stack proficiency</li><li>Skill gap detection</li><li>Auto-generated micro-learning</li><li>Vetted replacement sourcing</li></ul></div></div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-md-6"><div class="card h-100 p-4 text-center"><h4>Free Assessment</h4><h2 class="display-4 fw-bold">₹0</h2><p>Team entropy score</p><a href="/team-entropy-scorecard" class="btn btn-outline-primary">Check My Team</a></div></div>
+        <div class="col-md-6"><div class="card h-100 p-4 text-center bg-light"><h4>Continuous</h4><h2 class="display-4 fw-bold">₹999</h2><p>/developer/month</p><a href="/contact" class="btn btn-primary">Start Monitoring</a></div></div>
+    </div>
+
+    <div class="text-center p-5 bg-light rounded">
+        <h3>How Fast Is Your Team Decaying?</h3>
+        <a href="/team-entropy-scorecard" class="btn btn-primary btn-lg">Team Entropy Scorecard</a>
+    </div>
+</div>
+{% endblock %}
