@@ -302,16 +302,29 @@ function updateAllPrices(currency) {
         BRL: 'R$', NGN: '₦', ZAR: 'R'
     };
     
-    document.querySelectorAll('.price-amount, [data-inr]').forEach(el => {
-        const inrAmount = parseFloat(el.getAttribute('data-inr') || el.textContent.replace(/[^0-9]/g,''));
+    // Update all elements with data-inr attribute
+    document.querySelectorAll('[data-inr]').forEach(el => {
+        const inrAmount = parseFloat(el.getAttribute('data-inr'));
         if (inrAmount && rates[currency]) {
             const converted = Math.round(inrAmount * rates[currency]);
             el.textContent = (symbols[currency] || '$') + converted.toLocaleString();
         }
     });
+    
+    // Show notification
+    const symbol = symbols[currency] || '$';
+    showNotification('Currency changed to ' + symbol + ' ' + currency);
 }
 
-// Load saved preferences
+function showNotification(msg) {
+    const div = document.createElement('div');
+    div.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#3ba591;color:#fff;padding:10px 20px;border-radius:5px;z-index:9999;';
+    div.textContent = msg;
+    document.body.appendChild(div);
+    setTimeout(() => div.remove(), 3000);
+}
+
+// Load saved currency
 document.addEventListener('DOMContentLoaded', function() {
     const savedLang = localStorage.getItem('charvak_lang');
     const savedCurrency = localStorage.getItem('charvak_currency');
