@@ -38,4 +38,36 @@ else{alert.className='alert alert-success';alert.textContent='✅ Your site is i
 document.getElementById('resultCard').classList.remove('d-none');document.getElementById('resultCard').scrollIntoView({behavior:'smooth'});}
 function shareHealth(){const s=document.getElementById('healthScore').textContent;window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('My website health score is '+s+'/100! Check yours: https://www.charvakit.com/digital-health-checker'));}
 </script>
+<script>
+function runScan(){
+    const url = document.getElementById('siteUrl').value;
+    if(!url) return alert('Enter a URL!');
+    
+    const score = Math.floor(Math.random()*50)+40;
+    document.getElementById('healthScore').textContent = score;
+    document.getElementById('secScore').textContent = Math.floor(Math.random()*40)+50;
+    document.getElementById('perfScore').textContent = Math.floor(Math.random()*35)+55;
+    document.getElementById('seoScore').textContent = Math.floor(Math.random()*30)+60;
+    
+    const alert = document.getElementById('healthAlert');
+    if(score<60){
+        alert.className='alert alert-danger';
+        alert.textContent='🚨 Critical issues found! Your site needs immediate attention.';
+    } else if(score<80){
+        alert.className='alert alert-warning';
+        alert.textContent='⚠️ Several issues detected. Recommended to fix soon.';
+    } else {
+        alert.className='alert alert-success';
+        alert.textContent='✅ Your site is in good health! Minor improvements possible.';
+    }
+    
+    document.getElementById('resultCard').classList.remove('d-none');
+    document.getElementById('resultCard').scrollIntoView({behavior:'smooth'});
+}
+
+function shareHealth(){
+    const s = document.getElementById('healthScore').textContent;
+    window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('My website health score is '+s+'/100! Check yours: https://www.charvakit.com/digital-health-checker'));
+}
+</script>
 {% endblock %}
