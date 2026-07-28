@@ -12,6 +12,11 @@ from api_sync import (
 from auth import register_user, login_user, logout_user, verify_token, get_current_user
 from database import db
 from global_config import detect_user_region, get_pricing, LANGUAGES, CURRENCIES
+from ai_service import (
+    generate_assessment_questions, voice_to_website, neural_wireframe_to_code,
+    localize_website, generate_legal_contract, analyze_legacy_code,
+    generate_agent_schema, is_ai_ready
+)
 
 app = FastAPI(title="Charvak IT Consulting Pvt Ltd - Web Designing | Staff Augmentation")
 
@@ -512,6 +517,60 @@ async def ai_health():
         "openai_configured": bool(openai_key),
         "key_prefix": openai_key[:10] + "..." if openai_key else "NOT SET"
     }
+
+@app.get("/api/health/ai")
+async def ai_health_check():
+    return {"openai_configured": is_ai_ready(), "models_activated": 8 if is_ai_ready() else 0}
+
+@app.post("/api/ai/generate-questions")
+async def api_generate_questions(request: Request):
+    data = await request.json()
+    questions = await generate_assessment_questions(
+        data.get("stack", "Python"),
+        data.get("difficulty", "Intermediate"),
+        data.get("count", 10)
+    )
+    return {"questions": questions, "count": len(questions)}
+
+@app.post("/api/ai/voice-to-web")
+async def api_voice_to_web(request: Request):
+    data = await request.json()
+    result = await voice_to_website(data.get("transcript", ""), data.get("language", "en"))
+    return result
+
+@app.post("/api/ai/neural-wireframe")
+async def api_neural_wireframe(request: Request):
+    data = await request.json()
+    code = await neural_wireframe_to_code(data.get("sketch", ""))
+    return {"code": code}
+
+@app.post("/api/ai/localize")
+async def api_localize(request: Request):
+    data = await request.json()
+    result = await localize_website(data.get("url", ""), data.get("language", "en"))
+    return result
+
+@app.post("/api/ai/generate-contract")
+async def api_generate_contract(request: Request):
+    data = await request.json()
+    contract = await generate_legal_contract(
+        data.get("company", ""),
+        data.get("country", ""),
+        data.get("service", "")
+    )
+    return {"contract": contract}
+
+@app.post("/api/ai/analyze-legacy")
+async def api_analyze_legacy(request: Request):
+    data = await request.json()
+    result = await analyze_legacy_code(data.get("code", ""))
+    return result
+
+@app.post("/api/ai/generate-schema")
+async def api_generate_schema(request: Request):
+    data = await request.json()
+    result = await generate_agent_schema(data.get("url", ""))
+    return result
 
 @app.get("/health")
 async def health_check():

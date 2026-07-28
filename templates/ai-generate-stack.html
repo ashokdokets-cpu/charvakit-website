@@ -134,10 +134,9 @@ const aiQuestions = {
         {q:'Who created GraphQL?',o:['Google','Facebook/Meta','Amazon','Microsoft'],a:1},
         {q:'GraphQL vs REST advantage?',o:['Faster always','Fetch exactly what you need','More secure','Easier to learn'],a:1},
         {q:'What is a resolver?',o:['DNS service','Function that returns data for a field','Cache manager','Authentication middleware'],a:1},
-        {q:'What is a mutation?',o:['Read operation','Write/update operation','Delete only','Subscribe operation'],a:1},
-    ]
-    };
-
+        {q:'What is a mutation?',o:['Read operation','Write/update operation','Delete only','Subscribe operation'],a:1}
+        ]
+};
 let genStackName = '', genDifficulty = '', currentGenQuestions = [], currentGenQ = 0, genScore = 0;
 
 function generateStack(){
@@ -187,9 +186,24 @@ function showGeneratedAssessment(stack, difficulty, count){
     const topics = ['Core Concepts','Architecture','Best Practices','Security','Performance','Deployment','Scaling','Integration'];
     document.getElementById('genTopics').textContent = topics.slice(0, Math.floor(Math.random()*4)+3).join(', ');
     
-    // Select questions
+    // Try real AI first, fallback to local generation
     const key = stack.toLowerCase().replace(/\s/g,'');
-    currentGenQuestions = (aiQuestions[key] || generateDynamicQuestions(stack, count)).slice(0, count);
+    fetch('/api/ai/generate-questions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({stack: stack, difficulty: difficulty, count: count})
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.questions && data.questions.length > 0) {
+            currentGenQuestions = data.questions;
+        } else {
+            currentGenQuestions = (aiQuestions[key] || generateDynamicQuestions(stack, count)).slice(0, count);
+        }
+    })
+    .catch(() => {
+        currentGenQuestions = (aiQuestions[key] || generateDynamicQuestions(stack, count)).slice(0, count);
+    });
 }
 
 function startGeneratedAssessment(){
