@@ -11,7 +11,46 @@
 <div class="container py-5">
     <div class="row mb-5">
         <div class="col-lg-6"><h2>Stop Overpaying for Cloud</h2><p class="lead">The average company wastes 32% of its cloud spend on idle resources, over-provisioning, and unnecessary services.</p><p>Charvak Lock-In Breaker connects to your cloud account (read-only), scans every resource, and identifies exact savings opportunities — then generates migration scripts to cut costs.</p></div>
-        <div class="col-lg-6"><div class="bg-dark text-white p-4 rounded"><h4>How It Works</h4><ol><li>Connect cloud account (read-only)</li><li>AI scans resources in 10 minutes</li><li>Get detailed waste report</li><li>One-click migration scripts</li><li>Save 30-50% on cloud bills</li></ol></div></div>
+        <div class="bg-dark text-white p-4 rounded">
+    <h4>How It Works</h4>
+    <div id="demoSteps">
+        <ol>
+            <li id="step1">Connect cloud account (read-only) <button class="btn btn-outline-light btn-sm ms-2" onclick="runDemo()">Run Demo</button></li>
+            <li id="step2" style="display:none;">✅ AI scans resources in 10 minutes <span class="badge bg-success ms-2">Complete</span></li>
+            <li id="step3" style="display:none;">✅ Get detailed waste report <span class="badge bg-success ms-2">Complete</span></li>
+            <li id="step4" style="display:none;">✅ One-click migration scripts generated <span class="badge bg-success ms-2">Ready</span></li>
+            <li id="step5" style="display:none;">✅ Save 30-50% on cloud bills <strong class="text-success">Estimated: 35% savings</strong></li>
+        </ol>
+    </div>
+    <p class="text-white-50 mt-2" id="demoResult" style="display:none;">Demo complete! Your estimated savings: <strong class="text-success">$17,500/year</strong></p>
+    <a href="/cloud-waste-calculator" class="btn btn-primary mt-2" id="demoCTA" style="display:none;">Calculate Your Actual Savings</a>
+</div>
+
+<script>
+function runDemo(){
+    document.getElementById('step1').innerHTML = '🔍 Connecting to cloud account...';
+    setTimeout(() => {
+        document.getElementById('step1').innerHTML = '✅ Cloud account connected (read-only) <span class="badge bg-success ms-2">Done</span>';
+        document.getElementById('step2').style.display = 'list-item';
+    }, 1000);
+    setTimeout(() => {
+        document.getElementById('step2').innerHTML = '✅ AI scans resources - 47 resources found <span class="badge bg-success ms-2">Complete</span>';
+        document.getElementById('step3').style.display = 'list-item';
+    }, 2000);
+    setTimeout(() => {
+        document.getElementById('step3').innerHTML = '✅ Waste report: 32% idle, 18% over-provisioned <span class="badge bg-success ms-2">Complete</span>';
+        document.getElementById('step4').style.display = 'list-item';
+    }, 3000);
+    setTimeout(() => {
+        document.getElementById('step4').innerHTML = '✅ Migration scripts ready: 12 resources to optimize <span class="badge bg-success ms-2">Ready</span>';
+        document.getElementById('step5').style.display = 'list-item';
+    }, 4000);
+    setTimeout(() => {
+        document.getElementById('demoResult').style.display = 'block';
+        document.getElementById('demoCTA').style.display = 'inline-block';
+    }, 5000);
+}
+</script>
     </div>
 
     <div class="row g-4 mb-5">
