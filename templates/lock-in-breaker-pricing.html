@@ -43,7 +43,7 @@
                     <li class="mb-2">✅ 90-day support</li>
                     <li class="mb-2">❌ No ongoing monitoring</li>
                 </ul>
-                <a href="/contact" class="btn btn-primary btn-lg">Get Started</a>
+                <a href="#" class="btn btn-primary btn-lg" onclick="getStarted(event)">Get Started</a>
             </div>
         </div>
         
@@ -61,7 +61,7 @@
                     <li class="mb-2">✅ Vendor negotiation support</li>
                     <li class="mb-2">✅ Priority support</li>
                 </ul>
-                <a href="/contact" class="btn btn-success btn-lg">Subscribe Now</a>
+                <a href="#" class="btn btn-success btn-lg" onclick="subscribeNow(event)">Subscribe Now</a>
             </div>
         </div>
     </div>
@@ -80,4 +80,27 @@
         <a href="/contact" class="btn btn-outline-light btn-lg">Talk to Sales</a>
     </div>
 </div>
+<script>
+function getStarted(e){
+    e.preventDefault();
+    const name = prompt('Enter your company name:');
+    if(name){
+        const clients = JSON.parse(localStorage.getItem('lock_breaker_clients')||'[]');
+        clients.push({company: name, plan: 'One-Time Migration (10%)', date: new Date().toISOString()});
+        localStorage.setItem('lock_breaker_clients', JSON.stringify(clients));
+        alert('Thanks ' + name + '! Our team will contact you within 24 hours to start your cloud migration.');
+    }
+}
+
+function subscribeNow(e){
+    e.preventDefault();
+    const name = prompt('Enter your company name:');
+    if(name){
+        const subscribers = JSON.parse(localStorage.getItem('lock_breaker_subscribers')||'[]');
+        subscribers.push({company: name, plan: 'Continuous Protection (₹4,999/mo)', date: new Date().toISOString()});
+        localStorage.setItem('lock_breaker_subscribers', JSON.stringify(subscribers));
+        alert('Welcome aboard, ' + name + '! Your continuous protection plan is now active. We will contact you shortly.');
+    }
+}
+</script>
 {% endblock %}
