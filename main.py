@@ -496,6 +496,10 @@ async def partner_verification(request: Request):
 async def custom_assessment(request: Request):
     return templates.TemplateResponse("custom-assessment.html", {"request": request, "title": "Custom Assessment - Charvak Skill-Twin"})
 
+@app.get("/ai-generate-stack", response_class=HTMLResponse)
+async def ai_generate_stack(request: Request):
+    return templates.TemplateResponse("ai-generate-stack.html", {"request": request, "title": "AI Stack Generator - Charvak Skill-Twin"})
+
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}

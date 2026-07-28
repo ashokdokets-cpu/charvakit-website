@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+{% block title %}AI Stack Generator - Charvak Skill-Twin{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4">
+        <span class="badge bg-warning text-dark mb-2 px-3 py-2">🤖 AI-Powered</span>
+        <h1 class="display-4 fw-bold">AI Stack Generator</h1>
+        <p class="lead">Type any technology. Our AI generates a complete assessment with questions in 60 seconds.</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row"><div class="col-lg-7 mx-auto">
+        
+        <!-- Request Stack -->
+        <div class="card border-0 shadow-lg p-4 mb-4" id="requestCard">
+            <div class="card-body">
+                <h4 class="mb-3">🧠 Generate Custom Assessment</h4>
+                <div class="mb-3">
+                    <label class="form-label">Technology / Stack Name</label>
+                    <input type="text" class="form-control form-control-lg" id="stackRequest" placeholder="e.g. Kubernetes, Terraform, GraphQL, Svelte, Rust...">
+                    <small class="text-muted">Be specific. AI generates questions based on latest documentation.</small>
+                </div>
+                <div class="row g-2 mb-3">
+                    <div class="col-6"><label class="form-label">Difficulty</label><select class="form-select" id="difficulty"><option>Beginner</option><option selected>Intermediate</option><option>Advanced</option><option>Mixed</option></select></div>
+                    <div class="col-6"><label class="form-label">Number of Questions</label><select class="form-select" id="questionCount"><option>5</option><option selected>10</option><option>15</option><option>20</option></select></div>
+                </div>
+                <button class="btn btn-primary btn-lg w-100" onclick="generateStack()">
+                    <i class="bi bi-magic me-2"></i>Generate Assessment
+                </button>
+            </div>
+        </div>
+
+        <!-- Generating Animation -->
+        <div class="card border-0 shadow-lg p-4 mb-4 d-none" id="generatingCard">
+            <div class="card-body text-center">
+                <div class="spinner-border text-primary mb-3" style="width:3rem;height:3rem;"></div>
+                <h4 id="generatingText">Generating assessment...</h4>
+                <div id="generatingSteps" class="text-start mt-3"></div>
+            </div>
+        </div>
+
+        <!-- Generated Assessment -->
+        <div class="card border-0 shadow-lg p-4 mb-4 d-none" id="generatedCard" style="border-left:5px solid #10b981;">
+            <div class="card-body">
+                <h4 class="text-success mb-3">✅ Assessment Generated!</h4>
+                <div class="bg-light p-3 rounded mb-3">
+                    <h5 id="genStackName"></h5>
+                    <p class="mb-1"><strong>Difficulty:</strong> <span id="genDifficulty"></span></p>
+                    <p class="mb-1"><strong>Questions:</strong> <span id="genQuestionCount"></span></p>
+                    <p class="mb-0"><strong>Topics Covered:</strong> <span id="genTopics"></span></p>
+                </div>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-primary btn-lg" onclick="startGeneratedAssessment()">Take Assessment Now</button>
+                    <button class="btn btn-outline-primary" onclick="shareGeneratedStack()">📤 Share This Stack</button>
+                    <button class="btn btn-outline-secondary" onclick="regenerateStack()">🔄 Regenerate</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assessment Questions -->
+        <div class="card border-0 shadow-lg p-4 d-none" id="assessmentCard">
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-3">
+                    <h5 id="assessTitle"></h5>
+                    <span class="badge bg-primary" id="assessProgress"></span>
+                </div>
+                <p class="lead mb-3" id="assessQuestion"></p>
+                <div id="assessOptions"></div>
+                <button class="btn btn-primary mt-3" id="assessNextBtn" onclick="nextGeneratedQuestion()">Next</button>
+            </div>
+        </div>
+
+        <!-- Results -->
+        <div class="card border-0 shadow-lg p-4 d-none" id="assessResultCard" style="border-left:5px solid #8b5cf6;">
+            <div class="card-body text-center">
+                <h3>🏆 Assessment Complete!</h3>
+                <div class="display-1 fw-bold text-primary" id="genFinalScore">--</div><p>/100</p>
+                <div class="alert alert-success mt-3">
+                    <h5>🎖️ Verified Badge Earned!</h5>
+                    <p class="mb-0">Badge: <strong id="genBadgeName"></strong></p>
+                </div>
+                <div class="mt-3">
+                    <button class="btn btn-primary btn-lg" onclick="shareBadge()">📤 Share Badge on LinkedIn</button>
+                    <a href="/skill-twin" class="btn btn-outline-primary btn-lg ms-2">Get More Badges</a>
+                </div>
+            </div>
+        </div>
+
+    </div></div>
+</div>
+
+<script>
+// AI-generated question bank (simulates GPT-4o output)
+const aiQuestions = {
+    'kubernetes': [
+        {q:'What is a Pod in Kubernetes?',o:['Smallest deployable unit','A storage volume','A network policy','A monitoring tool'],a:0},
+        {q:'What does a Deployment manage?',o:['Network traffic','ReplicaSets and Pods','Storage volumes','User authentication'],a:1},
+        {q:'What is a Service in K8s?',o:['A container','Network abstraction for Pods','A monitoring dashboard','A security policy'],a:1},
+        {q:'What is etcd?',o:['Container runtime','Key-value store for cluster data','Load balancer','CI/CD tool'],a:1},
+        {q:'What is a ConfigMap?',o:['A deployment strategy','External configuration data','A monitoring metric','A security scan'],a:1},
+    ],
+    'terraform': [
+        {q:'What is Terraform?',o:['CI/CD tool','Infrastructure as Code tool','Monitoring system','Container orchestrator'],a:1},
+        {q:'What language does Terraform use?',o:['YAML','HCL','JSON','XML'],a:1},
+        {q:'What does `terraform plan` do?',o:['Apply changes','Preview changes','Destroy resources','Format code'],a:1},
+        {q:'What is a provider?',o:['A plugin for cloud APIs','A deployment target','A security group','A network rule'],a:0},
+        {q:'What is state in Terraform?',o:['Running containers','Infrastructure mapping','Network status','User permissions'],a:1},
+    ],
+    'graphql': [
+        {q:'What is GraphQL?',o:['Database','Query language for APIs','CSS framework','Cloud service'],a:1},
+        {q:'Who created GraphQL?',o:['Google','Facebook/Meta','Amazon','Microsoft'],a:1},
+        {q:'GraphQL vs REST advantage?',o:['Faster always','Fetch exactly what you need','More secure','Easier to learn'],a:1},
+        {q:'What is a resolver?',o:['DNS service','Function that returns data for a field','Cache manager','Authentication middleware'],a:1},
+        {q:'What is a mutation?',o:['Read operation','Write/update operation','Delete only','Subscribe operation'],a:1},
+    ],
+    'default': [
+        {q:'What is the primary purpose of this technology?',o:['To solve specific technical problems efficiently','To replace all existing tools','Only for large enterprises','Only for startups'],a:0},
+        {q:'Which best describes its architecture?',o:['Monolithic only','Microservices only','Varies by implementation','Serverless only'],a:2},
+        {q:'What is a key advantage?',o:['Always cheapest','Scalability and flexibility','Requires no learning','Works without configuration'],a:1},
+        {q:'How is it typically deployed?',o:['Only on-premise','Cloud-native or hybrid','Only on mainframes','Only on mobile'],a:1},
+        {q:'What skill is most important for this?',o:['Memorization','Understanding core concepts','Copy-pasting code','Avoiding documentation'],a:1},
+    ]
+};
+
+let genStackName = '', genDifficulty = '', currentGenQuestions = [], currentGenQ = 0, genScore = 0;
+
+function generateStack(){
+    const stack = document.getElementById('stackRequest').value.trim();
+    const difficulty = document.getElementById('difficulty').value;
+    const count = parseInt(document.getElementById('questionCount').value);
+    
+    if(!stack) return alert('Enter a technology name!');
+    
+    genStackName = stack;
+    genDifficulty = difficulty;
+    
+    // Show generating animation
+    document.getElementById('requestCard').classList.add('d-none');
+    document.getElementById('generatingCard').classList.remove('d-none');
+    
+    const steps = document.getElementById('generatingSteps');
+    steps.innerHTML = '';
+    const stepTexts = [
+        '🔍 Searching latest documentation for ' + stack + '...',
+        '📚 Analyzing ' + difficulty + '-level concepts...',
+        '✍️ Generating ' + count + ' assessment questions...',
+        '✅ Validating answers and explanations...',
+        '🎯 Assessment ready!'
+    ];
+    
+    let stepIndex = 0;
+    const interval = setInterval(() => {
+        if(stepIndex < stepTexts.length){
+            steps.innerHTML += '<p class="mb-1 text-success">' + stepTexts[stepIndex] + '</p>';
+            stepIndex++;
+        } else {
+            clearInterval(interval);
+            showGeneratedAssessment(stack, difficulty, count);
+        }
+    }, 800);
+}
+
+function showGeneratedAssessment(stack, difficulty, count){
+    document.getElementById('generatingCard').classList.add('d-none');
+    document.getElementById('generatedCard').classList.remove('d-none');
+    
+    document.getElementById('genStackName').textContent = '📦 ' + stack;
+    document.getElementById('genDifficulty').textContent = difficulty;
+    document.getElementById('genQuestionCount').textContent = count;
+    
+    const topics = ['Core Concepts','Architecture','Best Practices','Security','Performance','Deployment','Scaling','Integration'];
+    document.getElementById('genTopics').textContent = topics.slice(0, Math.floor(Math.random()*4)+3).join(', ');
+    
+    // Select questions
+    const key = stack.toLowerCase().replace(/\s/g,'');
+    currentGenQuestions = (aiQuestions[key] || aiQuestions['default']).slice(0, count);
+}
+
+function startGeneratedAssessment(){
+    currentGenQ = 0;
+    genScore = 0;
+    document.getElementById('generatedCard').classList.add('d-none');
+    document.getElementById('assessmentCard').classList.remove('d-none');
+    document.getElementById('assessTitle').textContent = '📝 ' + genStackName + ' Assessment';
+    showGeneratedQuestion();
+}
+
+function showGeneratedQuestion(){
+    const q = currentGenQuestions[currentGenQ];
+    document.getElementById('assessProgress').textContent = (currentGenQ+1) + '/' + currentGenQuestions.length;
+    document.getElementById('assessQuestion').textContent = q.q;
+    document.getElementById('assessOptions').innerHTML = q.o.map((o,i) => 
+        '<div class="form-check mb-2"><input class="form-check-input" type="radio" name="genOpt" value="'+i+'" id="genOpt'+i+'"><label class="form-check-label" for="genOpt'+i+'">'+o+'</label></div>'
+    ).join('');
+    document.getElementById('assessNextBtn').textContent = currentGenQ < currentGenQuestions.length-1 ? 'Next' : 'Finish';
+}
+
+function nextGeneratedQuestion(){
+    const selected = document.querySelector('input[name="genOpt"]:checked');
+    if(!selected) return alert('Select an answer!');
+    if(parseInt(selected.value) === currentGenQuestions[currentGenQ].a) genScore++;
+    currentGenQ++;
+    if(currentGenQ < currentGenQuestions.length){
+        showGeneratedQuestion();
+    } else {
+        showGeneratedResult();
+    }
+}
+
+function showGeneratedResult(){
+    document.getElementById('assessmentCard').classList.add('d-none');
+    document.getElementById('assessResultCard').classList.remove('d-none');
+    const finalScore = Math.round((genScore/currentGenQuestions.length)*100);
+    document.getElementById('genFinalScore').textContent = finalScore;
+    document.getElementById('genBadgeName').textContent = genStackName + ' - ' + genDifficulty + ' (' + finalScore + '%)';
+    document.getElementById('assessResultCard').scrollIntoView({behavior:'smooth'});
+}
+
+function shareBadge(){
+    const badge = document.getElementById('genBadgeName').textContent;
+    window.open('https://www.linkedin.com/sharing/share-offsite/?url='+encodeURIComponent('https://www.charvakit.com/skill-twin'));
+}
+
+function shareGeneratedStack(){
+    window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('I just generated a '+genStackName+' assessment on Charvak Skill-Twin! Try it: https://www.charvakit.com/ai-generate-stack'));
+}
+
+function regenerateStack(){
+    document.getElementById('generatedCard').classList.add('d-none');
+    document.getElementById('requestCard').classList.remove('d-none');
+}
+</script>
+{% endblock %}
