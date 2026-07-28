@@ -16,8 +16,8 @@
     </div>
 
     <div class="row g-4 mb-5">
-        <div class="col-md-6"><div class="card h-100 p-4 text-center"><h4>Free Assessment</h4><h2 class="display-4 fw-bold">₹0</h2><p>Team entropy score</p><a href="/team-entropy-scorecard" class="btn btn-outline-primary">Check My Team</a></div></div>
-        <div class="col-md-6"><div class="card h-100 p-4 text-center bg-light"><h4>Continuous</h4><h2 class="display-4 fw-bold">₹999</h2><p>/developer/month</p><a href="/contact" class="btn btn-primary">Start Monitoring</a></div></div>
+        <div class="col-md-6"><div class="card h-100 p-4 text-center"><h4>Free Assessment</h4><h2 class="display-4 fw-bold"><span data-inr="0">₹0</span></h2><p>Team entropy score</p><a href="/team-entropy-scorecard" class="btn btn-outline-primary">Check My Team</a></div></div>
+        <div class="col-md-6"><div class="card h-100 p-4 text-center bg-light"><h4>Continuous</h4><h2 class="display-4 fw-bold"><span data-inr="999">₹999</span></h2><p>/developer/month</p><a href="#" class="btn btn-primary" onclick="entropyStart(event)">Start Monitoring</a></div></div>
     </div>
 
     <div class="text-center p-5 bg-light rounded">
@@ -25,4 +25,16 @@
         <a href="/team-entropy-scorecard" class="btn btn-primary btn-lg">Team Entropy Scorecard</a>
     </div>
 </div>
+<script>
+function entropyStart(e){
+    e.preventDefault();
+    const name = prompt('Enter your company name:');
+    if(name){
+        const subs = JSON.parse(localStorage.getItem('entropy_subs')||'[]');
+        subs.push({company: name, plan: 'Continuous (₹999/dev/mo)', date: new Date().toISOString()});
+        localStorage.setItem('entropy_subs', JSON.stringify(subs));
+        alert('Monitoring activated for ' + name + '! We will set up your Entropy Engine and contact you shortly.');
+    }
+}
+</script>
 {% endblock %}
