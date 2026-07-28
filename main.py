@@ -629,6 +629,7 @@ async def api_apply_job(request: Request):
 async def api_job_stats():
     return job_board.get_stats()
 
+
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
