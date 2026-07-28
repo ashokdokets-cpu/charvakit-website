@@ -80,69 +80,35 @@
 </div>
 
 <script>
-document.getElementById('cloudWasteForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const spend = parseFloat(document.getElementById('monthlySpend').value);
-    const provider = document.getElementById('provider').value;
-    const size = document.getElementById('companySize').value;
-    
-    // Industry-standard waste calculation
-    let wasteRate = 0.32; // Default 32% industry average
-    if (provider === 'aws' && size === 'enterprise') wasteRate = 0.35;
-    if (provider === 'azure') wasteRate = 0.30;
-    if (provider === 'gcp') wasteRate = 0.28;
-    if (provider === 'multi') wasteRate = 0.38;
-    if (size === 'startup') wasteRate += 0.05;
-    
-    const monthlyWaste = spend * wasteRate;
-    const annualWaste = monthlyWaste * 12;
-    const potentialSavings = annualWaste * 0.7; // 70% recoverable
-    
-    document.getElementById('wasteAmount').textContent = '$' + annualWaste.toLocaleString();
-    document.getElementById('savingsAmount').textContent = '$' + potentialSavings.toLocaleString();
-    document.getElementById('wastePercent').textContent = Math.round(wasteRate * 100) + '%';
-    document.getElementById('recommendation').textContent = 
-        'Charvak Lock-In Breaker can recover up to 70% of this waste. ' +
-        'Average client saves $' + potentialSavings.toLocaleString() + '/year.';
-    
-    document.getElementById('resultsCard').classList.remove('d-none');
-    document.getElementById('resultsCard').scrollIntoView({behavior: 'smooth'});
-});
-
-function shareReport() {
-    const waste = document.getElementById('wasteAmount').textContent;
-    const text = `I just discovered my company is wasting ${waste}/year on cloud! Check your waste: https://www.charvakit.com/cloud-waste-calculator`;
-    if (navigator.share) {
-        navigator.share({title: 'My Cloud Waste Report', text: text, url: 'https://www.charvakit.com/cloud-waste-calculator'});
-    } else {
-        window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(text));
-    }
-}
-</script>
-<script>
 function calculateWaste(){
     const spend = parseFloat(document.getElementById('monthlySpend').value);
+    if(!spend) return alert('Enter your monthly cloud spend!');
     const provider = document.getElementById('provider').value;
     const size = document.getElementById('companySize').value;
-    if(!spend) return alert('Enter your monthly cloud spend!');
-    
     let wasteRate = 0.32;
     if(provider === 'aws' && size === 'enterprise') wasteRate = 0.35;
     if(provider === 'azure') wasteRate = 0.30;
     if(provider === 'gcp') wasteRate = 0.28;
     if(provider === 'multi') wasteRate = 0.38;
     if(size === 'startup') wasteRate += 0.05;
-    
-    const monthlyWaste = spend * wasteRate;
-    const annualWaste = monthlyWaste * 12;
+    const annualWaste = spend * wasteRate * 12;
     const savings = annualWaste * 0.7;
-    
     document.getElementById('wasteAmount').textContent = '$' + annualWaste.toLocaleString();
     document.getElementById('savingsAmount').textContent = '$' + savings.toLocaleString();
     document.getElementById('wastePercent').textContent = Math.round(wasteRate * 100) + '%';
     document.getElementById('recommendation').textContent = 'Charvak Lock-In Breaker can recover up to 70% of this waste. Average client saves $' + savings.toLocaleString() + '/year.';
     document.getElementById('resultsCard').classList.remove('d-none');
     document.getElementById('resultsCard').scrollIntoView({behavior:'smooth'});
+}
+
+function shareReport() {
+    const waste = document.getElementById('wasteAmount').textContent;
+    const text = 'I just discovered my company is wasting ' + waste + '/year on cloud! Check yours: https://www.charvakit.com/cloud-waste-calculator';
+    if (navigator.share) {
+        navigator.share({title: 'My Cloud Waste Report', text: text, url: 'https://www.charvakit.com/cloud-waste-calculator'});
+    } else {
+        window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(text));
+    }
 }
 </script>
 {% endblock %}
