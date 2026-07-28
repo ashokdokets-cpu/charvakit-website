@@ -23,8 +23,8 @@
     </div>
 
     <div class="row g-4 mb-5">
-        <div class="col-md-6"><div class="card h-100 p-4 text-center"><h4>🔍 Free Audit</h4><h2 class="display-4 fw-bold">₹0</h2><p>Codebase analysis</p><a href="/time-machine-checker" class="btn btn-outline-primary">Audit My Site</a></div></div>
-        <div class="col-md-6"><div class="card h-100 p-4 text-center bg-light"><h4>⚡ Full Migration</h4><h2 class="display-4 fw-bold">₹19,999</h2><p>Complete rebuild</p><a href="/contact" class="btn btn-primary">Migrate Now</a></div></div>
+        <div class="col-md-6"><div class="card h-100 p-4 text-center"><h4>🔍 Free Audit</h4><h2 class="display-4 fw-bold"><span data-inr="0">₹0</span></h2><p>Codebase analysis</p><a href="/time-machine-checker" class="btn btn-outline-primary">Audit My Site</a></div></div>
+        <div class="col-md-6"><div class="card h-100 p-4 text-center bg-light"><h4>⚡ Full Migration</h4><h2 class="display-4 fw-bold"><span data-inr="19999">₹19,999</span></h2><p>Complete rebuild</p><a href="#" class="btn btn-primary" onclick="legacyMigrate(event)">Migrate Now</a></div></div>
     </div>
 
     <div class="text-center p-5 bg-light rounded">
@@ -33,4 +33,16 @@
         <a href="/time-machine-checker" class="btn btn-primary btn-lg">Time Machine Checker</a>
     </div>
 </div>
+<script>
+function legacyMigrate(e){
+    e.preventDefault();
+    const url = prompt('Enter your website URL to migrate:');
+    if(url){
+        const migrations = JSON.parse(localStorage.getItem('legacy_migrations')||'[]');
+        migrations.push({url, plan: 'Full Migration (₹19,999)', date: new Date().toISOString()});
+        localStorage.setItem('legacy_migrations', JSON.stringify(migrations));
+        alert('Migration initiated for ' + url + '! Our team will analyze your site and contact you within 24 hours.');
+    }
+}
+</script>
 {% endblock %}
