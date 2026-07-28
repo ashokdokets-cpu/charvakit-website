@@ -127,4 +127,8 @@ def seed_default_jobs():
         for job in default_jobs:
             job_board.post_job(*job)
 
-seed_default_jobs()
+# Seed jobs on first run
+try:
+    seed_default_jobs()
+except Exception as e:
+    print(f"Seed error (non-critical): {e}")
