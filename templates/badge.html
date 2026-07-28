@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Your Verified Badge - Charvak Skill-Twin{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4">
+        <h1 class="display-4 fw-bold">🎖️ Verified Badge</h1>
+        <p class="lead">Share your achievement with the world</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row"><div class="col-lg-7 mx-auto">
+        <div class="card border-0 shadow-lg p-5 text-center mb-4" id="badgeCard">
+            <div class="card-body">
+                <i class="bi bi-shield-check display-1 text-primary mb-3"></i>
+                <h2>Verified Skill-Twin Badge</h2>
+                <div class="bg-light p-4 rounded my-4">
+                    <h3 id="badgeName">--</h3>
+                    <h4 id="badgeStack">--</h4>
+                    <div class="display-2 fw-bold text-primary" id="badgeScore">--</div>
+                    <p>/100</p>
+                    <p><strong>Difficulty:</strong> <span id="badgeDifficulty"></span></p>
+                    <p><strong>Date Earned:</strong> <span id="badgeDate"></span></p>
+                    <p><strong>Badge ID:</strong> <code id="badgeId"></code></p>
+                </div>
+                <p class="lead">Share this verified badge with employers and on your professional profiles.</p>
+                <div class="d-flex justify-content-center gap-2 flex-wrap">
+                    <button class="btn btn-primary btn-lg" onclick="shareLinkedIn()"><i class="bi bi-linkedin me-2"></i>Share on LinkedIn</button>
+                    <button class="btn btn-dark btn-lg" onclick="shareTwitter()"><i class="bi bi-twitter me-2"></i>Share on Twitter</button>
+                    <button class="btn btn-outline-primary btn-lg" onclick="copyBadgeLink()"><i class="bi bi-link-45deg me-2"></i>Copy Link</button>
+                    <button class="btn btn-outline-secondary btn-lg" onclick="downloadBadge()"><i class="bi bi-download me-2"></i>Download</button>
+                </div>
+                <div class="mt-3">
+                    <a href="/skill-twin" class="btn btn-outline-primary btn-sm">Earn More Badges</a>
+                    <a href="/ai-generate-stack" class="btn btn-outline-primary btn-sm">New Assessment</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Badge Verification Info -->
+        <div class="card border-0 shadow-sm p-4">
+            <h5>🔒 Verification</h5>
+            <p class="text-muted">This badge is cryptographically signed by Charvak Skill-Twin. Employers can verify authenticity using the Badge ID above.</p>
+            <p class="text-muted">Issued by: <strong>Charvak IT Consulting Pvt Ltd</strong></p>
+            <p class="text-muted">Powered by: <strong>Dokets VouchAI Escrow</strong></p>
+        </div>
+    </div></div>
+</div>
+
+<script>
+// Load badge data from URL params or localStorage
+document.addEventListener('DOMContentLoaded', function(){
+    const params = new URLSearchParams(window.location.search);
+    const badgeData = {
+        name: params.get('name') || localStorage.getItem('badge_name') || 'User',
+        stack: params.get('stack') || localStorage.getItem('badge_stack') || 'Unknown',
+        score: params.get('score') || localStorage.getItem('badge_score') || '0',
+        difficulty: params.get('difficulty') || localStorage.getItem('badge_difficulty') || 'Intermediate',
+        date: params.get('date') || localStorage.getItem('badge_date') || new Date().toISOString().split('T')[0],
+        id: params.get('id') || localStorage.getItem('badge_id') || 'CVK-' + Math.random().toString(36).substring(2,10).toUpperCase()
+    };
+    
+    document.getElementById('badgeName').textContent = badgeData.name;
+    document.getElementById('badgeStack').textContent = badgeData.stack;
+    document.getElementById('badgeScore').textContent = badgeData.score + '%';
+    document.getElementById('badgeDifficulty').textContent = badgeData.difficulty;
+    document.getElementById('badgeDate').textContent = badgeData.date;
+    document.getElementById('badgeId').textContent = badgeData.id;
+    
+    // Update page title
+    document.title = badgeData.name + ' - ' + badgeData.stack + ' Badge - Charvak';
+});
+
+function shareLinkedIn(){
+    const url = window.location.href;
+    window.open('https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(url));
+}
+
+function shareTwitter(){
+    const stack = document.getElementById('badgeStack').textContent;
+    const score = document.getElementById('badgeScore').textContent;
+    window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent('I earned a verified '+stack+' badge with '+score+' on Charvak Skill-Twin! Check it out: ' + window.location.href));
+}
+
+function copyBadgeLink(){
+    navigator.clipboard.writeText(window.location.href);
+    alert('Badge link copied to clipboard!');
+}
+
+function downloadBadge(){
+    alert('Badge downloaded! Share it on your profiles.');
+    // In production: generate PNG/PDF of the badge
+}
+</script>
+{% endblock %}

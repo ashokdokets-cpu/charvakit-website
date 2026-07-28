@@ -228,8 +228,28 @@ function showGeneratedResult(){
     document.getElementById('assessResultCard').classList.remove('d-none');
     const finalScore = Math.round((genScore/currentGenQuestions.length)*100);
     document.getElementById('genFinalScore').textContent = finalScore;
-    document.getElementById('genBadgeName').textContent = genStackName + ' - ' + genDifficulty + ' (' + finalScore + '%)';
+    const badgeName = genStackName + ' - ' + genDifficulty + ' (' + finalScore + '%)';
+    document.getElementById('genBadgeName').textContent = badgeName;
     document.getElementById('assessResultCard').scrollIntoView({behavior:'smooth'});
+    
+    // Save badge data
+    const badgeId = 'CVK-' + Math.random().toString(36).substring(2,10).toUpperCase();
+    localStorage.setItem('badge_name', 'User');
+    localStorage.setItem('badge_stack', genStackName);
+    localStorage.setItem('badge_score', finalScore + '%');
+    localStorage.setItem('badge_difficulty', genDifficulty);
+    localStorage.setItem('badge_date', new Date().toISOString().split('T')[0]);
+    localStorage.setItem('badge_id', badgeId);
+    
+    // Store in badge history
+    const badges = JSON.parse(localStorage.getItem('badge_history')||'[]');
+    badges.push({name:'User', stack:genStackName, score:finalScore+'%', difficulty:genDifficulty, date:new Date().toISOString().split('T')[0], id:badgeId});
+    localStorage.setItem('badge_history', JSON.stringify(badges));
+    
+    // Update the share badge button to link to badge page
+    document.querySelector('button[onclick="shareBadge()"]').onclick = function(){
+        window.location.href = '/badge?name=User&stack='+encodeURIComponent(genStackName)+'&score='+finalScore+'%&difficulty='+genDifficulty+'&id='+badgeId;
+    };
 }
 
 function shareBadge(){

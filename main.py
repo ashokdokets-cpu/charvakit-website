@@ -500,6 +500,10 @@ async def custom_assessment(request: Request):
 async def ai_generate_stack(request: Request):
     return templates.TemplateResponse("ai-generate-stack.html", {"request": request, "title": "AI Stack Generator - Charvak Skill-Twin"})
 
+@app.get("/badge", response_class=HTMLResponse)
+async def badge_page(request: Request):
+    return templates.TemplateResponse("badge.html", {"request": request, "title": "Your Verified Badge - Charvak"})
+
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
