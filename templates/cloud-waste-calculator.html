@@ -52,7 +52,7 @@
                             <label class="form-label fw-bold">Your Email (for detailed report)</label>
                             <input type="email" class="form-control" id="email" placeholder="you@company.com" required>
                         </div>
-                        <button type="submit" class="btn btn-primary btn-lg w-100">Calculate My Cloud Waste</button>
+                        <button type="button" class="btn btn-primary btn-lg w-100" onclick="calculateWaste()">Calculate My Cloud Waste</button>
                     </form>
                 </div>
             </div>
@@ -117,6 +117,32 @@ function shareReport() {
     } else {
         window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(text));
     }
+}
+</script>
+<script>
+function calculateWaste(){
+    const spend = parseFloat(document.getElementById('monthlySpend').value);
+    const provider = document.getElementById('provider').value;
+    const size = document.getElementById('companySize').value;
+    if(!spend) return alert('Enter your monthly cloud spend!');
+    
+    let wasteRate = 0.32;
+    if(provider === 'aws' && size === 'enterprise') wasteRate = 0.35;
+    if(provider === 'azure') wasteRate = 0.30;
+    if(provider === 'gcp') wasteRate = 0.28;
+    if(provider === 'multi') wasteRate = 0.38;
+    if(size === 'startup') wasteRate += 0.05;
+    
+    const monthlyWaste = spend * wasteRate;
+    const annualWaste = monthlyWaste * 12;
+    const savings = annualWaste * 0.7;
+    
+    document.getElementById('wasteAmount').textContent = '$' + annualWaste.toLocaleString();
+    document.getElementById('savingsAmount').textContent = '$' + savings.toLocaleString();
+    document.getElementById('wastePercent').textContent = Math.round(wasteRate * 100) + '%';
+    document.getElementById('recommendation').textContent = 'Charvak Lock-In Breaker can recover up to 70% of this waste. Average client saves $' + savings.toLocaleString() + '/year.';
+    document.getElementById('resultsCard').classList.remove('d-none');
+    document.getElementById('resultsCard').scrollIntoView({behavior:'smooth'});
 }
 </script>
 {% endblock %}
