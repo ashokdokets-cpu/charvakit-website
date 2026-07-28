@@ -92,6 +92,28 @@
 
 <script>
 // AI-generated question bank (simulates GPT-4o output)
+// Dynamic question generator for any technology
+function generateDynamicQuestions(stack, count) {
+    const templates = [
+        { q: `What is the primary purpose of ${stack}?`, o: ['To solve specific technical problems efficiently', 'To replace all existing tools', 'Only for large enterprises', 'Only for startups'], a: 0 },
+        { q: `Which best describes ${stack} architecture?`, o: ['Monolithic only', 'Microservices only', 'Varies by implementation', 'Serverless only'], a: 2 },
+        { q: `What is a key advantage of ${stack}?`, o: ['Always cheapest', 'Scalability and flexibility', 'Requires no learning', 'Works without configuration'], a: 1 },
+        { q: `How is ${stack} typically deployed?`, o: ['Only on-premise', 'Cloud-native or hybrid', 'Only on mainframes', 'Only on mobile'], a: 1 },
+        { q: `What skill is most important for ${stack}?`, o: ['Memorization', 'Understanding core concepts', 'Copy-pasting code', 'Avoiding documentation'], a: 1 },
+        { q: `Which is a common use case for ${stack}?`, o: ['Building scalable applications', 'Only gaming', 'Only spreadsheets', 'Only emails'], a: 0 },
+        { q: `What is a best practice with ${stack}?`, o: ['Skip testing', 'Write maintainable code', 'Ignore security', 'Avoid documentation'], a: 1 },
+        { q: `How does ${stack} handle errors?`, o: ['It does not', 'Through error handling mechanisms', 'By crashing always', 'By ignoring them'], a: 1 },
+        { q: `What type of community does ${stack} have?`, o: ['None', 'Active open-source community', 'Closed proprietary only', 'One person'], a: 1 },
+        { q: `What is the learning curve for ${stack}?`, o: ['Impossible', 'Manageable with practice', 'No learning needed', 'Years minimum'], a: 1 },
+        { q: `How does ${stack} ensure security?`, o: ['No security', 'Built-in security features', 'Security is optional', 'Only external tools'], a: 1 },
+        { q: `What makes ${stack} different from alternatives?`, o: ['Nothing', 'Unique features and approach', 'It is the same', 'Only price'], a: 1 },
+        { q: `Is ${stack} suitable for beginners?`, o: ['Never', 'Yes, with proper learning resources', 'Only experts', 'No documentation'], a: 1 },
+        { q: `How often is ${stack} updated?`, o: ['Never', 'Regularly with new features', 'Once a decade', 'Only when forced'], a: 1 },
+        { q: `What type of companies use ${stack}?`, o: ['None', 'Startups to enterprises worldwide', 'Only one company', 'Only local businesses'], a: 1 },
+    ];
+    return templates.slice(0, count);
+}
+
 const aiQuestions = {
     'kubernetes': [
         {q:'What is a Pod in Kubernetes?',o:['Smallest deployable unit','A storage volume','A network policy','A monitoring tool'],a:0},
@@ -113,15 +135,8 @@ const aiQuestions = {
         {q:'GraphQL vs REST advantage?',o:['Faster always','Fetch exactly what you need','More secure','Easier to learn'],a:1},
         {q:'What is a resolver?',o:['DNS service','Function that returns data for a field','Cache manager','Authentication middleware'],a:1},
         {q:'What is a mutation?',o:['Read operation','Write/update operation','Delete only','Subscribe operation'],a:1},
-    ],
-    'default': [
-        {q:'What is the primary purpose of this technology?',o:['To solve specific technical problems efficiently','To replace all existing tools','Only for large enterprises','Only for startups'],a:0},
-        {q:'Which best describes its architecture?',o:['Monolithic only','Microservices only','Varies by implementation','Serverless only'],a:2},
-        {q:'What is a key advantage?',o:['Always cheapest','Scalability and flexibility','Requires no learning','Works without configuration'],a:1},
-        {q:'How is it typically deployed?',o:['Only on-premise','Cloud-native or hybrid','Only on mainframes','Only on mobile'],a:1},
-        {q:'What skill is most important for this?',o:['Memorization','Understanding core concepts','Copy-pasting code','Avoiding documentation'],a:1},
     ]
-};
+    };
 
 let genStackName = '', genDifficulty = '', currentGenQuestions = [], currentGenQ = 0, genScore = 0;
 
@@ -174,7 +189,7 @@ function showGeneratedAssessment(stack, difficulty, count){
     
     // Select questions
     const key = stack.toLowerCase().replace(/\s/g,'');
-    currentGenQuestions = (aiQuestions[key] || aiQuestions['default']).slice(0, count);
+    currentGenQuestions = (aiQuestions[key] || generateDynamicQuestions(stack, count)).slice(0, count);
 }
 
 function startGeneratedAssessment(){
