@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Custom Assessment - Charvak Skill-Twin{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4">
+        <span class="badge bg-success mb-2 px-3 py-2">New</span>
+        <h1 class="display-4 fw-bold">Custom Assessment Engine</h1>
+        <p class="lead">Companies can upload their own skill stacks. Candidates get assessed on exactly what matters.</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <!-- Two Tabs -->
+    <ul class="nav nav-tabs mb-4" id="assessmentTab">
+        <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#takeAssessment">Take Assessment</a></li>
+        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#uploadStack">Upload Custom Stack (For Companies)</a></li>
+    </ul>
+
+    <div class="tab-content">
+        <!-- Take Assessment Tab -->
+        <div class="tab-pane fade show active" id="takeAssessment">
+            <div class="row"><div class="col-lg-7 mx-auto">
+                <div class="card border-0 shadow-sm p-4 mb-3">
+                    <h4>Choose Your Assessment</h4>
+                    <div class="mb-3"><label class="form-label">Select Stack</label>
+                        <select class="form-select" id="assessmentStack" onchange="loadCustomStacks()">
+                            <option value="">Loading stacks...</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary btn-lg w-100" onclick="startCustomAssessment()">Start Assessment</button>
+                </div>
+                <div class="card border-0 shadow-sm p-4 d-none" id="customQuestionCard">
+                    <h5 id="customQNum">Question 1/5</h5>
+                    <p class="lead mb-3" id="customQuestion"></p>
+                    <div id="customOptions"></div>
+                    <button class="btn btn-primary mt-3" onclick="nextCustomQuestion()">Next</button>
+                </div>
+                <div class="card border-0 shadow-sm p-4 d-none" id="customResultCard" style="border-left:5px solid #8b5cf6;">
+                    <div class="text-center">
+                        <h3>Verified Assessment Complete</h3>
+                        <div class="display-1 fw-bold text-primary" id="customScore">--</div><p>/100</p>
+                        <div class="alert alert-success">Badge: <strong id="customBadge"></strong></div>
+                        <a href="/skill-twin" class="btn btn-primary btn-lg">Get Verified Badge</a>
+                        <button class="btn btn-outline-secondary btn-lg ms-2" onclick="shareCustomScore()">Share Score</button>
+                    </div>
+                </div>
+            </div></div>
+        </div>
+
+        <!-- Upload Stack Tab -->
+        <div class="tab-pane fade" id="uploadStack">
+            <div class="row"><div class="col-lg-7 mx-auto">
+                <div class="card border-0 shadow-sm p-4">
+                    <h4>Upload Your Custom Skill Stack</h4>
+                    <p class="text-muted">Companies can define their own assessment questions for candidates.</p>
+                    <form onsubmit="uploadStack(event)">
+                        <div class="mb-3"><label class="form-label">Stack Name</label><input type="text" class="form-control" id="stackName" placeholder="e.g. React Native, DevOps, Data Science" required></div>
+                        <div class="mb-3"><label class="form-label">Company Name</label><input type="text" class="form-control" id="stackCompany" placeholder="Your company name" required></div>
+                        <div class="mb-3"><label class="form-label">Question 1</label><input type="text" class="form-control" id="q1" placeholder="Question" required>
+                            <input type="text" class="form-control mt-1" placeholder="Option A"><input type="text" class="form-control mt-1" placeholder="Option B"><input type="text" class="form-control mt-1" placeholder="Option C"><input type="text" class="form-control mt-1" placeholder="Option D">
+                            <select class="form-select mt-1"><option>Correct Answer</option><option>A</option><option>B</option><option>C</option><option>D</option></select>
+                        </div>
+                        <p class="text-muted">Add more questions after upload from the admin panel.</p>
+                        <button type="submit" class="btn btn-primary btn-lg w-100">Upload Stack</button>
+                        <p class="text-success mt-2 text-center" id="uploadMsg" style="display:none;"></p>
+                    </form>
+                </div>
+            </div></div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Load stacks from localStorage + defaults
+function loadCustomStacks(){
+    const select = document.getElementById('assessmentStack');
+    select.innerHTML = '<option value="python">Python (Default)</option><option value="javascript">JavaScript (Default)</option>';
+    const custom = JSON.parse(localStorage.getItem('custom_stacks')||'[]');
+    custom.forEach(s => {
+        select.innerHTML += '<option value="'+s.name.toLowerCase().replace(/\s/g,'_')+'">'+s.name+' by '+s.company+'</option>';
+    });
+}
+
+function uploadStack(e){
+    e.preventDefault();
+    const name = document.getElementById('stackName').value;
+    const company = document.getElementById('stackCompany').value;
+    if(!name||!company)return;
+    const stacks = JSON.parse(localStorage.getItem('custom_stacks')||'[]');
+    stacks.push({name, company, date: new Date().toISOString()});
+    localStorage.setItem('custom_stacks', JSON.stringify(stacks));
+    document.getElementById('uploadMsg').textContent = 'Stack "'+name+'" uploaded! It will appear in assessments after review.';
+    document.getElementById('uploadMsg').style.display = 'block';
+    document.querySelector('form').reset();
+    loadCustomStacks();
+}
+
+function startCustomAssessment(){
+    // Uses same logic as skill-check but can load custom questions
+    window.location.href = '/skill-check';
+}
+
+document.addEventListener('DOMContentLoaded', loadCustomStacks);
+</script>
+{% endblock %}

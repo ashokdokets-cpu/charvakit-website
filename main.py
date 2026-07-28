@@ -492,6 +492,10 @@ async def request_training(request: Request):
 async def partner_verification(request: Request):
     return templates.TemplateResponse("partner-verification.html", {"request": request, "title": "Partner With Us - Charvak"})
 
+@app.get("/custom-assessment", response_class=HTMLResponse)
+async def custom_assessment(request: Request):
+    return templates.TemplateResponse("custom-assessment.html", {"request": request, "title": "Custom Assessment - Charvak Skill-Twin"})
+
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
