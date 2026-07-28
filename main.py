@@ -504,6 +504,15 @@ async def ai_generate_stack(request: Request):
 async def badge_page(request: Request):
     return templates.TemplateResponse("badge.html", {"request": request, "title": "Your Verified Badge - Charvak"})
 
+@app.get("/api/health/ai")
+async def ai_health():
+    import os
+    openai_key = os.getenv("OPENAI_API_KEY", "")
+    return {
+        "openai_configured": bool(openai_key),
+        "key_prefix": openai_key[:10] + "..." if openai_key else "NOT SET"
+    }
+
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
