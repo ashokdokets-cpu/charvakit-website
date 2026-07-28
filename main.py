@@ -17,6 +17,8 @@ from ai_service import (
     localize_website, generate_legal_contract, analyze_legacy_code,
     generate_agent_schema, is_ai_ready
 )
+from monitor_service import add_monitor, check_all_sites, get_monitor_status
+from job_service import job_board
 
 app = FastAPI(title="Charvak IT Consulting Pvt Ltd - Web Designing | Staff Augmentation")
 
@@ -571,6 +573,61 @@ async def api_generate_schema(request: Request):
     data = await request.json()
     result = await generate_agent_schema(data.get("url", ""))
     return result
+
+# --- Silent-Killer Monitor Routes ---
+@app.post("/api/monitor/add")
+async def api_add_monitor(request: Request):
+    data = await request.json()
+    result = await add_monitor(data.get("url", ""), data.get("name", ""), data.get("interval", 300))
+    return result
+
+@app.get("/api/monitor/status")
+async def api_monitor_status(url: str = None):
+    return await get_monitor_status(url)
+
+@app.post("/api/monitor/check")
+async def api_check_all():
+    results = await check_all_sites()
+    return {"checked": len(results), "results": results}
+
+# --- Live Job Board Routes ---
+@app.post("/api/jobs/post")
+async def api_post_job(request: Request):
+    data = await request.json()
+    result = job_board.post_job(
+        title=data.get("title", ""),
+        company=data.get("company", ""),
+        job_type=data.get("type", "Permanent"),
+        location=data.get("location", "Remote"),
+        salary=data.get("salary", ""),
+        description=data.get("description", ""),
+        skills=data.get("skills", ""),
+        posted_by=data.get("posted_by", "api")
+    )
+    return result
+
+@app.get("/api/jobs/search")
+async def api_search_jobs(type: str = None, location: str = None, keyword: str = None):
+    filters = {}
+    if type: filters['type'] = type
+    if location: filters['location'] = location
+    if keyword: filters['keyword'] = keyword
+    jobs = job_board.get_jobs(filters)
+    return {"jobs": jobs, "count": len(jobs)}
+
+@app.post("/api/jobs/apply")
+async def api_apply_job(request: Request):
+    data = await request.json()
+    result = job_board.apply_to_job(
+        data.get("job_id", ""),
+        data.get("user_id", ""),
+        data.get("resume_url")
+    )
+    return result
+
+@app.get("/api/jobs/stats")
+async def api_job_stats():
+    return job_board.get_stats()
 
 @app.get("/health")
 async def health_check():
