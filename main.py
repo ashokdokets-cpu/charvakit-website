@@ -90,6 +90,9 @@ async def products(request: Request):
         {"name": "Design-Token Sentinel", "description": "Figma ↔ GitHub brand sync", "features": ["Figma Sync", "Auto PRs", "Multi-Domain", "WCAG Check"], "link": "/design-token-sentinel", "icon": "palette"},
         {"name": "Legacy-Shift", "description": "Old code → Next.js Jamstack", "features": ["Legacy Parse", "Auto-Convert", "10x Faster", "Auto-Tested"], "link": "/legacy-shift", "icon": "clock-history"},
         {"name": "Agent-Ready Wrapper", "description": "JSON-LD → AI agent storefront", "features": ["Structured Data", "Micro-APIs", "Auto-Sync", "AI Commerce"], "link": "/agent-ready", "icon": "cpu"},
+        {"name": "Silent-Killer Sentinel", "description": "24/7 monitoring & auto-fix for webhooks", "features": ["5-Min Checks", "Instant Alerts", "Auto-Hotfix"], "link": "/silent-killer", "icon": "activity"},
+        {"name": "AI-Slop Quarantine", "description": "Clean AI-generated code bloat & WCAG errors", "features": ["De-Bloat", "Fix Layouts", "WCAG Fix"], "link": "/ai-slop-quarantine", "icon": "recycle"},
+        {"name": "Developer Entropy Engine", "description": "Track team skill decay & upskill", "features": ["Code Quality", "Skill Gaps", "Auto-Learning"], "link": "/developer-entropy", "icon": "graph-down"},
     ]
     return templates.TemplateResponse("products-list.html", {"request": request, "title": "All Products - Charvak", "products": products_data})
 
