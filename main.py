@@ -19,8 +19,23 @@ from ai_service import (
 )
 from monitor_service import add_monitor, check_all_sites, get_monitor_status
 from job_service import job_board
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="Charvak IT Consulting Pvt Ltd - Web Designing | Staff Augmentation")
+
+# CORS - Allow DoketsRB to access Charvakit API
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://www.doketsrb.com",
+        "https://doketsrb.com",
+        "http://localhost:3000",
+        "http://127.0.0.1:5500"
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
