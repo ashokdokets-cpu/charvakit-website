@@ -95,10 +95,19 @@ function applyJob(e, title, company){
     e.preventDefault();
     const name = prompt('Enter your name to apply for ' + title + ' at ' + company + ':');
     if(name){
+        // Save locally
         const applications = JSON.parse(localStorage.getItem('job_applications')||'[]');
         applications.push({name, title, company, date: new Date().toISOString()});
         localStorage.setItem('job_applications', JSON.stringify(applications));
-        alert('Application submitted for ' + title + ' at ' + company + '! We will contact you shortly.');
+        
+        // Also send to server
+        fetch('/api/jobs/apply', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({name, title, company, date: new Date().toISOString()})
+        });
+        
+        alert('Application submitted for ' + title + ' at ' + company + '!');
     }
 }
 

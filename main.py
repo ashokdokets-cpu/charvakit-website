@@ -661,3 +661,27 @@ async def api_job_stats():
         return job_board.get_stats()
     except:
         return {"active_jobs": 6, "total_applications": 45, "total_candidates": 10000}
+
+@app.post("/api/jobs/apply")
+async def api_apply_job(request: Request):
+    data = await request.json()
+    # Save to database (or file for now)
+    import json as j
+    try:
+        with open("applications.json", "r") as f:
+            apps = j.load(f)
+    except:
+        apps = []
+    
+    apps.append({
+        "name": data.get("name"),
+        "job_title": data.get("title"),
+        "company": data.get("company"),
+        "date": data.get("date"),
+        "source": "job_board"
+    })
+    
+    with open("applications.json", "w") as f:
+        j.dump(apps, f, indent=2)
+    
+    return {"status": "success", "message": "Application saved to server"}
