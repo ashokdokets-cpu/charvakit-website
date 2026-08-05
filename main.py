@@ -637,3 +637,7 @@ async def api_job_stats():
 async def api_get_applications():
     apps = db.get_applications()
     return {"applications": apps, "count": len(apps)}
+
+@app.get("/micro-internship", response_class=HTMLResponse)
+async def micro_internship(request: Request):
+    return templates.TemplateResponse("micro-internship.html", {"request": request, "title": "Micro-Internships - Charvak First Job Engine"})

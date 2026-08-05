@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Micro-Internships - Charvak First Job Engine{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4">
+        <span class="badge bg-warning text-dark mb-2 px-3 py-2">🚀 New</span>
+        <h1 class="display-4 fw-bold">Micro-Internships</h1>
+        <p class="lead">Real projects. Real companies. Real experience. 2 weeks. Free for students.</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <!-- How It Works -->
+    <div class="row mb-5">
+        <div class="col-lg-8 mx-auto text-center">
+            <h3 class="mb-4">How Micro-Internships Work</h3>
+            <div class="row g-3">
+                <div class="col-md-3"><div class="card p-3 h-100"><h2 class="text-primary">1</h2><h6>Take Skill Check</h6><small class="text-muted">Free 5-min assessment to know your level</small></div></div>
+                <div class="col-md-3"><div class="card p-3 h-100"><h2 class="text-primary">2</h2><h6>Pick Project</h6><small class="text-muted">Choose from real company tasks</small></div></div>
+                <div class="col-md-3"><div class="card p-3 h-100"><h2 class="text-primary">3</h2><h6>Build in 2 Weeks</h6><small class="text-muted">AI-reviewed code, real deliverables</small></div></div>
+                <div class="col-md-3"><div class="card p-3 h-100"><h2 class="text-primary">4</h2><h6>Get Verified & Hired</h6><small class="text-muted">Shareable badge + placement</small></div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Available Micro-Internships -->
+    <h3 class="mb-4 text-center">Available Micro-Internships</h3>
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="card h-100 p-4"><span class="badge bg-success mb-2">Beginner</span><h5>Build a Landing Page</h5><p class="text-muted">HTML, CSS, Bootstrap</p><p><strong>Duration:</strong> 2 weeks</p><p><strong>Company:</strong> Local Business Owner</p><p><strong>Skills:</strong> HTML, CSS, Responsive Design</p><hr><p class="mb-1"><strong>You'll Build:</strong> A professional landing page for a real business</p><p class="mb-1"><strong>You'll Get:</strong> Portfolio piece + Verified Badge</p><p class="text-success fw-bold">FREE for Students</p><a href="/skill-check" class="btn btn-primary w-100 mt-2">Start Skill Check First</a></div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 p-4"><span class="badge bg-info mb-2">Intermediate</span><h5>API Integration Task</h5><p class="text-muted">Python, FastAPI, REST</p><p><strong>Duration:</strong> 2 weeks</p><p><strong>Company:</strong> Tech Startup</p><p><strong>Skills:</strong> Python, FastAPI, JSON, REST</p><hr><p class="mb-1"><strong>You'll Build:</strong> A working API endpoint for a real product</p><p class="mb-1"><strong>You'll Get:</strong> Backend portfolio + Verified Badge</p><p class="text-success fw-bold">FREE for Students</p><a href="/skill-check" class="btn btn-primary w-100 mt-2">Start Skill Check First</a></div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 p-4"><span class="badge bg-warning text-dark mb-2">Advanced</span><h5>Full Stack Feature</h5><p class="text-muted">React + Node.js + Database</p><p><strong>Duration:</strong> 2 weeks</p><p><strong>Company:</strong> SaaS Company</p><p><strong>Skills:</strong> React, Node.js, MongoDB, Git</p><hr><p class="mb-1"><strong>You'll Build:</strong> A complete feature for a live SaaS product</p><p class="mb-1"><strong>You'll Get:</strong> Full stack portfolio + Verified Badge</p><p class="text-success fw-bold">FREE for Students</p><a href="/skill-check" class="btn btn-primary w-100 mt-2">Start Skill Check First</a></div>
+        </div>
+    </div>
+
+    <!-- Industries -->
+    <h4 class="mb-3 text-center">Industries Covered</h4>
+    <div class="row g-2 mb-5 text-center">
+        <div class="col-6 col-md-2"><span class="badge bg-light text-dark p-2 w-100">IT / Tech</span></div>
+        <div class="col-6 col-md-2"><span class="badge bg-light text-dark p-2 w-100">E-commerce</span></div>
+        <div class="col-6 col-md-2"><span class="badge bg-light text-dark p-2 w-100">Healthcare</span></div>
+        <div class="col-6 col-md-2"><span class="badge bg-light text-dark p-2 w-100">Education</span></div>
+        <div class="col-6 col-md-2"><span class="badge bg-light text-dark p-2 w-100">Finance</span></div>
+        <div class="col-6 col-md-2"><span class="badge bg-light text-dark p-2 w-100">Real Estate</span></div>
+        <div class="col-6 col-md-2"><span class="badge bg-light text-dark p-2 w-100">Logistics</span></div>
+        <div class="col-6 col-md-2"><span class="badge bg-light text-dark p-2 w-100">Media</span></div>
+        <div class="col-6 col-md-2"><span class="badge bg-light text-dark p-2 w-100">Retail</span></div>
+        <div class="col-6 col-md-2"><span class="badge bg-light text-dark p-2 w-100">Manufacturing</span></div>
+        <div class="col-6 col-md-2"><span class="badge bg-light text-dark p-2 w-100">Agriculture</span></div>
+        <div class="col-6 col-md-2"><span class="badge bg-light text-dark p-2 w-100">Any Business</span></div>
+    </div>
+
+    <!-- Dual CTA -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-6"><div class="card p-4 bg-success text-white h-100"><h4>🎓 For Students</h4><p>FREE. Get real experience. Build your portfolio. Land your first job.</p><ul><li>Free Skill Assessment</li><li>Real Company Projects</li><li>AI-Verified Portfolio</li><li>Placement Support</li></ul><a href="/skill-check" class="btn btn-light btn-lg mt-2">Start Free Skill Check</a></div></div>
+        <div class="col-md-6"><div class="card p-4 bg-primary text-white h-100"><h4>🏢 For Companies</h4><p>Get work done. Test-drive talent. Hire pre-verified candidates.</p><ul><li>Post Micro-Projects (₹2,000-5,000)</li><li>AI-Reviewed Deliverables</li><li>Early Access to Vetted Talent</li><li>48-Hour Placement Option</li></ul><a href="/contact" class="btn btn-light btn-lg mt-2">Post a Micro-Project</a></div></div>
+    </div>
+
+    <!-- Revenue Model -->
+    <div class="card bg-dark text-white p-4 mb-4">
+        <h4 class="text-center mb-3">How Charvak Makes This Sustainable</h4>
+        <div class="row g-3 text-center">
+            <div class="col-6 col-md-3"><small>Company Sponsors</small><h5>₹2,000-5,000</h5><small>Per micro-project</small></div>
+            <div class="col-6 col-md-3"><small>Internship Placement</small><h5>₹5,000-15,000</h5><small>Per intern placed</small></div>
+            <div class="col-6 col-md-3"><small>Full-Time Placement</small><h5>8.33% CTC</h5><small>Per hire</small></div>
+            <div class="col-6 col-md-3"><small>Student</small><h5>₹0</h5><small>Always FREE</small></div>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="text-center p-5 bg-light rounded">
+        <h3>🎯 90% of Micro-Interns Get Job Offers</h3>
+        <p class="lead mb-0">Join students worldwide who landed their first job through Charvak's verified experience program.</p>
+        <a href="/skill-check" class="btn btn-primary btn-lg mt-4">Start Your Journey — It's Free</a>
+    </div>
+</div>
+{% endblock %}
