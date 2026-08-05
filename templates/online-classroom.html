@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% block title %}Online Classroom - Charvak Training Engine{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4">
+        <span class="badge bg-success mb-2 px-3 py-2">New</span>
+        <h1 class="display-4 fw-bold">Online Classroom</h1>
+        <p class="lead">Live sessions, course materials, and progress tracking — all in one place.</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row g-4 mb-5">
+        <!-- Live Session -->
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <i class="bi bi-camera-video display-3 text-primary mb-3"></i>
+                    <h4>Live Video Session</h4>
+                    <p class="text-muted">Conduct live classes via Google Meet, Zoom, or our built-in video.</p>
+                    <div class="mb-3">
+                        <label class="form-label">Session Link</label>
+                        <input type="url" class="form-control" id="sessionLink" placeholder="Paste Google Meet / Zoom link">
+                    </div>
+                    <button class="btn btn-primary w-100" onclick="joinSession()">
+                        <i class="bi bi-play-circle me-2"></i>Join Live Session
+                    </button>
+                    <div class="mt-3">
+                        <p class="small text-muted">Popular platforms:</p>
+                        <a href="https://meet.google.com" target="_blank" class="btn btn-outline-primary btn-sm me-2">Google Meet</a>
+                        <a href="https://zoom.us" target="_blank" class="btn btn-outline-primary btn-sm me-2">Zoom</a>
+                        <a href="https://teams.microsoft.com" target="_blank" class="btn btn-outline-primary btn-sm">Microsoft Teams</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Course Materials -->
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <i class="bi bi-folder display-3 text-primary mb-3"></i>
+                    <h4>Course Materials</h4>
+                    <p class="text-muted">Upload and share course content with enrolled students.</p>
+                    <div class="mb-3">
+                        <label class="form-label">Upload Material</label>
+                        <input type="file" class="form-control" id="materialUpload">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Or Paste Resource Link</label>
+                        <input type="url" class="form-control" id="resourceLink" placeholder="Google Drive, Notion, GitHub...">
+                    </div>
+                    <button class="btn btn-primary w-100" onclick="addMaterial()">
+                        <i class="bi bi-upload me-2"></i>Share Material
+                    </button>
+                    <div id="materialsList" class="mt-3"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Tracker -->
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <i class="bi bi-graph-up display-3 text-primary mb-3"></i>
+                    <h4>Progress Tracker</h4>
+                    <p class="text-muted">Track course completion and student progress.</p>
+                    <div class="mb-3">
+                        <label class="form-label">Module Name</label>
+                        <input type="text" class="form-control" id="moduleName" placeholder="e.g. Introduction to Python">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Completion %</label>
+                        <input type="range" class="form-range" id="completion" min="0" max="100" value="0" oninput="document.getElementById('completionVal').textContent=this.value+'%'">
+                        <span id="completionVal">0%</span>
+                    </div>
+                    <button class="btn btn-primary w-100" onclick="updateProgress()">
+                        <i class="bi bi-check-circle me-2"></i>Update Progress
+                    </button>
+                    <div id="progressList" class="mt-3"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Certificate -->
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4 text-center">
+                    <i class="bi bi-award display-3 text-primary mb-3"></i>
+                    <h4>Certificate of Completion</h4>
+                    <p class="text-muted">Generate certificate when course is 100% complete.</p>
+                    <button class="btn btn-success btn-lg w-100" onclick="generateCertificate()">
+                        <i class="bi bi-download me-2"></i>Generate Certificate
+                    </button>
+                    <p class="small text-muted mt-2">Available after 100% course completion</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center">
+        <a href="/training-engine" class="btn btn-outline-primary">Back to Training Engine</a>
+    </div>
+</div>
+
+<script>
+function joinSession(){
+    const link = document.getElementById('sessionLink').value;
+    if(link) window.open(link, '_blank');
+    else alert('Paste a Google Meet or Zoom link first!');
+}
+
+function addMaterial(){
+    const link = document.getElementById('resourceLink').value;
+    const file = document.getElementById('materialUpload').files[0];
+    if(link || file){
+        const materials = JSON.parse(localStorage.getItem('course_materials')||'[]');
+        materials.push({name: file ? file.name : link, url: link || '#', date: new Date().toISOString()});
+        localStorage.setItem('course_materials', JSON.stringify(materials));
+        document.getElementById('resourceLink').value = '';
+        document.getElementById('materialUpload').value = '';
+        loadMaterials();
+        alert('Material shared successfully!');
+    } else {
+        alert('Upload a file or paste a link!');
+    }
+}
+
+function loadMaterials(){
+    const materials = JSON.parse(localStorage.getItem('course_materials')||'[]');
+    document.getElementById('materialsList').innerHTML = materials.map(m => 
+        '<div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded"><span>'+m.name+'</span><small class="text-muted">'+new Date(m.date).toLocaleDateString()+'</small></div>'
+    ).join('') || '<p class="text-muted">No materials yet</p>';
+}
+
+function updateProgress(){
+    const module = document.getElementById('moduleName').value;
+    const completion = document.getElementById('completion').value;
+    if(module){
+        const progress = JSON.parse(localStorage.getItem('course_progress')||'[]');
+        progress.push({module, completion: completion+'%', date: new Date().toISOString()});
+        localStorage.setItem('course_progress', JSON.stringify(progress));
+        document.getElementById('moduleName').value = '';
+        loadProgress();
+        alert('Progress updated!');
+    }
+}
+
+function loadProgress(){
+    const progress = JSON.parse(localStorage.getItem('course_progress')||'[]');
+    document.getElementById('progressList').innerHTML = progress.map(p => 
+        '<div class="mb-2 p-2 bg-light rounded"><strong>'+p.module+'</strong><div class="progress mt-1"><div class="progress-bar bg-success" style="width:'+p.completion+'">'+p.completion+'</div></div></div>'
+    ).join('') || '<p class="text-muted">No progress tracked yet</p>';
+}
+
+function generateCertificate(){
+    const totalProgress = JSON.parse(localStorage.getItem('course_progress')||'[]');
+    if(totalProgress.length > 0){
+        const name = prompt('Enter your name for the certificate:');
+        if(name){
+            alert('Certificate generated for '+name+'! Downloading...');
+            window.open('/badge?name='+encodeURIComponent(name)+'&stack=Course+Completion&score=100%&difficulty=Training');
+        }
+    } else {
+        alert('Complete course modules first to generate certificate!');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+    loadMaterials();
+    loadProgress();
+});
+</script>
+{% endblock %}

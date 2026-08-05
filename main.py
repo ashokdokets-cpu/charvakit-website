@@ -340,6 +340,10 @@ async def submit_referral(request: Request):
 async def training_engine(request: Request):
     return templates.TemplateResponse("training-engine.html", {"request": request, "title": "Training Engine - Charvak Career Engine"})
 
+@app.get("/online-classroom", response_class=HTMLResponse)
+async def online_classroom(request: Request):
+    return templates.TemplateResponse("online-classroom.html", {"request": request, "title": "Online Classroom - Charvak"})
+
 @app.get("/background-verification", response_class=HTMLResponse)
 async def background_verification(request: Request):
     return templates.TemplateResponse("background-verification.html", {"request": request, "title": "Background Verification - Charvak Career Engine"})
