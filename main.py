@@ -19,6 +19,7 @@ from ai_service import (
 )
 from monitor_service import add_monitor, check_all_sites, get_monitor_status
 from job_service import job_board
+from whatsapp_bot import whatsapp_handler, VERIFY_TOKEN
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="Charvak IT Consulting Pvt Ltd - Web Designing | Staff Augmentation")
@@ -155,8 +156,6 @@ async def refund(request: Request):
 @app.get("/voice-to-web", response_class=HTMLResponse)
 async def voice_to_web(request: Request):
     return templates.TemplateResponse("voice-to-web.html", {"request": request, "title": "Voice-to-Web Engine - Charvak"})
-from whatsapp_bot import whatsapp_handler, VERIFY_TOKEN
-import json
 
 # WhatsApp Webhook - Verification
 @app.get("/webhook/whatsapp")
@@ -534,15 +533,6 @@ async def badge_page(request: Request):
     return templates.TemplateResponse("badge.html", {"request": request, "title": "Your Verified Badge - Charvak"})
 
 @app.get("/api/health/ai")
-async def ai_health():
-    import os
-    openai_key = os.getenv("OPENAI_API_KEY", "")
-    return {
-        "openai_configured": bool(openai_key),
-        "key_prefix": openai_key[:10] + "..." if openai_key else "NOT SET"
-    }
-
-@app.get("/api/health/ai")
 async def ai_health_check():
     return {"openai_configured": is_ai_ready(), "models_activated": 8 if is_ai_ready() else 0}
 
@@ -612,21 +602,6 @@ async def api_check_all():
     results = await check_all_sites()
     return {"checked": len(results), "results": results}
 
-# --- Live Job Board Routes ---
-@app.post("/api/jobs/post")
-async def api_post_job(request: Request):
-    data = await request.json()
-    result = job_board.post_job(
-        title=data.get("title", ""),
-        company=data.get("company", ""),
-        job_type=data.get("type", "Permanent"),
-        location=data.get("location", "Remote"),
-        salary=data.get("salary", ""),
-        description=data.get("description", ""),
-        skills=data.get("skills", ""),
-        posted_by=data.get("posted_by", "api")
-    )
-    return result
 
 @app.get("/api/jobs/search")
 async def api_search_jobs(type: str = None, location: str = None, keyword: str = None):
@@ -640,12 +615,8 @@ async def api_search_jobs(type: str = None, location: str = None, keyword: str =
 @app.post("/api/jobs/apply")
 async def api_apply_job(request: Request):
     data = await request.json()
-    result = job_board.apply_to_job(
-        data.get("job_id", ""),
-        data.get("user_id", ""),
-        data.get("resume_url")
-    )
-    return result
+    db.save_application(data)
+    return {"status": "success", "message": "Application saved to database"}
 
 @app.get("/health")
 async def health_check():
@@ -662,26 +633,7 @@ async def api_job_stats():
     except:
         return {"active_jobs": 6, "total_applications": 45, "total_candidates": 10000}
 
-@app.post("/api/jobs/apply")
-async def api_apply_job(request: Request):
-    data = await request.json()
-    # Save to database (or file for now)
-    import json as j
-    try:
-        with open("applications.json", "r") as f:
-            apps = j.load(f)
-    except:
-        apps = []
-    
-    apps.append({
-        "name": data.get("name"),
-        "job_title": data.get("title"),
-        "company": data.get("company"),
-        "date": data.get("date"),
-        "source": "job_board"
-    })
-    
-    with open("applications.json", "w") as f:
-        j.dump(apps, f, indent=2)
-    
-    return {"status": "success", "message": "Application saved to server"}
+@app.get("/api/jobs/applications")
+async def api_get_applications():
+    apps = db.get_applications()
+    return {"applications": apps, "count": len(apps)}

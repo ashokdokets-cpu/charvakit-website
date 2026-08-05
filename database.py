@@ -1,37 +1,153 @@
 """
 Charvakit Database Module
-PostgreSQL database connection, models, and CRUD operations
+PostgreSQL (production) + SQLite (development fallback)
 """
 import os
-import hashlib
-import secrets
-from datetime import datetime
-from typing import Optional, List, Dict
-
-# Using SQLite for development (easy setup), PostgreSQL for production
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///charvakit.db")
-
-# For production PostgreSQL:
-# DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:pass@host:5432/charvakit")
-
-# --- Simple Database Class (SQLite) ---
 import sqlite3
-import json
+import secrets
+from datetime import datetime, timedelta
+
+# Try PostgreSQL, fallback to SQLite
+DATABASE_URL = os.getenv("DATABASE_URL", "")
+
+# Check if we're on PostgreSQL
+USE_POSTGRES = DATABASE_URL and "postgres" in DATABASE_URL
+
+if USE_POSTGRES:
+    import psycopg2
+    import psycopg2.extras
 
 class Database:
     def __init__(self, db_path="charvakit.db"):
         self.db_path = db_path
-        self.init_db()
+        if USE_POSTGRES:
+            self.init_postgres()
+        else:
+            self.init_sqlite()
     
-    def connect(self):
-        return sqlite3.connect(self.db_path)
+    # ============ POSTGRESQL ============
+    def init_postgres(self):
+        """Initialize PostgreSQL tables"""
+        try:
+            conn = psycopg2.connect(DATABASE_URL)
+            cursor = conn.cursor()
+            
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS applications (
+                    id SERIAL PRIMARY KEY,
+                    name VARCHAR(255),
+                    job_title VARCHAR(255),
+                    company VARCHAR(255),
+                    email VARCHAR(255),
+                    date TIMESTAMP DEFAULT NOW(),
+                    source VARCHAR(50) DEFAULT 'job_board',
+                    status VARCHAR(50) DEFAULT 'new'
+                )
+            ''')
+            
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS jobs (
+                    id SERIAL PRIMARY KEY,
+                    title VARCHAR(255),
+                    company VARCHAR(255),
+                    type VARCHAR(50),
+                    location VARCHAR(255),
+                    salary VARCHAR(100),
+                    description TEXT,
+                    skills VARCHAR(500),
+                    posted_date TIMESTAMP DEFAULT NOW(),
+                    expiry_date TIMESTAMP DEFAULT (NOW() + INTERVAL '45 days'),
+                    is_active BOOLEAN DEFAULT TRUE
+                )
+            ''')
+            
+            conn.commit()
+            conn.close()
+            print("PostgreSQL tables ready")
+        except Exception as e:
+            print(f"PostgreSQL init error: {e}")
     
-    def init_db(self):
-        """Create all tables"""
-        conn = self.connect()
+    def save_application(self, data: dict):
+        """Save application to PostgreSQL"""
+        try:
+            conn = psycopg2.connect(DATABASE_URL)
+            cursor = conn.cursor()
+            cursor.execute('''
+                INSERT INTO applications (name, job_title, company, date, source)
+                VALUES (%s, %s, %s, %s, %s)
+            ''', (data.get('name'), data.get('title'), data.get('company'),
+                  data.get('date', datetime.now().isoformat()), data.get('source', 'job_board')))
+            conn.commit()
+            conn.close()
+            return True
+        except:
+            return self._save_sqlite(data)
+    
+    def get_applications(self):
+        """Get all applications from PostgreSQL"""
+        try:
+            conn = psycopg2.connect(DATABASE_URL)
+            cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+            cursor.execute('SELECT * FROM applications ORDER BY date DESC')
+            apps = cursor.fetchall()
+            conn.close()
+            return [dict(a) for a in apps]
+        except:
+            return self._get_applications_sqlite()
+    
+    def get_active_jobs(self):
+        """Get non-expired jobs from PostgreSQL"""
+        try:
+            conn = psycopg2.connect(DATABASE_URL)
+            cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+            cursor.execute('SELECT * FROM jobs WHERE is_active = TRUE AND expiry_date > NOW()')
+            jobs = cursor.fetchall()
+            conn.close()
+            return [dict(j) for j in jobs]
+        except:
+            return []
+    
+    def expire_old_jobs(self):
+        """Archive jobs past expiry date"""
+        try:
+            conn = psycopg2.connect(DATABASE_URL)
+            cursor = conn.cursor()
+            cursor.execute('UPDATE jobs SET is_active = FALSE WHERE expiry_date < NOW()')
+            conn.commit()
+            conn.close()
+        except:
+            pass
+    
+    # ============ SQLITE FALLBACK ============
+    def _save_sqlite(self, data: dict):
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO applications (application_id, user_id, job_title, company, source)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (f"APP{secrets.token_hex(4).upper()}", 'user', 
+              data.get('title'), data.get('company'), 'job_board'))
+        conn.commit()
+        conn.close()
+        return True
+    
+    def _get_applications_sqlite(self):
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        try:
+            cursor.execute('SELECT * FROM applications ORDER BY last_updated DESC')
+            apps = cursor.fetchall()
+            conn.close()
+            return [{"name": a[2], "job_title": a[3], "company": a[4], "date": a[7]} for a in apps]
+        except:
+            conn.close()
+            return []
+    
+    def init_sqlite(self):
+        """Create all SQLite tables"""
+        conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         
-        # Users table
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -48,7 +164,6 @@ class Database:
             )
         ''')
         
-        # Applications table
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS applications (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -61,12 +176,10 @@ class Database:
                 applied_date DATE DEFAULT CURRENT_DATE,
                 source TEXT DEFAULT 'charvakit',
                 notes TEXT,
-                last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (user_id) REFERENCES users(user_id)
+                last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
         
-        # Jobs table
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS jobs (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -84,37 +197,6 @@ class Database:
             )
         ''')
         
-        # Skill gaps table
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS skill_gaps (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id TEXT NOT NULL,
-                skill TEXT NOT NULL,
-                current_level INTEGER,
-                required_level INTEGER,
-                recommended_course TEXT,
-                synced_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (user_id) REFERENCES users(user_id)
-            )
-        ''')
-        
-        # Courses table
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS courses (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                course_id TEXT UNIQUE NOT NULL,
-                title TEXT NOT NULL,
-                trainer TEXT,
-                category TEXT,
-                duration TEXT,
-                price REAL,
-                provider TEXT DEFAULT 'charvakit',
-                is_active BOOLEAN DEFAULT 1,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-        
-        # Contact messages
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS contact_messages (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -130,127 +212,22 @@ class Database:
         conn.commit()
         conn.close()
     
-    # --- User Operations ---
-    def create_user(self, email: str, password: str, name: str, role: str = "candidate", phone: str = None) -> Dict:
-        conn = self.connect()
+    # Common methods
+    def create_user(self, email: str, password: str, name: str, role: str = "candidate", phone: str = None):
+        conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         user_id = f"USR{secrets.token_hex(4).upper()}"
+        import hashlib
         password_hash = hashlib.sha256(password.encode()).hexdigest()
-        
         try:
-            cursor.execute('''
-                INSERT INTO users (user_id, email, password_hash, name, phone, role)
-                VALUES (?, ?, ?, ?, ?, ?)
-            ''', (user_id, email, password_hash, name, phone, role))
+            cursor.execute('INSERT INTO users (user_id, email, password_hash, name, phone, role) VALUES (?, ?, ?, ?, ?, ?)',
+                          (user_id, email, password_hash, name, phone, role))
             conn.commit()
-            return {"status": "success", "user_id": user_id, "email": email, "name": name}
-        except sqlite3.IntegrityError:
+            return {"status": "success", "user_id": user_id}
+        except:
             return {"status": "error", "message": "Email already registered"}
         finally:
             conn.close()
-    
-    def authenticate_user(self, email: str, password: str) -> Optional[Dict]:
-        conn = self.connect()
-        cursor = conn.cursor()
-        password_hash = hashlib.sha256(password.encode()).hexdigest()
-        
-        cursor.execute('SELECT * FROM users WHERE email = ? AND password_hash = ?', (email, password_hash))
-        user = cursor.fetchone()
-        conn.close()
-        
-        if user:
-            return {
-                "user_id": user[1], "email": user[2], "name": user[4],
-                "phone": user[5], "role": user[6], "doketsrb_id": user[7]
-            }
-        return None
-    
-    def get_user(self, user_id: str) -> Optional[Dict]:
-        conn = self.connect()
-        cursor = conn.cursor()
-        cursor.execute('SELECT * FROM users WHERE user_id = ?', (user_id,))
-        user = cursor.fetchone()
-        conn.close()
-        if user:
-            return {"user_id": user[1], "email": user[2], "name": user[4], "role": user[6]}
-        return None
-    
-    # --- Application Operations ---
-    def add_application(self, user_id: str, job_title: str, company: str, job_url: str = None, source: str = "charvakit") -> Dict:
-        conn = self.connect()
-        cursor = conn.cursor()
-        app_id = f"APP{secrets.token_hex(4).upper()}"
-        
-        cursor.execute('''
-            INSERT INTO applications (application_id, user_id, job_title, company, job_url, source)
-            VALUES (?, ?, ?, ?, ?, ?)
-        ''', (app_id, user_id, job_title, company, job_url, source))
-        conn.commit()
-        conn.close()
-        return {"status": "success", "application_id": app_id}
-    
-    def get_user_applications(self, user_id: str) -> List[Dict]:
-        conn = self.connect()
-        cursor = conn.cursor()
-        cursor.execute('SELECT * FROM applications WHERE user_id = ? ORDER BY last_updated DESC', (user_id,))
-        apps = cursor.fetchall()
-        conn.close()
-        return [{"application_id": a[1], "job_title": a[3], "company": a[4], "status": a[6], "applied_date": a[7], "source": a[8]} for a in apps]
-    
-    def update_application_status(self, app_id: str, status: str) -> Dict:
-        conn = self.connect()
-        cursor = conn.cursor()
-        cursor.execute('UPDATE applications SET status = ?, last_updated = CURRENT_TIMESTAMP WHERE application_id = ?', (status, app_id))
-        conn.commit()
-        conn.close()
-        return {"status": "success", "application_id": app_id, "new_status": status}
-    
-    # --- Job Operations ---
-    def post_job(self, title: str, company: str, job_type: str, location: str, salary: str, description: str, skills: str, posted_by: str) -> Dict:
-        conn = self.connect()
-        cursor = conn.cursor()
-        job_id = f"JOB{secrets.token_hex(4).upper()}"
-        
-        cursor.execute('''
-            INSERT INTO jobs (job_id, title, company, type, location, salary, description, skills_required, posted_by)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (job_id, title, company, job_type, location, salary, description, skills, posted_by))
-        conn.commit()
-        conn.close()
-        return {"status": "success", "job_id": job_id}
-    
-    def get_active_jobs(self) -> List[Dict]:
-        conn = self.connect()
-        cursor = conn.cursor()
-        cursor.execute('SELECT * FROM jobs WHERE is_active = 1 ORDER BY posted_date DESC')
-        jobs = cursor.fetchall()
-        conn.close()
-        return [{"job_id": j[1], "title": j[2], "company": j[3], "type": j[4], "location": j[5], "salary": j[6]} for j in jobs]
-    
-    # --- Contact Messages ---
-    def save_contact(self, name: str, email: str, phone: str, subject: str, message: str) -> Dict:
-        conn = self.connect()
-        cursor = conn.cursor()
-        cursor.execute('''
-            INSERT INTO contact_messages (name, email, phone, subject, message)
-            VALUES (?, ?, ?, ?, ?)
-        ''', (name, email, phone, subject, message))
-        conn.commit()
-        conn.close()
-        return {"status": "success", "message": "Message received"}
-    
-    # --- Stats ---
-    def get_stats(self) -> Dict:
-        conn = self.connect()
-        cursor = conn.cursor()
-        cursor.execute('SELECT COUNT(*) FROM users')
-        users = cursor.fetchone()[0]
-        cursor.execute('SELECT COUNT(*) FROM applications')
-        apps = cursor.fetchone()[0]
-        cursor.execute('SELECT COUNT(*) FROM jobs WHERE is_active = 1')
-        jobs = cursor.fetchone()[0]
-        conn.close()
-        return {"users": users, "applications": apps, "active_jobs": jobs}
 
 # Initialize database
 db = Database()
