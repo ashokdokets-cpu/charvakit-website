@@ -22,6 +22,31 @@
                         <label class="form-label">Session Link</label>
                         <input type="url" class="form-control" id="sessionLink" placeholder="Paste Google Meet / Zoom link">
                     </div>
+<div class="mb-3">
+            <label class="form-label">Your Time Zone</label>
+            <select class="form-select" id="timezone">
+                <option>Asia/Kolkata (GMT+5:30)</option>
+                <option>Asia/Dubai (GMT+4)</option>
+                <option>Asia/Singapore (GMT+8)</option>
+                <option>Europe/London (GMT+1)</option>
+                <option>Europe/Berlin (GMT+2)</option>
+                <option>America/New_York (GMT-4)</option>
+                <option>America/Chicago (GMT-5)</option>
+                <option>America/Los_Angeles (GMT-7)</option>
+                <option>Australia/Sydney (GMT+10)</option>
+                <option>Africa/Lagos (GMT+1)</option>
+                <option>America/Sao_Paulo (GMT-3)</option>
+            </select>
+            <small class="text-muted">All session times will be shown in your local time zone</small>
+        </div>
+<div class="mb-3">
+            <label class="form-label">Session Language</label>
+            <select class="form-select">
+                <option>English</option><option>Hindi</option><option>Telugu</option>
+                <option>Spanish</option><option>French</option><option>Arabic</option>
+                <option>Portuguese</option><option>Japanese</option><option>Korean</option>
+            </select>
+        </div>
                     <button class="btn btn-primary w-100" onclick="joinSession()">
                         <i class="bi bi-play-circle me-2"></i>Join Live Session
                     </button>
