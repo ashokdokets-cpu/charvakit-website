@@ -42,11 +42,11 @@
             <div class="col-md-2"><select class="form-select" id="jobType" onchange="filterJobs()"><option value="">All Types</option><option>Permanent</option><option>Contract</option><option>Contract-to-Hire</option><option>Freelance</option><option>Fractional</option><option>Internship</option><option>Part-Time</option><option>Gig / Project-Based</option></select></div>
             <div class="col-md-3">
                 <select class="form-select" id="jobLocation" onchange="filterJobs()">
-                    <option value="">All Locations</option>
-                    <option>Remote</option>
-                    <option>Bengaluru</option><option>Hyderabad</option><option>Mumbai</option><option>Delhi NCR</option><option>Chennai</option><option>Pune</option><option>Guntur</option><option>Visakhapatnam</option>
-                    <option>🇺🇸 United States</option><option>🇬🇧 United Kingdom</option><option>🇦🇪 UAE</option><option>🇸🇬 Singapore</option><option>🇨🇦 Canada</option><option>🇦🇺 Australia</option>
-                </select>
+    <option value="">All Locations</option>
+    <option>Remote</option>
+    <option>Bengaluru</option><option>Hyderabad</option><option>Mumbai</option><option>Delhi NCR</option><option>Chennai</option><option>Pune</option><option>Guntur</option><option>Visakhapatnam</option>
+    <option>🇺🇸 United States</option><option>🇬🇧 United Kingdom</option><option>🇦🇪 UAE</option><option>🇸🇬 Singapore</option><option>🇨🇦 Canada</option><option>🇦🇺 Australia</option><option>🇩🇪 Germany</option><option>🇯🇵 Japan</option><option>🇧🇷 Brazil</option><option>🇳🇬 Nigeria</option>
+</select>
             </div>
             <div class="col-md-2"><input type="text" class="form-control" id="customLocation" placeholder="Or type location..."></div>
             <div class="col-md-2"><button class="btn btn-primary w-100" onclick="filterJobs()">Search Jobs</button></div>
@@ -56,12 +56,12 @@
 
     <!-- Job Listings -->
     <div class="row g-3 mb-4" id="jobListings">
-        <div class="col-md-6 job-card" data-type="Permanent" data-location="Bengaluru" data-title="Senior React Developer"><div class="card h-100 p-3"><span class="badge bg-primary mb-2">Permanent</span><h5>Senior React Developer</h5><p class="text-muted mb-1">Bengaluru - 15-25 LPA</p><small>React, TypeScript, Node.js - 5+ yrs</small><div class="mt-2"><a href="/contact" class="btn btn-outline-primary btn-sm">Apply</a><button class="btn btn-outline-secondary btn-sm ms-1">Save</button></div></div></div>
-        <div class="col-md-6 job-card" data-type="Contract" data-location="Remote" data-title="Python Backend Developer"><div class="card h-100 p-3"><span class="badge bg-warning text-dark mb-2">Contract</span><h5>Python Backend Developer</h5><p class="text-muted mb-1">Remote - 6 months</p><small>FastAPI, PostgreSQL, AWS</small><div class="mt-2"><a href="/contact" class="btn btn-outline-primary btn-sm">Apply</a><button class="btn btn-outline-secondary btn-sm ms-1">Save</button></div></div></div>
-        <div class="col-md-6 job-card" data-type="Contract-to-Hire" data-location="Hyderabad" data-title="Full Stack Developer"><div class="card h-100 p-3"><span class="badge bg-info text-dark mb-2">Contract-to-Hire</span><h5>Full Stack Developer</h5><p class="text-muted mb-1">Hyderabad - 10-18 LPA</p><small>MERN Stack - 3+ yrs</small><div class="mt-2"><a href="/contact" class="btn btn-outline-primary btn-sm">Apply</a><button class="btn btn-outline-secondary btn-sm ms-1">Save</button></div></div></div>
-        <div class="col-md-6 job-card" data-type="Permanent" data-location="Remote" data-title="DevOps Engineer"><div class="card h-100 p-3"><span class="badge bg-primary mb-2">Permanent</span><h5>DevOps Engineer</h5><p class="text-muted mb-1">Remote - 12-20 LPA</p><small>AWS, Docker, K8s, CI/CD</small><div class="mt-2"><a href="/contact" class="btn btn-outline-primary btn-sm">Apply</a><button class="btn btn-outline-secondary btn-sm ms-1">Save</button></div></div></div>
-        <div class="col-md-6 job-card" data-type="Permanent" data-location="🇸🇬 Singapore" data-title="AI Engineer"><div class="card h-100 p-3"><span class="badge bg-primary mb-2">Permanent</span><h5>AI/ML Engineer</h5><p class="text-muted mb-1">Singapore - SGD 80-120K</p><small>Python, TensorFlow, PyTorch - 3+ yrs</small><div class="mt-2"><a href="/contact" class="btn btn-outline-primary btn-sm">Apply</a><button class="btn btn-outline-secondary btn-sm ms-1">Save</button></div></div></div>
-        <div class="col-md-6 job-card" data-type="Contract" data-location="🇦🇪 UAE" data-title="Cloud Architect"><div class="card h-100 p-3"><span class="badge bg-warning text-dark mb-2">Contract</span><h5>Cloud Architect</h5><p class="text-muted mb-1">Dubai - 12 months</p><small>AWS, Azure, GCP - 7+ yrs</small><div class="mt-2"><a href="/contact" class="btn btn-outline-primary btn-sm">Apply</a><button class="btn btn-outline-secondary btn-sm ms-1">Save</button></div></div></div>
+        <div class="col-md-6 job-card" data-type="Permanent" data-location="Bengaluru" data-title="Senior React Developer"><div class="card h-100 p-3"><span class="badge bg-primary mb-2">Permanent</span><h5>Senior React Developer</h5><p class="text-muted mb-1">Bengaluru - 15-25 LPA</p><small>React, TypeScript, Node.js - 5+ yrs</small><div class="mt-2"><a href="#" class="btn btn-outline-primary btn-sm" onclick="applyJob(event, 'Senior React Developer', 'TechCorp')">Apply</a><button class="btn btn-outline-secondary btn-sm ms-1">Save</button></div></div></div>
+        <div class="col-md-6 job-card" data-type="Contract" data-location="Remote" data-title="Python Backend Developer"><div class="card h-100 p-3"><span class="badge bg-warning text-dark mb-2">Contract</span><h5>Python Backend Developer</h5><p class="text-muted mb-1">Remote - 6 months</p><small>FastAPI, PostgreSQL, AWS</small><div class="mt-2"><a href="#" class="btn btn-outline-primary btn-sm" onclick="applyJob(event, 'Python Backend Developer', 'DataFlow')">Apply</a><button class="btn btn-outline-secondary btn-sm ms-1">Save</button></div></div></div>
+        <div class="col-md-6 job-card" data-type="Contract-to-Hire" data-location="Hyderabad" data-title="Full Stack Developer"><div class="card h-100 p-3"><span class="badge bg-info text-dark mb-2">Contract-to-Hire</span><h5>Full Stack Developer</h5><p class="text-muted mb-1">Hyderabad - 10-18 LPA</p><small>MERN Stack - 3+ yrs</small><div class="mt-2"><a href="#" class="btn btn-outline-primary btn-sm" onclick="applyJob(event, 'Full Stack Developer', 'WebSolutions')">Apply</a><button class="btn btn-outline-secondary btn-sm ms-1">Save</button></div></div></div>
+        <div class="col-md-6 job-card" data-type="Permanent" data-location="Remote" data-title="DevOps Engineer"><div class="card h-100 p-3"><span class="badge bg-primary mb-2">Permanent</span><h5>DevOps Engineer</h5><p class="text-muted mb-1">Remote - 12-20 LPA</p><small>AWS, Docker, K8s, CI/CD</small><div class="mt-2"><a href="#" class="btn btn-outline-primary btn-sm" onclick="applyJob(event, 'DevOps Engineer', 'CloudFirst')">Apply</a><button class="btn btn-outline-secondary btn-sm ms-1">Save</button></div></div></div>
+        <div class="col-md-6 job-card" data-type="Permanent" data-location="🇸🇬 Singapore" data-title="AI Engineer"><div class="card h-100 p-3"><span class="badge bg-primary mb-2">Permanent</span><h5>AI/ML Engineer</h5><p class="text-muted mb-1">Singapore - SGD 80-120K</p><small>Python, TensorFlow, PyTorch - 3+ yrs</small><div class="mt-2"><a href="#" class="btn btn-outline-primary btn-sm" onclick="applyJob(event, 'AI/ML Engineer', 'AI Labs')">Apply</a><button class="btn btn-outline-secondary btn-sm ms-1">Save</button></div></div></div>
+        <div class="col-md-6 job-card" data-type="Contract" data-location="🇦🇪 UAE" data-title="Cloud Architect"><div class="card h-100 p-3"><span class="badge bg-warning text-dark mb-2">Contract</span><h5>Cloud Architect</h5><p class="text-muted mb-1">Dubai - 12 months</p><small>AWS, Azure, GCP - 7+ yrs</small><div class="mt-2"><a href="#" class="btn btn-outline-primary btn-sm" onclick="applyJob(event, 'Cloud Architect', 'CloudSys')">Apply</a><button class="btn btn-outline-secondary btn-sm ms-1" onclick="saveJob(event, 'Job Title Here')">Save</button></div></div></div>
     </div>
     <p class="text-center text-muted d-none" id="noJobs">No jobs match your filters. Try different keywords or <a href="/post-job">post a job</a>.</p>
 
@@ -89,6 +89,31 @@ function filterJobs(){
     });
     document.getElementById('noJobs').classList.toggle('d-none', visible > 0);
     document.getElementById('activeJobs').textContent = visible;
+}
+
+function applyJob(e, title, company){
+    e.preventDefault();
+    const name = prompt('Enter your name to apply for ' + title + ' at ' + company + ':');
+    if(name){
+        const applications = JSON.parse(localStorage.getItem('job_applications')||'[]');
+        applications.push({name, title, company, date: new Date().toISOString()});
+        localStorage.setItem('job_applications', JSON.stringify(applications));
+        alert('Application submitted for ' + title + ' at ' + company + '! We will contact you shortly.');
+    }
+}
+
+function saveJob(e, title){
+    e.preventDefault();
+    const saved = JSON.parse(localStorage.getItem('saved_jobs')||'[]');
+    if(saved.includes(title)){
+        alert(title + ' is already saved!');
+    } else {
+        saved.push(title);
+        localStorage.setItem('saved_jobs', JSON.stringify(saved));
+        e.target.textContent = 'Saved!';
+        e.target.classList.add('btn-success');
+        alert(title + ' saved to your list!');
+    }
 }
 </script>
 
