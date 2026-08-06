@@ -654,3 +654,7 @@ async def demo_page(request: Request):
 @app.get("/for-candidates", response_class=HTMLResponse)
 async def for_candidates(request: Request):
     return templates.TemplateResponse("for-candidates.html", {"request": request, "title": "For Candidates - Charvak IT Consulting"})
+
+@app.get("/post-micro-project", response_class=HTMLResponse)
+async def post_micro_project(request: Request):
+    return templates.TemplateResponse("post-micro-project.html", {"request": request, "title": "Post a Micro-Project - Charvak"})

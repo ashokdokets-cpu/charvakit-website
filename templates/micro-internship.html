@@ -16,60 +16,57 @@
             <h3 class="mb-4">How Micro-Internships Work</h3>
             <div class="row g-3">
                 <div class="col-md-3"><div class="card p-3 h-100"><h2 class="text-primary">1</h2><h6>Take Skill Check</h6><small class="text-muted">Free 5-min assessment to know your level</small></div></div>
-                <div class="col-md-3"><div class="card p-3 h-100"><h2 class="text-primary">2</h2><h6>Pick Project</h6><small class="text-muted">Choose from real company tasks</small></div></div>
+                <div class="col-md-3"><div class="card p-3 h-100"><h2 class="text-primary">2</h2><h6>Pick Project</h6><small class="text-muted">Choose from AI/ML, Data Science, Web Dev projects</small></div></div>
                 <div class="col-md-3"><div class="card p-3 h-100"><h2 class="text-primary">3</h2><h6>Build in 2 Weeks</h6><small class="text-muted">AI-reviewed code, real deliverables</small></div></div>
                 <div class="col-md-3"><div class="card p-3 h-100"><h2 class="text-primary">4</h2><h6>Get Verified & Hired</h6><small class="text-muted">Shareable badge + placement</small></div></div>
             </div>
         </div>
     </div>
 
-    <!-- Available Micro-Internships -->
-    <h3 class="mb-4 text-center">Available Micro-Internships</h3>
-    <div class="row g-4 mb-5">
-        <div class="col-md-4">
-            <div class="card h-100 p-4"><span class="badge bg-success mb-2">Beginner</span><h5>Build a Landing Page</h5><p class="text-muted">HTML, CSS, Bootstrap</p><p><strong>Duration:</strong> 2 weeks</p><p><strong>Company:</strong> Local Business Owner</p><p><strong>Skills:</strong> HTML, CSS, Responsive Design</p><hr><p class="mb-1"><strong>You'll Build:</strong> A professional landing page for a real business</p><p class="mb-1"><strong>You'll Get:</strong> Portfolio piece + Verified Badge</p><p class="text-success fw-bold">FREE for Students</p><a href="/skill-check" class="btn btn-primary w-100 mt-2">Start Skill Check First</a></div>
-        </div>
-        <div class="col-md-4">
-            <div class="card h-100 p-4"><span class="badge bg-info mb-2">Intermediate</span><h5>API Integration Task</h5><p class="text-muted">Python, FastAPI, REST</p><p><strong>Duration:</strong> 2 weeks</p><p><strong>Company:</strong> Tech Startup</p><p><strong>Skills:</strong> Python, FastAPI, JSON, REST</p><hr><p class="mb-1"><strong>You'll Build:</strong> A working API endpoint for a real product</p><p class="mb-1"><strong>You'll Get:</strong> Backend portfolio + Verified Badge</p><p class="text-success fw-bold">FREE for Students</p><a href="/skill-check" class="btn btn-primary w-100 mt-2">Start Skill Check First</a></div>
-        </div>
-        <div class="col-md-4">
-            <div class="card h-100 p-4"><span class="badge bg-warning text-dark mb-2">Advanced</span><h5>Full Stack Feature</h5><p class="text-muted">React + Node.js + Database</p><p><strong>Duration:</strong> 2 weeks</p><p><strong>Company:</strong> SaaS Company</p><p><strong>Skills:</strong> React, Node.js, MongoDB, Git</p><hr><p class="mb-1"><strong>You'll Build:</strong> A complete feature for a live SaaS product</p><p class="mb-1"><strong>You'll Get:</strong> Full stack portfolio + Verified Badge</p><p class="text-success fw-bold">FREE for Students</p><a href="/skill-check" class="btn btn-primary w-100 mt-2">Start Skill Check First</a></div>
-        </div>
+    <!-- Featured AI/ML Projects -->
+    <h3 class="mb-4 text-center">🔥 Featured AI / ML / Data Science Projects</h3>
+    <div class="row g-4 mb-4">
+        <div class="col-md-4"><div class="card h-100 p-4"><span class="badge bg-warning text-dark mb-2">Advanced</span><h5>Build a PDF Q&A Bot with RAG</h5><p class="text-muted">LangChain + OpenAI + Vector DB</p><p><strong>Duration:</strong> 2 weeks</p><p><strong>Skills:</strong> Python, LangChain, OpenAI, RAG</p><hr><p class="mb-1"><strong>You'll Build:</strong> AI bot that answers questions from PDFs</p><p class="mb-1"><strong>You'll Get:</strong> GenAI portfolio + Verified Badge</p><p class="text-success fw-bold">FREE for Students</p><a href="/skill-check" class="btn btn-primary w-100 mt-2">Start Skill Check First</a></div></div>
+        <div class="col-md-4"><div class="card h-100 p-4"><span class="badge bg-info mb-2">Intermediate</span><h5>AI Chatbot with GPT API</h5><p class="text-muted">OpenAI + FastAPI + Web App</p><p><strong>Duration:</strong> 2 weeks</p><p><strong>Skills:</strong> Python, OpenAI API, FastAPI</p><hr><p class="mb-1"><strong>You'll Build:</strong> Working AI chatbot deployed as web app</p><p class="mb-1"><strong>You'll Get:</strong> AI portfolio + Verified Badge</p><p class="text-success fw-bold">FREE for Students</p><a href="/skill-check" class="btn btn-primary w-100 mt-2">Start Skill Check First</a></div></div>
+        <div class="col-md-4"><div class="card h-100 p-4"><span class="badge bg-warning text-dark mb-2">Advanced</span><h5>Image Classification with Deep Learning</h5><p class="text-muted">TensorFlow/PyTorch + CNN</p><p><strong>Duration:</strong> 2 weeks</p><p><strong>Skills:</strong> Python, TensorFlow, CNN, Computer Vision</p><hr><p class="mb-1"><strong>You'll Build:</strong> CNN model with web interface</p><p class="mb-1"><strong>You'll Get:</strong> Deep Learning portfolio + Badge</p><p class="text-success fw-bold">FREE for Students</p><a href="/skill-check" class="btn btn-primary w-100 mt-2">Start Skill Check First</a></div></div>
     </div>
 
+    <!-- All Projects (Dynamic) -->
+    <div id="dynamicProjects"></div>
+
     <!-- Industries -->
-    <h4 class="mb-3 text-center">Industries Covered</h4>
+    <h4 class="mb-3 text-center mt-5">Industries Covered</h4>
     <div class="row g-2 mb-5 text-center">
-        <div class="col-6 col-md-2"><span class="badge bg-light text-dark p-2 w-100">IT / Tech</span></div>
-        <div class="col-6 col-md-2"><span class="badge bg-light text-dark p-2 w-100">E-commerce</span></div>
-        <div class="col-6 col-md-2"><span class="badge bg-light text-dark p-2 w-100">Healthcare</span></div>
-        <div class="col-6 col-md-2"><span class="badge bg-light text-dark p-2 w-100">Education</span></div>
-        <div class="col-6 col-md-2"><span class="badge bg-light text-dark p-2 w-100">Finance</span></div>
-        <div class="col-6 col-md-2"><span class="badge bg-light text-dark p-2 w-100">Real Estate</span></div>
-        <div class="col-6 col-md-2"><span class="badge bg-light text-dark p-2 w-100">Logistics</span></div>
-        <div class="col-6 col-md-2"><span class="badge bg-light text-dark p-2 w-100">Media</span></div>
-        <div class="col-6 col-md-2"><span class="badge bg-light text-dark p-2 w-100">Retail</span></div>
-        <div class="col-6 col-md-2"><span class="badge bg-light text-dark p-2 w-100">Manufacturing</span></div>
-        <div class="col-6 col-md-2"><span class="badge bg-light text-dark p-2 w-100">Agriculture</span></div>
-        <div class="col-6 col-md-2"><span class="badge bg-light text-dark p-2 w-100">Any Business</span></div>
+        <div class="col-6 col-md-2"><span class="badge bg-light text-dark p-2 w-100">AI / ML</span></div>
+        <div class="col-6 col-md-2"><span class="badge bg-light text-dark p-2 w-100">Data Science</span></div>
+        <div class="col-6 col-md-2"><span class="badge bg-light text-dark p-2 w-100">Data Engineering</span></div>
+        <div class="col-6 col-md-2"><span class="badge bg-light text-dark p-2 w-100">GenAI / LLMs</span></div>
+        <div class="col-6 col-md-2"><span class="badge bg-light text-dark p-2 w-100">Computer Vision</span></div>
+        <div class="col-6 col-md-2"><span class="badge bg-light text-dark p-2 w-100">NLP</span></div>
+        <div class="col-6 col-md-2"><span class="badge bg-light text-dark p-2 w-100">Web Development</span></div>
+        <div class="col-6 col-md-2"><span class="badge bg-light text-dark p-2 w-100">Cloud / DevOps</span></div>
+        <div class="col-6 col-md-2"><span class="badge bg-light text-dark p-2 w-100">Cybersecurity</span></div>
+        <div class="col-6 col-md-2"><span class="badge bg-light text-dark p-2 w-100">Design</span></div>
+        <div class="col-6 col-md-2"><span class="badge bg-light text-dark p-2 w-100">Marketing</span></div>
+        <div class="col-6 col-md-2"><span class="badge bg-light text-dark p-2 w-100">Any Industry</span></div>
     </div>
 
     <!-- Dual CTA -->
     <div class="row g-4 mb-5">
-        <div class="col-md-6"><div class="card p-4 bg-success text-white h-100"><h4>🎓 For Students</h4><p>FREE. Get real experience. Build your portfolio. Land your first job.</p><ul><li>Free Skill Assessment</li><li>Real Company Projects</li><li>AI-Verified Portfolio</li><li>Placement Support</li></ul><a href="/skill-check" class="btn btn-light btn-lg mt-2">Start Free Skill Check</a></div></div>
-        <div class="col-md-6"><div class="card p-4 bg-primary text-white h-100"><h4>🏢 For Companies</h4><p>Get work done. Test-drive talent. Hire pre-verified candidates.</p><ul><li>Post Micro-Projects</li><li>AI-Reviewed Deliverables</li><li>Early Access to Vetted Talent</li><li>48-Hour Placement Option</li></ul><a href="/contact" class="btn btn-light btn-lg mt-2">Post a Micro-Project</a></div></div>
+        <div class="col-md-6"><div class="card p-4 bg-success text-white h-100"><h4>🎓 For Students</h4><p>FREE. Get real experience. Build your portfolio. Land your first job.</p><ul><li>Free Skill Assessment</li><li>Real AI/ML Company Projects</li><li>AI-Verified Portfolio</li><li>Placement Support</li></ul><a href="/skill-check" class="btn btn-light btn-lg mt-2">Start Free Skill Check</a></div></div>
+        <div class="col-md-6"><div class="card p-4 bg-primary text-white h-100"><h4>🏢 For Companies</h4><p>Get work done. Test-drive talent. Hire pre-verified candidates.</p><ul><li>Post Micro-Projects</li><li>AI-Reviewed Deliverables</li><li>Early Access to Vetted Talent</li><li>Hire as Intern or Full-Time</li></ul><a href="/post-micro-project" class="btn btn-light btn-lg mt-2">Post a Micro-Project</a></div></div>
     </div>
 
-    <!-- Revenue Model -->
+    <!-- Why This Model Works -->
     <div class="card bg-dark text-white p-4 mb-4">
-    <h4 class="text-center mb-3">Why This Model Works</h4>
-    <div class="row g-3 text-center">
-        <div class="col-6 col-md-3"><i class="bi bi-building display-4 mb-2"></i><h6>Company Sponsored</h6><small>Companies fund the projects</small></div>
-        <div class="col-6 col-md-3"><i class="bi bi-briefcase display-4 mb-2"></i><h6>Paid Internships</h6><small>Earn while you learn</small></div>
-        <div class="col-6 col-md-3"><i class="bi bi-trophy display-4 mb-2"></i><h6>Full-Time Placement</h6><small>Direct hiring after proving skills</small></div>
-        <div class="col-6 col-md-3"><i class="bi bi-heart display-4 mb-2"></i><h6>Always Free</h6><small>Zero cost for students</small></div>
+        <h4 class="text-center mb-3">Why This Model Works</h4>
+        <div class="row g-3 text-center">
+            <div class="col-6 col-md-3"><i class="bi bi-building display-4 mb-2"></i><h6>Company Sponsored</h6><small>Companies fund the projects</small></div>
+            <div class="col-6 col-md-3"><i class="bi bi-briefcase display-4 mb-2"></i><h6>Real Experience</h6><small>Not simulated tasks</small></div>
+            <div class="col-6 col-md-3"><i class="bi bi-trophy display-4 mb-2"></i><h6>Hire Directly</h6><small>Intern → Full-Time path</small></div>
+            <div class="col-6 col-md-3"><i class="bi bi-heart display-4 mb-2"></i><h6>Always Free</h6><small>Zero cost for students</small></div>
+        </div>
     </div>
-</div>
 
     <!-- Stats -->
     <div class="text-center p-5 bg-light rounded">
@@ -78,4 +75,39 @@
         <a href="/skill-check" class="btn btn-primary btn-lg mt-4">Start Your Journey — It's Free</a>
     </div>
 </div>
+
+<script>
+function loadDynamicProjects(){
+    const projects = JSON.parse(localStorage.getItem('micro_projects')||'[]');
+    const seedProjects = [
+        {title:"Build an AI Chatbot with GPT API",company:"Charvak IT Consulting (AI Project)",level:"Intermediate",duration:"2 weeks",skills:"Python, OpenAI API, FastAPI",description:"Build a simple AI chatbot using OpenAI's GPT-4o-mini API. Deploy as a web app with FastAPI backend."},
+        {title:"Train a Machine Learning Model on Customer Data",company:"Charvak IT Consulting (ML Project)",level:"Advanced",duration:"2 weeks",skills:"Python, Scikit-learn, Pandas, NumPy",description:"Take a customer dataset, clean it, train a classification model, and create a prediction API endpoint."},
+        {title:"Create a Data Dashboard with Streamlit",company:"Charvak IT Consulting (Data Project)",level:"Intermediate",duration:"2 weeks",skills:"Python, Streamlit, Pandas, Plotly",description:"Build an interactive data visualization dashboard using Streamlit."},
+        {title:"Build a Resume Parser with NLP",company:"Charvak IT Consulting (AI Project)",level:"Advanced",duration:"2 weeks",skills:"Python, NLP, spaCy, Transformers",description:"Create an AI-powered resume parser that extracts skills from PDF resumes."},
+        {title:"Sentiment Analysis on Product Reviews",company:"Charvak IT Consulting (ML Project)",level:"Intermediate",duration:"1 week",skills:"Python, NLTK, TextBlob, Pandas",description:"Analyze 500 product reviews and classify sentiment."},
+        {title:"Build an Image Classification Model",company:"Charvak IT Consulting (Deep Learning)",level:"Advanced",duration:"2 weeks",skills:"Python, TensorFlow/PyTorch, CNN",description:"Train a CNN to classify images into 5 categories."},
+        {title:"Create an Automated Data Pipeline",company:"Charvak IT Consulting (Data Engineering)",level:"Advanced",duration:"2 weeks",skills:"Python, Airflow, PostgreSQL, ETL",description:"Build an automated ETL pipeline from API to database."},
+        {title:"AI-Powered Job Recommendation Engine",company:"Charvak IT Consulting (AI Project)",level:"Advanced",duration:"2 weeks",skills:"Python, Scikit-learn, TF-IDF, NLP",description:"Build a job recommendation system using similarity matching."},
+        {title:"Stock Price Predictor with Time Series",company:"Charvak IT Consulting (Data Science)",level:"Intermediate",duration:"2 weeks",skills:"Python, Prophet, Pandas, Time Series",description:"Use Prophet to forecast stock prices with Streamlit visualization."},
+        {title:"Build a PDF Q&A Bot with RAG",company:"Charvak IT Consulting (Gen AI)",level:"Advanced",duration:"2 weeks",skills:"Python, LangChain, OpenAI, Vector DB, RAG",description:"Build a RAG bot that answers questions from PDFs."},
+        {title:"Customer Churn Prediction Model",company:"Charvak IT Consulting (ML Project)",level:"Intermediate",duration:"1 week",skills:"Python, Scikit-learn, XGBoost",description:"Build churn prediction model and identify top churn factors."},
+        {title:"Real-Time Data Streaming Dashboard",company:"Charvak IT Consulting (Data Engineering)",level:"Advanced",duration:"2 weeks",skills:"Python, Kafka, WebSockets, Dashboard",description:"Set up real-time data streaming with live metrics dashboard."}
+    ];
+    
+    const allProjects = [...seedProjects, ...projects];
+    const container = document.getElementById('dynamicProjects');
+    
+    if (allProjects.length > 0) {
+        let html = '<h4 class="mt-4 mb-3">📋 All Available Projects</h4><div class="row g-3">';
+        allProjects.forEach(p => {
+            const badges = {Beginner:'bg-success',Intermediate:'bg-info',Advanced:'bg-warning text-dark'};
+            html += '<div class="col-md-4"><div class="card h-100 p-3"><span class="badge '+badges[p.level]+' mb-2">'+p.level+'</span><h6>'+p.title+'</h6><small class="text-muted">'+p.company+'</small><p class="small mt-1"><strong>Skills:</strong> '+p.skills+'</p><p class="small"><strong>Duration:</strong> '+p.duration+'</p><a href="/skill-check" class="btn btn-outline-primary btn-sm mt-2">Apply (Free)</a></div></div>';
+        });
+        html += '</div>';
+        container.innerHTML = html;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', loadDynamicProjects);
+</script>
 {% endblock %}

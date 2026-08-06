@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Post a Micro-Project - Charvak{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4">
+        <span class="badge bg-success mb-2 px-3 py-2">For Companies</span>
+        <h1 class="display-4 fw-bold">Post a Micro-Project</h1>
+        <p class="lead">Get work done by pre-vetted GenZ talent. 2 weeks. Fixed price. Quality guaranteed.</p>
+    </div>
+</div>
+
+<div class="container py-5"><div class="row"><div class="col-lg-7 mx-auto">
+    <div class="card border-0 shadow-lg p-4"><div class="card-body">
+        <h4 class="mb-3">Project Details</h4>
+        <form onsubmit="postMicroProject(event)">
+            <div class="mb-3"><label class="form-label">Project Title</label><input type="text" class="form-control" id="projTitle" placeholder="e.g. Build a Landing Page" required></div>
+            <div class="row g-2 mb-3">
+                <div class="col-md-6"><label class="form-label">Category</label><select class="form-select" id="projCategory">
+    <option>AI / Machine Learning</option>
+    <option>Data Science</option>
+    <option>Data Engineering</option>
+    <option>Generative AI (GenAI)</option>
+    <option>Deep Learning</option>
+    <option>NLP / Text Analysis</option>
+    <option>Computer Vision</option>
+    <option>Python Development</option>
+    <option>Web Development</option>
+    <option>Design</option>
+    <option>Content Writing</option>
+    <option>Other</option>
+</select></div>
+                <div class="col-md-6"><label class="form-label">Difficulty</label><select class="form-select" id="projLevel"><option>Beginner</option><option>Intermediate</option><option>Advanced</option></select></div>
+            </div>
+            <div class="row g-2 mb-3">
+                <div class="col-md-6"><label class="form-label">Duration</label><select class="form-select" id="projDuration"><option>1 week</option><option selected>2 weeks</option><option>3 weeks</option><option>4 weeks</option></select></div>
+                <div class="col-md-6"><label class="form-label">Budget (₹)</label><input type="number" class="form-control" id="projBudget" placeholder="e.g. 2000" required></div>
+            </div>
+            <div class="mb-3"><label class="form-label">Skills Required</label><input type="text" class="form-control" id="projSkills" placeholder="e.g. HTML, CSS, JavaScript"></div>
+            <div class="mb-3"><label class="form-label">Company Name</label><input type="text" class="form-control" id="projCompany" placeholder="Your company name" required></div>
+            <div class="mb-3"><label class="form-label">Your Email</label><input type="email" class="form-control" id="projEmail" placeholder="you@company.com" required></div>
+            <div class="mb-3"><label class="form-label">Project Description</label><textarea class="form-control" id="projDesc" rows="3" placeholder="What needs to be done? What are the deliverables?"></textarea></div>
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>What happens next?</strong><br>
+                1. Your project goes live on the Micro-Internship board<br>
+                2. Pre-vetted GenZ talent applies<br>
+                3. You pick the best candidate<br>
+                4. They deliver in 2 weeks<br>
+                5. You can hire them as intern or full-time
+            </div>
+            <button type="submit" class="btn btn-primary btn-lg w-100">Post Micro-Project</button>
+        </form>
+        <p class="text-success mt-2 text-center" id="projMsg" style="display:none;"></p>
+    </div></div>
+</div></div></div>
+
+<script>
+function postMicroProject(e){
+    e.preventDefault();
+    const title = document.getElementById('projTitle').value;
+    const email = document.getElementById('projEmail').value;
+    if(!title || !email) return;
+    
+    const projects = JSON.parse(localStorage.getItem('micro_projects')||'[]');
+    projects.push({
+        title: title,
+        category: document.getElementById('projCategory').value,
+        level: document.getElementById('projLevel').value,
+        duration: document.getElementById('projDuration').value,
+        budget: document.getElementById('projBudget').value,
+        skills: document.getElementById('projSkills').value,
+        company: document.getElementById('projCompany').value,
+        email: email,
+        description: document.getElementById('projDesc').value,
+        date: new Date().toISOString(),
+        status: 'open'
+    });
+    localStorage.setItem('micro_projects', JSON.stringify(projects));
+    
+    document.getElementById('projMsg').textContent = 'Project posted! It will appear on the Micro-Internship board. GenZ talent will apply shortly.';
+    document.getElementById('projMsg').style.display = 'block';
+    document.querySelector('form').reset();
+    
+    // Also update the micro-internship page
+    setTimeout(() => window.location.href = '/micro-internship', 2000);
+}
+</script>
+{% endblock %}
