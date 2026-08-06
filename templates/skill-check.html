@@ -97,7 +97,25 @@
     </div></div>
 </div>
 
+<!-- Employer Tools -->
+<div class="card border-0 shadow-sm p-4 mt-4" id="employerSection">
+    <h5>🏢 For Employers</h5>
+    <p class="text-muted">Use this assessment to evaluate candidates. Share the link below.</p>
+    <div class="input-group mb-2">
+        <input type="text" class="form-control" id="assessmentLink" readonly value="https://www.charvakit.com/skill-check?stack=Python">
+        <button class="btn btn-primary" onclick="copyAssessmentLink()">Copy Link</button>
+    </div>
+    <small class="text-muted">Candidates who take this assessment get ranked. You see all results.</small>
+</div>
+
 <script>
+function copyAssessmentLink() {
+    const link = document.getElementById('assessmentLink');
+    link.select();
+    document.execCommand('copy');
+    alert('Assessment link copied! Share with candidates.');
+}
+
 // Question banks
 const predefinedQuestions = {
     'Python': [{q:'What does PEP 8 define?',o:['Code style guide','Python version','Package manager','Testing framework'],a:0},{q:'Which is immutable?',o:['List','Tuple','Set','Dictionary'],a:1},{q:'What is a decorator?',o:['Design pattern','Function modifier','Class method','Import statement'],a:1},{q:'What does lambda create?',o:['Class','Module','Anonymous function','Variable'],a:2},{q:'Purpose of __init__?',o:['Destructor','Constructor','Import','Decorator'],a:1}],
