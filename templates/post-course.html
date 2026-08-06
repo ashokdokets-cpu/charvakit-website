@@ -34,14 +34,36 @@
 <script>
 function submitCourse(e){
     e.preventDefault();
-    const title=document.getElementById('courseTitle').value;
-    const email=document.getElementById('trainerEmail').value;
+    const title = document.getElementById('courseTitle').value;
+    const email = document.getElementById('trainerEmail').value;
     if(!title||!email)return;
-    const courses=JSON.parse(localStorage.getItem('charvak_courses')||'[]');
-    courses.push({title,category:document.getElementById('courseCategory').value,duration:document.getElementById('courseDuration').value,price:document.getElementById('coursePrice').value,trainer:document.getElementById('trainerName').value,email,date:new Date().toISOString()});
-    localStorage.setItem('charvak_courses',JSON.stringify(courses));
-    document.getElementById('courseMsg').textContent='Course submitted! We will review and publish within 48 hours.';
-    document.getElementById('courseMsg').style.display='block';
+    
+    // Save to localStorage
+    const courses = JSON.parse(localStorage.getItem('charvak_courses')||'[]');
+    courses.push({
+        title: title,
+        category: document.getElementById('courseCategory').value,
+        duration: document.getElementById('courseDuration').value,
+        price: document.getElementById('coursePrice').value,
+        trainer: document.getElementById('trainerName').value,
+        email: email,
+        date: new Date().toISOString()
+    });
+    localStorage.setItem('charvak_courses', JSON.stringify(courses));
+    
+    // Auto-configure enrollment for this course
+    const courseConfig = JSON.parse(localStorage.getItem('course_configs')||'{}');
+    courseConfig[title] = {
+        payment_required: true,
+        price: document.getElementById('coursePrice').value,
+        classroom_url: '/online-classroom?course=' + encodeURIComponent(title),
+        trainer_email: email,
+        created: new Date().toISOString()
+    };
+    localStorage.setItem('course_configs', JSON.stringify(courseConfig));
+    
+    document.getElementById('courseMsg').textContent = 'Course submitted! Enrollment & classroom auto-configured.';
+    document.getElementById('courseMsg').style.display = 'block';
     document.querySelector('form').reset();
 }
 </script>
