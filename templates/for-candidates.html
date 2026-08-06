@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% block title %}For Candidates - Charvak IT Consulting{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4">
+        <span class="badge bg-warning text-dark mb-2 px-3 py-2">For Talent</span>
+        <h1 class="display-4 fw-bold">Your Career. Verified. Global.</h1>
+        <p class="lead">Any profession. Any level. Any country. Get certified, get experience, get hired.</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <!-- The Problem We Solve -->
+    <div class="row mb-5">
+        <div class="col-lg-8 mx-auto text-center">
+            <h3 class="mb-4">The Job Search Is Broken. We Fixed It.</h3>
+            <div class="row g-3">
+                <div class="col-md-4"><div class="card p-3 bg-danger text-white"><h5>📄 Resumes Don't Work</h5><p class="mb-0">Everyone has one. Nobody stands out.</p></div></div>
+                <div class="col-md-4"><div class="card p-3 bg-danger text-white"><h5>🐌 Months of Waiting</h5><p class="mb-0">Apply to 100 jobs, hear back from 3.</p></div></div>
+                <div class="col-md-4"><div class="card p-3 bg-danger text-white"><h5>❌ No Experience Trap</h5><p class="mb-0">Need job for experience, need experience for job.</p></div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- The Charvak Difference -->
+    <div class="row mb-5 align-items-center">
+        <div class="col-lg-6">
+            <h3>How Charvak Changes Your Career</h3>
+            <p class="lead">We don't just show your resume. We <strong>prove your skills</strong> with AI verification, real project experience, and a badge employers trust.</p>
+            <div class="d-flex mb-3"><span class="step-number me-3">1</span><div><h5>Verify Your Skills</h5><p class="text-muted">Take a free AI assessment. Get a verified score for any profession.</p></div></div>
+            <div class="d-flex mb-3"><span class="step-number me-3">2</span><div><h5>Get Real Experience</h5><p class="text-muted">Micro-Internship: Build for real companies in 2 weeks. Free.</p></div></div>
+            <div class="d-flex mb-3"><span class="step-number me-3">3</span><div><h5>Earn Your Badge</h5><p class="text-muted">Charvak Verified Badge — shareable proof employers trust.</p></div></div>
+            <div class="d-flex"><span class="step-number me-3">4</span><div><h5>Get Hired</h5><p class="text-muted">Matched with jobs that fit your verified skills. Globally.</p></div></div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card bg-dark text-white p-4">
+                <h4 class="mb-3 text-center">Traditional vs Charvak</h4>
+                <table class="table table-dark table-bordered mb-0">
+                    <tr><th></th><th>Traditional</th><th class="text-primary">Charvak</th></tr>
+                    <tr><td>Stand out</td><td>Resume only</td><td class="text-success">Verified Badge + Portfolio</td></tr>
+                    <tr><td>Experience</td><td>Need job first</td><td class="text-success">Micro-Internship (Free)</td></tr>
+                    <tr><td>Time to hire</td><td>3-6 months</td><td class="text-success">48 hours after verified</td></tr>
+                    <tr><td>Cost to you</td><td>₹0 but slow</td><td class="text-success">₹0 + Fast tracked</td></tr>
+                    <tr><td>Global reach</td><td>Local only</td><td class="text-success">34 languages, any country</td></tr>
+                    <tr><td>Skill proof</td><td>Self-claimed</td><td class="text-success">AI-verified + Third-party</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Solutions by Career Stage -->
+    <h3 class="text-center mb-4">Wherever You Are in Your Career</h3>
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="card h-100 p-4 text-center" style="border-top:4px solid #10b981;">
+                <i class="bi bi-mortarboard display-3 text-success mb-3"></i>
+                <h4>Students & Freshers</h4>
+                <p class="text-muted">0-2 years experience</p>
+                <ul class="text-start">
+                    <li class="mb-2">Free Skill Check — know your level</li>
+                    <li class="mb-2">Micro-Internship — get real experience</li>
+                    <li class="mb-2">Verified Badge — stand out from crowd</li>
+                    <li class="mb-2">Internship & Fresher job matches</li>
+                </ul>
+                <a href="/skill-check" class="btn btn-success mt-auto">Start Free Skill Check</a>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 p-4 text-center" style="border-top:4px solid #f59e0b;">
+                <i class="bi bi-briefcase display-3 text-warning mb-3"></i>
+                <h4>Experienced Professionals</h4>
+                <p class="text-muted">2-10 years experience</p>
+                <ul class="text-start">
+                    <li class="mb-2">Verify your expertise with AI assessment</li>
+                    <li class="mb-2">Premium Badge for senior roles</li>
+                    <li class="mb-2">Direct placement in mid-senior roles</li>
+                    <li class="mb-2">Fractional & consulting opportunities</li>
+                </ul>
+                <a href="/skill-check" class="btn btn-warning mt-auto">Verify Your Skills</a>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 p-4 text-center" style="border-top:4px solid #3b82f6;">
+                <i class="bi bi-star display-3 text-primary mb-3"></i>
+                <h4>Leaders & Executives</h4>
+                <p class="text-muted">10+ years, C-Level, Directors</p>
+                <ul class="text-start">
+                    <li class="mb-2">Executive verified badge</li>
+                    <li class="mb-2">Board & C-Level placement</li>
+                    <li class="mb-2">Fractional CXO opportunities</li>
+                    <li class="mb-2">Global leadership roles</li>
+                </ul>
+                <a href="/contact" class="btn btn-primary mt-auto">Get Executive Placement</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- All Professions We Serve -->
+    <h3 class="text-center mb-4">Every Profession. Every Industry. Globally.</h3>
+    <div class="row g-2 mb-5 text-center">
+        <div class="col-6 col-md-2"><div class="card p-2">💻 Developers</div></div>
+        <div class="col-6 col-md-2"><div class="card p-2">🎨 Designers</div></div>
+        <div class="col-6 col-md-2"><div class="card p-2">📊 Data Scientists</div></div>
+        <div class="col-6 col-md-2"><div class="card p-2">☁️ Cloud Engineers</div></div>
+        <div class="col-6 col-md-2"><div class="card p-2">🔒 Cybersecurity</div></div>
+        <div class="col-6 col-md-2"><div class="card p-2">📱 Mobile Devs</div></div>
+        <div class="col-6 col-md-2"><div class="card p-2">📋 Project Managers</div></div>
+        <div class="col-6 col-md-2"><div class="card p-2">💰 Finance</div></div>
+        <div class="col-6 col-md-2"><div class="card p-2">📣 Marketing</div></div>
+        <div class="col-6 col-md-2"><div class="card p-2">🏥 Healthcare</div></div>
+        <div class="col-6 col-md-2"><div class="card p-2">🏗️ Architects</div></div>
+        <div class="col-6 col-md-2"><div class="card p-2">👔 Sales</div></div>
+        <div class="col-6 col-md-2"><div class="card p-2">🤝 HR</div></div>
+        <div class="col-6 col-md-2"><div class="card p-2">📝 Content Writers</div></div>
+        <div class="col-6 col-md-2"><div class="card p-2">🎯 Any Profession</div></div>
+        <div class="col-6 col-md-2"><div class="card p-2">🌍 Any Industry</div></div>
+        <div class="col-6 col-md-2"><div class="card p-2">🏢 C-Level Execs</div></div>
+        <div class="col-6 col-md-2"><div class="card p-2">🔧 Trades & Skilled</div></div>
+    </div>
+
+    <!-- What You Get -->
+    <h3 class="text-center mb-4">What You Get With Charvak</h3>
+    <div class="row g-3 mb-5">
+        <div class="col-md-4"><div class="card p-3"><i class="bi bi-shield-check text-primary display-4"></i><h5>Verified Identity</h5><p class="text-muted">AI-verified skills that employers trust — not just a resume</p></div></div>
+        <div class="col-md-4"><div class="card p-3"><i class="bi bi-rocket text-primary display-4"></i><h5>Real Experience</h5><p class="text-muted">Micro-Internship builds your portfolio with real company projects</p></div></div>
+        <div class="col-md-4"><div class="card p-3"><i class="bi bi-globe text-primary display-4"></i><h5>Global Opportunities</h5><p class="text-muted">Jobs in 34 languages, 13 currencies, any country</p></div></div>
+        <div class="col-md-4"><div class="card p-3"><i class="bi bi-lightning text-primary display-4"></i><h5>Fast Placement</h5><p class="text-muted">48 hours from verified to hired — not months</p></div></div>
+        <div class="col-md-4"><div class="card p-3"><i class="bi bi-wallet text-primary display-4"></i><h5>Free for You</h5><p class="text-muted">Skill check, micro-internship, job matching — all free</p></div></div>
+        <div class="col-md-4"><div class="card p-3"><i class="bi bi-graph-up text-primary display-4"></i><h5>Career Growth</h5><p class="text-muted">Training, upskilling, and continuous certification</p></div></div>
+    </div>
+
+    <!-- Job Types -->
+    <h3 class="text-center mb-4">Every Type of Work</h3>
+    <div class="row g-2 mb-5 text-center">
+        <div class="col-6 col-md-3"><div class="card p-3">🏢 Permanent</div></div>
+        <div class="col-6 col-md-3"><div class="card p-3">📋 Contract</div></div>
+        <div class="col-6 col-md-3"><div class="card p-3">🔄 Contract-to-Hire</div></div>
+        <div class="col-6 col-md-3"><div class="card p-3">🆓 Freelance</div></div>
+        <div class="col-6 col-md-3"><div class="card p-3">⏰ Fractional</div></div>
+        <div class="col-6 col-md-3"><div class="card p-3">🎓 Internship</div></div>
+        <div class="col-6 col-md-3"><div class="card p-3">🕐 Part-Time</div></div>
+        <div class="col-6 col-md-3"><div class="card p-3">⚡ Gig / Project</div></div>
+    </div>
+
+    <!-- CTA -->
+    <div class="text-center p-5 bg-dark text-white rounded">
+        <h3>Your Next Career Move Starts Here</h3>
+        <p class="lead mb-4">Join professionals worldwide who proved their skills, built real experience, and landed their dream jobs — all through Charvak.</p>
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="row g-2">
+                    <div class="col-md-4"><a href="/skill-check" class="btn btn-primary btn-lg w-100">Free Skill Check</a></div>
+                    <div class="col-md-4"><a href="/micro-internship" class="btn btn-outline-light btn-lg w-100">Micro-Internship</a></div>
+                    <div class="col-md-4"><a href="/job-board" class="btn btn-outline-light btn-lg w-100">Browse Jobs</a></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
