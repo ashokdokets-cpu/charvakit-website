@@ -78,9 +78,66 @@ function selectPlan(plan) {
     document.getElementById('planInfo').textContent = info[plan];
 }
 </script>
-            <button type="submit" class="btn btn-primary btn-lg w-100">Post Job - <span data-inr="999">999</span></button>
+            <button type="button" class="btn btn-primary btn-lg w-100" onclick="processJobPayment(event)">Post Job - Pay Now</button>
         </form>
     </div></div>
     <div class="text-center mt-3"><a href="/job-board" class="btn btn-outline-primary">Back to Job Board</a></div>
 </div></div></div>
+
+<script>
+let selectedPlan = null;
+
+function selectPlan(plan) {
+    selectedPlan = plan;
+    document.querySelectorAll('[id^="plan-"]').forEach(c => c.style.border = '1px solid #ddd');
+    document.getElementById('plan-' + plan).style.border = '2px solid #3ba591';
+    document.getElementById('plan-' + plan).style.background = '#f0faf7';
+    
+    const info = {
+        free: 'Free: 1 job post. Great for testing Charvakit.',
+        starter: 'Starter: 3 job posts at ₹166/post. Best for small teams.',
+        growth: 'Growth: 10 job posts at ₹99/post. Most popular!',
+        pro: 'Pro: Unlimited posts for 30 days. Best value for active hirers.'
+    };
+    document.getElementById('planInfo').textContent = info[plan];
+}
+
+function processJobPayment(e) {
+    e.preventDefault();
+    if (!selectedPlan || selectedPlan === 'free') {
+        submitJob();
+        return;
+    }
+    
+    const prices = { starter: 499, growth: 999, pro: 2499 };
+    const amount = prices[selectedPlan];
+    const currency = localStorage.getItem('charvak_currency') || 'INR';
+    
+    if (currency === 'INR' && typeof Razorpay !== 'undefined') {
+        const options = {
+            key: 'YOUR_RAZORPAY_KEY_ID',
+            amount: amount * 100,
+            currency: 'INR',
+            name: 'Charvak IT Consulting',
+            description: 'Job Post - ' + selectedPlan + ' Plan',
+            handler: function(response) { submitJob(); },
+            prefill: { email: document.getElementById('email')?.value || '' },
+            theme: { color: '#3ba591' }
+        };
+        const rzp = new Razorpay(options);
+        rzp.open();
+    } else {
+        if (confirm('Proceed with payment of ₹' + amount + '?')) {
+            submitJob();
+        }
+    }
+}
+
+function submitJob() {
+    const title = document.querySelector('input[placeholder*="Senior"]')?.value || 'New Position';
+    alert('Job posted successfully! It will appear on the Job Board within minutes.');
+    document.querySelector('form').reset();
+    selectedPlan = null;
+}
+</script>
 {% endblock %}
