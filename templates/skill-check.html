@@ -208,7 +208,11 @@ function showResult() {
     document.getElementById('resultCard').classList.remove('d-none');
     const final = Math.round((score/currentQuestions.length)*100);
     document.getElementById('finalScore').textContent = final;
-    document.getElementById('resultMsg').textContent = final >= 70 ? 'Great job! You are job-ready!' : 'Good foundation. Consider upskilling.';
+    if (final >= 70) {
+    document.getElementById('resultMsg').innerHTML = 'Great job! You are job-ready! <br><a href="/micro-internship" class="btn btn-success btn-sm mt-2">Get Real Experience (Micro-Internship)</a>';
+} else {
+    document.getElementById('resultMsg').innerHTML = 'Good foundation. <br><a href="/training-engine" class="btn btn-warning btn-sm mt-2">Upskill with Training Engine</a>';
+}
     document.getElementById('resultCard').scrollIntoView({behavior:'smooth'});
     
     // Save to localStorage
