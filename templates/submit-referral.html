@@ -24,4 +24,24 @@
     </div></div>
     <div class="text-center mt-3"><a href="/job-board" class="btn btn-outline-primary">Back to Job Board</a></div>
 </div></div></div>
+
+<script>
+function submitReferral(e){
+    e.preventDefault();
+    const name = document.querySelector('input[placeholder="Your full name"]').value;
+    const email = document.querySelector('input[placeholder="you@email.com"]').value;
+    if(!name || !email) return alert('Please fill your name and email!');
+    
+    const referrals = JSON.parse(localStorage.getItem('charvak_referrals')||'[]');
+    referrals.push({
+        name, email,
+        job: document.querySelector('input[placeholder*="Frontend"]').value,
+        url: document.querySelector('input[type="url"]').value,
+        date: new Date().toISOString()
+    });
+    localStorage.setItem('charvak_referrals', JSON.stringify(referrals));
+    alert('Referral submitted! You will earn rewards when the candidate progresses.');
+    document.querySelector('form').reset();
+}
+</script>
 {% endblock %}
