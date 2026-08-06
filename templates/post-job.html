@@ -23,7 +23,61 @@
             <div class="mb-3"><label class="form-label">Skills Required</label><input type="text" class="form-control" placeholder="e.g. Python, FastAPI, PostgreSQL"></div>
             <div class="mb-3"><label class="form-label">Job Description</label><textarea class="form-control" rows="4" placeholder="Describe the role, responsibilities, and requirements..."></textarea></div>
             <div class="mb-3"><label class="form-label">Application Link/Email</label><input type="text" class="form-control" placeholder="Where should candidates apply?"></div>
-            <div class="alert alert-info">Posting fee: <span data-inr="999">999</span>. Payment via Dokets VouchAI Escrow.</div>
+            <!-- Job Post Packages -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card p-2 text-center h-100" onclick="selectPlan('free')" id="plan-free" style="cursor:pointer;">
+            <h6>🆓 Free</h6>
+            <h4>₹0</h4>
+            <small>1 post</small>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card p-2 text-center h-100" onclick="selectPlan('starter')" id="plan-starter" style="cursor:pointer;">
+            <h6>🚀 Starter</h6>
+            <h4><span data-inr="499">₹499</span></h4>
+            <small>3 posts</small>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card p-2 text-center h-100 border-primary" onclick="selectPlan('growth')" id="plan-growth" style="cursor:pointer;border-width:2px;">
+            <span class="badge bg-primary">Popular</span>
+            <h6>⭐ Growth</h6>
+            <h4><span data-inr="999">₹999</span></h4>
+            <small>10 posts</small>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card p-2 text-center h-100" onclick="selectPlan('pro')" id="plan-pro" style="cursor:pointer;">
+            <h6>💼 Pro</h6>
+            <h4><span data-inr="2499">₹2,499</span></h4>
+            <small>30-day unlimited</small>
+        </div>
+    </div>
+</div>
+
+<div class="alert alert-info">
+    <i class="bi bi-shield-check me-2"></i> 
+    <span id="planInfo">Select a plan above.</span> Payment via Dokets VouchAI Escrow. Pay only on successful hire.
+</div>
+
+<script>
+let selectedPlan = null;
+function selectPlan(plan) {
+    selectedPlan = plan;
+    document.querySelectorAll('[id^="plan-"]').forEach(c => c.style.border = '1px solid #ddd');
+    document.getElementById('plan-' + plan).style.border = '2px solid #3ba591';
+    document.getElementById('plan-' + plan).style.background = '#f0faf7';
+    
+    const info = {
+        free: 'Free: 1 job post. Great for testing Charvakit.',
+        starter: 'Starter: 3 job posts at ₹166/post. Best for small teams.',
+        growth: 'Growth: 10 job posts at ₹99/post. Most popular!',
+        pro: 'Pro: Unlimited posts for 30 days. Best value for active hirers.'
+    };
+    document.getElementById('planInfo').textContent = info[plan];
+}
+</script>
             <button type="submit" class="btn btn-primary btn-lg w-100">Post Job - <span data-inr="999">999</span></button>
         </form>
     </div></div>
