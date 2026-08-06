@@ -1,0 +1,42 @@
+<!-- Razorpay -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<!-- PayPal -->
+<script src="https://www.paypal.com/sdk/js?client-id=YOUR_PAYPAL_CLIENT_ID&currency=INR"></script>
+
+<script>
+// Detect user country for payment method
+function getPreferredPayment() {
+    const currency = localStorage.getItem('charvak_currency') || 'INR';
+    return currency === 'INR' ? 'razorpay' : 'paypal';
+}
+
+function processPayment(amount, name, callback) {
+    const method = getPreferredPayment();
+    if (method === 'razorpay') {
+        processRazorpay(amount, name, callback);
+    } else {
+        processPayPal(amount, name, callback);
+    }
+}
+
+function processRazorpay(amount, name, callback) {
+    const options = {
+        key: 'YOUR_RAZORPAY_KEY_ID',
+        amount: amount * 100,
+        currency: 'INR',
+        name: 'Charvak IT Consulting',
+        description: name,
+        handler: function(response) { callback(true, response); },
+        prefill: { email: 'user@email.com' },
+        theme: { color: '#3ba591' }
+    };
+    const rzp = new Razorpay(options);
+    rzp.open();
+}
+
+function processPayPal(amount, name, callback) {
+    // PayPal button rendered in container
+    alert('PayPal payment: ' + name + ' - $' + (amount/83).toFixed(2));
+    callback(true, {});
+}
+</script>

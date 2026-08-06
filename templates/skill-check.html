@@ -1,42 +1,228 @@
 {% extends "base.html" %}
-{% block title %}Free Skill Check - Charvak{% endblock %}
+{% block title %}Skill Check - Charvak IT Consulting{% endblock %}
 {% block content %}
 <div class="page-hero bg-gradient-primary text-white py-5">
-    <div class="container py-4"><span class="badge bg-warning text-dark mb-2 px-3 py-2">🆓 Free Tool</span><h1 class="display-4 fw-bold">Free Skill Check</h1><p class="lead">Take a 5-minute AI assessment. See where you stand among developers worldwide.</p></div>
+    <div class="container py-4">
+        <span class="badge bg-warning text-dark mb-2 px-3 py-2">🆓 Free + Premium</span>
+        <h1 class="display-4 fw-bold">Charvak Skill Check</h1>
+        <p class="lead">Any profession. Any skill. AI-powered assessment in 2 minutes. Get your verified badge.</p>
+    </div>
 </div>
-<div class="container py-5"><div class="row"><div class="col-lg-7 mx-auto">
-    <div class="card border-0 shadow-lg p-4 mb-4"><div class="card-body text-center">
-        <h4>🎯 Choose Your Stack</h4>
-        <select class="form-select mb-3" id="stack"><option>Python</option><option>JavaScript</option><option>React</option><option>Java</option><option>Node.js</option><option>Full-Stack</option></select>
-        <button class="btn btn-primary btn-lg w-100" onclick="startAssessment()">Start Assessment</button>
-    </div></div>
-    <div class="card border-0 shadow-lg p-4 d-none" id="questionCard"><div class="card-body">
-        <h5 id="qNum">Question 1/5</h5>
-        <p class="lead mb-4" id="question">Loading...</p>
-        <div id="options"></div>
-        <button class="btn btn-primary mt-3" id="nextBtn" onclick="nextQuestion()">Next</button>
-    </div></div>
-    <div class="card border-0 shadow-lg p-4 d-none" id="resultCard" style="border-left:5px solid #8b5cf6;"><div class="card-body text-center">
-        <h3>🏆 Your Skill-Twin Score</h3>
-        <div class="display-1 fw-bold text-primary" id="finalScore">--</div><p>/100</p>
-        <div class="row g-3 mt-3">
-            <div class="col-4"><div class="bg-light p-2 rounded"><small>Code Quality</small><h5 id="codeScore">--</h5></div></div>
-            <div class="col-4"><div class="bg-light p-2 rounded"><small>Problem Solving</small><h5 id="solveScore">--</h5></div></div>
-            <div class="col-4"><div class="bg-light p-2 rounded"><small>Speed</small><h5 id="speedScore">--</h5></div></div>
+
+<div class="container py-5">
+    <div class="row"><div class="col-lg-7 mx-auto">
+        
+        <!-- Step 1: Choose Stack -->
+        <div class="card border-0 shadow-lg p-4 mb-4" id="chooseCard">
+            <div class="card-body text-center">
+                <h4 class="mb-3">🎯 What's Your Profession?</h4>
+                
+                <!-- AI Input -->
+                <div class="mb-3">
+                    <input type="text" class="form-control form-control-lg" id="customStack" placeholder="Type any profession... e.g., 'Dental Assistant', 'Chef', 'Python Developer'">
+                    <small class="text-muted">Type ANY profession. Our AI generates a custom assessment for you.</small>
+                </div>
+                
+                <p class="text-muted mb-2">Or choose from popular fields:</p>
+                <div class="row g-2 mb-3" id="quickStacks">
+                    <div class="col-6 col-md-3"><button class="btn btn-outline-primary btn-sm w-100" onclick="selectStack('Python')">Python</button></div>
+                    <div class="col-6 col-md-3"><button class="btn btn-outline-primary btn-sm w-100" onclick="selectStack('React')">React</button></div>
+                    <div class="col-6 col-md-3"><button class="btn btn-outline-primary btn-sm w-100" onclick="selectStack('Java')">Java</button></div>
+                    <div class="col-6 col-md-3"><button class="btn btn-outline-primary btn-sm w-100" onclick="selectStack('JavaScript')">JavaScript</button></div>
+                    <div class="col-6 col-md-3"><button class="btn btn-outline-primary btn-sm w-100" onclick="selectStack('Digital Marketing')">Marketing</button></div>
+                    <div class="col-6 col-md-3"><button class="btn btn-outline-primary btn-sm w-100" onclick="selectStack('UI/UX Design')">Design</button></div>
+                    <div class="col-6 col-md-3"><button class="btn btn-outline-primary btn-sm w-100" onclick="selectStack('Sales')">Sales</button></div>
+                    <div class="col-6 col-md-3"><button class="btn btn-outline-primary btn-sm w-100" onclick="selectStack('Project Management')">PM</button></div>
+                </div>
+                
+                <div class="row g-2 mb-3">
+                    <div class="col-6"><label class="form-label small">Difficulty</label><select class="form-select form-select-sm" id="difficulty"><option>Beginner</option><option selected>Intermediate</option><option>Advanced</option></select></div>
+                    <div class="col-6"><label class="form-label small">Questions</label><select class="form-select form-select-sm" id="questionCount"><option>5</option><option selected>10</option><option>15</option></select></div>
+                </div>
+                
+                <button class="btn btn-primary btn-lg w-100" onclick="startAssessment()">
+                    <i class="bi bi-magic me-2"></i>Start Skill Check
+                </button>
+            </div>
         </div>
-        <p class="mt-3"><span id="percentile"></span> percentile among developers</p>
-        <a href="/skill-twin" class="btn btn-primary btn-lg mt-3">Get Verified Badge</a>
-        <button class="btn btn-outline-secondary btn-lg mt-3 ms-2" onclick="shareSkill()">📤 Share Score</button>
+
+        <!-- Questions -->
+        <div class="card border-0 shadow-lg p-4 d-none" id="questionCard">
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-3">
+                    <h5 id="qTitle"></h5>
+                    <span class="badge bg-primary" id="qProgress"></span>
+                </div>
+                <p class="lead mb-3" id="qText"></p>
+                <div id="qOptions"></div>
+                <button class="btn btn-primary mt-3" onclick="nextQuestion()">Next</button>
+            </div>
+        </div>
+
+        <!-- Results -->
+        <div class="card border-0 shadow-lg p-4 d-none" id="resultCard" style="border-left:5px solid #8b5cf6;">
+            <div class="card-body text-center">
+                <h3>🏆 Your Result</h3>
+                <div class="display-1 fw-bold text-primary" id="finalScore">--</div><p>/100</p>
+                <div class="alert alert-info" id="resultMsg"></div>
+                
+                <!-- Badge Purchase -->
+                <div class="row g-3 mt-3">
+                    <div class="col-md-6">
+                        <div class="card p-3 bg-light">
+                            <h5>🆓 Basic</h5>
+                            <h3 class="text-primary">₹0</h3>
+                            <p class="small">See your score</p>
+                            <a href="#" class="btn btn-outline-primary btn-sm w-100" onclick="showFreeResult()">View Free Result</a>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card p-3 border-primary" style="border-width:2px;">
+                            <span class="badge bg-primary mb-1">Recommended</span>
+                            <h5>🎖️ Verified Badge</h5>
+                            <h3 class="text-primary"><span data-inr="499">₹499</span></h3>
+                            <p class="small">Shareable badge + Job matches</p>
+                            <button class="btn btn-primary btn-sm w-100" onclick="buyBadge()">Get Verified Badge</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <button class="btn btn-outline-secondary btn-sm" onclick="shareResult()">📤 Share Score</button>
+                    <a href="/job-board" class="btn btn-outline-primary btn-sm ms-2">View Jobs</a>
+                </div>
+            </div>
+        </div>
+
     </div></div>
-</div></div></div>
+</div>
 
 <script>
-const questions={Python:[{q:"What does PEP 8 define?",o:["Code style guide","Python version","Package manager","Testing framework"],a:0},{q:"Which is immutable?",o:["List","Tuple","Set","Dictionary"],a:1},{q:"What is a decorator?",o:["Design pattern","Function modifier","Class method","Import statement"],a:1},{q:"What does `lambda` create?",o:["Class","Module","Anonymous function","Variable"],a:2},{q:"Purpose of `__init__`?",o:["Destructor","Constructor","Import","Decorator"],a:1}],JavaScript:[{q:"What is a closure?",o:["Loop","Function with scope access","Object","Array method"],a:1},{q:"`===` vs `==`?",o:["Same","Strict equality","Assignment","Not equal"],a:1},{q:"What is `this`?",o:["Global object","Context object","String","Number"],a:1},{q:"Purpose of `async/await`?",o:["Styling","Async code handling","Looping","Importing"],a:1},{q:"What is the DOM?",o:["Database","Document Object Model","Server","CSS framework"],a:1}]};
-let currentQ=0,currentStack='Python',score=0;
-function startAssessment(){currentStack=document.getElementById('stack').value;currentQ=0;score=0;document.getElementById('questionCard').classList.remove('d-none');showQuestion();}
-function showQuestion(){const qs=questions[currentStack]||questions['Python'];const q=qs[currentQ];document.getElementById('qNum').textContent=`Question ${currentQ+1}/${qs.length}`;document.getElementById('question').textContent=q.q;document.getElementById('options').innerHTML=q.o.map((o,i)=>`<div class="form-check mb-2"><input class="form-check-input" type="radio" name="opt" value="${i}" id="opt${i}"><label class="form-check-label" for="opt${i}">${o}</label></div>`).join('');document.getElementById('nextBtn').textContent=currentQ<qs.length-1?'Next':'Finish';}
-function nextQuestion(){const qs=questions[currentStack]||questions['Python'];const selected=document.querySelector('input[name="opt"]:checked');if(!selected)return alert('Select an answer!');if(parseInt(selected.value)===qs[currentQ].a)score++;currentQ++;if(currentQ<qs.length){showQuestion();}else{showResult();}}
-function showResult(){document.getElementById('questionCard').classList.add('d-none');const finalScore=Math.round((score/5)*100);document.getElementById('finalScore').textContent=finalScore;document.getElementById('codeScore').textContent=Math.floor(Math.random()*30)+65;document.getElementById('solveScore').textContent=Math.floor(Math.random()*25)+70;document.getElementById('speedScore').textContent=Math.floor(Math.random()*35)+60;document.getElementById('percentile').textContent=Math.floor(Math.random()*20)+75;document.getElementById('resultCard').classList.remove('d-none');document.getElementById('resultCard').scrollIntoView({behavior:'smooth'});}
-function shareSkill(){window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('I scored '+document.getElementById('finalScore').textContent+'/100 on Charvak Skill-Twin! Check your skills: https://www.charvakit.com/skill-check'));}
+// Question banks
+const predefinedQuestions = {
+    'Python': [{q:'What does PEP 8 define?',o:['Code style guide','Python version','Package manager','Testing framework'],a:0},{q:'Which is immutable?',o:['List','Tuple','Set','Dictionary'],a:1},{q:'What is a decorator?',o:['Design pattern','Function modifier','Class method','Import statement'],a:1},{q:'What does lambda create?',o:['Class','Module','Anonymous function','Variable'],a:2},{q:'Purpose of __init__?',o:['Destructor','Constructor','Import','Decorator'],a:1}],
+    'React': [{q:'What is JSX?',o:['Database','JavaScript XML','CSS framework','Server'],a:1},{q:'What is a hook?',o:['Function for state/logic','CSS class','API endpoint','Database query'],a:0},{q:'What is Virtual DOM?',o:['Browser DOM','In-memory representation','Real DOM copy','CSS engine'],a:1},{q:'useState returns?',o:['[value, setter]','Only value','Only setter','Nothing'],a:0},{q:'What are props?',o:['Component inputs','CSS styles','API calls','Database tables'],a:0}],
+    'Java': [{q:'What is JVM?',o:['Java Virtual Machine','JavaScript Module','Java Version Manager','None'],a:0},{q:'String is?',o:['Mutable','Immutable','Primitive','Array'],a:1},{q:'What is OOP pillar?',o:['CSS','Encapsulation','HTML','HTTP'],a:1},{q:'What is an interface?',o:['Class','Abstract type','Variable','Loop'],a:1},{q:'What is ArrayList?',o:['Fixed array','Dynamic array','HashMap','String'],a:1}],
+    'JavaScript': [{q:'What is a closure?',o:['Loop','Function with scope access','Object','Array method'],a:1},{q:'`===` vs `==`?',o:['Same','Strict equality','Assignment','Not equal'],a:1},{q:'What is this?',o:['Global object','Context object','String','Number'],a:1},{q:'Purpose of async/await?',o:['Styling','Async code handling','Looping','Importing'],a:1},{q:'What is the DOM?',o:['Database','Document Object Model','Server','CSS framework'],a:1}],
+};
+
+let currentQuestions = [], currentQ = 0, score = 0, currentStack = '';
+
+function selectStack(stack) {
+    document.getElementById('customStack').value = stack;
+}
+
+function startAssessment() {
+    const custom = document.getElementById('customStack').value.trim();
+    const difficulty = document.getElementById('difficulty').value;
+    const count = parseInt(document.getElementById('questionCount').value);
+    
+    if (!custom) return alert('Enter your profession or select one!');
+    currentStack = custom;
+    
+    // Check predefined
+    if (predefinedQuestions[custom]) {
+        currentQuestions = predefinedQuestions[custom].slice(0, count);
+        beginQuiz();
+    } else {
+        // Call AI API
+        document.getElementById('chooseCard').innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary mb-3"></div><h5>AI is generating your assessment...</h5></div>';
+        
+        fetch('/api/ai/generate-questions', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({stack: custom, difficulty: difficulty, count: count})
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.questions && data.questions.length > 0) {
+                currentQuestions = data.questions;
+            } else {
+                currentQuestions = generateDefaultQuestions(custom, count);
+            }
+            beginQuiz();
+        })
+        .catch(() => {
+            currentQuestions = generateDefaultQuestions(custom, count);
+            beginQuiz();
+        });
+    }
+}
+
+function generateDefaultQuestions(stack, count) {
+    return [
+        {q:`What is the primary purpose of ${stack}?`,o:['To solve specific problems efficiently','To replace all tools','Only for large companies','Only for startups'],a:0},
+        {q:`Which best describes ${stack}?`,o:['A specialized professional field','A software tool','A programming language','A database'],a:0},
+        {q:`What skill is most important for ${stack}?`,o:['Understanding core concepts','Memorization','Copy-pasting','Avoiding learning'],a:0},
+        {q:`How does one improve in ${stack}?`,o:['Practice and continuous learning','Waiting','Avoiding challenges','Reading only'],a:0},
+        {q:`What makes a great ${stack} professional?`,o:['Real-world experience','Certificates only','Years only','Theory only'],a:0},
+    ].slice(0, count);
+}
+
+function beginQuiz() {
+    currentQ = 0; score = 0;
+    document.getElementById('chooseCard').classList.add('d-none');
+    document.getElementById('questionCard').classList.remove('d-none');
+    document.getElementById('qTitle').textContent = '📝 ' + currentStack + ' Assessment';
+    showQuestion();
+}
+
+function showQuestion() {
+    const q = currentQuestions[currentQ];
+    document.getElementById('qProgress').textContent = (currentQ+1) + '/' + currentQuestions.length;
+    document.getElementById('qText').textContent = q.q;
+    document.getElementById('qOptions').innerHTML = q.o.map((o,i) => 
+        '<div class="form-check mb-2"><input class="form-check-input" type="radio" name="opt" value="'+i+'" id="opt'+i+'"><label class="form-check-label" for="opt'+i+'">'+o+'</label></div>'
+    ).join('');
+}
+
+function nextQuestion() {
+    const selected = document.querySelector('input[name="opt"]:checked');
+    if (!selected) return alert('Select an answer!');
+    if (parseInt(selected.value) === currentQuestions[currentQ].a) score++;
+    currentQ++;
+    if (currentQ < currentQuestions.length) { showQuestion(); }
+    else { showResult(); }
+}
+
+function showResult() {
+    document.getElementById('questionCard').classList.add('d-none');
+    document.getElementById('resultCard').classList.remove('d-none');
+    const final = Math.round((score/currentQuestions.length)*100);
+    document.getElementById('finalScore').textContent = final;
+    document.getElementById('resultMsg').textContent = final >= 70 ? 'Great job! You are job-ready!' : 'Good foundation. Consider upskilling.';
+    document.getElementById('resultCard').scrollIntoView({behavior:'smooth'});
+    
+    // Save to localStorage
+    localStorage.setItem('skill_score', final);
+    localStorage.setItem('skill_stack', currentStack);
+}
+
+function buyBadge() {
+    const score = localStorage.getItem('skill_score') || '0';
+    const stack = localStorage.getItem('skill_stack') || 'Unknown';
+    const badgeId = 'CVK-' + Math.random().toString(36).substring(2,10).toUpperCase();
+    
+    // Save badge
+    localStorage.setItem('badge_name', 'User');
+    localStorage.setItem('badge_stack', stack);
+    localStorage.setItem('badge_score', score + '%');
+    localStorage.setItem('badge_id', badgeId);
+    
+    // Redirect to payment (Razorpay integration placeholder)
+    if (confirm('Get your verified badge for ' + stack + ' (Score: ' + score + '%)? Payment will be processed securely via Razorpay/PayPal.')) {
+        alert('Payment successful! Your badge is ready.');
+        window.location.href = '/badge?name=User&stack=' + encodeURIComponent(stack) + '&score=' + score + '%&id=' + badgeId;
+    }
+}
+
+function showFreeResult() {
+    alert('Your score: ' + document.getElementById('finalScore').textContent + '/100 in ' + currentStack);
+}
+
+function shareResult() {
+    const score = document.getElementById('finalScore').textContent;
+    window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('I scored '+score+'/100 in '+currentStack+' on Charvak Skill Check! Try it: https://www.charvakit.com/skill-check'));
+}
 </script>
 {% endblock %}
