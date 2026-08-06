@@ -641,3 +641,7 @@ async def api_get_applications():
 @app.get("/micro-internship", response_class=HTMLResponse)
 async def micro_internship(request: Request):
     return templates.TemplateResponse("micro-internship.html", {"request": request, "title": "Micro-Internships - Charvak First Job Engine"})
+
+@app.get("/for-employers", response_class=HTMLResponse)
+async def for_employers(request: Request):
+    return templates.TemplateResponse("for-employers.html", {"request": request, "title": "For Employers - Charvak IT Consulting"})
