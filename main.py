@@ -21,6 +21,7 @@ from monitor_service import add_monitor, check_all_sites, get_monitor_status
 from job_service import job_board
 from whatsapp_bot import whatsapp_handler, VERIFY_TOKEN
 from fastapi.middleware.cors import CORSMiddleware
+from na_module.work_auth import work_auth_engine, VisaType
 
 app = FastAPI(title="Charvak IT Consulting Pvt Ltd - Web Designing | Staff Augmentation")
 
@@ -658,3 +659,27 @@ async def for_candidates(request: Request):
 @app.get("/post-micro-project", response_class=HTMLResponse)
 async def post_micro_project(request: Request):
     return templates.TemplateResponse("post-micro-project.html", {"request": request, "title": "Post a Micro-Project - Charvak"})
+
+@app.get("/na-bench-staffing", response_class=HTMLResponse)
+async def na_bench_staffing(request: Request):
+    return templates.TemplateResponse("na-bench-staffing.html", {"request": request, "title": "NA Bench Staffing - Charvak"})
+
+@app.post("/api/na/verify-work-auth")
+async def verify_work_auth(request: Request):
+    data = await request.json()
+    try:
+        visa_type = work_auth_engine.classify_visa(data.get("visa_input", ""))
+        result = work_auth_engine.verify_candidate(
+            candidate_id=data.get("candidate_id", "NA-" + str(hash(data.get("visa_input", "")))),
+            visa_type=visa_type,
+            visa_expiry=data.get("visa_expiry"),
+            documents_verified=data.get("documents_verified", False),
+            client_type=data.get("client_type", "corporate")
+        )
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.get("/api/na/visa-types")
+async def get_visa_types():
+    return {"visa_types": [{"name": v.value, "key": v.name} for v in VisaType]}
