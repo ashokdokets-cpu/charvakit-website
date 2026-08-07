@@ -15,7 +15,7 @@ class VMSProvider(Enum):
     WAND = "WAND VMS"
     VNDLY = "Workday VNDLY"
     COUPA = "Coupa Contingent Workforce"
-    PRO unlimited = "PRO Unlimited"
+    PRO_UNLIMITED = "PRO Unlimited"
     CUSTOM = "Custom VMS"
 
 class JobStatus(Enum):
