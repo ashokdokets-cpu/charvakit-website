@@ -25,6 +25,7 @@ from na_module.work_auth import work_auth_engine, VisaType
 from na_module.vms_connector import vms_connector
 from na_module.vector_matcher import vector_matcher
 from na_module.resume_engine import pii_redactor, compliance_checker, sub_vendor_manager
+from na_module.charvak_vms import charvak_vms, RequisitionStatus
 
 app = FastAPI(title="Charvak IT Consulting Pvt Ltd - Web Designing | Staff Augmentation")
 
@@ -774,3 +775,42 @@ async def register_vendor(request: Request):
 @app.get("/api/na/vendor-stats/{vendor_id}")
 async def vendor_stats(vendor_id: str):
     return sub_vendor_manager.get_vendor_stats(vendor_id)
+
+@app.get("/api/na/vms/requisitions")
+async def get_requisitions(skill: str = None, visa_type: str = None):
+    filters = {}
+    if skill: filters["skill"] = skill
+    if visa_type: filters["visa_type"] = visa_type
+    reqs = charvak_vms.get_open_requisitions(filters)
+    return {"requisitions": reqs, "count": len(reqs)}
+
+@app.post("/api/na/vms/requisitions")
+async def create_requisition(request: Request):
+    data = await request.json()
+    result = charvak_vms.create_requisition(
+        client_id=data.get("client_id", "CLIENT-001"),
+        job_data=data
+    )
+    return result
+
+@app.post("/api/na/vms/timecard")
+async def submit_timecard(request: Request):
+    data = await request.json()
+    result = charvak_vms.submit_timecard(
+        req_id=data.get("req_id"),
+        candidate_id=data.get("candidate_id"),
+        hours=data.get("hours", 0),
+        period_end=data.get("period_end"),
+        rate=data.get("rate", 0)
+    )
+    return result
+
+@app.post("/api/na/vms/timecard/approve")
+async def approve_timecard(request: Request):
+    data = await request.json()
+    result = charvak_vms.approve_timecard(data.get("timecard_id"))
+    return result
+
+@app.get("/api/na/vms/analytics/{client_id}")
+async def client_analytics(client_id: str):
+    return charvak_vms.get_client_analytics(client_id)
