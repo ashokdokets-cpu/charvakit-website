@@ -22,6 +22,8 @@ from job_service import job_board
 from whatsapp_bot import whatsapp_handler, VERIFY_TOKEN
 from fastapi.middleware.cors import CORSMiddleware
 from na_module.work_auth import work_auth_engine, VisaType
+from na_module.vms_connector import vms_connector
+from na_module.vector_matcher import vector_matcher
 
 app = FastAPI(title="Charvak IT Consulting Pvt Ltd - Web Designing | Staff Augmentation")
 
@@ -683,3 +685,57 @@ async def verify_work_auth(request: Request):
 @app.get("/api/na/visa-types")
 async def get_visa_types():
     return {"visa_types": [{"name": v.value, "key": v.name} for v in VisaType]}
+
+@app.post("/api/na/ingest-job")
+async def ingest_job(request: Request):
+    data = await request.json()
+    result = vms_connector.ingest_job_requirements(
+        source=data.get("source", "direct"),
+        raw_data=data
+    )
+    return result
+
+@app.get("/api/na/jobs")
+async def get_na_jobs(skill: str = None, location: str = None, visa_type: str = None):
+    filters = {}
+    if skill: filters["skill"] = skill
+    if location: filters["location"] = location
+    if visa_type: filters["visa_type"] = visa_type
+    jobs = vms_connector.get_active_jobs(filters)
+    return {"jobs": jobs, "count": len(jobs)}
+
+@app.post("/api/na/submit-candidate")
+async def submit_candidate(request: Request):
+    data = await request.json()
+    
+    # First verify work auth
+    visa_type = work_auth_engine.classify_visa(data.get("visa_input", ""))
+    work_auth = work_auth_engine.verify_candidate(
+        candidate_id=data.get("candidate_id"),
+        visa_type=visa_type,
+        visa_expiry=data.get("visa_expiry"),
+        documents_verified=data.get("documents_verified", False),
+        client_type=data.get("client_type", "corporate")
+    )
+    
+    if not work_auth["can_submit"]:
+        return {"status": "rejected", "reason": "Work authorization check failed", "details": work_auth}
+    
+    result = vms_connector.submit_candidate(
+        job_id=data.get("job_id"),
+        candidate_data=data,
+        vendor_id=data.get("vendor_id", "NA-VENDOR-001"),
+        work_auth_result=work_auth
+    )
+    return result
+
+@app.post("/api/na/match-candidate")
+async def match_candidate(request: Request):
+    data = await request.json()
+    jobs = vms_connector.get_active_jobs()
+    matches = vector_matcher.match_candidate_to_jobs(data, jobs)
+    return {"candidate_id": data.get("id"), "matches": matches, "count": len(matches)}
+
+@app.get("/api/na/sla-check/{submission_id}")
+async def check_sla(submission_id: str):
+    return vms_connector.check_sla(submission_id)
