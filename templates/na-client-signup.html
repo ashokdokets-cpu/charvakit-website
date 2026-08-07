@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Register - Charvak North America{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4">
+        <span class="badge bg-warning text-dark mb-2 px-3 py-2">🇺🇸 North America</span>
+        <h1 class="display-4 fw-bold">Register as a Client</h1>
+        <p class="lead">One registration. All client types welcome. We classify internally.</p>
+    </div>
+</div>
+
+<div class="container py-5"><div class="row"><div class="col-lg-7 mx-auto">
+    <div class="card border-0 shadow-lg p-4"><div class="card-body">
+        <h4 class="mb-3">Client Registration</h4>
+        <p class="text-muted">All fields are secure. We never share your information with sub-vendors.</p>
+        <form onsubmit="registerClient(event)">
+            <div class="row g-2 mb-3">
+                <div class="col-md-6"><label class="form-label">Company Name</label><input type="text" class="form-control" id="companyName" required></div>
+                <div class="col-md-6"><label class="form-label">Contact Person</label><input type="text" class="form-control" id="contactPerson" required></div>
+            </div>
+            <div class="mb-3"><label class="form-label">Business Email</label><input type="email" class="form-control" id="email" required></div>
+            <div class="mb-3"><label class="form-label">Phone</label><input type="tel" class="form-control" id="phone"></div>
+            <div class="mb-3">
+                <label class="form-label">I am a...</label>
+                <select class="form-select" id="clientType">
+                    <option value="">Select your role</option>
+                    <option value="tier1">Tier-1 Vendor / Direct Client</option>
+                    <option value="consulting">Consulting Firm / Implementation Partner</option>
+                    <option value="subvendor">Sub-Vendor / Tier-2 Supplier</option>
+                    <option value="other">Other / Not Sure</option>
+                </select>
+                <small class="text-muted">This helps us configure your account. All types get full access.</small>
+            </div>
+            <div class="mb-3"><label class="form-label">How many bench candidates do you have? (approx)</label><input type="number" class="form-control" id="benchCount" placeholder="e.g. 10"></div>
+            <div class="mb-3"><label class="form-label">Preferred States / Regions</label><input type="text" class="form-control" id="regions" placeholder="e.g. NY, NJ, TX, CA, Remote"></div>
+            <div class="alert alert-info">
+                <i class="bi bi-shield-check me-2"></i>
+                <strong>What happens next?</strong><br>
+                1. Your account is created immediately<br>
+                2. You get access to the bench staffing portal<br>
+                3. Start uploading candidates or posting requirements<br>
+                4. AI matching begins within minutes<br>
+                5. All protected by Dokets VouchAI Escrow
+            </div>
+            <button type="submit" class="btn btn-primary btn-lg w-100">Register Now</button>
+        </form>
+        <p class="text-success mt-2 text-center" id="regMsg" style="display:none;"></p>
+    </div></div>
+</div></div></div>
+
+<script>
+function registerClient(e){
+    e.preventDefault();
+    const name = document.getElementById('companyName').value;
+    const email = document.getElementById('email').value;
+    if(!name || !email) return;
+    
+    const clients = JSON.parse(localStorage.getItem('na_clients')||'[]');
+    clients.push({
+        company: name,
+        contact: document.getElementById('contactPerson').value,
+        email: email,
+        phone: document.getElementById('phone').value,
+        type: document.getElementById('clientType').value,
+        bench_count: document.getElementById('benchCount').value,
+        regions: document.getElementById('regions').value,
+        registered: new Date().toISOString(),
+        status: 'active'
+    });
+    localStorage.setItem('na_clients', JSON.stringify(clients));
+    
+    document.getElementById('regMsg').textContent = 'Welcome aboard, ' + name + '! Your account is ready. Start using the bench staffing portal.';
+    document.getElementById('regMsg').style.display = 'block';
+    document.querySelector('form').reset();
+    
+    setTimeout(() => window.location.href = '/na-bench-staffing', 2000);
+}
+</script>
+{% endblock %}

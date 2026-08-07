@@ -831,3 +831,7 @@ async def total_revenue():
 @app.get("/api/na/revenue/firm/{firm_id}")
 async def firm_revenue(firm_id: str):
     return revenue_engine.get_firm_revenue(firm_id)
+
+@app.get("/na-client-signup", response_class=HTMLResponse)
+async def na_client_signup(request: Request):
+    return templates.TemplateResponse("na-client-signup.html", {"request": request, "title": "Register - Charvak NA"})
