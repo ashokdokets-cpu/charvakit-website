@@ -24,6 +24,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from na_module.work_auth import work_auth_engine, VisaType
 from na_module.vms_connector import vms_connector
 from na_module.vector_matcher import vector_matcher
+from na_module.resume_engine import pii_redactor, compliance_checker, sub_vendor_manager
 
 app = FastAPI(title="Charvak IT Consulting Pvt Ltd - Web Designing | Staff Augmentation")
 
@@ -739,3 +740,37 @@ async def match_candidate(request: Request):
 @app.get("/api/na/sla-check/{submission_id}")
 async def check_sla(submission_id: str):
     return vms_connector.check_sla(submission_id)
+
+@app.post("/api/na/redact-resume")
+async def redact_resume(request: Request):
+    data = await request.json()
+    text = data.get("text", "")
+    candidate_id = data.get("candidate_id", "NA-UNKNOWN")
+    redacted_text, log = pii_redactor.redact_text(text, candidate_id)
+    return {"redacted_text": redacted_text, "log": log}
+
+@app.post("/api/na/blind-profile")
+async def blind_profile(request: Request):
+    data = await request.json()
+    profile = pii_redactor.generate_blind_profile(data)
+    return profile
+
+@app.post("/api/na/compliance-check")
+async def compliance_check(request: Request):
+    data = await request.json()
+    check_type = data.get("type", "job")
+    if check_type == "job":
+        result = compliance_checker.check_job_compliance(data)
+    else:
+        result = compliance_checker.check_candidate_compliance(data)
+    return result
+
+@app.post("/api/na/register-vendor")
+async def register_vendor(request: Request):
+    data = await request.json()
+    result = sub_vendor_manager.register_vendor(data)
+    return result
+
+@app.get("/api/na/vendor-stats/{vendor_id}")
+async def vendor_stats(vendor_id: str):
+    return sub_vendor_manager.get_vendor_stats(vendor_id)
