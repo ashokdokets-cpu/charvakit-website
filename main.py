@@ -26,6 +26,7 @@ from na_module.vms_connector import vms_connector
 from na_module.vector_matcher import vector_matcher
 from na_module.resume_engine import pii_redactor, compliance_checker, sub_vendor_manager
 from na_module.charvak_vms import charvak_vms, RequisitionStatus
+from na_module.revenue_engine import revenue_engine, SubscriptionTier
 
 app = FastAPI(title="Charvak IT Consulting Pvt Ltd - Web Designing | Staff Augmentation")
 
@@ -814,3 +815,19 @@ async def approve_timecard(request: Request):
 @app.get("/api/na/vms/analytics/{client_id}")
 async def client_analytics(client_id: str):
     return charvak_vms.get_client_analytics(client_id)
+
+@app.post("/api/na/revenue/subscribe")
+async def create_subscription(request: Request):
+    data = await request.json()
+    tier_name = data.get("tier", "STARTER")
+    tier = getattr(SubscriptionTier, tier_name, SubscriptionTier.STARTER)
+    result = revenue_engine.create_subscription(data.get("firm_id"), tier)
+    return result
+
+@app.get("/api/na/revenue/total")
+async def total_revenue():
+    return revenue_engine.get_total_revenue()
+
+@app.get("/api/na/revenue/firm/{firm_id}")
+async def firm_revenue(firm_id: str):
+    return revenue_engine.get_firm_revenue(firm_id)
