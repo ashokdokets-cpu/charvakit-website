@@ -65,37 +65,12 @@ function roastResume(){
 }
 
 function unlockRewrite(){
-    const amount = 99;
-    const currency = localStorage.getItem('charvak_currency') || 'INR';
-    
-    if (currency === 'INR' && typeof Razorpay !== 'undefined') {
-        const options = {
-            key: 'YOUR_RAZORPAY_KEY_ID',
-            amount: amount * 100,
-            currency: 'INR',
-            name: 'Charvak AI Tools',
-            description: 'Resume Roast - ATS Optimized Rewrite',
-            handler: function(response) {
-                document.getElementById('paymentMsg').textContent = '✅ Payment successful! Downloading your optimized resume...';
-                document.getElementById('paymentMsg').style.color = '#10b981';
-            },
-            prefill: { email: 'user@email.com' },
-            theme: { color: '#3ba591' }
-        };
-        const rzp = new Razorpay(options);
-        rzp.open();
-    } else if (currency !== 'INR' && typeof paypal !== 'undefined') {
-        // PayPal integration
-        alert('Processing PayPal payment of $' + (amount/83).toFixed(2));
-        document.getElementById('paymentMsg').textContent = '✅ Payment successful! Downloading your optimized resume...';
-        document.getElementById('paymentMsg').style.color = '#10b981';
-    } else {
-        // Fallback for demo
-        if (confirm('Unlock AI-rewritten resume for ₹' + amount + '?')) {
+    processToolPayment(99, 'Resume Roast - ATS Rewrite', function(success){
+        if(success){
             document.getElementById('paymentMsg').textContent = '✅ Payment successful! Downloading your optimized resume...';
             document.getElementById('paymentMsg').style.color = '#10b981';
         }
-    }
+    });
 }
 </script>
 {% endblock %}
