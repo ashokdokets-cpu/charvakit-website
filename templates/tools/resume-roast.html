@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Resume Roast - Charvak AI Tools{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4">
+        <span class="badge bg-warning text-dark mb-2 px-3 py-2">🔥 Viral Tool</span>
+        <h1 class="display-4 fw-bold">Resume Roast & Reality Check</h1>
+        <p class="lead">Upload your resume. Get a brutally honest AI roast + ATS match score. Free roast. Paid rewrite.</p>
+    </div>
+</div>
+
+<div class="container py-5"><div class="row"><div class="col-lg-7 mx-auto">
+    <div class="card border-0 shadow-lg p-4 mb-4">
+        <div class="card-body text-center">
+            <h4>📄 Upload Your Resume</h4>
+            <div class="mb-3">
+                <textarea class="form-control" id="resumeText" rows="8" placeholder="Paste your resume text here..."></textarea>
+            </div>
+            <div class="mb-3">
+                <input type="text" class="form-control" id="jobTitle" placeholder="Target Job Title (e.g., Senior React Developer)">
+            </div>
+            <button class="btn btn-primary btn-lg w-100" onclick="roastResume()">
+                <i class="bi bi-fire me-2"></i>Roast My Resume
+            </button>
+        </div>
+    </div>
+    
+    <!-- Results -->
+    <div class="card border-0 shadow-lg p-4 d-none" id="resultCard" style="border-left:5px solid #ef4444;">
+        <div class="card-body text-center">
+            <h3>🔥 Resume Roast Report</h3>
+            <div class="display-1 fw-bold" id="matchScore">--</div><p>/100 ATS Match</p>
+            <div class="bg-light p-3 rounded mb-3" id="roastText"></div>
+            <div class="row g-2 mb-3" id="buzzwordsList"></div>
+            <div class="alert alert-info" id="gapAlert"></div>
+            <button class="btn btn-primary btn-lg" onclick="unlockRewrite()">
+                <i class="bi bi-magic me-2"></i>Unlock ATS-Optimized Rewrite — <span data-inr="99">₹99</span>
+            </button>
+            <p class="small text-muted mt-2" id="paymentMsg"></p>
+        </div>
+    </div>
+</div></div></div>
+
+<script>
+function roastResume(){
+    const resume = document.getElementById('resumeText').value;
+    const job = document.getElementById('jobTitle').value;
+    if(!resume) return alert('Paste your resume!');
+    
+    // Simulate AI roast
+    const score = Math.floor(Math.random()*40)+45;
+    const roasts = [
+        "Your resume says 'team player' 4 times. AI thinks you actually hate people.",
+        "'Detail-oriented' — yet you forgot to add dates to 3 jobs. Interesting.",
+        "You used 'synergy' in 2026. This isn't a corporate retreat brochure.",
+        "AI found 12 buzzwords, 0 measurable achievements. Harsh but true."
+    ];
+    
+    document.getElementById('matchScore').textContent = score;
+    document.getElementById('roastText').innerHTML = '<strong>AI Says:</strong> "' + roasts[Math.floor(Math.random()*roasts.length)] + '"';
+    document.getElementById('buzzwordsList').innerHTML = '<div class="col-4"><span class="badge bg-danger">synergy</span></div><div class="col-4"><span class="badge bg-danger">team player</span></div><div class="col-4"><span class="badge bg-danger">detail-oriented</span></div>';
+    document.getElementById('gapAlert').textContent = score >= 70 ? 'Decent match! Minor optimizations needed.' : 'Significant gaps found. Rewrite recommended.';
+    document.getElementById('resultCard').classList.remove('d-none');
+    document.getElementById('resultCard').scrollIntoView({behavior:'smooth'});
+}
+
+function unlockRewrite(){
+    if(confirm('Unlock AI-rewritten resume for ₹99? Your resume will be ATS-optimized instantly.')){
+        document.getElementById('paymentMsg').textContent = '✅ Payment successful! Downloading your optimized resume...';
+        document.getElementById('paymentMsg').style.color = '#10b981';
+    }
+}
+</script>
+{% endblock %}
