@@ -835,18 +835,3 @@ async def firm_revenue(firm_id: str):
 @app.get("/na-client-signup", response_class=HTMLResponse)
 async def na_client_signup(request: Request):
     return templates.TemplateResponse("na-client-signup.html", {"request": request, "title": "Register - Charvak NA"})
-
-# Tools Suite
-@app.get("/tools", response_class=HTMLResponse)
-async def tools_index(request: Request):
-    return templates.TemplateResponse("tools/index.html", {"request": request, "title": "AI Tools Suite - Charvak"})
-
-@app.get("/tools/resume-roast", response_class=HTMLResponse)
-async def resume_roast(request: Request):
-    return templates.TemplateResponse("tools/resume-roast.html", {"request": request, "title": "Resume Roast - Charvak"})
-
-@app.get("/tools/ghost-bounty", response_class=HTMLResponse)
-async def ghost_bounty(request: Request):
-    return templates.TemplateResponse("tools/ghost-bounty.html", {"request": request, "title": "GhostBounty AI - Charvak"}) if False else templates.TemplateResponse("tools/coming-soon.html", {"request": request, "title": "Coming Soon"})
-
-# Add more tool routes as built

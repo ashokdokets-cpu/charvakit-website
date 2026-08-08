@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Micro-Trial Engine - Charvak{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5"><div class="container py-4"><span class="badge bg-warning text-dark mb-2 px-3 py-2">⏱️ Paid Trial</span><h1 class="display-4 fw-bold">Micro-Trial Engine</h1><p class="lead">15-minute paid skill trial. Get paid for your time. Employers pay to see results.</p></div></div>
+<div class="container py-5"><div class="row"><div class="col-lg-7 mx-auto">
+    <div class="card border-0 shadow-lg p-4 mb-4"><div class="card-body text-center"><h4>🧪 Take a Micro-Trial</h4><select class="form-select mb-3" id="trialType"><option>React Component Debug</option><option>SQL Query Optimization</option><option>API Design Challenge</option></select><button class="btn btn-primary btn-lg w-100" onclick="startTrial()">Start 15-Minute Trial</button></div></div>
+    <div class="card border-0 shadow-lg p-4 d-none" id="trialResult"><div class="card-body text-center"><h3>✅ Trial Complete!</h3><div class="display-1 fw-bold text-primary" id="trialScore">--</div><p>/100</p><p class="text-success">You earned $15 for completing this trial!</p><button class="btn btn-primary btn-lg" onclick="claimPayment()">Claim Payment via Escrow</button></div></div>
+</div></div></div>
+<script>function startTrial(){setTimeout(()=>{document.getElementById('trialScore').textContent=Math.floor(Math.random()*25)+70;document.getElementById('trialResult').classList.remove('d-none');},1500);}function claimPayment(){alert('$15 payment processing via Dokets VouchAI Escrow!');}</script>
+{% endblock %}

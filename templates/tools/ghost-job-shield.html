@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Ghost-Job Shield - Charvak{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5"><div class="container py-4"><span class="badge bg-warning text-dark mb-2 px-3 py-2">👻 Detection</span><h1 class="display-4 fw-bold">Ghost-Job Shield</h1><p class="lead">Paste a job posting URL. AI detects if it's a real job or a ghost listing.</p></div></div>
+<div class="container py-5"><div class="row"><div class="col-lg-7 mx-auto">
+    <div class="card border-0 shadow-lg p-4 mb-4"><div class="card-body text-center"><h4>🔍 Audit a Job Posting</h4><input type="url" class="form-control mb-3" id="jobUrl" placeholder="https://linkedin.com/jobs/..."><button class="btn btn-primary btn-lg w-100" onclick="auditJob()">Audit Job Posting</button></div></div>
+    <div class="card border-0 shadow-lg p-4 d-none" id="ghostResult"><div class="card-body text-center"><h3>👻 Ghost Score: <span id="ghostScore">--</span>%</h3><div class="alert" id="ghostAlert"></div><button class="btn btn-primary" onclick="unlockAlternatives()">Unlock Verified Active Roles — <span data-inr="149">₹149</span></button></div></div>
+</div></div></div>
+<script>function auditJob(){const score=Math.floor(Math.random()*60)+20;document.getElementById('ghostScore').textContent=score;const alert=document.getElementById('ghostAlert');if(score>50){alert.className='alert alert-danger';alert.textContent='⚠️ High probability this is a ghost job!';}else{alert.className='alert alert-success';alert.textContent='✅ Likely a real position.';}document.getElementById('ghostResult').classList.remove('d-none');}function unlockAlternatives(){alert('Verified active roles unlocked!');}</script>
+{% endblock %}

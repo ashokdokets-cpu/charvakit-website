@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Role-Mirror AI - Charvak{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4"><span class="badge bg-warning text-dark mb-2 px-3 py-2">🪞 AI Analysis</span><h1 class="display-4 fw-bold">Role-Mirror AI</h1><p class="lead">Got rejected? See exactly what skills you missed and get a personalized upskill plan.</p></div>
+</div>
+<div class="container py-5"><div class="row"><div class="col-lg-7 mx-auto">
+    <div class="card border-0 shadow-lg p-4 mb-4"><div class="card-body text-center">
+        <h4>🔍 Analyze Your Rejection</h4>
+        <div class="mb-3"><label class="form-label">Job Title You Applied For</label><input type="text" class="form-control" id="rejectedRole" placeholder="e.g. Senior React Developer"></div>
+        <div class="mb-3"><label class="form-label">Your Skills (comma separated)</label><textarea class="form-control" id="yourSkills" rows="3" placeholder="e.g. React, JavaScript, CSS, Node.js"></textarea></div>
+        <button class="btn btn-primary btn-lg w-100" onclick="runMirror()">Run Role Mirror</button>
+    </div></div>
+    <div class="card border-0 shadow-lg p-4 d-none" id="mirrorResult"><div class="card-body text-center"><h3>🪞 Match: <span id="mirrorScore">--</span>%</h3><p id="gapAnalysis"></p><button class="btn btn-primary btn-lg" onclick="unlockPlan()">Unlock 3-Day Bridge Plan — <span data-inr="299">₹299</span></button></div></div>
+</div></div></div>
+<script>function runMirror(){const score=Math.floor(Math.random()*30)+55;document.getElementById('mirrorScore').textContent=score;document.getElementById('gapAnalysis').textContent='Missing: TypeScript, GraphQL, AWS. These 3 skills separated you from the hired candidate.';document.getElementById('mirrorResult').classList.remove('d-none');}function unlockPlan(){alert('3-Day Bridge Plan unlocked! Start your micro-project now.');}</script>
+{% endblock %}

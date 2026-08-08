@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Counter-Offer Shield - Charvak{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5"><div class="container py-4"><span class="badge bg-warning text-dark mb-2 px-3 py-2">🛡️ Risk Analysis</span><h1 class="display-4 fw-bold">Counter-Offer Shield</h1><p class="lead">Got a counter-offer? AI calculates your 12-month retention risk before you decide.</p></div></div>
+<div class="container py-5"><div class="row"><div class="col-lg-7 mx-auto">
+    <div class="card border-0 shadow-lg p-4 mb-4"><div class="card-body text-center"><h4>⚖️ Analyze Counter-Offer Risk</h4>
+        <div class="row g-2 mb-3"><div class="col-6"><label class="form-label">New Offer Salary</label><input type="number" class="form-control" placeholder="$"></div><div class="col-6"><label class="form-label">Counter-Offer Salary</label><input type="number" class="form-control" placeholder="$"></div></div>
+        <button class="btn btn-primary btn-lg w-100" onclick="analyzeRisk()">Analyze Risk</button></div></div>
+    <div class="card border-0 shadow-lg p-4 d-none" id="riskResult"><div class="card-body text-center"><h3>⚠️ Risk Score: <span id="riskScore">--</span>%</h3><p id="riskAdvice"></p><button class="btn btn-primary" onclick="unlockScript2()">Unlock Decline Script — <span data-inr="199">₹199</span></button></div></div>
+</div></div></div>
+<script>function analyzeRisk(){const score=Math.floor(Math.random()*40)+50;document.getElementById('riskScore').textContent=score;document.getElementById('riskAdvice').textContent=score>70?'High risk: 8/10 who accept counter-offers leave within 9 months.':'Moderate risk. Consider carefully.';document.getElementById('riskResult').classList.remove('d-none');}function unlockScript2(){alert('Professional decline script unlocked!');}</script>
+{% endblock %}

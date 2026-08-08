@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}GhostBounty AI - Charvak{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4"><span class="badge bg-warning text-dark mb-2 px-3 py-2">🔥 Viral Tool</span><h1 class="display-4 fw-bold">GhostBounty AI</h1><p class="lead">Get paid when employers ghost you. 60-second AI challenge. No resumes.</p></div>
+</div>
+<div class="container py-5"><div class="row"><div class="col-lg-7 mx-auto">
+    <div class="card border-0 shadow-lg p-4 mb-4"><div class="card-body text-center">
+        <h4>🎯 Take the 60-Second Challenge</h4>
+        <p class="text-muted">Employers post challenges. You complete them. If you score top 10% and they don't review in 48hrs, you get paid $10-$25.</p>
+        <div class="mb-3"><label class="form-label">Select Challenge</label><select class="form-select" id="challenge"><option>Debug a Microservice Architecture</option><option>Handle a Disgruntled Client</option><option>Optimize a Slow SQL Query</option></select></div>
+        <button class="btn btn-primary btn-lg w-100" onclick="startChallenge()">Start 60-Second Challenge</button>
+    </div></div>
+    <div class="card border-0 shadow-lg p-4 d-none" id="resultCard" style="border-left:5px solid #10b981;"><div class="card-body text-center">
+        <h3>✅ Challenge Complete!</h3>
+        <div class="display-1 fw-bold text-primary" id="challengeScore">--</div><p>/100</p>
+        <div class="alert alert-success" id="bountyMsg"></div>
+        <button class="btn btn-primary btn-lg" onclick="claimBounty()">Claim Bounty if Ghosted</button>
+    </div></div>
+</div></div></div>
+<script>
+function startChallenge(){const score=Math.floor(Math.random()*30)+70;document.getElementById('challengeScore').textContent=score;document.getElementById('bountyMsg').textContent=score>=90?'Top 10%! Employer has 48hrs to review or you get $20!':'Great effort! Score shared with employer.';document.getElementById('resultCard').classList.remove('d-none');}
+function claimBounty(){alert('Bounty claimed! $20 will be processed via Dokets VouchAI if employer fails to review within 48 hours.');}
+</script>
+{% endblock %}

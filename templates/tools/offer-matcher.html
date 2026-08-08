@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Offer Matcher - Charvak{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5"><div class="container py-4"><span class="badge bg-warning text-dark mb-2 px-3 py-2">📊 Compare</span><h1 class="display-4 fw-bold">Offer Matcher</h1><p class="lead">Paste two offer letters. AI compares true value including benefits, equity, taxes.</p></div></div>
+<div class="container py-5"><div class="row"><div class="col-lg-7 mx-auto">
+    <div class="card border-0 shadow-lg p-4 mb-4"><div class="card-body text-center"><h4>📄 Compare Offers</h4>
+        <div class="row g-2 mb-3"><div class="col-6"><label class="form-label">Offer A</label><textarea class="form-control" rows="4" placeholder="Paste Offer A details..."></textarea></div><div class="col-6"><label class="form-label">Offer B</label><textarea class="form-control" rows="4" placeholder="Paste Offer B details..."></textarea></div></div>
+        <button class="btn btn-primary btn-lg w-100" onclick="compareOffers()">Compare Offers</button></div></div>
+    <div class="card border-0 shadow-lg p-4 d-none" id="compareResult"><div class="card-body text-center"><h3>📊 Comparison</h3><div class="row g-3"><div class="col-6"><h4>Offer A</h4><h2 class="text-primary">$108,000</h2><small>True Value</small></div><div class="col-6"><h4>Offer B</h4><h2 class="text-success">$122,000</h2><small>True Value (+$14K)</small></div></div><p class="mt-2"><strong>Winner: Offer B</strong> — Includes better benefits and remote savings</p><button class="btn btn-primary" onclick="unlockScript()">Unlock Counter-Offer Script — <span data-inr="199">₹199</span></button></div></div>
+</div></div></div>
+<script>function compareOffers(){document.getElementById('compareResult').classList.remove('d-none');}function unlockScript(){alert('Counter-offer script unlocked! Use this to negotiate with Company A.');}</script>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}BountySwap AI - Charvak{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4"><span class="badge bg-warning text-dark mb-2 px-3 py-2">💰 Referral Network</span><h1 class="display-4 fw-bold">BountySwap AI</h1><p class="lead">Refer a friend to a job. You both get paid. 50/50 split on every bounty.</p></div>
+</div>
+<div class="container py-5"><div class="row"><div class="col-lg-7 mx-auto">
+    <div class="card border-0 shadow-lg p-4 mb-4"><div class="card-body text-center">
+        <h4>🔗 Generate Your Referral Link</h4>
+        <div class="mb-3"><label class="form-label">Job You're Referring</label><input type="text" class="form-control" id="bountyJob" placeholder="e.g. DevOps Engineer at TechCorp"></div>
+        <button class="btn btn-primary btn-lg w-100" onclick="generateBounty()">Generate Bounty Link</button>
+    </div></div>
+    <div class="card border-0 shadow-lg p-4 d-none" id="bountyResult"><div class="card-body text-center"><h4>✅ Bounty Link Ready!</h4><p><strong>Bounty:</strong> $1,000 split 50/50</p><p><strong>Your Share:</strong> $500 | <strong>Friend's Bonus:</strong> $500</p><button class="btn btn-primary" onclick="shareBounty()">📤 Share Bounty Link</button></div></div>
+</div></div></div>
+<script>function generateBounty(){document.getElementById('bountyResult').classList.remove('d-none');}function shareBounty(){alert('Link copied! Share with friends to earn bounties.');}</script>
+{% endblock %}

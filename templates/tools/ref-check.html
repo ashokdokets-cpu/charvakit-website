@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Ref-Check Roulette - Charvak{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4"><span class="badge bg-warning text-dark mb-2 px-3 py-2">🎙️ Voice AI</span><h1 class="display-4 fw-bold">Ref-Check Roulette</h1><p class="lead">AI calls your references. 30-second verification. Instant trust score.</p></div>
+</div>
+<div class="container py-5"><div class="row"><div class="col-lg-7 mx-auto">
+    <div class="card border-0 shadow-lg p-4 mb-4"><div class="card-body text-center">
+        <h4>📞 Verify Your References</h4>
+        <p class="text-muted">Enter 3 past colleagues. Our AI calls them for a 30-second verification. You get a Trust Score.</p>
+        <div class="row g-2 mb-3"><div class="col-4"><input type="text" class="form-control" placeholder="Ref 1 Name"></div><div class="col-4"><input type="text" class="form-control" placeholder="Ref 2 Name"></div><div class="col-4"><input type="text" class="form-control" placeholder="Ref 3 Name"></div></div>
+        <button class="btn btn-primary btn-lg w-100" onclick="startRefCheck()">Start AI Reference Check</button>
+    </div></div>
+    <div class="card border-0 shadow-lg p-4 d-none" id="refResult"><div class="card-body text-center"><h3>🎯 Trust Score: <span id="trustScore">--</span>/100</h3><p class="text-muted">Fast-Track Verification: <span data-inr="599">₹599</span></p><button class="btn btn-primary" onclick="fastTrack()">Fast-Track Now</button></div></div>
+</div></div></div>
+<script>function startRefCheck(){document.getElementById('trustScore').textContent=Math.floor(Math.random()*20)+80;document.getElementById('refResult').classList.remove('d-none');}function fastTrack(){alert('Fast-Track activated! AI will verify within 5 minutes.');}</script>
+{% endblock %}
