@@ -6,5 +6,9 @@
     <div class="card border-0 shadow-lg p-4 mb-4"><div class="card-body text-center"><h4>📧 Decode Recruiter Message</h4><textarea class="form-control mb-3" id="inmailText" rows="4" placeholder="Paste recruiter InMail or email here..."></textarea><button class="btn btn-primary btn-lg w-100" onclick="roastPitch()">Roast This Pitch</button></div></div>
     <div class="card border-0 shadow-lg p-4 d-none" id="pitchResult"><div class="card-body text-center"><h4>🎤 Pitch Analysis</h4><p><strong>What they said:</strong> "Competitive salary based on experience"</p><p><strong>AI Translation:</strong> "No fixed budget, hoping you lowball yourself"</p><p><strong>Spam Score:</strong> <span id="spamScore">--</span>/100</p><button class="btn btn-primary" onclick="unlockReply()">Unlock Smart Reply — <span data-inr="149">₹149</span></button></div></div>
 </div></div></div>
-<script>function roastPitch(){document.getElementById('spamScore').textContent=Math.floor(Math.random()*40)+30;document.getElementById('pitchResult').classList.remove('d-none');}function unlockReply(){alert('Smart reply generated! Forces recruiter to reveal salary range.');}</script>
+<script>function roastPitch(){document.getElementById('spamScore').textContent=Math.floor(Math.random()*40)+30;document.getElementById('pitchResult').classList.remove('d-none');}function unlockReply(){
+    processToolPayment(149, 'Recruiter Pitch Roast - Smart Reply', function(success){
+        if(success){ alert('Smart reply generated! Forces recruiter to reveal salary range.'); }
+    });
+}</script>
 {% endblock %}

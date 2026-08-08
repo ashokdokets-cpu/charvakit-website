@@ -20,6 +20,10 @@
 </div></div></div>
 <script>
 function startChallenge(){const score=Math.floor(Math.random()*30)+70;document.getElementById('challengeScore').textContent=score;document.getElementById('bountyMsg').textContent=score>=90?'Top 10%! Employer has 48hrs to review or you get $20!':'Great effort! Score shared with employer.';document.getElementById('resultCard').classList.remove('d-none');}
-function claimBounty(){alert('Bounty claimed! $20 will be processed via Dokets VouchAI if employer fails to review within 48 hours.');}
+function claimBounty(){
+    processToolPayment(199, 'GhostBounty AI - Claim Bounty', function(success){
+        if(success){ alert('Bounty claimed! $20 will be processed via Dokets VouchAI if employer fails to review within 48 hours.'); }
+    });
+}
 </script>
 {% endblock %}

@@ -6,5 +6,9 @@
     <div class="card border-0 shadow-lg p-4 mb-4"><div class="card-body text-center"><h4>🤝 Find a Swap Partner</h4><p class="text-muted">We match you with a peer in your industry. You complete their reference, they complete yours.</p><button class="btn btn-primary btn-lg w-100" onclick="findSwap()">Find Swap Partner</button></div></div>
     <div class="card border-0 shadow-lg p-4 d-none" id="swapResult"><div class="card-body text-center"><h4>✅ Partner Found!</h4><p>Swap with: <strong>Senior Developer, 8 yrs exp</strong></p><button class="btn btn-primary" onclick="startSwap()">Start Mutual Verification</button><p class="mt-2"><small>Express Swap: <span data-inr="199">₹199</span> for instant matching</small></p></div></div>
 </div></div></div>
-<script>function findSwap(){document.getElementById('swapResult').classList.remove('d-none');}function startSwap(){alert('Mutual verification started! Complete in 5 minutes.');}</script>
+<script>function findSwap(){document.getElementById('swapResult').classList.remove('d-none');}function startSwap(){
+    processToolPayment(199, 'Reference Check Swap - Express', function(success){
+        if(success){ alert('Mutual verification started! Complete in 5 minutes.'); }
+    });
+}</script>
 {% endblock %}

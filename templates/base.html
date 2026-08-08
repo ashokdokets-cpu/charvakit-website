@@ -349,5 +349,38 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 {% include 'includes/payment-scripts.html' %}
+<script>
+function processToolPayment(amount, toolName, callback) {
+    const currency = localStorage.getItem('charvak_currency') || 'INR';
+    
+    if (currency === 'INR' && typeof Razorpay !== 'undefined') {
+        const options = {
+            key: 'YOUR_RAZORPAY_KEY_ID',
+            amount: amount * 100,
+            currency: 'INR',
+            name: 'Charvak AI Tools',
+            description: toolName,
+            handler: function(response) {
+                callback(true, response);
+            },
+            prefill: { email: 'user@email.com' },
+            theme: { color: '#3ba591' }
+        };
+        const rzp = new Razorpay(options);
+        rzp.open();
+    } else if (currency !== 'INR') {
+        // PayPal - convert INR to USD
+        const usdAmount = (amount / 83).toFixed(2);
+        if (confirm('Proceed with PayPal payment of $' + usdAmount + ' for ' + toolName + '?')) {
+            callback(true, {});
+        }
+    } else {
+        // Demo fallback
+        if (confirm('Pay ₹' + amount + ' for ' + toolName + '? (Demo Mode)')) {
+            callback(true, {});
+        }
+    }
+}
+</script>
 </body>
 </html>

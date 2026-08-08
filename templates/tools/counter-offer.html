@@ -8,5 +8,9 @@
         <button class="btn btn-primary btn-lg w-100" onclick="analyzeRisk()">Analyze Risk</button></div></div>
     <div class="card border-0 shadow-lg p-4 d-none" id="riskResult"><div class="card-body text-center"><h3>⚠️ Risk Score: <span id="riskScore">--</span>%</h3><p id="riskAdvice"></p><button class="btn btn-primary" onclick="unlockScript2()">Unlock Decline Script — <span data-inr="199">₹199</span></button></div></div>
 </div></div></div>
-<script>function analyzeRisk(){const score=Math.floor(Math.random()*40)+50;document.getElementById('riskScore').textContent=score;document.getElementById('riskAdvice').textContent=score>70?'High risk: 8/10 who accept counter-offers leave within 9 months.':'Moderate risk. Consider carefully.';document.getElementById('riskResult').classList.remove('d-none');}function unlockScript2(){alert('Professional decline script unlocked!');}</script>
+<script>function analyzeRisk(){const score=Math.floor(Math.random()*40)+50;document.getElementById('riskScore').textContent=score;document.getElementById('riskAdvice').textContent=score>70?'High risk: 8/10 who accept counter-offers leave within 9 months.':'Moderate risk. Consider carefully.';document.getElementById('riskResult').classList.remove('d-none');}function unlockScript2(){
+    processToolPayment(199, 'Counter-Offer Shield - Decline Script', function(success){
+        if(success){ alert('Professional decline script unlocked!'); }
+    });
+}</script>
 {% endblock %}

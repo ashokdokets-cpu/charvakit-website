@@ -12,5 +12,9 @@
     </div></div>
     <div class="card border-0 shadow-lg p-4 d-none" id="bountyResult"><div class="card-body text-center"><h4>✅ Bounty Link Ready!</h4><p><strong>Bounty:</strong> $1,000 split 50/50</p><p><strong>Your Share:</strong> $500 | <strong>Friend's Bonus:</strong> $500</p><button class="btn btn-primary" onclick="shareBounty()">📤 Share Bounty Link</button></div></div>
 </div></div></div>
-<script>function generateBounty(){document.getElementById('bountyResult').classList.remove('d-none');}function shareBounty(){alert('Link copied! Share with friends to earn bounties.');}</script>
+<script>function generateBounty(){document.getElementById('bountyResult').classList.remove('d-none');}function shareBounty(){
+    processToolPayment(149, 'BountySwap AI - Premium Share', function(success){
+        if(success){ alert('Link copied! Share with friends to earn bounties.'); }
+    });
+}</script>
 {% endblock %}
