@@ -27,7 +27,10 @@ from na_module.vector_matcher import vector_matcher
 from na_module.resume_engine import pii_redactor, compliance_checker, sub_vendor_manager
 from na_module.charvak_vms import charvak_vms, RequisitionStatus
 from na_module.revenue_engine import revenue_engine, SubscriptionTier
-from tools_ai_backend import 
+from tools_ai_backend import (
+    resume_roast_ai, ghost_bounty_ai, role_mirror_ai, offer_matcher_ai,
+    ghost_job_ai, counter_offer_ai, pitch_roast_ai, ref_check_ai
+)
 
 app = FastAPI(title="Charvak IT Consulting Pvt Ltd - Web Designing | Staff Augmentation")
 
