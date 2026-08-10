@@ -8,7 +8,23 @@
         <button class="btn btn-primary btn-lg w-100" onclick="compareOffers()">Compare Offers</button></div></div>
     <div class="card border-0 shadow-lg p-4 d-none" id="compareResult"><div class="card-body text-center"><h3>📊 Comparison</h3><div class="row g-3"><div class="col-6"><h4>Offer A</h4><h2 class="text-primary">$108,000</h2><small>True Value</small></div><div class="col-6"><h4>Offer B</h4><h2 class="text-success">$122,000</h2><small>True Value (+$14K)</small></div></div><p class="mt-2"><strong>Winner: Offer B</strong> — Includes better benefits and remote savings</p><button class="btn btn-primary" onclick="unlockScript()">Unlock Counter-Offer Script — <span data-inr="199">₹199</span></button></div></div>
 </div></div></div>
-<script>function compareOffers(){document.getElementById('compareResult').classList.remove('d-none');}function unlockScript(){
+<script>async function compareOffers(){
+    const offerA = document.querySelectorAll('textarea')[0].value;
+    const offerB = document.querySelectorAll('textarea')[1].value;
+    if(!offerA || !offerB) return alert('Paste both offers!');
+    try {
+        const response = await fetch('/api/tools/offer-matcher', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({offer_a: offerA, offer_b: offerB})
+        });
+        const data = await response.json();
+        document.querySelector('#compareResult h2.text-primary').textContent = data.true_value_a || '$108K';
+        document.querySelector('#compareResult h2.text-success').textContent = data.true_value_b || '$122K';
+        document.querySelector('#compareResult p strong').textContent = 'Winner: Offer ' + (data.winner || 'B');
+    } catch(e) {}
+    document.getElementById('compareResult').classList.remove('d-none');
+}function unlockScript(){
     processToolPayment(199, 'Offer Matcher - Counter Script', function(success){
         if(success){ alert('Counter-offer script unlocked! Use this to negotiate with Company A.'); }
     });

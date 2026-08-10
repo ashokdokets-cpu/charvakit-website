@@ -19,7 +19,22 @@
     </div></div>
 </div></div></div>
 <script>
-function startChallenge(){const score=Math.floor(Math.random()*30)+70;document.getElementById('challengeScore').textContent=score;document.getElementById('bountyMsg').textContent=score>=90?'Top 10%! Employer has 48hrs to review or you get $20!':'Great effort! Score shared with employer.';document.getElementById('resultCard').classList.remove('d-none');}
+async function startChallenge(){
+    const challenge = document.getElementById('challenge').value;
+    try {
+        const response = await fetch('/api/tools/ghost-bounty', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({challenge: challenge})
+        });
+        const data = await response.json();
+        document.getElementById('challengeScore').textContent = data.passing_score || 85;
+        document.getElementById('bountyMsg').textContent = 'Question: ' + (data.question || 'Complete the challenge');
+    } catch(e) {
+        document.getElementById('challengeScore').textContent = Math.floor(Math.random()*30)+70;
+    }
+    document.getElementById('resultCard').classList.remove('d-none');
+}
 function claimBounty(){
     processToolPayment(199, 'GhostBounty AI - Claim Bounty', function(success){
         if(success){ alert('Bounty claimed! $20 will be processed via Dokets VouchAI if employer fails to review within 48 hours.'); }

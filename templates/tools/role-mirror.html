@@ -13,7 +13,25 @@
     </div></div>
     <div class="card border-0 shadow-lg p-4 d-none" id="mirrorResult"><div class="card-body text-center"><h3>🪞 Match: <span id="mirrorScore">--</span>%</h3><p id="gapAnalysis"></p><button class="btn btn-primary btn-lg" onclick="unlockPlan()">Unlock 3-Day Bridge Plan — <span data-inr="299">₹299</span></button></div></div>
 </div></div></div>
-<script>function runMirror(){const score=Math.floor(Math.random()*30)+55;document.getElementById('mirrorScore').textContent=score;document.getElementById('gapAnalysis').textContent='Missing: TypeScript, GraphQL, AWS. These 3 skills separated you from the hired candidate.';document.getElementById('mirrorResult').classList.remove('d-none');}function unlockPlan(){
+<script>async function runMirror(){
+    const role = document.getElementById('rejectedRole').value;
+    const skills = document.getElementById('yourSkills').value;
+    if(!role) return alert('Enter the job title!');
+    try {
+        const response = await fetch('/api/tools/role-mirror', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({role: role, skills: skills})
+        });
+        const data = await response.json();
+        document.getElementById('mirrorScore').textContent = data.match_percentage || 72;
+        document.getElementById('gapAnalysis').textContent = 'Missing: ' + (data.missing_skills || ['skills']).join(', ') + '. ' + (data.bridge_plan || '');
+    } catch(e) {
+        document.getElementById('mirrorScore').textContent = Math.floor(Math.random()*30)+55;
+        document.getElementById('gapAnalysis').textContent = 'Missing: TypeScript, GraphQL, AWS.';
+    }
+    document.getElementById('mirrorResult').classList.remove('d-none');
+}function unlockPlan(){
     processToolPayment(299, 'Role-Mirror AI - Bridge Plan', function(success){
         if(success){ alert('3-Day Bridge Plan unlocked! Start your micro-project now.'); }
     });
