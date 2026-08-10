@@ -6,7 +6,7 @@
     <div class="card border-0 shadow-lg p-4 mb-4"><div class="card-body text-center"><h4>⚖️ Analyze Counter-Offer Risk</h4>
         <div class="row g-2 mb-3"><div class="col-6"><label class="form-label">New Offer Salary</label><input type="number" class="form-control" placeholder="$"></div><div class="col-6"><label class="form-label">Counter-Offer Salary</label><input type="number" class="form-control" placeholder="$"></div></div>
         <button class="btn btn-primary btn-lg w-100" onclick="analyzeRisk()">Analyze Risk</button></div></div>
-    <div class="card border-0 shadow-lg p-4 d-none" id="riskResult"><div class="card-body text-center"><h3>⚠️ Risk Score: <span id="riskScore">--</span>%</h3><p id="riskAdvice"></p><button class="btn btn-primary" onclick="unlockScript2()">Unlock Decline Script — <span data-inr="199">₹199</span></button></div></div>
+    <div class="card border-0 shadow-lg p-4 d-none" id="riskResult"><div class="card-body text-center"><h3>⚠️ Risk Score: <span id="riskScore">--</span>%</h3><p id="riskAdvice"></p><p class="small text-muted">By proceeding, you accept our <a href="/agreement?type=MOU&client=User&redirect=/tools/counter-offer&service=Counter-Offer+Shield&payment=One-time+fee">Terms of Use</a></p><button class="btn btn-primary" onclick="unlockScript2()">Unlock Decline Script — <span data-inr="199">₹199</span></button></div></div>
 </div></div></div>
 <script>async function analyzeRisk(){
     const newSal = parseInt(document.querySelectorAll('input')[0].value) || 0;
