@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Agreement - Charvak IT Consulting{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4">
+        <h1 class="display-4 fw-bold">{{ agreement_title }}</h1>
+        <p class="lead">{{ agreement_type }} — Please review and accept to continue.</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row"><div class="col-lg-8 mx-auto">
+        <div class="card border-0 shadow-lg p-4">
+            <div class="card-body">
+                <h4>{{ agreement_title }}</h4>
+                <p class="text-muted">Between: <strong>Charvak IT Consulting Pvt Ltd</strong> (Service Provider) and <strong>{{ client_name }}</strong> (Client)</p>
+                <p class="text-muted">Effective Date: <strong>{{ effective_date }}</strong></p>
+                
+                <div class="bg-light p-3 rounded mb-4" style="max-height: 400px; overflow-y: auto;">
+                    <h5>1. Scope of Services</h5>
+                    <p>Charvak IT Consulting agrees to provide {{ service_description }} as outlined in this agreement.</p>
+                    
+                    <h5>2. Confidentiality & NDA</h5>
+                    <p>Both parties agree to protect all confidential information shared during the engagement. This includes candidate profiles, client requirements, pricing, and business processes. Confidentiality obligations survive termination of this agreement for 3 years.</p>
+                    
+                    <h5>3. Payment Terms</h5>
+                    <p>{{ payment_terms }}. All payments are processed securely via Dokets VouchAI Escrow.</p>
+                    
+                    <h5>4. Non-Solicitation</h5>
+                    <p>Client agrees not to directly solicit or hire Charvak's introduced candidates outside the platform for 12 months from introduction date.</p>
+                    
+                    <h5>5. Data Protection</h5>
+                    <p>Charvak complies with GDPR, CCPA, and Indian IT Act. All personal data is processed per our Privacy Policy.</p>
+                    
+                    <h5>6. Limitation of Liability</h5>
+                    <p>Charvak's liability is limited to the fees paid for the specific service. Charvak is not liable for candidate performance post-placement.</p>
+                    
+                    <h5>7. Termination</h5>
+                    <p>Either party may terminate with 30 days written notice. Pending payments for services rendered remain due.</p>
+                    
+                    <h5>8. Governing Law</h5>
+                    <p>This agreement is governed by the laws of India. Disputes subject to Guntur, Andhra Pradesh jurisdiction.</p>
+                </div>
+                
+                <div class="alert alert-info">
+                    <i class="bi bi-shield-check me-2"></i>
+                    <strong>Digital Signature:</strong> By clicking "Accept & Continue", you electronically sign this agreement. This is legally binding under the Information Technology Act, 2000.
+                </div>
+                
+                <div class="d-flex gap-3">
+                    <button class="btn btn-primary btn-lg flex-grow-1" onclick="acceptAgreement()">
+                        <i class="bi bi-check-circle me-2"></i>Accept & Continue
+                    </button>
+                    <a href="{{ decline_url }}" class="btn btn-outline-secondary btn-lg">Decline</a>
+                </div>
+                
+                <p class="small text-muted mt-3 text-center" id="agreementMsg"></p>
+            </div>
+        </div>
+    </div></div>
+</div>
+
+<script>
+function acceptAgreement(){
+    const agreementData = {
+        type: '{{ agreement_type }}',
+        client: '{{ client_name }}',
+        date: new Date().toISOString(),
+        accepted: true
+    };
+    
+    const agreements = JSON.parse(localStorage.getItem('charvak_agreements') || '[]');
+    agreements.push(agreementData);
+    localStorage.setItem('charvak_agreements', JSON.stringify(agreements));
+    
+    document.getElementById('agreementMsg').innerHTML = '✅ Agreement accepted! Redirecting...';
+    document.getElementById('agreementMsg').style.color = '#10b981';
+    
+    setTimeout(() => {
+        window.location.href = '{{ redirect_url }}';
+    }, 1500);
+}
+</script>
+{% endblock %}

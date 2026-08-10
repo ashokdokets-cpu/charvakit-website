@@ -939,3 +939,33 @@ async def api_ref_check(request: Request):
     data = await request.json()
     result = await ref_check_ai(data.get("ref_names", []))
     return result
+
+@app.get("/agreement")
+async def agreement_page(request: Request):
+    agreement_type = request.query_params.get("type", "MSA")
+    client_name = request.query_params.get("client", "Client")
+    redirect_url = request.query_params.get("redirect", "/")
+    service = request.query_params.get("service", "IT Consulting Services")
+    payment = request.query_params.get("payment", "Payment due upon service delivery")
+    
+    agreements = {
+        "MSA": "Master Service Agreement",
+        "NDA": "Non-Disclosure Agreement", 
+        "MOU": "Memorandum of Understanding",
+        "PLACEMENT": "Placement Agreement",
+        "INTERN": "Internship Agreement",
+        "TRAINER": "Trainer Agreement"
+    }
+    
+    return templates.TemplateResponse("agreement.html", {
+        "request": request,
+        "title": f"{agreements.get(agreement_type, 'Agreement')} - Charvak",
+        "agreement_title": agreements.get(agreement_type, "Service Agreement"),
+        "agreement_type": agreement_type,
+        "client_name": client_name,
+        "effective_date": "August 10, 2026",
+        "service_description": service,
+        "payment_terms": payment,
+        "redirect_url": redirect_url,
+        "decline_url": "/"
+    })
