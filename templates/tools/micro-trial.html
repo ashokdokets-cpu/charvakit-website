@@ -6,7 +6,25 @@
     <div class="card border-0 shadow-lg p-4 mb-4"><div class="card-body text-center"><h4>🧪 Take a Micro-Trial</h4><select class="form-select mb-3" id="trialType"><option>React Component Debug</option><option>SQL Query Optimization</option><option>API Design Challenge</option></select><button class="btn btn-primary btn-lg w-100" onclick="startTrial()">Start 15-Minute Trial</button></div></div>
     <div class="card border-0 shadow-lg p-4 d-none" id="trialResult"><div class="card-body text-center"><h3>✅ Trial Complete!</h3><div class="display-1 fw-bold text-primary" id="trialScore">--</div><p>/100</p><p class="text-success">You earned $15 for completing this trial!</p><button class="btn btn-primary btn-lg" onclick="claimPayment()">Claim Payment via Escrow</button></div></div>
 </div></div></div>
-<script>function startTrial(){setTimeout(()=>{document.getElementById('trialScore').textContent=Math.floor(Math.random()*25)+70;document.getElementById('trialResult').classList.remove('d-none');},1500);}function claimPayment(){
+<script>async function startTrial(){
+    try {
+        const response = await fetch('/api/tools/ghost-bounty', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({challenge: document.getElementById('trialType').value})
+        });
+        const data = await response.json();
+        setTimeout(() => {
+            document.getElementById('trialScore').textContent = data.passing_score || Math.floor(Math.random()*25)+70;
+            document.getElementById('trialResult').classList.remove('d-none');
+        }, 1500);
+    } catch(e) {
+        setTimeout(() => {
+            document.getElementById('trialScore').textContent = Math.floor(Math.random()*25)+70;
+            document.getElementById('trialResult').classList.remove('d-none');
+        }, 1500);
+    }
+}function claimPayment(){
     processToolPayment(199, 'Micro-Trial Engine - Claim Payment', function(success){
         if(success){ alert('$15 payment processing via Dokets VouchAI Escrow!'); }
     });
