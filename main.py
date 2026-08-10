@@ -978,3 +978,7 @@ async def sign_agreement(request: Request):
         return {"status": "success", "message": "Agreement saved to server"}
     except:
         return {"status": "success", "message": "Agreement recorded locally"}
+
+@app.get("/pricing", response_class=HTMLResponse)
+async def pricing_page(request: Request):
+    return templates.TemplateResponse("pricing.html", {"request": request, "title": "Pricing - Charvak IT Consulting"})
