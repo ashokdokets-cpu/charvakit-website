@@ -27,6 +27,7 @@ from na_module.vector_matcher import vector_matcher
 from na_module.resume_engine import pii_redactor, compliance_checker, sub_vendor_manager
 from na_module.charvak_vms import charvak_vms, RequisitionStatus
 from na_module.revenue_engine import revenue_engine, SubscriptionTier
+from tools_ai_backend import 
 
 app = FastAPI(title="Charvak IT Consulting Pvt Ltd - Web Designing | Staff Augmentation")
 
@@ -887,3 +888,51 @@ async def ghost_tracker(request: Request):
 @app.get("/tools/pitch-roast", response_class=HTMLResponse)
 async def pitch_roast(request: Request):
     return templates.TemplateResponse("tools/pitch-roast.html", {"request": request, "title": "Recruiter Pitch Roast - Charvak"})
+
+@app.post("/api/tools/resume-roast")
+async def api_resume_roast(request: Request):
+    data = await request.json()
+    result = await resume_roast_ai(data.get("resume", ""), data.get("job_title", ""))
+    return result
+
+@app.post("/api/tools/ghost-bounty")
+async def api_ghost_bounty(request: Request):
+    data = await request.json()
+    result = await ghost_bounty_ai(data.get("challenge", "Debug"))
+    return result
+
+@app.post("/api/tools/role-mirror")
+async def api_role_mirror(request: Request):
+    data = await request.json()
+    result = await role_mirror_ai(data.get("role", ""), data.get("skills", ""))
+    return result
+
+@app.post("/api/tools/offer-matcher")
+async def api_offer_matcher(request: Request):
+    data = await request.json()
+    result = await offer_matcher_ai(data.get("offer_a", ""), data.get("offer_b", ""))
+    return result
+
+@app.post("/api/tools/ghost-job")
+async def api_ghost_job(request: Request):
+    data = await request.json()
+    result = await ghost_job_ai(data.get("url", ""))
+    return result
+
+@app.post("/api/tools/counter-offer")
+async def api_counter_offer(request: Request):
+    data = await request.json()
+    result = await counter_offer_ai(data.get("new_salary", 0), data.get("counter_salary", 0))
+    return result
+
+@app.post("/api/tools/pitch-roast")
+async def api_pitch_roast(request: Request):
+    data = await request.json()
+    result = await pitch_roast_ai(data.get("inmail", ""))
+    return result
+
+@app.post("/api/tools/ref-check")
+async def api_ref_check(request: Request):
+    data = await request.json()
+    result = await ref_check_ai(data.get("ref_names", []))
+    return result

@@ -42,24 +42,31 @@
 </div></div></div>
 
 <script>
-function roastResume(){
+async function roastResume(){
     const resume = document.getElementById('resumeText').value;
     const job = document.getElementById('jobTitle').value;
     if(!resume) return alert('Paste your resume!');
     
-    // Simulate AI roast
-    const score = Math.floor(Math.random()*40)+45;
-    const roasts = [
-        "Your resume says 'team player' 4 times. AI thinks you actually hate people.",
-        "'Detail-oriented' — yet you forgot to add dates to 3 jobs. Interesting.",
-        "You used 'synergy' in 2026. This isn't a corporate retreat brochure.",
-        "AI found 12 buzzwords, 0 measurable achievements. Harsh but true."
-    ];
+    // Call real AI API
+    try {
+        const response = await fetch('/api/tools/resume-roast', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({resume: resume, job_title: job || 'General'})
+        });
+        const data = await response.json();
+        
+        document.getElementById('matchScore').textContent = data.match_score || 65;
+        document.getElementById('roastText').innerHTML = '<strong>AI Says:</strong> "' + (data.roast || 'Interesting resume!') + '"';
+        document.getElementById('buzzwordsList').innerHTML = (data.buzzwords || ['synergy']).map(b => '<div class="col-4"><span class="badge bg-danger">'+b+'</span></div>').join('');
+        document.getElementById('gapAlert').textContent = data.ats_tips || 'Optimize for ATS.';
+    } catch(e) {
+        // Fallback to simulated
+        const score = Math.floor(Math.random()*40)+45;
+        document.getElementById('matchScore').textContent = score;
+        document.getElementById('roastText').innerHTML = '<strong>AI Says:</strong> "Needs more metrics and keywords."';
+    }
     
-    document.getElementById('matchScore').textContent = score;
-    document.getElementById('roastText').innerHTML = '<strong>AI Says:</strong> "' + roasts[Math.floor(Math.random()*roasts.length)] + '"';
-    document.getElementById('buzzwordsList').innerHTML = '<div class="col-4"><span class="badge bg-danger">synergy</span></div><div class="col-4"><span class="badge bg-danger">team player</span></div><div class="col-4"><span class="badge bg-danger">detail-oriented</span></div>';
-    document.getElementById('gapAlert').textContent = score >= 70 ? 'Decent match! Minor optimizations needed.' : 'Significant gaps found. Rewrite recommended.';
     document.getElementById('resultCard').classList.remove('d-none');
     document.getElementById('resultCard').scrollIntoView({behavior:'smooth'});
 }
