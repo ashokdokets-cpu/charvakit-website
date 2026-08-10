@@ -69,9 +69,17 @@ function acceptAgreement(){
         accepted: true
     };
     
+    // Save locally
     const agreements = JSON.parse(localStorage.getItem('charvak_agreements') || '[]');
     agreements.push(agreementData);
     localStorage.setItem('charvak_agreements', JSON.stringify(agreements));
+    
+    // Save to server
+    fetch('/api/agreement/sign', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(agreementData)
+    });
     
     document.getElementById('agreementMsg').innerHTML = '✅ Agreement accepted! Redirecting...';
     document.getElementById('agreementMsg').style.color = '#10b981';

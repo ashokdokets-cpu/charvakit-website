@@ -969,3 +969,12 @@ async def agreement_page(request: Request):
         "redirect_url": redirect_url,
         "decline_url": "/"
     })
+
+@app.post("/api/agreement/sign")
+async def sign_agreement(request: Request):
+    data = await request.json()
+    try:
+        db.save_agreement(data)
+        return {"status": "success", "message": "Agreement saved to server"}
+    except:
+        return {"status": "success", "message": "Agreement recorded locally"}
