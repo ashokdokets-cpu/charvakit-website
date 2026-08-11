@@ -6,3 +6,5 @@ venv/
 charvakit-old-backup/ 
 wget.exe 
 download_website.py 
+charvakit.db
+main.py.backup-*

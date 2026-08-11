@@ -30,15 +30,45 @@
 <script>
 function submitPartner(e){
     e.preventDefault();
-    const name=document.getElementById('agencyName').value;
-    const email=document.getElementById('partnerEmail').value;
-    if(!name||!email)return;
-    const partners=JSON.parse(localStorage.getItem('charvak_partners')||'[]');
-    partners.push({name,contact:document.getElementById('contactPerson').value,email,phone:document.getElementById('partnerPhone').value,coverage:document.getElementById('coverage').value,date:new Date().toISOString()});
-    localStorage.setItem('charvak_partners',JSON.stringify(partners));
-    document.getElementById('partnerMsg').textContent='Application submitted! We will contact you within 48 hours.';
-    document.getElementById('partnerMsg').style.display='block';
-    document.querySelector('form').reset();
+    const name = document.getElementById('agencyName').value;
+    const email = document.getElementById('partnerEmail').value;
+    if(!name||!email) return;
+    
+    const services = [];
+    document.querySelectorAll('input[type="checkbox"]:checked').forEach(cb => {
+        services.push(cb.parentElement.textContent.trim());
+    });
+    
+    const partnerData = {
+        agency_name: name,
+        contact_person: document.getElementById('contactPerson').value,
+        email: email,
+        phone: document.getElementById('partnerPhone').value,
+        services: services,
+        coverage: document.getElementById('coverage').value
+    };
+    
+    // Send to backend
+    fetch('/api/kyc/partner/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(partnerData)
+    })
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById('partnerMsg').textContent = data.message || 'Application submitted! We will contact you within 48 hours.';
+        document.getElementById('partnerMsg').style.display = 'block';
+        document.querySelector('form').reset();
+    })
+    .catch(err => {
+        // Fallback to localStorage
+        const partners = JSON.parse(localStorage.getItem('charvak_partners')||'[]');
+        partners.push({...partnerData, date: new Date().toISOString()});
+        localStorage.setItem('charvak_partners', JSON.stringify(partners));
+        document.getElementById('partnerMsg').textContent = 'Application submitted! We will contact you within 48 hours.';
+        document.getElementById('partnerMsg').style.display = 'block';
+        document.querySelector('form').reset();
+    });
 }
 </script>
 {% endblock %}

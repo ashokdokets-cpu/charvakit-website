@@ -1,14 +1,14 @@
 <!-- Razorpay -->
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <!-- PayPal -->
-<script src="https://www.paypal.com/sdk/js?client-id=YOUR_PAYPAL_CLIENT_ID&currency=INR"></script>
+<script src="https://www.paypal.com/sdk/js?client-id={{ PAYPAL_CLIENT_ID }}&currency=INR"></script>
 
 <!-- UPI Payment -->
 <div id="upiSection" style="display:none;">
     <h6>Pay via UPI</h6>
-    <p>Scan QR or pay to UPI ID: <strong>charvakit@upi</strong></p>
-    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=charvakit@upi&pn=CharvakITConsulting" alt="UPI QR">
-    <p class="small">Or use any UPI app and send to <strong>charvakit@upi</strong></p>
+    <p>Scan QR or pay to UPI ID: <strong>{{ UPI_ID }}</strong></p>
+    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa={{ UPI_ID }}&pn=CharvakITConsulting" alt="UPI QR">
+    <p class="small">Or use any UPI app and send to <strong>{{ UPI_ID }}</strong></p>
 </div>
 
 <script>
@@ -23,23 +23,62 @@ function getPreferredPayment() {
     return 'paypal';
 }
 
-function processPayment(amount, name, callback) {
+async function processToolPayment(amount, name, callback) {
     const method = getPreferredPayment();
-    if (method === 'razorpay') {
-        processRazorpay(amount, name, callback);
-    } else {
-        processPayPal(amount, name, callback);
+    
+    try {
+        // Create order on backend
+        const response = await fetch('/api/payment/create-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ amount, name, method })
+        });
+        const order = await response.json();
+        
+        if (order.status !== 'success') {
+            alert('Payment setup failed. Please try again.');
+            callback(false);
+            return;
+        }
+        
+        if (method === 'razorpay') {
+            processRazorpay(order, callback);
+        } else if (method === 'paypal') {
+            processPayPal(order, callback);
+        } else {
+            showUPI();
+            callback(true, { method: 'upi' });
+        }
+    } catch (e) {
+        console.error('Payment error:', e);
+        alert('Payment failed. Please try again.');
+        callback(false);
     }
 }
 
-function processRazorpay(amount, name, callback) {
+function processRazorpay(order, callback) {
     const options = {
-        key: 'YOUR_RAZORPAY_KEY_ID',
-        amount: amount * 100,
-        currency: 'INR',
+        key: order.key_id || '{{ RAZORPAY_KEY_ID }}',
+        amount: order.amount,
+        currency: order.currency || 'INR',
         name: 'Charvak IT Consulting',
-        description: name,
-        handler: function(response) { callback(true, response); },
+        description: 'AI Tool Unlock',
+        order_id: order.order_id,
+        handler: async function(response) {
+            // Verify payment on backend
+            const verifyResp = await fetch('/api/payment/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    method: 'razorpay',
+                    payment_id: response.razorpay_payment_id,
+                    order_id: response.razorpay_order_id,
+                    signature: response.razorpay_signature
+                })
+            });
+            const verifyData = await verifyResp.json();
+            callback(verifyData.verified, response);
+        },
         prefill: { email: 'user@email.com' },
         theme: { color: '#3ba591' }
     };
@@ -47,8 +86,29 @@ function processRazorpay(amount, name, callback) {
     rzp.open();
 }
 
-function processPayPal(amount, name, callback) {
-    alert('PayPal payment: ' + name + ' - $' + (amount/83).toFixed(2));
-    callback(true, {});
+function processPayPal(order, callback) {
+    paypal.Buttons({
+        createOrder: function(data, actions) {
+            return actions.order.create({
+                purchase_units: [{
+                    amount: { value: order.amount }
+                }]
+            });
+        },
+        onApprove: async function(data, actions) {
+            // Verify on backend
+            const verifyResp = await fetch('/api/payment/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    method: 'paypal',
+                    order_id: order.order_id,
+                    paypal_order_id: data.orderID
+                })
+            });
+            const verifyData = await verifyResp.json();
+            callback(verifyData.verified, data);
+        }
+    }).render('#paypal-button-container');
 }
 </script>

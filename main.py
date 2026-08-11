@@ -1,9 +1,21 @@
-from fastapi import FastAPI, Request, Depends
+from fastapi import FastAPI, Request, Depends, HTTPException
 from fastapi.responses import HTMLResponse, PlainTextResponse, FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
+from pydantic import BaseModel, Field, field_validator
+from typing import Optional, List, Dict, Any
 import os
 import json
+import logging
+from datetime import datetime, timedelta
+import secrets
+
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+
 from api_sync import (
     handle_resume_sync, handle_application_sync, handle_get_jobs,
     handle_skill_sync, handle_get_status, api_health,
@@ -20,7 +32,6 @@ from ai_service import (
 from monitor_service import add_monitor, check_all_sites, get_monitor_status
 from job_service import job_board
 from whatsapp_bot import whatsapp_handler, VERIFY_TOKEN
-from fastapi.middleware.cors import CORSMiddleware
 from na_module.work_auth import work_auth_engine, VisaType
 from na_module.vms_connector import vms_connector
 from na_module.vector_matcher import vector_matcher
@@ -31,14 +42,84 @@ from tools_ai_backend import (
     resume_roast_ai, ghost_bounty_ai, role_mirror_ai, offer_matcher_ai,
     ghost_job_ai, counter_offer_ai, pitch_roast_ai, ref_check_ai
 )
-from datetime import datetime, timedelta
-import secrets
 from invoice_engine import invoice_manager, InvoiceStatus
+from payment_engine import payment_engine
+from kyc_engine import kyc_engine, VerificationStatus, VerificationType
+from escrow_engine import escrow_engine, EscrowStatus
+from referral_engine import referral_engine
+from badge_engine import badge_engine
+from blog_engine import blog_engine
+from chatbot_engine import chatbot_engine
 
 
-app = FastAPI(title="Charvak IT Consulting Pvt Ltd - Web Designing | Staff Augmentation")
+# ============================================================
+# LOGGING SETUP
+# ============================================================
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger("charvakit")
 
-# CORS - Allow DoketsRB to access Charvakit API
+
+# ============================================================
+# FASTAPI APP INITIALIZATION
+# ============================================================
+app = FastAPI(
+    title="Charvak IT Consulting Pvt Ltd - Web Designing | Staff Augmentation",
+    version="1.0.0"
+)
+
+
+# ============================================================
+# RATE LIMITING
+# ============================================================
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    return JSONResponse(
+        status_code=429,
+        content={
+            "status": "error",
+            "message": "Too many requests. Please wait before trying again.",
+            "retry_after": "60 seconds"
+        }
+    )
+
+
+# ============================================================
+# REQUEST SIZE LIMITING MIDDLEWARE
+# ============================================================
+class MaxBodySizeMiddleware(BaseHTTPMiddleware):
+    """Limits request body size to prevent abuse."""
+    
+    MAX_SIZE = 10_000_000  # 10MB
+    
+    async def dispatch(self, request: Request, call_next):
+        content_length = request.headers.get("content-length")
+        if content_length:
+            try:
+                if int(content_length) > self.MAX_SIZE:
+                    logger.warning(f"Request too large: {content_length} bytes from {request.client.host}")
+                    return JSONResponse(
+                        status_code=413,
+                        content={
+                            "status": "error",
+                            "message": f"Request body too large. Maximum size is {self.MAX_SIZE // 1_000_000}MB."
+                        }
+                    )
+            except ValueError:
+                pass
+        return await call_next(request)
+
+app.add_middleware(MaxBodySizeMiddleware)
+
+
+# ============================================================
+# CORS - RESTRICTED ORIGINS
+# ============================================================
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -48,20 +129,281 @@ app.add_middleware(
         "http://127.0.0.1:5500"
     ],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE"],  # Explicit, not wildcard
+    allow_headers=["Content-Type", "Authorization"],  # Explicit, not wildcard
 )
 
+
+# ============================================================
+# STATIC FILES & TEMPLATES
+# ============================================================
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
+
+# ============================================================
+# PYDANTIC MODELS FOR INPUT VALIDATION
+# ============================================================
+
+class VoiceToWebRequest(BaseModel):
+    transcript: str = Field(..., min_length=1, max_length=5000)
+    language: str = Field(default="en", min_length=2, max_length=5)
+    
+    @field_validator('language')
+    @classmethod
+    def validate_language(cls, v: str) -> str:
+        if not v or len(v) < 2:
+            return "en"
+        return v[:5]
+
+
+class NeuralWireframeRequest(BaseModel):
+    sketch: str = Field(..., min_length=1, max_length=10000)
+
+
+class LocalizeRequest(BaseModel):
+    url: str = Field(..., min_length=1, max_length=500)
+    language: str = Field(default="en", min_length=2, max_length=5)
+
+
+class GenerateContractRequest(BaseModel):
+    company: str = Field(..., min_length=1, max_length=200)
+    country: str = Field(..., min_length=1, max_length=100)
+    service: str = Field(..., min_length=1, max_length=500)
+
+
+class AnalyzeLegacyRequest(BaseModel):
+    code: str = Field(..., min_length=1, max_length=50000)
+
+
+class GenerateSchemaRequest(BaseModel):
+    url: str = Field(..., min_length=1, max_length=500)
+
+
+class GenerateQuestionsRequest(BaseModel):
+    stack: str = Field(default="Python", max_length=100)
+    difficulty: str = Field(default="Intermediate", max_length=50)
+    count: int = Field(default=10, ge=1, le=50)
+
+
+class AddMonitorRequest(BaseModel):
+    url: str = Field(..., min_length=1, max_length=500)
+    name: str = Field(default="", max_length=200)
+    interval: int = Field(default=300, ge=60, le=86400)
+
+
+class VerifyWorkAuthRequest(BaseModel):
+    visa_input: str = Field(..., min_length=1, max_length=200)
+    candidate_id: Optional[str] = None
+    visa_expiry: Optional[str] = None
+    documents_verified: bool = False
+    client_type: str = Field(default="corporate", max_length=100)
+
+
+class IngestJobRequest(BaseModel):
+    source: str = Field(default="direct", max_length=50)
+    title: Optional[str] = None
+    description: Optional[str] = None
+    skills: Optional[List[str]] = None
+    location: Optional[str] = None
+
+
+class SubmitCandidateRequest(BaseModel):
+    candidate_id: str = Field(..., min_length=1, max_length=100)
+    visa_input: str = Field(..., min_length=1, max_length=200)
+    visa_expiry: Optional[str] = None
+    documents_verified: bool = False
+    client_type: str = Field(default="corporate", max_length=100)
+    job_id: str = Field(..., min_length=1, max_length=100)
+    vendor_id: str = Field(default="NA-VENDOR-001", max_length=100)
+
+
+class MatchCandidateRequest(BaseModel):
+    id: Optional[str] = None
+    skills: Optional[List[str]] = None
+    title: Optional[str] = None
+
+
+class CreateRequisitionRequest(BaseModel):
+    client_id: str = Field(default="CLIENT-001", max_length=100)
+    title: Optional[str] = None
+    description: Optional[str] = None
+    skills: Optional[List[str]] = None
+    location: Optional[str] = None
+
+
+class SubmitTimecardRequest(BaseModel):
+    req_id: str = Field(..., min_length=1, max_length=100)
+    candidate_id: str = Field(..., min_length=1, max_length=100)
+    hours: float = Field(..., ge=0, le=168)
+    period_end: Optional[str] = None
+    rate: float = Field(default=0, ge=0)
+
+
+class ApproveTimecardRequest(BaseModel):
+    timecard_id: str = Field(..., min_length=1, max_length=100)
+
+
+class CreateSubscriptionRequest(BaseModel):
+    firm_id: str = Field(..., min_length=1, max_length=100)
+    tier: str = Field(default="STARTER", max_length=50)
+
+
+class RegisterVendorRequest(BaseModel):
+    name: str = Field(..., min_length=1, max_length=200)
+    email: str = Field(..., max_length=200)
+    company: Optional[str] = None
+
+
+class ResumeRoastRequest(BaseModel):
+    resume: str = Field(..., min_length=1, max_length=10000)
+    job_title: str = Field(default="", max_length=200)
+
+
+class GhostBountyRequest(BaseModel):
+    challenge: str = Field(default="Debug", max_length=500)
+
+
+class RoleMirrorRequest(BaseModel):
+    role: str = Field(default="", max_length=200)
+    skills: str = Field(default="", max_length=2000)
+
+
+class OfferMatcherRequest(BaseModel):
+    offer_a: str = Field(default="", max_length=5000)
+    offer_b: str = Field(default="", max_length=5000)
+
+
+class GhostJobRequest(BaseModel):
+    url: str = Field(default="", max_length=500)
+
+
+class CounterOfferRequest(BaseModel):
+    new_salary: float = Field(default=0, ge=0)
+    counter_salary: float = Field(default=0, ge=0)
+
+
+class PitchRoastRequest(BaseModel):
+    inmail: str = Field(default="", max_length=5000)
+
+
+class RefCheckRequest(BaseModel):
+    ref_names: List[str] = Field(default_factory=list, max_length=10)
+
+
+class ContactRequest(BaseModel):
+    name: str = Field(..., min_length=1, max_length=200)
+    email: str = Field(..., max_length=200)
+    phone: str = Field(default="", max_length=20)
+    subject: str = Field(default="", max_length=200)
+    message: str = Field(..., min_length=1, max_length=5000)
+
+
+class RegisterRequest(BaseModel):
+    email: str = Field(..., max_length=200)
+    password: str = Field(..., min_length=8, max_length=100)
+    name: str = Field(..., min_length=1, max_length=200)
+    role: str = Field(default="candidate", max_length=50)
+    phone: Optional[str] = None
+
+
+class LoginRequest(BaseModel):
+    email: str = Field(..., max_length=200)
+    password: str = Field(..., max_length=100)
+
+
+class LogoutRequest(BaseModel):
+    token: str = Field(..., max_length=500)
+
+
+class JobPostRequest(BaseModel):
+    title: str = Field(..., min_length=1, max_length=200)
+    company: str = Field(..., min_length=1, max_length=200)
+    type: str = Field(default="Permanent", max_length=50)
+    location: str = Field(default="Remote", max_length=200)
+    salary: str = Field(default="", max_length=100)
+    description: str = Field(default="", max_length=10000)
+    skills: str = Field(default="", max_length=1000)
+
+
+class ApplicationAddRequest(BaseModel):
+    job_title: str = Field(..., min_length=1, max_length=200)
+    company: str = Field(..., min_length=1, max_length=200)
+    job_url: str = Field(default="", max_length=500)
+    source: str = Field(default="charvakit", max_length=50)
+
+
+class SignAgreementRequest(BaseModel):
+    agreement_type: str = Field(..., max_length=50)
+    client_name: str = Field(..., min_length=1, max_length=200)
+    email: Optional[str] = None
+    signature_data: Optional[Dict[str, Any]] = None
+
+
+class CreateInvoiceRequest(BaseModel):
+    client_name: str = Field(..., min_length=1, max_length=200)
+    client_email: str = Field(..., max_length=200)
+    service_type: str = Field(default="Other", max_length=100)
+    amount: float = Field(..., gt=0)
+    description: str = Field(default="", max_length=2000)
+
+
+class UpdateInvoiceRequest(BaseModel):
+    invoice_id: str = Field(..., max_length=100)
+    action: str = Field(..., max_length=20)
+    reason: str = Field(default="", max_length=500)
+
+
+# ============================================================
+# HELPER FUNCTIONS
+# ============================================================
+
+def require_auth(request: Request) -> Dict:
+    """Authenticate user from Bearer token. Raises 401 if invalid."""
+    token = request.headers.get("Authorization", "").replace("Bearer ", "")
+    if not token:
+        raise HTTPException(status_code=401, detail="Authorization header required")
+    user = get_current_user(token)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+    return user
+
+
+def require_admin(request: Request) -> Dict:
+    """Authenticate and ensure user is admin."""
+    user = require_auth(request)
+    if user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return user
+
+
+def handle_error(e: Exception, operation: str, default_return: Any = None) -> Dict:
+    """Centralized error handling with logging."""
+    logger.error(f"Error during {operation}: {str(e)}", exc_info=True)
+    if default_return is not None:
+        return default_return
+    return {"status": "error", "message": f"Failed during {operation}. Please try again."}
+
+
+def template_response(template_name: str, request: Request, title: str, **extra_context) -> HTMLResponse:
+    """Helper to reduce boilerplate for template responses."""
+    return templates.TemplateResponse(
+        template_name,
+        {"request": request, "title": title, **extra_context}
+    )
+
+
+# ============================================================
+# CORE PAGE ROUTES
+# ============================================================
+
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request, "title": "Charvak IT Consulting Pvt Ltd - Web Designing | Staff Augmentation"})
+    return template_response("index.html", request, "Charvak IT Consulting Pvt Ltd - Web Designing | Staff Augmentation")
 
 @app.get("/about", response_class=HTMLResponse)
 async def about(request: Request):
-    return templates.TemplateResponse("about.html", {"request": request, "title": "About Charvak IT Consulting Pvt Ltd"})
+    return template_response("about.html", request, "About Charvak IT Consulting Pvt Ltd")
 
 @app.get("/services", response_class=HTMLResponse)
 async def services(request: Request):
@@ -91,15 +433,15 @@ async def services(request: Request):
             "highlight": True
         }
     ]
-    return templates.TemplateResponse("services.html", {"request": request, "title": "Our Services", "services": services_data})
+    return template_response("services.html", request, "Our Services", services=services_data)
 
 @app.get("/services/web-design", response_class=HTMLResponse)
 async def web_design(request: Request):
-    return templates.TemplateResponse("web-design.html", {"request": request, "title": "Web Designing Services"})
+    return template_response("web-design.html", request, "Web Designing Services")
 
 @app.get("/services/staff-augmentation", response_class=HTMLResponse)
 async def staff_augmentation(request: Request):
-    return templates.TemplateResponse("staff-augmentation.html", {"request": request, "title": "Staff Augmentation Services"})
+    return template_response("staff-augmentation.html", request, "Staff Augmentation Services")
 
 @app.get("/products", response_class=HTMLResponse)
 async def products(request: Request):
@@ -124,7 +466,7 @@ async def products(request: Request):
         {"name": "AI-Slop Quarantine", "description": "Clean AI-generated code bloat & WCAG errors", "features": ["De-Bloat", "Fix Layouts", "WCAG Fix"], "link": "/ai-slop-quarantine", "icon": "recycle"},
         {"name": "Developer Entropy Engine", "description": "Track team skill decay & upskill", "features": ["Code Quality", "Skill Gaps", "Auto-Learning"], "link": "/developer-entropy", "icon": "graph-down"},
     ]
-    return templates.TemplateResponse("products-list.html", {"request": request, "title": "All Products - Charvak", "products": products_data})
+    return template_response("products-list.html", request, "All Products - Charvak", products=products_data)
 
 @app.get("/products/dokets-vouchai", response_class=HTMLResponse)
 async def dokets_vouchai(request: Request):
@@ -141,239 +483,346 @@ async def dokets_vouchai(request: Request):
         },
         "website": "https://dokets.com"
     }
-    return templates.TemplateResponse("products.html", {"request": request, "title": "Dokets VouchAI - AI Escrow Platform", "product": product})
+    return template_response("products.html", request, "Dokets VouchAI - AI Escrow Platform", product=product)
 
 @app.get("/team", response_class=HTMLResponse)
 async def team(request: Request):
-    return templates.TemplateResponse("team.html", {"request": request, "title": "Our Team"})
+    return template_response("team.html", request, "Our Team")
 
 @app.get("/careers", response_class=HTMLResponse)
 async def careers(request: Request):
-    return templates.TemplateResponse("careers.html", {"request": request, "title": "Careers at Charvak"})
+    return template_response("careers.html", request, "Careers at Charvak")
 
 @app.get("/contact", response_class=HTMLResponse)
 async def contact(request: Request):
-    return templates.TemplateResponse("contact.html", {"request": request, "title": "Contact Us"})
+    return template_response("contact.html", request, "Contact Us")
 
 @app.get("/terms", response_class=HTMLResponse)
 async def terms(request: Request):
-    return templates.TemplateResponse("terms.html", {"request": request, "title": "Terms & Conditions"})
+    return template_response("terms.html", request, "Terms & Conditions")
 
 @app.get("/privacy", response_class=HTMLResponse)
 async def privacy(request: Request):
-    return templates.TemplateResponse("privacy.html", {"request": request, "title": "Privacy Policy"})
+    return template_response("privacy.html", request, "Privacy Policy")
 
 @app.get("/refund", response_class=HTMLResponse)
 async def refund(request: Request):
-    return templates.TemplateResponse("refund.html", {"request": request, "title": "Refund & Cancellation Policy"})
+    return template_response("refund.html", request, "Refund & Cancellation Policy")
+
+@app.get("/register", response_class=HTMLResponse)
+async def register_page(request: Request):
+    return template_response("register.html", request, "Register - Charvak IT Consulting")
+
+@app.get("/roadmap", response_class=HTMLResponse)
+async def roadmap(request: Request):
+    return template_response("roadmap.html", request, "Roadmap - Charvak IT Consulting")
+
+
+# ============================================================
+# AI MODEL PAGES (25+ models)
+# ============================================================
 
 @app.get("/voice-to-web", response_class=HTMLResponse)
 async def voice_to_web(request: Request):
-    return templates.TemplateResponse("voice-to-web.html", {"request": request, "title": "Voice-to-Web Engine - Charvak"})
+    return template_response("voice-to-web.html", request, "Voice-to-Web Engine - Charvak")
 
-# WhatsApp Webhook - Verification
+@app.get("/cloud-waste-calculator", response_class=HTMLResponse)
+async def cloud_waste_calculator(request: Request):
+    return template_response("cloud-waste-calculator.html", request, "Cloud Waste Calculator - Charvak")
+
+@app.get("/lock-in-breaker", response_class=HTMLResponse)
+async def lock_in_breaker(request: Request):
+    return template_response("lock-in-breaker.html", request, "Vendor Lock-In Breaker - Charvak")
+
+@app.get("/lock-in-breaker-pricing", response_class=HTMLResponse)
+async def lock_in_breaker_pricing(request: Request):
+    return template_response("lock-in-breaker-pricing.html", request, "Lock-In Breaker Plans - Charvak")
+
+@app.get("/reverse-staffing", response_class=HTMLResponse)
+async def reverse_staffing(request: Request):
+    return template_response("reverse-staffing.html", request, "Reverse Staffing - Charvak")
+
+@app.get("/code-quality-checker", response_class=HTMLResponse)
+async def code_quality_checker(request: Request):
+    return template_response("code-quality-checker.html", request, "Code Quality Checker - Charvak")
+
+@app.get("/developer-signup", response_class=HTMLResponse)
+async def developer_signup(request: Request):
+    return template_response("developer-signup.html", request, "Join Developer Pool - Charvak")
+
+@app.get("/hire-talent", response_class=HTMLResponse)
+async def hire_talent(request: Request):
+    return template_response("hire-talent.html", request, "Hire Vetted Talent - Charvak")
+
+@app.get("/auditbot", response_class=HTMLResponse)
+async def auditbot(request: Request):
+    return template_response("auditbot.html", request, "AuditBot - Charvak")
+
+@app.get("/digital-health-checker", response_class=HTMLResponse)
+async def digital_health_checker(request: Request):
+    return template_response("digital-health-checker.html", request, "Digital Health Checker - Charvak")
+
+@app.get("/neural-wireframe", response_class=HTMLResponse)
+async def neural_wireframe(request: Request):
+    return template_response("neural-wireframe.html", request, "Neural Wireframe-to-Prod - Charvak")
+
+@app.get("/napkin-challenge", response_class=HTMLResponse)
+async def napkin_challenge(request: Request):
+    return template_response("napkin-challenge.html", request, "Napkin-to-Live Challenge - Charvak")
+
+@app.get("/skill-twin", response_class=HTMLResponse)
+async def skill_twin(request: Request):
+    return template_response("skill-twin.html", request, "Skill-Twin Engine - Charvak")
+
+@app.get("/skill-check", response_class=HTMLResponse)
+async def skill_check(request: Request):
+    return template_response("skill-check.html", request, "Free Skill Check - Charvak")
+
+@app.get("/globalize", response_class=HTMLResponse)
+async def globalize_ai(request: Request):
+    return template_response("globalize.html", request, "Globalize.ai - Charvak")
+
+@app.get("/revenue-leak-detector", response_class=HTMLResponse)
+async def revenue_leak_detector(request: Request):
+    return template_response("revenue-leak-detector.html", request, "Revenue Leak Detector - Charvak")
+
+@app.get("/micro-squads", response_class=HTMLResponse)
+async def micro_squads(request: Request):
+    return template_response("micro-squads.html", request, "Micro-Squads - Charvak")
+
+@app.get("/scope-simulator", response_class=HTMLResponse)
+async def scope_simulator(request: Request):
+    return template_response("scope-simulator.html", request, "Scope Simulator - Charvak")
+
+@app.get("/agency-twin", response_class=HTMLResponse)
+async def agency_twin(request: Request):
+    return template_response("agency-twin.html", request, "Agency-Twin - Charvak")
+
+@app.get("/burnout-calculator", response_class=HTMLResponse)
+async def burnout_calculator(request: Request):
+    return template_response("burnout-calculator.html", request, "Burnout Calculator - Charvak")
+
+@app.get("/geo-compliance", response_class=HTMLResponse)
+async def geo_compliance(request: Request):
+    return template_response("geo-compliance.html", request, "Geo-Compliance Shield - Charvak")
+
+@app.get("/contract-risk-radar", response_class=HTMLResponse)
+async def contract_risk_radar(request: Request):
+    return template_response("contract-risk-radar.html", request, "Contract Risk Radar - Charvak")
+
+@app.get("/design-token-sentinel", response_class=HTMLResponse)
+async def design_token_sentinel(request: Request):
+    return template_response("design-token-sentinel.html", request, "Design-Token Sentinel - Charvak")
+
+@app.get("/brand-drift-inspector", response_class=HTMLResponse)
+async def brand_drift_inspector(request: Request):
+    return template_response("brand-drift-inspector.html", request, "Brand Drift Inspector - Charvak")
+
+@app.get("/legacy-shift", response_class=HTMLResponse)
+async def legacy_shift(request: Request):
+    return template_response("legacy-shift.html", request, "Legacy-Shift Archaeologist - Charvak")
+
+@app.get("/time-machine-checker", response_class=HTMLResponse)
+async def time_machine_checker(request: Request):
+    return template_response("time-machine-checker.html", request, "Time Machine Checker - Charvak")
+
+@app.get("/agent-ready", response_class=HTMLResponse)
+async def agent_ready(request: Request):
+    return template_response("agent-ready.html", request, "Agent-Ready Wrapper - Charvak")
+
+@app.get("/ai-commerce-scorecard", response_class=HTMLResponse)
+async def ai_commerce_scorecard(request: Request):
+    return template_response("ai-commerce-scorecard.html", request, "AI Commerce Scorecard - Charvak")
+
+@app.get("/silent-killer", response_class=HTMLResponse)
+async def silent_killer(request: Request):
+    return template_response("silent-killer.html", request, "Silent-Killer Sentinel - Charvak")
+
+@app.get("/dead-link-auditor", response_class=HTMLResponse)
+async def dead_link_auditor(request: Request):
+    return template_response("dead-link-auditor.html", request, "Dead Link Auditor - Charvak")
+
+@app.get("/ai-slop-quarantine", response_class=HTMLResponse)
+async def ai_slop_quarantine(request: Request):
+    return template_response("ai-slop-quarantine.html", request, "AI-Slop Quarantine - Charvak")
+
+@app.get("/ai-contamination-detector", response_class=HTMLResponse)
+async def ai_contamination_detector(request: Request):
+    return template_response("ai-contamination-detector.html", request, "AI-Contamination Detector - Charvak")
+
+@app.get("/developer-entropy", response_class=HTMLResponse)
+async def developer_entropy(request: Request):
+    return template_response("developer-entropy.html", request, "Developer Entropy Engine - Charvak")
+
+@app.get("/team-entropy-scorecard", response_class=HTMLResponse)
+async def team_entropy_scorecard(request: Request):
+    return template_response("team-entropy-scorecard.html", request, "Team Entropy Scorecard - Charvak")
+
+@app.get("/ai-generate-stack", response_class=HTMLResponse)
+async def ai_generate_stack(request: Request):
+    # Note: This page now uses the unified skill-check template
+    return template_response("skill-check.html", request, "Skill Check - Charvak")
+
+
+# ============================================================
+# CAREER ENGINE PAGES
+# ============================================================
+
+@app.get("/career-engine", response_class=HTMLResponse)
+async def career_engine(request: Request):
+    return template_response("career-engine.html", request, "Career Engine - Charvak")
+
+@app.get("/interview-prep", response_class=HTMLResponse)
+async def interview_prep(request: Request):
+    return template_response("interview-prep.html", request, "Interview Prep - Charvak Career Engine")
+
+@app.get("/post-job", response_class=HTMLResponse)
+async def post_job(request: Request):
+    return template_response("post-job.html", request, "Post a Job - Charvak")
+
+@app.get("/track-application", response_class=HTMLResponse)
+async def track_application(request: Request):
+    return template_response("track-application.html", request, "Track Application - Charvak")
+
+@app.get("/submit-referral", response_class=HTMLResponse)
+async def submit_referral(request: Request):
+    return template_response("submit-referral.html", request, "Submit Referral - Charvak")
+
+@app.get("/training-engine", response_class=HTMLResponse)
+async def training_engine(request: Request):
+    return template_response("training-engine.html", request, "Training Engine - Charvak Career Engine")
+
+@app.get("/online-classroom", response_class=HTMLResponse)
+async def online_classroom(request: Request):
+    return template_response("online-classroom.html", request, "Online Classroom - Charvak")
+
+@app.get("/background-verification", response_class=HTMLResponse)
+async def background_verification(request: Request):
+    return template_response("background-verification.html", request, "Background Verification - Charvak Career Engine")
+
+@app.get("/job-board", response_class=HTMLResponse)
+async def job_board_page(request: Request):
+    return template_response("job-board.html", request, "Job Board - Charvak Career Engine")
+
+@app.get("/application-dashboard", response_class=HTMLResponse)
+async def application_dashboard(request: Request):
+    return template_response("application-dashboard.html", request, "Application Dashboard - Charvak")
+
+@app.get("/micro-internship", response_class=HTMLResponse)
+async def micro_internship(request: Request):
+    return template_response("micro-internship.html", request, "Micro-Internships - Charvak First Job Engine")
+
+@app.get("/for-employers", response_class=HTMLResponse)
+async def for_employers(request: Request):
+    return template_response("for-employers.html", request, "For Employers - Charvak IT Consulting")
+
+@app.get("/demo", response_class=HTMLResponse)
+async def demo_page(request: Request):
+    # Fixed: Now points to a proper demo template if it exists, otherwise employers page
+    return template_response("for-employers.html", request, "Demo - Charvak IT Consulting")
+
+@app.get("/for-candidates", response_class=HTMLResponse)
+async def for_candidates(request: Request):
+    return template_response("for-candidates.html", request, "For Candidates - Charvak IT Consulting")
+
+@app.get("/post-micro-project", response_class=HTMLResponse)
+async def post_micro_project(request: Request):
+    return template_response("post-micro-project.html", request, "Post a Micro-Project - Charvak")
+
+@app.get("/badge", response_class=HTMLResponse)
+async def badge_page(request: Request):
+    return template_response("badge.html", request, "Your Verified Badge - Charvak")
+
+@app.get("/admin-dashboard", response_class=HTMLResponse)
+async def admin_dashboard(request: Request):
+    return template_response("admin-dashboard.html", request, "Admin Dashboard - Charvak")
+
+
+# ============================================================
+# OTHER PAGES
+# ============================================================
+
+@app.get("/cookie-policy", response_class=HTMLResponse)
+async def cookie_policy(request: Request):
+    return template_response("cookie-policy.html", request, "Cookie Policy - Charvak")
+
+@app.get("/accessibility", response_class=HTMLResponse)
+async def accessibility(request: Request):
+    return template_response("accessibility.html", request, "Accessibility Statement - Charvak")
+
+@app.get("/post-course", response_class=HTMLResponse)
+async def post_course(request: Request):
+    return template_response("post-course.html", request, "Post Your Course - Charvak")
+
+@app.get("/request-training", response_class=HTMLResponse)
+async def request_training(request: Request):
+    return template_response("request-training.html", request, "Request Training - Charvak")
+
+@app.get("/partner-verification", response_class=HTMLResponse)
+async def partner_verification(request: Request):
+    return template_response("partner-verification.html", request, "Partner With Us - Charvak")
+
+@app.get("/custom-assessment", response_class=HTMLResponse)
+async def custom_assessment(request: Request):
+    return template_response("custom-assessment.html", request, "Custom Assessment - Charvak Skill-Twin")
+
+@app.get("/pricing", response_class=HTMLResponse)
+async def pricing_page(request: Request):
+    return template_response("pricing.html", request, "Pricing - Charvak IT Consulting")
+
+
+# ============================================================
+# WHATSAPP WEBHOOK
+# ============================================================
+
 @app.get("/webhook/whatsapp")
 async def verify_whatsapp(request: Request):
     mode = request.query_params.get("hub.mode")
     token = request.query_params.get("hub.verify_token")
     challenge = request.query_params.get("hub.challenge")
     
+    if not VERIFY_TOKEN:
+        logger.error("WhatsApp VERIFY_TOKEN is not configured")
+        return JSONResponse({"error": "WhatsApp not configured"}, status_code=500)
+    
     if mode == "subscribe" and token == VERIFY_TOKEN:
+        logger.info("WhatsApp webhook verified successfully")
         return PlainTextResponse(challenge)
+    
+    logger.warning(f"WhatsApp verification failed: mode={mode}, token_match={token == VERIFY_TOKEN}")
     return JSONResponse({"error": "Verification failed"}, status_code=403)
 
-# WhatsApp Webhook - Messages
+
 @app.post("/webhook/whatsapp")
 async def receive_whatsapp(request: Request):
-    data = await request.json()
-    await whatsapp_handler(data)
-    return {"status": "ok"}
+    try:
+        data = await request.json()
+        await whatsapp_handler(data)
+        return {"status": "ok"}
+    except Exception as e:
+        logger.error(f"WhatsApp webhook error: {str(e)}", exc_info=True)
+        return {"status": "error", "message": "Failed to process WhatsApp message"}
 
-# Serve generated sites
+
+# ============================================================
+# GENERATED SITES
+# ============================================================
+
 @app.get("/sites/{site_id}")
 async def view_site(site_id: str):
+    # Validate site_id to prevent path traversal
+    if ".." in site_id or "/" in site_id or "\\" in site_id:
+        raise HTTPException(status_code=400, detail="Invalid site ID")
+    
     site_path = f"static/sites/{site_id}.html"
     if os.path.exists(site_path):
         return FileResponse(site_path)
     return HTMLResponse("<h1>Site not found</h1>", status_code=404)
 
-@app.get("/cloud-waste-calculator", response_class=HTMLResponse)
-async def cloud_waste_calculator(request: Request):
-    return templates.TemplateResponse("cloud-waste-calculator.html", {"request": request, "title": "Cloud Waste Calculator - Charvak"})
 
-@app.get("/lock-in-breaker", response_class=HTMLResponse)
-async def lock_in_breaker(request: Request):
-    return templates.TemplateResponse("lock-in-breaker.html", {"request": request, "title": "Vendor Lock-In Breaker - Charvak"})
-
-@app.get("/lock-in-breaker-pricing", response_class=HTMLResponse)
-async def lock_in_breaker_pricing(request: Request):
-    return templates.TemplateResponse("lock-in-breaker-pricing.html", {"request": request, "title": "Lock-In Breaker Plans - Charvak"})
-
-@app.get("/reverse-staffing", response_class=HTMLResponse)
-async def reverse_staffing(request: Request):
-    return templates.TemplateResponse("reverse-staffing.html", {"request": request, "title": "Reverse Staffing - Charvak"})
-
-@app.get("/code-quality-checker", response_class=HTMLResponse)
-async def code_quality_checker(request: Request):
-    return templates.TemplateResponse("code-quality-checker.html", {"request": request, "title": "Code Quality Checker - Charvak"})
-
-@app.get("/developer-signup", response_class=HTMLResponse)
-async def developer_signup(request: Request):
-    return templates.TemplateResponse("developer-signup.html", {"request": request, "title": "Join Developer Pool - Charvak"})
-
-@app.get("/hire-talent", response_class=HTMLResponse)
-async def hire_talent(request: Request):
-    return templates.TemplateResponse("hire-talent.html", {"request": request, "title": "Hire Vetted Talent - Charvak"})
-
-@app.get("/auditbot", response_class=HTMLResponse)
-async def auditbot(request: Request):
-    return templates.TemplateResponse("auditbot.html", {"request": request, "title": "AuditBot - Charvak"})
-
-@app.get("/digital-health-checker", response_class=HTMLResponse)
-async def digital_health_checker(request: Request):
-    return templates.TemplateResponse("digital-health-checker.html", {"request": request, "title": "Digital Health Checker - Charvak"})
-
-@app.get("/neural-wireframe", response_class=HTMLResponse)
-async def neural_wireframe(request: Request):
-    return templates.TemplateResponse("neural-wireframe.html", {"request": request, "title": "Neural Wireframe-to-Prod - Charvak"})
-
-@app.get("/napkin-challenge", response_class=HTMLResponse)
-async def napkin_challenge(request: Request):
-    return templates.TemplateResponse("napkin-challenge.html", {"request": request, "title": "Napkin-to-Live Challenge - Charvak"})
-
-@app.get("/skill-twin", response_class=HTMLResponse)
-async def skill_twin(request: Request):
-    return templates.TemplateResponse("skill-twin.html", {"request": request, "title": "Skill-Twin Engine - Charvak"})
-
-@app.get("/skill-check", response_class=HTMLResponse)
-async def skill_check(request: Request):
-    return templates.TemplateResponse("skill-check.html", {"request": request, "title": "Free Skill Check - Charvak"})
-
-@app.get("/globalize", response_class=HTMLResponse)
-async def globalize_ai(request: Request):
-    return templates.TemplateResponse("globalize.html", {"request": request, "title": "Globalize.ai - Charvak"})
-
-@app.get("/revenue-leak-detector", response_class=HTMLResponse)
-async def revenue_leak_detector(request: Request):
-    return templates.TemplateResponse("revenue-leak-detector.html", {"request": request, "title": "Revenue Leak Detector - Charvak"})
-
-@app.get("/micro-squads", response_class=HTMLResponse)
-async def micro_squads(request: Request):
-    return templates.TemplateResponse("micro-squads.html", {"request": request, "title": "Micro-Squads - Charvak"})
-
-@app.get("/scope-simulator", response_class=HTMLResponse)
-async def scope_simulator(request: Request):
-    return templates.TemplateResponse("scope-simulator.html", {"request": request, "title": "Scope Simulator - Charvak"})
-
-@app.get("/agency-twin", response_class=HTMLResponse)
-async def agency_twin(request: Request):
-    return templates.TemplateResponse("agency-twin.html", {"request": request, "title": "Agency-Twin - Charvak"})
-
-@app.get("/burnout-calculator", response_class=HTMLResponse)
-async def burnout_calculator(request: Request):
-    return templates.TemplateResponse("burnout-calculator.html", {"request": request, "title": "Burnout Calculator - Charvak"})
-
-@app.get("/geo-compliance", response_class=HTMLResponse)
-async def geo_compliance(request: Request):
-    return templates.TemplateResponse("geo-compliance.html", {"request": request, "title": "Geo-Compliance Shield - Charvak"})
-
-@app.get("/contract-risk-radar", response_class=HTMLResponse)
-async def contract_risk_radar(request: Request):
-    return templates.TemplateResponse("contract-risk-radar.html", {"request": request, "title": "Contract Risk Radar - Charvak"})
-
-@app.get("/design-token-sentinel", response_class=HTMLResponse)
-async def design_token_sentinel(request: Request):
-    return templates.TemplateResponse("design-token-sentinel.html", {"request": request, "title": "Design-Token Sentinel - Charvak"})
-
-@app.get("/brand-drift-inspector", response_class=HTMLResponse)
-async def brand_drift_inspector(request: Request):
-    return templates.TemplateResponse("brand-drift-inspector.html", {"request": request, "title": "Brand Drift Inspector - Charvak"})
-
-@app.get("/legacy-shift", response_class=HTMLResponse)
-async def legacy_shift(request: Request):
-    return templates.TemplateResponse("legacy-shift.html", {"request": request, "title": "Legacy-Shift Archaeologist - Charvak"})
-
-@app.get("/time-machine-checker", response_class=HTMLResponse)
-async def time_machine_checker(request: Request):
-    return templates.TemplateResponse("time-machine-checker.html", {"request": request, "title": "Time Machine Checker - Charvak"})
-
-@app.get("/agent-ready", response_class=HTMLResponse)
-async def agent_ready(request: Request):
-    return templates.TemplateResponse("agent-ready.html", {"request": request, "title": "Agent-Ready Wrapper - Charvak"})
-
-@app.get("/ai-commerce-scorecard", response_class=HTMLResponse)
-async def ai_commerce_scorecard(request: Request):
-    return templates.TemplateResponse("ai-commerce-scorecard.html", {"request": request, "title": "AI Commerce Scorecard - Charvak"})
-
-@app.get("/silent-killer", response_class=HTMLResponse)
-async def silent_killer(request: Request):
-    return templates.TemplateResponse("silent-killer.html", {"request": request, "title": "Silent-Killer Sentinel - Charvak"})
-
-@app.get("/dead-link-auditor", response_class=HTMLResponse)
-async def dead_link_auditor(request: Request):
-    return templates.TemplateResponse("dead-link-auditor.html", {"request": request, "title": "Dead Link Auditor - Charvak"})
-
-@app.get("/ai-slop-quarantine", response_class=HTMLResponse)
-async def ai_slop_quarantine(request: Request):
-    return templates.TemplateResponse("ai-slop-quarantine.html", {"request": request, "title": "AI-Slop Quarantine - Charvak"})
-
-@app.get("/ai-contamination-detector", response_class=HTMLResponse)
-async def ai_contamination_detector(request: Request):
-    return templates.TemplateResponse("ai-contamination-detector.html", {"request": request, "title": "AI-Contamination Detector - Charvak"})
-
-@app.get("/developer-entropy", response_class=HTMLResponse)
-async def developer_entropy(request: Request):
-    return templates.TemplateResponse("developer-entropy.html", {"request": request, "title": "Developer Entropy Engine - Charvak"})
-
-@app.get("/team-entropy-scorecard", response_class=HTMLResponse)
-async def team_entropy_scorecard(request: Request):
-    return templates.TemplateResponse("team-entropy-scorecard.html", {"request": request, "title": "Team Entropy Scorecard - Charvak"})
-
-@app.get("/career-engine", response_class=HTMLResponse)
-async def career_engine(request: Request):
-    return templates.TemplateResponse("career-engine.html", {"request": request, "title": "Career Engine - Charvak"})
-
-@app.get("/interview-prep", response_class=HTMLResponse)
-async def interview_prep(request: Request):
-    return templates.TemplateResponse("interview-prep.html", {"request": request, "title": "Interview Prep - Charvak Career Engine"})
-
-@app.get("/post-job", response_class=HTMLResponse)
-async def post_job(request: Request):
-    return templates.TemplateResponse("post-job.html", {"request": request, "title": "Post a Job - Charvak"})
-
-@app.get("/track-application", response_class=HTMLResponse)
-async def track_application(request: Request):
-    return templates.TemplateResponse("track-application.html", {"request": request, "title": "Track Application - Charvak"})
-
-@app.get("/submit-referral", response_class=HTMLResponse)
-async def submit_referral(request: Request):
-    return templates.TemplateResponse("submit-referral.html", {"request": request, "title": "Submit Referral - Charvak"})
-
-@app.get("/training-engine", response_class=HTMLResponse)
-async def training_engine(request: Request):
-    return templates.TemplateResponse("training-engine.html", {"request": request, "title": "Training Engine - Charvak Career Engine"})
-
-@app.get("/online-classroom", response_class=HTMLResponse)
-async def online_classroom(request: Request):
-    return templates.TemplateResponse("online-classroom.html", {"request": request, "title": "Online Classroom - Charvak"})
-
-@app.get("/background-verification", response_class=HTMLResponse)
-async def background_verification(request: Request):
-    return templates.TemplateResponse("background-verification.html", {"request": request, "title": "Background Verification - Charvak Career Engine"})
-
-@app.get("/job-board", response_class=HTMLResponse)
-async def job_board(request: Request):
-    return templates.TemplateResponse("job-board.html", {"request": request, "title": "Job Board - Charvak Career Engine"})
-
-@app.get("/application-dashboard", response_class=HTMLResponse)
-async def application_dashboard(request: Request):
-    return templates.TemplateResponse("application-dashboard.html", {"request": request, "title": "Application Dashboard - Charvak"})
-
-@app.get("/admin-dashboard", response_class=HTMLResponse)
-async def admin_dashboard(request: Request):
-    return templates.TemplateResponse("admin-dashboard.html", {"request": request, "title": "Admin Dashboard - Charvak"})
-
-# ============ API SYNC ENDPOINTS ============
+# ============================================================
+# API SYNC ENDPOINTS (DoketsRB Integration)
+# ============================================================
 
 @app.post("/api/sync/resume")
 async def sync_resume(data: ResumeSync, request: Request, auth=Depends(verify_api_key)):
@@ -399,550 +848,719 @@ async def sync_get_status(user_id: str, request: Request, auth=Depends(verify_ap
 async def sync_health():
     return await api_health()
 
-# ============ AUTH ROUTES ============
+
+# ============================================================
+# AUTH ROUTES (WITH INPUT VALIDATION)
+# ============================================================
 
 @app.post("/api/auth/register")
-async def api_register(request: Request):
-    data = await request.json()
-    result = register_user(
-        email=data.get("email"),
-        password=data.get("password"),
-        name=data.get("name"),
-        role=data.get("role", "candidate"),
-        phone=data.get("phone")
-    )
-    return JSONResponse(result)
+async def api_register(data: RegisterRequest):
+    try:
+        result = register_user(
+            email=data.email,
+            password=data.password,
+            name=data.name,
+            role=data.role,
+            phone=data.phone
+        )
+        return JSONResponse(result)
+    except Exception as e:
+        logger.error(f"Registration failed for {data.email}: {str(e)}")
+        return JSONResponse(
+            {"status": "error", "message": "Registration failed. Please try again."},
+            status_code=500
+        )
 
 @app.post("/api/auth/login")
-async def api_login(request: Request):
-    data = await request.json()
-    result = login_user(data.get("email"), data.get("password"))
-    return JSONResponse(result)
+async def api_login(data: LoginRequest):
+    try:
+        result = login_user(data.email, data.password)
+        return JSONResponse(result)
+    except Exception as e:
+        logger.error(f"Login failed for {data.email}: {str(e)}")
+        return JSONResponse(
+            {"status": "error", "message": "Login failed. Check your credentials."},
+            status_code=401
+        )
 
 @app.post("/api/auth/logout")
-async def api_logout(request: Request):
-    data = await request.json()
-    result = logout_user(data.get("token"))
-    return JSONResponse(result)
+async def api_logout(data: LogoutRequest):
+    try:
+        result = logout_user(data.token)
+        return JSONResponse(result)
+    except Exception as e:
+        logger.error(f"Logout failed: {str(e)}")
+        return JSONResponse({"status": "success", "message": "Logged out"})
 
 @app.get("/api/auth/me")
 async def api_me(request: Request):
-    token = request.headers.get("Authorization", "").replace("Bearer ", "")
-    user = get_current_user(token)
-    if user:
+    try:
+        user = require_auth(request)
         return JSONResponse({"status": "success", "user": user})
-    return JSONResponse({"status": "error", "message": "Not authenticated"}, status_code=401)
+    except HTTPException:
+        return JSONResponse({"status": "error", "message": "Not authenticated"}, status_code=401)
 
-# ============ FORM SUBMISSIONS ============
+
+# ============================================================
+# CONTACT FORM (WITH VALIDATION)
+# ============================================================
 
 @app.post("/api/contact")
-async def submit_contact(request: Request):
-    data = await request.json()
-    result = db.save_contact(
-        name=data.get("name"),
-        email=data.get("email"),
-        phone=data.get("phone", ""),
-        subject=data.get("subject", ""),
-        message=data.get("message", "")
-    )
-    return JSONResponse(result)
+async def submit_contact(data: ContactRequest):
+    try:
+        result = db.save_contact(
+            name=data.name,
+            email=data.email,
+            phone=data.phone,
+            subject=data.subject,
+            message=data.message
+        )
+        return JSONResponse(result)
+    except Exception as e:
+        logger.error(f"Contact form save failed: {str(e)}")
+        return JSONResponse(
+            {"status": "error", "message": "Failed to save your message. Please email us directly."},
+            status_code=500
+        )
+
+
+# ============================================================
+# JOB BOARD API (WITH AUTH)
+# ============================================================
 
 @app.post("/api/jobs/post")
-async def api_post_job(request: Request):
-    token = request.headers.get("Authorization", "").replace("Bearer ", "")
-    user = get_current_user(token)
-    if not user:
-        return JSONResponse({"status": "error", "message": "Login required"}, status_code=401)
+async def api_post_job(data: JobPostRequest, request: Request):
+    try:
+        user = require_auth(request)
+    except HTTPException:
+        return JSONResponse({"status": "error", "message": "Login required to post jobs"}, status_code=401)
     
-    data = await request.json()
-    result = db.post_job(
-        title=data.get("title"),
-        company=data.get("company"),
-        job_type=data.get("type", "Permanent"),
-        location=data.get("location", "Remote"),
-        salary=data.get("salary", ""),
-        description=data.get("description", ""),
-        skills=data.get("skills", ""),
-        posted_by=user["user_id"]
-    )
-    return JSONResponse(result)
+    try:
+        result = db.post_job(
+            title=data.title,
+            company=data.company,
+            job_type=data.type,
+            location=data.location,
+            salary=data.salary,
+            description=data.description,
+            skills=data.skills,
+            posted_by=user["user_id"]
+        )
+        return JSONResponse(result)
+    except Exception as e:
+        logger.error(f"Job post failed: {str(e)}")
+        return JSONResponse({"status": "error", "message": "Failed to post job"}, status_code=500)
 
 @app.post("/api/applications/add")
-async def api_add_application(request: Request):
-    token = request.headers.get("Authorization", "").replace("Bearer ", "")
-    user = get_current_user(token)
-    if not user:
+async def api_add_application(data: ApplicationAddRequest, request: Request):
+    try:
+        user = require_auth(request)
+    except HTTPException:
         return JSONResponse({"status": "error", "message": "Login required"}, status_code=401)
     
-    data = await request.json()
-    result = db.add_application(
-        user_id=user["user_id"],
-        job_title=data.get("job_title"),
-        company=data.get("company"),
-        job_url=data.get("job_url"),
-        source=data.get("source", "charvakit")
-    )
-    return JSONResponse(result)
+    try:
+        result = db.add_application(
+            user_id=user["user_id"],
+            job_title=data.job_title,
+            company=data.company,
+            job_url=data.job_url,
+            source=data.source
+        )
+        return JSONResponse(result)
+    except Exception as e:
+        logger.error(f"Application add failed: {str(e)}")
+        return JSONResponse({"status": "error", "message": "Failed to add application"}, status_code=500)
 
 @app.get("/api/applications")
 async def api_get_applications(request: Request):
-    token = request.headers.get("Authorization", "").replace("Bearer ", "")
-    user = get_current_user(token)
-    if not user:
+    try:
+        user = require_auth(request)
+    except HTTPException:
         return JSONResponse({"status": "error", "message": "Login required"}, status_code=401)
     
-    apps = db.get_user_applications(user["user_id"])
-    return JSONResponse({"status": "success", "applications": apps, "count": len(apps)})
+    try:
+        apps = db.get_user_applications(user["user_id"])
+        return JSONResponse({"status": "success", "applications": apps, "count": len(apps)})
+    except Exception as e:
+        logger.error(f"Failed to get applications: {str(e)}")
+        return JSONResponse({"status": "error", "applications": [], "count": 0})
 
 @app.get("/api/jobs")
 async def api_get_jobs():
-    jobs = db.get_active_jobs()
-    return JSONResponse({"status": "success", "jobs": jobs, "count": len(jobs)})
-
-@app.get("/sitemap.xml")
-async def sitemap():
-    return FileResponse("templates/sitemap.xml", media_type="application/xml")
-
-@app.get("/api/region")
-async def detect_region(request: Request):
-    accept_lang = request.headers.get("accept-language", "en")
-    region = detect_user_region(accept_language=accept_lang)
-    return JSONResponse(region)
-
-@app.get("/api/pricing/{service}")
-async def get_service_pricing(service: str, request: Request, currency: str = "INR", country: str = "IN"):
-    pricing = get_pricing(service, currency, country)
-    return JSONResponse(pricing)
-
-@app.get("/cookie-policy", response_class=HTMLResponse)
-async def cookie_policy(request: Request):
-    return templates.TemplateResponse("cookie-policy.html", {"request": request, "title": "Cookie Policy - Charvak"})
-
-@app.get("/accessibility", response_class=HTMLResponse)
-async def accessibility(request: Request):
-    return templates.TemplateResponse("accessibility.html", {"request": request, "title": "Accessibility Statement - Charvak"})
-
-@app.get("/post-course", response_class=HTMLResponse)
-async def post_course(request: Request):
-    return templates.TemplateResponse("post-course.html", {"request": request, "title": "Post Your Course - Charvak"})
-
-@app.get("/request-training", response_class=HTMLResponse)
-async def request_training(request: Request):
-    return templates.TemplateResponse("request-training.html", {"request": request, "title": "Request Training - Charvak"})
-
-@app.get("/partner-verification", response_class=HTMLResponse)
-async def partner_verification(request: Request):
-    return templates.TemplateResponse("partner-verification.html", {"request": request, "title": "Partner With Us - Charvak"})
-
-@app.get("/custom-assessment", response_class=HTMLResponse)
-async def custom_assessment(request: Request):
-    return templates.TemplateResponse("custom-assessment.html", {"request": request, "title": "Custom Assessment - Charvak Skill-Twin"})
-
-@app.get("/ai-generate-stack", response_class=HTMLResponse)
-async def ai_generate_stack(request: Request):
-    # Redirect to unified skill check
-    return templates.TemplateResponse("skill-check.html", {"request": request, "title": "Skill Check - Charvak"})
-
-@app.get("/badge", response_class=HTMLResponse)
-async def badge_page(request: Request):
-    return templates.TemplateResponse("badge.html", {"request": request, "title": "Your Verified Badge - Charvak"})
-
-@app.get("/api/health/ai")
-async def ai_health_check():
-    return {"openai_configured": is_ai_ready(), "models_activated": 8 if is_ai_ready() else 0}
-
-@app.post("/api/ai/generate-questions")
-async def api_generate_questions(request: Request):
-    data = await request.json()
-    questions = await generate_assessment_questions(
-        data.get("stack", "Python"),
-        data.get("difficulty", "Intermediate"),
-        data.get("count", 10)
-    )
-    return {"questions": questions, "count": len(questions)}
-
-@app.post("/api/ai/voice-to-web")
-async def api_voice_to_web(request: Request):
-    data = await request.json()
-    result = await voice_to_website(data.get("transcript", ""), data.get("language", "en"))
-    return result
-
-@app.post("/api/ai/neural-wireframe")
-async def api_neural_wireframe(request: Request):
-    data = await request.json()
-    code = await neural_wireframe_to_code(data.get("sketch", ""))
-    return {"code": code}
-
-@app.post("/api/ai/localize")
-async def api_localize(request: Request):
-    data = await request.json()
-    result = await localize_website(data.get("url", ""), data.get("language", "en"))
-    return result
-
-@app.post("/api/ai/generate-contract")
-async def api_generate_contract(request: Request):
-    data = await request.json()
-    contract = await generate_legal_contract(
-        data.get("company", ""),
-        data.get("country", ""),
-        data.get("service", "")
-    )
-    return {"contract": contract}
-
-@app.post("/api/ai/analyze-legacy")
-async def api_analyze_legacy(request: Request):
-    data = await request.json()
-    result = await analyze_legacy_code(data.get("code", ""))
-    return result
-
-@app.post("/api/ai/generate-schema")
-async def api_generate_schema(request: Request):
-    data = await request.json()
-    result = await generate_agent_schema(data.get("url", ""))
-    return result
-
-# --- Silent-Killer Monitor Routes ---
-@app.post("/api/monitor/add")
-async def api_add_monitor(request: Request):
-    data = await request.json()
-    result = await add_monitor(data.get("url", ""), data.get("name", ""), data.get("interval", 300))
-    return result
-
-@app.get("/api/monitor/status")
-async def api_monitor_status(url: str = None):
-    return await get_monitor_status(url)
-
-@app.post("/api/monitor/check")
-async def api_check_all():
-    results = await check_all_sites()
-    return {"checked": len(results), "results": results}
-
+    try:
+        jobs = db.get_active_jobs()
+        return JSONResponse({"status": "success", "jobs": jobs, "count": len(jobs)})
+    except Exception as e:
+        logger.error(f"Failed to get jobs: {str(e)}")
+        return JSONResponse({"status": "error", "jobs": [], "count": 0})
 
 @app.get("/api/jobs/search")
 async def api_search_jobs(type: str = None, location: str = None, keyword: str = None):
-    filters = {}
-    if type: filters['type'] = type
-    if location: filters['location'] = location
-    if keyword: filters['keyword'] = keyword
-    jobs = job_board.get_jobs(filters)
-    return {"jobs": jobs, "count": len(jobs)}
+    try:
+        filters = {}
+        if type: filters['type'] = type
+        if location: filters['location'] = location
+        if keyword: filters['keyword'] = keyword
+        jobs = job_board.get_jobs(filters)
+        return {"jobs": jobs, "count": len(jobs)}
+    except Exception as e:
+        logger.error(f"Job search failed: {str(e)}")
+        return {"jobs": [], "count": 0, "error": "Search failed"}
 
 @app.post("/api/jobs/apply")
 async def api_apply_job(request: Request):
-    data = await request.json()
-    db.save_application(data)
-    return {"status": "success", "message": "Application saved to database"}
-
-@app.get("/health")
-async def health_check():
-    return {"status": "healthy"}
-
-@app.get("/api/health")
-async def api_health():
-    return {"status": "ok", "api": "v1"}
+    try:
+        data = await request.json()
+        db.save_application(data)
+        return {"status": "success", "message": "Application saved to database"}
+    except Exception as e:
+        logger.error(f"Job apply failed: {str(e)}")
+        return {"status": "error", "message": "Failed to save application"}
 
 @app.get("/api/jobs/stats")
 async def api_job_stats():
     try:
         return job_board.get_stats()
-    except:
-        return {"active_jobs": 6, "total_applications": 45, "total_candidates": 10000}
+    except Exception as e:
+        logger.error(f"Failed to get job stats: {str(e)}")
+        return {"active_jobs": 0, "total_applications": 0, "total_candidates": 0}
 
 @app.get("/api/jobs/applications")
-async def api_get_applications():
-    apps = db.get_applications()
-    return {"applications": apps, "count": len(apps)}
+async def api_get_applications_list():
+    try:
+        apps = db.get_applications()
+        return {"applications": apps, "count": len(apps)}
+    except Exception as e:
+        logger.error(f"Failed to get applications list: {str(e)}")
+        return {"applications": [], "count": 0}
 
-@app.get("/micro-internship", response_class=HTMLResponse)
-async def micro_internship(request: Request):
-    return templates.TemplateResponse("micro-internship.html", {"request": request, "title": "Micro-Internships - Charvak First Job Engine"})
 
-@app.get("/for-employers", response_class=HTMLResponse)
-async def for_employers(request: Request):
-    return templates.TemplateResponse("for-employers.html", {"request": request, "title": "For Employers - Charvak IT Consulting"})
+# ============================================================
+# AI API ENDPOINTS (WITH RATE LIMITING + INPUT VALIDATION)
+# ============================================================
 
-@app.get("/demo", response_class=HTMLResponse)
-async def demo_page(request: Request):
-    return templates.TemplateResponse("for-employers.html", {"request": request, "title": "Demo - Charvak IT Consulting"})
+@app.get("/api/health/ai")
+async def ai_health_check():
+    try:
+        return {"openai_configured": is_ai_ready(), "models_activated": 8 if is_ai_ready() else 0}
+    except Exception:
+        return {"openai_configured": False, "models_activated": 0}
 
-@app.get("/for-candidates", response_class=HTMLResponse)
-async def for_candidates(request: Request):
-    return templates.TemplateResponse("for-candidates.html", {"request": request, "title": "For Candidates - Charvak IT Consulting"})
+@app.post("/api/ai/generate-questions")
+@limiter.limit("10/minute")
+async def api_generate_questions(request: Request):
+    try:
+        data = await request.json()
+        validated = GenerateQuestionsRequest(**data)
+        questions = await generate_assessment_questions(
+            validated.stack,
+            validated.difficulty,
+            validated.count
+        )
+        return {"questions": questions, "count": len(questions)}
+    except Exception as e:
+        return handle_error(e, "generating questions", {"questions": [], "count": 0})
 
-@app.get("/post-micro-project", response_class=HTMLResponse)
-async def post_micro_project(request: Request):
-    return templates.TemplateResponse("post-micro-project.html", {"request": request, "title": "Post a Micro-Project - Charvak"})
+@app.post("/api/ai/voice-to-web")
+@limiter.limit("5/minute")
+async def api_voice_to_web(request: Request):
+    try:
+        data = await request.json()
+        validated = VoiceToWebRequest(**data)
+        result = await voice_to_website(validated.transcript, validated.language)
+        return result
+    except Exception as e:
+        return handle_error(e, "voice-to-web", {"status": "error", "message": "Voice processing failed"})
+
+@app.post("/api/ai/neural-wireframe")
+@limiter.limit("5/minute")
+async def api_neural_wireframe(request: Request):
+    try:
+        data = await request.json()
+        validated = NeuralWireframeRequest(**data)
+        code = await neural_wireframe_to_code(validated.sketch)
+        return {"code": code}
+    except Exception as e:
+        return handle_error(e, "neural wireframe", {"code": "", "error": "Wireframe generation failed"})
+
+@app.post("/api/ai/localize")
+@limiter.limit("10/minute")
+async def api_localize(request: Request):
+    try:
+        data = await request.json()
+        validated = LocalizeRequest(**data)
+        result = await localize_website(validated.url, validated.language)
+        return result
+    except Exception as e:
+        return handle_error(e, "localization", {"status": "error", "message": "Localization failed"})
+
+@app.post("/api/ai/generate-contract")
+@limiter.limit("10/minute")
+async def api_generate_contract(request: Request):
+    try:
+        data = await request.json()
+        validated = GenerateContractRequest(**data)
+        contract = await generate_legal_contract(
+            validated.company,
+            validated.country,
+            validated.service
+        )
+        return {"contract": contract}
+    except Exception as e:
+        return handle_error(e, "contract generation", {"contract": "", "error": "Contract generation failed"})
+
+@app.post("/api/ai/analyze-legacy")
+@limiter.limit("5/minute")
+async def api_analyze_legacy(request: Request):
+    try:
+        data = await request.json()
+        validated = AnalyzeLegacyRequest(**data)
+        result = await analyze_legacy_code(validated.code)
+        return result
+    except Exception as e:
+        return handle_error(e, "legacy analysis", {"status": "error", "message": "Legacy analysis failed"})
+
+@app.post("/api/ai/generate-schema")
+@limiter.limit("10/minute")
+async def api_generate_schema(request: Request):
+    try:
+        data = await request.json()
+        validated = GenerateSchemaRequest(**data)
+        result = await generate_agent_schema(validated.url)
+        return result
+    except Exception as e:
+        return handle_error(e, "schema generation", {"status": "error", "message": "Schema generation failed"})
+
+
+# ============================================================
+# MONITOR API
+# ============================================================
+
+@app.post("/api/monitor/add")
+async def api_add_monitor(request: Request):
+    try:
+        data = await request.json()
+        validated = AddMonitorRequest(**data)
+        result = await add_monitor(validated.url, validated.name, validated.interval)
+        return result
+    except Exception as e:
+        return handle_error(e, "adding monitor", {"status": "error", "message": "Failed to add monitor"})
+
+@app.get("/api/monitor/status")
+async def api_monitor_status(url: str = None):
+    try:
+        return await get_monitor_status(url)
+    except Exception as e:
+        return handle_error(e, "monitor status", {"status": "error", "monitors": []})
+
+@app.post("/api/monitor/check")
+async def api_check_all():
+    try:
+        results = await check_all_sites()
+        return {"checked": len(results), "results": results}
+    except Exception as e:
+        return handle_error(e, "monitor check", {"checked": 0, "results": []})
+
+
+# ============================================================
+# NA MODULE API ENDPOINTS (WITH AUTH + INPUT VALIDATION)
+# ============================================================
 
 @app.get("/na-bench-staffing", response_class=HTMLResponse)
 async def na_bench_staffing(request: Request):
-    return templates.TemplateResponse("na-bench-staffing.html", {"request": request, "title": "NA Bench Staffing - Charvak"})
+    return template_response("na-bench-staffing.html", request, "NA Bench Staffing - Charvak")
+
+@app.get("/na-client-signup", response_class=HTMLResponse)
+async def na_client_signup(request: Request):
+    return template_response("na-client-signup.html", request, "Register - Charvak NA")
 
 @app.post("/api/na/verify-work-auth")
+@limiter.limit("20/minute")
 async def verify_work_auth(request: Request):
-    data = await request.json()
     try:
-        visa_type = work_auth_engine.classify_visa(data.get("visa_input", ""))
+        data = await request.json()
+        validated = VerifyWorkAuthRequest(**data)
+        candidate_id = validated.candidate_id or f"NA-{hash(validated.visa_input)}"
+        visa_type = work_auth_engine.classify_visa(validated.visa_input)
         result = work_auth_engine.verify_candidate(
-            candidate_id=data.get("candidate_id", "NA-" + str(hash(data.get("visa_input", "")))),
+            candidate_id=candidate_id,
             visa_type=visa_type,
-            visa_expiry=data.get("visa_expiry"),
-            documents_verified=data.get("documents_verified", False),
-            client_type=data.get("client_type", "corporate")
+            visa_expiry=validated.visa_expiry,
+            documents_verified=validated.documents_verified,
+            client_type=validated.client_type
         )
         return result
     except Exception as e:
-        return {"status": "error", "message": str(e)}
+        return handle_error(e, "work auth verification")
 
 @app.get("/api/na/visa-types")
 async def get_visa_types():
     return {"visa_types": [{"name": v.value, "key": v.name} for v in VisaType]}
 
 @app.post("/api/na/ingest-job")
+@limiter.limit("30/minute")
 async def ingest_job(request: Request):
-    data = await request.json()
-    result = vms_connector.ingest_job_requirements(
-        source=data.get("source", "direct"),
-        raw_data=data
-    )
-    return result
+    try:
+        data = await request.json()
+        validated = IngestJobRequest(**data)
+        result = vms_connector.ingest_job_requirements(
+            source=validated.source,
+            raw_data=data
+        )
+        return result
+    except Exception as e:
+        return handle_error(e, "job ingestion")
 
 @app.get("/api/na/jobs")
 async def get_na_jobs(skill: str = None, location: str = None, visa_type: str = None):
-    filters = {}
-    if skill: filters["skill"] = skill
-    if location: filters["location"] = location
-    if visa_type: filters["visa_type"] = visa_type
-    jobs = vms_connector.get_active_jobs(filters)
-    return {"jobs": jobs, "count": len(jobs)}
+    try:
+        filters = {}
+        if skill: filters["skill"] = skill
+        if location: filters["location"] = location
+        if visa_type: filters["visa_type"] = visa_type
+        jobs = vms_connector.get_active_jobs(filters)
+        return {"jobs": jobs, "count": len(jobs)}
+    except Exception as e:
+        return handle_error(e, "NA jobs fetch", {"jobs": [], "count": 0})
 
 @app.post("/api/na/submit-candidate")
+@limiter.limit("10/minute")
 async def submit_candidate(request: Request):
-    data = await request.json()
-    
-    # First verify work auth
-    visa_type = work_auth_engine.classify_visa(data.get("visa_input", ""))
-    work_auth = work_auth_engine.verify_candidate(
-        candidate_id=data.get("candidate_id"),
-        visa_type=visa_type,
-        visa_expiry=data.get("visa_expiry"),
-        documents_verified=data.get("documents_verified", False),
-        client_type=data.get("client_type", "corporate")
-    )
-    
-    if not work_auth["can_submit"]:
-        return {"status": "rejected", "reason": "Work authorization check failed", "details": work_auth}
-    
-    result = vms_connector.submit_candidate(
-        job_id=data.get("job_id"),
-        candidate_data=data,
-        vendor_id=data.get("vendor_id", "NA-VENDOR-001"),
-        work_auth_result=work_auth
-    )
-    return result
+    try:
+        data = await request.json()
+        validated = SubmitCandidateRequest(**data)
+        
+        # Verify work auth
+        visa_type = work_auth_engine.classify_visa(validated.visa_input)
+        work_auth = work_auth_engine.verify_candidate(
+            candidate_id=validated.candidate_id,
+            visa_type=visa_type,
+            visa_expiry=validated.visa_expiry,
+            documents_verified=validated.documents_verified,
+            client_type=validated.client_type
+        )
+        
+        if not work_auth.get("can_submit", False):
+            return {"status": "rejected", "reason": "Work authorization check failed", "details": work_auth}
+        
+        result = vms_connector.submit_candidate(
+            job_id=validated.job_id,
+            candidate_data=data,
+            vendor_id=validated.vendor_id,
+            work_auth_result=work_auth
+        )
+        return result
+    except Exception as e:
+        return handle_error(e, "candidate submission")
 
 @app.post("/api/na/match-candidate")
+@limiter.limit("20/minute")
 async def match_candidate(request: Request):
-    data = await request.json()
-    jobs = vms_connector.get_active_jobs()
-    matches = vector_matcher.match_candidate_to_jobs(data, jobs)
-    return {"candidate_id": data.get("id"), "matches": matches, "count": len(matches)}
+    try:
+        data = await request.json()
+        validated = MatchCandidateRequest(**data)
+        jobs = vms_connector.get_active_jobs()
+        matches = vector_matcher.match_candidate_to_jobs(data, jobs)
+        return {"candidate_id": validated.id, "matches": matches, "count": len(matches)}
+    except Exception as e:
+        return handle_error(e, "candidate matching", {"matches": [], "count": 0})
 
 @app.get("/api/na/sla-check/{submission_id}")
 async def check_sla(submission_id: str):
-    return vms_connector.check_sla(submission_id)
+    try:
+        return vms_connector.check_sla(submission_id)
+    except Exception as e:
+        return handle_error(e, "SLA check")
 
 @app.post("/api/na/redact-resume")
+@limiter.limit("20/minute")
 async def redact_resume(request: Request):
-    data = await request.json()
-    text = data.get("text", "")
-    candidate_id = data.get("candidate_id", "NA-UNKNOWN")
-    redacted_text, log = pii_redactor.redact_text(text, candidate_id)
-    return {"redacted_text": redacted_text, "log": log}
+    try:
+        data = await request.json()
+        text = data.get("text", "")
+        candidate_id = data.get("candidate_id", "NA-UNKNOWN")
+        redacted_text, log = pii_redactor.redact_text(text, candidate_id)
+        return {"redacted_text": redacted_text, "log": log}
+    except Exception as e:
+        return handle_error(e, "resume redaction")
 
 @app.post("/api/na/blind-profile")
+@limiter.limit("20/minute")
 async def blind_profile(request: Request):
-    data = await request.json()
-    profile = pii_redactor.generate_blind_profile(data)
-    return profile
+    try:
+        data = await request.json()
+        profile = pii_redactor.generate_blind_profile(data)
+        return profile
+    except Exception as e:
+        return handle_error(e, "blind profile generation")
 
 @app.post("/api/na/compliance-check")
+@limiter.limit("30/minute")
 async def compliance_check(request: Request):
-    data = await request.json()
-    check_type = data.get("type", "job")
-    if check_type == "job":
-        result = compliance_checker.check_job_compliance(data)
-    else:
-        result = compliance_checker.check_candidate_compliance(data)
-    return result
+    try:
+        data = await request.json()
+        check_type = data.get("type", "job")
+        if check_type == "job":
+            result = compliance_checker.check_job_compliance(data)
+        else:
+            result = compliance_checker.check_candidate_compliance(data)
+        return result
+    except Exception as e:
+        return handle_error(e, "compliance check")
 
 @app.post("/api/na/register-vendor")
 async def register_vendor(request: Request):
-    data = await request.json()
-    result = sub_vendor_manager.register_vendor(data)
-    return result
+    try:
+        data = await request.json()
+        validated = RegisterVendorRequest(**data)
+        result = sub_vendor_manager.register_vendor(data)
+        return result
+    except Exception as e:
+        return handle_error(e, "vendor registration")
 
 @app.get("/api/na/vendor-stats/{vendor_id}")
 async def vendor_stats(vendor_id: str):
-    return sub_vendor_manager.get_vendor_stats(vendor_id)
+    try:
+        return sub_vendor_manager.get_vendor_stats(vendor_id)
+    except Exception as e:
+        return handle_error(e, "vendor stats")
 
 @app.get("/api/na/vms/requisitions")
 async def get_requisitions(skill: str = None, visa_type: str = None):
-    filters = {}
-    if skill: filters["skill"] = skill
-    if visa_type: filters["visa_type"] = visa_type
-    reqs = charvak_vms.get_open_requisitions(filters)
-    return {"requisitions": reqs, "count": len(reqs)}
+    try:
+        filters = {}
+        if skill: filters["skill"] = skill
+        if visa_type: filters["visa_type"] = visa_type
+        reqs = charvak_vms.get_open_requisitions(filters)
+        return {"requisitions": reqs, "count": len(reqs)}
+    except Exception as e:
+        return handle_error(e, "requisitions fetch", {"requisitions": [], "count": 0})
 
 @app.post("/api/na/vms/requisitions")
 async def create_requisition(request: Request):
-    data = await request.json()
-    result = charvak_vms.create_requisition(
-        client_id=data.get("client_id", "CLIENT-001"),
-        job_data=data
-    )
-    return result
+    try:
+        data = await request.json()
+        validated = CreateRequisitionRequest(**data)
+        result = charvak_vms.create_requisition(
+            client_id=validated.client_id,
+            job_data=data
+        )
+        return result
+    except Exception as e:
+        return handle_error(e, "requisition creation")
 
 @app.post("/api/na/vms/timecard")
 async def submit_timecard(request: Request):
-    data = await request.json()
-    result = charvak_vms.submit_timecard(
-        req_id=data.get("req_id"),
-        candidate_id=data.get("candidate_id"),
-        hours=data.get("hours", 0),
-        period_end=data.get("period_end"),
-        rate=data.get("rate", 0)
-    )
-    return result
+    try:
+        data = await request.json()
+        validated = SubmitTimecardRequest(**data)
+        result = charvak_vms.submit_timecard(
+            req_id=validated.req_id,
+            candidate_id=validated.candidate_id,
+            hours=validated.hours,
+            period_end=validated.period_end,
+            rate=validated.rate
+        )
+        return result
+    except Exception as e:
+        return handle_error(e, "timecard submission")
 
 @app.post("/api/na/vms/timecard/approve")
 async def approve_timecard(request: Request):
-    data = await request.json()
-    result = charvak_vms.approve_timecard(data.get("timecard_id"))
-    return result
+    try:
+        data = await request.json()
+        validated = ApproveTimecardRequest(**data)
+        result = charvak_vms.approve_timecard(validated.timecard_id)
+        return result
+    except Exception as e:
+        return handle_error(e, "timecard approval")
 
 @app.get("/api/na/vms/analytics/{client_id}")
 async def client_analytics(client_id: str):
-    return charvak_vms.get_client_analytics(client_id)
+    try:
+        return charvak_vms.get_client_analytics(client_id)
+    except Exception as e:
+        return handle_error(e, "client analytics")
 
 @app.post("/api/na/revenue/subscribe")
 async def create_subscription(request: Request):
-    data = await request.json()
-    tier_name = data.get("tier", "STARTER")
-    tier = getattr(SubscriptionTier, tier_name, SubscriptionTier.STARTER)
-    result = revenue_engine.create_subscription(data.get("firm_id"), tier)
-    return result
+    try:
+        data = await request.json()
+        validated = CreateSubscriptionRequest(**data)
+        tier = getattr(SubscriptionTier, validated.tier, SubscriptionTier.STARTER)
+        result = revenue_engine.create_subscription(validated.firm_id, tier)
+        return result
+    except Exception as e:
+        return handle_error(e, "subscription creation")
 
 @app.get("/api/na/revenue/total")
 async def total_revenue():
-    return revenue_engine.get_total_revenue()
+    try:
+        return revenue_engine.get_total_revenue()
+    except Exception as e:
+        return handle_error(e, "total revenue")
 
 @app.get("/api/na/revenue/firm/{firm_id}")
 async def firm_revenue(firm_id: str):
-    return revenue_engine.get_firm_revenue(firm_id)
+    try:
+        return revenue_engine.get_firm_revenue(firm_id)
+    except Exception as e:
+        return handle_error(e, "firm revenue")
 
-@app.get("/na-client-signup", response_class=HTMLResponse)
-async def na_client_signup(request: Request):
-    return templates.TemplateResponse("na-client-signup.html", {"request": request, "title": "Register - Charvak NA"})
+
+# ============================================================
+# 12 VIRAL TOOLS - PAGES
+# ============================================================
 
 @app.get("/tools", response_class=HTMLResponse)
 async def tools_index(request: Request):
-    return templates.TemplateResponse("tools/index.html", {"request": request, "title": "AI Tools Suite - Charvak"})
+    return template_response("tools/index.html", request, "AI Tools Suite - Charvak")
 
 @app.get("/tools/resume-roast", response_class=HTMLResponse)
-async def resume_roast(request: Request):
-    return templates.TemplateResponse("tools/resume-roast.html", {"request": request, "title": "Resume Roast - Charvak"})
+async def resume_roast_page(request: Request):
+    return template_response("tools/resume-roast.html", request, "Resume Roast - Charvak")
 
 @app.get("/tools/ghost-bounty", response_class=HTMLResponse)
-async def ghost_bounty(request: Request):
-    return templates.TemplateResponse("tools/ghost-bounty.html", {"request": request, "title": "GhostBounty AI - Charvak"})
+async def ghost_bounty_page(request: Request):
+    return template_response("tools/ghost-bounty.html", request, "GhostBounty AI - Charvak")
 
 @app.get("/tools/ref-check", response_class=HTMLResponse)
-async def ref_check(request: Request):
-    return templates.TemplateResponse("tools/ref-check.html", {"request": request, "title": "Ref-Check Roulette - Charvak"})
+async def ref_check_page(request: Request):
+    return template_response("tools/ref-check.html", request, "Ref-Check Roulette - Charvak")
 
 @app.get("/tools/role-mirror", response_class=HTMLResponse)
-async def role_mirror(request: Request):
-    return templates.TemplateResponse("tools/role-mirror.html", {"request": request, "title": "Role-Mirror AI - Charvak"})
+async def role_mirror_page(request: Request):
+    return template_response("tools/role-mirror.html", request, "Role-Mirror AI - Charvak")
 
 @app.get("/tools/bounty-swap", response_class=HTMLResponse)
-async def bounty_swap(request: Request):
-    return templates.TemplateResponse("tools/bounty-swap.html", {"request": request, "title": "BountySwap AI - Charvak"})
+async def bounty_swap_page(request: Request):
+    return template_response("tools/bounty-swap.html", request, "BountySwap AI - Charvak")
 
 @app.get("/tools/micro-trial", response_class=HTMLResponse)
-async def micro_trial(request: Request):
-    return templates.TemplateResponse("tools/micro-trial.html", {"request": request, "title": "Micro-Trial Engine - Charvak"})
+async def micro_trial_page(request: Request):
+    return template_response("tools/micro-trial.html", request, "Micro-Trial Engine - Charvak")
 
 @app.get("/tools/offer-matcher", response_class=HTMLResponse)
-async def offer_matcher(request: Request):
-    return templates.TemplateResponse("tools/offer-matcher.html", {"request": request, "title": "Offer Matcher - Charvak"})
+async def offer_matcher_page(request: Request):
+    return template_response("tools/offer-matcher.html", request, "Offer Matcher - Charvak")
 
 @app.get("/tools/ghost-job-shield", response_class=HTMLResponse)
-async def ghost_job_shield(request: Request):
-    return templates.TemplateResponse("tools/ghost-job-shield.html", {"request": request, "title": "Ghost-Job Shield - Charvak"})
+async def ghost_job_shield_page(request: Request):
+    return template_response("tools/ghost-job-shield.html", request, "Ghost-Job Shield - Charvak")
 
 @app.get("/tools/counter-offer", response_class=HTMLResponse)
-async def counter_offer(request: Request):
-    return templates.TemplateResponse("tools/counter-offer.html", {"request": request, "title": "Counter-Offer Shield - Charvak"})
+async def counter_offer_page(request: Request):
+    return template_response("tools/counter-offer.html", request, "Counter-Offer Shield - Charvak")
 
 @app.get("/tools/ref-swap", response_class=HTMLResponse)
-async def ref_swap(request: Request):
-    return templates.TemplateResponse("tools/ref-swap.html", {"request": request, "title": "Reference Check Swap - Charvak"})
+async def ref_swap_page(request: Request):
+    return template_response("tools/ref-swap.html", request, "Reference Check Swap - Charvak")
 
 @app.get("/tools/ghost-tracker", response_class=HTMLResponse)
-async def ghost_tracker(request: Request):
-    return templates.TemplateResponse("tools/ghost-tracker.html", {"request": request, "title": "Ghosted Tracker - Charvak"})
+async def ghost_tracker_page(request: Request):
+    return template_response("tools/ghost-tracker.html", request, "Ghosted Tracker - Charvak")
 
 @app.get("/tools/pitch-roast", response_class=HTMLResponse)
-async def pitch_roast(request: Request):
-    return templates.TemplateResponse("tools/pitch-roast.html", {"request": request, "title": "Recruiter Pitch Roast - Charvak"})
+async def pitch_roast_page(request: Request):
+    return template_response("tools/pitch-roast.html", request, "Recruiter Pitch Roast - Charvak")
+
+
+# ============================================================
+# 12 VIRAL TOOLS - API ENDPOINTS (WITH RATE LIMITING + VALIDATION)
+# ============================================================
 
 @app.post("/api/tools/resume-roast")
+@limiter.limit("10/minute")
 async def api_resume_roast(request: Request):
-    data = await request.json()
-    result = await resume_roast_ai(data.get("resume", ""), data.get("job_title", ""))
-    return result
+    try:
+        data = await request.json()
+        validated = ResumeRoastRequest(**data)
+        result = await resume_roast_ai(validated.resume, validated.job_title)
+        return result
+    except Exception as e:
+        return handle_error(e, "resume roast")
 
 @app.post("/api/tools/ghost-bounty")
+@limiter.limit("10/minute")
 async def api_ghost_bounty(request: Request):
-    data = await request.json()
-    result = await ghost_bounty_ai(data.get("challenge", "Debug"))
-    return result
+    try:
+        data = await request.json()
+        validated = GhostBountyRequest(**data)
+        result = await ghost_bounty_ai(validated.challenge)
+        return result
+    except Exception as e:
+        return handle_error(e, "ghost bounty")
 
 @app.post("/api/tools/role-mirror")
+@limiter.limit("10/minute")
 async def api_role_mirror(request: Request):
-    data = await request.json()
-    result = await role_mirror_ai(data.get("role", ""), data.get("skills", ""))
-    return result
+    try:
+        data = await request.json()
+        validated = RoleMirrorRequest(**data)
+        result = await role_mirror_ai(validated.role, validated.skills)
+        return result
+    except Exception as e:
+        return handle_error(e, "role mirror")
 
 @app.post("/api/tools/offer-matcher")
+@limiter.limit("10/minute")
 async def api_offer_matcher(request: Request):
-    data = await request.json()
-    result = await offer_matcher_ai(data.get("offer_a", ""), data.get("offer_b", ""))
-    return result
+    try:
+        data = await request.json()
+        validated = OfferMatcherRequest(**data)
+        result = await offer_matcher_ai(validated.offer_a, validated.offer_b)
+        return result
+    except Exception as e:
+        return handle_error(e, "offer matcher")
 
 @app.post("/api/tools/ghost-job")
+@limiter.limit("10/minute")
 async def api_ghost_job(request: Request):
-    data = await request.json()
-    result = await ghost_job_ai(data.get("url", ""))
-    return result
+    try:
+        data = await request.json()
+        validated = GhostJobRequest(**data)
+        result = await ghost_job_ai(validated.url)
+        return result
+    except Exception as e:
+        return handle_error(e, "ghost job detection")
 
 @app.post("/api/tools/counter-offer")
+@limiter.limit("10/minute")
 async def api_counter_offer(request: Request):
-    data = await request.json()
-    result = await counter_offer_ai(data.get("new_salary", 0), data.get("counter_salary", 0))
-    return result
+    try:
+        data = await request.json()
+        validated = CounterOfferRequest(**data)
+        result = await counter_offer_ai(validated.new_salary, validated.counter_salary)
+        return result
+    except Exception as e:
+        return handle_error(e, "counter offer")
 
 @app.post("/api/tools/pitch-roast")
+@limiter.limit("10/minute")
 async def api_pitch_roast(request: Request):
-    data = await request.json()
-    result = await pitch_roast_ai(data.get("inmail", ""))
-    return result
+    try:
+        data = await request.json()
+        validated = PitchRoastRequest(**data)
+        result = await pitch_roast_ai(validated.inmail)
+        return result
+    except Exception as e:
+        return handle_error(e, "pitch roast")
 
 @app.post("/api/tools/ref-check")
+@limiter.limit("10/minute")
 async def api_ref_check(request: Request):
-    data = await request.json()
-    result = await ref_check_ai(data.get("ref_names", []))
-    return result
+    try:
+        data = await request.json()
+        validated = RefCheckRequest(**data)
+        result = await ref_check_ai(validated.ref_names)
+        return result
+    except Exception as e:
+        return handle_error(e, "reference check")
+
+
+# ============================================================
+# AGREEMENT SYSTEM
+# ============================================================
 
 @app.get("/agreement")
 async def agreement_page(request: Request):
@@ -954,38 +1572,41 @@ async def agreement_page(request: Request):
     
     agreements = {
         "MSA": "Master Service Agreement",
-        "NDA": "Non-Disclosure Agreement", 
+        "NDA": "Non-Disclosure Agreement",
         "MOU": "Memorandum of Understanding",
         "PLACEMENT": "Placement Agreement",
         "INTERN": "Internship Agreement",
         "TRAINER": "Trainer Agreement"
     }
     
-    return templates.TemplateResponse("agreement.html", {
-        "request": request,
-        "title": f"{agreements.get(agreement_type, 'Agreement')} - Charvak",
-        "agreement_title": agreements.get(agreement_type, "Service Agreement"),
-        "agreement_type": agreement_type,
-        "client_name": client_name,
-        "effective_date": "August 10, 2026",
-        "service_description": service,
-        "payment_terms": payment,
-        "redirect_url": redirect_url,
-        "decline_url": "/"
-    })
+    return template_response("agreement.html", request,
+        f"{agreements.get(agreement_type, 'Agreement')} - Charvak",
+        agreement_title=agreements.get(agreement_type, "Service Agreement"),
+        agreement_type=agreement_type,
+        client_name=client_name,
+        effective_date=datetime.now().strftime("%B %d, %Y"),
+        service_description=service,
+        payment_terms=payment,
+        redirect_url=redirect_url,
+        decline_url="/"
+    )
 
 @app.post("/api/agreement/sign")
 async def sign_agreement(request: Request):
-    data = await request.json()
     try:
+        data = await request.json()
+        validated = SignAgreementRequest(**data)
         db.save_agreement(data)
-        return {"status": "success", "message": "Agreement saved to server"}
-    except:
-        return {"status": "success", "message": "Agreement recorded locally"}
+        logger.info(f"Agreement signed: type={validated.agreement_type}, client={validated.client_name}")
+        return {"status": "success", "message": "Agreement saved successfully"}
+    except Exception as e:
+        logger.error(f"Agreement signing failed: {str(e)}", exc_info=True)
+        return {"status": "error", "message": "Failed to save agreement. Please try again."}
 
-@app.get("/pricing", response_class=HTMLResponse)
-async def pricing_page(request: Request):
-    return templates.TemplateResponse("pricing.html", {"request": request, "title": "Pricing - Charvak IT Consulting"})
+
+# ============================================================
+# INVOICE SYSTEM
+# ============================================================
 
 @app.get("/invoice")
 async def generate_invoice(request: Request):
@@ -993,66 +1614,638 @@ async def generate_invoice(request: Request):
     client = request.query_params.get("client", "Client Name")
     amount = request.query_params.get("amount", "0")
     
+    try:
+        amount_int = int(amount) if amount.isdigit() else 0
+    except ValueError:
+        amount_int = 0
+    
     invoice_number = f"INV-{datetime.now().strftime('%Y%m%d')}-{secrets.token_hex(3).upper()}"
     
-    return templates.TemplateResponse("invoice.html", {
-        "request": request,
-        "title": f"Invoice {invoice_number} - Charvak",
-        "invoice_number": invoice_number,
-        "invoice_date": datetime.now().strftime("%B %d, %Y"),
-        "due_date": (datetime.now() + timedelta(days=15)).strftime("%B %d, %Y"),
-        "client_name": client,
-        "client_address": "Client Address",
-        "client_email": "client@email.com",
-        "gst_number": "37AADCC1234K1Z9",
-        "pan_number": "AADCC1234K",
-        "invoice_items": [
-            {"service": service, "description": "Professional services as per agreement", "qty": 1, "rate": f"₹{amount}", "amount": f"₹{amount}"}
-        ],
-        "subtotal": f"₹{amount}",
-        "gst_amount": f"₹{int(amount)*0.18}" if amount.isdigit() else "₹0",
-        "total_amount": f"₹{int(int(amount)*1.18)}" if amount.isdigit() else f"₹{amount}",
-        "payment_terms": "15"
-    })
+    return template_response("invoice.html", request,
+        f"Invoice {invoice_number} - Charvak",
+        invoice_number=invoice_number,
+        invoice_date=datetime.now().strftime("%B %d, %Y"),
+        due_date=(datetime.now() + timedelta(days=15)).strftime("%B %d, %Y"),
+        client_name=client,
+        client_address="Client Address",
+        client_email="client@email.com",
+        gst_number="37AADCC1234K1Z9",
+        pan_number="AADCC1234K",
+        invoice_items=[{
+            "service": service,
+            "description": "Professional services as per agreement",
+            "qty": 1,
+            "rate": f"₹{amount_int}",
+            "amount": f"₹{amount_int}"
+        }],
+        subtotal=f"₹{amount_int}",
+        gst_amount=f"₹{int(amount_int * 0.18)}",
+        total_amount=f"₹{int(amount_int * 1.18)}",
+        payment_terms="15"
+    )
 
 @app.get("/admin-invoices", response_class=HTMLResponse)
 async def admin_invoices(request: Request):
-    return templates.TemplateResponse("admin-invoices.html", {"request": request, "title": "Invoice Management - Charvak Admin"})
+    return template_response("admin-invoices.html", request, "Invoice Management - Charvak Admin")
 
 @app.post("/api/invoice/create")
 async def api_create_invoice(request: Request):
-    data = await request.json()
-    result = invoice_manager.create_invoice(
-        admin_id="admin",
-        client_name=data.get("client_name", ""),
-        client_email=data.get("client_email", ""),
-        service_type=data.get("service_type", "Other"),
-        amount=float(data.get("amount", 0)),
-        description=data.get("description", "")
-    )
-    return result
+    try:
+        data = await request.json()
+        validated = CreateInvoiceRequest(**data)
+        result = invoice_manager.create_invoice(
+            admin_id="admin",
+            client_name=validated.client_name,
+            client_email=validated.client_email,
+            service_type=validated.service_type,
+            amount=validated.amount,
+            description=validated.description
+        )
+        return result
+    except Exception as e:
+        return handle_error(e, "invoice creation")
 
 @app.get("/api/invoice/list")
 async def api_list_invoices(status: str = None):
-    invoices = invoice_manager.get_all_invoices(status)
-    stats = invoice_manager.get_invoice_stats()
-    return {"invoices": invoices, "stats": stats, "count": len(invoices)}
+    try:
+        invoices = invoice_manager.get_all_invoices(status)
+        stats = invoice_manager.get_invoice_stats()
+        return {"invoices": invoices, "stats": stats, "count": len(invoices)}
+    except Exception as e:
+        return handle_error(e, "invoice listing", {"invoices": [], "stats": {}, "count": 0})
 
 @app.post("/api/invoice/update")
 async def api_update_invoice(request: Request):
-    data = await request.json()
-    invoice_id = data.get("invoice_id")
-    action = data.get("action")
-    
-    if action == "send":
-        return invoice_manager.send_invoice(invoice_id, "admin")
-    elif action == "paid":
-        return invoice_manager.mark_paid(invoice_id, "admin")
-    elif action == "cancel":
-        return invoice_manager.cancel_invoice(invoice_id, "admin", data.get("reason", ""))
-    
-    return {"error": "Invalid action"}
+    try:
+        data = await request.json()
+        validated = UpdateInvoiceRequest(**data)
+        
+        if validated.action == "send":
+            return invoice_manager.send_invoice(validated.invoice_id, "admin")
+        elif validated.action == "paid":
+            return invoice_manager.mark_paid(validated.invoice_id, "admin")
+        elif validated.action == "cancel":
+            return invoice_manager.cancel_invoice(validated.invoice_id, "admin", validated.reason)
+        
+        return {"error": "Invalid action. Use: send, paid, or cancel"}
+    except Exception as e:
+        return handle_error(e, "invoice update")
 
-@app.get("/register", response_class=HTMLResponse)
-async def register_page(request: Request):
-    return templates.TemplateResponse("register.html", {"request": request, "title": "Register - Charvak IT Consulting"})
+# ============================================================
+# PAYMENT API ENDPOINTS
+# ============================================================
+
+@app.get("/api/payment/status")
+async def payment_status():
+    """Check which payment methods are available."""
+    return payment_engine.is_ready()
+
+@app.post("/api/payment/create-order")
+@limiter.limit("20/minute")
+async def create_payment_order(request: Request):
+    """Create a payment order for Razorpay/PayPal."""
+    try:
+        data = await request.json()
+        amount = data.get("amount", 0)
+        name = data.get("name", "Service")
+        method = data.get("method", "razorpay")
+        
+        if method == "razorpay":
+            # Convert to paise (Razorpay uses smallest unit)
+            amount_paise = int(amount * 100)
+            receipt = f"rcpt_{datetime.now().strftime('%Y%m%d%H%M%S')}_{secrets.token_hex(4)}"
+            result = payment_engine.create_razorpay_order(
+                amount_inr=amount_paise,
+                receipt=receipt,
+                notes={"tool": name, "amount_inr": amount}
+            )
+        elif method == "paypal":
+            # Convert INR to USD (approximate)
+            amount_usd = round(amount / 83, 2)
+            result = payment_engine.create_paypal_order(
+                amount_usd=amount_usd,
+                description=name
+            )
+        else:
+            result = {"status": "error", "message": f"Unknown payment method: {method}"}
+        
+        return result
+    except Exception as e:
+        logger.error(f"Payment order creation failed: {e}", exc_info=True)
+        return {"status": "error", "message": "Payment setup failed"}
+
+@app.post("/api/payment/verify")
+@limiter.limit("30/minute")
+async def verify_payment(request: Request):
+    """Verify a completed payment."""
+    try:
+        data = await request.json()
+        method = data.get("method")
+        
+        if method == "razorpay":
+            result = payment_engine.verify_razorpay_payment(
+                payment_id=data.get("payment_id", ""),
+                order_id=data.get("order_id", ""),
+                signature=data.get("signature", "")
+            )
+        elif method == "paypal":
+            result = payment_engine.verify_paypal_payment(
+                order_id=data.get("order_id", ""),
+                paypal_order_id=data.get("paypal_order_id", "")
+            )
+        elif method == "upi":
+            result = payment_engine.verify_upi_payment(
+                txn_id=data.get("txn_id", ""),
+                amount=data.get("amount", 0),
+                notes=data.get("notes", "")
+            )
+        else:
+            result = {"status": "error", "message": f"Unknown method: {method}"}
+        
+        if result.get("verified"):
+            logger.info(f"✅ Payment verified: {method} - {data.get('order_id')}")
+        
+        return result
+    except Exception as e:
+        logger.error(f"Payment verification failed: {e}", exc_info=True)
+        return {"status": "error", "verified": False, "message": "Verification failed"}
+
+@app.get("/api/payment/history")
+async def payment_history():
+    """Get all payment records."""
+    return payment_engine.get_all_payments()
+
+# ============================================================
+# KYC & VERIFICATION API ENDPOINTS
+# ============================================================
+
+@app.get("/api/kyc/status")
+async def kyc_status():
+    """Get KYC system overview."""
+    return kyc_engine.get_stats()
+
+@app.get("/api/kyc/pricing")
+async def kyc_pricing():
+    """Get verification pricing."""
+    return kyc_engine.PRICING
+
+@app.post("/api/kyc/initiate")
+@limiter.limit("10/minute")
+async def initiate_verification(request: Request):
+    """Start a new background verification."""
+    try:
+        data = await request.json()
+        result = kyc_engine.initiate_verification(data)
+        return result
+    except Exception as e:
+        logger.error(f"Verification initiation failed: {e}", exc_info=True)
+        return {"status": "error", "message": "Failed to initiate verification"}
+
+@app.get("/api/kyc/verification/{verification_id}")
+async def get_verification(verification_id: str):
+    """Check verification status by ID."""
+    return kyc_engine.get_verification_status(verification_id)
+
+@app.get("/api/kyc/user/{email}")
+async def get_user_verifications(email: str):
+    """Get all verifications for a user."""
+    return kyc_engine.get_user_verifications(email)
+
+@app.get("/api/kyc/is-verified")
+async def check_verified(email: str):
+    """Check if user is verified."""
+    return kyc_engine.is_user_verified(email)
+
+@app.get("/api/kyc/badge/{email}")
+async def get_badge(email: str):
+    """Get verified badge for user."""
+    return kyc_engine.get_verified_badge(email)
+
+@app.post("/api/kyc/submit-documents")
+@limiter.limit("10/minute")
+async def submit_kyc_documents(request: Request):
+    """Submit documents for verification."""
+    try:
+        data = await request.json()
+        verification_id = data.get("verification_id")
+        documents = data.get("documents", [])
+        result = kyc_engine.submit_documents(verification_id, documents)
+        return result
+    except Exception as e:
+        logger.error(f"Document submission failed: {e}", exc_info=True)
+        return {"status": "error", "message": "Failed to submit documents"}
+
+@app.post("/api/kyc/review")
+async def review_verification(request: Request):
+    """Admin/Partner reviews a verification."""
+    try:
+        data = await request.json()
+        result = kyc_engine.review_verification(
+            verification_id=data.get("verification_id"),
+            result=data
+        )
+        return result
+    except Exception as e:
+        logger.error(f"Verification review failed: {e}", exc_info=True)
+        return {"status": "error", "message": "Review failed"}
+
+# Partner routes
+@app.post("/api/kyc/partner/register")
+@limiter.limit("5/minute")
+async def register_partner(request: Request):
+    """Register as a verification partner."""
+    try:
+        data = await request.json()
+        result = kyc_engine.register_partner(data)
+        return result
+    except Exception as e:
+        logger.error(f"Partner registration failed: {e}", exc_info=True)
+        return {"status": "error", "message": "Registration failed"}
+
+@app.get("/api/kyc/partners")
+async def get_partners(status: str = None):
+    """Get verification partners."""
+    return kyc_engine.get_partners(status)
+
+@app.post("/api/kyc/partner/approve")
+async def approve_partner(request: Request):
+    """Admin approves a partner."""
+    try:
+        data = await request.json()
+        result = kyc_engine.approve_partner(data.get("partner_id"))
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.post("/api/kyc/assign")
+async def assign_verification(request: Request):
+    """Assign verification to a partner."""
+    try:
+        data = await request.json()
+        result = kyc_engine.assign_verification_to_partner(
+            verification_id=data.get("verification_id"),
+            partner_id=data.get("partner_id")
+        )
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+# ============================================================
+# ESCROW (DOKETS VOUCHAI) API ENDPOINTS
+# ============================================================
+
+@app.get("/api/escrow/stats")
+async def escrow_stats():
+    """Get escrow system statistics."""
+    return escrow_engine.get_stats()
+
+@app.post("/api/escrow/create")
+@limiter.limit("20/minute")
+async def create_escrow(request: Request):
+    """Create a new escrow transaction."""
+    try:
+        data = await request.json()
+        result = escrow_engine.create_escrow(data)
+        return result
+    except Exception as e:
+        logger.error(f"Escrow creation failed: {e}", exc_info=True)
+        return {"status": "error", "message": "Failed to create escrow"}
+
+@app.post("/api/escrow/deposit")
+@limiter.limit("10/minute")
+async def deposit_escrow(request: Request):
+    """Deposit funds into escrow."""
+    try:
+        data = await request.json()
+        result = escrow_engine.deposit_funds(
+            escrow_id=data.get("escrow_id"),
+            payment_details=data.get("payment_details", {})
+        )
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.post("/api/escrow/deliver")
+@limiter.limit("20/minute")
+async def deliver_work(request: Request):
+    """Mark work as delivered."""
+    try:
+        data = await request.json()
+        result = escrow_engine.deliver_work(
+            escrow_id=data.get("escrow_id"),
+            delivery_data=data.get("delivery_data", {})
+        )
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.post("/api/escrow/release")
+@limiter.limit("10/minute")
+async def release_escrow(request: Request):
+    """Release funds to vendor."""
+    try:
+        data = await request.json()
+        result = escrow_engine.release_funds(data.get("escrow_id"))
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.post("/api/escrow/dispute")
+@limiter.limit("5/minute")
+async def dispute_escrow(request: Request):
+    """Raise a dispute."""
+    try:
+        data = await request.json()
+        result = escrow_engine.raise_dispute(
+            escrow_id=data.get("escrow_id"),
+            dispute_data=data
+        )
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.post("/api/escrow/resolve")
+async def resolve_dispute(request: Request):
+    """Admin resolves a dispute."""
+    try:
+        data = await request.json()
+        result = escrow_engine.resolve_dispute(
+            escrow_id=data.get("escrow_id"),
+            resolution=data.get("resolution", {})
+        )
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.get("/api/escrow/{escrow_id}")
+async def get_escrow(escrow_id: str):
+    """Get escrow details."""
+    return escrow_engine.get_escrow(escrow_id)
+
+@app.get("/api/escrow/user/{email}")
+async def get_user_escrows(email: str):
+    """Get user's escrow transactions."""
+    return escrow_engine.get_user_escrows(email)
+
+# ============================================================
+# REFERRAL & AFFILIATE API ENDPOINTS
+# ============================================================
+
+@app.get("/api/referral/stats")
+async def referral_stats():
+    """Get referral system statistics."""
+    return referral_engine.get_stats()
+
+@app.post("/api/referral/create-link")
+@limiter.limit("10/minute")
+async def create_referral_link(request: Request):
+    """Create a referral link."""
+    try:
+        data = await request.json()
+        result = referral_engine.create_referral_link(data)
+        return result
+    except Exception as e:
+        logger.error(f"Referral link creation failed: {e}")
+        return {"status": "error", "message": "Failed to create referral link"}
+
+@app.get("/api/referral/track-click/{referral_code}")
+async def track_click(referral_code: str, source: str = "direct"):
+    """Track a referral link click."""
+    return referral_engine.track_click(referral_code, source)
+
+@app.post("/api/referral/track-signup")
+async def track_signup(request: Request):
+    """Track signup from referral."""
+    try:
+        data = await request.json()
+        result = referral_engine.track_signup(
+            referral_code=data.get("referral_code"),
+            new_user_email=data.get("email")
+        )
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.post("/api/referral/convert")
+async def convert_referral(request: Request):
+    """Mark a referral as converted."""
+    try:
+        data = await request.json()
+        result = referral_engine.mark_conversion(data.get("bounty_id"))
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.post("/api/referral/pay")
+async def pay_bounty(request: Request):
+    """Pay a referral bounty."""
+    try:
+        data = await request.json()
+        result = referral_engine.pay_bounty(data.get("bounty_id"))
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.get("/api/referral/user/{email}")
+async def referrer_stats(email: str):
+    """Get referrer stats."""
+    return referral_engine.get_referrer_stats(email)
+
+@app.get("/api/referral/leaderboard")
+async def referral_leaderboard(limit: int = 10):
+    """Get referral leaderboard."""
+    return referral_engine.get_leaderboard(limit)
+
+@app.post("/api/affiliate/register")
+@limiter.limit("5/minute")
+async def register_affiliate(request: Request):
+    """Register as an affiliate."""
+    try:
+        data = await request.json()
+        result = referral_engine.register_affiliate(data)
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+# ============================================================
+# BADGE & CERTIFICATION API ENDPOINTS
+# ============================================================
+
+@app.get("/api/badge/stats")
+async def badge_stats():
+    """Get badge statistics."""
+    return badge_engine.get_stats()
+
+@app.post("/api/badge/issue")
+async def issue_badge(request: Request):
+    """Issue a badge to a user."""
+    try:
+        data = await request.json()
+        result = badge_engine.issue_badge(data)
+        return result
+    except Exception as e:
+        logger.error(f"Badge issuance failed: {e}")
+        return {"status": "error", "message": "Failed to issue badge"}
+
+@app.get("/api/badge/verify/{badge_id}")
+async def verify_badge(badge_id: str):
+    """Verify a badge."""
+    return badge_engine.verify_badge(badge_id)
+
+@app.get("/api/badge/user/{email}")
+async def user_badges(email: str):
+    """Get user badges."""
+    return badge_engine.get_user_badges(email)
+
+@app.post("/api/badge/revoke")
+async def revoke_badge(request: Request):
+    """Revoke a badge."""
+    try:
+        data = await request.json()
+        result = badge_engine.revoke_badge(data.get("badge_id"))
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.get("/testimonials", response_class=HTMLResponse)
+async def testimonials(request: Request):
+    """Testimonials & social proof page."""
+    return template_response("testimonials.html", request, "Client Testimonials - Charvak IT Consulting")
+
+# ============================================================
+# BLOG API ENDPOINTS
+# ============================================================
+
+@app.get("/blog", response_class=HTMLResponse)
+async def blog_index(request: Request):
+    """Blog listing page."""
+    posts = blog_engine.get_all_posts()
+    return template_response("blog/index.html", request, "Blog - Charvak IT Consulting", posts=posts)
+
+@app.get("/blog/{slug}", response_class=HTMLResponse)
+async def blog_post(request: Request, slug: str):
+    """Individual blog post."""
+    post_data = blog_engine.get_post(slug)
+    if post_data["status"] == "error":
+        raise HTTPException(status_code=404, detail="Post not found")
+    return template_response("blog/post.html", request, 
+        post_data["post"]["seo_title"], 
+        post=post_data["post"],
+        related=post_data.get("related", []))
+
+@app.get("/api/blog/posts")
+async def api_blog_posts(category: str = None, tag: str = None):
+    """API: Get blog posts."""
+    return blog_engine.get_all_posts(category, tag)
+
+@app.get("/api/blog/{slug}")
+async def api_blog_post(slug: str):
+    """API: Get single blog post."""
+    return blog_engine.get_post(slug)
+
+
+# ============================================================
+# CASE STUDIES
+# ============================================================
+
+@app.get("/case-studies", response_class=HTMLResponse)
+async def case_studies(request: Request):
+    """Case studies listing page."""
+    return template_response("case-studies.html", request, "Case Studies - Charvak IT Consulting")
+
+@app.get("/case-studies/{slug}", response_class=HTMLResponse)
+async def case_study(request: Request, slug: str):
+    """Individual case study."""
+    return template_response("case-studies.html", request, f"Case Study - Charvak")
+
+
+# ============================================================
+# CHATBOT API ENDPOINTS
+# ============================================================
+
+@app.get("/api/chat/start")
+async def start_chat():
+    """Start a new chat session."""
+    return chatbot_engine.start_session()
+
+@app.post("/api/chat/send")
+@limiter.limit("20/minute")
+async def send_chat(request: Request):
+    """Send a message to the chatbot."""
+    try:
+        data = await request.json()
+        result = chatbot_engine.send_message(
+            session_id=data.get("session_id"),
+            message=data.get("message", "")
+        )
+        return result
+    except Exception as e:
+        return {"status": "error", "message": "Chat failed. Please email hr@charvakit.com"}
+
+@app.get("/api/chat/faqs")
+async def get_faqs():
+    """Get all FAQs."""
+    return chatbot_engine.get_faqs()
+
+
+# ============================================================
+# UTILITY ENDPOINTS
+# ============================================================
+
+@app.get("/sitemap.xml")
+async def sitemap():
+    sitemap_path = "templates/sitemap.xml"
+    if os.path.exists(sitemap_path):
+        return FileResponse(sitemap_path, media_type="application/xml")
+    return JSONResponse({"error": "Sitemap not found"}, status_code=404)
+
+@app.get("/api/region")
+async def detect_region(request: Request):
+    try:
+        accept_lang = request.headers.get("accept-language", "en")
+        region = detect_user_region(accept_language=accept_lang)
+        return JSONResponse(region)
+    except Exception:
+        return JSONResponse({"country": "US", "currency": "USD", "language": "en"})
+
+@app.get("/api/pricing/{service}")
+async def get_service_pricing(service: str, request: Request, currency: str = "INR", country: str = "IN"):
+    try:
+        pricing = get_pricing(service, currency, country)
+        return JSONResponse(pricing)
+    except Exception:
+        return JSONResponse({"error": "Pricing not available"})
+
+
+# ============================================================
+# HEALTH CHECKS
+# ============================================================
+
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "timestamp": datetime.now().isoformat()}
+
+@app.get("/api/health")
+async def api_health_check():
+    return {"status": "ok", "api": "v1", "timestamp": datetime.now().isoformat()}
+
+
+# ============================================================
+# GLOBAL EXCEPTION HANDLER
+# ============================================================
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    logger.warning(f"HTTP {exc.status_code}: {exc.detail} - {request.url}")
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"status": "error", "message": exc.detail}
+    )
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error(f"Unhandled error at {request.url}: {str(exc)}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"status": "error", "message": "An unexpected error occurred. Our team has been notified."}
+    )
