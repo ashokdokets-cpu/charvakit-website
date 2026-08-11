@@ -181,7 +181,7 @@
                             <i class="bi bi-linkedin me-2"></i>Continue with LinkedIn
                         </button>
                         <hr>
-                        <small class="text-muted">Or <a href="/api/auth/register">register with email</a></small>
+                        <small class="text-muted">Or <a href="/developer-signup">register with email</a></small>
                     </div>
                 </div>
             </div>
@@ -319,15 +319,13 @@ function socialLogin(provider) {
         linkedin: 'YOUR_LI_CLIENT_ID'
     };
     
-    // Check if key is configured
     const clientId = redirects[provider];
     if (!clientId || clientId.startsWith('YOUR_')) {
-        alert(provider + ' login is coming soon! Please register with email for now.');
-        window.location.href = '/api/auth/register';
+        // Redirect to registration page instead of API endpoint
+        window.location.href = '/developer-signup';
         return;
     }
     
-    // Redirect to OAuth provider
     const urls = {
         google: 'https://accounts.google.com/o/oauth2/auth?client_id=' + clientId + '&redirect_uri=https://www.charvakit.com/auth/callback&response_type=code&scope=email%20profile',
         facebook: 'https://www.facebook.com/v18.0/dialog/oauth?client_id=' + clientId + '&redirect_uri=https://www.charvakit.com/auth/callback',
