@@ -380,3 +380,53 @@ p, h1, h2, h3, h4, h5, h6, li, span, a {
 .accordion-toggle[aria-expanded="true"] .bi-chevron-down {
     transform: rotate(180deg);
 }
+
+/* ============ MOBILE GLOBAL BAR FIXES ============ */
+
+/* Mobile Global Bar - Compact Layout */
+@media (max-width: 768px) {
+    .global-bar {
+        font-size: 9px !important;
+        padding: 2px 5px !important;
+    }
+    .global-bar .col-md-6 {
+        width: 50%;
+        float: left;
+    }
+    .global-bar small {
+        font-size: 8px !important;
+        margin-right: 5px !important;
+    }
+    .global-bar select {
+        font-size: 9px !important;
+        padding: 2px 4px !important;
+        width: auto !important;
+        max-width: 80px;
+    }
+    .global-bar .bi {
+        font-size: 8px !important;
+    }
+    .global-bar .row {
+        flex-wrap: nowrap;
+    }
+    .navbar-brand img {
+        height: 24px !important;
+    }
+    .navbar {
+        padding: 3px 0 !important;
+    }
+}
+
+/* Extra small devices */
+@media (max-width: 480px) {
+    .global-bar {
+        font-size: 7px !important;
+    }
+    .global-bar select {
+        font-size: 7px !important;
+        max-width: 60px;
+    }
+    .global-bar small {
+        font-size: 7px !important;
+    }
+}
