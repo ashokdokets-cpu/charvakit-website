@@ -33,6 +33,8 @@ from tools_ai_backend import (
 )
 from datetime import datetime, timedelta
 import secrets
+from invoice_engine import invoice_manager, InvoiceStatus
+
 
 app = FastAPI(title="Charvak IT Consulting Pvt Ltd - Web Designing | Staff Augmentation")
 
@@ -1012,3 +1014,41 @@ async def generate_invoice(request: Request):
         "total_amount": f"₹{int(int(amount)*1.18)}" if amount.isdigit() else f"₹{amount}",
         "payment_terms": "15"
     })
+
+@app.get("/admin-invoices", response_class=HTMLResponse)
+async def admin_invoices(request: Request):
+    return templates.TemplateResponse("admin-invoices.html", {"request": request, "title": "Invoice Management - Charvak Admin"})
+
+@app.post("/api/invoice/create")
+async def api_create_invoice(request: Request):
+    data = await request.json()
+    result = invoice_manager.create_invoice(
+        admin_id="admin",
+        client_name=data.get("client_name", ""),
+        client_email=data.get("client_email", ""),
+        service_type=data.get("service_type", "Other"),
+        amount=float(data.get("amount", 0)),
+        description=data.get("description", "")
+    )
+    return result
+
+@app.get("/api/invoice/list")
+async def api_list_invoices(status: str = None):
+    invoices = invoice_manager.get_all_invoices(status)
+    stats = invoice_manager.get_invoice_stats()
+    return {"invoices": invoices, "stats": stats, "count": len(invoices)}
+
+@app.post("/api/invoice/update")
+async def api_update_invoice(request: Request):
+    data = await request.json()
+    invoice_id = data.get("invoice_id")
+    action = data.get("action")
+    
+    if action == "send":
+        return invoice_manager.send_invoice(invoice_id, "admin")
+    elif action == "paid":
+        return invoice_manager.mark_paid(invoice_id, "admin")
+    elif action == "cancel":
+        return invoice_manager.cancel_invoice(invoice_id, "admin", data.get("reason", ""))
+    
+    return {"error": "Invalid action"}

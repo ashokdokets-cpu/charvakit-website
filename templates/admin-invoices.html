@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Invoice Management - Charvak Admin{% endblock %}
+{% block content %}
+<div class="page-hero bg-dark text-white py-5">
+    <div class="container py-4">
+        <span class="badge bg-danger mb-2 px-3 py-2">Admin Only</span>
+        <h1 class="display-4 fw-bold">Invoice Management</h1>
+        <p class="lead">Create, send, and track all B2B invoices</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <!-- Stats -->
+    <div class="row g-3 mb-4 text-center" id="invoiceStats">
+        <div class="col-6 col-md-3"><div class="bg-light p-3 rounded"><h4 id="totalInvoices">0</h4><small>Total</small></div></div>
+        <div class="col-6 col-md-3"><div class="bg-warning p-3 rounded"><h4 id="pendingInvoices">0</h4><small>Pending/Sent</small></div></div>
+        <div class="col-6 col-md-3"><div class="bg-success text-white p-3 rounded"><h4 id="paidInvoices">0</h4><small>Paid</small></div></div>
+        <div class="col-6 col-md-3"><div class="bg-danger text-white p-3 rounded"><h4 id="overdueInvoices">0</h4><small>Overdue</small></div></div>
+    </div>
+
+    <!-- Create Invoice -->
+    <div class="card border-0 shadow-sm p-4 mb-4">
+        <h5>📄 Create New Invoice</h5>
+        <div class="row g-2">
+            <div class="col-md-3"><input type="text" class="form-control" id="clientName" placeholder="Client Name"></div>
+            <div class="col-md-3"><input type="email" class="form-control" id="clientEmail" placeholder="Client Email"></div>
+            <div class="col-md-2">
+                <select class="form-select" id="serviceType">
+                    <option>Reverse Staffing</option><option>Micro-Squads</option><option>NA Bench Staffing</option><option>Enterprise Subscription</option><option>Bulk Verification</option><option>Other</option>
+                </select>
+            </div>
+            <div class="col-md-2"><input type="number" class="form-control" id="invoiceAmount" placeholder="Amount (₹)"></div>
+            <div class="col-md-2"><button class="btn btn-primary w-100" onclick="createInvoice()">Create Invoice</button></div>
+        </div>
+    </div>
+
+    <!-- Invoice List -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <h5>📋 All Invoices</h5>
+            <div class="mb-3">
+                <select class="form-select w-auto d-inline" id="statusFilter" onchange="loadInvoices()">
+                    <option value="">All Status</option><option>Draft</option><option>Pending</option><option>Sent</option><option>Paid</option><option>Overdue</option><option>Cancelled</option>
+                </select>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover" id="invoiceTable">
+                    <thead><tr><th>Invoice #</th><th>Client</th><th>Service</th><th>Amount</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+                    <tbody id="invoiceBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function createInvoice(){
+    const name = document.getElementById('clientName').value;
+    const email = document.getElementById('clientEmail').value;
+    const service = document.getElementById('serviceType').value;
+    const amount = document.getElementById('invoiceAmount').value;
+    if(!name || !email || !amount) return alert('Fill all fields!');
+    
+    fetch('/api/invoice/create', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({client_name: name, client_email: email, service_type: service, amount: parseFloat(amount)})
+    })
+    .then(r => r.json())
+    .then(data => {
+        alert('Invoice ' + data.invoice_number + ' created!');
+        document.getElementById('clientName').value = '';
+        document.getElementById('clientEmail').value = '';
+        document.getElementById('invoiceAmount').value = '';
+        loadInvoices();
+    });
+}
+
+function updateStatus(invoiceId, action){
+    fetch('/api/invoice/update', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({invoice_id: invoiceId, action: action})
+    })
+    .then(r => r.json())
+    .then(() => loadInvoices());
+}
+
+function loadInvoices(){
+    const status = document.getElementById('statusFilter').value;
+    const url = status ? '/api/invoice/list?status=' + status : '/api/invoice/list';
+    
+    fetch(url)
+    .then(r => r.json())
+    .then(data => {
+        const tbody = document.getElementById('invoiceBody');
+        tbody.innerHTML = data.invoices.map(i => `
+            <tr>
+                <td><strong>${i.invoice_number}</strong><br><small>${i.invoice_id}</small></td>
+                <td>${i.client_name}<br><small>${i.client_email}</small></td>
+                <td>${i.service_type}</td>
+                <td>₹${i.total_amount.toLocaleString()}</td>
+                <td><span class="badge bg-${i.status === 'Paid' ? 'success' : i.status === 'Overdue' ? 'danger' : i.status === 'Sent' ? 'info' : 'warning'}">${i.status}</span></td>
+                <td>${new Date(i.created_at).toLocaleDateString()}</td>
+                <td>
+                    ${i.status === 'Draft' ? `<button class="btn btn-sm btn-primary" onclick="updateStatus('${i.invoice_id}','send')">Send</button>` : ''}
+                    ${i.status === 'Sent' ? `<button class="btn btn-sm btn-success" onclick="updateStatus('${i.invoice_id}','paid')">Mark Paid</button>` : ''}
+                    <a href="/invoice?service=${i.service_type}&client=${i.client_name}&amount=${i.amount}" class="btn btn-sm btn-outline-primary" target="_blank">View</a>
+                </td>
+            </tr>
+        `).join('');
+        
+        // Update stats
+        const stats = data.stats;
+        document.getElementById('totalInvoices').textContent = stats.total_invoices;
+        document.getElementById('pendingInvoices').textContent = (stats.by_status?.Sent || 0) + (stats.by_status?.Pending || 0);
+        document.getElementById('paidInvoices').textContent = stats.by_status?.Paid || 0;
+        document.getElementById('overdueInvoices').textContent = stats.by_status?.Overdue || 0;
+    });
+}
+
+document.addEventListener('DOMContentLoaded', loadInvoices);
+</script>
+{% endblock %}
