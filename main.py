@@ -31,6 +31,8 @@ from tools_ai_backend import (
     resume_roast_ai, ghost_bounty_ai, role_mirror_ai, offer_matcher_ai,
     ghost_job_ai, counter_offer_ai, pitch_roast_ai, ref_check_ai
 )
+from datetime import datetime, timedelta
+import secrets
 
 app = FastAPI(title="Charvak IT Consulting Pvt Ltd - Web Designing | Staff Augmentation")
 
@@ -982,3 +984,31 @@ async def sign_agreement(request: Request):
 @app.get("/pricing", response_class=HTMLResponse)
 async def pricing_page(request: Request):
     return templates.TemplateResponse("pricing.html", {"request": request, "title": "Pricing - Charvak IT Consulting"})
+
+@app.get("/invoice")
+async def generate_invoice(request: Request):
+    service = request.query_params.get("service", "Consulting Services")
+    client = request.query_params.get("client", "Client Name")
+    amount = request.query_params.get("amount", "0")
+    
+    invoice_number = f"INV-{datetime.now().strftime('%Y%m%d')}-{secrets.token_hex(3).upper()}"
+    
+    return templates.TemplateResponse("invoice.html", {
+        "request": request,
+        "title": f"Invoice {invoice_number} - Charvak",
+        "invoice_number": invoice_number,
+        "invoice_date": datetime.now().strftime("%B %d, %Y"),
+        "due_date": (datetime.now() + timedelta(days=15)).strftime("%B %d, %Y"),
+        "client_name": client,
+        "client_address": "Client Address",
+        "client_email": "client@email.com",
+        "gst_number": "37AADCC1234K1Z9",
+        "pan_number": "AADCC1234K",
+        "invoice_items": [
+            {"service": service, "description": "Professional services as per agreement", "qty": 1, "rate": f"₹{amount}", "amount": f"₹{amount}"}
+        ],
+        "subtotal": f"₹{amount}",
+        "gst_amount": f"₹{int(amount)*0.18}" if amount.isdigit() else "₹0",
+        "total_amount": f"₹{int(int(amount)*1.18)}" if amount.isdigit() else f"₹{amount}",
+        "payment_terms": "15"
+    })

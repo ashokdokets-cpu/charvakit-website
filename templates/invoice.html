@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Invoice - Charvak IT Consulting{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <div class="row"><div class="col-lg-8 mx-auto">
+        <div class="card border-0 shadow-lg p-4 no-print">
+            <div class="card-body text-center">
+                <h4>📄 Invoice Generated</h4>
+                <p class="text-muted">Invoice #{{ invoice_number }} has been generated for {{ client_name }}.</p>
+                <button class="btn btn-primary btn-lg" onclick="window.print()">📥 Download Invoice</button>
+            </div>
+        </div>
+        
+        <div class="card border-0 shadow-lg p-4 mt-4">
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-6">
+                        <h4>Charvak IT Consulting Pvt Ltd</h4>
+                        <p class="mb-1">#301, Sri Padmavati Towers, 3rd Lane</p>
+                        <p class="mb-1">Seetaram Nagar, Guntur 522001</p>
+                        <p class="mb-1">Andhra Pradesh, India</p>
+                        <p class="mb-1">GST: {{ gst_number }}</p>
+                        <p>PAN: {{ pan_number }}</p>
+                    </div>
+                    <div class="col-6 text-end">
+                        <h2>INVOICE</h2>
+                        <p><strong>Invoice #:</strong> {{ invoice_number }}</p>
+                        <p><strong>Date:</strong> {{ invoice_date }}</p>
+                        <p><strong>Due Date:</strong> {{ due_date }}</p>
+                    </div>
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-6">
+                        <h5>Bill To:</h5>
+                        <p class="mb-1"><strong>{{ client_name }}</strong></p>
+                        <p class="mb-1">{{ client_address }}</p>
+                        <p>{{ client_email }}</p>
+                    </div>
+                </div>
+                
+                <table class="table table-bordered">
+                    <thead><tr><th>Service</th><th>Description</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead>
+                    <tbody>
+                        {% for item in invoice_items %}
+                        <tr>
+                            <td>{{ item.service }}</td>
+                            <td>{{ item.description }}</td>
+                            <td>{{ item.qty }}</td>
+                            <td>{{ item.rate }}</td>
+                            <td>{{ item.amount }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr><td colspan="4" class="text-end"><strong>Subtotal</strong></td><td>{{ subtotal }}</td></tr>
+                        <tr><td colspan="4" class="text-end"><strong>GST (18%)</strong></td><td>{{ gst_amount }}</td></tr>
+                        <tr class="table-dark"><td colspan="4" class="text-end"><strong>Total</strong></td><td><strong>{{ total_amount }}</strong></td></tr>
+                    </tfoot>
+                </table>
+                
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <h6>Payment Instructions:</h6>
+                        <p class="mb-1">Bank Transfer to:</p>
+                        <p class="mb-1"><strong>Account Name:</strong> Charvak IT Consulting Pvt Ltd</p>
+                        <p class="mb-1"><strong>Bank:</strong> [Bank Name]</p>
+                        <p class="mb-1"><strong>Account #:</strong> [Account Number]</p>
+                        <p class="mb-1"><strong>IFSC:</strong> [IFSC Code]</p>
+                        <p class="mb-1"><strong>SWIFT:</strong> [SWIFT Code] (for international transfers)</p>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-4">
+                    <p><em>This is a computer-generated invoice. No signature required.</em></p>
+                    <p class="small text-muted">Payment due within {{ payment_terms }} days. Late payment subject to 18% interest per annum.</p>
+                </div>
+            </div>
+        </div>
+    </div></div>
+</div>
+{% endblock %}
