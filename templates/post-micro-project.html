@@ -82,7 +82,7 @@ function postMicroProject(e){
     });
     localStorage.setItem('micro_projects', JSON.stringify(projects));
     
-    document.getElementById('projMsg').innerHTML = 'Project posted! It will appear on the Micro-Internship board. <a href="/invoice?service=Micro-Internship+Project&client=' + encodeURIComponent(document.getElementById('projCompany').value) + '&amount=' + document.getElementById('projBudget').value + '" class="btn btn-outline-primary btn-sm mt-2">Generate Invoice</a>';
+    document.getElementById('projMsg').textContent = 'Project posted! It will appear on the Micro-Internship board. GenZ talent will apply shortly.';
     document.getElementById('projMsg').style.display = 'block';
     document.querySelector('form').reset();
     
