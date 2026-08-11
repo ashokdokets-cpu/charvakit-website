@@ -11,12 +11,14 @@
     <meta property="og:description" content="Charvak IT Consulting Pvt Ltd - Complete AI-powered digital ecosystem">
     <meta property="og:url" content="https://www.charvakit.com">
     <meta property="og:type" content="website">
+    <meta name="theme-color" content="#3ba591">
     <link rel="canonical" href="https://www.charvakit.com{{ request.url.path }}">
     <title>{% block title %}{{ title }}{% endblock %}</title>
     <link rel="icon" type="image/png" href="/static/images/logo.png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="manifest" href="/static/manifest.json">
     
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-HVHHD3KJ9G"></script>
@@ -159,8 +161,29 @@
     </ul>
 </li>
                     <li class="nav-item"><a class="nav-link" href="/careers">Careers</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/contact">Contact</a></li>
+                                        <li class="nav-item"><a class="nav-link" href="/contact">Contact</a></li>
                 </ul>
+                
+                <!-- Quick Login -->
+                <div class="dropdown">
+                    <button class="btn btn-outline-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-person-circle me-1"></i>Login
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end p-3" style="width:280px;">
+                        <h6>Quick Login</h6>
+                        <button class="btn btn-outline-danger btn-sm w-100 mb-2" onclick="socialLogin('google')">
+                            <i class="bi bi-google me-2"></i>Continue with Google
+                        </button>
+                        <button class="btn btn-outline-primary btn-sm w-100 mb-2" onclick="socialLogin('facebook')">
+                            <i class="bi bi-facebook me-2"></i>Continue with Facebook
+                        </button>
+                        <button class="btn btn-outline-dark btn-sm w-100" onclick="socialLogin('linkedin')">
+                            <i class="bi bi-linkedin me-2"></i>Continue with LinkedIn
+                        </button>
+                        <hr>
+                        <small class="text-muted">Or <a href="/api/auth/register">register with email</a></small>
+                    </div>
+                </div>
             </div>
         </div>
     </nav>
@@ -280,8 +303,25 @@
         </div>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/static/js/main.js"></script>
+    
+    <script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/static/sw.js');
+    }
+    </script>
+<script>
+function socialLogin(provider) {
+    const redirects = {
+        google: 'https://accounts.google.com/o/oauth2/auth?client_id=YOUR_GOOGLE_CLIENT_ID&redirect_uri=https://www.charvakit.com/auth/callback&response_type=code&scope=email%20profile',
+        facebook: 'https://www.facebook.com/v18.0/dialog/oauth?client_id=YOUR_FB_APP_ID&redirect_uri=https://www.charvakit.com/auth/callback',
+        linkedin: 'https://www.linkedin.com/oauth/v2/authorization?client_id=YOUR_LI_CLIENT_ID&redirect_uri=https://www.charvakit.com/auth/callback&response_type=code&scope=openid%20profile%20email'
+    };
+    window.location.href = redirects[provider];
+}
+</script>
+</body>
     <!-- Cookie Banner -->
     <div id="cookieBanner" class="fixed-bottom bg-dark text-white p-3" style="z-index:9999; display:none;">
         <div class="container"><div class="row align-items-center"><div class="col-md-8"><p class="mb-0 small">🍪 We use cookies. By continuing, you agree to our <a href="/privacy" class="text-primary">Privacy Policy</a> and <a href="/terms" class="text-primary">Terms</a>.</p></div><div class="col-md-4 text-end"><button class="btn btn-primary btn-sm me-2" onclick="localStorage.setItem('cookie_consent','all');document.getElementById('cookieBanner').style.display='none'">Accept</button></div></div></div>
@@ -383,5 +423,11 @@ function processToolPayment(amount, toolName, callback) {
     }
 }
 </script>
+<!-- WhatsApp Support Widget -->
+<a href="https://wa.me/917997871701?text=Hi%20Charvak%20Team" target="_blank" 
+   style="position:fixed;bottom:80px;right:20px;background:#25D366;color:#fff;width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.3);text-decoration:none;" 
+   title="Chat with us on WhatsApp">
+    <i class="bi bi-whatsapp"></i>
+</a>
 </body>
 </html>

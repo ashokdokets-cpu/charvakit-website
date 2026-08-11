@@ -46,6 +46,13 @@ function changeLanguage(lang) {
     window.location.search = '?lang=' + lang;
 }
 
+function switchLanguage(lang) {
+    if (lang === 'hi') {
+        document.querySelector('.navbar-brand').innerHTML = 'चार्वाक आईटी कंसल्टिंग';
+    }
+    localStorage.setItem('charvak_lang', lang);
+}
+
 function changeCurrency(curr) {
     localStorage.setItem('charvak_currency', curr);
     // Update all prices on page

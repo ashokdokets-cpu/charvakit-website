@@ -3,11 +3,24 @@
 <!-- PayPal -->
 <script src="https://www.paypal.com/sdk/js?client-id=YOUR_PAYPAL_CLIENT_ID&currency=INR"></script>
 
+<!-- UPI Payment -->
+<div id="upiSection" style="display:none;">
+    <h6>Pay via UPI</h6>
+    <p>Scan QR or pay to UPI ID: <strong>charvakit@upi</strong></p>
+    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=charvakit@upi&pn=CharvakITConsulting" alt="UPI QR">
+    <p class="small">Or use any UPI app and send to <strong>charvakit@upi</strong></p>
+</div>
+
 <script>
+function showUPI() {
+    document.getElementById('upiSection').style.display = 'block';
+}
+
 // Detect user country for payment method
 function getPreferredPayment() {
     const currency = localStorage.getItem('charvak_currency') || 'INR';
-    return currency === 'INR' ? 'razorpay' : 'paypal';
+    if (currency === 'INR') return 'razorpay';
+    return 'paypal';
 }
 
 function processPayment(amount, name, callback) {
@@ -35,7 +48,6 @@ function processRazorpay(amount, name, callback) {
 }
 
 function processPayPal(amount, name, callback) {
-    // PayPal button rendered in container
     alert('PayPal payment: ' + name + ' - $' + (amount/83).toFixed(2));
     callback(true, {});
 }
