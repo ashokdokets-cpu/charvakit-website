@@ -181,7 +181,7 @@
                             <i class="bi bi-linkedin me-2"></i>Continue with LinkedIn
                         </button>
                         <hr>
-                        <small class="text-muted">Or <a href="/developer-signup">register with email</a></small>
+                        <small class="text-muted">Or <a href="/register">register with email</a></small>
                     </div>
                 </div>
             </div>
@@ -322,7 +322,7 @@ function socialLogin(provider) {
     const clientId = redirects[provider];
     if (!clientId || clientId.startsWith('YOUR_')) {
         // Redirect to registration page instead of API endpoint
-        window.location.href = '/developer-signup';
+        window.location.href = '/register';
         return;
     }
     

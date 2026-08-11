@@ -1052,3 +1052,7 @@ async def api_update_invoice(request: Request):
         return invoice_manager.cancel_invoice(invoice_id, "admin", data.get("reason", ""))
     
     return {"error": "Invalid action"}
+
+@app.get("/register", response_class=HTMLResponse)
+async def register_page(request: Request):
+    return templates.TemplateResponse("register.html", {"request": request, "title": "Register - Charvak IT Consulting"})
