@@ -314,11 +314,26 @@
 <script>
 function socialLogin(provider) {
     const redirects = {
-        google: 'https://accounts.google.com/o/oauth2/auth?client_id=YOUR_GOOGLE_CLIENT_ID&redirect_uri=https://www.charvakit.com/auth/callback&response_type=code&scope=email%20profile',
-        facebook: 'https://www.facebook.com/v18.0/dialog/oauth?client_id=YOUR_FB_APP_ID&redirect_uri=https://www.charvakit.com/auth/callback',
-        linkedin: 'https://www.linkedin.com/oauth/v2/authorization?client_id=YOUR_LI_CLIENT_ID&redirect_uri=https://www.charvakit.com/auth/callback&response_type=code&scope=openid%20profile%20email'
+        google: 'YOUR_GOOGLE_CLIENT_ID',
+        facebook: 'YOUR_FB_APP_ID', 
+        linkedin: 'YOUR_LI_CLIENT_ID'
     };
-    window.location.href = redirects[provider];
+    
+    // Check if key is configured
+    const clientId = redirects[provider];
+    if (!clientId || clientId.startsWith('YOUR_')) {
+        alert(provider + ' login is coming soon! Please register with email for now.');
+        window.location.href = '/api/auth/register';
+        return;
+    }
+    
+    // Redirect to OAuth provider
+    const urls = {
+        google: 'https://accounts.google.com/o/oauth2/auth?client_id=' + clientId + '&redirect_uri=https://www.charvakit.com/auth/callback&response_type=code&scope=email%20profile',
+        facebook: 'https://www.facebook.com/v18.0/dialog/oauth?client_id=' + clientId + '&redirect_uri=https://www.charvakit.com/auth/callback',
+        linkedin: 'https://www.linkedin.com/oauth/v2/authorization?client_id=' + clientId + '&redirect_uri=https://www.charvakit.com/auth/callback&response_type=code&scope=openid%20profile%20email'
+    };
+    window.location.href = urls[provider];
 }
 </script>
 </body>
