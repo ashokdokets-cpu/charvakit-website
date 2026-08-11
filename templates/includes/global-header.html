@@ -46,11 +46,36 @@ function changeLanguage(lang) {
     window.location.search = '?lang=' + lang;
 }
 
+// Global Language Switcher — Supports all 34 languages
 function switchLanguage(lang) {
-    if (lang === 'hi') {
-        document.querySelector('.navbar-brand').innerHTML = 'चार्वाक आईटी कंसल्टिंग';
-    }
     localStorage.setItem('charvak_lang', lang);
+    
+    // For full page translation using Google Translate
+    if (lang !== 'en') {
+        // Create Google Translate cookie
+        document.cookie = 'googtrans=/en/' + lang;
+        // Reload with Google Translate
+        window.location.reload();
+    }
+}
+
+// Auto-apply saved language on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const savedLang = localStorage.getItem('charvak_lang');
+    if (savedLang && savedLang !== 'en') {
+        // Apply Google Translate
+        const script = document.createElement('script');
+        script.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateInit';
+        document.head.appendChild(script);
+    }
+});
+
+function googleTranslateInit() {
+    new google.translate.TranslateElement({
+        pageLanguage: 'en',
+        includedLanguages: 'hi,te,ta,kn,ml,mr,bn,gu,pa,es,fr,de,pt,it,nl,ru,ar,zh,ja,ko,tr,vi,th,id,ms,fil,sw,am,ha,yo,ig,zu,so',
+        layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+    }, 'google_translate_element');
 }
 
 function changeCurrency(curr) {
