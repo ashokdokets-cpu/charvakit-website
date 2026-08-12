@@ -54,6 +54,7 @@ from sso_engine import sso_engine
 from micro_internship_engine import micro_internship_engine
 from training_engine import training_engine
 from interview_prep_engine import interview_prep_engine
+from job_board_engine import job_board_engine
 
 
 # ============================================================
@@ -929,7 +930,7 @@ async def submit_contact(data: ContactRequest):
 
 
 # ============================================================
-# JOB BOARD API (WITH AUTH)
+# JOB BOARD API ENDPOINTS (Database-backed)
 # ============================================================
 
 @app.post("/api/jobs/post")
@@ -940,16 +941,16 @@ async def api_post_job(data: JobPostRequest, request: Request):
         return JSONResponse({"status": "error", "message": "Login required to post jobs"}, status_code=401)
     
     try:
-        result = db.post_job(
-            title=data.title,
-            company=data.company,
-            job_type=data.type,
-            location=data.location,
-            salary=data.salary,
-            description=data.description,
-            skills=data.skills,
-            posted_by=user["user_id"]
-        )
+        result = job_board_engine.post_job({
+            "title": data.title,
+            "company": data.company,
+            "job_type": data.type,
+            "location": data.location,
+            "salary": data.salary,
+            "description": data.description,
+            "skills": data.skills.split(",") if data.skills else [],
+            "posted_by": user["user_id"]
+        })
         return JSONResponse(result)
     except Exception as e:
         logger.error(f"Job post failed: {str(e)}")
@@ -963,13 +964,11 @@ async def api_add_application(data: ApplicationAddRequest, request: Request):
         return JSONResponse({"status": "error", "message": "Login required"}, status_code=401)
     
     try:
-        result = db.add_application(
-            user_id=user["user_id"],
-            job_title=data.job_title,
-            company=data.company,
-            job_url=data.job_url,
-            source=data.source
-        )
+        result = job_board_engine.apply_to_job({
+            "job_id": data.job_title,  # Temporary mapping
+            "user_id": user["user_id"],
+            "resume_url": data.job_url
+        })
         return JSONResponse(result)
     except Exception as e:
         logger.error(f"Application add failed: {str(e)}")
@@ -983,8 +982,9 @@ async def api_get_applications(request: Request):
         return JSONResponse({"status": "error", "message": "Login required"}, status_code=401)
     
     try:
-        apps = db.get_user_applications(user["user_id"])
-        return JSONResponse({"status": "success", "applications": apps, "count": len(apps)})
+        apps = job_board_engine.get_applications()
+        user_apps = [a for a in apps if a.get("user_id") == user["user_id"]]
+        return JSONResponse({"status": "success", "applications": user_apps, "count": len(user_apps)})
     except Exception as e:
         logger.error(f"Failed to get applications: {str(e)}")
         return JSONResponse({"status": "error", "applications": [], "count": 0})
@@ -992,7 +992,7 @@ async def api_get_applications(request: Request):
 @app.get("/api/jobs")
 async def api_get_jobs():
     try:
-        jobs = db.get_active_jobs()
+        jobs = job_board_engine.get_jobs()
         return JSONResponse({"status": "success", "jobs": jobs, "count": len(jobs)})
     except Exception as e:
         logger.error(f"Failed to get jobs: {str(e)}")
@@ -1005,7 +1005,7 @@ async def api_search_jobs(type: str = None, location: str = None, keyword: str =
         if type: filters['type'] = type
         if location: filters['location'] = location
         if keyword: filters['keyword'] = keyword
-        jobs = job_board.get_jobs(filters)
+        jobs = job_board_engine.get_jobs(filters)
         return {"jobs": jobs, "count": len(jobs)}
     except Exception as e:
         logger.error(f"Job search failed: {str(e)}")
@@ -1015,8 +1015,8 @@ async def api_search_jobs(type: str = None, location: str = None, keyword: str =
 async def api_apply_job(request: Request):
     try:
         data = await request.json()
-        db.save_application(data)
-        return {"status": "success", "message": "Application saved to database"}
+        result = job_board_engine.apply_to_job(data)
+        return result
     except Exception as e:
         logger.error(f"Job apply failed: {str(e)}")
         return {"status": "error", "message": "Failed to save application"}
@@ -1024,15 +1024,15 @@ async def api_apply_job(request: Request):
 @app.get("/api/jobs/stats")
 async def api_job_stats():
     try:
-        return job_board.get_stats()
+        return job_board_engine.get_stats()
     except Exception as e:
         logger.error(f"Failed to get job stats: {str(e)}")
-        return {"active_jobs": 0, "total_applications": 0, "total_candidates": 0}
+        return {"active_jobs": 0, "total_applications": 0, "companies": 0, "locations": 0}
 
 @app.get("/api/jobs/applications")
-async def api_get_applications_list():
+async def api_get_applications_list(job_id: str = None):
     try:
-        apps = db.get_applications()
+        apps = job_board_engine.get_applications(job_id)
         return {"applications": apps, "count": len(apps)}
     except Exception as e:
         logger.error(f"Failed to get applications list: {str(e)}")
@@ -1890,6 +1890,25 @@ async def assign_verification(request: Request):
             verification_id=data.get("verification_id"),
             partner_id=data.get("partner_id")
         )
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.post("/api/background-verification/initiate")
+@limiter.limit("10/minute")
+async def initiate_background_verification(request: Request):
+    """Initiate background verification from career engine."""
+    try:
+        data = await request.json()
+        # Route through KYC engine
+        result = kyc_engine.initiate_verification({
+            "name": data.get("name"),
+            "email": data.get("email"),
+            "phone": data.get("phone", ""),
+            "verification_type": data.get("verification_type", "identity"),
+            "country": data.get("country", "India"),
+            "notes": data.get("notes", "")
+        })
         return result
     except Exception as e:
         return {"status": "error", "message": str(e)}
