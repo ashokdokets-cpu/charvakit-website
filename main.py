@@ -1563,6 +1563,41 @@ async def api_ref_check(request: Request):
     except Exception as e:
         return handle_error(e, "reference check")
 
+@app.post("/api/tools/bounty-swap")
+@limiter.limit("10/minute")
+async def api_bounty_swap(request: Request):
+    data = await request.json()
+    result = await bounty_swap_ai(data.get("bounty_amount", 500), data.get("referrer_name", ""))
+    return result
+
+@app.post("/api/tools/micro-trial")
+@limiter.limit("10/minute")
+async def api_micro_trial(request: Request):
+    data = await request.json()
+    result = await micro_trial_ai(data.get("trial_type", "Frontend"), data.get("skills", ""))
+    return result
+
+@app.post("/api/tools/ghost-job-shield")
+@limiter.limit("10/minute")
+async def api_ghost_job_shield(request: Request):
+    data = await request.json()
+    result = await ghost_job_ai(data.get("url", ""))
+    return result
+
+@app.post("/api/tools/ref-swap")
+@limiter.limit("10/minute")
+async def api_ref_swap(request: Request):
+    data = await request.json()
+    result = await ref_swap_ai(data.get("ref_type", "Professional"), data.get("industry", ""))
+    return result
+
+@app.post("/api/tools/ghost-tracker")
+@limiter.limit("10/minute")
+async def api_ghosted_tracker(request: Request):
+    data = await request.json()
+    result = await ghosted_tracker_ai(data.get("applications", []))
+    return result
+
 
 # ============================================================
 # AGREEMENT SYSTEM

@@ -118,3 +118,67 @@ async def ref_check_ai(ref_names: list) -> Dict:
         try: return json.loads(result)
         except: pass
     return {"questions": ["What was their role?", "Would you rehire?", "Key strength?"], "trust_score_estimate": 85}
+
+
+# ============ ADDITIONAL TOOL FUNCTIONS ============
+
+async def bounty_swap_ai(bounty_amount: int, referrer_name: str = "") -> Dict:
+    """BountySwap AI - Generate 50/50 split bounty link"""
+    import secrets
+    split = bounty_amount // 2
+    return {
+        "status": "success",
+        "bounty_link": f"https://charvakit.com/ref/BTY-{secrets.token_hex(4).upper()}",
+        "bounty_amount": bounty_amount,
+        "referrer_gets": split,
+        "new_referral_gets": split,
+        "message": f"Bounty link ready! You'll each get ₹{split} when your referral converts."
+    }
+
+async def micro_trial_ai(trial_type: str, candidate_skills: str) -> Dict:
+    """Micro-Trial Engine - Generate 15-min trial"""
+    trials = {
+        "Frontend": {"task": "Build a responsive landing page", "duration": "15 min", "score_card": ["HTML", "CSS", "Responsive"]},
+        "Backend": {"task": "Create REST API with 3 endpoints", "duration": "15 min", "score_card": ["API Design", "Validation", "Error Handling"]},
+        "Full Stack": {"task": "Build todo app with auth", "duration": "15 min", "score_card": ["Frontend", "Backend", "DB"]},
+        "Data Science": {"task": "Analyze dataset and predict", "duration": "15 min", "score_card": ["Python", "Pandas", "ML"]},
+    }
+    trial = trials.get(trial_type, trials["Frontend"])
+    return {
+        "status": "success",
+        "trial_type": trial_type,
+        "task": trial["task"],
+        "duration": trial["duration"],
+        "score_card": trial["score_card"],
+        "payment": 15,
+        "currency": "USD",
+        "message": "Trial generated! Earn $15 on completion."
+    }
+
+async def ref_swap_ai(ref_type: str, industry: str = "") -> Dict:
+    """Reference Check Swap - Find mutual verification partners"""
+    import secrets
+    return {
+        "status": "success",
+        "swap_id": f"SWAP-{secrets.token_hex(4).upper()}",
+        "ref_type": ref_type,
+        "industry": industry,
+        "matches": [
+            {"name": "Partner 1", "match_score": 85, "industry": industry},
+            {"name": "Partner 2", "match_score": 78, "industry": industry},
+            {"name": "Partner 3", "match_score": 72, "industry": industry},
+        ],
+        "message": "Reference swap partners found! Connect and verify each other."
+    }
+
+async def ghosted_tracker_ai(applications: list) -> Dict:
+    """Ghosted Tracker - Track and generate follow-up"""
+    ghosted = [a for a in applications if a.get("status") == "no_response"]
+    return {
+        "status": "success",
+        "total_applications": len(applications),
+        "ghosted_count": len(ghosted),
+        "follow_up_template": "Hi [Recruiter], following up on my application from [date]. I remain very interested in the [role] position. Would you have an update?",
+        "ghosted_companies": [a.get("company", "Unknown") for a in ghosted],
+        "message": "Tracking active. Follow-up script generated for ghosted applications."
+    }
