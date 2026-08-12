@@ -62,32 +62,51 @@
 <script>
 function postMicroProject(e){
     e.preventDefault();
-    const title = document.getElementById('projTitle').value;
-    const email = document.getElementById('projEmail').value;
-    if(!title || !email) return;
     
-    const projects = JSON.parse(localStorage.getItem('micro_projects')||'[]');
-    projects.push({
-        title: title,
+    const projectData = {
+        title: document.getElementById('projTitle').value,
         category: document.getElementById('projCategory').value,
-        level: document.getElementById('projLevel').value,
-        duration: document.getElementById('projDuration').value,
-        budget: document.getElementById('projBudget').value,
-        skills: document.getElementById('projSkills').value,
-        company: document.getElementById('projCompany').value,
-        email: email,
+        difficulty: document.getElementById('projLevel').value,
+        duration_weeks: parseInt(document.getElementById('projDuration').value),
+        budget_inr: parseFloat(document.getElementById('projBudget').value),
+        skills_required: document.getElementById('projSkills').value.split(',').map(s => s.trim()).filter(Boolean),
         description: document.getElementById('projDesc').value,
-        date: new Date().toISOString(),
-        status: 'open'
+        client_id: 'CLIENT-DEMO',
+        company_name: document.getElementById('projCompany').value,
+        contact_email: document.getElementById('projEmail').value,
+        escrow_required: true
+    };
+    
+    fetch('/api/micro-internship/project/post', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(projectData)
+    })
+    .then(res => res.json())
+    .then(data => {
+        const msg = document.getElementById('projMsg');
+        if (data.status === 'success') {
+            msg.textContent = '✅ Project posted! Project ID: ' + data.project_id;
+            msg.style.color = '#10b981';
+            msg.style.display = 'block';
+            document.querySelector('form').reset();
+        } else {
+            msg.textContent = '❌ ' + (data.message || 'Failed to post project');
+            msg.style.color = '#ef4444';
+            msg.style.display = 'block';
+        }
+    })
+    .catch(err => {
+        // Fallback to localStorage
+        const projects = JSON.parse(localStorage.getItem('micro_projects')||'[]');
+        projects.push({...projectData, date: new Date().toISOString()});
+        localStorage.setItem('micro_projects', JSON.stringify(projects));
+        const msg = document.getElementById('projMsg');
+        msg.textContent = '✅ Project saved locally!';
+        msg.style.color = '#10b981';
+        msg.style.display = 'block';
+        document.querySelector('form').reset();
     });
-    localStorage.setItem('micro_projects', JSON.stringify(projects));
-    
-    document.getElementById('projMsg').textContent = 'Project posted! It will appear on the Micro-Internship board. GenZ talent will apply shortly.';
-    document.getElementById('projMsg').style.display = 'block';
-    document.querySelector('form').reset();
-    
-    // Also update the micro-internship page
-    setTimeout(() => window.location.href = '/micro-internship', 2000);
 }
 </script>
 {% endblock %}

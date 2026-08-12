@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Client Dashboard - Charvak Micro-Internships{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4">
+        <h1 class="display-4 fw-bold">Micro-Internship Dashboard</h1>
+        <p class="lead">Manage your projects, candidates, and payments in one place</p>
+    </div>
+</div>
+<div class="container py-5">
+    <div class="row g-3 mb-4 text-center">
+        <div class="col-3"><div class="bg-light p-3 rounded"><h4 id="totalProjects">0</h4><small>Total Projects</small></div></div>
+        <div class="col-3"><div class="bg-primary text-white p-3 rounded"><h4 id="activeProjects">0</h4><small>Active</small></div></div>
+        <div class="col-3"><div class="bg-success text-white p-3 rounded"><h4 id="completedProjects">0</h4><small>Completed</small></div></div>
+        <div class="col-3"><div class="bg-warning p-3 rounded"><h4 id="totalSpend">₹0</h4><small>Total Spend</small></div></div>
+    </div>
+    
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5>Your Projects</h5>
+                <a href="/post-micro-project" class="btn btn-primary btn-sm">+ New Project</a>
+            </div>
+            <div id="projectList"><p class="text-muted">No projects yet. Post your first micro-internship!</p></div>
+        </div>
+    </div>
+    
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <h5 class="mb-3">Recent Applications</h5>
+            <div id="applicationList"><p class="text-muted">No applications yet.</p></div>
+        </div>
+    </div>
+</div>
+<script>
+// Load dashboard data
+const clientId = 'CLIENT-DEMO';
+fetch('/api/micro-internship/client/' + clientId + '/dashboard')
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            document.getElementById('totalProjects').textContent = data.stats.total_projects;
+            document.getElementById('activeProjects').textContent = data.stats.active_projects;
+            document.getElementById('completedProjects').textContent = data.stats.hired_count;
+            document.getElementById('totalSpend').textContent = '₹' + data.stats.total_spend;
+            
+            if (data.projects.length > 0) {
+                document.getElementById('projectList').innerHTML = data.projects.map(p => 
+                    `<div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+                        <div><strong>${p.title}</strong><br><small class="text-muted">${p.category} • ${p.difficulty} • ₹${p.budget_inr}</small></div>
+                        <span class="badge bg-${p.status === 'completed' ? 'success' : 'primary'}">${p.status}</span>
+                    </div>`
+                ).join('');
+            }
+            
+            if (data.applications.length > 0) {
+                document.getElementById('applicationList').innerHTML = data.applications.map(a => 
+                    `<div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+                        <div><strong>${a.candidate_name}</strong><br><small class="text-muted">AI Match: ${a.ai_score}%</small></div>
+                        <span class="badge bg-info">${a.status}</span>
+                    </div>`
+                ).join('');
+            }
+        }
+    });
+</script>
+{% endblock %}

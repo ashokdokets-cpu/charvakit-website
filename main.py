@@ -51,6 +51,7 @@ from badge_engine import badge_engine
 from blog_engine import blog_engine
 from chatbot_engine import chatbot_engine
 from sso_engine import sso_engine
+from micro_internship_engine import micro_internship_engine
 
 
 # ============================================================
@@ -2069,6 +2070,112 @@ async def register_affiliate(request: Request):
         return {"status": "error", "message": str(e)}
 
 # ============================================================
+# MICRO-INTERNSHIP API ENDPOINTS
+# ============================================================
+
+@app.get("/api/micro-internship/stats")
+async def micro_internship_stats():
+    """Get micro-internship system statistics."""
+    return micro_internship_engine.get_stats()
+
+@app.post("/api/micro-internship/client/register")
+@limiter.limit("10/minute")
+async def register_micro_client(request: Request):
+    """Register a client company."""
+    try:
+        data = await request.json()
+        result = micro_internship_engine.register_client(data)
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.get("/api/micro-internship/client/{client_id}/dashboard")
+async def client_dashboard(client_id: str):
+    """Get client dashboard."""
+    return micro_internship_engine.get_client_dashboard(client_id)
+
+@app.post("/api/micro-internship/project/post")
+@limiter.limit("20/minute")
+async def post_micro_project(request: Request):
+    """Post a micro-internship project."""
+    try:
+        data = await request.json()
+        result = micro_internship_engine.post_project(data)
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.get("/api/micro-internship/projects")
+async def get_projects(category: str = None, difficulty: str = None, skill: str = None, max_budget: float = None):
+    """Get open projects."""
+    filters = {}
+    if category: filters["category"] = category
+    if difficulty: filters["difficulty"] = difficulty
+    if skill: filters["skill"] = skill
+    if max_budget: filters["max_budget"] = max_budget
+    return micro_internship_engine.get_open_projects(filters)
+
+@app.get("/api/micro-internship/project/{project_id}")
+async def get_project(project_id: str):
+    """Get project details."""
+    return micro_internship_engine.get_project(project_id)
+
+@app.post("/api/micro-internship/apply")
+@limiter.limit("10/minute")
+async def apply_to_project(request: Request):
+    """Apply to a project."""
+    try:
+        data = await request.json()
+        result = micro_internship_engine.apply_to_project(data)
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.get("/api/micro-internship/project/{project_id}/applications")
+async def project_applications(project_id: str):
+    """Get applications for a project."""
+    return micro_internship_engine.get_project_applications(project_id)
+
+@app.post("/api/micro-internship/assign")
+async def assign_intern(request: Request):
+    """Assign intern to project."""
+    try:
+        data = await request.json()
+        result = micro_internship_engine.assign_intern(
+            project_id=data.get("project_id"),
+            application_id=data.get("application_id")
+        )
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.post("/api/micro-internship/submit")
+async def submit_work(request: Request):
+    """Submit work for review."""
+    try:
+        data = await request.json()
+        result = micro_internship_engine.submit_work(
+            project_id=data.get("project_id"),
+            submission_data=data
+        )
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.post("/api/micro-internship/approve")
+async def approve_work(request: Request):
+    """Approve work and release payment."""
+    try:
+        data = await request.json()
+        result = micro_internship_engine.approve_work(
+            project_id=data.get("project_id"),
+            approval_data=data
+        )
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+# ============================================================
 # BADGE & CERTIFICATION API ENDPOINTS
 # ============================================================
 
@@ -2264,6 +2371,10 @@ async def login_page(request: Request):
         sso_enabled=providers.get("enabled", False)
     )
 
+@app.get("/client-dashboard", response_class=HTMLResponse)
+async def client_dashboard_page(request: Request):
+    """Client dashboard for micro-internships."""
+    return template_response("client-dashboard.html", request, "Client Dashboard - Charvak Micro-Internships")
 
 # ============================================================
 # UTILITY ENDPOINTS
