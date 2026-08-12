@@ -57,6 +57,7 @@ from training_engine import training_engine
 from interview_prep_engine import interview_prep_engine
 from job_board_engine import job_board_engine
 from products_engine import products_engine
+from candidate_engine import candidate_engine
 
 
 
@@ -2707,6 +2708,51 @@ async def career_progress(email: str):
 async def web_design_proposal(request: Request):
     """Web design proposal page."""
     return template_response("web-design-proposal.html", request, "Get a Web Design Proposal - Charvak")
+
+# ============================================================
+# CANDIDATE POOL API ENDPOINTS
+# ============================================================
+
+@app.post("/api/candidate/register")
+@limiter.limit("10/minute")
+async def register_candidate(request: Request):
+    """Register a new candidate."""
+    try:
+        data = await request.json()
+        result = candidate_engine.register_candidate(data)
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.get("/api/candidate/{candidate_id}")
+async def get_candidate(candidate_id: str):
+    """Get candidate details."""
+    return candidate_engine.get_candidate(candidate_id)
+
+@app.get("/api/candidates/search")
+async def search_candidates(skill: str = None, experience_min: int = None, location: str = None, visa_status: str = None):
+    """Search candidate pool."""
+    filters = {}
+    if skill: filters["skill"] = skill
+    if experience_min: filters["experience_min"] = experience_min
+    if location: filters["location"] = location
+    if visa_status: filters["visa_status"] = visa_status
+    return candidate_engine.search_candidates(filters)
+
+@app.post("/api/candidate/{candidate_id}/skill-score")
+async def update_skill_score(candidate_id: str, request: Request):
+    """Update candidate skill score."""
+    try:
+        data = await request.json()
+        result = candidate_engine.update_skill_score(candidate_id, data.get("score", 0), data.get("badge_id"))
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.get("/api/candidates/stats")
+async def candidate_pool_stats():
+    """Get candidate pool statistics."""
+    return candidate_engine.get_pool_stats()
 
 # ============================================================
 # UTILITY ENDPOINTS
