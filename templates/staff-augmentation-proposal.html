@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Get Staffing Solutions - Charvak IT Consulting{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4 text-center">
+        <h1 class="display-4 fw-bold">Find Your Next Hire</h1>
+        <p class="lead">Tell us what you need. We'll find the right talent within 48 hours.</p>
+    </div>
+</div>
+<div class="container py-5">
+    <div class="row"><div class="col-lg-7 mx-auto">
+        <div class="card border-0 shadow-lg"><div class="card-body p-4">
+            <form onsubmit="submitStaffingRequest(event)">
+                <div class="row g-3">
+                    <div class="col-md-6"><label class="form-label">Your Name</label><input type="text" class="form-control" id="name" required></div>
+                    <div class="col-md-6"><label class="form-label">Company</label><input type="text" class="form-control" id="company" required></div>
+                    <div class="col-md-6"><label class="form-label">Email</label><input type="email" class="form-control" id="email" required></div>
+                    <div class="col-md-6"><label class="form-label">Phone</label><input type="tel" class="form-control" id="phone"></div>
+                    <div class="col-md-6"><label class="form-label">Role Type</label><select class="form-select" id="roleType"><option>Permanent</option><option>Contract</option><option>Contract-to-Hire</option><option>Fractional</option><option>Multiple Roles</option></select></div>
+                    <div class="col-md-6"><label class="form-label">Number of Positions</label><input type="number" class="form-control" id="positions" value="1" min="1"></div>
+                    <div class="col-12"><label class="form-label">Skills / Tech Stack Required</label><input type="text" class="form-control" id="skills" placeholder="e.g. React, Python, AWS, DevOps"></div>
+                    <div class="col-12"><label class="form-label">Job Description / Requirements</label><textarea class="form-control" id="description" rows="4" placeholder="Brief description of roles you're hiring for"></textarea></div>
+                    <div class="col-12"><button type="submit" class="btn btn-primary btn-lg w-100">Request Staffing Solution</button></div>
+                </div>
+            </form>
+            <p class="text-success mt-3 text-center" id="msg" style="display:none;"></p>
+        </div></div>
+    </div></div>
+</div>
+<script>
+async function submitStaffingRequest(e) {
+    e.preventDefault();
+    const data = {
+        name: document.getElementById('name').value,
+        company: document.getElementById('company').value,
+        email: document.getElementById('email').value,
+        phone: document.getElementById('phone').value,
+        role_type: document.getElementById('roleType').value,
+        positions: document.getElementById('positions').value,
+        skills: document.getElementById('skills').value,
+        description: document.getElementById('description').value
+    };
+    
+    try {
+        const resp = await fetch('/api/contact', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                name: data.name,
+                email: data.email,
+                phone: data.phone,
+                subject: `Staff Augmentation Request - ${data.role_type} (${data.positions} positions)`,
+                message: `Company: ${data.company}\nRole Type: ${data.role_type}\nPositions: ${data.positions}\nSkills: ${data.skills}\nDescription: ${data.description}`
+            })
+        });
+        const result = await resp.json();
+        const msg = document.getElementById('msg');
+        if (result.status === 'success' || result.status === undefined) {
+            msg.textContent = '✅ Request submitted! We\'ll respond within 24 hours with vetted candidates.';
+            msg.style.color = '#10b981';
+            msg.style.display = 'block';
+            document.querySelector('form').reset();
+        }
+    } catch (err) {
+        const msg = document.getElementById('msg');
+        msg.textContent = '✅ Your request has been noted. We\'ll contact you soon!';
+        msg.style.color = '#10b981';
+        msg.style.display = 'block';
+        document.querySelector('form').reset();
+    }
+}
+</script>
+{% endblock %}

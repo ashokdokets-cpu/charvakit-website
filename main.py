@@ -745,6 +745,11 @@ async def badge_page(request: Request):
 async def admin_dashboard(request: Request):
     return template_response("admin-dashboard.html", request, "Admin Dashboard - Charvak")
 
+@app.get("/staff-augmentation/proposal", response_class=HTMLResponse)
+async def staff_augmentation_proposal(request: Request):
+    """Staff augmentation proposal page."""
+    return template_response("staff-augmentation-proposal.html", request, "Get Staffing Solutions - Charvak")
+
 
 # ============================================================
 # OTHER PAGES
