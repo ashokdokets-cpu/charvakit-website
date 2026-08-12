@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Login - Charvak IT Consulting{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center"><div class="col-md-5">
+        <div class="card border-0 shadow-lg">
+            <div class="card-body p-4">
+                <h3 class="text-center mb-4">Sign In</h3>
+                
+                {% if sso_enabled %}
+                <p class="text-center text-muted small mb-3">Enterprise Single Sign-On</p>
+                {% for key, provider in sso_providers.items() %}
+                <button class="btn btn-outline-secondary w-100 mb-2" onclick="initiateSSO('{{ key }}')">
+                    <i class="bi {{ provider.icon }} me-2"></i>Continue with {{ provider.name }}
+                </button>
+                {% endfor %}
+                <hr><p class="text-center text-muted small">or use email</p>
+                {% endif %}
+                
+                <form onsubmit="loginUser(event)">
+                    <div class="mb-3"><input type="email" class="form-control" id="email" placeholder="Email" required></div>
+                    <div class="mb-3"><input type="password" class="form-control" id="password" placeholder="Password" required></div>
+                    <button type="submit" class="btn btn-primary w-100">Sign In</button>
+                </form>
+                <p class="text-center mt-3 small">Don't have an account? <a href="/register">Register</a></p>
+                <p id="loginMsg" class="text-center small mt-2"></p>
+            </div>
+        </div>
+    </div></div>
+</div>
+<script>
+async function loginUser(e) {
+    e.preventDefault();
+    const resp = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({email: document.getElementById('email').value, password: document.getElementById('password').value})
+    });
+    const data = await resp.json();
+    document.getElementById('loginMsg').textContent = data.status === 'success' ? '✅ Redirecting...' : '❌ ' + data.message;
+    if (data.status === 'success') { localStorage.setItem('charvak_token', data.token); setTimeout(() => window.location = '/', 500); }
+}
+async function initiateSSO(provider) {
+    const resp = await fetch('/api/sso/login', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({provider: provider, redirect: '/'})
+    });
+    const data = await resp.json();
+    if (data.redirect) window.location = data.redirect;
+}
+</script>
+{% endblock %}

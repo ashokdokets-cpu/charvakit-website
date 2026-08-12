@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}SSO Login Successful{% endblock %}
+{% block content %}
+<div class="container py-5 text-center">
+    <div class="display-1 text-success mb-3">✅</div>
+    <h2>Login Successful</h2>
+    <p>Welcome, {{ user.name }} ({{ user.email }})</p>
+    <p class="text-muted small">Redirecting to {{ redirect }}...</p>
+</div>
+<script>
+localStorage.setItem('charvak_token', '{{ token }}');
+setTimeout(() => window.location = '{{ redirect }}', 1000);
+</script>
+{% endblock %}

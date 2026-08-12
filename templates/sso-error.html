@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}SSO Login Failed{% endblock %}
+{% block content %}
+<div class="container py-5 text-center">
+    <div class="display-1 text-danger mb-3">❌</div>
+    <h2>Login Failed</h2>
+    <p>{{ error }}</p>
+    <a href="/login" class="btn btn-primary">Try Again</a>
+    <a href="/contact" class="btn btn-outline-secondary">Contact Support</a>
+</div>
+{% endblock %}

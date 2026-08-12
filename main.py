@@ -50,6 +50,7 @@ from referral_engine import referral_engine
 from badge_engine import badge_engine
 from blog_engine import blog_engine
 from chatbot_engine import chatbot_engine
+from sso_engine import sso_engine
 
 
 # ============================================================
@@ -2196,6 +2197,72 @@ async def sla_page(request: Request):
 async def help_center(request: Request):
     """Help & Support Center."""
     return template_response("help.html", request, "Help Center - Charvak IT Consulting")
+
+# ============================================================
+# SSO/SAML AUTH ENDPOINTS
+# ============================================================
+
+@app.get("/saml/metadata")
+async def saml_metadata():
+    """SAML SP Metadata endpoint for IdP configuration."""
+    return sso_engine.generate_metadata()
+
+@app.get("/api/sso/providers")
+async def sso_providers():
+    """Get configured SSO providers."""
+    return sso_engine.get_configured_providers()
+
+@app.post("/api/sso/login")
+@limiter.limit("10/minute")
+async def sso_login(request: Request):
+    """Initiate SSO login."""
+    try:
+        data = await request.json()
+        result = sso_engine.generate_saml_request(
+            provider_key=data.get("provider", "okta"),
+            relay_state=data.get("redirect", "/")
+        )
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.post("/saml/acs")
+async def saml_acs(request: Request):
+    """SAML Assertion Consumer Service — receives IdP response."""
+    try:
+        form_data = await request.form()
+        saml_response = form_data.get("SAMLResponse", "")
+        relay_state = form_data.get("RelayState", "/")
+        result = sso_engine.handle_saml_response(saml_response, relay_state)
+        
+        if result["status"] == "success":
+            return template_response("sso-success.html", request,
+                "SSO Login Successful - Charvak",
+                token=result["token"],
+                redirect=result["redirect"],
+                user=result["user"]
+            )
+        
+        return template_response("sso-error.html", request,
+            "SSO Login Failed - Charvak",
+            error="Authentication failed"
+        )
+    except Exception as e:
+        logger.error(f"SAML ACS error: {e}", exc_info=True)
+        return template_response("sso-error.html", request,
+            "SSO Error - Charvak",
+            error=str(e)
+        )
+
+@app.get("/login", response_class=HTMLResponse)
+async def login_page(request: Request):
+    """Unified login page with SSO options."""
+    providers = sso_engine.get_configured_providers()
+    return template_response("login.html", request, 
+        "Login - Charvak IT Consulting",
+        sso_providers=providers.get("providers", {}),
+        sso_enabled=providers.get("enabled", False)
+    )
 
 
 # ============================================================
