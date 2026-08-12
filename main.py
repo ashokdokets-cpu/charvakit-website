@@ -21,7 +21,7 @@ from api_sync import (
     handle_skill_sync, handle_get_status, api_health,
     ResumeSync, ApplicationSync, SkillGapSync, verify_api_key
 )
-from auth import register_user, login_user, logout_user, verify_token, get_current_user
+from auth import register_user, login_user, logout_user, logout_all_sessions, verify_token, get_current_user
 from database import db
 from global_config import detect_user_region, get_pricing, LANGUAGES, CURRENCIES
 from ai_service import (
@@ -124,6 +124,22 @@ class MaxBodySizeMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
 app.add_middleware(MaxBodySizeMiddleware)
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """Add security headers to all responses."""
+    
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://checkout.razorpay.com https://www.paypal.com 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; connect-src 'self' https://api.openai.com"
+        return response
+
+app.add_middleware(SecurityHeadersMiddleware)
 
 
 # ============================================================
@@ -886,6 +902,7 @@ async def api_register(data: RegisterRequest):
         )
 
 @app.post("/api/auth/login")
+@limiter.limit("5/minute")  # Prevent brute force
 async def api_login(data: LoginRequest):
     try:
         result = login_user(data.email, data.password)
@@ -905,6 +922,16 @@ async def api_logout(data: LogoutRequest):
     except Exception as e:
         logger.error(f"Logout failed: {str(e)}")
         return JSONResponse({"status": "success", "message": "Logged out"})
+
+@app.post("/api/auth/logout-all")
+async def api_logout_all(request: Request):
+    """Logout from all sessions."""
+    try:
+        user = require_auth(request)
+        result = logout_all_sessions(user["user_id"])
+        return JSONResponse(result)
+    except HTTPException:
+        return JSONResponse({"status": "error", "message": "Not authenticated"}, status_code=401)
 
 @app.get("/api/auth/me")
 async def api_me(request: Request):
@@ -2825,3 +2852,4 @@ async def global_exception_handler(request: Request, exc: Exception):
         status_code=500,
         content={"status": "error", "message": "An unexpected error occurred. Our team has been notified."}
     )
+
