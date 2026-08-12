@@ -694,7 +694,7 @@ async def submit_referral(request: Request):
     return template_response("submit-referral.html", request, "Submit Referral - Charvak")
 
 @app.get("/training-engine", response_class=HTMLResponse)
-async def training_engine(request: Request):
+async def training_engine_page(request: Request):
     return template_response("training-engine.html", request, "Training Engine - Charvak Career Engine")
 
 @app.get("/online-classroom", response_class=HTMLResponse)
