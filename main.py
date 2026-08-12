@@ -902,8 +902,8 @@ async def api_register(data: RegisterRequest):
         )
 
 @app.post("/api/auth/login")
-@limiter.limit("5/minute")  # Prevent brute force
-async def api_login(data: LoginRequest):
+@limiter.limit("5/minute")
+async def api_login(request: Request, data: LoginRequest):
     try:
         result = login_user(data.email, data.password)
         return JSONResponse(result)
