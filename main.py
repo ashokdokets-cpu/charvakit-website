@@ -40,7 +40,8 @@ from na_module.charvak_vms import charvak_vms, RequisitionStatus
 from na_module.revenue_engine import revenue_engine, SubscriptionTier
 from tools_ai_backend import (
     resume_roast_ai, ghost_bounty_ai, role_mirror_ai, offer_matcher_ai,
-    ghost_job_ai, counter_offer_ai, pitch_roast_ai, ref_check_ai
+    ghost_job_ai, counter_offer_ai, pitch_roast_ai, ref_check_ai,
+    bounty_swap_ai, micro_trial_ai, ref_swap_ai, ghosted_tracker_ai
 )
 from invoice_engine import invoice_manager, InvoiceStatus
 from payment_engine import payment_engine
