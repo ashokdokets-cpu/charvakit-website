@@ -2413,12 +2413,12 @@ async def post_course_api(request: Request):
         return {"status": "error", "message": str(e)}
 
 @app.get("/api/training/courses")
-async def get_courses(category: str = None):
+async def api_get_training_courses(category: str = None):
     """Get published courses."""
     return training_engine.get_courses(category)
 
 @app.get("/api/training/course/{course_id}")
-async def get_course(course_id: str):
+async def api_get_training_course(course_id: str):
     """Get course details."""
     return training_engine.get_course(course_id)
 
