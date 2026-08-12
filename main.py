@@ -2759,6 +2759,11 @@ async def candidate_signup_page(request: Request):
     """Candidate registration page."""
     return template_response("candidate-signup.html", request, "Join Charvak Talent Pool - Free")
 
+@app.get("/demos", response_class=HTMLResponse)
+async def demos_page(request: Request):
+    """Product demo videos page."""
+    return template_response("demos.html", request, "Product Demos - Charvak IT Consulting")
+
 # ============================================================
 # UTILITY ENDPOINTS
 # ============================================================
