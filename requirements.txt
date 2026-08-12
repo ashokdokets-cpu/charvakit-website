@@ -11,3 +11,5 @@ psycopg2-binary>=2.9.0
 slowapi>=0.1.9
 python3-saml>=1.16.0
 cryptography>=50.0.0
+python3-saml>=1.16.0
+cryptography>=50.0.0
