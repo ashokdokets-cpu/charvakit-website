@@ -52,6 +52,8 @@ from blog_engine import blog_engine
 from chatbot_engine import chatbot_engine
 from sso_engine import sso_engine
 from micro_internship_engine import micro_internship_engine
+from training_engine import training_engine
+from interview_prep_engine import interview_prep_engine
 
 
 # ============================================================
@@ -2375,6 +2377,83 @@ async def login_page(request: Request):
 async def client_dashboard_page(request: Request):
     """Client dashboard for micro-internships."""
     return template_response("client-dashboard.html", request, "Client Dashboard - Charvak Micro-Internships")
+
+# ============================================================
+# TRAINING ENGINE API ENDPOINTS
+# ============================================================
+
+@app.post("/api/training/post-course")
+@limiter.limit("10/minute")
+async def post_course_api(request: Request):
+    """Post a new course."""
+    try:
+        data = await request.json()
+        result = training_engine.post_course(data)
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.get("/api/training/courses")
+async def get_courses(category: str = None):
+    """Get published courses."""
+    return training_engine.get_courses(category)
+
+@app.get("/api/training/course/{course_id}")
+async def get_course(course_id: str):
+    """Get course details."""
+    return training_engine.get_course(course_id)
+
+@app.post("/api/training/enroll")
+@limiter.limit("20/minute")
+async def enroll_student(request: Request):
+    """Enroll in a course."""
+    try:
+        data = await request.json()
+        result = training_engine.enroll_student(data)
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.get("/api/training/trainer/{email}")
+async def trainer_dashboard(email: str):
+    """Get trainer dashboard."""
+    return training_engine.get_trainer_dashboard(email)
+
+@app.get("/api/training/student/{email}")
+async def student_dashboard(email: str):
+    """Get student dashboard."""
+    return training_engine.get_student_dashboard(email)
+
+# ============================================================
+# INTERVIEW PREP API ENDPOINTS
+# ============================================================
+
+@app.post("/api/interview-prep/start")
+@limiter.limit("10/minute")
+async def start_interview_prep(request: Request):
+    """Start an interview prep session."""
+    try:
+        data = await request.json()
+        result = interview_prep_engine.start_session(data)
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.post("/api/interview-prep/submit")
+@limiter.limit("20/minute")
+async def submit_answer(request: Request):
+    """Submit an answer for scoring."""
+    try:
+        data = await request.json()
+        result = interview_prep_engine.submit_answer(data)
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.get("/api/interview-prep/session/{session_id}")
+async def get_prep_session(session_id: str):
+    """Get session details."""
+    return interview_prep_engine.get_session(session_id)
 
 # ============================================================
 # UTILITY ENDPOINTS
