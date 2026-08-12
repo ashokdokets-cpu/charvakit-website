@@ -55,6 +55,8 @@ from micro_internship_engine import micro_internship_engine
 from training_engine import training_engine
 from interview_prep_engine import interview_prep_engine
 from job_board_engine import job_board_engine
+from products_engine import products_engine
+
 
 
 # ============================================================
@@ -2473,6 +2475,77 @@ async def submit_answer(request: Request):
 async def get_prep_session(session_id: str):
     """Get session details."""
     return interview_prep_engine.get_session(session_id)
+
+# ============================================================
+# PRODUCTS API ENDPOINTS
+# ============================================================
+
+
+@app.post("/api/products/lock-in-breaker/audit")
+@limiter.limit("10/minute")
+async def api_lock_in_breaker(request: Request):
+    data = await request.json()
+    return products_engine.lock_in_breaker_audit(data)
+
+@app.post("/api/products/reverse-staffing/match")
+@limiter.limit("10/minute")
+async def api_reverse_staffing(request: Request):
+    data = await request.json()
+    return products_engine.reverse_staffing_match(data)
+
+@app.post("/api/products/auditbot/scan")
+@limiter.limit("10/minute")
+async def api_auditbot(request: Request):
+    data = await request.json()
+    return products_engine.auditbot_scan(data)
+
+@app.post("/api/products/skill-twin/assess")
+@limiter.limit("10/minute")
+async def api_skill_twin(request: Request):
+    data = await request.json()
+    return products_engine.skill_twin_assess(data)
+
+@app.post("/api/products/micro-squads/assemble")
+@limiter.limit("10/minute")
+async def api_micro_squads(request: Request):
+    data = await request.json()
+    return products_engine.micro_squads_assemble(data)
+
+@app.post("/api/products/agency-twin/automate")
+@limiter.limit("10/minute")
+async def api_agency_twin(request: Request):
+    data = await request.json()
+    return products_engine.agency_twin_automate(data)
+
+@app.post("/api/products/geo-compliance/check")
+@limiter.limit("10/minute")
+async def api_geo_compliance(request: Request):
+    data = await request.json()
+    return products_engine.geo_compliance_check(data)
+
+@app.post("/api/products/design-token/check")
+@limiter.limit("10/minute")
+async def api_design_token(request: Request):
+    data = await request.json()
+    return products_engine.design_token_check(data)
+
+@app.post("/api/products/silent-killer/monitor")
+@limiter.limit("10/minute")
+async def api_silent_killer(request: Request):
+    data = await request.json()
+    return products_engine.silent_killer_monitor(data)
+
+@app.post("/api/products/ai-slop/scan")
+@limiter.limit("10/minute")
+async def api_ai_slop(request: Request):
+    data = await request.json()
+    return products_engine.ai_slop_scan(data)
+
+@app.post("/api/products/developer-entropy/score")
+@limiter.limit("10/minute")
+async def api_developer_entropy(request: Request):
+    data = await request.json()
+    return products_engine.developer_entropy_score(data)
 
 # ============================================================
 # UTILITY ENDPOINTS
