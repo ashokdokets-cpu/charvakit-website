@@ -2657,6 +2657,48 @@ async def platform_stats():
     }
 
 # ============================================================
+# CAREER PROGRESS TRACKING
+# ============================================================
+
+@app.get("/api/career/progress/{email}")
+async def career_progress(email: str):
+    """Track candidate's progress through the career engine."""
+    try:
+        progress = {
+            "email": email,
+            "steps": {
+                "1_skill_check": {
+                    "completed": bool(badge_engine.get_user_badges(email).get("count", 0) > 0),
+                    "link": "/skill-check"
+                },
+                "2_micro_internship": {
+                    "completed": False,  # Would check micro-internship applications
+                    "link": "/micro-internship"
+                },
+                "3_badge": {
+                    "completed": bool(badge_engine.get_user_badges(email).get("count", 0) > 0),
+                    "link": "/badge"
+                },
+                "4_training": {
+                    "completed": len(training_engine.get_student_dashboard(email).get("enrollments", [])) > 0,
+                    "link": "/training-engine"
+                },
+                "5_job_applied": {
+                    "completed": len([a for a in job_board_engine.get_applications() if a.get("user_id") == email]) > 0,
+                    "link": "/job-board"
+                }
+            },
+            "badges_earned": badge_engine.get_user_badges(email).get("count", 0),
+            "courses_enrolled": len(training_engine.get_student_dashboard(email).get("enrollments", [])),
+            "jobs_applied": len([a for a in job_board_engine.get_applications() if a.get("user_id") == email]),
+            "verification_status": kyc_engine.is_user_verified(email),
+            "next_step": "Take your free Skill Check" if not badge_engine.get_user_badges(email).get("count") else "Apply to matched jobs"
+        }
+        return {"status": "success", "progress": progress}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+# ============================================================
 # UTILITY ENDPOINTS
 # ============================================================
 
