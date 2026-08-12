@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}SLA & Uptime - Charvak IT Consulting{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4 text-center">
+        <h1 class="display-4 fw-bold">Service Level Agreement</h1>
+        <p class="lead">Our commitment to reliability and transparency</p>
+    </div>
+</div>
+<div class="container py-5">
+    <div class="row g-4">
+        <div class="col-md-4"><div class="card h-100 p-4 text-center border-0 shadow-sm"><h2 class="text-primary">99.9%</h2><p>Uptime Guarantee</p><small class="text-muted">Monitored 24/7 by UptimeRobot</small></div></div>
+        <div class="col-md-4"><div class="card h-100 p-4 text-center border-0 shadow-sm"><h2 class="text-primary">< 4hr</h2><p>Response Time</p><small class="text-muted">Critical issues addressed within 4 hours</small></div></div>
+        <div class="col-md-4"><div class="card h-100 p-4 text-center border-0 shadow-sm"><h2 class="text-primary">24hr</h2><p>Resolution Time</p><small class="text-muted">Standard issues resolved within 24 hours</small></div></div>
+    </div>
+    <div class="mt-5">
+        <h3>What's Covered</h3>
+        <table class="table"><thead><tr><th>Service</th><th>Uptime</th><th>Support</th></tr></thead>
+        <tbody>
+            <tr><td>AI Tools Suite</td><td>99.9%</td><td>Email + Chat</td></tr>
+            <tr><td>NA Module (VMS)</td><td>99.9%</td><td>Priority Email</td></tr>
+            <tr><td>Career Engine</td><td>99.5%</td><td>Email + Chat</td></tr>
+            <tr><td>Escrow (Dokets VouchAI)</td><td>99.99%</td><td>24/7 Priority</td></tr>
+        </tbody></table>
+    </div>
+    <div class="text-center mt-4"><p>Current Status: <span class="badge bg-success">Operational</span></p><a href="/contact" class="btn btn-primary">Report an Issue</a></div>
+</div>
+{% endblock %}

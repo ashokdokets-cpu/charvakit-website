@@ -2187,6 +2187,16 @@ async def get_faqs():
     """Get all FAQs."""
     return chatbot_engine.get_faqs()
 
+@app.get("/sla", response_class=HTMLResponse)
+async def sla_page(request: Request):
+    """Public SLA & Uptime page."""
+    return template_response("sla.html", request, "SLA & Uptime - Charvak IT Consulting")
+
+@app.get("/help", response_class=HTMLResponse)
+async def help_center(request: Request):
+    """Help & Support Center."""
+    return template_response("help.html", request, "Help Center - Charvak IT Consulting")
+
 
 # ============================================================
 # UTILITY ENDPOINTS

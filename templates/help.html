@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Help Center - Charvak IT Consulting{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4 text-center"><h1 class="display-4 fw-bold">Help Center</h1><p class="lead">How can we help you today?</p></div>
+</div>
+<div class="container py-5">
+    <div class="row g-4">
+        <div class="col-md-4"><div class="card h-100 p-4"><h5>📧 Email Support</h5><p>hr@charvakit.com</p><small class="text-muted">Response within 24 hours</small></div></div>
+        <div class="col-md-4"><div class="card h-100 p-4"><h5>📞 Phone</h5><p>+91 799 7871 701</p><small class="text-muted">Mon-Sat, 10AM-7PM IST</small></div></div>
+        <div class="col-md-4"><div class="card h-100 p-4"><h5>💬 Live Chat</h5><p>AI Assistant available 24/7</p><small class="text-muted">Click the chat icon</small></div></div>
+    </div>
+    <h4 class="mt-5">Frequently Asked Questions</h4>
+    <div class="accordion mt-3" id="faqAccordion">
+        <div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button" data-bs-toggle="collapse" data-bs-target="#faq1">What services does Charvak offer?</button></h2><div id="faq1" class="accordion-collapse collapse show"><div class="accordion-body">IT staffing, AI tools, web design, NA bench staffing with visa handling, and escrow payments.</div></div></div>
+        <div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#faq2">How do I get a verified badge?</button></h2><div id="faq2" class="accordion-collapse collapse"><div class="accordion-body">Take the Skill-Twin assessment at /skill-twin and earn your verified badge.</div></div></div>
+        <div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#faq3">What payment methods do you accept?</button></h2><div id="faq3" class="accordion-collapse collapse"><div class="accordion-body">Razorpay (India), PayPal (Global), and UPI. Escrow protected via Dokets VouchAI.</div></div></div>
+    </div>
+</div>
+{% endblock %}
