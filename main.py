@@ -2698,6 +2698,11 @@ async def career_progress(email: str):
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
+@app.get("/services/web-design/proposal", response_class=HTMLResponse)
+async def web_design_proposal(request: Request):
+    """Web design proposal page."""
+    return template_response("web-design-proposal.html", request, "Get a Web Design Proposal - Charvak")
+
 # ============================================================
 # UTILITY ENDPOINTS
 # ============================================================

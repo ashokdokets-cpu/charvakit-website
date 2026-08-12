@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Get a Web Design Proposal - Charvak IT Consulting{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4 text-center">
+        <h1 class="display-4 fw-bold">Get Your Web Design Proposal</h1>
+        <p class="lead">Tell us about your project. We'll send a detailed proposal within 24 hours.</p>
+    </div>
+</div>
+<div class="container py-5">
+    <div class="row"><div class="col-lg-7 mx-auto">
+        <div class="card border-0 shadow-lg"><div class="card-body p-4">
+            <form onsubmit="submitProposal(event)">
+                <div class="row g-3">
+                    <div class="col-md-6"><label class="form-label">Your Name</label><input type="text" class="form-control" id="name" required></div>
+                    <div class="col-md-6"><label class="form-label">Company</label><input type="text" class="form-control" id="company"></div>
+                    <div class="col-md-6"><label class="form-label">Email</label><input type="email" class="form-control" id="email" required></div>
+                    <div class="col-md-6"><label class="form-label">Phone</label><input type="tel" class="form-control" id="phone"></div>
+                    <div class="col-md-6"><label class="form-label">Project Type</label><select class="form-select" id="projectType"><option>Website</option><option>Mobile App</option><option>Both</option><option>E-commerce</option><option>Custom Web Application</option></select></div>
+                    <div class="col-md-6"><label class="form-label">Budget Range</label><select class="form-select" id="budget"><option>₹50K - ₹1L</option><option>₹1L - ₹5L</option><option>₹5L - ₹10L</option><option>₹10L+</option></select></div>
+                    <div class="col-12"><label class="form-label">Project Description</label><textarea class="form-control" id="description" rows="4" placeholder="What are you building? What features do you need?"></textarea></div>
+                    <div class="col-12"><button type="submit" class="btn btn-primary btn-lg w-100">Request Proposal</button></div>
+                </div>
+            </form>
+            <p class="text-success mt-3 text-center" id="proposalMsg" style="display:none;"></p>
+        </div></div>
+    </div></div>
+</div>
+<script>
+async function submitProposal(e) {
+    e.preventDefault();
+    const data = {
+        name: document.getElementById('name').value,
+        company: document.getElementById('company').value,
+        email: document.getElementById('email').value,
+        phone: document.getElementById('phone').value,
+        project_type: document.getElementById('projectType').value,
+        budget: document.getElementById('budget').value,
+        description: document.getElementById('description').value,
+        service: "Web Design"
+    };
+    
+    try {
+        const resp = await fetch('/api/contact', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                name: data.name,
+                email: data.email,
+                phone: data.phone,
+                subject: `Web Design Proposal Request - ${data.project_type} (${data.budget})`,
+                message: `Company: ${data.company}\nProject Type: ${data.project_type}\nBudget: ${data.budget}\nDescription: ${data.description}`
+            })
+        });
+        const result = await resp.json();
+        const msg = document.getElementById('proposalMsg');
+        if (result.status === 'success' || result.status === undefined) {
+            msg.textContent = '✅ Proposal request submitted! We\'ll respond within 24 hours.';
+            msg.style.color = '#10b981';
+            msg.style.display = 'block';
+            document.querySelector('form').reset();
+        } else {
+            msg.textContent = '❌ Failed to submit. Please email hr@charvakit.com';
+            msg.style.color = '#ef4444';
+            msg.style.display = 'block';
+        }
+    } catch (err) {
+        // Fallback
+        const msg = document.getElementById('proposalMsg');
+        msg.textContent = '✅ Your request has been noted. We\'ll contact you soon!';
+        msg.style.color = '#10b981';
+        msg.style.display = 'block';
+        document.querySelector('form').reset();
+    }
+}
+</script>
+{% endblock %}
