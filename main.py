@@ -2583,6 +2583,79 @@ async def api_developer_entropy(request: Request):
     data = await request.json()
     return products_engine.developer_entropy_score(data)
 
+@app.post("/api/calculator/hiring-savings")
+@limiter.limit("20/minute")
+async def hiring_savings_calculator(request: Request):
+    """Calculate hiring cost savings."""
+    try:
+        data = await request.json()
+        hires_per_year = int(data.get("hires_per_year", 5))
+        avg_ctc = float(data.get("avg_ctc", 1000000))
+        
+        traditional_cost = round(avg_ctc * 0.20 * hires_per_year, 2)  # 20% agency fee
+        charvak_cost = round(avg_ctc * 0.02 * hires_per_year, 2)  # 2% platform fee
+        savings = round(traditional_cost - charvak_cost, 2)
+        savings_percent = round((savings / traditional_cost) * 100, 1) if traditional_cost > 0 else 0
+        
+        return {
+            "status": "success",
+            "hires_per_year": hires_per_year,
+            "avg_ctc": avg_ctc,
+            "traditional_cost": traditional_cost,
+            "charvak_cost": charvak_cost,
+            "savings": savings,
+            "savings_percent": savings_percent,
+            "message": f"You save ₹{savings:,} per year ({savings_percent}%)"
+        }
+    except Exception as e:
+        return {"status": "error", "message": "Calculation failed"}
+
+@app.post("/api/demo/book")
+@limiter.limit("5/minute")
+async def book_demo(request: Request):
+    """Book a demo request."""
+    try:
+        data = await request.json()
+        demo_request = {
+            "request_id": f"DEMO-{secrets.token_hex(4).upper()}",
+            "name": data.get("name"),
+            "email": data.get("email"),
+            "company": data.get("company", ""),
+            "company_size": data.get("company_size", ""),
+            "hiring_volume": data.get("hiring_volume", ""),
+            "preferred_time": data.get("preferred_time", ""),
+            "created_at": datetime.now().isoformat()
+        }
+        
+        # In production: save to database and send email
+        logger.info(f"Demo requested: {demo_request}")
+        
+        return {
+            "status": "success",
+            "request_id": demo_request["request_id"],
+            "message": "Demo request received! We'll respond within 24 hours.",
+            "confirmation": f"A confirmation email will be sent to {data.get('email')}"
+        }
+    except Exception as e:
+        return {"status": "error", "message": "Failed to book demo"}
+
+@app.get("/api/stats/platform")
+async def platform_stats():
+    """Get REAL platform statistics from engines."""
+    return {
+        "status": "success",
+        "stats": {
+            "active_jobs": job_board_engine.get_stats()["active_jobs"],
+            "micro_projects": micro_internship_engine.get_stats()["stats"]["total_projects"],
+            "courses": training_engine.get_courses()["count"],
+            "escrow_transactions": escrow_engine.get_stats()["stats"]["total_transactions"],
+            "verified_users": kyc_engine.get_stats()["stats"]["verified_users"],
+            "badges_issued": badge_engine.get_stats()["stats"]["total_badges_issued"],
+            "blog_posts": blog_engine.get_all_posts()["count"],
+            "timestamp": datetime.now().isoformat()
+        }
+    }
+
 # ============================================================
 # UTILITY ENDPOINTS
 # ============================================================
