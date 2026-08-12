@@ -2754,6 +2754,11 @@ async def candidate_pool_stats():
     """Get candidate pool statistics."""
     return candidate_engine.get_pool_stats()
 
+@app.get("/candidate-signup", response_class=HTMLResponse)
+async def candidate_signup_page(request: Request):
+    """Candidate registration page."""
+    return template_response("candidate-signup.html", request, "Join Charvak Talent Pool - Free")
+
 # ============================================================
 # UTILITY ENDPOINTS
 # ============================================================

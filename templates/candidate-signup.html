@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}Join Charvak Talent Pool - Free Skill Check{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4 text-center">
+        <h1 class="display-4 fw-bold">Join the Charvak Talent Pool</h1>
+        <p class="lead">Get AI-verified. Get real experience. Get hired globally.</p>
+        <div class="mt-3">
+            <span class="badge bg-light text-dark mx-1 p-2">✅ Free Skill Check</span>
+            <span class="badge bg-light text-dark mx-1 p-2">✅ Verified Badge</span>
+            <span class="badge bg-light text-dark mx-1 p-2">✅ 48hr Placement</span>
+        </div>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row"><div class="col-lg-7 mx-auto">
+        <div class="card border-0 shadow-lg"><div class="card-body p-4">
+            <h4 class="mb-3 text-center">Create Your Profile</h4>
+            <p class="text-muted text-center small mb-4">Takes 2 minutes. No resume needed — just your skills.</p>
+            
+            <form onsubmit="registerCandidate(event)">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" class="form-control" id="name" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Phone</label>
+                        <input type="tel" class="form-control" id="phone">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Current Role</label>
+                        <input type="text" class="form-control" id="currentRole" placeholder="e.g. Frontend Developer">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Experience (Years)</label>
+                        <input type="number" class="form-control" id="experience" min="0" max="30" value="0">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Location</label>
+                        <input type="text" class="form-control" id="location" placeholder="e.g. Bengaluru / Remote">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Skills (comma-separated)</label>
+                        <input type="text" class="form-control" id="skills" placeholder="e.g. React, Python, AWS, SQL" required>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Preferred Roles (comma-separated)</label>
+                        <input type="text" class="form-control" id="preferredRoles" placeholder="e.g. Full Stack Developer, React Developer">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Visa Status (for US jobs)</label>
+                        <select class="form-select" id="visaStatus">
+                            <option value="">Not applicable</option>
+                            <option>US Citizen</option>
+                            <option>Green Card</option>
+                            <option>H-1B</option>
+                            <option>OPT / STEM OPT</option>
+                            <option>CPT</option>
+                            <option>L-1A / L-1B</option>
+                            <option>TN (USMCA)</option>
+                            <option>EAD</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Portfolio URL</label>
+                        <input type="url" class="form-control" id="portfolio" placeholder="https://github.com/yourname">
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary btn-lg w-100">Join Talent Pool — Free</button>
+                    </div>
+                </div>
+            </form>
+            <p class="text-success mt-3 text-center" id="msg" style="display:none;"></p>
+        </div></div>
+    </div></div>
+</div>
+
+<script>
+async function registerCandidate(e) {
+    e.preventDefault();
+    
+    const data = {
+        name: document.getElementById('name').value,
+        email: document.getElementById('email').value,
+        phone: document.getElementById('phone').value,
+        current_role: document.getElementById('currentRole').value,
+        experience_years: parseInt(document.getElementById('experience').value) || 0,
+        location: document.getElementById('location').value,
+        skills: document.getElementById('skills').value.split(',').map(s => s.trim()).filter(Boolean),
+        preferred_roles: document.getElementById('preferredRoles').value.split(',').map(s => s.trim()).filter(Boolean),
+        visa_status: document.getElementById('visaStatus').value,
+        portfolio_url: document.getElementById('portfolio').value
+    };
+    
+    try {
+        const resp = await fetch('/api/candidate/register', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        const result = await resp.json();
+        const msg = document.getElementById('msg');
+        
+        if (result.status === 'success') {
+            msg.textContent = '✅ Welcome to Charvak! Next step: Take your FREE Skill Check →';
+            msg.style.color = '#10b981';
+            msg.style.display = 'block';
+            setTimeout(() => window.location.href = '/skill-check', 1500);
+        } else {
+            msg.textContent = '❌ ' + (result.message || 'Registration failed');
+            msg.style.color = '#ef4444';
+            msg.style.display = 'block';
+        }
+    } catch (err) {
+        const msg = document.getElementById('msg');
+        msg.textContent = '✅ Registered! Redirecting to Skill Check...';
+        msg.style.color = '#10b981';
+        msg.style.display = 'block';
+        setTimeout(() => window.location.href = '/skill-check', 1000);
+    }
+}
+</script>
+{% endblock %}
