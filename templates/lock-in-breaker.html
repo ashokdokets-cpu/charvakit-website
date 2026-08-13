@@ -1,5 +1,6 @@
 {% extends "base.html" %}
-{% block title %}Vendor Lock-In Breaker - Charvak IT Consulting Pvt Ltd{% endblock %}
+{% block title %}Vendor Lock-In Breaker - Charvak IT Consulting Pvt Ltd{% include 'includes/premium-upsell.html' %}
+{% endblock %}
 {% block content %}
 <div class="page-hero bg-gradient-primary text-white py-5">
     <div class="container py-4">
@@ -65,4 +66,5 @@ function runDemo(){
     <a href="/cloud-waste-calculator" class="btn btn-primary btn-lg me-2">Free Cloud Waste Calculator</a>
     <a href="/lock-in-breaker-pricing" class="btn btn-outline-primary btn-lg">View Plans</a>
 </div>
+{% include 'includes/premium-upsell.html' %}
 {% endblock %}

@@ -1,5 +1,6 @@
 {% extends "base.html" %}
-{% block title %}AuditBot - Charvak IT Consulting Pvt Ltd{% endblock %}
+{% block title %}AuditBot - Charvak IT Consulting Pvt Ltd{% include 'includes/premium-upsell.html' %}
+{% endblock %}
 {% block content %}
 <div class="page-hero bg-gradient-primary text-white py-5">
     <div class="container py-4">
@@ -55,4 +56,5 @@ function auditSubscribe(e){
     }
 }
 </script>
+{% include 'includes/premium-upsell.html' %}
 {% endblock %}

@@ -1,5 +1,6 @@
 {% extends "base.html" %}
-{% block title %}Legacy-Shift Archaeologist - Charvak{% endblock %}
+{% block title %}Legacy-Shift Archaeologist - Charvak{% include 'includes/premium-upsell.html' %}
+{% endblock %}
 {% block content %}
 <div class="page-hero bg-gradient-primary text-white py-5">
     <div class="container py-4">
@@ -45,4 +46,5 @@ function legacyMigrate(e){
     }
 }
 </script>
+{% include 'includes/premium-upsell.html' %}
 {% endblock %}
