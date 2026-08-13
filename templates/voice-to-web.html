@@ -1,5 +1,6 @@
 {% extends "base.html" %}
-{% block title %}Voice-to-Web Engine - Charvak{% endblock %}
+{% block title %}Voice-to-Web Engine - Charvak{% include 'includes/premium-upsell.html' %}
+{% endblock %}
 {% block content %}
 <div class="page-hero bg-gradient-primary text-white py-5">
     <div class="container py-4">
@@ -106,4 +107,5 @@ function getPro(e){
     }
 }
 </script>
+{% include 'includes/premium-upsell.html' %}
 {% endblock %}
