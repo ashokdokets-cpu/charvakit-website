@@ -28,4 +28,5 @@
 function calculateBurnout(){const p=parseInt(document.getElementById('projects').value)||5;const h=parseInt(document.getElementById('adminHours').value)||4;const r=parseInt(document.getElementById('hourlyRate').value)||1500;const annual=p*h*12;const revenue=annual*r;document.getElementById('lostHours').textContent=annual.toLocaleString()+' hrs';document.getElementById('lostRevenue').textContent='₹'+revenue.toLocaleString();document.getElementById('workWeeks').textContent=Math.round(annual/40);document.getElementById('resultCard').classList.remove('d-none');document.getElementById('resultCard').scrollIntoView({behavior:'smooth'});}
 function shareBurnout(){window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('I lose '+document.getElementById('lostHours').textContent+'/year to admin! Check your burnout: https://www.charvakit.com/burnout-calculator'));}
 </script>
+{% include 'includes/premium-upsell.html' %}
 {% endblock %}

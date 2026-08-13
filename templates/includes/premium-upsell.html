@@ -1,0 +1,20 @@
+<div class="container py-3">
+    <div class="card border-0 shadow-sm bg-light">
+        <div class="card-body text-center p-4">
+            <h5>🔒 Get the Complete Report</h5>
+            <p class="text-muted mb-2">Your free result is above. Unlock the full analysis with actionable recommendations.</p>
+            <button class="btn btn-primary btn-lg" onclick="unlockPremium()">Unlock Full Report — ₹199</button>
+            <p class="small text-muted mt-2">Instant access • Exportable PDF • Action plan included</p>
+        </div>
+    </div>
+</div>
+
+<script>
+function unlockPremium() {
+    processToolPayment(199, 'Premium Report Unlock', function(success) {
+        if (success) {
+            alert('✅ Premium report unlocked! Check your email for the full PDF.');
+        }
+    });
+}
+</script>

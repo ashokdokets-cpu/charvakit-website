@@ -32,4 +32,5 @@
 function runTimeMachine(){const url=document.getElementById('siteUrl').value;if(!url)return alert('Enter a URL!');document.getElementById('beforeScore').textContent=Math.floor(Math.random()*30)+20+'/100';document.getElementById('afterScore').textContent=Math.floor(Math.random()*15)+85+'/100';document.getElementById('secIssues').textContent=Math.floor(Math.random()*20)+10;document.getElementById('loadTime').textContent=(Math.random()*4+0.5).toFixed(1)+'s → 0.'+Math.floor(Math.random()*5)+'s';document.getElementById('mobileScore').textContent=Math.floor(Math.random()*30)+30+'→'+(Math.floor(Math.random()*10)+90);document.getElementById('resultCard').classList.remove('d-none');document.getElementById('resultCard').scrollIntoView({behavior:'smooth'});}
 function shareTimeMachine(){window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('I just time-traveled my old website with Charvak Legacy-Shift! See the transformation: https://www.charvakit.com/time-machine-checker'));}
 </script>
+{% include 'includes/premium-upsell.html' %}
 {% endblock %}
