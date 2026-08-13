@@ -97,6 +97,27 @@ async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
         }
     )
 
+# Global rate limit for all page views
+@app.middleware("http")
+async def global_rate_limit(request: Request, call_next):
+    from slowapi.util import get_remote_address
+    client_ip = get_remote_address(request)
+    if not hasattr(app.state, "view_counts"):
+        app.state.view_counts = {}
+    
+    counts = app.state.view_counts
+    now = datetime.now()
+    if client_ip in counts:
+        if (now - counts[client_ip]["timestamp"]).seconds < 60:
+            counts[client_ip]["count"] += 1
+            if counts[client_ip]["count"] > 60:
+                return JSONResponse({"error": "Too many requests"}, status_code=429)
+        else:
+            counts[client_ip] = {"count": 1, "timestamp": now}
+    else:
+        counts[client_ip] = {"count": 1, "timestamp": now}
+    
+    return await call_next(request)
 
 # ============================================================
 # REQUEST SIZE LIMITING MIDDLEWARE
