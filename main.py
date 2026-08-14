@@ -61,6 +61,7 @@ from candidate_engine import candidate_engine
 from brand_engine import brand_engine
 from events_engine import events_engine
 from messaging_engine import messaging_engine
+from email_engine import email_engine
 
 
 
@@ -1076,6 +1077,16 @@ async def api_apply_job(request: Request):
     try:
         data = await request.json()
         result = job_board_engine.apply_to_job(data)
+        
+        # Notify candidate via email (if email provided)
+        if result["status"] == "success" and data.get("email"):
+            email_engine.notify_application_received(
+                candidate_email=data.get("email", ""),
+                candidate_name=data.get("name", ""),
+                job_title=data.get("job_title", "the position"),
+                company=data.get("company", "the company")
+            )
+        
         return result
     except Exception as e:
         logger.error(f"Job apply failed: {str(e)}")
@@ -2825,6 +2836,16 @@ async def send_message(request: Request):
     try:
         data = await request.json()
         result = messaging_engine.send_message(data)
+        
+        # Notify recipient via email (if email known)
+        if result["status"] == "success" and data.get("recipient_email"):
+            email_engine.notify_new_message(
+                recipient_email=data.get("recipient_email", ""),
+                recipient_name=data.get("recipient_name", ""),
+                sender_name=data.get("sender_name", "Someone"),
+                message_preview=data.get("body", "")
+            )
+        
         return result
     except Exception as e:
         return {"status": "error", "message": str(e)}
@@ -2949,6 +2970,30 @@ async def promote_job(request: Request):
     try:
         data = await request.json()
         result = brand_engine.promote_job(data.get("job_id"), data.get("company_id"))
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+# ============================================================
+# EMAIL NOTIFICATION API ENDPOINTS
+# ============================================================
+
+@app.get("/api/email/stats")
+async def email_stats():
+    """Get email engine status."""
+    return email_engine.get_stats()
+
+@app.post("/api/email/test")
+@limiter.limit("5/minute")
+async def test_email(request: Request):
+    """Send a test email."""
+    try:
+        data = await request.json()
+        result = email_engine.send_email(
+            to_email=data.get("email", "hr@charvakit.com"),
+            subject="Charvak Email Test",
+            body="This is a test email from Charvak IT Consulting."
+        )
         return result
     except Exception as e:
         return {"status": "error", "message": str(e)}
