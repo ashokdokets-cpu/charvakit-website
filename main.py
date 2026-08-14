@@ -2870,6 +2870,11 @@ async def get_events(event_type: str = None):
     """Get upcoming events."""
     return events_engine.get_events(event_type)
 
+@app.get("/api/events/stats")
+async def events_stats():
+    """Get event statistics."""
+    return events_engine.get_stats()
+
 @app.get("/api/events/{event_id}")
 async def get_event(event_id: str):
     """Get event details."""
@@ -2896,12 +2901,6 @@ async def check_in_event(request: Request):
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
-@app.get("/api/events/stats")
-async def events_stats():
-    """Get event statistics."""
-    return events_engine.get_stats()
-
-
 # ============================================================
 # BRAND API ENDPOINTS
 # ============================================================
@@ -2921,6 +2920,11 @@ async def create_brand_page(request: Request):
 async def get_all_brands():
     """Get all company brands."""
     return brand_engine.get_all_brands()
+
+@app.get("/api/brand/stats")
+async def brand_stats():
+    """Get brand statistics."""
+    return brand_engine.get_stats()
 
 @app.get("/api/brand/{brand_id}")
 async def get_brand(brand_id: str):
@@ -2948,11 +2952,6 @@ async def promote_job(request: Request):
         return result
     except Exception as e:
         return {"status": "error", "message": str(e)}
-
-@app.get("/api/brand/stats")
-async def brand_stats():
-    """Get brand statistics."""
-    return brand_engine.get_stats()
 
 # ============================================================
 # UTILITY ENDPOINTS
