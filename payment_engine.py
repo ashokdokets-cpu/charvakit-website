@@ -41,13 +41,15 @@ class PaymentEngine:
         else:
             logger.warning("⚠️ Payment Engine: TEST mode — no real charges")
     
-    def is_ready(self) -> Dict:
+        def is_ready(self) -> Dict:
         """Check which payment methods are configured."""
         return {
             "razorpay": bool(self.razorpay_key_id and self.razorpay_key_secret),
             "paypal": bool(self.paypal_client_id and self.paypal_client_secret),
             "upi": bool(self.upi_id),
-            "mode": self.mode
+            "mode": self.mode,
+            "paypal_client_id": self.paypal_client_id,
+            "razorpay_key_id": self.razorpay_key_id
         }
     
     # ============================================================

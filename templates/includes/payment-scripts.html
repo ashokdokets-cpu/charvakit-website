@@ -1,7 +1,18 @@
 <!-- Razorpay -->
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <!-- PayPal -->
-<script src="https://www.paypal.com/sdk/js?client-id={{ PAYPAL_CLIENT_ID }}&currency=INR"></script>
+<script>
+// Dynamically load PayPal SDK with client ID from backend
+fetch('/api/payment/status')
+    .then(res => res.json())
+    .then(data => {
+        if (data.paypal && data.mode === 'live') {
+            const script = document.createElement('script');
+            script.src = 'https://www.paypal.com/sdk/js?client-id=' + data.paypal_client_id + '&currency=INR';
+            document.head.appendChild(script);
+        }
+    });
+</script>
 
 <!-- UPI Payment -->
 <div id="upiSection" style="display:none;">
