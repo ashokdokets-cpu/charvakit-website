@@ -39,4 +39,43 @@ fetch('/api/messaging/inbox/' + userId)
         }
     });
 </script>
+<!-- COMPOSE MESSAGE -->
+<div class="container py-4">
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <h5>Send a Message</h5>
+            <form onsubmit="sendMessage(event)">
+                <div class="row g-3">
+                    <div class="col-md-6"><input type="text" class="form-control" id="recipientId" placeholder="Recipient ID (e.g. CAND-001)" required></div>
+                    <div class="col-md-6"><input type="text" class="form-control" id="subject" placeholder="Subject"></div>
+                    <div class="col-12"><textarea class="form-control" id="messageBody" rows="3" placeholder="Type your message..." required></textarea></div>
+                    <div class="col-12"><button class="btn btn-primary" type="submit">Send Message</button></div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+async function sendMessage(e) {
+    e.preventDefault();
+    const userId = localStorage.getItem('charvak_user_id') || 'CAND-001';
+    const data = {
+        sender_id: userId,
+        sender_type: 'candidate',
+        recipient_id: document.getElementById('recipientId').value,
+        recipient_type: 'employer',
+        subject: document.getElementById('subject').value || 'New Message',
+        body: document.getElementById('messageBody').value
+    };
+    const resp = await fetch('/api/messaging/send', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    });
+    const result = await resp.json();
+    alert(result.message || 'Message sent!');
+    location.reload();
+}
+</script>
 {% endblock %}
