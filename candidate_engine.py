@@ -27,7 +27,7 @@ class CandidateEngine:
         self.skill_profiles = []
         logger.info("✅ Candidate Engine ready")
     
-        def register_candidate(self, data: Dict) -> Dict:
+    def register_candidate(self, data: Dict) -> Dict:
         """
         Register a new candidate.
         
@@ -122,7 +122,7 @@ class CandidateEngine:
             "message": "Skill score updated!"
         }
     
-        def search_candidates(self, filters: Dict = None) -> Dict:
+    def search_candidates(self, filters: Dict = None) -> Dict:
         """
         Advanced search with 50+ filter combinations.
         
