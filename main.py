@@ -3065,6 +3065,10 @@ async def create_team(request: Request):
     data = await request.json()
     return team_engine.create_team(data)
 
+@app.get("/api/team/stats")
+async def team_stats():
+    return team_engine.get_stats()
+
 @app.get("/api/team/{team_id}")
 async def get_team(team_id: str):
     return team_engine.get_team(team_id)
@@ -3074,10 +3078,6 @@ async def get_team(team_id: str):
 async def invite_member(request: Request):
     data = await request.json()
     return team_engine.invite_member(data)
-
-@app.get("/api/team/stats")
-async def team_stats():
-    return team_engine.get_stats()
 
 
 # ============================================================
