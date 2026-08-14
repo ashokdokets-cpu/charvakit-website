@@ -65,6 +65,7 @@ from email_engine import email_engine
 from university_engine import university_engine
 from ats_engine import ats_engine
 from team_engine import team_engine
+from enterprise_engine import enterprise_engine
 
 
 
@@ -3145,6 +3146,93 @@ async def ats_page(request: Request):
 @app.get("/university", response_class=HTMLResponse)
 async def university_page(request: Request):
     return template_response("university.html", request, "University Portal - Charvak IT Consulting")
+
+# ============================================================
+# ENTERPRISE API ENDPOINTS
+# ============================================================
+
+@app.post("/api/enterprise/salary/record")
+@limiter.limit("20/minute")
+async def record_salary(request: Request):
+    data = await request.json()
+    return enterprise_engine.record_salary(data)
+
+@app.get("/api/enterprise/salary/benchmarks")
+async def salary_benchmarks(university: str = None, major: str = None, industry: str = None):
+    filters = {}
+    if university: filters["university"] = university
+    if major: filters["major"] = major
+    if industry: filters["industry"] = industry
+    return enterprise_engine.get_salary_benchmarks(filters)
+
+@app.post("/api/enterprise/pathway/create")
+@limiter.limit("10/minute")
+async def create_pathway(request: Request):
+    data = await request.json()
+    return enterprise_engine.create_pathway(data)
+
+@app.post("/api/enterprise/resume/submit")
+@limiter.limit("20/minute")
+async def submit_resume(request: Request):
+    data = await request.json()
+    return enterprise_engine.submit_resume_for_review(data)
+
+@app.post("/api/enterprise/resume/review")
+@limiter.limit("20/minute")
+async def review_resume(request: Request):
+    data = await request.json()
+    return enterprise_engine.review_resume(data.get("review_id"), data.get("decision"), data.get("comments", ""))
+
+@app.get("/api/enterprise/resume/pending")
+async def pending_reviews():
+    return enterprise_engine.get_pending_reviews()
+
+@app.post("/api/enterprise/appointment/book")
+@limiter.limit("20/minute")
+async def book_appointment(request: Request):
+    data = await request.json()
+    return enterprise_engine.create_appointment(data)
+
+@app.get("/api/enterprise/appointments")
+async def get_appointments(advisor_id: str = None):
+    return enterprise_engine.get_appointments(advisor_id)
+
+@app.post("/api/enterprise/employer/tier")
+@limiter.limit("10/minute")
+async def set_tier(request: Request):
+    data = await request.json()
+    return enterprise_engine.set_employer_tier(data)
+
+@app.get("/api/enterprise/employers")
+async def get_employers(tier: str = None):
+    return enterprise_engine.get_employers_by_tier(tier)
+
+@app.post("/api/enterprise/resume-book/create")
+@limiter.limit("5/minute")
+async def create_resume_book(request: Request):
+    data = await request.json()
+    return enterprise_engine.create_resume_book(data)
+
+@app.post("/api/enterprise/survey/create")
+@limiter.limit("5/minute")
+async def create_survey(request: Request):
+    data = await request.json()
+    return enterprise_engine.create_survey(data)
+
+@app.post("/api/enterprise/kiosk/start")
+@limiter.limit("5/minute")
+async def start_kiosk(request: Request):
+    data = await request.json()
+    return enterprise_engine.start_kiosk(data)
+
+@app.post("/api/enterprise/kiosk/check-in")
+async def kiosk_check_in(request: Request):
+    data = await request.json()
+    return enterprise_engine.kiosk_check_in(data.get("kiosk_id"), data.get("student_id"))
+
+@app.get("/api/enterprise/stats")
+async def enterprise_stats():
+    return enterprise_engine.get_stats()
 
 # ============================================================
 # UTILITY ENDPOINTS
