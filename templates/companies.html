@@ -7,6 +7,26 @@
         <p class="lead">Explore employer brands and reviews</p>
     </div>
 </div>
+
+<!-- CREATE BRAND PAGE FORM -->
+<div class="container py-4">
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <h5>Create Your Brand Page</h5>
+            <form onsubmit="createBrand(event)">
+                <div class="row g-3">
+                    <div class="col-md-6"><input type="text" class="form-control" id="companyName" placeholder="Company Name" required></div>
+                    <div class="col-md-6"><input type="text" class="form-control" id="industry" placeholder="Industry" required></div>
+                    <div class="col-md-6"><input type="text" class="form-control" id="location" placeholder="Location"></div>
+                    <div class="col-md-6"><input type="text" class="form-control" id="size" placeholder="Company Size"></div>
+                    <div class="col-12"><textarea class="form-control" id="description" rows="2" placeholder="Brief description"></textarea></div>
+                    <div class="col-12"><button class="btn btn-primary" type="submit">Create Brand Page</button></div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <div class="container py-5">
     <div class="row" id="companyList">
         <p class="text-muted text-center">No companies yet. Be the first to create a brand page!</p>
@@ -37,6 +57,26 @@ fetch('/api/brand/companies')
 
 function viewCompany(brandId) {
     window.location.href = '/companies/' + brandId;
+}
+</script>
+<script>
+async function createBrand(e) {
+    e.preventDefault();
+    const data = {
+        company_name: document.getElementById('companyName').value,
+        industry: document.getElementById('industry').value,
+        location: document.getElementById('location').value,
+        size: document.getElementById('size').value,
+        description: document.getElementById('description').value
+    };
+    const resp = await fetch('/api/brand/create', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    });
+    const result = await resp.json();
+    alert(result.message || 'Brand page created!');
+    location.reload();
 }
 </script>
 {% endblock %}
