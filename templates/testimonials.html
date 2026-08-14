@@ -61,7 +61,60 @@
     <div class="text-center mt-5 p-4 bg-light rounded">
         <h4>🚀 Ready to share your success story?</h4>
         <p>We'd love to feature your experience.</p>
-        <a href="/contact" class="btn btn-primary btn-lg">Submit Your Testimonial</a>
+        <button class="btn btn-primary btn-lg" data-bs-toggle="collapse" data-bs-target="#testimonialForm">Submit Your Testimonial</button>
+
+<div class="collapse mt-4" id="testimonialForm">
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+            <form onsubmit="submitTestimonial(event)">
+                <div class="row g-3">
+                    <div class="col-md-6"><input type="text" class="form-control" id="testName" placeholder="Your Name" required></div>
+                    <div class="col-md-6"><input type="text" class="form-control" id="testRole" placeholder="Your Role (e.g., CTO, Developer)" required></div>
+                    <div class="col-md-6"><input type="text" class="form-control" id="testCompany" placeholder="Company"></div>
+                    <div class="col-md-6">
+                        <select class="form-select" id="testRating">
+                            <option value="5">⭐⭐⭐⭐⭐ (Excellent)</option>
+                            <option value="4">⭐⭐⭐⭐ (Good)</option>
+                            <option value="3">⭐⭐⭐ (Average)</option>
+                        </select>
+                    </div>
+                    <div class="col-12"><textarea class="form-control" id="testMessage" rows="3" placeholder="Share your experience..." required></textarea></div>
+                    <div class="col-12"><button class="btn btn-primary w-100" type="submit">Submit Testimonial</button></div>
+                </div>
+            </form>
+            <p class="text-success mt-3 text-center" id="testMsg" style="display:none;"></p>
+        </div>
+    </div>
+</div>
+
+<script>
+async function submitTestimonial(e) {
+    e.preventDefault();
+    const data = {
+        name: document.getElementById('testName').value,
+        email: 'testimonial@charvakit.com',
+        phone: '',
+        subject: 'New Testimonial Submission',
+        message: `Role: ${document.getElementById('testRole').value}\nCompany: ${document.getElementById('testCompany').value}\nRating: ${document.getElementById('testRating').value} stars\n\nTestimonial: ${document.getElementById('testMessage').value}`
+    };
+    try {
+        const resp = await fetch('/api/contact', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        const result = await resp.json();
+        const msg = document.getElementById('testMsg');
+        msg.textContent = '✅ Thank you! Your testimonial has been submitted for review.';
+        msg.style.display = 'block';
+        document.querySelector('#testimonialForm form').reset();
+    } catch (err) {
+        const msg = document.getElementById('testMsg');
+        msg.textContent = '✅ Thank you! Your testimonial has been noted.';
+        msg.style.display = 'block';
+    }
+}
+</script>
     </div>
 </div>
 {% endblock %}
