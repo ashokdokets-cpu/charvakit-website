@@ -58,6 +58,9 @@ from interview_prep_engine import interview_prep_engine
 from job_board_engine import job_board_engine
 from products_engine import products_engine
 from candidate_engine import candidate_engine
+from brand_engine import brand_engine
+from events_engine import events_engine
+from messaging_engine import messaging_engine
 
 
 
@@ -2570,7 +2573,6 @@ async def get_prep_session(session_id: str):
 # PRODUCTS API ENDPOINTS
 # ============================================================
 
-
 @app.post("/api/products/lock-in-breaker/audit")
 @limiter.limit("10/minute")
 async def api_lock_in_breaker(request: Request):
@@ -2811,6 +2813,146 @@ async def candidate_signup_page(request: Request):
 async def demos_page(request: Request):
     """Product demo videos page."""
     return template_response("demos.html", request, "Product Demos - Charvak IT Consulting")
+
+# ============================================================
+# MESSAGING API ENDPOINTS
+# ============================================================
+
+@app.post("/api/messaging/send")
+@limiter.limit("20/minute")
+async def send_message(request: Request):
+    """Send a message."""
+    try:
+        data = await request.json()
+        result = messaging_engine.send_message(data)
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.get("/api/messaging/inbox/{user_id}")
+async def get_inbox(user_id: str):
+    """Get user's inbox."""
+    return messaging_engine.get_inbox(user_id)
+
+@app.get("/api/messaging/conversation/{user_id}/{other_user_id}")
+async def get_conversation(user_id: str, other_user_id: str):
+    """Get conversation between two users."""
+    return messaging_engine.get_conversation(user_id, other_user_id)
+
+@app.get("/api/messaging/templates")
+async def get_message_templates():
+    """Get message templates."""
+    return messaging_engine.get_templates()
+
+@app.get("/api/messaging/stats")
+async def messaging_stats():
+    """Get messaging statistics."""
+    return messaging_engine.get_stats()
+
+
+# ============================================================
+# EVENTS API ENDPOINTS
+# ============================================================
+
+@app.post("/api/events/create")
+@limiter.limit("10/minute")
+async def create_event(request: Request):
+    """Create an event."""
+    try:
+        data = await request.json()
+        result = events_engine.create_event(data)
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.get("/api/events")
+async def get_events(event_type: str = None):
+    """Get upcoming events."""
+    return events_engine.get_events(event_type)
+
+@app.get("/api/events/{event_id}")
+async def get_event(event_id: str):
+    """Get event details."""
+    return events_engine.get_event(event_id)
+
+@app.post("/api/events/rsvp")
+@limiter.limit("20/minute")
+async def rsvp_event(request: Request):
+    """RSVP to an event."""
+    try:
+        data = await request.json()
+        result = events_engine.rsvp_to_event(data)
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.post("/api/events/check-in")
+async def check_in_event(request: Request):
+    """Check in to an event."""
+    try:
+        data = await request.json()
+        result = events_engine.check_in(data.get("rsvp_id"))
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.get("/api/events/stats")
+async def events_stats():
+    """Get event statistics."""
+    return events_engine.get_stats()
+
+
+# ============================================================
+# BRAND API ENDPOINTS
+# ============================================================
+
+@app.post("/api/brand/create")
+@limiter.limit("10/minute")
+async def create_brand_page(request: Request):
+    """Create a company brand page."""
+    try:
+        data = await request.json()
+        result = brand_engine.create_brand_page(data)
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.get("/api/brand/companies")
+async def get_all_brands():
+    """Get all company brands."""
+    return brand_engine.get_all_brands()
+
+@app.get("/api/brand/{brand_id}")
+async def get_brand(brand_id: str):
+    """Get brand page with reviews."""
+    return brand_engine.get_brand_page(brand_id)
+
+@app.post("/api/brand/review")
+@limiter.limit("10/minute")
+async def post_review(request: Request):
+    """Post an employer review."""
+    try:
+        data = await request.json()
+        result = brand_engine.post_review(data)
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.post("/api/brand/promote")
+@limiter.limit("5/minute")
+async def promote_job(request: Request):
+    """Promote a job."""
+    try:
+        data = await request.json()
+        result = brand_engine.promote_job(data.get("job_id"), data.get("company_id"))
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.get("/api/brand/stats")
+async def brand_stats():
+    """Get brand statistics."""
+    return brand_engine.get_stats()
 
 # ============================================================
 # UTILITY ENDPOINTS
