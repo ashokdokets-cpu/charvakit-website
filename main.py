@@ -2791,13 +2791,47 @@ async def get_candidate(candidate_id: str):
     return candidate_engine.get_candidate(candidate_id)
 
 @app.get("/api/candidates/search")
-async def search_candidates(skill: str = None, experience_min: int = None, location: str = None, visa_status: str = None):
-    """Search candidate pool."""
+async def search_candidates(
+    skill: str = None,
+    experience_min: int = None,
+    experience_max: int = None,
+    location: str = None,
+    visa_status: str = None,
+    skill_score_min: int = None,
+    education: str = None,
+    degree: str = None,
+    major: str = None,
+    university: str = None,
+    gpa_min: float = None,
+    graduation_year_min: int = None,
+    certification: str = None,
+    language: str = None,
+    work_authorization: str = None,
+    remote_preference: str = None,
+    availability: str = None,
+    years_coding_min: int = None
+):
+    """Advanced candidate search with 18 filters."""
     filters = {}
     if skill: filters["skill"] = skill
     if experience_min: filters["experience_min"] = experience_min
+    if experience_max: filters["experience_max"] = experience_max
     if location: filters["location"] = location
     if visa_status: filters["visa_status"] = visa_status
+    if skill_score_min: filters["skill_score_min"] = skill_score_min
+    if education: filters["education"] = education
+    if degree: filters["degree"] = degree
+    if major: filters["major"] = major
+    if university: filters["university"] = university
+    if gpa_min: filters["gpa_min"] = gpa_min
+    if graduation_year_min: filters["graduation_year_min"] = graduation_year_min
+    if certification: filters["certification"] = certification
+    if language: filters["language"] = language
+    if work_authorization: filters["work_authorization"] = work_authorization
+    if remote_preference: filters["remote_preference"] = remote_preference
+    if availability: filters["availability"] = availability
+    if years_coding_min: filters["years_coding_min"] = years_coding_min
+    
     return candidate_engine.search_candidates(filters)
 
 @app.post("/api/candidate/{candidate_id}/skill-score")
