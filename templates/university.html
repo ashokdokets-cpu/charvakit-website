@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}University Portal - Charvak IT Consulting{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4 text-center">
+        <h1 class="display-4 fw-bold">🎓 University Portal</h1>
+        <p class="lead">Manage students, track outcomes, host career fairs</p>
+    </div>
+</div>
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-7 mx-auto">
+            <div class="card border-0 shadow-sm p-4 mb-4">
+                <h5>Register Your University</h5>
+                <form onsubmit="registerUniversity(event)">
+                    <div class="mb-3"><label class="form-label">University Name</label><input type="text" class="form-control" id="uniName" required></div>
+                    <div class="mb-3"><label class="form-label">Admin Email</label><input type="email" class="form-control" id="uniEmail" required></div>
+                    <div class="mb-3"><label class="form-label">Location</label><input type="text" class="form-control" id="uniLocation"></div>
+                    <button class="btn btn-primary w-100" type="submit">Register University</button>
+                </form>
+                <p class="text-success mt-2 text-center" id="uniMsg" style="display:none;"></p>
+            </div>
+            <div class="card border-0 shadow-sm p-4">
+                <h5>What You Get</h5>
+                <ul class="list-unstyled">
+                    <li>✅ Student management dashboard</li>
+                    <li>✅ First-destination outcome reporting</li>
+                    <li>✅ Employment rate tracking</li>
+                    <li>✅ Career fair hosting</li>
+                    <li>✅ Employer connections</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+async function registerUniversity(e) {
+    e.preventDefault();
+    const data = {
+        name: document.getElementById('uniName').value,
+        admin_email: document.getElementById('uniEmail').value,
+        location: document.getElementById('uniLocation').value
+    };
+    const resp = await fetch('/api/university/register', {
+        method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)
+    });
+    const result = await resp.json();
+    const msg = document.getElementById('uniMsg');
+    msg.textContent = result.message || 'University registered!';
+    msg.style.display = 'block';
+}
+</script>
+{% endblock %}

@@ -3138,6 +3138,14 @@ async def record_outcome(request: Request):
 async def university_stats():
     return university_engine.get_stats()
 
+@app.get("/ats", response_class=HTMLResponse)
+async def ats_page(request: Request):
+    return template_response("ats.html", request, "ATS Integration - Charvak IT Consulting")
+
+@app.get("/university", response_class=HTMLResponse)
+async def university_page(request: Request):
+    return template_response("university.html", request, "University Portal - Charvak IT Consulting")
+
 # ============================================================
 # UTILITY ENDPOINTS
 # ============================================================

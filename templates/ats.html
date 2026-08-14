@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}ATS Integration - Charvak IT Consulting{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4 text-center">
+        <h1 class="display-4 fw-bold">🔄 ATS Integration</h1>
+        <p class="lead">Connect Charvak with Greenhouse, Lever, Workday & more</p>
+    </div>
+</div>
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-7 mx-auto">
+            <div class="card border-0 shadow-sm p-4 mb-4">
+                <h5>Connect External ATS</h5>
+                <form onsubmit="connectATS(event)">
+                    <div class="mb-3">
+                        <label class="form-label">Provider</label>
+                        <select class="form-select" id="provider">
+                            <option value="greenhouse">Greenhouse</option>
+                            <option value="lever">Lever</option>
+                            <option value="workday">Workday</option>
+                            <option value="custom">Custom</option>
+                        </select>
+                    </div>
+                    <div class="mb-3"><label class="form-label">API Key</label><input type="password" class="form-control" id="apiKey" required></div>
+                    <div class="mb-3"><label class="form-label">Base URL</label><input type="url" class="form-control" id="baseUrl" placeholder="https://api.greenhouse.io"></div>
+                    <div class="mb-3"><label class="form-label">Company Name</label><input type="text" class="form-control" id="companyName" required></div>
+                    <button class="btn btn-primary w-100" type="submit">Connect ATS</button>
+                </form>
+                <p class="text-success mt-2 text-center" id="atsMsg" style="display:none;"></p>
+            </div>
+            <div class="card border-0 shadow-sm p-4">
+                <h5>Why Connect Your ATS?</h5>
+                <ul class="list-unstyled">
+                    <li>✅ Bidirectional job sync</li>
+                    <li>✅ Charvak ATS is primary — external ATS syncs automatically</li>
+                    <li>✅ No manual data entry</li>
+                    <li>✅ Real-time candidate updates</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+async function connectATS(e) {
+    e.preventDefault();
+    const data = {
+        provider: document.getElementById('provider').value,
+        api_key: document.getElementById('apiKey').value,
+        base_url: document.getElementById('baseUrl').value,
+        company_name: document.getElementById('companyName').value
+    };
+    const resp = await fetch('/api/ats/connect', {
+        method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)
+    });
+    const result = await resp.json();
+    const msg = document.getElementById('atsMsg');
+    msg.textContent = result.message || 'ATS connected!';
+    msg.style.display = 'block';
+}
+</script>
+{% endblock %}
