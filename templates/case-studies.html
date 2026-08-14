@@ -2,12 +2,77 @@
 {% block title %}Case Studies - Charvak IT Consulting{% endblock %}
 {% block content %}
 <div class="page-hero bg-gradient-primary text-white py-5">
-    <div class="container py-4 text-center"><h1 class="display-4 fw-bold">Case Studies</h1><p class="lead">Real results from real clients</p></div>
+    <div class="container py-4 text-center">
+        <h1 class="display-4 fw-bold">Case Studies</h1>
+        <p class="lead">Real results from real clients</p>
+    </div>
 </div>
+
 <div class="container py-5">
     <div class="row g-4">
-        <div class="col-md-6"><div class="card h-100 border-0 shadow-sm"><div class="card-body"><span class="badge bg-success mb-2">Staffing</span><h4>Reduced Time-to-Hire by 60%</h4><p>How a US-based fintech company used our NA module to hire 12 developers in 2 weeks instead of 6.</p><hr><div class="row text-center"><div class="col-4"><h5>12</h5><small>Hires</small></div><div class="col-4"><h5>2 wks</h5><small>TAT</small></div><div class="col-4"><h5>40%</h5><small>Cost ↓</small></div></div></div></div></div>
-        <div class="col-md-6"><div class="card h-100 border-0 shadow-sm"><div class="card-body"><span class="badge bg-info mb-2">AI Tools</span><h4>500+ Resumes Roasted in 1 Month</h4><p>How our Resume Roast tool helped job seekers improve their ATS scores by an average of 35%.</p><hr><div class="row text-center"><div class="col-4"><h5>500+</h5><small>Users</small></div><div class="col-4"><h5>35%</h5><small>Score ↑</small></div><div class="col-4"><h5>₹99</h5><small>Per Use</small></div></div></div></div></div>
+        <!-- Case Study 1 -->
+        <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <span class="badge bg-success mb-2">Staffing</span>
+                    <h4>Reduced Time-to-Hire by 60%</h4>
+                    <p>How a US-based fintech company used our NA module to hire 12 developers in 2 weeks instead of 6.</p>
+                    <hr>
+                    <div class="row text-center mb-3">
+                        <div class="col-4"><h5>12</h5><small>Hires</small></div>
+                        <div class="col-4"><h5>2 wks</h5><small>TAT</small></div>
+                        <div class="col-4"><h5>40%</h5><small>Cost ↓</small></div>
+                    </div>
+                    <button class="btn btn-outline-primary btn-sm w-100" data-bs-toggle="collapse" data-bs-target="#case1">Read Full Case Study</button>
+                    <div class="collapse mt-3" id="case1">
+                        <div class="p-3 bg-light rounded">
+                            <h6>The Challenge</h6>
+                            <p>A fast-growing fintech startup needed 12 senior developers urgently but was stuck in a 6-week hiring cycle. Traditional agencies quoted $50K+ in fees.</p>
+                            <h6>The Solution</h6>
+                            <p>Charvak's NA module verified work authorization for 17 visa types, matched candidates using vector-based AI, and managed the entire interview pipeline.</p>
+                            <h6>The Result</h6>
+                            <p>12 developers hired in 14 days. 40% lower cost than traditional staffing. All candidates verified with Skill-Twin badges.</p>
+                            <blockquote class="blockquote mb-0">"Charvak's NA module saved us months of work. The visa handling alone was worth it."</blockquote>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Case Study 2 -->
+        <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <span class="badge bg-info mb-2">AI Tools</span>
+                    <h4>500+ Resumes Roasted in 1 Month</h4>
+                    <p>How our Resume Roast tool helped job seekers improve their ATS scores by an average of 35%.</p>
+                    <hr>
+                    <div class="row text-center mb-3">
+                        <div class="col-4"><h5>500+</h5><small>Users</small></div>
+                        <div class="col-4"><h5>35%</h5><small>Score ↑</small></div>
+                        <div class="col-4"><h5>₹99</h5><small>Per Use</small></div>
+                    </div>
+                    <button class="btn btn-outline-primary btn-sm w-100" data-bs-toggle="collapse" data-bs-target="#case2">Read Full Case Study</button>
+                    <div class="collapse mt-3" id="case2">
+                        <div class="p-3 bg-light rounded">
+                            <h6>The Challenge</h6>
+                            <p>Job seekers were applying with outdated resumes that failed ATS screening. 87% of resumes never reached human recruiters.</p>
+                            <h6>The Solution</h6>
+                            <p>Resume Roast uses GPT-4o-mini to analyze resumes against job descriptions, identify missing keywords, and generate ATS-optimized rewrites.</p>
+                            <h6>The Result</h6>
+                            <p>500+ resumes processed in 30 days. Average ATS score improved by 35%. 22 users reported interview callbacks within 2 weeks.</p>
+                            <blockquote class="blockquote mb-0">"My ATS score went from 45 to 85. I got 3 interview calls in a week!"</blockquote>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mt-5 p-4 bg-light rounded">
+        <h4>Want Your Success Story Featured?</h4>
+        <p>We'd love to document your results.</p>
+        <a href="/contact" class="btn btn-primary btn-lg">Share Your Story</a>
     </div>
 </div>
 {% endblock %}
