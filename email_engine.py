@@ -33,7 +33,7 @@ class EmailEngine:
         else:
             logger.warning("⚠️ Email Engine: DISABLED (set SMTP_PASSWORD to enable)")
     
-    def send_email(self, to_email: str, subject: str, body: str, is_html: bool = False) -> Dict:
+        def send_email(self, to_email: str, subject: str, body: str, is_html: bool = False) -> Dict:
         """Send an email via GoDaddy SMTP."""
         if not self.enabled:
             logger.info(f"[EMAIL DISABLED] To: {to_email} | Subject: {subject}")
@@ -51,15 +51,15 @@ class EmailEngine:
                 msg.attach(MIMEText(body, "plain"))
             
             # Try TLS first (port 587), fallback to SSL (port 465)
-try:
-    with smtplib.SMTP(SMTP_SERVER, 587) as server:
-        server.starttls()
-        server.login(SMTP_USERNAME, SMTP_PASSWORD)
-        server.sendmail(SMTP_USERNAME, to_email, msg.as_string())
-except:
-    with smtplib.SMTP_SSL(SMTP_SERVER, 465) as server:
-        server.login(SMTP_USERNAME, SMTP_PASSWORD)
-        server.sendmail(SMTP_USERNAME, to_email, msg.as_string())
+            try:
+                with smtplib.SMTP(SMTP_SERVER, 587) as server:
+                    server.starttls()
+                    server.login(SMTP_USERNAME, SMTP_PASSWORD)
+                    server.sendmail(SMTP_USERNAME, to_email, msg.as_string())
+            except Exception:
+                with smtplib.SMTP_SSL(SMTP_SERVER, 465) as server:
+                    server.login(SMTP_USERNAME, SMTP_PASSWORD)
+                    server.sendmail(SMTP_USERNAME, to_email, msg.as_string())
             
             self.sent_count += 1
             logger.info(f"✅ Email sent to {to_email}: {subject}")
