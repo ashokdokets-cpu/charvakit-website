@@ -62,6 +62,9 @@ from brand_engine import brand_engine
 from events_engine import events_engine
 from messaging_engine import messaging_engine
 from email_engine import email_engine
+from university_engine import university_engine
+from ats_engine import ats_engine
+from team_engine import team_engine
 
 
 
@@ -3051,6 +3054,89 @@ async def companies_page(request: Request):
 async def company_detail_page(request: Request, brand_id: str):
     """Single company profile page."""
     return template_response("company-detail.html", request, "Company Profile - Charvak", brand_id=brand_id)
+
+# ============================================================
+# TEAM API ENDPOINTS
+# ============================================================
+
+@app.post("/api/team/create")
+@limiter.limit("10/minute")
+async def create_team(request: Request):
+    data = await request.json()
+    return team_engine.create_team(data)
+
+@app.get("/api/team/{team_id}")
+async def get_team(team_id: str):
+    return team_engine.get_team(team_id)
+
+@app.post("/api/team/invite")
+@limiter.limit("20/minute")
+async def invite_member(request: Request):
+    data = await request.json()
+    return team_engine.invite_member(data)
+
+@app.get("/api/team/stats")
+async def team_stats():
+    return team_engine.get_stats()
+
+
+# ============================================================
+# ATS API ENDPOINTS
+# ============================================================
+
+@app.post("/api/ats/connect")
+@limiter.limit("5/minute")
+async def connect_ats(request: Request):
+    data = await request.json()
+    return ats_engine.connect_external_ats(data)  # Changed from connect_ats
+
+@app.get("/api/ats/integrations")
+async def get_ats_integrations():
+    return ats_engine.get_integrations()
+
+@app.post("/api/ats/webhook/{integration_id}")
+async def ats_webhook(integration_id: str, request: Request):
+    data = await request.json()
+    return ats_engine.receive_webhook(integration_id, data)
+
+@app.get("/api/ats/stats")
+async def ats_stats():
+    return ats_engine.get_stats()
+
+
+# ============================================================
+# UNIVERSITY API ENDPOINTS
+# ============================================================
+
+@app.post("/api/university/register")
+@limiter.limit("5/minute")
+async def register_university(request: Request):
+    data = await request.json()
+    return university_engine.register_university(data)
+
+@app.get("/api/university/{university_id}/dashboard")
+async def university_dashboard(university_id: str):
+    return university_engine.get_university_dashboard(university_id)
+
+@app.get("/api/university/{university_id}/report")
+async def first_destination_report(university_id: str):
+    return university_engine.get_first_destination_report(university_id)
+
+@app.post("/api/university/student/add")
+@limiter.limit("20/minute")
+async def add_student(request: Request):
+    data = await request.json()
+    return university_engine.add_student(data)
+
+@app.post("/api/university/outcome/record")
+@limiter.limit("20/minute")
+async def record_outcome(request: Request):
+    data = await request.json()
+    return university_engine.record_outcome(data)
+
+@app.get("/api/university/stats")
+async def university_stats():
+    return university_engine.get_stats()
 
 # ============================================================
 # UTILITY ENDPOINTS
