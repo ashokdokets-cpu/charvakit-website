@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Companies - Charvak IT Consulting{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4 text-center">
+        <h1 class="display-4 fw-bold">🏢 Companies</h1>
+        <p class="lead">Explore employer brands and reviews</p>
+    </div>
+</div>
+<div class="container py-5">
+    <div class="row" id="companyList">
+        <p class="text-muted text-center">No companies yet. Be the first to create a brand page!</p>
+    </div>
+</div>
+<script>
+fetch('/api/brand/companies')
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success' && data.companies.length > 0) {
+            document.getElementById('companyList').innerHTML = data.companies.map(c => `
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center">
+                            <h5>${c.company_name}</h5>
+                            <p class="text-muted small">${c.industry} • ${c.location}</p>
+                            <div class="mb-2">
+                                <span class="badge bg-success">⭐ ${c.average_rating || 'New'}</span>
+                                <span class="badge bg-light text-dark">${c.review_count} reviews</span>
+                            </div>
+                            <button class="btn btn-outline-primary btn-sm" onclick="viewCompany('${c.brand_id}')">View Profile</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+    });
+
+function viewCompany(brandId) {
+    window.location.href = '/companies/' + brandId;
+}
+</script>
+{% endblock %}

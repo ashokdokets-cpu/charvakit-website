@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Career Events - Charvak IT Consulting{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4 text-center">
+        <h1 class="display-4 fw-bold">🎯 Career Events</h1>
+        <p class="lead">Career fairs, webinars, workshops & info sessions</p>
+    </div>
+</div>
+<div class="container py-5">
+    <div class="row" id="eventList">
+        <p class="text-muted text-center">No upcoming events. Check back soon!</p>
+    </div>
+</div>
+<script>
+fetch('/api/events')
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success' && data.events.length > 0) {
+            document.getElementById('eventList').innerHTML = data.events.map(e => `
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body">
+                            <span class="badge bg-primary mb-2">${e.event_type}</span>
+                            <h5>${e.title}</h5>
+                            <p class="text-muted small">${e.description}</p>
+                            <hr>
+                            <p class="mb-2"><i class="bi bi-calendar me-2"></i>${e.date}</p>
+                            <p class="mb-2"><i class="bi bi-people me-2"></i>${e.rsvp_count}/${e.max_attendees} registered</p>
+                            <button class="btn btn-primary btn-sm w-100" onclick="rsvpEvent('${e.event_id}')">RSVP Now</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+    });
+
+function rsvpEvent(eventId) {
+    fetch('/api/events/rsvp', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            event_id: eventId,
+            user_id: localStorage.getItem('charvak_user_id') || 'USER-001',
+            user_name: 'User',
+            user_email: 'user@email.com',
+            user_type: 'student'
+        })
+    })
+    .then(res => res.json())
+    .then(data => alert(data.message || 'RSVP confirmed!'));
+}
+</script>
+{% endblock %}

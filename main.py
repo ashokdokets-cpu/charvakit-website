@@ -2998,6 +2998,26 @@ async def test_email(request: Request):
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
+@app.get("/inbox", response_class=HTMLResponse)
+async def inbox_page(request: Request):
+    """Messaging inbox page."""
+    return template_response("inbox.html", request, "Inbox - Charvak IT Consulting")
+
+@app.get("/events", response_class=HTMLResponse)
+async def events_page(request: Request):
+    """Career events page."""
+    return template_response("events.html", request, "Career Events - Charvak IT Consulting")
+
+@app.get("/companies", response_class=HTMLResponse)
+async def companies_page(request: Request):
+    """Companies brand pages listing."""
+    return template_response("companies.html", request, "Companies - Charvak IT Consulting")
+
+@app.get("/companies/{brand_id}", response_class=HTMLResponse)
+async def company_detail_page(request: Request, brand_id: str):
+    """Single company profile page."""
+    return template_response("company-detail.html", request, "Company Profile - Charvak", brand_id=brand_id)
+
 # ============================================================
 # UTILITY ENDPOINTS
 # ============================================================

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Inbox - Charvak IT Consulting{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4">
+        <h1 class="display-4 fw-bold">📬 Inbox</h1>
+        <p class="lead">Your messages and conversations</p>
+    </div>
+</div>
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="mb-3">Your Conversations</h5>
+                    <div id="conversationList">
+                        <p class="text-muted text-center">No conversations yet.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+const userId = localStorage.getItem('charvak_user_id') || 'CAND-TEST';
+fetch('/api/messaging/inbox/' + userId)
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success' && data.conversations.length > 0) {
+            document.getElementById('conversationList').innerHTML = data.conversations.map(c => `
+                <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+                    <div>
+                        <strong>${c.participants.filter(p => p !== userId)[0]}</strong><br>
+                        <small class="text-muted">${c.last_message.body ? c.last_message.body.substring(0, 60) + '...' : ''}</small>
+                    </div>
+                    <span class="badge bg-primary">${c.unread_count > 0 ? c.unread_count + ' new' : ''}</span>
+                </div>
+            `).join('');
+        }
+    });
+</script>
+{% endblock %}

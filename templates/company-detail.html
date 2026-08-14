@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Company Profile - Charvak IT Consulting{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <div id="companyProfile"><p class="text-muted text-center">Loading...</p></div>
+</div>
+<script>
+const brandId = '{{ brand_id }}';
+fetch('/api/brand/' + brandId)
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            const c = data.company;
+            document.getElementById('companyProfile').innerHTML = `
+                <div class="text-center mb-4">
+                    <h1>${c.company_name}</h1>
+                    <p>${c.industry} • ${c.location} • ${c.size}</p>
+                    <span class="badge bg-success">⭐ ${c.average_rating || 'New'}</span>
+                    <span class="badge bg-light text-dark">${c.review_count} reviews</span>
+                </div>
+                <p>${c.description}</p>
+                <hr>
+                <h4>Reviews</h4>
+                ${data.reviews.length > 0 ? data.reviews.map(r => `
+                    <div class="card mb-3"><div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <strong>${r.reviewer_name}</strong>
+                            <span>${'⭐'.repeat(r.rating)}</span>
+                        </div>
+                        <h6>${r.title}</h6>
+                        <p class="small">${r.review}</p>
+                    </div></div>
+                `).join('') : '<p class="text-muted">No reviews yet.</p>'}
+            `;
+        }
+    });
+</script>
+{% endblock %}
