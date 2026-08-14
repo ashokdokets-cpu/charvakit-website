@@ -14,7 +14,7 @@ logger = logging.getLogger("charvakit.email")
 
 # GoDaddy SMTP Configuration
 SMTP_SERVER = os.getenv("SMTP_SERVER", "smtpout.secureserver.net")
-SMTP_PORT = int(os.getenv("SMTP_PORT", "465"))
+SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 SMTP_USERNAME = os.getenv("SMTP_USERNAME", "hr@charvakit.com")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")  # Set in Render env vars
 ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "hr@charvakit.com")
@@ -50,9 +50,16 @@ class EmailEngine:
             else:
                 msg.attach(MIMEText(body, "plain"))
             
-            with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT) as server:
-                server.login(SMTP_USERNAME, SMTP_PASSWORD)
-                server.sendmail(SMTP_USERNAME, to_email, msg.as_string())
+            # Try TLS first (port 587), fallback to SSL (port 465)
+try:
+    with smtplib.SMTP(SMTP_SERVER, 587) as server:
+        server.starttls()
+        server.login(SMTP_USERNAME, SMTP_PASSWORD)
+        server.sendmail(SMTP_USERNAME, to_email, msg.as_string())
+except:
+    with smtplib.SMTP_SSL(SMTP_SERVER, 465) as server:
+        server.login(SMTP_USERNAME, SMTP_PASSWORD)
+        server.sendmail(SMTP_USERNAME, to_email, msg.as_string())
             
             self.sent_count += 1
             logger.info(f"✅ Email sent to {to_email}: {subject}")
