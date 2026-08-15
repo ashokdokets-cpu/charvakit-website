@@ -176,10 +176,15 @@ app.add_middleware(SecurityHeadersMiddleware)
 # ============================================================
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
+        allow_origins=[
         "https://www.doketsrb.com",
         "https://doketsrb.com",
+        "https://www.charvakit.com",
+        "https://charvakit.com",
+        "https://charvakit-website.onrender.com",
         "http://localhost:3000",
+        "http://localhost:5500",
+        "http://127.0.0.1:3000",
         "http://127.0.0.1:5500"
     ],
     allow_credentials=True,
