@@ -3277,6 +3277,10 @@ async def create_lead_drip(request: Request):
 async def marketing_ai_stats():
     return marketing_ai_engine.get_stats()
 
+@app.get("/marketing-ai", response_class=HTMLResponse)
+async def marketing_ai_page(request: Request):
+    return template_response("marketing-ai.html", request, "Marketing AI - Charvak IT Consulting")
+
 # ============================================================
 # UTILITY ENDPOINTS
 # ============================================================
