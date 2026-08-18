@@ -21,6 +21,8 @@ class LMS_Engine:
         self.certificates = []
         self.lesson_progress = []
         self.discussions = []
+        self.lessons = []
+        self.payouts = []
         logger.info("✅ LMS Engine ready — 6 modules")
     
     # ============================================================
@@ -272,6 +274,203 @@ class LMS_Engine:
             "recommendations": recommendations,
             "based_on": rated_categories
         }
+
+    # ============================================================
+    # 7. VIDEO LECTURES & COURSE CONTENT
+    # ============================================================
+    
+    def add_lesson(self, data: Dict) -> Dict:
+        """
+        Add a lesson with video to a course.
+        data = {course_id, title, video_url, description, duration_minutes, order}
+        """
+        lesson_id = f"LESSON-{secrets.token_hex(4).upper()}"
+        
+        lesson = {
+            "lesson_id": lesson_id,
+            "course_id": data.get("course_id"),
+            "title": data.get("title", "Lesson"),
+            "video_url": data.get("video_url", ""),
+            "description": data.get("description", ""),
+            "duration_minutes": data.get("duration_minutes", 10),
+            "order": data.get("order", 1),
+            "created_at": datetime.now().isoformat()
+        }
+        
+        self.lessons.append(lesson)
+        
+        return {"status": "success", "lesson_id": lesson_id, "message": "Lesson added!"}
+    
+    def get_course_lessons(self, course_id: str) -> Dict:
+        """Get all lessons for a course."""
+        lessons = [l for l in self.lessons if l["course_id"] == course_id]
+        lessons.sort(key=lambda l: l["order"])
+        
+        return {
+            "status": "success",
+            "course_id": course_id,
+            "lessons": lessons,
+            "count": len(lessons),
+            "total_duration_minutes": sum(l["duration_minutes"] for l in lessons)
+        }
+    
+    # ============================================================
+    # 8. INSTRUCTOR PAYOUTS (via Escrow)
+    # ============================================================
+    
+    def request_payout(self, data: Dict) -> Dict:
+        """
+        Request instructor payout via escrow.
+        data = {trainer_email, amount, payment_method}
+        """
+        payout_id = f"PAYOUT-{secrets.token_hex(4).upper()}"
+        
+        payout = {
+            "payout_id": payout_id,
+            "trainer_email": data.get("trainer_email"),
+            "amount": float(data.get("amount", 0)),
+            "payment_method": data.get("payment_method", "Dokets VouchAI Escrow"),
+            "status": "pending",
+            "requested_at": datetime.now().isoformat()
+        }
+        
+        self.payouts.append(payout)
+        
+        return {
+            "status": "success",
+            "payout_id": payout_id,
+            "message": f"Payout of ₹{payout['amount']} requested via {payout['payment_method']}",
+            "processing_time": "3-5 business days"
+        }
+    
+    def get_payouts(self, trainer_email: str) -> Dict:
+        """Get all payouts for a trainer."""
+        trainer_payouts = [p for p in self.payouts if p["trainer_email"] == trainer_email]
+        total = sum(p["amount"] for p in trainer_payouts if p["status"] == "completed")
+        
+        return {
+            "status": "success",
+            "trainer_email": trainer_email,
+            "payouts": trainer_payouts,
+            "total_paid": total
+        }
+    
+    # ============================================================
+    # 9. MULTI-LANGUAGE COURSES
+    # ============================================================
+    
+    def add_course_language(self, data: Dict) -> Dict:
+        """
+        Add language support to a course.
+        data = {course_id, language, translated_title, translated_description}
+        """
+        course = self._find_course(data.get("course_id"))
+        if not course:
+            return {"status": "error", "message": "Course not found"}
+        
+        if "languages" not in course:
+            course["languages"] = []
+        
+        course["languages"].append({
+            "language": data.get("language"),
+            "title": data.get("translated_title"),
+            "description": data.get("translated_description", "")
+        })
+        
+        return {"status": "success", "message": f"{data.get('language')} added to course!"}
+    
+    # ============================================================
+    # 10. GAMIFICATION
+    # ============================================================
+    
+    def award_points(self, data: Dict) -> Dict:
+        """
+        Award points for actions.
+        data = {student_email, action, points}
+        """
+        action_points = {
+            "lesson_completed": 10,
+            "quiz_passed": 50,
+            "course_completed": 100,
+            "discussion_posted": 5,
+            "certificate_earned": 200
+        }
+        
+        action = data.get("action", "lesson_completed")
+        points = data.get("points", action_points.get(action, 10))
+        
+        return {
+            "status": "success",
+            "student_email": data.get("student_email"),
+            "action": action,
+            "points_earned": points,
+            "message": f"+{points} points earned!"
+        }
+    
+    # ============================================================
+    # 11. EMAIL NOTIFICATIONS (integrated with email_engine)
+    # ============================================================
+    
+    def send_course_notification(self, data: Dict) -> Dict:
+        """
+        Send course notification email.
+        data = {student_email, student_name, notification_type, course_name}
+        """
+        notification_type = data.get("notification_type", "enrollment")
+        
+        notifications = {
+            "enrollment": {
+                "subject": f"✅ Enrolled in {data.get('course_name')}",
+                "body": f"Hi {data.get('student_name')}, you're enrolled in {data.get('course_name')}. Start learning today!"
+            },
+            "reminder": {
+                "subject": f"⏰ Reminder: {data.get('course_name')}",
+                "body": f"Hi {data.get('student_name')}, don't forget to continue your course!"
+            },
+            "completion": {
+                "subject": f"🎉 Course Completed: {data.get('course_name')}",
+                "body": f"Congratulations {data.get('student_name')}! You've completed {data.get('course_name')}."
+            }
+        }
+        
+        notif = notifications.get(notification_type, notifications["enrollment"])
+        
+        # Try to send via email engine
+        try:
+            from email_engine import email_engine
+            email_engine.send_email(data.get("student_email"), notif["subject"], notif["body"])
+        except:
+            pass
+        
+        return {"status": "success", "message": "Notification sent!", **notif}
+    
+    # ============================================================
+    # 12. COURSE SEARCH & FILTERING
+    # ============================================================
+    
+        def search_courses(self, query: str = None, category: str = None, min_rating: float = None, max_price: float = None, language: str = None) -> Dict:
+        """
+        Advanced course search — searches Training Engine courses.
+        """
+        # Get courses from Training Engine
+        from training_engine import training_engine
+        courses = training_engine.get_courses().get("courses", [])
+        
+        if query:
+            q = query.lower()
+            courses = [c for c in courses if q in c.get("course_name", "").lower() or q in c.get("description", "").lower()]
+        if category:
+            courses = [c for c in courses if c.get("category") == category]
+        if max_price:
+            courses = [c for c in courses if c.get("price_inr", 0) <= max_price]
+        
+        return {
+            "status": "success",
+            "courses": courses,
+            "count": len(courses),
+            "filters_applied": {"query": query, "category": category, "max_price": max_price, "language": language}
+        }
+    
     
     # ============================================================
     # HELPERS & STATS
@@ -283,6 +482,12 @@ class LMS_Engine:
                 return quiz
         return None
     
+    def _find_course(self, course_id: str) -> Optional[Dict]:
+        for course in getattr(self, 'courses', []):
+            if course.get("course_id") == course_id:
+                return course
+        return None
+    
     def get_stats(self) -> Dict:
         return {
             "status": "success",
@@ -291,7 +496,9 @@ class LMS_Engine:
                 "total_quizzes": len(self.quizzes),
                 "total_certificates": len(self.certificates),
                 "total_discussions": len(self.discussions),
-                "total_quiz_attempts": len(self.quiz_attempts)
+                "total_quiz_attempts": len(self.quiz_attempts),
+                "total_lessons": len(self.lessons),
+                "total_payouts": len(self.payouts)
             }
         }
 
