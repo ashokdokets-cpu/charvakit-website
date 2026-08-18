@@ -69,6 +69,7 @@ from enterprise_engine import enterprise_engine
 from marketing_ai_engine import marketing_ai_engine
 from indian_language_ai import indian_language_ai
 from lms_engine import lms_engine
+from career_v2_engine import career_v2_engine
 
 
 
@@ -3434,6 +3435,62 @@ async def send_course_notification(request: Request):
 @app.get("/api/lms/search")
 async def search_courses(query: str = None, category: str = None, max_price: float = None, language: str = None):
     return lms_engine.search_courses(query, category, None, max_price, language)
+
+# ============================================================
+# CAREER V2 API ENDPOINTS
+# ============================================================
+
+@app.post("/api/career/alert")
+@limiter.limit("10/minute")
+async def create_job_alert(request: Request):
+    data = await request.json()
+    return career_v2_engine.create_job_alert(data)
+
+@app.get("/api/career/alerts/{email}")
+async def get_alerts(email: str):
+    return career_v2_engine.get_alerts(email)
+
+@app.post("/api/career/save-job")
+@limiter.limit("20/minute")
+async def save_job(request: Request):
+    data = await request.json()
+    return career_v2_engine.save_job(data)
+
+@app.post("/api/career/follow-company")
+@limiter.limit("20/minute")
+async def follow_company(request: Request):
+    data = await request.json()
+    return career_v2_engine.follow_company(data)
+
+@app.post("/api/career/salary")
+@limiter.limit("10/minute")
+async def add_salary(request: Request):
+    data = await request.json()
+    return career_v2_engine.add_salary(data)
+
+@app.get("/api/career/salary-insights")
+async def get_salary_insights(role: str = None):
+    return career_v2_engine.get_salary_insights(role)
+
+@app.post("/api/career/interview")
+@limiter.limit("10/minute")
+async def schedule_interview(request: Request):
+    data = await request.json()
+    return career_v2_engine.schedule_interview(data)
+
+@app.post("/api/career/offer")
+@limiter.limit("10/minute")
+async def add_offer(request: Request):
+    data = await request.json()
+    return career_v2_engine.add_offer(data)
+
+@app.get("/api/career/recommendations/{email}")
+async def get_job_recommendations(email: str):
+    return career_v2_engine.get_job_recommendations(email)
+
+@app.get("/api/career-v2/stats")
+async def career_v2_stats():
+    return career_v2_engine.get_stats()
 
 # ============================================================
 # UTILITY ENDPOINTS
