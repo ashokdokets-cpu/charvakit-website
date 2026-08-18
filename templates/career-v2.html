@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Career Center - Charvak IT Consulting{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4 text-center">
+        <h1 class="display-4 fw-bold">🎯 Career Center</h1>
+        <p class="lead">Job alerts, saved jobs, salary insights, interviews, and offers</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row g-4">
+        <!-- Job Alert -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5>🔔 Create Job Alert</h5>
+                    <form onsubmit="createAlert(event)">
+                        <input type="email" class="form-control mb-2" id="alertEmail" placeholder="Your Email" required>
+                        <input type="text" class="form-control mb-2" id="alertKeywords" placeholder="Keywords (e.g. Python, React)">
+                        <input type="text" class="form-control mb-3" id="alertLocation" placeholder="Location">
+                        <button class="btn btn-primary btn-sm w-100" type="submit">Create Alert</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Save Job -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5>💾 Save Job</h5>
+                    <form onsubmit="saveJob(event)">
+                        <input type="email" class="form-control mb-2" id="saveEmail" placeholder="Your Email" required>
+                        <input type="text" class="form-control mb-3" id="saveJobId" placeholder="Job ID" required>
+                        <button class="btn btn-primary btn-sm w-100" type="submit">Save Job</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Follow Company -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5>🏢 Follow Company</h5>
+                    <form onsubmit="followCompany(event)">
+                        <input type="email" class="form-control mb-2" id="followEmail" placeholder="Your Email" required>
+                        <input type="text" class="form-control mb-3" id="followCompany" placeholder="Company Name" required>
+                        <button class="btn btn-primary btn-sm w-100" type="submit">Follow</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Salary Insights -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5>💰 Salary Insights</h5>
+                    <form onsubmit="addSalary(event)">
+                        <input type="text" class="form-control mb-2" id="salaryRole" placeholder="Role" required>
+                        <input type="number" class="form-control mb-3" id="salaryAmount" placeholder="Amount (₹)" required>
+                        <button class="btn btn-primary btn-sm w-100" type="submit">Add Salary</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Schedule Interview -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5>📅 Schedule Interview</h5>
+                    <form onsubmit="scheduleInterview(event)">
+                        <input type="email" class="form-control mb-2" id="intEmail" placeholder="Your Email" required>
+                        <input type="text" class="form-control mb-2" id="intEmployer" placeholder="Employer" required>
+                        <input type="text" class="form-control mb-2" id="intRole" placeholder="Role" required>
+                        <input type="datetime-local" class="form-control mb-3" id="intDate" required>
+                        <button class="btn btn-primary btn-sm w-100" type="submit">Schedule</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Offer -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5>📄 Track Offer</h5>
+                    <form onsubmit="addOffer(event)">
+                        <input type="email" class="form-control mb-2" id="offerEmail" placeholder="Your Email" required>
+                        <input type="text" class="form-control mb-2" id="offerCompany" placeholder="Company" required>
+                        <input type="text" class="form-control mb-2" id="offerRole" placeholder="Role" required>
+                        <input type="number" class="form-control mb-3" id="offerSalary" placeholder="Salary (₹)" required>
+                        <button class="btn btn-primary btn-sm w-100" type="submit">Add Offer</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Output -->
+    <div class="mt-4" id="careerV2Output"></div>
+</div>
+
+<script>
+async function createAlert(e){e.preventDefault();const d={email:document.getElementById('alertEmail').value,keywords:document.getElementById('alertKeywords').value.split(','),location:document.getElementById('alertLocation').value};const r=await fetch('/api/career/alert',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});const j=await r.json();show(j.message);}
+async function saveJob(e){e.preventDefault();const d={email:document.getElementById('saveEmail').value,job_id:document.getElementById('saveJobId').value};const r=await fetch('/api/career/save-job',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});const j=await r.json();show(j.message);}
+async function followCompany(e){e.preventDefault();const d={email:document.getElementById('followEmail').value,company:document.getElementById('followCompany').value};const r=await fetch('/api/career/follow-company',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});const j=await r.json();show(j.message);}
+async function addSalary(e){e.preventDefault();const d={role:document.getElementById('salaryRole').value,amount:parseFloat(document.getElementById('salaryAmount').value)};const r=await fetch('/api/career/salary',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});const j=await r.json();show(j.message);}
+async function scheduleInterview(e){e.preventDefault();const d={candidate_email:document.getElementById('intEmail').value,employer:document.getElementById('intEmployer').value,role:document.getElementById('intRole').value,date:document.getElementById('intDate').value};const r=await fetch('/api/career/interview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});const j=await r.json();show(j.message);}
+async function addOffer(e){e.preventDefault();const d={candidate_email:document.getElementById('offerEmail').value,company:document.getElementById('offerCompany').value,role:document.getElementById('offerRole').value,salary:parseFloat(document.getElementById('offerSalary').value)};const r=await fetch('/api/career/offer',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});const j=await r.json();show(j.message);}
+function show(msg){document.getElementById('careerV2Output').innerHTML='<div class="alert alert-success">'+msg+'</div>';}
+</script>
+{% endblock %}

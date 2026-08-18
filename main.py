@@ -3492,6 +3492,10 @@ async def get_job_recommendations(email: str):
 async def career_v2_stats():
     return career_v2_engine.get_stats()
 
+@app.get("/career-center", response_class=HTMLResponse)
+async def career_center_page(request: Request):
+    return template_response("career-v2.html", request, "Career Center - Charvak IT Consulting")
+
 # ============================================================
 # UTILITY ENDPOINTS
 # ============================================================
