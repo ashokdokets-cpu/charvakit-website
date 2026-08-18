@@ -68,6 +68,7 @@ from team_engine import team_engine
 from enterprise_engine import enterprise_engine
 from marketing_ai_engine import marketing_ai_engine
 from indian_language_ai import indian_language_ai
+from lms_engine import lms_engine
 
 
 
@@ -3320,6 +3321,72 @@ async def indian_language_stats():
 @app.get("/indian-language-ai", response_class=HTMLResponse)
 async def indian_language_ai_page(request: Request):
     return template_response("indian-language-ai.html", request, "Indian Language AI - Charvak IT Consulting")
+
+# ============================================================
+# LMS API ENDPOINTS (Global Learning Management System)
+# ============================================================
+
+@app.post("/api/lms/rate")
+@limiter.limit("20/minute")
+async def rate_course(request: Request):
+    data = await request.json()
+    return lms_engine.rate_course(data)
+
+@app.get("/api/lms/ratings/{course_id}")
+async def get_course_ratings(course_id: str):
+    return lms_engine.get_course_ratings(course_id)
+
+@app.post("/api/lms/quiz/create")
+@limiter.limit("10/minute")
+async def create_quiz(request: Request):
+    data = await request.json()
+    return lms_engine.create_quiz(data)
+
+@app.post("/api/lms/quiz/submit")
+@limiter.limit("20/minute")
+async def submit_quiz(request: Request):
+    data = await request.json()
+    return lms_engine.submit_quiz(data)
+
+@app.post("/api/lms/certificate/issue")
+@limiter.limit("10/minute")
+async def issue_certificate(request: Request):
+    data = await request.json()
+    return lms_engine.issue_certificate(data)
+
+@app.get("/api/lms/certificate/verify/{cert_id}")
+async def verify_certificate(cert_id: str):
+    return lms_engine.verify_certificate(cert_id)
+
+@app.post("/api/lms/progress/update")
+@limiter.limit("20/minute")
+async def update_progress(request: Request):
+    data = await request.json()
+    return lms_engine.update_progress(data)
+
+@app.get("/api/lms/progress/{enrollment_id}")
+async def get_progress(enrollment_id: str):
+    return lms_engine.get_progress(enrollment_id)
+
+@app.post("/api/lms/discussion/post")
+@limiter.limit("20/minute")
+async def post_discussion(request: Request):
+    data = await request.json()
+    return lms_engine.post_discussion(data)
+
+@app.post("/api/lms/discussion/reply")
+@limiter.limit("20/minute")
+async def reply_discussion(request: Request):
+    data = await request.json()
+    return lms_engine.reply_discussion(data)
+
+@app.get("/api/lms/recommendations/{student_email}")
+async def get_recommendations(student_email: str):
+    return lms_engine.get_recommendations(student_email)
+
+@app.get("/api/lms/stats")
+async def lms_stats():
+    return lms_engine.get_stats()
 
 # ============================================================
 # UTILITY ENDPOINTS
