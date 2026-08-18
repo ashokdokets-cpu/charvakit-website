@@ -67,6 +67,7 @@ from ats_engine import ats_engine
 from team_engine import team_engine
 from enterprise_engine import enterprise_engine
 from marketing_ai_engine import marketing_ai_engine
+from indian_language_ai import indian_language_ai
 
 
 
@@ -3280,6 +3281,41 @@ async def marketing_ai_stats():
 @app.get("/marketing-ai", response_class=HTMLResponse)
 async def marketing_ai_page(request: Request):
     return template_response("marketing-ai.html", request, "Marketing AI - Charvak IT Consulting")
+
+# ============================================================
+# INDIAN LANGUAGE AI API ENDPOINTS
+# ============================================================
+
+@app.get("/api/indian-languages")
+async def get_indian_languages():
+    """Get supported Indian languages."""
+    return indian_language_ai.get_languages()
+
+@app.post("/api/indian-languages/assessment")
+@limiter.limit("10/minute")
+async def create_language_assessment(request: Request):
+    """Create assessment in Indian language."""
+    data = await request.json()
+    return indian_language_ai.create_assessment(data)
+
+@app.post("/api/indian-languages/submit")
+@limiter.limit("20/minute")
+async def submit_language_assessment(request: Request):
+    """Submit assessment answers."""
+    data = await request.json()
+    return indian_language_ai.submit_assessment(data)
+
+@app.post("/api/indian-languages/translate")
+@limiter.limit("20/minute")
+async def translate_job_ad(request: Request):
+    """Translate job ad to Indian language."""
+    data = await request.json()
+    return indian_language_ai.translate_job_ad(data)
+
+@app.get("/api/indian-languages/stats")
+async def indian_language_stats():
+    """Get Indian Language AI statistics."""
+    return indian_language_ai.get_stats()
 
 # ============================================================
 # UTILITY ENDPOINTS
