@@ -3317,6 +3317,10 @@ async def indian_language_stats():
     """Get Indian Language AI statistics."""
     return indian_language_ai.get_stats()
 
+@app.get("/indian-language-ai", response_class=HTMLResponse)
+async def indian_language_ai_page(request: Request):
+    return template_response("indian-language-ai.html", request, "Indian Language AI - Charvak IT Consulting")
+
 # ============================================================
 # UTILITY ENDPOINTS
 # ============================================================
