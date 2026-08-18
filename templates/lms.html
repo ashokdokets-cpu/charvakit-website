@@ -102,7 +102,49 @@
                 </div>
             </div>
         </div>
-    </div>
+
+        <!-- Add Lesson -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5>🎬 Add Video Lesson</h5>
+                    <form onsubmit="addLesson(event)">
+                        <input type="text" class="form-control mb-2" id="lessonCourseId" placeholder="Course ID" required>
+                        <input type="text" class="form-control mb-2" id="lessonTitle" placeholder="Lesson Title" required>
+                        <input type="url" class="form-control mb-3" id="lessonVideoUrl" placeholder="Video URL (YouTube/Vimeo)">
+                        <button class="btn btn-primary btn-sm w-100" type="submit">Add Lesson</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Request Payout -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5>💰 Request Payout</h5>
+                    <form onsubmit="requestPayout(event)">
+                        <input type="email" class="form-control mb-2" id="payoutEmail" placeholder="Trainer Email" required>
+                        <input type="number" class="form-control mb-3" id="payoutAmount" placeholder="Amount (₹)" required>
+                        <button class="btn btn-primary btn-sm w-100" type="submit">Request Payout</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Courses -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5>🔍 Search Courses</h5>
+                    <form onsubmit="searchCourses(event)">
+                        <input type="text" class="form-control mb-3" id="searchQuery" placeholder="Search courses..." required>
+                        <button class="btn btn-primary btn-sm w-100" type="submit">Search</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>   <!-- Row closes here -->
 
     <!-- Output Area -->
     <div class="mt-4" id="lmsOutput"></div>
@@ -115,6 +157,9 @@ async function issueCert(e){e.preventDefault();const d={course_name:document.get
 async function postDiscussion(e){e.preventDefault();const d={course_id:document.getElementById('discCourseId').value,author:document.getElementById('discAuthor').value,title:document.getElementById('discTitle').value,content:document.getElementById('discContent').value};const r=await fetch('/api/lms/discussion/post',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});const j=await r.json();showOutput(j.message);}
 async function checkProgress(e){e.preventDefault();const id=document.getElementById('progressEnrollment').value;const r=await fetch('/api/lms/progress/'+id);const j=await r.json();showOutput('Progress: '+j.progress_percent+'%');}
 async function getRecommendations(e){e.preventDefault();const email=document.getElementById('recoEmail').value;const r=await fetch('/api/lms/recommendations/'+email);const j=await r.json();showOutput(j.recommendations.map(x=>x.course+' ('+x.match+'%)').join(', '));}
+async function addLesson(e){e.preventDefault();const d={course_id:document.getElementById('lessonCourseId').value,title:document.getElementById('lessonTitle').value,video_url:document.getElementById('lessonVideoUrl').value};const r=await fetch('/api/lms/lesson/add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});const j=await r.json();showOutput(j.message);}
+async function requestPayout(e){e.preventDefault();const d={trainer_email:document.getElementById('payoutEmail').value,amount:parseFloat(document.getElementById('payoutAmount').value)};const r=await fetch('/api/lms/payout/request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});const j=await r.json();showOutput(j.message);}
+async function searchCourses(e){e.preventDefault();const q=document.getElementById('searchQuery').value;const r=await fetch('/api/lms/search?query='+q);const j=await r.json();showOutput(j.count+' courses found');}
 function showOutput(msg){document.getElementById('lmsOutput').innerHTML='<div class="alert alert-success">'+msg+'</div>';}
 </script>
 {% endblock %}
