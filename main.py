@@ -3388,6 +3388,10 @@ async def get_recommendations(student_email: str):
 async def lms_stats():
     return lms_engine.get_stats()
 
+@app.get("/lms", response_class=HTMLResponse)
+async def lms_page(request: Request):
+    return template_response("lms.html", request, "Learning Management System - Charvak IT Consulting")
+
 # ============================================================
 # UTILITY ENDPOINTS
 # ============================================================

@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}Learning Management - Charvak IT Consulting{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4 text-center">
+        <h1 class="display-4 fw-bold">🎓 Learning Management System</h1>
+        <p class="lead">Courses, quizzes, certificates, and progress tracking</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row g-4">
+        <!-- Rate Course -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5>⭐ Rate a Course</h5>
+                    <form onsubmit="rateCourse(event)">
+                        <input type="text" class="form-control mb-2" id="rateCourseId" placeholder="Course ID" required>
+                        <input type="text" class="form-control mb-2" id="rateStudentEmail" placeholder="Your Email" required>
+                        <select class="form-select mb-2" id="rateValue">
+                            <option value="5">⭐⭐⭐⭐⭐</option>
+                            <option value="4">⭐⭐⭐⭐</option>
+                            <option value="3">⭐⭐⭐</option>
+                            <option value="2">⭐⭐</option>
+                            <option value="1">⭐</option>
+                        </select>
+                        <textarea class="form-control mb-3" id="rateReview" rows="2" placeholder="Your review"></textarea>
+                        <button class="btn btn-primary btn-sm w-100" type="submit">Submit Rating</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Take Quiz -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5>📝 Take a Quiz</h5>
+                    <form onsubmit="submitQuiz(event)">
+                        <input type="text" class="form-control mb-2" id="quizId" placeholder="Quiz ID" required>
+                        <input type="text" class="form-control mb-3" id="quizEmail" placeholder="Your Email" required>
+                        <button class="btn btn-primary btn-sm w-100" type="submit">Submit Quiz</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Certificate -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5>📜 Get Certificate</h5>
+                    <form onsubmit="issueCert(event)">
+                        <input type="text" class="form-control mb-2" id="certCourseName" placeholder="Course Name" required>
+                        <input type="text" class="form-control mb-2" id="certEmail" placeholder="Your Email" required>
+                        <input type="text" class="form-control mb-3" id="certName" placeholder="Your Name" required>
+                        <button class="btn btn-primary btn-sm w-100" type="submit">Issue Certificate</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Discussion -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5>💬 Discussion Forum</h5>
+                    <form onsubmit="postDiscussion(event)">
+                        <input type="text" class="form-control mb-2" id="discCourseId" placeholder="Course ID" required>
+                        <input type="text" class="form-control mb-2" id="discAuthor" placeholder="Your Name" required>
+                        <input type="text" class="form-control mb-2" id="discTitle" placeholder="Topic Title" required>
+                        <textarea class="form-control mb-3" id="discContent" rows="2" placeholder="Your question..."></textarea>
+                        <button class="btn btn-primary btn-sm w-100" type="submit">Post Discussion</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5>📊 Check Progress</h5>
+                    <form onsubmit="checkProgress(event)">
+                        <input type="text" class="form-control mb-3" id="progressEnrollment" placeholder="Enrollment ID" required>
+                        <button class="btn btn-primary btn-sm w-100" type="submit">Check Progress</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recommendations -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5>🤖 AI Recommendations</h5>
+                    <form onsubmit="getRecommendations(event)">
+                        <input type="text" class="form-control mb-3" id="recoEmail" placeholder="Your Email" required>
+                        <button class="btn btn-primary btn-sm w-100" type="submit">Get Recommendations</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Output Area -->
+    <div class="mt-4" id="lmsOutput"></div>
+</div>
+
+<script>
+async function rateCourse(e){e.preventDefault();const d={course_id:document.getElementById('rateCourseId').value,student_email:document.getElementById('rateStudentEmail').value,rating:parseInt(document.getElementById('rateValue').value),review:document.getElementById('rateReview').value};const r=await fetch('/api/lms/rate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});const j=await r.json();showOutput(j.message);}
+async function submitQuiz(e){e.preventDefault();const d={quiz_id:document.getElementById('quizId').value,student_email:document.getElementById('quizEmail').value,answers:[]};const r=await fetch('/api/lms/quiz/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});const j=await r.json();showOutput(j.message);}
+async function issueCert(e){e.preventDefault();const d={course_name:document.getElementById('certCourseName').value,student_email:document.getElementById('certEmail').value,student_name:document.getElementById('certName').value};const r=await fetch('/api/lms/certificate/issue',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});const j=await r.json();showOutput(j.message);}
+async function postDiscussion(e){e.preventDefault();const d={course_id:document.getElementById('discCourseId').value,author:document.getElementById('discAuthor').value,title:document.getElementById('discTitle').value,content:document.getElementById('discContent').value};const r=await fetch('/api/lms/discussion/post',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});const j=await r.json();showOutput(j.message);}
+async function checkProgress(e){e.preventDefault();const id=document.getElementById('progressEnrollment').value;const r=await fetch('/api/lms/progress/'+id);const j=await r.json();showOutput('Progress: '+j.progress_percent+'%');}
+async function getRecommendations(e){e.preventDefault();const email=document.getElementById('recoEmail').value;const r=await fetch('/api/lms/recommendations/'+email);const j=await r.json();showOutput(j.recommendations.map(x=>x.course+' ('+x.match+'%)').join(', '));}
+function showOutput(msg){document.getElementById('lmsOutput').innerHTML='<div class="alert alert-success">'+msg+'</div>';}
+</script>
+{% endblock %}
