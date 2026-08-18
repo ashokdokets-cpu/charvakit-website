@@ -66,6 +66,7 @@ from university_engine import university_engine
 from ats_engine import ats_engine
 from team_engine import team_engine
 from enterprise_engine import enterprise_engine
+from marketing_ai_engine import marketing_ai_engine
 
 
 
@@ -3249,6 +3250,32 @@ async def kiosk_check_in(request: Request):
 @app.get("/api/enterprise/stats")
 async def enterprise_stats():
     return enterprise_engine.get_stats()
+
+# ============================================================
+# MARKETING AI API ENDPOINTS
+# ============================================================
+
+@app.post("/api/marketing/job-ad")
+@limiter.limit("10/minute")
+async def generate_job_ad(request: Request):
+    data = await request.json()
+    return await marketing_ai_engine.generate_job_ad(data)
+
+@app.post("/api/marketing/social-post")
+@limiter.limit("20/minute")
+async def generate_social_post(request: Request):
+    data = await request.json()
+    return await marketing_ai_engine.generate_social_post(data)
+
+@app.post("/api/marketing/lead-drip")
+@limiter.limit("10/minute")
+async def create_lead_drip(request: Request):
+    data = await request.json()
+    return await marketing_ai_engine.create_lead_drip(data)
+
+@app.get("/api/marketing/stats")
+async def marketing_ai_stats():
+    return marketing_ai_engine.get_stats()
 
 # ============================================================
 # UTILITY ENDPOINTS
