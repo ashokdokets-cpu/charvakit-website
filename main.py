@@ -3392,6 +3392,49 @@ async def lms_stats():
 async def lms_page(request: Request):
     return template_response("lms.html", request, "Learning Management System - Charvak IT Consulting")
 
+# LMS — Additional Features
+@app.post("/api/lms/lesson/add")
+@limiter.limit("20/minute")
+async def add_lesson(request: Request):
+    data = await request.json()
+    return lms_engine.add_lesson(data)
+
+@app.get("/api/lms/lessons/{course_id}")
+async def get_lessons(course_id: str):
+    return lms_engine.get_course_lessons(course_id)
+
+@app.post("/api/lms/payout/request")
+@limiter.limit("10/minute")
+async def request_payout(request: Request):
+    data = await request.json()
+    return lms_engine.request_payout(data)
+
+@app.get("/api/lms/payouts/{trainer_email}")
+async def get_payouts(trainer_email: str):
+    return lms_engine.get_payouts(trainer_email)
+
+@app.post("/api/lms/language/add")
+@limiter.limit("10/minute")
+async def add_course_language(request: Request):
+    data = await request.json()
+    return lms_engine.add_course_language(data)
+
+@app.post("/api/lms/gamification/points")
+@limiter.limit("20/minute")
+async def award_points(request: Request):
+    data = await request.json()
+    return lms_engine.award_points(data)
+
+@app.post("/api/lms/notify")
+@limiter.limit("20/minute")
+async def send_course_notification(request: Request):
+    data = await request.json()
+    return lms_engine.send_course_notification(data)
+
+@app.get("/api/lms/search")
+async def search_courses(query: str = None, category: str = None, max_price: float = None, language: str = None):
+    return lms_engine.search_courses(query, category, None, max_price, language)
+
 # ============================================================
 # UTILITY ENDPOINTS
 # ============================================================
