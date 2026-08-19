@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Bridge — Career Journey - Charvak IT Consulting{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4 text-center">
+        <h1 class="display-4 fw-bold">🌉 Bridge Your Career</h1>
+        <p class="lead">Diagnose → Measure → Learn → Match → Monetize</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row g-4">
+        <!-- Start Journey -->
+        <div class="col-lg-6">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h5>🎯 Start Your Journey</h5>
+                    <p class="text-muted">5 scenario questions to diagnose your skill gaps</p>
+                    <button class="btn btn-primary btn-lg w-100" onclick="startJourney()">Start Assessment</button>
+                    <div class="mt-3" id="journeyOutput"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Revenue Calculator -->
+        <div class="col-lg-6">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h5>💰 Revenue Calculator</h5>
+                    <p class="text-muted">ISA-based revenue model for universities</p>
+                    <form onsubmit="calcRevenue(event)">
+                        <div class="mb-3">
+                            <label class="form-label">Students: <span id="studentVal">1000</span></label>
+                            <input type="range" class="form-range" id="students" min="100" max="10000" value="1000" oninput="document.getElementById('studentVal').textContent=this.value">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Placement Rate: <span id="placeVal">45%</span></label>
+                            <input type="range" class="form-range" id="placement" min="10" max="90" value="45" oninput="document.getElementById('placeVal').textContent=this.value+'%'">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Avg Salary: <span id="salaryVal">₹6,00,000</span></label>
+                            <input type="range" class="form-range" id="salary" min="300000" max="1800000" step="10000" value="600000" oninput="document.getElementById('salaryVal').textContent='₹'+parseInt(this.value).toLocaleString('en-IN')">
+                        </div>
+                        <button class="btn btn-primary w-100" type="submit">Calculate Revenue</button>
+                    </form>
+                    <div class="mt-3" id="revenueOutput"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+async function startJourney() {
+    const r = await fetch('/api/bridge/start', {method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+    const j = await r.json();
+    document.getElementById('journeyOutput').innerHTML = 
+        '<div class="alert alert-info">Session: ' + j.session_id + '<br>First question: ' + j.first_question.prompt + '</div>';
+}
+
+async function calcRevenue(e) {
+    e.preventDefault();
+    const data = {
+        students: parseInt(document.getElementById('students').value),
+        placement_rate: parseFloat(document.getElementById('placement').value),
+        avg_salary: parseFloat(document.getElementById('salary').value),
+        isa_percent: 12,
+        isa_months: 24
+    };
+    const r = await fetch('/api/bridge/revenue', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+    const j = await r.json();
+    const streams = j.revenue_streams;
+    document.getElementById('revenueOutput').innerHTML = 
+        '<div class="alert alert-success">' +
+        'ISA: ₹' + streams.isa.amount.toLocaleString('en-IN') + '<br>' +
+        'Corporate: ₹' + streams.corporate.amount.toLocaleString('en-IN') + '<br>' +
+        'Licensing: ₹' + streams.licensing.amount.toLocaleString('en-IN') + '<br>' +
+        'Premium: ₹' + streams.premium.amount.toLocaleString('en-IN') + '<br>' +
+        '<hr><strong>Total: ₹' + j.total.toLocaleString('en-IN') + '</strong>' +
+        '</div>';
+}
+</script>
+{% endblock %}

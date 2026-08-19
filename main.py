@@ -3606,6 +3606,10 @@ async def calculate_bridge_revenue(request: Request):
 async def bridge_stats():
     return bridge_engine.get_stats()
 
+@app.get("/bridge", response_class=HTMLResponse)
+async def bridge_page(request: Request):
+    return template_response("bridge.html", request, "Bridge Your Career - Charvak IT Consulting")
+
 # ============================================================
 # UTILITY ENDPOINTS
 # ============================================================
