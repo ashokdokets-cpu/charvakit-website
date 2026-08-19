@@ -73,6 +73,7 @@ from career_v2_engine import career_v2_engine
 from micro_internship_global import micro_internship_global
 from assessment_report_engine import assessment_report_engine
 from security_middleware import security_manager
+from bridge_engine import bridge_engine
 
 
 
@@ -3578,6 +3579,32 @@ async def blacklist_ip(request: Request):
         return {"status": "success", "message": f"IP {ip} blacklisted"}
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+# ============================================================
+# BRIDGE ENGINE API ENDPOINTS
+# ============================================================
+
+@app.post("/api/bridge/start")
+@limiter.limit("10/minute")
+async def start_bridge(request: Request):
+    data = await request.json() if request.body() else {}
+    return bridge_engine.start_journey(data)
+
+@app.post("/api/bridge/answer")
+@limiter.limit("20/minute")
+async def submit_bridge_answer(request: Request):
+    data = await request.json()
+    return bridge_engine.submit_answer(data)
+
+@app.post("/api/bridge/revenue")
+@limiter.limit("10/minute")
+async def calculate_bridge_revenue(request: Request):
+    data = await request.json()
+    return bridge_engine.calculate_revenue(data)
+
+@app.get("/api/bridge/stats")
+async def bridge_stats():
+    return bridge_engine.get_stats()
 
 # ============================================================
 # UTILITY ENDPOINTS
