@@ -3637,6 +3637,10 @@ async def get_premium_report(request: Request):
 async def ai_bridge_stats():
     return ai_bridge_engine.get_stats()
 
+@app.get("/ai-assessment", response_class=HTMLResponse)
+async def ai_assessment_page(request: Request):
+    return template_response("ai-bridge.html", request, "AI Career Assessment - Charvak IT Consulting")
+
 # ============================================================
 # UTILITY ENDPOINTS
 # ============================================================

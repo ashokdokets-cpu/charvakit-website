@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block title %}AI Career Assessment - Charvak IT Consulting{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4 text-center">
+        <h1 class="display-4 fw-bold">🤖 AI Career Assessment</h1>
+        <p class="lead">Personalized assessment powered by GPT-4o-mini</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <!-- Setup Form -->
+            <div class="card border-0 shadow-sm mb-4" id="setupForm">
+                <div class="card-body p-4">
+                    <h5 class="mb-3">Start Your AI Assessment</h5>
+                    <form onsubmit="startAIAssessment(event)">
+                        <div class="mb-3">
+                            <label class="form-label">Your Name</label>
+                            <input type="text" class="form-control" id="name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Your Email</label>
+                            <input type="email" class="form-control" id="email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Role</label>
+                            <select class="form-select" id="role">
+                                <option>Software Developer</option>
+                                <option>Data Scientist</option>
+                                <option>UI/UX Designer</option>
+                                <option>Marketing Specialist</option>
+                                <option>Business Analyst</option>
+                                <option>DevOps Engineer</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Industry</label>
+                            <select class="form-select" id="industry">
+                                <option>IT/Tech</option>
+                                <option>Finance</option>
+                                <option>Healthcare</option>
+                                <option>E-commerce</option>
+                                <option>Manufacturing</option>
+                                <option>Education</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Experience Level</label>
+                            <select class="form-select" id="level">
+                                <option>Fresher</option>
+                                <option>Mid-Level</option>
+                                <option>Senior</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary btn-lg w-100" type="submit">Start AI Assessment</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Questions -->
+            <div id="questionArea"></div>
+
+            <!-- Report -->
+            <div id="reportArea"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+let aiSessionId = null;
+let currentQIndex = 0;
+let aiQuestions = [];
+
+async function startAIAssessment(e) {
+    e.preventDefault();
+    const data = {
+        name: document.getElementById('name').value,
+        email: document.getElementById('email').value,
+        role: document.getElementById('role').value,
+        industry: document.getElementById('industry').value,
+        experience_level: document.getElementById('level').value
+    };
+    const r = await fetch('/api/ai-bridge/start', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+    const j = await r.json();
+    aiSessionId = j.session_id;
+    aiQuestions = j.first_question ? [j.first_question] : [];
+    document.getElementById('setupForm').style.display = 'none';
+    showAIQuestion();
+}
+
+function showAIQuestion() {
+    if (currentQIndex < aiQuestions.length) {
+        const q = aiQuestions[currentQIndex];
+        document.getElementById('questionArea').innerHTML = `
+            <div class="card border-0 shadow-sm p-4">
+                <small class="text-muted">Question ${currentQIndex + 1} of 5</small>
+                <h5 class="mt-2">${q.prompt}</h5>
+                <textarea class="form-control mt-3" id="answerText" rows="4" placeholder="Type your answer..."></textarea>
+                <button class="btn btn-primary mt-3" onclick="submitAIAnswer('${q.id}')">Submit Answer</button>
+            </div>
+        `;
+    }
+}
+
+async function submitAIAnswer(questionId) {
+    const answerText = document.getElementById('answerText').value;
+    const data = {
+        session_id: aiSessionId,
+        question_id: questionId,
+        answer_text: answerText
+    };
+    const r = await fetch('/api/ai-bridge/answer', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+    const j = await r.json();
+    currentQIndex++;
+    
+    if (j.complete) {
+        showReport(j.report);
+    } else if (j.next_question) {
+        aiQuestions.push(j.next_question);
+        showAIQuestion();
+    }
+}
+
+function showReport(report) {
+    document.getElementById('questionArea').innerHTML = '';
+    document.getElementById('reportArea').innerHTML = `
+        <div class="card border-0 shadow-sm p-4">
+            <h5 class="text-success">✅ Assessment Complete!</h5>
+            <h2>Score: ${report.score || 72}/100</h2>
+            <hr>
+            <h6>Strengths:</h6>
+            <ul>${(report.strengths || []).map(s => '<li>'+s+'</li>').join('')}</ul>
+            <h6>Areas for Improvement:</h6>
+            <ul>${(report.weaknesses || []).map(w => '<li>'+w+'</li>').join('')}</ul>
+            <hr>
+            <button class="btn btn-primary w-100" onclick="getPremium()">🔓 Unlock Full Report — ₹99</button>
+        </div>
+    `;
+}
+
+async function getPremium() {
+    const r = await fetch('/api/ai-bridge/premium', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id: aiSessionId})});
+    const j = await r.json();
+    alert(j.message || 'Premium report unlocked!');
+}
+</script>
+{% endblock %}
