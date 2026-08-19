@@ -3526,12 +3526,15 @@ async def global_micro_stats():
 # ============================================================
 # ASSESSMENT REPORT API ENDPOINTS
 # ============================================================
-
 @app.post("/api/report/generate")
 @limiter.limit("20/minute")
 async def generate_report(request: Request):
     data = await request.json()
     return assessment_report_engine.generate_report(data)
+
+@app.get("/api/report/stats")
+async def report_stats():
+    return assessment_report_engine.get_stats()
 
 @app.get("/api/report/{report_id}")
 async def get_report(report_id: str):
@@ -3544,10 +3547,6 @@ async def verify_report(verification_id: str):
 @app.get("/api/report/candidate/{email}")
 async def get_candidate_reports(email: str):
     return assessment_report_engine.get_candidate_reports(email)
-
-@app.get("/api/report/stats")
-async def report_stats():
-    return assessment_report_engine.get_stats()
 
 # ============================================================
 # UTILITY ENDPOINTS
