@@ -74,6 +74,7 @@ from micro_internship_global import micro_internship_global
 from assessment_report_engine import assessment_report_engine
 from security_middleware import security_manager
 from bridge_engine import bridge_engine
+from ai_bridge_engine import ai_bridge_engine
 
 
 
@@ -3609,6 +3610,32 @@ async def bridge_stats():
 @app.get("/bridge", response_class=HTMLResponse)
 async def bridge_page(request: Request):
     return template_response("bridge.html", request, "Bridge Your Career - Charvak IT Consulting")
+
+# ============================================================
+# AI BRIDGE ENGINE API ENDPOINTS
+# ============================================================
+
+@app.post("/api/ai-bridge/start")
+@limiter.limit("10/minute")
+async def start_ai_bridge(request: Request):
+    data = await request.json()
+    return ai_bridge_engine.start_ai_assessment(data)
+
+@app.post("/api/ai-bridge/answer")
+@limiter.limit("20/minute")
+async def submit_ai_answer(request: Request):
+    data = await request.json()
+    return ai_bridge_engine.submit_ai_answer(data)
+
+@app.post("/api/ai-bridge/premium")
+@limiter.limit("5/minute")
+async def get_premium_report(request: Request):
+    data = await request.json()
+    return ai_bridge_engine.get_premium_report(data.get("session_id"))
+
+@app.get("/api/ai-bridge/stats")
+async def ai_bridge_stats():
+    return ai_bridge_engine.get_stats()
 
 # ============================================================
 # UTILITY ENDPOINTS
