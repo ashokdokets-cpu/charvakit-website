@@ -70,6 +70,7 @@ from marketing_ai_engine import marketing_ai_engine
 from indian_language_ai import indian_language_ai
 from lms_engine import lms_engine
 from career_v2_engine import career_v2_engine
+from micro_internship_global import micro_internship_global
 
 
 
@@ -3495,6 +3496,31 @@ async def career_v2_stats():
 @app.get("/career-center", response_class=HTMLResponse)
 async def career_center_page(request: Request):
     return template_response("career-v2.html", request, "Career Center - Charvak IT Consulting")
+
+# Micro-Internship Global
+
+@app.post("/api/micro-internship/global/post")
+@limiter.limit("10/minute")
+async def post_global_project(request: Request):
+    data = await request.json()
+    return micro_internship_global.post_global_project(data)
+
+@app.post("/api/micro-internship/global/mentor")
+@limiter.limit("10/minute")
+async def assign_mentor(request: Request):
+    data = await request.json()
+    return micro_internship_global.assign_mentor(data)
+
+@app.get("/api/micro-internship/global/projects")
+async def filter_global_projects(country: str = None, mode: str = None):
+    filters = {}
+    if country: filters["country"] = country
+    if mode: filters["mode"] = mode
+    return micro_internship_global.filter_projects(filters)
+
+@app.get("/api/micro-internship/global/stats")
+async def global_micro_stats():
+    return micro_internship_global.get_stats()
 
 # ============================================================
 # UTILITY ENDPOINTS
