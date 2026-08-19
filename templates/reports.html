@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Assessment Reports - Charvak IT Consulting{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4 text-center">
+        <h1 class="display-4 fw-bold">📊 Assessment Reports</h1>
+        <p class="lead">Generate, verify, and track assessment reports</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row g-4">
+        <!-- Generate Report -->
+        <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h5>📝 Generate Report</h5>
+                    <form onsubmit="generateReport(event)">
+                        <div class="mb-2">
+                            <select class="form-select" id="reportType">
+                                <option value="skill_twin">Skill-Twin Assessment</option>
+                                <option value="interview_prep">Interview Prep</option>
+                                <option value="quiz">LMS Quiz</option>
+                                <option value="indian_language">Indian Language Assessment</option>
+                            </select>
+                        </div>
+                        <input type="text" class="form-control mb-2" id="candidateName" placeholder="Candidate Name" required>
+                        <input type="email" class="form-control mb-2" id="candidateEmail" placeholder="Candidate Email" required>
+                        <input type="email" class="form-control mb-2" id="employerEmail" placeholder="Employer Email (optional)">
+                        <input type="number" class="form-control mb-3" id="reportScore" placeholder="Score (0-100)" required>
+                        <button class="btn btn-primary w-100" type="submit">Generate & Deliver Report</button>
+                    </form>
+                    <p class="text-success mt-2 text-center" id="reportMsg" style="display:none;"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Verify Report -->
+        <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h5>🔍 Verify Report</h5>
+                    <form onsubmit="verifyReport(event)">
+                        <input type="text" class="form-control mb-3" id="verificationId" placeholder="Verification ID (e.g. VERIFY-XXXX)" required>
+                        <button class="btn btn-outline-primary w-100" type="submit">Verify</button>
+                    </form>
+                    <div class="mt-3" id="verifyResult"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- My Reports -->
+        <div class="col-md-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5>📂 My Reports</h5>
+                    <form onsubmit="getMyReports(event)" class="mb-3">
+                        <div class="row g-2">
+                            <div class="col-md-8"><input type="email" class="form-control" id="myEmail" placeholder="Your Email" required></div>
+                            <div class="col-md-4"><button class="btn btn-outline-primary w-100" type="submit">Get My Reports</button></div>
+                        </div>
+                    </form>
+                    <div id="myReportsList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+async function generateReport(e) {
+    e.preventDefault();
+    const data = {
+        assessment_type: document.getElementById('reportType').value,
+        candidate_name: document.getElementById('candidateName').value,
+        candidate_email: document.getElementById('candidateEmail').value,
+        employer_email: document.getElementById('employerEmail').value,
+        score: parseFloat(document.getElementById('reportScore').value),
+        passed: parseFloat(document.getElementById('reportScore').value) >= 70
+    };
+    const r = await fetch('/api/report/generate', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+    const j = await r.json();
+    const msg = document.getElementById('reportMsg');
+    msg.textContent = j.message + ' (ID: ' + j.report_id + ')';
+    msg.style.display = 'block';
+}
+
+async function verifyReport(e) {
+    e.preventDefault();
+    const id = document.getElementById('verificationId').value;
+    const r = await fetch('/api/report/verify/' + id);
+    const j = await r.json();
+    document.getElementById('verifyResult').innerHTML = j.verified 
+        ? '<div class="alert alert-success">✅ Verified! Score: ' + j.report.score + '%</div>'
+        : '<div class="alert alert-danger">❌ Report not found</div>';
+}
+
+async function getMyReports(e) {
+    e.preventDefault();
+    const email = document.getElementById('myEmail').value;
+    const r = await fetch('/api/report/candidate/' + email);
+    const j = await r.json();
+    document.getElementById('myReportsList').innerHTML = j.count > 0
+        ? j.reports.map(x => '<div class="p-2 border-bottom">'+x.assessment_type+' — '+x.score+'% ('+x.report_id+')</div>').join('')
+        : '<p class="text-muted">No reports found</p>';
+}
+</script>
+{% endblock %}

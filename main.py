@@ -3548,6 +3548,10 @@ async def verify_report(verification_id: str):
 async def get_candidate_reports(email: str):
     return assessment_report_engine.get_candidate_reports(email)
 
+@app.get("/reports", response_class=HTMLResponse)
+async def reports_page(request: Request):
+    return template_response("reports.html", request, "Assessment Reports - Charvak IT Consulting")
+
 # ============================================================
 # UTILITY ENDPOINTS
 # ============================================================
