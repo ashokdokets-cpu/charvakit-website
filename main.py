@@ -71,6 +71,7 @@ from indian_language_ai import indian_language_ai
 from lms_engine import lms_engine
 from career_v2_engine import career_v2_engine
 from micro_internship_global import micro_internship_global
+from assessment_report_engine import assessment_report_engine
 
 
 
@@ -3521,6 +3522,32 @@ async def filter_global_projects(country: str = None, mode: str = None):
 @app.get("/api/micro-internship/global/stats")
 async def global_micro_stats():
     return micro_internship_global.get_stats()
+
+# ============================================================
+# ASSESSMENT REPORT API ENDPOINTS
+# ============================================================
+
+@app.post("/api/report/generate")
+@limiter.limit("20/minute")
+async def generate_report(request: Request):
+    data = await request.json()
+    return assessment_report_engine.generate_report(data)
+
+@app.get("/api/report/{report_id}")
+async def get_report(report_id: str):
+    return assessment_report_engine.get_report(report_id)
+
+@app.get("/api/report/verify/{verification_id}")
+async def verify_report(verification_id: str):
+    return assessment_report_engine.verify_report(verification_id)
+
+@app.get("/api/report/candidate/{email}")
+async def get_candidate_reports(email: str):
+    return assessment_report_engine.get_candidate_reports(email)
+
+@app.get("/api/report/stats")
+async def report_stats():
+    return assessment_report_engine.get_stats()
 
 # ============================================================
 # UTILITY ENDPOINTS
