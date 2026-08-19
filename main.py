@@ -72,6 +72,7 @@ from lms_engine import lms_engine
 from career_v2_engine import career_v2_engine
 from micro_internship_global import micro_internship_global
 from assessment_report_engine import assessment_report_engine
+from security_middleware import security_manager
 
 
 
@@ -3551,6 +3552,32 @@ async def get_candidate_reports(email: str):
 @app.get("/reports", response_class=HTMLResponse)
 async def reports_page(request: Request):
     return template_response("reports.html", request, "Assessment Reports - Charvak IT Consulting")
+
+# ============================================================
+# SECURITY API ENDPOINTS
+# ============================================================
+
+@app.get("/api/security/stats")
+async def security_stats():
+    """Get security statistics."""
+    return security_manager.get_security_stats()
+
+@app.post("/api/security/blacklist")
+async def blacklist_ip(request: Request):
+    """Blacklist an IP (admin only)."""
+    try:
+        data = await request.json()
+        # Require API key for this action
+        api_key = request.headers.get("X-API-Key", "")
+        if not security_manager.validate_api_key(api_key):
+            return JSONResponse({"status": "error", "message": "Invalid API key"}, status_code=401)
+        
+        ip = data.get("ip")
+        reason = data.get("reason", "manual_blacklist")
+        security_manager.blacklist_ip(ip, reason)
+        return {"status": "success", "message": f"IP {ip} blacklisted"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 # ============================================================
 # UTILITY ENDPOINTS
