@@ -3667,6 +3667,10 @@ async def assist_research(request: Request):
 async def student_suite_stats():
     return student_suite_engine.get_stats()
 
+@app.get("/student-suite", response_class=HTMLResponse)
+async def student_suite_page(request: Request):
+    return template_response("student-suite.html", request, "AI Student Suite - Charvak IT Consulting")
+
 # ============================================================
 # UTILITY ENDPOINTS
 # ============================================================
