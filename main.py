@@ -75,6 +75,7 @@ from assessment_report_engine import assessment_report_engine
 from security_middleware import security_manager
 from bridge_engine import bridge_engine
 from ai_bridge_engine import ai_bridge_engine
+from student_suite_engine import student_suite_engine
 
 
 
@@ -3607,9 +3608,6 @@ async def calculate_bridge_revenue(request: Request):
 async def bridge_stats():
     return bridge_engine.get_stats()
 
-@app.get("/bridge", response_class=HTMLResponse)
-async def bridge_page(request: Request):
-    return template_response("bridge.html", request, "Bridge Your Career - Charvak IT Consulting")
 
 # ============================================================
 # AI BRIDGE ENGINE API ENDPOINTS
@@ -3640,6 +3638,34 @@ async def ai_bridge_stats():
 @app.get("/ai-assessment", response_class=HTMLResponse)
 async def ai_assessment_page(request: Request):
     return template_response("ai-bridge.html", request, "AI Career Assessment - Charvak IT Consulting")
+
+# Student Suite
+
+@app.post("/api/student/subscribe")
+@limiter.limit("10/minute")
+async def student_subscribe(request: Request):
+    data = await request.json()
+    return student_suite_engine.subscribe(data)
+
+@app.get("/api/student/plan/{email}")
+async def get_student_plan(email: str):
+    return student_suite_engine.get_plan(email)
+
+@app.post("/api/student/assignment")
+@limiter.limit("20/minute")
+async def assist_assignment(request: Request):
+    data = await request.json()
+    return student_suite_engine.assist_assignment(data)
+
+@app.post("/api/student/research")
+@limiter.limit("20/minute")
+async def assist_research(request: Request):
+    data = await request.json()
+    return student_suite_engine.assist_research(data)
+
+@app.get("/api/student/stats")
+async def student_suite_stats():
+    return student_suite_engine.get_stats()
 
 # ============================================================
 # UTILITY ENDPOINTS
