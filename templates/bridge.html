@@ -41,9 +41,31 @@
                             <label class="form-label">Avg Salary: <span id="salaryVal">₹6,00,000</span></label>
                             <input type="range" class="form-range" id="salary" min="300000" max="1800000" step="10000" value="600000" oninput="document.getElementById('salaryVal').textContent='₹'+parseInt(this.value).toLocaleString('en-IN')">
                         </div>
+                        <div class="mb-3">
+                            <label class="form-label">ISA %: <span id="isaVal">12%</span></label>
+                            <input type="range" class="form-range" id="isaPercent" min="5" max="20" value="12" oninput="document.getElementById('isaVal').textContent=this.value+'%'">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">ISA Duration: <span id="durVal">24 months</span></label>
+                            <input type="range" class="form-range" id="isaMonths" min="6" max="36" step="6" value="24" oninput="document.getElementById('durVal').textContent=this.value+' months'">
+                        </div>
                         <button class="btn btn-primary w-100" type="submit">Calculate Revenue</button>
                     </form>
                     <div class="mt-3" id="revenueOutput"></div>
+                    
+                    <!-- Premium Upsell -->
+                    <div class="mt-3">
+                        <button class="btn btn-outline-primary btn-sm w-100" onclick="premiumCalculator()">
+                            🔓 Unlock Advanced Features — ₹4,999
+                        </button>
+                    </div>
+                    
+                    <!-- Lead Capture -->
+                    <div class="alert alert-warning mt-3 mb-0">
+                        <h6 class="mb-1">🏫 Want to implement this at your university?</h6>
+                        <p class="small mb-2">Get white-label dashboard + custom reports</p>
+                        <a href="/contact" class="btn btn-primary btn-sm">Schedule a Demo</a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -115,8 +137,8 @@ async function calcRevenue(e) {
         students: parseInt(document.getElementById('students').value),
         placement_rate: parseFloat(document.getElementById('placement').value),
         avg_salary: parseFloat(document.getElementById('salary').value),
-        isa_percent: 12,
-        isa_months: 24
+        isa_percent: parseFloat(document.getElementById('isaPercent').value),
+        isa_months: parseInt(document.getElementById('isaMonths').value)
     };
     const r = await fetch('/api/bridge/revenue', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
     const j = await r.json();
@@ -127,10 +149,17 @@ async function calcRevenue(e) {
         'Corporate: ₹' + streams.corporate.amount.toLocaleString('en-IN') + '<br>' +
         'Licensing: ₹' + streams.licensing.amount.toLocaleString('en-IN') + '<br>' +
         'Premium: ₹' + streams.premium.amount.toLocaleString('en-IN') + '<br>' +
-        '<hr><strong>Total: ₹' + j.total.toLocaleString('en-IN') + '</strong>' +
+        '<hr><strong>Total: ₹' + j.total.toLocaleString('en-IN') + '</strong><br>' +
+        '<small>Per Student: ₹' + j.per_student.toLocaleString('en-IN') + '</small>' +
         '</div>';
 }
-</script><script>
+
+function premiumCalculator() {
+    alert('🔓 Advanced Calculator Features:\n\n✅ Multiple cohort comparison\n✅ PDF export reports\n✅ White-label dashboard\n✅ API access\n\nPrice: ₹4,999/month\n\nContact hr@charvakit.com to subscribe!');
+}
+</script>
+
+<script>
 let currentSessionId = null;
 let currentQuestion = null;
 let answeredCount = 0;
@@ -195,8 +224,8 @@ async function calcRevenue(e) {
         students: parseInt(document.getElementById('students').value),
         placement_rate: parseFloat(document.getElementById('placement').value),
         avg_salary: parseFloat(document.getElementById('salary').value),
-        isa_percent: 12,
-        isa_months: 24
+        isa_percent: parseFloat(document.getElementById('isaPercent').value),
+        isa_months: parseInt(document.getElementById('isaMonths').value)
     };
     const r = await fetch('/api/bridge/revenue', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
     const j = await r.json();
@@ -207,8 +236,13 @@ async function calcRevenue(e) {
         'Corporate: ₹' + streams.corporate.amount.toLocaleString('en-IN') + '<br>' +
         'Licensing: ₹' + streams.licensing.amount.toLocaleString('en-IN') + '<br>' +
         'Premium: ₹' + streams.premium.amount.toLocaleString('en-IN') + '<br>' +
-        '<hr><strong>Total: ₹' + j.total.toLocaleString('en-IN') + '</strong>' +
+        '<hr><strong>Total: ₹' + j.total.toLocaleString('en-IN') + '</strong><br>' +
+        '<small>Per Student: ₹' + j.per_student.toLocaleString('en-IN') + '</small>' +
         '</div>';
+}
+
+function premiumCalculator() {
+    alert('🔓 Advanced Calculator Features:\n\n✅ Multiple cohort comparison\n✅ PDF export reports\n✅ White-label dashboard\n✅ API access\n\nPrice: ₹4,999/month\n\nContact hr@charvakit.com to subscribe!');
 }
 </script>
 {% endblock %}
