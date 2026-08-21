@@ -26,16 +26,31 @@
             max-height: 80vh;
             overflow-y: auto;
         }
-        .dropdown-menu {
+                .dropdown-menu {
             background: #16213e;
             border: 1px solid #2a3a5e;
+            max-height: 70vh;
+            overflow-y: auto;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
         }
         .dropdown-item {
             color: #fff;
+            font-size: 14px;
+            padding: 8px 16px;
         }
         .dropdown-item:hover {
             background: #1d3252;
             color: #3ba591;
+        }
+        /* Show dropdown on hover for desktop */
+        @media (min-width: 992px) {
+            .dropdown:hover .dropdown-menu {
+                display: block;
+                margin-top: 0;
+            }
+            .dropdown-menu {
+                min-width: 220px;
+            }
         }
     </style>
     <link rel="stylesheet" href="/static/css/style.css">
