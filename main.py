@@ -76,6 +76,7 @@ from security_middleware import security_manager
 from bridge_engine import bridge_engine
 from ai_bridge_engine import ai_bridge_engine
 from student_suite_engine import student_suite_engine
+from profile_network_engine import profile_network_engine
 
 
 
@@ -3670,6 +3671,36 @@ async def student_suite_stats():
 @app.get("/student-suite", response_class=HTMLResponse)
 async def student_suite_page(request: Request):
     return template_response("student-suite.html", request, "AI Student Suite - Charvak IT Consulting")
+
+@app.post("/api/profile/create")
+@limiter.limit("10/minute")
+async def create_master_profile(request: Request):
+    data = await request.json()
+    return profile_network_engine.create_master_profile(data)
+
+@app.get("/api/profile/{email}")
+async def get_master_profile(email: str):
+    return profile_network_engine.get_master_profile(email)
+
+@app.post("/api/alumni/add")
+@limiter.limit("10/minute")
+async def add_alumni(request: Request):
+    data = await request.json()
+    return profile_network_engine.add_alumni_connection(data)
+
+@app.get("/api/alumni/find")
+async def find_alumni(university: str = None, company: str = None):
+    return profile_network_engine.find_alumni(university, company)
+
+@app.post("/api/referral/match")
+@limiter.limit("10/minute")
+async def find_referral(request: Request):
+    data = await request.json()
+    return profile_network_engine.find_referral_match(data)
+
+@app.get("/api/profile-network/stats")
+async def profile_network_stats():
+    return profile_network_engine.get_stats()
 
 # ============================================================
 # UTILITY ENDPOINTS
