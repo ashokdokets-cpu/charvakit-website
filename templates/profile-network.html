@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Profile & Network - Charvak IT Consulting{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4 text-center">
+        <h1 class="display-4 fw-bold">👤 Profile & Network</h1>
+        <p class="lead">Master Profile, Alumni Network, Referral Matchmaking</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row g-4">
+        <!-- Master Profile -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5>📋 Master Profile</h5>
+                    <p class="text-muted small">Your unified career data in one place</p>
+                    <form onsubmit="createProfile(event)">
+                        <input type="email" class="form-control mb-3" id="profileEmail" placeholder="Your Email" required>
+                        <button class="btn btn-primary btn-sm w-100" type="submit">Create/Get Profile</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alumni Network -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5>🎓 Alumni Network</h5>
+                    <p class="text-muted small">Find alumni from your university</p>
+                    <form onsubmit="findAlumni(event)">
+                        <input type="text" class="form-control mb-2" id="alumniUniversity" placeholder="University Name" required>
+                        <button class="btn btn-primary btn-sm w-100" type="submit">Find Alumni</button>
+                    </form>
+                    <div class="mt-2" id="alumniOutput"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Referral Matchmaking -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5>🤝 Referral Matchmaking</h5>
+                    <p class="text-muted small">Find who can refer you at target companies</p>
+                    <form onsubmit="findReferral(event)">
+                        <input type="text" class="form-control mb-3" id="targetCompany" placeholder="Target Company (e.g. Google)" required>
+                        <button class="btn btn-primary btn-sm w-100" type="submit">Find Referrers</button>
+                    </form>
+                    <div class="mt-2" id="referralOutput"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Output -->
+    <div class="mt-4" id="networkOutput"></div>
+</div>
+
+<script>
+async function createProfile(e) {
+    e.preventDefault();
+    const email = document.getElementById('profileEmail').value;
+    const r = await fetch('/api/profile/create', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email})});
+    const j = await r.json();
+    showOutput(j.message || 'Profile ready!');
+}
+
+async function findAlumni(e) {
+    e.preventDefault();
+    const uni = document.getElementById('alumniUniversity').value;
+    const r = await fetch('/api/alumni/find?university=' + encodeURIComponent(uni));
+    const j = await r.json();
+    document.getElementById('alumniOutput').innerHTML = j.count > 0
+        ? j.alumni.map(a => '<div class="p-2 border-bottom"><strong>'+a.name+'</strong><br><small>'+a.company+' - '+a.role+'</small></div>').join('')
+        : '<p class="text-muted">No alumni found</p>';
+}
+
+async function findReferral(e) {
+    e.preventDefault();
+    const company = document.getElementById('targetCompany').value;
+    const r = await fetch('/api/referral/match', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({target_company:company})});
+    const j = await r.json();
+    document.getElementById('referralOutput').innerHTML = j.count > 0
+        ? '<div class="alert alert-success">Found '+j.count+' potential referrers!</div>'
+        : '<div class="alert alert-warning">No referrers found yet. Add alumni connections first.</div>';
+}
+
+function showOutput(msg) {
+    document.getElementById('networkOutput').innerHTML = '<div class="alert alert-success">'+msg+'</div>';
+}
+</script>
+{% endblock %}

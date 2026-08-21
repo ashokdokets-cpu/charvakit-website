@@ -3702,6 +3702,10 @@ async def find_referral(request: Request):
 async def profile_network_stats():
     return profile_network_engine.get_stats()
 
+@app.get("/profile-network", response_class=HTMLResponse)
+async def profile_network_page(request: Request):
+    return template_response("profile-network.html", request, "Profile & Network - Charvak IT Consulting")
+
 # ============================================================
 # UTILITY ENDPOINTS
 # ============================================================
