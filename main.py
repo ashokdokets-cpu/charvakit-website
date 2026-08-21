@@ -77,6 +77,7 @@ from bridge_engine import bridge_engine
 from ai_bridge_engine import ai_bridge_engine
 from student_suite_engine import student_suite_engine
 from profile_network_engine import profile_network_engine
+from doketsrb_integration import doketsrb_integration
 
 
 
@@ -3705,6 +3706,28 @@ async def profile_network_stats():
 @app.get("/profile-network", response_class=HTMLResponse)
 async def profile_network_page(request: Request):
     return template_response("profile-network.html", request, "Profile & Network - Charvak IT Consulting")
+
+# ============================================================
+# DOKETSRB INTEGRATION API ENDPOINTS
+# ============================================================
+
+@app.get("/api/doketsrb/links")
+async def get_doketsrb_links():
+    return doketsrb_integration.get_deep_links()
+
+@app.get("/api/doketsrb/banner")
+async def get_doketsrb_banner(context: str = "career"):
+    return doketsrb_integration.get_promotional_banner(context)
+
+@app.post("/api/doketsrb/bundle")
+@limiter.limit("10/minute")
+async def subscribe_doketsrb_bundle(request: Request):
+    data = await request.json()
+    return doketsrb_integration.subscribe_bundle(data)
+
+@app.get("/api/doketsrb/bundles")
+async def get_doketsrb_bundles():
+    return doketsrb_integration.get_bundles()
 
 # ============================================================
 # UTILITY ENDPOINTS
