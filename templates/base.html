@@ -19,12 +19,31 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     
     <style>
-        .navbar-collapse {
-            background: #1a1a2e;
-            padding: 10px;
-            border-radius: 8px;
-            max-height: 80vh;
-            overflow-y: auto;
+                /* Mobile — collapsible menu with scroll */
+        @media (max-width: 991px) {
+            .navbar-collapse {
+                background: #1a1a2e;
+                padding: 10px;
+                border-radius: 8px;
+                max-height: 80vh;
+                overflow-y: auto;
+            }
+        }
+        /* Desktop — dropdowns float freely, no clipping */
+        @media (min-width: 992px) {
+            .navbar-collapse {
+                overflow: visible !important;
+                max-height: none !important;
+                background: transparent;
+                padding: 0;
+            }
+            .navbar {
+                overflow: visible !important;
+            }
+            .dropdown-menu {
+                position: absolute !important;
+                top: 100% !important;
+            }
         }
                         .dropdown-menu {
             background: #16213e;
