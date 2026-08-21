@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}Outreach Tools - Charvak IT Consulting{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4 text-center">
+        <h1 class="display-4 fw-bold">📧 Outreach Tools</h1>
+        <p class="lead">Cold Email Finder, Gmail Sync, Application Auto-Tracking</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row g-4">
+        <!-- Cold Email Finder -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5>🔍 Cold Email Finder</h5>
+                    <p class="text-muted small">Find hiring manager emails</p>
+                    <form onsubmit="findColdEmail(event)">
+                        <input type="text" class="form-control mb-2" id="emailCompany" placeholder="Company" required>
+                        <input type="text" class="form-control mb-2" id="emailName" placeholder="Hiring Manager Name">
+                        <input type="text" class="form-control mb-2" id="emailRole" placeholder="Target Role">
+                        <input type="text" class="form-control mb-3" id="emailCandidate" placeholder="Your Name" required>
+                        <button class="btn btn-primary btn-sm w-100" type="submit">Find Emails</button>
+                    </form>
+                    <div class="mt-2" id="coldEmailOutput"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gmail Sync -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5>📬 Gmail Sync</h5>
+                    <p class="text-muted small">Auto-track applications from email</p>
+                    <form onsubmit="connectGmail(event)">
+                        <input type="email" class="form-control mb-3" id="gmailEmail" placeholder="Your Email" required>
+                        <button class="btn btn-primary btn-sm w-100" type="submit">Connect Gmail</button>
+                    </form>
+                    <div class="mt-2" id="gmailOutput"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Auto-Track -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5>📋 Auto-Track Application</h5>
+                    <p class="text-muted small">Track application status</p>
+                    <form onsubmit="autoTrack(event)">
+                        <input type="email" class="form-control mb-2" id="trackEmail" placeholder="Your Email" required>
+                        <input type="text" class="form-control mb-2" id="trackCompany" placeholder="Company" required>
+                        <input type="text" class="form-control mb-3" id="trackRole" placeholder="Role" required>
+                        <button class="btn btn-primary btn-sm w-100" type="submit">Track Application</button>
+                    </form>
+                    <div class="mt-2" id="trackOutput"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Premium Upsell -->
+    <div class="text-center mt-4">
+        <div class="card border-0 shadow-sm bg-light">
+            <div class="card-body p-4">
+                <h5>🔓 Unlock All Outreach Tools</h5>
+                <p class="text-muted">Cold Email Finder + Gmail Sync + Auto-Tracking</p>
+                <h3>₹199/month</h3>
+                <button class="btn btn-primary" onclick="subscribePremium()">Subscribe Premium</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+async function findColdEmail(e) {
+    e.preventDefault();
+    const d = {
+        company: document.getElementById('emailCompany').value,
+        hiring_manager_name: document.getElementById('emailName').value,
+        target_role: document.getElementById('emailRole').value,
+        candidate_name: document.getElementById('emailCandidate').value
+    };
+    const r = await fetch('/api/outreach/cold-email', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});
+    const j = await r.json();
+    document.getElementById('coldEmailOutput').innerHTML = '<div class="alert alert-success"><strong>Likely emails:</strong><br>' + j.likely_emails.join('<br>') + '</div>';
+}
+async function connectGmail(e) {
+    e.preventDefault();
+    const email = document.getElementById('gmailEmail').value;
+    const r = await fetch('/api/outreach/gmail-sync', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email})});
+    const j = await r.json();
+    document.getElementById('gmailOutput').innerHTML = '<div class="alert alert-success">'+j.message+'</div>';
+}
+async function autoTrack(e) {
+    e.preventDefault();
+    const d = {email:document.getElementById('trackEmail').value,company:document.getElementById('trackCompany').value,role:document.getElementById('trackRole').value,status:'applied'};
+    const r = await fetch('/api/outreach/auto-track', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});
+    const j = await r.json();
+    document.getElementById('trackOutput').innerHTML = '<div class="alert alert-success">'+j.message+'</div>';
+}
+function subscribePremium() {
+    const email = prompt('Enter your email:');
+    if (!email) return;
+    fetch('/api/outreach/premium', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,plan:'premium'})})
+        .then(r=>r.json()).then(j=>alert(j.message));
+}
+</script>
+{% endblock %}

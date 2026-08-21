@@ -3774,6 +3774,10 @@ async def subscribe_outreach_premium(request: Request):
 async def outreach_stats():
     return outreach_engine.get_stats()
 
+@app.get("/outreach", response_class=HTMLResponse)
+async def outreach_page(request: Request):
+    return template_response("outreach.html", request, "Outreach Tools - Charvak IT Consulting")
+
 # ============================================================
 # UTILITY ENDPOINTS
 # ============================================================
