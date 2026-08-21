@@ -26,12 +26,42 @@
             max-height: 80vh;
             overflow-y: auto;
         }
-                .dropdown-menu {
+                        .dropdown-menu {
             background: #16213e;
             border: 1px solid #2a3a5e;
-            max-height: 70vh;
-            overflow-y: auto;
             box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+            position: absolute;
+            z-index: 10000;
+        }
+        /* Multi-column layout for long dropdowns */
+        .dropdown-menu .dropdown-item {
+            color: #fff;
+            font-size: 13px;
+            padding: 7px 14px;
+            white-space: nowrap;
+        }
+        .dropdown-item:hover {
+            background: #1d3252;
+            color: #3ba591;
+        }
+        /* Show dropdown on hover for desktop — full visibility */
+        @media (min-width: 992px) {
+            .dropdown:hover .dropdown-menu {
+                display: block;
+                margin-top: 0;
+            }
+            .dropdown-menu {
+                min-width: 240px;
+                padding: 8px 0;
+            }
+        }
+        /* Products dropdown — 2-column layout for long lists */
+        @media (min-width: 992px) {
+            .nav-item.dropdown .dropdown-menu[aria-labelledby] {
+                columns: 2;
+                column-gap: 0;
+                min-width: 480px;
+            }
         }
         .dropdown-item {
             color: #fff;
