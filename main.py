@@ -78,6 +78,7 @@ from ai_bridge_engine import ai_bridge_engine
 from student_suite_engine import student_suite_engine
 from profile_network_engine import profile_network_engine
 from doketsrb_integration import doketsrb_integration
+from outreach_engine import outreach_engine
 
 
 
@@ -3736,6 +3737,42 @@ async def team_dashboard_page(request: Request):
 @app.get("/payments", response_class=HTMLResponse)
 async def payments_page(request: Request):
     return template_response("payments.html", request, "Payments - Charvak IT Consulting")
+
+# ============================================================
+# OUTREACH ENGINE API ENDPOINTS
+# ============================================================
+
+@app.post("/api/outreach/cold-email")
+@limiter.limit("10/minute")
+async def find_cold_email(request: Request):
+    data = await request.json()
+    return outreach_engine.find_hiring_manager_email(data)
+
+@app.post("/api/outreach/gmail-sync")
+@limiter.limit("5/minute")
+async def connect_gmail_sync(request: Request):
+    data = await request.json()
+    return outreach_engine.connect_gmail(data)
+
+@app.post("/api/outreach/auto-track")
+@limiter.limit("20/minute")
+async def auto_track_application(request: Request):
+    data = await request.json()
+    return outreach_engine.auto_track_application(data)
+
+@app.get("/api/outreach/tracked/{email}")
+async def get_tracked_applications(email: str):
+    return outreach_engine.get_tracked_applications(email)
+
+@app.post("/api/outreach/premium")
+@limiter.limit("5/minute")
+async def subscribe_outreach_premium(request: Request):
+    data = await request.json()
+    return outreach_engine.subscribe_premium(data)
+
+@app.get("/api/outreach/stats")
+async def outreach_stats():
+    return outreach_engine.get_stats()
 
 # ============================================================
 # UTILITY ENDPOINTS
