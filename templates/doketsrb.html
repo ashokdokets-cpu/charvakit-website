@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}DoketsRB Integration - Charvak IT Consulting{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4 text-center">
+        <h1 class="display-4 fw-bold">📄 DoketsRB Suite</h1>
+        <p class="lead">AI Resume Builder, Cover Letters, LinkedIn Optimizer & More</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row g-4">
+        <!-- Features -->
+        <div class="col-lg-7">
+            <h4 class="mb-3">DoketsRB Features (All Free)</h4>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="card h-100 border-0 shadow-sm"><div class="card-body text-center">
+                        <div class="display-4 mb-2">📄</div>
+                        <h6>AI Resume Builder</h6>
+                        <p class="text-muted small">ATS-friendly templates</p>
+                        <a href="https://doketsrb.com" target="_blank" class="btn btn-outline-primary btn-sm">Open</a>
+                    </div></div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100 border-0 shadow-sm"><div class="card-body text-center">
+                        <div class="display-4 mb-2">✉️</div>
+                        <h6>Cover Letter Generator</h6>
+                        <p class="text-muted small">Custom letters in seconds</p>
+                        <a href="https://doketsrb.com" target="_blank" class="btn btn-outline-primary btn-sm">Open</a>
+                    </div></div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100 border-0 shadow-sm"><div class="card-body text-center">
+                        <div class="display-4 mb-2">🔗</div>
+                        <h6>LinkedIn Optimizer</h6>
+                        <p class="text-muted small">Get found by recruiters</p>
+                        <a href="https://doketsrb.com" target="_blank" class="btn btn-outline-primary btn-sm">Open</a>
+                    </div></div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100 border-0 shadow-sm"><div class="card-body text-center">
+                        <div class="display-4 mb-2">🔍</div>
+                        <h6>JD Parser</h6>
+                        <p class="text-muted small">Match resume to job description</p>
+                        <a href="https://doketsrb.com" target="_blank" class="btn btn-outline-primary btn-sm">Open</a>
+                    </div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bundle Pricing -->
+        <div class="col-lg-5">
+            <h4 class="mb-3">Charvak + DoketsRB Bundles</h4>
+            <div class="card border-0 shadow-sm mb-3"><div class="card-body">
+                <h6>Basic</h6><h3>₹0</h3>
+                <small class="text-muted">Charvak Free + DoketsRB Free</small><hr>
+                <button class="btn btn-outline-primary btn-sm w-100" onclick="subscribeBundle('basic')">Start Free</button>
+            </div></div>
+            <div class="card border-0 shadow-sm mb-3 bg-primary text-white"><div class="card-body">
+                <h6>Pro Bundle</h6><h3>₹149/mo</h3>
+                <small>Charvak AI Assessment + DoketsRB Premium</small><hr>
+                <button class="btn btn-light btn-sm w-100" onclick="subscribeBundle('pro')">Subscribe Pro</button>
+            </div></div>
+            <div class="card border-0 shadow-sm"><div class="card-body">
+                <h6>Enterprise</h6><h3>₹999/mo</h3>
+                <small class="text-muted">Everything + White-label + API</small><hr>
+                <button class="btn btn-outline-primary btn-sm w-100" onclick="subscribeBundle('enterprise')">Contact Sales</button>
+            </div></div>
+        </div>
+    </div>
+</div>
+
+<script>
+async function subscribeBundle(bundle) {
+    const email = prompt('Enter your email:');
+    if (!email) return;
+    const r = await fetch('/api/doketsrb/bundle', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,bundle:bundle})});
+    const j = await r.json();
+    alert(j.message || 'Subscribed!');
+}
+</script>
+{% endblock %}

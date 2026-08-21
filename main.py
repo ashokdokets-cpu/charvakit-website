@@ -3757,6 +3757,10 @@ async def get_service_pricing(service: str, request: Request, currency: str = "I
     except Exception:
         return JSONResponse({"error": "Pricing not available"})
 
+@app.get("/doketsrb", response_class=HTMLResponse)
+async def doketsrb_page(request: Request):
+    return template_response("doketsrb.html", request, "DoketsRB Suite - Charvak IT Consulting")
+
 
 # ============================================================
 # HEALTH CHECKS
