@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Team Dashboard - Charvak IT Consulting{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4 text-center">
+        <h1 class="display-4 fw-bold">👥 Team Dashboard</h1>
+        <p class="lead">Manage your team, roles, and members</p>
+    </div>
+</div>
+<div class="container py-5">
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm"><div class="card-body">
+                <h5>Create Team</h5>
+                <form onsubmit="createTeam(event)">
+                    <input type="text" class="form-control mb-2" id="teamCompany" placeholder="Company Name" required>
+                    <input type="email" class="form-control mb-2" id="teamAdminEmail" placeholder="Admin Email" required>
+                    <input type="text" class="form-control mb-3" id="teamAdminName" placeholder="Admin Name" required>
+                    <button class="btn btn-primary w-100" type="submit">Create Team</button>
+                </form>
+            </div></div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm"><div class="card-body">
+                <h5>Invite Member</h5>
+                <form onsubmit="inviteMember(event)">
+                    <input type="text" class="form-control mb-2" id="memberTeamId" placeholder="Team ID" required>
+                    <input type="text" class="form-control mb-2" id="memberName" placeholder="Member Name" required>
+                    <input type="email" class="form-control mb-3" id="memberEmail" placeholder="Member Email" required>
+                    <button class="btn btn-primary w-100" type="submit">Invite Member</button>
+                </form>
+            </div></div>
+        </div>
+    </div>
+    <div class="mt-3" id="teamOutput"></div>
+</div>
+<script>
+async function createTeam(e){e.preventDefault();const d={company_name:document.getElementById('teamCompany').value,admin_email:document.getElementById('teamAdminEmail').value,admin_name:document.getElementById('teamAdminName').value};const r=await fetch('/api/team/create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});const j=await r.json();show(j.message+' Team ID: '+j.team_id);}
+async function inviteMember(e){e.preventDefault();const d={team_id:document.getElementById('memberTeamId').value,name:document.getElementById('memberName').value,email:document.getElementById('memberEmail').value,role:'recruiter'};const r=await fetch('/api/team/invite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});const j=await r.json();show(j.message);}
+function show(m){document.getElementById('teamOutput').innerHTML='<div class="alert alert-success">'+m+'</div>';}
+</script>
+{% endblock %}

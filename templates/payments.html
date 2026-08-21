@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Payments - Charvak IT Consulting{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4 text-center">
+        <h1 class="display-4 fw-bold">💰 Payments</h1>
+        <p class="lead">Check payment status and methods</p>
+    </div>
+</div>
+<div class="container py-5">
+    <div class="row"><div class="col-lg-6 mx-auto">
+        <div class="card border-0 shadow-sm"><div class="card-body text-center">
+            <h5>Payment Status</h5>
+            <div id="paymentStatus" class="mt-3"><p class="text-muted">Loading...</p></div>
+        </div></div>
+        <div class="card border-0 shadow-sm mt-4"><div class="card-body text-center">
+            <h5>Payment Methods</h5>
+            <div class="mt-3">
+                <span class="badge bg-success me-2 p-2">✅ Razorpay</span>
+                <span class="badge bg-success me-2 p-2">✅ PayPal</span>
+                <span class="badge bg-success p-2">✅ UPI</span>
+            </div>
+        </div></div>
+    </div></div>
+</div>
+<script>
+fetch('/api/payment/status').then(r=>r.json()).then(j=>{
+    document.getElementById('paymentStatus').innerHTML = 
+        '<p>Razorpay: '+(j.razorpay?'✅':'❌')+'<br>PayPal: '+(j.paypal?'✅':'❌')+'<br>UPI: '+(j.upi?'✅':'❌')+'<br>Mode: <strong>'+j.mode+'</strong></p>';
+});
+</script>
+{% endblock %}

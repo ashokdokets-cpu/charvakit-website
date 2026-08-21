@@ -3729,6 +3729,14 @@ async def subscribe_doketsrb_bundle(request: Request):
 async def get_doketsrb_bundles():
     return doketsrb_integration.get_bundles()
 
+@app.get("/team-dashboard", response_class=HTMLResponse)
+async def team_dashboard_page(request: Request):
+    return template_response("team-dashboard.html", request, "Team Dashboard - Charvak IT Consulting")
+
+@app.get("/payments", response_class=HTMLResponse)
+async def payments_page(request: Request):
+    return template_response("payments.html", request, "Payments - Charvak IT Consulting")
+
 # ============================================================
 # UTILITY ENDPOINTS
 # ============================================================
