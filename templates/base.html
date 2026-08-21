@@ -68,6 +68,20 @@
                 min-width: 200px;
             }
         }
+/* Prevent dropdown item overflow */
+        .dropdown-menu .dropdown-item {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 13px;
+            padding: 6px 10px;
+        }
+        .dropdown-menu .col-6 {
+            padding: 0 8px;
+        }
+        .dropdown-menu .col-6:first-child {
+            border-right: 1px solid #2a3a5e;
+        }
 
         /* Products dropdown — 2-column alignment */
         @media (min-width: 992px) {
@@ -270,7 +284,7 @@
                     </li>
                     <li class="nav-item dropdown">
         <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Products</a>
-    <ul class="dropdown-menu" style="min-width: 560px; padding: 12px 16px;">
+    <ul class="dropdown-menu" style="min-width: 600px; max-width: 650px; padding: 12px 16px; overflow: hidden;">
         <div class="row g-2">
             <div class="col-6">
                 <strong class="d-block mb-2" style="font-size:12px; color:#3ba591;">CORE PRODUCTS</strong>
