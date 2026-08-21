@@ -45,6 +45,29 @@
                 top: 100% !important;
             }
         }
+        /* Products & Resources — 2-column dropdown layout */
+        @media (min-width: 992px) {
+            .dropdown-menu {
+                columns: 2;
+                column-gap: 0;
+                min-width: 480px;
+                padding: 8px;
+            }
+            .dropdown-menu .dropdown-item {
+                break-inside: avoid;
+                white-space: nowrap;
+            }
+            .dropdown-menu .dropdown-divider {
+                column-span: all;
+            }
+            /* Small dropdowns stay single column */
+            .dropdown-menu:has(li:nth-child(1):last-child),
+            .dropdown-menu:has(li:nth-child(2):last-child),
+            .dropdown-menu:has(li:nth-child(3):last-child) {
+                columns: 1;
+                min-width: 200px;
+            }
+        }
                         .dropdown-menu {
             background: #16213e;
             border: 1px solid #2a3a5e;
