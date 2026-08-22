@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}How It Works - Charvak IT Consulting{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4 text-center">
+        <h1 class="display-4 fw-bold">How Charvak Works</h1>
+        <p class="lead">AI-powered talent platform — simplified</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <ul class="nav nav-pills mb-4 justify-content-center">
+        <li class="nav-item"><a class="nav-link active" data-bs-toggle="pill" href="#clients">🏢 For Clients</a></li>
+        <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#candidates">🎯 For Candidates</a></li>
+    </ul>
+
+    <div class="tab-content">
+        <div class="tab-pane fade show active" id="clients">
+            <div class="row g-4">
+                <div class="col-md-3"><div class="card h-100 border-0 shadow-sm text-center p-4"><div class="display-4 mb-3">📝</div><h5>1. POST</h5><p class="text-muted small">Tell us what you need</p><a href="/post-job" class="btn btn-outline-primary btn-sm">Post Free</a></div></div>
+                <div class="col-md-3"><div class="card h-100 border-0 shadow-sm text-center p-4"><div class="display-4 mb-3">🤖</div><h5>2. AI MATCH</h5><p class="text-muted small">AI finds verified candidates</p><a href="/products" class="btn btn-outline-primary btn-sm">See AI</a></div></div>
+                <div class="col-md-3"><div class="card h-100 border-0 shadow-sm text-center p-4"><div class="display-4 mb-3">🧪</div><h5>3. TEST</h5><p class="text-muted small">Micro-internships prove skills</p><a href="/micro-internship" class="btn btn-outline-primary btn-sm">Try Trial</a></div></div>
+                <div class="col-md-3"><div class="card h-100 border-0 shadow-sm text-center p-4"><div class="display-4 mb-3">💰</div><h5>4. HIRE</h5><p class="text-muted small">Pay only on success</p><a href="/for-employers" class="btn btn-primary btn-sm">Start Hiring</a></div></div>
+            </div>
+        </div>
+        <div class="tab-pane fade" id="candidates">
+            <div class="row g-4">
+                <div class="col-md-3"><div class="card h-100 border-0 shadow-sm text-center p-4"><div class="display-4 mb-3">👤</div><h5>1. JOIN</h5><p class="text-muted small">Free profile in 2 min</p><a href="/candidate-signup" class="btn btn-outline-primary btn-sm">Join Free</a></div></div>
+                <div class="col-md-3"><div class="card h-100 border-0 shadow-sm text-center p-4"><div class="display-4 mb-3">✅</div><h5>2. VERIFY</h5><p class="text-muted small">AI skill score + badge</p><a href="/skill-check" class="btn btn-outline-primary btn-sm">Get Verified</a></div></div>
+                <div class="col-md-3"><div class="card h-100 border-0 shadow-sm text-center p-4"><div class="display-4 mb-3">💼</div><h5>3. EXPERIENCE</h5><p class="text-muted small">Real projects + courses</p><a href="/micro-internship" class="btn btn-outline-primary btn-sm">Get Experience</a></div></div>
+                <div class="col-md-3"><div class="card h-100 border-0 shadow-sm text-center p-4"><div class="display-4 mb-3">🎯</div><h5>4. GET HIRED</h5><p class="text-muted small">AI matches to jobs</p><a href="/job-board" class="btn btn-primary btn-sm">Find Jobs</a></div></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

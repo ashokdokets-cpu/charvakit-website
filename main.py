@@ -3778,6 +3778,10 @@ async def outreach_stats():
 async def outreach_page(request: Request):
     return template_response("outreach.html", request, "Outreach Tools - Charvak IT Consulting")
 
+@app.get("/how-it-works", response_class=HTMLResponse)
+async def how_it_works_page(request: Request):
+    return template_response("how-it-works.html", request, "How It Works - Charvak IT Consulting")
+
 # ============================================================
 # UTILITY ENDPOINTS
 # ============================================================
