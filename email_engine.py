@@ -49,15 +49,27 @@ class EmailEngine:
             else:
                 msg.attach(MIMEText(body, "plain"))
 
+                        smtp_success = False
             try:
                 with smtplib.SMTP(SMTP_SERVER, 587) as server:
                     server.starttls()
                     server.login(SMTP_USERNAME, SMTP_PASSWORD)
                     server.sendmail(SMTP_USERNAME, to_email, msg.as_string())
+                smtp_success = True
             except Exception:
-                with smtplib.SMTP_SSL(SMTP_SERVER, 465) as server:
-                    server.login(SMTP_USERNAME, SMTP_PASSWORD)
-                    server.sendmail(SMTP_USERNAME, to_email, msg.as_string())
+                pass
+            
+            if not smtp_success:
+                try:
+                    with smtplib.SMTP_SSL(SMTP_SERVER, 465) as server:
+                        server.login(SMTP_USERNAME, SMTP_PASSWORD)
+                        server.sendmail(SMTP_USERNAME, to_email, msg.as_string())
+                    smtp_success = True
+                except Exception:
+                    pass
+            
+            if not smtp_success:
+                return {"status": "error", "message": "SMTP connection failed — email not sent"}
 
             self.sent_count += 1
             logger.info(f"✅ Email sent to {to_email}: {subject}")
