@@ -2,21 +2,21 @@
 // Universal Currency Updater — auto-converts ₹ prices based on user region
 (function() {
     const EXCHANGE_RATES = {
-        INR: 1,
-        USD: 0.012,
-        EUR: 0.011,
-        GBP: 0.0095,
-        AED: 0.044,
-        SGD: 0.016,
-        CAD: 0.016,
-        AUD: 0.018,
-        JPY: 1.8,
-        CNY: 0.087,
-        BRL: 0.06,
-        NGN: 19.5,
-        ZAR: 0.22,
-        KES: 1.55
-    };
+    INR: 1,
+    USD: 0.05,  // Premium pricing for global (not just exchange rate)
+    EUR: 0.045,
+    GBP: 0.04,
+    AED: 0.18,
+    SGD: 0.068,
+    CAD: 0.068,
+    AUD: 0.075,
+    JPY: 7.5,
+    CNY: 0.36,
+    BRL: 0.25,
+    NGN: 80,
+    ZAR: 0.92,
+    KES: 6.4
+};
     
     const CURRENCY_SYMBOLS = {
         INR: '₹', USD: '$', EUR: '€', GBP: '£', AED: 'د.إ',
