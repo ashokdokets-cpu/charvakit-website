@@ -87,10 +87,26 @@ function submitBeta() {
 </div>
 
 <script>
-function startFree(e){
+async function startFree(e){
     e.preventDefault();
     const name = prompt('Enter your business name to start:');
     if(name){
+        // Send to backend
+        try {
+            await fetch('/api/contact', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    name: name,
+                    email: 'beta@charvakit.com',
+                    phone: '',
+                    subject: 'Voice-to-Web Free Signup',
+                    message: 'Business: ' + name
+                })
+            });
+        } catch(err) {}
+        
+        // Also save locally
         const freeUsers = JSON.parse(localStorage.getItem('voice_to_web_free')||'[]');
         freeUsers.push({business: name, date: new Date().toISOString()});
         localStorage.setItem('voice_to_web_free', JSON.stringify(freeUsers));
@@ -98,20 +114,24 @@ function startFree(e){
     }
 }
 
-function getPro(e){
+async function getPro(e){
     e.preventDefault();
     const name = prompt('Enter your name:');
     if(name){
-        const proUsers = JSON.parse(localStorage.getItem('voice_to_web_pro')||'[]');
-        proUsers.push({name, date: new Date().toISOString()});
-        localStorage.setItem('voice_to_web_pro', JSON.stringify(proUsers));
-        alert('Welcome to Pro, ' + name + '! We will set up your account and contact you shortly.');
-    }
-}
-function getPro(e){
-    e.preventDefault();
-    const name = prompt('Enter your name:');
-    if(name){
+        try {
+            await fetch('/api/contact', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    name: name,
+                    email: 'pro@charvakit.com',
+                    phone: '',
+                    subject: 'Voice-to-Web Pro Signup',
+                    message: 'Pro user: ' + name
+                })
+            });
+        } catch(err) {}
+        
         const proUsers = JSON.parse(localStorage.getItem('voice_to_web_pro')||'[]');
         proUsers.push({name, date: new Date().toISOString()});
         localStorage.setItem('voice_to_web_pro', JSON.stringify(proUsers));
