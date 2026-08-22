@@ -27,38 +27,42 @@ function showUPI() {
     document.getElementById('upiSection').style.display = 'block';
 }
 
-// Detect user country for payment method
-function getPreferredPayment() {
-    const currency = localStorage.getItem('charvak_currency') || 'INR';
-    if (currency === 'INR') return 'razorpay';
-    return 'paypal';
-}
-
 async function processToolPayment(amount, name, callback) {
-    const method = getPreferredPayment();
+    const currency = localStorage.getItem('charvak_currency') || 'INR';
     
+    let method = 'razorpay';
+    
+    if (currency === 'INR') {
+        // India — Razorpay only
+        method = 'razorpay';
+    } else {
+        // Global — show both Razorpay and PayPal
+        const choice = confirm(
+            'Choose Payment Method:\n\n' +
+            'OK = Razorpay (Cards, UPI, NetBanking)\n' +
+            'Cancel = PayPal (International)'
+        );
+        method = choice ? 'razorpay' : 'paypal';
+    }
+
     try {
-        // Create order on backend
         const response = await fetch('/api/payment/create-order', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ amount, name, method })
         });
         const order = await response.json();
-        
+
         if (order.status !== 'success') {
             alert('Payment setup failed. Please try again.');
             callback(false);
             return;
         }
-        
+
         if (method === 'razorpay') {
             processRazorpay(order, callback);
         } else if (method === 'paypal') {
             processPayPal(order, callback);
-        } else {
-            showUPI();
-            callback(true, { method: 'upi' });
         }
     } catch (e) {
         console.error('Payment error:', e);
@@ -66,6 +70,7 @@ async function processToolPayment(amount, name, callback) {
         callback(false);
     }
 }
+
 // Fetch Razorpay key from backend
 fetch('/api/payment/status')
     .then(res => res.json())
@@ -105,6 +110,16 @@ function processRazorpay(order, callback) {
 }
 
 function processPayPal(order, callback) {
+    // Create container for PayPal button
+    let container = document.getElementById('paypal-button-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'paypal-button-container';
+        container.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10000;background:#fff;padding:20px;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,0.4);';
+        document.body.appendChild(container);
+    }
+    container.innerHTML = '<h5 class="mb-3">Pay with PayPal</h5>';
+    
     paypal.Buttons({
         createOrder: function(data, actions) {
             return actions.order.create({
@@ -114,7 +129,6 @@ function processPayPal(order, callback) {
             });
         },
         onApprove: async function(data, actions) {
-            // Verify on backend
             const verifyResp = await fetch('/api/payment/verify', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
