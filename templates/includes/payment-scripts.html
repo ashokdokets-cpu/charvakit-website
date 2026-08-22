@@ -66,10 +66,17 @@ async function processToolPayment(amount, name, callback) {
         callback(false);
     }
 }
-
+// Fetch Razorpay key from backend
+fetch('/api/payment/status')
+    .then(res => res.json())
+    .then(data => {
+        if (data.razorpay_key_id) {
+            window.charvak_razorpay_key = data.razorpay_key_id;
+        }
+    });
 function processRazorpay(order, callback) {
     const options = {
-        key: order.key_id || '{{ RAZORPAY_KEY_ID }}',
+        key: order.key_id || window.charvak_razorpay_key || '',
         amount: order.amount,
         currency: order.currency || 'INR',
         name: 'Charvak IT Consulting',
