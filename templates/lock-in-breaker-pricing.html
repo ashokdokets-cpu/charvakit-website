@@ -51,7 +51,7 @@
         <div class="col-md-4">
             <div class="card h-100 p-4 text-center border">
                 <h4 class="text-success">🛡️ Continuous Protection</h4>
-                <h2 class="display-4 fw-bold"><span data-inr="4999"><span data-inr="4,999">₹4,999</span></span></h2>
+                <h2 class="display-4 fw-bold"><span data-inr="4999"><span data-inr="4999">₹4,999</span></span></h2>
                 <p class="text-muted">/month</p>
                 <ul class="list-unstyled text-start mb-4">
                     <li class="mb-2">✅ Everything in Migration</li>
@@ -97,7 +97,7 @@ function subscribeNow(e){
     const name = prompt('Enter your company name:');
     if(name){
         const subscribers = JSON.parse(localStorage.getItem('lock_breaker_subscribers')||'[]');
-        subscribers.push({company: name, plan: 'Continuous Protection (<span data-inr="4,999">₹4,999</span>/mo)', date: new Date().toISOString()});
+        subscribers.push({company: name, plan: 'Continuous Protection (<span data-inr="4999">₹4,999</span>/mo)', date: new Date().toISOString()});
         localStorage.setItem('lock_breaker_subscribers', JSON.stringify(subscribers));
         alert('Welcome aboard, ' + name + '! Your continuous protection plan is now active. We will contact you shortly.');
     }
