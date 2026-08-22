@@ -3,7 +3,7 @@
 {% block content %}
 <div class="page-hero bg-gradient-primary text-white py-5">
     <div class="container py-4"><h1 class="display-4 fw-bold">Post a Job</h1>
-<p class="lead">Reach 10,000+ vetted candidates. Start free. Plans from ₹499.</p></div>
+<p class="lead">Reach 10,000+ vetted candidates. Start free. Plans from <span data-inr="499">₹499</span>.</p></div>
 </div>
 <div class="container py-5"><div class="row"><div class="col-lg-7 mx-auto">
     <div class="card border-0 shadow-lg p-4"><div class="card-body">
@@ -34,14 +34,14 @@
     <div class="col-6 col-md-3">
         <div class="card p-2 text-center h-100" onclick="selectPlan('free')" id="plan-free" style="cursor:pointer;">
             <h6>🆓 Free</h6>
-            <h4>₹0</h4>
+            <h4><span data-inr="0">₹0</span></h4>
             <small>1 post</small>
         </div>
     </div>
     <div class="col-6 col-md-3">
         <div class="card p-2 text-center h-100" onclick="selectPlan('starter')" id="plan-starter" style="cursor:pointer;">
             <h6>🚀 Starter</h6>
-            <h4><span data-inr="499">₹499</span></h4>
+            <h4><span data-inr="499"><span data-inr="499">₹499</span></span></h4>
             <small>3 posts</small>
         </div>
     </div>
@@ -49,14 +49,14 @@
         <div class="card p-2 text-center h-100 border-primary" onclick="selectPlan('growth')" id="plan-growth" style="cursor:pointer;border-width:2px;">
             <span class="badge bg-primary">Popular</span>
             <h6>⭐ Growth</h6>
-            <h4><span data-inr="999">₹999</span></h4>
+            <h4><span data-inr="999"><span data-inr="999">₹999</span></span></h4>
             <small>10 posts</small>
         </div>
     </div>
     <div class="col-6 col-md-3">
         <div class="card p-2 text-center h-100" onclick="selectPlan('pro')" id="plan-pro" style="cursor:pointer;">
             <h6>💼 Pro</h6>
-            <h4><span data-inr="2499">₹2,499</span></h4>
+            <h4><span data-inr="2499"><span data-inr="2,499">₹2,499</span></span></h4>
             <small>30-day unlimited</small>
         </div>
     </div>
@@ -77,8 +77,8 @@ function selectPlan(plan) {
     
     const info = {
         free: 'Free: 1 job post. Great for testing Charvakit.',
-        starter: 'Starter: 3 job posts at ₹166/post. Best for small teams.',
-        growth: 'Growth: 10 job posts at ₹99/post. Most popular!',
+        starter: 'Starter: 3 job posts at <span data-inr="166">₹166</span>/post. Best for small teams.',
+        growth: 'Growth: 10 job posts at <span data-inr="99">₹99</span>/post. Most popular!',
         pro: 'Pro: Unlimited posts for 30 days. Best value for active hirers.'
     };
     document.getElementById('planInfo').textContent = info[plan];
@@ -101,8 +101,8 @@ function selectPlan(plan) {
     
     const info = {
         free: 'Free: 1 job post. Great for testing Charvakit.',
-        starter: 'Starter: 3 job posts at ₹166/post. Best for small teams.',
-        growth: 'Growth: 10 job posts at ₹99/post. Most popular!',
+        starter: 'Starter: 3 job posts at <span data-inr="166">₹166</span>/post. Best for small teams.',
+        growth: 'Growth: 10 job posts at <span data-inr="99">₹99</span>/post. Most popular!',
         pro: 'Pro: Unlimited posts for 30 days. Best value for active hirers.'
     };
     document.getElementById('planInfo').textContent = info[plan];

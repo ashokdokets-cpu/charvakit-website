@@ -24,9 +24,9 @@
     </div>
 
     <div class="row g-4 mb-5">
-        <div class="col-md-4"><div class="card h-100 p-4 text-center"><h4>🆓 Starter</h4><h2 class="display-4 fw-bold"><span data-inr="0">₹0</span></h2><p>1 domain · Weekly scan</p><a href="/brand-drift-inspector" class="btn btn-outline-primary">Scan Free</a></div></div>
-        <div class="col-md-4"><div class="card h-100 p-4 text-center border-primary" style="border-width:2px;"><span class="badge bg-primary mb-2">Popular</span><h4>⭐ Pro</h4><h2 class="display-4 fw-bold"><span data-inr="2499">₹2,499</span></h2><p>/month · 5 domains</p><a href="#" class="btn btn-primary" onclick="dtGetPro(event)">Get Pro</a></div></div>
-        <div class="col-md-4"><div class="card h-100 p-4 text-center"><h4>🏢 Enterprise</h4><h2 class="display-4 fw-bold"><span data-inr="7999">₹7,999</span></h2><p>/month · Unlimited</p><a href="/contact" class="btn btn-outline-primary">Contact Sales</a></div></div>
+        <div class="col-md-4"><div class="card h-100 p-4 text-center"><h4>🆓 Starter</h4><h2 class="display-4 fw-bold"><span data-inr="0"><span data-inr="0">₹0</span></span></h2><p>1 domain · Weekly scan</p><a href="/brand-drift-inspector" class="btn btn-outline-primary">Scan Free</a></div></div>
+        <div class="col-md-4"><div class="card h-100 p-4 text-center border-primary" style="border-width:2px;"><span class="badge bg-primary mb-2">Popular</span><h4>⭐ Pro</h4><h2 class="display-4 fw-bold"><span data-inr="2499"><span data-inr="2,499">₹2,499</span></span></h2><p>/month · 5 domains</p><a href="#" class="btn btn-primary" onclick="dtGetPro(event)">Get Pro</a></div></div>
+        <div class="col-md-4"><div class="card h-100 p-4 text-center"><h4>🏢 Enterprise</h4><h2 class="display-4 fw-bold"><span data-inr="7999"><span data-inr="7,999">₹7,999</span></span></h2><p>/month · Unlimited</p><a href="/contact" class="btn btn-outline-primary">Contact Sales</a></div></div>
     </div>
 
     <div class="text-center p-5 bg-light rounded">
@@ -41,7 +41,7 @@ function dtGetPro(e){
     const name = prompt('Enter your company name:');
     if(name){
         const pros = JSON.parse(localStorage.getItem('design_token_pro')||'[]');
-        pros.push({company: name, plan: 'Pro (₹2,499/mo)', date: new Date().toISOString()});
+        pros.push({company: name, plan: 'Pro (<span data-inr="2,499">₹2,499</span>/mo)', date: new Date().toISOString()});
         localStorage.setItem('design_token_pro', JSON.stringify(pros));
         alert('Welcome aboard, ' + name + '! Your Design-Token Sentinel Pro is being set up. We will contact you shortly.');
     }

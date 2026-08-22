@@ -24,9 +24,9 @@
     </div>
 
     <div class="row g-4 mb-5">
-    <div class="col-md-4"><div class="card h-100 p-4 text-center border"><h4>🔍 Free Scan</h4><h2 class="display-4 fw-bold"><span data-inr="0">₹0</span></h2><p class="text-muted">One-time</p><ul class="list-unstyled text-start"><li class="mb-2">✅ Full website scan</li><li class="mb-2">✅ Health score report</li><li class="mb-2">❌ No auto-fix patches</li></ul><a href="/digital-health-checker" class="btn btn-outline-primary">Start Free Scan</a></div></div>
-    <div class="col-md-4"><div class="card h-100 p-4 text-center border-primary" style="border-width:2px;"><span class="badge bg-primary mb-2">Popular</span><h4>⚡ One-Time Fix</h4><h2 class="display-4 fw-bold"><span data-inr="2999">₹2,999</span></h2><p class="text-muted">Per scan</p><ul class="list-unstyled text-start"><li class="mb-2">✅ Everything in Free</li><li class="mb-2">✅ Auto-fix patch scripts</li><li class="mb-2">✅ 30-day support</li></ul><a href="#" class="btn btn-primary" onclick="auditGetFixed(event)">Get Fixed</a></div></div>
-    <div class="col-md-4"><div class="card h-100 p-4 text-center border"><h4>🛡️ Continuous</h4><h2 class="display-4 fw-bold"><span data-inr="1999">₹1,999</span></h2><p class="text-muted">/month</p><ul class="list-unstyled text-start"><li class="mb-2">✅ 24/7 monitoring</li><li class="mb-2">✅ Auto-patch deployment</li><li class="mb-2">✅ Monthly health reports</li></ul><a href="#" class="btn btn-success" onclick="auditSubscribe(event)">Subscribe</a>F</div></div>
+    <div class="col-md-4"><div class="card h-100 p-4 text-center border"><h4>🔍 Free Scan</h4><h2 class="display-4 fw-bold"><span data-inr="0"><span data-inr="0">₹0</span></span></h2><p class="text-muted">One-time</p><ul class="list-unstyled text-start"><li class="mb-2">✅ Full website scan</li><li class="mb-2">✅ Health score report</li><li class="mb-2">❌ No auto-fix patches</li></ul><a href="/digital-health-checker" class="btn btn-outline-primary">Start Free Scan</a></div></div>
+    <div class="col-md-4"><div class="card h-100 p-4 text-center border-primary" style="border-width:2px;"><span class="badge bg-primary mb-2">Popular</span><h4>⚡ One-Time Fix</h4><h2 class="display-4 fw-bold"><span data-inr="2999"><span data-inr="2,999">₹2,999</span></span></h2><p class="text-muted">Per scan</p><ul class="list-unstyled text-start"><li class="mb-2">✅ Everything in Free</li><li class="mb-2">✅ Auto-fix patch scripts</li><li class="mb-2">✅ 30-day support</li></ul><a href="#" class="btn btn-primary" onclick="auditGetFixed(event)">Get Fixed</a></div></div>
+    <div class="col-md-4"><div class="card h-100 p-4 text-center border"><h4>🛡️ Continuous</h4><h2 class="display-4 fw-bold"><span data-inr="1999"><span data-inr="1,999">₹1,999</span></span></h2><p class="text-muted">/month</p><ul class="list-unstyled text-start"><li class="mb-2">✅ 24/7 monitoring</li><li class="mb-2">✅ Auto-patch deployment</li><li class="mb-2">✅ Monthly health reports</li></ul><a href="#" class="btn btn-success" onclick="auditSubscribe(event)">Subscribe</a>F</div></div>
 </div>
 <div class="text-center p-5 bg-dark text-white rounded">
     <h3>Don't Wait for a Breach</h3>
@@ -40,7 +40,7 @@ function auditGetFixed(e){
     const name = prompt('Enter your website URL or company name:');
     if(name){
         const clients = JSON.parse(localStorage.getItem('auditbot_clients')||'[]');
-        clients.push({client: name, plan: 'One-Time Fix (₹2,999)', date: new Date().toISOString()});
+        clients.push({client: name, plan: 'One-Time Fix (<span data-inr="2,999">₹2,999</span>)', date: new Date().toISOString()});
         localStorage.setItem('auditbot_clients', JSON.stringify(clients));
         alert('Thanks! We will scan ' + name + ' and send the fix report within 24 hours.');
     }
@@ -50,7 +50,7 @@ function auditSubscribe(e){
     const name = prompt('Enter your website URL or company name:');
     if(name){
         const subs = JSON.parse(localStorage.getItem('auditbot_subscribers')||'[]');
-        subs.push({client: name, plan: 'Continuous (₹1,999/mo)', date: new Date().toISOString()});
+        subs.push({client: name, plan: 'Continuous (<span data-inr="1,999">₹1,999</span>/mo)', date: new Date().toISOString()});
         localStorage.setItem('auditbot_subscribers', JSON.stringify(subs));
         alert('Welcome! Continuous monitoring is now active for ' + name + '. We will contact you shortly.');
     }

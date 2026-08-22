@@ -135,7 +135,7 @@ function showReport(report) {
             <h6>Areas for Improvement:</h6>
             <ul>${(report.weaknesses || []).map(w => '<li>'+w+'</li>').join('')}</ul>
             <hr>
-            <button class="btn btn-primary w-100" onclick="getPremium()">🔓 Unlock Full Report — ₹99</button>
+            <button class="btn btn-primary w-100" onclick="getPremium()">🔓 Unlock Full Report — <span data-inr="99">₹99</span></button>
         </div>
     `;
 }

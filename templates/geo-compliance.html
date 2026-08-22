@@ -24,7 +24,7 @@
     </div>
 
     <div class="row g-4 mb-5">
-        <div class="col-md-6"><div class="card h-100 p-4 text-center"><h4>📋 Per Contract</h4><h2 class="display-4 fw-bold"><span data-inr="999">₹999</span></h2><p>One contract + compliance check</p><a href="#" class="btn btn-outline-primary" onclick="generateContract(event)">Generate Contract</a></div></div>
+        <div class="col-md-6"><div class="card h-100 p-4 text-center"><h4>📋 Per Contract</h4><h2 class="display-4 fw-bold"><span data-inr="999"><span data-inr="999">₹999</span></span></h2><p>One contract + compliance check</p><a href="#" class="btn btn-outline-primary" onclick="generateContract(event)">Generate Contract</a></div></div>
         <div class="col-md-6"><div class="card h-100 p-4 text-center bg-light"><h4>🔄 Managed Payroll</h4><h2 class="display-4 fw-bold">3%</h2><p>Of contractor payments</p><a href="#" class="btn btn-primary" onclick="startHiring(event)">Start Hiring Globally</a></div></div>
     </div>
 
@@ -40,7 +40,7 @@ function generateContract(e){
     const name = prompt('Enter company name:');
     if(name){
         const contracts = JSON.parse(localStorage.getItem('geo_contracts')||'[]');
-        contracts.push({company: name, type: 'Per Contract (₹999)', date: new Date().toISOString()});
+        contracts.push({company: name, type: 'Per Contract (<span data-inr="999">₹999</span>)', date: new Date().toISOString()});
         localStorage.setItem('geo_contracts', JSON.stringify(contracts));
         alert('Contract generation initiated for ' + name + '! Our legal team will send the draft within 24 hours.');
     }
