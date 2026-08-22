@@ -89,54 +89,57 @@ function submitBeta() {
 <script>
 async function startFree(e){
     e.preventDefault();
-    const name = prompt('Enter your business name to start:');
-    if(name){
-        // Send to backend
-        try {
-            await fetch('/api/contact', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    name: name,
-                    email: 'beta@charvakit.com',
-                    phone: '',
-                    subject: 'Voice-to-Web Free Signup',
-                    message: 'Business: ' + name
-                })
-            });
-        } catch(err) {}
-        
-        // Also save locally
-        const freeUsers = JSON.parse(localStorage.getItem('voice_to_web_free')||'[]');
-        freeUsers.push({business: name, date: new Date().toISOString()});
-        localStorage.setItem('voice_to_web_free', JSON.stringify(freeUsers));
-        alert('Great! Your free website for "' + name + '" is being generated. Check back soon!');
-    }
+    const name = prompt('Enter your business name:');
+    if(!name) return;
+    const email = prompt('Enter your email (to send your website link):');
+    if(!email) return;
+    const phone = prompt('Enter your WhatsApp number (for support):');
+    
+    try {
+        await fetch('/api/contact', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                name: name,
+                email: email,
+                phone: phone || '',
+                subject: 'Voice-to-Web Free Signup',
+                message: 'Business: ' + name + '\nEmail: ' + email + '\nWhatsApp: ' + (phone || 'Not provided')
+            })
+        });
+    } catch(err) {}
+    
+    const freeUsers = JSON.parse(localStorage.getItem('voice_to_web_free')||'[]');
+    freeUsers.push({business: name, email: email, phone: phone || '', date: new Date().toISOString()});
+    localStorage.setItem('voice_to_web_free', JSON.stringify(freeUsers));
+    alert('Great, ' + name + '! Your free website will be sent to ' + email + '. Check your inbox!');
 }
-
 async function getPro(e){
     e.preventDefault();
-    const name = prompt('Enter your name:');
-    if(name){
-        try {
-            await fetch('/api/contact', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    name: name,
-                    email: 'pro@charvakit.com',
-                    phone: '',
-                    subject: 'Voice-to-Web Pro Signup',
-                    message: 'Pro user: ' + name
-                })
-            });
-        } catch(err) {}
-        
-        const proUsers = JSON.parse(localStorage.getItem('voice_to_web_pro')||'[]');
-        proUsers.push({name, date: new Date().toISOString()});
-        localStorage.setItem('voice_to_web_pro', JSON.stringify(proUsers));
-        alert('Welcome to Pro, ' + name + '! We will set up your account and contact you shortly.');
-    }
+    const name = prompt('Enter your full name:');
+    if(!name) return;
+    const email = prompt('Enter your email (for account setup):');
+    if(!email) return;
+    const phone = prompt('Enter your WhatsApp number (for priority support):');
+    
+    try {
+        await fetch('/api/contact', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                name: name,
+                email: email,
+                phone: phone || '',
+                subject: 'Voice-to-Web Pro Signup',
+                message: 'Pro user: ' + name + '\nEmail: ' + email + '\nWhatsApp: ' + (phone || 'Not provided')
+            })
+        });
+    } catch(err) {}
+    
+    const proUsers = JSON.parse(localStorage.getItem('voice_to_web_pro')||'[]');
+    proUsers.push({name: name, email: email, phone: phone || '', date: new Date().toISOString()});
+    localStorage.setItem('voice_to_web_pro', JSON.stringify(proUsers));
+    alert('Welcome to Pro, ' + name + '! Your account will be set up at ' + email + '. We will contact you shortly.');
 }
 
 async function submitBeta(e) {
