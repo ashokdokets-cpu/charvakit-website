@@ -593,6 +593,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 {% include 'includes/payment-scripts.html' %}
+{% include 'includes/currency-updater.html' %}
 <script>
 // Fetch Razorpay key from backend
 fetch('/api/payment/status')

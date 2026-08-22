@@ -1,0 +1,75 @@
+<script>
+// Universal Currency Updater — auto-converts ₹ prices based on user region
+(function() {
+    const EXCHANGE_RATES = {
+        INR: 1,
+        USD: 0.012,
+        EUR: 0.011,
+        GBP: 0.0095,
+        AED: 0.044,
+        SGD: 0.016,
+        CAD: 0.016,
+        AUD: 0.018,
+        JPY: 1.8,
+        CNY: 0.087,
+        BRL: 0.06,
+        NGN: 19.5,
+        ZAR: 0.22,
+        KES: 1.55
+    };
+    
+    const CURRENCY_SYMBOLS = {
+        INR: '₹', USD: '$', EUR: '€', GBP: '£', AED: 'د.إ',
+        SGD: 'S$', CAD: 'C$', AUD: 'A$', JPY: '¥', CNY: '¥',
+        BRL: 'R$', NGN: '₦', ZAR: 'R', KES: 'KSh'
+    };
+    
+    function getCurrency() {
+        return localStorage.getItem('charvak_currency') || 'INR';
+    }
+    
+    function convertPrice(inrAmount, targetCurrency) {
+        const rate = EXCHANGE_RATES[targetCurrency] || 1;
+        const converted = inrAmount * rate;
+        const symbol = CURRENCY_SYMBOLS[targetCurrency] || '₹';
+        return symbol + Math.round(converted).toLocaleString('en-IN');
+    }
+    
+    function updatePrices() {
+        const currency = getCurrency();
+        
+        // Update all elements with data-inr attribute
+        document.querySelectorAll('[data-inr]').forEach(el => {
+            const inrAmount = parseFloat(el.getAttribute('data-inr'));
+            if (inrAmount) {
+                el.textContent = convertPrice(inrAmount, currency);
+            }
+        });
+        
+        // Update all elements with class "price-inr"
+        document.querySelectorAll('.price-inr').forEach(el => {
+            const inrText = el.textContent.replace(/[^\d]/g, '');
+            const inrAmount = parseFloat(inrText);
+            if (inrAmount) {
+                el.textContent = convertPrice(inrAmount, currency);
+            }
+        });
+    }
+    
+    // Auto-detect currency first
+    fetch('/api/region')
+        .then(res => res.json())
+        .then(data => {
+            if (data && data.currency) {
+                localStorage.setItem('charvak_currency', data.currency);
+            }
+            updatePrices();
+        })
+        .catch(() => updatePrices());
+    
+    // Update prices when currency changes
+    window.addEventListener('storage', (e) => {
+        if (e.key === 'charvak_currency') updatePrices();
+    });
+})();
+</script>
