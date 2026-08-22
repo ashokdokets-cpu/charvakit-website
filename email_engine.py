@@ -9,8 +9,8 @@ from typing import Dict
 logger = logging.getLogger("charvakit.email")
 
 SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY", "")
-ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "hr@charvakit.com")
-FROM_EMAIL = "hr@charvakit.com"
+ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "charvakit@gmail.com")
+FROM_EMAIL = "charvakit@gmail.com"
 
 EMAIL_ENABLED = bool(SENDGRID_API_KEY)
 
