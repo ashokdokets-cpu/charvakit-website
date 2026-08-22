@@ -14,7 +14,7 @@ logger = logging.getLogger("charvakit.studentsuite")
 class StudentSuiteEngine:
     """AI-powered student tools with subscription tiers."""
     
-        PLANS = {
+    PLANS = {
         "free": {"name": "Free", "price": 0, "daily_limit": 10, "features": ["Basic AI tools"]},
         "pro": {"name": "Student Pro", "price": 99, "daily_limit": 100, "features": ["All 28 platforms", "Assignment Assistant", "Unlimited tokens"]},
         "premium": {"name": "Student Premium", "price": 499, "daily_limit": 1000, "features": ["Everything in Pro", "Research Helper", "Priority support", "PDF Reports", "Offline access"]},
