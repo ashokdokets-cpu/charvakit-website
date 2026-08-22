@@ -1,77 +1,61 @@
 """
 Charvak Email Engine
-Sends email via GoDaddy SMTP
+Uses SendGrid API for reliable email delivery
 """
 import os
 import logging
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 from typing import Dict
 
 logger = logging.getLogger("charvakit.email")
 
-SMTP_SERVER = os.getenv("SMTP_SERVER", "smtpout.secureserver.net")
-SMTP_USERNAME = os.getenv("SMTP_USERNAME", "hr@charvakit.com")
-SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
+SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY", "")
 ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "hr@charvakit.com")
+FROM_EMAIL = "hr@charvakit.com"
 
-EMAIL_ENABLED = bool(SMTP_PASSWORD)
+EMAIL_ENABLED = bool(SENDGRID_API_KEY)
 
 
 class EmailEngine:
-    """Email notifications."""
+    """Email notifications via SendGrid."""
 
     def __init__(self):
         self.enabled = EMAIL_ENABLED
         self.sent_count = 0
         if self.enabled:
-            logger.info("Email Engine: ENABLED")
+            logger.info("Email Engine: ENABLED (SendGrid)")
         else:
-            logger.warning("Email Engine: DISABLED")
+            logger.warning("Email Engine: DISABLED (set SENDGRID_API_KEY)")
 
     def send_email(self, to_email: str, subject: str, body: str, is_html: bool = False) -> Dict:
-        """Send email via SMTP."""
+        """Send email via SendGrid API."""
         if not self.enabled:
-            return {"status": "disabled", "message": "Email engine not configured"}
+            return {"status": "disabled", "message": "SendGrid not configured"}
 
         try:
-            msg = MIMEMultipart()
-            msg["From"] = f"Charvak IT Consulting <{SMTP_USERNAME}>"
-            msg["To"] = to_email
-            msg["Subject"] = subject
+            import requests
 
-            if is_html:
-                msg.attach(MIMEText(body, "html"))
+            response = requests.post(
+                "https://api.sendgrid.com/v3/mail/send",
+                headers={
+                    "Authorization": f"Bearer {SENDGRID_API_KEY}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "personalizations": [{"to": [{"email": to_email}]}],
+                    "from": {"email": FROM_EMAIL, "name": "Charvak IT Consulting"},
+                    "subject": subject,
+                    "content": [{"type": "text/plain", "value": body}]
+                },
+                timeout=10
+            )
+
+            if response.status_code in [200, 202]:
+                self.sent_count += 1
+                logger.info(f"Email sent to {to_email}")
+                return {"status": "success", "message": "Email sent successfully", "to": to_email}
             else:
-                msg.attach(MIMEText(body, "plain"))
-
-            smtp_success = False
-
-            try:
-                with smtplib.SMTP(SMTP_SERVER, 587) as server:
-                    server.starttls()
-                    server.login(SMTP_USERNAME, SMTP_PASSWORD)
-                    server.sendmail(SMTP_USERNAME, to_email, msg.as_string())
-                smtp_success = True
-            except Exception:
-                pass
-
-            if not smtp_success:
-                try:
-                    with smtplib.SMTP_SSL(SMTP_SERVER, 465) as server:
-                        server.login(SMTP_USERNAME, SMTP_PASSWORD)
-                        server.sendmail(SMTP_USERNAME, to_email, msg.as_string())
-                    smtp_success = True
-                except Exception:
-                    pass
-
-            if not smtp_success:
-                return {"status": "error", "message": "SMTP connection failed"}
-
-            self.sent_count += 1
-            logger.info(f"Email sent to {to_email}")
-            return {"status": "success", "message": "Email sent successfully", "to": to_email}
+                logger.error(f"SendGrid error: {response.status_code}")
+                return {"status": "error", "message": f"SendGrid error: {response.status_code}"}
 
         except Exception as e:
             logger.error(f"Email failed: {e}")
@@ -94,8 +78,8 @@ class EmailEngine:
         return {
             "status": "success",
             "enabled": self.enabled,
-            "smtp_server": SMTP_SERVER,
-            "sender": SMTP_USERNAME,
+            "provider": "SendGrid",
+            "sender": FROM_EMAIL,
             "total_sent": self.sent_count
         }
 
