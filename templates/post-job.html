@@ -121,7 +121,7 @@ function processJobPayment(e) {
     
     if (currency === 'INR' && typeof Razorpay !== 'undefined') {
         const options = {
-            key: 'YOUR_RAZORPAY_KEY_ID',
+            key: window.charvak_razorpay_key || '',
             amount: amount * 100,
             currency: 'INR',
             name: 'Charvak IT Consulting',
