@@ -12,6 +12,18 @@ fetch('/api/payment/status')
             document.head.appendChild(script);
         }
     });
+// Auto-detect user's currency from their browser/region
+fetch('/api/region')
+    .then(res => res.json())
+    .then(data => {
+        if (data && data.currency) {
+            localStorage.setItem('charvak_currency', data.currency);
+            console.log('Currency auto-detected:', data.currency);
+        }
+    })
+    .catch(() => {
+        console.log('Currency detection failed, using INR default');
+    });
 </script>
 
 <!-- UPI Payment -->
