@@ -1,6 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Voice-to-Web Engine - Charvak{% include 'includes/premium-upsell.html' %}
-{% endblock %}
+{% block title %}Voice-to-Web Engine - Charvak{% endblock %}
 {% block content %}
 <div class="page-hero bg-gradient-primary text-white py-5">
     <div class="container py-4">
@@ -37,7 +36,6 @@
         </div>
     </div>
 
-    <!-- Features Grid -->
     <div class="row g-4 mb-5">
         <div class="col-md-4"><div class="card h-100 p-4 text-center"><i class="bi bi-mic display-4 text-primary mb-3"></i><h5>Voice-First</h5><p class="text-muted">No typing needed. Just speak naturally in your language.</p></div></div>
         <div class="col-md-4"><div class="card h-100 p-4 text-center"><i class="bi bi-phone display-4 text-primary mb-3"></i><h5>PWA Ready</h5><p class="text-muted">Works on any device. Installable like an app. Works offline.</p></div></div>
@@ -47,42 +45,23 @@
         <div class="col-md-4"><div class="card h-100 p-4 text-center"><i class="bi bi-headset display-4 text-primary mb-3"></i><h5>AI Webmaster</h5><p class="text-muted">Dedicated fractional staff manages updates for you.</p></div></div>
     </div>
 
-    <!-- Pricing -->
     <div class="row g-4 mb-5">
-        <div class="col-md-6"><div class="card h-100 p-5 text-center border-success"><h3 class="text-success">Free</h3><h2 class="display-4 fw-bold"><span data-inr="0"><span data-inr="0">₹0</span></span></h2><p>AI website generation</p><p class="text-muted">3-minute build · Basic template · Charvak branding</p><a href="#" class="btn btn-outline-success btn-lg" onclick="startFree(event)">Start Free</a></div></div>
-        <div class="col-md-6"><div class="card h-100 p-5 text-center border-primary bg-light"><h3 class="text-primary">Pro</h3><h2 class="display-4 fw-bold"><span data-inr="499"><span data-inr="499">₹499</span></span><span class="fs-6">/mo</span></h2><p>+ AI Webmaster Staffing</p><p class="text-muted">Custom domain · No branding · AI SEO · On-demand updates · Priority support</p><a href="#" class="btn btn-primary btn-lg" onclick="getPro(event)">Get Pro</a></div></div>
+        <div class="col-md-6"><div class="card h-100 p-5 text-center border-success"><h3 class="text-success">Free</h3><h2 class="display-4 fw-bold"><span data-inr="0">₹0</span></h2><p>AI website generation</p><p class="text-muted">3-minute build · Basic template · Charvak branding</p><a href="#" class="btn btn-outline-success btn-lg" onclick="startFree(event)">Start Free</a></div></div>
+        <div class="col-md-6"><div class="card h-100 p-5 text-center border-primary bg-light"><h3 class="text-primary">Pro</h3><h2 class="display-4 fw-bold"><span data-inr="499">₹499</span><span class="fs-6">/mo</span></h2><p>+ AI Webmaster Staffing</p><p class="text-muted">Custom domain · No branding · AI SEO · On-demand updates · Priority support</p><a href="#" class="btn btn-primary btn-lg" onclick="getPro(event)">Get Pro</a></div></div>
     </div>
 
-    <!-- CTA -->
     <div class="text-center p-5 bg-dark text-white rounded">
         <h3>Be Among the First 100 Businesses</h3>
-<p class="mb-4">Join our beta program and get 3 months of Pro free.</p>
-<div class="row justify-content-center"><div class="col-md-6">
-    <form onsubmit="submitBeta(event)">
-        <input type="text" class="form-control mb-2" id="betaName" placeholder="Your Name" required>
-        <input type="email" class="form-control mb-2" id="betaEmail" placeholder="Your Email" required>
-        <input type="tel" class="form-control mb-2" id="betaPhone" placeholder="WhatsApp Number" required>
-        <button class="btn btn-primary btn-lg w-100" type="submit">Apply for Beta Access</button>
-    </form>
-    <p class="small mt-2 text-success" id="betaMsg" style="display:none;"></p>
-</div></div>
-
-<script>
-function submitBeta() {
-    const name = document.getElementById('betaName').value;
-    const email = document.getElementById('betaEmail').value;
-    if (!name || !email) {
-        document.getElementById('betaMsg').textContent = 'Please fill name and email.';
-        document.getElementById('betaMsg').style.color = '#e94d65';
-        return;
-    }
-    document.getElementById('betaMsg').textContent = 'You are on the beta list! We will notify you at ' + email;
-    document.getElementById('betaMsg').style.color = '#3ba591';
-    const betaUsers = JSON.parse(localStorage.getItem('voice_to_web_beta') || '[]');
-    betaUsers.push({name, email, date: new Date().toISOString()});
-    localStorage.setItem('voice_to_web_beta', JSON.stringify(betaUsers));
-}
-</script>
+        <p class="mb-4">Join our beta program and get 3 months of Pro free.</p>
+        <div class="row justify-content-center"><div class="col-md-6">
+            <form onsubmit="submitBeta(event)">
+                <input type="text" class="form-control mb-2" id="betaName" placeholder="Your Name" required>
+                <input type="email" class="form-control mb-2" id="betaEmail" placeholder="Your Email" required>
+                <input type="tel" class="form-control mb-2" id="betaPhone" placeholder="WhatsApp Number" required>
+                <button class="btn btn-primary btn-lg w-100" type="submit">Apply for Beta Access</button>
+            </form>
+            <p class="small mt-2 text-success" id="betaMsg" style="display:none;"></p>
+        </div></div>
     </div>
 </div>
 
@@ -94,26 +73,12 @@ async function startFree(e){
     const email = prompt('Enter your email (to send your website link):');
     if(!email) return;
     const phone = prompt('Enter your WhatsApp number (for support):');
-    
     try {
-        await fetch('/api/contact', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                name: name,
-                email: email,
-                phone: phone || '',
-                subject: 'Voice-to-Web Free Signup',
-                message: 'Business: ' + name + '\nEmail: ' + email + '\nWhatsApp: ' + (phone || 'Not provided')
-            })
-        });
+        await fetch('/api/contact', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,email:email,phone:phone||'',subject:'Voice-to-Web Free Signup',message:'Business: '+name+'\nEmail: '+email+'\nWhatsApp: '+(phone||'Not provided')})});
     } catch(err) {}
-    
-    const freeUsers = JSON.parse(localStorage.getItem('voice_to_web_free')||'[]');
-    freeUsers.push({business: name, email: email, phone: phone || '', date: new Date().toISOString()});
-    localStorage.setItem('voice_to_web_free', JSON.stringify(freeUsers));
-    alert('Great, ' + name + '! Your free website will be sent to ' + email + '. Check your inbox!');
+    alert('Great, '+name+'! Your free website will be sent to '+email+'. Check your inbox!');
 }
+
 async function getPro(e){
     e.preventDefault();
     const name = prompt('Enter your full name:');
@@ -121,25 +86,10 @@ async function getPro(e){
     const email = prompt('Enter your email (for account setup):');
     if(!email) return;
     const phone = prompt('Enter your WhatsApp number (for priority support):');
-    
     try {
-        await fetch('/api/contact', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                name: name,
-                email: email,
-                phone: phone || '',
-                subject: 'Voice-to-Web Pro Signup',
-                message: 'Pro user: ' + name + '\nEmail: ' + email + '\nWhatsApp: ' + (phone || 'Not provided')
-            })
-        });
+        await fetch('/api/contact', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,email:email,phone:phone||'',subject:'Voice-to-Web Pro Signup',message:'Pro user: '+name+'\nEmail: '+email+'\nWhatsApp: '+(phone||'Not provided')})});
     } catch(err) {}
-    
-    const proUsers = JSON.parse(localStorage.getItem('voice_to_web_pro')||'[]');
-    proUsers.push({name: name, email: email, phone: phone || '', date: new Date().toISOString()});
-    localStorage.setItem('voice_to_web_pro', JSON.stringify(proUsers));
-    alert('Welcome to Pro, ' + name + '! Your account will be set up at ' + email + '. We will contact you shortly.');
+    alert('Welcome to Pro, '+name+'! Your account will be set up at '+email+'. We will contact you shortly.');
 }
 
 async function submitBeta(e) {
@@ -153,8 +103,7 @@ async function submitBeta(e) {
     };
     try {
         const r = await fetch('/api/contact', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
-        const j = await r.json();
-        document.getElementById('betaMsg').textContent = '✅ Beta access requested! We will contact you on WhatsApp.';
+        document.getElementById('betaMsg').textContent = '✅ Beta access requested! We will contact you.';
         document.getElementById('betaMsg').style.display = 'block';
         document.querySelector('form').reset();
     } catch(err) {
@@ -163,6 +112,4 @@ async function submitBeta(e) {
     }
 }
 </script>
-</script>
-{% include 'includes/premium-upsell.html' %}
 {% endblock %}
