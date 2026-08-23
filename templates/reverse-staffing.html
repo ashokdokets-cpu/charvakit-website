@@ -59,11 +59,10 @@ function subscribePlan(e){
     const name = prompt('Enter your company name:');
     if(name){
         const subscribers = JSON.parse(localStorage.getItem('staffing_subscribers')||'[]');
-        subscribers.push({company: name, plan: 'Subscription - <span data-inr="4999">₹4,999</span>/mo', date: new Date().toISOString()});
+        subscribers.push({company: name, plan: 'Subscription - ₹4,999/mo', date: new Date().toISOString()}););
         localStorage.setItem('staffing_subscribers', JSON.stringify(subscribers));
         alert('Thanks ' + name + '! Your subscription has been initiated. We will contact you within 24 hours.');
     }
 }
 </script>
-{% include 'includes/premium-upsell.html' %}
 {% endblock %}
