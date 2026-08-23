@@ -1,6 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Neural Wireframe-to-Prod - Charvak{% include 'includes/premium-upsell.html' %}
-{% endblock %}
+{% block title %}Neural Wireframe-to-Prod - Charvak{% endblock %}
 {% block content %}
 <div class="page-hero bg-gradient-primary text-white py-5">
     <div class="container py-4">
@@ -37,22 +36,21 @@
     </div>
 
     <div class="row g-4 mb-5">
-        <div class="col-md-6"><div class="card h-100 p-4 text-center"><h3>🆓 Free Generation</h3><h2 class="display-4 fw-bold"><span data-inr="0"><span data-inr="0">₹0</span></span></h2><p>3 generations/month</p><a href="/napkin-challenge" class="btn btn-outline-primary mt-3">Try Free</a></div></div>
-                <div class="col-md-6"><div class="card h-100 p-4 text-center bg-light"><h3>⭐ Pro Launch</h3><h2 class="display-4 fw-bold"><span data-inr="999"><span data-inr="999">₹999</span></span></h2><p>Per site launch</p><p class="text-muted">Custom domain, no branding, priority support</p><a href="#" class="btn btn-primary mt-3" onclick="proSignup(event)">Get Pro</a></div></div>
+        <div class="col-md-6"><div class="card h-100 p-4 text-center"><h3>🆓 Free Generation</h3><h2 class="display-4 fw-bold"><span data-inr="0">₹0</span></h2><p>3 generations/month</p><a href="/napkin-challenge" class="btn btn-outline-primary mt-3">Try Free</a></div></div>
+        <div class="col-md-6"><div class="card h-100 p-4 text-center border-primary"><h3>⭐ Pro Launch</h3><h2 class="display-4 fw-bold"><span data-inr="5000">₹5,000</span></h2><p>Per site launch</p><p class="text-muted">Custom domain, no branding, priority support</p><button class="btn btn-primary mt-3" onclick="getProWireframe()">Get Pro</button></div></div>
     </div>
 </div>
 
 <script>
-function proSignup(e){
-    e.preventDefault();
-    const name = prompt('Enter your name to start:');
-    if(name){
-        const signups = JSON.parse(localStorage.getItem('neural_wireframe_pro')||'[]');
-        signups.push({name, date: new Date().toISOString()});
-        localStorage.setItem('neural_wireframe_pro', JSON.stringify(signups));
-        alert('Thanks ' + name + '! You are signed up for Pro. We will contact you shortly.');
-    }
+async function getProWireframe() {
+    const name = prompt('Enter your name:');
+    if(!name) return;
+    const email = prompt('Enter your email:');
+    if(!email) return;
+    try {
+        await fetch('/api/contact', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,email:email,phone:'',subject:'Neural Wireframe Pro',message:'Pro user: '+name+'\nEmail: '+email})});
+    } catch(err) {}
+    alert('Welcome to Pro, '+name+'! We will contact you at '+email+'.');
 }
 </script>
-{% include 'includes/premium-upsell.html' %}
 {% endblock %}
