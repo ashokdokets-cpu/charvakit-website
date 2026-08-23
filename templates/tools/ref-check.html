@@ -11,7 +11,7 @@
         <div class="row g-2 mb-3"><div class="col-4"><input type="text" class="form-control" placeholder="Ref 1 Name"></div><div class="col-4"><input type="text" class="form-control" placeholder="Ref 2 Name"></div><div class="col-4"><input type="text" class="form-control" placeholder="Ref 3 Name"></div></div>
         <button class="btn btn-primary btn-lg w-100" onclick="startRefCheck()">Start AI Reference Check</button>
     </div></div>
-    <div class="card border-0 shadow-lg p-4 d-none" id="refResult"><div class="card-body text-center"><h3>🎯 Trust Score: <span id="trustScore">--</span>/100</h3><p class="text-muted">Fast-Track Verification: <span data-inr="599"><span data-inr="599">₹599</span></span></p><p class="small text-muted">By proceeding, you accept our <a href="/agreement?type=MOU&client=User&redirect=/tools/ref-check&service=Ref-Check+Roulette&payment=One-time+fee">Terms of Use</a></p><button class="btn btn-primary" onclick="fastTrack()">Fast-Track Now</button></div></div>
+    <div class="card border-0 shadow-lg p-4 d-none" id="refResult"><div class="card-body text-center"><h3>🎯 Trust Score: <span id="trustScore">--</span>/100</h3><p class="text-muted">Fast-Track Verification: <span data-inr="599">₹599</span></p><p class="small text-muted">By proceeding, you accept our <a href="/agreement?type=MOU&client=User&redirect=/tools/ref-check&service=Ref-Check+Roulette&payment=One-time+fee">Terms of Use</a></p><button class="btn btn-primary" onclick="fastTrack()">Fast-Track Now</button></div></div>
 </div></div></div>
 <script>async function startRefCheck(){
     const refs = [document.querySelectorAll('input')[0].value, document.querySelectorAll('input')[1].value, document.querySelectorAll('input')[2].value].filter(r => r);
