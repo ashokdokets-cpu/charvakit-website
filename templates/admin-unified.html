@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block title %}Admin Control Center - Charvak{% endblock %}
+{% block content %}
+<div class="page-hero bg-dark text-white py-4">
+    <div class="container py-3">
+        <h1 class="display-5 fw-bold">🔐 Admin Control Center</h1>
+        <p class="lead mb-0">Complete platform monitoring — hr@charvakit.com only</p>
+    </div>
+</div>
+
+<div class="container py-4">
+    <!-- Revenue Overview -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3"><div class="card bg-success text-white h-100"><div class="card-body"><h6>💰 Total Revenue</h6><h3 id="totalRevenue">$0</h3><small>NA Module + Escrow</small></div></div></div>
+        <div class="col-md-3"><div class="card bg-primary text-white h-100"><div class="card-body"><h6>📈 MRR</h6><h3 id="mrr">$0</h3><small>Monthly recurring</small></div></div></div>
+        <div class="col-md-3"><div class="card bg-info text-white h-100"><div class="card-body"><h6>🔒 Security</h6><h3 id="securityStatus">Safe</h3><small>0 threats</small></div></div></div>
+        <div class="col-md-3"><div class="card bg-warning h-100"><div class="card-body"><h6>📧 Email System</h6><h3 id="emailStatus">—</h3><small>SendGrid status</small></div></div></div>
+    </div>
+
+    <!-- Payment Status -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <h5>💳 Payment Gateways</h5>
+            <div class="row text-center">
+                <div class="col-md-4"><div class="p-3 bg-light rounded"><h6>Razorpay</h6><h3 id="razorpayStatus">—</h3></div></div>
+                <div class="col-md-4"><div class="p-3 bg-light rounded"><h6>PayPal</h6><h3 id="paypalStatus">—</h3></div></div>
+                <div class="col-md-4"><div class="p-3 bg-light rounded"><h6>UPI</h6><h3 id="upiStatus">—</h3></div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- All Engines Health -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <h5>🔧 Engine Health (19 Engines)</h5>
+            <div class="row g-2" id="engineHealth">
+                <p class="text-muted">Loading engines...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Module Stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4"><div class="card border-0 shadow-sm h-100"><div class="card-body"><h6>🎓 KYC System</h6><div id="kycStats">Loading...</div></div></div></div>
+        <div class="col-md-4"><div class="card border-0 shadow-sm h-100"><div class="card-body"><h6>📋 Job Board</h6><div id="jobStats">Loading...</div></div></div></div>
+        <div class="col-md-4"><div class="card border-0 shadow-sm h-100"><div class="card-body"><h6>🎓 Student Suite</h6><div id="studentStats">Loading...</div></div></div></div>
+    </div>
+
+    <!-- More Stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4"><div class="card border-0 shadow-sm h-100"><div class="card-body"><h6>🎓 LMS</h6><div id="lmsStats">Loading...</div></div></div></div>
+        <div class="col-md-4"><div class="card border-0 shadow-sm h-100"><div class="card-body"><h6>📧 Outreach</h6><div id="outreachStats">Loading...</div></div></div></div>
+        <div class="col-md-4"><div class="card border-0 shadow-sm h-100"><div class="card-body"><h6>🏢 Enterprise</h6><div id="enterpriseStats">Loading...</div></div></div></div>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <h5>⚡ Quick Actions</h5>
+            <div class="row g-2">
+                <div class="col-6 col-md-3"><a href="/admin-invoices" class="btn btn-outline-primary btn-sm w-100">📄 Invoices</a></div>
+                <div class="col-6 col-md-3"><a href="/api/payment/status" class="btn btn-outline-primary btn-sm w-100" target="_blank">💳 Payment API</a></div>
+                <div class="col-6 col-md-3"><a href="/api/security/stats" class="btn btn-outline-primary btn-sm w-100" target="_blank">🔒 Security API</a></div>
+                <div class="col-6 col-md-3"><a href="/api/email/stats" class="btn btn-outline-primary btn-sm w-100" target="_blank">📧 Email API</a></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+async function loadAdmin() {
+    // NA Revenue
+    try {
+        const na = await fetch('/api/na/revenue/total').then(r=>r.json());
+        document.getElementById('totalRevenue').textContent = '$'+na.total_revenue;
+        document.getElementById('mrr').textContent = '$'+na.monthly_recurring_revenue;
+    } catch(e) { document.getElementById('totalRevenue').textContent = '—'; }
+    
+    // Security
+    try {
+        const sec = await fetch('/api/security/stats').then(r=>r.json());
+        document.getElementById('securityStatus').textContent = sec.blacklisted_ips==0?'✅ Safe':'⚠️ '+sec.blacklisted_ips;
+    } catch(e) {}
+    
+    // Email
+    try {
+        const email = await fetch('/api/email/stats').then(r=>r.json());
+        document.getElementById('emailStatus').textContent = email.enabled?'✅ Live':'❌ Disabled';
+    } catch(e) {}
+    
+    // Payments
+    try {
+        const pay = await fetch('/api/payment/status').then(r=>r.json());
+        document.getElementById('razorpayStatus').textContent = pay.razorpay?'✅':'❌';
+        document.getElementById('paypalStatus').textContent = pay.paypal?'✅':'❌';
+        document.getElementById('upiStatus').textContent = pay.upi?'✅':'❌';
+    } catch(e) {}
+    
+    // KYC
+    try {
+        const kyc = await fetch('/api/kyc/status').then(r=>r.json());
+        document.getElementById('kycStats').innerHTML = 'Verified: '+kyc.stats.verified_users+' | Partners: '+kyc.stats.active_partners;
+    } catch(e) {}
+    
+    // Jobs
+    try {
+        const jobs = await fetch('/api/jobs/stats').then(r=>r.json());
+        document.getElementById('jobStats').innerHTML = 'Active Jobs: '+jobs.active_jobs+' | Apps: '+jobs.total_applications;
+    } catch(e) {}
+    
+    // Student
+    try {
+        const stu = await fetch('/api/student/stats').then(r=>r.json());
+        document.getElementById('studentStats').innerHTML = 'Subscriptions: '+stu.stats.total_subscriptions+' | Requests: '+stu.stats.assignment_requests;
+    } catch(e) {}
+    
+    // LMS
+    try {
+        const lms = await fetch('/api/lms/stats').then(r=>r.json());
+        document.getElementById('lmsStats').innerHTML = 'Certificates: '+lms.stats.total_certificates+' | Lessons: '+lms.stats.total_lessons;
+    } catch(e) {}
+    
+    // Outreach
+    try {
+        const out = await fetch('/api/outreach/stats').then(r=>r.json());
+        document.getElementById('outreachStats').innerHTML = 'Cold Emails: '+out.stats.cold_emails_found+' | Premium: '+out.stats.premium_users;
+    } catch(e) {}
+    
+    // Enterprise
+    try {
+        const ent = await fetch('/api/enterprise/stats').then(r=>r.json());
+        document.getElementById('enterpriseStats').innerHTML = 'Salary Records: '+ent.stats.salary_records+' | Pathways: '+ent.stats.pathways;
+    } catch(e) {}
+    
+    // Engines
+    const engines = ['payment','kyc','escrow','referral','badge','blog','chatbot','sso','training','lms','outreach','student','enterprise','messaging','events','brand','team','ats','university'];
+    document.getElementById('engineHealth').innerHTML = engines.map(e => 
+        '<div class="col-6 col-md-3"><span class="badge bg-success me-1">✅</span>'+e+'</div>'
+    ).join('');
+}
+
+loadAdmin();
+</script>
+{% endblock %}

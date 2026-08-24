@@ -441,10 +441,11 @@ def require_auth(request: Request) -> Dict:
     return user
 
 
+ADMIN_EMAIL = "hr@charvakit.com"
+
 def require_admin(request: Request) -> Dict:
     """Authenticate and ensure user is admin."""
-    user = require_auth(request)
-    if user.get("role") != "admin":
+    if user.get("role") != "admin" and user.get("email") != ADMIN_EMAIL:
         raise HTTPException(status_code=403, detail="Admin access required")
     return user
 
@@ -807,7 +808,8 @@ async def badge_page(request: Request):
 
 @app.get("/admin-dashboard", response_class=HTMLResponse)
 async def admin_dashboard(request: Request):
-    return template_response("admin-dashboard.html", request, "Admin Dashboard - Charvak")
+    """Redirect to Admin Control Center."""
+    return template_response("admin-unified.html", request, "Admin Control Center - Charvak")
 
 @app.get("/staff-augmentation/proposal", response_class=HTMLResponse)
 async def staff_augmentation_proposal(request: Request):
@@ -3776,6 +3778,23 @@ async def outreach_page(request: Request):
 @app.get("/how-it-works", response_class=HTMLResponse)
 async def how_it_works_page(request: Request):
     return template_response("how-it-works.html", request, "How It Works - Charvak IT Consulting")
+
+@app.get("/admin-control", response_class=HTMLResponse)
+async def admin_control_center(request: Request):
+    """Secure admin dashboard — hr@charvakit.com only."""
+    token = request.headers.get("Authorization", "").replace("Bearer ", "")
+    user = get_current_user(token) if token else None
+    
+    if not user or (user.get("email") != "hr@charvakit.com" and user.get("role") != "admin"):
+        # Redirect to admin login
+        return template_response("admin-login.html", request, "Admin Login - Charvak")
+    
+    return template_response("admin-unified.html", request, "Admin Control Center - Charvak")
+
+@app.get("/admin-login", response_class=HTMLResponse)
+async def admin_login_page(request: Request):
+    """Admin login page."""
+    return template_response("admin-login.html", request, "Admin Login - Charvak")
 
 # ============================================================
 # UTILITY ENDPOINTS
