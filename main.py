@@ -3837,6 +3837,14 @@ async def reset_password(request: Request):
     except Exception as e:
         return JSONResponse({"status": "error", "message": str(e)})
 
+@app.get("/forgot-password", response_class=HTMLResponse)
+async def forgot_password_page(request: Request):
+    return template_response("forgot-password.html", request, "Forgot Password - Charvak")
+
+@app.get("/login", response_class=HTMLResponse)
+async def login_page(request: Request):
+    return template_response("login.html", request, "Login - Charvak")
+
 # ============================================================
 # UTILITY ENDPOINTS
 # ============================================================
