@@ -3796,6 +3796,40 @@ async def admin_login_page(request: Request):
     """Admin login page."""
     return template_response("admin-login.html", request, "Admin Login - Charvak")
 
+@app.post("/api/auth/reset-password")
+async def reset_password(request: Request):
+    """Reset password for admin (temporary endpoint)."""
+    try:
+        data = await request.json()
+        email = data.get("email")
+        new_password = data.get("new_password", "Charvak@2026")
+        
+        if email != "hr@charvakit.com":
+            return JSONResponse({"status": "error", "message": "Only admin email allowed"}, status_code=403)
+        
+        # Hash new password
+        from auth import hash_password
+        hashed = hash_password(new_password)
+        
+        # Update in database
+        import psycopg2
+        conn = psycopg2.connect(os.getenv("DATABASE_URL"))
+        cursor = conn.cursor()
+        cursor.execute("UPDATE users SET password_hash = %s, role = 'admin' WHERE email = %s", (hashed, email))
+        if cursor.rowcount == 0:
+            # Create if not exists
+            cursor.execute(
+                "INSERT INTO users (user_id, email, password_hash, name, phone, role) VALUES (%s, %s, %s, %s, %s, %s)",
+                (secrets.token_hex(8), email, hashed, "Charvak Admin", "+91 799 7871 701", "admin")
+            )
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return JSONResponse({"status": "success", "message": f"Password reset to {new_password}"})
+    except Exception as e:
+        return JSONResponse({"status": "error", "message": str(e)})
+
 # ============================================================
 # UTILITY ENDPOINTS
 # ============================================================
