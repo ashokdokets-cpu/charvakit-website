@@ -352,22 +352,28 @@
                 <div class="dropdown ms-2">
                     <button class="btn btn-outline-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" style="margin-left:-4px;">
                         <i class="bi bi-person-circle me-1"></i>Login
-                    </button>
-                    <div class="dropdown-menu dropdown-menu-end p-3" style="width:280px;">
-                        <h6 class="text-white">Quick Login</h6>
-                        <button class="btn btn-outline-danger btn-sm w-100 mb-2 text-white" onclick="socialLogin('google')" style="border-color:#fff;">
-    <i class="bi bi-google me-2"></i>Continue with Google
-</button>
-<button class="btn btn-outline-primary btn-sm w-100 mb-2 text-white" onclick="socialLogin('facebook')" style="border-color:#fff;">
-    <i class="bi bi-facebook me-2"></i>Continue with Facebook
-</button>
-<button class="btn btn-outline-dark btn-sm w-100 text-white" onclick="socialLogin('linkedin')" style="border-color:#fff;">
-    <i class="bi bi-linkedin me-2"></i>Continue with LinkedIn
-</button>
-<hr>
-<small class="text-white d-block text-center mt-2">Or <a href="/register" class="text-decoration-none text-warning">Register with Email</a></small>
-                    </div>
-                </div>
+                    <!-- Quick Login -->
+<div class="dropdown">
+    <button class="btn btn-outline-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+        <i class="bi bi-person-circle me-1"></i>Login
+    </button>
+    <div class="dropdown-menu dropdown-menu-end p-3" style="width:280px;">
+        <h6 class="text-white">Quick Login</h6>
+        <a href="/login" class="btn btn-primary btn-sm w-100 mb-2">📧 Login with Email</a>
+        <button class="btn btn-outline-danger btn-sm w-100 mb-2 text-white" onclick="alert('Google login coming soon!')" style="border-color:#fff;">
+            <i class="bi bi-google me-2"></i>Continue with Google
+        </button>
+        <button class="btn btn-outline-primary btn-sm w-100 mb-2 text-white" onclick="alert('Facebook login coming soon!')" style="border-color:#fff;">
+            <i class="bi bi-facebook me-2"></i>Continue with Facebook
+        </button>
+        <button class="btn btn-outline-dark btn-sm w-100 mb-2 text-white" onclick="alert('LinkedIn login coming soon!')" style="border-color:#fff;">
+            <i class="bi bi-linkedin me-2"></i>Continue with LinkedIn
+        </button>
+        <hr>
+        <small class="text-white d-block text-center mt-2">No account? <a href="/register" class="text-decoration-none text-warning">Register</a></small>
+        <small class="text-white d-block text-center mt-1"><a href="/forgot-password" class="text-decoration-none text-info">Forgot password?</a></small>
+    </div>
+</div>
             </div>
         </div>
     </nav>
