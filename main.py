@@ -79,6 +79,7 @@ from student_suite_engine import student_suite_engine
 from profile_network_engine import profile_network_engine
 from doketsrb_integration import doketsrb_integration
 from outreach_engine import outreach_engine
+from data_lifecycle import data_lifecycle
 
 
 
@@ -3844,6 +3845,41 @@ async def forgot_password_page(request: Request):
 @app.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
     return template_response("login.html", request, "Login - Charvak")
+
+# ============================================================
+# DATA LIFECYCLE API ENDPOINTS
+# ============================================================
+
+@app.post("/api/lifecycle/expire-jobs")
+async def expire_jobs():
+    """Expire old jobs."""
+    return data_lifecycle.expire_old_jobs()
+
+@app.get("/api/lifecycle/inactive-candidates")
+async def inactive_candidates():
+    """Get inactive candidates."""
+    return data_lifecycle.check_inactive_candidates()
+
+@app.delete("/api/lifecycle/delete-user")
+async def delete_user(request: Request):
+    """GDPR: Delete user data."""
+    data = await request.json()
+    return data_lifecycle.delete_user_data(data.get("email"))
+
+@app.post("/api/lifecycle/send-reminders")
+async def send_reminders():
+    """Send renewal reminders."""
+    return data_lifecycle.send_renewal_reminders()
+
+@app.get("/api/lifecycle/export/{email}")
+async def export_user(email: str):
+    """GDPR: Export user data."""
+    return data_lifecycle.export_user_data(email)
+
+@app.get("/api/lifecycle/stats")
+async def lifecycle_stats():
+    """Get lifecycle statistics."""
+    return data_lifecycle.get_stats()
 
 # ============================================================
 # UTILITY ENDPOINTS
