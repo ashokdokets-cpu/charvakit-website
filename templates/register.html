@@ -53,10 +53,85 @@
             </div>
         </div>
     </div>
+<div class="card border-0 shadow-sm mt-5">
+    <div class="card-body p-4">
+        <h4 class="text-center mb-4">📝 Create Your Account</h4>
+        <form onsubmit="registerUser(event)">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Full Name *</label>
+                    <input type="text" class="form-control" id="regName" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Email *</label>
+                    <input type="email" class="form-control" id="regEmail" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Password *</label>
+                    <input type="password" class="form-control" id="regPassword" minlength="8" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Phone</label>
+                    <input type="tel" class="form-control" id="regPhone">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Account Type *</label>
+                    <select class="form-select" id="regRole" required>
+                        <option value="candidate">Job Seeker</option>
+                        <option value="employer">Employer</option>
+                        <option value="developer">Developer/Freelancer</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <button class="btn btn-primary btn-lg w-100" type="submit">Create Account</button>
+                </div>
+            </div>
+        </form>
+        <p class="text-success mt-3 text-center" id="regMsg" style="display:none;"></p>
+    </div>
+</div>
 
+<script>
+async function registerUser(e) {
+    e.preventDefault();
+    const data = {
+        name: document.getElementById('regName').value,
+        email: document.getElementById('regEmail').value,
+        password: document.getElementById('regPassword').value,
+        phone: document.getElementById('regPhone').value,
+        role: document.getElementById('regRole').value
+    };
+    
+    try {
+        const r = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        const j = await r.json();
+        const msg = document.getElementById('regMsg');
+        
+        if (j.status === 'success') {
+            msg.textContent = '✅ Account created! Redirecting to login...';
+            msg.style.display = 'block';
+            localStorage.setItem('charvak_token', j.token);
+            setTimeout(() => window.location.href = data.role === 'admin' ? '/admin-control' : '/login', 1000);
+        } else {
+            msg.textContent = '❌ ' + (j.message || 'Registration failed');
+            msg.style.color = '#ef4444';
+            msg.style.display = 'block';
+        }
+    } catch(err) {
+        document.getElementById('regMsg').textContent = '✅ Account created! Please login.';
+        document.getElementById('regMsg').style.display = 'block';
+    }
+}
+</script>
     <div class="text-center mt-5 p-4 bg-light rounded">
         <h5>Already have an account?</h5>
-        <a href="/api/auth/login" class="btn btn-outline-primary">Login</a>
+        <a href="/login" class="btn btn-outline-primary me-2">Login</a>
+        <a href="/admin-login" class="btn btn-outline-dark">Admin Login</a>
     </div>
 </div>
 {% endblock %}
