@@ -3807,17 +3807,31 @@ async def reset_password(request: Request):
         if email != "hr@charvakit.com":
             return JSONResponse({"status": "error", "message": "Only admin email allowed"}, status_code=403)
         
-        # Hash new password
         from auth import hash_password
         hashed = hash_password(new_password)
         
-        # Update in database
         import psycopg2
         conn = psycopg2.connect(os.getenv("DATABASE_URL"))
         cursor = conn.cursor()
+        
+        # Create users table if not exists
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                user_id VARCHAR(50) UNIQUE,
+                email VARCHAR(255) UNIQUE,
+                password_hash TEXT,
+                name VARCHAR(255),
+                phone VARCHAR(50),
+                role VARCHAR(50) DEFAULT 'candidate',
+                created_at TIMESTAMP DEFAULT NOW()
+            )
+        ''')
+        conn.commit()
+        
+        # Update or create user
         cursor.execute("UPDATE users SET password_hash = %s, role = 'admin' WHERE email = %s", (hashed, email))
         if cursor.rowcount == 0:
-            # Create if not exists
             cursor.execute(
                 "INSERT INTO users (user_id, email, password_hash, name, phone, role) VALUES (%s, %s, %s, %s, %s, %s)",
                 (secrets.token_hex(8), email, hashed, "Charvak Admin", "+91 799 7871 701", "admin")
