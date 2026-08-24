@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Admin Login - Charvak{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card border-0 shadow-lg">
+                <div class="card-body p-4">
+                    <h3 class="text-center mb-4">🔐 Admin Login</h3>
+                    <p class="text-center text-muted small">Restricted access — hr@charvakit.com only</p>
+                    <form onsubmit="adminLogin(event)">
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" id="adminEmail" value="hr@charvakit.com" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Password</label>
+                            <input type="password" class="form-control" id="adminPassword" placeholder="Enter your password" required>
+                        </div>
+                        <button class="btn btn-primary w-100" type="submit">Login as Admin</button>
+                    </form>
+                    <p class="text-danger mt-2 text-center" id="adminError" style="display:none;"></p>
+                    <hr>
+                    <p class="text-center small mb-0">
+                        Not registered? <a href="/register">Register hr@charvakit.com</a> first.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+async function adminLogin(e) {
+    e.preventDefault();
+    const email = document.getElementById('adminEmail').value;
+    const password = document.getElementById('adminPassword').value;
+    
+    if (email !== 'hr@charvakit.com') {
+        document.getElementById('adminError').textContent = 'Only hr@charvakit.com can access admin.';
+        document.getElementById('adminError').style.display = 'block';
+        return;
+    }
+    
+    const r = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({email: email, password: password})
+    });
+    const j = await r.json();
+    
+    if (j.status === 'success') {
+        localStorage.setItem('charvak_token', j.token);
+        window.location.href = '/admin-control';
+    } else {
+        document.getElementById('adminError').textContent = j.message || 'Invalid credentials. Register first.';
+        document.getElementById('adminError').style.display = 'block';
+    }
+}
+</script>
+{% endblock %}
