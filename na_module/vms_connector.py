@@ -205,7 +205,10 @@ class VMSConnector:
 # Initialize VMS connector
 vms_connector = VMSConnector()
 
-# Seed some sample jobs
+# ============================================================
+# DEMO DATA — For client presentations only
+# Remove or set to [] when going live with real clients
+# ============================================================
 sample_jobs = [
     {
         "title": "Senior Java Backend Developer",

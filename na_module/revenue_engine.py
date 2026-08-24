@@ -206,7 +206,10 @@ class RevenueEngine:
 # Initialize revenue engine
 revenue_engine = RevenueEngine()
 
-# Seed some sample data
+# ============================================================
+# DEMO REVENUE — For client presentations
+# Remove when real clients onboard
+# ============================================================
 revenue_engine.create_subscription("FIRM-001", SubscriptionTier.GROWTH)
 revenue_engine.create_subscription("FIRM-002", SubscriptionTier.STARTER)
 revenue_engine.track_placement("FIRM-001", "CAND-001", 160000, 80)  # $160K contract, $80/hr

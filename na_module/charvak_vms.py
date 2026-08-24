@@ -224,11 +224,56 @@ class CharvakVMS:
 # Initialize Charvak VMS
 charvak_vms = CharvakVMS()
 
-# Seed sample requisitions
+# ============================================================
+# DEMO DATA — For client presentations only
+# Remove or set to [] when going live with real clients
+# ============================================================
 sample_reqs = [
-    {"title": "Senior Java Backend Developer", "skills": ["Java", "Spring Boot", "Kafka"], "rate_min": 65, "rate_max": 75, "location": "New York, NY", "duration": "12 months"},
-    {"title": "React Frontend Developer", "skills": ["React", "TypeScript", "GraphQL"], "rate_min": 55, "rate_max": 70, "location": "Remote", "duration": "6 months"},
-    {"title": "DevOps Engineer", "skills": ["AWS", "Kubernetes", "Terraform"], "rate_min": 60, "rate_max": 80, "location": "Austin, TX", "duration": "12 months"},
+    {
+        "title": "Senior Java Backend Developer",
+        "skills": ["Java", "Spring Boot", "Kafka", "Microservices", "AWS"],
+        "rate_min": 65, "rate_max": 75, "rate_type": "C2C",
+        "location": "New York, NY (Hybrid)",
+        "duration": "12 months",
+        "visa_restrictions": [],
+        "submission_limit": 3
+    },
+    {
+        "title": "React Frontend Developer",
+        "skills": ["React", "TypeScript", "Node.js", "GraphQL"],
+        "rate_min": 55, "rate_max": 70, "rate_type": "C2C",
+        "location": "Remote (US)",
+        "duration": "6 months",
+        "visa_restrictions": ["CPT"],
+        "submission_limit": 3
+    },
+    {
+        "title": "DevOps Engineer",
+        "skills": ["AWS", "Kubernetes", "Terraform", "CI/CD"],
+        "rate_min": 60, "rate_max": 80, "rate_type": "C2C",
+        "location": "Austin, TX",
+        "duration": "12 months",
+        "visa_restrictions": [],
+        "submission_limit": 2
+    },
+    {
+        "title": "Data Engineer",
+        "skills": ["Python", "Spark", "Airflow", "Snowflake"],
+        "rate_min": 55, "rate_max": 75, "rate_type": "C2C",
+        "location": "Remote (US)",
+        "duration": "6 months",
+        "visa_restrictions": ["OPT"],
+        "submission_limit": 3
+    },
+    {
+        "title": "Cloud Architect",
+        "skills": ["AWS", "Azure", "GCP", "Kubernetes"],
+        "rate_min": 80, "rate_max": 100, "rate_type": "W2",
+        "location": "Chicago, IL",
+        "duration": "18 months",
+        "visa_restrictions": [],
+        "submission_limit": 2
+    }
 ]
 
 for req in sample_reqs:
