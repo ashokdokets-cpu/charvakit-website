@@ -229,5 +229,29 @@ class Database:
         finally:
             conn.close()
 
+    def get_user_by_email(self, email: str):
+        """Get user by email"""
+        import psycopg2
+        try:
+            conn = psycopg2.connect(DATABASE_URL)
+            cursor = conn.cursor()
+            cursor.execute('SELECT user_id, email, password_hash, name, phone, role FROM users WHERE email = %s', (email,))
+            row = cursor.fetchone()
+            cursor.close()
+            conn.close()
+            if row:
+                return {
+                    "user_id": row[0],
+                    "email": row[1],
+                    "password_hash": row[2],
+                    "name": row[3],
+                    "phone": row[4],
+                    "role": row[5]
+                }
+            return None
+        except Exception as e:
+            print(f"get_user_by_email error: {e}")
+            return None
+
 # Initialize database
 db = Database()
