@@ -3781,14 +3781,7 @@ async def how_it_works_page(request: Request):
 
 @app.get("/admin-control", response_class=HTMLResponse)
 async def admin_control_center(request: Request):
-    """Secure admin dashboard — hr@charvakit.com only."""
-    token = request.headers.get("Authorization", "").replace("Bearer ", "")
-    user = get_current_user(token) if token else None
-    
-    if not user or (user.get("email") != "hr@charvakit.com" and user.get("role") != "admin"):
-        # Redirect to admin login
-        return template_response("admin-login.html", request, "Admin Login - Charvak")
-    
+    """Admin Control Center — hr@charvakit.com"""
     return template_response("admin-unified.html", request, "Admin Control Center - Charvak")
 
 @app.get("/admin-login", response_class=HTMLResponse)
