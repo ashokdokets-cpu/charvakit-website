@@ -203,7 +203,7 @@ app.add_middleware(
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE"],  # Explicit, not wildcard
-    allow_headers=["Content-Type", "Authorization"],  # Explicit, not wildcard
+    allow_headers=["Content-Type", "Authorization", "X-API-Key"],  # Explicit, not wildcard
 )
 
 
