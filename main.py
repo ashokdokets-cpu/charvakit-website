@@ -81,6 +81,7 @@ from doketsrb_integration import doketsrb_integration
 from outreach_engine import outreach_engine
 from data_lifecycle import data_lifecycle
 from final_year_project_engine import final_year_project_engine
+from ai_credit_engine import ai_credit_engine
 
 
 
@@ -3924,6 +3925,56 @@ async def fyp_stats():
 @app.get("/final-year-project", response_class=HTMLResponse)
 async def fyp_page(request: Request):
     return template_response("final-year-project.html", request, "Final Year Project Assistant - Charvak")
+
+# ============================================================
+# AI CREDIT SYSTEM API
+# ============================================================
+
+@app.get("/api/credits/{email}")
+async def get_user_credits(email: str):
+    """Get user's credit balance."""
+    return ai_credit_engine.get_user_credits(email)
+
+@app.post("/api/credits/check")
+@limiter.limit("20/minute")
+async def check_credits(request: Request):
+    """Check and deduct credits for AI usage."""
+    data = await request.json()
+    return ai_credit_engine.check_and_deduct(data.get("email"), data.get("feature"))
+
+@app.post("/api/credits/purchase")
+@limiter.limit("10/minute")
+async def purchase_credits(request: Request):
+    """Purchase credit plan."""
+    data = await request.json()
+    return ai_credit_engine.purchase_credits(data.get("email"), data.get("plan"))
+
+@app.post("/api/credits/daily-bonus")
+@limiter.limit("5/minute")
+async def daily_bonus(request: Request):
+    """Claim daily bonus."""
+    data = await request.json()
+    return ai_credit_engine.apply_daily_bonus(data.get("email"))
+
+@app.get("/api/credits/expiry/{email}")
+async def check_expiry(email: str):
+    """Check credit expiry."""
+    return ai_credit_engine.check_expiry(email)
+
+@app.get("/api/credits/usage/{email}")
+async def usage_history(email: str):
+    """Get usage history."""
+    return ai_credit_engine.get_user_usage_history(email)
+
+@app.get("/api/credits/admin/stats")
+async def credit_admin_stats():
+    """Admin credit statistics."""
+    return ai_credit_engine.get_admin_stats()
+
+@app.get("/api/credits/plans")
+async def credit_plans():
+    """Get all plans."""
+    return {"status": "success", "plans": ai_credit_engine.PLANS}
 
 # ============================================================
 # UTILITY ENDPOINTS
