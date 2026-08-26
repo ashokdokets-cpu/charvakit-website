@@ -1,188 +1,269 @@
 """
-Charvak Final Year Project Assistant
-Helps students with complete final year project lifecycle
+Charvak Final Year Project Assistant — AI-Powered
+Personalized project support using GPT-4o-mini
 """
 import logging
+import json
+import os
 from datetime import datetime
 from typing import Dict, List
 import secrets
 
 logger = logging.getLogger("charvakit.fyp")
 
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+
 
 class FinalYearProjectEngine:
-    """Complete final year project support."""
+    """AI-powered final year project support."""
+    
+    PLANS = {
+        "free": {"name": "Free", "price": 0, "features": ["Topic suggestions (5)", "Basic outline"]},
+        "pro": {"name": "Pro", "price": 299, "features": ["AI personalized topics (20+)", "AI proposal generation", "Tech stack suggestion"]},
+        "premium": {"name": "Premium", "price": 999, "features": ["Everything in Pro", "Full AI documentation", "Viva preparation", "Code starter templates", "Priority support"]},
+    }
     
     def __init__(self):
         self.projects = []
-        logger.info("Final Year Project Engine ready")
+        self.subscriptions = []
+        self.revenue = 0
+        logger.info(f"FYP Engine ready | AI: {'Enabled' if OPENAI_API_KEY else 'Fallback mode'}")
     
-    def suggest_topics(self, data: Dict) -> Dict:
+    # ============================================================
+    # AI-POWERED TOPIC SUGGESTIONS
+    # ============================================================
+    
+    def suggest_topics_ai(self, data: Dict) -> Dict:
         """
-        Suggest project topics based on branch/domain.
-        data = {branch, domain, difficulty, interests}
+        AI-powered topic suggestions.
+        data = {branch, domain, skills, interests, plan}
         """
         branch = data.get("branch", "Computer Science")
         domain = data.get("domain", "AI/ML")
+        skills = data.get("skills", [])
+        interests = data.get("interests", [])
+        plan = data.get("plan", "free")
         
-        topics = {
-            "Computer Science": {
-                "AI/ML": [
-                    "Chatbot for College Enquiry System",
-                    "Disease Prediction using ML",
-                    "Face Recognition Attendance System",
-                    "Sentiment Analysis for Product Reviews",
-                    "Stock Price Prediction using LSTM"
-                ],
-                "Web Development": [
-                    "College Management System",
-                    "E-Learning Platform",
-                    "Online Voting System",
-                    "Food Delivery App",
-                    "Hospital Management System"
-                ],
-                "Data Science": [
-                    "Customer Churn Prediction",
-                    "Credit Card Fraud Detection",
-                    "Recommendation System",
-                    "Time Series Forecasting",
-                    "Social Media Analytics"
-                ]
-            },
-            "Electronics": {
-                "IoT": [
-                    "Smart Home Automation",
-                    "Weather Monitoring System",
-                    "Smart Agriculture System",
-                    "Health Monitoring Wearable",
-                    "Smart Parking System"
-                ]
-            }
-        }
+        # Try AI
+        if OPENAI_API_KEY:
+            try:
+                import openai
+                client = openai.OpenAI(api_key=OPENAI_API_KEY)
+                
+                prompt = f"""Generate 10 unique final year project topics for a {branch} student.
+                Domain: {domain}
+                Skills: {', '.join(skills) if skills else 'General programming'}
+                Interests: {', '.join(interests) if interests else 'Open to suggestions'}
+                
+                Return JSON: {{"topics": [{{"title": "...", "domain": "...", "difficulty": "...", "description": "..."}}]}}"""
+                
+                response = client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[{"role": "user", "content": prompt}],
+                    max_tokens=800,
+                    temperature=0.8
+                )
+                
+                topics_data = json.loads(response.choices[0].message.content)
+                return {"status": "success", "ai_generated": True, **topics_data}
+            except Exception as e:
+                logger.warning(f"AI failed, using fallback: {e}")
         
-        branch_topics = topics.get(branch, {}).get(domain, topics["Computer Science"]["AI/ML"])
-        
-        project_id = f"FYP-{secrets.token_hex(4).upper()}"
-        
-        result = {
-            "project_id": project_id,
-            "branch": branch,
-            "domain": domain,
-            "suggested_topics": branch_topics,
-            "recommended": branch_topics[0],
-            "difficulty": data.get("difficulty", "Intermediate"),
-            "message": "Choose a topic, or ask for more suggestions!"
-        }
-        
-        self.projects.append(result)
-        return {"status": "success", **result}
+        # Fallback predefined
+        return self._fallback_topics(branch, domain)
     
-    def generate_proposal(self, data: Dict) -> Dict:
-        """
-        Generate project proposal.
-        data = {topic, branch, domain}
-        """
-        topic = data.get("topic", "Project")
-        
-        proposal = {
-            "title": topic,
-            "abstract": f"This project focuses on {topic}, addressing key challenges in the field. The proposed solution leverages modern technologies to deliver practical outcomes, with measurable impact on the target domain.",
-            "objectives": [
-                f"Study existing approaches to {topic}",
-                f"Design an efficient solution for {topic}",
-                f"Implement and test the proposed system",
-                f"Document findings and future enhancements"
-            ],
-            "scope": f"The project covers end-to-end development of {topic}, including requirements analysis, design, implementation, testing, and deployment.",
-            "tech_stack": self._suggest_tech_stack(topic),
-            "modules": self._suggest_modules(topic),
-            "timeline": [
-                "Week 1-2: Requirements & Research",
-                "Week 3-4: Design & Architecture",
-                "Week 5-8: Implementation",
-                "Week 9-10: Testing & Fixes",
-                "Week 11-12: Documentation & Submission"
-            ]
-        }
-        
-        return {"status": "success", "proposal": proposal}
-    
-    def generate_documentation(self, data: Dict) -> Dict:
-        """
-        Generate project documentation outline.
-        """
-        topic = data.get("topic", "Project")
-        
-        docs = {
-            "chapters": [
-                {"chapter": 1, "title": "Introduction", "content": f"Background, problem statement, objectives of {topic}"},
-                {"chapter": 2, "title": "Literature Review", "content": "Review of existing systems and research papers"},
-                {"chapter": 3, "title": "System Design", "content": "Architecture, modules, database design, UML diagrams"},
-                {"chapter": 4, "title": "Implementation", "content": "Code structure, key algorithms, screenshots"},
-                {"chapter": 5, "title": "Testing & Results", "content": "Test cases, results analysis, performance metrics"},
-                {"chapter": 6, "title": "Conclusion & Future Work", "content": "Summary, limitations, future enhancements"}
-            ],
-            "diagrams_needed": ["Use Case Diagram", "ER Diagram", "Class Diagram", "Sequence Diagram", "Activity Diagram"],
-            "documents": ["SRS (Software Requirements Specification)", "SDD (System Design Document)", "User Manual", "Test Report"]
-        }
-        
-        return {"status": "success", "documentation": docs}
-    
-    def generate_viva_questions(self, topic: str) -> Dict:
-        """Generate viva questions."""
-        questions = [
-            f"Explain the motivation behind choosing {topic}?",
-            "What are the key modules of your project?",
-            "Which technologies did you use and why?",
-            "What challenges did you face during development?",
-            "How does your project differ from existing solutions?",
-            "What future enhancements would you suggest?",
-            "Explain the architecture of your system.",
-            "What testing methodology did you use?",
-            "How would you scale your solution?",
-            "What did you learn from this project?"
+    def _fallback_topics(self, branch: str, domain: str) -> Dict:
+        """Fallback predefined topics."""
+        topics = [
+            {"title": "Chatbot for College Enquiry", "domain": domain, "difficulty": "Intermediate", "description": "AI chatbot answering college queries"},
+            {"title": "Disease Prediction using ML", "domain": domain, "difficulty": "Advanced", "description": "Predict diseases from symptoms"},
+            {"title": "Face Recognition Attendance", "domain": domain, "difficulty": "Intermediate", "description": "Automated attendance using face recognition"},
+            {"title": "Sentiment Analysis Platform", "domain": domain, "difficulty": "Beginner", "description": "Analyze sentiment from reviews"},
+            {"title": "Stock Price Predictor", "domain": domain, "difficulty": "Advanced", "description": "LSTM-based stock prediction"},
         ]
+        return {"status": "success", "ai_generated": False, "topics": topics}
+    
+    # ============================================================
+    # AI-POWERED PROPOSAL GENERATION
+    # ============================================================
+    
+    def generate_proposal_ai(self, data: Dict) -> Dict:
+        """
+        AI-powered proposal generation.
+        data = {topic, branch, domain, student_name, college}
+        """
+        topic = data.get("topic", "Project")
+        student = data.get("student_name", "Student")
+        college = data.get("college", "College")
+        
+        if OPENAI_API_KEY:
+            try:
+                import openai
+                client = openai.OpenAI(api_key=OPENAI_API_KEY)
+                
+                prompt = f"""Generate a professional final year project proposal for:
+                Student: {student}
+                College: {college}
+                Topic: {topic}
+                
+                Return JSON: {{"title": "...", "abstract": "...", "objectives": [...], "scope": "...", "tech_stack": [...], "modules": [...], "timeline": [...]}}"""
+                
+                response = client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[{"role": "user", "content": prompt}],
+                    max_tokens=1000,
+                    temperature=0.7
+                )
+                
+                proposal = json.loads(response.choices[0].message.content)
+                return {"status": "success", "ai_generated": True, "proposal": proposal}
+            except Exception as e:
+                logger.warning(f"AI proposal failed: {e}")
+        
+        return {"status": "success", "ai_generated": False, "proposal": self._fallback_proposal(topic)}
+    
+    def _fallback_proposal(self, topic: str) -> Dict:
+        return {
+            "title": topic,
+            "abstract": f"This project focuses on {topic}.",
+            "objectives": [f"Study {topic}", f"Design {topic}", f"Implement {topic}"],
+            "scope": f"End-to-end development of {topic}",
+            "tech_stack": ["Python", "React", "PostgreSQL"],
+            "modules": ["Authentication", "Core Module", "Admin", "Reports"],
+            "timeline": ["Week 1-2: Research", "Week 3-8: Development", "Week 9-12: Testing"]
+        }
+    
+    # ============================================================
+    # AI-POWERED DOCUMENTATION
+    # ============================================================
+    
+    def generate_documentation_ai(self, data: Dict) -> Dict:
+        """
+        AI-powered documentation.
+        data = {topic, proposal}
+        """
+        topic = data.get("topic", "Project")
+        
+        if OPENAI_API_KEY:
+            try:
+                import openai
+                client = openai.OpenAI(api_key=OPENAI_API_KEY)
+                
+                prompt = f"""Generate complete documentation outline for final year project: {topic}
+                Return JSON: {{"chapters": [{{"chapter": 1, "title": "...", "content_outline": "..."}}], "diagrams": [...], "documents": [...]}}"""
+                
+                response = client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[{"role": "user", "content": prompt}],
+                    max_tokens=800,
+                    temperature=0.5
+                )
+                
+                docs = json.loads(response.choices[0].message.content)
+                return {"status": "success", "ai_generated": True, "documentation": docs}
+            except Exception as e:
+                logger.warning(f"AI docs failed: {e}")
+        
+        return {"status": "success", "ai_generated": False, "documentation": self._fallback_docs(topic)}
+    
+    def _fallback_docs(self, topic: str) -> Dict:
+        return {
+            "chapters": [
+                {"chapter": 1, "title": "Introduction", "content_outline": f"Background of {topic}"},
+                {"chapter": 2, "title": "Literature Review", "content_outline": "Existing systems"},
+                {"chapter": 3, "title": "System Design", "content_outline": "Architecture"},
+                {"chapter": 4, "title": "Implementation", "content_outline": "Code structure"},
+                {"chapter": 5, "title": "Testing", "content_outline": "Test cases"},
+                {"chapter": 6, "title": "Conclusion", "content_outline": "Summary"}
+            ],
+            "diagrams": ["Use Case", "ER Diagram", "Class Diagram"],
+            "documents": ["SRS", "SDD", "User Manual"]
+        }
+    
+    # ============================================================
+    # AI-POWERED VIVA PREP
+    # ============================================================
+    
+    def generate_viva_ai(self, data: Dict) -> Dict:
+        """
+        AI-powered viva questions specific to project.
+        """
+        topic = data.get("topic", "Project")
+        
+        if OPENAI_API_KEY:
+            try:
+                import openai
+                client = openai.OpenAI(api_key=OPENAI_API_KEY)
+                
+                prompt = f"""Generate 15 viva questions specific to final year project: {topic}
+                Include technical, architectural, and general questions.
+                Return JSON: {{"questions": [...], "tips": [...]}}"""
+                
+                response = client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[{"role": "user", "content": prompt}],
+                    max_tokens=600,
+                    temperature=0.6
+                )
+                
+                viva = json.loads(response.choices[0].message.content)
+                return {"status": "success", "ai_generated": True, **viva}
+            except Exception as e:
+                logger.warning(f"AI viva failed: {e}")
+        
+        return {"status": "success", "ai_generated": False, "questions": self._fallback_questions(topic)}
+    
+    def _fallback_questions(self, topic: str) -> List[str]:
+        return [
+            f"Why did you choose {topic}?",
+            "What technologies did you use?",
+            "What challenges did you face?",
+            "How does your project differ from existing solutions?",
+            "What future enhancements would you suggest?"
+        ]
+    
+    # ============================================================
+    # MONETIZATION
+    # ============================================================
+    
+    def subscribe(self, data: Dict) -> Dict:
+        """
+        Subscribe to FYP plan.
+        data = {email, plan}
+        """
+        plan_key = data.get("plan", "free")
+        plan = self.PLANS.get(plan_key, self.PLANS["free"])
+        
+        subscription = {
+            "subscription_id": f"FYP-SUB-{secrets.token_hex(4).upper()}",
+            "email": data.get("email"),
+            "plan": plan_key,
+            "price": plan["price"],
+            "subscribed_at": datetime.now().isoformat()
+        }
+        
+        self.subscriptions.append(subscription)
+        self.revenue += plan["price"]
         
         return {
             "status": "success",
-            "questions": questions,
-            "tips": [
-                "Know every line of your code",
-                "Be confident about your architecture choices",
-                "Have real metrics/results ready",
-                "Prepare a 2-minute project summary",
-                "Keep documentation handy for reference"
-            ]
+            "plan": plan["name"],
+            "price": plan["price"],
+            "features": plan["features"],
+            "message": f"Subscribed to {plan['name']}!"
         }
     
-    def _suggest_tech_stack(self, topic: str) -> List[str]:
-        """Suggest tech stack based on topic."""
-        topic_lower = topic.lower()
-        if "ml" in topic_lower or "ai" in topic_lower or "prediction" in topic_lower:
-            return ["Python", "TensorFlow/PyTorch", "Flask/FastAPI", "PostgreSQL", "React"]
-        if "web" in topic_lower or "portal" in topic_lower or "management" in topic_lower:
-            return ["React", "Node.js", "Express", "MongoDB", "Bootstrap"]
-        if "app" in topic_lower or "mobile" in topic_lower:
-            return ["Flutter/React Native", "Firebase", "REST API"]
-        return ["Python", "React", "PostgreSQL", "Docker"]
-    
-    def _suggest_modules(self, topic: str) -> List[str]:
-        """Suggest project modules."""
-        return [
-            "User Authentication & Management",
-            f"Core {topic} Module",
-            "Admin Dashboard",
-            "Reporting & Analytics",
-            "Notifications System",
-            "Settings & Configuration"
-        ]
+    def get_plans(self) -> Dict:
+        return {"status": "success", "plans": self.PLANS}
     
     def get_stats(self) -> Dict:
         return {
             "status": "success",
             "stats": {
                 "total_projects": len(self.projects),
-                "topics_suggested": len(self.projects)
+                "total_subscriptions": len(self.subscriptions),
+                "total_revenue": self.revenue,
+                "ai_enabled": bool(OPENAI_API_KEY)
             }
         }
 

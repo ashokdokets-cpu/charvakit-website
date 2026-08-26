@@ -3882,29 +3882,40 @@ async def lifecycle_stats():
     """Get lifecycle statistics."""
     return data_lifecycle.get_stats()
 
+# FYP — AI-Powered
 @app.post("/api/fyp/suggest-topics")
 @limiter.limit("10/minute")
-async def suggest_topics(request: Request):
+async def suggest_fyp_topics(request: Request):
     data = await request.json()
-    return final_year_project_engine.suggest_topics(data)
+    return final_year_project_engine.suggest_topics_ai(data)
 
 @app.post("/api/fyp/generate-proposal")
 @limiter.limit("10/minute")
-async def generate_proposal(request: Request):
+async def generate_fyp_proposal(request: Request):
     data = await request.json()
-    return final_year_project_engine.generate_proposal(data)
+    return final_year_project_engine.generate_proposal_ai(data)
 
 @app.post("/api/fyp/generate-documentation")
 @limiter.limit("5/minute")
-async def generate_documentation(request: Request):
+async def generate_fyp_documentation(request: Request):
     data = await request.json()
-    return final_year_project_engine.generate_documentation(data)
+    return final_year_project_engine.generate_documentation_ai(data)
 
 @app.post("/api/fyp/viva-questions")
 @limiter.limit("10/minute")
-async def viva_questions(request: Request):
+async def fyp_viva_questions(request: Request):
     data = await request.json()
-    return final_year_project_engine.generate_viva_questions(data.get("topic", ""))
+    return final_year_project_engine.generate_viva_ai(data)
+
+@app.post("/api/fyp/subscribe")
+@limiter.limit("10/minute")
+async def fyp_subscribe(request: Request):
+    data = await request.json()
+    return final_year_project_engine.subscribe(data)
+
+@app.get("/api/fyp/plans")
+async def fyp_plans():
+    return final_year_project_engine.get_plans()
 
 @app.get("/api/fyp/stats")
 async def fyp_stats():
