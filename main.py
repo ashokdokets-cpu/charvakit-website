@@ -80,6 +80,7 @@ from profile_network_engine import profile_network_engine
 from doketsrb_integration import doketsrb_integration
 from outreach_engine import outreach_engine
 from data_lifecycle import data_lifecycle
+from final_year_project_engine import final_year_project_engine
 
 
 
@@ -3880,6 +3881,34 @@ async def export_user(email: str):
 async def lifecycle_stats():
     """Get lifecycle statistics."""
     return data_lifecycle.get_stats()
+
+@app.post("/api/fyp/suggest-topics")
+@limiter.limit("10/minute")
+async def suggest_topics(request: Request):
+    data = await request.json()
+    return final_year_project_engine.suggest_topics(data)
+
+@app.post("/api/fyp/generate-proposal")
+@limiter.limit("10/minute")
+async def generate_proposal(request: Request):
+    data = await request.json()
+    return final_year_project_engine.generate_proposal(data)
+
+@app.post("/api/fyp/generate-documentation")
+@limiter.limit("5/minute")
+async def generate_documentation(request: Request):
+    data = await request.json()
+    return final_year_project_engine.generate_documentation(data)
+
+@app.post("/api/fyp/viva-questions")
+@limiter.limit("10/minute")
+async def viva_questions(request: Request):
+    data = await request.json()
+    return final_year_project_engine.generate_viva_questions(data.get("topic", ""))
+
+@app.get("/api/fyp/stats")
+async def fyp_stats():
+    return final_year_project_engine.get_stats()
 
 # ============================================================
 # UTILITY ENDPOINTS
