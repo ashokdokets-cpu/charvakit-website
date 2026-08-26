@@ -3974,7 +3974,10 @@ async def credit_admin_stats():
 @app.get("/api/credits/plans")
 async def credit_plans():
     """Get all plans."""
-    return {"status": "success", "plans": ai_credit_engine.PLANS}
+    return {
+        "status": "success",
+        "plans": ai_credit_engine.get_plans()  # FIX: Use the clean method
+    }
 
 # ============================================================
 # UTILITY ENDPOINTS

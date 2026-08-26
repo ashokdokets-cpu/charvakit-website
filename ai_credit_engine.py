@@ -116,13 +116,23 @@ class AICreditEngine:
         
         logger.info(f"Credits initialized for {email}: {plan_data['credits']} credits")
         
-        return {"status": "success", "credits": plan_data["credits"], "message": "Credits initialized"}
+        return {
+            "status": "success", 
+            "credits": plan_data["credits"], 
+            "message": "Credits initialized",
+            "user": self.user_credits[email]  # FIX: Return the user object
+        }
     
     def get_user_credits(self, email: str) -> Dict:
         """Get user's credit balance."""
         user = self.user_credits.get(email)
         if not user:
-            user = self.initialize_user(email).get("user")
+            # FIX: Properly initialize and get user
+            init_result = self.initialize_user(email)
+            if init_result["status"] == "success":
+                user = init_result["user"]
+            else:
+                return {"status": "error", "message": "Failed to initialize user"}
         
         # Check expiry
         if user and datetime.fromisoformat(user["expires_at"]) < datetime.now():
@@ -138,6 +148,20 @@ class AICreditEngine:
             "total_used": user["total_credits_used"]
         }
     
+    def get_plans(self) -> Dict:
+        """Get all plans in a clean serializable format."""
+        serializable_plans = {}
+        for plan_key, plan_data in self.PLANS.items():
+            serializable_plans[plan_key] = {
+                "name": plan_data["name"],
+                "price": plan_data["price"],
+                "credits": plan_data["credits"],
+                "validity_days": plan_data["validity_days"],
+                "daily_bonus": plan_data["daily_bonus"],
+                "features": plan_data["features"]
+            }
+        return serializable_plans
+    
     # ============================================================
     # CREDIT USAGE
     # ============================================================
@@ -146,8 +170,10 @@ class AICreditEngine:
         """Check credits and deduct for AI usage."""
         user = self.user_credits.get(email)
         if not user:
-            user = self.initialize_user(email).get("user")
-            if not user:
+            init_result = self.initialize_user(email)
+            if init_result["status"] == "success":
+                user = init_result["user"]
+            else:
                 return {"status": "error", "message": "Failed to initialize user"}
         
         credits_needed = self.FEATURE_CREDITS.get(feature, self.FEATURE_CREDITS["default"])
@@ -205,8 +231,11 @@ class AICreditEngine:
         
         user = self.user_credits.get(email)
         if not user:
-            self.initialize_user(email, plan)
-            user = self.user_credits[email]
+            init_result = self.initialize_user(email, plan)
+            if init_result["status"] == "success":
+                user = init_result["user"]
+            else:
+                return {"status": "error", "message": "Failed to initialize user"}
         
         # Add credits
         user["credits_remaining"] += plan_data["credits"]
@@ -311,7 +340,7 @@ class AICreditEngine:
                 "total_ai_calls": total_ai_calls,
                 "total_revenue": total_revenue,
                 "total_purchases": len(self.credit_purchases),
-                "plans": {k: {"price": v["price"], "credits": v["credits"]} for k, v in self.PLANS.items()}
+                "plans": self.get_plans()  # FIX: Use clean serialization
             }
         }
     
