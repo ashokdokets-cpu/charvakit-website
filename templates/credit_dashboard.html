@@ -244,5 +244,22 @@
         loadDashboard();
     });
 </script>
+
+<!-- Currency Change Listener -->
+<script>
+window.addEventListener('charvakCurrencyChanged', function(e) {
+    if (e.detail && e.detail.currency) {
+        if (typeof CharvakCurrency !== 'undefined') {
+            CharvakCurrency.updateAllPrices();
+        }
+    }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof CharvakCurrency !== 'undefined') {
+        CharvakCurrency.init();
+    }
+});
+</script>
 </body>
 </html>

@@ -127,5 +127,22 @@
     <p>All payments secured via Dokets VouchAI Escrow | 19 AI Models | 34 Languages | 13 Currencies</p>
 </div>
 
+
+<!-- Currency Change Listener -->
+<script>
+window.addEventListener('charvakCurrencyChanged', function(e) {
+    if (e.detail && e.detail.currency) {
+        if (typeof CharvakCurrency !== 'undefined') {
+            CharvakCurrency.updateAllPrices();
+        }
+    }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof CharvakCurrency !== 'undefined') {
+        CharvakCurrency.init();
+    }
+});
+</script>
 </body>
 </html>

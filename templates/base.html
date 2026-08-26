@@ -559,24 +559,35 @@ function changeLanguage(lang) {
     }
 }
 
-// Currency conversion
+// Currency conversion - Unified system
 function changeCurrency(curr) {
-    localStorage.setItem('charvak_currency', curr);
-    updateAllPrices(curr);
+    // Use global CharvakCurrency if available
+    if (typeof CharvakCurrency !== 'undefined') {
+        CharvakCurrency.setCurrency(curr);
+    } else {
+        // Fallback
+        localStorage.setItem('charvak_currency', curr);
+        updateAllPrices(curr);
+    }
 }
 
 function updateAllPrices(currency) {
-    // Use the global CharvakCurrency utility instead
+    // Use global CharvakCurrency if available
     if (typeof CharvakCurrency !== 'undefined') {
-        CharvakCurrency.setCurrency(currency);
+        CharvakCurrency.updateAllPrices();
         return;
     }
     
-    // Fallback if utility not loaded
+    // Fallback conversion
     const rates = {
         INR: 1, USD: 83.1, EUR: 90.2, GBP: 105.3, AED: 22.6,
         SGD: 61.2, AUD: 54.8, CAD: 61.0, JPY: 0.56, CNY: 11.5,
         BRL: 16.8, NGN: 0.055, ZAR: 4.45
+    };
+    const symbols = {
+        INR: '₹', USD: '$', EUR: '€', GBP: '£', AED: 'د.إ',
+        SGD: 'S$', AUD: 'A$', CAD: 'C$', JPY: '¥', CNY: '¥',
+        BRL: 'R$', NGN: '₦', ZAR: 'R'
     };
     
     document.querySelectorAll('[data-inr]').forEach(el => {
@@ -589,11 +600,6 @@ function updateAllPrices(currency) {
             el.textContent = (symbols[currency] || '$') + formatted;
         }
     });
-}
-    
-    // Show notification
-    const symbol = symbols[currency] || '$';
-    showNotification('Currency changed to ' + symbol + ' ' + currency);
 }
 
 function showNotification(msg) {
@@ -612,6 +618,76 @@ document.addEventListener('DOMContentLoaded', function() {
     if (savedCurrency) {
         document.getElementById('currencySelector').value = savedCurrency;
         updateAllPrices(savedCurrency);
+    }
+    
+    // Initialize global currency if available
+    if (typeof CharvakCurrency !== 'undefined') {
+        CharvakCurrency.init();
+    }
+});
+
+// ============================================================
+// GLOBAL CURRENCY CHANGE LISTENER
+// This ensures all pages respond to currency changes
+// ============================================================
+
+// Listen for currency changes from CharvakCurrency utility
+window.addEventListener('charvakCurrencyChanged', function(e) {
+    if (e.detail && e.detail.currency) {
+        const currency = e.detail.currency;
+        console.log('Currency changed to:', currency);
+        
+        // Update all price elements on the page
+        updateAllPrices(currency);
+        
+        // Update the currency selector in the global bar
+        const currencySelector = document.getElementById('currencySelector');
+        if (currencySelector) {
+            currencySelector.value = currency;
+        }
+        
+        // Update any elements with data-currency-display attribute
+        document.querySelectorAll('[data-currency-display]').forEach(el => {
+            if (typeof CharvakCurrency !== 'undefined') {
+                el.textContent = CharvakCurrency.getSymbol() + ' ' + currency;
+            }
+        });
+        
+        // Update any elements with data-currency-name attribute
+        document.querySelectorAll('[data-currency-name]').forEach(el => {
+            if (typeof CharvakCurrency !== 'undefined') {
+                el.textContent = CharvakCurrency.getName();
+            }
+        });
+    }
+});
+
+// Listen for the legacy currency change event
+window.addEventListener('charvakCurrencyChange', function(e) {
+    if (e.detail && e.detail.currency) {
+        const currency = e.detail.currency;
+        console.log('Legacy currency change event:', currency);
+        
+        // Forward to the new event
+        window.dispatchEvent(new CustomEvent('charvakCurrencyChanged', {
+            detail: { currency: currency }
+        }));
+    }
+});
+
+// Also listen for storage changes (if currency changed in another tab)
+window.addEventListener('storage', function(e) {
+    if (e.key === 'charvak_currency' && e.newValue) {
+        console.log('Currency changed in another tab:', e.newValue);
+        
+        // Update all prices
+        updateAllPrices(e.newValue);
+        
+        // Update selector
+        const currencySelector = document.getElementById('currencySelector');
+        if (currencySelector) {
+            currencySelector.value = e.newValue;
+        }
     }
 });
 </script>
