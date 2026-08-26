@@ -82,6 +82,7 @@ from outreach_engine import outreach_engine
 from data_lifecycle import data_lifecycle
 from final_year_project_engine import final_year_project_engine
 from ai_credit_engine import ai_credit_engine
+from notification_engine import notification_engine
 
 
 
@@ -3977,6 +3978,57 @@ async def daily_bonus(request: Request):
     """Claim daily bonus."""
     data = await request.json()
     return ai_credit_engine.apply_daily_bonus(data.get("email"))
+
+# ============================================================
+# AI CREDITS PAGES & NOTIFICATIONS
+# ============================================================
+
+@app.get("/ai-credits-pricing")
+async def ai_credits_pricing_page(request: Request):
+    """AI Credits pricing page."""
+    return templates.TemplateResponse("ai_credits_pricing.html", {"request": request})
+
+@app.get("/credit-dashboard")
+async def credit_dashboard_page(request: Request):
+    """Credit dashboard page."""
+    return templates.TemplateResponse("credit_dashboard.html", {"request": request})
+
+@app.post("/api/notifications/check")
+@limiter.limit("10/minute")
+async def check_notifications(request: Request):
+    """Check and send notifications."""
+    data = await request.json()
+    email = data.get("email")
+    
+    # Check credits
+    credits = ai_credit_engine.get_user_credits(email)
+    low_credit_result = notification_engine.notify_low_credits(
+        email, credits["credits_remaining"]
+    )
+    
+    # Check expiry
+    expiry = ai_credit_engine.check_expiry(email)
+    expiry_result = {"status": "skipped"}
+    if expiry["status"] in ["expired", "expiring_soon"]:
+        expiry_result = notification_engine.notify_expiry(
+            email, expiry.get("days_remaining", 0)
+        )
+    
+    return {
+        "status": "success",
+        "low_credit": low_credit_result,
+        "expiry": expiry_result
+    }
+
+@app.get("/api/notifications/history/{email}")
+async def notification_history(email: str):
+    """Get notification history for user."""
+    return notification_engine.get_notification_history(email)
+
+@app.get("/api/notifications/stats")
+async def notification_stats():
+    """Get notification statistics."""
+    return notification_engine.get_stats()
 
 # ============================================================
 # UTILITY ENDPOINTS

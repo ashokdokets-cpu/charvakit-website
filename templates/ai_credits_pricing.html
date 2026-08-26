@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Credits Pricing - Charvak IT</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .plan-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .plan-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        .popular-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 py-4">
+            <div class="flex justify-between items-center">
+                <h1 class="text-2xl font-bold text-gray-800">AI Credits - Charvak IT</h1>
+                <div class="flex space-x-4">
+                    <a href="/pricing" class="text-gray-600 hover:text-gray-800">Service Pricing</a>
+                    <a href="/credit-dashboard" class="text-blue-600 hover:text-blue-800">My Dashboard</a>
+                    <a href="/" class="text-blue-600 hover:text-blue-800">← Home</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 py-16">
+        <div class="text-center mb-12">
+            <h2 class="text-4xl font-bold text-gray-900 mb-4">AI Credit Plans</h2>
+            <p class="text-xl text-gray-600">Power all AI tools with credits</p>
+            <p class="text-sm text-gray-500 mt-2">Assignment Assistant, Research Helper, FYP Tools, and more</p>
+        </div>
+
+        <!-- Current Balance -->
+        <div class="max-w-md mx-auto mb-12 bg-white rounded-lg shadow-lg p-6 text-center">
+            <h3 class="text-lg font-semibold text-gray-700 mb-2">Your AI Credit Balance</h3>
+            <div id="balance-loading" class="text-gray-500">Loading...</div>
+            <div id="balance-display" class="hidden">
+                <p class="text-4xl font-bold text-blue-600" id="credits-remaining">0</p>
+                <p class="text-sm text-gray-500 mt-2">Plan: <span id="current-plan" class="font-semibold">Free</span></p>
+                <p class="text-sm text-gray-500">Expires: <span id="plan-expiry">-</span></p>
+            </div>
+        </div>
+
+        <!-- Plans Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6" id="plans-container">
+            <div class="col-span-5 text-center text-gray-500">Loading plans...</div>
+        </div>
+
+        <!-- Credit Usage Table -->
+        <div class="mt-16 bg-white rounded-lg shadow-lg p-6">
+            <h3 class="text-2xl font-bold text-gray-900 mb-6">Credit Requirements per Tool</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="bg-gray-50">
+                            <th class="px-4 py-2 text-left">AI Tool</th>
+                            <th class="px-4 py-2 text-left">Credits Required</th>
+                            <th class="px-4 py-2 text-left">Category</th>
+                        </tr>
+                    </thead>
+                    <tbody id="credits-table">
+                        <tr><td colspan="3" class="text-center py-4">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div id="payment-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+            <h3 class="text-2xl font-bold text-gray-900 mb-4">Subscribe to Plan</h3>
+            <div id="payment-details" class="mb-6"></div>
+            <div class="space-y-3">
+                <button onclick="processSubscription()" class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition">
+                    Confirm & Pay
+                </button>
+                <button onclick="closePaymentModal()" class="w-full bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300 transition">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let userEmail = localStorage.getItem('userEmail') || 'demo@charvakit.com';
+        let selectedPlan = null;
+        let allPlans = {};
+
+        async function loadBalance() {
+            try {
+                const response = await fetch(`/api/credits/${userEmail}`);
+                const data = await response.json();
+                if (data.status === 'success') {
+                    document.getElementById('balance-loading').classList.add('hidden');
+                    document.getElementById('balance-display').classList.remove('hidden');
+                    document.getElementById('credits-remaining').textContent = data.credits_remaining;
+                    document.getElementById('current-plan').textContent = data.plan;
+                    document.getElementById('plan-expiry').textContent = new Date(data.expires_at).toLocaleDateString();
+                }
+            } catch (error) {
+                console.error('Error loading balance:', error);
+            }
+        }
+
+        async function loadPlans() {
+            try {
+                const response = await fetch('/api/credits/plans');
+                const data = await response.json();
+                if (data.status === 'success') {
+                    allPlans = data.plans;
+                    displayPlans(data.plans);
+                    displayCreditsTable();
+                }
+            } catch (error) {
+                console.error('Error loading plans:', error);
+            }
+        }
+
+        function displayPlans(plans) {
+            const container = document.getElementById('plans-container');
+            container.innerHTML = '';
+            
+            const planOrder = ['free', 'starter', 'pro', 'premium', 'enterprise'];
+            
+            planOrder.forEach(planKey => {
+                const plan = plans[planKey];
+                if (!plan) return;
+                
+                const isPopular = planKey === 'pro';
+                const card = document.createElement('div');
+                card.className = `plan-card bg-white rounded-lg shadow-lg overflow-hidden ${isPopular ? 'border-2 border-blue-500' : ''}`;
+                
+                card.innerHTML = `
+                    ${isPopular ? '<div class="popular-badge text-white text-center py-2 font-semibold">MOST POPULAR</div>' : ''}
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-900 mb-2">${plan.name}</h3>
+                        <div class="mb-4">
+                            <span class="text-3xl font-bold">₹${plan.price}</span>
+                            ${plan.price > 0 ? '<span class="text-gray-500 text-sm">/plan</span>' : ''}
+                        </div>
+                        <div class="mb-4">
+                            <p class="text-2xl font-semibold text-blue-600">${plan.credits.toLocaleString()}</p>
+                            <p class="text-sm text-gray-500">credits</p>
+                        </div>
+                        <ul class="mb-6 space-y-2">
+                            ${plan.features.map(feature => `
+                                <li class="flex items-start">
+                                    <svg class="w-5 h-5 text-green-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                    <span class="text-sm text-gray-600">${feature}</span>
+                                </li>
+                            `).join('')}
+                            ${plan.daily_bonus > 0 ? `
+                                <li class="flex items-start">
+                                    <svg class="w-5 h-5 text-green-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                    <span class="text-sm text-gray-600">${plan.daily_bonus} daily bonus credits</span>
+                                </li>
+                            ` : ''}
+                            <li class="flex items-start">
+                                <svg class="w-5 h-5 text-green-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                <span class="text-sm text-gray-600">${plan.validity_days} days validity</span>
+                            </li>
+                        </ul>
+                        <button onclick="selectPlan('${planKey}')" class="w-full ${plan.price === 0 ? 'bg-gray-200 text-gray-700 hover:bg-gray-300' : 'bg-blue-600 text-white hover:bg-blue-700'} py-2 rounded-lg transition font-semibold">
+                            ${plan.price === 0 ? 'Start Free' : 'Subscribe Now'}
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function displayCreditsTable() {
+            const tableBody = document.getElementById('credits-table');
+            const tools = [
+                { tool: 'Resume Roast', credits: 5, category: 'Career Tools' },
+                { tool: 'Skill Assessment', credits: 10, category: 'Career Tools' },
+                { tool: 'AI Premium Report', credits: 20, category: 'Career Tools' },
+                { tool: 'Voice to Web', credits: 30, category: 'Development' },
+                { tool: 'Neural Wireframe', credits: 25, category: 'Development' },
+                { tool: 'Assignment Assistant', credits: 10, category: 'Student Suite' },
+                { tool: 'Research Helper', credits: 15, category: 'Student Suite' },
+                { tool: 'FYP Topic Suggestions', credits: 5, category: 'Student Suite' },
+                { tool: 'FYP Proposal Generator', credits: 15, category: 'Student Suite' },
+                { tool: 'FYP Documentation', credits: 30, category: 'Student Suite' },
+                { tool: 'FYP Viva Prep', credits: 10, category: 'Student Suite' },
+                { tool: 'Marketing Job Ad', credits: 10, category: 'Business' },
+                { tool: 'Language Assessment', credits: 10, category: 'Assessment' },
+                { tool: 'LMS Quiz Generator', credits: 5, category: 'Education' },
+                { tool: 'Interview Prep', credits: 8, category: 'Career Tools' },
+                { tool: 'Chatbot Query', credits: 2, category: 'Support' }
+            ];
+            
+            tableBody.innerHTML = tools.map(tool => `
+                <tr class="border-b hover:bg-gray-50">
+                    <td class="px-4 py-3 font-medium">${tool.tool}</td>
+                    <td class="px-4 py-3">
+                        <span class="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold">
+                            ${tool.credits} credits
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 text-gray-600">${tool.category}</td>
+                </tr>
+            `).join('');
+        }
+
+        function selectPlan(planKey) {
+            selectedPlan = planKey;
+            const plan = allPlans[planKey];
+            
+            if (plan.price === 0) {
+                activateFreePlan();
+                return;
+            }
+            
+            document.getElementById('payment-details').innerHTML = `
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <p class="text-lg mb-2">Plan: <strong>${plan.name}</strong></p>
+                    <p class="text-lg mb-2">Credits: <strong>${plan.credits.toLocaleString()}</strong></p>
+                    <p class="text-lg mb-2">Validity: <strong>${plan.validity_days} days</strong></p>
+                    ${plan.daily_bonus > 0 ? `<p class="text-lg mb-2">Daily Bonus: <strong>${plan.daily_bonus} credits</strong></p>` : ''}
+                    <p class="text-2xl font-bold text-blue-600 mt-3">₹${plan.price}</p>
+                </div>
+            `;
+            document.getElementById('payment-modal').classList.remove('hidden');
+            document.getElementById('payment-modal').classList.add('flex');
+        }
+
+        async function processSubscription() {
+            try {
+                const response = await fetch('/api/credits/purchase', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: userEmail, plan: selectedPlan })
+                });
+                
+                const data = await response.json();
+                if (data.status === 'success') {
+                    alert(`✅ ${data.message}`);
+                    closePaymentModal();
+                    loadBalance();
+                } else {
+                    alert('❌ ' + data.message);
+                }
+            } catch (error) {
+                console.error('Subscription error:', error);
+                alert('Payment failed. Please try again.');
+            }
+        }
+
+        async function activateFreePlan() {
+            try {
+                const response = await fetch('/api/credits/purchase', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: userEmail, plan: 'free' })
+                });
+                const data = await response.json();
+                alert(data.message || 'Free plan activated!');
+                loadBalance();
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function closePaymentModal() {
+            document.getElementById('payment-modal').classList.add('hidden');
+            document.getElementById('payment-modal').classList.remove('flex');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadBalance();
+            loadPlans();
+        });
+    </script>
+</body>
+</html>
