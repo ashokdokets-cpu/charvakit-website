@@ -3929,6 +3929,28 @@ async def fyp_page(request: Request):
 # ============================================================
 # AI CREDIT SYSTEM API
 # ============================================================
+@app.get("/api/credits/plans")
+async def credit_plans():
+    """Get all credit plans."""
+    return {
+        "status": "success",
+        "plans": ai_credit_engine.get_plans()
+    }
+
+@app.get("/api/credits/admin/stats")
+async def credit_admin_stats():
+    """Admin credit statistics."""
+    return ai_credit_engine.get_admin_stats()
+
+@app.get("/api/credits/expiry/{email}")
+async def check_expiry(email: str):
+    """Check credit expiry."""
+    return ai_credit_engine.check_expiry(email)
+
+@app.get("/api/credits/usage/{email}")
+async def usage_history(email: str):
+    """Get usage history."""
+    return ai_credit_engine.get_user_usage_history(email)
 
 @app.get("/api/credits/{email}")
 async def get_user_credits(email: str):
@@ -3955,29 +3977,6 @@ async def daily_bonus(request: Request):
     """Claim daily bonus."""
     data = await request.json()
     return ai_credit_engine.apply_daily_bonus(data.get("email"))
-
-@app.get("/api/credits/expiry/{email}")
-async def check_expiry(email: str):
-    """Check credit expiry."""
-    return ai_credit_engine.check_expiry(email)
-
-@app.get("/api/credits/usage/{email}")
-async def usage_history(email: str):
-    """Get usage history."""
-    return ai_credit_engine.get_user_usage_history(email)
-
-@app.get("/api/credits/admin/stats")
-async def credit_admin_stats():
-    """Admin credit statistics."""
-    return ai_credit_engine.get_admin_stats()
-
-@app.get("/api/credits/plans")
-async def credit_plans():
-    """Get all plans."""
-    return {
-        "status": "success",
-        "plans": ai_credit_engine.get_plans()  # FIX: Use the clean method
-    }
 
 # ============================================================
 # UTILITY ENDPOINTS
