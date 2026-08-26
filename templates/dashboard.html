@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Credit Dashboard - Charvak IT</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-50">
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 py-4">
+            <div class="flex justify-between items-center">
+                <h1 class="text-2xl font-bold text-gray-800">Credit Dashboard</h1>
+                <div class="flex space-x-4">
+                    <a href="/pricing" class="text-blue-600 hover:text-blue-800">Pricing</a>
+                    <a href="/" class="text-blue-600 hover:text-blue-800">← Back to Home</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-8">Credit Usage Dashboard</h1>
+        
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-sm font-medium text-gray-500">Credits Remaining</h3>
+                <p class="text-3xl font-bold text-blue-600" id="credits-remaining">-</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-sm font-medium text-gray-500">Total Used</h3>
+                <p class="text-3xl font-bold text-red-600" id="total-used">-</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-sm font-medium text-gray-500">AI Calls</h3>
+                <p class="text-3xl font-bold text-green-600" id="total-calls">-</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-sm font-medium text-gray-500">Current Plan</h3>
+                <p class="text-3xl font-bold text-purple-600" id="current-plan">-</p>
+            </div>
+        </div>
+        
+        <!-- Usage Chart -->
+        <div class="bg-white rounded-lg shadow p-6 mb-8">
+            <h3 class="text-lg font-semibold mb-4">Usage History</h3>
+            <canvas id="usageChart"></canvas>
+        </div>
+        
+        <!-- Recent Activity -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold mb-4">Recent Activity</h3>
+            <div id="recent-activity" class="space-y-4">
+                <p class="text-gray-500">Loading...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let userEmail = localStorage.getItem('userEmail') || 'demo@charvakit.com';
+        
+        async function loadDashboard() {
+            try {
+                // Load credits
+                const creditsResponse = await fetch(`/api/credits/${userEmail}`);
+                const creditsData = await creditsResponse.json();
+                
+                document.getElementById('credits-remaining').textContent = creditsData.credits_remaining;
+                document.getElementById('total-used').textContent = creditsData.total_used;
+                document.getElementById('current-plan').textContent = creditsData.plan;
+                
+                // Load usage history
+                const usageResponse = await fetch(`/api/credits/usage/${userEmail}`);
+                const usageData = await usageResponse.json();
+                
+                document.getElementById('total-calls').textContent = usageData.count;
+                displayUsageChart(usageData.usage);
+                displayRecentActivity(usageData.usage);
+                
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+            }
+        }
+        
+        function displayUsageChart(usage) {
+            const ctx = document.getElementById('usageChart').getContext('2d');
+            
+            // Group by date
+            const dateMap = {};
+            usage.forEach(u => {
+                const date = new Date(u.timestamp).toLocaleDateString();
+                if (!dateMap[date]) dateMap[date] = 0;
+                dateMap[date] += u.credits_used;
+            });
+            
+            const labels = Object.keys(dateMap);
+            const values = Object.values(dateMap);
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Credits Used',
+                        data: values,
+                        borderColor: 'rgb(59, 130, 246)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+        
+        function displayRecentActivity(usage) {
+            const container = document.getElementById('recent-activity');
+            container.innerHTML = '';
+            
+            if (usage.length === 0) {
+                container.innerHTML = '<p class="text-gray-500">No activity yet</p>';
+                return;
+            }
+            
+            usage.slice(-10).reverse().forEach(u => {
+                const activity = document.createElement('div');
+                activity.className = 'flex items-center justify-between py-2 border-b';
+                activity.innerHTML = `
+                    <div>
+                        <p class="font-medium">${u.feature}</p>
+                        <p class="text-sm text-gray-500">${new Date(u.timestamp).toLocaleString()}</p>
+                    </div>
+                    <span class="text-red-600 font-semibold">-${u.credits_used} credits</span>
+                `;
+                container.appendChild(activity);
+            });
+        }
+        
+        document.addEventListener('DOMContentLoaded', loadDashboard);
+    </script>
+</body>
+</html>
