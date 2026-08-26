@@ -3,258 +3,210 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Credit Dashboard - Charvak IT</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Credit Dashboard - Charvak IT</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f8f9fa;
+        }
+        .stat-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+    </style>
 </head>
-<body class="bg-gray-50">
-    <nav class="bg-white shadow-lg">
-        <div class="max-w-7xl mx-auto px-4 py-4">
-            <div class="flex justify-between items-center">
-                <h1 class="text-2xl font-bold text-gray-800">AI Credit Dashboard</h1>
-                <div class="flex space-x-4">
-                    <a href="/ai-credits-pricing" class="text-blue-600 hover:text-blue-800">Buy Credits</a>
-                    <a href="/pricing" class="text-gray-600 hover:text-gray-800">Service Pricing</a>
-                    <a href="/" class="text-gray-600 hover:text-gray-800">← Home</a>
-                </div>
-            </div>
-        </div>
-    </nav>
+<body>
 
-    <div class="max-w-7xl mx-auto px-4 py-8">
-        <!-- User Info -->
-        <div class="bg-white rounded-lg shadow p-6 mb-8">
-            <div class="flex justify-between items-center">
+<!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-dark" style="background:#1a1a2e;">
+    <div class="container">
+        <a class="navbar-brand" href="/">
+            <img src="/static/images/logo.png" alt="Logo" height="32">
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+                <li class="nav-item"><a class="nav-link" href="/ai-credits-pricing">Buy Credits</a></li>
+                <li class="nav-item"><a class="nav-link" href="/pricing">Service Pricing</a></li>
+                <li class="nav-item"><a class="nav-link active" href="/credit-dashboard" style="color:#3ba591; font-weight:600;">Dashboard</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container py-5">
+    <h1 class="display-4 fw-bold mb-4" style="color:#1a1a2e;">Credit Usage Dashboard</h1>
+    
+    <!-- User Info -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <h2 class="text-2xl font-bold text-gray-900" id="user-email">demo@charvakit.com</h2>
-                    <p class="text-gray-500">Member since: <span id="member-since">-</span></p>
+                    <h5 class="card-title mb-0" id="user-email">demo@charvakit.com</h5>
+                    <small class="text-muted">Member since: <span id="member-since">-</span></small>
                 </div>
-                <button onclick="claimDailyBonus()" class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition font-semibold">
-                    🎁 Claim Daily Bonus
+                <button onclick="claimDailyBonus()" class="btn btn-success">
+                    <i class="bi bi-gift me-2"></i>Claim Daily Bonus
                 </button>
             </div>
         </div>
-
-        <!-- Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div class="bg-white rounded-lg shadow p-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h3 class="text-sm font-medium text-gray-500">Credits Remaining</h3>
-                        <p class="text-3xl font-bold text-blue-600 mt-2" id="credits-remaining">-</p>
-                    </div>
-                    <div class="bg-blue-100 p-3 rounded-full">
-                        <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
+    </div>
+    
+    <!-- Stats Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                        <i class="bi bi-lightning-charge"></i>
                     </div>
                 </div>
-            </div>
-
-            <div class="bg-white rounded-lg shadow p-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h3 class="text-sm font-medium text-gray-500">Total Used</h3>
-                        <p class="text-3xl font-bold text-red-600 mt-2" id="total-used">-</p>
-                    </div>
-                    <div class="bg-red-100 p-3 rounded-full">
-                        <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-                        </svg>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-lg shadow p-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h3 class="text-sm font-medium text-gray-500">AI Calls Made</h3>
-                        <p class="text-3xl font-bold text-green-600 mt-2" id="total-calls">-</p>
-                    </div>
-                    <div class="bg-green-100 p-3 rounded-full">
-                        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                        </svg>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-lg shadow p-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h3 class="text-sm font-medium text-gray-500">Current Plan</h3>
-                        <p class="text-3xl font-bold text-purple-600 mt-2" id="current-plan">-</p>
-                    </div>
-                    <div class="bg-purple-100 p-3 rounded-full">
-                        <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-                        </svg>
-                    </div>
-                </div>
+                <h6 class="text-muted mb-2">Credits Remaining</h6>
+                <div class="stat-value text-primary" id="credits-remaining">-</div>
             </div>
         </div>
-
-        <!-- Charts -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <div class="bg-white rounded-lg shadow p-6">
-                <h3 class="text-lg font-semibold mb-4">Credit Usage Trend</h3>
-                <canvas id="usageChart"></canvas>
-            </div>
-            <div class="bg-white rounded-lg shadow p-6">
-                <h3 class="text-lg font-semibold mb-4">Usage by Feature</h3>
-                <canvas id="featureChart"></canvas>
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="stat-icon bg-danger bg-opacity-10 text-danger">
+                        <i class="bi bi-graph-down"></i>
+                    </div>
+                </div>
+                <h6 class="text-muted mb-2">Total Used</h6>
+                <div class="stat-value text-danger" id="total-used">-</div>
             </div>
         </div>
-
-        <!-- Recent Activity -->
-        <div class="bg-white rounded-lg shadow p-6">
-            <h3 class="text-lg font-semibold mb-4">Recent Activity</h3>
-            <div id="recent-activity" class="space-y-4">
-                <p class="text-gray-500">Loading...</p>
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="stat-icon bg-success bg-opacity-10 text-success">
+                        <i class="bi bi-robot"></i>
+                    </div>
+                </div>
+                <h6 class="text-muted mb-2">AI Calls Made</h6>
+                <div class="stat-value text-success" id="total-calls">-</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+                        <i class="bi bi-star"></i>
+                    </div>
+                </div>
+                <h6 class="text-muted mb-2">Current Plan</h6>
+                <div class="stat-value text-warning" id="current-plan" style="font-size:1.5rem;">-</div>
             </div>
         </div>
     </div>
+    
+    <!-- Recent Activity -->
+    <div class="card">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">Recent Activity</h5>
+        </div>
+        <div class="card-body" id="recent-activity">
+            <p class="text-muted text-center py-5">Loading...</p>
+        </div>
+    </div>
+</div>
 
-    <script>
-        let userEmail = localStorage.getItem('userEmail') || 'demo@charvakit.com';
-        
-        async function loadDashboard() {
-            try {
-                document.getElementById('user-email').textContent = userEmail;
-                
-                const creditsResponse = await fetch(`/api/credits/${userEmail}`);
-                const creditsData = await creditsResponse.json();
-                
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    let userEmail = localStorage.getItem('userEmail') || 'demo@charvakit.com';
+    
+    async function loadDashboard() {
+        try {
+            document.getElementById('user-email').textContent = userEmail;
+            
+            const creditsResponse = await fetch(`/api/credits/${userEmail}`);
+            const creditsData = await creditsResponse.json();
+            
+            if (creditsData.status === 'success') {
                 document.getElementById('credits-remaining').textContent = creditsData.credits_remaining;
                 document.getElementById('total-used').textContent = creditsData.total_used;
                 document.getElementById('current-plan').textContent = creditsData.plan;
                 document.getElementById('member-since').textContent = new Date(creditsData.expires_at).toLocaleDateString();
-                
-                const usageResponse = await fetch(`/api/credits/usage/${userEmail}`);
-                const usageData = await usageResponse.json();
-                
-                document.getElementById('total-calls').textContent = usageData.count;
-                displayUsageChart(usageData.usage);
-                displayFeatureChart(usageData.usage);
-                displayRecentActivity(usageData.usage);
-                
-            } catch (error) {
-                console.error('Error loading dashboard:', error);
-            }
-        }
-        
-        function displayUsageChart(usage) {
-            const ctx = document.getElementById('usageChart').getContext('2d');
-            
-            const dateMap = {};
-            usage.forEach(u => {
-                const date = new Date(u.timestamp).toLocaleDateString();
-                if (!dateMap[date]) dateMap[date] = 0;
-                dateMap[date] += u.credits_used;
-            });
-            
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: Object.keys(dateMap),
-                    datasets: [{
-                        label: 'Credits Used',
-                        data: Object.values(dateMap),
-                        borderColor: 'rgb(59, 130, 246)',
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: { y: { beginAtZero: true } }
-                }
-            });
-        }
-        
-        function displayFeatureChart(usage) {
-            const ctx = document.getElementById('featureChart').getContext('2d');
-            
-            const featureMap = {};
-            usage.forEach(u => {
-                if (!featureMap[u.feature]) featureMap[u.feature] = 0;
-                featureMap[u.feature] += u.credits_used;
-            });
-            
-            new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: Object.keys(featureMap),
-                    datasets: [{
-                        data: Object.values(featureMap),
-                        backgroundColor: [
-                            'rgb(59, 130, 246)',
-                            'rgb(239, 68, 68)',
-                            'rgb(16, 185, 129)',
-                            'rgb(168, 85, 247)',
-                            'rgb(245, 158, 11)',
-                            'rgb(236, 72, 153)'
-                        ]
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
-                        }
-                    }
-                }
-            });
-        }
-        
-        function displayRecentActivity(usage) {
-            const container = document.getElementById('recent-activity');
-            container.innerHTML = '';
-            
-            if (usage.length === 0) {
-                container.innerHTML = '<p class="text-gray-500 text-center py-8">No activity yet. Start using AI tools!</p>';
-                return;
             }
             
-            usage.slice(-10).reverse().forEach(u => {
-                const activity = document.createElement('div');
-                activity.className = 'flex items-center justify-between py-3 border-b last:border-0';
-                activity.innerHTML = `
-                    <div class="flex items-center">
-                        <div class="bg-gray-100 p-2 rounded-full mr-3">
-                            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                            </svg>
-                        </div>
-                        <div>
-                            <p class="font-medium">${u.feature.replace(/_/g, ' ')}</p>
-                            <p class="text-sm text-gray-500">${new Date(u.timestamp).toLocaleString()}</p>
-                        </div>
-                    </div>
-                    <span class="text-red-600 font-semibold">-${u.credits_used} credits</span>
-                `;
-                container.appendChild(activity);
+            const usageResponse = await fetch(`/api/credits/usage/${userEmail}`);
+            const usageData = await usageResponse.json();
+            
+            document.getElementById('total-calls').textContent = usageData.count;
+            displayRecentActivity(usageData.usage);
+            
+        } catch (error) {
+            console.error('Error loading dashboard:', error);
+            document.getElementById('recent-activity').innerHTML = '<p class="text-danger text-center">Error loading data</p>';
+        }
+    }
+    
+    function displayRecentActivity(usage) {
+        const container = document.getElementById('recent-activity');
+        container.innerHTML = '';
+        
+        if (usage.length === 0) {
+            container.innerHTML = '<p class="text-muted text-center py-5">No activity yet. Start using AI tools!</p>';
+            return;
+        }
+        
+        usage.slice(-10).reverse().forEach(u => {
+            const activity = document.createElement('div');
+            activity.className = 'd-flex justify-content-between align-items-center py-3 border-bottom';
+            activity.innerHTML = `
+                <div>
+                    <p class="mb-1 fw-semibold">${u.feature.replace(/_/g, ' ')}</p>
+                    <small class="text-muted">${new Date(u.timestamp).toLocaleString()}</small>
+                </div>
+                <span class="text-danger fw-bold">-${u.credits_used} credits</span>
+            `;
+            container.appendChild(activity);
+        });
+    }
+    
+    async function claimDailyBonus() {
+        try {
+            const response = await fetch('/api/credits/daily-bonus', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: userEmail })
             });
+            const data = await response.json();
+            alert(data.message || 'Bonus claimed!');
+            loadDashboard();
+        } catch (error) {
+            console.error('Error claiming bonus:', error);
+            alert('Failed to claim bonus');
         }
-        
-        async function claimDailyBonus() {
-            try {
-                const response = await fetch('/api/credits/daily-bonus', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: userEmail })
-                });
-                const data = await response.json();
-                alert(data.message || 'Bonus claimed!');
-                loadDashboard();
-            } catch (error) {
-                console.error('Error claiming bonus:', error);
-                alert('Failed to claim bonus');
-            }
-        }
-        
-        document.addEventListener('DOMContentLoaded', loadDashboard);
-    </script>
+    }
+    
+    document.addEventListener('DOMContentLoaded', loadDashboard);
+</script>
 </body>
 </html>
