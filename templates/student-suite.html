@@ -93,14 +93,14 @@
 function subscribe(plan) {
     const email = prompt('Enter your email:');
     if (!email) return;
-    fetch('/api/student/subscribe', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({student_email:email,plan:plan})})
+    fetch('/api/student/subscribe', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,plan:plan})})
         .then(r=>r.json()).then(j=>alert(j.message));
 }
 
 async function assistAssignment(e) {
     e.preventDefault();
     const data = {
-        student_email: document.getElementById('assignEmail').value,
+        email: document.getElementById('assignEmail').value,
         subject: document.getElementById('assignSubject').value,
         topic: document.getElementById('assignTopic').value
     };
@@ -113,7 +113,7 @@ async function assistAssignment(e) {
 async function assistResearch(e) {
     e.preventDefault();
     const data = {
-        student_email: document.getElementById('researchEmail').value,
+        email: document.getElementById('researchEmail').value,
         field: document.getElementById('researchField').value,
         topic: document.getElementById('researchTopic').value
     };
