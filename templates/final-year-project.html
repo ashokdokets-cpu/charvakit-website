@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% block title %}Final Year Project Assistant - Charvak{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4 text-center">
+        <h1 class="display-4 fw-bold">🎓 Final Year Project Assistant</h1>
+        <p class="lead">AI-powered project support — topics, proposals, documentation, viva prep</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <!-- Plans -->
+    <div class="row mb-5">
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm text-center">
+                <div class="card-body">
+                    <h5>Free</h5>
+                    <h2>₹0</h2>
+                    <p class="text-muted small">5 topic suggestions<br>Basic outline</p>
+                    <button class="btn btn-outline-primary btn-sm" onclick="subscribeFYP('free')">Start Free</button>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm text-center bg-primary text-white">
+                <div class="card-body">
+                    <h5>Pro</h5>
+                    <h2>₹299</h2>
+                    <p class="small">AI personalized topics (20+)<br>AI proposal generation<br>Tech stack suggestion</p>
+                    <button class="btn btn-light btn-sm" onclick="subscribeFYP('pro')">Subscribe Pro</button>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm text-center">
+                <div class="card-body">
+                    <h5>Premium</h5>
+                    <h2>₹999</h2>
+                    <p class="text-muted small">Everything in Pro<br>AI documentation<br>Viva preparation<br>Code templates</p>
+                    <button class="btn btn-outline-primary btn-sm" onclick="subscribeFYP('premium')">Subscribe Premium</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Topic Suggestions -->
+        <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5>📝 Get Project Topics</h5>
+                    <form onsubmit="suggestTopics(event)">
+                        <input type="text" class="form-control mb-2" id="fypBranch" placeholder="Branch (e.g. Computer Science)" required>
+                        <input type="text" class="form-control mb-2" id="fypDomain" placeholder="Domain (e.g. AI/ML, Web Dev)" required>
+                        <input type="text" class="form-control mb-3" id="fypSkills" placeholder="Your Skills (comma-separated)">
+                        <button class="btn btn-primary w-100" type="submit">Suggest Topics</button>
+                    </form>
+                    <div class="mt-3" id="topicOutput"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Proposal Generator -->
+        <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5>📄 Generate Proposal</h5>
+                    <form onsubmit="generateProposal(event)">
+                        <input type="text" class="form-control mb-2" id="fypTopic" placeholder="Your Project Topic" required>
+                        <input type="text" class="form-control mb-2" id="fypName" placeholder="Your Name" required>
+                        <input type="text" class="form-control mb-3" id="fypCollege" placeholder="College Name">
+                        <button class="btn btn-primary w-100" type="submit">Generate Proposal</button>
+                    </form>
+                    <div class="mt-3" id="proposalOutput"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Documentation -->
+        <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5>📚 Generate Documentation</h5>
+                    <form onsubmit="generateDocs(event)">
+                        <input type="text" class="form-control mb-3" id="fypDocTopic" placeholder="Project Topic" required>
+                        <button class="btn btn-primary w-100" type="submit">Generate Documentation</button>
+                    </form>
+                    <div class="mt-3" id="docsOutput"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Viva Prep -->
+        <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5>🎤 Viva Preparation</h5>
+                    <form onsubmit="vivaPrep(event)">
+                        <input type="text" class="form-control mb-3" id="fypVivaTopic" placeholder="Project Topic" required>
+                        <button class="btn btn-primary w-100" type="submit">Get Viva Questions</button>
+                    </form>
+                    <div class="mt-3" id="vivaOutput"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function subscribeFYP(plan) {
+    const email = prompt('Enter your email:');
+    if (!email) return;
+    fetch('/api/fyp/subscribe', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,plan:plan})})
+        .then(r=>r.json()).then(j=>alert(j.message));
+}
+
+async function suggestTopics(e) {
+    e.preventDefault();
+    const data = {
+        branch: document.getElementById('fypBranch').value,
+        domain: document.getElementById('fypDomain').value,
+        skills: document.getElementById('fypSkills').value.split(',').map(s=>s.trim()).filter(Boolean)
+    };
+    const r = await fetch('/api/fyp/suggest-topics', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+    const j = await r.json();
+    document.getElementById('topicOutput').innerHTML = j.topics 
+        ? j.topics.map(t=>'<div class="p-2 border-bottom"><strong>'+t.title+'</strong><br><small>'+t.domain+' • '+t.difficulty+'</small></div>').join('')
+        : '<p class="text-muted">No topics found</p>';
+}
+
+async function generateProposal(e) {
+    e.preventDefault();
+    const data = {
+        topic: document.getElementById('fypTopic').value,
+        student_name: document.getElementById('fypName').value,
+        college: document.getElementById('fypCollege').value
+    };
+    const r = await fetch('/api/fyp/generate-proposal', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+    const j = await r.json();
+    const p = j.proposal || {};
+    document.getElementById('proposalOutput').innerHTML = '<div class="alert alert-success"><strong>Title:</strong> '+(p.title||data.topic)+'<br><strong>Abstract:</strong> '+(p.abstract||'')+'</div>';
+}
+
+async function generateDocs(e) {
+    e.preventDefault();
+    const topic = document.getElementById('fypDocTopic').value;
+    const r = await fetch('/api/fyp/generate-documentation', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic:topic})});
+    const j = await r.json();
+    const d = j.documentation || {};
+    document.getElementById('docsOutput').innerHTML = d.chapters 
+        ? d.chapters.map(c=>'<div class="p-2 border-bottom"><strong>Ch '+c.chapter+':</strong> '+c.title+'</div>').join('')
+        : '<p class="text-muted">Documentation generated</p>';
+}
+
+async function vivaPrep(e) {
+    e.preventDefault();
+    const topic = document.getElementById('fypVivaTopic').value;
+    const r = await fetch('/api/fyp/viva-questions', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic:topic})});
+    const j = await r.json();
+    document.getElementById('vivaOutput').innerHTML = j.questions 
+        ? j.questions.map((q,i)=>'<div class="p-2 border-bottom"><strong>Q'+(i+1)+':</strong> '+q+'</div>').join('')
+        : '<p class="text-muted">Questions generated</p>';
+}
+</script>
+{% endblock %}

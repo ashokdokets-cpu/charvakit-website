@@ -3921,6 +3921,10 @@ async def fyp_plans():
 async def fyp_stats():
     return final_year_project_engine.get_stats()
 
+@app.get("/final-year-project", response_class=HTMLResponse)
+async def fyp_page(request: Request):
+    return template_response("final-year-project.html", request, "Final Year Project Assistant - Charvak")
+
 # ============================================================
 # UTILITY ENDPOINTS
 # ============================================================
