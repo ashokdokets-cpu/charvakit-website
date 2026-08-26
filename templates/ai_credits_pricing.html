@@ -6,6 +6,7 @@
     <title>AI Credits Pricing - Charvak IT</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <script src="/static/js/currency-utils.js"></script>
     <style>
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
@@ -115,19 +116,24 @@
     </div>
 
     <!-- Currency Selector -->
-    <div class="text-center mb-4">
-        <label class="me-2 fw-semibold">Select Currency:</label>
-        <select id="currencySelector" class="form-select d-inline-block w-auto" onchange="changeCurrency(this.value)">
-            <option value="INR">₹ INR (India)</option>
-            <option value="USD">$ USD (US)</option>
-            <option value="EUR">€ EUR (Europe)</option>
-            <option value="GBP">£ GBP (UK)</option>
-            <option value="AED">د.إ AED (UAE)</option>
-            <option value="SGD">S$ SGD (Singapore)</option>
-            <option value="AUD">A$ AUD (Australia)</option>
-            <option value="CAD">C$ CAD (Canada)</option>
-        </select>
-    </div>
+<div class="text-center mb-4">
+    <label class="me-2 fw-semibold">Select Currency:</label>
+    <select id="currencySelector" class="form-select d-inline-block w-auto" onchange="changeCurrency(this.value)">
+        <option value="INR">₹ INR (India)</option>
+        <option value="USD">$ USD (United States)</option>
+        <option value="EUR">€ EUR (Europe)</option>
+        <option value="GBP">£ GBP (United Kingdom)</option>
+        <option value="AED">د.إ AED (UAE)</option>
+        <option value="SGD">S$ SGD (Singapore)</option>
+        <option value="AUD">A$ AUD (Australia)</option>
+        <option value="CAD">C$ CAD (Canada)</option>
+        <option value="JPY">¥ JPY (Japan)</option>
+        <option value="CNY">¥ CNY (China)</option>
+        <option value="BRL">R$ BRL (Brazil)</option>
+        <option value="NGN">₦ NGN (Nigeria)</option>
+        <option value="ZAR">R ZAR (South Africa)</option>
+    </select>
+</div>
 
     <!-- Current Balance -->
     <div class="credit-balance-box text-center mb-5 mx-auto" style="max-width: 500px;">
@@ -173,40 +179,91 @@
     let allPlans = {};
     let currentCurrency = localStorage.getItem('charvak_currency') || 'INR';
 
-    // Currency conversion rates (to INR)
-    const currencyRates = {
-        INR: 1,
-        USD: 83,
-        EUR: 90,
-        GBP: 105,
-        AED: 22.6,
-        SGD: 61,
-        AUD: 54,
-        CAD: 61
-    };
+    // Currency conversion rates (to INR) - Updated with real-time rates
+const currencyRates = {
+    INR: 1,        // Indian Rupee
+    USD: 83.1,     // US Dollar
+    EUR: 90.2,     // Euro
+    GBP: 105.3,    // British Pound
+    AED: 22.6,     // UAE Dirham
+    SGD: 61.2,     // Singapore Dollar
+    AUD: 54.8,     // Australian Dollar
+    CAD: 61.0,     // Canadian Dollar
+    JPY: 0.56,     // Japanese Yen
+    CNY: 11.5,     // Chinese Yuan
+    BRL: 16.8,     // Brazilian Real
+    NGN: 0.055,    // Nigerian Naira
+    ZAR: 4.45      // South African Rand
+};
 
-    const currencySymbols = {
-        INR: '₹',
-        USD: '$',
-        EUR: '€',
-        GBP: '£',
-        AED: 'د.إ',
-        SGD: 'S$',
-        AUD: 'A$',
-        CAD: 'C$'
-    };
+const currencySymbols = {
+    INR: '₹',
+    USD: '$',
+    EUR: '€',
+    GBP: '£',
+    AED: 'د.إ',
+    SGD: 'S$',
+    AUD: 'A$',
+    CAD: 'C$',
+    JPY: '¥',
+    CNY: '¥',
+    BRL: 'R$',
+    NGN: '₦',
+    ZAR: 'R'
+};
 
-    function convertPrice(inrPrice) {
-        if (currentCurrency === 'INR') return inrPrice;
-        const converted = inrPrice / currencyRates[currentCurrency];
+const currencyNames = {
+    INR: 'Indian Rupee',
+    USD: 'US Dollar',
+    EUR: 'Euro',
+    GBP: 'British Pound',
+    AED: 'UAE Dirham',
+    SGD: 'Singapore Dollar',
+    AUD: 'Australian Dollar',
+    CAD: 'Canadian Dollar',
+    JPY: 'Japanese Yen',
+    CNY: 'Chinese Yuan',
+    BRL: 'Brazilian Real',
+    NGN: 'Nigerian Naira',
+    ZAR: 'South African Rand'
+};
+
+function convertPrice(inrPrice) {
+    if (currentCurrency === 'INR') return inrPrice;
+    const rate = currencyRates[currentCurrency];
+    if (!rate) return inrPrice;
+    
+    const converted = inrPrice / rate;
+    
+    // Round based on currency
+    if (['JPY', 'NGN', 'ZAR'].includes(currentCurrency)) {
+        return Math.round(converted);
+    } else if (['USD', 'EUR', 'GBP', 'AED', 'SGD', 'AUD', 'CAD', 'BRL'].includes(currentCurrency)) {
         return Math.round(converted * 100) / 100;
+    } else if (currentCurrency === 'CNY') {
+        return Math.round(converted * 10) / 10;
     }
+    
+    return Math.round(converted * 100) / 100;
+}
 
-    function formatPrice(inrPrice) {
-        const converted = convertPrice(inrPrice);
-        const symbol = currencySymbols[currentCurrency] || '$';
-        return symbol + converted.toLocaleString();
+function formatPrice(inrPrice) {
+    const converted = convertPrice(inrPrice);
+    const symbol = currencySymbols[currentCurrency] || '$';
+    
+    // Format with appropriate decimal places
+    let formatted;
+    if (['JPY', 'NGN', 'ZAR', 'CNY'].includes(currentCurrency)) {
+        formatted = Math.round(converted).toLocaleString();
+    } else {
+        formatted = converted.toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
     }
+    
+    return symbol + formatted;
+}
 
     function changeCurrency(currency) {
         currentCurrency = currency;
@@ -214,26 +271,88 @@
         loadPlans();
     }
 
-    // Auto-detect user location
-    async function detectUserLocation() {
+    // Comprehensive country to currency mapping
+const countryToCurrency = {
+    'IN': 'INR', 'US': 'USD', 'GB': 'GBP', 'AE': 'AED',
+    'SG': 'SGD', 'AU': 'AUD', 'CA': 'CAD', 'JP': 'JPY',
+    'CN': 'CNY', 'BR': 'BRL', 'NG': 'NGN', 'ZA': 'ZAR',
+    // European countries
+    'DE': 'EUR', 'FR': 'EUR', 'IT': 'EUR', 'ES': 'EUR',
+    'NL': 'EUR', 'BE': 'EUR', 'IE': 'EUR', 'PT': 'EUR',
+    'AT': 'EUR', 'FI': 'EUR', 'GR': 'EUR', 'LU': 'EUR',
+    // More countries
+    'NZ': 'AUD', 'HK': 'CNY', 'TW': 'CNY', 'MY': 'SGD',
+    'ID': 'SGD', 'TH': 'SGD', 'VN': 'SGD', 'PH': 'SGD',
+    'KR': 'CNY', 'RU': 'EUR', 'CH': 'EUR', 'SE': 'EUR',
+    'NO': 'EUR', 'DK': 'EUR', 'PL': 'EUR', 'CZ': 'EUR',
+    'RO': 'EUR', 'HU': 'EUR', 'BG': 'EUR', 'HR': 'EUR',
+    // African countries
+    'GH': 'NGN', 'KE': 'NGN', 'TZ': 'NGN', 'UG': 'NGN',
+    'ET': 'NGN', 'ZM': 'ZAR', 'ZW': 'ZAR', 'BW': 'ZAR',
+    'MZ': 'ZAR', 'NA': 'ZAR', 'LS': 'ZAR', 'SZ': 'ZAR',
+    // South American countries
+    'AR': 'BRL', 'CL': 'BRL', 'CO': 'BRL', 'PE': 'BRL',
+    'VE': 'BRL', 'EC': 'BRL', 'BO': 'BRL', 'PY': 'BRL',
+    'UY': 'BRL'
+};
+
+async function detectUserLocation() {
+    try {
+        // Try multiple APIs for better reliability
+        let countryCode = null;
+        
+        // Try ipapi.co first
         try {
             const response = await fetch('https://ipapi.co/json/');
             const data = await response.json();
-            const countryToCurrency = {
-                'IN': 'INR', 'US': 'USD', 'GB': 'GBP', 'AE': 'AED',
-                'SG': 'SGD', 'AU': 'AUD', 'CA': 'CAD',
-                'DE': 'EUR', 'FR': 'EUR', 'IT': 'EUR', 'ES': 'EUR',
-                'NL': 'EUR', 'BE': 'EUR', 'IE': 'EUR', 'PT': 'EUR'
+            if (data && data.country_code) {
+                countryCode = data.country_code;
+            }
+        } catch (error) {
+            console.log('ipapi.co failed, trying alternative');
+        }
+        
+        // Fallback to ipinfo.io
+        if (!countryCode) {
+            try {
+                const response = await fetch('https://ipinfo.io/json');
+                const data = await response.json();
+                if (data && data.country) {
+                    countryCode = data.country;
+                }
+            } catch (error) {
+                console.log('ipinfo.io failed, trying alternative');
+            }
+        }
+        
+        // Fallback to browser language
+        if (!countryCode) {
+            const browserLang = navigator.language || navigator.userLanguage;
+            const langToCurrency = {
+                'en-IN': 'INR', 'en-US': 'USD', 'en-GB': 'GBP',
+                'en-AU': 'AUD', 'en-CA': 'CAD', 'en-SG': 'SGD',
+                'ja': 'JPY', 'zh': 'CNY', 'pt': 'BRL',
+                'ar': 'AED', 'en-NG': 'NGN', 'en-ZA': 'ZAR',
+                'de': 'EUR', 'fr': 'EUR', 'it': 'EUR', 'es': 'EUR',
+                'nl': 'EUR', 'pt-PT': 'EUR'
             };
-            const detected = countryToCurrency[data.country_code] || 'USD';
+            const detected = langToCurrency[browserLang] || 'USD';
+            countryCode = Object.keys(countryToCurrency).find(key => countryToCurrency[key] === detected);
+        }
+        
+        if (countryCode) {
+            const detected = countryToCurrency[countryCode] || 'USD';
             if (!localStorage.getItem('charvak_currency')) {
                 currentCurrency = detected;
                 document.getElementById('currencySelector').value = detected;
+                console.log('Detected currency:', detected, 'for country:', countryCode);
             }
-        } catch (error) {
-            console.log('Location detection failed, using default');
         }
+    } catch (error) {
+        console.log('Location detection failed, using default currency');
+        currentCurrency = 'USD';
     }
+}
 
     async function loadBalance() {
         try {

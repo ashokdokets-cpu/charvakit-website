@@ -6,6 +6,7 @@
     <title>Credit Dashboard - Charvak IT</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <script src="/static/js/currency-utils.js"></script>
     <style>
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
@@ -17,6 +18,7 @@
             padding: 20px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
             transition: transform 0.3s ease;
+            height: 100%;
         }
         .stat-card:hover {
             transform: translateY(-5px);
@@ -65,8 +67,8 @@
     <!-- User Info -->
     <div class="card mb-4">
         <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+                <div class="mb-3 mb-md-0">
                     <h5 class="card-title mb-0" id="user-email">demo@charvakit.com</h5>
                     <small class="text-muted">Member since: <span id="member-since">-</span></small>
                 </div>
@@ -77,14 +79,28 @@
         </div>
     </div>
     
+    <!-- Currency Display Card -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="text-muted mb-2">Current Currency</h6>
+                    <p class="mb-0 fw-semibold" id="display-currency">₹ INR (Indian Rupee)</p>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-2">Currency Status</h6>
+                    <p class="mb-0"><span class="badge bg-success">Active</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- Stats Cards -->
     <div class="row g-4 mb-4">
         <div class="col-md-3 col-sm-6">
             <div class="stat-card">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div class="stat-icon bg-primary bg-opacity-10 text-primary">
-                        <i class="bi bi-lightning-charge"></i>
-                    </div>
+                <div class="stat-icon bg-primary bg-opacity-10 text-primary mb-3">
+                    <i class="bi bi-lightning-charge"></i>
                 </div>
                 <h6 class="text-muted mb-2">Credits Remaining</h6>
                 <div class="stat-value text-primary" id="credits-remaining">-</div>
@@ -92,10 +108,8 @@
         </div>
         <div class="col-md-3 col-sm-6">
             <div class="stat-card">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div class="stat-icon bg-danger bg-opacity-10 text-danger">
-                        <i class="bi bi-graph-down"></i>
-                    </div>
+                <div class="stat-icon bg-danger bg-opacity-10 text-danger mb-3">
+                    <i class="bi bi-graph-down"></i>
                 </div>
                 <h6 class="text-muted mb-2">Total Used</h6>
                 <div class="stat-value text-danger" id="total-used">-</div>
@@ -103,10 +117,8 @@
         </div>
         <div class="col-md-3 col-sm-6">
             <div class="stat-card">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div class="stat-icon bg-success bg-opacity-10 text-success">
-                        <i class="bi bi-robot"></i>
-                    </div>
+                <div class="stat-icon bg-success bg-opacity-10 text-success mb-3">
+                    <i class="bi bi-robot"></i>
                 </div>
                 <h6 class="text-muted mb-2">AI Calls Made</h6>
                 <div class="stat-value text-success" id="total-calls">-</div>
@@ -114,17 +126,15 @@
         </div>
         <div class="col-md-3 col-sm-6">
             <div class="stat-card">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div class="stat-icon bg-warning bg-opacity-10 text-warning">
-                        <i class="bi bi-star"></i>
-                    </div>
+                <div class="stat-icon bg-warning bg-opacity-10 text-warning mb-3">
+                    <i class="bi bi-star"></i>
                 </div>
                 <h6 class="text-muted mb-2">Current Plan</h6>
                 <div class="stat-value text-warning" id="current-plan" style="font-size:1.5rem;">-</div>
             </div>
         </div>
     </div>
-    
+
     <!-- Recent Activity -->
     <div class="card">
         <div class="card-header bg-white">
@@ -181,7 +191,7 @@
             activity.className = 'd-flex justify-content-between align-items-center py-3 border-bottom';
             activity.innerHTML = `
                 <div>
-                    <p class="mb-1 fw-semibold">${u.feature.replace(/_/g, ' ')}</p>
+                    <p class="mb-1 fw-semibold text-capitalize">${u.feature.replace(/_/g, ' ')}</p>
                     <small class="text-muted">${new Date(u.timestamp).toLocaleString()}</small>
                 </div>
                 <span class="text-danger fw-bold">-${u.credits_used} credits</span>
@@ -206,7 +216,33 @@
         }
     }
     
-    document.addEventListener('DOMContentLoaded', loadDashboard);
+    // Currency display in dashboard
+    function updateCurrencyDisplay() {
+        const currency = localStorage.getItem('charvak_currency') || 'INR';
+        const currencyNames = {
+            INR: 'Indian Rupee', USD: 'US Dollar', EUR: 'Euro',
+            GBP: 'British Pound', AED: 'UAE Dirham', SGD: 'Singapore Dollar',
+            AUD: 'Australian Dollar', CAD: 'Canadian Dollar', JPY: 'Japanese Yen',
+            CNY: 'Chinese Yuan', BRL: 'Brazilian Real', NGN: 'Nigerian Naira',
+            ZAR: 'South African Rand'
+        };
+        const symbols = {
+            INR: '₹', USD: '$', EUR: '€', GBP: '£', AED: 'د.إ',
+            SGD: 'S$', AUD: 'A$', CAD: 'C$', JPY: '¥', CNY: '¥',
+            BRL: 'R$', NGN: '₦', ZAR: 'R'
+        };
+        
+        const displayElement = document.getElementById('display-currency');
+        if (displayElement) {
+            displayElement.textContent = `${symbols[currency]} ${currency} (${currencyNames[currency]})`;
+        }
+    }
+
+    // Initialize dashboard with currency display
+    document.addEventListener('DOMContentLoaded', () => {
+        updateCurrencyDisplay();
+        loadDashboard();
+    });
 </script>
 </body>
 </html>
