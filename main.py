@@ -3649,7 +3649,9 @@ async def ai_assessment_page(request: Request):
 @limiter.limit("10/minute")
 async def student_subscribe(request: Request):
     data = await request.json()
-    return student_suite_engine.subscribe(data)
+    email = data.get("email") or data.get("student_email")
+    plan = data.get("plan", "free")
+    return student_suite_engine.subscribe(email=email, plan=plan)
 
 @app.get("/api/student/plan/{email}")
 async def get_student_plan(email: str):
@@ -3659,13 +3661,19 @@ async def get_student_plan(email: str):
 @limiter.limit("20/minute")
 async def assist_assignment(request: Request):
     data = await request.json()
-    return student_suite_engine.assist_assignment(data)
+    email = data.get("email") or data.get("student_email")
+    subject = data.get("subject", "")
+    topic = data.get("topic", "")
+    return student_suite_engine.assist_assignment(email=email, subject=subject, topic=topic)
 
 @app.post("/api/student/research")
 @limiter.limit("20/minute")
 async def assist_research(request: Request):
     data = await request.json()
-    return student_suite_engine.assist_research(data)
+    email = data.get("email") or data.get("student_email")
+    field = data.get("field", "")
+    topic = data.get("topic", "")
+    return student_suite_engine.assist_research(email=email, field=field, topic=topic)
 
 @app.get("/api/student/stats")
 async def student_suite_stats():
