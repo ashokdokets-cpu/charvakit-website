@@ -314,7 +314,9 @@
         </div>
     </ul>
 </li>
-                    <li class="nav-item"><a class="nav-link" href="/careers">Careers</a></li>
+<li class="nav-item"><a class="nav-link" href="/careers">Careers</a></li>
+<li class="nav-item"><a class="nav-link" href="/ai-credits-pricing" style="color:#3ba591; font-weight:600;">🎯 AI Credits</a></li>
+<li class="nav-item"><a class="nav-link" href="/credit-dashboard" style="color:#3ba591;">📊 Dashboard</a></li>
 <li class="nav-item dropdown">
     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Resources</a>
     <ul class="dropdown-menu">
@@ -348,7 +350,17 @@
 <li class="nav-item"><a class="nav-link" href="/contact">Contact</a></li>
                 </ul>
                 
-                                            <!-- Quick Login -->
+<!-- AI Credits Quick Access -->
+<div class="d-flex align-items-center me-3">
+    <a href="/credit-dashboard" class="btn btn-sm btn-outline-success me-2" title="My Credit Dashboard">
+        <i class="bi bi-speedometer2 me-1"></i>
+        <span id="nav-credits-display">Credits</span>
+    </a>
+    <a href="/ai-credits-pricing" class="btn btn-sm btn-success" title="Buy AI Credits">
+        <i class="bi bi-lightning-charge me-1"></i> Buy
+    </a>
+</div>                                            
+<!-- Quick Login -->
             <div class="dropdown">
     <button class="btn btn-outline-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
         <i class="bi bi-person-circle me-1"></i>Login
@@ -404,6 +416,8 @@
                         <li class="mb-2"><a href="/careers" class="text-muted text-decoration-none">Careers</a></li>
                         <li class="mb-2"><a href="/contact" class="text-muted text-decoration-none">Contact</a></li>
                         <li class="mb-2"><a href="/career-engine" class="text-muted text-decoration-none">Career Engine</a></li>
+                        <li class="mb-2"><a href="/ai-credits-pricing" class="text-muted text-decoration-none">AI Credits</a></li>
+                        <li class="mb-2"><a href="/credit-dashboard" class="text-muted text-decoration-none">Credit Dashboard</a></li>
                         <li class="mb-2"><a href="/job-board" class="text-muted text-decoration-none">Job Board</a></li>
                     </ul>
                 </div>
@@ -640,10 +654,40 @@ function processToolPayment(amount, toolName, callback) {
 }
 </script>
 <!-- WhatsApp Support Widget -->
-<a href="https://wa.me/917997871701?text=Hi%20Charvak%20Team" target="_blank" 
-   style="position:fixed;bottom:80px;right:20px;background:#25D366;color:#fff;width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.3);text-decoration:none;" 
+<a href="https://wa.me/917997871701?text=Hi%20Charvak%20Team" target="_blank"
+   style="position:fixed;bottom:80px;right:20px;background:#25D366;color:#fff;width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.3);text-decoration:none;"
    title="Chat with us on WhatsApp">
     <i class="bi bi-whatsapp"></i>
 </a>
+
+<!-- AI Credits Navigation Script -->
+<script>
+async function loadNavCredits() {
+    const email = localStorage.getItem('userEmail') || 'demo@charvakit.com';
+    try {
+        const response = await fetch(`/api/credits/${email}`);
+        const data = await response.json();
+        if (data.status === 'success') {
+            const creditDisplay = document.getElementById('nav-credits-display');
+            if (creditDisplay) {
+                creditDisplay.textContent = `${data.credits_remaining} ⚡`;
+            }
+        }
+    } catch (error) {
+        console.error('Error loading credits:', error);
+        const creditDisplay = document.getElementById('nav-credits-display');
+        if (creditDisplay) {
+            creditDisplay.textContent = 'Credits';
+        }
+    }
+}
+
+// Load credits when page loads
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadNavCredits);
+} else {
+    loadNavCredits();
+}
+</script>
 </body>
 </html>
