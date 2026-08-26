@@ -17,6 +17,9 @@
     <link rel="icon" type="image/png" href="/static/images/logo.png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="manifest" href="/static/manifest.json">
+    <script src="/static/js/currency-utils.js"></script>
     
     <style>
                 /* Mobile — collapsible menu with scroll */
@@ -164,9 +167,7 @@
             }
         }
     </style>
-    <link rel="stylesheet" href="/static/css/style.css">
-    <link rel="manifest" href="/static/manifest.json">
-    
+        
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-HVHHD3KJ9G"></script>
     <script>
@@ -565,25 +566,30 @@ function changeCurrency(curr) {
 }
 
 function updateAllPrices(currency) {
+    // Use the global CharvakCurrency utility instead
+    if (typeof CharvakCurrency !== 'undefined') {
+        CharvakCurrency.setCurrency(currency);
+        return;
+    }
+    
+    // Fallback if utility not loaded
     const rates = {
-        INR: 1, USD: 0.012, EUR: 0.011, GBP: 0.0095, AED: 0.044,
-        SGD: 0.016, AUD: 0.018, CAD: 0.016, JPY: 1.75, CNY: 0.087,
-        BRL: 0.059, NGN: 18.5, ZAR: 0.22
-    };
-    const symbols = {
-        INR: '₹', USD: '$', EUR: '€', GBP: '£', AED: 'د.إ',
-        SGD: 'S$', AUD: 'A$', CAD: 'C$', JPY: '¥', CNY: '¥',
-        BRL: 'R$', NGN: '₦', ZAR: 'R'
+        INR: 1, USD: 83.1, EUR: 90.2, GBP: 105.3, AED: 22.6,
+        SGD: 61.2, AUD: 54.8, CAD: 61.0, JPY: 0.56, CNY: 11.5,
+        BRL: 16.8, NGN: 0.055, ZAR: 4.45
     };
     
-    // Update all elements with data-inr attribute
     document.querySelectorAll('[data-inr]').forEach(el => {
         const inrAmount = parseFloat(el.getAttribute('data-inr'));
         if (inrAmount && rates[currency]) {
-            const converted = Math.round(inrAmount * rates[currency]);
-            el.textContent = (symbols[currency] || '$') + converted.toLocaleString();
+            const converted = inrAmount / rates[currency];
+            const formatted = ['JPY', 'NGN', 'ZAR', 'CNY'].includes(currency) 
+                ? Math.round(converted).toLocaleString() 
+                : converted.toFixed(2);
+            el.textContent = (symbols[currency] || '$') + formatted;
         }
     });
+}
     
     // Show notification
     const symbol = symbols[currency] || '$';
