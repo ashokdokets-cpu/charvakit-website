@@ -136,31 +136,67 @@ function subscribePremium() {
         } else {
             alert('Failed to create payment order');
         }
+    })
+    .catch(error => {
+        console.error('Payment order error:', error);
+        alert('Payment gateway error. Please try again.');
     });
 }
 
 async function verifyAndActivate(email, paymentResponse) {
-    const verify = await fetch('/api/payment/verify', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-            method: 'razorpay',
-            payment_id: paymentResponse.razorpay_payment_id,
-            order_id: paymentResponse.razorpay_order_id,
-            signature: paymentResponse.razorpay_signature
-        })
-    });
-    
-    const verifyData = await verify.json();
-    if (verifyData.verified) {
-        const response = await fetch('/api/outreach/premium', {
+    try {
+        // Verify payment first
+        const verifyResponse = await fetch('/api/payment/verify', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({email: email, plan: 'premium'})
+            body: JSON.stringify({
+                method: 'razorpay',
+                payment_id: paymentResponse.razorpay_payment_id,
+                order_id: paymentResponse.razorpay_order_id,
+                signature: paymentResponse.razorpay_signature
+            })
         });
-        const data = await response.json();
-        alert(data.message || 'Premium activated!');
+        
+        const verifyData = await verifyResponse.json();
+        
+        if (verifyData.verified || verifyData.status === 'success') {
+            // Payment verified - now activate premium
+            const activateResponse = await fetch('/api/outreach/premium', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    email: email,
+                    plan: 'premium',
+                    payment_id: paymentResponse.razorpay_payment_id
+                })
+            });
+            
+            const activateData = await activateResponse.json();
+            
+            if (activateData.status === 'success') {
+                alert('✅ Outreach Premium activated successfully!');
+                localStorage.setItem('outreach_premium', 'true');
+                updatePremiumUI();
+            } else {
+                alert('❌ ' + (activateData.message || 'Failed to activate premium'));
+            }
+        } else {
+            alert('Payment verification failed. Please contact support.');
+        }
+    } catch (error) {
+        console.error('Verification error:', error);
+        alert('Payment verification failed. Please try again.');
     }
+}
+
+function updatePremiumUI() {
+    // Update button state
+    const premiumButtons = document.querySelectorAll('[onclick="subscribePremium()"]');
+    premiumButtons.forEach(button => {
+        button.textContent = '✅ Premium Active';
+        button.disabled = true;
+        button.className = 'btn btn-success';
+    });
 }
 </script>
 {% endblock %}
