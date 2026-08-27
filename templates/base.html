@@ -112,6 +112,28 @@
             min-width: 280px;
         }
     }
+/* Scrollable dropdowns for long menus */
+@media (min-width: 992px) {
+    .dropdown-menu {
+        max-height: 400px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+    /* Custom scrollbar */
+    .dropdown-menu::-webkit-scrollbar {
+        width: 5px;
+    }
+    .dropdown-menu::-webkit-scrollbar-track {
+        background: #16213e;
+    }
+    .dropdown-menu::-webkit-scrollbar-thumb {
+        background: #3ba591;
+        border-radius: 3px;
+    }
+    .dropdown-menu::-webkit-scrollbar-thumb:hover {
+        background: #2d8a7a;
+    }
+}
 </style>
         
     <!-- Google Analytics -->
@@ -248,7 +270,7 @@
                 
                 <li class="nav-item dropdown">
     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Resources</a>
-    <ul class="dropdown-menu" style="min-width:350px;">
+    <ul class="dropdown-menu" style="min-width:350px; max-height:400px; overflow-y:auto;">
         <li><strong class="dropdown-header text-white-50 px-3 py-2" style="font-size:11px; letter-spacing:1px;">📚 LEARNING & INFO</strong></li>
         <li><a class="dropdown-item" href="/blog">Blog</a></li>
         <li><a class="dropdown-item" href="/case-studies">Case Studies</a></li>
