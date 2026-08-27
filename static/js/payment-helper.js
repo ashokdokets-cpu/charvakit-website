@@ -26,7 +26,7 @@ function processCharvakPayment(email, amount, featureName, callback) {
     .then(orderData => {
         if (orderData.status === 'success' || orderData.order_id) {
             const options = {
-                key: orderData.key_id || window.charvak_razorpay_key,
+                key: orderData.key_id || orderData.key || window.charvak_razorpay_key || 'rzp_live_TSniXv6CyEnZ9B',
                 amount: amount * 100,
                 currency: 'INR',
                 name: 'Charvak IT Consulting',

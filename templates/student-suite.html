@@ -143,7 +143,7 @@ function initiateRazorpayPayment(email, plan, planDetails) {
         
         if (orderData.status === 'success' || orderData.order_id) {
             const options = {
-                key: orderData.key_id || window.charvak_razorpay_key || 'rzp_test_placeholder',
+                key: orderData.key_id || orderData.key || window.charvak_razorpay_key || 'rzp_live_TSniXv6CyEnZ9B' || 'rzp_test_placeholder',
                 amount: planDetails.price * 100,
                 currency: 'INR',
                 name: 'Charvak IT Consulting',
