@@ -54,7 +54,7 @@
     <!-- Dual CTA -->
     <div class="row g-4 mb-5">
         <div class="col-md-6"><div class="card p-4 bg-success text-white h-100"><h4>🎓 For Students</h4><p>FREE. Get real experience. Build your portfolio. Land your first job.</p><ul><li>Free Skill Assessment</li><li>Real AI/ML Company Projects</li><li>AI-Verified Portfolio</li><li>Placement Support</li></ul><a href="/skill-check" class="btn btn-light btn-lg mt-2">Start Free Skill Check</a></div></div>
-        <div class="col-md-6"><div class="card p-4 bg-primary text-white h-100"><h4>🏢 For Companies</h4><p>Get work done. Test-drive talent. Hire pre-verified candidates.</p><ul><li>Post Micro-Projects</li><li>AI-Reviewed Deliverables</li><li>Early Access to Vetted Talent</li><li>Hire as Intern or Full-Time</li></ul><a href="/post-micro-project" class="btn btn-light btn-lg mt-2">Post a Micro-Project</a></div></div>
+        <div class="col-md-6"><div class="card p-4 bg-primary text-white h-100"><h4>🏢 For Companies</h4><p>Get work done. Test-drive talent. Hire pre-verified candidates.</p><ul><li>Post Micro-Projects</li><li>AI-Reviewed Deliverables</li><li>Early Access to Vetted Talent</li><li>Hire as Intern or Full-Time</li></ul><a href="#" class="btn btn-light btn-lg mt-2" onclick="postCompanyProject(event)">Post a Micro-Project</a></div></div>
     </div>
 
     <!-- Why This Model Works -->
@@ -106,6 +106,17 @@ function loadDynamicProjects(){
         html += '</div>';
         container.innerHTML = html;
     }
+}
+
+function postCompanyProject(event) {
+    event.preventDefault();
+    const email = prompt('Enter your business email:');
+    if (!email) return;
+    
+    processCharvakPayment(email, 2000, 'Micro-Internship Project Posting', function(response) {
+        alert(String.fromCodePoint(0x2705) + ' Payment successful! Redirecting to project form...');
+        window.location.href = '/post-micro-project?payment_id=' + (response.razorpay_payment_id || response.payment_id || 'demo');
+    });
 }
 
 document.addEventListener('DOMContentLoaded', loadDynamicProjects);
