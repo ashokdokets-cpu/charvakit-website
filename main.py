@@ -86,6 +86,8 @@ from notification_engine import notification_engine
 from voice_to_web_engine import voice_to_web_engine
 from exam_prep_engine import exam_prep_engine
 from global_exams_engine import global_exams_engine
+from ai_question_generator import ai_question_generator
+from exam_analytics_engine import exam_analytics_engine
 
 
 
@@ -4170,6 +4172,40 @@ async def global_exam_categories():
 async def global_exam_by_category(category_id: str):
     """Get global exams by category."""
     return global_exams_engine.get_exams_by_category(category_id)
+
+@app.post("/api/exam/ai-questions")
+async def ai_questions(request: Request):
+    """Generate AI-powered unique questions."""
+    data = await request.json()
+    questions = ai_question_generator.generate_questions(
+        exam_id=data.get("exam_id"),
+        topic=data.get("topic"),
+        count=data.get("count", 10)
+    )
+    return {"status": "success", "questions": questions}
+
+@app.post("/api/exam/record-answer")
+async def record_answer(request: Request):
+    """Record user answer for analytics."""
+    data = await request.json()
+    return exam_analytics_engine.record_answer(
+        email=data.get("email"),
+        exam_id=data.get("exam_id"),
+        topic=data.get("topic"),
+        question_id=data.get("question_id"),
+        correct=data.get("correct", False),
+        time_taken=data.get("time_taken", 30)
+    )
+
+@app.get("/api/exam/analytics/{email}")
+async def get_analytics(email: str):
+    """Get user analytics with AI advice."""
+    return exam_analytics_engine.get_analytics(email)
+
+@app.get("/api/exam/improvement/{email}")
+async def get_improvement(email: str):
+    """Get improvement over time."""
+    return exam_analytics_engine.get_improvement(email)
 
 # ============================================================
 # UTILITY ENDPOINTS
