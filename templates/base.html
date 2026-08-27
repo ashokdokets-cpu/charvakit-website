@@ -115,10 +115,10 @@
 /* Scrollable dropdowns for long menus */
 @media (min-width: 992px) {
     .dropdown-menu {
-        max-height: 400px;
-        overflow-y: auto;
-        overflow-x: hidden;
-    }
+    max-height: 500px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
     /* Custom scrollbar */
     .dropdown-menu::-webkit-scrollbar {
         width: 5px;
@@ -270,8 +270,8 @@
                 
                 <li class="nav-item dropdown">
     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Resources</a>
-    <ul class="dropdown-menu" style="min-width:350px; max-height:400px; overflow-y:auto;">
-        <li><strong class="dropdown-header text-white-50 px-3 py-2" style="font-size:11px; letter-spacing:1px;">📚 LEARNING & INFO</strong></li>
+    <ul class="dropdown-menu" style="min-width:500px; max-height:400px; overflow-y:auto; columns:2; column-gap:10px;">
+        <li><strong class="dropdown-header text-white-50 px-3 py-2" style="font-size:11px; letter-spacing:1px;">📚 LEARNING</strong></li>
         <li><a class="dropdown-item" href="/blog">Blog</a></li>
         <li><a class="dropdown-item" href="/case-studies">Case Studies</a></li>
         <li><a class="dropdown-item" href="/testimonials">Testimonials</a></li>
@@ -279,26 +279,23 @@
         <li><a class="dropdown-item" href="/companies">Companies</a></li>
         <li><a class="dropdown-item" href="/how-it-works">How It Works</a></li>
         
-        <li><hr class="dropdown-divider"></li>
-        <li><strong class="dropdown-header text-white-50 px-3 py-2" style="font-size:11px; letter-spacing:1px;">🎓 EDUCATION & ASSESSMENT</strong></li>
+        <li><strong class="dropdown-header text-white-50 px-3 py-2" style="font-size:11px; letter-spacing:1px;">🎓 EDUCATION</strong></li>
         <li><a class="dropdown-item" href="/lms">LMS</a></li>
         <li><a class="dropdown-item" href="/ai-assessment">AI Assessment</a></li>
         <li><a class="dropdown-item" href="/university">University Portal</a></li>
         <li><a class="dropdown-item" href="/marketing-ai">Marketing AI</a></li>
         
-        <li><hr class="dropdown-divider"></li>
-        <li><strong class="dropdown-header text-white-50 px-3 py-2" style="font-size:11px; letter-spacing:1px;">🔧 TOOLS & UTILITIES</strong></li>
+        <li><strong class="dropdown-header text-white-50 px-3 py-2" style="font-size:11px; letter-spacing:1px;">🔧 TOOLS</strong></li>
         <li><a class="dropdown-item" href="/ats">ATS Integration</a></li>
         <li><a class="dropdown-item" href="/indian-language-ai">Indian Language AI</a></li>
         <li><a class="dropdown-item" href="/reports">Reports</a></li>
         <li><a class="dropdown-item" href="/payments">Payments</a></li>
         
-        <li><hr class="dropdown-divider"></li>
-        <li><strong class="dropdown-header text-white-50 px-3 py-2" style="font-size:11px; letter-spacing:1px;">👤 USER AREA</strong></li>
+        <li><strong class="dropdown-header text-white-50 px-3 py-2" style="font-size:11px; letter-spacing:1px;">👤 USER</strong></li>
         <li><a class="dropdown-item" href="/profile-network">Profile & Network</a></li>
         <li><a class="dropdown-item" href="/team-dashboard">Team Dashboard</a></li>
         
-        <li><hr class="dropdown-divider"></li>
+        <li><strong class="dropdown-header text-white-50 px-3 py-2" style="font-size:11px; letter-spacing:1px;">ABOUT</strong></li>
         <li><a class="dropdown-item" href="/about">About</a></li>
         <li><a class="dropdown-item" href="/team">Our Team</a></li>
         <li><a class="dropdown-item" href="/careers">Careers</a></li>
