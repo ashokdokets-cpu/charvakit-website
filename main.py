@@ -1924,7 +1924,7 @@ async def create_payment_order(request: Request):
         name = data.get("name", "Service")
         method = data.get("method", "razorpay")
         
-                if method == "razorpay":
+        if method == "razorpay":
             # Convert to paise (Razorpay uses smallest unit)
             amount_paise = int(amount * 100)
             receipt = f"rcpt_{datetime.now().strftime('%Y%m%d%H%M%S')}_{secrets.token_hex(4)}"
@@ -1933,7 +1933,7 @@ async def create_payment_order(request: Request):
                 receipt=receipt,
                 notes={"tool": name, "amount_inr": amount}
             )
-            # Add key to response
+            # ADD KEY TO RESPONSE
             result["key_id"] = os.getenv("RAZORPAY_KEY_ID", "rzp_live_TSniXv6CyEnZ9B")
             result["key"] = os.getenv("RAZORPAY_KEY_ID", "rzp_live_TSniXv6CyEnZ9B")
         elif method == "paypal":
