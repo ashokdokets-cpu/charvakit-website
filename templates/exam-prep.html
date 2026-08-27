@@ -1,9 +1,9 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 {% block title %}Global Exam Preparation Center - Charvak{% endblock %}
 {% block content %}
 <div class="page-hero bg-gradient-primary text-white py-5">
     <div class="container py-4 text-center">
-        <h1 class="display-4 fw-bold">🌍 Global Exam Preparation Center</h1>
+        <h1 class="display-4 fw-bold">ðŸŒ Global Exam Preparation Center</h1>
         <p class="lead">Practice 83+ competitive exams across 8 categories. AI-powered. Real-time analytics.</p>
         <div class="mt-3">
             <span class="badge bg-warning text-dark me-2">83+ Exams</span>
@@ -20,8 +20,8 @@
         <div class="col-md-4">
             <div class="card h-100 text-center border-0 shadow-sm">
                 <div class="card-body">
-                    <h5>🆓 Free</h5>
-                    <h2>₹0</h2>
+                    <h5>Free</h5>
+                    <h2><span data-inr="0">₹0</span></h2>
                     <p class="text-muted small">10 questions/day<br>1 mock test/week</p>
                     <button class="btn btn-outline-primary btn-sm" onclick="subscribeExam('free')">Start Free</button>
                 </div>
@@ -30,8 +30,8 @@
         <div class="col-md-4">
             <div class="card h-100 text-center border-primary bg-primary text-white shadow">
                 <div class="card-body">
-                    <h5>⭐ Student Pro</h5>
-                    <h2>₹99/mo</h2>
+                    <h5>Student Pro</h5>
+                    <h2><span data-inr="99">₹99</span>/mo</h2>
                     <p class="small">Unlimited practice<br>5 mock tests/week<br>Detailed analytics</p>
                     <button class="btn btn-light btn-sm" onclick="subscribeExam('pro')">Subscribe Pro</button>
                 </div>
@@ -40,8 +40,8 @@
         <div class="col-md-4">
             <div class="card h-100 text-center border-0 shadow-sm">
                 <div class="card-body">
-                    <h5>👑 Premium</h5>
-                    <h2>₹499/mo</h2>
+                    <h5>Premium</h5>
+                    <h2><span data-inr="499">₹499</span>/mo</h2>
                     <p class="text-muted small">AI-personalized<br>Unlimited mock tests<br>Interview prep + GD</p>
                     <button class="btn btn-outline-primary btn-sm" onclick="subscribeExam('premium')">Subscribe Premium</button>
                 </div>
@@ -83,7 +83,7 @@ function subscribeExam(plan) {
     if (plan === 'free') {
         localStorage.setItem('exam_plan', 'free');
         localStorage.setItem('userEmail', email);
-        alert('✅ Free plan activated!');
+        alert('âœ… Free plan activated!');
         loadCategories();
         return;
     }
@@ -97,7 +97,7 @@ function subscribeExam(plan) {
     processCharvakPayment(email, selected.price, 'Exam Prep ' + selected.name, function(response) {
         localStorage.setItem('exam_plan', plan);
         localStorage.setItem('userEmail', email);
-        alert('✅ ' + selected.name + ' activated!');
+        alert('âœ… ' + selected.name + ' activated!');
         loadCategories();
     });
 }
@@ -200,7 +200,7 @@ async function startPractice(examId) {
 function displayQuestions(questions, examId, topic) {
     const container = document.getElementById('practiceArea');
     container.innerHTML = `
-        <h5>📝 Practice: ${topic}</h5>
+        <h5>ðŸ“ Practice: ${topic}</h5>
         <div class="list-group">
             ${questions.map((q, i) => `
                 <div class="list-group-item">
@@ -229,9 +229,9 @@ function checkAnswer(questionIndex, correctAnswer) {
     }
     
     if (parseInt(selected.value) === correctAnswer) {
-        answerSpan.innerHTML = '<span class="text-success">✅ Correct!</span>';
+        answerSpan.innerHTML = '<span class="text-success">âœ… Correct!</span>';
     } else {
-        answerSpan.innerHTML = '<span class="text-danger">❌ Incorrect</span>';
+        answerSpan.innerHTML = '<span class="text-danger">âŒ Incorrect</span>';
     }
 }
 
@@ -242,7 +242,7 @@ function submitPractice(examId, topic, totalQuestions) {
     progress[key] = (progress[key] || 0) + totalQuestions;
     localStorage.setItem('exam_progress', JSON.stringify(progress));
     
-    alert('✅ Practice submitted! Progress saved.');
+    alert('âœ… Practice submitted! Progress saved.');
     loadProgress();
 }
 
@@ -264,7 +264,7 @@ async function startMockTest(examId) {
         container.innerHTML = `
             <div class="card shadow-sm">
                 <div class="card-body text-center">
-                    <h5>⏱️ Mock Test Started!</h5>
+                    <h5>â±ï¸ Mock Test Started!</h5>
                     <p>Test ID: ${data.test_id}</p>
                     <p>Exam: ${data.exam_id}</p>
                     <p>Started: ${new Date(data.started_at).toLocaleString()}</p>
@@ -291,7 +291,7 @@ function loadProgress() {
     }
     
     container.innerHTML = `
-        <h5>📊 Your Progress</h5>
+        <h5>ðŸ“Š Your Progress</h5>
         <div class="table-responsive">
             <table class="table table-bordered">
                 <thead><tr><th>Exam/Topic</th><th>Questions Practiced</th></tr></thead>
