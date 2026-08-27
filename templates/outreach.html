@@ -104,8 +104,63 @@ async function autoTrack(e) {
 function subscribePremium() {
     const email = prompt('Enter your email:');
     if (!email) return;
-    fetch('/api/outreach/premium', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,plan:'premium'})})
-        .then(r=>r.json()).then(j=>alert(j.message));
+    
+    // Trigger payment first
+    fetch('/api/payment/create-order', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            amount: 299,
+            name: 'Outreach Premium',
+            method: 'razorpay'
+        })
+    })
+    .then(res => res.json())
+    .then(orderData => {
+        if (orderData.status === 'success' || orderData.order_id) {
+            const options = {
+                key: orderData.key_id || window.charvak_razorpay_key,
+                amount: 299 * 100,
+                currency: 'INR',
+                name: 'Charvak IT',
+                description: 'Outreach Premium Subscription',
+                order_id: orderData.order_id,
+                handler: function(response) {
+                    verifyAndActivate(email, response);
+                },
+                prefill: {email: email},
+                theme: {color: '#3ba591'}
+            };
+            const rzp = new Razorpay(options);
+            rzp.open();
+        } else {
+            alert('Failed to create payment order');
+        }
+    });
+}
+
+async function verifyAndActivate(email, paymentResponse) {
+    const verify = await fetch('/api/payment/verify', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            method: 'razorpay',
+            payment_id: paymentResponse.razorpay_payment_id,
+            order_id: paymentResponse.razorpay_order_id,
+            signature: paymentResponse.razorpay_signature
+        })
+    });
+    
+    const verifyData = await verify.json();
+    if (verifyData.verified) {
+        const response = await fetch('/api/outreach/premium', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({email: email, plan: 'premium'})
+        });
+        const data = await response.json();
+        alert(data.message || 'Premium activated!');
+    }
 }
 </script>
 {% endblock %}

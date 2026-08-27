@@ -334,27 +334,81 @@
     }
 
     async function processSubscription() {
-        try {
-            const response = await fetch('/api/credits/purchase', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: userEmail, plan: selectedPlan })
-            });
-            
-            const data = await response.json();
-            if (data.status === 'success') {
-                alert(`✅ ${data.message}`);
-                bootstrap.Modal.getInstance(document.getElementById('payment-modal')).hide();
-                loadBalance();
-            } else {
-                alert('❌ ' + data.message);
-            }
-        } catch (error) {
-            console.error('Subscription error:', error);
-            alert('Payment failed. Please try again.');
-        }
+    const plan = allPlans[selectedPlan];
+    
+    if (plan.price === 0) {
+        // Free plan - direct activation
+        activateFreePlan();
+        return;
     }
-
+    
+    // Paid plan - trigger payment first
+    try {
+        const orderResponse = await fetch('/api/payment/create-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                amount: plan.price,
+                name: `${plan.name} Credits`,
+                method: 'razorpay'
+            })
+        });
+        
+        const orderData = await orderResponse.json();
+        
+        if (orderData.status === 'success' || orderData.order_id) {
+            const options = {
+                key: orderData.key_id || window.charvak_razorpay_key,
+                amount: plan.price * 100,
+                currency: 'INR',
+                name: 'Charvak IT',
+                description: `${plan.name} - ${plan.credits} credits`,
+                order_id: orderData.order_id,
+                handler: async function(response) {
+                    // Verify payment
+                    const verifyResponse = await fetch('/api/payment/verify', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            method: 'razorpay',
+                            payment_id: response.razorpay_payment_id,
+                            order_id: response.razorpay_order_id,
+                            signature: response.razorpay_signature
+                        })
+                    });
+                    
+                    const verifyData = await verifyResponse.json();
+                    
+                    if (verifyData.verified) {
+                        // Now purchase credits
+                        const purchaseResponse = await fetch('/api/credits/purchase', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ 
+                                email: userEmail, 
+                                plan: selectedPlan,
+                                payment_id: response.razorpay_payment_id
+                            })
+                        });
+                        
+                        const data = await purchaseResponse.json();
+                        alert(data.message || 'Credits purchased!');
+                        closePaymentModal();
+                        loadBalance();
+                    }
+                },
+                prefill: {email: userEmail},
+                theme: {color: '#3ba591'}
+            };
+            
+            const rzp = new Razorpay(options);
+            rzp.open();
+        }
+    } catch (error) {
+        console.error('Payment error:', error);
+        alert('Payment failed. Please try again.');
+    }
+}
     async function activateFreePlan() {
         try {
             const response = await fetch('/api/credits/purchase', {

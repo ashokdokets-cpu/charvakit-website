@@ -110,8 +110,80 @@
 function subscribeFYP(plan) {
     const email = prompt('Enter your email:');
     if (!email) return;
-    fetch('/api/fyp/subscribe', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,plan:plan})})
-        .then(r=>r.json()).then(j=>alert(j.message));
+    
+    const planPrices = {
+        'free': {name: 'Free', price: 0},
+        'pro': {name: 'Pro', price: 299},
+        'premium': {name: 'Premium', price: 999}
+    };
+    
+    const selectedPlan = planPrices[plan];
+    if (!selectedPlan) return;
+    
+    if (selectedPlan.price === 0) {
+        // Free plan - direct activation
+        fetch('/api/fyp/subscribe', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({email: email, plan: plan})
+        }).then(r=>r.json()).then(j=>alert(j.message));
+        return;
+    }
+    
+    // Paid plan - trigger payment
+    fetch('/api/payment/create-order', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            amount: selectedPlan.price,
+            name: `FYP ${selectedPlan.name}`,
+            method: 'razorpay'
+        })
+    })
+    .then(res => res.json())
+    .then(orderData => {
+        if (orderData.status === 'success' || orderData.order_id) {
+            const options = {
+                key: orderData.key_id || window.charvak_razorpay_key,
+                amount: selectedPlan.price * 100,
+                currency: 'INR',
+                name: 'Charvak IT',
+                description: `FYP ${selectedPlan.name} Plan`,
+                order_id: orderData.order_id,
+                handler: function(response) {
+                    verifyAndActivateFYP(email, plan, response);
+                },
+                prefill: {email: email},
+                theme: {color: '#3ba591'}
+            };
+            const rzp = new Razorpay(options);
+            rzp.open();
+        }
+    });
+}
+
+async function verifyAndActivateFYP(email, plan, paymentResponse) {
+    const verify = await fetch('/api/payment/verify', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            method: 'razorpay',
+            payment_id: paymentResponse.razorpay_payment_id,
+            order_id: paymentResponse.razorpay_order_id,
+            signature: paymentResponse.razorpay_signature
+        })
+    });
+    
+    const verifyData = await verify.json();
+    if (verifyData.verified) {
+        const response = await fetch('/api/fyp/subscribe', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({email: email, plan: plan, payment_id: paymentResponse.razorpay_payment_id})
+        });
+        const data = await response.json();
+        alert(data.message || 'FYP plan activated!');
+    }
 }
 
 async function suggestTopics(e) {
