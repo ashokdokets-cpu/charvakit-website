@@ -42,15 +42,74 @@
 </div>
 
 <script>
-async function getProWireframe() {
-    const name = prompt('Enter your name:');
-    if(!name) return;
+function getProWireframe() {
     const email = prompt('Enter your email:');
-    if(!email) return;
-    try {
-        await fetch('/api/contact', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,email:email,phone:'',subject:'Neural Wireframe Pro',message:'Pro user: '+name+'\nEmail: '+email})});
-    } catch(err) {}
-    alert('Welcome to Pro, '+name+'! We will contact you at '+email+'.');
+    if (!email) return;
+    
+    const amountUSD = 250; // $250 per site launch
+    const amountINR = amountUSD * 83; // ≈ ₹20,750
+    
+    if (!confirm('Pro Launch - $250 per site\n\n✅ Custom domain\n✅ No branding\n✅ Priority support\n\nProceed to payment?')) {
+        return;
+    }
+    
+    // Trigger Razorpay payment
+    fetch('/api/payment/create-order', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            amount: amountINR,
+            name: 'Neural Wireframe Pro Launch',
+            method: 'razorpay'
+        })
+    })
+    .then(res => res.json())
+    .then(orderData => {
+        if (orderData.status === 'success' || orderData.order_id) {
+            const options = {
+                key: orderData.key_id || window.charvak_razorpay_key,
+                amount: amountINR * 100,
+                currency: 'INR',
+                name: 'Charvak IT Consulting',
+                description: 'Neural Wireframe Pro Launch',
+                order_id: orderData.order_id,
+                handler: function(response) {
+                    fetch('/api/payment/verify', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            method: 'razorpay',
+                            payment_id: response.razorpay_payment_id,
+                            order_id: response.razorpay_order_id,
+                            signature: response.razorpay_signature
+                        })
+                    })
+                    .then(r => r.json())
+                    .then(v => {
+                        if (v.verified) {
+                            alert('✅ Payment successful! Pro Launch activated!');
+                            localStorage.setItem('neural_pro_launch', 'active');
+                        } else {
+                            alert('Payment verification failed');
+                        }
+                    });
+                },
+                prefill: {email: email},
+                theme: {color: '#3ba591'},
+                modal: {
+                    ondismiss: function() {
+                        alert('Payment cancelled');
+                    }
+                }
+            };
+            const rzp = new Razorpay(options);
+            rzp.open();
+        }
+    })
+    .catch(error => {
+        console.error('Payment error:', error);
+        alert('Payment gateway error. Please try again.');
+    });
 }
 </script>
 <script>
