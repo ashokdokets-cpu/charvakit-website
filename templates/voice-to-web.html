@@ -112,4 +112,125 @@ async function submitBeta(e) {
     }
 }
 </script>
+<script>
+// Voice-to-Web - Complete Integration
+
+function subscribeV2W(plan) {
+    const email = prompt('Enter your email:');
+    if (!email) return;
+    
+    if (plan === 'free') {
+        // Free plan - direct activation
+        fetch('/api/ai/voice-to-web', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({email: email, plan: 'free'})
+        })
+        .then(r => r.json())
+        .then(j => alert(j.message || 'Free plan activated!'));
+        return;
+    }
+    
+    if (plan === 'pro') {
+        const amount = 499; // ₹499/month
+        
+        if (!confirm('Subscribe to Voice-to-Web Pro?\n\n₹499/month\n\nCustom domain\nNo branding\nAI SEO\nOn-demand updates\nPriority support\n\nProceed to payment?')) {
+            return;
+        }
+        
+        // Trigger Razorpay payment
+        fetch('/api/payment/create-order', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                amount: amount,
+                name: 'Voice-to-Web Pro',
+                method: 'razorpay'
+            })
+        })
+        .then(res => res.json())
+        .then(orderData => {
+            if (orderData.status === 'success' || orderData.order_id) {
+                const options = {
+                    key: orderData.key_id || window.charvak_razorpay_key,
+                    amount: amount * 100,
+                    currency: 'INR',
+                    name: 'Charvak IT Consulting',
+                    description: 'Voice-to-Web Pro Subscription',
+                    order_id: orderData.order_id,
+                    handler: function(response) {
+                        fetch('/api/payment/verify', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({
+                                method: 'razorpay',
+                                payment_id: response.razorpay_payment_id,
+                                order_id: response.razorpay_order_id,
+                                signature: response.razorpay_signature
+                            })
+                        })
+                        .then(r => r.json())
+                        .then(v => {
+                            if (v.verified) {
+                                fetch('/api/ai/voice-to-web', {
+                                    method: 'POST',
+                                    headers: {'Content-Type': 'application/json'},
+                                    body: JSON.stringify({
+                                        email: email,
+                                        plan: 'pro',
+                                        payment_id: response.razorpay_payment_id
+                                    })
+                                })
+                                .then(r => r.json())
+                                .then(j => {
+                                    alert('✅ ' + (j.message || 'Pro plan activated!'));
+                                    localStorage.setItem('v2w_plan', 'pro');
+                                });
+                            }
+                        });
+                    },
+                    prefill: {email: email},
+                    theme: {color: '#3ba591'}
+                };
+                const rzp = new Razorpay(options);
+                rzp.open();
+            }
+        });
+    }
+}
+
+// Beta signup form handler
+document.addEventListener('DOMContentLoaded', function() {
+    const betaForm = document.querySelector('form');
+    if (betaForm) {
+        betaForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const name = document.querySelector('input[placeholder*="Name"]').value;
+            const email = document.querySelector('input[type="email"]').value;
+            const whatsapp = document.querySelector('input[placeholder*="WhatsApp"]').value;
+            
+            if (!name || !email || !whatsapp) {
+                alert('Please fill all fields');
+                return;
+            }
+            
+            fetch('/api/contact', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    name: name,
+                    email: email,
+                    message: 'Voice-to-Web Beta Signup - WhatsApp: ' + whatsapp
+                })
+            })
+            .then(r => r.json())
+            .then(j => {
+                alert('✅ Thank you ' + name + '! You are now in the beta program. We will contact you shortly.');
+                betaForm.reset();
+            });
+        });
+    }
+});
+</script>
 {% endblock %}
