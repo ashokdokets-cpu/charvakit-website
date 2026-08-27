@@ -335,21 +335,20 @@
 
     async function processSubscription() {
     const plan = allPlans[selectedPlan];
+    if (!plan) return;
     
     if (plan.price === 0) {
-        // Free plan - direct activation
         activateFreePlan();
         return;
     }
     
-    // Paid plan - trigger payment first
     try {
         const orderResponse = await fetch('/api/payment/create-order', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 amount: plan.price,
-                name: `${plan.name} Credits`,
+                name: plan.name + ' Credits',
                 method: 'razorpay'
             })
         });
@@ -362,10 +361,9 @@
                 amount: plan.price * 100,
                 currency: 'INR',
                 name: 'Charvak IT',
-                description: `${plan.name} - ${plan.credits} credits`,
+                description: plan.name + ' - ' + plan.credits + ' credits',
                 order_id: orderData.order_id,
                 handler: async function(response) {
-                    // Verify payment
                     const verifyResponse = await fetch('/api/payment/verify', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -380,7 +378,6 @@
                     const verifyData = await verifyResponse.json();
                     
                     if (verifyData.verified) {
-                        // Now purchase credits
                         const purchaseResponse = await fetch('/api/credits/purchase', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
