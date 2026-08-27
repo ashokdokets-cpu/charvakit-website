@@ -107,9 +107,18 @@ function subscribeExam(plan) {
 // ============================================================
 async function loadCategories() {
     try {
-        const response = await fetch('/api/exam/categories');
-        const data = await response.json();
-        displayCategories(data.categories);
+        // Load Indian exams
+        const indianResponse = await fetch('/api/exam/categories');
+        const indianData = await indianResponse.json();
+        
+        // Load Global exams
+        const globalResponse = await fetch('/api/global-exam/categories');
+        const globalData = await globalResponse.json();
+        
+        // Combine both
+        const allCategories = [...indianData.categories, ...globalData.categories];
+        
+        displayCategories(allCategories);
     } catch (error) {
         console.error('Error loading categories:', error);
     }
@@ -140,7 +149,16 @@ function displayCategories(categories) {
 // ============================================================
 async function loadExams(categoryId) {
     try {
-        const response = await fetch(`/api/exam/category/${categoryId}`);
+        let response;
+        // Check if it's a global category
+        const globalCategoryIds = ['higher_education', 'english_proficiency', 'finance', 'it_cloud', 'project_management', 'medical_licensing'];
+        
+        if (globalCategoryIds.includes(categoryId)) {
+            response = await fetch(`/api/global-exam/category/${categoryId}`);
+        } else {
+            response = await fetch(`/api/exam/category/${categoryId}`);
+        }
+        
         const data = await response.json();
         displayExams(data);
     } catch (error) {
