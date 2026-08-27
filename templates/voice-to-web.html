@@ -115,88 +115,121 @@ async function submitBeta(e) {
 <script>
 // Voice-to-Web - Complete Integration
 
-function subscribeV2W(plan) {
+function startFree(event) {
+    event.preventDefault();
     const email = prompt('Enter your email:');
     if (!email) return;
     
-    if (plan === 'free') {
-        // Free plan - direct activation
-        fetch('/api/ai/voice-to-web', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({email: email, plan: 'free'})
-        })
-        .then(r => r.json())
-        .then(j => alert(j.message || 'Free plan activated!'));
+    // Free plan - direct activation
+    fetch('/api/ai/voice-to-web', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({email: email, plan: 'free'})
+    })
+    .then(r => r.json())
+    .then(j => alert(j.message || 'Free plan activated!'));
+}
+
+function getPro(event) {
+    event.preventDefault();
+    const email = prompt('Enter your email:');
+    if (!email) return;
+    
+    const amount = 499;
+    
+    if (!confirm('Subscribe to Voice-to-Web Pro?\n\n₹499/month\n\nCustom domain\nNo branding\nAI SEO\nOn-demand updates\nPriority support\n\nProceed to payment?')) {
         return;
     }
     
-    if (plan === 'pro') {
-        const amount = 499; // ₹499/month
-        
-        if (!confirm('Subscribe to Voice-to-Web Pro?\n\n₹499/month\n\nCustom domain\nNo branding\nAI SEO\nOn-demand updates\nPriority support\n\nProceed to payment?')) {
-            return;
-        }
-        
-        // Trigger Razorpay payment
-        fetch('/api/payment/create-order', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                amount: amount,
-                name: 'Voice-to-Web Pro',
-                method: 'razorpay'
-            })
-        })
+    // Fetch Razorpay key first
+    fetch('/api/payment/status')
         .then(res => res.json())
-        .then(orderData => {
-            if (orderData.status === 'success' || orderData.order_id) {
-                const options = {
-                    key: orderData.key_id || window.charvak_razorpay_key,
-                    amount: amount * 100,
-                    currency: 'INR',
-                    name: 'Charvak IT Consulting',
-                    description: 'Voice-to-Web Pro Subscription',
-                    order_id: orderData.order_id,
-                    handler: function(response) {
-                        fetch('/api/payment/verify', {
-                            method: 'POST',
-                            headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify({
-                                method: 'razorpay',
-                                payment_id: response.razorpay_payment_id,
-                                order_id: response.razorpay_order_id,
-                                signature: response.razorpay_signature
-                            })
-                        })
-                        .then(r => r.json())
-                        .then(v => {
-                            if (v.verified) {
-                                fetch('/api/ai/voice-to-web', {
-                                    method: 'POST',
-                                    headers: {'Content-Type': 'application/json'},
-                                    body: JSON.stringify({
-                                        email: email,
-                                        plan: 'pro',
-                                        payment_id: response.razorpay_payment_id
-                                    })
-                                })
-                                .then(r => r.json())
-                                .then(j => {
-                                    alert('✅ ' + (j.message || 'Pro plan activated!'));
-                                    localStorage.setItem('v2w_plan', 'pro');
-                                });
-                            }
-                        });
-                    },
-                    prefill: {email: email},
-                    theme: {color: '#3ba591'}
-                };
-                const rzp = new Razorpay(options);
-                rzp.open();
+        .then(status => {
+            const razorpayKey = status.razorpay_key_id || window.charvak_razorpay_key;
+            
+            if (!razorpayKey) {
+                alert('Payment gateway not configured. Please try again later.');
+                return;
             }
+            
+            // Create order
+            fetch('/api/payment/create-order', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    amount: amount,
+                    name: 'Voice-to-Web Pro',
+                    method: 'razorpay'
+                })
+            })
+            .then(res => res.json())
+            .then(orderData => {
+                console.log('Order created:', orderData);
+                
+                if (orderData.status === 'success' || orderData.order_id) {
+                    const options = {
+                        key: razorpayKey,
+                        amount: amount * 100,
+                        currency: 'INR',
+                        name: 'Charvak IT Consulting',
+                        description: 'Voice-to-Web Pro Subscription',
+                        order_id: orderData.order_id,
+                        handler: function(response) {
+                            console.log('Payment success:', response);
+                            
+                            // Verify payment
+                            fetch('/api/payment/verify', {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify({
+                                    method: 'razorpay',
+                                    payment_id: response.razorpay_payment_id,
+                                    order_id: response.razorpay_order_id,
+                                    signature: response.razorpay_signature
+                                })
+                            })
+                            .then(r => r.json())
+                            .then(v => {
+                                if (v.verified) {
+                                    // Activate Pro
+                                    fetch('/api/ai/voice-to-web', {
+                                        method: 'POST',
+                                        headers: {'Content-Type': 'application/json'},
+                                        body: JSON.stringify({
+                                            email: email,
+                                            plan: 'pro',
+                                            payment_id: response.razorpay_payment_id
+                                        })
+                                    })
+                                    .then(r => r.json())
+                                    .then(j => {
+                                        alert('✅ Pro plan activated!');
+                                        localStorage.setItem('v2w_plan', 'pro');
+                                    });
+                                }
+                            });
+                        },
+                        prefill: {email: email},
+                        theme: {color: '#3ba591'},
+                        modal: {
+                            ondismiss: function() {
+                                alert('Payment cancelled');
+                            }
+                        }
+                    };
+                    
+                    console.log('Opening Razorpay...');
+                    const rzp = new Razorpay(options);
+                    rzp.open();
+                } else {
+                    alert('Failed to create order: ' + (orderData.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Order error:', error);
+                alert('Payment gateway error. Please try again.');
+            });
         });
-    }
 }
 
 // Beta signup form handler
@@ -206,11 +239,11 @@ document.addEventListener('DOMContentLoaded', function() {
         betaForm.addEventListener('submit', function(e) {
             e.preventDefault();
             
-            const name = document.querySelector('input[placeholder*="Name"]').value;
-            const email = document.querySelector('input[type="email"]').value;
-            const whatsapp = document.querySelector('input[placeholder*="WhatsApp"]').value;
+            const nameInput = document.querySelector('input[placeholder*="Name"]');
+            const emailInput = document.querySelector('input[type="email"]');
+            const whatsappInput = document.querySelector('input[placeholder*="WhatsApp"]');
             
-            if (!name || !email || !whatsapp) {
+            if (!nameInput || !emailInput || !whatsappInput) {
                 alert('Please fill all fields');
                 return;
             }
@@ -219,14 +252,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
-                    name: name,
-                    email: email,
-                    message: 'Voice-to-Web Beta Signup - WhatsApp: ' + whatsapp
+                    name: nameInput.value,
+                    email: emailInput.value,
+                    message: 'Voice-to-Web Beta Signup - WhatsApp: ' + whatsappInput.value
                 })
             })
             .then(r => r.json())
             .then(j => {
-                alert('✅ Thank you ' + name + '! You are now in the beta program. We will contact you shortly.');
+                alert('✅ Thank you! You are in the beta program!');
                 betaForm.reset();
             });
         });
