@@ -21,6 +21,7 @@
     <link rel="manifest" href="/static/manifest.json">
     <script src="/static/js/currency-utils.js"></script>
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script src="https://www.paypal.com/sdk/js?client-id=Aaj9jDnwPl93PWiV_sZR5LuHpOmmDCGTPJCCasN7FR7dDJGUrGLA14p5zUok1R61Zy-JgJdmq4GhIeoL&currency=USD"></script>
     <script src="/static/js/payment-helper.js"></script>
     
     <style>
@@ -708,49 +709,171 @@ fetch('/api/payment/status')
 function processToolPayment(amount, toolName, callback) {
     const currency = localStorage.getItem('charvak_currency') || 'INR';
     
-    if (currency === 'INR' && typeof Razorpay !== 'undefined') {
-        const options = {
-            key: window.charvak_razorpay_key || 'rzp_live_TSniXv6CyEnZ9B',
-            amount: amount * 100,
-            currency: 'INR',
-            name: 'Charvak AI Tools',
-            description: toolName,
-            handler: function(response) {
-                callback(true, response);
-            },
-            prefill: { email: 'user@email.com' },
-            theme: { color: '#3ba591' }
-        };
-        const rzp = new Razorpay(options);
-        rzp.open();
-    } else if (currency !== 'INR') {
-        // PayPal - create real order
-        const usdAmount = (amount / 83).toFixed(2);
-        if (confirm('Proceed with PayPal payment of $' + usdAmount + ' for ' + toolName + '?')) {
+    // Show payment method selection
+    showPaymentMethodModal(amount, toolName, callback);
+}
+
+function showPaymentMethodModal(amount, toolName, callback) {
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:99999;display:flex;align-items:center;justify-content:center;';
+    modal.innerHTML = `
+        <div class="bg-white p-4 rounded" style="max-width:400px;width:90%;">
+            <h4 class="mb-3">Choose Payment Method</h4>
+            <p class="mb-3">Amount: <strong>₹${amount}</strong> (${toolName})</p>
+            <div class="d-grid gap-2">
+                <button class="btn btn-primary btn-lg" onclick="payWithRazorpay(${amount}, '${toolName}', ${callback ? 'true' : 'false'})">
+                    🇮🇳 Pay with Razorpay (UPI/Cards)
+                </button>
+                <button class="btn btn-warning btn-lg" onclick="payWithPayPal(${amount}, '${toolName}')">
+                    🌍 Pay with PayPal (International)
+                </button>
+                <button class="btn btn-secondary" onclick="this.closest('div[style]').parentElement.remove()">Cancel</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function payWithRazorpay(amount, toolName, hasCallback) {
+    // Close modal
+    document.querySelector('div[style*="z-index:99999"]').remove();
+    
+    fetch('/api/payment/status')
+        .then(res => res.json())
+        .then(status => {
+            const razorpayKey = status.razorpay_key_id || 'rzp_live_TSniXv6CyEnZ9B';
+            
             fetch('/api/payment/create-order', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
                     amount: amount,
                     name: toolName,
-                    method: 'paypal'
+                    method: 'razorpay'
                 })
             })
             .then(res => res.json())
             .then(orderData => {
-                console.log('PayPal order:', orderData);
-                if (orderData.status === 'success' || orderData.order_id) {
-                    callback(true, {paypal_order_id: orderData.order_id});
-                } else {
-                    alert('PayPal order failed');
-                }
-            })
-            .catch(error => {
-                console.error('PayPal error:', error);
-                alert('PayPal payment failed');
+                const orderId = orderData.order_id || orderData.id;
+                
+                const options = {
+                    key: razorpayKey,
+                    amount: amount * 100,
+                    currency: 'INR',
+                    name: 'Charvak IT Consulting',
+                    description: toolName,
+                    order_id: orderId,
+                    handler: function(response) {
+                        fetch('/api/payment/verify', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({
+                                method: 'razorpay',
+                                payment_id: response.razorpay_payment_id,
+                                order_id: response.razorpay_order_id,
+                                signature: response.razorpay_signature
+                            })
+                        })
+                        .then(r => r.json())
+                        .then(v => {
+                            if (v.verified) {
+                                alert('✅ Payment successful!');
+                                if (callback) callback(true, response);
+                            }
+                        });
+                    },
+                    prefill: {email: 'user@email.com'},
+                    theme: {color: '#3ba591'}
+                };
+                
+                const rzp = new Razorpay(options);
+                rzp.open();
             });
+        });
+}
+
+function payWithPayPal(amount, toolName) {
+    // Close modal
+    document.querySelector('div[style*="z-index:99999"]').remove();
+    
+    const usdAmount = (amount / 83).toFixed(2);
+    
+    // Create PayPal order
+    fetch('/api/payment/create-order', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            amount: amount,
+            name: toolName,
+            method: 'paypal'
+        })
+    })
+    .then(res => res.json())
+    .then(orderData => {
+        console.log('PayPal order:', orderData);
+        
+        if (orderData.order_id || orderData.id) {
+            // Render PayPal buttons
+            const paypalContainer = document.createElement('div');
+            paypalContainer.id = 'paypal-button-container';
+            paypalContainer.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:99999;background:white;padding:30px;border-radius:10px;box-shadow:0 10px 40px rgba(0,0,0,0.3);';
+            paypalContainer.innerHTML = `
+                <h5 class="mb-3">Complete PayPal Payment</h5>
+                <p>Amount: <strong>$${usdAmount} USD</strong></p>
+                <div id="paypal-buttons"></div>
+                <button class="btn btn-secondary mt-3 w-100" onclick="this.parentElement.remove()">Cancel</button>
+            `;
+            document.body.appendChild(paypalContainer);
+            
+            // Render PayPal buttons
+            paypal.Buttons({
+                createOrder: function(data, actions) {
+                    return actions.order.create({
+                        purchase_units: [{
+                            description: toolName,
+                            amount: {
+                                currency_code: 'USD',
+                                value: usdAmount
+                            }
+                        }]
+                    });
+                },
+                onApprove: function(data, actions) {
+                    return actions.order.capture().then(function(details) {
+                        alert('✅ PayPal payment successful! Transaction ID: ' + details.id);
+                        document.getElementById('paypal-button-container').remove();
+                        
+                        // Verify on backend
+                        fetch('/api/payment/verify', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({
+                                method: 'paypal',
+                                order_id: orderData.order_id || orderData.id,
+                                paypal_order_id: details.id
+                            })
+                        })
+                        .then(r => r.json())
+                        .then(v => {
+                            console.log('Verification:', v);
+                            if (callback) callback(true, {paypal_order_id: details.id});
+                        });
+                    });
+                },
+                onError: function(err) {
+                    console.error('PayPal error:', err);
+                    alert('PayPal payment failed. Please try again.');
+                }
+            }).render('#paypal-buttons');
+        } else {
+            alert('PayPal order creation failed');
         }
-    } else {
+    })
+    .catch(error => {
+        console.error('PayPal error:', error);
+        alert('PayPal payment failed');
+    });
+} else {
         // Demo fallback
         if (confirm('Pay ₹' + amount + ' for ' + toolName + '? (Demo Mode)')) {
             callback(true, {});
