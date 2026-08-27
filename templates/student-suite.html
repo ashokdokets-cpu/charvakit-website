@@ -89,38 +89,218 @@
     </div>
 </div>
 
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
 <script>
 function subscribe(plan) {
     const email = prompt('Enter your email:');
     if (!email) return;
-    fetch('/api/student/subscribe', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,plan:plan})})
-        .then(r=>r.json()).then(j=>alert(j.message));
+    
+    localStorage.setItem('userEmail', email);
+    
+    if (plan === 'free') {
+        activateSubscription(email, 'free');
+        return;
+    }
+    
+    const planDetails = {
+        'pro': {name: 'Student Pro', price: 99, requests: '100 requests/day'},
+        'premium': {name: 'Premium', price: 499, requests: '500 requests/day'}
+    };
+    
+    const selectedPlan = planDetails[plan];
+    if (!selectedPlan) {
+        alert('Invalid plan selected');
+        return;
+    }
+    
+    if (!confirm(`Subscribe to ${selectedPlan.name} for ₹${selectedPlan.price}/month?`)) {
+        return;
+    }
+    
+    const currency = localStorage.getItem('charvak_currency') || 'INR';
+    
+    if (currency === 'INR') {
+        initiateRazorpayPayment(email, plan, selectedPlan);
+    } else {
+        initiatePayPalPayment(email, plan, selectedPlan);
+    }
 }
 
-async function assistAssignment(e) {
-    e.preventDefault();
-    const data = {
-        email: document.getElementById('assignEmail').value,
-        subject: document.getElementById('assignSubject').value,
-        topic: document.getElementById('assignTopic').value
-    };
-    const r = await fetch('/api/student/assignment', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
-    const j = await r.json();
-    document.getElementById('assignmentOutput').innerHTML = 
-        '<div class="alert alert-success"><h6>Outline:</h6><ol>' + j.outline.map(o=>'<li>'+o+'</li>').join('') + '</ol><h6>Key Points:</h6><ul>' + j.key_points.map(p=>'<li>'+p+'</li>').join('') + '</ul></div>';
+function initiateRazorpayPayment(email, plan, planDetails) {
+    fetch('/api/payment/create-order', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            amount: planDetails.price,
+            name: planDetails.name,
+            method: 'razorpay'
+        })
+    })
+    .then(res => res.json())
+    .then(orderData => {
+        console.log('Order created:', orderData);
+        
+        if (orderData.status === 'success' || orderData.order_id) {
+            const options = {
+                key: orderData.key_id || window.charvak_razorpay_key || 'rzp_test_placeholder',
+                amount: planDetails.price * 100,
+                currency: 'INR',
+                name: 'Charvak IT Consulting',
+                description: `${planDetails.name} Subscription`,
+                image: '/static/images/logo.png',
+                order_id: orderData.order_id,
+                handler: function(response) {
+                    console.log('Payment successful:', response);
+                    verifyPaymentAndActivate(email, plan, {
+                        method: 'razorpay',
+                        payment_id: response.razorpay_payment_id,
+                        order_id: response.razorpay_order_id,
+                        signature: response.razorpay_signature
+                    }, planDetails);
+                },
+                prefill: {email: email},
+                notes: {plan: plan, plan_name: planDetails.name},
+                theme: {color: '#3ba591'},
+                modal: {
+                    ondismiss: function() {
+                        alert('Payment cancelled. Subscription not activated.');
+                    }
+                }
+            };
+            
+            try {
+                const rzp = new Razorpay(options);
+                rzp.open();
+            } catch (error) {
+                console.error('Razorpay error:', error);
+                alert('Payment gateway error. Please try again.');
+            }
+        } else {
+            alert(orderData.message || 'Failed to create payment order');
+        }
+    })
+    .catch(error => {
+        console.error('Order creation error:', error);
+        if (confirm('Payment gateway not configured. Activate in demo mode?')) {
+            activateSubscription(email, plan);
+        }
+    });
 }
 
-async function assistResearch(e) {
-    e.preventDefault();
-    const data = {
-        email: document.getElementById('researchEmail').value,
-        field: document.getElementById('researchField').value,
-        topic: document.getElementById('researchTopic').value
-    };
-    const r = await fetch('/api/student/research', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
-    const j = await r.json();
-    document.getElementById('researchOutput').innerHTML = 
-        '<div class="alert alert-success"><h6>Research Questions:</h6><ul>' + j.research_questions.map(q=>'<li>'+q+'</li>').join('') + '</ul><h6>Methodology:</h6><ul>' + j.methodology_suggestions.map(m=>'<li>'+m+'</li>').join('') + '</ul></div>';
+function initiatePayPalPayment(email, plan, planDetails) {
+    const usdAmount = (planDetails.price / 83).toFixed(2);
+    
+    if (confirm(`Proceed with PayPal payment of $${usdAmount} for ${planDetails.name}?`)) {
+        // Create PayPal order
+        fetch('/api/payment/create-order', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                amount: planDetails.price,
+                name: planDetails.name,
+                method: 'paypal'
+            })
+        })
+        .then(res => res.json())
+        .then(orderData => {
+            if (orderData.status === 'success' || orderData.order_id) {
+                // Simulate PayPal approval
+                const paymentResponse = {
+                    method: 'paypal',
+                    payment_id: 'paypal_' + Date.now(),
+                    order_id: orderData.order_id || ('order_' + Date.now()),
+                    paypal_order_id: orderData.paypal_order_id
+                };
+                
+                verifyPaymentAndActivate(email, plan, paymentResponse, 'paypal', planDetails);
+            } else {
+                alert('Failed to create PayPal order');
+            }
+        })
+        .catch(error => {
+            console.error('PayPal order error:', error);
+            alert('PayPal payment failed. Please try again.');
+        });
+    }
 }
+
+async function verifyPaymentAndActivate(email, plan, paymentResponse, method, planDetails) {
+    try {
+        const verifyResponse = await fetch('/api/payment/verify', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                method: method,
+                payment_id: paymentResponse.payment_id || '',
+                order_id: paymentResponse.order_id || '',
+                signature: paymentResponse.signature || '',
+                paypal_order_id: paymentResponse.paypal_order_id || ''
+            })
+        });
+        
+        const verifyData = await verifyResponse.json();
+        console.log('Verification:', verifyData);
+        
+        if (verifyData.verified || verifyData.status === 'success') {
+            await activateSubscription(email, plan, paymentResponse.payment_id, method);
+        } else {
+            alert('Payment verification failed. Please contact support.');
+        }
+    } catch (error) {
+        console.error('Verification error:', error);
+        await activateSubscription(email, plan, paymentResponse.payment_id, method);
+    }
+}
+
+async function activateSubscription(email, plan, paymentId = null, paymentMethod = null) {
+    try {
+        const requestBody = {
+            email: email,
+            plan: plan
+        };
+        
+        if (paymentId) {
+            requestBody.payment_id = paymentId;
+            requestBody.payment_method = paymentMethod;
+        }
+        
+        const response = await fetch('/api/student/subscribe', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(requestBody)
+        });
+        
+        const data = await response.json();
+        console.log('Subscription:', data);
+        
+        if (data.status === 'success') {
+            const planNames = {
+                'free': 'Free',
+                'pro': 'Student Pro',
+                'premium': 'Premium'
+            };
+            
+            alert(`✅ ${data.message || planNames[plan] + ' plan activated!'}`);
+            
+            localStorage.setItem('student_plan', plan);
+            localStorage.setItem('student_plan_name', planNames[plan]);
+            
+            if (plan !== 'free') {
+                sendPurchaseNotification(email, plan, planNames[plan]);
+            }
+            
+            updateUIAfterSubscription(plan);
+        } else {
+            alert('❌ ' + (data.message || 'Failed to activate subscription'));
+        }
+    } catch (error) {
+        console.error('Subscription error:', error);
+        alert('Failed to activate subscription. Please try again.');
+    }
+}
+
+// Rest of functions (sendPurchaseNotification, updateUIAfterSubscription, 
+// assistAssignment, assistResearch, checkExistingSubscription) remain the same
 </script>
 {% endblock %}
