@@ -83,6 +83,7 @@ from data_lifecycle import data_lifecycle
 from final_year_project_engine import final_year_project_engine
 from ai_credit_engine import ai_credit_engine
 from notification_engine import notification_engine
+from voice_to_web_engine import voice_to_web_engine
 
 
 
@@ -1180,6 +1181,75 @@ async def api_voice_to_web(request: Request):
         return result
     except Exception as e:
         return handle_error(e, "voice-to-web", {"status": "error", "message": "Voice processing failed"})
+# ============================================================
+# VOICE-TO-WEB PRO ENGINE ROUTES
+# ============================================================
+
+@app.post("/api/voice-to-web/create")
+@limiter.limit("10/minute")
+async def v2w_create(request: Request):
+    """Create website from voice data."""
+    data = await request.json()
+    return voice_to_web_engine.create_website(
+        email=data.get("email"),
+        business_name=data.get("business_name"),
+        plan=data.get("plan", "free"),
+        transcript=data.get("transcript", "")
+    )
+
+@app.post("/api/voice-to-web/domain")
+@limiter.limit("10/minute")
+async def v2w_domain(request: Request):
+    """Setup custom domain."""
+    data = await request.json()
+    return voice_to_web_engine.setup_custom_domain(
+        website_id=data.get("website_id"),
+        domain=data.get("domain")
+    )
+
+@app.post("/api/voice-to-web/seo")
+@limiter.limit("10/minute")
+async def v2w_seo(request: Request):
+    """Enable AI SEO."""
+    data = await request.json()
+    return voice_to_web_engine.enable_ai_seo(
+        website_id=data.get("website_id"),
+        business_name=data.get("business_name"),
+        description=data.get("description", "")
+    )
+
+@app.post("/api/voice-to-web/update")
+@limiter.limit("20/minute")
+async def v2w_update(request: Request):
+    """Request on-demand update."""
+    data = await request.json()
+    return voice_to_web_engine.request_update(
+        website_id=data.get("website_id"),
+        update_type=data.get("update_type"),
+        details=data.get("details"),
+        email=data.get("email", "")
+    )
+
+@app.post("/api/voice-to-web/support")
+@limiter.limit("20/minute")
+async def v2w_support(request: Request):
+    """Create support ticket."""
+    data = await request.json()
+    return voice_to_web_engine.create_support_ticket(
+        email=data.get("email"),
+        issue=data.get("issue"),
+        website_id=data.get("website_id")
+    )
+
+@app.get("/api/voice-to-web/status/{website_id}")
+async def v2w_status(website_id: str):
+    """Get website status."""
+    return voice_to_web_engine.get_website_status(website_id)
+
+@app.get("/api/voice-to-web/stats")
+async def v2w_stats():
+    """Get engine stats."""
+    return voice_to_web_engine.get_stats()
 
 @app.post("/api/ai/neural-wireframe")
 @limiter.limit("5/minute")
