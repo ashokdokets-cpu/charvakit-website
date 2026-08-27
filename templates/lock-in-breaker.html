@@ -50,6 +50,47 @@ function runDemo(){
         document.getElementById('demoCTA').style.display = 'inline-block';
     }, 5000);
 }
+
+// Add payment for actual migration service
+function startMigration(event) {
+    event.preventDefault();
+    const email = prompt('Enter your business email:');
+    if (!email) return;
+    
+    processCharvakPayment(email, 4999, 'Lock-In Breaker Migration', function(response) {
+        alert('✅ Payment successful! Migration started. Our team will contact you.');
+        localStorage.setItem('lock_breaker_migration', 'active');
+    });
+}
+
+// Add payment for continuous protection
+function subscribeProtection(event) {
+    event.preventDefault();
+    const email = prompt('Enter your business email:');
+    if (!email) return;
+    
+    processCharvakPayment(email, 4999, 'Lock-In Breaker Continuous Protection', function(response) {
+        alert('✅ Subscription activated! Continuous protection is now live.');
+        localStorage.setItem('lock_breaker_protection', 'active');
+    });
+}
+
+// Add event listeners to CTA buttons when DOM loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Find the demo CTA button and attach payment
+    const demoCTA = document.getElementById('demoCTA');
+    if (demoCTA) {
+        demoCTA.addEventListener('click', startMigration);
+    }
+    
+    // Find any subscribe/pricing buttons and attach payment
+    const subscribeButtons = document.querySelectorAll('[onclick*="subscribe"], .btn-primary');
+    subscribeButtons.forEach(btn => {
+        if (btn.textContent.includes('Subscribe') || btn.textContent.includes('Get Started') || btn.textContent.includes('Start')) {
+            btn.onclick = subscribeProtection;
+        }
+    });
+});
 </script>
     </div>
 

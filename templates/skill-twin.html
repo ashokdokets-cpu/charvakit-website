@@ -41,16 +41,12 @@
     </div>
 </div>
 <script>
-function getVerified(e){
-    e.preventDefault();
-    const name = prompt('Enter your name:');
-    if(name){
-        const users = JSON.parse(localStorage.getItem('skill_twin_verified')||'[]');
-        users.push({name, date: new Date().toISOString()});
-        localStorage.setItem('skill_twin_verified', JSON.stringify(users));
-        alert('Thanks ' + name + '! Take the free assessment now to get your verified badge.');
-        window.location.href = '/skill-check';
-    }
+function getVerified(event) {
+    event.preventDefault();
+    const email = prompt('Enter your email:');
+    processCharvakPayment(email, 499, 'Skill-Twin Verification', function() {
+        alert('✅ Verification initiated!');
+    });
 }
 </script>
 {% include 'includes/premium-upsell.html' %}

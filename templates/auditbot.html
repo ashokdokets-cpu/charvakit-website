@@ -34,25 +34,20 @@
 </div>
 </div>
 <script>
-function auditGetFixed(e){
-    e.preventDefault();
-    const name = prompt('Enter your website URL or company name:');
-    if(name){
-        const clients = JSON.parse(localStorage.getItem('auditbot_clients')||'[]');
-        clients.push({client: name, plan: 'One-Time Fix (<span data-inr="2999">₹2,999</span>)', date: new Date().toISOString()});
-        localStorage.setItem('auditbot_clients', JSON.stringify(clients));
-        alert('Thanks! We will scan ' + name + ' and send the fix report within 24 hours.');
-    }
+function auditGetFixed(event) {
+    event.preventDefault();
+    const email = prompt('Enter your email:');
+    processCharvakPayment(email, 299, 'AuditBot Fix', function() {
+        alert('✅ AuditBot fix activated!');
+    });
 }
-function auditSubscribe(e){
-    e.preventDefault();
-    const name = prompt('Enter your website URL or company name:');
-    if(name){
-        const subs = JSON.parse(localStorage.getItem('auditbot_subscribers')||'[]');
-        subs.push({client: name, plan: 'Continuous (<span data-inr="1999">₹1,999</span>/mo)', date: new Date().toISOString()});
-        localStorage.setItem('auditbot_subscribers', JSON.stringify(subs));
-        alert('Welcome! Continuous monitoring is now active for ' + name + '. We will contact you shortly.');
-    }
+
+function auditSubscribe(event) {
+    event.preventDefault();
+    const email = prompt('Enter your email:');
+    processCharvakPayment(email, 999, 'AuditBot Subscription', function() {
+        alert('✅ AuditBot subscription activated!');
+    });
 }
 </script>
 {% include 'includes/premium-upsell.html' %}
