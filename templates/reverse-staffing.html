@@ -56,13 +56,82 @@
 <script>
 function subscribePlan(e){
     e.preventDefault();
-    const name = prompt('Enter your company name:');
-    if(name){
-        const subscribers = JSON.parse(localStorage.getItem('staffing_subscribers')||'[]');
-        subscribers.push({company: name, plan: 'Subscription - ₹4,999/mo', date: new Date().toISOString()}););
-        localStorage.setItem('staffing_subscribers', JSON.stringify(subscribers));
-        alert('Thanks ' + name + '! Your subscription has been initiated. We will contact you within 24 hours.');
+    const email = prompt('Enter your business email:');
+    if (!email) return;
+    
+    const amount = 4999; // ₹4,999/month
+    
+    if (!confirm('Subscribe to Reverse Staffing?\n\n₹4,999/month\n\nProceed to payment?')) {
+        return;
     }
+    
+    fetch('/api/payment/create-order', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            amount: amount,
+            name: 'Reverse Staffing Subscription',
+            method: 'razorpay'
+        })
+    })
+    .then(res => res.json())
+    .then(orderData => {
+        if (orderData.status === 'success' || orderData.order_id) {
+            const options = {
+                key: orderData.key_id || window.charvak_razorpay_key,
+                amount: amount * 100,
+                currency: 'INR',
+                name: 'Charvak IT Consulting',
+                description: 'Reverse Staffing Subscription (Monthly)',
+                order_id: orderData.order_id,
+                handler: function(response) {
+                    fetch('/api/payment/verify', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            method: 'razorpay',
+                            payment_id: response.razorpay_payment_id,
+                            order_id: response.razorpay_order_id,
+                            signature: response.razorpay_signature
+                        })
+                    })
+                    .then(r => r.json())
+                    .then(v => {
+                        if (v.verified) {
+                            fetch('/api/products/reverse-staffing/match', {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify({
+                                    email: email,
+                                    payment_id: response.razorpay_payment_id
+                                })
+                            })
+                            .then(r => r.json())
+                            .then(j => {
+                                alert('✅ ' + (j.message || 'Reverse Staffing activated!'));
+                                localStorage.setItem('reverse_staffing', 'active');
+                            });
+                        } else {
+                            alert('Payment verification failed');
+                        }
+                    });
+                },
+                prefill: {email: email},
+                theme: {color: '#3ba591'},
+                modal: {
+                    ondismiss: function() {
+                        alert('Payment cancelled');
+                    }
+                }
+            };
+            const rzp = new Razorpay(options);
+            rzp.open();
+        }
+    })
+    .catch(error => {
+        console.error('Payment error:', error);
+        alert('Payment gateway error');
+    });
 }
 </script>
 {% endblock %}
