@@ -84,6 +84,7 @@ from final_year_project_engine import final_year_project_engine
 from ai_credit_engine import ai_credit_engine
 from notification_engine import notification_engine
 from voice_to_web_engine import voice_to_web_engine
+from exam_prep_engine import exam_prep_engine
 
 
 
@@ -4115,6 +4116,56 @@ async def notification_history(email: str):
 async def notification_stats():
     """Get notification statistics."""
     return notification_engine.get_stats()
+
+# ============================================================
+# GLOBAL EXAM PREPARATION CENTER
+# ============================================================
+
+@app.get("/exam-prep", response_class=HTMLResponse)
+async def exam_prep_page(request: Request):
+    """Global Exam Preparation Center."""
+    return template_response("exam-prep.html", request, "Global Exam Preparation Center - Charvak")
+
+@app.get("/api/exam/categories")
+async def exam_categories():
+    """Get all exam categories."""
+    return exam_prep_engine.get_all_categories()
+
+@app.get("/api/exam/category/{category_id}")
+async def exam_by_category(category_id: str):
+    """Get exams by category."""
+    return exam_prep_engine.get_exams_by_category(category_id)
+
+@app.get("/api/exam/{exam_id}")
+async def exam_details(exam_id: str):
+    """Get exam details."""
+    return exam_prep_engine.get_exam_details(exam_id)
+
+@app.post("/api/exam/questions")
+async def exam_questions(request: Request):
+    """Generate practice questions."""
+    data = await request.json()
+    return exam_prep_engine.generate_questions(
+        exam_id=data.get("exam_id"),
+        topic=data.get("topic"),
+        count=data.get("count", 10)
+    )
+
+@app.post("/api/exam/mock-test")
+async def start_mock_test(request: Request):
+    """Start mock test."""
+    data = await request.json()
+    return exam_prep_engine.start_mock_test(
+        exam_id=data.get("exam_id"),
+        email=data.get("email")
+    )
+
+# ============================================================
+# END OF ROUTES
+# ============================================================
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
 
 # ============================================================
 # UTILITY ENDPOINTS
