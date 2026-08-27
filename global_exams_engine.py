@@ -1,6 +1,6 @@
 """
 Charvak Global Exams - International Exam Preparation
-Covers: Higher Education, English Proficiency, Finance, IT, PM, Medical
+Covers: Higher Education, English Proficiency, Finance, IT, PM, Medical Licensing
 """
 import logging
 from datetime import datetime
@@ -11,13 +11,10 @@ logger = logging.getLogger("charvakit.global_exams")
 class GlobalExamsEngine:
     def __init__(self):
         self.categories = self._initialize_global_exams()
-        logger.info("Global Exams Engine ready")
+        logger.info("Global Exams Engine ready - 55+ international exams")
     
     def _initialize_global_exams(self) -> Dict:
         return {
-            # ============================================================
-            # CATEGORY 9: INTERNATIONAL HIGHER EDUCATION
-            # ============================================================
             "higher_education": {
                 "name": "International Higher Education",
                 "icon": "🎓",
@@ -36,10 +33,6 @@ class GlobalExamsEngine:
                     {"id": "gamsat", "name": "GAMSAT", "full_name": "Graduate Medical School Admissions", "tier": "Digital", "sections": ["Reasoning", "Writing", "Science"], "questions": 102, "duration": "300 min", "fee_usd": 500}
                 ]
             },
-            
-            # ============================================================
-            # CATEGORY 10: ENGLISH LANGUAGE PROFICIENCY
-            # ============================================================
             "english_proficiency": {
                 "name": "English Language Proficiency",
                 "icon": "🗣️",
@@ -53,80 +46,64 @@ class GlobalExamsEngine:
                     {"id": "cambridge", "name": "Cambridge English", "full_name": "C1 Advanced/C2 Proficiency", "tier": "CBT", "sections": ["Reading", "Writing", "Listening", "Speaking"], "questions": 52, "duration": "235 min", "fee_usd": 250}
                 ]
             },
-            
-            # ============================================================
-            # CATEGORY 11: FINANCE & ACCOUNTING
-            # ============================================================
             "finance": {
                 "name": "Finance & Accounting",
                 "icon": "💰",
                 "exams": [
-                    {"id": "cfa", "name": "CFA", "full_name": "Chartered Financial Analyst", "tier": "CBT (Prometric)", "sections": ["Ethics", "Quant", "Economics", "FRA"], "questions": 180, "duration": "270 min", "fee_usd": 940},
-                    {"id": "frm", "name": "FRM", "full_name": "Financial Risk Manager", "tier": "CBT (Pearson VUE)", "sections": ["Risk Management", "Quant", "Markets"], "questions": 100, "duration": "240 min", "fee_usd": 750},
-                    {"id": "caia", "name": "CAIA", "full_name": "Chartered Alternative Investment", "tier": "CBT", "sections": ["Alternative Investments", "Ethics"], "questions": 200, "duration": "240 min", "fee_usd": 1250},
-                    {"id": "us_cpa", "name": "US CPA", "full_name": "Certified Public Accountant", "tier": "CBT (Prometric)", "sections": ["AUD", "BEC", "FAR", "REG"], "questions": 72, "duration": "240 min", "fee_usd": 225},
-                    {"id": "acca", "name": "ACCA", "full_name": "Association of Chartered Accountants", "tier": "On-demand CBE", "sections": ["Accounting", "Taxation", "Audit"], "questions": 50, "duration": "180 min", "fee_usd": 150},
-                    {"id": "cima", "name": "CIMA", "full_name": "Management Accountants", "tier": "CBT (Pearson VUE)", "sections": ["Management", "Finance", "Strategy"], "questions": 60, "duration": "90 min", "fee_usd": 120},
-                    {"id": "cia", "name": "CIA", "full_name": "Certified Internal Auditor", "tier": "CBT", "sections": ["Internal Audit", "Risk", "Governance"], "questions": 125, "duration": "150 min", "fee_usd": 380},
-                    {"id": "cma_us", "name": "CMA (US)", "full_name": "Certified Management Accountant", "tier": "CBT", "sections": ["Financial Planning", "Analysis"], "questions": 100, "duration": "240 min", "fee_usd": 415},
-                    {"id": "soa", "name": "SOA Exams", "full_name": "Society of Actuaries", "tier": "CBT", "sections": ["Probability", "Financial Math", "Statistics"], "questions": 35, "duration": "180 min", "fee_usd": 225},
-                    {"id": "cas", "name": "CAS Exams", "full_name": "Casualty Actuarial Society", "tier": "CBT", "sections": ["MAS-I", "MAS-II", "Exams 5-9"], "questions": 45, "duration": "240 min", "fee_usd": 450}
+                    {"id": "cfa", "name": "CFA", "full_name": "Chartered Financial Analyst", "tier": "CBT", "sections": ["Ethics", "Quant", "Economics", "FRA"], "questions": 180, "duration": "270 min", "fee_usd": 940},
+                    {"id": "frm", "name": "FRM", "full_name": "Financial Risk Manager", "tier": "CBT", "sections": ["Risk", "Quant", "Markets"], "questions": 100, "duration": "240 min", "fee_usd": 750},
+                    {"id": "caia", "name": "CAIA", "full_name": "Alternative Investment Analyst", "tier": "CBT", "sections": ["Alternatives", "Ethics"], "questions": 200, "duration": "240 min", "fee_usd": 1250},
+                    {"id": "us_cpa", "name": "US CPA", "full_name": "Certified Public Accountant", "tier": "CBT", "sections": ["AUD", "BEC", "FAR", "REG"], "questions": 72, "duration": "240 min", "fee_usd": 225},
+                    {"id": "acca", "name": "ACCA", "full_name": "Chartered Certified Accountants", "tier": "CBE", "sections": ["Accounting", "Tax", "Audit"], "questions": 50, "duration": "180 min", "fee_usd": 150},
+                    {"id": "cima", "name": "CIMA", "full_name": "Management Accountants", "tier": "CBT", "sections": ["Management", "Finance", "Strategy"], "questions": 60, "duration": "90 min", "fee_usd": 120},
+                    {"id": "cia", "name": "CIA", "full_name": "Certified Internal Auditor", "tier": "CBT", "sections": ["Audit", "Risk", "Governance"], "questions": 125, "duration": "150 min", "fee_usd": 380},
+                    {"id": "cma_us", "name": "CMA (US)", "full_name": "Management Accountant", "tier": "CBT", "sections": ["Planning", "Analysis"], "questions": 100, "duration": "240 min", "fee_usd": 415},
+                    {"id": "soa", "name": "SOA Exams", "full_name": "Society of Actuaries", "tier": "CBT", "sections": ["Probability", "Financial Math"], "questions": 35, "duration": "180 min", "fee_usd": 225},
+                    {"id": "cas", "name": "CAS Exams", "full_name": "Casualty Actuarial Society", "tier": "CBT", "sections": ["MAS-I", "MAS-II"], "questions": 45, "duration": "240 min", "fee_usd": 450}
                 ]
             },
-            
-            # ============================================================
-            # CATEGORY 12: IT & CLOUD CERTIFICATIONS
-            # ============================================================
             "it_cloud": {
                 "name": "IT, Cloud & Technical",
                 "icon": "💻",
                 "exams": [
-                    {"id": "aws_saa", "name": "AWS Solutions Architect", "full_name": "Associate Level", "tier": "CBT (Pearson VUE)", "sections": ["Architecture", "Security", "Cost"], "questions": 65, "duration": "130 min", "fee_usd": 150},
-                    {"id": "aws_dev", "name": "AWS Developer", "full_name": "Associate Level", "tier": "CBT", "sections": ["Development", "Deployment", "Debugging"], "questions": 65, "duration": "130 min", "fee_usd": 150},
-                    {"id": "azure_104", "name": "Azure Administrator", "full_name": "AZ-104", "tier": "CBT", "sections": ["Identity", "Storage", "Compute"], "questions": 50, "duration": "120 min", "fee_usd": 165},
-                    {"id": "azure_305", "name": "Azure Architect", "full_name": "AZ-305", "tier": "CBT", "sections": ["Design", "Security", "Migration"], "questions": 50, "duration": "150 min", "fee_usd": 165},
-                    {"id": "gcp_ace", "name": "GCP Associate Engineer", "full_name": "Google Cloud", "tier": "CBT", "sections": ["Cloud", "Kubernetes", "Storage"], "questions": 50, "duration": "120 min", "fee_usd": 125},
-                    {"id": "gcp_pca", "name": "GCP Cloud Architect", "full_name": "Professional Level", "tier": "CBT", "sections": ["Architecture", "Security", "Optimization"], "questions": 60, "duration": "120 min", "fee_usd": 200},
-                    {"id": "cissp", "name": "CISSP", "full_name": "Certified Information Systems Security", "tier": "CAT", "sections": ["Security", "Risk", "Asset Security"], "questions": 150, "duration": "180 min", "fee_usd": 749},
-                    {"id": "ceh", "name": "CEH", "full_name": "Certified Ethical Hacker", "tier": "CBT", "sections": ["Ethical Hacking", "Tools", "Methodology"], "questions": 125, "duration": "240 min", "fee_usd": 1199},
-                    {"id": "comptia_sec", "name": "CompTIA Security+", "full_name": "Security+", "tier": "CBT", "sections": ["Security", "Threats", "Architecture"], "questions": 90, "duration": "90 min", "fee_usd": 392},
-                    {"id": "ccna", "name": "CCNA", "full_name": "Cisco Certified Network Associate", "tier": "CBT", "sections": ["Networking", "Security", "Automation"], "questions": 100, "duration": "120 min", "fee_usd": 300},
-                    {"id": "rhcsa", "name": "RHCSA", "full_name": "Red Hat System Administrator", "tier": "Hands-on", "sections": ["Linux", "Shell", "Services"], "questions": 20, "duration": "180 min", "fee_usd": 400},
-                    {"id": "cka", "name": "CKA", "full_name": "Certified Kubernetes Administrator", "tier": "Hands-on", "sections": ["Kubernetes", "Troubleshooting", "Networking"], "questions": 17, "duration": "120 min", "fee_usd": 375},
-                    {"id": "istqb", "name": "ISTQB", "full_name": "Software Testing", "tier": "CBT", "sections": ["Testing", "QA", "Agile"], "questions": 40, "duration": "60 min", "fee_usd": 229},
-                    {"id": "salesforce", "name": "Salesforce Admin", "full_name": "Administrator Certification", "tier": "CBT", "sections": ["Salesforce", "CRM", "Automation"], "questions": 60, "duration": "105 min", "fee_usd": 200}
+                    {"id": "aws_saa", "name": "AWS Solutions Architect", "full_name": "Associate", "tier": "CBT", "sections": ["Architecture", "Security"], "questions": 65, "duration": "130 min", "fee_usd": 150},
+                    {"id": "aws_dev", "name": "AWS Developer", "full_name": "Associate", "tier": "CBT", "sections": ["Development", "Deployment"], "questions": 65, "duration": "130 min", "fee_usd": 150},
+                    {"id": "azure_104", "name": "Azure Administrator", "full_name": "AZ-104", "tier": "CBT", "sections": ["Identity", "Storage"], "questions": 50, "duration": "120 min", "fee_usd": 165},
+                    {"id": "azure_305", "name": "Azure Architect", "full_name": "AZ-305", "tier": "CBT", "sections": ["Design", "Security"], "questions": 50, "duration": "150 min", "fee_usd": 165},
+                    {"id": "gcp_ace", "name": "GCP Associate Engineer", "full_name": "Google Cloud", "tier": "CBT", "sections": ["Cloud", "K8s"], "questions": 50, "duration": "120 min", "fee_usd": 125},
+                    {"id": "gcp_pca", "name": "GCP Cloud Architect", "full_name": "Professional", "tier": "CBT", "sections": ["Architecture", "Security"], "questions": 60, "duration": "120 min", "fee_usd": 200},
+                    {"id": "cissp", "name": "CISSP", "full_name": "Security Professional", "tier": "CAT", "sections": ["Security", "Risk"], "questions": 150, "duration": "180 min", "fee_usd": 749},
+                    {"id": "ceh", "name": "CEH", "full_name": "Ethical Hacker", "tier": "CBT", "sections": ["Hacking", "Tools"], "questions": 125, "duration": "240 min", "fee_usd": 1199},
+                    {"id": "comptia_sec", "name": "CompTIA Security+", "full_name": "Security+", "tier": "CBT", "sections": ["Security", "Threats"], "questions": 90, "duration": "90 min", "fee_usd": 392},
+                    {"id": "ccna", "name": "CCNA", "full_name": "Cisco Network Associate", "tier": "CBT", "sections": ["Networking", "Security"], "questions": 100, "duration": "120 min", "fee_usd": 300},
+                    {"id": "rhcsa", "name": "RHCSA", "full_name": "Red Hat Administrator", "tier": "Hands-on", "sections": ["Linux", "Shell"], "questions": 20, "duration": "180 min", "fee_usd": 400},
+                    {"id": "cka", "name": "CKA", "full_name": "Kubernetes Administrator", "tier": "Hands-on", "sections": ["K8s", "Troubleshooting"], "questions": 17, "duration": "120 min", "fee_usd": 375},
+                    {"id": "istqb", "name": "ISTQB", "full_name": "Software Testing", "tier": "CBT", "sections": ["Testing", "QA"], "questions": 40, "duration": "60 min", "fee_usd": 229},
+                    {"id": "salesforce", "name": "Salesforce Admin", "full_name": "Administrator", "tier": "CBT", "sections": ["CRM", "Automation"], "questions": 60, "duration": "105 min", "fee_usd": 200}
                 ]
             },
-            
-            # ============================================================
-            # CATEGORY 13: PROJECT MANAGEMENT & GOVERNANCE
-            # ============================================================
             "project_management": {
                 "name": "Project Management",
                 "icon": "📊",
                 "exams": [
-                    {"id": "pmp", "name": "PMP", "full_name": "Project Management Professional", "tier": "CBT (Pearson VUE)", "sections": ["People", "Process", "Business"], "questions": 180, "duration": "230 min", "fee_usd": 555},
-                    {"id": "capm", "name": "CAPM", "full_name": "Certified Associate in PM", "tier": "CBT", "sections": ["PM Fundamentals", "Process"], "questions": 150, "duration": "180 min", "fee_usd": 300},
-                    {"id": "pmi_acp", "name": "PMI-ACP", "full_name": "Agile Certified Practitioner", "tier": "CBT", "sections": ["Agile", "Scrum", "Lean"], "questions": 120, "duration": "180 min", "fee_usd": 495},
-                    {"id": "prince2", "name": "PRINCE2", "full_name": "Foundation & Practitioner", "tier": "Digital Proctoring", "sections": ["Principles", "Themes", "Processes"], "questions": 60, "duration": "60 min", "fee_usd": 350},
-                    {"id": "psm", "name": "PSM I/II/III", "full_name": "Professional Scrum Master", "tier": "Online", "sections": ["Scrum", "Agile", "Team"], "questions": 80, "duration": "60 min", "fee_usd": 150},
-                    {"id": "itil4", "name": "ITIL 4", "full_name": "Foundation & Managing Professional", "tier": "CBT", "sections": ["Service Management", "Practices"], "questions": 40, "duration": "60 min", "fee_usd": 350}
+                    {"id": "pmp", "name": "PMP", "full_name": "Project Management Professional", "tier": "CBT", "sections": ["People", "Process", "Business"], "questions": 180, "duration": "230 min", "fee_usd": 555},
+                    {"id": "capm", "name": "CAPM", "full_name": "Certified Associate in PM", "tier": "CBT", "sections": ["PM Fundamentals"], "questions": 150, "duration": "180 min", "fee_usd": 300},
+                    {"id": "pmi_acp", "name": "PMI-ACP", "full_name": "Agile Practitioner", "tier": "CBT", "sections": ["Agile", "Scrum"], "questions": 120, "duration": "180 min", "fee_usd": 495},
+                    {"id": "prince2", "name": "PRINCE2", "full_name": "Foundation & Practitioner", "tier": "Digital", "sections": ["Principles", "Themes"], "questions": 60, "duration": "60 min", "fee_usd": 350},
+                    {"id": "psm", "name": "PSM I/II/III", "full_name": "Professional Scrum Master", "tier": "Online", "sections": ["Scrum", "Agile"], "questions": 80, "duration": "60 min", "fee_usd": 150},
+                    {"id": "itil4", "name": "ITIL 4", "full_name": "Service Management", "tier": "CBT", "sections": ["Service", "Practices"], "questions": 40, "duration": "60 min", "fee_usd": 350}
                 ]
             },
-            
-            # ============================================================
-            # CATEGORY 14: MEDICAL LICENSING
-            # ============================================================
             "medical_licensing": {
                 "name": "Medical Licensing",
                 "icon": "⚕️",
                 "exams": [
-                    {"id": "usmle_step1", "name": "USMLE Step 1", "full_name": "Medical Licensing - Basic Sciences", "tier": "CBT", "sections": ["Anatomy", "Physiology", "Pathology"], "questions": 280, "duration": "480 min", "fee_usd": 660},
-                    {"id": "usmle_step2", "name": "USMLE Step 2 CK", "full_name": "Clinical Knowledge", "tier": "CBT", "sections": ["Medicine", "Surgery", "Pediatrics"], "questions": 318, "duration": "540 min", "fee_usd": 660},
-                    {"id": "nclex", "name": "NCLEX-RN/PN", "full_name": "Nursing Licensure", "tier": "CAT", "sections": ["Nursing", "Patient Care", "Safety"], "questions": 145, "duration": "300 min", "fee_usd": 200},
-                    {"id": "inbde", "name": "INBDE", "full_name": "Dental Board Examination", "tier": "CBT", "sections": ["Dental Sciences", "Clinical"], "questions": 500, "duration": "480 min", "fee_usd": 700},
+                    {"id": "usmle_step1", "name": "USMLE Step 1", "full_name": "Basic Sciences", "tier": "CBT", "sections": ["Anatomy", "Pathology"], "questions": 280, "duration": "480 min", "fee_usd": 660},
+                    {"id": "usmle_step2", "name": "USMLE Step 2 CK", "full_name": "Clinical Knowledge", "tier": "CBT", "sections": ["Medicine", "Surgery"], "questions": 318, "duration": "540 min", "fee_usd": 660},
+                    {"id": "nclex", "name": "NCLEX-RN/PN", "full_name": "Nursing Licensure", "tier": "CAT", "sections": ["Nursing", "Patient Care"], "questions": 145, "duration": "300 min", "fee_usd": 200},
+                    {"id": "inbde", "name": "INBDE", "full_name": "Dental Board", "tier": "CBT", "sections": ["Dental", "Clinical"], "questions": 500, "duration": "480 min", "fee_usd": 700},
                     {"id": "amc", "name": "AMC Exams", "full_name": "Australian Medical Council", "tier": "CAT", "sections": ["Medicine", "Surgery"], "questions": 150, "duration": "210 min", "fee_usd": 1800},
-                    {"id": "plab1", "name": "PLAB Part 1", "full_name": "UK Medical License", "tier": "CBT", "sections": ["Medicine", "Surgery", "Clinical"], "questions": 180, "duration": "180 min", "fee_usd": 255}
+                    {"id": "plab1", "name": "PLAB Part 1", "full_name": "UK Medical License", "tier": "CBT", "sections": ["Medicine", "Clinical"], "questions": 180, "duration": "180 min", "fee_usd": 255}
                 ]
             }
         }
@@ -150,5 +127,13 @@ class GlobalExamsEngine:
         if category_id not in self.categories:
             return {"status": "error", "message": "Category not found"}
         return {"status": "success", "category": self.categories[category_id]["name"], "icon": self.categories[category_id]["icon"], "exams": self.categories[category_id]["exams"]}
+    
+    def get_exam_details(self, exam_id: str) -> Dict:
+        """Get details for specific exam."""
+        for cat_data in self.categories.values():
+            for exam in cat_data["exams"]:
+                if exam["id"] == exam_id:
+                    return {"status": "success", "exam": exam, "category": cat_data["name"]}
+        return {"status": "error", "message": f"Exam {exam_id} not found"}
 
 global_exams_engine = GlobalExamsEngine()
