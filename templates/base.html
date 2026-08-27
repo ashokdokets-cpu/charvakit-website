@@ -25,151 +25,94 @@
     <script src="/static/js/payment-helper.js"></script>
     
     <style>
-                /* Mobile — collapsible menu with scroll */
-        @media (max-width: 991px) {
-            .navbar-collapse {
-                background: #1a1a2e;
-                padding: 10px;
-                border-radius: 8px;
-                max-height: 80vh;
-                overflow-y: auto;
-            }
+    /* ============================================================
+       NAVIGATION STYLES - Clean & Responsive for All Devices
+       ============================================================ */
+    
+    /* Mobile Navigation Optimization */
+    @media (max-width: 991px) {
+        .navbar-collapse {
+            background: #1a1a2e;
+            padding: 15px;
+            border-radius: 8px;
+            max-height: 80vh;
+            overflow-y: auto;
         }
-        /* Desktop — dropdowns float freely, no clipping */
-        @media (min-width: 992px) {
-            .navbar-collapse {
-                overflow: visible !important;
-                max-height: none !important;
-                background: transparent;
-                padding: 0;
-            }
-            .navbar {
-                overflow: visible !important;
-            }
-            .dropdown-menu {
-                position: absolute !important;
-                top: 100% !important;
-            }
+        .navbar-nav {
+            padding: 10px;
         }
-        /* Products & Resources — 2-column dropdown layout */
-        @media (min-width: 992px) {
-            .dropdown-menu {
-                columns: 2;
-                column-gap: 0;
-                min-width: 480px;
-                padding: 8px;
-            }
-            .dropdown-menu .dropdown-item {
-                break-inside: avoid;
-                white-space: nowrap;
-            }
-            .dropdown-menu .dropdown-divider {
-                column-span: all;
-            }
-            /* Small dropdowns stay single column */
-            .dropdown-menu:has(li:nth-child(1):last-child),
-            .dropdown-menu:has(li:nth-child(2):last-child),
-                        .dropdown-menu:has(li:nth-child(3):last-child) {
-                columns: 1;
-                min-width: 200px;
-            }
+        .nav-item {
+            margin-bottom: 5px;
         }
-/* Prevent dropdown item overflow */
-        .dropdown-menu .dropdown-item {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            font-size: 13px;
-            padding: 6px 10px;
+        .dropdown-menu {
+            background: #16213e;
+            border: 1px solid #2a3a5e;
+            padding-left: 15px;
+            position: static !important;
         }
-        .dropdown-menu .col-6 {
-            padding: 0 8px;
+        .dropdown-item {
+            color: #fff;
+            padding: 8px 15px;
+            font-size: 14px;
         }
-        .dropdown-menu .col-6:first-child {
-            border-right: 1px solid #2a3a5e;
-        }
+    }
 
-        /* Products dropdown — 2-column alignment */
-        @media (min-width: 992px) {
-            .nav-item.dropdown .dropdown-menu {
-                columns: 2;
-                column-gap: 12px;
-                min-width: 500px;
-                padding: 10px 16px;
-            }
-            .nav-item.dropdown .dropdown-menu .dropdown-item {
-                break-inside: avoid;
-                white-space: nowrap;
-                padding: 6px 10px;
-                border-radius: 4px;
-            }
-            .nav-item.dropdown .dropdown-menu .dropdown-divider {
-                column-span: all;
-                margin: 6px 0;
-            }
-            /* Login dropdown stays single column */
-            .dropdown:not(.nav-item) .dropdown-menu {
-                columns: 1;
-                min-width: 280px;
-            }
+    /* Desktop Navigation */
+    @media (min-width: 992px) {
+        .navbar-collapse {
+            overflow: visible !important;
+            max-height: none !important;
+            background: transparent;
+            padding: 0;
         }
-                        .dropdown-menu {
+        .navbar-nav .nav-link {
+            font-size: 13px;
+            padding: 8px 10px;
+        }
+        .dropdown-menu {
             background: #16213e;
             border: 1px solid #2a3a5e;
             box-shadow: 0 6px 20px rgba(0,0,0,0.4);
             position: absolute;
+            top: 100%;
             z-index: 10000;
+            min-width: 250px;
+            padding: 8px 0;
+            columns: 1;
         }
-        /* Multi-column layout for long dropdowns */
-        .dropdown-menu .dropdown-item {
+        .dropdown-item {
             color: #fff;
             font-size: 13px;
             padding: 7px 14px;
             white-space: nowrap;
+            break-inside: avoid;
         }
         .dropdown-item:hover {
             background: #1d3252;
             color: #3ba591;
         }
-        /* Show dropdown on hover for desktop — full visibility */
-        @media (min-width: 992px) {
-            .dropdown:hover .dropdown-menu {
-                display: block;
-                margin-top: 0;
-            }
-            .dropdown-menu {
-                min-width: 240px;
-                padding: 8px 0;
-            }
+        .dropdown:hover .dropdown-menu {
+            display: block;
+            margin-top: 0;
         }
-        /* Products dropdown — 2-column layout for long lists */
-        @media (min-width: 992px) {
-            .nav-item.dropdown .dropdown-menu[aria-labelledby] {
-                columns: 2;
-                column-gap: 0;
-                min-width: 480px;
-            }
+        
+        /* Large dropdowns - 2 columns */
+        .nav-item.dropdown .dropdown-menu {
+            columns: 2;
+            column-gap: 0;
+            min-width: 400px;
         }
-        .dropdown-item {
-            color: #fff;
-            font-size: 14px;
-            padding: 8px 16px;
+        .nav-item.dropdown .dropdown-divider {
+            column-span: all;
         }
-        .dropdown-item:hover {
-            background: #1d3252;
-            color: #3ba591;
+        
+        /* Login dropdown stays single column */
+        .dropdown:not(.nav-item) .dropdown-menu {
+            columns: 1;
+            min-width: 280px;
         }
-        /* Show dropdown on hover for desktop */
-        @media (min-width: 992px) {
-            .dropdown:hover .dropdown-menu {
-                display: block;
-                margin-top: 0;
-            }
-            .dropdown-menu {
-                min-width: 220px;
-            }
-        }
-    </style>
+    }
+</style>
         
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-HVHHD3KJ9G"></script>
