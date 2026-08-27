@@ -34,25 +34,20 @@
     </div>
 </div>
 <script>
-function generateContract(e){
-    e.preventDefault();
-    const name = prompt('Enter company name:');
-    if(name){
-        const contracts = JSON.parse(localStorage.getItem('geo_contracts')||'[]');
-        contracts.push({company: name, type: 'Per Contract (<span data-inr="999">₹999</span>)', date: new Date().toISOString()});
-        localStorage.setItem('geo_contracts', JSON.stringify(contracts));
-        alert('Contract generation initiated for ' + name + '! Our legal team will send the draft within 24 hours.');
-    }
+function generateContract(event) {
+    event.preventDefault();
+    const email = prompt('Enter your email:');
+    processCharvakPayment(email, 199, 'Contract Generation', function() {
+        alert('✅ Contract generated!');
+    });
 }
-function startHiring(e){
-    e.preventDefault();
-    const name = prompt('Enter company name:');
-    if(name){
-        const hirings = JSON.parse(localStorage.getItem('geo_hiring')||'[]');
-        hirings.push({company: name, type: 'Managed Payroll (3%)', date: new Date().toISOString()});
-        localStorage.setItem('geo_hiring', JSON.stringify(hirings));
-        alert('Global hiring activated for ' + name + '! We will set up your account and contact you shortly.');
-    }
+
+function startHiring(event) {
+    event.preventDefault();
+    const email = prompt('Enter your email:');
+    processCharvakPayment(email, 999, 'Global Hiring', function() {
+        alert('✅ Global hiring activated!');
+    });
 }
 </script>
 {% include 'includes/premium-upsell.html' %}

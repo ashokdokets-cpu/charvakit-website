@@ -32,15 +32,12 @@
     </div>
 </div>
 <script>
-function aiSlopClean(e){
-    e.preventDefault();
-    const url = prompt('Enter your website URL:');
-    if(url){
-        const cleanups = JSON.parse(localStorage.getItem('ai_slop_cleanups')||'[]');
-        cleanups.push({url, plan: 'Full Cleanup (<span data-inr="5999">₹5,999</span>)', date: new Date().toISOString()});
-        localStorage.setItem('ai_slop_cleanups', JSON.stringify(cleanups));
-        alert('Cleanup initiated for ' + url + '! We will sanitize your site and contact you within 24 hours.');
-    }
+function aiSlopClean(event) {
+    event.preventDefault();
+    const email = prompt('Enter your email:');
+    processCharvakPayment(email, 149, 'AI-Slop Clean', function() {
+        alert('✅ Site cleaning started!');
+    });
 }
 </script>
 {% include 'includes/premium-upsell.html' %}

@@ -34,15 +34,12 @@
     </div>
 </div>
 <script>
-function legacyMigrate(e){
-    e.preventDefault();
-    const url = prompt('Enter your website URL to migrate:');
-    if(url){
-        const migrations = JSON.parse(localStorage.getItem('legacy_migrations')||'[]');
-        migrations.push({url, plan: 'Full Migration (<span data-inr="19999">₹19,999</span>)', date: new Date().toISOString()});
-        localStorage.setItem('legacy_migrations', JSON.stringify(migrations));
-        alert('Migration initiated for ' + url + '! Our team will analyze your site and contact you within 24 hours.');
-    }
+function legacyMigrate(event) {
+    event.preventDefault();
+    const email = prompt('Enter your email:');
+    processCharvakPayment(email, 4999, 'Legacy Migration', function() {
+        alert('✅ Migration started!');
+    });
 }
 </script>
 {% include 'includes/premium-upsell.html' %}

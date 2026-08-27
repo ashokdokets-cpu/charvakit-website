@@ -33,15 +33,12 @@
     </div>
 </div>
 <script>
-function agentReadySignup(e){
-    e.preventDefault();
-    const url = prompt('Enter your website URL:');
-    if(url){
-        const signups = JSON.parse(localStorage.getItem('agent_ready_signups')||'[]');
-        signups.push({url, plan: 'Wrapper Install (<span data-inr="4999">₹4,999</span>)', date: new Date().toISOString()});
-        localStorage.setItem('agent_ready_signups', JSON.stringify(signups));
-        alert('Agent-Ready setup initiated for ' + url + '! We will install the wrapper and contact you within 24 hours.');
-    }
+function agentReadySignup(event) {
+    event.preventDefault();
+    const email = prompt('Enter your email:');
+    processCharvakPayment(email, 399, 'Agent-Ready Wrapper', function() {
+        alert('✅ Agent-Ready activated!');
+    });
 }
 </script>
 {% include 'includes/premium-upsell.html' %}
