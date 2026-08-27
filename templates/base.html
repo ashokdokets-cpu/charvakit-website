@@ -724,34 +724,33 @@ function processToolPayment(amount, toolName, callback) {
         const rzp = new Razorpay(options);
         rzp.open();
     } else if (currency !== 'INR') {
-    // PayPal - create real order
-    const usdAmount = (amount / 83).toFixed(2);
-    if (confirm('Proceed with PayPal payment of $' + usdAmount + ' for ' + toolName + '?')) {
-        fetch('/api/payment/create-order', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                amount: amount,
-                name: toolName,
-                method: 'paypal'
+        // PayPal - create real order
+        const usdAmount = (amount / 83).toFixed(2);
+        if (confirm('Proceed with PayPal payment of $' + usdAmount + ' for ' + toolName + '?')) {
+            fetch('/api/payment/create-order', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    amount: amount,
+                    name: toolName,
+                    method: 'paypal'
+                })
             })
-        })
-        .then(res => res.json())
-        .then(orderData => {
-            console.log('PayPal order:', orderData);
-            if (orderData.status === 'success' || orderData.order_id) {
-                // In production, redirect to PayPal checkout
-                callback(true, {paypal_order_id: orderData.order_id});
-            } else {
-                alert('PayPal order failed');
-            }
-        })
-        .catch(error => {
-            console.error('PayPal error:', error);
-            alert('PayPal payment failed');
-        });
-    }
-} else {
+            .then(res => res.json())
+            .then(orderData => {
+                console.log('PayPal order:', orderData);
+                if (orderData.status === 'success' || orderData.order_id) {
+                    callback(true, {paypal_order_id: orderData.order_id});
+                } else {
+                    alert('PayPal order failed');
+                }
+            })
+            .catch(error => {
+                console.error('PayPal error:', error);
+                alert('PayPal payment failed');
+            });
+        }
+    } else {
         // Demo fallback
         if (confirm('Pay ₹' + amount + ' for ' + toolName + '? (Demo Mode)')) {
             callback(true, {});
