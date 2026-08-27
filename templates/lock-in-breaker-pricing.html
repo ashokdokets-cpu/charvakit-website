@@ -94,13 +94,100 @@ function getStarted(e){
 
 function subscribeNow(e){
     e.preventDefault();
-    const name = prompt('Enter your company name:');
-    if(name){
-        const subscribers = JSON.parse(localStorage.getItem('lock_breaker_subscribers')||'[]');
-        subscribers.push({company: name, plan: 'Continuous Protection (<span data-inr="4999">₹4,999</span>/mo)', date: new Date().toISOString()});
-        localStorage.setItem('lock_breaker_subscribers', JSON.stringify(subscribers));
-        alert('Welcome aboard, ' + name + '! Your continuous protection plan is now active. We will contact you shortly.');
+    const email = prompt('Enter your business email:');
+    if(!email) return;
+    
+    const amount = 4999; // ₹4,999/month
+    
+    // Confirm subscription
+    if (!confirm('Subscribe to Continuous Protection Plan?\n\n₹4,999/month\n\nProceed to payment?')) {
+        return;
     }
+    
+    // Trigger Razorpay payment
+    fetch('/api/payment/create-order', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            amount: amount,
+            name: 'Lock-In Breaker Continuous Protection',
+            method: 'razorpay'
+        })
+    })
+    .then(res => res.json())
+    .then(orderData => {
+        if (orderData.status === 'success' || orderData.order_id) {
+            const options = {
+                key: orderData.key_id || window.charvak_razorpay_key,
+                amount: amount * 100, // Convert to paise
+                currency: 'INR',
+                name: 'Charvak IT Consulting',
+                description: 'Lock-In Breaker - Continuous Protection (Monthly)',
+                order_id: orderData.order_id,
+                handler: function(response) {
+                    // Verify payment
+                    fetch('/api/payment/verify', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            method: 'razorpay',
+                            payment_id: response.razorpay_payment_id,
+                            order_id: response.razorpay_order_id,
+                            signature: response.razorpay_signature
+                        })
+                    })
+                    .then(r => r.json())
+                    .then(v => {
+                        if (v.verified) {
+                            // Save subscription after payment
+                            const subscribers = JSON.parse(localStorage.getItem('lock_breaker_subscribers')||'[]');
+                            subscribers.push({
+                                company: email, 
+                                plan: 'Continuous Protection (₹4,999/mo)', 
+                                payment_id: response.razorpay_payment_id,
+                                date: new Date().toISOString()
+                            });
+                            localStorage.setItem('lock_breaker_subscribers', JSON.stringify(subscribers));
+                            
+                            alert('✅ Payment successful! Your continuous protection plan is now active.');
+                            
+                            // Send notification
+                            fetch('/api/notifications/send', {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify({
+                                    email: email,
+                                    template: 'purchase_confirmation',
+                                    params: {
+                                        plan_name: 'Lock-In Breaker Continuous Protection',
+                                        credits: 0
+                                    }
+                                })
+                            });
+                        } else {
+                            alert('Payment verification failed. Please contact support.');
+                        }
+                    });
+                },
+                prefill: {email: email},
+                theme: {color: '#3ba591'},
+                modal: {
+                    ondismiss: function() {
+                        alert('Payment cancelled. Subscription not activated.');
+                    }
+                }
+            };
+            
+            const rzp = new Razorpay(options);
+            rzp.open();
+        } else {
+            alert('Failed to create payment order. Please try again.');
+        }
+    })
+    .catch(error => {
+        console.error('Payment error:', error);
+        alert('Payment gateway error. Please try again.');
+    });
 }
 </script>
 {% endblock %}

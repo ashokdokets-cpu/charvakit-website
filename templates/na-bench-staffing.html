@@ -101,4 +101,128 @@
         <p class="text-muted">19 AI Models | 34 Languages | 13 Currencies | Dokets VouchAI Escrow</p>
     </div>
 </div>
+<script>
+// NA Bench Staffing - Payment Integration
+
+function registerAsClient(plan) {
+    const email = prompt('Enter your business email:');
+    if (!email) return;
+    
+    const planDetails = {
+        'starter': {name: 'Starter', price: 50, candidates: 10},
+        'growth': {name: 'Growth', price: 100, candidates: 25},
+        'pro': {name: 'Pro', price: 250, candidates: 100}
+    };
+    
+    const selectedPlan = planDetails[plan];
+    if (!selectedPlan) return;
+    
+    // Show plan confirmation
+    if (!confirm(`Subscribe to ${selectedPlan.name} Plan?\n\n$${selectedPlan.price}/month\n${selectedPlan.candidates} candidates\n\nProceed to payment?`)) {
+        return;
+    }
+    
+    // Trigger Razorpay payment
+    fetch('/api/payment/create-order', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            amount: selectedPlan.price * 83, // Convert USD to INR
+            name: 'NA ' + selectedPlan.name + ' Plan',
+            method: 'razorpay'
+        })
+    })
+    .then(res => res.json())
+    .then(orderData => {
+        if (orderData.status === 'success' || orderData.order_id) {
+            const options = {
+                key: orderData.key_id || window.charvak_razorpay_key,
+                amount: selectedPlan.price * 83 * 100, // Convert to paise
+                currency: 'INR',
+                name: 'Charvak IT',
+                description: `NA ${selectedPlan.name} - ${selectedPlan.candidates} candidates`,
+                order_id: orderData.order_id,
+                handler: function(response) {
+                    // Verify payment
+                    fetch('/api/payment/verify', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            method: 'razorpay',
+                            payment_id: response.razorpay_payment_id,
+                            order_id: response.razorpay_order_id,
+                            signature: response.razorpay_signature
+                        })
+                    })
+                    .then(r => r.json())
+                    .then(v => {
+                        if (v.verified) {
+                            // Activate NA subscription
+                            fetch('/api/na/revenue/subscribe', {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify({
+                                    email: email,
+                                    plan: selectedPlan.name,
+                                    amount: selectedPlan.price,
+                                    payment_id: response.razorpay_payment_id
+                                })
+                            })
+                            .then(r => r.json())
+                            .then(j => {
+                                alert(j.message || 'NA subscription activated!');
+                                // Redirect to client signup
+                                window.location.href = '/na-client-signup?plan=' + plan + '&email=' + email;
+                            });
+                        } else {
+                            alert('Payment verification failed');
+                        }
+                    });
+                },
+                prefill: {email: email},
+                theme: {color: '#3ba591'}
+            };
+            const rzp = new Razorpay(options);
+            rzp.open();
+        }
+    });
+}
+
+// Update the Register button to show plans first
+document.addEventListener('DOMContentLoaded', function() {
+    const registerBtn = document.querySelector('a[href="/na-client-signup"]');
+    if (registerBtn) {
+        registerBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            showNAPlans();
+        });
+    }
+});
+
+function showNAPlans() {
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
+    modal.innerHTML = `
+        <div class="bg-white p-4 rounded" style="max-width:500px;width:90%;">
+            <h4 class="mb-3">Choose Your NA Plan</h4>
+            <div class="list-group mb-3">
+                <button class="list-group-item list-group-item-action" onclick="registerAsClient('starter')">
+                    <strong>Starter</strong> - $50/mo<br>
+                    <small>10 candidates</small>
+                </button>
+                <button class="list-group-item list-group-item-action" onclick="registerAsClient('growth')">
+                    <strong>Growth</strong> - $100/mo<br>
+                    <small>25 candidates</small>
+                </button>
+                <button class="list-group-item list-group-item-action" onclick="registerAsClient('pro')">
+                    <strong>Pro</strong> - $250/mo<br>
+                    <small>100 candidates</small>
+                </button>
+            </div>
+            <button class="btn btn-secondary w-100" onclick="this.closest('div[style]').parentElement.remove()">Cancel</button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+</script>
 {% endblock %}
