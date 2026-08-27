@@ -49,7 +49,7 @@ class PaymentEngine:
             "razorpay_key_id": self.razorpay_key_id
         }
 
-    def create_razorpay_order(self, amount_inr: int, receipt: str, notes: Dict = None) -> Dict:
+        def create_razorpay_order(self, amount_inr: int, receipt: str, notes: Dict = None) -> Dict:
         """Create a Razorpay order."""
         if not self.razorpay_key_id:
             return {"status": "error", "message": "Razorpay not configured"}
@@ -71,29 +71,30 @@ class PaymentEngine:
                 "order_id": order_id,
                 "amount": amount_inr,
                 "currency": "INR",
-                "key_id": self.razorpay_key_id
+                "key_id": self.razorpay_key_id,
+                "key": self.razorpay_key_id
             }
 
-try:
-    import requests
-    response = requests.post(
-        "https://api.razorpay.com/v1/orders",
-        auth=(self.razorpay_key_id, self.razorpay_key_secret),
-        json={"amount": amount_inr, "currency": "INR", "receipt": receipt, "notes": notes or {}}
-    )
-    data = response.json()
-    self._save_payment({
-        "order_id": data.get("id"),
-        "amount": amount_inr,
-        "currency": "INR",
-        "method": "razorpay",
-        "status": "created",
-        "notes": notes or {}
-    })
-    # ADD KEY TO LIVE MODE RESPONSE
-    data["key_id"] = self.razorpay_key_id
-    data["key"] = self.razorpay_key_id
-    return {"status": "success", **data}
+        try:
+            import requests
+            response = requests.post(
+                "https://api.razorpay.com/v1/orders",
+                auth=(self.razorpay_key_id, self.razorpay_key_secret),
+                json={"amount": amount_inr, "currency": "INR", "receipt": receipt, "notes": notes or {}}
+            )
+            data = response.json()
+            self._save_payment({
+                "order_id": data.get("id"),
+                "amount": amount_inr,
+                "currency": "INR",
+                "method": "razorpay",
+                "status": "created",
+                "notes": notes or {}
+            })
+            # ADD KEY TO LIVE MODE RESPONSE
+            data["key_id"] = self.razorpay_key_id
+            data["key"] = self.razorpay_key_id
+            return {"status": "success", **data}
         except Exception as e:
             logger.error(f"Razorpay order creation failed: {e}")
             return {"status": "error", "message": str(e)}
