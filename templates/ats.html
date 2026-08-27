@@ -79,4 +79,14 @@ async function connectATS(e) {
     msg.style.display = 'block';
 }
 </script>
+<script>
+function connectATS(event) {
+    event.preventDefault();
+    const email = prompt('Enter your business email:');
+    if (!email) return;
+    processCharvakPayment(email, 999, 'ATS Integration', function(response) {
+        alert('✅ ATS integration started!');
+    });
+}
+</script>
 {% endblock %}

@@ -105,4 +105,14 @@ async function getMyReports(e) {
         : '<p class="text-muted">No reports found</p>';
 }
 </script>
+<script>
+function generateReport(event) {
+    event.preventDefault();
+    const email = prompt('Enter your email:');
+    if (!email) return;
+    processCharvakPayment(email, 299, 'Premium Report', function(response) {
+        alert('✅ Report generated!');
+    });
+}
+</script>
 {% endblock %}

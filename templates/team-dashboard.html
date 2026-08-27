@@ -60,4 +60,14 @@ async function createTeam(e){e.preventDefault();const d={company_name:document.g
 async function inviteMember(e){e.preventDefault();const d={team_id:document.getElementById('memberTeamId').value,name:document.getElementById('memberName').value,email:document.getElementById('memberEmail').value,role:'recruiter'};const r=await fetch('/api/team/invite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});const j=await r.json();show(j.message);}
 function show(m){document.getElementById('teamOutput').innerHTML='<div class="alert alert-success">'+m+'</div>';}
 </script>
+<script>
+function upgradeTeam(event) {
+    event.preventDefault();
+    const email = prompt('Enter your email:');
+    if (!email) return;
+    processCharvakPayment(email, 1999, 'Team Dashboard Pro', function(response) {
+        alert('✅ Team Pro activated!');
+    });
+}
+</script>
 {% endblock %}

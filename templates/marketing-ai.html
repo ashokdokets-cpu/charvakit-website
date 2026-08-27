@@ -90,4 +90,14 @@ async function generateSocialPost(e) {
     document.getElementById('socialPostOutput').innerHTML = `<div class="p-3 bg-light rounded"><pre style="white-space:pre-wrap;font-size:14px;">${result.post_text}</pre></div>`;
 }
 </script>
+<script>
+function generateMarketing(event) {
+    event.preventDefault();
+    const email = prompt('Enter your email:');
+    if (!email) return;
+    processCharvakPayment(email, 299, 'Marketing AI', function(response) {
+        alert('✅ Marketing content generated!');
+    });
+}
+</script>
 {% endblock %}

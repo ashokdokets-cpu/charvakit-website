@@ -162,4 +162,14 @@ async function requestPayout(e){e.preventDefault();const d={trainer_email:docume
 async function searchCourses(e){e.preventDefault();const q=document.getElementById('searchQuery').value;const r=await fetch('/api/lms/search?query='+q);const j=await r.json();showOutput(j.count+' courses found');}
 function showOutput(msg){document.getElementById('lmsOutput').innerHTML='<div class="alert alert-success">'+msg+'</div>';}
 </script>
+<script>
+function enrollCourse(event) {
+    event.preventDefault();
+    const email = prompt('Enter your email:');
+    if (!email) return;
+    processCharvakPayment(email, 999, 'LMS Course Enrollment', function(response) {
+        alert('✅ Course enrollment confirmed!');
+    });
+}
+</script>
 {% endblock %}

@@ -88,4 +88,14 @@ async function registerUniversity(e) {
     msg.style.display = 'block';
 }
 </script>
+<script>
+function registerUniversity(event) {
+    event.preventDefault();
+    const email = prompt('Enter university email:');
+    if (!email) return;
+    processCharvakPayment(email, 4999, 'University Portal', function(response) {
+        alert('✅ University portal activated!');
+    });
+}
+</script>
 {% endblock %}

@@ -103,4 +103,14 @@ async function createEvent(e) {
     location.reload();
 }
 </script>
+<script>
+function registerForEvent(event) {
+    event.preventDefault();
+    const email = prompt('Enter your email:');
+    if (!email) return;
+    processCharvakPayment(email, 499, 'Event Registration', function(response) {
+        alert('✅ Event registration confirmed!');
+    });
+}
+</script>
 {% endblock %}
