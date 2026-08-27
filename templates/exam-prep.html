@@ -1,0 +1,312 @@
+{% extends "base.html" %}
+{% block title %}Global Exam Preparation Center - Charvak{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4 text-center">
+        <h1 class="display-4 fw-bold">🌍 Global Exam Preparation Center</h1>
+        <p class="lead">Practice 83+ competitive exams across 8 categories. AI-powered. Real-time analytics.</p>
+        <div class="mt-3">
+            <span class="badge bg-warning text-dark me-2">83+ Exams</span>
+            <span class="badge bg-success me-2">8 Categories</span>
+            <span class="badge bg-info me-2">AI-Powered</span>
+            <span class="badge bg-primary">13 Currencies</span>
+        </div>
+    </div>
+</div>
+
+<div class="container py-5">
+    <!-- Subscription Plans -->
+    <div class="row mb-5">
+        <div class="col-md-4">
+            <div class="card h-100 text-center border-0 shadow-sm">
+                <div class="card-body">
+                    <h5>🆓 Free</h5>
+                    <h2>₹0</h2>
+                    <p class="text-muted small">10 questions/day<br>1 mock test/week</p>
+                    <button class="btn btn-outline-primary btn-sm" onclick="subscribeExam('free')">Start Free</button>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 text-center border-primary bg-primary text-white shadow">
+                <div class="card-body">
+                    <h5>⭐ Student Pro</h5>
+                    <h2>₹99/mo</h2>
+                    <p class="small">Unlimited practice<br>5 mock tests/week<br>Detailed analytics</p>
+                    <button class="btn btn-light btn-sm" onclick="subscribeExam('pro')">Subscribe Pro</button>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 text-center border-0 shadow-sm">
+                <div class="card-body">
+                    <h5>👑 Premium</h5>
+                    <h2>₹499/mo</h2>
+                    <p class="text-muted small">AI-personalized<br>Unlimited mock tests<br>Interview prep + GD</p>
+                    <button class="btn btn-outline-primary btn-sm" onclick="subscribeExam('premium')">Subscribe Premium</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Categories -->
+    <h3 class="text-center mb-4">Choose Your Exam Category</h3>
+    <div class="row g-4" id="examCategories">
+        <div class="col-12 text-center text-muted">Loading categories...</div>
+    </div>
+
+    <!-- Exam Listing -->
+    <div class="mt-5" id="examListing"></div>
+
+    <!-- Practice Area -->
+    <div class="mt-5" id="practiceArea"></div>
+
+    <!-- Mock Test Area -->
+    <div class="mt-5" id="mockTestArea"></div>
+
+    <!-- User Progress -->
+    <div class="mt-5" id="progressArea"></div>
+</div>
+
+<script>
+let userEmail = localStorage.getItem('userEmail') || 'demo@charvakit.com';
+let currentExam = null;
+let currentPlan = localStorage.getItem('exam_plan') || 'free';
+
+// ============================================================
+// SUBSCRIPTION
+// ============================================================
+function subscribeExam(plan) {
+    const email = prompt('Enter your email:');
+    if (!email) return;
+    
+    if (plan === 'free') {
+        localStorage.setItem('exam_plan', 'free');
+        localStorage.setItem('userEmail', email);
+        alert('✅ Free plan activated!');
+        loadCategories();
+        return;
+    }
+    
+    const planDetails = {
+        'pro': {name: 'Student Pro', price: 99},
+        'premium': {name: 'Premium', price: 499}
+    };
+    
+    const selected = planDetails[plan];
+    processCharvakPayment(email, selected.price, 'Exam Prep ' + selected.name, function(response) {
+        localStorage.setItem('exam_plan', plan);
+        localStorage.setItem('userEmail', email);
+        alert('✅ ' + selected.name + ' activated!');
+        loadCategories();
+    });
+}
+
+// ============================================================
+// LOAD CATEGORIES
+// ============================================================
+async function loadCategories() {
+    try {
+        const response = await fetch('/api/exam/categories');
+        const data = await response.json();
+        displayCategories(data.categories);
+    } catch (error) {
+        console.error('Error loading categories:', error);
+    }
+}
+
+function displayCategories(categories) {
+    const container = document.getElementById('examCategories');
+    container.innerHTML = '';
+    
+    categories.forEach(cat => {
+        const col = document.createElement('div');
+        col.className = 'col-md-3 col-sm-6';
+        col.innerHTML = `
+            <div class="card h-100 text-center shadow-sm" style="cursor:pointer;" onclick="loadExams('${cat.id}')">
+                <div class="card-body">
+                    <div style="font-size:48px;">${cat.icon}</div>
+                    <h6 class="mt-2">${cat.name}</h6>
+                    <span class="badge bg-primary">${cat.exam_count} Exams</span>
+                </div>
+            </div>
+        `;
+        container.appendChild(col);
+    });
+}
+
+// ============================================================
+// LOAD EXAMS BY CATEGORY
+// ============================================================
+async function loadExams(categoryId) {
+    try {
+        const response = await fetch(`/api/exam/category/${categoryId}`);
+        const data = await response.json();
+        displayExams(data);
+    } catch (error) {
+        console.error('Error loading exams:', error);
+    }
+}
+
+function displayExams(data) {
+    const container = document.getElementById('examListing');
+    container.innerHTML = `
+        <h4>${data.icon} ${data.category}</h4>
+        <div class="row g-3">
+            ${data.exams.map(exam => `
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h6>${exam.name}</h6>
+                            <small class="text-muted">${exam.full_name}</small>
+                            <p class="small mt-2 mb-1"><strong>Tier:</strong> ${exam.tier}</p>
+                            <p class="small mb-1"><strong>Sections:</strong> ${exam.sections.join(', ')}</p>
+                            <p class="small mb-2"><strong>Questions:</strong> ${exam.questions} | <strong>Duration:</strong> ${exam.duration}</p>
+                            <button class="btn btn-primary btn-sm w-100 mb-1" onclick="startPractice('${exam.id}')">Practice</button>
+                            <button class="btn btn-outline-primary btn-sm w-100" onclick="startMockTest('${exam.id}')">Mock Test</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+// ============================================================
+// PRACTICE
+// ============================================================
+async function startPractice(examId) {
+    currentExam = examId;
+    const topic = prompt('Enter topic to practice (e.g., Reasoning, Quant, English):');
+    if (!topic) return;
+    
+    const container = document.getElementById('practiceArea');
+    container.innerHTML = '<p class="text-center">Loading questions...</p>';
+    
+    try {
+        const response = await fetch('/api/exam/questions', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({exam_id: examId, topic: topic, count: 10})
+        });
+        const data = await response.json();
+        displayQuestions(data.questions, examId, topic);
+    } catch (error) {
+        console.error('Error:', error);
+        container.innerHTML = '<p class="text-danger text-center">Error loading questions</p>';
+    }
+}
+
+function displayQuestions(questions, examId, topic) {
+    const container = document.getElementById('practiceArea');
+    container.innerHTML = `
+        <h5>📝 Practice: ${topic}</h5>
+        <div class="list-group">
+            ${questions.map((q, i) => `
+                <div class="list-group-item">
+                    <p class="mb-2"><strong>Q${i+1}.</strong> ${q.question}</p>
+                    ${q.options.map((opt, j) => `
+                        <label class="d-block">
+                            <input type="radio" name="q${i}" value="${j}"> ${opt}
+                        </label>
+                    `).join('')}
+                    <button class="btn btn-sm btn-outline-success mt-2" onclick="checkAnswer(${i}, ${q.correct})">Check Answer</button>
+                    <span id="answer${i}" class="ms-2"></span>
+                </div>
+            `).join('')}
+        </div>
+        <button class="btn btn-primary mt-3" onclick="submitPractice('${examId}', '${topic}', ${questions.length})">Submit Practice</button>
+    `;
+}
+
+function checkAnswer(questionIndex, correctAnswer) {
+    const selected = document.querySelector(`input[name="q${questionIndex}"]:checked`);
+    const answerSpan = document.getElementById(`answer${questionIndex}`);
+    
+    if (!selected) {
+        answerSpan.innerHTML = '<span class="text-warning">Select an answer</span>';
+        return;
+    }
+    
+    if (parseInt(selected.value) === correctAnswer) {
+        answerSpan.innerHTML = '<span class="text-success">✅ Correct!</span>';
+    } else {
+        answerSpan.innerHTML = '<span class="text-danger">❌ Incorrect</span>';
+    }
+}
+
+function submitPractice(examId, topic, totalQuestions) {
+    // Track progress
+    const progress = JSON.parse(localStorage.getItem('exam_progress') || '{}');
+    const key = `${examId}_${topic}`;
+    progress[key] = (progress[key] || 0) + totalQuestions;
+    localStorage.setItem('exam_progress', JSON.stringify(progress));
+    
+    alert('✅ Practice submitted! Progress saved.');
+    loadProgress();
+}
+
+// ============================================================
+// MOCK TEST
+// ============================================================
+async function startMockTest(examId) {
+    const container = document.getElementById('mockTestArea');
+    container.innerHTML = '<p class="text-center">Starting mock test...</p>';
+    
+    try {
+        const response = await fetch('/api/exam/mock-test', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({exam_id: examId, email: userEmail})
+        });
+        const data = await response.json();
+        
+        container.innerHTML = `
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h5>⏱️ Mock Test Started!</h5>
+                    <p>Test ID: ${data.test_id}</p>
+                    <p>Exam: ${data.exam_id}</p>
+                    <p>Started: ${new Date(data.started_at).toLocaleString()}</p>
+                    <button class="btn btn-primary" onclick="alert('Mock test interface coming soon!')">Begin Test</button>
+                </div>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+// ============================================================
+// USER PROGRESS
+// ============================================================
+function loadProgress() {
+    const container = document.getElementById('progressArea');
+    const progress = JSON.parse(localStorage.getItem('exam_progress') || '{}');
+    
+    const keys = Object.keys(progress);
+    if (keys.length === 0) {
+        container.innerHTML = '<p class="text-muted text-center">No practice yet. Start practicing!</p>';
+        return;
+    }
+    
+    container.innerHTML = `
+        <h5>📊 Your Progress</h5>
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead><tr><th>Exam/Topic</th><th>Questions Practiced</th></tr></thead>
+                <tbody>
+                    ${keys.map(key => `<tr><td>${key.replace('_', ' - ')}</td><td>${progress[key]}</td></tr>`).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    loadCategories();
+    loadProgress();
+});
+</script>
+{% endblock %}
