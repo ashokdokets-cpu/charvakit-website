@@ -64,54 +64,6 @@
         </div></div>
     </div>
 </div>
-
-<script>
-async function startFree(e){
-    e.preventDefault();
-    const name = prompt('Enter your business name:');
-    if(!name) return;
-    const email = prompt('Enter your email (to send your website link):');
-    if(!email) return;
-    const phone = prompt('Enter your WhatsApp number (for support):');
-    try {
-        await fetch('/api/contact', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,email:email,phone:phone||'',subject:'Voice-to-Web Free Signup',message:'Business: '+name+'\nEmail: '+email+'\nWhatsApp: '+(phone||'Not provided')})});
-    } catch(err) {}
-    alert('Great, '+name+'! Your free website will be sent to '+email+'. Check your inbox!');
-}
-
-async function getPro(e){
-    e.preventDefault();
-    const name = prompt('Enter your full name:');
-    if(!name) return;
-    const email = prompt('Enter your email (for account setup):');
-    if(!email) return;
-    const phone = prompt('Enter your WhatsApp number (for priority support):');
-    try {
-        await fetch('/api/contact', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,email:email,phone:phone||'',subject:'Voice-to-Web Pro Signup',message:'Pro user: '+name+'\nEmail: '+email+'\nWhatsApp: '+(phone||'Not provided')})});
-    } catch(err) {}
-    alert('Welcome to Pro, '+name+'! Your account will be set up at '+email+'. We will contact you shortly.');
-}
-
-async function submitBeta(e) {
-    e.preventDefault();
-    const data = {
-        name: document.getElementById('betaName').value,
-        email: document.getElementById('betaEmail').value,
-        phone: document.getElementById('betaPhone').value,
-        subject: 'Voice-to-Web Beta Signup',
-        message: 'Beta signup for Voice-to-Web Engine. WhatsApp: ' + document.getElementById('betaPhone').value
-    };
-    try {
-        const r = await fetch('/api/contact', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
-        document.getElementById('betaMsg').textContent = '✅ Beta access requested! We will contact you.';
-        document.getElementById('betaMsg').style.display = 'block';
-        document.querySelector('form').reset();
-    } catch(err) {
-        document.getElementById('betaMsg').textContent = '✅ Beta access requested! We will contact you soon.';
-        document.getElementById('betaMsg').style.display = 'block';
-    }
-}
-</script>
 <script>
 // Voice-to-Web - Complete Integration
 
