@@ -85,6 +85,7 @@ from ai_credit_engine import ai_credit_engine
 from notification_engine import notification_engine
 from voice_to_web_engine import voice_to_web_engine
 from exam_prep_engine import exam_prep_engine
+from global_exams_engine import global_exams_engine
 
 
 
@@ -4160,12 +4161,15 @@ async def start_mock_test(request: Request):
         email=data.get("email")
     )
 
-# ============================================================
-# END OF ROUTES
-# ============================================================
+@app.get("/api/global-exam/categories")
+async def global_exam_categories():
+    """Get all global exam categories."""
+    return global_exams_engine.get_all_categories()
 
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+@app.get("/api/global-exam/category/{category_id}")
+async def global_exam_by_category(category_id: str):
+    """Get global exams by category."""
+    return global_exams_engine.get_exams_by_category(category_id)
 
 # ============================================================
 # UTILITY ENDPOINTS
@@ -4232,4 +4236,11 @@ async def global_exception_handler(request: Request, exc: Exception):
         status_code=500,
         content={"status": "error", "message": "An unexpected error occurred. Our team has been notified."}
     )
+
+# ============================================================
+# END OF ROUTES
+# ============================================================
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
 
