@@ -3643,6 +3643,11 @@ async def ai_bridge_stats():
 async def ai_assessment_page(request: Request):
     return template_response("ai-bridge.html", request, "AI Career Assessment - Charvak IT Consulting")
 
+@app.get("/bridge", response_class=HTMLResponse)
+async def bridge_page(request: Request):
+    """Bridge career journey page."""
+    return template_response("bridge.html", request, "Bridge - Career Journey - Charvak IT Consulting")
+
 # Student Suite
 
 @app.post("/api/student/subscribe")
