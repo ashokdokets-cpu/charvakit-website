@@ -72,12 +72,112 @@
 </div>
 
 <script>
-async function subscribeBundle(bundle) {
-    const email = prompt('Enter your email:');
+function subscribeBundle(plan) {
+    const email = prompt('Enter your business email:');
     if (!email) return;
-    const r = await fetch('/api/doketsrb/bundle', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,bundle:bundle})});
-    const j = await r.json();
-    alert(j.message || 'Subscribed!');
+    
+    const bundlePrices = {
+        'basic': {name: 'Basic Bundle', price: 999, features: 'Core DoketsRB features'},
+        'pro': {name: 'Pro Bundle', price: 2499, features: 'Advanced features + Priority support'},
+        'enterprise': {name: 'Enterprise Bundle', price: 4999, features: 'Full suite + Dedicated support'}
+    };
+    
+    const selectedPlan = bundlePrices[plan];
+    if (!selectedPlan) return;
+    
+    // Confirm subscription
+    if (!confirm('Subscribe to ' + selectedPlan.name + '?\n\n₹' + selectedPlan.price + '/month\n' + selectedPlan.features + '\n\nProceed to payment?')) {
+        return;
+    }
+    
+    // Trigger Razorpay payment
+    fetch('/api/payment/create-order', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            amount: selectedPlan.price,
+            name: 'DoketsRB ' + selectedPlan.name,
+            method: 'razorpay'
+        })
+    })
+    .then(res => res.json())
+    .then(orderData => {
+        if (orderData.status === 'success' || orderData.order_id) {
+            const options = {
+                key: orderData.key_id || window.charvak_razorpay_key,
+                amount: selectedPlan.price * 100,
+                currency: 'INR',
+                name: 'Charvak IT Consulting',
+                description: 'DoketsRB ' + selectedPlan.name + ' - ' + selectedPlan.features,
+                order_id: orderData.order_id,
+                handler: function(response) {
+                    // Verify payment
+                    fetch('/api/payment/verify', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            method: 'razorpay',
+                            payment_id: response.razorpay_payment_id,
+                            order_id: response.razorpay_order_id,
+                            signature: response.razorpay_signature
+                        })
+                    })
+                    .then(r => r.json())
+                    .then(v => {
+                        if (v.verified) {
+                            // Activate bundle after payment
+                            fetch('/api/doketsrb/bundle', {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify({
+                                    email: email,
+                                    bundle: plan,
+                                    payment_id: response.razorpay_payment_id
+                                })
+                            })
+                            .then(r => r.json())
+                            .then(j => {
+                                alert('✅ ' + (j.message || selectedPlan.name + ' activated!'));
+                                localStorage.setItem('doketsrb_bundle', plan);
+                                updateBundleUI(plan);
+                            });
+                        } else {
+                            alert('Payment verification failed. Please contact support.');
+                        }
+                    });
+                },
+                prefill: {email: email},
+                theme: {color: '#3ba591'},
+                modal: {
+                    ondismiss: function() {
+                        alert('Payment cancelled. Bundle not activated.');
+                    }
+                }
+            };
+            
+            const rzp = new Razorpay(options);
+            rzp.open();
+        } else {
+            alert('Failed to create payment order. Please try again.');
+        }
+    })
+    .catch(error => {
+        console.error('Payment error:', error);
+        alert('Payment gateway error. Please try again.');
+    });
+}
+
+function updateBundleUI(plan) {
+    // Update all bundle buttons
+    const buttons = document.querySelectorAll('[onclick^="subscribeBundle"]');
+    buttons.forEach(button => {
+        const buttonPlan = button.getAttribute('onclick').match(/'([^']+)'/)[1];
+        if (buttonPlan === plan) {
+            button.textContent = '✅ Active';
+            button.disabled = true;
+            button.className = 'btn btn-success btn-sm';
+        }
+    });
 }
 </script>
 {% endblock %}
