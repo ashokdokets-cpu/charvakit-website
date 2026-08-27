@@ -155,94 +155,71 @@ async function calcRevenue(e) {
 }
 
 function premiumCalculator() {
-    alert('🔓 Advanced Calculator Features:\n\n✅ Multiple cohort comparison\n✅ PDF export reports\n✅ White-label dashboard\n✅ API access\n\nPrice: <span data-inr="4999">₹4,999</span>/month\n\nContact hr@charvakit.com to subscribe!');
-}
-</script>
-
-<script>
-let currentSessionId = null;
-let currentQuestion = null;
-let answeredCount = 0;
-
-async function startJourney() {
-    const r = await fetch('/api/bridge/start', {method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
-    const j = await r.json();
-    currentSessionId = j.session_id;
-    currentQuestion = j.first_question;
-    answeredCount = 0;
-    showQuestion(currentQuestion);
-}
-
-function showQuestion(question) {
-    document.getElementById('journeyOutput').innerHTML = `
-        <div class="card border-0 shadow-sm p-3">
-            <div class="mb-2"><small class="text-muted">Question ${answeredCount + 1} of 5</small></div>
-            <h6>${question.prompt}</h6>
-            ${question.options.map((opt, i) => `
-                <button class="btn btn-outline-primary btn-sm w-100 mb-2" onclick="answerQuestion('${question.id}', ${i})">
-                    ${opt}
-                </button>
-            `).join('')}
-        </div>
-    `;
-}
-
-async function answerQuestion(questionId, answerIndex) {
-    const data = {
-        session_id: currentSessionId,
-        question_id: questionId,
-        answer_index: answerIndex
-    };
-    const r = await fetch('/api/bridge/answer', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
-    const j = await r.json();
-    answeredCount++;
+    const email = prompt('Enter your email:');
+    if (!email) return;
     
-    if (j.complete) {
-        document.getElementById('journeyOutput').innerHTML = `
-            <div class="alert alert-success">
-                <h5>✅ Assessment Complete!</h5>
-                <p>Your Readiness Score: <strong>${j.readiness}/100</strong></p>
-                <hr>
-                <h6>Skill Breakdown:</h6>
-                ${j.radar_data.radar.map(c => `
-                    <div class="d-flex justify-content-between">
-                        <span>${c.category}</span>
-                        <strong>${c.score}</strong>
-                    </div>
-                `).join('')}
-                <button class="btn btn-primary btn-sm mt-3" onclick="startJourney()">Retake Assessment</button>
-            </div>
-        `;
-    } else {
-        showQuestion(j.next_question);
+    const amount = 4999;
+    
+    if (!confirm('Unlock Advanced Calculator Features?\n\n₹4,999/month\n\n✅ Multiple cohort comparison\n✅ PDF export reports\n✅ White-label dashboard\n✅ API access\n\nProceed to payment?')) {
+        return;
     }
-}
-
-async function calcRevenue(e) {
-    e.preventDefault();
-    const data = {
-        students: parseInt(document.getElementById('students').value),
-        placement_rate: parseFloat(document.getElementById('placement').value),
-        avg_salary: parseFloat(document.getElementById('salary').value),
-        isa_percent: parseFloat(document.getElementById('isaPercent').value),
-        isa_months: parseInt(document.getElementById('isaMonths').value)
-    };
-    const r = await fetch('/api/bridge/revenue', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
-    const j = await r.json();
-    const streams = j.revenue_streams;
-    document.getElementById('revenueOutput').innerHTML = 
-        '<div class="alert alert-success">' +
-        'ISA: ₹' + streams.isa.amount.toLocaleString('en-IN') + '<br>' +
-        'Corporate: ₹' + streams.corporate.amount.toLocaleString('en-IN') + '<br>' +
-        'Licensing: ₹' + streams.licensing.amount.toLocaleString('en-IN') + '<br>' +
-        'Premium: ₹' + streams.premium.amount.toLocaleString('en-IN') + '<br>' +
-        '<hr><strong>Total: ₹' + j.total.toLocaleString('en-IN') + '</strong><br>' +
-        '<small>Per Student: ₹' + j.per_student.toLocaleString('en-IN') + '</small>' +
-        '</div>';
-}
-
-function premiumCalculator() {
-    alert('🔓 Advanced Calculator Features:\n\n✅ Multiple cohort comparison\n✅ PDF export reports\n✅ White-label dashboard\n✅ API access\n\nPrice: <span data-inr="4999">₹4,999</span>/month\n\nContact hr@charvakit.com to subscribe!');
+    
+    fetch('/api/payment/create-order', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            amount: amount,
+            name: 'Bridge Premium Calculator',
+            method: 'razorpay'
+        })
+    })
+    .then(res => res.json())
+    .then(orderData => {
+        if (orderData.status === 'success' || orderData.order_id) {
+            const options = {
+                key: orderData.key_id || window.charvak_razorpay_key,
+                amount: amount * 100,
+                currency: 'INR',
+                name: 'Charvak IT Consulting',
+                description: 'Bridge Premium Calculator (Monthly)',
+                order_id: orderData.order_id,
+                handler: function(response) {
+                    fetch('/api/payment/verify', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            method: 'razorpay',
+                            payment_id: response.razorpay_payment_id,
+                            order_id: response.razorpay_order_id,
+                            signature: response.razorpay_signature
+                        })
+                    })
+                    .then(r => r.json())
+                    .then(v => {
+                        if (v.verified) {
+                            fetch('/api/bridge/premium', {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify({
+                                    email: email,
+                                    payment_id: response.razorpay_payment_id
+                                })
+                            })
+                            .then(r => r.json())
+                            .then(j => {
+                                alert('✅ ' + (j.message || 'Premium Calculator unlocked!'));
+                                localStorage.setItem('bridge_premium', 'active');
+                            });
+                        }
+                    });
+                },
+                prefill: {email: email},
+                theme: {color: '#3ba591'}
+            };
+            const rzp = new Razorpay(options);
+            rzp.open();
+        }
+    });
 }
 </script>
 {% endblock %}
