@@ -91,34 +91,98 @@
 <script>
 async function createAssessment(e) {
     e.preventDefault();
-    const data = {
-        language: document.getElementById('langSelect').value,
-        skill: document.getElementById('skillInput').value,
-        difficulty: document.getElementById('difficultySelect').value
-    };
-    const resp = await fetch('/api/indian-languages/assessment', {
-        method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)
+    
+    const email = prompt('Enter your email:');
+    if (!email) return;
+    
+    const language = document.getElementById('langSelect').value;
+    const skill = document.getElementById('skillInput').value;
+    const difficulty = document.getElementById('difficultySelect').value;
+    
+    if (!skill) {
+        alert('Please enter a skill');
+        return;
+    }
+    
+    // Trigger payment first (₹99 per assessment)
+    processCharvakPayment(email, 99, 'Indian Language Assessment', function(response) {
+        // After payment, call API
+        fetch('/api/indian-languages/assessment', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                language: language,
+                skill: skill,
+                difficulty: difficulty,
+                email: email,
+                payment_id: response.razorpay_payment_id || response.paypal_order_id || 'paid'
+            })
+        })
+        .then(resp => resp.json())
+        .then(result => {
+            if (result.assessment) {
+                document.getElementById('assessmentOutput').innerHTML = 
+                    `<div class="p-3 bg-light rounded"><strong>${result.assessment.native_name} Assessment Created!</strong><br>` +
+                    `Questions: ${result.assessment.total_questions}<br>Skill: ${result.assessment.skill}</div>`;
+            } else {
+                document.getElementById('assessmentOutput').innerHTML = 
+                    `<div class="p-3 bg-light rounded text-danger">Assessment creation failed</div>`;
+            }
+        })
+        .catch(error => {
+            console.error('Assessment error:', error);
+            document.getElementById('assessmentOutput').innerHTML = 
+                `<div class="p-3 bg-light rounded text-danger">Error creating assessment</div>`;
+        });
     });
-    const result = await resp.json();
-    document.getElementById('assessmentOutput').innerHTML = 
-        `<div class="p-3 bg-light rounded"><strong>${result.assessment.native_name} Assessment Created!</strong><br>` +
-        `Questions: ${result.assessment.total_questions}<br>Skill: ${result.assessment.skill}</div>`;
 }
 
 async function translateJobAd(e) {
     e.preventDefault();
-    const data = {
-        language: document.getElementById('translateLang').value,
-        job_title: document.getElementById('jobTitleInput').value,
-        company: document.getElementById('companyInput').value,
-        location: document.getElementById('locationInput').value
-    };
-    const resp = await fetch('/api/indian-languages/translate', {
-        method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)
+    
+    const email = prompt('Enter your email:');
+    if (!email) return;
+    
+    const language = document.getElementById('translateLang').value;
+    const job_title = document.getElementById('jobTitleInput').value;
+    const company = document.getElementById('companyInput').value;
+    const location = document.getElementById('locationInput').value;
+    
+    if (!job_title || !company || !location) {
+        alert('Please fill all job ad fields');
+        return;
+    }
+    
+    // Trigger payment first (₹99 per translation)
+    processCharvakPayment(email, 99, 'Job Ad Translation', function(response) {
+        fetch('/api/indian-languages/translate', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                language: language,
+                job_title: job_title,
+                company: company,
+                location: location,
+                email: email,
+                payment_id: response.razorpay_payment_id || response.paypal_order_id || 'paid'
+            })
+        })
+        .then(resp => resp.json())
+        .then(result => {
+            if (result.translated_ad) {
+                document.getElementById('translationOutput').innerHTML = 
+                    `<div class="p-3 bg-light rounded"><pre style="white-space:pre-wrap;font-size:14px;">${result.translated_ad}</pre></div>`;
+            } else {
+                document.getElementById('translationOutput').innerHTML = 
+                    `<div class="p-3 bg-light rounded text-danger">Translation failed</div>`;
+            }
+        })
+        .catch(error => {
+            console.error('Translation error:', error);
+            document.getElementById('translationOutput').innerHTML = 
+                `<div class="p-3 bg-light rounded text-danger">Error translating</div>`;
+        });
     });
-    const result = await resp.json();
-    document.getElementById('translationOutput').innerHTML = 
-        `<div class="p-3 bg-light rounded"><pre style="white-space:pre-wrap;font-size:14px;">${result.translated_ad}</pre></div>`;
 }
 </script>
 <script>
