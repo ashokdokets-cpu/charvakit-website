@@ -13,12 +13,12 @@ import secrets
 
 logger = logging.getLogger("charvakit.payments")
 
-RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID", "")
+RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID", "rzp_live_TSniXv6CyEnZ9B")
 RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET", "")
 PAYPAL_CLIENT_ID = os.getenv("PAYPAL_CLIENT_ID", "")
 PAYPAL_CLIENT_SECRET = os.getenv("PAYPAL_CLIENT_SECRET", "")
 UPI_ID = os.getenv("UPI_ID", "charvakit@upi")
-PAYMENT_MODE = os.getenv("PAYMENT_MODE", "test")
+PAYMENT_MODE = os.getenv("PAYMENT_MODE", "live")
 
 
 class PaymentEngine:
@@ -49,7 +49,7 @@ class PaymentEngine:
             "razorpay_key_id": self.razorpay_key_id
         }
 
-        def create_razorpay_order(self, amount_inr: int, receipt: str, notes: Dict = None) -> Dict:
+    def create_razorpay_order(self, amount_inr: int, receipt: str, notes: Dict = None) -> Dict:
         """Create a Razorpay order."""
         if not self.razorpay_key_id:
             return {"status": "error", "message": "Razorpay not configured"}
@@ -91,7 +91,6 @@ class PaymentEngine:
                 "status": "created",
                 "notes": notes or {}
             })
-            # ADD KEY TO LIVE MODE RESPONSE
             data["key_id"] = self.razorpay_key_id
             data["key"] = self.razorpay_key_id
             return {"status": "success", **data}
