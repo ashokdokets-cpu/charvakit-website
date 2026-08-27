@@ -121,7 +121,7 @@ function subscribeFYP(plan) {
     if (!selectedPlan) return;
     
     if (selectedPlan.price === 0) {
-        // Free plan - direct activation
+        // Free plan - direct activation (no payment needed)
         fetch('/api/fyp/subscribe', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
@@ -130,13 +130,13 @@ function subscribeFYP(plan) {
         return;
     }
     
-    // Paid plan - trigger payment
+    // Paid plan - trigger Razorpay payment
     fetch('/api/payment/create-order', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
             amount: selectedPlan.price,
-            name: `FYP ${selectedPlan.name}`,
+            name: 'FYP ' + selectedPlan.name,
             method: 'razorpay'
         })
     })
@@ -148,42 +148,88 @@ function subscribeFYP(plan) {
                 amount: selectedPlan.price * 100,
                 currency: 'INR',
                 name: 'Charvak IT',
-                description: `FYP ${selectedPlan.name} Plan`,
+                description: 'FYP ' + selectedPlan.name + ' Plan',
                 order_id: orderData.order_id,
                 handler: function(response) {
                     verifyAndActivateFYP(email, plan, response);
                 },
                 prefill: {email: email},
-                theme: {color: '#3ba591'}
+                theme: {color: '#3ba591'},
+                modal: {
+                    ondismiss: function() {
+                        alert('Payment cancelled. FYP plan not activated.');
+                    }
+                }
             };
             const rzp = new Razorpay(options);
             rzp.open();
+        } else {
+            alert('Failed to create payment order');
         }
+    })
+    .catch(error => {
+        console.error('Payment error:', error);
+        alert('Payment gateway error. Please try again.');
     });
 }
 
 async function verifyAndActivateFYP(email, plan, paymentResponse) {
-    const verify = await fetch('/api/payment/verify', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-            method: 'razorpay',
-            payment_id: paymentResponse.razorpay_payment_id,
-            order_id: paymentResponse.razorpay_order_id,
-            signature: paymentResponse.razorpay_signature
-        })
-    });
-    
-    const verifyData = await verify.json();
-    if (verifyData.verified) {
-        const response = await fetch('/api/fyp/subscribe', {
+    try {
+        // Verify payment
+        const verifyResponse = await fetch('/api/payment/verify', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({email: email, plan: plan, payment_id: paymentResponse.razorpay_payment_id})
+            body: JSON.stringify({
+                method: 'razorpay',
+                payment_id: paymentResponse.razorpay_payment_id,
+                order_id: paymentResponse.razorpay_order_id,
+                signature: paymentResponse.razorpay_signature
+            })
         });
-        const data = await response.json();
-        alert(data.message || 'FYP plan activated!');
+        
+        const verifyData = await verifyResponse.json();
+        
+        if (verifyData.verified || verifyData.status === 'success') {
+            // Payment verified - activate FYP plan
+            const activateResponse = await fetch('/api/fyp/subscribe', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    email: email,
+                    plan: plan,
+                    payment_id: paymentResponse.razorpay_payment_id
+                })
+            });
+            
+            const data = await activateResponse.json();
+            
+            if (data.status === 'success') {
+                alert('✅ ' + (data.message || 'FYP plan activated!'));
+                localStorage.setItem('fyp_plan', plan);
+                updateFYPUI(plan);
+            } else {
+                alert('❌ ' + (data.message || 'Failed to activate FYP plan'));
+            }
+        } else {
+            alert('Payment verification failed. Please contact support.');
+        }
+    } catch (error) {
+        console.error('Verification error:', error);
+        alert('Payment verification failed. Please try again.');
     }
+}
+
+function updateFYPUI(plan) {
+    // Update all FYP subscribe buttons
+    const buttons = document.querySelectorAll('[onclick^="subscribeFYP"]');
+    buttons.forEach(button => {
+        const buttonPlan = button.getAttribute('onclick').match(/'([^']+)'/)[1];
+        if (buttonPlan === plan) {
+            button.textContent = '✅ Active';
+            button.disabled = true;
+            button.className = 'btn btn-success btn-sm';
+        }
+    });
 }
 
 async function suggestTopics(e) {
