@@ -83,4 +83,21 @@ function registerClient(e){
     setTimeout(() => window.location.href = '/na-bench-staffing', 2000);
 }
 </script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if coming from payment
+    const urlParams = new URLSearchParams(window.location.search);
+    const plan = urlParams.get('plan');
+    const email = urlParams.get('email');
+    
+    if (plan && email) {
+        // Pre-fill email
+        const emailInput = document.querySelector('input[type="email"]');
+        if (emailInput) emailInput.value = email;
+        
+        // Show activated message
+        alert(String.fromCodePoint(0x2705) + ' ' + plan + ' plan activated! Please complete your registration.');
+    }
+});
+</script>
 {% endblock %}
