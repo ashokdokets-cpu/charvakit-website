@@ -68,6 +68,50 @@
 </div>
 
 <script>
+// Plan configuration
+const planLimits = {
+    'free': {'daily_questions': 10, 'weekly_mock_tests': 1, 'practice_modes': ['quick'], 'analytics': false},
+    'pro': {'daily_questions': 100, 'weekly_mock_tests': 5, 'practice_modes': ['quick', 'full'], 'analytics': true},
+    'premium': {'daily_questions': 500, 'weekly_mock_tests': -1, 'practice_modes': ['quick', 'full', 'mock'], 'analytics': true}
+};
+
+let dailyQuestionsUsed = parseInt(localStorage.getItem('daily_questions_used') || '0');
+let weeklyMockTestsUsed = parseInt(localStorage.getItem('weekly_mock_tests_used') || '0');
+
+function canPractice(mode) {
+    const plan = localStorage.getItem('exam_plan') || 'free';
+    const limits = planLimits[plan];
+    if (!limits) return false;
+    if (!limits.practice_modes.includes(mode)) {
+        alert('Your ' + plan + ' plan does not include this mode. Upgrade!');
+        return false;
+    }
+    if (dailyQuestionsUsed >= limits.daily_questions) {
+        alert('Daily limit reached. Upgrade for more!');
+        return false;
+    }
+    return true;
+}
+
+function showUpgradeModal() {
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:99999;display:flex;align-items:center;justify-content:center;';
+    modal.innerHTML = '<div class="bg-white p-4 rounded" style="max-width:400px;width:90%;"><h5>Upgrade Plan</h5><button class="btn btn-primary w-100 mb-2" onclick="subscribeExam(\'pro\')">Pro - ₹99/mo</button><button class="btn btn-success w-100 mb-2" onclick="subscribeExam(\'premium\')">Premium - ₹499/mo</button><button class="btn btn-secondary w-100" onclick="this.closest(\'div[style]\').parentElement.remove()">Cancel</button></div>';
+    document.body.appendChild(modal);
+}
+
+function resetDailyCounters() {
+    const today = new Date().toDateString();
+    const lastReset = localStorage.getItem('last_reset_date');
+    if (lastReset !== today) {
+        localStorage.setItem('daily_questions_used', '0');
+        localStorage.setItem('weekly_mock_tests_used', '0');
+        localStorage.setItem('last_reset_date', today);
+        dailyQuestionsUsed = 0;
+        weeklyMockTestsUsed = 0;
+    }
+}
+
 let userEmail = localStorage.getItem('userEmail') || 'demo@charvakit.com';
 let currentExam = null;
 let currentPlan = localStorage.getItem('exam_plan') || 'free';
@@ -195,6 +239,11 @@ function displayExams(data) {
 async function startPractice(examId) {
     currentExam = examId;
     
+    if (!canPractice('quick')) {
+        showUpgradeModal();
+        return;
+    }
+    
     // Get exam details to show topics
     try {
         const examResponse = await fetch(`/api/exam/${examId}`);
@@ -294,6 +343,9 @@ function checkAnswer(questionIndex, correctAnswer) {
 }
 
 function submitPractice(examId, topic, totalQuestions) {
+    dailyQuestionsUsed += totalQuestions;
+    localStorage.setItem('daily_questions_used', dailyQuestionsUsed);
+    
     // Track progress
     const progress = JSON.parse(localStorage.getItem('exam_progress') || '{}');
     const key = `${examId}_${topic}`;
@@ -348,6 +400,24 @@ function startFullPractice(examId) {
 // MOCK TEST
 // ============================================================
 async function startMockTest(examId) {
+    const plan = localStorage.getItem('exam_plan') || 'free';
+    const limits = planLimits[plan];
+    
+    if (!limits.practice_modes.includes('mock')) {
+        alert('Mock tests require Premium plan. Upgrade now!');
+        showUpgradeModal();
+        return;
+    }
+    
+    if (limits.weekly_mock_tests !== -1 && weeklyMockTestsUsed >= limits.weekly_mock_tests) {
+        alert('Weekly mock test limit reached. Upgrade!');
+        showUpgradeModal();
+        return;
+    }
+    
+    weeklyMockTestsUsed++;
+    localStorage.setItem('weekly_mock_tests_used', weeklyMockTestsUsed);
+    
     const container = document.getElementById('mockTestArea');
     container.innerHTML = '<p class="text-center">Preparing mock test...</p>';
     
