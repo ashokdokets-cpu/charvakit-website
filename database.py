@@ -214,20 +214,26 @@ class Database:
     
     # Common methods
     def create_user(self, email: str, password: str, name: str, role: str = "candidate", phone: str = None):
-        conn = sqlite3.connect(self.db_path)
+    import psycopg2
+    import hashlib
+    import os
+    
+    user_id = f"USR{secrets.token_hex(4).upper()}"
+    password_hash = hashlib.sha256(password.encode()).hexdigest()
+    
+    try:
+        conn = psycopg2.connect(os.getenv("DATABASE_URL", ""))
         cursor = conn.cursor()
-        user_id = f"USR{secrets.token_hex(4).upper()}"
-        import hashlib
-        password_hash = hashlib.sha256(password.encode()).hexdigest()
-        try:
-            cursor.execute('INSERT INTO users (user_id, email, password_hash, name, phone, role) VALUES (?, ?, ?, ?, ?, ?)',
-                          (user_id, email, password_hash, name, phone, role))
-            conn.commit()
-            return {"status": "success", "user_id": user_id}
-        except:
-            return {"status": "error", "message": "Email already registered"}
-        finally:
-            conn.close()
+        cursor.execute(
+            'INSERT INTO users (user_id, email, password_hash, name, phone, role) VALUES (%s, %s, %s, %s, %s, %s)',
+            (user_id, email, password_hash, name, phone, role)
+        )
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return {"status": "success", "user_id": user_id}
+    except Exception as e:
+        return {"status": "error", "message": "Email already registered"}
 
     def get_user_by_email(self, email: str):
         """Get user by email"""
