@@ -19,7 +19,7 @@ class AIQuestionGenerator:
         self.used_questions = {}
         self.topic_fallback = self._initialize_fallback_topics()
         self.question_cache = {}
-        self.cache_ttl = timedelta(hours=24)
+        self.cache_ttl = timedelta(days=30)  # Keep questions for 30 days
         self.daily_ai_usage = {}
         self.max_daily_ai = 100
         self.variation_prefixes = [
@@ -101,12 +101,12 @@ class AIQuestionGenerator:
         
         # Check cache with variation
         if cache_key in self.question_cache:
-            cache_data = self.question_cache[cache_key]
-            if datetime.now() - cache_data["timestamp"] < self.cache_ttl:
-                cached = cache_data["questions"]
-                if len(cached) >= count:
-                    sampled = random.sample(cached, min(count, len(cached)))
-                    return self._apply_variation(sampled)
+    cache_data = self.question_cache[cache_key]
+    cached = cache_data["questions"]
+    if len(cached) >= count * 3:
+        # We have enough questions - sample with variation
+        sampled = random.sample(cached, min(count * 3, len(cached)))
+        return self._apply_variation(sampled)[:count]
         
         # Check daily AI limit
         can_use_ai = True
@@ -126,8 +126,6 @@ class AIQuestionGenerator:
                     if user_email:
                         self.daily_ai_usage[user_email][today] += count
                     if cache_key not in self.question_cache:
-                        self.question_cache[cache_key] = {"questions": [], "timestamp": datetime.now()}
-                    self.question_cache[cache_key]["questions"].extend(questions)
                     sampled = random.sample(questions, min(count, len(questions)))
                     return self._apply_variation(sampled)
             except Exception as e:
