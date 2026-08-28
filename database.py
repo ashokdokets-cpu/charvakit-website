@@ -217,13 +217,12 @@ class Database:
         import psycopg2
         import hashlib
         import os
-        
+        import secrets as secrets_module
+
         user_id = f"USR{secrets.token_hex(4).upper()}"
-        import hashlib
-import secrets as secrets_module
-salt = secrets_module.token_hex(16)
-password_hash = f"{salt}${hashlib.sha256(f'{salt}:{password}'.encode()).hexdigest()}"
-        
+        salt = secrets_module.token_hex(16)
+        password_hash = f"{salt}${hashlib.sha256(f\"{salt}:{password}\".encode()).hexdigest()}"
+
         try:
             conn = psycopg2.connect(os.getenv("DATABASE_URL", ""))
             cursor = conn.cursor()
