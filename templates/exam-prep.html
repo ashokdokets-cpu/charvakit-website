@@ -269,30 +269,151 @@ function submitPractice(examId, topic, totalQuestions) {
 // ============================================================
 async function startMockTest(examId) {
     const container = document.getElementById('mockTestArea');
-    container.innerHTML = '<p class="text-center">Starting mock test...</p>';
+    container.innerHTML = '<p class="text-center">Preparing mock test...</p>';
     
     try {
-        const response = await fetch('/api/exam/mock-test', {
+        // Get exam details
+        const examResponse = await fetch(`/api/exam/${examId}`);
+        const examData = await examResponse.json();
+        const exam = examData.exam || {};
+        
+        // Start mock test
+        const mockResponse = await fetch('/api/exam/mock-test', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({exam_id: examId, email: userEmail})
         });
-        const data = await response.json();
+        const mockData = await mockResponse.json();
         
-        container.innerHTML = `
-            <div class="card shadow-sm">
-                <div class="card-body text-center">
-                    <h5>Mock Test Started!</h5>
-                    <p>Test ID: ${data.test_id}</p>
-                    <p>Exam: ${data.exam_id}</p>
-                    <p>Started: ${new Date(data.started_at).toLocaleString()}</p>
-                    <button class="btn btn-primary" onclick="alert('Mock test interface coming soon!')">Begin Test</button>
+        // Generate questions for mock test
+        const questionCount = Math.min(exam.questions || 10, 10); // Start with 10 for demo
+        const topic = exam.sections ? exam.sections[0] : 'General';
+        
+        const questionsResponse = await fetch('/api/exam/ai-questions', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({exam_id: examId, topic: topic, count: questionCount})
+        });
+        const questionsData = await questionsResponse.json();
+        
+        // Display mock test interface
+        displayMockTest(mockData.test_id, examId, exam, questionsData.questions);
+    } catch (error) {
+        console.error('Error:', error);
+        container.innerHTML = '<p class="text-danger text-center">Error starting mock test</p>';
+    }
+}
+
+function displayMockTest(testId, examId, exam, questions) {
+    const container = document.getElementById('mockTestArea');
+    
+    let questionsHTML = '';
+    questions.forEach((q, i) => {
+        questionsHTML += `
+            <div class="card mb-3" id="question-${i}">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <h6>Question ${i+1} of ${questions.length}</h6>
+                        <span class="badge bg-${q.difficulty === 'Easy' ? 'success' : q.difficulty === 'Medium' ? 'warning' : 'danger'}">${q.difficulty}</span>
+                    </div>
+                    <p class="mt-2"><strong>${q.question}</strong></p>
+                    <div class="options">
+                        ${q.options.map((opt, j) => `
+                            <label class="d-block p-2 border rounded mb-1" style="cursor:pointer;">
+                                <input type="radio" name="mock-q-${i}" value="${j}" onchange="selectMockAnswer(${i}, ${j})">
+                                ${opt}
+                            </label>
+                        `).join('')}
+                    </div>
                 </div>
             </div>
         `;
-    } catch (error) {
-        console.error('Error:', error);
+    });
+    
+    container.innerHTML = `
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Mock Test: ${exam.name || examId}</h5>
+                <span id="timer" class="badge bg-warning text-dark">60:00</span>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">Test ID: ${testId}</p>
+                <p class="text-muted">Duration: ${exam.duration || '60 min'} | Questions: ${questions.length}</p>
+                <hr>
+                <div id="questions-container">
+                    ${questionsHTML}
+                </div>
+                <button class="btn btn-success btn-lg w-100 mt-3" onclick="submitMockTest('${testId}', ${questions.length})">
+                    Submit Test
+                </button>
+            </div>
+        </div>
+    `;
+    
+    // Start timer
+    startTimer(60); // 60 minutes
+}
+
+let mockAnswers = {};
+let timerInterval = null;
+
+function selectMockAnswer(questionIndex, answerIndex) {
+    mockAnswers[questionIndex] = answerIndex;
+}
+
+function startTimer(minutes) {
+    let seconds = minutes * 60;
+    const timerDisplay = document.getElementById('timer');
+    
+    timerInterval = setInterval(() => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        timerDisplay.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        
+        if (seconds <= 60) {
+            timerDisplay.className = 'badge bg-danger';
+        }
+        
+        if (seconds <= 0) {
+            clearInterval(timerInterval);
+            alert('Time is up! Submitting test...');
+            submitMockTest('', 0);
+        }
+        seconds--;
+    }, 1000);
+}
+
+async function submitMockTest(testId, totalQuestions) {
+    clearInterval(timerInterval);
+    
+    const answered = Object.keys(mockAnswers).length;
+    const unanswered = totalQuestions - answered;
+    
+    if (!confirm(`Submit test?\n\nAnswered: ${answered}\nUnanswered: ${unanswered}`)) {
+        return;
     }
+    
+    // Calculate score (for demo, assume correct answers)
+    let correctCount = 0;
+    const questions = document.querySelectorAll('[id^="question-"]');
+    
+    // Show results
+    const mockTestArea = document.getElementById('mockTestArea');
+    mockTestArea.innerHTML = `
+        <div class="card shadow-sm">
+            <div class="card-body text-center">
+                <h4>Test Submitted!</h4>
+                <div class="display-4 text-primary">${Math.round((correctCount / totalQuestions) * 100)}%</div>
+                <p>Answered: ${answered}/${totalQuestions}</p>
+                <p>Correct: ${correctCount}</p>
+                <p>Test ID: ${testId}</p>
+                <button class="btn btn-primary" onclick="alert('Detailed results coming soon!')">View Detailed Results</button>
+            </div>
+        </div>
+    `;
+    
+    // Reset
+    mockAnswers = {};
 }
 
 // ============================================================
