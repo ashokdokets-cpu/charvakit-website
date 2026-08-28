@@ -195,14 +195,58 @@ function displayExams(data) {
 // ============================================================
 async function startPractice(examId) {
     currentExam = examId;
-    const topic = prompt('Enter topic to practice (e.g., Reasoning, Quant, English):');
-    if (!topic) return;
     
+    // Get exam details to show topics
+    try {
+        const examResponse = await fetch(`/api/exam/${examId}`);
+        const examData = await examResponse.json();
+        const exam = examData.exam || {};
+        const sections = exam.sections || ["General"];
+        
+        // Show topic selection modal
+        showTopicSelection(examId, exam.name || examId, sections);
+    } catch (error) {
+        // Fallback to prompt
+        const topic = prompt('Enter topic to practice:');
+        if (topic) {
+            loadPracticeQuestions(examId, topic);
+        }
+    }
+}
+
+function showTopicSelection(examId, examName, topics) {
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:99999;display:flex;align-items:center;justify-content:center;';
+    modal.id = 'topic-modal';
+    modal.innerHTML = `
+        <div class="bg-white p-4 rounded" style="max-width:400px;width:90%;background:white;border-radius:12px;">
+            <h5 class="mb-3">Choose Topic for ${examName}</h5>
+            <div class="list-group mb-3">
+                ${topics.map(topic => `
+                    <button class="list-group-item list-group-item-action" onclick="selectTopic('${examId}', '${topic}')">
+                        ${topic}
+                    </button>
+                `).join('')}
+            </div>
+            <button class="btn btn-secondary w-100" onclick="document.getElementById('topic-modal').remove()">Cancel</button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function selectTopic(examId, topic) {
+    const modal = document.getElementById('topic-modal');
+    if (modal) modal.remove();
+    
+    loadPracticeQuestions(examId, topic);
+}
+
+async function loadPracticeQuestions(examId, topic) {
     const container = document.getElementById('practiceArea');
-    container.innerHTML = '<p class="text-center">Loading questions...</p>';
+    container.innerHTML = '<p class="text-center">Loading ' + topic + ' questions...</p>';
     
     try {
-        const response = await fetch('/api/exam/questions', {
+        const response = await fetch('/api/exam/ai-questions', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({exam_id: examId, topic: topic, count: 10})
