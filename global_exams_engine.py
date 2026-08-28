@@ -98,12 +98,12 @@ class GlobalExamsEngine:
                 "name": "Medical Licensing",
                 "icon": "⚕️",
                 "exams": [
-                    {"id": "usmle_step1", "name": "USMLE Step 1", "full_name": "Basic Sciences", "tier": "CBT", "sections": ["Anatomy", "Pathology", "Physiology", "Biochemistry", "Microbiology", "Pharmacology"], "questions": 280, "duration": "480 min", "fee_usd": 660},
-                    {"id": "usmle_step2", "name": "USMLE Step 2 CK", "full_name": "Clinical Knowledge", "tier": "CBT", "sections": ["Medicine", "Surgery", "Pediatrics", "OBG", "Psychiatry"], "questions": 318, "duration": "540 min", "fee_usd": 660},
-                    {"id": "nclex", "name": "NCLEX-RN/PN", "full_name": "Nursing Licensure", "tier": "CAT", "sections": ["Nursing", "Patient Care", "Safety", "Pharmacology", "Management"], "questions": 145, "duration": "300 min", "fee_usd": 200},
-                    {"id": "inbde", "name": "INBDE", "full_name": "Dental Board", "tier": "CBT", "sections": ["Dental Anatomy", "Clinical Dentistry", "Pathology", "Pharmacology"], "questions": 500, "duration": "480 min", "fee_usd": 700},
-                    {"id": "amc", "name": "AMC Exams", "full_name": "Australian Medical Council", "tier": "CAT", "sections": ["Medicine", "Surgery", "Pediatrics", "OBG", "Psychiatry"], "questions": 150, "duration": "210 min", "fee_usd": 1800},
-                    {"id": "plab1", "name": "PLAB Part 1", "full_name": "UK Medical License", "tier": "CBT", "sections": ["Medicine", "Clinical", "Surgery", "Pediatrics", "OBG"], "questions": 180, "duration": "180 min", "fee_usd": 255}
+                    {"id": "usmle_step1", "name": "USMLE Step 1", "full_name": "Basic Sciences", "tier": "CBT", "sections": ["Anatomy", "Pathology"], "questions": 280, "duration": "480 min", "fee_usd": 660},
+                    {"id": "usmle_step2", "name": "USMLE Step 2 CK", "full_name": "Clinical Knowledge", "tier": "CBT", "sections": ["Medicine", "Surgery"], "questions": 318, "duration": "540 min", "fee_usd": 660},
+                    {"id": "nclex", "name": "NCLEX-RN/PN", "full_name": "Nursing Licensure", "tier": "CAT", "sections": ["Nursing", "Patient Care"], "questions": 145, "duration": "300 min", "fee_usd": 200},
+                    {"id": "inbde", "name": "INBDE", "full_name": "Dental Board", "tier": "CBT", "sections": ["Dental", "Clinical"], "questions": 500, "duration": "480 min", "fee_usd": 700},
+                    {"id": "amc", "name": "AMC Exams", "full_name": "Australian Medical Council", "tier": "CAT", "sections": ["Medicine", "Surgery"], "questions": 150, "duration": "210 min", "fee_usd": 1800},
+                    {"id": "plab1", "name": "PLAB Part 1", "full_name": "UK Medical License", "tier": "CBT", "sections": ["Medicine", "Clinical"], "questions": 180, "duration": "180 min", "fee_usd": 255}
                 ]
             }
         }
