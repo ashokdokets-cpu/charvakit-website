@@ -212,51 +212,48 @@ class AIQuestionGenerator:
             }
         }
     
-    def generate_questions(self, exam_id: str, topic: str, count: int = 10) -> List[Dict]:
-    """Generate unique questions for a topic."""
-    topic_lower = topic.lower().strip()
-    
-    # Normalize topic names
-    topic_map = {
-        "pathology": "pathology",
-        "anatomy": "anatomy",
-        "medicine": "medicine",
-        "surgery": "surgery",
-        "nursing": "nursing",
-        "dental": "dental",
-        "clinical": "clinical",
-        "reasoning": "reasoning",
-        "quant": "quant",
-        "quantitative": "quant",
-        "english": "english",
-        "gk": "gk",
-        "general knowledge": "gk"
-    }
-    
-    # Get normalized topic
-    normalized_topic = topic_map.get(topic_lower, topic_lower)
-    
-    # Get topic data
-    topic_data = self.topics.get(normalized_topic, self.topics.get("reasoning", {}))
-    
-    questions = []
-    base_questions = topic_data.get("questions", [])
-    base_options = topic_data.get("options", [])
-    base_correct = topic_data.get("correct", [])
-    base_difficulty = topic_data.get("difficulty", [])
-    
-    for i in range(count):
-        idx = i % len(base_questions) if base_questions else 0
-        questions.append({
-            "id": i + 1,
-            "question": base_questions[idx] if base_questions else f"{topic} - Question {i+1}",
-            "options": base_options[idx] if base_options else ["Option A", "Option B", "Option C", "Option D"],
-            "correct": base_correct[idx] if base_correct else 0,
-            "explanation": f"Detailed explanation for question {i+1}",
-            "difficulty": base_difficulty[idx] if base_difficulty else "Medium",
-            "topic": topic
-        })
-    
-    return questions
+        def generate_questions(self, exam_id: str, topic: str, count: int = 10) -> List[Dict]:
+        """Generate unique questions for a topic."""
+        topic_lower = topic.lower().strip()
+        
+        # Normalize topic names
+        topic_map = {
+            "pathology": "pathology",
+            "anatomy": "anatomy",
+            "medicine": "medicine",
+            "surgery": "surgery",
+            "nursing": "nursing",
+            "dental": "dental",
+            "clinical": "clinical",
+            "reasoning": "reasoning",
+            "quant": "quant",
+            "quantitative": "quant",
+            "english": "english",
+            "gk": "gk",
+            "general knowledge": "gk"
+        }
+        
+        normalized_topic = topic_map.get(topic_lower, topic_lower)
+        topic_data = self.topics.get(normalized_topic, self.topics.get("reasoning", {}))
+        
+        questions = []
+        base_questions = topic_data.get("questions", [])
+        base_options = topic_data.get("options", [])
+        base_correct = topic_data.get("correct", [])
+        base_difficulty = topic_data.get("difficulty", [])
+        
+        for i in range(count):
+            idx = i % len(base_questions) if base_questions else 0
+            questions.append({
+                "id": i + 1,
+                "question": base_questions[idx] if base_questions else f"{topic} - Question {i+1}",
+                "options": base_options[idx] if base_options else ["Option A", "Option B", "Option C", "Option D"],
+                "correct": base_correct[idx] if base_correct else 0,
+                "explanation": f"Detailed explanation for question {i+1}",
+                "difficulty": base_difficulty[idx] if base_difficulty else "Medium",
+                "topic": topic
+            })
+        
+        return questions
 
 ai_question_generator = AIQuestionGenerator()
