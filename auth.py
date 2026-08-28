@@ -23,9 +23,14 @@ def hash_password(password: str, salt: str = None) -> str:
 def verify_password(password: str, stored_hash: str) -> bool:
     """Verify password against stored hash."""
     try:
-        salt, expected = stored_hash.split("$")
-        actual = hashlib.sha256(f"{salt}:{password}".encode()).hexdigest()
-        return hmac.compare_digest(actual, expected)
+        if "$" in stored_hash:
+            salt, expected = stored_hash.split("$")
+            actual = hashlib.sha256(f"{salt}:{password}".encode()).hexdigest()
+            return hmac.compare_digest(actual, expected)
+        else:
+            # Direct SHA-256 (old format)
+            direct_hash = hashlib.sha256(password.encode()).hexdigest()
+            return hmac.compare_digest(direct_hash, stored_hash)
     except:
         return False
 
@@ -38,10 +43,10 @@ def register_user(email: str, password: str, name: str, role: str = "candidate",
         return {"status": "error", "message": "Password must contain an uppercase letter"}
     if not any(c.isdigit() for c in password):
         return {"status": "error", "message": "Password must contain a number"}
-    
-    # Don't hash here - let create_user handle it
-result = db.create_user(email, password, name, role, phone)
-    
+
+    hashed_password = hash_password(password)
+    result = db.create_user(email, hashed_password, name, role, phone)
+
     if result["status"] == "success":
         token = secrets.token_hex(32)
         active_tokens[token] = {
@@ -60,21 +65,11 @@ def login_user(email: str, password: str):
     user = db.get_user_by_email(email)
     if not user:
         return {"status": "error", "message": "Invalid email or password"}
-    
+
     stored_hash = user.get("password_hash", user.get("password", ""))
-    
-    # Try direct SHA-256 first
-    direct_hash = hashlib.sha256(password.encode()).hexdigest()
-    
-    # Try salted hash
-    if "$" in stored_hash:
-        salt = stored_hash.split("$")[0]
-        salted_hash = hashlib.sha256((salt + ":" + password).encode()).hexdigest()
-        if stored_hash.split("$")[1] != salted_hash and direct_hash != stored_hash:
-            return {"status": "error", "message": "Invalid email or password"}
-    elif direct_hash != stored_hash:
+    if not verify_password(password, stored_hash):
         return {"status": "error", "message": "Invalid email or password"}
-    
+
     token = secrets.token_hex(32)
     active_tokens[token] = {
         "user_id": user["user_id"],
@@ -89,38 +84,33 @@ def login_user(email: str, password: str):
 def verify_token(token: str) -> Optional[dict]:
     """Verify auth token."""
     if token in active_tokens:
-        session = active_tokens[token]
-        if session["expires"] > datetime.now():
-            return session
+        token_data = active_tokens[token]
+        if datetime.now() < token_data["expires"]:
+            return token_data
         else:
             del active_tokens[token]
     return None
 
 
-def logout_user(token: str):
-    """Logout and invalidate token."""
-    if token in active_tokens:
-        del active_tokens[token]
-        return {"status": "success"}
-    return {"status": "error", "message": "Invalid token"}
-
-
-def logout_all_sessions(user_id: str):
-    """Invalidate all sessions for a user."""
-    tokens_to_remove = [t for t, s in active_tokens.items() if s.get("user_id") == user_id]
-    for token in tokens_to_remove:
-        del active_tokens[token]
-    return {"status": "success", "sessions_invalidated": len(tokens_to_remove)}
-
-
 def get_current_user(token: str) -> Optional[dict]:
     """Get current user from token."""
-    session = verify_token(token)
-    if session:
-        return db.get_user(session["user_id"])
+    token_data = verify_token(token)
+    if token_data:
+        return db.get_user_by_email(token_data["email"])
     return None
 
 
-def get_active_session_count(user_id: str) -> int:
-    """Get number of active sessions for a user."""
-    return len([s for s in active_tokens.values() if s.get("user_id") == user_id])
+def logout_user(token: str):
+    """Logout user."""
+    if token in active_tokens:
+        del active_tokens[token]
+        return {"status": "success", "message": "Logged out"}
+    return {"status": "error", "message": "Invalid token"}
+
+
+def logout_all_sessions(email: str):
+    """Logout all sessions for a user."""
+    tokens_to_remove = [t for t, data in active_tokens.items() if data["email"] == email]
+    for token in tokens_to_remove:
+        del active_tokens[token]
+    return {"status": "success", "message": f"Logged out {len(tokens_to_remove)} sessions"}

@@ -220,9 +220,8 @@ class Database:
         import secrets as secrets_module
 
         user_id = f"USR{secrets.token_hex(4).upper()}"
-        salt = secrets_module.token_hex(16)
-        password_hash = salt + '$' + hashlib.sha256((salt + ':' + password).encode()).hexdigest()
-
+        # Password is already hashed from auth.py - store as-is
+password_hash = password
         try:
             conn = psycopg2.connect(os.getenv("DATABASE_URL", ""))
             cursor = conn.cursor()
