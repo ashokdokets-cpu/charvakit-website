@@ -164,6 +164,42 @@ class AIQuestionGenerator:
                     "Normal body temperature in Celsius?",
                     "What does PRN mean?"
                 ],
+            "dental": {
+                "questions": [
+                    "Which tooth is known as the 'wisdom tooth'?",
+                    "What is the hardest substance in the human body?",
+                    "How many permanent teeth does an adult have?",
+                    "What is dental caries commonly known as?",
+                    "Which nerve supplies the lower teeth?"
+                ],
+                "options": [
+                    ["Third molar", "First molar", "Second molar", "Premolar"],
+                    ["Enamel", "Dentin", "Bone", "Cementum"],
+                    ["28", "30", "32", "34"],
+                    ["Tooth decay", "Gum disease", "Tooth sensitivity", "Bad breath"],
+                    ["Inferior alveolar nerve", "Facial nerve", "Trigeminal nerve", "Lingual nerve"]
+                ],
+                "correct": [0, 0, 2, 0, 0],
+                "difficulty": ["Easy", "Easy", "Easy", "Easy", "Medium"]
+            },
+            "clinical": {
+                "questions": [
+                    "What is the normal range for blood pressure?",
+                    "Which test is used to diagnose diabetes?",
+                    "What is the most common cause of fever?",
+                    "Normal respiratory rate for adults?",
+                    "What is the first sign of shock?"
+                ],
+                "options": [
+                    ["120/80 mmHg", "140/90 mmHg", "100/60 mmHg", "160/100 mmHg"],
+                    ["Fasting blood glucose", "Lipid profile", "CBC", "Liver function test"],
+                    ["Infection", "Dehydration", "Stress", "Medication"],
+                    ["12-20/min", "8-10/min", "20-30/min", "30-40/min"],
+                    ["Hypotension", "Tachycardia", "Fever", "Pain"]
+                ],
+                "correct": [0, 0, 0, 0, 1],
+                "difficulty": ["Easy", "Easy", "Easy", "Easy", "Medium"]
+            }
                 "options": [
                     ["60-100 bpm", "40-60 bpm", "100-120 bpm", "120-140 bpm"],
                     ["Supine", "Fowler's", "Prone", "Trendelenburg"],
