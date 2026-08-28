@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% block title %}AI Internship Program - Charvak{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4 text-center">
+        <h1 class="display-4 fw-bold">🤖 AI-Powered Internship Program</h1>
+        <p class="lead">2-week real-world experience with AI mentorship. Get verified badge + synopsis.</p>
+        <div class="mt-3">
+            <span class="badge bg-warning text-dark me-2">14 Days</span>
+            <span class="badge bg-success me-2">AI Mentored</span>
+            <span class="badge bg-info me-2">Verified Badge</span>
+            <span class="badge bg-primary">Real Scenarios</span>
+        </div>
+    </div>
+</div>
+
+<div class="container py-5">
+    <!-- How It Works -->
+    <div class="row mb-5">
+        <div class="col-lg-8 mx-auto text-center">
+            <h3 class="mb-4">How It Works</h3>
+            <div class="row g-3">
+                <div class="col-md-3"><div class="card p-3 h-100"><h2 class="text-primary">1</h2><h6>Choose Program</h6><small class="text-muted">Select your specialization</small></div></div>
+                <div class="col-md-3"><div class="card p-3 h-100"><h2 class="text-primary">2</h2><h6>Daily Scenarios</h6><small class="text-muted">Real-world tasks each day</small></div></div>
+                <div class="col-md-3"><div class="card p-3 h-100"><h2 class="text-primary">3</h2><h6>AI Mentorship</h6><small class="text-muted">Get feedback from AI</small></div></div>
+                <div class="col-md-3"><div class="card p-3 h-100"><h2 class="text-primary">4</h2><h6>Get Badge</h6><small class="text-muted">Verified + synopsis</small></div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Programs -->
+    <h3 class="text-center mb-4">Choose Your Internship</h3>
+    <div class="row g-4" id="internshipPrograms">
+        <div class="col-12 text-center text-muted">Loading programs...</div>
+    </div>
+
+    <!-- Enrollment Area -->
+    <div class="mt-5" id="enrollmentArea"></div>
+
+    <!-- Daily Scenario Area -->
+    <div class="mt-5" id="scenarioArea"></div>
+</div>
+
+<script>
+let userEmail = localStorage.getItem('userEmail') || 'demo@charvakit.com';
+let currentEnrollment = null;
+
+// Load programs
+async function loadPrograms() {
+    try {
+        const response = await fetch('/api/internship/programs');
+        const data = await response.json();
+        displayPrograms(data.programs);
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+function displayPrograms(programs) {
+    const container = document.getElementById('internshipPrograms');
+    container.innerHTML = '';
+    
+    programs.forEach(program => {
+        const col = document.createElement('div');
+        col.className = 'col-md-3 col-sm-6';
+        col.innerHTML = `
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <h5>${program.name}</h5>
+                    <p class="text-muted small">${program.duration}</p>
+                    <h3 class="text-primary">₹${program.price}</h3>
+                    <p class="small"><strong>Skills:</strong> ${program.skills.join(', ')}</p>
+                    <p class="small text-muted"><strong>Deliverables:</strong> ${program.deliverables.join(', ')}</p>
+                    <button class="btn btn-primary w-100" onclick="enrollInternship('${program.id}', '${program.name}', ${program.price})">
+                        Enroll Now
+                    </button>
+                </div>
+            </div>
+        `;
+        container.appendChild(col);
+    });
+}
+
+function enrollInternship(programId, programName, price) {
+    const email = prompt('Enter your email:');
+    if (!email) return;
+    
+    processCharvakPayment(email, price, 'AI Internship: ' + programName, function(response) {
+        // Payment successful - enroll
+        fetch('/api/internship/enroll', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({email: email, program_id: programId})
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.status === 'success') {
+                currentEnrollment = data.enrollment_id;
+                localStorage.setItem('internship_enrollment', currentEnrollment);
+                alert('✅ Enrolled! Your AI Internship starts now!');
+                loadDailyScenario(1);
+            }
+        });
+    });
+}
+
+async function loadDailyScenario(day) {
+    if (!currentEnrollment) {
+        currentEnrollment = localStorage.getItem('internship_enrollment');
+    }
+    
+    if (!currentEnrollment) return;
+    
+    const container = document.getElementById('scenarioArea');
+    container.innerHTML = '<p class="text-center">Loading Day ' + day + ' scenario...</p>';
+    
+    try {
+        const response = await fetch(`/api/internship/scenario/${currentEnrollment}/${day}`);
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            displayScenario(data, day);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+function displayScenario(data, day) {
+    const container = document.getElementById('scenarioArea');
+    const scenario = data.scenario;
+    
+    container.innerHTML = `
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Day ${day} - ${scenario.task}</h5>
+            </div>
+            <div class="card-body">
+                <h6>Real-World Scenario:</h6>
+                <p class="text-muted">${scenario.scenario}</p>
+                <hr>
+                <div class="alert alert-info">
+                    <strong>Your Task:</strong> ${scenario.task}
+                </div>
+                <button class="btn btn-success" onclick="markComplete(${day})">Mark as Complete</button>
+                ${day < 14 ? `<button class="btn btn-outline-primary ms-2" onclick="loadDailyScenario(${day + 1})">Next Day →</button>` : ''}
+            </div>
+        </div>
+    `;
+}
+
+function markComplete(day) {
+    alert('✅ Day ' + day + ' completed!');
+    if (day === 14) {
+        completeInternship();
+    } else {
+        loadDailyScenario(day + 1);
+    }
+}
+
+async function completeInternship() {
+    if (!currentEnrollment) return;
+    
+    try {
+        const response = await fetch(`/api/internship/complete/${currentEnrollment}`, {
+            method: 'POST'
+        });
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            alert('🎉 Internship Completed! Badge: ' + data.badge);
+            document.getElementById('scenarioArea').innerHTML = `
+                <div class="card shadow-sm">
+                    <div class="card-body text-center">
+                        <div style="font-size:64px;">🏆</div>
+                        <h4>Internship Complete!</h4>
+                        <p>Badge: <strong>${data.badge}</strong></p>
+                        <p>Skills: ${data.skills.join(', ')}</p>
+                        <button class="btn btn-primary" onclick="window.print()">Print Synopsis</button>
+                    </div>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', loadPrograms);
+</script>
+{% endblock %}

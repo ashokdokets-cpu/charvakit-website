@@ -88,6 +88,7 @@ from exam_prep_engine import exam_prep_engine
 from global_exams_engine import global_exams_engine
 from ai_question_generator import ai_question_generator
 from exam_analytics_engine import exam_analytics_engine
+from ai_internship_engine import ai_internship_engine
 
 
 
@@ -4231,6 +4232,32 @@ async def exam_details(exam_id: str):
         return global_result
     
     return {"status": "error", "message": f"Exam {exam_id} not found"}
+
+@app.get("/ai-internship", response_class=HTMLResponse)
+async def ai_internship_page(request: Request):
+    """AI Internship Program page."""
+    return template_response("ai-internship.html", request, "AI Internship Program - Charvak")
+
+@app.get("/api/internship/programs")
+async def internship_programs():
+    """Get all internship programs."""
+    return ai_internship_engine.get_programs()
+
+@app.post("/api/internship/enroll")
+async def internship_enroll(request: Request):
+    """Enroll in internship."""
+    data = await request.json()
+    return ai_internship_engine.enroll(data.get("email"), data.get("program_id"))
+
+@app.get("/api/internship/scenario/{enrollment_id}/{day}")
+async def internship_scenario(enrollment_id: str, day: int):
+    """Get daily scenario."""
+    return ai_internship_engine.get_daily_scenario(enrollment_id, day)
+
+@app.post("/api/internship/complete/{enrollment_id}")
+async def internship_complete(enrollment_id: str):
+    """Complete internship."""
+    return ai_internship_engine.complete_internship(enrollment_id)
 
 # ============================================================
 # UTILITY ENDPOINTS
