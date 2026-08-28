@@ -126,10 +126,10 @@ class AIQuestionGenerator:
                     if user_email:
                         self.daily_ai_usage[user_email][today] += count
                     if cache_key not in self.question_cache:
+                        self.question_cache[cache_key] = {"questions": [], "timestamp": datetime.now()}
+                    self.question_cache[cache_key]["questions"].extend(questions)
                     sampled = random.sample(questions, min(count, len(questions)))
                     return self._apply_variation(sampled)
-            except Exception as e:
-                logger.error(f"OpenAI failed: {e}")
         
         # Fallback with variation
         return self._generate_fallback_with_variation(exam_id, topic, count)
