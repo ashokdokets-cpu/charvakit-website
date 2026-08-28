@@ -16,36 +16,46 @@
 <div class="container py-5">
     <!-- Subscription Plans -->
     <div class="row mb-5">
-        <div class="col-md-4">
-            <div class="card h-100 text-center border-0 shadow-sm">
-                <div class="card-body">
-                    <h5>Free</h5>
-                    <h2><span data-inr="0">₹0</span></h2>
-                    <p class="text-muted small">10 questions/day<br>1 mock test/week</p>
-                    <button class="btn btn-outline-primary btn-sm" onclick="subscribeExam('free')">Start Free</button>
-                </div>
-            </div>
+        <div class="col-md-3">
+    <div class="card h-100 text-center border-0 shadow-sm">
+        <div class="card-body">
+            <h5>🆓 Free</h5>
+            <h2><span data-inr="0">₹0</span></h2>
+            <p class="text-muted small">10 questions/day<br>1 mock test/week</p>
+            <button class="btn btn-outline-primary btn-sm" onclick="subscribeExam('free')">Start Free</button>
         </div>
-        <div class="col-md-4">
-            <div class="card h-100 text-center border-primary bg-primary text-white shadow">
-                <div class="card-body">
-                    <h5>Student Pro</h5>
-                    <h2><span data-inr="99">₹99</span>/mo</h2>
-                    <p class="small">Unlimited practice<br>5 mock tests/week<br>Detailed analytics</p>
-                    <button class="btn btn-light btn-sm" onclick="subscribeExam('pro')">Subscribe Pro</button>
-                </div>
-            </div>
+    </div>
+</div>
+<div class="col-md-3">
+    <div class="card h-100 text-center border-0 shadow-sm">
+        <div class="card-body">
+            <h5>⭐ Starter</h5>
+            <h2><span data-inr="99">₹99</span>/mo</h2>
+            <p class="text-muted small">50 questions/day<br>2 mock tests/week</p>
+            <button class="btn btn-outline-primary btn-sm" onclick="subscribeExam('starter')">Subscribe Starter</button>
         </div>
-        <div class="col-md-4">
-            <div class="card h-100 text-center border-0 shadow-sm">
-                <div class="card-body">
-                    <h5>Premium</h5>
-                    <h2><span data-inr="499">₹499</span>/mo</h2>
-                    <p class="text-muted small">AI-personalized<br>Unlimited mock tests<br>Interview prep + GD</p>
-                    <button class="btn btn-outline-primary btn-sm" onclick="subscribeExam('premium')">Subscribe Premium</button>
-                </div>
-            </div>
+    </div>
+</div>
+<div class="col-md-3">
+    <div class="card h-100 text-center border-primary bg-primary text-white shadow">
+        <div class="card-body">
+            <h5>🚀 Student Pro</h5>
+            <h2><span data-inr="199">₹199</span>/mo</h2>
+            <p class="small">Unlimited practice<br>5 mock tests/week<br>Detailed analytics</p>
+            <button class="btn btn-light btn-sm" onclick="subscribeExam('pro')">Subscribe Pro</button>
         </div>
+    </div>
+</div>
+<div class="col-md-3">
+    <div class="card h-100 text-center border-0 shadow-sm">
+        <div class="card-body">
+            <h5>👑 Premium</h5>
+            <h2><span data-inr="999">₹999</span>/mo</h2>
+            <p class="text-muted small">AI-personalized<br>Unlimited mock tests<br>Interview prep + GD</p>
+            <button class="btn btn-outline-primary btn-sm" onclick="subscribeExam('premium')">Subscribe Premium</button>
+        </div>
+    </div>
+</div>
     </div>
 
     <!-- Categories -->
@@ -70,9 +80,10 @@
 <script>
 // Plan configuration
 const planLimits = {
-    'free': {'daily_questions': 10, 'weekly_mock_tests': 1, 'practice_modes': ['quick'], 'analytics': false},
-    'pro': {'daily_questions': 100, 'weekly_mock_tests': 5, 'practice_modes': ['quick', 'full'], 'analytics': true},
-    'premium': {'daily_questions': 500, 'weekly_mock_tests': -1, 'practice_modes': ['quick', 'full', 'mock'], 'analytics': true}
+    'free': {'daily_questions': 10, 'weekly_mock_tests': 1, 'practice_modes': ['quick'], 'analytics': false, 'price': 0},
+    'starter': {'daily_questions': 50, 'weekly_mock_tests': 2, 'practice_modes': ['quick', 'full'], 'analytics': false, 'price': 99},
+    'pro': {'daily_questions': -1, 'weekly_mock_tests': 5, 'practice_modes': ['quick', 'full'], 'analytics': true, 'price': 199},
+    'premium': {'daily_questions': -1, 'weekly_mock_tests': -1, 'practice_modes': ['quick', 'full', 'mock'], 'analytics': true, 'price': 999}
 };
 
 let dailyQuestionsUsed = parseInt(localStorage.getItem('daily_questions_used') || '0');
@@ -96,7 +107,7 @@ function canPractice(mode) {
 function showUpgradeModal() {
     const modal = document.createElement('div');
     modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:99999;display:flex;align-items:center;justify-content:center;';
-    modal.innerHTML = '<div class="bg-white p-4 rounded" style="max-width:400px;width:90%;"><h5>Upgrade Plan</h5><button class="btn btn-primary w-100 mb-2" onclick="subscribeExam(\'pro\')">Pro - ₹99/mo</button><button class="btn btn-success w-100 mb-2" onclick="subscribeExam(\'premium\')">Premium - ₹499/mo</button><button class="btn btn-secondary w-100" onclick="this.closest(\'div[style]\').parentElement.remove()">Cancel</button></div>';
+    modal.innerHTML = '<div class="bg-white p-4 rounded" style="max-width:400px;width:90%;"><h5 class="mb-3">Upgrade Your Plan</h5><button class="btn btn-outline-primary w-100 mb-2" onclick="subscribeExam(\'starter\')">Starter - ₹99/mo</button><button class="btn btn-primary w-100 mb-2" onclick="subscribeExam(\'pro\')">Pro - ₹199/mo</button><button class="btn btn-success w-100 mb-2" onclick="subscribeExam(\'premium\')">Premium - ₹999/mo</button><button class="btn btn-secondary w-100" onclick="this.closest(\'div[style]\').parentElement.remove()">Cancel</button></div>';
     document.body.appendChild(modal);
 }
 
@@ -132,9 +143,10 @@ function subscribeExam(plan) {
     }
     
     const planDetails = {
-        'pro': {name: 'Student Pro', price: 99},
-        'premium': {name: 'Premium', price: 499}
-    };
+    'starter': {name: 'Starter', price: 99},
+    'pro': {name: 'Student Pro', price: 199},
+    'premium': {name: 'Premium', price: 999}
+};
     
     const selected = planDetails[plan];
     processCharvakPayment(email, selected.price, 'Exam Prep ' + selected.name, function(response) {
