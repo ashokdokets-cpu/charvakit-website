@@ -15,102 +15,216 @@ class AIInternshipEngine:
         self.progress = {}
         logger.info("AI Internship Engine ready")
     
-    def _initialize_programs(self):
-        """Initialize internship programs."""
+        def _initialize_programs(self):
+        """Initialize 20+ internship programs across all disciplines."""
         return {
+            # ENGINEERING (6)
             "ai_ml": {
                 "name": "AI/ML Engineer Internship",
                 "duration": "2 weeks",
                 "price": 2999,
-                "scenarios": [
-                    {"day": 1, "task": "Set up development environment", "scenario": "You join a startup as AI intern. Set up Python, Git, and ML libraries."},
-                    {"day": 2, "task": "Data collection & cleaning", "scenario": "Collect customer data from CSV. Clean and preprocess for ML."},
-                    {"day": 3, "task": "Exploratory data analysis", "scenario": "Analyze patterns in customer churn data. Create visualizations."},
-                    {"day": 4, "task": "Feature engineering", "scenario": "Create features for churn prediction model."},
-                    {"day": 5, "task": "Model building", "scenario": "Train classification model for churn prediction."},
-                    {"day": 6, "task": "Model evaluation", "scenario": "Evaluate model performance. Improve accuracy."},
-                    {"day": 7, "task": "Week 1 review", "scenario": "Present findings to 'team lead' (AI). Get feedback."},
-                    {"day": 8, "task": "API development", "scenario": "Create REST API for your ML model using FastAPI."},
-                    {"day": 9, "task": "Frontend integration", "scenario": "Build simple UI to interact with your model."},
-                    {"day": 10, "task": "Testing & debugging", "scenario": "Write unit tests. Fix bugs found by 'QA team' (AI)."},
-                    {"day": 11, "task": "Deployment", "scenario": "Deploy your model to cloud. Make it production-ready."},
-                    {"day": 12, "task": "Documentation", "scenario": "Write technical documentation for your project."},
-                    {"day": 13, "task": "Final presentation", "scenario": "Prepare final presentation for 'stakeholders' (AI)."},
-                    {"day": 14, "task": "Graduation & badge", "scenario": "Complete internship. Receive verified badge and synopsis."}
-                ],
-                "skills": ["Python", "ML", "FastAPI", "Git", "Cloud"],
-                "deliverables": ["ML Model", "API", "Documentation", "Presentation"]
+                "category": "Engineering",
+                "skills": ["Python", "ML", "Deep Learning", "Cloud"],
+                "deliverables": ["ML Model", "API", "Documentation"],
+                "scenarios": self._generate_scenarios("AI/ML Engineer")
             },
-            "web_dev": {
+            "full_stack": {
                 "name": "Full Stack Developer Internship",
                 "duration": "2 weeks",
                 "price": 2499,
-                "scenarios": [
-                    {"day": 1, "task": "Setup & planning", "scenario": "You join a tech startup. Plan your project architecture."},
-                    {"day": 2, "task": "Frontend basics", "scenario": "Build responsive UI with HTML/CSS/JavaScript."},
-                    {"day": 3, "task": "React introduction", "scenario": "Convert static pages to React components."},
-                    {"day": 4, "task": "State management", "scenario": "Implement state management for your app."},
-                    {"day": 5, "task": "Backend setup", "scenario": "Create Node.js/Python backend with REST APIs."},
-                    {"day": 6, "task": "Database design", "scenario": "Design and implement database schema."},
-                    {"day": 7, "task": "Week 1 demo", "scenario": "Demo your progress to 'team' (AI). Get feedback."},
-                    {"day": 8, "task": "Authentication", "scenario": "Implement user authentication and authorization."},
-                    {"day": 9, "task": "API integration", "scenario": "Connect frontend to backend APIs."},
-                    {"day": 10, "task": "Testing", "scenario": "Write tests. Fix bugs."},
-                    {"day": 11, "task": "Performance optimization", "scenario": "Optimize your app for speed and efficiency."},
-                    {"day": 12, "task": "Deployment", "scenario": "Deploy to cloud. Configure CI/CD."},
-                    {"day": 13, "task": "Final polish", "scenario": "Polish UI/UX. Fix remaining issues."},
-                    {"day": 14, "task": "Graduation", "scenario": "Present final project. Receive badge."}
-                ],
-                "skills": ["React", "Node.js", "Database", "API", "Cloud"],
-                "deliverables": ["Web App", "API", "Database", "Documentation"]
+                "category": "Engineering",
+                "skills": ["React", "Node.js", "Database", "API"],
+                "deliverables": ["Web App", "API", "Database"],
+                "scenarios": self._generate_scenarios("Full Stack Developer")
             },
-            "data_science": {
-                "name": "Data Science Internship",
+            "data_engineer": {
+                "name": "Data Engineer Internship",
                 "duration": "2 weeks",
                 "price": 2799,
-                "scenarios": [
-                    {"day": 1, "task": "Environment setup", "scenario": "Set up Python data science environment (Jupyter, Pandas)."},
-                    {"day": 2, "task": "Data collection", "scenario": "Collect data from multiple sources."},
-                    {"day": 3, "task": "Data cleaning", "scenario": "Clean messy real-world data."},
-                    {"day": 4, "task": "EDA", "scenario": "Explore data. Find insights and patterns."},
-                    {"day": 5, "task": "Visualization", "scenario": "Create compelling visualizations with Plotly."},
-                    {"day": 6, "task": "Statistical analysis", "scenario": "Perform hypothesis testing and statistical analysis."},
-                    {"day": 7, "task": "Week 1 report", "scenario": "Create insights report for 'stakeholders' (AI)."},
-                    {"day": 8, "task": "ML basics", "scenario": "Build first ML model for prediction."},
-                    {"day": 9, "task": "Model tuning", "scenario": "Tune hyperparameters. Improve model."},
-                    {"day": 10, "task": "Advanced ML", "scenario": "Try ensemble methods. Compare models."},
-                    {"day": 11, "task": "Dashboard", "scenario": "Build interactive dashboard with Streamlit."},
-                    {"day": 12, "task": "Storytelling", "scenario": "Create data story with insights."},
-                    {"day": 13, "task": "Final presentation", "scenario": "Prepare final data presentation."},
-                    {"day": 14, "task": "Graduation", "scenario": "Present findings. Receive badge."}
-                ],
-                "skills": ["Python", "Pandas", "Visualization", "Statistics", "ML"],
-                "deliverables": ["Analysis Report", "Dashboard", "Models", "Presentation"]
+                "category": "Engineering",
+                "skills": ["Python", "SQL", "ETL", "Big Data"],
+                "deliverables": ["Data Pipeline", "Dashboard"],
+                "scenarios": self._generate_scenarios("Data Engineer")
             },
-            "digital_marketing": {
-                "name": "Digital Marketing Internship",
+            "devops": {
+                "name": "DevOps Engineer Internship",
                 "duration": "2 weeks",
-                "price": 1999,
-                "scenarios": [
-                    {"day": 1, "task": "Market research", "scenario": "Research target audience and competitors."},
-                    {"day": 2, "task": "SEO basics", "scenario": "Optimize website content for search engines."},
-                    {"day": 3, "task": "Content strategy", "scenario": "Create content calendar and strategy."},
-                    {"day": 4, "task": "Social media", "scenario": "Create social media campaign plan."},
-                    {"day": 5, "task": "Email marketing", "scenario": "Design email marketing campaign."},
-                    {"day": 6, "task": "Paid ads", "scenario": "Create Google/Facebook ad campaign."},
-                    {"day": 7, "task": "Week 1 review", "scenario": "Review metrics. Optimize campaigns."},
-                    {"day": 8, "task": "Analytics", "scenario": "Set up Google Analytics. Track performance."},
-                    {"day": 9, "task": "Content creation", "scenario": "Create blog posts and social content."},
-                    {"day": 10, "task": "A/B testing", "scenario": "Run A/B tests on campaigns."},
-                    {"day": 11, "task": "Influencer marketing", "scenario": "Plan influencer collaboration."},
-                    {"day": 12, "task": "ROI analysis", "scenario": "Analyze campaign ROI. Optimize budget."},
-                    {"day": 13, "task": "Final report", "scenario": "Create marketing performance report."},
-                    {"day": 14, "task": "Graduation", "scenario": "Present results. Receive badge."}
-                ],
-                "skills": ["SEO", "Social Media", "Analytics", "Content", "Ads"],
-                "deliverables": ["Campaign Plan", "Content", "Analytics Report"]
+                "price": 2499,
+                "category": "Engineering",
+                "skills": ["Docker", "K8s", "CI/CD", "Cloud"],
+                "deliverables": ["Pipeline", "Deployment"],
+                "scenarios": self._generate_scenarios("DevOps Engineer")
+            },
+            "cybersecurity": {
+                "name": "Cybersecurity Analyst Internship",
+                "duration": "2 weeks",
+                "price": 2999,
+                "category": "Engineering",
+                "skills": ["Security", "Networking", "Ethical Hacking"],
+                "deliverables": ["Security Audit", "Report"],
+                "scenarios": self._generate_scenarios("Cybersecurity Analyst")
+            },
+            "cloud_architect": {
+                "name": "Cloud Architect Internship",
+                "duration": "2 weeks",
+                "price": 2799,
+                "category": "Engineering",
+                "skills": ["AWS", "Azure", "GCP", "Architecture"],
+                "deliverables": ["Architecture Design"],
+                "scenarios": self._generate_scenarios("Cloud Architect")
+            },
+            
+            # SCIENCE (4)
+            "data_scientist": {
+                "name": "Data Scientist Internship",
+                "duration": "2 weeks",
+                "price": 2999,
+                "category": "Science",
+                "skills": ["Python", "Statistics", "ML", "Visualization"],
+                "deliverables": ["Analysis Report", "Models"],
+                "scenarios": self._generate_scenarios("Data Scientist")
+            },
+            "research_scientist": {
+                "name": "Research Scientist Internship",
+                "duration": "2 weeks",
+                "price": 2499,
+                "category": "Science",
+                "skills": ["Research Methods", "Data Analysis", "Writing"],
+                "deliverables": ["Research Paper", "Presentation"],
+                "scenarios": self._generate_scenarios("Research Scientist")
+            },
+            "bioinformatics": {
+                "name": "Bioinformatics Analyst Internship",
+                "duration": "2 weeks",
+                "price": 2799,
+                "category": "Science",
+                "skills": ["Biology", "Python", "Genomics"],
+                "deliverables": ["Genomic Analysis", "Report"],
+                "scenarios": self._generate_scenarios("Bioinformatics Analyst")
+            },
+            "environmental": {
+                "name": "Environmental Scientist Internship",
+                "duration": "2 weeks",
+                "price": 2299,
+                "category": "Science",
+                "skills": ["Environmental Data", "GIS", "Analysis"],
+                "deliverables": ["Environmental Report"],
+                "scenarios": self._generate_scenarios("Environmental Scientist")
+            },
+            
+            # MANAGEMENT (4)
+            "business_analyst": {
+                "name": "Business Analyst Internship",
+                "duration": "2 weeks",
+                "price": 2499,
+                "category": "Management",
+                "skills": ["Requirements", "Analysis", "Communication"],
+                "deliverables": ["Requirements Doc", "Analysis"],
+                "scenarios": self._generate_scenarios("Business Analyst")
+            },
+            "product_manager": {
+                "name": "Product Manager Internship",
+                "duration": "2 weeks",
+                "price": 2999,
+                "category": "Management",
+                "skills": ["Product Strategy", "UX", "Roadmap"],
+                "deliverables": ["PRD", "Roadmap"],
+                "scenarios": self._generate_scenarios("Product Manager")
+            },
+            "marketing_manager": {
+                "name": "Marketing Manager Internship",
+                "duration": "2 weeks",
+                "price": 2299,
+                "category": "Management",
+                "skills": ["Digital Marketing", "Analytics", "Content"],
+                "deliverables": ["Campaign Plan", "Report"],
+                "scenarios": self._generate_scenarios("Marketing Manager")
+            },
+            "financial_analyst": {
+                "name": "Financial Analyst Internship",
+                "duration": "2 weeks",
+                "price": 2799,
+                "category": "Management",
+                "skills": ["Finance", "Excel", "Modeling"],
+                "deliverables": ["Financial Model", "Report"],
+                "scenarios": self._generate_scenarios("Financial Analyst")
+            },
+            
+            # MASTERS (6)
+            "mtech_ai": {
+                "name": "MTech AI Internship",
+                "duration": "2 weeks",
+                "price": 3499,
+                "category": "Masters",
+                "skills": ["Advanced ML", "Deep Learning", "Research"],
+                "deliverables": ["Research Paper", "Model"],
+                "scenarios": self._generate_scenarios("MTech AI")
+            },
+            "mtech_software": {
+                "name": "MTech Software Internship",
+                "duration": "2 weeks",
+                "price": 2999,
+                "category": "Masters",
+                "skills": ["Architecture", "Systems Design", "Coding"],
+                "deliverables": ["System Design", "Code"],
+                "scenarios": self._generate_scenarios("MTech Software")
+            },
+            "mba_strategy": {
+                "name": "MBA Strategy Internship",
+                "duration": "2 weeks",
+                "price": 3499,
+                "category": "Masters",
+                "skills": ["Business Strategy", "Leadership", "Analysis"],
+                "deliverables": ["Strategy Doc", "Presentation"],
+                "scenarios": self._generate_scenarios("MBA Strategy")
+            },
+            "msc_data": {
+                "name": "MSc Data Science Internship",
+                "duration": "2 weeks",
+                "price": 2999,
+                "category": "Masters",
+                "skills": ["Statistics", "ML", "Big Data"],
+                "deliverables": ["Research Paper", "Dashboard"],
+                "scenarios": self._generate_scenarios("MSc Data Science")
+            },
+            "msc_psychology": {
+                "name": "MSc Psychology Internship",
+                "duration": "2 weeks",
+                "price": 2499,
+                "category": "Masters",
+                "skills": ["Research", "Counseling", "Analysis"],
+                "deliverables": ["Research Report", "Case Study"],
+                "scenarios": self._generate_scenarios("MSc Psychology")
+            },
+            "ma_economics": {
+                "name": "MA Economics Internship",
+                "duration": "2 weeks",
+                "price": 2299,
+                "category": "Masters",
+                "skills": ["Econometrics", "Policy", "Analysis"],
+                "deliverables": ["Economic Analysis", "Report"],
+                "scenarios": self._generate_scenarios("MA Economics")
             }
         }
+    
+    def _generate_scenarios(self, role):
+        """Generate 14-day scenarios for any role."""
+        return [
+            {"day": 1, "task": "Onboarding & Setup", "scenario": f"You join as {role} intern. Set up environment."},
+            {"day": 2, "task": "Research & Analysis", "scenario": f"Research industry trends for {role}."},
+            {"day": 3, "task": "First Assignment", "scenario": f"Complete first {role} task."},
+            {"day": 4, "task": "Deep Dive", "scenario": f"Dive deeper into {role} skills."},
+            {"day": 5, "task": "Practical Project", "scenario": f"Start practical {role} project."},
+            {"day": 6, "task": "Review & Feedback", "scenario": f"Submit work for AI mentor review."},
+            {"day": 7, "task": "Week 1 Review", "scenario": f"Present progress to AI team lead."},
+            {"day": 8, "task": "Advanced Topics", "scenario": f"Learn advanced {role} concepts."},
+            {"day": 9, "task": "Real Project Work", "scenario": f"Work on real {role} project."},
+            {"day": 10, "task": "Testing & Quality", "scenario": f"Ensure quality in deliverables."},
+            {"day": 11, "task": "Optimization", "scenario": f"Optimize {role} work."},
+            {"day": 12, "task": "Documentation", "scenario": f"Document project and processes."},
+            {"day": 13, "task": "Final Presentation", "scenario": f"Prepare final presentation."},
+            {"day": 14, "task": "Graduation", "scenario": f"Complete internship. Receive badge."}
+        ]
     
     def get_programs(self):
         """Get all internship programs."""
