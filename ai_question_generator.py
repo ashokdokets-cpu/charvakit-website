@@ -101,12 +101,12 @@ class AIQuestionGenerator:
         
         # Check cache with variation
         if cache_key in self.question_cache:
-    cache_data = self.question_cache[cache_key]
-    cached = cache_data["questions"]
-    if len(cached) >= count * 3:
-        # We have enough questions - sample with variation
-        sampled = random.sample(cached, min(count * 3, len(cached)))
-        return self._apply_variation(sampled)[:count]
+            cache_data = self.question_cache[cache_key]
+            cached = cache_data["questions"]
+            if len(cached) >= count * 3:
+                # We have enough questions - sample with variation
+                sampled = random.sample(cached, min(count * 3, len(cached)))
+                return self._apply_variation(sampled)[:count]
         
         # Check daily AI limit
         can_use_ai = True
