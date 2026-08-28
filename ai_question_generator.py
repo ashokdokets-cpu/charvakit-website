@@ -27,7 +27,96 @@ class AIQuestionGenerator:
                     ["Monday", "Tuesday", "Wednesday", "Thursday"]
                 ],
                 "correct": [0, 1, 0, 3, 2]
+            "pm fundamentals": {
+                "questions": ["What is the first phase of project management?", "What does WBS stand for?", "What is the triple constraint in PM?", "Who is responsible for project success?", "What is a Gantt chart used for?"],
+                "options": [["Initiation", "Planning", "Execution", "Closing"], ["Work Breakdown Structure", "Work Budget System", "Weekly Business Status", "None"], ["Scope, Time, Cost", "Quality, Risk, Resource", "People, Process, Tech", "Plan, Do, Check"], ["Project Manager", "Team", "Sponsor", "Stakeholder"], ["Scheduling", "Budgeting", "Risk analysis", "Communication"]],
+                "correct": [0, 0, 0, 0, 0]
             },
+            "people": {
+                "questions": ["What is the key to team motivation?", "What is emotional intelligence?", "What is conflict resolution?", "What is servant leadership?", "What is stakeholder management?"],
+                "options": [["Recognition", "Money", "Fear", "Pressure"], ["Understanding emotions", "IQ", "Technical skills", "Memory"], ["Finding solutions", "Avoiding conflict", "Winning arguments", "Ignoring issues"], ["Serving team first", "Commanding", "Delegating only", "Micromanaging"], ["Engaging stakeholders", "Ignoring them", "Telling them", "Avoiding them"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "process": {
+                "questions": ["What is process improvement?", "What is Lean methodology?", "What is Six Sigma?", "What is Kaizen?", "What is a bottleneck?"],
+                "options": [["Continuous enhancement", "One-time change", "Random change", "No change"], ["Eliminating waste", "Adding steps", "More resources", "More time"], ["Reducing defects", "Increasing defects", "Ignoring quality", "Faster delivery only"], ["Continuous improvement", "One-time event", "Annual review", "External audit"], ["Slowest step", "Fastest step", "First step", "Last step"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "business": {
+                "questions": ["What is ROI?", "What is a business case?", "What is NPV?", "What is stakeholder analysis?", "What is strategic alignment?"],
+                "options": [["Return on Investment", "Rate of Interest", "Return on Income", "None"], ["Justification document", "Legal document", "HR document", "Marketing plan"], ["Net Present Value", "New Project Value", "Net Profit Value", "None"], ["Identifying stakeholders", "Ignoring stakeholders", "Managing only clients", "Managing only team"], ["Aligning with goals", "Random projects", "Personal preference", "Short-term only"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "architecture": {
+                "questions": ["What is cloud architecture?", "What is scalability?", "What is high availability?", "What is fault tolerance?", "What is load balancing?"],
+                "options": [["Design of cloud systems", "Building design", "Network cable", "Hardware"], ["Handling growth", "Reducing size", "Fixed capacity", "Limiting users"], ["Always available", "Sometimes available", "Rarely available", "Never available"], ["Recovering from failure", "No failures", "Ignoring failures", "Preventing all failures"], ["Distributing traffic", "Blocking traffic", "Slowing traffic", "Monitoring traffic"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "security": {
+                "questions": ["What is encryption?", "What is a firewall?", "What is authentication?", "What is authorization?", "What is a vulnerability?"],
+                "options": [["Encoding data", "Deleting data", "Copying data", "Sharing data"], ["Network security", "Hardware", "Software bug", "Virus"], ["Verifying identity", "Granting access", "Denying access", "Logging in"], ["Granting permissions", "Verifying identity", "Creating accounts", "Deleting accounts"], ["Weakness", "Strength", "Feature", "Update"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "reading": {
+                "questions": ["What is skimming?", "What is scanning?", "What is inference?", "What is the main idea?", "What is context clue?"],
+                "options": [["Quick reading", "Slow reading", "Detailed reading", "No reading"], ["Finding specific info", "Reading everything", "Reading nothing", "Random reading"], ["Drawing conclusion", "Copying text", "Memorizing", "Ignoring text"], ["Central point", "Minor detail", "Example", "Footnote"], ["Hint in text", "Dictionary", "External source", "Guess"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "listening": {
+                "questions": ["What is active listening?", "What is paraphrasing?", "What is note-taking?", "What is comprehension?", "What is a lecture?"],
+                "options": [["Focused listening", "Passive hearing", "Ignoring", "Interrupting"], ["Restating", "Copying", "Translating", "Shortening"], ["Recording key points", "Writing everything", "Not writing", "Typing only"], ["Understanding", "Hearing only", "Seeing", "Touching"], ["Educational talk", "Conversation", "Argument", "Story"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "speaking": {
+                "questions": ["What is pronunciation?", "What is fluency?", "What is intonation?", "What is articulation?", "What is a presentation?"],
+                "options": [["Sound of words", "Spelling", "Writing", "Reading"], ["Smooth speech", "Fast speech", "Slow speech", "No speech"], ["Voice pitch", "Volume only", "Speed only", "Words only"], ["Clear speech", "Mumbling", "Whispering", "Shouting"], ["Formal talk", "Casual chat", "Argument", "Interview"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "writing": {
+                "questions": ["What is an essay?", "What is a thesis statement?", "What is coherence?", "What is grammar?", "What is punctuation?"],
+                "options": [["Structured writing", "Random notes", "List", "Poem"], ["Main argument", "Example", "Conclusion", "Title"], ["Logical flow", "Random order", "Repetition", "Contradiction"], ["Language rules", "Math rules", "Science rules", "No rules"], ["Marks in text", "Spacing only", "Font style", "Page size"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "ethics": {
+                "questions": ["What is ethics?", "What is integrity?", "What is conflict of interest?", "What is transparency?", "What is accountability?"],
+                "options": [["Moral principles", "Legal rules", "Company policy", "Personal preference"], ["Honesty", "Dishonesty", "Secrecy", "Manipulation"], ["Competing interests", "Shared interest", "No interest", "Public interest"], ["Openness", "Secrecy", "Hidden agenda", "Opaque"], ["Responsibility", "Blame", "Denial", "Avoidance"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "economics": {
+                "questions": ["What is supply and demand?", "What is inflation?", "What is GDP?", "What is recession?", "What is interest rate?"],
+                "options": [["Market forces", "Government rules", "Company policy", "Random events"], ["Price increase", "Price decrease", "Price stability", "No prices"], ["Gross Domestic Product", "General Development Plan", "Gross Development Product", "None"], ["Economic decline", "Economic growth", "Economic stability", "No economy"], ["Cost of borrowing", "Cost of living", "Cost of food", "Cost of housing"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "fra": {
+                "questions": ["What is balance sheet?", "What is income statement?", "What is cash flow?", "What is depreciation?", "What is goodwill?"],
+                "options": [["Financial position", "Profit only", "Loss only", "Tax only"], ["Revenue and expenses", "Assets only", "Liabilities only", "Equity only"], ["Money movement", "Profit only", "Sales only", "Expenses only"], ["Asset value decrease", "Asset value increase", "No change", "Market value"], ["Intangible asset", "Tangible asset", "Liability", "Expense"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "varc": {
+                "questions": ["What is reading comprehension?", "What is para jumble?", "What is summary writing?", "What is vocabulary?", "What is tone of passage?"],
+                "options": [["Understanding text", "Reading fast", "Reading slow", "Skipping text"], ["Arranging sentences", "Writing sentences", "Deleting sentences", "Copying sentences"], ["Condensing text", "Expanding text", "Repeating text", "Ignoring text"], ["Word knowledge", "Grammar only", "Spelling only", "Punctuation only"], ["Author's attitude", "Reader's attitude", "Character's attitude", "No attitude"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "dilr": {
+                "questions": ["What is data interpretation?", "What is logical reasoning?", "What is a pie chart?", "What is a bar graph?", "What is a table?"],
+                "options": [["Analyzing data", "Collecting data", "Deleting data", "Ignoring data"], ["Drawing conclusions", "Memorizing facts", "Copying text", "Guessing"], ["Circular chart", "Linear chart", "Square chart", "No chart"], ["Vertical bars", "Horizontal lines", "Dots", "No bars"], ["Data grid", "Story", "Poem", "Picture"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "physics": {
+                "questions": ["What is Newton's first law?", "What is velocity?", "What is energy?", "What is gravity?", "What is friction?"],
+                "options": [["Inertia", "Acceleration", "Action-reaction", "None"], ["Speed with direction", "Speed only", "Direction only", "Distance"], ["Capacity to work", "Force", "Power", "Pressure"], ["Attraction force", "Repulsion force", "No force", "Magnetic force"], ["Resistance force", "Driving force", "No force", "Electric force"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "chemistry": {
+                "questions": ["What is the atomic number?", "What is a molecule?", "What is pH?", "What is a chemical reaction?", "What is the periodic table?"],
+                "options": [["Number of protons", "Number of electrons", "Number of neutrons", "Atomic mass"], ["Group of atoms", "Single atom", "Element", "Compound only"], ["Acidity measure", "Temperature", "Pressure", "Volume"], ["Substance change", "No change", "Physical change only", "Color change only"], ["Element arrangement", "Compound list", "Reaction list", "Formula list"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "math": {
+                "questions": ["What is 15% of 200?", "What is square root of 144?", "What is 2^8?", "What is 7 x 8?", "What is 100/4?"],
+                "options": [["30", "25", "35", "40"], ["12", "11", "13", "14"], ["256", "128", "512", "1024"], ["56", "54", "58", "52"], ["25", "20", "30", "15"]],
+                "correct": [0, 0, 0, 0, 0]
+            }            },
             "quant": {
                 "questions": [
                     "What is 15% of 200?",
@@ -44,7 +133,96 @@ class AIQuestionGenerator:
                     ["128", "256", "512", "1024"]
                 ],
                 "correct": [1, 2, 2, 2, 1]
+            "pm fundamentals": {
+                "questions": ["What is the first phase of project management?", "What does WBS stand for?", "What is the triple constraint in PM?", "Who is responsible for project success?", "What is a Gantt chart used for?"],
+                "options": [["Initiation", "Planning", "Execution", "Closing"], ["Work Breakdown Structure", "Work Budget System", "Weekly Business Status", "None"], ["Scope, Time, Cost", "Quality, Risk, Resource", "People, Process, Tech", "Plan, Do, Check"], ["Project Manager", "Team", "Sponsor", "Stakeholder"], ["Scheduling", "Budgeting", "Risk analysis", "Communication"]],
+                "correct": [0, 0, 0, 0, 0]
             },
+            "people": {
+                "questions": ["What is the key to team motivation?", "What is emotional intelligence?", "What is conflict resolution?", "What is servant leadership?", "What is stakeholder management?"],
+                "options": [["Recognition", "Money", "Fear", "Pressure"], ["Understanding emotions", "IQ", "Technical skills", "Memory"], ["Finding solutions", "Avoiding conflict", "Winning arguments", "Ignoring issues"], ["Serving team first", "Commanding", "Delegating only", "Micromanaging"], ["Engaging stakeholders", "Ignoring them", "Telling them", "Avoiding them"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "process": {
+                "questions": ["What is process improvement?", "What is Lean methodology?", "What is Six Sigma?", "What is Kaizen?", "What is a bottleneck?"],
+                "options": [["Continuous enhancement", "One-time change", "Random change", "No change"], ["Eliminating waste", "Adding steps", "More resources", "More time"], ["Reducing defects", "Increasing defects", "Ignoring quality", "Faster delivery only"], ["Continuous improvement", "One-time event", "Annual review", "External audit"], ["Slowest step", "Fastest step", "First step", "Last step"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "business": {
+                "questions": ["What is ROI?", "What is a business case?", "What is NPV?", "What is stakeholder analysis?", "What is strategic alignment?"],
+                "options": [["Return on Investment", "Rate of Interest", "Return on Income", "None"], ["Justification document", "Legal document", "HR document", "Marketing plan"], ["Net Present Value", "New Project Value", "Net Profit Value", "None"], ["Identifying stakeholders", "Ignoring stakeholders", "Managing only clients", "Managing only team"], ["Aligning with goals", "Random projects", "Personal preference", "Short-term only"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "architecture": {
+                "questions": ["What is cloud architecture?", "What is scalability?", "What is high availability?", "What is fault tolerance?", "What is load balancing?"],
+                "options": [["Design of cloud systems", "Building design", "Network cable", "Hardware"], ["Handling growth", "Reducing size", "Fixed capacity", "Limiting users"], ["Always available", "Sometimes available", "Rarely available", "Never available"], ["Recovering from failure", "No failures", "Ignoring failures", "Preventing all failures"], ["Distributing traffic", "Blocking traffic", "Slowing traffic", "Monitoring traffic"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "security": {
+                "questions": ["What is encryption?", "What is a firewall?", "What is authentication?", "What is authorization?", "What is a vulnerability?"],
+                "options": [["Encoding data", "Deleting data", "Copying data", "Sharing data"], ["Network security", "Hardware", "Software bug", "Virus"], ["Verifying identity", "Granting access", "Denying access", "Logging in"], ["Granting permissions", "Verifying identity", "Creating accounts", "Deleting accounts"], ["Weakness", "Strength", "Feature", "Update"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "reading": {
+                "questions": ["What is skimming?", "What is scanning?", "What is inference?", "What is the main idea?", "What is context clue?"],
+                "options": [["Quick reading", "Slow reading", "Detailed reading", "No reading"], ["Finding specific info", "Reading everything", "Reading nothing", "Random reading"], ["Drawing conclusion", "Copying text", "Memorizing", "Ignoring text"], ["Central point", "Minor detail", "Example", "Footnote"], ["Hint in text", "Dictionary", "External source", "Guess"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "listening": {
+                "questions": ["What is active listening?", "What is paraphrasing?", "What is note-taking?", "What is comprehension?", "What is a lecture?"],
+                "options": [["Focused listening", "Passive hearing", "Ignoring", "Interrupting"], ["Restating", "Copying", "Translating", "Shortening"], ["Recording key points", "Writing everything", "Not writing", "Typing only"], ["Understanding", "Hearing only", "Seeing", "Touching"], ["Educational talk", "Conversation", "Argument", "Story"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "speaking": {
+                "questions": ["What is pronunciation?", "What is fluency?", "What is intonation?", "What is articulation?", "What is a presentation?"],
+                "options": [["Sound of words", "Spelling", "Writing", "Reading"], ["Smooth speech", "Fast speech", "Slow speech", "No speech"], ["Voice pitch", "Volume only", "Speed only", "Words only"], ["Clear speech", "Mumbling", "Whispering", "Shouting"], ["Formal talk", "Casual chat", "Argument", "Interview"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "writing": {
+                "questions": ["What is an essay?", "What is a thesis statement?", "What is coherence?", "What is grammar?", "What is punctuation?"],
+                "options": [["Structured writing", "Random notes", "List", "Poem"], ["Main argument", "Example", "Conclusion", "Title"], ["Logical flow", "Random order", "Repetition", "Contradiction"], ["Language rules", "Math rules", "Science rules", "No rules"], ["Marks in text", "Spacing only", "Font style", "Page size"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "ethics": {
+                "questions": ["What is ethics?", "What is integrity?", "What is conflict of interest?", "What is transparency?", "What is accountability?"],
+                "options": [["Moral principles", "Legal rules", "Company policy", "Personal preference"], ["Honesty", "Dishonesty", "Secrecy", "Manipulation"], ["Competing interests", "Shared interest", "No interest", "Public interest"], ["Openness", "Secrecy", "Hidden agenda", "Opaque"], ["Responsibility", "Blame", "Denial", "Avoidance"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "economics": {
+                "questions": ["What is supply and demand?", "What is inflation?", "What is GDP?", "What is recession?", "What is interest rate?"],
+                "options": [["Market forces", "Government rules", "Company policy", "Random events"], ["Price increase", "Price decrease", "Price stability", "No prices"], ["Gross Domestic Product", "General Development Plan", "Gross Development Product", "None"], ["Economic decline", "Economic growth", "Economic stability", "No economy"], ["Cost of borrowing", "Cost of living", "Cost of food", "Cost of housing"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "fra": {
+                "questions": ["What is balance sheet?", "What is income statement?", "What is cash flow?", "What is depreciation?", "What is goodwill?"],
+                "options": [["Financial position", "Profit only", "Loss only", "Tax only"], ["Revenue and expenses", "Assets only", "Liabilities only", "Equity only"], ["Money movement", "Profit only", "Sales only", "Expenses only"], ["Asset value decrease", "Asset value increase", "No change", "Market value"], ["Intangible asset", "Tangible asset", "Liability", "Expense"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "varc": {
+                "questions": ["What is reading comprehension?", "What is para jumble?", "What is summary writing?", "What is vocabulary?", "What is tone of passage?"],
+                "options": [["Understanding text", "Reading fast", "Reading slow", "Skipping text"], ["Arranging sentences", "Writing sentences", "Deleting sentences", "Copying sentences"], ["Condensing text", "Expanding text", "Repeating text", "Ignoring text"], ["Word knowledge", "Grammar only", "Spelling only", "Punctuation only"], ["Author's attitude", "Reader's attitude", "Character's attitude", "No attitude"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "dilr": {
+                "questions": ["What is data interpretation?", "What is logical reasoning?", "What is a pie chart?", "What is a bar graph?", "What is a table?"],
+                "options": [["Analyzing data", "Collecting data", "Deleting data", "Ignoring data"], ["Drawing conclusions", "Memorizing facts", "Copying text", "Guessing"], ["Circular chart", "Linear chart", "Square chart", "No chart"], ["Vertical bars", "Horizontal lines", "Dots", "No bars"], ["Data grid", "Story", "Poem", "Picture"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "physics": {
+                "questions": ["What is Newton's first law?", "What is velocity?", "What is energy?", "What is gravity?", "What is friction?"],
+                "options": [["Inertia", "Acceleration", "Action-reaction", "None"], ["Speed with direction", "Speed only", "Direction only", "Distance"], ["Capacity to work", "Force", "Power", "Pressure"], ["Attraction force", "Repulsion force", "No force", "Magnetic force"], ["Resistance force", "Driving force", "No force", "Electric force"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "chemistry": {
+                "questions": ["What is the atomic number?", "What is a molecule?", "What is pH?", "What is a chemical reaction?", "What is the periodic table?"],
+                "options": [["Number of protons", "Number of electrons", "Number of neutrons", "Atomic mass"], ["Group of atoms", "Single atom", "Element", "Compound only"], ["Acidity measure", "Temperature", "Pressure", "Volume"], ["Substance change", "No change", "Physical change only", "Color change only"], ["Element arrangement", "Compound list", "Reaction list", "Formula list"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "math": {
+                "questions": ["What is 15% of 200?", "What is square root of 144?", "What is 2^8?", "What is 7 x 8?", "What is 100/4?"],
+                "options": [["30", "25", "35", "40"], ["12", "11", "13", "14"], ["256", "128", "512", "1024"], ["56", "54", "58", "52"], ["25", "20", "30", "15"]],
+                "correct": [0, 0, 0, 0, 0]
+            }            },
             "english": {
                 "questions": [
                     "Choose the correct synonym of 'Happy':",
@@ -57,7 +235,96 @@ class AIQuestionGenerator:
                     ["go", "goes", "going", "gone"]
                 ],
                 "correct": [1, 1, 1]
+            "pm fundamentals": {
+                "questions": ["What is the first phase of project management?", "What does WBS stand for?", "What is the triple constraint in PM?", "Who is responsible for project success?", "What is a Gantt chart used for?"],
+                "options": [["Initiation", "Planning", "Execution", "Closing"], ["Work Breakdown Structure", "Work Budget System", "Weekly Business Status", "None"], ["Scope, Time, Cost", "Quality, Risk, Resource", "People, Process, Tech", "Plan, Do, Check"], ["Project Manager", "Team", "Sponsor", "Stakeholder"], ["Scheduling", "Budgeting", "Risk analysis", "Communication"]],
+                "correct": [0, 0, 0, 0, 0]
             },
+            "people": {
+                "questions": ["What is the key to team motivation?", "What is emotional intelligence?", "What is conflict resolution?", "What is servant leadership?", "What is stakeholder management?"],
+                "options": [["Recognition", "Money", "Fear", "Pressure"], ["Understanding emotions", "IQ", "Technical skills", "Memory"], ["Finding solutions", "Avoiding conflict", "Winning arguments", "Ignoring issues"], ["Serving team first", "Commanding", "Delegating only", "Micromanaging"], ["Engaging stakeholders", "Ignoring them", "Telling them", "Avoiding them"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "process": {
+                "questions": ["What is process improvement?", "What is Lean methodology?", "What is Six Sigma?", "What is Kaizen?", "What is a bottleneck?"],
+                "options": [["Continuous enhancement", "One-time change", "Random change", "No change"], ["Eliminating waste", "Adding steps", "More resources", "More time"], ["Reducing defects", "Increasing defects", "Ignoring quality", "Faster delivery only"], ["Continuous improvement", "One-time event", "Annual review", "External audit"], ["Slowest step", "Fastest step", "First step", "Last step"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "business": {
+                "questions": ["What is ROI?", "What is a business case?", "What is NPV?", "What is stakeholder analysis?", "What is strategic alignment?"],
+                "options": [["Return on Investment", "Rate of Interest", "Return on Income", "None"], ["Justification document", "Legal document", "HR document", "Marketing plan"], ["Net Present Value", "New Project Value", "Net Profit Value", "None"], ["Identifying stakeholders", "Ignoring stakeholders", "Managing only clients", "Managing only team"], ["Aligning with goals", "Random projects", "Personal preference", "Short-term only"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "architecture": {
+                "questions": ["What is cloud architecture?", "What is scalability?", "What is high availability?", "What is fault tolerance?", "What is load balancing?"],
+                "options": [["Design of cloud systems", "Building design", "Network cable", "Hardware"], ["Handling growth", "Reducing size", "Fixed capacity", "Limiting users"], ["Always available", "Sometimes available", "Rarely available", "Never available"], ["Recovering from failure", "No failures", "Ignoring failures", "Preventing all failures"], ["Distributing traffic", "Blocking traffic", "Slowing traffic", "Monitoring traffic"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "security": {
+                "questions": ["What is encryption?", "What is a firewall?", "What is authentication?", "What is authorization?", "What is a vulnerability?"],
+                "options": [["Encoding data", "Deleting data", "Copying data", "Sharing data"], ["Network security", "Hardware", "Software bug", "Virus"], ["Verifying identity", "Granting access", "Denying access", "Logging in"], ["Granting permissions", "Verifying identity", "Creating accounts", "Deleting accounts"], ["Weakness", "Strength", "Feature", "Update"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "reading": {
+                "questions": ["What is skimming?", "What is scanning?", "What is inference?", "What is the main idea?", "What is context clue?"],
+                "options": [["Quick reading", "Slow reading", "Detailed reading", "No reading"], ["Finding specific info", "Reading everything", "Reading nothing", "Random reading"], ["Drawing conclusion", "Copying text", "Memorizing", "Ignoring text"], ["Central point", "Minor detail", "Example", "Footnote"], ["Hint in text", "Dictionary", "External source", "Guess"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "listening": {
+                "questions": ["What is active listening?", "What is paraphrasing?", "What is note-taking?", "What is comprehension?", "What is a lecture?"],
+                "options": [["Focused listening", "Passive hearing", "Ignoring", "Interrupting"], ["Restating", "Copying", "Translating", "Shortening"], ["Recording key points", "Writing everything", "Not writing", "Typing only"], ["Understanding", "Hearing only", "Seeing", "Touching"], ["Educational talk", "Conversation", "Argument", "Story"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "speaking": {
+                "questions": ["What is pronunciation?", "What is fluency?", "What is intonation?", "What is articulation?", "What is a presentation?"],
+                "options": [["Sound of words", "Spelling", "Writing", "Reading"], ["Smooth speech", "Fast speech", "Slow speech", "No speech"], ["Voice pitch", "Volume only", "Speed only", "Words only"], ["Clear speech", "Mumbling", "Whispering", "Shouting"], ["Formal talk", "Casual chat", "Argument", "Interview"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "writing": {
+                "questions": ["What is an essay?", "What is a thesis statement?", "What is coherence?", "What is grammar?", "What is punctuation?"],
+                "options": [["Structured writing", "Random notes", "List", "Poem"], ["Main argument", "Example", "Conclusion", "Title"], ["Logical flow", "Random order", "Repetition", "Contradiction"], ["Language rules", "Math rules", "Science rules", "No rules"], ["Marks in text", "Spacing only", "Font style", "Page size"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "ethics": {
+                "questions": ["What is ethics?", "What is integrity?", "What is conflict of interest?", "What is transparency?", "What is accountability?"],
+                "options": [["Moral principles", "Legal rules", "Company policy", "Personal preference"], ["Honesty", "Dishonesty", "Secrecy", "Manipulation"], ["Competing interests", "Shared interest", "No interest", "Public interest"], ["Openness", "Secrecy", "Hidden agenda", "Opaque"], ["Responsibility", "Blame", "Denial", "Avoidance"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "economics": {
+                "questions": ["What is supply and demand?", "What is inflation?", "What is GDP?", "What is recession?", "What is interest rate?"],
+                "options": [["Market forces", "Government rules", "Company policy", "Random events"], ["Price increase", "Price decrease", "Price stability", "No prices"], ["Gross Domestic Product", "General Development Plan", "Gross Development Product", "None"], ["Economic decline", "Economic growth", "Economic stability", "No economy"], ["Cost of borrowing", "Cost of living", "Cost of food", "Cost of housing"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "fra": {
+                "questions": ["What is balance sheet?", "What is income statement?", "What is cash flow?", "What is depreciation?", "What is goodwill?"],
+                "options": [["Financial position", "Profit only", "Loss only", "Tax only"], ["Revenue and expenses", "Assets only", "Liabilities only", "Equity only"], ["Money movement", "Profit only", "Sales only", "Expenses only"], ["Asset value decrease", "Asset value increase", "No change", "Market value"], ["Intangible asset", "Tangible asset", "Liability", "Expense"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "varc": {
+                "questions": ["What is reading comprehension?", "What is para jumble?", "What is summary writing?", "What is vocabulary?", "What is tone of passage?"],
+                "options": [["Understanding text", "Reading fast", "Reading slow", "Skipping text"], ["Arranging sentences", "Writing sentences", "Deleting sentences", "Copying sentences"], ["Condensing text", "Expanding text", "Repeating text", "Ignoring text"], ["Word knowledge", "Grammar only", "Spelling only", "Punctuation only"], ["Author's attitude", "Reader's attitude", "Character's attitude", "No attitude"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "dilr": {
+                "questions": ["What is data interpretation?", "What is logical reasoning?", "What is a pie chart?", "What is a bar graph?", "What is a table?"],
+                "options": [["Analyzing data", "Collecting data", "Deleting data", "Ignoring data"], ["Drawing conclusions", "Memorizing facts", "Copying text", "Guessing"], ["Circular chart", "Linear chart", "Square chart", "No chart"], ["Vertical bars", "Horizontal lines", "Dots", "No bars"], ["Data grid", "Story", "Poem", "Picture"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "physics": {
+                "questions": ["What is Newton's first law?", "What is velocity?", "What is energy?", "What is gravity?", "What is friction?"],
+                "options": [["Inertia", "Acceleration", "Action-reaction", "None"], ["Speed with direction", "Speed only", "Direction only", "Distance"], ["Capacity to work", "Force", "Power", "Pressure"], ["Attraction force", "Repulsion force", "No force", "Magnetic force"], ["Resistance force", "Driving force", "No force", "Electric force"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "chemistry": {
+                "questions": ["What is the atomic number?", "What is a molecule?", "What is pH?", "What is a chemical reaction?", "What is the periodic table?"],
+                "options": [["Number of protons", "Number of electrons", "Number of neutrons", "Atomic mass"], ["Group of atoms", "Single atom", "Element", "Compound only"], ["Acidity measure", "Temperature", "Pressure", "Volume"], ["Substance change", "No change", "Physical change only", "Color change only"], ["Element arrangement", "Compound list", "Reaction list", "Formula list"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "math": {
+                "questions": ["What is 15% of 200?", "What is square root of 144?", "What is 2^8?", "What is 7 x 8?", "What is 100/4?"],
+                "options": [["30", "25", "35", "40"], ["12", "11", "13", "14"], ["256", "128", "512", "1024"], ["56", "54", "58", "52"], ["25", "20", "30", "15"]],
+                "correct": [0, 0, 0, 0, 0]
+            }            },
             "gk": {
                 "questions": [
                     "Who is the Prime Minister of India?",
@@ -70,7 +337,96 @@ class AIQuestionGenerator:
                     ["Atlantic", "Indian", "Pacific", "Arctic"]
                 ],
                 "correct": [0, 1, 2]
+            "pm fundamentals": {
+                "questions": ["What is the first phase of project management?", "What does WBS stand for?", "What is the triple constraint in PM?", "Who is responsible for project success?", "What is a Gantt chart used for?"],
+                "options": [["Initiation", "Planning", "Execution", "Closing"], ["Work Breakdown Structure", "Work Budget System", "Weekly Business Status", "None"], ["Scope, Time, Cost", "Quality, Risk, Resource", "People, Process, Tech", "Plan, Do, Check"], ["Project Manager", "Team", "Sponsor", "Stakeholder"], ["Scheduling", "Budgeting", "Risk analysis", "Communication"]],
+                "correct": [0, 0, 0, 0, 0]
             },
+            "people": {
+                "questions": ["What is the key to team motivation?", "What is emotional intelligence?", "What is conflict resolution?", "What is servant leadership?", "What is stakeholder management?"],
+                "options": [["Recognition", "Money", "Fear", "Pressure"], ["Understanding emotions", "IQ", "Technical skills", "Memory"], ["Finding solutions", "Avoiding conflict", "Winning arguments", "Ignoring issues"], ["Serving team first", "Commanding", "Delegating only", "Micromanaging"], ["Engaging stakeholders", "Ignoring them", "Telling them", "Avoiding them"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "process": {
+                "questions": ["What is process improvement?", "What is Lean methodology?", "What is Six Sigma?", "What is Kaizen?", "What is a bottleneck?"],
+                "options": [["Continuous enhancement", "One-time change", "Random change", "No change"], ["Eliminating waste", "Adding steps", "More resources", "More time"], ["Reducing defects", "Increasing defects", "Ignoring quality", "Faster delivery only"], ["Continuous improvement", "One-time event", "Annual review", "External audit"], ["Slowest step", "Fastest step", "First step", "Last step"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "business": {
+                "questions": ["What is ROI?", "What is a business case?", "What is NPV?", "What is stakeholder analysis?", "What is strategic alignment?"],
+                "options": [["Return on Investment", "Rate of Interest", "Return on Income", "None"], ["Justification document", "Legal document", "HR document", "Marketing plan"], ["Net Present Value", "New Project Value", "Net Profit Value", "None"], ["Identifying stakeholders", "Ignoring stakeholders", "Managing only clients", "Managing only team"], ["Aligning with goals", "Random projects", "Personal preference", "Short-term only"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "architecture": {
+                "questions": ["What is cloud architecture?", "What is scalability?", "What is high availability?", "What is fault tolerance?", "What is load balancing?"],
+                "options": [["Design of cloud systems", "Building design", "Network cable", "Hardware"], ["Handling growth", "Reducing size", "Fixed capacity", "Limiting users"], ["Always available", "Sometimes available", "Rarely available", "Never available"], ["Recovering from failure", "No failures", "Ignoring failures", "Preventing all failures"], ["Distributing traffic", "Blocking traffic", "Slowing traffic", "Monitoring traffic"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "security": {
+                "questions": ["What is encryption?", "What is a firewall?", "What is authentication?", "What is authorization?", "What is a vulnerability?"],
+                "options": [["Encoding data", "Deleting data", "Copying data", "Sharing data"], ["Network security", "Hardware", "Software bug", "Virus"], ["Verifying identity", "Granting access", "Denying access", "Logging in"], ["Granting permissions", "Verifying identity", "Creating accounts", "Deleting accounts"], ["Weakness", "Strength", "Feature", "Update"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "reading": {
+                "questions": ["What is skimming?", "What is scanning?", "What is inference?", "What is the main idea?", "What is context clue?"],
+                "options": [["Quick reading", "Slow reading", "Detailed reading", "No reading"], ["Finding specific info", "Reading everything", "Reading nothing", "Random reading"], ["Drawing conclusion", "Copying text", "Memorizing", "Ignoring text"], ["Central point", "Minor detail", "Example", "Footnote"], ["Hint in text", "Dictionary", "External source", "Guess"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "listening": {
+                "questions": ["What is active listening?", "What is paraphrasing?", "What is note-taking?", "What is comprehension?", "What is a lecture?"],
+                "options": [["Focused listening", "Passive hearing", "Ignoring", "Interrupting"], ["Restating", "Copying", "Translating", "Shortening"], ["Recording key points", "Writing everything", "Not writing", "Typing only"], ["Understanding", "Hearing only", "Seeing", "Touching"], ["Educational talk", "Conversation", "Argument", "Story"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "speaking": {
+                "questions": ["What is pronunciation?", "What is fluency?", "What is intonation?", "What is articulation?", "What is a presentation?"],
+                "options": [["Sound of words", "Spelling", "Writing", "Reading"], ["Smooth speech", "Fast speech", "Slow speech", "No speech"], ["Voice pitch", "Volume only", "Speed only", "Words only"], ["Clear speech", "Mumbling", "Whispering", "Shouting"], ["Formal talk", "Casual chat", "Argument", "Interview"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "writing": {
+                "questions": ["What is an essay?", "What is a thesis statement?", "What is coherence?", "What is grammar?", "What is punctuation?"],
+                "options": [["Structured writing", "Random notes", "List", "Poem"], ["Main argument", "Example", "Conclusion", "Title"], ["Logical flow", "Random order", "Repetition", "Contradiction"], ["Language rules", "Math rules", "Science rules", "No rules"], ["Marks in text", "Spacing only", "Font style", "Page size"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "ethics": {
+                "questions": ["What is ethics?", "What is integrity?", "What is conflict of interest?", "What is transparency?", "What is accountability?"],
+                "options": [["Moral principles", "Legal rules", "Company policy", "Personal preference"], ["Honesty", "Dishonesty", "Secrecy", "Manipulation"], ["Competing interests", "Shared interest", "No interest", "Public interest"], ["Openness", "Secrecy", "Hidden agenda", "Opaque"], ["Responsibility", "Blame", "Denial", "Avoidance"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "economics": {
+                "questions": ["What is supply and demand?", "What is inflation?", "What is GDP?", "What is recession?", "What is interest rate?"],
+                "options": [["Market forces", "Government rules", "Company policy", "Random events"], ["Price increase", "Price decrease", "Price stability", "No prices"], ["Gross Domestic Product", "General Development Plan", "Gross Development Product", "None"], ["Economic decline", "Economic growth", "Economic stability", "No economy"], ["Cost of borrowing", "Cost of living", "Cost of food", "Cost of housing"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "fra": {
+                "questions": ["What is balance sheet?", "What is income statement?", "What is cash flow?", "What is depreciation?", "What is goodwill?"],
+                "options": [["Financial position", "Profit only", "Loss only", "Tax only"], ["Revenue and expenses", "Assets only", "Liabilities only", "Equity only"], ["Money movement", "Profit only", "Sales only", "Expenses only"], ["Asset value decrease", "Asset value increase", "No change", "Market value"], ["Intangible asset", "Tangible asset", "Liability", "Expense"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "varc": {
+                "questions": ["What is reading comprehension?", "What is para jumble?", "What is summary writing?", "What is vocabulary?", "What is tone of passage?"],
+                "options": [["Understanding text", "Reading fast", "Reading slow", "Skipping text"], ["Arranging sentences", "Writing sentences", "Deleting sentences", "Copying sentences"], ["Condensing text", "Expanding text", "Repeating text", "Ignoring text"], ["Word knowledge", "Grammar only", "Spelling only", "Punctuation only"], ["Author's attitude", "Reader's attitude", "Character's attitude", "No attitude"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "dilr": {
+                "questions": ["What is data interpretation?", "What is logical reasoning?", "What is a pie chart?", "What is a bar graph?", "What is a table?"],
+                "options": [["Analyzing data", "Collecting data", "Deleting data", "Ignoring data"], ["Drawing conclusions", "Memorizing facts", "Copying text", "Guessing"], ["Circular chart", "Linear chart", "Square chart", "No chart"], ["Vertical bars", "Horizontal lines", "Dots", "No bars"], ["Data grid", "Story", "Poem", "Picture"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "physics": {
+                "questions": ["What is Newton's first law?", "What is velocity?", "What is energy?", "What is gravity?", "What is friction?"],
+                "options": [["Inertia", "Acceleration", "Action-reaction", "None"], ["Speed with direction", "Speed only", "Direction only", "Distance"], ["Capacity to work", "Force", "Power", "Pressure"], ["Attraction force", "Repulsion force", "No force", "Magnetic force"], ["Resistance force", "Driving force", "No force", "Electric force"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "chemistry": {
+                "questions": ["What is the atomic number?", "What is a molecule?", "What is pH?", "What is a chemical reaction?", "What is the periodic table?"],
+                "options": [["Number of protons", "Number of electrons", "Number of neutrons", "Atomic mass"], ["Group of atoms", "Single atom", "Element", "Compound only"], ["Acidity measure", "Temperature", "Pressure", "Volume"], ["Substance change", "No change", "Physical change only", "Color change only"], ["Element arrangement", "Compound list", "Reaction list", "Formula list"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "math": {
+                "questions": ["What is 15% of 200?", "What is square root of 144?", "What is 2^8?", "What is 7 x 8?", "What is 100/4?"],
+                "options": [["30", "25", "35", "40"], ["12", "11", "13", "14"], ["256", "128", "512", "1024"], ["56", "54", "58", "52"], ["25", "20", "30", "15"]],
+                "correct": [0, 0, 0, 0, 0]
+            }            },
             "anatomy": {
                 "questions": [
                     "Which bone is known as the collarbone?",
@@ -87,7 +443,96 @@ class AIQuestionGenerator:
                     ["Neuron", "Nephron", "Glomerulus", "Tubule"]
                 ],
                 "correct": [0, 1, 2, 0, 1]
+            "pm fundamentals": {
+                "questions": ["What is the first phase of project management?", "What does WBS stand for?", "What is the triple constraint in PM?", "Who is responsible for project success?", "What is a Gantt chart used for?"],
+                "options": [["Initiation", "Planning", "Execution", "Closing"], ["Work Breakdown Structure", "Work Budget System", "Weekly Business Status", "None"], ["Scope, Time, Cost", "Quality, Risk, Resource", "People, Process, Tech", "Plan, Do, Check"], ["Project Manager", "Team", "Sponsor", "Stakeholder"], ["Scheduling", "Budgeting", "Risk analysis", "Communication"]],
+                "correct": [0, 0, 0, 0, 0]
             },
+            "people": {
+                "questions": ["What is the key to team motivation?", "What is emotional intelligence?", "What is conflict resolution?", "What is servant leadership?", "What is stakeholder management?"],
+                "options": [["Recognition", "Money", "Fear", "Pressure"], ["Understanding emotions", "IQ", "Technical skills", "Memory"], ["Finding solutions", "Avoiding conflict", "Winning arguments", "Ignoring issues"], ["Serving team first", "Commanding", "Delegating only", "Micromanaging"], ["Engaging stakeholders", "Ignoring them", "Telling them", "Avoiding them"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "process": {
+                "questions": ["What is process improvement?", "What is Lean methodology?", "What is Six Sigma?", "What is Kaizen?", "What is a bottleneck?"],
+                "options": [["Continuous enhancement", "One-time change", "Random change", "No change"], ["Eliminating waste", "Adding steps", "More resources", "More time"], ["Reducing defects", "Increasing defects", "Ignoring quality", "Faster delivery only"], ["Continuous improvement", "One-time event", "Annual review", "External audit"], ["Slowest step", "Fastest step", "First step", "Last step"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "business": {
+                "questions": ["What is ROI?", "What is a business case?", "What is NPV?", "What is stakeholder analysis?", "What is strategic alignment?"],
+                "options": [["Return on Investment", "Rate of Interest", "Return on Income", "None"], ["Justification document", "Legal document", "HR document", "Marketing plan"], ["Net Present Value", "New Project Value", "Net Profit Value", "None"], ["Identifying stakeholders", "Ignoring stakeholders", "Managing only clients", "Managing only team"], ["Aligning with goals", "Random projects", "Personal preference", "Short-term only"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "architecture": {
+                "questions": ["What is cloud architecture?", "What is scalability?", "What is high availability?", "What is fault tolerance?", "What is load balancing?"],
+                "options": [["Design of cloud systems", "Building design", "Network cable", "Hardware"], ["Handling growth", "Reducing size", "Fixed capacity", "Limiting users"], ["Always available", "Sometimes available", "Rarely available", "Never available"], ["Recovering from failure", "No failures", "Ignoring failures", "Preventing all failures"], ["Distributing traffic", "Blocking traffic", "Slowing traffic", "Monitoring traffic"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "security": {
+                "questions": ["What is encryption?", "What is a firewall?", "What is authentication?", "What is authorization?", "What is a vulnerability?"],
+                "options": [["Encoding data", "Deleting data", "Copying data", "Sharing data"], ["Network security", "Hardware", "Software bug", "Virus"], ["Verifying identity", "Granting access", "Denying access", "Logging in"], ["Granting permissions", "Verifying identity", "Creating accounts", "Deleting accounts"], ["Weakness", "Strength", "Feature", "Update"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "reading": {
+                "questions": ["What is skimming?", "What is scanning?", "What is inference?", "What is the main idea?", "What is context clue?"],
+                "options": [["Quick reading", "Slow reading", "Detailed reading", "No reading"], ["Finding specific info", "Reading everything", "Reading nothing", "Random reading"], ["Drawing conclusion", "Copying text", "Memorizing", "Ignoring text"], ["Central point", "Minor detail", "Example", "Footnote"], ["Hint in text", "Dictionary", "External source", "Guess"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "listening": {
+                "questions": ["What is active listening?", "What is paraphrasing?", "What is note-taking?", "What is comprehension?", "What is a lecture?"],
+                "options": [["Focused listening", "Passive hearing", "Ignoring", "Interrupting"], ["Restating", "Copying", "Translating", "Shortening"], ["Recording key points", "Writing everything", "Not writing", "Typing only"], ["Understanding", "Hearing only", "Seeing", "Touching"], ["Educational talk", "Conversation", "Argument", "Story"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "speaking": {
+                "questions": ["What is pronunciation?", "What is fluency?", "What is intonation?", "What is articulation?", "What is a presentation?"],
+                "options": [["Sound of words", "Spelling", "Writing", "Reading"], ["Smooth speech", "Fast speech", "Slow speech", "No speech"], ["Voice pitch", "Volume only", "Speed only", "Words only"], ["Clear speech", "Mumbling", "Whispering", "Shouting"], ["Formal talk", "Casual chat", "Argument", "Interview"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "writing": {
+                "questions": ["What is an essay?", "What is a thesis statement?", "What is coherence?", "What is grammar?", "What is punctuation?"],
+                "options": [["Structured writing", "Random notes", "List", "Poem"], ["Main argument", "Example", "Conclusion", "Title"], ["Logical flow", "Random order", "Repetition", "Contradiction"], ["Language rules", "Math rules", "Science rules", "No rules"], ["Marks in text", "Spacing only", "Font style", "Page size"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "ethics": {
+                "questions": ["What is ethics?", "What is integrity?", "What is conflict of interest?", "What is transparency?", "What is accountability?"],
+                "options": [["Moral principles", "Legal rules", "Company policy", "Personal preference"], ["Honesty", "Dishonesty", "Secrecy", "Manipulation"], ["Competing interests", "Shared interest", "No interest", "Public interest"], ["Openness", "Secrecy", "Hidden agenda", "Opaque"], ["Responsibility", "Blame", "Denial", "Avoidance"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "economics": {
+                "questions": ["What is supply and demand?", "What is inflation?", "What is GDP?", "What is recession?", "What is interest rate?"],
+                "options": [["Market forces", "Government rules", "Company policy", "Random events"], ["Price increase", "Price decrease", "Price stability", "No prices"], ["Gross Domestic Product", "General Development Plan", "Gross Development Product", "None"], ["Economic decline", "Economic growth", "Economic stability", "No economy"], ["Cost of borrowing", "Cost of living", "Cost of food", "Cost of housing"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "fra": {
+                "questions": ["What is balance sheet?", "What is income statement?", "What is cash flow?", "What is depreciation?", "What is goodwill?"],
+                "options": [["Financial position", "Profit only", "Loss only", "Tax only"], ["Revenue and expenses", "Assets only", "Liabilities only", "Equity only"], ["Money movement", "Profit only", "Sales only", "Expenses only"], ["Asset value decrease", "Asset value increase", "No change", "Market value"], ["Intangible asset", "Tangible asset", "Liability", "Expense"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "varc": {
+                "questions": ["What is reading comprehension?", "What is para jumble?", "What is summary writing?", "What is vocabulary?", "What is tone of passage?"],
+                "options": [["Understanding text", "Reading fast", "Reading slow", "Skipping text"], ["Arranging sentences", "Writing sentences", "Deleting sentences", "Copying sentences"], ["Condensing text", "Expanding text", "Repeating text", "Ignoring text"], ["Word knowledge", "Grammar only", "Spelling only", "Punctuation only"], ["Author's attitude", "Reader's attitude", "Character's attitude", "No attitude"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "dilr": {
+                "questions": ["What is data interpretation?", "What is logical reasoning?", "What is a pie chart?", "What is a bar graph?", "What is a table?"],
+                "options": [["Analyzing data", "Collecting data", "Deleting data", "Ignoring data"], ["Drawing conclusions", "Memorizing facts", "Copying text", "Guessing"], ["Circular chart", "Linear chart", "Square chart", "No chart"], ["Vertical bars", "Horizontal lines", "Dots", "No bars"], ["Data grid", "Story", "Poem", "Picture"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "physics": {
+                "questions": ["What is Newton's first law?", "What is velocity?", "What is energy?", "What is gravity?", "What is friction?"],
+                "options": [["Inertia", "Acceleration", "Action-reaction", "None"], ["Speed with direction", "Speed only", "Direction only", "Distance"], ["Capacity to work", "Force", "Power", "Pressure"], ["Attraction force", "Repulsion force", "No force", "Magnetic force"], ["Resistance force", "Driving force", "No force", "Electric force"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "chemistry": {
+                "questions": ["What is the atomic number?", "What is a molecule?", "What is pH?", "What is a chemical reaction?", "What is the periodic table?"],
+                "options": [["Number of protons", "Number of electrons", "Number of neutrons", "Atomic mass"], ["Group of atoms", "Single atom", "Element", "Compound only"], ["Acidity measure", "Temperature", "Pressure", "Volume"], ["Substance change", "No change", "Physical change only", "Color change only"], ["Element arrangement", "Compound list", "Reaction list", "Formula list"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "math": {
+                "questions": ["What is 15% of 200?", "What is square root of 144?", "What is 2^8?", "What is 7 x 8?", "What is 100/4?"],
+                "options": [["30", "25", "35", "40"], ["12", "11", "13", "14"], ["256", "128", "512", "1024"], ["56", "54", "58", "52"], ["25", "20", "30", "15"]],
+                "correct": [0, 0, 0, 0, 0]
+            }            },
             "pathology": {
                 "questions": [
                     "What is the most common type of cancer worldwide?",
@@ -104,7 +549,96 @@ class AIQuestionGenerator:
                     ["Alcohol", "Hepatitis B", "Hepatitis C", "NASH"]
                 ],
                 "correct": [0, 0, 1, 0, 0]
+            "pm fundamentals": {
+                "questions": ["What is the first phase of project management?", "What does WBS stand for?", "What is the triple constraint in PM?", "Who is responsible for project success?", "What is a Gantt chart used for?"],
+                "options": [["Initiation", "Planning", "Execution", "Closing"], ["Work Breakdown Structure", "Work Budget System", "Weekly Business Status", "None"], ["Scope, Time, Cost", "Quality, Risk, Resource", "People, Process, Tech", "Plan, Do, Check"], ["Project Manager", "Team", "Sponsor", "Stakeholder"], ["Scheduling", "Budgeting", "Risk analysis", "Communication"]],
+                "correct": [0, 0, 0, 0, 0]
             },
+            "people": {
+                "questions": ["What is the key to team motivation?", "What is emotional intelligence?", "What is conflict resolution?", "What is servant leadership?", "What is stakeholder management?"],
+                "options": [["Recognition", "Money", "Fear", "Pressure"], ["Understanding emotions", "IQ", "Technical skills", "Memory"], ["Finding solutions", "Avoiding conflict", "Winning arguments", "Ignoring issues"], ["Serving team first", "Commanding", "Delegating only", "Micromanaging"], ["Engaging stakeholders", "Ignoring them", "Telling them", "Avoiding them"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "process": {
+                "questions": ["What is process improvement?", "What is Lean methodology?", "What is Six Sigma?", "What is Kaizen?", "What is a bottleneck?"],
+                "options": [["Continuous enhancement", "One-time change", "Random change", "No change"], ["Eliminating waste", "Adding steps", "More resources", "More time"], ["Reducing defects", "Increasing defects", "Ignoring quality", "Faster delivery only"], ["Continuous improvement", "One-time event", "Annual review", "External audit"], ["Slowest step", "Fastest step", "First step", "Last step"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "business": {
+                "questions": ["What is ROI?", "What is a business case?", "What is NPV?", "What is stakeholder analysis?", "What is strategic alignment?"],
+                "options": [["Return on Investment", "Rate of Interest", "Return on Income", "None"], ["Justification document", "Legal document", "HR document", "Marketing plan"], ["Net Present Value", "New Project Value", "Net Profit Value", "None"], ["Identifying stakeholders", "Ignoring stakeholders", "Managing only clients", "Managing only team"], ["Aligning with goals", "Random projects", "Personal preference", "Short-term only"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "architecture": {
+                "questions": ["What is cloud architecture?", "What is scalability?", "What is high availability?", "What is fault tolerance?", "What is load balancing?"],
+                "options": [["Design of cloud systems", "Building design", "Network cable", "Hardware"], ["Handling growth", "Reducing size", "Fixed capacity", "Limiting users"], ["Always available", "Sometimes available", "Rarely available", "Never available"], ["Recovering from failure", "No failures", "Ignoring failures", "Preventing all failures"], ["Distributing traffic", "Blocking traffic", "Slowing traffic", "Monitoring traffic"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "security": {
+                "questions": ["What is encryption?", "What is a firewall?", "What is authentication?", "What is authorization?", "What is a vulnerability?"],
+                "options": [["Encoding data", "Deleting data", "Copying data", "Sharing data"], ["Network security", "Hardware", "Software bug", "Virus"], ["Verifying identity", "Granting access", "Denying access", "Logging in"], ["Granting permissions", "Verifying identity", "Creating accounts", "Deleting accounts"], ["Weakness", "Strength", "Feature", "Update"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "reading": {
+                "questions": ["What is skimming?", "What is scanning?", "What is inference?", "What is the main idea?", "What is context clue?"],
+                "options": [["Quick reading", "Slow reading", "Detailed reading", "No reading"], ["Finding specific info", "Reading everything", "Reading nothing", "Random reading"], ["Drawing conclusion", "Copying text", "Memorizing", "Ignoring text"], ["Central point", "Minor detail", "Example", "Footnote"], ["Hint in text", "Dictionary", "External source", "Guess"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "listening": {
+                "questions": ["What is active listening?", "What is paraphrasing?", "What is note-taking?", "What is comprehension?", "What is a lecture?"],
+                "options": [["Focused listening", "Passive hearing", "Ignoring", "Interrupting"], ["Restating", "Copying", "Translating", "Shortening"], ["Recording key points", "Writing everything", "Not writing", "Typing only"], ["Understanding", "Hearing only", "Seeing", "Touching"], ["Educational talk", "Conversation", "Argument", "Story"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "speaking": {
+                "questions": ["What is pronunciation?", "What is fluency?", "What is intonation?", "What is articulation?", "What is a presentation?"],
+                "options": [["Sound of words", "Spelling", "Writing", "Reading"], ["Smooth speech", "Fast speech", "Slow speech", "No speech"], ["Voice pitch", "Volume only", "Speed only", "Words only"], ["Clear speech", "Mumbling", "Whispering", "Shouting"], ["Formal talk", "Casual chat", "Argument", "Interview"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "writing": {
+                "questions": ["What is an essay?", "What is a thesis statement?", "What is coherence?", "What is grammar?", "What is punctuation?"],
+                "options": [["Structured writing", "Random notes", "List", "Poem"], ["Main argument", "Example", "Conclusion", "Title"], ["Logical flow", "Random order", "Repetition", "Contradiction"], ["Language rules", "Math rules", "Science rules", "No rules"], ["Marks in text", "Spacing only", "Font style", "Page size"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "ethics": {
+                "questions": ["What is ethics?", "What is integrity?", "What is conflict of interest?", "What is transparency?", "What is accountability?"],
+                "options": [["Moral principles", "Legal rules", "Company policy", "Personal preference"], ["Honesty", "Dishonesty", "Secrecy", "Manipulation"], ["Competing interests", "Shared interest", "No interest", "Public interest"], ["Openness", "Secrecy", "Hidden agenda", "Opaque"], ["Responsibility", "Blame", "Denial", "Avoidance"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "economics": {
+                "questions": ["What is supply and demand?", "What is inflation?", "What is GDP?", "What is recession?", "What is interest rate?"],
+                "options": [["Market forces", "Government rules", "Company policy", "Random events"], ["Price increase", "Price decrease", "Price stability", "No prices"], ["Gross Domestic Product", "General Development Plan", "Gross Development Product", "None"], ["Economic decline", "Economic growth", "Economic stability", "No economy"], ["Cost of borrowing", "Cost of living", "Cost of food", "Cost of housing"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "fra": {
+                "questions": ["What is balance sheet?", "What is income statement?", "What is cash flow?", "What is depreciation?", "What is goodwill?"],
+                "options": [["Financial position", "Profit only", "Loss only", "Tax only"], ["Revenue and expenses", "Assets only", "Liabilities only", "Equity only"], ["Money movement", "Profit only", "Sales only", "Expenses only"], ["Asset value decrease", "Asset value increase", "No change", "Market value"], ["Intangible asset", "Tangible asset", "Liability", "Expense"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "varc": {
+                "questions": ["What is reading comprehension?", "What is para jumble?", "What is summary writing?", "What is vocabulary?", "What is tone of passage?"],
+                "options": [["Understanding text", "Reading fast", "Reading slow", "Skipping text"], ["Arranging sentences", "Writing sentences", "Deleting sentences", "Copying sentences"], ["Condensing text", "Expanding text", "Repeating text", "Ignoring text"], ["Word knowledge", "Grammar only", "Spelling only", "Punctuation only"], ["Author's attitude", "Reader's attitude", "Character's attitude", "No attitude"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "dilr": {
+                "questions": ["What is data interpretation?", "What is logical reasoning?", "What is a pie chart?", "What is a bar graph?", "What is a table?"],
+                "options": [["Analyzing data", "Collecting data", "Deleting data", "Ignoring data"], ["Drawing conclusions", "Memorizing facts", "Copying text", "Guessing"], ["Circular chart", "Linear chart", "Square chart", "No chart"], ["Vertical bars", "Horizontal lines", "Dots", "No bars"], ["Data grid", "Story", "Poem", "Picture"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "physics": {
+                "questions": ["What is Newton's first law?", "What is velocity?", "What is energy?", "What is gravity?", "What is friction?"],
+                "options": [["Inertia", "Acceleration", "Action-reaction", "None"], ["Speed with direction", "Speed only", "Direction only", "Distance"], ["Capacity to work", "Force", "Power", "Pressure"], ["Attraction force", "Repulsion force", "No force", "Magnetic force"], ["Resistance force", "Driving force", "No force", "Electric force"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "chemistry": {
+                "questions": ["What is the atomic number?", "What is a molecule?", "What is pH?", "What is a chemical reaction?", "What is the periodic table?"],
+                "options": [["Number of protons", "Number of electrons", "Number of neutrons", "Atomic mass"], ["Group of atoms", "Single atom", "Element", "Compound only"], ["Acidity measure", "Temperature", "Pressure", "Volume"], ["Substance change", "No change", "Physical change only", "Color change only"], ["Element arrangement", "Compound list", "Reaction list", "Formula list"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "math": {
+                "questions": ["What is 15% of 200?", "What is square root of 144?", "What is 2^8?", "What is 7 x 8?", "What is 100/4?"],
+                "options": [["30", "25", "35", "40"], ["12", "11", "13", "14"], ["256", "128", "512", "1024"], ["56", "54", "58", "52"], ["25", "20", "30", "15"]],
+                "correct": [0, 0, 0, 0, 0]
+            }            },
             "medicine": {
                 "questions": [
                     "What is the first-line treatment for hypertension?",
@@ -121,7 +655,96 @@ class AIQuestionGenerator:
                     ["Streptococcus pneumoniae", "Staphylococcus aureus", "Klebsiella", "Pseudomonas"]
                 ],
                 "correct": [0, 1, 0, 2, 0]
+            "pm fundamentals": {
+                "questions": ["What is the first phase of project management?", "What does WBS stand for?", "What is the triple constraint in PM?", "Who is responsible for project success?", "What is a Gantt chart used for?"],
+                "options": [["Initiation", "Planning", "Execution", "Closing"], ["Work Breakdown Structure", "Work Budget System", "Weekly Business Status", "None"], ["Scope, Time, Cost", "Quality, Risk, Resource", "People, Process, Tech", "Plan, Do, Check"], ["Project Manager", "Team", "Sponsor", "Stakeholder"], ["Scheduling", "Budgeting", "Risk analysis", "Communication"]],
+                "correct": [0, 0, 0, 0, 0]
             },
+            "people": {
+                "questions": ["What is the key to team motivation?", "What is emotional intelligence?", "What is conflict resolution?", "What is servant leadership?", "What is stakeholder management?"],
+                "options": [["Recognition", "Money", "Fear", "Pressure"], ["Understanding emotions", "IQ", "Technical skills", "Memory"], ["Finding solutions", "Avoiding conflict", "Winning arguments", "Ignoring issues"], ["Serving team first", "Commanding", "Delegating only", "Micromanaging"], ["Engaging stakeholders", "Ignoring them", "Telling them", "Avoiding them"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "process": {
+                "questions": ["What is process improvement?", "What is Lean methodology?", "What is Six Sigma?", "What is Kaizen?", "What is a bottleneck?"],
+                "options": [["Continuous enhancement", "One-time change", "Random change", "No change"], ["Eliminating waste", "Adding steps", "More resources", "More time"], ["Reducing defects", "Increasing defects", "Ignoring quality", "Faster delivery only"], ["Continuous improvement", "One-time event", "Annual review", "External audit"], ["Slowest step", "Fastest step", "First step", "Last step"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "business": {
+                "questions": ["What is ROI?", "What is a business case?", "What is NPV?", "What is stakeholder analysis?", "What is strategic alignment?"],
+                "options": [["Return on Investment", "Rate of Interest", "Return on Income", "None"], ["Justification document", "Legal document", "HR document", "Marketing plan"], ["Net Present Value", "New Project Value", "Net Profit Value", "None"], ["Identifying stakeholders", "Ignoring stakeholders", "Managing only clients", "Managing only team"], ["Aligning with goals", "Random projects", "Personal preference", "Short-term only"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "architecture": {
+                "questions": ["What is cloud architecture?", "What is scalability?", "What is high availability?", "What is fault tolerance?", "What is load balancing?"],
+                "options": [["Design of cloud systems", "Building design", "Network cable", "Hardware"], ["Handling growth", "Reducing size", "Fixed capacity", "Limiting users"], ["Always available", "Sometimes available", "Rarely available", "Never available"], ["Recovering from failure", "No failures", "Ignoring failures", "Preventing all failures"], ["Distributing traffic", "Blocking traffic", "Slowing traffic", "Monitoring traffic"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "security": {
+                "questions": ["What is encryption?", "What is a firewall?", "What is authentication?", "What is authorization?", "What is a vulnerability?"],
+                "options": [["Encoding data", "Deleting data", "Copying data", "Sharing data"], ["Network security", "Hardware", "Software bug", "Virus"], ["Verifying identity", "Granting access", "Denying access", "Logging in"], ["Granting permissions", "Verifying identity", "Creating accounts", "Deleting accounts"], ["Weakness", "Strength", "Feature", "Update"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "reading": {
+                "questions": ["What is skimming?", "What is scanning?", "What is inference?", "What is the main idea?", "What is context clue?"],
+                "options": [["Quick reading", "Slow reading", "Detailed reading", "No reading"], ["Finding specific info", "Reading everything", "Reading nothing", "Random reading"], ["Drawing conclusion", "Copying text", "Memorizing", "Ignoring text"], ["Central point", "Minor detail", "Example", "Footnote"], ["Hint in text", "Dictionary", "External source", "Guess"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "listening": {
+                "questions": ["What is active listening?", "What is paraphrasing?", "What is note-taking?", "What is comprehension?", "What is a lecture?"],
+                "options": [["Focused listening", "Passive hearing", "Ignoring", "Interrupting"], ["Restating", "Copying", "Translating", "Shortening"], ["Recording key points", "Writing everything", "Not writing", "Typing only"], ["Understanding", "Hearing only", "Seeing", "Touching"], ["Educational talk", "Conversation", "Argument", "Story"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "speaking": {
+                "questions": ["What is pronunciation?", "What is fluency?", "What is intonation?", "What is articulation?", "What is a presentation?"],
+                "options": [["Sound of words", "Spelling", "Writing", "Reading"], ["Smooth speech", "Fast speech", "Slow speech", "No speech"], ["Voice pitch", "Volume only", "Speed only", "Words only"], ["Clear speech", "Mumbling", "Whispering", "Shouting"], ["Formal talk", "Casual chat", "Argument", "Interview"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "writing": {
+                "questions": ["What is an essay?", "What is a thesis statement?", "What is coherence?", "What is grammar?", "What is punctuation?"],
+                "options": [["Structured writing", "Random notes", "List", "Poem"], ["Main argument", "Example", "Conclusion", "Title"], ["Logical flow", "Random order", "Repetition", "Contradiction"], ["Language rules", "Math rules", "Science rules", "No rules"], ["Marks in text", "Spacing only", "Font style", "Page size"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "ethics": {
+                "questions": ["What is ethics?", "What is integrity?", "What is conflict of interest?", "What is transparency?", "What is accountability?"],
+                "options": [["Moral principles", "Legal rules", "Company policy", "Personal preference"], ["Honesty", "Dishonesty", "Secrecy", "Manipulation"], ["Competing interests", "Shared interest", "No interest", "Public interest"], ["Openness", "Secrecy", "Hidden agenda", "Opaque"], ["Responsibility", "Blame", "Denial", "Avoidance"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "economics": {
+                "questions": ["What is supply and demand?", "What is inflation?", "What is GDP?", "What is recession?", "What is interest rate?"],
+                "options": [["Market forces", "Government rules", "Company policy", "Random events"], ["Price increase", "Price decrease", "Price stability", "No prices"], ["Gross Domestic Product", "General Development Plan", "Gross Development Product", "None"], ["Economic decline", "Economic growth", "Economic stability", "No economy"], ["Cost of borrowing", "Cost of living", "Cost of food", "Cost of housing"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "fra": {
+                "questions": ["What is balance sheet?", "What is income statement?", "What is cash flow?", "What is depreciation?", "What is goodwill?"],
+                "options": [["Financial position", "Profit only", "Loss only", "Tax only"], ["Revenue and expenses", "Assets only", "Liabilities only", "Equity only"], ["Money movement", "Profit only", "Sales only", "Expenses only"], ["Asset value decrease", "Asset value increase", "No change", "Market value"], ["Intangible asset", "Tangible asset", "Liability", "Expense"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "varc": {
+                "questions": ["What is reading comprehension?", "What is para jumble?", "What is summary writing?", "What is vocabulary?", "What is tone of passage?"],
+                "options": [["Understanding text", "Reading fast", "Reading slow", "Skipping text"], ["Arranging sentences", "Writing sentences", "Deleting sentences", "Copying sentences"], ["Condensing text", "Expanding text", "Repeating text", "Ignoring text"], ["Word knowledge", "Grammar only", "Spelling only", "Punctuation only"], ["Author's attitude", "Reader's attitude", "Character's attitude", "No attitude"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "dilr": {
+                "questions": ["What is data interpretation?", "What is logical reasoning?", "What is a pie chart?", "What is a bar graph?", "What is a table?"],
+                "options": [["Analyzing data", "Collecting data", "Deleting data", "Ignoring data"], ["Drawing conclusions", "Memorizing facts", "Copying text", "Guessing"], ["Circular chart", "Linear chart", "Square chart", "No chart"], ["Vertical bars", "Horizontal lines", "Dots", "No bars"], ["Data grid", "Story", "Poem", "Picture"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "physics": {
+                "questions": ["What is Newton's first law?", "What is velocity?", "What is energy?", "What is gravity?", "What is friction?"],
+                "options": [["Inertia", "Acceleration", "Action-reaction", "None"], ["Speed with direction", "Speed only", "Direction only", "Distance"], ["Capacity to work", "Force", "Power", "Pressure"], ["Attraction force", "Repulsion force", "No force", "Magnetic force"], ["Resistance force", "Driving force", "No force", "Electric force"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "chemistry": {
+                "questions": ["What is the atomic number?", "What is a molecule?", "What is pH?", "What is a chemical reaction?", "What is the periodic table?"],
+                "options": [["Number of protons", "Number of electrons", "Number of neutrons", "Atomic mass"], ["Group of atoms", "Single atom", "Element", "Compound only"], ["Acidity measure", "Temperature", "Pressure", "Volume"], ["Substance change", "No change", "Physical change only", "Color change only"], ["Element arrangement", "Compound list", "Reaction list", "Formula list"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "math": {
+                "questions": ["What is 15% of 200?", "What is square root of 144?", "What is 2^8?", "What is 7 x 8?", "What is 100/4?"],
+                "options": [["30", "25", "35", "40"], ["12", "11", "13", "14"], ["256", "128", "512", "1024"], ["56", "54", "58", "52"], ["25", "20", "30", "15"]],
+                "correct": [0, 0, 0, 0, 0]
+            }            },
             "surgery": {
                 "questions": [
                     "What is the most common surgical emergency?",
@@ -138,7 +761,96 @@ class AIQuestionGenerator:
                     ["Adhesions", "Hernia", "Tumor", "Volvulus"]
                 ],
                 "correct": [0, 0, 0, 2, 0]
+            "pm fundamentals": {
+                "questions": ["What is the first phase of project management?", "What does WBS stand for?", "What is the triple constraint in PM?", "Who is responsible for project success?", "What is a Gantt chart used for?"],
+                "options": [["Initiation", "Planning", "Execution", "Closing"], ["Work Breakdown Structure", "Work Budget System", "Weekly Business Status", "None"], ["Scope, Time, Cost", "Quality, Risk, Resource", "People, Process, Tech", "Plan, Do, Check"], ["Project Manager", "Team", "Sponsor", "Stakeholder"], ["Scheduling", "Budgeting", "Risk analysis", "Communication"]],
+                "correct": [0, 0, 0, 0, 0]
             },
+            "people": {
+                "questions": ["What is the key to team motivation?", "What is emotional intelligence?", "What is conflict resolution?", "What is servant leadership?", "What is stakeholder management?"],
+                "options": [["Recognition", "Money", "Fear", "Pressure"], ["Understanding emotions", "IQ", "Technical skills", "Memory"], ["Finding solutions", "Avoiding conflict", "Winning arguments", "Ignoring issues"], ["Serving team first", "Commanding", "Delegating only", "Micromanaging"], ["Engaging stakeholders", "Ignoring them", "Telling them", "Avoiding them"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "process": {
+                "questions": ["What is process improvement?", "What is Lean methodology?", "What is Six Sigma?", "What is Kaizen?", "What is a bottleneck?"],
+                "options": [["Continuous enhancement", "One-time change", "Random change", "No change"], ["Eliminating waste", "Adding steps", "More resources", "More time"], ["Reducing defects", "Increasing defects", "Ignoring quality", "Faster delivery only"], ["Continuous improvement", "One-time event", "Annual review", "External audit"], ["Slowest step", "Fastest step", "First step", "Last step"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "business": {
+                "questions": ["What is ROI?", "What is a business case?", "What is NPV?", "What is stakeholder analysis?", "What is strategic alignment?"],
+                "options": [["Return on Investment", "Rate of Interest", "Return on Income", "None"], ["Justification document", "Legal document", "HR document", "Marketing plan"], ["Net Present Value", "New Project Value", "Net Profit Value", "None"], ["Identifying stakeholders", "Ignoring stakeholders", "Managing only clients", "Managing only team"], ["Aligning with goals", "Random projects", "Personal preference", "Short-term only"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "architecture": {
+                "questions": ["What is cloud architecture?", "What is scalability?", "What is high availability?", "What is fault tolerance?", "What is load balancing?"],
+                "options": [["Design of cloud systems", "Building design", "Network cable", "Hardware"], ["Handling growth", "Reducing size", "Fixed capacity", "Limiting users"], ["Always available", "Sometimes available", "Rarely available", "Never available"], ["Recovering from failure", "No failures", "Ignoring failures", "Preventing all failures"], ["Distributing traffic", "Blocking traffic", "Slowing traffic", "Monitoring traffic"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "security": {
+                "questions": ["What is encryption?", "What is a firewall?", "What is authentication?", "What is authorization?", "What is a vulnerability?"],
+                "options": [["Encoding data", "Deleting data", "Copying data", "Sharing data"], ["Network security", "Hardware", "Software bug", "Virus"], ["Verifying identity", "Granting access", "Denying access", "Logging in"], ["Granting permissions", "Verifying identity", "Creating accounts", "Deleting accounts"], ["Weakness", "Strength", "Feature", "Update"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "reading": {
+                "questions": ["What is skimming?", "What is scanning?", "What is inference?", "What is the main idea?", "What is context clue?"],
+                "options": [["Quick reading", "Slow reading", "Detailed reading", "No reading"], ["Finding specific info", "Reading everything", "Reading nothing", "Random reading"], ["Drawing conclusion", "Copying text", "Memorizing", "Ignoring text"], ["Central point", "Minor detail", "Example", "Footnote"], ["Hint in text", "Dictionary", "External source", "Guess"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "listening": {
+                "questions": ["What is active listening?", "What is paraphrasing?", "What is note-taking?", "What is comprehension?", "What is a lecture?"],
+                "options": [["Focused listening", "Passive hearing", "Ignoring", "Interrupting"], ["Restating", "Copying", "Translating", "Shortening"], ["Recording key points", "Writing everything", "Not writing", "Typing only"], ["Understanding", "Hearing only", "Seeing", "Touching"], ["Educational talk", "Conversation", "Argument", "Story"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "speaking": {
+                "questions": ["What is pronunciation?", "What is fluency?", "What is intonation?", "What is articulation?", "What is a presentation?"],
+                "options": [["Sound of words", "Spelling", "Writing", "Reading"], ["Smooth speech", "Fast speech", "Slow speech", "No speech"], ["Voice pitch", "Volume only", "Speed only", "Words only"], ["Clear speech", "Mumbling", "Whispering", "Shouting"], ["Formal talk", "Casual chat", "Argument", "Interview"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "writing": {
+                "questions": ["What is an essay?", "What is a thesis statement?", "What is coherence?", "What is grammar?", "What is punctuation?"],
+                "options": [["Structured writing", "Random notes", "List", "Poem"], ["Main argument", "Example", "Conclusion", "Title"], ["Logical flow", "Random order", "Repetition", "Contradiction"], ["Language rules", "Math rules", "Science rules", "No rules"], ["Marks in text", "Spacing only", "Font style", "Page size"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "ethics": {
+                "questions": ["What is ethics?", "What is integrity?", "What is conflict of interest?", "What is transparency?", "What is accountability?"],
+                "options": [["Moral principles", "Legal rules", "Company policy", "Personal preference"], ["Honesty", "Dishonesty", "Secrecy", "Manipulation"], ["Competing interests", "Shared interest", "No interest", "Public interest"], ["Openness", "Secrecy", "Hidden agenda", "Opaque"], ["Responsibility", "Blame", "Denial", "Avoidance"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "economics": {
+                "questions": ["What is supply and demand?", "What is inflation?", "What is GDP?", "What is recession?", "What is interest rate?"],
+                "options": [["Market forces", "Government rules", "Company policy", "Random events"], ["Price increase", "Price decrease", "Price stability", "No prices"], ["Gross Domestic Product", "General Development Plan", "Gross Development Product", "None"], ["Economic decline", "Economic growth", "Economic stability", "No economy"], ["Cost of borrowing", "Cost of living", "Cost of food", "Cost of housing"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "fra": {
+                "questions": ["What is balance sheet?", "What is income statement?", "What is cash flow?", "What is depreciation?", "What is goodwill?"],
+                "options": [["Financial position", "Profit only", "Loss only", "Tax only"], ["Revenue and expenses", "Assets only", "Liabilities only", "Equity only"], ["Money movement", "Profit only", "Sales only", "Expenses only"], ["Asset value decrease", "Asset value increase", "No change", "Market value"], ["Intangible asset", "Tangible asset", "Liability", "Expense"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "varc": {
+                "questions": ["What is reading comprehension?", "What is para jumble?", "What is summary writing?", "What is vocabulary?", "What is tone of passage?"],
+                "options": [["Understanding text", "Reading fast", "Reading slow", "Skipping text"], ["Arranging sentences", "Writing sentences", "Deleting sentences", "Copying sentences"], ["Condensing text", "Expanding text", "Repeating text", "Ignoring text"], ["Word knowledge", "Grammar only", "Spelling only", "Punctuation only"], ["Author's attitude", "Reader's attitude", "Character's attitude", "No attitude"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "dilr": {
+                "questions": ["What is data interpretation?", "What is logical reasoning?", "What is a pie chart?", "What is a bar graph?", "What is a table?"],
+                "options": [["Analyzing data", "Collecting data", "Deleting data", "Ignoring data"], ["Drawing conclusions", "Memorizing facts", "Copying text", "Guessing"], ["Circular chart", "Linear chart", "Square chart", "No chart"], ["Vertical bars", "Horizontal lines", "Dots", "No bars"], ["Data grid", "Story", "Poem", "Picture"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "physics": {
+                "questions": ["What is Newton's first law?", "What is velocity?", "What is energy?", "What is gravity?", "What is friction?"],
+                "options": [["Inertia", "Acceleration", "Action-reaction", "None"], ["Speed with direction", "Speed only", "Direction only", "Distance"], ["Capacity to work", "Force", "Power", "Pressure"], ["Attraction force", "Repulsion force", "No force", "Magnetic force"], ["Resistance force", "Driving force", "No force", "Electric force"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "chemistry": {
+                "questions": ["What is the atomic number?", "What is a molecule?", "What is pH?", "What is a chemical reaction?", "What is the periodic table?"],
+                "options": [["Number of protons", "Number of electrons", "Number of neutrons", "Atomic mass"], ["Group of atoms", "Single atom", "Element", "Compound only"], ["Acidity measure", "Temperature", "Pressure", "Volume"], ["Substance change", "No change", "Physical change only", "Color change only"], ["Element arrangement", "Compound list", "Reaction list", "Formula list"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "math": {
+                "questions": ["What is 15% of 200?", "What is square root of 144?", "What is 2^8?", "What is 7 x 8?", "What is 100/4?"],
+                "options": [["30", "25", "35", "40"], ["12", "11", "13", "14"], ["256", "128", "512", "1024"], ["56", "54", "58", "52"], ["25", "20", "30", "15"]],
+                "correct": [0, 0, 0, 0, 0]
+            }            },
             "nursing": {
                 "questions": [
                     "What is the normal adult heart rate?",
@@ -155,7 +867,96 @@ class AIQuestionGenerator:
                     ["As needed", "Every hour", "Before meals", "At bedtime"]
                 ],
                 "correct": [0, 1, 2, 0, 0]
+            "pm fundamentals": {
+                "questions": ["What is the first phase of project management?", "What does WBS stand for?", "What is the triple constraint in PM?", "Who is responsible for project success?", "What is a Gantt chart used for?"],
+                "options": [["Initiation", "Planning", "Execution", "Closing"], ["Work Breakdown Structure", "Work Budget System", "Weekly Business Status", "None"], ["Scope, Time, Cost", "Quality, Risk, Resource", "People, Process, Tech", "Plan, Do, Check"], ["Project Manager", "Team", "Sponsor", "Stakeholder"], ["Scheduling", "Budgeting", "Risk analysis", "Communication"]],
+                "correct": [0, 0, 0, 0, 0]
             },
+            "people": {
+                "questions": ["What is the key to team motivation?", "What is emotional intelligence?", "What is conflict resolution?", "What is servant leadership?", "What is stakeholder management?"],
+                "options": [["Recognition", "Money", "Fear", "Pressure"], ["Understanding emotions", "IQ", "Technical skills", "Memory"], ["Finding solutions", "Avoiding conflict", "Winning arguments", "Ignoring issues"], ["Serving team first", "Commanding", "Delegating only", "Micromanaging"], ["Engaging stakeholders", "Ignoring them", "Telling them", "Avoiding them"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "process": {
+                "questions": ["What is process improvement?", "What is Lean methodology?", "What is Six Sigma?", "What is Kaizen?", "What is a bottleneck?"],
+                "options": [["Continuous enhancement", "One-time change", "Random change", "No change"], ["Eliminating waste", "Adding steps", "More resources", "More time"], ["Reducing defects", "Increasing defects", "Ignoring quality", "Faster delivery only"], ["Continuous improvement", "One-time event", "Annual review", "External audit"], ["Slowest step", "Fastest step", "First step", "Last step"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "business": {
+                "questions": ["What is ROI?", "What is a business case?", "What is NPV?", "What is stakeholder analysis?", "What is strategic alignment?"],
+                "options": [["Return on Investment", "Rate of Interest", "Return on Income", "None"], ["Justification document", "Legal document", "HR document", "Marketing plan"], ["Net Present Value", "New Project Value", "Net Profit Value", "None"], ["Identifying stakeholders", "Ignoring stakeholders", "Managing only clients", "Managing only team"], ["Aligning with goals", "Random projects", "Personal preference", "Short-term only"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "architecture": {
+                "questions": ["What is cloud architecture?", "What is scalability?", "What is high availability?", "What is fault tolerance?", "What is load balancing?"],
+                "options": [["Design of cloud systems", "Building design", "Network cable", "Hardware"], ["Handling growth", "Reducing size", "Fixed capacity", "Limiting users"], ["Always available", "Sometimes available", "Rarely available", "Never available"], ["Recovering from failure", "No failures", "Ignoring failures", "Preventing all failures"], ["Distributing traffic", "Blocking traffic", "Slowing traffic", "Monitoring traffic"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "security": {
+                "questions": ["What is encryption?", "What is a firewall?", "What is authentication?", "What is authorization?", "What is a vulnerability?"],
+                "options": [["Encoding data", "Deleting data", "Copying data", "Sharing data"], ["Network security", "Hardware", "Software bug", "Virus"], ["Verifying identity", "Granting access", "Denying access", "Logging in"], ["Granting permissions", "Verifying identity", "Creating accounts", "Deleting accounts"], ["Weakness", "Strength", "Feature", "Update"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "reading": {
+                "questions": ["What is skimming?", "What is scanning?", "What is inference?", "What is the main idea?", "What is context clue?"],
+                "options": [["Quick reading", "Slow reading", "Detailed reading", "No reading"], ["Finding specific info", "Reading everything", "Reading nothing", "Random reading"], ["Drawing conclusion", "Copying text", "Memorizing", "Ignoring text"], ["Central point", "Minor detail", "Example", "Footnote"], ["Hint in text", "Dictionary", "External source", "Guess"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "listening": {
+                "questions": ["What is active listening?", "What is paraphrasing?", "What is note-taking?", "What is comprehension?", "What is a lecture?"],
+                "options": [["Focused listening", "Passive hearing", "Ignoring", "Interrupting"], ["Restating", "Copying", "Translating", "Shortening"], ["Recording key points", "Writing everything", "Not writing", "Typing only"], ["Understanding", "Hearing only", "Seeing", "Touching"], ["Educational talk", "Conversation", "Argument", "Story"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "speaking": {
+                "questions": ["What is pronunciation?", "What is fluency?", "What is intonation?", "What is articulation?", "What is a presentation?"],
+                "options": [["Sound of words", "Spelling", "Writing", "Reading"], ["Smooth speech", "Fast speech", "Slow speech", "No speech"], ["Voice pitch", "Volume only", "Speed only", "Words only"], ["Clear speech", "Mumbling", "Whispering", "Shouting"], ["Formal talk", "Casual chat", "Argument", "Interview"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "writing": {
+                "questions": ["What is an essay?", "What is a thesis statement?", "What is coherence?", "What is grammar?", "What is punctuation?"],
+                "options": [["Structured writing", "Random notes", "List", "Poem"], ["Main argument", "Example", "Conclusion", "Title"], ["Logical flow", "Random order", "Repetition", "Contradiction"], ["Language rules", "Math rules", "Science rules", "No rules"], ["Marks in text", "Spacing only", "Font style", "Page size"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "ethics": {
+                "questions": ["What is ethics?", "What is integrity?", "What is conflict of interest?", "What is transparency?", "What is accountability?"],
+                "options": [["Moral principles", "Legal rules", "Company policy", "Personal preference"], ["Honesty", "Dishonesty", "Secrecy", "Manipulation"], ["Competing interests", "Shared interest", "No interest", "Public interest"], ["Openness", "Secrecy", "Hidden agenda", "Opaque"], ["Responsibility", "Blame", "Denial", "Avoidance"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "economics": {
+                "questions": ["What is supply and demand?", "What is inflation?", "What is GDP?", "What is recession?", "What is interest rate?"],
+                "options": [["Market forces", "Government rules", "Company policy", "Random events"], ["Price increase", "Price decrease", "Price stability", "No prices"], ["Gross Domestic Product", "General Development Plan", "Gross Development Product", "None"], ["Economic decline", "Economic growth", "Economic stability", "No economy"], ["Cost of borrowing", "Cost of living", "Cost of food", "Cost of housing"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "fra": {
+                "questions": ["What is balance sheet?", "What is income statement?", "What is cash flow?", "What is depreciation?", "What is goodwill?"],
+                "options": [["Financial position", "Profit only", "Loss only", "Tax only"], ["Revenue and expenses", "Assets only", "Liabilities only", "Equity only"], ["Money movement", "Profit only", "Sales only", "Expenses only"], ["Asset value decrease", "Asset value increase", "No change", "Market value"], ["Intangible asset", "Tangible asset", "Liability", "Expense"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "varc": {
+                "questions": ["What is reading comprehension?", "What is para jumble?", "What is summary writing?", "What is vocabulary?", "What is tone of passage?"],
+                "options": [["Understanding text", "Reading fast", "Reading slow", "Skipping text"], ["Arranging sentences", "Writing sentences", "Deleting sentences", "Copying sentences"], ["Condensing text", "Expanding text", "Repeating text", "Ignoring text"], ["Word knowledge", "Grammar only", "Spelling only", "Punctuation only"], ["Author's attitude", "Reader's attitude", "Character's attitude", "No attitude"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "dilr": {
+                "questions": ["What is data interpretation?", "What is logical reasoning?", "What is a pie chart?", "What is a bar graph?", "What is a table?"],
+                "options": [["Analyzing data", "Collecting data", "Deleting data", "Ignoring data"], ["Drawing conclusions", "Memorizing facts", "Copying text", "Guessing"], ["Circular chart", "Linear chart", "Square chart", "No chart"], ["Vertical bars", "Horizontal lines", "Dots", "No bars"], ["Data grid", "Story", "Poem", "Picture"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "physics": {
+                "questions": ["What is Newton's first law?", "What is velocity?", "What is energy?", "What is gravity?", "What is friction?"],
+                "options": [["Inertia", "Acceleration", "Action-reaction", "None"], ["Speed with direction", "Speed only", "Direction only", "Distance"], ["Capacity to work", "Force", "Power", "Pressure"], ["Attraction force", "Repulsion force", "No force", "Magnetic force"], ["Resistance force", "Driving force", "No force", "Electric force"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "chemistry": {
+                "questions": ["What is the atomic number?", "What is a molecule?", "What is pH?", "What is a chemical reaction?", "What is the periodic table?"],
+                "options": [["Number of protons", "Number of electrons", "Number of neutrons", "Atomic mass"], ["Group of atoms", "Single atom", "Element", "Compound only"], ["Acidity measure", "Temperature", "Pressure", "Volume"], ["Substance change", "No change", "Physical change only", "Color change only"], ["Element arrangement", "Compound list", "Reaction list", "Formula list"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "math": {
+                "questions": ["What is 15% of 200?", "What is square root of 144?", "What is 2^8?", "What is 7 x 8?", "What is 100/4?"],
+                "options": [["30", "25", "35", "40"], ["12", "11", "13", "14"], ["256", "128", "512", "1024"], ["56", "54", "58", "52"], ["25", "20", "30", "15"]],
+                "correct": [0, 0, 0, 0, 0]
+            }            },
             "physiology": {
                 "questions": [
                     "What is the normal pH of human blood?",
@@ -172,7 +973,96 @@ class AIQuestionGenerator:
                     ["90-120 mmHg", "120-140 mmHg", "140-160 mmHg", "80-100 mmHg"]
                 ],
                 "correct": [0, 0, 0, 0, 0]
+            "pm fundamentals": {
+                "questions": ["What is the first phase of project management?", "What does WBS stand for?", "What is the triple constraint in PM?", "Who is responsible for project success?", "What is a Gantt chart used for?"],
+                "options": [["Initiation", "Planning", "Execution", "Closing"], ["Work Breakdown Structure", "Work Budget System", "Weekly Business Status", "None"], ["Scope, Time, Cost", "Quality, Risk, Resource", "People, Process, Tech", "Plan, Do, Check"], ["Project Manager", "Team", "Sponsor", "Stakeholder"], ["Scheduling", "Budgeting", "Risk analysis", "Communication"]],
+                "correct": [0, 0, 0, 0, 0]
             },
+            "people": {
+                "questions": ["What is the key to team motivation?", "What is emotional intelligence?", "What is conflict resolution?", "What is servant leadership?", "What is stakeholder management?"],
+                "options": [["Recognition", "Money", "Fear", "Pressure"], ["Understanding emotions", "IQ", "Technical skills", "Memory"], ["Finding solutions", "Avoiding conflict", "Winning arguments", "Ignoring issues"], ["Serving team first", "Commanding", "Delegating only", "Micromanaging"], ["Engaging stakeholders", "Ignoring them", "Telling them", "Avoiding them"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "process": {
+                "questions": ["What is process improvement?", "What is Lean methodology?", "What is Six Sigma?", "What is Kaizen?", "What is a bottleneck?"],
+                "options": [["Continuous enhancement", "One-time change", "Random change", "No change"], ["Eliminating waste", "Adding steps", "More resources", "More time"], ["Reducing defects", "Increasing defects", "Ignoring quality", "Faster delivery only"], ["Continuous improvement", "One-time event", "Annual review", "External audit"], ["Slowest step", "Fastest step", "First step", "Last step"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "business": {
+                "questions": ["What is ROI?", "What is a business case?", "What is NPV?", "What is stakeholder analysis?", "What is strategic alignment?"],
+                "options": [["Return on Investment", "Rate of Interest", "Return on Income", "None"], ["Justification document", "Legal document", "HR document", "Marketing plan"], ["Net Present Value", "New Project Value", "Net Profit Value", "None"], ["Identifying stakeholders", "Ignoring stakeholders", "Managing only clients", "Managing only team"], ["Aligning with goals", "Random projects", "Personal preference", "Short-term only"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "architecture": {
+                "questions": ["What is cloud architecture?", "What is scalability?", "What is high availability?", "What is fault tolerance?", "What is load balancing?"],
+                "options": [["Design of cloud systems", "Building design", "Network cable", "Hardware"], ["Handling growth", "Reducing size", "Fixed capacity", "Limiting users"], ["Always available", "Sometimes available", "Rarely available", "Never available"], ["Recovering from failure", "No failures", "Ignoring failures", "Preventing all failures"], ["Distributing traffic", "Blocking traffic", "Slowing traffic", "Monitoring traffic"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "security": {
+                "questions": ["What is encryption?", "What is a firewall?", "What is authentication?", "What is authorization?", "What is a vulnerability?"],
+                "options": [["Encoding data", "Deleting data", "Copying data", "Sharing data"], ["Network security", "Hardware", "Software bug", "Virus"], ["Verifying identity", "Granting access", "Denying access", "Logging in"], ["Granting permissions", "Verifying identity", "Creating accounts", "Deleting accounts"], ["Weakness", "Strength", "Feature", "Update"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "reading": {
+                "questions": ["What is skimming?", "What is scanning?", "What is inference?", "What is the main idea?", "What is context clue?"],
+                "options": [["Quick reading", "Slow reading", "Detailed reading", "No reading"], ["Finding specific info", "Reading everything", "Reading nothing", "Random reading"], ["Drawing conclusion", "Copying text", "Memorizing", "Ignoring text"], ["Central point", "Minor detail", "Example", "Footnote"], ["Hint in text", "Dictionary", "External source", "Guess"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "listening": {
+                "questions": ["What is active listening?", "What is paraphrasing?", "What is note-taking?", "What is comprehension?", "What is a lecture?"],
+                "options": [["Focused listening", "Passive hearing", "Ignoring", "Interrupting"], ["Restating", "Copying", "Translating", "Shortening"], ["Recording key points", "Writing everything", "Not writing", "Typing only"], ["Understanding", "Hearing only", "Seeing", "Touching"], ["Educational talk", "Conversation", "Argument", "Story"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "speaking": {
+                "questions": ["What is pronunciation?", "What is fluency?", "What is intonation?", "What is articulation?", "What is a presentation?"],
+                "options": [["Sound of words", "Spelling", "Writing", "Reading"], ["Smooth speech", "Fast speech", "Slow speech", "No speech"], ["Voice pitch", "Volume only", "Speed only", "Words only"], ["Clear speech", "Mumbling", "Whispering", "Shouting"], ["Formal talk", "Casual chat", "Argument", "Interview"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "writing": {
+                "questions": ["What is an essay?", "What is a thesis statement?", "What is coherence?", "What is grammar?", "What is punctuation?"],
+                "options": [["Structured writing", "Random notes", "List", "Poem"], ["Main argument", "Example", "Conclusion", "Title"], ["Logical flow", "Random order", "Repetition", "Contradiction"], ["Language rules", "Math rules", "Science rules", "No rules"], ["Marks in text", "Spacing only", "Font style", "Page size"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "ethics": {
+                "questions": ["What is ethics?", "What is integrity?", "What is conflict of interest?", "What is transparency?", "What is accountability?"],
+                "options": [["Moral principles", "Legal rules", "Company policy", "Personal preference"], ["Honesty", "Dishonesty", "Secrecy", "Manipulation"], ["Competing interests", "Shared interest", "No interest", "Public interest"], ["Openness", "Secrecy", "Hidden agenda", "Opaque"], ["Responsibility", "Blame", "Denial", "Avoidance"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "economics": {
+                "questions": ["What is supply and demand?", "What is inflation?", "What is GDP?", "What is recession?", "What is interest rate?"],
+                "options": [["Market forces", "Government rules", "Company policy", "Random events"], ["Price increase", "Price decrease", "Price stability", "No prices"], ["Gross Domestic Product", "General Development Plan", "Gross Development Product", "None"], ["Economic decline", "Economic growth", "Economic stability", "No economy"], ["Cost of borrowing", "Cost of living", "Cost of food", "Cost of housing"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "fra": {
+                "questions": ["What is balance sheet?", "What is income statement?", "What is cash flow?", "What is depreciation?", "What is goodwill?"],
+                "options": [["Financial position", "Profit only", "Loss only", "Tax only"], ["Revenue and expenses", "Assets only", "Liabilities only", "Equity only"], ["Money movement", "Profit only", "Sales only", "Expenses only"], ["Asset value decrease", "Asset value increase", "No change", "Market value"], ["Intangible asset", "Tangible asset", "Liability", "Expense"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "varc": {
+                "questions": ["What is reading comprehension?", "What is para jumble?", "What is summary writing?", "What is vocabulary?", "What is tone of passage?"],
+                "options": [["Understanding text", "Reading fast", "Reading slow", "Skipping text"], ["Arranging sentences", "Writing sentences", "Deleting sentences", "Copying sentences"], ["Condensing text", "Expanding text", "Repeating text", "Ignoring text"], ["Word knowledge", "Grammar only", "Spelling only", "Punctuation only"], ["Author's attitude", "Reader's attitude", "Character's attitude", "No attitude"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "dilr": {
+                "questions": ["What is data interpretation?", "What is logical reasoning?", "What is a pie chart?", "What is a bar graph?", "What is a table?"],
+                "options": [["Analyzing data", "Collecting data", "Deleting data", "Ignoring data"], ["Drawing conclusions", "Memorizing facts", "Copying text", "Guessing"], ["Circular chart", "Linear chart", "Square chart", "No chart"], ["Vertical bars", "Horizontal lines", "Dots", "No bars"], ["Data grid", "Story", "Poem", "Picture"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "physics": {
+                "questions": ["What is Newton's first law?", "What is velocity?", "What is energy?", "What is gravity?", "What is friction?"],
+                "options": [["Inertia", "Acceleration", "Action-reaction", "None"], ["Speed with direction", "Speed only", "Direction only", "Distance"], ["Capacity to work", "Force", "Power", "Pressure"], ["Attraction force", "Repulsion force", "No force", "Magnetic force"], ["Resistance force", "Driving force", "No force", "Electric force"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "chemistry": {
+                "questions": ["What is the atomic number?", "What is a molecule?", "What is pH?", "What is a chemical reaction?", "What is the periodic table?"],
+                "options": [["Number of protons", "Number of electrons", "Number of neutrons", "Atomic mass"], ["Group of atoms", "Single atom", "Element", "Compound only"], ["Acidity measure", "Temperature", "Pressure", "Volume"], ["Substance change", "No change", "Physical change only", "Color change only"], ["Element arrangement", "Compound list", "Reaction list", "Formula list"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "math": {
+                "questions": ["What is 15% of 200?", "What is square root of 144?", "What is 2^8?", "What is 7 x 8?", "What is 100/4?"],
+                "options": [["30", "25", "35", "40"], ["12", "11", "13", "14"], ["256", "128", "512", "1024"], ["56", "54", "58", "52"], ["25", "20", "30", "15"]],
+                "correct": [0, 0, 0, 0, 0]
+            }            },
             "biochemistry": {
                 "questions": [
                     "What is the building block of proteins?",
@@ -189,7 +1079,96 @@ class AIQuestionGenerator:
                     ["70-100 mg/dL", "100-150 mg/dL", "150-200 mg/dL", "200-250 mg/dL"]
                 ],
                 "correct": [0, 0, 0, 2, 0]
+            "pm fundamentals": {
+                "questions": ["What is the first phase of project management?", "What does WBS stand for?", "What is the triple constraint in PM?", "Who is responsible for project success?", "What is a Gantt chart used for?"],
+                "options": [["Initiation", "Planning", "Execution", "Closing"], ["Work Breakdown Structure", "Work Budget System", "Weekly Business Status", "None"], ["Scope, Time, Cost", "Quality, Risk, Resource", "People, Process, Tech", "Plan, Do, Check"], ["Project Manager", "Team", "Sponsor", "Stakeholder"], ["Scheduling", "Budgeting", "Risk analysis", "Communication"]],
+                "correct": [0, 0, 0, 0, 0]
             },
+            "people": {
+                "questions": ["What is the key to team motivation?", "What is emotional intelligence?", "What is conflict resolution?", "What is servant leadership?", "What is stakeholder management?"],
+                "options": [["Recognition", "Money", "Fear", "Pressure"], ["Understanding emotions", "IQ", "Technical skills", "Memory"], ["Finding solutions", "Avoiding conflict", "Winning arguments", "Ignoring issues"], ["Serving team first", "Commanding", "Delegating only", "Micromanaging"], ["Engaging stakeholders", "Ignoring them", "Telling them", "Avoiding them"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "process": {
+                "questions": ["What is process improvement?", "What is Lean methodology?", "What is Six Sigma?", "What is Kaizen?", "What is a bottleneck?"],
+                "options": [["Continuous enhancement", "One-time change", "Random change", "No change"], ["Eliminating waste", "Adding steps", "More resources", "More time"], ["Reducing defects", "Increasing defects", "Ignoring quality", "Faster delivery only"], ["Continuous improvement", "One-time event", "Annual review", "External audit"], ["Slowest step", "Fastest step", "First step", "Last step"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "business": {
+                "questions": ["What is ROI?", "What is a business case?", "What is NPV?", "What is stakeholder analysis?", "What is strategic alignment?"],
+                "options": [["Return on Investment", "Rate of Interest", "Return on Income", "None"], ["Justification document", "Legal document", "HR document", "Marketing plan"], ["Net Present Value", "New Project Value", "Net Profit Value", "None"], ["Identifying stakeholders", "Ignoring stakeholders", "Managing only clients", "Managing only team"], ["Aligning with goals", "Random projects", "Personal preference", "Short-term only"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "architecture": {
+                "questions": ["What is cloud architecture?", "What is scalability?", "What is high availability?", "What is fault tolerance?", "What is load balancing?"],
+                "options": [["Design of cloud systems", "Building design", "Network cable", "Hardware"], ["Handling growth", "Reducing size", "Fixed capacity", "Limiting users"], ["Always available", "Sometimes available", "Rarely available", "Never available"], ["Recovering from failure", "No failures", "Ignoring failures", "Preventing all failures"], ["Distributing traffic", "Blocking traffic", "Slowing traffic", "Monitoring traffic"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "security": {
+                "questions": ["What is encryption?", "What is a firewall?", "What is authentication?", "What is authorization?", "What is a vulnerability?"],
+                "options": [["Encoding data", "Deleting data", "Copying data", "Sharing data"], ["Network security", "Hardware", "Software bug", "Virus"], ["Verifying identity", "Granting access", "Denying access", "Logging in"], ["Granting permissions", "Verifying identity", "Creating accounts", "Deleting accounts"], ["Weakness", "Strength", "Feature", "Update"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "reading": {
+                "questions": ["What is skimming?", "What is scanning?", "What is inference?", "What is the main idea?", "What is context clue?"],
+                "options": [["Quick reading", "Slow reading", "Detailed reading", "No reading"], ["Finding specific info", "Reading everything", "Reading nothing", "Random reading"], ["Drawing conclusion", "Copying text", "Memorizing", "Ignoring text"], ["Central point", "Minor detail", "Example", "Footnote"], ["Hint in text", "Dictionary", "External source", "Guess"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "listening": {
+                "questions": ["What is active listening?", "What is paraphrasing?", "What is note-taking?", "What is comprehension?", "What is a lecture?"],
+                "options": [["Focused listening", "Passive hearing", "Ignoring", "Interrupting"], ["Restating", "Copying", "Translating", "Shortening"], ["Recording key points", "Writing everything", "Not writing", "Typing only"], ["Understanding", "Hearing only", "Seeing", "Touching"], ["Educational talk", "Conversation", "Argument", "Story"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "speaking": {
+                "questions": ["What is pronunciation?", "What is fluency?", "What is intonation?", "What is articulation?", "What is a presentation?"],
+                "options": [["Sound of words", "Spelling", "Writing", "Reading"], ["Smooth speech", "Fast speech", "Slow speech", "No speech"], ["Voice pitch", "Volume only", "Speed only", "Words only"], ["Clear speech", "Mumbling", "Whispering", "Shouting"], ["Formal talk", "Casual chat", "Argument", "Interview"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "writing": {
+                "questions": ["What is an essay?", "What is a thesis statement?", "What is coherence?", "What is grammar?", "What is punctuation?"],
+                "options": [["Structured writing", "Random notes", "List", "Poem"], ["Main argument", "Example", "Conclusion", "Title"], ["Logical flow", "Random order", "Repetition", "Contradiction"], ["Language rules", "Math rules", "Science rules", "No rules"], ["Marks in text", "Spacing only", "Font style", "Page size"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "ethics": {
+                "questions": ["What is ethics?", "What is integrity?", "What is conflict of interest?", "What is transparency?", "What is accountability?"],
+                "options": [["Moral principles", "Legal rules", "Company policy", "Personal preference"], ["Honesty", "Dishonesty", "Secrecy", "Manipulation"], ["Competing interests", "Shared interest", "No interest", "Public interest"], ["Openness", "Secrecy", "Hidden agenda", "Opaque"], ["Responsibility", "Blame", "Denial", "Avoidance"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "economics": {
+                "questions": ["What is supply and demand?", "What is inflation?", "What is GDP?", "What is recession?", "What is interest rate?"],
+                "options": [["Market forces", "Government rules", "Company policy", "Random events"], ["Price increase", "Price decrease", "Price stability", "No prices"], ["Gross Domestic Product", "General Development Plan", "Gross Development Product", "None"], ["Economic decline", "Economic growth", "Economic stability", "No economy"], ["Cost of borrowing", "Cost of living", "Cost of food", "Cost of housing"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "fra": {
+                "questions": ["What is balance sheet?", "What is income statement?", "What is cash flow?", "What is depreciation?", "What is goodwill?"],
+                "options": [["Financial position", "Profit only", "Loss only", "Tax only"], ["Revenue and expenses", "Assets only", "Liabilities only", "Equity only"], ["Money movement", "Profit only", "Sales only", "Expenses only"], ["Asset value decrease", "Asset value increase", "No change", "Market value"], ["Intangible asset", "Tangible asset", "Liability", "Expense"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "varc": {
+                "questions": ["What is reading comprehension?", "What is para jumble?", "What is summary writing?", "What is vocabulary?", "What is tone of passage?"],
+                "options": [["Understanding text", "Reading fast", "Reading slow", "Skipping text"], ["Arranging sentences", "Writing sentences", "Deleting sentences", "Copying sentences"], ["Condensing text", "Expanding text", "Repeating text", "Ignoring text"], ["Word knowledge", "Grammar only", "Spelling only", "Punctuation only"], ["Author's attitude", "Reader's attitude", "Character's attitude", "No attitude"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "dilr": {
+                "questions": ["What is data interpretation?", "What is logical reasoning?", "What is a pie chart?", "What is a bar graph?", "What is a table?"],
+                "options": [["Analyzing data", "Collecting data", "Deleting data", "Ignoring data"], ["Drawing conclusions", "Memorizing facts", "Copying text", "Guessing"], ["Circular chart", "Linear chart", "Square chart", "No chart"], ["Vertical bars", "Horizontal lines", "Dots", "No bars"], ["Data grid", "Story", "Poem", "Picture"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "physics": {
+                "questions": ["What is Newton's first law?", "What is velocity?", "What is energy?", "What is gravity?", "What is friction?"],
+                "options": [["Inertia", "Acceleration", "Action-reaction", "None"], ["Speed with direction", "Speed only", "Direction only", "Distance"], ["Capacity to work", "Force", "Power", "Pressure"], ["Attraction force", "Repulsion force", "No force", "Magnetic force"], ["Resistance force", "Driving force", "No force", "Electric force"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "chemistry": {
+                "questions": ["What is the atomic number?", "What is a molecule?", "What is pH?", "What is a chemical reaction?", "What is the periodic table?"],
+                "options": [["Number of protons", "Number of electrons", "Number of neutrons", "Atomic mass"], ["Group of atoms", "Single atom", "Element", "Compound only"], ["Acidity measure", "Temperature", "Pressure", "Volume"], ["Substance change", "No change", "Physical change only", "Color change only"], ["Element arrangement", "Compound list", "Reaction list", "Formula list"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "math": {
+                "questions": ["What is 15% of 200?", "What is square root of 144?", "What is 2^8?", "What is 7 x 8?", "What is 100/4?"],
+                "options": [["30", "25", "35", "40"], ["12", "11", "13", "14"], ["256", "128", "512", "1024"], ["56", "54", "58", "52"], ["25", "20", "30", "15"]],
+                "correct": [0, 0, 0, 0, 0]
+            }            },
             "microbiology": {
                 "questions": [
                     "Which organism causes tuberculosis?",
@@ -206,7 +1185,96 @@ class AIQuestionGenerator:
                     ["Candida albicans", "Aspergillus", "Cryptococcus", "Histoplasma"]
                 ],
                 "correct": [0, 0, 0, 0, 0]
+            "pm fundamentals": {
+                "questions": ["What is the first phase of project management?", "What does WBS stand for?", "What is the triple constraint in PM?", "Who is responsible for project success?", "What is a Gantt chart used for?"],
+                "options": [["Initiation", "Planning", "Execution", "Closing"], ["Work Breakdown Structure", "Work Budget System", "Weekly Business Status", "None"], ["Scope, Time, Cost", "Quality, Risk, Resource", "People, Process, Tech", "Plan, Do, Check"], ["Project Manager", "Team", "Sponsor", "Stakeholder"], ["Scheduling", "Budgeting", "Risk analysis", "Communication"]],
+                "correct": [0, 0, 0, 0, 0]
             },
+            "people": {
+                "questions": ["What is the key to team motivation?", "What is emotional intelligence?", "What is conflict resolution?", "What is servant leadership?", "What is stakeholder management?"],
+                "options": [["Recognition", "Money", "Fear", "Pressure"], ["Understanding emotions", "IQ", "Technical skills", "Memory"], ["Finding solutions", "Avoiding conflict", "Winning arguments", "Ignoring issues"], ["Serving team first", "Commanding", "Delegating only", "Micromanaging"], ["Engaging stakeholders", "Ignoring them", "Telling them", "Avoiding them"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "process": {
+                "questions": ["What is process improvement?", "What is Lean methodology?", "What is Six Sigma?", "What is Kaizen?", "What is a bottleneck?"],
+                "options": [["Continuous enhancement", "One-time change", "Random change", "No change"], ["Eliminating waste", "Adding steps", "More resources", "More time"], ["Reducing defects", "Increasing defects", "Ignoring quality", "Faster delivery only"], ["Continuous improvement", "One-time event", "Annual review", "External audit"], ["Slowest step", "Fastest step", "First step", "Last step"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "business": {
+                "questions": ["What is ROI?", "What is a business case?", "What is NPV?", "What is stakeholder analysis?", "What is strategic alignment?"],
+                "options": [["Return on Investment", "Rate of Interest", "Return on Income", "None"], ["Justification document", "Legal document", "HR document", "Marketing plan"], ["Net Present Value", "New Project Value", "Net Profit Value", "None"], ["Identifying stakeholders", "Ignoring stakeholders", "Managing only clients", "Managing only team"], ["Aligning with goals", "Random projects", "Personal preference", "Short-term only"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "architecture": {
+                "questions": ["What is cloud architecture?", "What is scalability?", "What is high availability?", "What is fault tolerance?", "What is load balancing?"],
+                "options": [["Design of cloud systems", "Building design", "Network cable", "Hardware"], ["Handling growth", "Reducing size", "Fixed capacity", "Limiting users"], ["Always available", "Sometimes available", "Rarely available", "Never available"], ["Recovering from failure", "No failures", "Ignoring failures", "Preventing all failures"], ["Distributing traffic", "Blocking traffic", "Slowing traffic", "Monitoring traffic"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "security": {
+                "questions": ["What is encryption?", "What is a firewall?", "What is authentication?", "What is authorization?", "What is a vulnerability?"],
+                "options": [["Encoding data", "Deleting data", "Copying data", "Sharing data"], ["Network security", "Hardware", "Software bug", "Virus"], ["Verifying identity", "Granting access", "Denying access", "Logging in"], ["Granting permissions", "Verifying identity", "Creating accounts", "Deleting accounts"], ["Weakness", "Strength", "Feature", "Update"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "reading": {
+                "questions": ["What is skimming?", "What is scanning?", "What is inference?", "What is the main idea?", "What is context clue?"],
+                "options": [["Quick reading", "Slow reading", "Detailed reading", "No reading"], ["Finding specific info", "Reading everything", "Reading nothing", "Random reading"], ["Drawing conclusion", "Copying text", "Memorizing", "Ignoring text"], ["Central point", "Minor detail", "Example", "Footnote"], ["Hint in text", "Dictionary", "External source", "Guess"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "listening": {
+                "questions": ["What is active listening?", "What is paraphrasing?", "What is note-taking?", "What is comprehension?", "What is a lecture?"],
+                "options": [["Focused listening", "Passive hearing", "Ignoring", "Interrupting"], ["Restating", "Copying", "Translating", "Shortening"], ["Recording key points", "Writing everything", "Not writing", "Typing only"], ["Understanding", "Hearing only", "Seeing", "Touching"], ["Educational talk", "Conversation", "Argument", "Story"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "speaking": {
+                "questions": ["What is pronunciation?", "What is fluency?", "What is intonation?", "What is articulation?", "What is a presentation?"],
+                "options": [["Sound of words", "Spelling", "Writing", "Reading"], ["Smooth speech", "Fast speech", "Slow speech", "No speech"], ["Voice pitch", "Volume only", "Speed only", "Words only"], ["Clear speech", "Mumbling", "Whispering", "Shouting"], ["Formal talk", "Casual chat", "Argument", "Interview"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "writing": {
+                "questions": ["What is an essay?", "What is a thesis statement?", "What is coherence?", "What is grammar?", "What is punctuation?"],
+                "options": [["Structured writing", "Random notes", "List", "Poem"], ["Main argument", "Example", "Conclusion", "Title"], ["Logical flow", "Random order", "Repetition", "Contradiction"], ["Language rules", "Math rules", "Science rules", "No rules"], ["Marks in text", "Spacing only", "Font style", "Page size"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "ethics": {
+                "questions": ["What is ethics?", "What is integrity?", "What is conflict of interest?", "What is transparency?", "What is accountability?"],
+                "options": [["Moral principles", "Legal rules", "Company policy", "Personal preference"], ["Honesty", "Dishonesty", "Secrecy", "Manipulation"], ["Competing interests", "Shared interest", "No interest", "Public interest"], ["Openness", "Secrecy", "Hidden agenda", "Opaque"], ["Responsibility", "Blame", "Denial", "Avoidance"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "economics": {
+                "questions": ["What is supply and demand?", "What is inflation?", "What is GDP?", "What is recession?", "What is interest rate?"],
+                "options": [["Market forces", "Government rules", "Company policy", "Random events"], ["Price increase", "Price decrease", "Price stability", "No prices"], ["Gross Domestic Product", "General Development Plan", "Gross Development Product", "None"], ["Economic decline", "Economic growth", "Economic stability", "No economy"], ["Cost of borrowing", "Cost of living", "Cost of food", "Cost of housing"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "fra": {
+                "questions": ["What is balance sheet?", "What is income statement?", "What is cash flow?", "What is depreciation?", "What is goodwill?"],
+                "options": [["Financial position", "Profit only", "Loss only", "Tax only"], ["Revenue and expenses", "Assets only", "Liabilities only", "Equity only"], ["Money movement", "Profit only", "Sales only", "Expenses only"], ["Asset value decrease", "Asset value increase", "No change", "Market value"], ["Intangible asset", "Tangible asset", "Liability", "Expense"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "varc": {
+                "questions": ["What is reading comprehension?", "What is para jumble?", "What is summary writing?", "What is vocabulary?", "What is tone of passage?"],
+                "options": [["Understanding text", "Reading fast", "Reading slow", "Skipping text"], ["Arranging sentences", "Writing sentences", "Deleting sentences", "Copying sentences"], ["Condensing text", "Expanding text", "Repeating text", "Ignoring text"], ["Word knowledge", "Grammar only", "Spelling only", "Punctuation only"], ["Author's attitude", "Reader's attitude", "Character's attitude", "No attitude"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "dilr": {
+                "questions": ["What is data interpretation?", "What is logical reasoning?", "What is a pie chart?", "What is a bar graph?", "What is a table?"],
+                "options": [["Analyzing data", "Collecting data", "Deleting data", "Ignoring data"], ["Drawing conclusions", "Memorizing facts", "Copying text", "Guessing"], ["Circular chart", "Linear chart", "Square chart", "No chart"], ["Vertical bars", "Horizontal lines", "Dots", "No bars"], ["Data grid", "Story", "Poem", "Picture"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "physics": {
+                "questions": ["What is Newton's first law?", "What is velocity?", "What is energy?", "What is gravity?", "What is friction?"],
+                "options": [["Inertia", "Acceleration", "Action-reaction", "None"], ["Speed with direction", "Speed only", "Direction only", "Distance"], ["Capacity to work", "Force", "Power", "Pressure"], ["Attraction force", "Repulsion force", "No force", "Magnetic force"], ["Resistance force", "Driving force", "No force", "Electric force"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "chemistry": {
+                "questions": ["What is the atomic number?", "What is a molecule?", "What is pH?", "What is a chemical reaction?", "What is the periodic table?"],
+                "options": [["Number of protons", "Number of electrons", "Number of neutrons", "Atomic mass"], ["Group of atoms", "Single atom", "Element", "Compound only"], ["Acidity measure", "Temperature", "Pressure", "Volume"], ["Substance change", "No change", "Physical change only", "Color change only"], ["Element arrangement", "Compound list", "Reaction list", "Formula list"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "math": {
+                "questions": ["What is 15% of 200?", "What is square root of 144?", "What is 2^8?", "What is 7 x 8?", "What is 100/4?"],
+                "options": [["30", "25", "35", "40"], ["12", "11", "13", "14"], ["256", "128", "512", "1024"], ["56", "54", "58", "52"], ["25", "20", "30", "15"]],
+                "correct": [0, 0, 0, 0, 0]
+            }            },
             "pharmacology": {
                 "questions": [
                     "Which drug is used for pain relief?",
@@ -223,7 +1291,96 @@ class AIQuestionGenerator:
                     ["ACE inhibitors", "Statins", "PPIs", "NSAIDs"]
                 ],
                 "correct": [0, 0, 0, 0, 0]
+            "pm fundamentals": {
+                "questions": ["What is the first phase of project management?", "What does WBS stand for?", "What is the triple constraint in PM?", "Who is responsible for project success?", "What is a Gantt chart used for?"],
+                "options": [["Initiation", "Planning", "Execution", "Closing"], ["Work Breakdown Structure", "Work Budget System", "Weekly Business Status", "None"], ["Scope, Time, Cost", "Quality, Risk, Resource", "People, Process, Tech", "Plan, Do, Check"], ["Project Manager", "Team", "Sponsor", "Stakeholder"], ["Scheduling", "Budgeting", "Risk analysis", "Communication"]],
+                "correct": [0, 0, 0, 0, 0]
             },
+            "people": {
+                "questions": ["What is the key to team motivation?", "What is emotional intelligence?", "What is conflict resolution?", "What is servant leadership?", "What is stakeholder management?"],
+                "options": [["Recognition", "Money", "Fear", "Pressure"], ["Understanding emotions", "IQ", "Technical skills", "Memory"], ["Finding solutions", "Avoiding conflict", "Winning arguments", "Ignoring issues"], ["Serving team first", "Commanding", "Delegating only", "Micromanaging"], ["Engaging stakeholders", "Ignoring them", "Telling them", "Avoiding them"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "process": {
+                "questions": ["What is process improvement?", "What is Lean methodology?", "What is Six Sigma?", "What is Kaizen?", "What is a bottleneck?"],
+                "options": [["Continuous enhancement", "One-time change", "Random change", "No change"], ["Eliminating waste", "Adding steps", "More resources", "More time"], ["Reducing defects", "Increasing defects", "Ignoring quality", "Faster delivery only"], ["Continuous improvement", "One-time event", "Annual review", "External audit"], ["Slowest step", "Fastest step", "First step", "Last step"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "business": {
+                "questions": ["What is ROI?", "What is a business case?", "What is NPV?", "What is stakeholder analysis?", "What is strategic alignment?"],
+                "options": [["Return on Investment", "Rate of Interest", "Return on Income", "None"], ["Justification document", "Legal document", "HR document", "Marketing plan"], ["Net Present Value", "New Project Value", "Net Profit Value", "None"], ["Identifying stakeholders", "Ignoring stakeholders", "Managing only clients", "Managing only team"], ["Aligning with goals", "Random projects", "Personal preference", "Short-term only"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "architecture": {
+                "questions": ["What is cloud architecture?", "What is scalability?", "What is high availability?", "What is fault tolerance?", "What is load balancing?"],
+                "options": [["Design of cloud systems", "Building design", "Network cable", "Hardware"], ["Handling growth", "Reducing size", "Fixed capacity", "Limiting users"], ["Always available", "Sometimes available", "Rarely available", "Never available"], ["Recovering from failure", "No failures", "Ignoring failures", "Preventing all failures"], ["Distributing traffic", "Blocking traffic", "Slowing traffic", "Monitoring traffic"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "security": {
+                "questions": ["What is encryption?", "What is a firewall?", "What is authentication?", "What is authorization?", "What is a vulnerability?"],
+                "options": [["Encoding data", "Deleting data", "Copying data", "Sharing data"], ["Network security", "Hardware", "Software bug", "Virus"], ["Verifying identity", "Granting access", "Denying access", "Logging in"], ["Granting permissions", "Verifying identity", "Creating accounts", "Deleting accounts"], ["Weakness", "Strength", "Feature", "Update"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "reading": {
+                "questions": ["What is skimming?", "What is scanning?", "What is inference?", "What is the main idea?", "What is context clue?"],
+                "options": [["Quick reading", "Slow reading", "Detailed reading", "No reading"], ["Finding specific info", "Reading everything", "Reading nothing", "Random reading"], ["Drawing conclusion", "Copying text", "Memorizing", "Ignoring text"], ["Central point", "Minor detail", "Example", "Footnote"], ["Hint in text", "Dictionary", "External source", "Guess"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "listening": {
+                "questions": ["What is active listening?", "What is paraphrasing?", "What is note-taking?", "What is comprehension?", "What is a lecture?"],
+                "options": [["Focused listening", "Passive hearing", "Ignoring", "Interrupting"], ["Restating", "Copying", "Translating", "Shortening"], ["Recording key points", "Writing everything", "Not writing", "Typing only"], ["Understanding", "Hearing only", "Seeing", "Touching"], ["Educational talk", "Conversation", "Argument", "Story"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "speaking": {
+                "questions": ["What is pronunciation?", "What is fluency?", "What is intonation?", "What is articulation?", "What is a presentation?"],
+                "options": [["Sound of words", "Spelling", "Writing", "Reading"], ["Smooth speech", "Fast speech", "Slow speech", "No speech"], ["Voice pitch", "Volume only", "Speed only", "Words only"], ["Clear speech", "Mumbling", "Whispering", "Shouting"], ["Formal talk", "Casual chat", "Argument", "Interview"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "writing": {
+                "questions": ["What is an essay?", "What is a thesis statement?", "What is coherence?", "What is grammar?", "What is punctuation?"],
+                "options": [["Structured writing", "Random notes", "List", "Poem"], ["Main argument", "Example", "Conclusion", "Title"], ["Logical flow", "Random order", "Repetition", "Contradiction"], ["Language rules", "Math rules", "Science rules", "No rules"], ["Marks in text", "Spacing only", "Font style", "Page size"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "ethics": {
+                "questions": ["What is ethics?", "What is integrity?", "What is conflict of interest?", "What is transparency?", "What is accountability?"],
+                "options": [["Moral principles", "Legal rules", "Company policy", "Personal preference"], ["Honesty", "Dishonesty", "Secrecy", "Manipulation"], ["Competing interests", "Shared interest", "No interest", "Public interest"], ["Openness", "Secrecy", "Hidden agenda", "Opaque"], ["Responsibility", "Blame", "Denial", "Avoidance"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "economics": {
+                "questions": ["What is supply and demand?", "What is inflation?", "What is GDP?", "What is recession?", "What is interest rate?"],
+                "options": [["Market forces", "Government rules", "Company policy", "Random events"], ["Price increase", "Price decrease", "Price stability", "No prices"], ["Gross Domestic Product", "General Development Plan", "Gross Development Product", "None"], ["Economic decline", "Economic growth", "Economic stability", "No economy"], ["Cost of borrowing", "Cost of living", "Cost of food", "Cost of housing"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "fra": {
+                "questions": ["What is balance sheet?", "What is income statement?", "What is cash flow?", "What is depreciation?", "What is goodwill?"],
+                "options": [["Financial position", "Profit only", "Loss only", "Tax only"], ["Revenue and expenses", "Assets only", "Liabilities only", "Equity only"], ["Money movement", "Profit only", "Sales only", "Expenses only"], ["Asset value decrease", "Asset value increase", "No change", "Market value"], ["Intangible asset", "Tangible asset", "Liability", "Expense"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "varc": {
+                "questions": ["What is reading comprehension?", "What is para jumble?", "What is summary writing?", "What is vocabulary?", "What is tone of passage?"],
+                "options": [["Understanding text", "Reading fast", "Reading slow", "Skipping text"], ["Arranging sentences", "Writing sentences", "Deleting sentences", "Copying sentences"], ["Condensing text", "Expanding text", "Repeating text", "Ignoring text"], ["Word knowledge", "Grammar only", "Spelling only", "Punctuation only"], ["Author's attitude", "Reader's attitude", "Character's attitude", "No attitude"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "dilr": {
+                "questions": ["What is data interpretation?", "What is logical reasoning?", "What is a pie chart?", "What is a bar graph?", "What is a table?"],
+                "options": [["Analyzing data", "Collecting data", "Deleting data", "Ignoring data"], ["Drawing conclusions", "Memorizing facts", "Copying text", "Guessing"], ["Circular chart", "Linear chart", "Square chart", "No chart"], ["Vertical bars", "Horizontal lines", "Dots", "No bars"], ["Data grid", "Story", "Poem", "Picture"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "physics": {
+                "questions": ["What is Newton's first law?", "What is velocity?", "What is energy?", "What is gravity?", "What is friction?"],
+                "options": [["Inertia", "Acceleration", "Action-reaction", "None"], ["Speed with direction", "Speed only", "Direction only", "Distance"], ["Capacity to work", "Force", "Power", "Pressure"], ["Attraction force", "Repulsion force", "No force", "Magnetic force"], ["Resistance force", "Driving force", "No force", "Electric force"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "chemistry": {
+                "questions": ["What is the atomic number?", "What is a molecule?", "What is pH?", "What is a chemical reaction?", "What is the periodic table?"],
+                "options": [["Number of protons", "Number of electrons", "Number of neutrons", "Atomic mass"], ["Group of atoms", "Single atom", "Element", "Compound only"], ["Acidity measure", "Temperature", "Pressure", "Volume"], ["Substance change", "No change", "Physical change only", "Color change only"], ["Element arrangement", "Compound list", "Reaction list", "Formula list"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "math": {
+                "questions": ["What is 15% of 200?", "What is square root of 144?", "What is 2^8?", "What is 7 x 8?", "What is 100/4?"],
+                "options": [["30", "25", "35", "40"], ["12", "11", "13", "14"], ["256", "128", "512", "1024"], ["56", "54", "58", "52"], ["25", "20", "30", "15"]],
+                "correct": [0, 0, 0, 0, 0]
+            }            },
             "pediatrics": {
                 "questions": [
                     "What is the normal birth weight?",
@@ -240,7 +1397,96 @@ class AIQuestionGenerator:
                     ["120-160 bpm", "80-100 bpm", "60-80 bpm", "100-120 bpm"]
                 ],
                 "correct": [0, 0, 0, 0, 0]
+            "pm fundamentals": {
+                "questions": ["What is the first phase of project management?", "What does WBS stand for?", "What is the triple constraint in PM?", "Who is responsible for project success?", "What is a Gantt chart used for?"],
+                "options": [["Initiation", "Planning", "Execution", "Closing"], ["Work Breakdown Structure", "Work Budget System", "Weekly Business Status", "None"], ["Scope, Time, Cost", "Quality, Risk, Resource", "People, Process, Tech", "Plan, Do, Check"], ["Project Manager", "Team", "Sponsor", "Stakeholder"], ["Scheduling", "Budgeting", "Risk analysis", "Communication"]],
+                "correct": [0, 0, 0, 0, 0]
             },
+            "people": {
+                "questions": ["What is the key to team motivation?", "What is emotional intelligence?", "What is conflict resolution?", "What is servant leadership?", "What is stakeholder management?"],
+                "options": [["Recognition", "Money", "Fear", "Pressure"], ["Understanding emotions", "IQ", "Technical skills", "Memory"], ["Finding solutions", "Avoiding conflict", "Winning arguments", "Ignoring issues"], ["Serving team first", "Commanding", "Delegating only", "Micromanaging"], ["Engaging stakeholders", "Ignoring them", "Telling them", "Avoiding them"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "process": {
+                "questions": ["What is process improvement?", "What is Lean methodology?", "What is Six Sigma?", "What is Kaizen?", "What is a bottleneck?"],
+                "options": [["Continuous enhancement", "One-time change", "Random change", "No change"], ["Eliminating waste", "Adding steps", "More resources", "More time"], ["Reducing defects", "Increasing defects", "Ignoring quality", "Faster delivery only"], ["Continuous improvement", "One-time event", "Annual review", "External audit"], ["Slowest step", "Fastest step", "First step", "Last step"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "business": {
+                "questions": ["What is ROI?", "What is a business case?", "What is NPV?", "What is stakeholder analysis?", "What is strategic alignment?"],
+                "options": [["Return on Investment", "Rate of Interest", "Return on Income", "None"], ["Justification document", "Legal document", "HR document", "Marketing plan"], ["Net Present Value", "New Project Value", "Net Profit Value", "None"], ["Identifying stakeholders", "Ignoring stakeholders", "Managing only clients", "Managing only team"], ["Aligning with goals", "Random projects", "Personal preference", "Short-term only"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "architecture": {
+                "questions": ["What is cloud architecture?", "What is scalability?", "What is high availability?", "What is fault tolerance?", "What is load balancing?"],
+                "options": [["Design of cloud systems", "Building design", "Network cable", "Hardware"], ["Handling growth", "Reducing size", "Fixed capacity", "Limiting users"], ["Always available", "Sometimes available", "Rarely available", "Never available"], ["Recovering from failure", "No failures", "Ignoring failures", "Preventing all failures"], ["Distributing traffic", "Blocking traffic", "Slowing traffic", "Monitoring traffic"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "security": {
+                "questions": ["What is encryption?", "What is a firewall?", "What is authentication?", "What is authorization?", "What is a vulnerability?"],
+                "options": [["Encoding data", "Deleting data", "Copying data", "Sharing data"], ["Network security", "Hardware", "Software bug", "Virus"], ["Verifying identity", "Granting access", "Denying access", "Logging in"], ["Granting permissions", "Verifying identity", "Creating accounts", "Deleting accounts"], ["Weakness", "Strength", "Feature", "Update"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "reading": {
+                "questions": ["What is skimming?", "What is scanning?", "What is inference?", "What is the main idea?", "What is context clue?"],
+                "options": [["Quick reading", "Slow reading", "Detailed reading", "No reading"], ["Finding specific info", "Reading everything", "Reading nothing", "Random reading"], ["Drawing conclusion", "Copying text", "Memorizing", "Ignoring text"], ["Central point", "Minor detail", "Example", "Footnote"], ["Hint in text", "Dictionary", "External source", "Guess"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "listening": {
+                "questions": ["What is active listening?", "What is paraphrasing?", "What is note-taking?", "What is comprehension?", "What is a lecture?"],
+                "options": [["Focused listening", "Passive hearing", "Ignoring", "Interrupting"], ["Restating", "Copying", "Translating", "Shortening"], ["Recording key points", "Writing everything", "Not writing", "Typing only"], ["Understanding", "Hearing only", "Seeing", "Touching"], ["Educational talk", "Conversation", "Argument", "Story"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "speaking": {
+                "questions": ["What is pronunciation?", "What is fluency?", "What is intonation?", "What is articulation?", "What is a presentation?"],
+                "options": [["Sound of words", "Spelling", "Writing", "Reading"], ["Smooth speech", "Fast speech", "Slow speech", "No speech"], ["Voice pitch", "Volume only", "Speed only", "Words only"], ["Clear speech", "Mumbling", "Whispering", "Shouting"], ["Formal talk", "Casual chat", "Argument", "Interview"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "writing": {
+                "questions": ["What is an essay?", "What is a thesis statement?", "What is coherence?", "What is grammar?", "What is punctuation?"],
+                "options": [["Structured writing", "Random notes", "List", "Poem"], ["Main argument", "Example", "Conclusion", "Title"], ["Logical flow", "Random order", "Repetition", "Contradiction"], ["Language rules", "Math rules", "Science rules", "No rules"], ["Marks in text", "Spacing only", "Font style", "Page size"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "ethics": {
+                "questions": ["What is ethics?", "What is integrity?", "What is conflict of interest?", "What is transparency?", "What is accountability?"],
+                "options": [["Moral principles", "Legal rules", "Company policy", "Personal preference"], ["Honesty", "Dishonesty", "Secrecy", "Manipulation"], ["Competing interests", "Shared interest", "No interest", "Public interest"], ["Openness", "Secrecy", "Hidden agenda", "Opaque"], ["Responsibility", "Blame", "Denial", "Avoidance"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "economics": {
+                "questions": ["What is supply and demand?", "What is inflation?", "What is GDP?", "What is recession?", "What is interest rate?"],
+                "options": [["Market forces", "Government rules", "Company policy", "Random events"], ["Price increase", "Price decrease", "Price stability", "No prices"], ["Gross Domestic Product", "General Development Plan", "Gross Development Product", "None"], ["Economic decline", "Economic growth", "Economic stability", "No economy"], ["Cost of borrowing", "Cost of living", "Cost of food", "Cost of housing"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "fra": {
+                "questions": ["What is balance sheet?", "What is income statement?", "What is cash flow?", "What is depreciation?", "What is goodwill?"],
+                "options": [["Financial position", "Profit only", "Loss only", "Tax only"], ["Revenue and expenses", "Assets only", "Liabilities only", "Equity only"], ["Money movement", "Profit only", "Sales only", "Expenses only"], ["Asset value decrease", "Asset value increase", "No change", "Market value"], ["Intangible asset", "Tangible asset", "Liability", "Expense"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "varc": {
+                "questions": ["What is reading comprehension?", "What is para jumble?", "What is summary writing?", "What is vocabulary?", "What is tone of passage?"],
+                "options": [["Understanding text", "Reading fast", "Reading slow", "Skipping text"], ["Arranging sentences", "Writing sentences", "Deleting sentences", "Copying sentences"], ["Condensing text", "Expanding text", "Repeating text", "Ignoring text"], ["Word knowledge", "Grammar only", "Spelling only", "Punctuation only"], ["Author's attitude", "Reader's attitude", "Character's attitude", "No attitude"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "dilr": {
+                "questions": ["What is data interpretation?", "What is logical reasoning?", "What is a pie chart?", "What is a bar graph?", "What is a table?"],
+                "options": [["Analyzing data", "Collecting data", "Deleting data", "Ignoring data"], ["Drawing conclusions", "Memorizing facts", "Copying text", "Guessing"], ["Circular chart", "Linear chart", "Square chart", "No chart"], ["Vertical bars", "Horizontal lines", "Dots", "No bars"], ["Data grid", "Story", "Poem", "Picture"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "physics": {
+                "questions": ["What is Newton's first law?", "What is velocity?", "What is energy?", "What is gravity?", "What is friction?"],
+                "options": [["Inertia", "Acceleration", "Action-reaction", "None"], ["Speed with direction", "Speed only", "Direction only", "Distance"], ["Capacity to work", "Force", "Power", "Pressure"], ["Attraction force", "Repulsion force", "No force", "Magnetic force"], ["Resistance force", "Driving force", "No force", "Electric force"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "chemistry": {
+                "questions": ["What is the atomic number?", "What is a molecule?", "What is pH?", "What is a chemical reaction?", "What is the periodic table?"],
+                "options": [["Number of protons", "Number of electrons", "Number of neutrons", "Atomic mass"], ["Group of atoms", "Single atom", "Element", "Compound only"], ["Acidity measure", "Temperature", "Pressure", "Volume"], ["Substance change", "No change", "Physical change only", "Color change only"], ["Element arrangement", "Compound list", "Reaction list", "Formula list"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "math": {
+                "questions": ["What is 15% of 200?", "What is square root of 144?", "What is 2^8?", "What is 7 x 8?", "What is 100/4?"],
+                "options": [["30", "25", "35", "40"], ["12", "11", "13", "14"], ["256", "128", "512", "1024"], ["56", "54", "58", "52"], ["25", "20", "30", "15"]],
+                "correct": [0, 0, 0, 0, 0]
+            }            },
             "psychiatry": {
                 "questions": [
                     "What is the most common mental health disorder?",
@@ -257,7 +1503,96 @@ class AIQuestionGenerator:
                     ["Bipolar", "Depression", "Anxiety", "OCD"]
                 ],
                 "correct": [0, 0, 0, 0, 0]
+            "pm fundamentals": {
+                "questions": ["What is the first phase of project management?", "What does WBS stand for?", "What is the triple constraint in PM?", "Who is responsible for project success?", "What is a Gantt chart used for?"],
+                "options": [["Initiation", "Planning", "Execution", "Closing"], ["Work Breakdown Structure", "Work Budget System", "Weekly Business Status", "None"], ["Scope, Time, Cost", "Quality, Risk, Resource", "People, Process, Tech", "Plan, Do, Check"], ["Project Manager", "Team", "Sponsor", "Stakeholder"], ["Scheduling", "Budgeting", "Risk analysis", "Communication"]],
+                "correct": [0, 0, 0, 0, 0]
             },
+            "people": {
+                "questions": ["What is the key to team motivation?", "What is emotional intelligence?", "What is conflict resolution?", "What is servant leadership?", "What is stakeholder management?"],
+                "options": [["Recognition", "Money", "Fear", "Pressure"], ["Understanding emotions", "IQ", "Technical skills", "Memory"], ["Finding solutions", "Avoiding conflict", "Winning arguments", "Ignoring issues"], ["Serving team first", "Commanding", "Delegating only", "Micromanaging"], ["Engaging stakeholders", "Ignoring them", "Telling them", "Avoiding them"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "process": {
+                "questions": ["What is process improvement?", "What is Lean methodology?", "What is Six Sigma?", "What is Kaizen?", "What is a bottleneck?"],
+                "options": [["Continuous enhancement", "One-time change", "Random change", "No change"], ["Eliminating waste", "Adding steps", "More resources", "More time"], ["Reducing defects", "Increasing defects", "Ignoring quality", "Faster delivery only"], ["Continuous improvement", "One-time event", "Annual review", "External audit"], ["Slowest step", "Fastest step", "First step", "Last step"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "business": {
+                "questions": ["What is ROI?", "What is a business case?", "What is NPV?", "What is stakeholder analysis?", "What is strategic alignment?"],
+                "options": [["Return on Investment", "Rate of Interest", "Return on Income", "None"], ["Justification document", "Legal document", "HR document", "Marketing plan"], ["Net Present Value", "New Project Value", "Net Profit Value", "None"], ["Identifying stakeholders", "Ignoring stakeholders", "Managing only clients", "Managing only team"], ["Aligning with goals", "Random projects", "Personal preference", "Short-term only"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "architecture": {
+                "questions": ["What is cloud architecture?", "What is scalability?", "What is high availability?", "What is fault tolerance?", "What is load balancing?"],
+                "options": [["Design of cloud systems", "Building design", "Network cable", "Hardware"], ["Handling growth", "Reducing size", "Fixed capacity", "Limiting users"], ["Always available", "Sometimes available", "Rarely available", "Never available"], ["Recovering from failure", "No failures", "Ignoring failures", "Preventing all failures"], ["Distributing traffic", "Blocking traffic", "Slowing traffic", "Monitoring traffic"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "security": {
+                "questions": ["What is encryption?", "What is a firewall?", "What is authentication?", "What is authorization?", "What is a vulnerability?"],
+                "options": [["Encoding data", "Deleting data", "Copying data", "Sharing data"], ["Network security", "Hardware", "Software bug", "Virus"], ["Verifying identity", "Granting access", "Denying access", "Logging in"], ["Granting permissions", "Verifying identity", "Creating accounts", "Deleting accounts"], ["Weakness", "Strength", "Feature", "Update"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "reading": {
+                "questions": ["What is skimming?", "What is scanning?", "What is inference?", "What is the main idea?", "What is context clue?"],
+                "options": [["Quick reading", "Slow reading", "Detailed reading", "No reading"], ["Finding specific info", "Reading everything", "Reading nothing", "Random reading"], ["Drawing conclusion", "Copying text", "Memorizing", "Ignoring text"], ["Central point", "Minor detail", "Example", "Footnote"], ["Hint in text", "Dictionary", "External source", "Guess"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "listening": {
+                "questions": ["What is active listening?", "What is paraphrasing?", "What is note-taking?", "What is comprehension?", "What is a lecture?"],
+                "options": [["Focused listening", "Passive hearing", "Ignoring", "Interrupting"], ["Restating", "Copying", "Translating", "Shortening"], ["Recording key points", "Writing everything", "Not writing", "Typing only"], ["Understanding", "Hearing only", "Seeing", "Touching"], ["Educational talk", "Conversation", "Argument", "Story"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "speaking": {
+                "questions": ["What is pronunciation?", "What is fluency?", "What is intonation?", "What is articulation?", "What is a presentation?"],
+                "options": [["Sound of words", "Spelling", "Writing", "Reading"], ["Smooth speech", "Fast speech", "Slow speech", "No speech"], ["Voice pitch", "Volume only", "Speed only", "Words only"], ["Clear speech", "Mumbling", "Whispering", "Shouting"], ["Formal talk", "Casual chat", "Argument", "Interview"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "writing": {
+                "questions": ["What is an essay?", "What is a thesis statement?", "What is coherence?", "What is grammar?", "What is punctuation?"],
+                "options": [["Structured writing", "Random notes", "List", "Poem"], ["Main argument", "Example", "Conclusion", "Title"], ["Logical flow", "Random order", "Repetition", "Contradiction"], ["Language rules", "Math rules", "Science rules", "No rules"], ["Marks in text", "Spacing only", "Font style", "Page size"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "ethics": {
+                "questions": ["What is ethics?", "What is integrity?", "What is conflict of interest?", "What is transparency?", "What is accountability?"],
+                "options": [["Moral principles", "Legal rules", "Company policy", "Personal preference"], ["Honesty", "Dishonesty", "Secrecy", "Manipulation"], ["Competing interests", "Shared interest", "No interest", "Public interest"], ["Openness", "Secrecy", "Hidden agenda", "Opaque"], ["Responsibility", "Blame", "Denial", "Avoidance"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "economics": {
+                "questions": ["What is supply and demand?", "What is inflation?", "What is GDP?", "What is recession?", "What is interest rate?"],
+                "options": [["Market forces", "Government rules", "Company policy", "Random events"], ["Price increase", "Price decrease", "Price stability", "No prices"], ["Gross Domestic Product", "General Development Plan", "Gross Development Product", "None"], ["Economic decline", "Economic growth", "Economic stability", "No economy"], ["Cost of borrowing", "Cost of living", "Cost of food", "Cost of housing"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "fra": {
+                "questions": ["What is balance sheet?", "What is income statement?", "What is cash flow?", "What is depreciation?", "What is goodwill?"],
+                "options": [["Financial position", "Profit only", "Loss only", "Tax only"], ["Revenue and expenses", "Assets only", "Liabilities only", "Equity only"], ["Money movement", "Profit only", "Sales only", "Expenses only"], ["Asset value decrease", "Asset value increase", "No change", "Market value"], ["Intangible asset", "Tangible asset", "Liability", "Expense"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "varc": {
+                "questions": ["What is reading comprehension?", "What is para jumble?", "What is summary writing?", "What is vocabulary?", "What is tone of passage?"],
+                "options": [["Understanding text", "Reading fast", "Reading slow", "Skipping text"], ["Arranging sentences", "Writing sentences", "Deleting sentences", "Copying sentences"], ["Condensing text", "Expanding text", "Repeating text", "Ignoring text"], ["Word knowledge", "Grammar only", "Spelling only", "Punctuation only"], ["Author's attitude", "Reader's attitude", "Character's attitude", "No attitude"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "dilr": {
+                "questions": ["What is data interpretation?", "What is logical reasoning?", "What is a pie chart?", "What is a bar graph?", "What is a table?"],
+                "options": [["Analyzing data", "Collecting data", "Deleting data", "Ignoring data"], ["Drawing conclusions", "Memorizing facts", "Copying text", "Guessing"], ["Circular chart", "Linear chart", "Square chart", "No chart"], ["Vertical bars", "Horizontal lines", "Dots", "No bars"], ["Data grid", "Story", "Poem", "Picture"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "physics": {
+                "questions": ["What is Newton's first law?", "What is velocity?", "What is energy?", "What is gravity?", "What is friction?"],
+                "options": [["Inertia", "Acceleration", "Action-reaction", "None"], ["Speed with direction", "Speed only", "Direction only", "Distance"], ["Capacity to work", "Force", "Power", "Pressure"], ["Attraction force", "Repulsion force", "No force", "Magnetic force"], ["Resistance force", "Driving force", "No force", "Electric force"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "chemistry": {
+                "questions": ["What is the atomic number?", "What is a molecule?", "What is pH?", "What is a chemical reaction?", "What is the periodic table?"],
+                "options": [["Number of protons", "Number of electrons", "Number of neutrons", "Atomic mass"], ["Group of atoms", "Single atom", "Element", "Compound only"], ["Acidity measure", "Temperature", "Pressure", "Volume"], ["Substance change", "No change", "Physical change only", "Color change only"], ["Element arrangement", "Compound list", "Reaction list", "Formula list"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "math": {
+                "questions": ["What is 15% of 200?", "What is square root of 144?", "What is 2^8?", "What is 7 x 8?", "What is 100/4?"],
+                "options": [["30", "25", "35", "40"], ["12", "11", "13", "14"], ["256", "128", "512", "1024"], ["56", "54", "58", "52"], ["25", "20", "30", "15"]],
+                "correct": [0, 0, 0, 0, 0]
+            }            },
             "obg": {
                 "questions": [
                     "What is the normal duration of pregnancy?",
@@ -274,7 +1609,96 @@ class AIQuestionGenerator:
                     ["Folic acid", "Vitamin C", "Vitamin D", "Vitamin B12"]
                 ],
                 "correct": [0, 0, 0, 0, 0]
-            }
+            "pm fundamentals": {
+                "questions": ["What is the first phase of project management?", "What does WBS stand for?", "What is the triple constraint in PM?", "Who is responsible for project success?", "What is a Gantt chart used for?"],
+                "options": [["Initiation", "Planning", "Execution", "Closing"], ["Work Breakdown Structure", "Work Budget System", "Weekly Business Status", "None"], ["Scope, Time, Cost", "Quality, Risk, Resource", "People, Process, Tech", "Plan, Do, Check"], ["Project Manager", "Team", "Sponsor", "Stakeholder"], ["Scheduling", "Budgeting", "Risk analysis", "Communication"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "people": {
+                "questions": ["What is the key to team motivation?", "What is emotional intelligence?", "What is conflict resolution?", "What is servant leadership?", "What is stakeholder management?"],
+                "options": [["Recognition", "Money", "Fear", "Pressure"], ["Understanding emotions", "IQ", "Technical skills", "Memory"], ["Finding solutions", "Avoiding conflict", "Winning arguments", "Ignoring issues"], ["Serving team first", "Commanding", "Delegating only", "Micromanaging"], ["Engaging stakeholders", "Ignoring them", "Telling them", "Avoiding them"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "process": {
+                "questions": ["What is process improvement?", "What is Lean methodology?", "What is Six Sigma?", "What is Kaizen?", "What is a bottleneck?"],
+                "options": [["Continuous enhancement", "One-time change", "Random change", "No change"], ["Eliminating waste", "Adding steps", "More resources", "More time"], ["Reducing defects", "Increasing defects", "Ignoring quality", "Faster delivery only"], ["Continuous improvement", "One-time event", "Annual review", "External audit"], ["Slowest step", "Fastest step", "First step", "Last step"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "business": {
+                "questions": ["What is ROI?", "What is a business case?", "What is NPV?", "What is stakeholder analysis?", "What is strategic alignment?"],
+                "options": [["Return on Investment", "Rate of Interest", "Return on Income", "None"], ["Justification document", "Legal document", "HR document", "Marketing plan"], ["Net Present Value", "New Project Value", "Net Profit Value", "None"], ["Identifying stakeholders", "Ignoring stakeholders", "Managing only clients", "Managing only team"], ["Aligning with goals", "Random projects", "Personal preference", "Short-term only"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "architecture": {
+                "questions": ["What is cloud architecture?", "What is scalability?", "What is high availability?", "What is fault tolerance?", "What is load balancing?"],
+                "options": [["Design of cloud systems", "Building design", "Network cable", "Hardware"], ["Handling growth", "Reducing size", "Fixed capacity", "Limiting users"], ["Always available", "Sometimes available", "Rarely available", "Never available"], ["Recovering from failure", "No failures", "Ignoring failures", "Preventing all failures"], ["Distributing traffic", "Blocking traffic", "Slowing traffic", "Monitoring traffic"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "security": {
+                "questions": ["What is encryption?", "What is a firewall?", "What is authentication?", "What is authorization?", "What is a vulnerability?"],
+                "options": [["Encoding data", "Deleting data", "Copying data", "Sharing data"], ["Network security", "Hardware", "Software bug", "Virus"], ["Verifying identity", "Granting access", "Denying access", "Logging in"], ["Granting permissions", "Verifying identity", "Creating accounts", "Deleting accounts"], ["Weakness", "Strength", "Feature", "Update"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "reading": {
+                "questions": ["What is skimming?", "What is scanning?", "What is inference?", "What is the main idea?", "What is context clue?"],
+                "options": [["Quick reading", "Slow reading", "Detailed reading", "No reading"], ["Finding specific info", "Reading everything", "Reading nothing", "Random reading"], ["Drawing conclusion", "Copying text", "Memorizing", "Ignoring text"], ["Central point", "Minor detail", "Example", "Footnote"], ["Hint in text", "Dictionary", "External source", "Guess"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "listening": {
+                "questions": ["What is active listening?", "What is paraphrasing?", "What is note-taking?", "What is comprehension?", "What is a lecture?"],
+                "options": [["Focused listening", "Passive hearing", "Ignoring", "Interrupting"], ["Restating", "Copying", "Translating", "Shortening"], ["Recording key points", "Writing everything", "Not writing", "Typing only"], ["Understanding", "Hearing only", "Seeing", "Touching"], ["Educational talk", "Conversation", "Argument", "Story"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "speaking": {
+                "questions": ["What is pronunciation?", "What is fluency?", "What is intonation?", "What is articulation?", "What is a presentation?"],
+                "options": [["Sound of words", "Spelling", "Writing", "Reading"], ["Smooth speech", "Fast speech", "Slow speech", "No speech"], ["Voice pitch", "Volume only", "Speed only", "Words only"], ["Clear speech", "Mumbling", "Whispering", "Shouting"], ["Formal talk", "Casual chat", "Argument", "Interview"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "writing": {
+                "questions": ["What is an essay?", "What is a thesis statement?", "What is coherence?", "What is grammar?", "What is punctuation?"],
+                "options": [["Structured writing", "Random notes", "List", "Poem"], ["Main argument", "Example", "Conclusion", "Title"], ["Logical flow", "Random order", "Repetition", "Contradiction"], ["Language rules", "Math rules", "Science rules", "No rules"], ["Marks in text", "Spacing only", "Font style", "Page size"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "ethics": {
+                "questions": ["What is ethics?", "What is integrity?", "What is conflict of interest?", "What is transparency?", "What is accountability?"],
+                "options": [["Moral principles", "Legal rules", "Company policy", "Personal preference"], ["Honesty", "Dishonesty", "Secrecy", "Manipulation"], ["Competing interests", "Shared interest", "No interest", "Public interest"], ["Openness", "Secrecy", "Hidden agenda", "Opaque"], ["Responsibility", "Blame", "Denial", "Avoidance"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "economics": {
+                "questions": ["What is supply and demand?", "What is inflation?", "What is GDP?", "What is recession?", "What is interest rate?"],
+                "options": [["Market forces", "Government rules", "Company policy", "Random events"], ["Price increase", "Price decrease", "Price stability", "No prices"], ["Gross Domestic Product", "General Development Plan", "Gross Development Product", "None"], ["Economic decline", "Economic growth", "Economic stability", "No economy"], ["Cost of borrowing", "Cost of living", "Cost of food", "Cost of housing"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "fra": {
+                "questions": ["What is balance sheet?", "What is income statement?", "What is cash flow?", "What is depreciation?", "What is goodwill?"],
+                "options": [["Financial position", "Profit only", "Loss only", "Tax only"], ["Revenue and expenses", "Assets only", "Liabilities only", "Equity only"], ["Money movement", "Profit only", "Sales only", "Expenses only"], ["Asset value decrease", "Asset value increase", "No change", "Market value"], ["Intangible asset", "Tangible asset", "Liability", "Expense"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "varc": {
+                "questions": ["What is reading comprehension?", "What is para jumble?", "What is summary writing?", "What is vocabulary?", "What is tone of passage?"],
+                "options": [["Understanding text", "Reading fast", "Reading slow", "Skipping text"], ["Arranging sentences", "Writing sentences", "Deleting sentences", "Copying sentences"], ["Condensing text", "Expanding text", "Repeating text", "Ignoring text"], ["Word knowledge", "Grammar only", "Spelling only", "Punctuation only"], ["Author's attitude", "Reader's attitude", "Character's attitude", "No attitude"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "dilr": {
+                "questions": ["What is data interpretation?", "What is logical reasoning?", "What is a pie chart?", "What is a bar graph?", "What is a table?"],
+                "options": [["Analyzing data", "Collecting data", "Deleting data", "Ignoring data"], ["Drawing conclusions", "Memorizing facts", "Copying text", "Guessing"], ["Circular chart", "Linear chart", "Square chart", "No chart"], ["Vertical bars", "Horizontal lines", "Dots", "No bars"], ["Data grid", "Story", "Poem", "Picture"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "physics": {
+                "questions": ["What is Newton's first law?", "What is velocity?", "What is energy?", "What is gravity?", "What is friction?"],
+                "options": [["Inertia", "Acceleration", "Action-reaction", "None"], ["Speed with direction", "Speed only", "Direction only", "Distance"], ["Capacity to work", "Force", "Power", "Pressure"], ["Attraction force", "Repulsion force", "No force", "Magnetic force"], ["Resistance force", "Driving force", "No force", "Electric force"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "chemistry": {
+                "questions": ["What is the atomic number?", "What is a molecule?", "What is pH?", "What is a chemical reaction?", "What is the periodic table?"],
+                "options": [["Number of protons", "Number of electrons", "Number of neutrons", "Atomic mass"], ["Group of atoms", "Single atom", "Element", "Compound only"], ["Acidity measure", "Temperature", "Pressure", "Volume"], ["Substance change", "No change", "Physical change only", "Color change only"], ["Element arrangement", "Compound list", "Reaction list", "Formula list"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "math": {
+                "questions": ["What is 15% of 200?", "What is square root of 144?", "What is 2^8?", "What is 7 x 8?", "What is 100/4?"],
+                "options": [["30", "25", "35", "40"], ["12", "11", "13", "14"], ["256", "128", "512", "1024"], ["56", "54", "58", "52"], ["25", "20", "30", "15"]],
+                "correct": [0, 0, 0, 0, 0]
+            }            }
         }
     
     def generate_questions(self, exam_id, topic, count=10):
@@ -296,7 +1720,96 @@ class AIQuestionGenerator:
                 "explanation": "Explanation for question " + str(i+1),
                 "difficulty": "Medium",
                 "topic": topic
-            })
+            "pm fundamentals": {
+                "questions": ["What is the first phase of project management?", "What does WBS stand for?", "What is the triple constraint in PM?", "Who is responsible for project success?", "What is a Gantt chart used for?"],
+                "options": [["Initiation", "Planning", "Execution", "Closing"], ["Work Breakdown Structure", "Work Budget System", "Weekly Business Status", "None"], ["Scope, Time, Cost", "Quality, Risk, Resource", "People, Process, Tech", "Plan, Do, Check"], ["Project Manager", "Team", "Sponsor", "Stakeholder"], ["Scheduling", "Budgeting", "Risk analysis", "Communication"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "people": {
+                "questions": ["What is the key to team motivation?", "What is emotional intelligence?", "What is conflict resolution?", "What is servant leadership?", "What is stakeholder management?"],
+                "options": [["Recognition", "Money", "Fear", "Pressure"], ["Understanding emotions", "IQ", "Technical skills", "Memory"], ["Finding solutions", "Avoiding conflict", "Winning arguments", "Ignoring issues"], ["Serving team first", "Commanding", "Delegating only", "Micromanaging"], ["Engaging stakeholders", "Ignoring them", "Telling them", "Avoiding them"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "process": {
+                "questions": ["What is process improvement?", "What is Lean methodology?", "What is Six Sigma?", "What is Kaizen?", "What is a bottleneck?"],
+                "options": [["Continuous enhancement", "One-time change", "Random change", "No change"], ["Eliminating waste", "Adding steps", "More resources", "More time"], ["Reducing defects", "Increasing defects", "Ignoring quality", "Faster delivery only"], ["Continuous improvement", "One-time event", "Annual review", "External audit"], ["Slowest step", "Fastest step", "First step", "Last step"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "business": {
+                "questions": ["What is ROI?", "What is a business case?", "What is NPV?", "What is stakeholder analysis?", "What is strategic alignment?"],
+                "options": [["Return on Investment", "Rate of Interest", "Return on Income", "None"], ["Justification document", "Legal document", "HR document", "Marketing plan"], ["Net Present Value", "New Project Value", "Net Profit Value", "None"], ["Identifying stakeholders", "Ignoring stakeholders", "Managing only clients", "Managing only team"], ["Aligning with goals", "Random projects", "Personal preference", "Short-term only"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "architecture": {
+                "questions": ["What is cloud architecture?", "What is scalability?", "What is high availability?", "What is fault tolerance?", "What is load balancing?"],
+                "options": [["Design of cloud systems", "Building design", "Network cable", "Hardware"], ["Handling growth", "Reducing size", "Fixed capacity", "Limiting users"], ["Always available", "Sometimes available", "Rarely available", "Never available"], ["Recovering from failure", "No failures", "Ignoring failures", "Preventing all failures"], ["Distributing traffic", "Blocking traffic", "Slowing traffic", "Monitoring traffic"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "security": {
+                "questions": ["What is encryption?", "What is a firewall?", "What is authentication?", "What is authorization?", "What is a vulnerability?"],
+                "options": [["Encoding data", "Deleting data", "Copying data", "Sharing data"], ["Network security", "Hardware", "Software bug", "Virus"], ["Verifying identity", "Granting access", "Denying access", "Logging in"], ["Granting permissions", "Verifying identity", "Creating accounts", "Deleting accounts"], ["Weakness", "Strength", "Feature", "Update"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "reading": {
+                "questions": ["What is skimming?", "What is scanning?", "What is inference?", "What is the main idea?", "What is context clue?"],
+                "options": [["Quick reading", "Slow reading", "Detailed reading", "No reading"], ["Finding specific info", "Reading everything", "Reading nothing", "Random reading"], ["Drawing conclusion", "Copying text", "Memorizing", "Ignoring text"], ["Central point", "Minor detail", "Example", "Footnote"], ["Hint in text", "Dictionary", "External source", "Guess"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "listening": {
+                "questions": ["What is active listening?", "What is paraphrasing?", "What is note-taking?", "What is comprehension?", "What is a lecture?"],
+                "options": [["Focused listening", "Passive hearing", "Ignoring", "Interrupting"], ["Restating", "Copying", "Translating", "Shortening"], ["Recording key points", "Writing everything", "Not writing", "Typing only"], ["Understanding", "Hearing only", "Seeing", "Touching"], ["Educational talk", "Conversation", "Argument", "Story"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "speaking": {
+                "questions": ["What is pronunciation?", "What is fluency?", "What is intonation?", "What is articulation?", "What is a presentation?"],
+                "options": [["Sound of words", "Spelling", "Writing", "Reading"], ["Smooth speech", "Fast speech", "Slow speech", "No speech"], ["Voice pitch", "Volume only", "Speed only", "Words only"], ["Clear speech", "Mumbling", "Whispering", "Shouting"], ["Formal talk", "Casual chat", "Argument", "Interview"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "writing": {
+                "questions": ["What is an essay?", "What is a thesis statement?", "What is coherence?", "What is grammar?", "What is punctuation?"],
+                "options": [["Structured writing", "Random notes", "List", "Poem"], ["Main argument", "Example", "Conclusion", "Title"], ["Logical flow", "Random order", "Repetition", "Contradiction"], ["Language rules", "Math rules", "Science rules", "No rules"], ["Marks in text", "Spacing only", "Font style", "Page size"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "ethics": {
+                "questions": ["What is ethics?", "What is integrity?", "What is conflict of interest?", "What is transparency?", "What is accountability?"],
+                "options": [["Moral principles", "Legal rules", "Company policy", "Personal preference"], ["Honesty", "Dishonesty", "Secrecy", "Manipulation"], ["Competing interests", "Shared interest", "No interest", "Public interest"], ["Openness", "Secrecy", "Hidden agenda", "Opaque"], ["Responsibility", "Blame", "Denial", "Avoidance"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "economics": {
+                "questions": ["What is supply and demand?", "What is inflation?", "What is GDP?", "What is recession?", "What is interest rate?"],
+                "options": [["Market forces", "Government rules", "Company policy", "Random events"], ["Price increase", "Price decrease", "Price stability", "No prices"], ["Gross Domestic Product", "General Development Plan", "Gross Development Product", "None"], ["Economic decline", "Economic growth", "Economic stability", "No economy"], ["Cost of borrowing", "Cost of living", "Cost of food", "Cost of housing"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "fra": {
+                "questions": ["What is balance sheet?", "What is income statement?", "What is cash flow?", "What is depreciation?", "What is goodwill?"],
+                "options": [["Financial position", "Profit only", "Loss only", "Tax only"], ["Revenue and expenses", "Assets only", "Liabilities only", "Equity only"], ["Money movement", "Profit only", "Sales only", "Expenses only"], ["Asset value decrease", "Asset value increase", "No change", "Market value"], ["Intangible asset", "Tangible asset", "Liability", "Expense"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "varc": {
+                "questions": ["What is reading comprehension?", "What is para jumble?", "What is summary writing?", "What is vocabulary?", "What is tone of passage?"],
+                "options": [["Understanding text", "Reading fast", "Reading slow", "Skipping text"], ["Arranging sentences", "Writing sentences", "Deleting sentences", "Copying sentences"], ["Condensing text", "Expanding text", "Repeating text", "Ignoring text"], ["Word knowledge", "Grammar only", "Spelling only", "Punctuation only"], ["Author's attitude", "Reader's attitude", "Character's attitude", "No attitude"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "dilr": {
+                "questions": ["What is data interpretation?", "What is logical reasoning?", "What is a pie chart?", "What is a bar graph?", "What is a table?"],
+                "options": [["Analyzing data", "Collecting data", "Deleting data", "Ignoring data"], ["Drawing conclusions", "Memorizing facts", "Copying text", "Guessing"], ["Circular chart", "Linear chart", "Square chart", "No chart"], ["Vertical bars", "Horizontal lines", "Dots", "No bars"], ["Data grid", "Story", "Poem", "Picture"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "physics": {
+                "questions": ["What is Newton's first law?", "What is velocity?", "What is energy?", "What is gravity?", "What is friction?"],
+                "options": [["Inertia", "Acceleration", "Action-reaction", "None"], ["Speed with direction", "Speed only", "Direction only", "Distance"], ["Capacity to work", "Force", "Power", "Pressure"], ["Attraction force", "Repulsion force", "No force", "Magnetic force"], ["Resistance force", "Driving force", "No force", "Electric force"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "chemistry": {
+                "questions": ["What is the atomic number?", "What is a molecule?", "What is pH?", "What is a chemical reaction?", "What is the periodic table?"],
+                "options": [["Number of protons", "Number of electrons", "Number of neutrons", "Atomic mass"], ["Group of atoms", "Single atom", "Element", "Compound only"], ["Acidity measure", "Temperature", "Pressure", "Volume"], ["Substance change", "No change", "Physical change only", "Color change only"], ["Element arrangement", "Compound list", "Reaction list", "Formula list"]],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "math": {
+                "questions": ["What is 15% of 200?", "What is square root of 144?", "What is 2^8?", "What is 7 x 8?", "What is 100/4?"],
+                "options": [["30", "25", "35", "40"], ["12", "11", "13", "14"], ["256", "128", "512", "1024"], ["56", "54", "58", "52"], ["25", "20", "30", "15"]],
+                "correct": [0, 0, 0, 0, 0]
+            }            })
         
         return questions
 
