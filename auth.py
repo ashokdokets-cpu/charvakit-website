@@ -61,7 +61,13 @@ def login_user(email: str, password: str):
     if not user:
         return {"status": "error", "message": "Invalid email or password"}
     
-    if not verify_password(password, user.get("password_hash", user.get("password", ""))):
+    stored_hash = user.get("password_hash", user.get("password", ""))
+# Try both verification methods
+if not verify_password(password, stored_hash):
+    # Fallback: try direct SHA-256
+    direct_hash = hashlib.sha256(password.encode()).hexdigest()
+    if direct_hash != stored_hash:
+        return {"status": "error", "message": "Invalid email or password"}
         return {"status": "error", "message": "Invalid email or password"}
     
     token = secrets.token_hex(32)
