@@ -199,7 +199,7 @@ class AIQuestionGenerator:
                 ],
                 "correct": [0, 0, 0, 0, 1],
                 "difficulty": ["Easy", "Easy", "Easy", "Easy", "Medium"]
-            }
+            },
                 "options": [
                     ["60-100 bpm", "40-60 bpm", "100-120 bpm", "120-140 bpm"],
                     ["Supine", "Fowler's", "Prone", "Trendelenburg"],
