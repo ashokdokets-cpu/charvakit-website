@@ -221,7 +221,7 @@ class Database:
 
         user_id = f"USR{secrets.token_hex(4).upper()}"
         salt = secrets_module.token_hex(16)
-        password_hash = f"{salt}${hashlib.sha256(f\"{salt}:{password}\".encode()).hexdigest()}"
+        password_hash = salt + '$' + hashlib.sha256((salt + ':' + password).encode()).hexdigest()
 
         try:
             conn = psycopg2.connect(os.getenv("DATABASE_URL", ""))
