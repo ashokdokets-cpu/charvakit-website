@@ -1,9 +1,8 @@
 """
 Charvak AI Question Generator
-Generates unique, non-repetitive questions using AI
+Generates unique questions for exam preparation
 """
 import logging
-import random
 from datetime import datetime
 from typing import Dict, List
 
@@ -27,8 +26,7 @@ class AIQuestionGenerator:
                     ["Square", "Rectangle", "Triangle", "Circle"],
                     ["Monday", "Tuesday", "Wednesday", "Thursday"]
                 ],
-                "correct": [0, 1, 0, 3, 2],
-                "difficulty": ["Easy", "Medium", "Easy", "Easy", "Medium"]
+                "correct": [0, 1, 0, 3, 2]
             },
             "quant": {
                 "questions": [
@@ -45,44 +43,33 @@ class AIQuestionGenerator:
                     ["50 km/h", "55 km/h", "60 km/h", "65 km/h"],
                     ["128", "256", "512", "1024"]
                 ],
-                "correct": [1, 2, 2, 2, 1],
-                "difficulty": ["Easy", "Easy", "Easy", "Medium", "Easy"]
+                "correct": [1, 2, 2, 2, 1]
             },
             "english": {
                 "questions": [
                     "Choose the correct synonym of 'Happy':",
                     "Which is grammatically correct?",
-                    "Fill in the blank: He ___ to school daily.",
-                    "Choose the correct antonym of 'Ancient':",
-                    "Identify the noun in: 'The cat sleeps'"
+                    "Fill in the blank: He ___ to school daily."
                 ],
                 "options": [
                     ["Sad", "Joyful", "Angry", "Tired"],
-                    ["He go to school", "He goes to school", "He going to school", "He gone to school"],
-                    ["go", "goes", "going", "gone"],
-                    ["Old", "Modern", "Past", "Historic"],
-                    ["The", "cat", "sleeps", "None"]
+                    ["He go", "He goes", "He going", "He gone"],
+                    ["go", "goes", "going", "gone"]
                 ],
-                "correct": [1, 1, 1, 1, 1],
-                "difficulty": ["Easy", "Easy", "Easy", "Easy", "Easy"]
+                "correct": [1, 1, 1]
             },
-                        "gk": {
+            "gk": {
                 "questions": [
                     "Who is the Prime Minister of India?",
                     "What is the capital of Australia?",
-                    "Which is the largest ocean?",
-                    "Who wrote the Indian National Anthem?",
-                    "What is the currency of Japan?"
+                    "Which is the largest ocean?"
                 ],
                 "options": [
                     ["Modi", "Gandhi", "Nehru", "Singh"],
                     ["Sydney", "Canberra", "Melbourne", "Perth"],
-                    ["Atlantic", "Indian", "Pacific", "Arctic"],
-                    ["Tagore", "Gandhi", "Nehru", "Bose"],
-                    ["Yuan", "Won", "Yen", "Ringgit"]
+                    ["Atlantic", "Indian", "Pacific", "Arctic"]
                 ],
-                "correct": [0, 1, 2, 0, 2],
-                "difficulty": ["Easy", "Medium", "Easy", "Easy", "Medium"]
+                "correct": [0, 1, 2]
             },
             "anatomy": {
                 "questions": [
@@ -99,8 +86,7 @@ class AIQuestionGenerator:
                     ["Cerebellum", "Cerebrum", "Medulla", "Pons"],
                     ["Neuron", "Nephron", "Glomerulus", "Tubule"]
                 ],
-                "correct": [0, 1, 2, 0, 1],
-                "difficulty": ["Easy", "Easy", "Easy", "Medium", "Medium"]
+                "correct": [0, 1, 2, 0, 1]
             },
             "pathology": {
                 "questions": [
@@ -117,8 +103,7 @@ class AIQuestionGenerator:
                     ["Type 1 Diabetes", "Type 2 Diabetes", "Both", "Neither"],
                     ["Alcohol", "Hepatitis B", "Hepatitis C", "NASH"]
                 ],
-                "correct": [0, 0, 1, 0, 0],
-                "difficulty": ["Medium", "Medium", "Hard", "Easy", "Medium"]
+                "correct": [0, 0, 1, 0, 0]
             },
             "medicine": {
                 "questions": [
@@ -135,8 +120,7 @@ class AIQuestionGenerator:
                     ["Vitamin A", "Vitamin B12", "Vitamin C", "Vitamin D"],
                     ["Streptococcus pneumoniae", "Staphylococcus aureus", "Klebsiella", "Pseudomonas"]
                 ],
-                "correct": [0, 1, 0, 2, 0],
-                "difficulty": ["Medium", "Medium", "Easy", "Easy", "Hard"]
+                "correct": [0, 1, 0, 2, 0]
             },
             "surgery": {
                 "questions": [
@@ -153,8 +137,7 @@ class AIQuestionGenerator:
                     ["Nylon", "Silk", "Vicryl", "Prolene"],
                     ["Adhesions", "Hernia", "Tumor", "Volvulus"]
                 ],
-                "correct": [0, 0, 0, 2, 0],
-                "difficulty": ["Easy", "Medium", "Medium", "Hard", "Medium"]
+                "correct": [0, 0, 0, 2, 0]
             },
             "nursing": {
                 "questions": [
@@ -164,93 +147,35 @@ class AIQuestionGenerator:
                     "Normal body temperature in Celsius?",
                     "What does PRN mean?"
                 ],
-            "dental": {
-                "questions": [
-                    "Which tooth is known as the 'wisdom tooth'?",
-                    "What is the hardest substance in the human body?",
-                    "How many permanent teeth does an adult have?",
-                    "What is dental caries commonly known as?",
-                    "Which nerve supplies the lower teeth?"
-                ],
-                "options": [
-                    ["Third molar", "First molar", "Second molar", "Premolar"],
-                    ["Enamel", "Dentin", "Bone", "Cementum"],
-                    ["28", "30", "32", "34"],
-                    ["Tooth decay", "Gum disease", "Tooth sensitivity", "Bad breath"],
-                    ["Inferior alveolar nerve", "Facial nerve", "Trigeminal nerve", "Lingual nerve"]
-                ],
-                "correct": [0, 0, 2, 0, 0],
-                "difficulty": ["Easy", "Easy", "Easy", "Easy", "Medium"]
-            },
-            "clinical": {
-                "questions": [
-                    "What is the normal range for blood pressure?",
-                    "Which test is used to diagnose diabetes?",
-                    "What is the most common cause of fever?",
-                    "Normal respiratory rate for adults?",
-                    "What is the first sign of shock?"
-                ],
-                "options": [
-                    ["120/80 mmHg", "140/90 mmHg", "100/60 mmHg", "160/100 mmHg"],
-                    ["Fasting blood glucose", "Lipid profile", "CBC", "Liver function test"],
-                    ["Infection", "Dehydration", "Stress", "Medication"],
-                    ["12-20/min", "8-10/min", "20-30/min", "30-40/min"],
-                    ["Hypotension", "Tachycardia", "Fever", "Pain"]
-                ],
-                "correct": [0, 0, 0, 0, 1],
-                "difficulty": ["Easy", "Easy", "Easy", "Easy", "Medium"]
-            },
                 "options": [
                     ["60-100 bpm", "40-60 bpm", "100-120 bpm", "120-140 bpm"],
                     ["Supine", "Fowler's", "Prone", "Trendelenburg"],
                     ["Clean the wound", "Apply dressing", "Assess the wound", "Remove old dressing"],
-                    ["36-37°C", "37-38°C", "38-39°C", "35-36°C"],
+                    ["36-37 C", "37-38 C", "38-39 C", "35-36 C"],
                     ["As needed", "Every hour", "Before meals", "At bedtime"]
                 ],
-                "correct": [0, 1, 2, 0, 0],
-                "difficulty": ["Easy", "Medium", "Easy", "Easy", "Easy"]
+                "correct": [0, 1, 2, 0, 0]
             }
         }
     
-        def generate_questions(self, exam_id: str, topic: str, count: int = 10) -> List[Dict]:
-        """Generate unique questions for a topic."""
+    def generate_questions(self, exam_id, topic, count=10):
         topic_lower = topic.lower().strip()
-        
-        # Normalize topic names
-        topic_map = {
-            "pathology": "pathology",
-            "anatomy": "anatomy",
-            "medicine": "medicine",
-            "surgery": "surgery",
-            "nursing": "nursing",
-            "dental": "dental",
-            "clinical": "clinical",
-            "reasoning": "reasoning",
-            "quant": "quant",
-            "quantitative": "quant",
-            "english": "english",
-            "gk": "gk",
-            "general knowledge": "gk"
-        }
-        
-        normalized_topic = topic_map.get(topic_lower, topic_lower)
-        topic_data = self.topics.get(normalized_topic, self.topics.get("reasoning", {}))
+        topic_data = self.topics.get(topic_lower, self.topics.get("reasoning", {}))
         
         questions = []
-        base_questions = topic_data.get("questions", [])
-        base_options = topic_data.get("options", [])
-        base_correct = topic_data.get("correct", [])
-        base_difficulty = topic_data.get("difficulty", [])
+        base_q = topic_data.get("questions", [])
+        base_o = topic_data.get("options", [])
+        base_c = topic_data.get("correct", [])
         
         for i in range(count):
-            idx = i % len(base_questions) if base_questions else 0
+            idx = i % len(base_q) if base_q else 0
             questions.append({
                 "id": i + 1,
-                "question": base_questions[idx] if base_questions else f"{topic} - Question {i+1}",
-                "options": base_options[idx] if base_options else ["Option A", "Option B", "Option C", "Option D"],
-                "correct": base_correct[idx] if base_correct else 0,
-                "explanation": f"Detailed explanation for question {i+1}",
-                "difficulty": base_difficulty[idx] if base_difficulty else "Medium",
+                "question": base_q[idx] if base_q else topic + " - Question " + str(i+1),
+                "options": base_o[idx] if base_o else ["Option A", "Option B", "Option C", "Option D"],
+                "correct": base_c[idx] if base_c else 0,
+                "explanation": "Explanation for question " + str(i+1),
+                "difficulty": "Medium",
                 "topic": topic
             })
         
