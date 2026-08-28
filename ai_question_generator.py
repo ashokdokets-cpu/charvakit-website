@@ -155,6 +155,125 @@ class AIQuestionGenerator:
                     ["As needed", "Every hour", "Before meals", "At bedtime"]
                 ],
                 "correct": [0, 1, 2, 0, 0]
+            },
+            "physiology": {
+                "questions": [
+                    "What is the normal pH of human blood?",
+                    "Which hormone regulates blood sugar?",
+                    "What is the functional unit of the nervous system?",
+                    "Normal adult respiratory rate?",
+                    "What is the normal range for systolic BP?"
+                ],
+                "options": [
+                    ["7.35-7.45", "7.0-7.2", "7.5-7.6", "6.8-7.0"],
+                    ["Insulin", "Glucagon", "Cortisol", "Thyroxine"],
+                    ["Neuron", "Nephron", "Alveoli", "Cell"],
+                    ["12-20/min", "8-10/min", "20-30/min", "30-40/min"],
+                    ["90-120 mmHg", "120-140 mmHg", "140-160 mmHg", "80-100 mmHg"]
+                ],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "biochemistry": {
+                "questions": [
+                    "What is the building block of proteins?",
+                    "Which enzyme breaks down carbohydrates?",
+                    "What is the energy currency of the cell?",
+                    "Which vitamin is fat-soluble?",
+                    "What is the normal fasting blood glucose?"
+                ],
+                "options": [
+                    ["Amino acids", "Fatty acids", "Glucose", "Nucleotides"],
+                    ["Amylase", "Lipase", "Protease", "Lactase"],
+                    ["ATP", "ADP", "AMP", "GTP"],
+                    ["Vitamin C", "Vitamin B12", "Vitamin D", "Vitamin B6"],
+                    ["70-100 mg/dL", "100-150 mg/dL", "150-200 mg/dL", "200-250 mg/dL"]
+                ],
+                "correct": [0, 0, 0, 2, 0]
+            },
+            "microbiology": {
+                "questions": [
+                    "Which organism causes tuberculosis?",
+                    "What is the most common cause of UTI?",
+                    "Which virus causes AIDS?",
+                    "What is the gram stain of E. coli?",
+                    "Which fungus causes candidiasis?"
+                ],
+                "options": [
+                    ["Mycobacterium tuberculosis", "Streptococcus", "Staphylococcus", "E. coli"],
+                    ["E. coli", "Klebsiella", "Pseudomonas", "Proteus"],
+                    ["HIV", "HPV", "HBV", "HCV"],
+                    ["Gram-negative", "Gram-positive", "Acid-fast", "None"],
+                    ["Candida albicans", "Aspergillus", "Cryptococcus", "Histoplasma"]
+                ],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "pharmacology": {
+                "questions": [
+                    "Which drug is used for pain relief?",
+                    "What is the antidote for heparin?",
+                    "Which antibiotic class includes penicillin?",
+                    "What is the first-line drug for type 2 diabetes?",
+                    "Which drug class is used for hypertension?"
+                ],
+                "options": [
+                    ["Paracetamol", "Insulin", "Aspirin", "Warfarin"],
+                    ["Protamine sulfate", "Vitamin K", "Fresh frozen plasma", "Platelets"],
+                    ["Beta-lactams", "Macrolides", "Tetracyclines", "Aminoglycosides"],
+                    ["Metformin", "Insulin", "Glibenclamide", "Pioglitazone"],
+                    ["ACE inhibitors", "Statins", "PPIs", "NSAIDs"]
+                ],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "pediatrics": {
+                "questions": [
+                    "What is the normal birth weight?",
+                    "At what age does a child start walking?",
+                    "Which vaccine is given at birth?",
+                    "What is the most common childhood cancer?",
+                    "Normal heart rate for a newborn?"
+                ],
+                "options": [
+                    ["2.5-3.5 kg", "1.5-2.5 kg", "3.5-4.5 kg", "4.5-5.5 kg"],
+                    ["12 months", "6 months", "18 months", "9 months"],
+                    ["BCG", "MMR", "Polio", "DPT"],
+                    ["Leukemia", "Lymphoma", "Brain tumor", "Neuroblastoma"],
+                    ["120-160 bpm", "80-100 bpm", "60-80 bpm", "100-120 bpm"]
+                ],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "psychiatry": {
+                "questions": [
+                    "What is the most common mental health disorder?",
+                    "Which neurotransmitter is linked to depression?",
+                    "What is the first-line treatment for schizophrenia?",
+                    "What does CBT stand for?",
+                    "Which disorder is characterized by mood swings?"
+                ],
+                "options": [
+                    ["Anxiety", "Depression", "Schizophrenia", "Bipolar"],
+                    ["Serotonin", "Dopamine", "GABA", "Glutamate"],
+                    ["Antipsychotics", "Antidepressants", "Mood stabilizers", "Anxiolytics"],
+                    ["Cognitive Behavioral Therapy", "Clinical Behavior Test", "Central Brain Treatment", "None"],
+                    ["Bipolar", "Depression", "Anxiety", "OCD"]
+                ],
+                "correct": [0, 0, 0, 0, 0]
+            },
+            "obg": {
+                "questions": [
+                    "What is the normal duration of pregnancy?",
+                    "Which hormone is detected in pregnancy tests?",
+                    "What is the most common cause of postpartum hemorrhage?",
+                    "Normal fetal heart rate?",
+                    "Which vitamin is recommended in pregnancy?"
+                ],
+                "options": [
+                    ["40 weeks", "36 weeks", "38 weeks", "42 weeks"],
+                    ["hCG", "FSH", "LH", "Prolactin"],
+                    ["Uterine atony", "Placenta previa", "Abruption", "Retained placenta"],
+                    ["110-160 bpm", "80-100 bpm", "160-180 bpm", "60-80 bpm"],
+                    ["Folic acid", "Vitamin C", "Vitamin D", "Vitamin B12"]
+                ],
+                "correct": [0, 0, 0, 0, 0]
             }
         }
     
