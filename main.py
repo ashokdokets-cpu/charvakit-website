@@ -4141,8 +4141,18 @@ async def exam_by_category(category_id: str):
 
 @app.get("/api/exam/{exam_id}")
 async def exam_details(exam_id: str):
-    """Get exam details."""
-    return exam_prep_engine.get_exam_details(exam_id)
+    """Get exam details - searches both Indian and Global exams."""
+    # Try Indian exams first
+    indian_result = exam_prep_engine.get_exam_details(exam_id)
+    if indian_result.get("status") == "success":
+        return indian_result
+    
+    # Try Global exams
+    global_result = global_exams_engine.get_exam_details(exam_id)
+    if global_result.get("status") == "success":
+        return global_result
+    
+    return {"status": "error", "message": f"Exam {exam_id} not found"}
 
 @app.post("/api/exam/questions")
 async def exam_questions(request: Request):
