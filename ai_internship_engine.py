@@ -14,8 +14,7 @@ class AIInternshipEngine:
         self.enrollments = {}
         self.progress = {}
         logger.info("AI Internship Engine ready")
-    
-        def _initialize_programs(self):
+    def _initialize_programs(self):
         """Initialize 20+ internship programs across all disciplines."""
         return {
             # ENGINEERING (6)
