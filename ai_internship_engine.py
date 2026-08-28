@@ -225,7 +225,7 @@ class AIInternshipEngine:
             {"day": 14, "task": "Graduation", "scenario": f"Complete internship. Receive badge."}
         ]
     
-    def get_programs(self):
+        def get_programs(self):
         """Get all internship programs."""
         programs = []
         for key, prog in self.programs.items():
@@ -234,6 +234,7 @@ class AIInternshipEngine:
                 "name": prog["name"],
                 "duration": prog["duration"],
                 "price": prog["price"],
+                "category": prog.get("category", "General"),
                 "skills": prog["skills"],
                 "deliverables": prog["deliverables"]
             })
