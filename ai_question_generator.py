@@ -66,7 +66,7 @@ class AIQuestionGenerator:
                 "correct": [1, 1, 1, 1, 1],
                 "difficulty": ["Easy", "Easy", "Easy", "Easy", "Easy"]
             },
-            "gk": {
+                        "gk": {
                 "questions": [
                     "Who is the Prime Minister of India?",
                     "What is the capital of Australia?",
@@ -83,6 +83,96 @@ class AIQuestionGenerator:
                 ],
                 "correct": [0, 1, 2, 0, 2],
                 "difficulty": ["Easy", "Medium", "Easy", "Easy", "Medium"]
+            },
+            "anatomy": {
+                "questions": [
+                    "Which bone is known as the collarbone?",
+                    "What is the largest organ in the human body?",
+                    "How many chambers does the human heart have?",
+                    "Which part of the brain controls balance?",
+                    "What is the functional unit of the kidney?"
+                ],
+                "options": [
+                    ["Clavicle", "Scapula", "Humerus", "Sternum"],
+                    ["Liver", "Skin", "Brain", "Lungs"],
+                    ["2", "3", "4", "6"],
+                    ["Cerebellum", "Cerebrum", "Medulla", "Pons"],
+                    ["Neuron", "Nephron", "Glomerulus", "Tubule"]
+                ],
+                "correct": [0, 1, 2, 0, 1],
+                "difficulty": ["Easy", "Easy", "Easy", "Medium", "Medium"]
+            },
+            "pathology": {
+                "questions": [
+                    "What is the most common type of cancer worldwide?",
+                    "Which cell type is involved in allergic reactions?",
+                    "What is the hallmark of acute inflammation?",
+                    "Which disease is caused by insulin deficiency?",
+                    "What is the most common cause of cirrhosis?"
+                ],
+                "options": [
+                    ["Lung cancer", "Breast cancer", "Colon cancer", "Prostate cancer"],
+                    ["Mast cells", "Neutrophils", "Lymphocytes", "Macrophages"],
+                    ["Fibrosis", "Neutrophil infiltration", "Granuloma", "Calcification"],
+                    ["Type 1 Diabetes", "Type 2 Diabetes", "Both", "Neither"],
+                    ["Alcohol", "Hepatitis B", "Hepatitis C", "NASH"]
+                ],
+                "correct": [0, 0, 1, 0, 0],
+                "difficulty": ["Medium", "Medium", "Hard", "Easy", "Medium"]
+            },
+            "medicine": {
+                "questions": [
+                    "What is the first-line treatment for hypertension?",
+                    "Which antibiotic is used for tuberculosis?",
+                    "What is the normal range for blood glucose?",
+                    "Which vitamin deficiency causes scurvy?",
+                    "What is the most common cause of pneumonia?"
+                ],
+                "options": [
+                    ["ACE inhibitors", "Beta blockers", "Diuretics", "Calcium channel blockers"],
+                    ["Penicillin", "Isoniazid", "Tetracycline", "Erythromycin"],
+                    ["70-100 mg/dL", "100-150 mg/dL", "150-200 mg/dL", "200-250 mg/dL"],
+                    ["Vitamin A", "Vitamin B12", "Vitamin C", "Vitamin D"],
+                    ["Streptococcus pneumoniae", "Staphylococcus aureus", "Klebsiella", "Pseudomonas"]
+                ],
+                "correct": [0, 1, 0, 2, 0],
+                "difficulty": ["Medium", "Medium", "Easy", "Easy", "Hard"]
+            },
+            "surgery": {
+                "questions": [
+                    "What is the most common surgical emergency?",
+                    "Which incision is used for appendectomy?",
+                    "What is the first sign of postoperative infection?",
+                    "Which suture material is absorbable?",
+                    "What is the most common cause of bowel obstruction?"
+                ],
+                "options": [
+                    ["Appendicitis", "Cholecystitis", "Hernia", "Perforation"],
+                    ["McBurney", "Midline", "Kocher", "Pfannenstiel"],
+                    ["Fever", "Pain", "Redness", "Swelling"],
+                    ["Nylon", "Silk", "Vicryl", "Prolene"],
+                    ["Adhesions", "Hernia", "Tumor", "Volvulus"]
+                ],
+                "correct": [0, 0, 0, 2, 0],
+                "difficulty": ["Easy", "Medium", "Medium", "Hard", "Medium"]
+            },
+            "nursing": {
+                "questions": [
+                    "What is the normal adult heart rate?",
+                    "Which position is best for a patient with dyspnea?",
+                    "What is the first step in wound care?",
+                    "Normal body temperature in Celsius?",
+                    "What does PRN mean?"
+                ],
+                "options": [
+                    ["60-100 bpm", "40-60 bpm", "100-120 bpm", "120-140 bpm"],
+                    ["Supine", "Fowler's", "Prone", "Trendelenburg"],
+                    ["Clean the wound", "Apply dressing", "Assess the wound", "Remove old dressing"],
+                    ["36-37°C", "37-38°C", "38-39°C", "35-36°C"],
+                    ["As needed", "Every hour", "Before meals", "At bedtime"]
+                ],
+                "correct": [0, 1, 2, 0, 0],
+                "difficulty": ["Easy", "Medium", "Easy", "Easy", "Easy"]
             }
         }
     
