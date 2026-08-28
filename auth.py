@@ -62,11 +62,18 @@ def login_user(email: str, password: str):
         return {"status": "error", "message": "Invalid email or password"}
 
     stored_hash = user.get("password_hash", user.get("password", ""))
-    if not verify_password(password, stored_hash):
-        # Fallback: try direct SHA-256
-        direct_hash = hashlib.sha256(password.encode()).hexdigest()
-        if direct_hash != stored_hash:
+# Try salted verification
+if not verify_password(password, stored_hash):
+    # Try direct SHA-256
+    direct_hash = hashlib.sha256(password.encode()).hexdigest()
+    # Try salted hash (new format)
+    if '$' in stored_hash:
+        salt = stored_hash.split('$')[0]
+        salted_hash = hashlib.sha256((salt + ':' + password).encode()).hexdigest()
+        if stored_hash.split('$')[1] != salted_hash:
             return {"status": "error", "message": "Invalid email or password"}
+    elif direct_hash != stored_hash:
+        return {"status": "error", "message": "Invalid email or password"}
 
     token = secrets.token_hex(32)
     active_tokens[token] = {
