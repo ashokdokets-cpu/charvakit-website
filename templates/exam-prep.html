@@ -205,12 +205,9 @@ async function startPractice(examId) {
         
         // Show topic selection modal
         showTopicSelection(examId, exam.name || examId, sections);
-    } catch (error) {
-        // Fallback to prompt
-        const topic = prompt('Enter topic to practice:');
-        if (topic) {
-            loadPracticeQuestions(examId, topic);
-        }
+        } catch (error) {
+        console.error('Error loading exam details:', error);
+        alert('Unable to load exam topics. Please try again.');
     }
 }
 
