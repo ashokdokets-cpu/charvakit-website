@@ -39,8 +39,8 @@ def register_user(email: str, password: str, name: str, role: str = "candidate",
     if not any(c.isdigit() for c in password):
         return {"status": "error", "message": "Password must contain a number"}
     
-    hashed_password = hash_password(password)
-    result = db.create_user(email, hashed_password, name, role, phone)
+    # Don't hash here - let create_user handle it
+result = db.create_user(email, password, name, role, phone)
     
     if result["status"] == "success":
         token = secrets.token_hex(32)
