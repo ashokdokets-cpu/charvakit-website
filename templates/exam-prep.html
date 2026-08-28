@@ -218,7 +218,7 @@ async function startPractice(examId) {
 function displayQuestions(questions, examId, topic) {
     const container = document.getElementById('practiceArea');
     container.innerHTML = `
-        <h5>ðŸ“ Practice: ${topic}</h5>
+        <h5>Practice: ${topic}</h5>
         <div class="list-group">
             ${questions.map((q, i) => `
                 <div class="list-group-item">
@@ -247,9 +247,9 @@ function checkAnswer(questionIndex, correctAnswer) {
     }
     
     if (parseInt(selected.value) === correctAnswer) {
-        answerSpan.innerHTML = '<span class="text-success">âœ… Correct!</span>';
+        answerSpan.innerHTML = '<span class="text-success">Correct!</span>';
     } else {
-        answerSpan.innerHTML = '<span class="text-danger">âŒ Incorrect</span>';
+        answerSpan.innerHTML = '<span class="text-danger">Incorrect</span>';
     }
 }
 
@@ -260,7 +260,7 @@ function submitPractice(examId, topic, totalQuestions) {
     progress[key] = (progress[key] || 0) + totalQuestions;
     localStorage.setItem('exam_progress', JSON.stringify(progress));
     
-    alert('âœ… Practice submitted! Progress saved.');
+    alert('Practice submitted! Progress saved.');
     loadProgress();
 }
 
@@ -282,7 +282,7 @@ async function startMockTest(examId) {
         container.innerHTML = `
             <div class="card shadow-sm">
                 <div class="card-body text-center">
-                    <h5>â±ï¸ Mock Test Started!</h5>
+                    <h5>Mock Test Started!</h5>
                     <p>Test ID: ${data.test_id}</p>
                     <p>Exam: ${data.exam_id}</p>
                     <p>Started: ${new Date(data.started_at).toLocaleString()}</p>
@@ -309,7 +309,7 @@ function loadProgress() {
     }
     
     container.innerHTML = `
-        <h5>ðŸ“Š Your Progress</h5>
+        <h5>Your Progress</h5>
         <div class="table-responsive">
             <table class="table table-bordered">
                 <thead><tr><th>Exam/Topic</th><th>Questions Practiced</th></tr></thead>
