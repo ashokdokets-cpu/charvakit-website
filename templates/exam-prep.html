@@ -305,6 +305,47 @@ function submitPractice(examId, topic, totalQuestions) {
     loadProgress();
 }
 
+function choosePracticeMode(examId, examName, topics) {
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:99999;display:flex;align-items:center;justify-content:center;';
+    modal.id = 'practice-mode-modal';
+    modal.innerHTML = `
+        <div class="bg-white p-4 rounded" style="max-width:400px;width:90%;background:white;border-radius:12px;">
+            <h5 class="mb-3">Choose Practice Mode - ${examName}</h5>
+            <div class="list-group mb-3">
+                <button class="list-group-item list-group-item-action" onclick="startQuickPractice('${examId}', '${topics[0] || 'General'}')">
+                    <strong>Quick Practice</strong><br>
+                    <small>10 questions | No timer</small>
+                </button>
+                <button class="list-group-item list-group-item-action" onclick="startFullPractice('${examId}')">
+                    <strong>Full Practice</strong><br>
+                    <small>25 questions | 30 min timer</small>
+                </button>
+                <button class="list-group-item list-group-item-action" onclick="startMockTest('${examId}')">
+                    <strong>Full Mock Test</strong><br>
+                    <small>All questions | Full duration</small>
+                </button>
+            </div>
+            <button class="btn btn-secondary w-100" onclick="document.getElementById('practice-mode-modal').remove()">Cancel</button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function startQuickPractice(examId, topic) {
+    const modal = document.getElementById('practice-mode-modal');
+    if (modal) modal.remove();
+    loadPracticeQuestions(examId, topic, 10);
+}
+
+function startFullPractice(examId) {
+    const modal = document.getElementById('practice-mode-modal');
+    if (modal) modal.remove();
+    showTopicSelection(examId, 'Full Practice', [], 25);
+}
+
+async function startMockTest(examId) {
+
 // ============================================================
 // MOCK TEST
 // ============================================================
