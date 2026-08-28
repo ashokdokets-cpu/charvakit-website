@@ -210,7 +210,7 @@ async function startPractice(examId) {
     }
 }
 
-function showTopicSelection(examId, examName, topics) {
+function showTopicSelection(examId, examName, topics, questionCount = 10) {
     const modal = document.createElement('div');
     modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:99999;display:flex;align-items:center;justify-content:center;';
     modal.id = 'topic-modal';
@@ -219,7 +219,7 @@ function showTopicSelection(examId, examName, topics) {
             <h5 class="mb-3">Choose Topic for ${examName}</h5>
             <div class="list-group mb-3">
                 ${topics.map(topic => `
-                    <button class="list-group-item list-group-item-action" onclick="selectTopic('${examId}', '${topic}')">
+                    <button class="list-group-item list-group-item-action" onclick="selectTopic('${examId}', '${topic}', ${questionCount})">
                         ${topic}
                     </button>
                 `).join('')}
@@ -230,14 +230,14 @@ function showTopicSelection(examId, examName, topics) {
     document.body.appendChild(modal);
 }
 
-function selectTopic(examId, topic) {
+function selectTopic(examId, topic, questionCount = 10) {
     const modal = document.getElementById('topic-modal');
     if (modal) modal.remove();
     
-    loadPracticeQuestions(examId, topic);
+    loadPracticeQuestions(examId, topic, questionCount);
 }
 
-async function loadPracticeQuestions(examId, topic) {
+async function loadPracticeQuestions(examId, topic, count = 10) {
     const container = document.getElementById('practiceArea');
     container.innerHTML = '<p class="text-center">Loading ' + topic + ' questions...</p>';
     
@@ -245,7 +245,7 @@ async function loadPracticeQuestions(examId, topic) {
         const response = await fetch('/api/exam/ai-questions', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({exam_id: examId, topic: topic, count: 10})
+            body: JSON.stringify({exam_id: examId, topic: topic, count: count})
         });
         const data = await response.json();
         displayQuestions(data.questions, examId, topic);
@@ -366,7 +366,7 @@ async function startMockTest(examId) {
         const mockData = await mockResponse.json();
         
         // Generate questions for mock test
-        const questionCount = Math.min(exam.questions || 10, 10); // Start with 10 for demo
+        const questionCount = exam.questions || 50; // Use actual exam question count
         const topic = exam.sections ? exam.sections[0] : 'General';
         
         const questionsResponse = await fetch('/api/exam/ai-questions', {
@@ -431,7 +431,9 @@ function displayMockTest(testId, examId, exam, questions) {
     `;
     
     // Start timer
-    startTimer(60); // 60 minutes
+    // Parse duration from exam (e.g., "120 min" → 120)
+const durationMinutes = parseInt(exam.duration) || 60;
+startTimer(durationMinutes);
 }
 
 let mockAnswers = {};
