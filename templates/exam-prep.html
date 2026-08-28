@@ -366,18 +366,37 @@ async function startMockTest(examId) {
         const mockData = await mockResponse.json();
         
         // Generate questions for mock test
-        const questionCount = exam.questions || 50; // Use actual exam question count
-        const topic = exam.sections ? exam.sections[0] : 'General';
+                // Generate questions for mock test - distribute across ALL sections
+        const questionCount = exam.questions || 50;
+        const sections = exam.sections || ['General'];
+        const questionsPerSection = Math.ceil(questionCount / sections.length);
         
-        const questionsResponse = await fetch('/api/exam/ai-questions', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({exam_id: examId, topic: topic, count: questionCount})
-        });
-        const questionsData = await questionsResponse.json();
+        // Generate questions in batches for each section
+        let allQuestions = [];
+        const batchSize = 20; // OpenAI limit per request
+        
+        for (const section of sections) {
+            let remaining = questionsPerSection;
+            while (remaining > 0) {
+                const batchCount = Math.min(batchSize, remaining);
+                const questionsResponse = await fetch('/api/exam/ai-questions', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({exam_id: examId, topic: section, count: batchCount})
+                });
+                const questionsData = await questionsResponse.json();
+                if (questionsData.questions) {
+                    allQuestions = allQuestions.concat(questionsData.questions);
+                }
+                remaining -= batchCount;
+            }
+        }
+        
+        // Trim to exact question count
+        allQuestions = allQuestions.slice(0, questionCount);
         
         // Display mock test interface
-        displayMockTest(mockData.test_id, examId, exam, questionsData.questions);
+        displayMockTest(mockData.test_id, examId, exam, allQuestions);
     } catch (error) {
         console.error('Error:', error);
         container.innerHTML = '<p class="text-danger text-center">Error starting mock test</p>';
