@@ -104,7 +104,6 @@ class AIQuestionGenerator:
             cache_data = self.question_cache[cache_key]
             cached = cache_data["questions"]
             if len(cached) >= count * 3:
-                # We have enough questions - sample with variation
                 sampled = random.sample(cached, min(count * 3, len(cached)))
                 return self._apply_variation(sampled)[:count]
         
@@ -130,6 +129,8 @@ class AIQuestionGenerator:
                     self.question_cache[cache_key]["questions"].extend(questions)
                     sampled = random.sample(questions, min(count, len(questions)))
                     return self._apply_variation(sampled)
+            except Exception as e:
+                logger.error(f"OpenAI failed: {e}")
         
         # Fallback with variation
         return self._generate_fallback_with_variation(exam_id, topic, count)
