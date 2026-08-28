@@ -41,7 +41,13 @@ async function loginUser(e) {
     });
     const data = await resp.json();
     document.getElementById('loginMsg').textContent = data.status === 'success' ? '✅ Redirecting...' : '❌ ' + data.message;
-    if (data.status === 'success') { localStorage.setItem('charvak_token', data.token); setTimeout(() => window.location = '/', 500); }
+    if (data.status === 'success') { 
+    localStorage.setItem('charvak_token', data.token); 
+    localStorage.setItem('auth_token', data.token); 
+    localStorage.setItem('userEmail', document.getElementById('email').value);
+    const redirect = new URLSearchParams(window.location.search).get('redirect') || '/';
+setTimeout(() => window.location = redirect, 500); 
+}
 }
 async function initiateSSO(provider) {
     const resp = await fetch('/api/sso/login', {
