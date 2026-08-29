@@ -212,18 +212,18 @@ class LMS_Engine:
         return {"status": "success", "message": "Notification sent!"}
 
     def search_courses(self, query: str = None, category: str = None, price: float = None, max_price: float = None, language: str = None) -> Dict:
-    try:
-        from training_engine import training_engine
-        courses = training_engine.get_courses().get("courses", [])
-    except:
-        courses = []
-    
-    if query:
-        q = query.lower()
-        courses = [c for c in courses if q in c.get("course_name", "").lower()]
-    
-    if category:
-        courses = [c for c in courses if c.get("category") == category]
+        try:
+            from training_engine import training_engine
+            courses = training_engine.get_courses().get("courses", [])
+        except:
+            courses = []
+
+        if query:
+            q = query.lower()
+            courses = [c for c in courses if q in c.get("course_name", "").lower()]
+
+        if category:
+            courses = [c for c in courses if c.get("category") == category]
     
     if max_price:
         courses = [c for c in courses if c.get("price", 0) <= max_price]
