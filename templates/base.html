@@ -577,14 +577,17 @@ function showNotification(msg) {
 // Load saved currency
 document.addEventListener('DOMContentLoaded', function() {
     const savedLang = localStorage.getItem('charvak_lang');
-    const savedCurrency = localStorage.getItem('charvak_currency');
+    const savedCurrency = localStorage.getItem('charvak_currency') || 'INR';
+    
     if (savedLang) document.getElementById('langSelector').value = savedLang;
-    if (savedCurrency) {
-        document.getElementById('currencySelector').value = savedCurrency;
-        updateAllPrices(savedCurrency);
+    
+    const currencySelector = document.getElementById('currencySelector');
+    if (currencySelector) {
+        currencySelector.value = savedCurrency || 'INR';
     }
     
-    // Initialize global currency if available
+    updateAllPrices(savedCurrency || 'INR');
+    
     if (typeof CharvakCurrency !== 'undefined') {
         CharvakCurrency.init();
     }
