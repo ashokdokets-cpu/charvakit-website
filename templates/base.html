@@ -330,6 +330,8 @@
         <hr>
         <small class="text-white d-block text-center mt-2">No account? <a href="/register" class="text-decoration-none text-warning">Register</a></small>
         <small class="text-white d-block text-center mt-1"><a href="/forgot-password" class="text-decoration-none text-info">Forgot password?</a></small>
+<hr>
+<button class="btn btn-danger btn-sm w-100" onclick="logoutUser()">🚪 Logout</button>
     </div>
 </div>
             </div>
@@ -644,6 +646,31 @@ window.addEventListener('storage', function(e) {
 </script>
 {% include 'includes/payment-scripts.html' %}
 {% include 'includes/currency-updater.html' %}
+<script>
+// Logout function
+async function logoutUser() {
+    const token = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token');
+    
+    if (token) {
+        try {
+            await fetch('/api/auth/logout', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({token: token})
+            });
+        } catch (error) {
+            console.error('Logout error:', error);
+        }
+    }
+    
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('charvak_token');
+    localStorage.removeItem('userEmail');
+    
+    alert('Logged out successfully!');
+    window.location.href = '/';
+}
+</script>
 <script>
 // Fetch Razorpay key from backend
 fetch('/api/payment/status')
