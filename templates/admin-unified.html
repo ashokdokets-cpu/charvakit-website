@@ -66,7 +66,45 @@
         </div>
     </div>
 </div>
+    <!-- Charts Section -->
+    <div class="row g-4 mt-4">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">📈 Revenue Trends</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">👥 User Growth</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="userChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
 
+    <!-- Export Buttons -->
+    <div class="row g-3 mt-4">
+        <div class="col-md-4">
+            <button class="btn btn-primary w-100" onclick="exportUsers()">📥 Export Users CSV</button>
+        </div>
+        <div class="col-md-4">
+            <button class="btn btn-success w-100" onclick="exportPayments()">💰 Export Payments CSV</button>
+        </div>
+        <div class="col-md-4">
+            <button class="btn btn-warning w-100" onclick="exportAll()">📦 Export All</button>
+        </div>
+    </div>
+
+    <!-- Alerts Container -->
+    <div id="alertContainer" class="mt-4"></div>
 <script>
 async function loadAdmin() {
     // NA Revenue
@@ -166,5 +204,127 @@ async function loadAdminStats() {
 
 // Load immediately
 loadAdminStats();
+// ============================================================
+// CHARTS (Revenue Trends & User Growth)
+// ============================================================
+let revenueChart = null;
+let userChart = null;
+
+function loadCharts() {
+    // Revenue Chart
+    const revenueCtx = document.getElementById('revenueChart');
+    if (revenueCtx) {
+        revenueChart = new Chart(revenueCtx, {
+            type: 'line',
+            data: {
+                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                datasets: [{
+                    label: 'Revenue',
+                    data: [0, 0, 0, 0],
+                    borderColor: '#3ba591',
+                    backgroundColor: 'rgba(59, 165, 145, 0.1)',
+                    tension: 0.4
+                }]
+            },
+            options: { responsive: true }
+        });
+    }
+    
+    // User Growth Chart
+    const userCtx = document.getElementById('userChart');
+    if (userCtx) {
+        userChart = new Chart(userCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                datasets: [{
+                    label: 'New Users',
+                    data: [0, 0, 0, 0],
+                    backgroundColor: '#3ba591'
+                }]
+            },
+            options: { responsive: true }
+        });
+    }
+}
+
+// ============================================================
+// EXPORT REPORTS
+// ============================================================
+function exportCSV(data, filename) {
+    const csv = JSONToCSV(data);
+    const blob = new Blob([csv], {type: 'text/csv'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function JSONToCSV(data) {
+    if (data.length === 0) return '';
+    const headers = Object.keys(data[0]);
+    const rows = data.map(obj => headers.map(h => obj[h]).join(','));
+    return [headers.join(','), ...rows].join('\n');
+}
+
+function exportUsers() {
+    fetch('/api/admin/users')
+        .then(r => r.json())
+        .then(data => exportCSV(data.users || [], 'charvak-users.csv'));
+}
+
+function exportPayments() {
+    fetch('/api/payment/history')
+        .then(r => r.json())
+        .then(data => exportCSV(data.payments || [], 'charvak-payments.csv'));
+}
+
+function exportAll() {
+    exportUsers();
+    setTimeout(exportPayments, 1000);
+}
+
+// ============================================================
+// NOTIFICATIONS / ALERTS
+// ============================================================
+function checkAlerts() {
+    const alerts = [];
+    
+    // Check for new users
+    fetch('/api/credits/admin/stats')
+        .then(r => r.json())
+        .then(data => {
+            if (data.stats?.total_users > 0) {
+                alerts.push(`Total users: ${data.stats.total_users}`);
+            }
+            if (data.stats?.total_revenue > 0) {
+                alerts.push(`Revenue: ₹${data.stats.total_revenue}`);
+            }
+            displayAlerts(alerts);
+        });
+}
+
+function displayAlerts(alerts) {
+    const container = document.getElementById('alertContainer');
+    if (container) {
+        container.innerHTML = alerts.map(a => 
+            `<div class="alert alert-info alert-dismissible fade show" role="alert">
+                ${a}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>`
+        ).join('');
+    }
+}
+
+// Initialize everything
+document.addEventListener('DOMContentLoaded', function() {
+    loadAdminStats();
+    loadCharts();
+    checkAlerts();
+    setInterval(loadAdminStats, 30000);
+    setInterval(checkAlerts, 60000); // Check alerts every minute
+});
 </script>
 {% endblock %}
