@@ -85,7 +85,7 @@ function displayPrograms(programs) {
                         <div class="card-body text-center">
                             <h6>${program.name}</h6>
                             <p class="text-muted small">${program.duration}</p>
-                            <h4 class="text-primary">${priceDisplay}</h4>
+                            <h4 class="text-primary"><span data-inr="${program.price}">${priceDisplay}</span></h4>
                             <p class="small"><strong>Skills:</strong> ${program.skills.join(', ')}</p>
                             <button class="btn btn-primary btn-sm w-100" onclick="enrollInternship('${program.id}', '${program.name}', ${program.price})">
                                 Enroll Now
@@ -206,6 +206,12 @@ async function completeInternship() {
 }
 
 // Initialize
-document.addEventListener('DOMContentLoaded', loadPrograms);
+document.addEventListener('DOMContentLoaded', async function() {
+    // Auto-detect user location for currency
+    if (typeof CharvakCurrency !== 'undefined') {
+        await CharvakCurrency.detectLocation();
+    }
+    loadPrograms();
+});
 </script>
 {% endblock %}
