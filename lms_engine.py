@@ -210,7 +210,6 @@ class LMS_Engine:
 
     def send_course_notification(self, data: Dict) -> Dict:
         return {"status": "success", "message": "Notification sent!"}
-
     def search_courses(self, query: str = None, category: str = None, price: float = None, max_price: float = None, language: str = None) -> Dict:
         try:
             from training_engine import training_engine
@@ -224,14 +223,15 @@ class LMS_Engine:
 
         if category:
             courses = [c for c in courses if c.get("category") == category]
-    
-    if max_price:
-        courses = [c for c in courses if c.get("price", 0) <= max_price]
-    
-    if language:
-        courses = [c for c in courses if c.get("language", "").lower() == language.lower()]
-    
-    return {"status": "success", "courses": courses, "count": len(courses)}
+
+        if max_price:
+            courses = [c for c in courses if c.get("price", 0) <= max_price]
+
+        if language:
+            courses = [c for c in courses if c.get("language", "").lower() == language.lower()]
+
+        return {"status": "success", "courses": courses, "count": len(courses)}
+        return {"status": "success", "courses": courses, "count": len(courses)}
         
     def get_stats(self) -> Dict:
         return {
