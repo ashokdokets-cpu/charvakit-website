@@ -100,40 +100,39 @@ const CharvakCurrency = {
         setTimeout(() => div.remove(), 3000);
     },
     
-        async detectLocation() {
-        try {
-            const response = await fetch('https://ipapi.co/json/');
-            const data = await response.json();
-            
-            const countryToCurrency = {
-                'IN': 'INR', 'US': 'USD', 'GB': 'GBP', 'AE': 'AED',
-                'SG': 'SGD', 'AU': 'AUD', 'CA': 'CAD', 'JP': 'JPY',
-                'CN': 'CNY', 'BR': 'BRL', 'NG': 'NGN', 'ZA': 'ZAR',
-                'DE': 'EUR', 'FR': 'EUR', 'IT': 'EUR', 'ES': 'EUR',
-                'NL': 'EUR', 'BE': 'EUR', 'IE': 'EUR', 'PT': 'EUR',
-                'AT': 'EUR', 'FI': 'EUR', 'GR': 'EUR', 'LU': 'EUR',
-                'CH': 'EUR', 'SE': 'EUR', 'NO': 'EUR', 'DK': 'EUR'
-            };
-            
-            const detected = countryToCurrency[data.country_code] || 'USD';
-            localStorage.setItem('charvak_currency', detected);
-            this.updateAllPrices();
-            console.log('Detected currency:', detected, 'for country:', data.country_code);
-            return detected;
-        } catch (error) {
-            console.log('IP detection failed, using browser language');
-            const lang = navigator.language || 'en-US';
-            const langMap = {
-                'en-IN': 'INR', 'hi-IN': 'INR', 'en-US': 'USD', 'en-GB': 'GBP',
-                'en-AU': 'AUD', 'en-CA': 'CAD', 'ja': 'JPY', 'zh': 'CNY',
-                'pt-BR': 'BRL', 'de': 'EUR', 'fr': 'EUR', 'es': 'EUR',
-                'it': 'EUR', 'nl': 'EUR', 'sv': 'EUR', 'da': 'EUR'
-            };
-            const detected = langMap[lang] || 'USD';
-            localStorage.setItem('charvak_currency', detected);
-            this.updateAllPrices();
-            return detected;
-        }
+    async detectLocation() {
+        // Use browser language (no external API - CSP compliant)
+        const lang = navigator.language || navigator.userLanguage || 'en-US';
+        
+        const langToCurrency = {
+            'en-IN': 'INR', 'hi-IN': 'INR', 'ta-IN': 'INR', 'te-IN': 'INR',
+            'en-US': 'USD', 'en-GB': 'GBP', 'en-AU': 'AUD', 'en-CA': 'CAD',
+            'en-SG': 'SGD', 'en-NZ': 'AUD', 'en-IE': 'EUR', 'en-ZA': 'ZAR',
+            'en-NG': 'NGN', 'en-GH': 'NGN', 'en-KE': 'NGN',
+            'ja': 'JPY', 'ja-JP': 'JPY',
+            'zh': 'CNY', 'zh-CN': 'CNY', 'zh-TW': 'CNY', 'zh-HK': 'CNY',
+            'pt': 'BRL', 'pt-BR': 'BRL', 'pt-PT': 'EUR',
+            'ar': 'AED', 'ar-AE': 'AED', 'ar-SA': 'AED',
+            'de': 'EUR', 'de-DE': 'EUR', 'de-AT': 'EUR', 'de-CH': 'EUR',
+            'fr': 'EUR', 'fr-FR': 'EUR', 'fr-BE': 'EUR',
+            'it': 'EUR', 'it-IT': 'EUR',
+            'es': 'EUR', 'es-ES': 'EUR', 'es-MX': 'USD',
+            'nl': 'EUR', 'nl-NL': 'EUR',
+            'sv': 'EUR', 'sv-SE': 'EUR',
+            'da': 'EUR', 'da-DK': 'EUR',
+            'fi': 'EUR', 'fi-FI': 'EUR',
+            'pl': 'EUR', 'pl-PL': 'EUR',
+            'cs': 'EUR', 'cs-CZ': 'EUR',
+            'ro': 'EUR', 'ro-RO': 'EUR',
+            'hu': 'EUR', 'hu-HU': 'EUR',
+            'el': 'EUR', 'el-GR': 'EUR'
+        };
+        
+        const detected = langToCurrency[lang] || 'USD';
+        localStorage.setItem('charvak_currency', detected);
+        this.updateAllPrices();
+        console.log('Currency detected:', detected, 'from language:', lang);
+        return detected;
     },
     
     async init() {
