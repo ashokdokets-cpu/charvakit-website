@@ -244,11 +244,11 @@
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">AI Tools</a>
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="/student-suite">🎓 Student Suite</a></li>
-                        <li><a class="dropdown-item" href="/ai-credits-pricing">🎯 AI Credits</a></li>
-                        <li><a class="dropdown-item" href="/ai-internship" style="color:#3ba591; font-weight:600;">🤖 AI Internship</a></li>
+                        <li><a class="dropdown-item" href="/student-suite">Student Suite</a></li>
+                        <li><a class="dropdown-item" href="/ai-credits-pricing">AI Credits</a></li>
+                        <li><a class="dropdown-item" href="/ai-internship" style="color:#3ba591; font-weight:600;">AI Internship</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="/tools">🛠️ AI Tools Suite</a></li>
+                        <li><a class="dropdown-item" href="/tools">AI Tools Suite</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="/voice-to-web">Voice-to-Web</a></li>
                         <li><a class="dropdown-item" href="/neural-wireframe">Neural Wireframe</a></li>
@@ -312,26 +312,37 @@
                     <span id="nav-credits-display">Credits</span>
                 </a>
                 <div class="dropdown">
-    <button class="btn btn-outline-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
-        <i class="bi bi-person-circle me-1"></i>Login
+    <button class="btn btn-outline-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" id="userMenuButton">
+        <i class="bi bi-person-circle me-1"></i><span id="userMenuLabel">Login</span>
     </button>
     <div class="dropdown-menu dropdown-menu-end p-3" style="width:280px;">
-        <h6 class="text-white">Quick Login</h6>
-        <a href="/login" class="btn btn-primary btn-sm w-100 mb-2">📧 Login with Email</a>
-        <button class="btn btn-outline-danger btn-sm w-100 mb-2 text-white" onclick="alert('Google login coming soon!')" style="border-color:#fff;">
-            <i class="bi bi-google me-2"></i>Continue with Google
-        </button>
-        <button class="btn btn-outline-primary btn-sm w-100 mb-2 text-white" onclick="alert('Facebook login coming soon!')" style="border-color:#fff;">
-            <i class="bi bi-facebook me-2"></i>Continue with Facebook
-        </button>
-        <button class="btn btn-outline-dark btn-sm w-100 mb-2 text-white" onclick="alert('LinkedIn login coming soon!')" style="border-color:#fff;">
-            <i class="bi bi-linkedin me-2"></i>Continue with LinkedIn
-        </button>
-        <hr>
-        <small class="text-white d-block text-center mt-2">No account? <a href="/register" class="text-decoration-none text-warning">Register</a></small>
-        <small class="text-white d-block text-center mt-1"><a href="/forgot-password" class="text-decoration-none text-info">Forgot password?</a></small>
-<hr>
-<button class="btn btn-danger btn-sm w-100" onclick="logoutUser()">🚪 Logout</button>
+        <!-- Logged Out Menu -->
+        <div id="loggedOutMenu">
+            <h6 class="text-white">Quick Login</h6>
+            <a href="/login" class="btn btn-primary btn-sm w-100 mb-2">Login with Email</a>
+            <button class="btn btn-outline-danger btn-sm w-100 mb-2 text-white" onclick="alert('Google login coming soon!')" style="border-color:#fff;">
+                <i class="bi bi-google me-2"></i>Continue with Google
+            </button>
+            <button class="btn btn-outline-primary btn-sm w-100 mb-2 text-white" onclick="alert('Facebook login coming soon!')" style="border-color:#fff;">
+                <i class="bi bi-facebook me-2"></i>Continue with Facebook
+            </button>
+            <button class="btn btn-outline-dark btn-sm w-100 mb-2 text-white" onclick="alert('LinkedIn login coming soon!')" style="border-color:#fff;">
+                <i class="bi bi-linkedin me-2"></i>Continue with LinkedIn
+            </button>
+            <hr>
+            <small class="text-white d-block text-center mt-2">No account? <a href="/register" class="text-decoration-none text-warning">Register</a></small>
+            <small class="text-white d-block text-center mt-1"><a href="/forgot-password" class="text-decoration-none text-info">Forgot password?</a></small>
+        </div>
+        
+        <!-- Logged In Menu -->
+        <div id="loggedInMenu" style="display:none;">
+            <h6 class="text-white">My Account</h6>
+            <p class="text-white-50 small mb-2" id="loggedInEmail"></p>
+            <a href="/credit-dashboard" class="btn btn-outline-success btn-sm w-100 mb-2">Dashboard</a>
+            <a href="/exam-prep" class="btn btn-outline-primary btn-sm w-100 mb-2">Exam Prep</a>
+            <a href="/ai-internship" class="btn btn-outline-info btn-sm w-100 mb-2">AI Internship</a>
+            <button class="btn btn-danger btn-sm w-100" onclick="logoutUser()">Logout</button>
+        </div>
     </div>
 </div>
             </div>
@@ -670,6 +681,25 @@ async function logoutUser() {
     alert('Logged out successfully!');
     window.location.href = '/';
 }
+// Check login state on page load
+function checkLoginState() {
+    const token = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token');
+    const email = localStorage.getItem('userEmail');
+    
+    if (token && email) {
+        document.getElementById('loggedOutMenu').style.display = 'none';
+        document.getElementById('loggedInMenu').style.display = 'block';
+        document.getElementById('userMenuLabel').textContent = email.split('@')[0];
+        document.getElementById('loggedInEmail').textContent = email;
+    } else {
+        document.getElementById('loggedOutMenu').style.display = 'block';
+        document.getElementById('loggedInMenu').style.display = 'none';
+        document.getElementById('userMenuLabel').textContent = 'Login';
+    }
+}
+
+// Run on page load
+document.addEventListener('DOMContentLoaded', checkLoginState);
 </script>
 <script>
 // Fetch Razorpay key from backend
