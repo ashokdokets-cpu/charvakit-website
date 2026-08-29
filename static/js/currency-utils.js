@@ -100,46 +100,33 @@ const CharvakCurrency = {
         setTimeout(() => div.remove(), 3000);
     },
     
-    async detectLocation() {
-        // Use browser language (no external API - CSP compliant)
-        const lang = navigator.language || navigator.userLanguage || 'en-US';
+        async detectLocation() {
+        // Default to INR (Charvak is Indian company)
+        const existing = localStorage.getItem('charvak_currency');
+        if (existing) {
+            this.updateAllPrices();
+            return existing;
+        }
         
-        const langToCurrency = {
-            'en-IN': 'INR', 'hi-IN': 'INR', 'ta-IN': 'INR', 'te-IN': 'INR',
-            'en-US': 'USD', 'en-GB': 'GBP', 'en-AU': 'AUD', 'en-CA': 'CAD',
-            'en-SG': 'SGD', 'en-NZ': 'AUD', 'en-IE': 'EUR', 'en-ZA': 'ZAR',
-            'en-NG': 'NGN', 'en-GH': 'NGN', 'en-KE': 'NGN',
-            'ja': 'JPY', 'ja-JP': 'JPY',
-            'zh': 'CNY', 'zh-CN': 'CNY', 'zh-TW': 'CNY', 'zh-HK': 'CNY',
-            'pt': 'BRL', 'pt-BR': 'BRL', 'pt-PT': 'EUR',
-            'ar': 'AED', 'ar-AE': 'AED', 'ar-SA': 'AED',
-            'de': 'EUR', 'de-DE': 'EUR', 'de-AT': 'EUR', 'de-CH': 'EUR',
-            'fr': 'EUR', 'fr-FR': 'EUR', 'fr-BE': 'EUR',
-            'it': 'EUR', 'it-IT': 'EUR',
-            'es': 'EUR', 'es-ES': 'EUR', 'es-MX': 'USD',
-            'nl': 'EUR', 'nl-NL': 'EUR',
-            'sv': 'EUR', 'sv-SE': 'EUR',
-            'da': 'EUR', 'da-DK': 'EUR',
-            'fi': 'EUR', 'fi-FI': 'EUR',
-            'pl': 'EUR', 'pl-PL': 'EUR',
-            'cs': 'EUR', 'cs-CZ': 'EUR',
-            'ro': 'EUR', 'ro-RO': 'EUR',
-            'hu': 'EUR', 'hu-HU': 'EUR',
-            'el': 'EUR', 'el-GR': 'EUR'
-        };
-        
-        const detected = langToCurrency[lang] || 'USD';
-        localStorage.setItem('charvak_currency', detected);
+        localStorage.setItem('charvak_currency', 'INR');
         this.updateAllPrices();
-        console.log('Currency detected:', detected, 'from language:', lang);
-        return detected;
+        console.log('Default currency: INR');
+        return 'INR';
     },
     
     async init() {
-        if (!localStorage.getItem('charvak_currency')) {
-            await this.detectLocation();
-        }
-        this.updateAllPrices();
+    // Set INR as default if no currency selected
+    if (!localStorage.getItem('charvak_currency')) {
+        localStorage.setItem('charvak_currency', 'INR');
+    }
+    this.updateAllPrices();
+    
+    // Update currency dropdown
+    const selector = document.getElementById('currencySelector');
+    if (selector) {
+        selector.value = this.getCurrent();
+    }
+}
         
         // Listen for changes from other scripts
         window.addEventListener('charvakCurrencyChange', (e) => {
