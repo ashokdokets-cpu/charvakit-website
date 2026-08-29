@@ -138,7 +138,33 @@ async function loadAdmin() {
         '<div class="col-6 col-md-3"><span class="badge bg-success me-1">✅</span>'+e+'</div>'
     ).join('');
 }
+// Any existing code...
 
-loadAdmin();
+// Auto-refresh every 30 seconds
+setInterval(loadAdminStats, 30000);
+
+async function loadAdminStats() {
+    try {
+        const [credits, exams, internships, payments] = await Promise.all([
+            fetch('/api/credits/admin/stats').then(r => r.json()),
+            fetch('/api/exam/categories').then(r => r.json()),
+            fetch('/api/internship/programs').then(r => r.json()),
+            fetch('/api/payment/history').then(r => r.json())
+        ]);
+        
+        console.log('Live stats:', {
+            users: credits.stats?.total_users || 0,
+            revenue: credits.stats?.total_revenue || 0,
+            exams: exams.total_exams || 0,
+            internships: internships.programs?.length || 0,
+            payments: payments.count || 0
+        });
+    } catch (error) {
+        console.error('Error loading stats:', error);
+    }
+}
+
+// Load immediately
+loadAdminStats();
 </script>
 {% endblock %}
