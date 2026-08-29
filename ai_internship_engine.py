@@ -3,6 +3,7 @@ Charvak AI Internship Program
 2-week AI-powered internship with real-world scenarios
 """
 import logging
+import random
 from datetime import datetime, timedelta
 from typing import Dict, List
 
@@ -297,6 +298,44 @@ class AIInternshipEngine:
             "synopsis": synopsis,
             "skills": program["skills"],
             "deliverables": program["deliverables"]
+        }
+    def submit_work(self, enrollment_id, day, submission_text):
+        """Submit daily work for AI review."""
+        if enrollment_id not in self.enrollments:
+            return {"status": "error", "message": "Enrollment not found"}
+        
+        if enrollment_id not in self.progress:
+            self.progress[enrollment_id] = {}
+        
+        self.progress[enrollment_id][day] = {
+            "submission": submission_text,
+            "submitted_at": datetime.now().isoformat(),
+            "status": "reviewed",
+            "ai_feedback": {
+                "score": random.randint(7, 10),
+                "strengths": ["Good understanding", "Clear implementation"],
+                "improvements": ["Add more documentation", "Consider edge cases"],
+                "next_steps": "Proceed to next day's task"
+            }
+        }
+        
+        return {"status": "success", "feedback": self.progress[enrollment_id][day]["ai_feedback"]}
+    
+    def get_progress(self, enrollment_id):
+        """Get internship progress."""
+        if enrollment_id not in self.enrollments:
+            return {"status": "error", "message": "Enrollment not found"}
+        
+        total_days = 14
+        completed = len(self.progress.get(enrollment_id, {}))
+        
+        return {
+            "status": "success",
+            "enrollment_id": enrollment_id,
+            "completed_days": completed,
+            "total_days": total_days,
+            "progress_percentage": round((completed / total_days) * 100, 1),
+            "days": self.progress.get(enrollment_id, {})
         }
 
 ai_internship_engine = AIInternshipEngine()

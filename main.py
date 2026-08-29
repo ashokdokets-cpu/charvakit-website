@@ -4259,6 +4259,17 @@ async def internship_complete(enrollment_id: str):
     """Complete internship."""
     return ai_internship_engine.complete_internship(enrollment_id)
 
+@app.post("/api/internship/submit/{enrollment_id}/{day}")
+async def submit_work(enrollment_id: str, day: int, request: Request):
+    """Submit work for AI review."""
+    data = await request.json()
+    return ai_internship_engine.submit_work(enrollment_id, day, data.get("submission", ""))
+
+@app.get("/api/internship/progress/{enrollment_id}")
+async def internship_progress(enrollment_id: str):
+    """Get internship progress."""
+    return ai_internship_engine.get_progress(enrollment_id)
+
 # ============================================================
 # UTILITY ENDPOINTS
 # ============================================================
