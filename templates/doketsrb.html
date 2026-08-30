@@ -77,16 +77,27 @@ function subscribeBundle(plan) {
     if (!email) return;
     
     const bundlePrices = {
-        'basic': {name: 'Basic Bundle', price: 999, features: 'Core DoketsRB features'},
-        'pro': {name: 'Pro Bundle', price: 2499, features: 'Advanced features + Priority support'},
-        'enterprise': {name: 'Enterprise Bundle', price: 4999, features: 'Full suite + Dedicated support'}
+        'basic': {name: 'Basic Bundle', price: 0, features: 'Charvak Free + DoketsRB Free'},
+        'pro': {name: 'Pro Bundle', price: 149, features: 'Charvak AI Assessment + DoketsRB Premium'},
+        'enterprise': {name: 'Enterprise Bundle', price: 999, features: 'Everything + White-label + API'}
     };
     
     const selectedPlan = bundlePrices[plan];
     if (!selectedPlan) return;
     
-    // Confirm subscription
-    if (!confirm('Subscribe to ' + selectedPlan.name + '?\n\n₹' + selectedPlan.price + '/month\n' + selectedPlan.features + '\n\nProceed to payment?')) {
+    // Free plan - no payment needed
+    if (selectedPlan.price === 0) {
+        fetch('/api/doketsrb/bundle', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({email: email, bundle: plan})
+        })
+        .then(r => r.json())
+        .then(j => alert(j.message || 'Basic Bundle activated! Free!'));
+        return;
+    }
+    
+    if (!confirm(`Subscribe to ${selectedPlan.name}?\n\n₹${selectedPlan.price}/month\n${selectedPlan.features}\n\nProceed to payment?`)) {
         return;
     }
     
@@ -102,16 +113,20 @@ function subscribeBundle(plan) {
     })
     .then(res => res.json())
     .then(orderData => {
-        if (orderData.status === 'success' || orderData.order_id) {
+        console.log('Order:', orderData);
+        
+        if (orderData.status === 'success' || orderData.order_id || orderData.id) {
+            const orderId = orderData.order_id || orderData.id;
+            const razorpayKey = orderData.key_id || orderData.key || window.charvak_razorpay_key || 'rzp_live_TSniXv6CyEnZ9B';
+            
             const options = {
-                key: orderData.key_id || orderData.key || window.charvak_razorpay_key || 'rzp_live_TSniXv6CyEnZ9B',
+                key: razorpayKey,
                 amount: selectedPlan.price * 100,
                 currency: 'INR',
-                name: 'Charvak IT Consulting',
-                description: 'DoketsRB ' + selectedPlan.name + ' - ' + selectedPlan.features,
-                order_id: orderData.order_id,
+                name: 'Charvak IT',
+                description: 'DoketsRB ' + selectedPlan.name,
+                order_id: orderId,
                 handler: function(response) {
-                    // Verify payment
                     fetch('/api/payment/verify', {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
@@ -125,24 +140,13 @@ function subscribeBundle(plan) {
                     .then(r => r.json())
                     .then(v => {
                         if (v.verified) {
-                            // Activate bundle after payment
                             fetch('/api/doketsrb/bundle', {
                                 method: 'POST',
                                 headers: {'Content-Type': 'application/json'},
-                                body: JSON.stringify({
-                                    email: email,
-                                    bundle: plan,
-                                    payment_id: response.razorpay_payment_id
-                                })
+                                body: JSON.stringify({email: email, bundle: plan, payment_id: response.razorpay_payment_id})
                             })
                             .then(r => r.json())
-                            .then(j => {
-                                alert('✅ ' + (j.message || selectedPlan.name + ' activated!'));
-                                localStorage.setItem('doketsrb_bundle', plan);
-                                updateBundleUI(plan);
-                            });
-                        } else {
-                            alert('Payment verification failed. Please contact support.');
+                            .then(j => alert(j.message || 'Bundle subscribed!'));
                         }
                     });
                 },
@@ -150,7 +154,7 @@ function subscribeBundle(plan) {
                 theme: {color: '#3ba591'},
                 modal: {
                     ondismiss: function() {
-                        alert('Payment cancelled. Bundle not activated.');
+                        alert('Payment cancelled');
                     }
                 }
             };
