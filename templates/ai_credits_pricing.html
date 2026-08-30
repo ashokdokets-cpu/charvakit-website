@@ -362,7 +362,7 @@
                 currency: 'INR',
                 name: 'Charvak IT',
                 description: plan.name + ' - ' + plan.credits + ' credits',
-                order_id: orderData.order_id,
+                order_id: orderData.order_id || orderData.id,
                 handler: async function(response) {
                     const verifyResponse = await fetch('/api/payment/verify', {
                         method: 'POST',
