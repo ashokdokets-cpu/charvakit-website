@@ -355,14 +355,14 @@
         
         const orderData = await orderResponse.json();
         
-        if (orderData.status === 'success' || orderData.order_id || orderData.id) {
+        if (orderData.status === 'success' || orderData.id || orderData.order_id) {
             const options = {
                 key: orderData.key_id || orderData.key || window.charvak_razorpay_key || 'rzp_live_TSniXv6CyEnZ9B',
                 amount: plan.price * 100,
                 currency: 'INR',
                 name: 'Charvak IT',
                 description: plan.name + ' - ' + plan.credits + ' credits',
-                order_id: orderData.order_id || orderData.id,
+                order_id: orderData.id || orderData.order_id,
                 handler: async function(response) {
                     const verifyResponse = await fetch('/api/payment/verify', {
                         method: 'POST',
