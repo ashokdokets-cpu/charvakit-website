@@ -1,6 +1,6 @@
 """
 Charvak AI Internship Program
-2-week AI-powered internship with real-world scenarios
+Multi-duration AI-powered internship with real-world scenarios
 """
 import logging
 import random
@@ -15,13 +15,13 @@ class AIInternshipEngine:
         self.enrollments = {}
         self.progress = {}
         logger.info("AI Internship Engine ready")
+
     def _initialize_programs(self):
         """Initialize 20+ internship programs across all disciplines."""
         return {
-            # ENGINEERING (6)
             "ai_ml": {
                 "name": "AI/ML Engineer Internship",
-                "duration": "2 weeks",
+                "duration": "4 weeks",
                 "price": 2999,
                 "category": "Engineering",
                 "skills": ["Python", "ML", "Deep Learning", "Cloud"],
@@ -30,7 +30,7 @@ class AIInternshipEngine:
             },
             "full_stack": {
                 "name": "Full Stack Developer Internship",
-                "duration": "2 weeks",
+                "duration": "4 weeks",
                 "price": 2499,
                 "category": "Engineering",
                 "skills": ["React", "Node.js", "Database", "API"],
@@ -39,7 +39,7 @@ class AIInternshipEngine:
             },
             "data_engineer": {
                 "name": "Data Engineer Internship",
-                "duration": "2 weeks",
+                "duration": "4 weeks",
                 "price": 2799,
                 "category": "Engineering",
                 "skills": ["Python", "SQL", "ETL", "Big Data"],
@@ -48,7 +48,7 @@ class AIInternshipEngine:
             },
             "devops": {
                 "name": "DevOps Engineer Internship",
-                "duration": "2 weeks",
+                "duration": "4 weeks",
                 "price": 2499,
                 "category": "Engineering",
                 "skills": ["Docker", "K8s", "CI/CD", "Cloud"],
@@ -57,7 +57,7 @@ class AIInternshipEngine:
             },
             "cybersecurity": {
                 "name": "Cybersecurity Analyst Internship",
-                "duration": "2 weeks",
+                "duration": "4 weeks",
                 "price": 2999,
                 "category": "Engineering",
                 "skills": ["Security", "Networking", "Ethical Hacking"],
@@ -66,18 +66,16 @@ class AIInternshipEngine:
             },
             "cloud_architect": {
                 "name": "Cloud Architect Internship",
-                "duration": "2 weeks",
+                "duration": "4 weeks",
                 "price": 2799,
                 "category": "Engineering",
                 "skills": ["AWS", "Azure", "GCP", "Architecture"],
                 "deliverables": ["Architecture Design"],
                 "scenarios": self._generate_scenarios("Cloud Architect")
             },
-            
-            # SCIENCE (4)
             "data_scientist": {
                 "name": "Data Scientist Internship",
-                "duration": "2 weeks",
+                "duration": "4 weeks",
                 "price": 2999,
                 "category": "Science",
                 "skills": ["Python", "Statistics", "ML", "Visualization"],
@@ -86,7 +84,7 @@ class AIInternshipEngine:
             },
             "research_scientist": {
                 "name": "Research Scientist Internship",
-                "duration": "2 weeks",
+                "duration": "4 weeks",
                 "price": 2499,
                 "category": "Science",
                 "skills": ["Research Methods", "Data Analysis", "Writing"],
@@ -95,7 +93,7 @@ class AIInternshipEngine:
             },
             "bioinformatics": {
                 "name": "Bioinformatics Analyst Internship",
-                "duration": "2 weeks",
+                "duration": "4 weeks",
                 "price": 2799,
                 "category": "Science",
                 "skills": ["Biology", "Python", "Genomics"],
@@ -104,18 +102,16 @@ class AIInternshipEngine:
             },
             "environmental": {
                 "name": "Environmental Scientist Internship",
-                "duration": "2 weeks",
+                "duration": "4 weeks",
                 "price": 2299,
                 "category": "Science",
                 "skills": ["Environmental Data", "GIS", "Analysis"],
                 "deliverables": ["Environmental Report"],
                 "scenarios": self._generate_scenarios("Environmental Scientist")
             },
-            
-            # MANAGEMENT (4)
             "business_analyst": {
                 "name": "Business Analyst Internship",
-                "duration": "2 weeks",
+                "duration": "4 weeks",
                 "price": 2499,
                 "category": "Management",
                 "skills": ["Requirements", "Analysis", "Communication"],
@@ -124,7 +120,7 @@ class AIInternshipEngine:
             },
             "product_manager": {
                 "name": "Product Manager Internship",
-                "duration": "2 weeks",
+                "duration": "4 weeks",
                 "price": 2999,
                 "category": "Management",
                 "skills": ["Product Strategy", "UX", "Roadmap"],
@@ -133,7 +129,7 @@ class AIInternshipEngine:
             },
             "marketing_manager": {
                 "name": "Marketing Manager Internship",
-                "duration": "2 weeks",
+                "duration": "4 weeks",
                 "price": 2299,
                 "category": "Management",
                 "skills": ["Digital Marketing", "Analytics", "Content"],
@@ -142,18 +138,16 @@ class AIInternshipEngine:
             },
             "financial_analyst": {
                 "name": "Financial Analyst Internship",
-                "duration": "2 weeks",
+                "duration": "4 weeks",
                 "price": 2799,
                 "category": "Management",
                 "skills": ["Finance", "Excel", "Modeling"],
                 "deliverables": ["Financial Model", "Report"],
                 "scenarios": self._generate_scenarios("Financial Analyst")
             },
-            
-            # MASTERS (6)
             "mtech_ai": {
                 "name": "MTech AI Internship",
-                "duration": "2 weeks",
+                "duration": "4 weeks",
                 "price": 3499,
                 "category": "Masters",
                 "skills": ["Advanced ML", "Deep Learning", "Research"],
@@ -162,7 +156,7 @@ class AIInternshipEngine:
             },
             "mtech_software": {
                 "name": "MTech Software Internship",
-                "duration": "2 weeks",
+                "duration": "4 weeks",
                 "price": 2999,
                 "category": "Masters",
                 "skills": ["Architecture", "Systems Design", "Coding"],
@@ -171,7 +165,7 @@ class AIInternshipEngine:
             },
             "mba_strategy": {
                 "name": "MBA Strategy Internship",
-                "duration": "2 weeks",
+                "duration": "4 weeks",
                 "price": 3499,
                 "category": "Masters",
                 "skills": ["Business Strategy", "Leadership", "Analysis"],
@@ -180,7 +174,7 @@ class AIInternshipEngine:
             },
             "msc_data": {
                 "name": "MSc Data Science Internship",
-                "duration": "2 weeks",
+                "duration": "4 weeks",
                 "price": 2999,
                 "category": "Masters",
                 "skills": ["Statistics", "ML", "Big Data"],
@@ -189,7 +183,7 @@ class AIInternshipEngine:
             },
             "msc_psychology": {
                 "name": "MSc Psychology Internship",
-                "duration": "2 weeks",
+                "duration": "4 weeks",
                 "price": 2499,
                 "category": "Masters",
                 "skills": ["Research", "Counseling", "Analysis"],
@@ -198,7 +192,7 @@ class AIInternshipEngine:
             },
             "ma_economics": {
                 "name": "MA Economics Internship",
-                "duration": "2 weeks",
+                "duration": "4 weeks",
                 "price": 2299,
                 "category": "Masters",
                 "skills": ["Econometrics", "Policy", "Analysis"],
@@ -206,25 +200,53 @@ class AIInternshipEngine:
                 "scenarios": self._generate_scenarios("MA Economics")
             }
         }
-    
-    def _generate_scenarios(self, role):
-        """Generate 14-day scenarios for any role."""
-        return [
-            {"day": 1, "task": "Onboarding & Setup", "scenario": f"You join as {role} intern. Set up environment."},
-            {"day": 2, "task": "Research & Analysis", "scenario": f"Research industry trends for {role}."},
-            {"day": 3, "task": "First Assignment", "scenario": f"Complete first {role} task."},
-            {"day": 4, "task": "Deep Dive", "scenario": f"Dive deeper into {role} skills."},
-            {"day": 5, "task": "Practical Project", "scenario": f"Start practical {role} project."},
-            {"day": 6, "task": "Review & Feedback", "scenario": f"Submit work for AI mentor review."},
-            {"day": 7, "task": "Week 1 Review", "scenario": f"Present progress to AI team lead."},
-            {"day": 8, "task": "Advanced Topics", "scenario": f"Learn advanced {role} concepts."},
-            {"day": 9, "task": "Real Project Work", "scenario": f"Work on real {role} project."},
-            {"day": 10, "task": "Testing & Quality", "scenario": f"Ensure quality in deliverables."},
-            {"day": 11, "task": "Optimization", "scenario": f"Optimize {role} work."},
-            {"day": 12, "task": "Documentation", "scenario": f"Document project and processes."},
-            {"day": 13, "task": "Final Presentation", "scenario": f"Prepare final presentation."},
-            {"day": 14, "task": "Graduation", "scenario": f"Complete internship. Receive badge."}
+
+    def _generate_scenarios(self, role, days=28):
+        """Generate scenarios for any duration (default 28 days - 4 weeks)."""
+        foundation = [
+            {"task": "Onboarding & Setup", "scenario": f"You join as {role} intern. Set up environment."},
+            {"task": "Research & Analysis", "scenario": f"Research industry trends for {role}."},
+            {"task": "First Assignment", "scenario": f"Complete first {role} task."},
+            {"task": "Deep Dive", "scenario": f"Dive deeper into {role} skills."},
+            {"task": "Practical Project", "scenario": f"Start practical {role} project."},
+            {"task": "Review & Feedback", "scenario": f"Submit work for AI mentor review."},
+            {"task": "Week 1 Review", "scenario": f"Present progress to AI team lead."},
+            {"task": "Advanced Topics", "scenario": f"Learn advanced {role} concepts."},
+            {"task": "Real Project Work", "scenario": f"Work on real {role} project."},
+            {"task": "Testing & Quality", "scenario": f"Ensure quality in deliverables."},
+            {"task": "Optimization", "scenario": f"Optimize {role} work."},
+            {"task": "Documentation", "scenario": f"Document project and processes."},
+            {"task": "Week 2 Review", "scenario": f"Review progress. Plan for advanced work."},
+            {"task": "Mid-Program Assessment", "scenario": f"AI evaluates your progress. Get feedback."}
         ]
+        advanced = [
+            {"task": "Advanced Project Planning", "scenario": f"Plan advanced {role} project."},
+            {"task": "Implementation Phase 1", "scenario": f"Implement first phase of project."},
+            {"task": "Implementation Phase 2", "scenario": f"Complete second phase."},
+            {"task": "Integration", "scenario": f"Integrate all components."},
+            {"task": "Testing & Debugging", "scenario": f"Test and fix bugs."},
+            {"task": "Code Review", "scenario": f"AI reviews your code. Get feedback."},
+            {"task": "Refactoring", "scenario": f"Improve code quality."},
+            {"task": "Performance Optimization", "scenario": f"Optimize for speed and efficiency."},
+            {"task": "Security Implementation", "scenario": f"Add security measures."},
+            {"task": "Documentation", "scenario": f"Complete documentation."},
+            {"task": "Deployment Preparation", "scenario": f"Prepare for deployment."},
+            {"task": "Final Testing", "scenario": f"Run final tests."},
+            {"task": "Project Presentation", "scenario": f"Prepare final presentation."},
+            {"task": "Week 4 Review & Graduation", "scenario": f"Complete internship. Receive badge."}
+        ]
+        all_tasks = foundation + advanced
+        scenarios = []
+        for day in range(1, days + 1):
+            idx = min(day - 1, len(all_tasks) - 1)
+            task_info = all_tasks[idx]
+            scenarios.append({
+                "day": day,
+                "task": task_info["task"],
+                "scenario": f"Day {day}: {task_info['scenario']}"
+            })
+        return scenarios
+
     def get_programs(self):
         """Get all internship programs."""
         programs = []
@@ -239,47 +261,45 @@ class AIInternshipEngine:
                 "deliverables": prog["deliverables"]
             })
         return {"status": "success", "programs": programs}
-    
-    def enroll(self, email, program_id):
-        """Enroll student in internship."""
+
+    def enroll(self, email, program_id, duration="standard"):
+        """Enroll student with duration option."""
         if program_id not in self.programs:
             return {"status": "error", "message": "Program not found"}
-        
+        duration_days = {"quick": 14, "standard": 28, "professional": 42}
+        total_days = duration_days.get(duration, 28)
         enrollment_id = f"INT-{datetime.now().strftime('%Y%m%d%H%M%S')}"
         self.enrollments[enrollment_id] = {
             "enrollment_id": enrollment_id,
             "email": email,
             "program_id": program_id,
+            "duration": duration,
+            "total_days": total_days,
             "start_date": datetime.now().isoformat(),
             "status": "active",
             "current_day": 1
         }
-        return {"status": "success", "enrollment_id": enrollment_id}
-    
+        return {"status": "success", "enrollment_id": enrollment_id, "total_days": total_days}
+
     def get_daily_scenario(self, enrollment_id, day):
         """Get daily scenario for intern."""
         if enrollment_id not in self.enrollments:
             return {"status": "error", "message": "Enrollment not found"}
-        
         enrollment = self.enrollments[enrollment_id]
         program = self.programs[enrollment["program_id"]]
-        
-        if day > len(program["scenarios"]):
+        total_days = enrollment.get("total_days", len(program["scenarios"]))
+        if day > total_days:
             return {"status": "error", "message": "Internship completed"}
-        
-        scenario = program["scenarios"][day - 1]
+        scenario = program["scenarios"][day - 1] if day - 1 < len(program["scenarios"]) else program["scenarios"][-1]
         return {"status": "success", "day": day, "scenario": scenario}
-    
+
     def complete_internship(self, enrollment_id):
         """Complete internship and generate badge."""
         if enrollment_id not in self.enrollments:
             return {"status": "error", "message": "Enrollment not found"}
-        
         enrollment = self.enrollments[enrollment_id]
         program = self.programs[enrollment["program_id"]]
-        
         badge = f"CHARVAK-{program['name'][:10].upper().replace(' ', '')}-{datetime.now().strftime('%Y%m')}"
-        
         synopsis = f"""
         AI Internship Synopsis
         ======================
@@ -291,7 +311,6 @@ class AIInternshipEngine:
         Badge: {badge}
         Completed: {datetime.now().isoformat()}
         """
-        
         return {
             "status": "success",
             "badge": badge,
@@ -299,14 +318,13 @@ class AIInternshipEngine:
             "skills": program["skills"],
             "deliverables": program["deliverables"]
         }
+
     def submit_work(self, enrollment_id, day, submission_text):
         """Submit daily work for AI review."""
         if enrollment_id not in self.enrollments:
             return {"status": "error", "message": "Enrollment not found"}
-        
         if enrollment_id not in self.progress:
             self.progress[enrollment_id] = {}
-        
         self.progress[enrollment_id][day] = {
             "submission": submission_text,
             "submitted_at": datetime.now().isoformat(),
@@ -318,17 +336,15 @@ class AIInternshipEngine:
                 "next_steps": "Proceed to next day's task"
             }
         }
-        
         return {"status": "success", "feedback": self.progress[enrollment_id][day]["ai_feedback"]}
-    
+
     def get_progress(self, enrollment_id):
         """Get internship progress."""
         if enrollment_id not in self.enrollments:
             return {"status": "error", "message": "Enrollment not found"}
-        
-        total_days = 14
+        enrollment = self.enrollments.get(enrollment_id, {})
+        total_days = enrollment.get("total_days", 28)
         completed = len(self.progress.get(enrollment_id, {}))
-        
         return {
             "status": "success",
             "enrollment_id": enrollment_id,
