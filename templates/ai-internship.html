@@ -84,7 +84,7 @@ function displayPrograms(programs) {
                     <div class="card h-100 shadow-sm">
                         <div class="card-body text-center">
                             <h6>${program.name}</h6>
-                            <p class="text-muted small">${program.duration}</p>
+                            <p class="text-muted small">2/4/6 weeks available</p>
                             <h4 class="text-primary"><span data-inr="${program.price}">${priceDisplay}</span></h4>
                             <p class="small"><strong>Skills:</strong> ${program.skills.join(', ')}</p>
                             <button class="btn btn-primary btn-sm w-100" onclick="enrollInternship('${program.id}', '${program.name}', ${program.price})">
@@ -104,19 +104,35 @@ function enrollInternship(programId, programName, price) {
     const email = prompt('Enter your email:');
     if (!email) return;
     
-    processCharvakPayment(email, price, 'AI Internship: ' + programName, function(response) {
-        // Payment successful - enroll
+    // Show duration selection
+    const durationChoice = prompt(
+        'Choose Duration:\n\n' +
+        '1. Quick (2 weeks) - ₹' + price + '\n' +
+        '2. Standard (4 weeks) - ₹' + price + ' (Best Value)\n' +
+        '3. Professional (6 weeks) - ₹' + Math.round(price * 1.5) + '\n\n' +
+        'Enter 1, 2, or 3:'
+    );
+    
+    const durationMap = {
+        '1': {id: 'quick', name: 'Quick', weeks: 2, price: price},
+        '2': {id: 'standard', name: 'Standard', weeks: 4, price: price},
+        '3': {id: 'professional', name: 'Professional', weeks: 6, price: Math.round(price * 1.5)}
+    };
+    
+    const selected = durationMap[durationChoice] || durationMap['2'];
+    
+    processCharvakPayment(email, selected.price, 'AI Internship: ' + programName + ' (' + selected.name + ' ' + selected.weeks + ' weeks)', function(response) {
         fetch('/api/internship/enroll', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({email: email, program_id: programId})
+            body: JSON.stringify({email: email, program_id: programId, duration: selected.id})
         })
         .then(r => r.json())
         .then(data => {
             if (data.status === 'success') {
                 currentEnrollment = data.enrollment_id;
                 localStorage.setItem('internship_enrollment', currentEnrollment);
-                alert('✅ Enrolled! Your AI Internship starts now!');
+                alert('✅ Enrolled! ' + selected.name + ' internship (' + selected.weeks + ' weeks) starts now!');
                 loadDailyScenario(1);
             }
         });
