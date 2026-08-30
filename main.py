@@ -4167,12 +4167,23 @@ async def exam_questions(request: Request):
 
 @app.post("/api/exam/mock-test")
 async def start_mock_test(request: Request):
-    """Start mock test."""
+    """Start mock test with credit deduction."""
     data = await request.json()
-    return exam_prep_engine.start_mock_test(
+    email = data.get("email", "demo@charvakit.com")
+    
+    # Deduct credits for mock test
+    credit_result = ai_credit_engine.check_and_deduct(email, "mock_test")
+    if credit_result["status"] == "error":
+        return credit_result
+    
+    result = exam_prep_engine.start_mock_test(
         exam_id=data.get("exam_id"),
-        email=data.get("email")
+        email=email
     )
+    
+    result["credits_deducted"] = 20
+    result["credits_remaining"] = credit_result.get("credits_remaining", 0)
+    return result
 
 @app.get("/api/global-exam/categories")
 async def global_exam_categories():
@@ -4186,14 +4197,29 @@ async def global_exam_by_category(category_id: str):
 
 @app.post("/api/exam/ai-questions")
 async def ai_questions(request: Request):
-    """Generate AI-powered unique questions."""
+    """Generate AI questions with credit deduction."""
     data = await request.json()
+    email = data.get("user_email") or data.get("email") or "demo@charvakit.com"
+    
+    # Deduct credits
+    credit_result = ai_credit_engine.check_and_deduct(email, "ai_questions")
+    if credit_result["status"] == "error":
+        return credit_result
+    
+    # Generate questions
     questions = ai_question_generator.generate_questions(
         exam_id=data.get("exam_id"),
         topic=data.get("topic"),
-        count=data.get("count", 10)
+        count=data.get("count", 10),
+        user_email=email
     )
-    return {"status": "success", "questions": questions}
+    
+    return {
+        "status": "success",
+        "questions": questions,
+        "credits_deducted": credit_result.get("credits_deducted", 5),
+        "credits_remaining": credit_result.get("credits_remaining", 0)
+    }
 
 @app.post("/api/exam/record-answer")
 async def record_answer(request: Request):
