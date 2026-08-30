@@ -4247,7 +4247,10 @@ async def internship_programs():
 async def internship_enroll(request: Request):
     """Enroll in internship."""
     data = await request.json()
-    return ai_internship_engine.enroll(data.get("email"), data.get("program_id"))
+    email = data.get("email")
+    program_id = data.get("program_id")
+    duration = data.get("duration", "standard")
+    return ai_internship_engine.enroll(email, program_id, duration)
 
 @app.get("/api/internship/scenario/{enrollment_id}/{day}")
 async def internship_scenario(enrollment_id: str, day: int):
