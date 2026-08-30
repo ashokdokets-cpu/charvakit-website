@@ -58,15 +58,20 @@
                 <button class="btn btn-outline-primary btn-sm w-100" onclick="subscribeBundle('basic')">Start Free</button>
             </div></div>
             <div class="card border-0 shadow-sm mb-3 bg-primary text-white"><div class="card-body">
-                <h6>Pro Bundle</h6><h3><span data-inr="149">₹149</span>/mo</h3>
-                <small>Charvak AI Assessment + DoketsRB Premium</small><hr>
+                <h6>Pro Bundle</h6><h3><span data-inr="299">₹299</span>/mo</h3>
+<small>All tools + Premium</small>
                 <button class="btn btn-light btn-sm w-100" onclick="subscribeBundle('pro')">Subscribe Pro</button>
             </div></div>
-            <div class="card border-0 shadow-sm"><div class="card-body">
-                <h6>Enterprise</h6><h3><span data-inr="999">₹999</span>/mo</h3>
-                <small class="text-muted">Everything + White-label + API</small><hr>
-                <button class="btn btn-outline-primary btn-sm w-100" onclick="subscribeBundle('enterprise')">Contact Sales</button>
-            </div></div>
+            <div class="card border-0 shadow-sm mb-3"><div class="card-body">
+    <h6>Pro Plus</h6><h3><span data-inr="599">₹599</span>/mo</h3>
+    <small class="text-muted">Pro + AI Assessment + Priority support</small><hr>
+    <button class="btn btn-outline-primary btn-sm w-100" onclick="subscribeBundle('pro_plus')">Subscribe Pro Plus</button>
+</div></div>
+<div class="card border-0 shadow-sm"><div class="card-body">
+    <h6>Enterprise</h6><h3><span data-inr="1999">₹1,999</span>/mo</h3>
+    <small class="text-muted">Everything + White-label + API</small><hr>
+    <button class="btn btn-outline-primary btn-sm w-100" onclick="subscribeBundle('enterprise')">Contact Sales</button>
+</div></div>
         </div>
     </div>
 </div>
@@ -77,10 +82,11 @@ function subscribeBundle(plan) {
     if (!email) return;
     
     const bundlePrices = {
-        'basic': {name: 'Basic Bundle', price: 0, features: 'Charvak Free + DoketsRB Free'},
-        'pro': {name: 'Pro Bundle', price: 149, features: 'Charvak AI Assessment + DoketsRB Premium'},
-        'enterprise': {name: 'Enterprise Bundle', price: 999, features: 'Everything + White-label + API'}
-    };
+    'basic': {name: 'Basic', price: 0, features: 'Free tools'},
+    'pro': {name: 'Pro', price: 299, features: 'All tools + Premium'},
+    'pro_plus': {name: 'Pro Plus', price: 599, features: 'Pro + AI Assessment + Priority support'},
+    'enterprise': {name: 'Enterprise', price: 1999, features: 'Everything + White-label + API'}
+};
     
     const selectedPlan = bundlePrices[plan];
     if (!selectedPlan) return;
