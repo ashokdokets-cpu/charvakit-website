@@ -3719,7 +3719,7 @@ async def ai_bridge_stats():
 
 @app.get("/ai-assessment", response_class=HTMLResponse)
 async def ai_assessment(request: Request):
-    return template_response("ai-assessment.html", request, "AI Career Assessment - Charvak IT Consulting")
+    return template_response("ai-bridge.html", request, "AI Career Assessment - Charvak IT Consulting")
 
 @app.get("/bridge", response_class=HTMLResponse)
 async def bridge_page(request: Request):
