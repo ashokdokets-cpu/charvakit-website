@@ -292,8 +292,7 @@ class AIInternshipEngine:
             return {"status": "error", "message": "Internship completed"}
         scenario = program["scenarios"][day - 1] if day - 1 < len(program["scenarios"]) else program["scenarios"][-1]
         return {"status": "success", "day": day, "scenario": scenario}
-
-        def _format_badge_name(self, name):
+    def _format_badge_name(self, name):
         """Format program name for badge."""
         name = name.replace("Internship", "").strip()
         name = name.replace("  ", " ").strip()
