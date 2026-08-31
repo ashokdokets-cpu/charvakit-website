@@ -299,14 +299,14 @@ class AIInternshipEngine:
             return {"status": "error", "message": "Enrollment not found"}
         enrollment = self.enrollments[enrollment_id]
         program = self.programs[enrollment["program_id"]]
-        def _format_badge_name(self, name):
-    """Format program name for badge."""
-    # Remove common suffixes
-    name = name.replace("Internship", "").strip()
-    # Clean up
-    name = name.replace("  ", " ").strip()
-    return name
 
+    def _format_badge_name(self, name):
+        badge = "CHARVAK-" + badge_name.upper() + "-" + datetime.now().strftime("%Y%m")
+        name = name.replace("Internship", "").strip()
+        name = name.replace("  ", " ").strip()
+        return name
+
+    def complete_internship(self, enrollment_id):
 # In complete_internship:
 badge = f"CHARVAK-{self._format_badge_name(program['name']).upper()}-{datetime.now().strftime('%Y%m')}"
         synopsis = f"""
