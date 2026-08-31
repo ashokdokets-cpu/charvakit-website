@@ -293,33 +293,33 @@ class AIInternshipEngine:
         scenario = program["scenarios"][day - 1] if day - 1 < len(program["scenarios"]) else program["scenarios"][-1]
         return {"status": "success", "day": day, "scenario": scenario}
 
-    def complete_internship(self, enrollment_id):
-        """Complete internship and generate badge."""
-        if enrollment_id not in self.enrollments:
-            return {"status": "error", "message": "Enrollment not found"}
-        enrollment = self.enrollments[enrollment_id]
-        program = self.programs[enrollment["program_id"]]
-
-    def _format_badge_name(self, name):
-        badge = "CHARVAK-" + badge_name.upper() + "-" + datetime.now().strftime("%Y%m")
+        def _format_badge_name(self, name):
+        """Format program name for badge."""
         name = name.replace("Internship", "").strip()
         name = name.replace("  ", " ").strip()
         return name
 
     def complete_internship(self, enrollment_id):
-# In complete_internship:
-badge = f"CHARVAK-{self._format_badge_name(program['name']).upper()}-{datetime.now().strftime('%Y%m')}"
-        synopsis = f"""
-        AI Internship Synopsis
-        ======================
-        Student: {enrollment['email']}
-        Program: {program['name']}
-        Duration: {program['duration']}
-        Skills: {', '.join(program['skills'])}
-        Deliverables: {', '.join(program['deliverables'])}
-        Badge: {badge}
-        Completed: {datetime.now().isoformat()}
-        """
+        """Complete internship and generate badge."""
+        if enrollment_id not in self.enrollments:
+            return {"status": "error", "message": "Enrollment not found"}
+        
+        enrollment = self.enrollments[enrollment_id]
+        program = self.programs[enrollment["program_id"]]
+        
+        badge_name = self._format_badge_name(program["name"])
+        badge = "CHARVAK-" + badge_name.upper() + "-" + datetime.now().strftime("%Y%m")
+        
+        synopsis = "AI Internship Synopsis\n"
+        synopsis += "======================\n"
+        synopsis += "Student: " + enrollment["email"] + "\n"
+        synopsis += "Program: " + program["name"] + "\n"
+        synopsis += "Duration: " + program["duration"] + "\n"
+        synopsis += "Skills: " + ", ".join(program["skills"]) + "\n"
+        synopsis += "Deliverables: " + ", ".join(program["deliverables"]) + "\n"
+        synopsis += "Badge: " + badge + "\n"
+        synopsis += "Completed: " + datetime.now().isoformat() + "\n"
+        
         return {
             "status": "success",
             "badge": badge,
