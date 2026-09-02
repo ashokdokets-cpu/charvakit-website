@@ -100,7 +100,7 @@ const CharvakCurrency = {
         setTimeout(() => div.remove(), 3000);
     },
     
-        async detectLocation() {
+    async detectLocation() {
         // Default to INR (Charvak is Indian company)
         const existing = localStorage.getItem('charvak_currency');
         if (existing) {
