@@ -4,27 +4,35 @@ PostgreSQL database connection and operations
 """
 import os
 import secrets
-import hashlib
 import psycopg2
 from datetime import datetime
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL", "")
-
 
 class Database:
     def __init__(self):
         self.db_url = DATABASE_URL
+        if not self.db_url or self.db_url.startswith("sqlite"):
+            print(f"Warning: Using fallback database URL")
         self.init_db()
-    
+
     def get_connection(self):
         """Get PostgreSQL connection."""
+        if not self.db_url or self.db_url.startswith("sqlite"):
+            raise Exception("PostgreSQL DATABASE_URL not configured properly")
         return psycopg2.connect(self.db_url)
-    
+
     def init_db(self):
         """Initialize database tables."""
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
+            
+            # Create users table for Charvak
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS users (
                     user_id TEXT PRIMARY KEY,
@@ -36,16 +44,40 @@ class Database:
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             ''')
+            
+            # Create applications table if it doesn't exist
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS applications (
+                    id SERIAL PRIMARY KEY,
+                    job_id INTEGER,
+                    user_id TEXT,
+                    status TEXT DEFAULT 'pending',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            
+            # Create jobs table if it doesn't exist
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS jobs (
+                    id SERIAL PRIMARY KEY,
+                    title TEXT NOT NULL,
+                    company TEXT,
+                    description TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            
             conn.commit()
             cursor.close()
             conn.close()
+            print("? Database tables initialized successfully")
         except Exception as e:
             print(f"Database init error: {e}")
-    
+
     def create_user(self, email, password, name, role="candidate", phone=None):
         """Create a new user. Password should already be hashed."""
         user_id = f"USR{secrets.token_hex(4).upper()}"
-        
+
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
@@ -58,8 +90,9 @@ class Database:
             conn.close()
             return {"status": "success", "user_id": user_id}
         except Exception as e:
+            print(f"Create user error: {e}")
             return {"status": "error", "message": "Email already registered"}
-    
+
     def get_user_by_email(self, email):
         """Get user by email."""
         try:
@@ -72,7 +105,7 @@ class Database:
             row = cursor.fetchone()
             cursor.close()
             conn.close()
-            
+
             if row:
                 return {
                     "user_id": row[0],
@@ -86,7 +119,7 @@ class Database:
         except Exception as e:
             print(f"Get user error: {e}")
             return None
-    
+
     def get_user_by_id(self, user_id):
         """Get user by ID."""
         try:
@@ -99,7 +132,7 @@ class Database:
             row = cursor.fetchone()
             cursor.close()
             conn.close()
-            
+
             if row:
                 return {
                     "user_id": row[0],
@@ -113,7 +146,7 @@ class Database:
         except Exception as e:
             print(f"Get user error: {e}")
             return None
-    
+
     def update_user(self, user_id, **kwargs):
         """Update user fields."""
         try:
@@ -127,7 +160,7 @@ class Database:
             return {"status": "success"}
         except Exception as e:
             return {"status": "error", "message": str(e)}
-    
+
     def delete_user(self, user_id):
         """Delete user."""
         try:

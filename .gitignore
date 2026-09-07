@@ -1,10 +1,36 @@
-__pycache__/ 
-*.pyc 
-.env 
-venv/ 
-*.log 
-charvakit-old-backup/ 
-wget.exe 
-download_website.py 
-charvakit.db
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+*.db
+*.sqlite
+
+# Backup files
+*.backup
+*.backup-*
+charvakit-old-backup/
 main.py.backup-*
+
+# Test and check files
+test_*.py
+check_*.py
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Large binaries
+wget.exe
+download_website.py

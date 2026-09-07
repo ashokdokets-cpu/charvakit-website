@@ -81,6 +81,10 @@ class AICreditEngine:
         "lms_quiz": 5,
         "interview_prep": 8,
         "chatbot_query": 2,
+        # Exam Prep Features
+        "ai_questions": 5,
+        "practice_test": 5,
+        "mock_test": 20,
         "default": 10
     }
     
