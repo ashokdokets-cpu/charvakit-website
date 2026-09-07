@@ -4790,6 +4790,33 @@ async def trainers_page(request: Request):
     return template_response("trainers.html", request, "Expert Trainers - Charvak")
 
 
+
+from role_manager import role_manager
+
+@app.post("/api/roles/add")
+async def add_new_role(request: Request):
+    data = await request.json()
+    return role_manager.add_new_role(
+        data.get("role_name"),
+        data.get("category"),
+        data.get("required_skills"),
+        data.get("description")
+    )
+
+@app.post("/api/roles/add-ai")
+async def add_role_with_ai(request: Request):
+    data = await request.json()
+    return role_manager.add_role_with_ai(
+        data.get("role_name"),
+        data.get("category"),
+        data.get("description")
+    )
+
+@app.get("/api/roles/details/{role_id}")
+async def get_role_details(role_id: str):
+    return role_manager.get_role_details(role_id)
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
