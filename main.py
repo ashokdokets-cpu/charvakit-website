@@ -4715,10 +4715,11 @@ async def check_expired():
 
 
 from ip_detection import ip_detector
+from improved_ip_detection import improved_ip_detector
 
 @app.get("/api/location/detect")
 async def detect_location_auto(request: Request):
-    return ip_detector.detect_from_request(request)
+    return improved_ip_detector.detect_from_request(request)
 
 @app.get("/api/location/detect/{ip}")
 async def detect_location_ip(ip: str):
