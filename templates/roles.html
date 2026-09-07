@@ -21,6 +21,54 @@
     <div class="hero text-center">
         <h1 class="display-4 fw-bold">🎯 Career Roles</h1>
         <p class="lead">15+ AI-Driven Career Paths</p>
+        <button class="btn btn-light btn-lg mt-3 px-4 rounded-pill" data-bs-toggle="modal" data-bs-target="#addRoleModal">
+            <i class="bi bi-plus-circle"></i> Add New Role
+        </button>
+    </div>
+
+    <!-- Add Role Modal -->
+    <div class="modal fade" id="addRoleModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white;">
+                    <h5 class="modal-title">➕ Add New Role</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addRoleForm">
+                        <div class="mb-3">
+                            <label class="form-label">Role Name *</label>
+                            <input type="text" class="form-control" id="roleName" placeholder="e.g. Blockchain Developer" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Category *</label>
+                            <select class="form-select" id="roleCategory" required>
+                                <option value="">Select Category</option>
+                                <option value="Technology">Technology</option>
+                                <option value="Data & AI">Data & AI</option>
+                                <option value="Infrastructure">Infrastructure</option>
+                                <option value="Security">Security</option>
+                                <option value="Quality">Quality</option>
+                                <option value="Product">Product</option>
+                                <option value="Business">Business</option>
+                                <option value="Design">Design</option>
+                                <option value="Custom">Custom</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Required Skills (comma separated) *</label>
+                            <input type="text" class="form-control" id="roleSkills" placeholder="e.g. Solidity, Ethereum, Smart Contracts" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" id="roleDescription" rows="2" placeholder="Brief description of the role"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 rounded-pill">Add Role</button>
+                    </form>
+                    <div id="roleAddMsg" class="mt-2 text-center"></div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="container py-5">
