@@ -4768,6 +4768,18 @@ async def update_admin_settings(request: Request):
     return admin_analytics.update_setting(data.get("key"), data.get("value"))
 
 
+
+@app.get("/assessments", response_class=HTMLResponse)
+async def assessments_home(request: Request):
+    """Unified assessments hub."""
+    return template_response("assessments.html", request, "AI Assessments - Charvak")
+
+@app.get("/training", response_class=HTMLResponse)
+async def training_home(request: Request):
+    """Unified training hub."""
+    return template_response("training.html", request, "Training Programs - Charvak")
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
