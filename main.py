@@ -4780,6 +4780,16 @@ async def training_home(request: Request):
     return template_response("training.html", request, "Training Programs - Charvak")
 
 
+
+@app.get("/roles", response_class=HTMLResponse)
+async def roles_page(request: Request):
+    return template_response("roles.html", request, "Career Roles - Charvak")
+
+@app.get("/trainers", response_class=HTMLResponse)
+async def trainers_page(request: Request):
+    return template_response("trainers.html", request, "Expert Trainers - Charvak")
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
