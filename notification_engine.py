@@ -4,6 +4,8 @@ Email notifications for credit alerts, purchase confirmations, and daily bonuses
 """
 import logging
 import os
+from dotenv import load_dotenv
+load_dotenv()
 from datetime import datetime
 from typing import Dict, List, Optional
 
@@ -15,7 +17,7 @@ class NotificationEngine:
     def __init__(self):
         self.notifications = []
         self.email_enabled = os.getenv("SENDGRID_API_KEY") is not None
-        self.from_email = "notifications@charvakit.com"
+        self.from_email = "hr@charvakit.com"
         logger.info(f"Notification Engine ready (Email: {'enabled' if self.email_enabled else 'disabled'})")
     
     def send_email(self, to_email: str, subject: str, html_content: str) -> Dict:

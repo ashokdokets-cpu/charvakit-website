@@ -5,12 +5,14 @@ Uses SendGrid API for reliable email delivery
 import os
 import logging
 from typing import Dict
+from dotenv import load_dotenv
+load_dotenv()
 
 logger = logging.getLogger("charvakit.email")
 
 SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY", "")
 ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "charvakit@gmail.com")
-FROM_EMAIL = "charvakit@gmail.com"
+FROM_EMAIL = "hr@charvakit.com"
 
 EMAIL_ENABLED = bool(SENDGRID_API_KEY)
 
