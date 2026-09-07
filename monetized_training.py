@@ -22,6 +22,56 @@ class MonetizedTrainingSystem:
         self.payouts = {}
         self.subscriptions = {}
         logger.info("Monetized Training System ready")
+        self._initialize_sample_trainers()
+    
+
+    def _initialize_sample_trainers(self):
+        sample_trainers = [
+            {
+                "email": "rajesh@charvakit.com",
+                "name": "Rajesh Kumar",
+                "expertise": ["Python", "Data Science", "Machine Learning"],
+                "experience": 8,
+                "hourly_rate": 50.00
+            },
+            {
+                "email": "priya@charvakit.com",
+                "name": "Priya Sharma",
+                "expertise": ["Java", "Spring Boot", "Microservices"],
+                "experience": 6,
+                "hourly_rate": 45.00
+            },
+            {
+                "email": "amit@charvakit.com",
+                "name": "Amit Patel",
+                "expertise": ["DevOps", "AWS", "Docker", "Kubernetes"],
+                "experience": 7,
+                "hourly_rate": 55.00
+            },
+            {
+                "email": "sneha@charvakit.com",
+                "name": "Sneha Reddy",
+                "expertise": ["Frontend", "React", "JavaScript", "UI/UX"],
+                "experience": 5,
+                "hourly_rate": 40.00
+            },
+            {
+                "email": "vikram@charvakit.com",
+                "name": "Vikram Singh",
+                "expertise": ["Cybersecurity", "Network Security", "Ethical Hacking"],
+                "experience": 9,
+                "hourly_rate": 60.00
+            }
+        ]
+        
+        for trainer in sample_trainers:
+            self.register_trainer(
+                trainer["email"],
+                trainer["name"],
+                trainer["expertise"],
+                trainer["experience"],
+                trainer["hourly_rate"]
+            )
     
     def register_trainer(self, email, name, expertise, experience, hourly_rate):
         """Register a trainer with full profile."""
