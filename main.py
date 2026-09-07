@@ -4840,8 +4840,8 @@ async def versant_page(request: Request):
 async def mcq_page(request: Request):
     return template_response("mcq.html", request, "MCQ Assessment - Charvak")
 
-@app.get("/companies", response_class=HTMLResponse)
-async def companies_page(request: Request):
+@app.get("/company-patterns", response_class=HTMLResponse)
+async def company_patterns_page(request: Request):
     return template_response("companies.html", request, "Company Patterns - Charvak")
 
 
