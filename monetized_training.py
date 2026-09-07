@@ -64,14 +64,22 @@ class MonetizedTrainingSystem:
             }
         ]
         
-        for trainer in sample_trainers:
-            self.register_trainer(
-                trainer["email"],
-                trainer["name"],
-                trainer["expertise"],
-                trainer["experience"],
-                trainer["hourly_rate"]
-            )
+        for i, trainer in enumerate(sample_trainers):
+            trainer_id = f"TR-SAMPLE-{i+1:03d}"
+            self.trainers[trainer_id] = {
+                "trainer_id": trainer_id,
+                "email": trainer["email"],
+                "name": trainer["name"],
+                "expertise": trainer["expertise"],
+                "experience": trainer["experience"],
+                "hourly_rate": float(trainer["hourly_rate"]),
+                "rating": 5.0,
+                "total_sessions": 0,
+                "total_earnings": 0,
+                "pending_payout": 0,
+                "status": "active",
+                "registered_at": datetime.now().isoformat()
+            }
     
     def register_trainer(self, email, name, expertise, experience, hourly_rate):
         """Register a trainer with full profile."""
