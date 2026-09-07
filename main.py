@@ -4795,13 +4795,20 @@ from role_manager import role_manager
 
 @app.post("/api/roles/add")
 async def add_new_role(request: Request):
+    """Add new role - ADMIN ONLY."""
+    from admin_role_manager import admin_role_manager
+    
     data = await request.json()
-    return role_manager.add_new_role(
+    admin_email = data.get("admin_email", "")
+    
+    result = admin_role_manager.add_role_as_admin(
+        admin_email,
         data.get("role_name"),
         data.get("category"),
         data.get("required_skills"),
         data.get("description")
     )
+    return result
 
 @app.post("/api/roles/add-ai")
 async def add_role_with_ai(request: Request):
@@ -4815,6 +4822,13 @@ async def add_role_with_ai(request: Request):
 @app.get("/api/roles/details/{role_id}")
 async def get_role_details(role_id: str):
     return role_manager.get_role_details(role_id)
+
+
+
+@app.get("/admin-roles", response_class=HTMLResponse)
+async def admin_roles_page(request: Request):
+    """Admin role management page."""
+    return template_response("admin-roles.html", request, "Admin Role Management - Charvak")
 
 
 if __name__ == "__main__":

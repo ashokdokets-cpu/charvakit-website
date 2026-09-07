@@ -1,0 +1,117 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Role Management - Charvak</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root { --primary: #3ba591; }
+        body { font-family: 'Poppins', sans-serif; background: #f8f9fa; }
+        .hero { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: white; padding: 40px 0; }
+        .card { border: none; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.08); }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <div class="container">
+            <h3>🔐 Admin Role Management</h3>
+            <p class="mb-0">Add new roles with auto-generated training plans</p>
+        </div>
+    </div>
+
+    <div class="container py-4">
+        <div class="row">
+            <div class="col-md-5">
+                <div class="card p-4">
+                    <h5 class="fw-bold mb-3">➕ Add New Role</h5>
+                    <form id="adminAddRoleForm">
+                        <div class="mb-3">
+                            <label class="form-label">Admin Email *</label>
+                            <input type="email" class="form-control" id="adminEmail" placeholder="hr@charvakit.com" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Role Name *</label>
+                            <input type="text" class="form-control" id="roleName" placeholder="e.g. Blockchain Developer" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Category *</label>
+                            <select class="form-select" id="roleCategory" required>
+                                <option value="">Select</option>
+                                <option value="Technology">Technology</option>
+                                <option value="Data & AI">Data & AI</option>
+                                <option value="Infrastructure">Infrastructure</option>
+                                <option value="Security">Security</option>
+                                <option value="Quality">Quality</option>
+                                <option value="Product">Product</option>
+                                <option value="Business">Business</option>
+                                <option value="Design">Design</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Skills (comma separated) *</label>
+                            <input type="text" class="form-control" id="roleSkills" placeholder="Skill1, Skill2, Skill3" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" id="roleDesc" rows="2"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 rounded-pill">Add Role</button>
+                    </form>
+                    <div id="adminMsg" class="mt-2 text-center"></div>
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <div class="card p-4">
+                    <h5 class="fw-bold mb-3">📋 Current Roles</h5>
+                    <div id="rolesList" class="list-group">
+                        <p class="text-muted">Loading roles...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Load roles
+        fetch('/api/roles/all')
+            .then(r => r.json())
+            .then(data => {
+                const list = document.getElementById('rolesList');
+                list.innerHTML = data.roles.map(role => 
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <span><strong></strong> <span class="badge bg-secondary"></span></span>
+                        <span class="badge bg-primary"> skills</span>
+                    </div>
+                ).join('');
+            });
+
+        // Add role form
+        document.getElementById('adminAddRoleForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const response = await fetch('/api/roles/add', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    admin_email: document.getElementById('adminEmail').value,
+                    role_name: document.getElementById('roleName').value,
+                    category: document.getElementById('roleCategory').value,
+                    required_skills: document.getElementById('roleSkills').value.split(',').map(s => s.trim()),
+                    description: document.getElementById('roleDesc').value
+                })
+            });
+            const result = await response.json();
+            const msg = document.getElementById('adminMsg');
+            if (result.status === 'success') {
+                msg.innerHTML = '<div class="alert alert-success">✅ Role added!</div>';
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                msg.innerHTML = <div class="alert alert-danger">❌ </div>;
+            }
+        });
+    </script>
+</body>
+</html>
