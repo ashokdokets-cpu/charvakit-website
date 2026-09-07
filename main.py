@@ -3936,10 +3936,6 @@ async def reset_password(request: Request):
 async def forgot_password_page(request: Request):
     return template_response("forgot-password.html", request, "Forgot Password - Charvak")
 
-@app.get("/login", response_class=HTMLResponse)
-async def login_page(request: Request):
-    return template_response("login.html", request, "Login - Charvak")
-
 # ============================================================
 # DATA LIFECYCLE API ENDPOINTS
 # ============================================================
@@ -4243,22 +4239,6 @@ async def get_analytics(email: str):
 async def get_improvement(email: str):
     """Get improvement over time."""
     return exam_analytics_engine.get_improvement(email)
-
-@app.get("/api/exam/{exam_id}")
-async def exam_details(exam_id: str):
-    """Get exam details - searches both Indian and Global exams."""
-    # Try Indian exams first
-    indian_result = exam_prep_engine.get_exam_details(exam_id)
-    if indian_result.get("status") == "success":
-        return indian_result
-    
-    # Try Global exams
-    global_result = global_exams_engine.get_exam_details(exam_id)
-    if global_result.get("status") == "success":
-        return global_result
-    
-    return {"status": "error", "message": f"Exam {exam_id} not found"}
-
 @app.get("/ai-internship", response_class=HTMLResponse)
 async def ai_internship_page(request: Request):
     """AI Internship Program page."""
