@@ -4369,6 +4369,391 @@ async def global_exception_handler(request: Request, exc: Exception):
 # END OF ROUTES
 # ============================================================
 
+
+from advanced_assessment_engine import advanced_assessment_engine
+
+@app.get("/advanced-assessment", response_class=HTMLResponse)
+async def advanced_assessment_page(request: Request):
+    """Advanced Assessment & Training page."""
+    html = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Advanced Assessment - Charvak</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    </head>
+    <body class="container mt-5">
+        <h1>Advanced Assessment & Training</h1>
+        <p>AI-Driven Complete Placement Preparation System</p>
+        <div class="row">
+            <div class="col-md-4">
+                <h3>Versant</h3>
+                <a href="/api/assessment/versant" class="btn btn-primary">Details</a>
+            </div>
+            <div class="col-md-4">
+                <h3>MCQ</h3>
+                <a href="/api/assessment/types" class="btn btn-primary">Types</a>
+            </div>
+            <div class="col-md-4">
+                <h3>Companies</h3>
+                <a href="/api/assessment/companies" class="btn btn-primary">Patterns</a>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    return HTMLResponse(content=html)
+
+@app.get("/api/assessment/types")
+async def assessment_types():
+    """Get all assessment types."""
+    return advanced_assessment_engine.get_assessment_types()
+
+@app.get("/api/assessment/versant")
+async def versant_details():
+    """Get Versant details."""
+    return advanced_assessment_engine.get_versant_details()
+
+@app.post("/api/assessment/versant/start")
+async def start_versant(request: Request):
+    """Start Versant assessment."""
+    data = await request.json()
+    return advanced_assessment_engine.start_versant_assessment(data.get("email"))
+
+@app.get("/api/assessment/versant/section/{session_id}/{section_index}")
+async def versant_section(session_id: str, section_index: int):
+    """Get Versant section questions."""
+    return advanced_assessment_engine.get_versant_section(session_id, section_index)
+
+@app.post("/api/assessment/mcq/generate")
+async def generate_mcq(request: Request):
+    """Generate MCQ questions."""
+    data = await request.json()
+    return advanced_assessment_engine.generate_mcq_questions(
+        data.get("category"),
+        data.get("topic"),
+        data.get("count", 10),
+        data.get("email")
+    )
+
+@app.get("/api/assessment/companies")
+async def company_patterns():
+    """Get company patterns."""
+    return advanced_assessment_engine.get_company_patterns()
+
+@app.post("/api/assessment/mock-drive")
+async def start_mock_drive(request: Request):
+    """Start mock drive."""
+    data = await request.json()
+    return advanced_assessment_engine.start_mock_drive(data.get("company_id"), data.get("email"))
+
+@app.post("/api/assessment/skill-gap")
+async def analyze_skill_gap(request: Request):
+    """Analyze skill gap."""
+    data = await request.json()
+    return advanced_assessment_engine.analyze_skill_gap(data.get("email"), data.get("scores"))
+
+@app.get("/api/training/phases")
+async def training_phases():
+    """Get training phases."""
+    return advanced_assessment_engine.get_training_phases()
+
+@app.get("/api/assessment/scorecard/{email}")
+async def get_scorecard(email: str):
+    """Get scorecard."""
+    return advanced_assessment_engine.get_scorecard(email)
+
+
+
+from enhanced_assessment_engine import enhanced_assessment_engine
+
+@app.get("/api/enhanced/companies")
+async def get_all_companies():
+    return enhanced_assessment_engine.get_supported_companies()
+
+@app.post("/api/enhanced/custom-assessment")
+async def create_custom(request: Request):
+    data = await request.json()
+    return enhanced_assessment_engine.create_custom_assessment(
+        data.get("company_name"),
+        data.get("topics"),
+        data.get("difficulty", "medium"),
+        data.get("count", 10)
+    )
+
+@app.post("/api/enhanced/topic-questions")
+async def topic_questions(request: Request):
+    data = await request.json()
+    return enhanced_assessment_engine.generate_topic_questions(
+        data.get("topic"),
+        data.get("count", 10),
+        data.get("difficulty", "medium")
+    )
+
+@app.get("/api/enhanced/topics/{field}")
+async def get_topics(field: str):
+    return enhanced_assessment_engine.get_topic_suggestions(field)
+
+
+
+from training_mapping_engine import training_mapping_engine
+
+@app.get("/api/training/skill-matrix")
+async def get_skill_matrix():
+    return training_mapping_engine.get_skill_matrix()
+
+@app.post("/api/training/create-plan")
+async def create_training_plan(request: Request):
+    data = await request.json()
+    return training_mapping_engine.create_training_plan(
+        data.get("email"),
+        data.get("target_role"),
+        data.get("current_skills"),
+        data.get("weeks", 12)
+    )
+
+@app.get("/api/training/plan/{email}")
+async def get_training_plan(email: str):
+    return training_mapping_engine.get_training_plan(email)
+
+@app.post("/api/training/update-progress")
+async def update_progress(request: Request):
+    data = await request.json()
+    return training_mapping_engine.update_progress(
+        data.get("email"),
+        data.get("week"),
+        data.get("skills_completed")
+    )
+
+@app.get("/api/training/job-market/{role}")
+async def job_market(role: str):
+    return training_mapping_engine.get_job_market_insights(role)
+
+
+
+from dynamic_role_engine import dynamic_role_engine
+
+@app.get("/api/roles/all")
+async def get_all_roles():
+    return dynamic_role_engine.get_all_roles()
+
+@app.post("/api/roles/analyze")
+async def analyze_skills(request: Request):
+    data = await request.json()
+    return dynamic_role_engine.analyze_skills_and_recommend(
+        data.get("email"),
+        data.get("skills"),
+        data.get("interests"),
+        data.get("experience_level", "fresher")
+    )
+
+@app.post("/api/roles/training-plan")
+async def create_role_plan(request: Request):
+    data = await request.json()
+    return dynamic_role_engine.create_dynamic_training_plan(
+        data.get("email"),
+        data.get("role_id"),
+        data.get("weeks", 12)
+    )
+
+@app.post("/api/roles/custom")
+async def add_custom_role(request: Request):
+    data = await request.json()
+    return dynamic_role_engine.recommend_custom_role(
+        data.get("email"),
+        data.get("role_name"),
+        data.get("required_skills"),
+        data.get("category", "Custom")
+    )
+
+
+
+from monetized_training import monetized_training
+
+@app.post("/api/monetized/trainer/register")
+async def register_trainer(request: Request):
+    data = await request.json()
+    return monetized_training.register_trainer(
+        data.get("email"),
+        data.get("name"),
+        data.get("expertise"),
+        data.get("experience"),
+        data.get("hourly_rate")
+    )
+
+@app.post("/api/monetized/course/create")
+async def create_course(request: Request):
+    data = await request.json()
+    return monetized_training.create_course(
+        data.get("trainer_id"),
+        data.get("title"),
+        data.get("description"),
+        data.get("skills"),
+        data.get("price"),
+        data.get("duration_weeks"),
+        data.get("max_students")
+    )
+
+@app.post("/api/monetized/schedule")
+async def schedule_training(request: Request):
+    data = await request.json()
+    return monetized_training.schedule_training(
+        data.get("trainer_id"),
+        data.get("course_id"),
+        data.get("session_date"),
+        data.get("session_time"),
+        data.get("duration_hours")
+    )
+
+@app.post("/api/monetized/enroll")
+async def enroll_student(request: Request):
+    data = await request.json()
+    return monetized_training.enroll_student(
+        data.get("student_email"),
+        data.get("course_id"),
+        data.get("payment_method", "razorpay")
+    )
+
+@app.post("/api/monetized/payout")
+async def process_payout(request: Request):
+    data = await request.json()
+    return monetized_training.process_trainer_payout(
+        data.get("trainer_id"),
+        data.get("amount")
+    )
+
+@app.get("/api/monetized/trainer/{trainer_id}")
+async def get_trainer_dashboard(trainer_id: str):
+    return monetized_training.get_trainer_dashboard(trainer_id)
+
+@app.get("/api/monetized/student/{email}")
+async def get_student_dashboard(email: str):
+    return monetized_training.get_student_dashboard(email)
+
+@app.get("/api/monetized/courses")
+async def get_available_courses():
+    return monetized_training.get_available_courses()
+
+@app.get("/api/monetized/trainers")
+async def get_all_trainers():
+    return monetized_training.get_all_trainers()
+
+@app.get("/api/monetized/payments/{email}")
+async def get_payment_history(email: str):
+    return monetized_training.get_payment_history(email)
+
+
+
+from integrated_pricing import integrated_pricing
+
+@app.get("/api/pricing/complete/{country_code}")
+async def get_complete_pricing(country_code: str):
+    return integrated_pricing.get_complete_pricing(country_code.upper())
+
+@app.get("/api/pricing/ai-credits/{country_code}")
+async def get_ai_credit_pricing(country_code: str):
+    return integrated_pricing.get_ai_credit_pricing(country_code.upper())
+
+@app.get("/api/pricing/internships/{country_code}")
+async def get_internship_pricing(country_code: str):
+    return integrated_pricing.get_internship_pricing(country_code.upper())
+
+@app.get("/api/pricing/training/{country_code}/{course_type}")
+async def get_training_pricing(country_code: str, course_type: str = "standard"):
+    return integrated_pricing.get_training_pricing(country_code.upper(), course_type)
+
+@app.get("/api/pricing/assessments/{country_code}")
+async def get_assessment_pricing(country_code: str):
+    return integrated_pricing.get_assessment_pricing(country_code.upper())
+
+
+
+from enhanced_payment import enhanced_payment
+
+@app.get("/api/payment/subscriptions/{country_code}")
+async def get_subscriptions(country_code: str):
+    return enhanced_payment.get_subscription_plans(country_code.upper())
+
+@app.post("/api/payment/subscribe")
+async def subscribe_user(request: Request):
+    data = await request.json()
+    return enhanced_payment.subscribe_user(
+        data.get("email"),
+        data.get("plan_id"),
+        data.get("country_code", "US"),
+        data.get("discount_code"),
+        data.get("user_type")
+    )
+
+@app.get("/api/payment/discounts")
+async def get_discounts():
+    return enhanced_payment.get_discount_codes()
+
+@app.get("/api/payment/discounts/{type_filter}")
+async def get_discounts_filtered(type_filter: str):
+    return enhanced_payment.get_discount_codes(type_filter)
+
+@app.post("/api/payment/validate-discount")
+async def validate_discount(request: Request):
+    data = await request.json()
+    return enhanced_payment.validate_discount_code(
+        data.get("code"),
+        data.get("user_type"),
+        data.get("quantity", 1)
+    )
+
+@app.post("/api/payment/apply-discount")
+async def apply_discount(request: Request):
+    data = await request.json()
+    return enhanced_payment.apply_discount(
+        data.get("base_price"),
+        data.get("discount_code"),
+        data.get("user_type"),
+        data.get("quantity", 1)
+    )
+
+@app.post("/api/payment/custom-discount")
+async def create_discount(request: Request):
+    data = await request.json()
+    return enhanced_payment.create_custom_discount(
+        data.get("code"),
+        data.get("discount_percent"),
+        data.get("valid_days"),
+        data.get("max_uses"),
+        data.get("type", "promotional"),
+        data.get("description", "")
+    )
+
+@app.get("/api/payment/detect-location/{ip}")
+async def detect_location(ip: str):
+    return enhanced_payment.detect_location_from_ip(ip)
+
+@app.get("/api/payment/check-expired")
+async def check_expired():
+    return enhanced_payment.check_expired_discounts()
+
+
+
+from ip_detection import ip_detector
+
+@app.get("/api/location/detect")
+async def detect_location_auto(request: Request):
+    return ip_detector.detect_from_request(request)
+
+@app.get("/api/location/detect/{ip}")
+async def detect_location_ip(ip: str):
+    return ip_detector.detect_country_from_ip(ip)
+
+@app.get("/api/location/auto")
+async def detect_location_external():
+    return ip_detector.get_client_ip_auto()
+
+@app.post("/api/location/localized-price")
+async def get_localized_price(request: Request):
+    data = await request.json()
+    return ip_detector.get_localized_response(request, data.get("base_price", 0))
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 

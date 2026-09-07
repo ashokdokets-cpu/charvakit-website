@@ -1,4 +1,4 @@
-"""
+﻿"""
 Charvak Advanced Assessment & Training System
 Completely AI-Driven: Versant, MCQ, Company Patterns, Skill-Gap Analysis
 Integrates with: AI Bridge, Training Engine, LMS, Question Generator
@@ -171,6 +171,14 @@ class AdvancedAssessmentEngine:
             ]
         }
     
+
+    def get_versant_details(self):
+        """Get Versant assessment details."""
+        return {
+            "status": "success",
+            "assessment": self.assessments["versant"]
+        }
+    
     def start_versant_assessment(self, email):
         """Start AI-driven Versant assessment."""
         session_id = f"VERSANT-{datetime.now().strftime('%Y%m%d%H%M%S')}"
@@ -204,8 +212,6 @@ class AdvancedAssessmentEngine:
             return {"status": "error", "message": "Invalid section"}
         
         section = sections[section_index]
-        
-        # AI generates questions based on section type
         questions = self._generate_versant_questions(section)
         
         return {
@@ -215,9 +221,7 @@ class AdvancedAssessmentEngine:
         }
     
     def _generate_versant_questions(self, section):
-        """Generate Versant questions using AI or fallback."""
-        questions = []
-        
+        """Generate Versant questions."""
         prompts = {
             "read_aloud": [
                 "The company will announce quarterly results next week.",
@@ -254,6 +258,7 @@ class AdvancedAssessmentEngine:
         }
         
         section_prompts = prompts.get(section["id"], ["Sample question"])
+        questions = []
         
         for i in range(min(section["questions"], len(section_prompts))):
             questions.append({
@@ -268,7 +273,6 @@ class AdvancedAssessmentEngine:
     
     def generate_mcq_questions(self, category, topic, count=10, email=None):
         """Generate AI-driven MCQ questions."""
-        # Try OpenAI for dynamic generation
         if self.openai_api_key:
             try:
                 questions = self._generate_mcq_with_openai(category, topic, count)
@@ -277,7 +281,6 @@ class AdvancedAssessmentEngine:
             except Exception as e:
                 logger.error(f"OpenAI MCQ generation failed: {e}")
         
-        # Fallback to question generator
         from ai_question_generator import ai_question_generator
         questions = ai_question_generator.generate_questions(
             exam_id=f"mcq_{category}",
@@ -357,7 +360,6 @@ class AdvancedAssessmentEngine:
         weak_areas = [k for k, v in scores.items() if v < 50]
         strong_areas = [k for k, v in scores.items() if v >= 75]
         
-        # Generate AI recommendations
         recommendations = []
         for weak in weak_areas:
             recommendations.append(f"Focus on improving {weak} with daily practice")
