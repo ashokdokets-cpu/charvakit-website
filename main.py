@@ -4754,6 +4754,39 @@ async def get_localized_price(request: Request):
     return ip_detector.get_localized_response(request, data.get("base_price", 0))
 
 
+
+from unified_analytics import unified_analytics
+from enhanced_email import enhanced_email
+from admin_analytics import admin_analytics
+
+@app.get("/api/analytics/unified")
+async def get_unified_analytics():
+    return unified_analytics.get_dashboard()
+
+@app.post("/api/analytics/track")
+async def track_analytics(request: Request):
+    data = await request.json()
+    return unified_analytics.track(data.get("type"), data.get("data"))
+
+@app.get("/api/email/enhanced/history")
+async def get_enhanced_email_history():
+    return enhanced_email.get_sent_history()
+
+@app.post("/api/email/enhanced/welcome")
+async def send_welcome_email(request: Request):
+    data = await request.json()
+    return enhanced_email.send_welcome(data.get("email"), data.get("name"))
+
+@app.get("/api/admin/analytics")
+async def get_admin_analytics():
+    return admin_analytics.get_full_overview()
+
+@app.post("/api/admin/settings")
+async def update_admin_settings(request: Request):
+    data = await request.json()
+    return admin_analytics.update_setting(data.get("key"), data.get("value"))
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
