@@ -34,3 +34,12 @@ Thumbs.db
 # Large binaries
 wget.exe
 download_website.py
+
+# Test and debug files
+*test*.py
+*verify*.py
+*fix*.py
+*find*.py
+*remove*.py
+*patch*.py
+*add_trainers*.py
