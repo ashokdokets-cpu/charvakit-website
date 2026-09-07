@@ -4831,6 +4831,20 @@ async def admin_roles_page(request: Request):
     return template_response("admin-roles.html", request, "Admin Role Management - Charvak")
 
 
+
+@app.get("/versant", response_class=HTMLResponse)
+async def versant_page(request: Request):
+    return template_response("versant.html", request, "Versant English Assessment - Charvak")
+
+@app.get("/mcq", response_class=HTMLResponse)
+async def mcq_page(request: Request):
+    return template_response("mcq.html", request, "MCQ Assessment - Charvak")
+
+@app.get("/companies", response_class=HTMLResponse)
+async def companies_page(request: Request):
+    return template_response("companies.html", request, "Company Patterns - Charvak")
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
