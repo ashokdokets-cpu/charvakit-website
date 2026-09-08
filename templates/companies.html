@@ -238,19 +238,58 @@
                 const result = await response.json();
                 
                 if (result.status === 'success') {
-                    alert('✅ Mock drive started successfully!\n\nCompany: ' + result.session.company_name + '\nSession ID: ' + result.session.session_id + '\n\nYour mock drive is ready. Questions will appear here.');
-                    
-                    // Show session details
+                    var session = result.session;
                     var detailBox = document.getElementById('detail-' + companyId);
+                    
+                    // Build questions HTML
+                    var questionsHtml = '<div class="alert alert-success mt-3"><strong>✅ Mock Drive Started!</strong><br>Session: ' + session.session_id + '<br>Company: ' + session.company_name + '<br>Pattern: ' + session.pattern + '</div>';
+                    questionsHtml += '<h5 class="mt-3">📋 Test Sections:</h5>';
+                    
+                    session.sections.forEach(function(section) {
+                        questionsHtml += '<div class="section-item"><strong>' + section.name + ':</strong> ' + section.questions + ' Questions (' + section.time + ')';
+                        questionsHtml += '<br><small class="text-muted">Topics: ' + section.topics.join(', ') + '</small></div>';
+                    });
+                    
+                    questionsHtml += '<button class="btn btn-success rounded-pill mt-3" onclick="loadCompanyQuestions(\'' + companyId + '\', \'' + session.session_id + '\')">📝 View Questions →</button>';
+                    questionsHtml += '<div id="questions-' + companyId + '"></div>';
+                    
                     if (detailBox) {
-                        detailBox.innerHTML += '<div class="alert alert-success mt-3">✅ Mock Drive Started! Session: ' + result.session.session_id + '</div>';
+                        detailBox.innerHTML = questionsHtml;
                     }
                 } else {
-                    alert('❌ Error starting mock drive. Please try again.');
+                    alert('❌ Error starting mock drive.');
                 }
             } catch (error) {
                 alert('❌ Error: ' + error.message);
             }
+        }
+
+        async function loadCompanyQuestions(companyId, sessionId) {
+            var questionsDiv = document.getElementById('questions-' + companyId);
+            questionsDiv.innerHTML = '<p class="text-muted">Loading questions...</p>';
+            
+            // Load questions for each section
+            var sections = ['Foundation', 'Advanced', 'Coding'];
+            var allHtml = '';
+            
+            for (var i = 0; i < sections.length; i++) {
+                var section = sections[i];
+                try {
+                    const response = await fetch('/api/company/' + companyId + '/questions/' + encodeURIComponent(section));
+                    const data = await response.json();
+                    
+                    if (data.status === 'success' && data.questions) {
+                        allHtml += '<h5 class="mt-3">' + section + ' Section:</h5>';
+                        data.questions.forEach(function(q, index) {
+                            allHtml += '<div class="section-item"><strong>Q' + (index + 1) + ':</strong> ' + q.question + '</div>';
+                        });
+                    }
+                } catch (e) {
+                    allHtml += '<p>Error loading ' + section + ' questions</p>';
+                }
+            }
+            
+            questionsDiv.innerHTML = allHtml;
         }
 
         function showCompany(companyId) {
