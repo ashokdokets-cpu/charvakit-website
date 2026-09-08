@@ -5347,6 +5347,40 @@ async def get_project_guidance(request: Request):
     )
 
 
+
+from interactive_tutor import interactive_tutor
+
+@app.post("/api/tutor/start")
+async def start_tutoring(request: Request):
+    data = await request.json()
+    return interactive_tutor.start_tutoring_session(
+        data.get("email"),
+        data.get("course_name"),
+        data.get("topic"),
+        data.get("user_level", "beginner")
+    )
+
+@app.post("/api/tutor/chat")
+async def chat_with_tutor(request: Request):
+    data = await request.json()
+    return interactive_tutor.chat_with_tutor(
+        data.get("session_id"),
+        data.get("user_message")
+    )
+
+@app.get("/api/tutor/scenario/{session_id}")
+async def get_scenario(session_id: str):
+    return interactive_tutor.get_real_scenario(session_id)
+
+@app.post("/api/tutor/evaluate")
+async def evaluate_answer(request: Request):
+    data = await request.json()
+    return interactive_tutor.evaluate_answer(
+        data.get("session_id"),
+        data.get("user_answer")
+    )
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
