@@ -21,15 +21,15 @@ function showPaymentMethodSelection(email, amount, featureName, callback) {
         <div class="bg-white p-4 rounded" style="max-width:420px;width:90%;background:white;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
             <h4 class="mb-3" style="margin-bottom:15px;font-weight:bold;">Choose Payment Method</h4>
             <p class="mb-3" style="margin-bottom:15px;color:#666;">
-                Feature: <strong>${featureName}</strong><br>
-                Amount: <strong>₹${amount.toLocaleString()}</strong>
+                Feature: <strong>' + featureName + '</strong><br>
+                Amount: <strong>₹' + amount.toLocaleString() + '</strong>
             </p>
             <div style="display:grid;gap:10px;">
-                <button class="btn btn-primary btn-lg" onclick="closePaymentModal(); payWithRazorpay('${email}', ${amount}, '${featureName}', ${callback ? 'true' : 'false'});" 
+                <button class="btn btn-primary btn-lg" onclick="closePaymentModal(); payWithRazorpay('' + email + '', ' + amount + ', '' + featureName + '', ' + callback ? 'true' : 'false' + ');" 
                     style="padding:15px;border-radius:8px;border:none;background:#3ba591;color:white;font-size:16px;font-weight:bold;cursor:pointer;">
                     🇮🇳 Pay with Razorpay (UPI/Cards/Netbanking)
                 </button>
-                <button class="btn btn-warning btn-lg" onclick="closePaymentModal(); payWithPayPal('${email}', ${amount}, '${featureName}', ${callback ? 'true' : 'false'});" 
+                <button class="btn btn-warning btn-lg" onclick="closePaymentModal(); payWithPayPal('' + email + '', ' + amount + ', '' + featureName + '', ' + callback ? 'true' : 'false' + ');" 
                     style="padding:15px;border-radius:8px;border:none;background:#ffc439;color:#111;font-size:16px;font-weight:bold;cursor:pointer;">
                     🌍 Pay with PayPal (International Cards)
                 </button>
@@ -161,8 +161,8 @@ function payWithPayPal(email, amount, featureName, hasCallback) {
         paypalModal.innerHTML = `
             <h5 style="margin-bottom:10px;">Complete PayPal Payment</h5>
             <p style="color:#666;margin-bottom:20px;">
-                Feature: ${featureName}<br>
-                Amount: <strong>$${usdAmount} USD</strong>
+                Feature: ' + featureName + '<br>
+                Amount: <strong>$' + usdAmount + ' USD</strong>
             </p>
             <div id="paypal-buttons-container"></div>
             <button onclick="document.getElementById('paypal-modal').remove()" 

@@ -40,7 +40,7 @@ const CharvakCurrency = {
             }));
             
             // Show notification
-            this.showNotification(`Currency: ${this.symbols[currency]} ${currency} (${this.names[currency]})`);
+            this.showNotification(`Currency: ' + this.symbols[currency] + ' ' + currency + ' (' + this.names[currency] + ')`);
             
             return true;
         }
@@ -135,7 +135,7 @@ const CharvakCurrency = {
             }
         });
     }
-};
+;
 
 // Initialize
 if (document.readyState === 'loading') {

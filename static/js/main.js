@@ -154,7 +154,7 @@ function showSuccess(message) {
     alertDiv.className = 'alert alert-success alert-dismissible fade show';
     alertDiv.role = 'alert';
     alertDiv.innerHTML = `
-        <i class="bi bi-check-circle me-2"></i>${message}
+        <i class="bi bi-check-circle me-2"></i>' + message + '
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     `;
     
