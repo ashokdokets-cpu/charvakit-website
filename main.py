@@ -5242,6 +5242,26 @@ async def generate_pattern_questions(request: Request):
     }
 
 
+
+from complete_analysis import complete_analysis
+
+@app.post("/api/analysis/complete")
+async def analyze_complete(request: Request):
+    data = await request.json()
+    return complete_analysis.analyze_complete_profile(
+        data.get("email"),
+        data
+    )
+
+@app.get("/api/analysis/report/{email}")
+async def get_analysis_report(email: str):
+    return complete_analysis.get_user_report(email)
+
+@app.get("/api/analysis/gap/{email}/{target_role}")
+async def get_gap_report(email: str, target_role: str):
+    return complete_analysis.get_skill_gap_report(email, target_role)
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
