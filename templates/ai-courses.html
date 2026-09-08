@@ -52,7 +52,36 @@
         return 4;
     }
 
-    function renderCourses() {
+    function getCurrentSymbol() {
+    if (typeof CharvakCurrency !== 'undefined' && CharvakCurrency.getSymbol) {
+        return CharvakCurrency.getSymbol();
+    }
+    var saved = localStorage.getItem('charvak_currency') || 'INR';
+    var symbols = {INR: '₹', USD: '$', EUR: '€', GBP: '£', AED: 'د.إ', SGD: 'S$', AUD: 'A$', CAD: 'C$', JPY: '¥'};
+    return symbols[saved] || '₹';
+}
+
+function getCurrentRate() {
+    var saved = localStorage.getItem('charvak_currency') || 'INR';
+    var rates = {INR: 1, USD: 83.1, EUR: 90.2, GBP: 105.3, AED: 22.6, SGD: 61.2, AUD: 54.8, CAD: 61.0, JPY: 0.56};
+    return rates[saved] || 1;
+}
+
+function formatPriceINR(priceINR) {
+    var symbol = getCurrentSymbol();
+    var rate = getCurrentRate();
+    var converted = Math.round(priceINR / rate);
+    return symbol + converted;
+}
+
+function formatInstallmentINR(priceINR, installments) {
+    var symbol = getCurrentSymbol();
+    var rate = getCurrentRate();
+    var converted = Math.round(priceINR / installments / rate);
+    return symbol + converted;
+}
+
+function renderCourses() {
         var html = '';
         for (var i = 0; i < coursesData.length; i++) {
             var c = coursesData[i];
