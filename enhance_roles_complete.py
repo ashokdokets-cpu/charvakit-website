@@ -1,0 +1,231 @@
+﻿with open('templates/roles.html', 'w', encoding='utf-8') as f:
+    content = '''<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Career Roles - Charvak</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { font-family: Arial, sans-serif; background: #f8f9fa; }
+        .hero { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px 0; }
+        .card { border: none; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.08); transition: all 0.3s; height: 100%; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0,0,0,0.15); }
+        .icon-circle { width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; margin: 0 auto 10px; }
+        .badge-salary { background: #e8f5e9; color: #2e7d32; padding: 5px 10px; border-radius: 20px; font-size: 11px; }
+        .badge-demand { background: #e3f2fd; color: #1565c0; padding: 5px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-analyze { background: #3ba591; color: white; border-radius: 50px; padding: 10px 25px; font-weight: bold; border: none; cursor: pointer; }
+        .btn-training { background: #667eea; color: white; border-radius: 50px; padding: 5px 15px; font-size: 12px; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="hero text-center">
+        <h1>🎯 Career Roles</h1>
+        <p>15+ AI-Driven Career Paths | Salary Info | Market Demand | Training Links</p>
+        <button class="btn btn-light btn-lg mt-2 rounded-pill" onclick="analyzeMySkills()">🔍 Analyze My Skills</button>
+    </div>
+
+    <div class="container py-4">
+        <div class="row g-3">
+            <div class="col-md-4"><div class="card p-3 text-center">
+                <div class="icon-circle" style="background:#e8eaf6;color:#667eea;">💻</div>
+                <h5>Software Developer</h5>
+                <small class="text-muted">Technology</small>
+                <p class="small mt-2">Python, Java, DSA, SQL, Git</p>
+                <span class="badge-salary">-</span>
+                <span class="badge-demand">Very High Demand</span>
+                <div class="mt-2">
+                    <a href="/training" class="btn-training">View Training Path</a>
+                    <button class="btn-analyze btn-sm mt-2" onclick="analyzeMySkills()">Analyze</button>
+                </div>
+            </div></div>
+            <div class="col-md-4"><div class="card p-3 text-center">
+                <div class="icon-circle" style="background:#e8f5e9;color:#11998e;">🌐</div>
+                <h5>Full Stack Developer</h5>
+                <small class="text-muted">Technology</small>
+                <p class="small mt-2">HTML, React, Node.js, MongoDB</p>
+                <span class="badge-salary">-</span>
+                <span class="badge-demand">Very High Demand</span>
+                <div class="mt-2">
+                    <a href="/training" class="btn-training">View Training Path</a>
+                    <button class="btn-analyze btn-sm mt-2" onclick="analyzeMySkills()">Analyze</button>
+                </div>
+            </div></div>
+            <div class="col-md-4"><div class="card p-3 text-center">
+                <div class="icon-circle" style="background:#e3f2fd;color:#1565c0;">🎨</div>
+                <h5>Frontend Developer</h5>
+                <small class="text-muted">Technology</small>
+                <p class="small mt-2">HTML, CSS, JavaScript, React</p>
+                <span class="badge-salary">-</span>
+                <span class="badge-demand">High Demand</span>
+                <div class="mt-2">
+                    <a href="/training" class="btn-training">View Training Path</a>
+                    <button class="btn-analyze btn-sm mt-2" onclick="analyzeMySkills()">Analyze</button>
+                </div>
+            </div></div>
+            <div class="col-md-4"><div class="card p-3 text-center">
+                <div class="icon-circle" style="background:#fff3e0;color:#e65100;">⚙️</div>
+                <h5>Backend Developer</h5>
+                <small class="text-muted">Technology</small>
+                <p class="small mt-2">Python, Node.js, SQL, Redis</p>
+                <span class="badge-salary">-</span>
+                <span class="badge-demand">Very High Demand</span>
+                <div class="mt-2">
+                    <a href="/training" class="btn-training">View Training Path</a>
+                    <button class="btn-analyze btn-sm mt-2" onclick="analyzeMySkills()">Analyze</button>
+                </div>
+            </div></div>
+            <div class="col-md-4"><div class="card p-3 text-center">
+                <div class="icon-circle" style="background:#fce4ec;color:#c62828;">📊</div>
+                <h5>Data Scientist</h5>
+                <small class="text-muted">Data & AI</small>
+                <p class="small mt-2">Python, ML, Statistics, SQL</p>
+                <span class="badge-salary">-</span>
+                <span class="badge-demand">High Demand</span>
+                <div class="mt-2">
+                    <a href="/training" class="btn-training">View Training Path</a>
+                    <button class="btn-analyze btn-sm mt-2" onclick="analyzeMySkills()">Analyze</button>
+                </div>
+            </div></div>
+            <div class="col-md-4"><div class="card p-3 text-center">
+                <div class="icon-circle" style="background:#e8f5e9;color:#11998e;">📈</div>
+                <h5>Data Analyst</h5>
+                <small class="text-muted">Data & AI</small>
+                <p class="small mt-2">SQL, Excel, Python, Tableau</p>
+                <span class="badge-salary">-</span>
+                <span class="badge-demand">High Demand</span>
+                <div class="mt-2">
+                    <a href="/training" class="btn-training">View Training Path</a>
+                    <button class="btn-analyze btn-sm mt-2" onclick="analyzeMySkills()">Analyze</button>
+                </div>
+            </div></div>
+            <div class="col-md-4"><div class="card p-3 text-center">
+                <div class="icon-circle" style="background:#e8eaf6;color:#667eea;">🤖</div>
+                <h5>ML Engineer</h5>
+                <small class="text-muted">Data & AI</small>
+                <p class="small mt-2">Python, ML, TensorFlow</p>
+                <span class="badge-salary">-</span>
+                <span class="badge-demand">Very High Demand</span>
+                <div class="mt-2">
+                    <a href="/training" class="btn-training">View Training Path</a>
+                    <button class="btn-analyze btn-sm mt-2" onclick="analyzeMySkills()">Analyze</button>
+                </div>
+            </div></div>
+            <div class="col-md-4"><div class="card p-3 text-center">
+                <div class="icon-circle" style="background:#fff3e0;color:#e65100;">🔧</div>
+                <h5>DevOps Engineer</h5>
+                <small class="text-muted">Infrastructure</small>
+                <p class="small mt-2">Linux, Docker, AWS</p>
+                <span class="badge-salary">-</span>
+                <span class="badge-demand">Very High Demand</span>
+                <div class="mt-2">
+                    <a href="/training" class="btn-training">View Training Path</a>
+                    <button class="btn-analyze btn-sm mt-2" onclick="analyzeMySkills()">Analyze</button>
+                </div>
+            </div></div>
+            <div class="col-md-4"><div class="card p-3 text-center">
+                <div class="icon-circle" style="background:#e8f5e9;color:#11998e;">☁️</div>
+                <h5>Cloud Architect</h5>
+                <small class="text-muted">Infrastructure</small>
+                <p class="small mt-2">AWS, Azure, GCP</p>
+                <span class="badge-salary">-</span>
+                <span class="badge-demand">Critical Demand</span>
+                <div class="mt-2">
+                    <a href="/training" class="btn-training">View Training Path</a>
+                    <button class="btn-analyze btn-sm mt-2" onclick="analyzeMySkills()">Analyze</button>
+                </div>
+            </div></div>
+            <div class="col-md-4"><div class="card p-3 text-center">
+                <div class="icon-circle" style="background:#fce4ec;color:#c62828;">🔒</div>
+                <h5>Cybersecurity Analyst</h5>
+                <small class="text-muted">Security</small>
+                <p class="small mt-2">Network Security</p>
+                <span class="badge-salary">-</span>
+                <span class="badge-demand">Critical Demand</span>
+                <div class="mt-2">
+                    <a href="/training" class="btn-training">View Training Path</a>
+                    <button class="btn-analyze btn-sm mt-2" onclick="analyzeMySkills()">Analyze</button>
+                </div>
+            </div></div>
+            <div class="col-md-4"><div class="card p-3 text-center">
+                <div class="icon-circle" style="background:#e8eaf6;color:#667eea;">✅</div>
+                <h5>QA Engineer</h5>
+                <small class="text-muted">Quality</small>
+                <p class="small mt-2">Testing, Selenium</p>
+                <span class="badge-salary">-</span>
+                <span class="badge-demand">Moderate Demand</span>
+                <div class="mt-2">
+                    <a href="/training" class="btn-training">View Training Path</a>
+                    <button class="btn-analyze btn-sm mt-2" onclick="analyzeMySkills()">Analyze</button>
+                </div>
+            </div></div>
+            <div class="col-md-4"><div class="card p-3 text-center">
+                <div class="icon-circle" style="background:#e8f5e9;color:#11998e;">📱</div>
+                <h5>Mobile Developer</h5>
+                <small class="text-muted">Technology</small>
+                <p class="small mt-2">Android, Flutter</p>
+                <span class="badge-salary">-</span>
+                <span class="badge-demand">High Demand</span>
+                <div class="mt-2">
+                    <a href="/training" class="btn-training">View Training Path</a>
+                    <button class="btn-analyze btn-sm mt-2" onclick="analyzeMySkills()">Analyze</button>
+                </div>
+            </div></div>
+        </div>
+    </div>
+
+    <script>
+    async function analyzeMySkills() {
+        const email = prompt('Enter your email to analyze skills:');
+        if (!email) return;
+        
+        const skills = prompt('Enter your skills (comma separated):\\nExample: Python, SQL, Java');
+        if (!skills) return;
+        
+        const skillsArray = skills.split(',').map(s => s.trim());
+        
+        try {
+            const response = await fetch('/api/roles/analyze', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    email: email,
+                    skills: skillsArray,
+                    interests: [],
+                    experience_level: 'fresher'
+                })
+            });
+            const result = await response.json();
+            
+            if (result.status === 'success') {
+                var recommendations = result.profile.recommendations || [];
+                var html = '<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;background:white;padding:30px;border-radius:15px;box-shadow:0 20px 60px rgba(0,0,0,0.3);max-width:500px;max-height:70vh;overflow-y:auto;">';
+                html += '<h4>✅ Skill Analysis</h4>';
+                html += '<p>Your skills: ' + skillsArray.join(', ') + '</p>';
+                html += '<hr>';
+                
+                if (recommendations.length > 0) {
+                    recommendations.slice(0, 5).forEach(function(rec) {
+                        html += '<div class="mb-2 p-2 border rounded">';
+                        html += '<strong>' + rec.role_name + '</strong> - ' + rec.match_percentage + '%<br>';
+                        html += '<small>Matched: ' + (rec.matched_skills || []).join(', ') + '</small><br>';
+                        html += '<small style="color:red;">Gaps: ' + (rec.skill_gaps || []).slice(0, 3).join(', ') + '</small>';
+                        html += '</div>';
+                    });
+                }
+                
+                html += '<button class="btn btn-primary btn-sm mt-3" onclick="this.parentElement.remove()">Close</button>';
+                html += '</div>';
+                
+                document.body.insertAdjacentHTML('beforeend', html);
+            }
+        } catch (error) {
+            alert('Error: ' + error.message);
+        }
+    }
+    </script>
+</body>
+</html>'''
+    f.write(content)
+
+print('✅ Complete Career Roles page with salary, demand, training links created!')
