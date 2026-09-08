@@ -5321,6 +5321,12 @@ async def complete_course(request: Request):
     return ai_courses.complete_course(data.get("enrollment_id"))
 
 
+
+@app.get("/ai-courses", response_class=HTMLResponse)
+async def ai_courses_page(request: Request):
+    return template_response("ai-courses.html", request, "AI Courses - Charvak")
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 

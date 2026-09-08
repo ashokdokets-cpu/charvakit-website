@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Courses - Charvak</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { font-family: Arial, sans-serif; background: #f8f9fa; }
+        .hero { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 50px 0; }
+        .card { border: none; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.08); transition: all 0.3s; height: 100%; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0,0,0,0.15); }
+        .badge-ai { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 5px 15px; border-radius: 20px; font-size: 11px; }
+        .btn-enroll { background: #3ba591; color: white; border-radius: 50px; padding: 10px 25px; font-weight: bold; border: none; }
+        .price-tag { background: #e8f5e9; color: #2e7d32; padding: 5px 12px; border-radius: 20px; font-size: 14px; font-weight: bold; }
+        .feature-list { list-style: none; padding: 0; }
+        .feature-list li { margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+    <div class="hero text-center">
+        <h1>🤖 AI-Driven Courses</h1>
+        <p>Learn with AI - Personalized Curriculum, 24/7 Support, Auto-Certificates</p>
+    </div>
+
+    <div class="container py-4">
+        <div class="alert alert-info text-center">
+            <strong>🎯 How It Works:</strong> Enroll → AI Plans Curriculum → Learn Weekly → Complete Projects → Get Certificate
+        </div>
+
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div class="card p-4 text-center">
+                    <span class="badge-ai">🤖 AI Tutor</span>
+                    <h4 class="mt-2">Python Programming</h4>
+                    <p class="text-muted">6 Weeks | Beginner Friendly</p>
+                    <span class="price-tag">₹999</span>
+                    <ul class="feature-list mt-3 text-start">
+                        <li>✅ AI-planned curriculum</li>
+                        <li>✅ Weekly lessons & exercises</li>
+                        <li>✅ Real-time project help</li>
+                        <li>✅ Completion certificate</li>
+                    </ul>
+                    <button class="btn-enroll w-100 mt-2" onclick="enrollCourse('Python Programming')">Enroll Now</button>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card p-4 text-center">
+                    <span class="badge-ai">🤖 AI Tutor</span>
+                    <h4 class="mt-2">Full Stack Web Development</h4>
+                    <p class="text-muted">12 Weeks | All Levels</p>
+                    <span class="price-tag">₹4,999</span>
+                    <ul class="feature-list mt-3 text-start">
+                        <li>✅ AI-planned curriculum</li>
+                        <li>✅ Weekly projects</li>
+                        <li>✅ Real-time code help</li>
+                        <li>✅ Completion certificate</li>
+                    </ul>
+                    <button class="btn-enroll w-100 mt-2" onclick="enrollCourse('Full Stack Web Development')">Enroll Now</button>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card p-4 text-center">
+                    <span class="badge-ai">🤖 AI Tutor</span>
+                    <h4 class="mt-2">Data Science & ML</h4>
+                    <p class="text-muted">16 Weeks | All Levels</p>
+                    <span class="price-tag">₹5,999</span>
+                    <ul class="feature-list mt-3 text-start">
+                        <li>✅ AI-planned curriculum</li>
+                        <li>✅ Real datasets & projects</li>
+                        <li>✅ 24/7 AI assistance</li>
+                        <li>✅ Completion certificate</li>
+                    </ul>
+                    <button class="btn-enroll w-100 mt-2" onclick="enrollCourse('Data Science & ML')">Enroll Now</button>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card p-4 text-center">
+                    <span class="badge-ai">🤖 AI Tutor</span>
+                    <h4 class="mt-2">AWS Cloud Computing</h4>
+                    <p class="text-muted">10 Weeks | All Levels</p>
+                    <span class="price-tag">₹3,999</span>
+                    <ul class="feature-list mt-3 text-start">
+                        <li>✅ AI-planned curriculum</li>
+                        <li>✅ Hands-on labs</li>
+                        <li>✅ Real-time help</li>
+                        <li>✅ Completion certificate</li>
+                    </ul>
+                    <button class="btn-enroll w-100 mt-2" onclick="enrollCourse('AWS Cloud Computing')">Enroll Now</button>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card p-4 text-center">
+                    <span class="badge-ai">🤖 AI Tutor</span>
+                    <h4 class="mt-2">Cybersecurity</h4>
+                    <p class="text-muted">14 Weeks | All Levels</p>
+                    <span class="price-tag">₹4,999</span>
+                    <ul class="feature-list mt-3 text-start">
+                        <li>✅ AI-planned curriculum</li>
+                        <li>✅ Practical labs</li>
+                        <li>✅ 24/7 AI support</li>
+                        <li>✅ Completion certificate</li>
+                    </ul>
+                    <button class="btn-enroll w-100 mt-2" onclick="enrollCourse('Cybersecurity')">Enroll Now</button>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card p-4 text-center">
+                    <span class="badge-ai">🤖 AI Tutor</span>
+                    <h4 class="mt-2">DevOps Engineering</h4>
+                    <p class="text-muted">12 Weeks | All Levels</p>
+                    <span class="price-tag">₹4,999</span>
+                    <ul class="feature-list mt-3 text-start">
+                        <li>✅ AI-planned curriculum</li>
+                        <li>✅ CI/CD projects</li>
+                        <li>✅ Real-time help</li>
+                        <li>✅ Completion certificate</li>
+                    </ul>
+                    <button class="btn-enroll w-100 mt-2" onclick="enrollCourse('DevOps Engineering')">Enroll Now</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function enrollCourse(courseName) {
+            const email = prompt('Enter your email to enroll in ' + courseName + ':');
+            if (!email) return;
+            
+            const duration = prompt('Choose duration (weeks):\n6, 8, 10, 12, 14, 16');
+            if (!duration) return;
+            
+            try {
+                const response = await fetch('/api/ai-course/enroll', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        email: email,
+                        course_name: courseName,
+                        duration_weeks: parseInt(duration),
+                        user_level: 'beginner'
+                    })
+                });
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    alert('✅ Enrolled Successfully!\n\nCourse: ' + courseName + '\nDuration: ' + duration + ' weeks\n\nAI will plan your personalized curriculum and start teaching you!');
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>
