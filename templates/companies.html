@@ -214,10 +214,11 @@
                     var question = await generateQuestion(topic, j, section.name);
                     
                     sectionHtml += '<div class="question-item">';
-                    sectionHtml += '<strong>Q' + (j + 1) + '.</strong> ' + question.question;
+                    sectionHtml += '<strong>Q' + (j + 1) + '.</strong> ' + (question.q || question.question || 'Question ' + (j + 1));
                     sectionHtml += '<br><small class="text-muted">Topic: ' + topic + '</small>';
                     
-                    question.options.forEach(function(opt, k) {
+                    var qOptions = question.options || ['Option A', 'Option B', 'Option C', 'Option D'];
+                    qOptions.forEach(function(opt, k) {
                         sectionHtml += '<div class="option-item" onclick="selectOption(\'' + qId + '\', ' + k + ', this)">' + String.fromCharCode(65 + k) + ') ' + opt + '</div>';
                     });
                     sectionHtml += '</div>';
