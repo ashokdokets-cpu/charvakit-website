@@ -60,14 +60,14 @@ function getInstallments(d) {
 function getCurrencySymbol() {
     var sel = document.getElementById('currencySelector');
     var curr = sel ? sel.value : 'INR';
-    var symbols = {INR: '₹', USD: '$', EUR: '€', GBP: '£', AED: 'د.إ', SGD: 'S$', AUD: 'A$', CAD: 'C$', JPY: '¥'};
+    var symbols = {INR: '₹', USD: '$', EUR: '€', GBP: '£', AED: 'د.إ', SGD: 'S$', AUD: 'A$', CAD: 'C$', JPY: '¥', CNY: '¥', BRL: 'R$', NGN: '₦', ZAR: 'R'};
     return symbols[curr] || '₹';
 }
 
 function getCurrencyRate() {
     var sel = document.getElementById('currencySelector');
     var curr = sel ? sel.value : 'INR';
-    var rates = {INR: 1, USD: 83.1, EUR: 90.2, GBP: 105.3, AED: 22.6, SGD: 61.2, AUD: 54.8, CAD: 61.0, JPY: 0.56};
+    var rates = {INR: 1, USD: 83.1, EUR: 90.2, GBP: 105.3, AED: 22.6, SGD: 61.2, AUD: 54.8, CAD: 61.0, JPY: 0.56, CNY: 11.5, BRL: 16.8, NGN: 0.055, ZAR: 4.45};
     return rates[curr] || 1;
 }
 
