@@ -1,0 +1,219 @@
+﻿with open('templates/trainers.html', 'w', encoding='utf-8') as f:
+    content = '''<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Courses - Charvak</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { font-family: Arial, sans-serif; background: #f8f9fa; }
+        .hero { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 50px 0; }
+        .card { border: none; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.08); transition: all 0.3s; height: 100%; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0,0,0,0.15); }
+        .badge-ai { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 5px 15px; border-radius: 20px; font-size: 11px; }
+        .btn-enroll { background: #3ba591; color: white; border-radius: 50px; padding: 10px 25px; font-weight: bold; border: none; cursor: pointer; }
+        .price-tag { background: #e8f5e9; color: #2e7d32; padding: 5px 12px; border-radius: 20px; font-size: 14px; font-weight: bold; }
+        .badge-demand { background: #e3f2fd; color: #1565c0; padding: 5px 12px; border-radius: 20px; font-size: 11px; }
+        .course-item { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 10px; padding: 15px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div class="hero text-center">
+        <h1>🤖 AI-Driven Courses</h1>
+        <p>25 High-Demand Courses | AI Tutor | 24/7 Support | Auto-Certificate</p>
+    </div>
+
+    <div class="container py-4">
+        <div class="alert alert-info text-center">
+            <strong>🎯 How It Works:</strong> Enroll → AI Plans Curriculum → Learn Weekly → Complete Projects → Get Certificate
+        </div>
+
+        <div class="row g-3">
+            <div class="col-md-6"><div class="course-item">
+                <strong>1. Full Stack Web Development</strong> <span class="badge-ai">🤖 AI Tutor</span> <span class="badge-demand">Very High Demand</span><br>
+                <small>Duration: 12 Weeks | 120 Hours</small><br>
+                <span class="price-tag">₹4,999</span> <small>EMI: ₹417/mo</small><br>
+                <button class="btn-enroll mt-2" onclick="enrollCourse('Full Stack Web Development')">Enroll Now →</button>
+            </div></div>
+            <div class="col-md-6"><div class="course-item">
+                <strong>2. Data Science & ML</strong> <span class="badge-ai">🤖 AI Tutor</span> <span class="badge-demand">Very High Demand</span><br>
+                <small>Duration: 16 Weeks | 160 Hours</small><br>
+                <span class="price-tag">₹5,999</span> <small>EMI: ₹500/mo</small><br>
+                <button class="btn-enroll mt-2" onclick="enrollCourse('Data Science & ML')">Enroll Now →</button>
+            </div></div>
+            <div class="col-md-6"><div class="course-item">
+                <strong>3. Python Programming</strong> <span class="badge-ai">🤖 AI Tutor</span> <span class="badge-demand">Very High Demand</span><br>
+                <small>Duration: 6 Weeks | 60 Hours</small><br>
+                <span class="price-tag">₹999</span> <small>EMI: ₹83/mo</small><br>
+                <button class="btn-enroll mt-2" onclick="enrollCourse('Python Programming')">Enroll Now →</button>
+            </div></div>
+            <div class="col-md-6"><div class="course-item">
+                <strong>4. AWS Cloud Computing</strong> <span class="badge-ai">🤖 AI Tutor</span> <span class="badge-demand">Critical Demand</span><br>
+                <small>Duration: 10 Weeks | 100 Hours</small><br>
+                <span class="price-tag">₹3,999</span> <small>EMI: ₹333/mo</small><br>
+                <button class="btn-enroll mt-2" onclick="enrollCourse('AWS Cloud Computing')">Enroll Now →</button>
+            </div></div>
+            <div class="col-md-6"><div class="course-item">
+                <strong>5. DevOps Engineering</strong> <span class="badge-ai">🤖 AI Tutor</span> <span class="badge-demand">Very High Demand</span><br>
+                <small>Duration: 12 Weeks | 120 Hours</small><br>
+                <span class="price-tag">₹4,999</span> <small>EMI: ₹417/mo</small><br>
+                <button class="btn-enroll mt-2" onclick="enrollCourse('DevOps Engineering')">Enroll Now →</button>
+            </div></div>
+            <div class="col-md-6"><div class="course-item">
+                <strong>6. Cybersecurity</strong> <span class="badge-ai">🤖 AI Tutor</span> <span class="badge-demand">Critical Demand</span><br>
+                <small>Duration: 14 Weeks | 140 Hours</small><br>
+                <span class="price-tag">₹4,999</span> <small>EMI: ₹417/mo</small><br>
+                <button class="btn-enroll mt-2" onclick="enrollCourse('Cybersecurity')">Enroll Now →</button>
+            </div></div>
+            <div class="col-md-6"><div class="course-item">
+                <strong>7. Java Development</strong> <span class="badge-ai">🤖 AI Tutor</span> <span class="badge-demand">High Demand</span><br>
+                <small>Duration: 10 Weeks | 100 Hours</small><br>
+                <span class="price-tag">₹2,999</span> <small>EMI: ₹250/mo</small><br>
+                <button class="btn-enroll mt-2" onclick="enrollCourse('Java Development')">Enroll Now →</button>
+            </div></div>
+            <div class="col-md-6"><div class="course-item">
+                <strong>8. React & Frontend</strong> <span class="badge-ai">🤖 AI Tutor</span> <span class="badge-demand">High Demand</span><br>
+                <small>Duration: 8 Weeks | 80 Hours</small><br>
+                <span class="price-tag">₹2,499</span> <small>EMI: ₹208/mo</small><br>
+                <button class="btn-enroll mt-2" onclick="enrollCourse('React & Frontend')">Enroll Now →</button>
+            </div></div>
+            <div class="col-md-6"><div class="course-item">
+                <strong>9. SQL & Database</strong> <span class="badge-ai">🤖 AI Tutor</span> <span class="badge-demand">High Demand</span><br>
+                <small>Duration: 4 Weeks | 40 Hours</small><br>
+                <span class="price-tag">₹999</span> <small>EMI: ₹83/mo</small><br>
+                <button class="btn-enroll mt-2" onclick="enrollCourse('SQL & Database')">Enroll Now →</button>
+            </div></div>
+            <div class="col-md-6"><div class="course-item">
+                <strong>10. Docker & Kubernetes</strong> <span class="badge-ai">🤖 AI Tutor</span> <span class="badge-demand">Very High Demand</span><br>
+                <small>Duration: 6 Weeks | 60 Hours</small><br>
+                <span class="price-tag">₹2,499</span> <small>EMI: ₹208/mo</small><br>
+                <button class="btn-enroll mt-2" onclick="enrollCourse('Docker & Kubernetes')">Enroll Now →</button>
+            </div></div>
+            <div class="col-md-6"><div class="course-item">
+                <strong>11. AI & Deep Learning</strong> <span class="badge-ai">🤖 AI Tutor</span> <span class="badge-demand">Very High Demand</span><br>
+                <small>Duration: 16 Weeks | 160 Hours</small><br>
+                <span class="price-tag">₹6,999</span> <small>EMI: ₹583/mo</small><br>
+                <button class="btn-enroll mt-2" onclick="enrollCourse('AI & Deep Learning')">Enroll Now →</button>
+            </div></div>
+            <div class="col-md-6"><div class="course-item">
+                <strong>12. Mobile App Development</strong> <span class="badge-ai">🤖 AI Tutor</span> <span class="badge-demand">High Demand</span><br>
+                <small>Duration: 12 Weeks | 120 Hours</small><br>
+                <span class="price-tag">₹3,999</span> <small>EMI: ₹333/mo</small><br>
+                <button class="btn-enroll mt-2" onclick="enrollCourse('Mobile App Development')">Enroll Now →</button>
+            </div></div>
+            <div class="col-md-6"><div class="course-item">
+                <strong>13. Blockchain Development</strong> <span class="badge-ai">🤖 AI Tutor</span> <span class="badge-demand">High Demand</span><br>
+                <small>Duration: 12 Weeks | 120 Hours</small><br>
+                <span class="price-tag">₹4,999</span> <small>EMI: ₹417/mo</small><br>
+                <button class="btn-enroll mt-2" onclick="enrollCourse('Blockchain Development')">Enroll Now →</button>
+            </div></div>
+            <div class="col-md-6"><div class="course-item">
+                <strong>14. Data Analytics</strong> <span class="badge-ai">🤖 AI Tutor</span> <span class="badge-demand">High Demand</span><br>
+                <small>Duration: 8 Weeks | 80 Hours</small><br>
+                <span class="price-tag">₹2,999</span> <small>EMI: ₹250/mo</small><br>
+                <button class="btn-enroll mt-2" onclick="enrollCourse('Data Analytics')">Enroll Now →</button>
+            </div></div>
+            <div class="col-md-6"><div class="course-item">
+                <strong>15. UI/UX Design</strong> <span class="badge-ai">🤖 AI Tutor</span> <span class="badge-demand">Moderate Demand</span><br>
+                <small>Duration: 6 Weeks | 60 Hours</small><br>
+                <span class="price-tag">₹1,999</span> <small>EMI: ₹167/mo</small><br>
+                <button class="btn-enroll mt-2" onclick="enrollCourse('UI/UX Design')">Enroll Now →</button>
+            </div></div>
+            <div class="col-md-6"><div class="course-item">
+                <strong>16. Cloud Architecture</strong> <span class="badge-ai">🤖 AI Tutor</span> <span class="badge-demand">Critical Demand</span><br>
+                <small>Duration: 14 Weeks | 140 Hours</small><br>
+                <span class="price-tag">₹5,999</span> <small>EMI: ₹500/mo</small><br>
+                <button class="btn-enroll mt-2" onclick="enrollCourse('Cloud Architecture')">Enroll Now →</button>
+            </div></div>
+            <div class="col-md-6"><div class="course-item">
+                <strong>17. Node.js Backend</strong> <span class="badge-ai">🤖 AI Tutor</span> <span class="badge-demand">High Demand</span><br>
+                <small>Duration: 8 Weeks | 80 Hours</small><br>
+                <span class="price-tag">₹2,499</span> <small>EMI: ₹208/mo</small><br>
+                <button class="btn-enroll mt-2" onclick="enrollCourse('Node.js Backend')">Enroll Now →</button>
+            </div></div>
+            <div class="col-md-6"><div class="course-item">
+                <strong>18. Python for Data Science</strong> <span class="badge-ai">🤖 AI Tutor</span> <span class="badge-demand">Very High Demand</span><br>
+                <small>Duration: 10 Weeks | 100 Hours</small><br>
+                <span class="price-tag">₹3,999</span> <small>EMI: ₹333/mo</small><br>
+                <button class="btn-enroll mt-2" onclick="enrollCourse('Python for Data Science')">Enroll Now →</button>
+            </div></div>
+            <div class="col-md-6"><div class="course-item">
+                <strong>19. Machine Learning Ops</strong> <span class="badge-ai">🤖 AI Tutor</span> <span class="badge-demand">High Demand</span><br>
+                <small>Duration: 12 Weeks | 120 Hours</small><br>
+                <span class="price-tag">₹4,999</span> <small>EMI: ₹417/mo</small><br>
+                <button class="btn-enroll mt-2" onclick="enrollCourse('Machine Learning Ops')">Enroll Now →</button>
+            </div></div>
+            <div class="col-md-6"><div class="course-item">
+                <strong>20. Spring Boot</strong> <span class="badge-ai">🤖 AI Tutor</span> <span class="badge-demand">High Demand</span><br>
+                <small>Duration: 8 Weeks | 80 Hours</small><br>
+                <span class="price-tag">₹2,499</span> <small>EMI: ₹208/mo</small><br>
+                <button class="btn-enroll mt-2" onclick="enrollCourse('Spring Boot')">Enroll Now →</button>
+            </div></div>
+            <div class="col-md-6"><div class="course-item">
+                <strong>21. Angular Development</strong> <span class="badge-ai">🤖 AI Tutor</span> <span class="badge-demand">Moderate Demand</span><br>
+                <small>Duration: 6 Weeks | 60 Hours</small><br>
+                <span class="price-tag">₹1,999</span> <small>EMI: ₹167/mo</small><br>
+                <button class="btn-enroll mt-2" onclick="enrollCourse('Angular Development')">Enroll Now →</button>
+            </div></div>
+            <div class="col-md-6"><div class="course-item">
+                <strong>22. Ethical Hacking</strong> <span class="badge-ai">🤖 AI Tutor</span> <span class="badge-demand">Critical Demand</span><br>
+                <small>Duration: 12 Weeks | 120 Hours</small><br>
+                <span class="price-tag">₹5,999</span> <small>EMI: ₹500/mo</small><br>
+                <button class="btn-enroll mt-2" onclick="enrollCourse('Ethical Hacking')">Enroll Now →</button>
+            </div></div>
+            <div class="col-md-6"><div class="course-item">
+                <strong>23. Big Data</strong> <span class="badge-ai">🤖 AI Tutor</span> <span class="badge-demand">High Demand</span><br>
+                <small>Duration: 12 Weeks | 120 Hours</small><br>
+                <span class="price-tag">₹4,999</span> <small>EMI: ₹417/mo</small><br>
+                <button class="btn-enroll mt-2" onclick="enrollCourse('Big Data')">Enroll Now →</button>
+            </div></div>
+            <div class="col-md-6"><div class="course-item">
+                <strong>24. Software Testing</strong> <span class="badge-ai">🤖 AI Tutor</span> <span class="badge-demand">Moderate Demand</span><br>
+                <small>Duration: 4 Weeks | 40 Hours</small><br>
+                <span class="price-tag">₹999</span> <small>EMI: ₹83/mo</small><br>
+                <button class="btn-enroll mt-2" onclick="enrollCourse('Software Testing')">Enroll Now →</button>
+            </div></div>
+            <div class="col-md-6"><div class="course-item">
+                <strong>25. Git & DevOps Tools</strong> <span class="badge-ai">🤖 AI Tutor</span> <span class="badge-demand">High Demand</span><br>
+                <small>Duration: 2 Weeks | 20 Hours</small><br>
+                <span class="price-tag">₹499</span> <small>EMI: ₹42/mo</small><br>
+                <button class="btn-enroll mt-2" onclick="enrollCourse('Git & DevOps Tools')">Enroll Now →</button>
+            </div></div>
+        </div>
+    </div>
+
+    <script>
+        async function enrollCourse(courseName) {
+            const email = prompt('Enter your email to enroll in ' + courseName + ':');
+            if (!email) return;
+            
+            const duration = prompt('Choose duration (weeks): 4, 6, 8, 10, 12, 14, 16');
+            if (!duration) return;
+            
+            try {
+                const response = await fetch('/api/ai-course/enroll', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        email: email,
+                        course_name: courseName,
+                        duration_weeks: parseInt(duration),
+                        user_level: 'beginner'
+                    })
+                });
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    alert('✅ Enrolled! AI will plan your curriculum for ' + courseName + ' (' + duration + ' weeks).');
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>'''
+    f.write(content)
+
+print('✅ Trainers page updated - 25 AI courses, no human trainers!')
