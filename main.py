@@ -5290,6 +5290,37 @@ async def get_course_price(course_name: str, country_code: str):
     return course_pricing.get_course_price(course_name, country_code.upper())
 
 
+
+from ai_courses import ai_courses
+
+@app.post("/api/ai-course/enroll")
+async def enroll_ai_course(request: Request):
+    data = await request.json()
+    return ai_courses.enroll_student(
+        data.get("email"),
+        data.get("course_name"),
+        data.get("duration_weeks"),
+        data.get("user_level", "beginner")
+    )
+
+@app.get("/api/ai-course/content/{enrollment_id}/{week_num}")
+async def get_weekly_content(enrollment_id: str, week_num: int):
+    return ai_courses.get_weekly_content(enrollment_id, week_num)
+
+@app.post("/api/ai-course/project-help")
+async def project_help(request: Request):
+    data = await request.json()
+    return ai_courses.assist_project(
+        data.get("enrollment_id"),
+        data.get("project_question")
+    )
+
+@app.post("/api/ai-course/complete")
+async def complete_course(request: Request):
+    data = await request.json()
+    return ai_courses.complete_course(data.get("enrollment_id"))
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
