@@ -38,6 +38,46 @@
     </div>
 
     <script>
+        var userCurrency = {symbol: '₹', rate: 1, country: 'IN'};
+
+        async function detectUserLocation() {
+            try {
+                const response = await fetch('/api/location/detect');
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    var country = result.country_code || 'IN';
+                    
+                    var currencyMap = {
+                        'IN': {symbol: '₹', rate: 1, label: 'INR'},
+                        'US': {symbol: '$', rate: 83, label: 'USD'},
+                        'GB': {symbol: '£', rate: 105, label: 'GBP'},
+                        'EU': {symbol: '€', rate: 90, label: 'EUR'},
+                        'AE': {symbol: 'د.إ', rate: 22.6, label: 'AED'},
+                        'SG': {symbol: 'S$', rate: 62, label: 'SGD'},
+                        'AU': {symbol: 'A$', rate: 55, label: 'AUD'}
+                    };
+                    
+                    userCurrency = currencyMap[country] || currencyMap['IN'];
+                    
+                    // Re-render courses with new currency
+                    detectUserLocation();
+                }
+            } catch (e) {
+                console.log('Using default INR');
+            }
+        }
+
+        function formatPrice(priceINR) {
+            var converted = Math.round(priceINR / userCurrency.rate);
+            return userCurrency.symbol + converted;
+        }
+
+        function formatInstallment(priceINR, installments) {
+            var converted = Math.round(priceINR / installments / userCurrency.rate);
+            return userCurrency.symbol + converted;
+        }
+
         var courses = [
             {name: 'Full Stack Web Development', price: 4999, duration: 12, demand: 'Very High'},
             {name: 'Data Science & ML', price: 5999, duration: 16, demand: 'Very High'},
@@ -83,8 +123,8 @@
                 html += '<span class="badge-ai">🤖 AI Tutor</span> ';
                 html += '<span class="badge-demand">' + course.demand + ' Demand</span><br>';
                 html += '<small>Duration: ' + course.duration + ' Weeks</small><br>';
-                html += '<span class="price-tag">₹' + course.price + '</span> ';
-                html += '<small class="installment-info">' + installments + ' Installments × ₹' + installmentAmount + '</small><br>';
+                html += '<span class="price-tag">formatPrice(course.price) + '</span> ';
+                html += '<small class="installment-info">' + installments + ' Installments × formatInstallment(course.price, installments) + '</small><br>';
                 html += '<button class="btn-enroll mt-2" onclick="enrollCourse(\'' + course.name + '\', ' + course.price + ', ' + course.duration + ')">Enroll Now →</button>';
                 html += '</div></div>';
             });
@@ -100,8 +140,8 @@
             
             var confirmMsg = 'Course: ' + courseName + '\n';
             confirmMsg += 'Duration: ' + duration + ' weeks\n';
-            confirmMsg += 'Total Price: ₹' + price + '\n';
-            confirmMsg += 'Installments: ' + installments + ' × ₹' + installmentAmount + '\n\n';
+            confirmMsg += 'Total Price: ' + formatPrice(price) + '\n';
+            confirmMsg += 'Installments: ' + installments + ' × ' + formatInstallment(price, installments) + '\n\n';
             confirmMsg += 'Pay 1st installment (₹' + installmentAmount + ') to start?';
             
             if (!confirm(confirmMsg)) return;
