@@ -80,17 +80,104 @@ class CompanyMockDrive:
         return companies.get(company_id, companies.get("tcs"))
     
     def _generate_section_questions(self, section_name, topics, count):
-        """Generate questions for a section."""
+        """Generate real market-standard questions."""
+        question_bank = {
+            "Aptitude": [
+                {"q": "What is 25% of 400?", "options": ["80", "100", "120", "150"], "correct": 1},
+                {"q": "If a train travels 360 km in 6 hours, what is its speed?", "options": ["50 km/h", "55 km/h", "60 km/h", "65 km/h"], "correct": 2},
+                {"q": "What is the LCM of 12 and 18?", "options": ["24", "36", "48", "72"], "correct": 1},
+                {"q": "If 5 workers complete a job in 10 days, how many days for 10 workers?", "options": ["3", "5", "7", "10"], "correct": 1},
+                {"q": "What comes next: 3, 6, 12, 24, ?", "options": ["36", "48", "50", "52"], "correct": 1},
+                {"q": "What is 15% of Rs. 2000?", "options": ["Rs. 250", "Rs. 300", "Rs. 350", "Rs. 400"], "correct": 1},
+                {"q": "Average of 10, 20, 30, 40, 50?", "options": ["25", "30", "35", "40"], "correct": 1},
+                {"q": "If a=5, b=3, what is a² + b²?", "options": ["25", "34", "36", "40"], "correct": 1}
+            ],
+            "Logical": [
+                {"q": "If A > B and B > C, then?", "options": ["A > C", "A < C", "A = C", "Cannot say"], "correct": 0},
+                {"q": "Which comes next: 1, 4, 9, 16, ?", "options": ["20", "25", "30", "36"], "correct": 1},
+                {"q": "Complete: 2, 3, 5, 7, 11, ?", "options": ["13", "14", "15", "16"], "correct": 0},
+                {"q": "Which is different: Apple, Banana, Carrot, Mango?", "options": ["Apple", "Banana", "Carrot", "Mango"], "correct": 2},
+                {"q": "If today is Monday, what was 3 days ago?", "options": ["Thursday", "Friday", "Saturday", "Sunday"], "correct": 1}
+            ],
+            "Verbal": [
+                {"q": "What is the synonym of 'happy'?", "options": ["Sad", "Joyful", "Angry", "Tired"], "correct": 1},
+                {"q": "What is the antonym of 'big'?", "options": ["Large", "Huge", "Small", "Giant"], "correct": 2},
+                {"q": "Complete: 'The cat ___ on the mat.'", "options": ["sit", "sits", "sitting", "sat"], "correct": 1},
+                {"q": "Which word is a noun?", "options": ["Run", "Beautiful", "Table", "Quickly"], "correct": 2}
+            ],
+            "Advanced Quant": [
+                {"q": "What is the probability of getting heads twice in two coin tosses?", "options": ["1/4", "1/2", "1/3", "3/4"], "correct": 0},
+                {"q": "If log₂(8) = x, what is x?", "options": ["2", "3", "4", "8"], "correct": 1},
+                {"q": "What is the sum of first 10 natural numbers?", "options": ["45", "50", "55", "60"], "correct": 2},
+                {"q": "If sin(30°) = ?", "options": ["0", "1/2", "1", "√3/2"], "correct": 1},
+                {"q": "What is 5! (5 factorial)?", "options": ["60", "100", "120", "150"], "correct": 2}
+            ],
+            "Advanced Logic": [
+                {"q": "In a code, CAT = 24. What is DOG?", "options": ["26", "27", "28", "29"], "correct": 1},
+                {"q": "If all roses are flowers and some flowers fade, then?", "options": ["All roses fade", "Some roses fade", "No roses fade", "Cannot say"], "correct": 3},
+                {"q": "A is father of B, B is mother of C. A is C's?", "options": ["Grandfather", "Grandmother", "Uncle", "Father"], "correct": 0}
+            ],
+            "DSA": [
+                {"q": "Which data structure uses LIFO?", "options": ["Queue", "Stack", "Array", "Linked List"], "correct": 1},
+                {"q": "Time complexity of binary search?", "options": ["O(1)", "O(log n)", "O(n)", "O(n²)"], "correct": 1},
+                {"q": "Which sorting is divide and conquer?", "options": ["Bubble", "Merge", "Insertion", "Selection"], "correct": 1},
+                {"q": "What is a binary tree?", "options": ["Max 2 children", "Max 3 children", "No children", "Unlimited"], "correct": 0},
+                {"q": "Which is not linear?", "options": ["Array", "Stack", "Tree", "Queue"], "correct": 2}
+            ],
+            "Problem Solving": [
+                {"q": "Find the missing: 2, 4, 8, 16, ?", "options": ["24", "32", "36", "40"], "correct": 1},
+                {"q": "A car covers 240 km in 4 hours. Distance in 7 hours?", "options": ["360", "420", "480", "520"], "correct": 1},
+                {"q": "If 3x + 7 = 22, what is x?", "options": ["3", "5", "7", "9"], "correct": 1}
+            ],
+            "Algorithms": [
+                {"q": "Time complexity of merge sort?", "options": ["O(n)", "O(n log n)", "O(n²)", "O(log n)"], "correct": 1},
+                {"q": "Which algorithm finds shortest path?", "options": ["DFS", "BFS", "Dijkstra", "Binary"], "correct": 2},
+                {"q": "Worst case of quick sort?", "options": ["O(n)", "O(n log n)", "O(n²)", "O(log n)"], "correct": 2}
+            ],
+            "DBMS": [
+                {"q": "SQL command to retrieve data?", "options": ["INSERT", "UPDATE", "SELECT", "DELETE"], "correct": 2},
+                {"q": "What is a primary key?", "options": ["Unique identifier", "Foreign key", "Index", "None"], "correct": 0},
+                {"q": "Which is NoSQL?", "options": ["MySQL", "MongoDB", "Oracle", "PostgreSQL"], "correct": 1}
+            ],
+            "OOPs": [
+                {"q": "OOP stands for?", "options": ["Object Oriented Programming", "Order of Operations", "Object Output Process", "None"], "correct": 0},
+                {"q": "Which is not OOP principle?", "options": ["Encapsulation", "Inheritance", "Compilation", "Polymorphism"], "correct": 2},
+                {"q": "What is encapsulation?", "options": ["Hiding data", "Showing data", "Deleting data", "Copying data"], "correct": 0}
+            ],
+            "CS Fundamentals": [
+                {"q": "What is an OS?", "options": ["Software managing hardware", "Hardware", "Application", "None"], "correct": 0},
+                {"q": "Which is not an OS?", "options": ["Windows", "Linux", "Oracle", "macOS"], "correct": 2},
+                {"q": "What is a process?", "options": ["Running program", "File", "Folder", "None"], "correct": 0}
+            ],
+            "Grammar": [
+                {"q": "Which is correct?", "options": ["He go", "He goes", "He going", "He gone"], "correct": 1},
+                {"q": "What is the past tense of 'run'?", "options": ["Ran", "Runned", "Running", "Runs"], "correct": 0},
+                {"q": "Which is a preposition?", "options": ["Run", "In", "Beautiful", "Quickly"], "correct": 1}
+            ]
+        }
+        
         questions = []
         for i in range(count):
             topic = topics[i % len(topics)] if topics else "General"
-            questions.append({
-                "id": i + 1,
-                "question": f"{section_name} - {topic} Question {i+1}",
-                "options": ["Option A", "Option B", "Option C", "Option D"],
-                "correct": i % 4,
-                "topic": topic
-            })
+            bank = question_bank.get(topic, question_bank.get("Aptitude", []))
+            
+            if bank:
+                q = bank[i % len(bank)]
+                questions.append({
+                    "id": i + 1,
+                    "question": q["q"],
+                    "options": q["options"],
+                    "correct": q["correct"],
+                    "topic": topic
+                })
+            else:
+                questions.append({
+                    "id": i + 1,
+                    "question": f"{topic} practice question {i+1}",
+                    "options": ["Option A", "Option B", "Option C", "Option D"],
+                    "correct": i % 4,
+                    "topic": topic
+                })
         return questions
     
     def start_mock(self, email, company_id):
