@@ -738,7 +738,7 @@ function processToolPayment(amount, toolName, callback) {
 function showPaymentMethodModal(amount, toolName, callback) {
     const modal = document.createElement('div');
     modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:99999;display:flex;align-items:center;justify-content:center;';
-    modal.innerHTML = `
+    modal.innerHTML = '
         <div class="bg-white p-4 rounded" style="max-width:400px;width:90%;">
             <h4 class="mb-3">Choose Payment Method</h4>
             <p class="mb-3">Amount: <strong>₹${amount}</strong> (${toolName})</p>
@@ -839,7 +839,7 @@ function payWithPayPal(amount, toolName) {
             const paypalContainer = document.createElement('div');
             paypalContainer.id = 'paypal-button-container';
             paypalContainer.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:99999;background:white;padding:30px;border-radius:10px;box-shadow:0 10px 40px rgba(0,0,0,0.3);';
-            paypalContainer.innerHTML = `
+            paypalContainer.innerHTML = '
                 <h5 class="mb-3">Complete PayPal Payment</h5>
                 <p>Amount: <strong>$${usdAmount} USD</strong></p>
                 <div id="paypal-buttons"></div>
@@ -915,12 +915,12 @@ function payWithPayPal(amount, toolName) {
 async function loadNavCredits() {
     const email = localStorage.getItem('userEmail') || 'demo@charvakit.com';
     try {
-        const response = await fetch(`/api/credits/${email}`);
+        const response = await fetch('/api/credits/' + email);
         const data = await response.json();
         if (data.status === 'success') {
             const creditDisplay = document.getElementById('nav-credits-display');
             if (creditDisplay) {
-                creditDisplay.textContent = `${data.credits_remaining} ⚡`;
+                creditDisplay.textContent = data.credits_remaining + ' ⚡';
             }
         }
     } catch (error) {
