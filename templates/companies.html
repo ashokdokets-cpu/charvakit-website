@@ -106,13 +106,17 @@
             
             try {
                 // Use multi-pattern API to get the specific pattern
-                const response = await fetch('/api/company-patterns/start', {
+                const response = await fetch('/api/ai-pattern/generate-questions', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
-                        email: email,
-                        company_id: companyId,
-                        pattern_id: patternId
+                        company_name: companyId.toUpperCase(),
+                        pattern_name: patternId,
+                        sections: [
+                            {name: 'Aptitude', count: 20, topics: ['Quant', 'Logical']},
+                            {name: 'Technical', count: 15, topics: ['DSA', 'Algorithms']},
+                            {name: 'Coding', count: 2, topics: ['DSA', 'Problem Solving']}
+                        ]
                     })
                 });
                 const result = await response.json();

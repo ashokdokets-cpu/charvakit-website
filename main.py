@@ -5226,6 +5226,22 @@ async def start_pattern_mock(request: Request):
     )
 
 
+
+from ai_pattern_questions import ai_pattern_questions
+
+@app.post("/api/ai-pattern/generate-questions")
+async def generate_pattern_questions(request: Request):
+    data = await request.json()
+    return {
+        "status": "success",
+        "sections": ai_pattern_questions.generate_pattern_questions(
+            data.get("company_name"),
+            data.get("pattern_name"),
+            data.get("sections")
+        )
+    }
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
