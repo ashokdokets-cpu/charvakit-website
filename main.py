@@ -5209,6 +5209,23 @@ async def complete_full_mock(request: Request):
     return complete_mock.complete_mock(data.get("session_id"))
 
 
+
+from multi_pattern_company import multi_pattern
+
+@app.get("/api/company-patterns/{company_id}")
+async def get_company_patterns(company_id: str):
+    return multi_pattern.get_company_patterns(company_id)
+
+@app.post("/api/company-patterns/start")
+async def start_pattern_mock(request: Request):
+    data = await request.json()
+    return multi_pattern.start_pattern_mock(
+        data.get("email"),
+        data.get("company_id"),
+        data.get("pattern_id")
+    )
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
