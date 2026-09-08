@@ -4988,6 +4988,77 @@ async def get_readiness(email: str, company_id: str):
     return company_content_engine.get_user_readiness(email, company_id)
 
 
+
+from universal_company import universal_company
+
+@app.post("/api/company/custom/add")
+async def add_custom_company(request: Request):
+    data = await request.json()
+    return universal_company.add_custom_company(
+        data.get("company_name"),
+        data.get("pattern_name"),
+        data.get("sections"),
+        data.get("cutoff", 65),
+        data.get("difficulty", "Moderate")
+    )
+
+@app.post("/api/company/content-request")
+async def request_content(request: Request):
+    data = await request.json()
+    return universal_company.request_content(
+        data.get("email"),
+        data.get("company_name"),
+        data.get("content_type"),
+        data.get("topic"),
+        data.get("description")
+    )
+
+@app.post("/api/company/contact-admin")
+async def contact_admin(request: Request):
+    data = await request.json()
+    return universal_company.contact_admin(
+        data.get("email"),
+        data.get("subject"),
+        data.get("message")
+    )
+
+@app.get("/api/company/content-requests")
+async def get_content_requests():
+    return universal_company.get_content_requests()
+
+@app.post("/api/company/update-request")
+async def update_request(request: Request):
+    data = await request.json()
+    return universal_company.update_content_request(
+        data.get("request_id"),
+        data.get("status"),
+        data.get("admin_note")
+    )
+
+@app.get("/api/company/custom/all")
+async def get_custom_companies():
+    return universal_company.get_custom_companies()
+
+@app.post("/api/company/generate-content")
+async def generate_content(request: Request):
+    data = await request.json()
+    return universal_company.generate_content_for_any_company(
+        data.get("company_name"),
+        data.get("topic"),
+        data.get("count", 5)
+    )
+
+@app.get("/api/company/all-combined")
+async def get_all_companies():
+    return universal_company.get_all_companies_combined()
+
+
+
+@app.get("/request-content", response_class=HTMLResponse)
+async def request_content_page(request: Request):
+    return template_response("request-content.html", request, "Request Content - Charvak")
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
