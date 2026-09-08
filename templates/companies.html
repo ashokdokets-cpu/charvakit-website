@@ -5,108 +5,237 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Company Patterns - Charvak</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: Arial, sans-serif; background: #f8f9fa; }
+        :root { --primary: #3ba591; --primary-dark: #2e8a78; }
+        body { font-family: 'Poppins', sans-serif; background: #f8f9fa; }
         .hero { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 50px 0; }
-        .card { border: none; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.08); }
-        .question-count { font-size: 14px; color: #666; }
+        .company-card { cursor: pointer; border: 2px solid #e0e0e0; border-radius: 15px; padding: 20px; text-align: center; background: white; transition: all 0.3s; height: 100%; }
+        .company-card:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0,0,0,0.15); border-color: var(--primary); }
+        .company-card.active { border-color: var(--primary); background: #f0faf8; }
+        .logo-circle { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: bold; color: white; margin: 0 auto 10px; }
+        .question-count { font-size: 13px; color: #666; }
+        .detail-box { background: white; border-radius: 15px; padding: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); margin-top: 20px; display: none; }
+        .detail-box.active { display: block; }
+        .section-item { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px; margin-bottom: 8px; }
     </style>
 </head>
 <body>
     <div class="hero text-center">
         <h1>🏢 Company Patterns</h1>
-        <p>Mock Drives for Top IT Companies - Market Standard</p>
+        <p>Mock Drives for 15+ Top IT Companies - Market Standard</p>
     </div>
 
     <div class="container py-4">
         <div class="alert alert-info text-center">
-            <strong>📋 Market Standard Questions:</strong> TCS (37Q) | Infosys (38Q) | Cognizant (35Q) | Wipro (24Q) | Accenture (50Q)
+            <strong>📋 Click any company to see detailed section breakdown</strong>
         </div>
     </div>
 
-    <div class="container py-4">
-        <div class="row g-4">
-            <div class="col-md-4">
-                <div class="card p-4 text-center">
-                    <h3>TCS</h3>
-                    <p class="text-muted">NQT, Digital, Innovator</p>
-                    <div class="question-count">
-                        <strong>37 Questions Total</strong><br>
-                        Foundation: 25Q (75 min)<br>
-                        Advanced: 10Q (25 min)<br>
-                        Coding: 2Q (55 min)
-                    </div>
-                    <a href="/api/company-pattern/tcs" class="btn btn-primary mt-3 rounded-pill">View Pattern</a>
+    <div class="container py-3">
+        <div class="row g-3">
+            <div class="col-6 col-md-3">
+                <div class="company-card" data-company="tcs" onclick="showCompany('tcs')">
+                    <div class="logo-circle" style="background:#1565c0;">TCS</div>
+                    <h5>TCS</h5>
+                    <small class="text-muted">NQT, Digital, Innovator</small><br>
+                    <span class="badge bg-primary mt-2">37 Questions</span>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="card p-4 text-center">
-                    <h3>Infosys</h3>
-                    <p class="text-muted">InfyTQ, HackWithInfy</p>
-                    <div class="question-count">
-                        <strong>38 Questions Total</strong><br>
-                        Aptitude: 20Q (60 min)<br>
-                        Technical: 15Q (30 min)<br>
-                        Coding: 3Q (90 min)
-                    </div>
-                    <a href="/api/company-pattern/infosys" class="btn btn-primary mt-3 rounded-pill">View Pattern</a>
+            <div class="col-6 col-md-3">
+                <div class="company-card" data-company="infosys" onclick="showCompany('infosys')">
+                    <div class="logo-circle" style="background:#00796b;">INF</div>
+                    <h5>Infosys</h5>
+                    <small class="text-muted">InfyTQ, HackWithInfy</small><br>
+                    <span class="badge bg-primary mt-2">38 Questions</span>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="card p-4 text-center">
-                    <h3>Cognizant</h3>
-                    <p class="text-muted">GenC, Elevate, Pro</p>
-                    <div class="question-count">
-                        <strong>35 Questions Total</strong><br>
-                        Aptitude: 20Q (60 min)<br>
-                        Communication: 10Q (20 min)<br>
-                        Programming: 5Q (45 min)
-                    </div>
-                    <a href="/api/company-pattern/cognizant" class="btn btn-primary mt-3 rounded-pill">View Pattern</a>
+            <div class="col-6 col-md-3">
+                <div class="company-card" data-company="cognizant" onclick="showCompany('cognizant')">
+                    <div class="logo-circle" style="background:#00695c;">CTS</div>
+                    <h5>Cognizant</h5>
+                    <small class="text-muted">GenC, Elevate, Pro</small><br>
+                    <span class="badge bg-primary mt-2">35 Questions</span>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="card p-4 text-center">
-                    <h3>Wipro</h3>
-                    <p class="text-muted">Elite NTH, Turbo</p>
-                    <div class="question-count">
-                        <strong>24 Questions Total</strong><br>
-                        Aptitude: 20Q (48 min)<br>
-                        Communication: 2Q (20 min)<br>
-                        Coding: 2Q (45 min)
-                    </div>
-                    <a href="/api/company-pattern/wipro" class="btn btn-primary mt-3 rounded-pill">View Pattern</a>
+            <div class="col-6 col-md-3">
+                <div class="company-card" data-company="wipro" onclick="showCompany('wipro')">
+                    <div class="logo-circle" style="background:#e65100;">WIP</div>
+                    <h5>Wipro</h5>
+                    <small class="text-muted">Elite NTH, Turbo</small><br>
+                    <span class="badge bg-primary mt-2">24 Questions</span>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="card p-4 text-center">
-                    <h3>Accenture</h3>
-                    <p class="text-muted">ASE, Advanced ASE</p>
-                    <div class="question-count">
-                        <strong>50 Questions Total</strong><br>
-                        Cognitive: 25Q (60 min)<br>
-                        Technical: 15Q (30 min)<br>
-                        Communication: 10Q (20 min)
-                    </div>
-                    <a href="/api/company-pattern/accenture" class="btn btn-primary mt-3 rounded-pill">View Pattern</a>
+            <div class="col-6 col-md-3">
+                <div class="company-card" data-company="accenture" onclick="showCompany('accenture')">
+                    <div class="logo-circle" style="background:#7b1fa2;">ACC</div>
+                    <h5>Accenture</h5>
+                    <small class="text-muted">ASE, Advanced ASE</small><br>
+                    <span class="badge bg-primary mt-2">50 Questions</span>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="card p-4 text-center">
-                    <h3>Capgemini</h3>
-                    <p class="text-muted">Exceller, Pro</p>
-                    <div class="question-count">
-                        <strong>37 Questions Total</strong><br>
-                        Aptitude: 20Q (60 min)<br>
-                        Technical: 15Q (30 min)<br>
-                        Coding: 2Q (45 min)
-                    </div>
-                    <a href="/api/company-pattern/capgemini" class="btn btn-primary mt-3 rounded-pill">View Pattern</a>
+            <div class="col-6 col-md-3">
+                <div class="company-card" data-company="capgemini" onclick="showCompany('capgemini')">
+                    <div class="logo-circle" style="background:#00838f;">CAP</div>
+                    <h5>Capgemini</h5>
+                    <small class="text-muted">Exceller, Pro</small><br>
+                    <span class="badge bg-primary mt-2">37 Questions</span>
                 </div>
             </div>
+            <div class="col-6 col-md-3">
+                <div class="company-card" data-company="ibm" onclick="showCompany('ibm')">
+                    <div class="logo-circle" style="background:#1a237e;">IBM</div>
+                    <h5>IBM</h5>
+                    <small class="text-muted">Associate, Developer</small><br>
+                    <span class="badge bg-primary mt-2">32 Questions</span>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="company-card" data-company="hcl" onclick="showCompany('hcl')">
+                    <div class="logo-circle" style="background:#bf360c;">HCL</div>
+                    <h5>HCLTech</h5>
+                    <small class="text-muted">TechBee, TSS</small><br>
+                    <span class="badge bg-primary mt-2">37 Questions</span>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="company-card" data-company="tech_mahindra" onclick="showCompany('tech_mahindra')">
+                    <div class="logo-circle" style="background:#e91e63;">TM</div>
+                    <h5>Tech Mahindra</h5>
+                    <small class="text-muted">Talent, Digital</small><br>
+                    <span class="badge bg-primary mt-2">35 Questions</span>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="company-card" data-company="lti" onclick="showCompany('lti')">
+                    <div class="logo-circle" style="background:#00bcd4;">LTI</div>
+                    <h5>LTI</h5>
+                    <small class="text-muted">GET, Digital</small><br>
+                    <span class="badge bg-primary mt-2">32 Questions</span>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="company-card" data-company="mindtree" onclick="showCompany('mindtree')">
+                    <div class="logo-circle" style="background:#ff5722;">MT</div>
+                    <h5>Mindtree</h5>
+                    <small class="text-muted">Graduate, Specialist</small><br>
+                    <span class="badge bg-primary mt-2">32 Questions</span>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="company-card" data-company="deloitte" onclick="showCompany('deloitte')">
+                    <div class="logo-circle" style="background:#4caf50;">DEL</div>
+                    <h5>Deloitte</h5>
+                    <small class="text-muted">Analyst, Consultant</small><br>
+                    <span class="badge bg-primary mt-2">40 Questions</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detail Box -->
+        <div class="detail-box active" id="detail-tcs">
+            <h4>🏢 TCS - NQT Pattern</h4>
+            <div class="section-item"><strong>Foundation:</strong> 25 Questions (75 min) - Aptitude, Logical, Verbal</div>
+            <div class="section-item"><strong>Advanced:</strong> 10 Questions (25 min) - Advanced Quant, Logic</div>
+            <div class="section-item"><strong>Coding:</strong> 2 Questions (55 min) - DSA Problems</div>
+            <button class="btn btn-primary rounded-pill mt-2">Start TCS Mock Drive →</button>
+        </div>
+        <div class="detail-box" id="detail-infosys">
+            <h4>🏢 Infosys - InfyTQ Pattern</h4>
+            <div class="section-item"><strong>Aptitude:</strong> 20 Questions (60 min)</div>
+            <div class="section-item"><strong>Technical:</strong> 15 Questions (30 min) - DSA, DBMS, OOPs</div>
+            <div class="section-item"><strong>Coding:</strong> 3 Questions (90 min)</div>
+            <button class="btn btn-primary rounded-pill mt-2">Start Infosys Mock Drive →</button>
+        </div>
+        <div class="detail-box" id="detail-cognizant">
+            <h4>🏢 Cognizant - GenC Pattern</h4>
+            <div class="section-item"><strong>Aptitude:</strong> 20 Questions (60 min)</div>
+            <div class="section-item"><strong>Communication:</strong> 10 Questions (20 min)</div>
+            <div class="section-item"><strong>Programming:</strong> 5 Questions (45 min) - SQL, Debugging</div>
+            <button class="btn btn-primary rounded-pill mt-2">Start Cognizant Mock Drive →</button>
+        </div>
+        <div class="detail-box" id="detail-wipro">
+            <h4>🏢 Wipro - Elite NTH Pattern</h4>
+            <div class="section-item"><strong>Aptitude:</strong> 20 Questions (48 min)</div>
+            <div class="section-item"><strong>Communication:</strong> 2 Questions (20 min) - Essay, Email</div>
+            <div class="section-item"><strong>Coding:</strong> 2 Questions (45 min)</div>
+            <button class="btn btn-primary rounded-pill mt-2">Start Wipro Mock Drive →</button>
+        </div>
+        <div class="detail-box" id="detail-accenture">
+            <h4>🏢 Accenture - ASE Pattern</h4>
+            <div class="section-item"><strong>Cognitive:</strong> 25 Questions (60 min)</div>
+            <div class="section-item"><strong>Technical:</strong> 15 Questions (30 min)</div>
+            <div class="section-item"><strong>Communication:</strong> 10 Questions (20 min)</div>
+            <button class="btn btn-primary rounded-pill mt-2">Start Accenture Mock Drive →</button>
+        </div>
+        <div class="detail-box" id="detail-capgemini">
+            <h4>🏢 Capgemini - Exceller Pattern</h4>
+            <div class="section-item"><strong>Aptitude:</strong> 20 Questions (60 min)</div>
+            <div class="section-item"><strong>Technical:</strong> 15 Questions (30 min)</div>
+            <div class="section-item"><strong>Coding:</strong> 2 Questions (45 min)</div>
+            <button class="btn btn-primary rounded-pill mt-2">Start Capgemini Mock Drive →</button>
+        </div>
+        <div class="detail-box" id="detail-ibm">
+            <h4>🏢 IBM - Associate Pattern</h4>
+            <div class="section-item"><strong>Aptitude:</strong> 20 Questions (60 min)</div>
+            <div class="section-item"><strong>Technical:</strong> 10 Questions (30 min)</div>
+            <div class="section-item"><strong>Coding:</strong> 2 Questions (45 min)</div>
+            <button class="btn btn-primary rounded-pill mt-2">Start IBM Mock Drive →</button>
+        </div>
+        <div class="detail-box" id="detail-hcl">
+            <h4>🏢 HCLTech - TechBee Pattern</h4>
+            <div class="section-item"><strong>Aptitude:</strong> 20 Questions (60 min)</div>
+            <div class="section-item"><strong>Technical:</strong> 15 Questions (30 min)</div>
+            <div class="section-item"><strong>Coding:</strong> 2 Questions (30 min)</div>
+            <button class="btn btn-primary rounded-pill mt-2">Start HCL Mock Drive →</button>
+        </div>
+        <div class="detail-box" id="detail-tech_mahindra">
+            <h4>🏢 Tech Mahindra Pattern</h4>
+            <div class="section-item"><strong>Aptitude:</strong> 20 Questions (60 min)</div>
+            <div class="section-item"><strong>Technical:</strong> 10 Questions (30 min)</div>
+            <div class="section-item"><strong>Coding:</strong> 2 Questions (45 min)</div>
+            <button class="btn btn-primary rounded-pill mt-2">Start Tech Mahindra Mock Drive →</button>
+        </div>
+        <div class="detail-box" id="detail-lti">
+            <h4>🏢 LTI Pattern</h4>
+            <div class="section-item"><strong>Aptitude:</strong> 20 Questions (60 min)</div>
+            <div class="section-item"><strong>Technical:</strong> 10 Questions (30 min)</div>
+            <div class="section-item"><strong>Coding:</strong> 2 Questions (45 min)</div>
+            <button class="btn btn-primary rounded-pill mt-2">Start LTI Mock Drive →</button>
+        </div>
+        <div class="detail-box" id="detail-mindtree">
+            <h4>🏢 Mindtree Pattern</h4>
+            <div class="section-item"><strong>Aptitude:</strong> 20 Questions (60 min)</div>
+            <div class="section-item"><strong>Technical:</strong> 10 Questions (30 min)</div>
+            <div class="section-item"><strong>Coding:</strong> 2 Questions (45 min)</div>
+            <button class="btn btn-primary rounded-pill mt-2">Start Mindtree Mock Drive →</button>
+        </div>
+        <div class="detail-box" id="detail-deloitte">
+            <h4>🏢 Deloitte Pattern</h4>
+            <div class="section-item"><strong>Aptitude:</strong> 25 Questions (60 min)</div>
+            <div class="section-item"><strong>Technical:</strong> 10 Questions (30 min)</div>
+            <div class="section-item"><strong>Communication:</strong> 5 Questions (15 min)</div>
+            <button class="btn btn-primary rounded-pill mt-2">Start Deloitte Mock Drive →</button>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function showCompany(companyId) {
+            // Update active card
+            document.querySelectorAll('.company-card').forEach(c => c.classList.remove('active'));
+            document.querySelector('[data-company="' + companyId + '"]').classList.add('active');
+            
+            // Hide all detail boxes
+            document.querySelectorAll('.detail-box').forEach(d => d.classList.remove('active'));
+            
+            // Show selected detail
+            var detail = document.getElementById('detail-' + companyId);
+            if (detail) {
+                detail.classList.add('active');
+            }
+        }
+    </script>
 </body>
 </html>
