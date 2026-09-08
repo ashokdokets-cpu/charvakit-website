@@ -57,6 +57,7 @@
         var currentSession = null;
         var currentCompany = null;
         var userAnswers = {};
+        var currentSessionId = null;
 
         async function selectCompany(companyId) {
             currentCompany = companyId;
@@ -138,7 +139,8 @@
                         html += '</div>';
                     });
                     
-                    html += '<p class="text-info mt-3">Questions will be AI-generated when you start the full test.</p>';
+                    html += '<button class="btn-custom mt-3" onclick="generateQuestions(\'' + result.session_id + '\', \'' + companyId + '\', \'' + patternId + '\')">📝 Generate Questions →</button>';
+                    html += '<div id="questionsBox" class="mt-3"></div>';
                     
                     content.innerHTML = html;
                 }
@@ -254,6 +256,76 @@
             } catch (error) {
                 resultsBox.innerHTML = '<p class="text-danger">Error: ' + error.message + '</p>';
             }
+        }
+        async function generateQuestions(sessionId, companyId, patternId) {
+            var box = document.getElementById('questionsBox');
+            box.innerHTML = '<p class="text-muted">Generating AI questions...</p>';
+            
+            try {
+                const response = await fetch('/api/mock/start-complete', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        email: 'user@example.com',
+                        company_id: companyId
+                    })
+                });
+                const result = await response.json();
+                
+                if (result.status === 'success' && result.session) {
+                    var session = result.session;
+                    var html = '';
+                    
+                    session.sections.forEach(function(section) {
+                        html += '<h5 class="mt-4">' + section.name + ' (' + section.questions.length + ' Questions)</h5>';
+                        
+                        section.questions.forEach(function(q, index) {
+                            var qId = section.name + '_' + index;
+                            html += '<div class="question-item">';
+                            html += '<strong>Q' + (index + 1) + '.</strong> ' + q.question;
+                            html += '<br><small class="text-muted">Topic: ' + q.topic + '</small>';
+                            
+                            if (q.options && Array.isArray(q.options)) {
+                                q.options.forEach(function(opt, j) {
+                                    html += '<div class="option-item" onclick="selectOption(\'' + qId + '\', ' + j + ', this)">' + String.fromCharCode(65 + j) + ') ' + opt + '</div>';
+                                });
+                            }
+                            html += '</div>';
+                        });
+                    });
+                    
+                    html += '<div class="text-center mt-4">';
+                    html += '<button class="btn-custom" onclick="completeMock()">📊 Complete Test & Get Results</button>';
+                    html += '</div>';
+                    html += '<div id="resultsBox" class="mt-3"></div>';
+                    
+                    box.innerHTML = html;
+                }
+            } catch (error) {
+                box.innerHTML = '<p class="text-danger">Error: ' + error.message + '</p>';
+            }
+        }
+
+        function selectOption(questionId, optionIndex, element) {
+            element.parentElement.querySelectorAll('.option-item').forEach(o => o.classList.remove('selected'));
+            element.classList.add('selected');
+            userAnswers[questionId] = optionIndex;
+        }
+
+        async function completeMock() {
+            var resultsBox = document.getElementById('resultsBox');
+            if (!resultsBox) resultsBox = document.getElementById('questionsBox');
+            resultsBox.innerHTML = '<p class="text-muted">Calculating results...</p>';
+            
+            var answered = Object.keys(userAnswers).length;
+            
+            resultsBox.innerHTML = '<div class="alert alert-info mt-3">';
+            resultsBox.innerHTML += '<h5>📊 Test Completed!</h5>';
+            resultsBox.innerHTML += 'Total Questions: ' + answered + '<br>';
+            resultsBox.innerHTML += 'Score: 75% (Sample)<br>';
+            resultsBox.innerHTML += 'Result: ✅ PASS<br>';
+            resultsBox.innerHTML += '</div>';
+            resultsBox.innerHTML += '<p class="text-muted mt-2">Full results and reports will be generated after all answers are submitted.</p>';
         }
     </script>
 </body>
