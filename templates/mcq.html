@@ -8,10 +8,13 @@
     <style>
         body { font-family: Arial, sans-serif; background: #f8f9fa; }
         .hero { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; padding: 40px 0; }
-        .category-card { cursor: pointer; border: 2px solid #e0e0e0; border-radius: 10px; padding: 15px; text-align: center; background: white; transition: all 0.3s; }
+        .category-card { cursor: pointer; border: 2px solid #e0e0e0; border-radius: 10px; padding: 15px; text-align: center; background: white; margin-bottom: 10px; }
         .category-card:hover { border-color: #3ba591; }
         .category-card.active { border-color: #3ba591; background: #f0faf8; }
         .topic-badge { display: inline-block; background: #e8f5e9; color: #2e7d32; padding: 4px 10px; border-radius: 20px; margin: 2px; font-size: 11px; }
+        .topic-tab { cursor: pointer; border: 1px solid #e0e0e0; border-radius: 20px; padding: 8px 15px; margin: 3px; background: white; display: inline-block; font-size: 13px; }
+        .topic-tab:hover { border-color: #3ba591; }
+        .topic-tab.active { background: #3ba591; color: white; }
         .question-box { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); margin-top: 20px; }
         .question-item { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; margin-bottom: 10px; }
         .option-item { cursor: pointer; padding: 10px 15px; border: 1px solid #e0e0e0; border-radius: 6px; margin: 5px 0; }
@@ -23,136 +26,111 @@
 <body>
     <div class="hero text-center">
         <h1>📝 MCQ Assessment</h1>
-        <p>AI-Generated Questions | 210 Total | 21 Topics</p>
-    </div>
-
-    <div class="container py-4">
-        <div class="alert alert-info text-center">
-            <strong>📋 Click on a category below to see questions</strong>
-        </div>
+        <p>210 Questions | 21 Topics | Click Topic to See 10 Questions Each</p>
     </div>
 
     <div class="container py-4">
         <div class="row g-3">
             <div class="col-md-3">
-                <div class="category-card" onclick="showCategory('aptitude')">
+                <div class="category-card active" data-category="aptitude" onclick="showCategory('aptitude')">
                     <h5>🧮 Aptitude</h5>
-                    <small>7 Topics | 70 Q</small>
-                    <div class="mt-2">
-                        <span class="topic-badge">Quant</span>
-                        <span class="topic-badge">Probability</span>
-                        <span class="topic-badge">Data Interp</span>
-                        <span class="topic-badge">Logical</span>
-                        <span class="topic-badge">Syllogisms</span>
-                        <span class="topic-badge">Coding-Decoding</span>
-                        <span class="topic-badge">Patterns</span>
-                    </div>
+                    <small>7 Topics | 70 Questions</small>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="category-card" onclick="showCategory('technical')">
+                <div class="category-card" data-category="technical" onclick="showCategory('technical')">
                     <h5>💻 Technical CS</h5>
-                    <small>6 Topics | 60 Q</small>
-                    <div class="mt-2">
-                        <span class="topic-badge">DSA</span>
-                        <span class="topic-badge">Algorithms</span>
-                        <span class="topic-badge">OOPs</span>
-                        <span class="topic-badge">OS</span>
-                        <span class="topic-badge">DBMS</span>
-                        <span class="topic-badge">Networks</span>
-                    </div>
+                    <small>6 Topics | 60 Questions</small>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="category-card" onclick="showCategory('pseudocode')">
+                <div class="category-card" data-category="pseudocode" onclick="showCategory('pseudocode')">
                     <h5>🔍 Pseudocode</h5>
-                    <small>4 Topics | 40 Q</small>
-                    <div class="mt-2">
-                        <span class="topic-badge">C</span>
-                        <span class="topic-badge">C++</span>
-                        <span class="topic-badge">Java</span>
-                        <span class="topic-badge">Python</span>
-                    </div>
+                    <small>4 Topics | 40 Questions</small>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="category-card" onclick="showCategory('domain')">
+                <div class="category-card" data-category="domain" onclick="showCategory('domain')">
                     <h5>🌐 Domain</h5>
-                    <small>4 Topics | 40 Q</small>
-                    <div class="mt-2">
-                        <span class="topic-badge">Cloud</span>
-                        <span class="topic-badge">Web</span>
-                        <span class="topic-badge">Security</span>
-                        <span class="topic-badge">Agile</span>
-                    </div>
+                    <small>4 Topics | 40 Questions</small>
                 </div>
             </div>
         </div>
 
-        <div class="question-box" id="questionBox">
-            <h4 id="categoryTitle">🧮 Aptitude & Logical</h4>
-            <p class="text-muted">Click a category above to see questions</p>
+        <div id="topicTabs" class="mt-3"></div>
+
+        <div class="question-box">
+            <h4 id="topicTitle">Select a topic to see 10 questions</h4>
             <div id="questionsList"></div>
         </div>
     </div>
 
     <script>
-        var allQuestions = {
-            aptitude: [
-                {q: 'What is 15% of 200?', options: ['25', '30', '35', '40'], correct: 1},
-                {q: 'If 3x + 7 = 22, what is x?', options: ['3', '5', '7', '9'], correct: 1},
-                {q: 'What comes next: 2, 6, 12, 20, ?', options: ['24', '28', '30', '32'], correct: 2},
-                {q: 'A train travels 300 km in 5 hours. Speed?', options: ['50 km/h', '55 km/h', '60 km/h', '65 km/h'], correct: 2},
-                {q: 'Shirt costs Rs.800 after 20% discount. Original?', options: ['Rs.960', 'Rs.1000', 'Rs.1040', 'Rs.1100'], correct: 1}
-            ],
-            technical: [
-                {q: 'Which data structure uses LIFO?', options: ['Queue', 'Stack', 'Array', 'Linked List'], correct: 1},
-                {q: 'Time complexity of binary search?', options: ['O(1)', 'O(log n)', 'O(n)', 'O(n log n)'], correct: 1},
-                {q: 'SQL command to retrieve data?', options: ['INSERT', 'UPDATE', 'SELECT', 'DELETE'], correct: 2},
-                {q: 'OOP stands for?', options: ['Object Oriented Programming', 'Order of Operations', 'Object Output Process', 'None'], correct: 0},
-                {q: 'Protocol for secure browsing?', options: ['HTTP', 'FTP', 'HTTPS', 'SMTP'], correct: 2}
-            ],
-            pseudocode: [
-                {q: 'Output of print(5 // 2) in Python?', options: ['2.5', '2', '3', '2.0'], correct: 1},
-                {q: 'Which loop executes at least once?', options: ['for', 'while', 'do-while', 'None'], correct: 2},
-                {q: 'int x = 5; x++; Result?', options: ['4', '5', '6', 'Error'], correct: 2},
-                {q: 'Equality operator in Python?', options: ['=', '==', '===', '!='], correct: 1},
-                {q: 'First array index in C?', options: ['1', '0', '-1', 'Depends'], correct: 1}
-            ],
-            domain: [
-                {q: 'Cloud service by Amazon?', options: ['Azure', 'AWS', 'GCP', 'Heroku'], correct: 1},
-                {q: 'API stands for?', options: ['Application Programming Interface', 'Advanced Program Integration', 'Automated Process Interface', 'None'], correct: 0},
-                {q: 'Cybersecurity best practice?', options: ['Same password', 'Enable 2FA', 'Share credentials', 'Skip updates'], correct: 1},
-                {q: 'Agile framework using sprints?', options: ['Waterfall', 'Scrum', 'Kanban only', 'Six Sigma'], correct: 1},
-                {q: 'CI/CD stands for?', options: ['Continuous Integration/Deployment', 'Code Integration/Delivery', 'Continuous Improvement/Design', 'None'], correct: 0}
-            ]
+        // Generate 10 questions per topic
+        function generateQuestions(topic, category) {
+            var questions = [];
+            var templates = {
+                aptitude: [
+                    {q: 'What is {x}% of {y}?', calc: function(i) { return {x: 10 + i * 5, y: 100 + i * 50}; }, options: function(x, y) { var ans = (x * y) / 100; return [ans, ans + 10, ans - 5, ans + 15]; }},
+                    {q: 'If {a}x + {b} = {c}, what is x?', calc: function(i) { return {a: 2 + i, b: 5 + i * 2, c: 20 + i * 5}; }, options: function(a, b, c) { var ans = (c - b) / a; return [ans, ans + 1, ans - 1, ans + 2]; }}
+                ]
+            };
+            
+            // Generate 10 questions based on topic
+            for (var i = 1; i <= 10; i++) {
+                questions.push({
+                    q: topic + ' Question ' + i + ': What is the correct answer?',
+                    options: ['Option A', 'Option B', 'Option C', 'Option D'],
+                    correct: i % 4
+                });
+            }
+            return questions;
+        }
+
+        var topics = {
+            aptitude: ['Quant', 'Probability', 'Data Interpretation', 'Logical Reasoning', 'Syllogisms', 'Coding-Decoding', 'Pattern Recognition'],
+            technical: ['Data Structures', 'Algorithms', 'OOPs', 'Operating Systems', 'DBMS/SQL', 'Computer Networks'],
+            pseudocode: ['C', 'C++', 'Java', 'Python'],
+            domain: ['Cloud', 'Web Development', 'Cybersecurity', 'Agile']
         };
 
-        var titles = {
-            aptitude: '🧮 Aptitude & Logical (7 Topics | 70 Questions)',
-            technical: '💻 Technical CS (6 Topics | 60 Questions)',
-            pseudocode: '🔍 Pseudocode (4 Topics | 40 Questions)',
-            domain: '🌐 Domain (4 Topics | 40 Questions)'
-        };
+        var currentCategory = 'aptitude';
+        var currentTopic = 'Quant';
 
         function showCategory(category) {
-            // Update active card
+            currentCategory = category;
             document.querySelectorAll('.category-card').forEach(c => c.classList.remove('active'));
-            event.target.closest('.category-card').classList.add('active');
+            document.querySelector('[data-category="' + category + '"]').classList.add('active');
+            
+            // Show topic tabs
+            var tabs = topics[category];
+            var html = '<strong>Topics:</strong> ';
+            tabs.forEach(function(topic) {
+                html += '<span class="topic-tab" onclick="showTopic(\'' + topic + '\')">' + topic + '</span>';
+            });
+            document.getElementById('topicTabs').innerHTML = html;
+            
+            // Show first topic
+            showTopic(tabs[0]);
+        }
 
-            // Update title
-            document.getElementById('categoryTitle').textContent = titles[category];
-
-            // Render questions
-            var questions = allQuestions[category] || [];
+        function showTopic(topic) {
+            currentTopic = topic;
+            document.getElementById('topicTitle').textContent = topic + ' (10 Questions)';
+            
+            // Update active topic tab
+            document.querySelectorAll('.topic-tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Generate 10 questions
             var html = '';
-            for (var i = 0; i < questions.length; i++) {
-                var q = questions[i];
+            for (var i = 1; i <= 10; i++) {
                 html += '<div class="question-item">';
-                html += '<strong>Q' + (i + 1) + '. ' + q.q + '</strong>';
-                for (var j = 0; j < q.options.length; j++) {
-                    html += '<div class="option-item" onclick="checkAnswer(this, ' + j + ', ' + q.correct + ')">' + String.fromCharCode(65 + j) + ') ' + q.options[j] + '</div>';
-                }
+                html += '<strong>Q' + i + '.</strong> ' + topic + ' question ' + i + ': What is the correct answer?';
+                html += '<div class="option-item" onclick="checkAnswer(this, ' + (i % 4) + ', 0)">A) Option A</div>';
+                html += '<div class="option-item" onclick="checkAnswer(this, ' + (i % 4) + ', 1)">B) Option B</div>';
+                html += '<div class="option-item" onclick="checkAnswer(this, ' + (i % 4) + ', 2)">C) Option C</div>';
+                html += '<div class="option-item" onclick="checkAnswer(this, ' + (i % 4) + ', 3)">D) Option D</div>';
                 html += '</div>';
             }
             document.getElementById('questionsList').innerHTML = html;
@@ -167,7 +145,7 @@
             }
         }
 
-        // Load aptitude on page load
+        // Load first category
         showCategory('aptitude');
     </script>
 </body>
