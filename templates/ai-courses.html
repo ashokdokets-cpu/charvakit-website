@@ -182,7 +182,17 @@
         }
 
         // Render courses on page load
+        // Render immediately with default INR
         renderCourses();
+        
+        // Update with user's currency if available
+        setTimeout(function() {
+            detectUserLocation().then(function() {
+                renderCourses();
+            }).catch(function() {
+                console.log('Using default currency');
+            });
+        }, 100);
     </script>
 </body>
 </html>
