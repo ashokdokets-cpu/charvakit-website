@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Training Programs - Charvak{% endblock %}
+{% block title %}AI Training - Charvak{% endblock %}
 {% block content %}
 <style>
     .training-hero { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; padding: 50px 0; }
@@ -10,15 +10,20 @@
     .phase-2 { border-color: #11998e; }
     .phase-3 { border-color: #f093fb; }
     .phase-4 { border-color: #f5576c; }
+    .badge-ai { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 5px 15px; border-radius: 20px; font-size: 11px; }
     .btn-custom { background: #3ba591; color: white; border-radius: 50px; padding: 10px 25px; font-weight: bold; border: none; }
 </style>
 
 <div class="training-hero text-center">
     <h1>📚 AI-Driven Training</h1>
-    <p class="lead">4-Phase Program | 15+ Roles | Expert Trainers</p>
+    <p class="lead">4-Phase AI Program | 15+ Roles | <span class="badge-ai">🤖 AI Tutor 24/7</span></p>
 </div>
 
 <div class="container py-5">
+    <div class="alert alert-info text-center">
+        <strong>🤖 How AI Trains You:</strong> AI Diagnoses → AI Teaches → AI Drills → AI Interviews → Placement Ready
+    </div>
+
     <div class="row g-4">
         <div class="col-md-3">
             <div class="card phase-card phase-border phase-1 p-4">
@@ -26,45 +31,45 @@
                 <h5 class="text-primary">🔍 AI Diagnostic</h5>
                 <p class="text-muted">Week 1</p>
                 <ul class="list-unstyled small">
-                    <li>✅ Skill Assessment</li>
-                    <li>✅ Gap Analysis</li>
-                    <li>✅ Role Categorization</li>
+                    <li>✅ AI Skill Assessment</li>
+                    <li>✅ AI Gap Analysis</li>
+                    <li>✅ AI Role Categorization</li>
                 </ul>
             </div>
         </div>
         <div class="col-md-3">
             <div class="card phase-card phase-border phase-2 p-4">
                 <h4 class="fw-bold">Phase 2</h4>
-                <h5 class="text-success">📖 Bootcamp</h5>
+                <h5 class="text-success">📖 AI Bootcamp</h5>
                 <p class="text-muted">Weeks 2-6</p>
                 <ul class="list-unstyled small">
-                    <li>✅ Core Skills</li>
-                    <li>✅ Daily Practice</li>
-                    <li>✅ AI Guidance</li>
+                    <li>✅ AI Tutor Daily Lessons</li>
+                    <li>✅ AI-Generated Practice</li>
+                    <li>✅ Real-time AI Support</li>
                 </ul>
             </div>
         </div>
         <div class="col-md-3">
             <div class="card phase-card phase-border phase-3 p-4">
                 <h4 class="fw-bold">Phase 3</h4>
-                <h5 class="text-warning">⚡ Skill Building</h5>
+                <h5 class="text-warning">⚡ AI Skill Building</h5>
                 <p class="text-muted">Weeks 7-10</p>
                 <ul class="list-unstyled small">
-                    <li>✅ Advanced Topics</li>
-                    <li>✅ Mock Drills</li>
-                    <li>✅ Projects</li>
+                    <li>✅ AI Advanced Topics</li>
+                    <li>✅ AI Mock Drills</li>
+                    <li>✅ AI-Guided Projects</li>
                 </ul>
             </div>
         </div>
         <div class="col-md-3">
             <div class="card phase-card phase-border phase-4 p-4">
                 <h4 class="fw-bold">Phase 4</h4>
-                <h5 class="text-danger">🎯 Placement Prep</h5>
+                <h5 class="text-danger">🎯 AI Placement Prep</h5>
                 <p class="text-muted">Weeks 11-12</p>
                 <ul class="list-unstyled small">
-                    <li>✅ Mock Interviews</li>
-                    <li>✅ Company Drives</li>
-                    <li>✅ Final Assessment</li>
+                    <li>✅ AI Mock Interviews</li>
+                    <li>✅ AI Company Drives</li>
+                    <li>✅ AI Final Assessment</li>
                 </ul>
             </div>
         </div>
@@ -74,22 +79,22 @@
         <div class="col-md-4">
             <div class="card phase-card p-4 text-center">
                 <h4>🎯 15+ Roles</h4>
-                <p class="text-muted">Career mapping & recommendations</p>
+                <p class="text-muted">AI career mapping & recommendations</p>
                 <a href="/roles" class="btn btn-custom">View Roles</a>
             </div>
         </div>
         <div class="col-md-4">
             <div class="card phase-card p-4 text-center">
                 <h4>🤖 AI Courses</h4>
-                <p class="text-muted">25 AI-driven courses</p>
+                <p class="text-muted">25 AI Tutor-driven courses</p>
                 <a href="/ai-courses" class="btn btn-custom">View Courses</a>
             </div>
         </div>
         <div class="col-md-4">
             <div class="card phase-card p-4 text-center">
-                <h4>📅 Request Training</h4>
-                <p class="text-muted">Custom training sessions</p>
-                <a href="/request-training" class="btn btn-custom">Request</a>
+                <h4>💬 AI Chat Support</h4>
+                <p class="text-muted">24/7 real-time AI assistance</p>
+                <a href="/ai-courses" class="btn btn-custom">Start Learning</a>
             </div>
         </div>
     </div>
