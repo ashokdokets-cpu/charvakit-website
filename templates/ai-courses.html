@@ -1,117 +1,124 @@
 {% extends "base.html" %}
 {% block title %}AI Courses - Charvak{% endblock %}
 {% block content %}
+<style>
+    .course-hero { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px 0; }
+    .badge-ai { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 5px 15px; border-radius: 20px; font-size: 11px; }
+    .badge-demand { background: #e3f2fd; color: #1565c0; padding: 5px 12px; border-radius: 20px; font-size: 11px; }
+    .btn-enroll { background: #3ba591; color: white; border-radius: 50px; padding: 10px 25px; font-weight: bold; border: none; cursor: pointer; }
+    .price-tag { background: #e8f5e9; color: #2e7d32; padding: 5px 12px; border-radius: 20px; font-size: 14px; font-weight: bold; }
+    .course-item { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 10px; padding: 15px; margin-bottom: 10px; }
+</style>
 
-    <div class="hero text-center">
-        <h1>🤖 AI-Driven Courses</h1>
-        <p>25 High-Demand Courses | AI Tutor 24/7 | Installment Plans | Auto-Certificate</p>
+<div class="course-hero text-center">
+    <h1>🤖 AI-Driven Courses</h1>
+    <p>25 High-Demand Courses | AI Tutor 24/7 | Installment Plans | Auto-Certificate</p>
+</div>
+
+<div class="container py-4">
+    <div class="alert alert-info text-center">
+        <strong>🎯 How It Works:</strong> Enroll → Pay 1st Installment → AI Tutor Starts → Learn → Certificate
     </div>
+    <div class="row g-3" id="coursesContainer"></div>
+</div>
 
-    <div class="container py-4">
-        <div class="alert alert-info text-center">
-            <strong>🎯 How It Works:</strong> Enroll → Pay 1st Installment → AI Tutor Starts → Learn → Certificate
-        </div>
-        <div class="alert alert-success text-center">
-            <strong>💰 Payment Plans:</strong> 2 Installments (up to 8 weeks) | 3 Installments (9-14 weeks) | 4 Installments (16+ weeks)
-        </div>
-        <div class="row g-3" id="coursesContainer"></div>
-    </div>
+<script>
+var coursesData = [
+    {name: 'Full Stack Web Development', price: 4999, duration: 12, demand: 'Very High'},
+    {name: 'Data Science & ML', price: 5999, duration: 16, demand: 'Very High'},
+    {name: 'Python Programming', price: 999, duration: 6, demand: 'Very High'},
+    {name: 'AWS Cloud Computing', price: 3999, duration: 10, demand: 'Critical'},
+    {name: 'DevOps Engineering', price: 4999, duration: 12, demand: 'Very High'},
+    {name: 'Cybersecurity', price: 4999, duration: 14, demand: 'Critical'},
+    {name: 'Java Development', price: 2999, duration: 10, demand: 'High'},
+    {name: 'React & Frontend', price: 2499, duration: 8, demand: 'High'},
+    {name: 'SQL & Database', price: 999, duration: 4, demand: 'High'},
+    {name: 'Docker & Kubernetes', price: 2499, duration: 6, demand: 'Very High'},
+    {name: 'AI & Deep Learning', price: 6999, duration: 16, demand: 'Very High'},
+    {name: 'Mobile App Development', price: 3999, duration: 12, demand: 'High'},
+    {name: 'Blockchain Development', price: 4999, duration: 12, demand: 'High'},
+    {name: 'Data Analytics', price: 2999, duration: 8, demand: 'High'},
+    {name: 'UI/UX Design', price: 1999, duration: 6, demand: 'Moderate'},
+    {name: 'Cloud Architecture', price: 5999, duration: 14, demand: 'Critical'},
+    {name: 'Node.js Backend', price: 2499, duration: 8, demand: 'High'},
+    {name: 'Python for Data Science', price: 3999, duration: 10, demand: 'Very High'},
+    {name: 'Machine Learning Ops', price: 4999, duration: 12, demand: 'High'},
+    {name: 'Spring Boot', price: 2499, duration: 8, demand: 'High'},
+    {name: 'Angular Development', price: 1999, duration: 6, demand: 'Moderate'},
+    {name: 'Ethical Hacking', price: 5999, duration: 12, demand: 'Critical'},
+    {name: 'Big Data', price: 4999, duration: 12, demand: 'High'},
+    {name: 'Software Testing', price: 999, duration: 4, demand: 'Moderate'},
+    {name: 'Git & DevOps Tools', price: 499, duration: 2, demand: 'High'}
+];
 
-    <script>
-    var coursesData = [
-        {name: 'Full Stack Web Development', price: 4999, duration: 12, demand: 'Very High'},
-        {name: 'Data Science & ML', price: 5999, duration: 16, demand: 'Very High'},
-        {name: 'Python Programming', price: 999, duration: 6, demand: 'Very High'},
-        {name: 'AWS Cloud Computing', price: 3999, duration: 10, demand: 'Critical'},
-        {name: 'DevOps Engineering', price: 4999, duration: 12, demand: 'Very High'},
-        {name: 'Cybersecurity', price: 4999, duration: 14, demand: 'Critical'},
-        {name: 'Java Development', price: 2999, duration: 10, demand: 'High'},
-        {name: 'React & Frontend', price: 2499, duration: 8, demand: 'High'},
-        {name: 'SQL & Database', price: 999, duration: 4, demand: 'High'},
-        {name: 'Docker & Kubernetes', price: 2499, duration: 6, demand: 'Very High'},
-        {name: 'AI & Deep Learning', price: 6999, duration: 16, demand: 'Very High'},
-        {name: 'Mobile App Development', price: 3999, duration: 12, demand: 'High'},
-        {name: 'Blockchain Development', price: 4999, duration: 12, demand: 'High'},
-        {name: 'Data Analytics', price: 2999, duration: 8, demand: 'High'},
-        {name: 'UI/UX Design', price: 1999, duration: 6, demand: 'Moderate'},
-        {name: 'Cloud Architecture', price: 5999, duration: 14, demand: 'Critical'},
-        {name: 'Node.js Backend', price: 2499, duration: 8, demand: 'High'},
-        {name: 'Python for Data Science', price: 3999, duration: 10, demand: 'Very High'},
-        {name: 'Machine Learning Ops', price: 4999, duration: 12, demand: 'High'},
-        {name: 'Spring Boot', price: 2499, duration: 8, demand: 'High'},
-        {name: 'Angular Development', price: 1999, duration: 6, demand: 'Moderate'},
-        {name: 'Ethical Hacking', price: 5999, duration: 12, demand: 'Critical'},
-        {name: 'Big Data', price: 4999, duration: 12, demand: 'High'},
-        {name: 'Software Testing', price: 999, duration: 4, demand: 'Moderate'},
-        {name: 'Git & DevOps Tools', price: 499, duration: 2, demand: 'High'}
-    ];
-
-    function getInstallments(d) {
-        if (d <= 8) return 2;
-        if (d <= 14) return 3;
-        return 4;
-    }
-
-    function getCurrentSymbol() {
-    var selector = document.getElementById('currencySelector');
-    var saved = selector ? selector.value : (localStorage.getItem('charvak_currency') || 'INR');
-    var symbols = {INR: '₹', USD: '$', EUR: '€', GBP: '£', AED: 'د.إ', SGD: 'S$', AUD: 'A$', CAD: 'C$', JPY: '¥', CNY: '¥', BRL: 'R$', NGN: '₦', ZAR: 'R'};
-    return symbols[saved] || '₹';
+function getInstallments(d) {
+    if (d <= 8) return 2;
+    if (d <= 14) return 3;
+    return 4;
 }
 
-function getCurrentRate() {
-    var selector = document.getElementById('currencySelector');
-    var saved = selector ? selector.value : (localStorage.getItem('charvak_currency') || 'INR');
-    var rates = {INR: 1, USD: 83.1, EUR: 90.2, GBP: 105.3, AED: 22.6, SGD: 61.2, AUD: 54.8, CAD: 61.0, JPY: 0.56, CNY: 11.5, BRL: 16.8, NGN: 0.055, ZAR: 4.45};
-    return rates[saved] || 1;
+function getCurrencySymbol() {
+    var sel = document.getElementById('currencySelector');
+    var curr = sel ? sel.value : 'INR';
+    var symbols = {INR: '₹', USD: '$', EUR: '€', GBP: '£', AED: 'د.إ', SGD: 'S$', AUD: 'A$', CAD: 'C$', JPY: '¥'};
+    return symbols[curr] || '₹';
 }
 
-function formatPriceINR(priceINR) {
-    var symbol = getCurrentSymbol();
-    var rate = getCurrentRate();
-    var converted = Math.round(priceINR / rate);
-    return symbol + converted;
-}
-
-function formatInstallmentINR(priceINR, installments) {
-    var symbol = getCurrentSymbol();
-    var rate = getCurrentRate();
-    var converted = Math.round(priceINR / installments / rate);
-    return symbol + converted;
+function getCurrencyRate() {
+    var sel = document.getElementById('currencySelector');
+    var curr = sel ? sel.value : 'INR';
+    var rates = {INR: 1, USD: 83.1, EUR: 90.2, GBP: 105.3, AED: 22.6, SGD: 61.2, AUD: 54.8, CAD: 61.0, JPY: 0.56};
+    return rates[curr] || 1;
 }
 
 function renderCourses() {
-        var html = '';
-        for (var i = 0; i < coursesData.length; i++) {
-            var c = coursesData[i];
-            var inst = getInstallments(c.duration);
-            var instAmt = Math.round(c.price / inst);
-            html += '<div class="col-md-6"><div class="course-item">';
-            html += '<strong>' + (i + 1) + '. ' + c.name + '</strong> ';
-            html += '<span class="badge-ai">🤖 AI Tutor</span> ';
-            html += '<span class="badge-demand">' + c.demand + ' Demand</span><br>';
-            html += '<small>Duration: ' + c.duration + ' Weeks</small><br>';
-            html += '<span class="price-tag">₹' + c.price + '</span> ';
-            html += '<small>' + inst + ' Installments × ₹' + instAmt + '</small><br>';
-            html += '<button class="btn-enroll mt-2" onclick="enrollCourse(' + i + ')">Enroll Now →</button>';
-            html += '</div></div>';
-        }
-        document.getElementById('coursesContainer').innerHTML = html;
-    }
-
-    function enrollCourse(i) {
+    var html = '';
+    var symbol = getCurrencySymbol();
+    var rate = getCurrencyRate();
+    
+    for (var i = 0; i < coursesData.length; i++) {
         var c = coursesData[i];
-        var email = prompt('Enter your email to enroll in ' + c.name + ':');
-        if (!email) return;
         var inst = getInstallments(c.duration);
-        var instAmt = Math.round(c.price / inst);
-        var msg = 'Course: ' + c.name + '\nDuration: ' + c.duration + ' weeks\nTotal: ₹' + c.price + '\nInstallments: ' + inst + ' x ₹' + instAmt + '\n\nProceed with payment?';
-        if (confirm(msg)) {
-            alert('✅ Enrollment created! Complete payment to start learning with AI Tutor.');
-        }
+        var priceDisplay = Math.round(c.price / rate);
+        var instDisplay = Math.round(c.price / inst / rate);
+        
+        html += '<div class="col-md-6"><div class="course-item">';
+        html += '<strong>' + (i + 1) + '. ' + c.name + '</strong> ';
+        html += '<span class="badge-ai">🤖 AI Tutor</span> ';
+        html += '<span class="badge-demand">' + c.demand + ' Demand</span><br>';
+        html += '<small>Duration: ' + c.duration + ' Weeks</small><br>';
+        html += '<span class="price-tag">' + symbol + priceDisplay + '</span> ';
+        html += '<small>' + inst + ' Installments x ' + symbol + instDisplay + '</small><br>';
+        html += '<button class="btn-enroll mt-2" onclick="enrollCourse(' + i + ')">Enroll Now →</button>';
+        html += '</div></div>';
     }
+    document.getElementById('coursesContainer').innerHTML = html;
+}
 
-    renderCourses();
-    </script>
+function enrollCourse(i) {
+    var c = coursesData[i];
+    var email = prompt('Enter your email to enroll in ' + c.name + ':');
+    if (!email) return;
+    var inst = getInstallments(c.duration);
+    var symbol = getCurrencySymbol();
+    var rate = getCurrencyRate();
+    var priceDisplay = Math.round(c.price / rate);
+    var instDisplay = Math.round(c.price / inst / rate);
+    alert('Enrollment created for ' + c.name + '! Complete payment of ' + symbol + instDisplay + ' to start.');
+}
 
+// Render on page load
+renderCourses();
+
+// Re-render when currency changes
+document.addEventListener('DOMContentLoaded', function() {
+    var sel = document.getElementById('currencySelector');
+    if (sel) {
+        sel.addEventListener('change', renderCourses);
+    }
+});
+
+// Listen for custom currency change event
+window.addEventListener('charvakCurrencyChanged', renderCourses);
+</script>
 {% endblock %}
