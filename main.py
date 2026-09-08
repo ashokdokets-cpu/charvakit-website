@@ -5098,6 +5098,19 @@ async def generate_results(request: Request):
     )
 
 
+
+from ai_versant import ai_versant
+
+@app.post("/api/versant/start-session")
+async def start_versant_session(request: Request):
+    data = await request.json()
+    return ai_versant.start_user_session(data.get("email"))
+
+@app.get("/api/versant/session/{session_id}/{section_id}")
+async def get_session_questions(session_id: str, section_id: str):
+    return ai_versant.get_session_questions(session_id, section_id)
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
