@@ -5185,6 +5185,30 @@ async def get_detailed_report(email: str):
     return results_system.generate_detailed_report(email)
 
 
+
+from complete_mock_drive import complete_mock
+
+@app.post("/api/mock/start-complete")
+async def start_complete_mock(request: Request):
+    data = await request.json()
+    return complete_mock.start_mock_drive(data.get("email"), data.get("company_id"))
+
+@app.post("/api/mock/submit-complete")
+async def submit_complete_answer(request: Request):
+    data = await request.json()
+    return complete_mock.submit_answer(
+        data.get("session_id"),
+        data.get("section_name"),
+        data.get("question_id"),
+        data.get("selected_option")
+    )
+
+@app.post("/api/mock/complete-full")
+async def complete_full_mock(request: Request):
+    data = await request.json()
+    return complete_mock.complete_mock(data.get("session_id"))
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
