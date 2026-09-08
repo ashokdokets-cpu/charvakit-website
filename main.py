@@ -4355,36 +4355,8 @@ from advanced_assessment_engine import advanced_assessment_engine
 @app.get("/advanced-assessment", response_class=HTMLResponse)
 async def advanced_assessment_page(request: Request):
     """Advanced Assessment & Training page."""
-    html = """
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>Advanced Assessment - Charvak</title>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    </head>
-    <body class="container mt-5">
-        <h1>Advanced Assessment & Training</h1>
-        <p>AI-Driven Complete Placement Preparation System</p>
-        <div class="row">
-            <div class="col-md-4">
-                <h3>Versant</h3>
-                <a href="/api/assessment/versant" class="btn btn-primary">Details</a>
-            </div>
-            <div class="col-md-4">
-                <h3>MCQ</h3>
-                <a href="/api/assessment/types" class="btn btn-primary">Types</a>
-            </div>
-            <div class="col-md-4">
-                <h3>Companies</h3>
-                <a href="/api/assessment/companies" class="btn btn-primary">Patterns</a>
-            </div>
-        </div>
-    </body>
-    </html>
-    """
-    return HTMLResponse(content=html)
+    return template_response("advanced-assessment.html", request, "Advanced Assessment - Charvak")
 
-@app.get("/api/assessment/types")
 async def assessment_types():
     """Get all assessment types."""
     return advanced_assessment_engine.get_assessment_types()
