@@ -5262,6 +5262,22 @@ async def get_gap_report(email: str, target_role: str):
     return complete_analysis.get_skill_gap_report(email, target_role)
 
 
+
+from ai_analysis import ai_analysis
+
+@app.post("/api/ai-analysis/analyze")
+async def ai_analyze_profile(request: Request):
+    data = await request.json()
+    return ai_analysis.analyze_user_profile(
+        data.get("email"),
+        data
+    )
+
+@app.get("/api/ai-analysis/report/{email}")
+async def get_ai_report(email: str):
+    return ai_analysis.get_analysis_report(email)
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
