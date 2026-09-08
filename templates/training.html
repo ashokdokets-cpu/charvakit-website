@@ -1,106 +1,97 @@
 {% extends "base.html" %}
 {% block title %}Training Programs - Charvak{% endblock %}
 {% block content %}
+<style>
+    .training-hero { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; padding: 50px 0; }
+    .phase-card { border: none; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.08); transition: all 0.3s; height: 100%; }
+    .phase-card:hover { transform: translateY(-5px); }
+    .phase-border { border-left: 5px solid; }
+    .phase-1 { border-color: #667eea; }
+    .phase-2 { border-color: #11998e; }
+    .phase-3 { border-color: #f093fb; }
+    .phase-4 { border-color: #f5576c; }
+    .btn-custom { background: #3ba591; color: white; border-radius: 50px; padding: 10px 25px; font-weight: bold; border: none; }
+</style>
 
-    <!-- Hero -->
-    <div class="gradient-hero text-center py-5">
-        <h1 class="display-4 text-white fw-bold">📚 AI-Driven Training</h1>
-        <p class="lead text-white-50 mt-3">4-Phase Program | 15+ Roles | Expert Trainers</p>
-        <a href="/training-engine" class="btn btn-light btn-lg mt-3 px-5 py-3 fw-bold shadow-lg">🎓 Start Training</a>
-    </div>
+<div class="training-hero text-center">
+    <h1>📚 AI-Driven Training</h1>
+    <p class="lead">4-Phase Program | 15+ Roles | Expert Trainers</p>
+</div>
 
-    <div class="container py-5">
-        <!-- 4 Phases -->
-        <h3 class="text-center fw-bold mb-4">Training Phases</h3>
-        <div class="row g-4">
-            <div class="col-md-3">
-                <div class="card phase-border phase-1 h-100 p-3 text-center">
-                    <div class="icon-circle" style="background:#e8eaf6; color:#667eea;"><i class="bi bi-search"></i></div>
-                    <h5 class="fw-bold">Phase 1</h5>
-                    <h6 class="text-primary">🔍 AI Diagnostic</h6>
-                    <small class="text-muted">Week 1</small>
-                    <hr>
-                    <ul class="list-unstyled text-start small">
-                        <li>✅ Skill Assessment</li>
-                        <li>✅ Gap Analysis</li>
-                        <li>✅ Role Categorization</li>
-                    </ul>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card phase-border phase-2 h-100 p-3 text-center">
-                    <div class="icon-circle" style="background:#e8f5e9; color:#11998e;"><i class="bi bi-book"></i></div>
-                    <h5 class="fw-bold">Phase 2</h5>
-                    <h6 class="text-success">📖 Bootcamp</h6>
-                    <small class="text-muted">Weeks 2-6</small>
-                    <hr>
-                    <ul class="list-unstyled text-start small">
-                        <li>✅ Core Skills</li>
-                        <li>✅ Daily Practice</li>
-                        <li>✅ AI Guidance</li>
-                    </ul>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card phase-border phase-3 h-100 p-3 text-center">
-                    <div class="icon-circle" style="background:#fce4ec; color:#f093fb;"><i class="bi bi-lightning"></i></div>
-                    <h5 class="fw-bold">Phase 3</h5>
-                    <h6 class="text-warning">⚡ Skill Building</h6>
-                    <small class="text-muted">Weeks 7-10</small>
-                    <hr>
-                    <ul class="list-unstyled text-start small">
-                        <li>✅ Advanced Topics</li>
-                        <li>✅ Mock Drills</li>
-                        <li>✅ Projects</li>
-                    </ul>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card phase-border phase-4 h-100 p-3 text-center">
-                    <div class="icon-circle" style="background:#ffebee; color:#f5576c;"><i class="bi bi-trophy"></i></div>
-                    <h5 class="fw-bold">Phase 4</h5>
-                    <h6 class="text-danger">🎯 Placement Prep</h6>
-                    <small class="text-muted">Weeks 11-12</small>
-                    <hr>
-                    <ul class="list-unstyled text-start small">
-                        <li>✅ Mock Interviews</li>
-                        <li>✅ Company Drives</li>
-                        <li>✅ Final Assessment</li>
-                    </ul>
-                </div>
+<div class="container py-5">
+    <div class="row g-4">
+        <div class="col-md-3">
+            <div class="card phase-card phase-border phase-1 p-4">
+                <h4 class="fw-bold">Phase 1</h4>
+                <h5 class="text-primary">🔍 AI Diagnostic</h5>
+                <p class="text-muted">Week 1</p>
+                <ul class="list-unstyled small">
+                    <li>✅ Skill Assessment</li>
+                    <li>✅ Gap Analysis</li>
+                    <li>✅ Role Categorization</li>
+                </ul>
             </div>
         </div>
-
-        <!-- Quick Access Cards -->
-        <h3 class="text-center fw-bold mt-5 mb-4">Quick Access</h3>
-        <div class="row g-4">
-            <div class="col-md-4">
-                <div class="card h-100 p-4 text-center">
-                    <div class="icon-circle" style="background:#e8eaf6; color:#667eea;"><i class="bi bi-briefcase"></i></div>
-                    <h4 class="fw-bold">🎯 15+ Roles</h4>
-                    <p class="text-muted">Software Dev, Data Science, DevOps & more</p>
-                    <a href="/roles" class="btn btn-custom">View All Roles</a>
-                </div>
+        <div class="col-md-3">
+            <div class="card phase-card phase-border phase-2 p-4">
+                <h4 class="fw-bold">Phase 2</h4>
+                <h5 class="text-success">📖 Bootcamp</h5>
+                <p class="text-muted">Weeks 2-6</p>
+                <ul class="list-unstyled small">
+                    <li>✅ Core Skills</li>
+                    <li>✅ Daily Practice</li>
+                    <li>✅ AI Guidance</li>
+                </ul>
             </div>
-            <div class="col-md-4">
-                <div class="card h-100 p-4 text-center">
-                    <div class="icon-circle" style="background:#e8f5e9; color:#11998e;"><i class="bi bi-people"></i></div>
-                    <h4 class="fw-bold">👨‍🏫 Expert Trainers</h4>
-                    <p class="text-muted">Learn from industry professionals</p>
-                    <a href="/trainers" class="btn btn-custom">View Trainers</a>
-                </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card phase-card phase-border phase-3 p-4">
+                <h4 class="fw-bold">Phase 3</h4>
+                <h5 class="text-warning">⚡ Skill Building</h5>
+                <p class="text-muted">Weeks 7-10</p>
+                <ul class="list-unstyled small">
+                    <li>✅ Advanced Topics</li>
+                    <li>✅ Mock Drills</li>
+                    <li>✅ Projects</li>
+                </ul>
             </div>
-            <div class="col-md-4">
-                <div class="card h-100 p-4 text-center">
-                    <div class="icon-circle" style="background:#fff3e0; color:#e65100;"><i class="bi bi-calendar-check"></i></div>
-                    <h4 class="fw-bold">📅 Request Training</h4>
-                    <p class="text-muted">Custom training sessions</p>
-                    <a href="/request-training" class="btn btn-custom">Request Training</a>
-                </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card phase-card phase-border phase-4 p-4">
+                <h4 class="fw-bold">Phase 4</h4>
+                <h5 class="text-danger">🎯 Placement Prep</h5>
+                <p class="text-muted">Weeks 11-12</p>
+                <ul class="list-unstyled small">
+                    <li>✅ Mock Interviews</li>
+                    <li>✅ Company Drives</li>
+                    <li>✅ Final Assessment</li>
+                </ul>
             </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
+    <div class="row mt-4 g-3">
+        <div class="col-md-4">
+            <div class="card phase-card p-4 text-center">
+                <h4>🎯 15+ Roles</h4>
+                <p class="text-muted">Career mapping & recommendations</p>
+                <a href="/roles" class="btn btn-custom">View Roles</a>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card phase-card p-4 text-center">
+                <h4>🤖 AI Courses</h4>
+                <p class="text-muted">25 AI-driven courses</p>
+                <a href="/ai-courses" class="btn btn-custom">View Courses</a>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card phase-card p-4 text-center">
+                <h4>📅 Request Training</h4>
+                <p class="text-muted">Custom training sessions</p>
+                <a href="/request-training" class="btn btn-custom">Request</a>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
