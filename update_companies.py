@@ -1,0 +1,116 @@
+﻿with open('templates/companies.html', 'w', encoding='utf-8') as f:
+    content = '''<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company Patterns - Charvak</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { font-family: Arial, sans-serif; background: #f8f9fa; }
+        .hero { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 50px 0; }
+        .card { border: none; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.08); }
+        .question-count { font-size: 14px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="hero text-center">
+        <h1>🏢 Company Patterns</h1>
+        <p>Mock Drives for Top IT Companies - Market Standard</p>
+    </div>
+
+    <div class="container py-4">
+        <div class="alert alert-info text-center">
+            <strong>📋 Market Standard Questions:</strong> TCS (37Q) | Infosys (38Q) | Cognizant (35Q) | Wipro (24Q) | Accenture (50Q)
+        </div>
+    </div>
+
+    <div class="container py-4">
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card p-4 text-center">
+                    <h3>TCS</h3>
+                    <p class="text-muted">NQT, Digital, Innovator</p>
+                    <div class="question-count">
+                        <strong>37 Questions Total</strong><br>
+                        Foundation: 25Q (75 min)<br>
+                        Advanced: 10Q (25 min)<br>
+                        Coding: 2Q (55 min)
+                    </div>
+                    <a href="/api/company-pattern/tcs" class="btn btn-primary mt-3 rounded-pill">View Pattern</a>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card p-4 text-center">
+                    <h3>Infosys</h3>
+                    <p class="text-muted">InfyTQ, HackWithInfy</p>
+                    <div class="question-count">
+                        <strong>38 Questions Total</strong><br>
+                        Aptitude: 20Q (60 min)<br>
+                        Technical: 15Q (30 min)<br>
+                        Coding: 3Q (90 min)
+                    </div>
+                    <a href="/api/company-pattern/infosys" class="btn btn-primary mt-3 rounded-pill">View Pattern</a>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card p-4 text-center">
+                    <h3>Cognizant</h3>
+                    <p class="text-muted">GenC, Elevate, Pro</p>
+                    <div class="question-count">
+                        <strong>35 Questions Total</strong><br>
+                        Aptitude: 20Q (60 min)<br>
+                        Communication: 10Q (20 min)<br>
+                        Programming: 5Q (45 min)
+                    </div>
+                    <a href="/api/company-pattern/cognizant" class="btn btn-primary mt-3 rounded-pill">View Pattern</a>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card p-4 text-center">
+                    <h3>Wipro</h3>
+                    <p class="text-muted">Elite NTH, Turbo</p>
+                    <div class="question-count">
+                        <strong>24 Questions Total</strong><br>
+                        Aptitude: 20Q (48 min)<br>
+                        Communication: 2Q (20 min)<br>
+                        Coding: 2Q (45 min)
+                    </div>
+                    <a href="/api/company-pattern/wipro" class="btn btn-primary mt-3 rounded-pill">View Pattern</a>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card p-4 text-center">
+                    <h3>Accenture</h3>
+                    <p class="text-muted">ASE, Advanced ASE</p>
+                    <div class="question-count">
+                        <strong>50 Questions Total</strong><br>
+                        Cognitive: 25Q (60 min)<br>
+                        Technical: 15Q (30 min)<br>
+                        Communication: 10Q (20 min)
+                    </div>
+                    <a href="/api/company-pattern/accenture" class="btn btn-primary mt-3 rounded-pill">View Pattern</a>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card p-4 text-center">
+                    <h3>Capgemini</h3>
+                    <p class="text-muted">Exceller, Pro</p>
+                    <div class="question-count">
+                        <strong>37 Questions Total</strong><br>
+                        Aptitude: 20Q (60 min)<br>
+                        Technical: 15Q (30 min)<br>
+                        Coding: 2Q (45 min)
+                    </div>
+                    <a href="/api/company-pattern/capgemini" class="btn btn-primary mt-3 rounded-pill">View Pattern</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>'''
+    f.write(content)
+
+print('✅ Companies page with market standards created!')

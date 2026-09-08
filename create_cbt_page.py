@@ -1,0 +1,137 @@
+﻿with open('templates/versant.html', 'w', encoding='utf-8') as f:
+    content = '''<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Versant CBT Assessment - Charvak</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { font-family: Arial, sans-serif; background: #f8f9fa; }
+        .hero { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 50px 0; }
+        .section-tab { cursor: pointer; border: 2px solid #e0e0e0; border-radius: 10px; padding: 15px; text-align: center; margin-bottom: 10px; background: white; }
+        .section-tab:hover { border-color: #3ba591; }
+        .section-tab.active { border-color: #3ba591; background: #f0faf8; }
+        .question-box { background: white; border-radius: 10px; padding: 30px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); margin-top: 20px; }
+        .btn-record { background: #e94d65; color: white; border: none; border-radius: 50px; padding: 15px 30px; font-size: 18px; cursor: pointer; }
+        .btn-record.recording { background: #c62828; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% {opacity:1} 50% {opacity:0.7} 100% {opacity:1} }
+        textarea { width: 100%; border: 1px solid #e0e0e0; border-radius: 8px; padding: 10px; }
+    </style>
+</head>
+<body>
+    <div class="hero text-center">
+        <h1>🗣️ Versant CBT Assessment</h1>
+        <p>Computer-Based Test - 50 Minutes</p>
+    </div>
+
+    <div class="container py-5">
+        <div class="row g-2">
+            <div class="col-6 col-md-2"><div class="section-tab" onclick="loadSection('read_aloud')">📖 Read Aloud<br><small>Speaking - Record</small></div></div>
+            <div class="col-6 col-md-2"><div class="section-tab" onclick="loadSection('repeats')">🎧 Repeats<br><small>Listen & Repeat</small></div></div>
+            <div class="col-6 col-md-2"><div class="section-tab" onclick="loadSection('sentence_builds')">✏️ Sentence Builds<br><small>Rearrange</small></div></div>
+            <div class="col-6 col-md-2"><div class="section-tab" onclick="loadSection('conversations')">💬 Conversations<br><small>Speak Answer</small></div></div>
+            <div class="col-6 col-md-2"><div class="section-tab" onclick="loadSection('story_retelling')">📝 Story Retelling<br><small>Read & Retell</small></div></div>
+            <div class="col-6 col-md-2"><div class="section-tab" onclick="loadSection('summary_opinion')">📄 Summary<br><small>Type Only</small></div></div>
+        </div>
+
+        <div class="question-box" id="sectionContent">
+            <h4>Select a section to begin</h4>
+        </div>
+    </div>
+
+    <script>
+        var mediaRecorder = null;
+        var recordedChunks = [];
+        var isRecording = false;
+
+        async function loadSection(sectionId) {
+            const response = await fetch('/api/versant/section/' + sectionId);
+            const data = await response.json();
+            const section = data.section;
+            const questions = data.questions;
+            
+            let html = '<h4>' + section.name + '</h4>';
+            html += '<p class="text-muted">' + section.instruction + '</p>';
+            html += '<p><strong>Type:</strong> ' + section.type + ' | <strong>Questions:</strong> ' + section.questions + ' | <strong>Time:</strong> ' + section.time_per_question + ' sec each</p>';
+            html += '<hr>';
+            
+            for (var i = 0; i < questions.length; i++) {
+                html += '<div class="question-item mb-3 p-3 border rounded">';
+                html += '<strong>Question ' + (i + 1) + ':</strong> ' + questions[i];
+                
+                if (section.input === 'audio_recording' || section.input === 'audio_playback_then_record' || section.input === 'read_then_record') {
+                    html += '<br><button class="btn-record mt-2" onclick="toggleRecording(this, ' + i + ')">🎤 Record Answer</button>';
+                    html += '<audio id="playback_' + i + '" controls style="display:none; margin-top:5px;"></audio>';
+                } else if (section.input === 'drag_drop_words') {
+                    html += '<br><input type="text" class="form-control mt-2" placeholder="Type the rearranged sentence">';
+                } else if (section.input === 'typed_response') {
+                    html += '<br><textarea rows="4" class="mt-2" placeholder="Type your summary here..."></textarea>';
+                }
+                
+                html += '</div>';
+            }
+            
+            document.getElementById('sectionContent').innerHTML = html;
+        }
+
+        async function toggleRecording(button, questionIndex) {
+            if (!isRecording) {
+                // Start recording
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    recordedChunks = [];
+                    
+                    mediaRecorder.ondataavailable = function(e) {
+                        if (e.data.size > 0) recordedChunks.push(e.data);
+                    };
+                    
+                    mediaRecorder.onstop = function() {
+                        const blob = new Blob(recordedChunks, {type: 'audio/webm'});
+                        const audioUrl = URL.createObjectURL(blob);
+                        const playback = document.getElementById('playback_' + questionIndex);
+                        playback.src = audioUrl;
+                        playback.style.display = 'block';
+                        
+                        // Save recording
+                        const reader = new FileReader();
+                        reader.readAsDataURL(blob);
+                        reader.onloadend = function() {
+                            fetch('/api/versant/record-audio', {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify({
+                                    session_id: 'CBT-TEST',
+                                    section_id: 'read_aloud',
+                                    question_id: questionIndex,
+                                    audio_blob: reader.result
+                                })
+                            });
+                        };
+                    };
+                    
+                    mediaRecorder.start();
+                    isRecording = true;
+                    button.textContent = '⏹ Stop Recording';
+                    button.classList.add('recording');
+                } catch (err) {
+                    alert('Microphone access denied. Please allow microphone access.');
+                }
+            } else {
+                // Stop recording
+                mediaRecorder.stop();
+                isRecording = false;
+                button.textContent = '🎤 Record Again';
+                button.classList.remove('recording');
+            }
+        }
+
+        // Load first section
+        loadSection('read_aloud');
+    </script>
+</body>
+</html>'''
+    f.write(content)
+
+print('✅ CBT Versant page with audio recording created!')
