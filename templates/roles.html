@@ -175,53 +175,120 @@
 
     <script>
     async function analyzeMySkills() {
-        const email = prompt('Enter your email to analyze skills:');
-        if (!email) return;
-        
-        const skills = prompt('Enter your skills (comma separated):\nExample: Python, SQL, Java');
-        if (!skills) return;
-        
-        const skillsArray = skills.split(',').map(s => s.trim());
-        
-        try {
-            const response = await fetch('/api/roles/analyze', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    email: email,
-                    skills: skillsArray,
-                    interests: [],
-                    experience_level: 'fresher'
-                })
-            });
-            const result = await response.json();
-            
-            if (result.status === 'success') {
-                var recommendations = result.profile.recommendations || [];
-                var html = '<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;background:white;padding:30px;border-radius:15px;box-shadow:0 20px 60px rgba(0,0,0,0.3);max-width:500px;max-height:70vh;overflow-y:auto;">';
-                html += '<h4>✅ Skill Analysis</h4>';
-                html += '<p>Your skills: ' + skillsArray.join(', ') + '</p>';
-                html += '<hr>';
-                
-                if (recommendations.length > 0) {
-                    recommendations.slice(0, 5).forEach(function(rec) {
-                        html += '<div class="mb-2 p-2 border rounded">';
-                        html += '<strong>' + rec.role_name + '</strong> - ' + rec.match_percentage + '%<br>';
-                        html += '<small>Matched: ' + (rec.matched_skills || []).join(', ') + '</small><br>';
-                        html += '<small style="color:red;">Gaps: ' + (rec.skill_gaps || []).slice(0, 3).join(', ') + '</small>';
-                        html += '</div>';
-                    });
-                }
-                
-                html += '<button class="btn btn-primary btn-sm mt-3" onclick="this.parentElement.remove()">Close</button>';
-                html += '</div>';
-                
-                document.body.insertAdjacentHTML('beforeend', html);
-            }
-        } catch (error) {
-            alert('Error: ' + error.message);
-        }
+    // Create comprehensive analysis modal
+    var modalHtml = '<div id="analysisModal" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;">';
+    modalHtml += '<div style="background:white;padding:30px;border-radius:15px;max-width:600px;width:90%;max-height:85vh;overflow-y:auto;">';
+    modalHtml += '<h4>🔍 Complete Skill Analysis</h4>';
+    modalHtml += '<p class="text-muted">Provide your details for AI analysis</p>';
+    modalHtml += '<hr>';
+    
+    // Email
+    modalHtml += '<div class="mb-3"><label class="form-label">Email *</label><input type="email" class="form-control" id="aiEmail" required></div>';
+    
+    // Resume Text
+    modalHtml += '<div class="mb-3"><label class="form-label">Resume / Skills Summary *</label><textarea class="form-control" id="aiResume" rows="4" placeholder="Paste your resume text or describe your skills and experience..." required></textarea></div>';
+    
+    // Education
+    modalHtml += '<div class="mb-3"><label class="form-label">Education Background</label><select class="form-select" id="aiEducation"><option value="">Select</option><option value="B.Tech CSE">B.Tech CSE</option><option value="B.Tech IT">B.Tech IT</option><option value="B.Tech ECE">B.Tech ECE</option><option value="MCA">MCA</option><option value="BCA">BCA</option><option value="B.Sc">B.Sc</option><option value="M.Tech">M.Tech</option><option value="Other">Other</option></select></div>';
+    
+    // Experience
+    modalHtml += '<div class="mb-3"><label class="form-label">Experience Level</label><select class="form-select" id="aiExperience"><option value="fresher">Fresher</option><option value="1-2 years">1-2 years</option><option value="2-5 years">2-5 years</option><option value="5+ years">5+ years</option></select></div>';
+    
+    // Certifications
+    modalHtml += '<div class="mb-3"><label class="form-label">Certifications (comma separated)</label><input type="text" class="form-control" id="aiCerts" placeholder="e.g., AWS Certified, Python Certification"></div>';
+    
+    // Skills (auto-extracted but allow manual)
+    modalHtml += '<div class="mb-3"><label class="form-label">Key Skills (comma separated)</label><input type="text" class="form-control" id="aiSkills" placeholder="e.g., Python, SQL, Java"></div>';
+    
+    // Buttons
+    modalHtml += '<div class="text-center"><button class="btn btn-primary rounded-pill px-4" onclick="submitAnalysis()">🤖 Analyze My Profile</button> <button class="btn btn-secondary rounded-pill px-4" onclick="closeAnalysis()">Cancel</button></div>';
+    modalHtml += '<div id="analysisResult" class="mt-3"></div>';
+    modalHtml += '</div></div>';
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+function closeAnalysis() {
+    var modal = document.getElementById('analysisModal');
+    if (modal) modal.remove();
+}
+
+async function submitAnalysis() {
+    var resultDiv = document.getElementById('analysisResult');
+    resultDiv.innerHTML = '<p class="text-muted">🤖 AI is analyzing your profile...</p>';
+    
+    var email = document.getElementById('aiEmail').value;
+    var resume = document.getElementById('aiResume').value;
+    var education = document.getElementById('aiEducation').value;
+    var experience = document.getElementById('aiExperience').value;
+    var certs = document.getElementById('aiCerts').value;
+    var skills = document.getElementById('aiSkills').value;
+    
+    if (!email || !resume) {
+        resultDiv.innerHTML = '<p class="text-danger">Please provide email and resume/skills summary.</p>';
+        return;
     }
+    
+    var certsArray = certs ? certs.split(',').map(c => c.trim()) : [];
+    var skillsArray = skills ? skills.split(',').map(s => s.trim()) : [];
+    
+    try {
+        const response = await fetch('/api/ai-analysis/analyze', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                email: email,
+                resume_text: resume,
+                education: education,
+                experience: experience,
+                certifications: certsArray,
+                skills: skillsArray
+            })
+        });
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            var report = result.report;
+            var html = '<div class="alert alert-success mt-3">';
+            html += '<h5>✅ AI Analysis Complete!</h5>';
+            html += '<p><strong>Education:</strong> ' + (education || 'Not specified') + '</p>';
+            html += '<p><strong>Experience:</strong> ' + (experience || 'Fresher') + '</p>';
+            html += '<p><strong>Certifications:</strong> ' + (certsArray.length > 0 ? certsArray.join(', ') : 'None') + '</p>';
+            html += '<hr>';
+            
+            var roles = report.recommended_roles || [];
+            if (roles.length > 0) {
+                html += '<h6>🎯 Recommended Roles:</h6>';
+                roles.forEach(function(rec) {
+                    html += '<div class="mb-2 p-2 border rounded">';
+                    html += '<strong>' + rec.role + '</strong> - ' + rec.match_percentage + '% match<br>';
+                    html += '<small>✅ Matched: ' + (rec.matched_skills || []).join(', ') + '</small><br>';
+                    html += '<small style="color:red;">📚 Gaps: ' + (rec.gaps || []).slice(0, 3).join(', ') + '</small>';
+                    html += '</div>';
+                });
+            }
+            
+            if (report.learning_recommendations && report.learning_recommendations.length > 0) {
+                html += '<h6 class="mt-3">💡 Learning Recommendations:</h6>';
+                html += '<ul>';
+                report.learning_recommendations.forEach(function(rec) {
+                    html += '<li>' + rec + '</li>';
+                });
+                html += '</ul>';
+            }
+            
+            if (report.career_advice) {
+                html += '<h6 class="mt-3">📈 Career Advice:</h6>';
+                html += '<p>' + report.career_advice + '</p>';
+            }
+            
+            html += '</div>';
+            resultDiv.innerHTML = html;
+        }
+    } catch (error) {
+        resultDiv.innerHTML = '<p class="text-danger">Error: ' + error.message + '</p>';
+    }
+}
     </script>
 </body>
 </html>
