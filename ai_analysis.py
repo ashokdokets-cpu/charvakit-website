@@ -65,11 +65,7 @@ class AISkillAnalysis:
             5. Overall career advice
 
             Return JSON with structure:
-            {
-                "recommended_roles": [{"role": "", "match_percentage": 0, "matched_skills": [], "gaps": []}],
-                "learning_recommendations": [],
-                "career_advice": ""
-            }
+            {{"recommended_roles": [{{"role": "", "match_percentage": 0, "matched_skills": [], "gaps": []}}], "learning_recommendations": [], "career_advice": ""}}
             """
             
             response = requests.post(
