@@ -88,7 +88,7 @@ class AIVersantGenerator:
         return self._call_openai(prompt, 1)
     
     def _call_openai(self, prompt, count):
-        """Call OpenAI API."""
+        """Call OpenAI API - returns list of strings."""
         if not self.openai_api_key:
             return self._get_fallback_questions(prompt, count)
         
@@ -104,16 +104,26 @@ class AIVersantGenerator:
                     "temperature": 0.95,
                     "max_tokens": 2000
                 },
-                timeout=15
+                timeout=10
             )
             
             data = response.json()
-            content = data["choices"][0]["message"]["content"]
+            content_text = data["choices"][0]["message"]["content"]
             
             import re
-            match = re.search(r'\[.*\]', content, re.DOTALL)
+            match = re.search(r'\[.*\]', content_text, re.DOTALL)
             if match:
-                return json.loads(match.group())
+                items = json.loads(match.group())
+                # Convert to plain strings
+                result = []
+                for item in items:
+                    if isinstance(item, str):
+                        result.append(item)
+                    elif isinstance(item, dict):
+                        result.append(item.get("sentence", item.get("words", item.get("question", str(item)))))
+                    else:
+                        result.append(str(item))
+                return result
         except Exception as e:
             logger.error(f"OpenAI failed: {e}")
         
