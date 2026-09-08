@@ -91,12 +91,7 @@
         if (!email) return;
         var inst = getInstallments(c.duration);
         var instAmt = Math.round(c.price / inst);
-        var msg = 'Course: ' + c.name + '
-Duration: ' + c.duration + ' weeks
-Total: ₹' + c.price + '
-Installments: ' + inst + ' x ₹' + instAmt + '
-
-Proceed with payment?';
+        var msg = 'Course: ' + c.name + '\nDuration: ' + c.duration + ' weeks\nTotal: ₹' + c.price + '\nInstallments: ' + inst + ' x ₹' + instAmt + '\n\nProceed with payment?';
         if (confirm(msg)) {
             alert('✅ Enrollment created! Complete payment to start learning with AI Tutor.');
         }
