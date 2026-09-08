@@ -4759,7 +4759,7 @@ async def roles_page(request: Request):
 
 @app.get("/trainers", response_class=HTMLResponse)
 async def trainers_page(request: Request):
-    return template_response("trainers.html", request, "Expert Trainers - Charvak")
+    return template_response("ai-courses.html", request, "AI Courses - Charvak")
 
 
 

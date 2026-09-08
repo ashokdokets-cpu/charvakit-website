@@ -11,145 +11,138 @@
         .card { border: none; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.08); transition: all 0.3s; height: 100%; }
         .card:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0,0,0,0.15); }
         .badge-ai { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 5px 15px; border-radius: 20px; font-size: 11px; }
-        .btn-enroll { background: #3ba591; color: white; border-radius: 50px; padding: 10px 25px; font-weight: bold; border: none; }
+        .badge-demand { background: #e3f2fd; color: #1565c0; padding: 5px 12px; border-radius: 20px; font-size: 11px; }
+        .btn-enroll { background: #3ba591; color: white; border-radius: 50px; padding: 10px 25px; font-weight: bold; border: none; cursor: pointer; }
         .price-tag { background: #e8f5e9; color: #2e7d32; padding: 5px 12px; border-radius: 20px; font-size: 14px; font-weight: bold; }
-        .feature-list { list-style: none; padding: 0; }
-        .feature-list li { margin-bottom: 5px; }
+        .course-item { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 10px; padding: 15px; margin-bottom: 10px; }
+        .installment-info { font-size: 12px; color: #666; }
     </style>
 </head>
 <body>
     <div class="hero text-center">
         <h1>🤖 AI-Driven Courses</h1>
-        <p>Learn with AI - Personalized Curriculum, 24/7 Support, Auto-Certificates</p>
+        <p>25 High-Demand Courses | AI Tutor 24/7 | Installment Plans | Auto-Certificate</p>
     </div>
 
     <div class="container py-4">
         <div class="alert alert-info text-center">
-            <strong>🎯 How It Works:</strong> Enroll → AI Plans Curriculum → Learn Weekly → Complete Projects → Get Certificate
+            <strong>🎯 How It Works:</strong> Enroll → Pay 1st Installment → AI Tutor Starts → Learn Weekly → Complete → Certificate
+        </div>
+        <div class="alert alert-success text-center">
+            <strong>💰 Payment Plans:</strong> 2 Installments (≤8 weeks) | 3 Installments (9-14 weeks) | 4 Installments (16+ weeks)
         </div>
 
-        <div class="row g-3">
-            <div class="col-md-4">
-                <div class="card p-4 text-center">
-                    <span class="badge-ai">🤖 AI Tutor</span>
-                    <h4 class="mt-2">Python Programming</h4>
-                    <p class="text-muted">6 Weeks | Beginner Friendly</p>
-                    <span class="price-tag">₹999</span>
-                    <ul class="feature-list mt-3 text-start">
-                        <li>✅ AI-planned curriculum</li>
-                        <li>✅ Weekly lessons & exercises</li>
-                        <li>✅ Real-time project help</li>
-                        <li>✅ Completion certificate</li>
-                    </ul>
-                    <button class="btn-enroll w-100 mt-2" onclick="enrollCourse('Python Programming')">Enroll Now</button>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card p-4 text-center">
-                    <span class="badge-ai">🤖 AI Tutor</span>
-                    <h4 class="mt-2">Full Stack Web Development</h4>
-                    <p class="text-muted">12 Weeks | All Levels</p>
-                    <span class="price-tag">₹4,999</span>
-                    <ul class="feature-list mt-3 text-start">
-                        <li>✅ AI-planned curriculum</li>
-                        <li>✅ Weekly projects</li>
-                        <li>✅ Real-time code help</li>
-                        <li>✅ Completion certificate</li>
-                    </ul>
-                    <button class="btn-enroll w-100 mt-2" onclick="enrollCourse('Full Stack Web Development')">Enroll Now</button>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card p-4 text-center">
-                    <span class="badge-ai">🤖 AI Tutor</span>
-                    <h4 class="mt-2">Data Science & ML</h4>
-                    <p class="text-muted">16 Weeks | All Levels</p>
-                    <span class="price-tag">₹5,999</span>
-                    <ul class="feature-list mt-3 text-start">
-                        <li>✅ AI-planned curriculum</li>
-                        <li>✅ Real datasets & projects</li>
-                        <li>✅ 24/7 AI assistance</li>
-                        <li>✅ Completion certificate</li>
-                    </ul>
-                    <button class="btn-enroll w-100 mt-2" onclick="enrollCourse('Data Science & ML')">Enroll Now</button>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card p-4 text-center">
-                    <span class="badge-ai">🤖 AI Tutor</span>
-                    <h4 class="mt-2">AWS Cloud Computing</h4>
-                    <p class="text-muted">10 Weeks | All Levels</p>
-                    <span class="price-tag">₹3,999</span>
-                    <ul class="feature-list mt-3 text-start">
-                        <li>✅ AI-planned curriculum</li>
-                        <li>✅ Hands-on labs</li>
-                        <li>✅ Real-time help</li>
-                        <li>✅ Completion certificate</li>
-                    </ul>
-                    <button class="btn-enroll w-100 mt-2" onclick="enrollCourse('AWS Cloud Computing')">Enroll Now</button>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card p-4 text-center">
-                    <span class="badge-ai">🤖 AI Tutor</span>
-                    <h4 class="mt-2">Cybersecurity</h4>
-                    <p class="text-muted">14 Weeks | All Levels</p>
-                    <span class="price-tag">₹4,999</span>
-                    <ul class="feature-list mt-3 text-start">
-                        <li>✅ AI-planned curriculum</li>
-                        <li>✅ Practical labs</li>
-                        <li>✅ 24/7 AI support</li>
-                        <li>✅ Completion certificate</li>
-                    </ul>
-                    <button class="btn-enroll w-100 mt-2" onclick="enrollCourse('Cybersecurity')">Enroll Now</button>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card p-4 text-center">
-                    <span class="badge-ai">🤖 AI Tutor</span>
-                    <h4 class="mt-2">DevOps Engineering</h4>
-                    <p class="text-muted">12 Weeks | All Levels</p>
-                    <span class="price-tag">₹4,999</span>
-                    <ul class="feature-list mt-3 text-start">
-                        <li>✅ AI-planned curriculum</li>
-                        <li>✅ CI/CD projects</li>
-                        <li>✅ Real-time help</li>
-                        <li>✅ Completion certificate</li>
-                    </ul>
-                    <button class="btn-enroll w-100 mt-2" onclick="enrollCourse('DevOps Engineering')">Enroll Now</button>
-                </div>
-            </div>
+        <div class="row g-3" id="coursesContainer">
+            <!-- Courses will be loaded here -->
         </div>
     </div>
 
     <script>
-        async function enrollCourse(courseName) {
+        var courses = [
+            {name: 'Full Stack Web Development', price: 4999, duration: 12, demand: 'Very High'},
+            {name: 'Data Science & ML', price: 5999, duration: 16, demand: 'Very High'},
+            {name: 'Python Programming', price: 999, duration: 6, demand: 'Very High'},
+            {name: 'AWS Cloud Computing', price: 3999, duration: 10, demand: 'Critical'},
+            {name: 'DevOps Engineering', price: 4999, duration: 12, demand: 'Very High'},
+            {name: 'Cybersecurity', price: 4999, duration: 14, demand: 'Critical'},
+            {name: 'Java Development', price: 2999, duration: 10, demand: 'High'},
+            {name: 'React & Frontend', price: 2499, duration: 8, demand: 'High'},
+            {name: 'SQL & Database', price: 999, duration: 4, demand: 'High'},
+            {name: 'Docker & Kubernetes', price: 2499, duration: 6, demand: 'Very High'},
+            {name: 'AI & Deep Learning', price: 6999, duration: 16, demand: 'Very High'},
+            {name: 'Mobile App Development', price: 3999, duration: 12, demand: 'High'},
+            {name: 'Blockchain Development', price: 4999, duration: 12, demand: 'High'},
+            {name: 'Data Analytics', price: 2999, duration: 8, demand: 'High'},
+            {name: 'UI/UX Design', price: 1999, duration: 6, demand: 'Moderate'},
+            {name: 'Cloud Architecture', price: 5999, duration: 14, demand: 'Critical'},
+            {name: 'Node.js Backend', price: 2499, duration: 8, demand: 'High'},
+            {name: 'Python for Data Science', price: 3999, duration: 10, demand: 'Very High'},
+            {name: 'Machine Learning Ops', price: 4999, duration: 12, demand: 'High'},
+            {name: 'Spring Boot', price: 2499, duration: 8, demand: 'High'},
+            {name: 'Angular Development', price: 1999, duration: 6, demand: 'Moderate'},
+            {name: 'Ethical Hacking', price: 5999, duration: 12, demand: 'Critical'},
+            {name: 'Big Data', price: 4999, duration: 12, demand: 'High'},
+            {name: 'Software Testing', price: 999, duration: 4, demand: 'Moderate'},
+            {name: 'Git & DevOps Tools', price: 499, duration: 2, demand: 'High'}
+        ];
+
+        function getInstallments(duration) {
+            if (duration <= 8) return 2;
+            if (duration <= 14) return 3;
+            return 4;
+        }
+
+        function renderCourses() {
+            var html = '';
+            courses.forEach(function(course, index) {
+                var installments = getInstallments(course.duration);
+                var installmentAmount = Math.round(course.price / installments);
+                
+                html += '<div class="col-md-6"><div class="course-item">';
+                html += '<strong>' + (index + 1) + '. ' + course.name + '</strong> ';
+                html += '<span class="badge-ai">🤖 AI Tutor</span> ';
+                html += '<span class="badge-demand">' + course.demand + ' Demand</span><br>';
+                html += '<small>Duration: ' + course.duration + ' Weeks</small><br>';
+                html += '<span class="price-tag">₹' + course.price + '</span> ';
+                html += '<small class="installment-info">' + installments + ' Installments × ₹' + installmentAmount + '</small><br>';
+                html += '<button class="btn-enroll mt-2" onclick="enrollCourse(\'' + course.name + '\', ' + course.price + ', ' + course.duration + ')">Enroll Now →</button>';
+                html += '</div></div>';
+            });
+            document.getElementById('coursesContainer').innerHTML = html;
+        }
+
+        async function enrollCourse(courseName, price, duration) {
             const email = prompt('Enter your email to enroll in ' + courseName + ':');
             if (!email) return;
             
-            const duration = prompt('Choose duration (weeks):\n6, 8, 10, 12, 14, 16');
-            if (!duration) return;
+            var installments = getInstallments(duration);
+            var installmentAmount = Math.round(price / installments);
+            
+            var confirmMsg = 'Course: ' + courseName + '\n';
+            confirmMsg += 'Duration: ' + duration + ' weeks\n';
+            confirmMsg += 'Total Price: ₹' + price + '\n';
+            confirmMsg += 'Installments: ' + installments + ' × ₹' + installmentAmount + '\n\n';
+            confirmMsg += 'Pay 1st installment (₹' + installmentAmount + ') to start?';
+            
+            if (!confirm(confirmMsg)) return;
             
             try {
-                const response = await fetch('/api/ai-course/enroll', {
+                const response = await fetch('/api/enroll/payment', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
                         email: email,
                         course_name: courseName,
-                        duration_weeks: parseInt(duration),
-                        user_level: 'beginner'
+                        duration_weeks: duration
                     })
                 });
                 const result = await response.json();
                 
                 if (result.status === 'success') {
-                    alert('✅ Enrolled Successfully!\n\nCourse: ' + courseName + '\nDuration: ' + duration + ' weeks\n\nAI will plan your personalized curriculum and start teaching you!');
+                    alert('✅ Enrollment Created!\n\nEnrollment ID: ' + result.enrollment_id + '\n\nComplete payment to start learning.');
+                    
+                    // Simulate payment
+                    const payResponse = await fetch('/api/enroll/pay-installment', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            enrollment_id: result.enrollment_id,
+                            installment_number: 1
+                        })
+                    });
+                    const payResult = await payResponse.json();
+                    
+                    if (payResult.status === 'success' && payResult.access_granted) {
+                        alert('✅ Payment Successful! AI Tutor access granted!\n\nYour ' + courseName + ' course has started!');
+                    }
                 }
             } catch (error) {
                 alert('Error: ' + error.message);
             }
         }
+
+        // Render courses on page load
+        renderCourses();
     </script>
 </body>
 </html>
