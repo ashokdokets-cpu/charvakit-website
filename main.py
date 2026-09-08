@@ -5111,6 +5111,18 @@ async def get_session_questions(session_id: str, section_id: str):
     return ai_versant.get_session_questions(session_id, section_id)
 
 
+
+from mcq_bank import mcq_bank
+
+@app.get("/api/mcq/topics")
+async def get_mcq_topics():
+    return mcq_bank.get_all_topics()
+
+@app.get("/api/mcq/questions/{category}/{topic}")
+async def get_topic_questions(category: str, topic: str):
+    return mcq_bank.get_topic_questions(category, topic)
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
