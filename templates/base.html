@@ -563,9 +563,9 @@ function updateAllPrices(currency) {
         BRL: 16.8, NGN: 0.055, ZAR: 4.45
     };
     const symbols = {
-        INR: '₹', USD: '$', EUR: '€', GBP: '£', AED: 'د.إ',
-        SGD: 'S$', AUD: 'A$', CAD: 'C$', JPY: '¥', CNY: '¥',
-        BRL: 'R$', NGN: '₦', ZAR: 'R'
+        INR: '₹', USD: '$', EUR: '€', GBP: '£', AED: 'AED',
+        SGD: 'S$', AUD: 'A$', CAD: 'C$', JPY: 'JPY', CNY: 'JPY',
+        BRL: 'R$', NGN: 'NGN', ZAR: 'R'
     };
     
     document.querySelectorAll('[data-inr]').forEach(el => {
@@ -744,10 +744,10 @@ function showPaymentMethodModal(amount, toolName, callback) {
             <p class="mb-3">Amount: <strong>₹' + amount + '</strong> (' + toolName + ')</p>
             <div class="d-grid gap-2">
                 <button class="btn btn-primary btn-lg" onclick="payWithRazorpay(' + amount + ', '' + toolName + '', ' + callback ? 'true' : 'false' + ')">
-                    🇮🇳 Pay with Razorpay (UPI/Cards)
+                    Pay with Razorpay (UPI/Cards)
                 </button>
                 <button class="btn btn-warning btn-lg" onclick="payWithPayPal(' + amount + ', '' + toolName + '')">
-                    🌍 Pay with PayPal (International)
+                    Pay with PayPal (International)
                 </button>
                 <button class="btn btn-secondary" onclick="this.closest('div[style]').parentElement.remove()">Cancel</button>
             </div>
