@@ -43,3 +43,9 @@ download_website.py
 *remove*.py
 *patch*.py
 *add_trainers*.py
+
+rebuild_*.py
+create_mcq.py
+add_admin_route.py
+add_role_button.py
+final_check.py

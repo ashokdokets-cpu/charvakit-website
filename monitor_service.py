@@ -5,7 +5,7 @@ Background monitoring for websites, webhooks, and APIs
 import os
 import json
 import time
-import httpx
+import requests
 import asyncio
 from datetime import datetime
 from typing import Dict, List
@@ -27,7 +27,7 @@ class SiteMonitor:
         """Check website health"""
         issues = []
         try:
-            async with httpx.AsyncClient(timeout=10) as client:
+            async with requests.Session(timeout=10) as client:
                 start = time.time()
                 response = await client.get(self.url)
                 response_time = time.time() - start

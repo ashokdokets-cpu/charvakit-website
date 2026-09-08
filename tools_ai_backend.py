@@ -4,7 +4,7 @@ Real GPT-4o-mini integration for all 12 viral tools
 """
 import os
 import json
-import httpx
+import requests
 from typing import Optional, Dict
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
@@ -15,7 +15,7 @@ async def call_ai(prompt: str, max_tokens: int = 800) -> Optional[str]:
     if not OPENAI_API_KEY:
         return None
     try:
-        async with httpx.AsyncClient(timeout=20) as client:
+        async with requests.Session(timeout=20) as client:
             response = await client.post(
                 f"{OPENAI_BASE}/chat/completions",
                 headers={"Authorization": f"Bearer {OPENAI_API_KEY}", "Content-Type": "application/json"},

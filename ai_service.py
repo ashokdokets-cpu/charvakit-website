@@ -4,7 +4,7 @@ Powers all 8 AI-dependent models using GPT-4o-mini
 """
 import os
 import json
-import httpx
+import requests
 from typing import Optional, Dict, List
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
@@ -16,7 +16,7 @@ async def call_openai(prompt: str, model: str = "gpt-4o-mini", max_tokens: int =
         return None
     
     try:
-        async with httpx.AsyncClient(timeout=30) as client:
+        async with requests.Session(timeout=30) as client:
             response = await client.post(
                 f"{OPENAI_BASE}/chat/completions",
                 headers={"Authorization": f"Bearer {OPENAI_API_KEY}", "Content-Type": "application/json"},
