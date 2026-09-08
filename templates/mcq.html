@@ -11,7 +11,6 @@
         .category-card { cursor: pointer; border: 2px solid #e0e0e0; border-radius: 10px; padding: 15px; text-align: center; background: white; margin-bottom: 10px; }
         .category-card:hover { border-color: #3ba591; }
         .category-card.active { border-color: #3ba591; background: #f0faf8; }
-        .topic-badge { display: inline-block; background: #e8f5e9; color: #2e7d32; padding: 4px 10px; border-radius: 20px; margin: 2px; font-size: 11px; }
         .topic-tab { cursor: pointer; border: 1px solid #e0e0e0; border-radius: 20px; padding: 8px 15px; margin: 3px; background: white; display: inline-block; font-size: 13px; }
         .topic-tab:hover { border-color: #3ba591; }
         .topic-tab.active { background: #3ba591; color: white; }
@@ -26,7 +25,7 @@
 <body>
     <div class="hero text-center">
         <h1>📝 MCQ Assessment</h1>
-        <p>210 Questions | 21 Topics | Click Topic to See 10 Questions Each</p>
+        <p>210 Questions | 21 Topics | Market Standard</p>
     </div>
 
     <div class="container py-4">
@@ -60,33 +59,12 @@
         <div id="topicTabs" class="mt-3"></div>
 
         <div class="question-box">
-            <h4 id="topicTitle">Select a topic to see 10 questions</h4>
+            <h4 id="topicTitle">Loading questions...</h4>
             <div id="questionsList"></div>
         </div>
     </div>
 
     <script>
-        // Generate 10 questions per topic
-        function generateQuestions(topic, category) {
-            var questions = [];
-            var templates = {
-                aptitude: [
-                    {q: 'What is {x}% of {y}?', calc: function(i) { return {x: 10 + i * 5, y: 100 + i * 50}; }, options: function(x, y) { var ans = (x * y) / 100; return [ans, ans + 10, ans - 5, ans + 15]; }},
-                    {q: 'If {a}x + {b} = {c}, what is x?', calc: function(i) { return {a: 2 + i, b: 5 + i * 2, c: 20 + i * 5}; }, options: function(a, b, c) { var ans = (c - b) / a; return [ans, ans + 1, ans - 1, ans + 2]; }}
-                ]
-            };
-            
-            // Generate 10 questions based on topic
-            for (var i = 1; i <= 10; i++) {
-                questions.push({
-                    q: topic + ' Question ' + i + ': What is the correct answer?',
-                    options: ['Option A', 'Option B', 'Option C', 'Option D'],
-                    correct: i % 4
-                });
-            }
-            return questions;
-        }
-
         var topics = {
             aptitude: ['Quant', 'Probability', 'Data Interpretation', 'Logical Reasoning', 'Syllogisms', 'Coding-Decoding', 'Pattern Recognition'],
             technical: ['Data Structures', 'Algorithms', 'OOPs', 'Operating Systems', 'DBMS/SQL', 'Computer Networks'],
@@ -102,7 +80,6 @@
             document.querySelectorAll('.category-card').forEach(c => c.classList.remove('active'));
             document.querySelector('[data-category="' + category + '"]').classList.add('active');
             
-            // Show topic tabs
             var tabs = topics[category];
             var html = '<strong>Topics:</strong> ';
             tabs.forEach(function(topic) {
@@ -110,27 +87,44 @@
             });
             document.getElementById('topicTabs').innerHTML = html;
             
-            // Show first topic
             showTopic(tabs[0]);
         }
 
-        function showTopic(topic) {
+        async function showTopic(topic) {
             currentTopic = topic;
-            document.getElementById('topicTitle').textContent = topic + ' (10 Questions)';
+            document.getElementById('topicTitle').textContent = topic + ' (Loading...)';
             
-            // Update active topic tab
             document.querySelectorAll('.topic-tab').forEach(t => t.classList.remove('active'));
-            event.target.classList.add('active');
+            if (event && event.target && event.target.classList) {
+                event.target.classList.add('active');
+            }
             
-            // Generate 10 questions
+            // Fetch questions from API
+            try {
+                const response = await fetch('/api/mcq/questions/' + currentCategory + '/' + encodeURIComponent(topic));
+                const data = await response.json();
+                
+                if (data.status === 'success' && data.questions && data.questions.length > 0) {
+                    document.getElementById('topicTitle').textContent = topic + ' (' + data.questions.length + ' Questions)';
+                    renderQuestions(data.questions);
+                } else {
+                    document.getElementById('topicTitle').textContent = topic + ' (No questions available)';
+                }
+            } catch (error) {
+                document.getElementById('topicTitle').textContent = topic + ' (Error loading questions)';
+            }
+        }
+
+        function renderQuestions(questions) {
             var html = '';
-            for (var i = 1; i <= 10; i++) {
+            for (var i = 0; i < questions.length; i++) {
+                var q = questions[i];
                 html += '<div class="question-item">';
-                html += '<strong>Q' + i + '.</strong> ' + topic + ' question ' + i + ': What is the correct answer?';
-                html += '<div class="option-item" onclick="checkAnswer(this, ' + (i % 4) + ', 0)">A) Option A</div>';
-                html += '<div class="option-item" onclick="checkAnswer(this, ' + (i % 4) + ', 1)">B) Option B</div>';
-                html += '<div class="option-item" onclick="checkAnswer(this, ' + (i % 4) + ', 2)">C) Option C</div>';
-                html += '<div class="option-item" onclick="checkAnswer(this, ' + (i % 4) + ', 3)">D) Option D</div>';
+                html += '<strong>Q' + (i + 1) + '. ' + q.q + '</strong>';
+                var options = q.options || [];
+                for (var j = 0; j < options.length; j++) {
+                    html += '<div class="option-item" onclick="checkAnswer(this, ' + j + ', ' + (q.correct || 0) + ')">' + String.fromCharCode(65 + j) + ') ' + options[j] + '</div>';
+                }
                 html += '</div>';
             }
             document.getElementById('questionsList').innerHTML = html;
@@ -145,7 +139,7 @@
             }
         }
 
-        // Load first category
+        // Load first category on page load
         showCategory('aptitude');
     </script>
 </body>
