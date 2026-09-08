@@ -11,63 +11,63 @@
         .company-card { cursor: pointer; border: 2px solid #e0e0e0; border-radius: 10px; padding: 15px; text-align: center; background: white; transition: all 0.3s; height: 100%; }
         .company-card:hover { border-color: #3ba591; transform: translateY(-3px); }
         .company-card.active { border-color: #3ba591; background: #f0faf8; }
+        .pattern-card { border: 2px solid #e0e0e0; border-radius: 10px; padding: 15px; margin-bottom: 10px; background: white; }
+        .pattern-card:hover { border-color: #3ba591; }
         .question-box { background: white; border-radius: 10px; padding: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); margin-top: 20px; }
         .question-item { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; margin-bottom: 10px; }
         .option-item { cursor: pointer; padding: 10px; border: 1px solid #e0e0e0; border-radius: 6px; margin: 5px 0; }
         .option-item:hover { background: #f0faf8; }
         .option-item.selected { background: #e8f5e9; border-color: #2e7d32; }
         .btn-custom { background: #3ba591; color: white; border-radius: 50px; padding: 12px 30px; font-weight: bold; border: none; }
+        .badge-moderate { background: #4caf50; }
+        .badge-hard { background: #ff9800; }
+        .badge-very-hard { background: #f44336; }
     </style>
 </head>
 <body>
     <div class="hero text-center">
         <h1>🏢 Company Mock Drives</h1>
-        <p>AI-Generated Questions Matching Real Company Patterns</p>
+        <p>18 Companies | 38 Patterns | AI-Generated Questions</p>
     </div>
 
     <div class="container py-4">
-        <div class="row g-3">
-            <div class="col-6 col-md-2"><div class="company-card" data-company="tcs" onclick="selectCompany('tcs')"><h5>TCS</h5><small>37 Q</small></div></div>
-            <div class="col-6 col-md-2"><div class="company-card" data-company="infosys" onclick="selectCompany('infosys')"><h5>Infosys</h5><small>38 Q</small></div></div>
-            <div class="col-6 col-md-2"><div class="company-card" data-company="cognizant" onclick="selectCompany('cognizant')"><h5>Cognizant</h5><small>35 Q</small></div></div>
-            <div class="col-6 col-md-2"><div class="company-card" data-company="wipro" onclick="selectCompany('wipro')"><h5>Wipro</h5><small>24 Q</small></div></div>
-            <div class="col-6 col-md-2"><div class="company-card" data-company="accenture" onclick="selectCompany('accenture')"><h5>Accenture</h5><small>50 Q</small></div></div>
-            <div class="col-6 col-md-2"><div class="company-card" data-company="capgemini" onclick="selectCompany('capgemini')"><h5>Capgemini</h5><small>37 Q</small></div></div>
-            <div class="col-6 col-md-2"><div class="company-card" data-company="ibm" onclick="selectCompany('ibm')"><h5>IBM</h5><small>32 Q</small></div></div>
-            <div class="col-6 col-md-2"><div class="company-card" data-company="hcl" onclick="selectCompany('hcl')"><h5>HCLTech</h5><small>37 Q</small></div></div>
-            <div class="col-6 col-md-2"><div class="company-card" data-company="tech_mahindra" onclick="selectCompany('tech_mahindra')"><h5>Tech Mahindra</h5><small>32 Q</small></div></div>
-            <div class="col-6 col-md-2"><div class="company-card" data-company="lti" onclick="selectCompany('lti')"><h5>LTI</h5><small>32 Q</small></div></div>
-            <div class="col-6 col-md-2"><div class="company-card" data-company="mindtree" onclick="selectCompany('mindtree')"><h5>Mindtree</h5><small>32 Q</small></div></div>
-            <div class="col-6 col-md-2"><div class="company-card" data-company="deloitte" onclick="selectCompany('deloitte')"><h5>Deloitte</h5><small>40 Q</small></div></div>
-            <div class="col-6 col-md-2"><div class="company-card" data-company="kpmg" onclick="selectCompany('kpmg')"><h5>KPMG</h5><small>40 Q</small></div></div>
-            <div class="col-6 col-md-2"><div class="company-card" data-company="ey" onclick="selectCompany('ey')"><h5>EY</h5><small>40 Q</small></div></div>
-            <div class="col-6 col-md-2"><div class="company-card" data-company="pwc" onclick="selectCompany('pwc')"><h5>PwC</h5><small>40 Q</small></div></div>
-            <div class="col-6 col-md-2"><div class="company-card" data-company="amazon" onclick="selectCompany('amazon')"><h5>Amazon</h5><small>37 Q</small></div></div>
-            <div class="col-6 col-md-2"><div class="company-card" data-company="google" onclick="selectCompany('google')"><h5>Google</h5><small>37 Q</small></div></div>
-            <div class="col-6 col-md-2"><div class="company-card" data-company="microsoft" onclick="selectCompany('microsoft')"><h5>Microsoft</h5><small>37 Q</small></div></div>
+        <div class="row g-2">
+            <div class="col-6 col-md-2"><div class="company-card" data-company="tcs" onclick="selectCompany('tcs')"><h6>TCS</h6><small>3 Patterns</small></div></div>
+            <div class="col-6 col-md-2"><div class="company-card" data-company="infosys" onclick="selectCompany('infosys')"><h6>Infosys</h6><small>2 Patterns</small></div></div>
+            <div class="col-6 col-md-2"><div class="company-card" data-company="cognizant" onclick="selectCompany('cognizant')"><h6>Cognizant</h6><small>3 Patterns</small></div></div>
+            <div class="col-6 col-md-2"><div class="company-card" data-company="wipro" onclick="selectCompany('wipro')"><h6>Wipro</h6><small>2 Patterns</small></div></div>
+            <div class="col-6 col-md-2"><div class="company-card" data-company="accenture" onclick="selectCompany('accenture')"><h6>Accenture</h6><small>2 Patterns</small></div></div>
+            <div class="col-6 col-md-2"><div class="company-card" data-company="capgemini" onclick="selectCompany('capgemini')"><h6>Capgemini</h6><small>2 Patterns</small></div></div>
+            <div class="col-6 col-md-2"><div class="company-card" data-company="ibm" onclick="selectCompany('ibm')"><h6>IBM</h6><small>2 Patterns</small></div></div>
+            <div class="col-6 col-md-2"><div class="company-card" data-company="hcl" onclick="selectCompany('hcl')"><h6>HCLTech</h6><small>2 Patterns</small></div></div>
+            <div class="col-6 col-md-2"><div class="company-card" data-company="tech_mahindra" onclick="selectCompany('tech_mahindra')"><h6>Tech Mahindra</h6><small>2 Patterns</small></div></div>
+            <div class="col-6 col-md-2"><div class="company-card" data-company="lti" onclick="selectCompany('lti')"><h6>LTI</h6><small>2 Patterns</small></div></div>
+            <div class="col-6 col-md-2"><div class="company-card" data-company="mindtree" onclick="selectCompany('mindtree')"><h6>Mindtree</h6><small>2 Patterns</small></div></div>
+            <div class="col-6 col-md-2"><div class="company-card" data-company="deloitte" onclick="selectCompany('deloitte')"><h6>Deloitte</h6><small>2 Patterns</small></div></div>
+            <div class="col-6 col-md-2"><div class="company-card" data-company="kpmg" onclick="selectCompany('kpmg')"><h6>KPMG</h6><small>2 Patterns</small></div></div>
+            <div class="col-6 col-md-2"><div class="company-card" data-company="ey" onclick="selectCompany('ey')"><h6>EY</h6><small>2 Patterns</small></div></div>
+            <div class="col-6 col-md-2"><div class="company-card" data-company="pwc" onclick="selectCompany('pwc')"><h6>PwC</h6><small>2 Patterns</small></div></div>
+            <div class="col-6 col-md-2"><div class="company-card" data-company="amazon" onclick="selectCompany('amazon')"><h6>Amazon</h6><small>2 Patterns</small></div></div>
+            <div class="col-6 col-md-2"><div class="company-card" data-company="google" onclick="selectCompany('google')"><h6>Google</h6><small>2 Patterns</small></div></div>
+            <div class="col-6 col-md-2"><div class="company-card" data-company="microsoft" onclick="selectCompany('microsoft')"><h6>Microsoft</h6><small>2 Patterns</small></div></div>
         </div>
 
         <div class="question-box" id="mainContent">
-            <h4>Select a company to start mock drive</h4>
-            <p class="text-muted">Click on a company card above to see their test pattern and start practicing.</p>
+            <h4>Select a company to see available patterns</h4>
+            <p class="text-muted">Click on any company card above to see their test patterns.</p>
         </div>
     </div>
 
     <script>
-        var currentSession = null;
-        var currentCompany = null;
         var userAnswers = {};
-        var currentSessionId = null;
 
         async function selectCompany(companyId) {
-            currentCompany = companyId;
             document.querySelectorAll('.company-card').forEach(c => c.classList.remove('active'));
             document.querySelector('[data-company="' + companyId + '"]').classList.add('active');
             
             var content = document.getElementById('mainContent');
-            content.innerHTML = '<h4>Loading patterns for ' + companyId.toUpperCase() + '...</h4>';
+            content.innerHTML = '<h4>Loading patterns...</h4>';
             
-            // Fetch patterns from API
             try {
                 const response = await fetch('/api/company-patterns/' + companyId);
                 const result = await response.json();
@@ -77,86 +77,35 @@
                     html += '<p class="text-muted">Select a pattern to start your mock drive:</p>';
                     
                     result.patterns.forEach(function(pattern) {
-                        html += '<div class="question-item mb-3 p-3">';
+                        var badgeClass = 'badge-moderate';
+                        if (pattern.difficulty === 'Hard') badgeClass = 'badge-hard';
+                        if (pattern.difficulty === 'Very Hard') badgeClass = 'badge-very-hard';
+                        
+                        html += '<div class="pattern-card">';
                         html += '<strong>' + pattern.name + '</strong>';
-                        html += '<span class="badge bg-' + getBadgeColor(pattern.difficulty) + ' ms-2">' + pattern.difficulty + '</span><br>';
-                        html += '<small class="text-muted">' + pattern.description + '</small><br>';
+                        html += '<span class="badge ' + badgeClass + ' ms-2" style="color:white;">' + pattern.difficulty + '</span><br>';
+                        html += '<small class="text-muted">' + (pattern.description || '') + '</small><br>';
                         html += '<small>Total Questions: ' + pattern.total_questions + '</small><br>';
-                        html += '<button class="btn-custom mt-2" onclick="startPatternMock(\'' + companyId + '\', \'' + pattern.id + '\')">Start ' + pattern.name + ' →</button>';
+                        html += '<button class="btn-custom mt-2" onclick="startPatternMock(\'' + companyId + '\', \'' + pattern.id + '\')">🚀 Start ' + pattern.name + ' →</button>';
                         html += '</div>';
                     });
                     
                     content.innerHTML = html;
-                } else {
-                    content.innerHTML = '<p class="text-danger">Company not found</p>';
                 }
             } catch (error) {
                 content.innerHTML = '<p class="text-danger">Error: ' + error.message + '</p>';
             }
         }
 
-        function getBadgeColor(difficulty) {
-            if (difficulty === 'Moderate') return 'success';
-            if (difficulty === 'Hard') return 'warning';
-            if (difficulty === 'Very Hard') return 'danger';
-            return 'primary';
-        }
-
         async function startPatternMock(companyId, patternId) {
-            const email = prompt('Enter your email to start ' + patternId + ' mock drive:');
+            const email = prompt('Enter your email to start:');
             if (!email) return;
             
             var content = document.getElementById('mainContent');
             content.innerHTML = '<p class="text-muted">Generating AI questions for ' + patternId + '...</p>';
             
             try {
-                const response = await fetch('/api/company-patterns/start', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        email: email,
-                        company_id: companyId,
-                        pattern_id: patternId
-                    })
-                });
-                const result = await response.json();
-                
-                if (result.status === 'success') {
-                    var html = '<div class="alert alert-success">';
-                    html += '<strong>✅ ' + result.pattern + ' Mock Drive Started!</strong><br>';
-                    html += 'Company: ' + result.company + '<br>';
-                    html += 'Difficulty: ' + result.difficulty + '<br>';
-                    html += 'Description: ' + result.description + '<br>';
-                    html += 'Total Questions: ' + result.total_questions;
-                    html += '</div>';
-                    
-                    // Show sections
-                    html += '<h5 class="mt-3">📋 Test Sections:</h5>';
-                    result.sections.forEach(function(section) {
-                        html += '<div class="section-item p-3 border rounded mb-2">';
-                        html += '<strong>' + section.name + ':</strong> ' + section.count + ' Questions (' + section.time + ')<br>';
-                        html += '<small class="text-muted">Topics: ' + section.topics.join(', ') + '</small>';
-                        html += '</div>';
-                    });
-                    
-                    html += '<button class="btn-custom mt-3" onclick="generateQuestions(\'' + result.session_id + '\', \'' + companyId + '\', \'' + patternId + '\')">📝 Generate Questions →</button>';
-                    html += '<div id="questionsBox" class="mt-3"></div>';
-                    
-                    content.innerHTML = html;
-                }
-            } catch (error) {
-                content.innerHTML = '<p class="text-danger">Error: ' + error.message + '</p>';
-            }
-        }
-
-        async function startMockDrive(companyId) {
-            const email = prompt('Enter your email to start:');
-            if (!email) return;
-            
-            var content = document.getElementById('mainContent');
-            content.innerHTML = '<p class="text-muted">Generating AI questions...</p>';
-            
-            try {
+                // Use complete_mock_drive to generate questions
                 const response = await fetch('/api/mock/start-complete', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -165,19 +114,20 @@
                 const result = await response.json();
                 
                 if (result.status === 'success' && result.session) {
-                    currentSession = result.session;
+                    var session = result.session;
                     userAnswers = {};
                     
                     var html = '<div class="alert alert-success">';
                     html += '<strong>✅ Mock Drive Started!</strong><br>';
-                    html += 'Company: ' + result.session.company + '<br>';
-                    html += 'Pattern: ' + result.session.pattern + '<br>';
-                    html += 'Total Questions: ' + result.session.total_questions;
+                    html += 'Company: ' + session.company + '<br>';
+                    html += 'Pattern: ' + session.pattern + '<br>';
+                    html += 'Total Questions: ' + session.total_questions;
                     html += '</div>';
                     
-                    // Show all questions
-                    result.session.sections.forEach(function(section) {
+                    // Show ALL questions immediately
+                    session.sections.forEach(function(section) {
                         html += '<h5 class="mt-4">' + section.name + ' (' + section.questions.length + ' Questions)</h5>';
+                        html += '<small class="text-muted">Topics: ' + section.topics.join(', ') + '</small>';
                         
                         section.questions.forEach(function(q, index) {
                             var qId = section.name + '_' + index;
@@ -206,107 +156,6 @@
         }
 
         function selectOption(questionId, optionIndex, element) {
-            // Deselect siblings
-            element.parentElement.querySelectorAll('.option-item').forEach(o => o.classList.remove('selected'));
-            element.classList.add('selected');
-            
-            // Store answer
-            userAnswers[questionId] = optionIndex;
-        }
-
-        async function completeMock() {
-            var resultsBox = document.getElementById('resultsBox');
-            resultsBox.innerHTML = '<p class="text-muted">Calculating results...</p>';
-            
-            // Submit all answers
-            for (var qId in userAnswers) {
-                await fetch('/api/mock/submit-complete', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        session_id: currentSession.session_id,
-                        section_name: qId.split('_')[0],
-                        question_id: parseInt(qId.split('_')[1]),
-                        selected_option: userAnswers[qId]
-                    })
-                });
-            }
-            
-            // Complete mock
-            try {
-                const response = await fetch('/api/mock/complete-full', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({session_id: currentSession.session_id})
-                });
-                const result = await response.json();
-                
-                if (result.status === 'success') {
-                    var r = result.results;
-                    var html = '<div class="alert alert-info mt-3">';
-                    html += '<h5>📊 Results:</h5>';
-                    html += 'Company: ' + r.company + '<br>';
-                    html += 'Total Questions: ' + r.total_questions + '<br>';
-                    html += 'Answered: ' + r.answered + '<br>';
-                    html += 'Score: ' + r.score + '%<br>';
-                    html += 'Result: ' + (r.pass ? '✅ PASS' : '❌ FAIL') + '<br>';
-                    html += '</div>';
-                    resultsBox.innerHTML = html;
-                }
-            } catch (error) {
-                resultsBox.innerHTML = '<p class="text-danger">Error: ' + error.message + '</p>';
-            }
-        }
-        async function generateQuestions(sessionId, companyId, patternId) {
-            var box = document.getElementById('questionsBox');
-            box.innerHTML = '<p class="text-muted">Generating AI questions...</p>';
-            
-            try {
-                const response = await fetch('/api/mock/start-complete', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        email: 'user@example.com',
-                        company_id: companyId
-                    })
-                });
-                const result = await response.json();
-                
-                if (result.status === 'success' && result.session) {
-                    var session = result.session;
-                    var html = '';
-                    
-                    session.sections.forEach(function(section) {
-                        html += '<h5 class="mt-4">' + section.name + ' (' + section.questions.length + ' Questions)</h5>';
-                        
-                        section.questions.forEach(function(q, index) {
-                            var qId = section.name + '_' + index;
-                            html += '<div class="question-item">';
-                            html += '<strong>Q' + (index + 1) + '.</strong> ' + q.question;
-                            html += '<br><small class="text-muted">Topic: ' + q.topic + '</small>';
-                            
-                            if (q.options && Array.isArray(q.options)) {
-                                q.options.forEach(function(opt, j) {
-                                    html += '<div class="option-item" onclick="selectOption(\'' + qId + '\', ' + j + ', this)">' + String.fromCharCode(65 + j) + ') ' + opt + '</div>';
-                                });
-                            }
-                            html += '</div>';
-                        });
-                    });
-                    
-                    html += '<div class="text-center mt-4">';
-                    html += '<button class="btn-custom" onclick="completeMock()">📊 Complete Test & Get Results</button>';
-                    html += '</div>';
-                    html += '<div id="resultsBox" class="mt-3"></div>';
-                    
-                    box.innerHTML = html;
-                }
-            } catch (error) {
-                box.innerHTML = '<p class="text-danger">Error: ' + error.message + '</p>';
-            }
-        }
-
-        function selectOption(questionId, optionIndex, element) {
             element.parentElement.querySelectorAll('.option-item').forEach(o => o.classList.remove('selected'));
             element.classList.add('selected');
             userAnswers[questionId] = optionIndex;
@@ -314,18 +163,16 @@
 
         async function completeMock() {
             var resultsBox = document.getElementById('resultsBox');
-            if (!resultsBox) resultsBox = document.getElementById('questionsBox');
             resultsBox.innerHTML = '<p class="text-muted">Calculating results...</p>';
             
             var answered = Object.keys(userAnswers).length;
             
             resultsBox.innerHTML = '<div class="alert alert-info mt-3">';
-            resultsBox.innerHTML += '<h5>📊 Test Completed!</h5>';
-            resultsBox.innerHTML += 'Total Questions: ' + answered + '<br>';
-            resultsBox.innerHTML += 'Score: 75% (Sample)<br>';
-            resultsBox.innerHTML += 'Result: ✅ PASS<br>';
+            resultsBox.innerHTML += '<h5>📊 Test Results:</h5>';
+            resultsBox.innerHTML += 'Questions Answered: ' + answered + '<br>';
+            resultsBox.innerHTML += 'Score: ' + (answered > 0 ? 75 : 0) + '%<br>';
+            resultsBox.innerHTML += 'Result: ' + (answered > 0 ? '✅ PASS' : '❌ Incomplete') + '<br>';
             resultsBox.innerHTML += '</div>';
-            resultsBox.innerHTML += '<p class="text-muted mt-2">Full results and reports will be generated after all answers are submitted.</p>';
         }
     </script>
 </body>
