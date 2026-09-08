@@ -5381,6 +5381,48 @@ async def evaluate_answer(request: Request):
     )
 
 
+
+from payment_enrollment import payment_enrollment
+
+@app.post("/api/enroll/payment")
+async def enroll_with_payment(request: Request):
+    data = await request.json()
+    return payment_enrollment.enroll_with_payment(
+        data.get("email"),
+        data.get("course_name"),
+        data.get("duration_weeks"),
+        data.get("payment_method", "razorpay")
+    )
+
+@app.post("/api/enroll/pay-installment")
+async def pay_installment(request: Request):
+    data = await request.json()
+    return payment_enrollment.pay_installment(
+        data.get("enrollment_id"),
+        data.get("installment_number")
+    )
+
+@app.get("/api/enroll/check-access/{enrollment_id}")
+async def check_access(enrollment_id: str):
+    return payment_enrollment.check_access(enrollment_id)
+
+@app.post("/api/enroll/request-extension")
+async def request_extension(request: Request):
+    data = await request.json()
+    return payment_enrollment.request_extension(
+        data.get("enrollment_id"),
+        data.get("additional_weeks")
+    )
+
+@app.post("/api/enroll/pay-extension")
+async def pay_extension(request: Request):
+    data = await request.json()
+    return payment_enrollment.pay_extension(
+        data.get("enrollment_id"),
+        data.get("additional_weeks")
+    )
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
