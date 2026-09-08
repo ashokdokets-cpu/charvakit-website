@@ -9,22 +9,21 @@
         body { font-family: Arial, sans-serif; background: #f8f9fa; }
         .hero { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; padding: 40px 0; }
         .card { border: none; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.08); transition: all 0.3s; height: 100%; }
-        .card:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0,0,0,0.15); }
+        .card:hover { transform: translateY(-5px); }
         .avatar { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; color: white; margin: 0 auto 10px; }
-        .badge-course { background: #e8f5e9; color: #2e7d32; padding: 5px 12px; border-radius: 20px; font-size: 11px; }
         .badge-demand { background: #e3f2fd; color: #1565c0; padding: 5px 12px; border-radius: 20px; font-size: 11px; }
         .btn-book { background: #3ba591; color: white; border-radius: 50px; padding: 10px 20px; font-weight: bold; border: none; }
-        .course-item { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 10px; padding: 12px; margin-bottom: 8px; }
+        .course-item { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 10px; padding: 15px; margin-bottom: 10px; }
+        .price-tag { background: #e8f5e9; color: #2e7d32; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="hero text-center">
         <h1>👨‍🏫 Expert Trainers & Top Courses</h1>
-        <p>Learn from Industry Professionals | 25 High-Demand Courses</p>
+        <p>Learn from Industry Professionals | 25 High-Demand Courses | Global Pricing</p>
     </div>
 
     <div class="container py-4">
-        <!-- Trainers -->
         <h4 class="text-center mb-3">Expert Trainers</h4>
         <div class="row g-3">
             <div class="col-md-4"><div class="card p-3 text-center">
@@ -32,7 +31,7 @@
                 <h5>Rajesh Kumar</h5>
                 <small class="text-muted">Python Expert | 8 years</small>
                 <div>⭐⭐⭐⭐⭐</div>
-                <strong>\/hr</strong>
+                <strong style="color:#2e7d32;">/hr</strong>
                 <button class="btn-book mt-2 w-100" onclick="bookTrainer('Rajesh Kumar')">Book Session</button>
             </div></div>
             <div class="col-md-4"><div class="card p-3 text-center">
@@ -40,7 +39,7 @@
                 <h5>Priya Sharma</h5>
                 <small class="text-muted">Java Expert | 6 years</small>
                 <div>⭐⭐⭐⭐⭐</div>
-                <strong>\/hr</strong>
+                <strong style="color:#2e7d32;">/hr</strong>
                 <button class="btn-book mt-2 w-100" onclick="bookTrainer('Priya Sharma')">Book Session</button>
             </div></div>
             <div class="col-md-4"><div class="card p-3 text-center">
@@ -48,7 +47,7 @@
                 <h5>Amit Patel</h5>
                 <small class="text-muted">DevOps Expert | 7 years</small>
                 <div>⭐⭐⭐⭐⭐</div>
-                <strong>\/hr</strong>
+                <strong style="color:#2e7d32;">/hr</strong>
                 <button class="btn-book mt-2 w-100" onclick="bookTrainer('Amit Patel')">Book Session</button>
             </div></div>
             <div class="col-md-4"><div class="card p-3 text-center">
@@ -56,7 +55,7 @@
                 <h5>Sneha Reddy</h5>
                 <small class="text-muted">Frontend Expert | 5 years</small>
                 <div>⭐⭐⭐⭐⭐</div>
-                <strong>\/hr</strong>
+                <strong style="color:#2e7d32;">/hr</strong>
                 <button class="btn-book mt-2 w-100" onclick="bookTrainer('Sneha Reddy')">Book Session</button>
             </div></div>
             <div class="col-md-4"><div class="card p-3 text-center">
@@ -64,39 +63,39 @@
                 <h5>Vikram Singh</h5>
                 <small class="text-muted">Security Expert | 9 years</small>
                 <div>⭐⭐⭐⭐⭐</div>
-                <strong>\/hr</strong>
+                <strong style="color:#2e7d32;">/hr</strong>
                 <button class="btn-book mt-2 w-100" onclick="bookTrainer('Vikram Singh')">Book Session</button>
             </div></div>
         </div>
 
-        <!-- Top 25 Courses -->
         <h4 class="text-center mt-5 mb-3">🎓 Top 25 High-Demand Courses</h4>
-        <div class="row g-3" id="coursesList">
-                        <div class="col-md-6"><div class="course-item"><strong>1. Full Stack Web Development</strong> <span class="badge-demand">Very High Demand</span><br><small>Duration: 12 Weeks | 120 Hours</small><br><span class="badge-course">Total: \,999</span> <span class="badge-course">EMI: \/mo</span></div></div>
-            <div class="col-md-6"><div class="course-item"><strong>2. Data Science & Machine Learning</strong> <span class="badge-demand">Very High Demand</span><br><small>Duration: 16 Weeks | 160 Hours</small><br><span class="badge-course">Total: \,999</span> <span class="badge-course">EMI: \/mo</span></div></div>
-            <div class="col-md-6"><div class="course-item"><strong>3. Python Programming</strong> <span class="badge-demand">Very High Demand</span><br><small>Duration: 6 Weeks | 60 Hours</small><br><span class="badge-course">Total: \</span> <span class="badge-course">EMI: \/mo</span></div></div>
-            <div class="col-md-6"><div class="course-item"><strong>4. AWS Cloud Computing</strong> <span class="badge-demand">Critical Demand</span><br><small>Duration: 10 Weeks | 100 Hours</small><br><span class="badge-course">Total: \,499</span> <span class="badge-course">EMI: \/mo</span></div></div>
-            <div class="col-md-6"><div class="course-item"><strong>5. DevOps Engineering</strong> <span class="badge-demand">Very High Demand</span><br><small>Duration: 12 Weeks | 120 Hours</small><br><span class="badge-course">Total: \,999</span> <span class="badge-course">EMI: \/mo</span></div></div>
-            <div class="col-md-6"><div class="course-item"><strong>6. Cybersecurity</strong> <span class="badge-demand">Critical Demand</span><br><small>Duration: 14 Weeks | 140 Hours</small><br><span class="badge-course">Total: \,499</span> <span class="badge-course">EMI: \/mo</span></div></div>
-            <div class="col-md-6"><div class="course-item"><strong>7. Java Development</strong> <span class="badge-demand">High Demand</span><br><small>Duration: 10 Weeks | 100 Hours</small><br><span class="badge-course">Total: \</span> <span class="badge-course">EMI: \/mo</span></div></div>
-            <div class="col-md-6"><div class="course-item"><strong>8. React & Frontend</strong> <span class="badge-demand">High Demand</span><br><small>Duration: 8 Weeks | 80 Hours</small><br><span class="badge-course">Total: \</span> <span class="badge-course">EMI: \/mo</span></div></div>
-            <div class="col-md-6"><div class="course-item"><strong>9. SQL & Database</strong> <span class="badge-demand">High Demand</span><br><small>Duration: 4 Weeks | 40 Hours</small><br><span class="badge-course">Total: \</span> <span class="badge-course">EMI: \/mo</span></div></div>
-            <div class="col-md-6"><div class="course-item"><strong>10. Docker & Kubernetes</strong> <span class="badge-demand">Very High Demand</span><br><small>Duration: 6 Weeks | 60 Hours</small><br><span class="badge-course">Total: \</span> <span class="badge-course">EMI: \/mo</span></div></div>
-            <div class="col-md-6"><div class="course-item"><strong>11. AI & Deep Learning</strong> <span class="badge-demand">Very High Demand</span><br><small>Duration: 16 Weeks | 160 Hours</small><br><span class="badge-course">Total: \,499</span> <span class="badge-course">EMI: \/mo</span></div></div>
-            <div class="col-md-6"><div class="course-item"><strong>12. Mobile App Development</strong> <span class="badge-demand">High Demand</span><br><small>Duration: 12 Weeks | 120 Hours</small><br><span class="badge-course">Total: \,499</span> <span class="badge-course">EMI: \/mo</span></div></div>
-            <div class="col-md-6"><div class="course-item"><strong>13. Blockchain Development</strong> <span class="badge-demand">High Demand</span><br><small>Duration: 12 Weeks | 120 Hours</small><br><span class="badge-course">Total: \,499</span> <span class="badge-course">EMI: \/mo</span></div></div>
-            <div class="col-md-6"><div class="course-item"><strong>14. Data Analytics</strong> <span class="badge-demand">High Demand</span><br><small>Duration: 8 Weeks | 80 Hours</small><br><span class="badge-course">Total: \</span> <span class="badge-course">EMI: \/mo</span></div></div>
-            <div class="col-md-6"><div class="course-item"><strong>15. UI/UX Design</strong> <span class="badge-demand">Moderate Demand</span><br><small>Duration: 6 Weeks | 60 Hours</small><br><span class="badge-course">Total: \</span> <span class="badge-course">EMI: \/mo</span></div></div>
-            <div class="col-md-6"><div class="course-item"><strong>16. Cloud Architecture</strong> <span class="badge-demand">Critical Demand</span><br><small>Duration: 14 Weeks | 140 Hours</small><br><span class="badge-course">Total: \,999</span> <span class="badge-course">EMI: \/mo</span></div></div>
-            <div class="col-md-6"><div class="course-item"><strong>17. Node.js Backend</strong> <span class="badge-demand">High Demand</span><br><small>Duration: 8 Weeks | 80 Hours</small><br><span class="badge-course">Total: \</span> <span class="badge-course">EMI: \/mo</span></div></div>
-            <div class="col-md-6"><div class="course-item"><strong>18. Python for Data Science</strong> <span class="badge-demand">Very High Demand</span><br><small>Duration: 10 Weeks | 100 Hours</small><br><span class="badge-course">Total: \,299</span> <span class="badge-course">EMI: \/mo</span></div></div>
-            <div class="col-md-6"><div class="course-item"><strong>19. Machine Learning Ops</strong> <span class="badge-demand">High Demand</span><br><small>Duration: 12 Weeks | 120 Hours</small><br><span class="badge-course">Total: \,499</span> <span class="badge-course">EMI: \/mo</span></div></div>
-            <div class="col-md-6"><div class="course-item"><strong>20. Spring Boot</strong> <span class="badge-demand">High Demand</span><br><small>Duration: 8 Weeks | 80 Hours</small><br><span class="badge-course">Total: \</span> <span class="badge-course">EMI: \/mo</span></div></div>
-            <div class="col-md-6"><div class="course-item"><strong>21. Angular Development</strong> <span class="badge-demand">Moderate Demand</span><br><small>Duration: 6 Weeks | 60 Hours</small><br><span class="badge-course">Total: \</span> <span class="badge-course">EMI: \/mo</span></div></div>
-            <div class="col-md-6"><div class="course-item"><strong>22. Ethical Hacking</strong> <span class="badge-demand">Critical Demand</span><br><small>Duration: 12 Weeks | 120 Hours</small><br><span class="badge-course">Total: \,999</span> <span class="badge-course">EMI: \/mo</span></div></div>
-            <div class="col-md-6"><div class="course-item"><strong>23. Big Data (Hadoop/Spark)</strong> <span class="badge-demand">High Demand</span><br><small>Duration: 12 Weeks | 120 Hours</small><br><span class="badge-course">Total: \,499</span> <span class="badge-course">EMI: \/mo</span></div></div>
-            <div class="col-md-6"><div class="course-item"><strong>24. Software Testing</strong> <span class="badge-demand">Moderate Demand</span><br><small>Duration: 4 Weeks | 40 Hours</small><br><span class="badge-course">Total: \</span> <span class="badge-course">EMI: \/mo</span></div></div>
-            <div class="col-md-6"><div class="course-item"><strong>25. Git & DevOps Tools</strong> <span class="badge-demand">High Demand</span><br><small>Duration: 2 Weeks | 20 Hours</small><br><span class="badge-course">Total: \</span> <span class="badge-course">EMI: \/mo</span></div></div>
+        <p class="text-center text-muted">Prices shown in USD | Use code CHARVAK20 for 20% off</p>
+        <div class="row g-3">
+            <div class="col-md-6"><div class="course-item"><strong>1. Full Stack Web Development</strong> <span class="badge-demand">Very High Demand</span><br><small>Duration: 12 Weeks | 120 Hours</small><br><span class="price-tag">,999</span> <small>EMI: /mo</small></div></div>
+            <div class="col-md-6"><div class="course-item"><strong>2. Data Science & ML</strong> <span class="badge-demand">Very High Demand</span><br><small>Duration: 16 Weeks | 160 Hours</small><br><span class="price-tag">,999</span> <small>EMI: /mo</small></div></div>
+            <div class="col-md-6"><div class="course-item"><strong>3. Python Programming</strong> <span class="badge-demand">Very High Demand</span><br><small>Duration: 6 Weeks | 60 Hours</small><br><span class="price-tag"></span> <small>EMI: /mo</small></div></div>
+            <div class="col-md-6"><div class="course-item"><strong>4. AWS Cloud Computing</strong> <span class="badge-demand">Critical Demand</span><br><small>Duration: 10 Weeks | 100 Hours</small><br><span class="price-tag">,499</span> <small>EMI: /mo</small></div></div>
+            <div class="col-md-6"><div class="course-item"><strong>5. DevOps Engineering</strong> <span class="badge-demand">Very High Demand</span><br><small>Duration: 12 Weeks | 120 Hours</small><br><span class="price-tag">,999</span> <small>EMI: /mo</small></div></div>
+            <div class="col-md-6"><div class="course-item"><strong>6. Cybersecurity</strong> <span class="badge-demand">Critical Demand</span><br><small>Duration: 14 Weeks | 140 Hours</small><br><span class="price-tag">,499</span> <small>EMI: /mo</small></div></div>
+            <div class="col-md-6"><div class="course-item"><strong>7. Java Development</strong> <span class="badge-demand">High Demand</span><br><small>Duration: 10 Weeks | 100 Hours</small><br><span class="price-tag"></span> <small>EMI: /mo</small></div></div>
+            <div class="col-md-6"><div class="course-item"><strong>8. React & Frontend</strong> <span class="badge-demand">High Demand</span><br><small>Duration: 8 Weeks | 80 Hours</small><br><span class="price-tag"></span> <small>EMI: /mo</small></div></div>
+            <div class="col-md-6"><div class="course-item"><strong>9. SQL & Database</strong> <span class="badge-demand">High Demand</span><br><small>Duration: 4 Weeks | 40 Hours</small><br><span class="price-tag"></span> <small>EMI: /mo</small></div></div>
+            <div class="col-md-6"><div class="course-item"><strong>10. Docker & Kubernetes</strong> <span class="badge-demand">Very High Demand</span><br><small>Duration: 6 Weeks | 60 Hours</small><br><span class="price-tag"></span> <small>EMI: /mo</small></div></div>
+            <div class="col-md-6"><div class="course-item"><strong>11. AI & Deep Learning</strong> <span class="badge-demand">Very High Demand</span><br><small>Duration: 16 Weeks | 160 Hours</small><br><span class="price-tag">,499</span> <small>EMI: /mo</small></div></div>
+            <div class="col-md-6"><div class="course-item"><strong>12. Mobile App Development</strong> <span class="badge-demand">High Demand</span><br><small>Duration: 12 Weeks | 120 Hours</small><br><span class="price-tag">,499</span> <small>EMI: /mo</small></div></div>
+            <div class="col-md-6"><div class="course-item"><strong>13. Blockchain Development</strong> <span class="badge-demand">High Demand</span><br><small>Duration: 12 Weeks | 120 Hours</small><br><span class="price-tag">,499</span> <small>EMI: /mo</small></div></div>
+            <div class="col-md-6"><div class="course-item"><strong>14. Data Analytics</strong> <span class="badge-demand">High Demand</span><br><small>Duration: 8 Weeks | 80 Hours</small><br><span class="price-tag"></span> <small>EMI: /mo</small></div></div>
+            <div class="col-md-6"><div class="course-item"><strong>15. UI/UX Design</strong> <span class="badge-demand">Moderate Demand</span><br><small>Duration: 6 Weeks | 60 Hours</small><br><span class="price-tag"></span> <small>EMI: /mo</small></div></div>
+            <div class="col-md-6"><div class="course-item"><strong>16. Cloud Architecture</strong> <span class="badge-demand">Critical Demand</span><br><small>Duration: 14 Weeks | 140 Hours</small><br><span class="price-tag">,999</span> <small>EMI: /mo</small></div></div>
+            <div class="col-md-6"><div class="course-item"><strong>17. Node.js Backend</strong> <span class="badge-demand">High Demand</span><br><small>Duration: 8 Weeks | 80 Hours</small><br><span class="price-tag"></span> <small>EMI: /mo</small></div></div>
+            <div class="col-md-6"><div class="course-item"><strong>18. Python for Data Science</strong> <span class="badge-demand">Very High Demand</span><br><small>Duration: 10 Weeks | 100 Hours</small><br><span class="price-tag">,299</span> <small>EMI: /mo</small></div></div>
+            <div class="col-md-6"><div class="course-item"><strong>19. Machine Learning Ops</strong> <span class="badge-demand">High Demand</span><br><small>Duration: 12 Weeks | 120 Hours</small><br><span class="price-tag">,499</span> <small>EMI: /mo</small></div></div>
+            <div class="col-md-6"><div class="course-item"><strong>20. Spring Boot</strong> <span class="badge-demand">High Demand</span><br><small>Duration: 8 Weeks | 80 Hours</small><br><span class="price-tag"></span> <small>EMI: /mo</small></div></div>
+            <div class="col-md-6"><div class="course-item"><strong>21. Angular Development</strong> <span class="badge-demand">Moderate Demand</span><br><small>Duration: 6 Weeks | 60 Hours</small><br><span class="price-tag"></span> <small>EMI: /mo</small></div></div>
+            <div class="col-md-6"><div class="course-item"><strong>22. Ethical Hacking</strong> <span class="badge-demand">Critical Demand</span><br><small>Duration: 12 Weeks | 120 Hours</small><br><span class="price-tag">,999</span> <small>EMI: /mo</small></div></div>
+            <div class="col-md-6"><div class="course-item"><strong>23. Big Data (Hadoop/Spark)</strong> <span class="badge-demand">High Demand</span><br><small>Duration: 12 Weeks | 120 Hours</small><br><span class="price-tag">,499</span> <small>EMI: /mo</small></div></div>
+            <div class="col-md-6"><div class="course-item"><strong>24. Software Testing</strong> <span class="badge-demand">Moderate Demand</span><br><small>Duration: 4 Weeks | 40 Hours</small><br><span class="price-tag"></span> <small>EMI: /mo</small></div></div>
+            <div class="col-md-6"><div class="course-item"><strong>25. Git & DevOps Tools</strong> <span class="badge-demand">High Demand</span><br><small>Duration: 2 Weeks | 20 Hours</small><br><span class="price-tag"></span> <small>EMI: /mo</small></div></div>
         </div>
     </div>
 
@@ -104,7 +103,7 @@
         function bookTrainer(trainerName) {
             const email = prompt('Enter your email to book ' + trainerName + ':');
             if (!email) return;
-            alert('✅ Session request sent!\nTrainer: ' + trainerName + '\nEmail: ' + email + '\n\nOur team will contact you shortly to schedule.');
+            alert('Session request sent! Trainer: ' + trainerName);
         }
     </script>
 </body>
