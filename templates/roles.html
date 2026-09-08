@@ -1,289 +1,91 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Career Roles - Charvak</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #3ba591; --primary-dark: #2e8a78; }
-        body { font-family: 'Poppins', sans-serif; background: #f8f9fa; }
-        .hero { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 60px 0; }
-        .card { border: none; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.08); transition: all 0.3s; }
-        .card:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0,0,0,0.15); }
-        .icon-circle { width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; }
-        .badge-custom { background: var(--primary); color: white; padding: 5px 15px; border-radius: 20px; font-size: 12px; }
+        body { font-family: Arial, sans-serif; background: #f8f9fa; }
+        .hero { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px 0; }
+        .card { border: none; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.08); transition: all 0.3s; height: 100%; }
+        .card:hover { transform: translateY(-5px); }
+        .icon-circle { width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; margin: 0 auto 10px; }
+        .btn-analyze { background: #3ba591; color: white; border-radius: 50px; padding: 8px 20px; font-weight: bold; border: none; cursor: pointer; }
     </style>
 </head>
 <body>
     <div class="hero text-center">
-        <h1 class="display-4 fw-bold">🎯 Career Roles</h1>
-        <p class="lead">15+ AI-Driven Career Paths</p>
-
+        <h1>🎯 Career Roles</h1>
+        <p>15+ AI-Driven Career Paths</p>
     </div>
 
-    
+    <div class="container py-4">
+        <div class="row g-3">
+            <div class="col-md-4"><div class="card p-3 text-center"><div class="icon-circle" style="background:#e8eaf6;color:#667eea;">💻</div><h5>Software Developer</h5><small class="text-muted">Technology</small><p class="small">Python, Java, DSA, SQL</p><button class="btn-analyze" onclick="analyzeMySkills()">Analyze My Skills</button></div></div>
+            <div class="col-md-4"><div class="card p-3 text-center"><div class="icon-circle" style="background:#e8f5e9;color:#11998e;">🌐</div><h5>Full Stack Developer</h5><small class="text-muted">Technology</small><p class="small">HTML, React, Node.js</p><button class="btn-analyze" onclick="analyzeMySkills()">Analyze My Skills</button></div></div>
+            <div class="col-md-4"><div class="card p-3 text-center"><div class="icon-circle" style="background:#e3f2fd;color:#1565c0;">🎨</div><h5>Frontend Developer</h5><small class="text-muted">Technology</small><p class="small">HTML, CSS, JavaScript</p><button class="btn-analyze" onclick="analyzeMySkills()">Analyze My Skills</button></div></div>
+            <div class="col-md-4"><div class="card p-3 text-center"><div class="icon-circle" style="background:#fff3e0;color:#e65100;">⚙️</div><h5>Backend Developer</h5><small class="text-muted">Technology</small><p class="small">Python, Node.js, SQL</p><button class="btn-analyze" onclick="analyzeMySkills()">Analyze My Skills</button></div></div>
+            <div class="col-md-4"><div class="card p-3 text-center"><div class="icon-circle" style="background:#fce4ec;color:#c62828;">📊</div><h5>Data Scientist</h5><small class="text-muted">Data & AI</small><p class="small">Python, ML, Statistics</p><button class="btn-analyze" onclick="analyzeMySkills()">Analyze My Skills</button></div></div>
+            <div class="col-md-4"><div class="card p-3 text-center"><div class="icon-circle" style="background:#e8f5e9;color:#11998e;">📈</div><h5>Data Analyst</h5><small class="text-muted">Data & AI</small><p class="small">SQL, Excel, Tableau</p><button class="btn-analyze" onclick="analyzeMySkills()">Analyze My Skills</button></div></div>
+            <div class="col-md-4"><div class="card p-3 text-center"><div class="icon-circle" style="background:#e8eaf6;color:#667eea;">🤖</div><h5>ML Engineer</h5><small class="text-muted">Data & AI</small><p class="small">Python, TensorFlow</p><button class="btn-analyze" onclick="analyzeMySkills()">Analyze My Skills</button></div></div>
+            <div class="col-md-4"><div class="card p-3 text-center"><div class="icon-circle" style="background:#fff3e0;color:#e65100;">🔧</div><h5>DevOps Engineer</h5><small class="text-muted">Infrastructure</small><p class="small">Linux, Docker, AWS</p><button class="btn-analyze" onclick="analyzeMySkills()">Analyze My Skills</button></div></div>
+            <div class="col-md-4"><div class="card p-3 text-center"><div class="icon-circle" style="background:#e8f5e9;color:#11998e;">☁️</div><h5>Cloud Architect</h5><small class="text-muted">Infrastructure</small><p class="small">AWS, Azure, GCP</p><button class="btn-analyze" onclick="analyzeMySkills()">Analyze My Skills</button></div></div>
+            <div class="col-md-4"><div class="card p-3 text-center"><div class="icon-circle" style="background:#fce4ec;color:#c62828;">🔒</div><h5>Cybersecurity Analyst</h5><small class="text-muted">Security</small><p class="small">Network Security</p><button class="btn-analyze" onclick="analyzeMySkills()">Analyze My Skills</button></div></div>
+            <div class="col-md-4"><div class="card p-3 text-center"><div class="icon-circle" style="background:#e8eaf6;color:#667eea;">✅</div><h5>QA Engineer</h5><small class="text-muted">Quality</small><p class="small">Testing, Selenium</p><button class="btn-analyze" onclick="analyzeMySkills()">Analyze My Skills</button></div></div>
+            <div class="col-md-4"><div class="card p-3 text-center"><div class="icon-circle" style="background:#e8f5e9;color:#11998e;">📱</div><h5>Mobile Developer</h5><small class="text-muted">Technology</small><p class="small">Android, Flutter</p><button class="btn-analyze" onclick="analyzeMySkills()">Analyze My Skills</button></div></div>
         </div>
     </div>
 
-    <div class="container py-5">
-        <div class="row g-4">
-            <div class="col-md-4">
-                <div class="card p-4 text-center h-100">
-                    <div class="icon-circle mx-auto mb-3" style="background:#e8eaf6; color:#667eea;"><i class="bi bi-code-slash"></i></div>
-                    <h5 class="fw-bold">Software Developer</h5>
-                    <span class="badge-custom">Technology</span>
-                    <p class="text-muted mt-2">Python, Java, DSA, SQL, Git, Problem Solving</p>
-                    <a onclick="analyzeMySkills()" style="cursor:pointer;" class="btn btn-primary rounded-pill mt-2">Analyze My Skills</a>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card p-4 text-center h-100">
-                    <div class="icon-circle mx-auto mb-3" style="background:#e8f5e9; color:#11998e;"><i class="bi bi-layers"></i></div>
-                    <h5 class="fw-bold">Full Stack Developer</h5>
-                    <span class="badge-custom">Technology</span>
-                    <p class="text-muted mt-2">HTML/CSS, JavaScript, React, Node.js, MongoDB</p>
-                    <a onclick="analyzeMySkills()" style="cursor:pointer;" class="btn btn-primary rounded-pill mt-2">Analyze My Skills</a>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card p-4 text-center h-100">
-                    <div class="icon-circle mx-auto mb-3" style="background:#e3f2fd; color:#1565c0;"><i class="bi bi-window"></i></div>
-                    <h5 class="fw-bold">Frontend Developer</h5>
-                    <span class="badge-custom">Technology</span>
-                    <p class="text-muted mt-2">HTML, CSS, JavaScript, React, UI/UX</p>
-                    <a onclick="analyzeMySkills()" style="cursor:pointer;" class="btn btn-primary rounded-pill mt-2">Analyze My Skills</a>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card p-4 text-center h-100">
-                    <div class="icon-circle mx-auto mb-3" style="background:#fff3e0; color:#e65100;"><i class="bi bi-server"></i></div>
-                    <h5 class="fw-bold">Backend Developer</h5>
-                    <span class="badge-custom">Technology</span>
-                    <p class="text-muted mt-2">Python, Java, Node.js, SQL, Redis</p>
-                    <a onclick="analyzeMySkills()" style="cursor:pointer;" class="btn btn-primary rounded-pill mt-2">Analyze My Skills</a>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card p-4 text-center h-100">
-                    <div class="icon-circle mx-auto mb-3" style="background:#fce4ec; color:#c62828;"><i class="bi bi-graph-up"></i></div>
-                    <h5 class="fw-bold">Data Scientist</h5>
-                    <span class="badge-custom">Data & AI</span>
-                    <p class="text-muted mt-2">Python, Statistics, ML, Deep Learning, SQL</p>
-                    <a onclick="analyzeMySkills()" style="cursor:pointer;" class="btn btn-primary rounded-pill mt-2">Analyze My Skills</a>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card p-4 text-center h-100">
-                    <div class="icon-circle mx-auto mb-3" style="background:#e8f5e9; color:#11998e;"><i class="bi bi-table"></i></div>
-                    <h5 class="fw-bold">Data Analyst</h5>
-                    <span class="badge-custom">Data & AI</span>
-                    <p class="text-muted mt-2">SQL, Excel, Python, Tableau, Power BI</p>
-                    <a onclick="analyzeMySkills()" style="cursor:pointer;" class="btn btn-primary rounded-pill mt-2">Analyze My Skills</a>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card p-4 text-center h-100">
-                    <div class="icon-circle mx-auto mb-3" style="background:#e8eaf6; color:#667eea;"><i class="bi bi-cpu"></i></div>
-                    <h5 class="fw-bold">ML Engineer</h5>
-                    <span class="badge-custom">Data & AI</span>
-                    <p class="text-muted mt-2">Python, ML, Deep Learning, TensorFlow</p>
-                    <a onclick="analyzeMySkills()" style="cursor:pointer;" class="btn btn-primary rounded-pill mt-2">Analyze My Skills</a>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card p-4 text-center h-100">
-                    <div class="icon-circle mx-auto mb-3" style="background:#fff3e0; color:#e65100;"><i class="bi bi-gear"></i></div>
-                    <h5 class="fw-bold">DevOps Engineer</h5>
-                    <span class="badge-custom">Infrastructure</span>
-                    <p class="text-muted mt-2">Linux, Docker, Kubernetes, CI/CD, AWS</p>
-                    <a onclick="analyzeMySkills()" style="cursor:pointer;" class="btn btn-primary rounded-pill mt-2">Analyze My Skills</a>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card p-4 text-center h-100">
-                    <div class="icon-circle mx-auto mb-3" style="background:#e8f5e9; color:#11998e;"><i class="bi bi-cloud"></i></div>
-                    <h5 class="fw-bold">Cloud Architect</h5>
-                    <span class="badge-custom">Infrastructure</span>
-                    <p class="text-muted mt-2">AWS, Azure, GCP, Networking, Security</p>
-                    <a onclick="analyzeMySkills()" style="cursor:pointer;" class="btn btn-primary rounded-pill mt-2">Analyze My Skills</a>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card p-4 text-center h-100">
-                    <div class="icon-circle mx-auto mb-3" style="background:#fce4ec; color:#c62828;"><i class="bi bi-shield-lock"></i></div>
-                    <h5 class="fw-bold">Cybersecurity Analyst</h5>
-                    <span class="badge-custom">Security</span>
-                    <p class="text-muted mt-2">Network Security, Cryptography, Ethical Hacking</p>
-                    <a onclick="analyzeMySkills()" style="cursor:pointer;" class="btn btn-primary rounded-pill mt-2">Analyze My Skills</a>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card p-4 text-center h-100">
-                    <div class="icon-circle mx-auto mb-3" style="background:#e8eaf6; color:#667eea;"><i class="bi bi-bug"></i></div>
-                    <h5 class="fw-bold">QA Engineer</h5>
-                    <span class="badge-custom">Quality</span>
-                    <p class="text-muted mt-2">Testing, Selenium, Python, Automation</p>
-                    <a onclick="analyzeMySkills()" style="cursor:pointer;" class="btn btn-primary rounded-pill mt-2">Analyze My Skills</a>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card p-4 text-center h-100">
-                    <div class="icon-circle mx-auto mb-3" style="background:#e8f5e9; color:#11998e;"><i class="bi bi-phone"></i></div>
-                    <h5 class="fw-bold">Mobile Developer</h5>
-                    <span class="badge-custom">Technology</span>
-                    <p class="text-muted mt-2">Android, iOS, Flutter, React Native</p>
-                    <a onclick="analyzeMySkills()" style="cursor:pointer;" class="btn btn-primary rounded-pill mt-2">Analyze My Skills</a>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card p-4 text-center h-100">
-                    <div class="icon-circle mx-auto mb-3" style="background:#fff3e0; color:#e65100;"><i class="bi bi-briefcase"></i></div>
-                    <h5 class="fw-bold">Product Manager</h5>
-                    <span class="badge-custom">Product</span>
-                    <p class="text-muted mt-2">Product Strategy, User Research, Agile</p>
-                    <a onclick="analyzeMySkills()" style="cursor:pointer;" class="btn btn-primary rounded-pill mt-2">Analyze My Skills</a>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card p-4 text-center h-100">
-                    <div class="icon-circle mx-auto mb-3" style="background:#e8eaf6; color:#667eea;"><i class="bi bi-clipboard-data"></i></div>
-                    <h5 class="fw-bold">Business Analyst</h5>
-                    <span class="badge-custom">Business</span>
-                    <p class="text-muted mt-2">Requirements, SQL, Excel, Process Mapping</p>
-                    <a onclick="analyzeMySkills()" style="cursor:pointer;" class="btn btn-primary rounded-pill mt-2">Analyze My Skills</a>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card p-4 text-center h-100">
-                    <div class="icon-circle mx-auto mb-3" style="background:#fce4ec; color:#c62828;"><i class="bi bi-palette"></i></div>
-                    <h5 class="fw-bold">UI/UX Designer</h5>
-                    <span class="badge-custom">Design</span>
-                    <p class="text-muted mt-2">UI Design, UX Research, Figma, Prototyping</p>
-                    <a onclick="analyzeMySkills()" style="cursor:pointer;" class="btn btn-primary rounded-pill mt-2">Analyze My Skills</a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
-        async function analyzeMySkills() {
-            const email = prompt('Enter your email to analyze skills:');
-            if (!email) return;
+    <script>
+    async function analyzeMySkills() {
+        const email = prompt('Enter your email to analyze skills:');
+        if (!email) return;
+        
+        const skills = prompt('Enter your skills (comma separated):\nExample: Python, SQL, Java');
+        if (!skills) return;
+        
+        const skillsArray = skills.split(',').map(s => s.trim());
+        
+        try {
+            const response = await fetch('/api/roles/analyze', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    email: email,
+                    skills: skillsArray,
+                    interests: [],
+                    experience_level: 'fresher'
+                })
+            });
+            const result = await response.json();
             
-            const skills = prompt('Enter your skills (comma separated):\nExample: Python, SQL, Java');
-            if (!skills) return;
-            
-            const skillsArray = skills.split(',').map(s => s.trim());
-            
-            try {
-                const response = await fetch('/api/roles/analyze', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        email: email,
-                        skills: skillsArray,
-                        interests: [],
-                        experience_level: 'fresher'
-                    })
-                });
-                const result = await response.json();
+            if (result.status === 'success') {
+                var recommendations = result.profile.recommendations || [];
+                var html = '<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;background:white;padding:30px;border-radius:15px;box-shadow:0 20px 60px rgba(0,0,0,0.3);max-width:500px;max-height:70vh;overflow-y:auto;">';
+                html += '<h4>✅ Skill Analysis</h4>';
+                html += '<p>Your skills: ' + skillsArray.join(', ') + '</p>';
+                html += '<hr>';
                 
-                if (result.status === 'success') {
-                    var recommendations = result.profile.recommendations;
-                    var html = '<div class="alert alert-success mt-3">';
-                    html += '<h5>✅ Skill Analysis Complete!</h5>';
-                    html += '<p>Based on your skills: ' + skillsArray.join(', ') + '</p>';
-                    html += '<hr>';
-                    
-                    if (recommendations && recommendations.length > 0) {
-                        html += '<h6>Recommended Roles:</h6>';
-                        recommendations.forEach(function(rec) {
-                            html += '<div class="mb-2 p-2 border rounded">';
-                            html += '<strong>' + rec.role_name + '</strong> - ' + rec.match_percentage + '% match<br>';
-                            html += '<small>Skills matched: ' + (rec.matched_skills || []).join(', ') + '</small><br>';
-                            html += '<small class="text-danger">Gaps: ' + (rec.skill_gaps || []).slice(0, 3).join(', ') + '</small>';
-                            html += '</div>';
-                        });
-                    } else {
-                        html += '<p>No strong matches found. Keep learning!</p>';
-                    }
-                    
-                    html += '</div>';
-                    
-                    // Show in a modal or below the cards
-                    var container = document.querySelector('.container');
-                    var resultDiv = document.createElement('div');
-                    resultDiv.innerHTML = html;
-                    container.appendChild(resultDiv);
-                    
-                    // Scroll to result
-                    resultDiv.scrollIntoView({behavior: 'smooth'});
+                if (recommendations.length > 0) {
+                    recommendations.slice(0, 5).forEach(function(rec) {
+                        html += '<div class="mb-2 p-2 border rounded">';
+                        html += '<strong>' + rec.role_name + '</strong> - ' + rec.match_percentage + '%<br>';
+                        html += '<small>Matched: ' + (rec.matched_skills || []).join(', ') + '</small><br>';
+                        html += '<small style="color:red;">Gaps: ' + (rec.skill_gaps || []).slice(0, 3).join(', ') + '</small>';
+                        html += '</div>';
+                    });
                 }
-            } catch (error) {
-                alert('Error: ' + error.message);
-            }
-        }
-    
-        async function analyzeMySkills() {
-            const email = prompt('Enter your email to analyze skills:');
-            if (!email) return;
-            
-            const skills = prompt('Enter your skills (comma separated):\nExample: Python, SQL, Java');
-            if (!skills) return;
-            
-            const skillsArray = skills.split(',').map(s => s.trim());
-            
-            try {
-                const response = await fetch('/api/roles/analyze', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        email: email,
-                        skills: skillsArray,
-                        interests: [],
-                        experience_level: 'fresher'
-                    })
-                });
-                const result = await response.json();
                 
-                if (result.status === 'success') {
-                    var recommendations = result.profile.recommendations;
-                    var html = '<div class="alert alert-success mt-3">';
-                    html += '<h5>✅ Skill Analysis Complete!</h5>';
-                    html += '<p>Based on your skills: ' + skillsArray.join(', ') + '</p>';
-                    html += '<hr>';
-                    
-                    if (recommendations && recommendations.length > 0) {
-                        html += '<h6>Recommended Roles:</h6>';
-                        recommendations.forEach(function(rec) {
-                            html += '<div class="mb-2 p-2 border rounded">';
-                            html += '<strong>' + rec.role_name + '</strong> - ' + rec.match_percentage + '% match<br>';
-                            html += '<small>Skills matched: ' + (rec.matched_skills || []).join(', ') + '</small><br>';
-                            html += '<small class="text-danger">Gaps: ' + (rec.skill_gaps || []).slice(0, 3).join(', ') + '</small>';
-                            html += '</div>';
-                        });
-                    } else {
-                        html += '<p>No strong matches found. Keep learning!</p>';
-                    }
-                    
-                    html += '</div>';
-                    
-                    // Show in a modal or below the cards
-                    var container = document.querySelector('.container');
-                    var resultDiv = document.createElement('div');
-                    resultDiv.innerHTML = html;
-                    container.appendChild(resultDiv);
-                    
-                    // Scroll to result
-                    resultDiv.scrollIntoView({behavior: 'smooth'});
-                }
-            } catch (error) {
-                alert('Error: ' + error.message);
+                html += '<button class="btn btn-primary btn-sm mt-3" onclick="this.parentElement.remove()">Close</button>';
+                html += '</div>';
+                
+                document.body.insertAdjacentHTML('beforeend', html);
             }
+        } catch (error) {
+            alert('Error: ' + error.message);
         }
+    }
     </script>
 </body>
 </html>
