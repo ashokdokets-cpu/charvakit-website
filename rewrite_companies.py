@@ -1,0 +1,176 @@
+﻿with open('templates/companies.html', 'w', encoding='utf-8') as f:
+    content = '''<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company Mock Drives - Charvak</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { font-family: Arial, sans-serif; background: #f8f9fa; }
+        .hero { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 40px 0; }
+        .company-card { cursor: pointer; border: 2px solid #e0e0e0; border-radius: 10px; padding: 15px; text-align: center; background: white; transition: all 0.3s; height: 100%; }
+        .company-card:hover { border-color: #3ba591; transform: translateY(-3px); }
+        .company-card.active { border-color: #3ba591; background: #f0faf8; }
+        .question-box { background: white; border-radius: 10px; padding: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); margin-top: 20px; }
+        .question-item { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; margin-bottom: 10px; }
+        .option-item { cursor: pointer; padding: 10px; border: 1px solid #e0e0e0; border-radius: 6px; margin: 5px 0; }
+        .option-item:hover { background: #f0faf8; }
+        .option-item.selected { background: #e8f5e9; border-color: #2e7d32; }
+        .btn-custom { background: #3ba591; color: white; border-radius: 50px; padding: 12px 30px; font-weight: bold; border: none; }
+    </style>
+</head>
+<body>
+    <div class="hero text-center">
+        <h1>🏢 Company Mock Drives</h1>
+        <p>AI-Generated Questions Matching Real Company Patterns</p>
+    </div>
+
+    <div class="container py-4">
+        <div class="row g-3">
+            <div class="col-6 col-md-3"><div class="company-card" data-company="tcs" onclick="selectCompany('tcs')"><h5>TCS</h5><small>NQT | 37 Questions</small></div></div>
+            <div class="col-6 col-md-3"><div class="company-card" data-company="infosys" onclick="selectCompany('infosys')"><h5>Infosys</h5><small>InfyTQ | 38 Questions</small></div></div>
+            <div class="col-6 col-md-3"><div class="company-card" data-company="cognizant" onclick="selectCompany('cognizant')"><h5>Cognizant</h5><small>GenC | 35 Questions</small></div></div>
+            <div class="col-6 col-md-3"><div class="company-card" data-company="wipro" onclick="selectCompany('wipro')"><h5>Wipro</h5><small>Elite NTH | 24 Questions</small></div></div>
+            <div class="col-6 col-md-3"><div class="company-card" data-company="accenture" onclick="selectCompany('accenture')"><h5>Accenture</h5><small>ASE | 50 Questions</small></div></div>
+            <div class="col-6 col-md-3"><div class="company-card" data-company="capgemini" onclick="selectCompany('capgemini')"><h5>Capgemini</h5><small>Exceller | 37 Questions</small></div></div>
+            <div class="col-6 col-md-3"><div class="company-card" data-company="ibm" onclick="selectCompany('ibm')"><h5>IBM</h5><small>32 Questions</small></div></div>
+            <div class="col-6 col-md-3"><div class="company-card" data-company="hcl" onclick="selectCompany('hcl')"><h5>HCLTech</h5><small>TechBee | 37 Questions</small></div></div>
+        </div>
+
+        <div class="question-box" id="mainContent">
+            <h4>Select a company to start mock drive</h4>
+            <p class="text-muted">Click on a company card above to see their test pattern and start practicing.</p>
+        </div>
+    </div>
+
+    <script>
+        var currentSession = null;
+        var currentCompany = null;
+        var userAnswers = {};
+
+        function selectCompany(companyId) {
+            currentCompany = companyId;
+            document.querySelectorAll('.company-card').forEach(c => c.classList.remove('active'));
+            document.querySelector('[data-company="' + companyId + '"]').classList.add('active');
+            
+            var content = document.getElementById('mainContent');
+            content.innerHTML = '<h4>Selected: ' + companyId.toUpperCase() + '</h4>';
+            content.innerHTML += '<p class="text-muted">Click below to start your mock drive with AI-generated questions.</p>';
+            content.innerHTML += '<button class="btn-custom" onclick="startMockDrive(\\'' + companyId + '\\')">🚀 Start ' + companyId.toUpperCase() + ' Mock Drive</button>';
+        }
+
+        async function startMockDrive(companyId) {
+            const email = prompt('Enter your email to start:');
+            if (!email) return;
+            
+            var content = document.getElementById('mainContent');
+            content.innerHTML = '<p class="text-muted">Generating AI questions...</p>';
+            
+            try {
+                const response = await fetch('/api/mock/start-complete', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({email: email, company_id: companyId})
+                });
+                const result = await response.json();
+                
+                if (result.status === 'success' && result.session) {
+                    currentSession = result.session;
+                    userAnswers = {};
+                    
+                    var html = '<div class="alert alert-success">';
+                    html += '<strong>✅ Mock Drive Started!</strong><br>';
+                    html += 'Company: ' + result.session.company + '<br>';
+                    html += 'Pattern: ' + result.session.pattern + '<br>';
+                    html += 'Total Questions: ' + result.session.total_questions;
+                    html += '</div>';
+                    
+                    // Show all questions
+                    result.session.sections.forEach(function(section) {
+                        html += '<h5 class="mt-4">' + section.name + ' (' + section.questions.length + ' Questions)</h5>';
+                        
+                        section.questions.forEach(function(q, index) {
+                            var qId = section.name + '_' + index;
+                            html += '<div class="question-item">';
+                            html += '<strong>Q' + (index + 1) + '.</strong> ' + q.question;
+                            
+                            if (q.options && Array.isArray(q.options)) {
+                                q.options.forEach(function(opt, j) {
+                                    html += '<div class="option-item" onclick="selectOption(\\'' + qId + '\\', ' + j + ', this)">' + String.fromCharCode(65 + j) + ') ' + opt + '</div>';
+                                });
+                            }
+                            html += '</div>';
+                        });
+                    });
+                    
+                    html += '<div class="text-center mt-4">';
+                    html += '<button class="btn-custom" onclick="completeMock()">📊 Complete Test & Get Results</button>';
+                    html += '</div>';
+                    html += '<div id="resultsBox" class="mt-3"></div>';
+                    
+                    content.innerHTML = html;
+                }
+            } catch (error) {
+                content.innerHTML = '<p class="text-danger">Error: ' + error.message + '</p>';
+            }
+        }
+
+        function selectOption(questionId, optionIndex, element) {
+            // Deselect siblings
+            element.parentElement.querySelectorAll('.option-item').forEach(o => o.classList.remove('selected'));
+            element.classList.add('selected');
+            
+            // Store answer
+            userAnswers[questionId] = optionIndex;
+        }
+
+        async function completeMock() {
+            var resultsBox = document.getElementById('resultsBox');
+            resultsBox.innerHTML = '<p class="text-muted">Calculating results...</p>';
+            
+            // Submit all answers
+            for (var qId in userAnswers) {
+                await fetch('/api/mock/submit-complete', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        session_id: currentSession.session_id,
+                        section_name: qId.split('_')[0],
+                        question_id: parseInt(qId.split('_')[1]),
+                        selected_option: userAnswers[qId]
+                    })
+                });
+            }
+            
+            // Complete mock
+            try {
+                const response = await fetch('/api/mock/complete-full', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({session_id: currentSession.session_id})
+                });
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    var r = result.results;
+                    var html = '<div class="alert alert-info mt-3">';
+                    html += '<h5>📊 Results:</h5>';
+                    html += 'Company: ' + r.company + '<br>';
+                    html += 'Total Questions: ' + r.total_questions + '<br>';
+                    html += 'Answered: ' + r.answered + '<br>';
+                    html += 'Score: ' + r.score + '%<br>';
+                    html += 'Result: ' + (r.pass ? '✅ PASS' : '❌ FAIL') + '<br>';
+                    html += '</div>';
+                    resultsBox.innerHTML = html;
+                }
+            } catch (error) {
+                resultsBox.innerHTML = '<p class="text-danger">Error: ' + error.message + '</p>';
+            }
+        }
+    </script>
+</body>
+</html>'''
+    f.write(content)
+
+print('✅ Companies page completely rewritten with full mock drive flow!')
