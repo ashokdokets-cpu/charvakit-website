@@ -4884,6 +4884,77 @@ async def submit_text(request: Request):
     )
 
 
+
+from content_generator import ai_content_generator
+
+@app.get("/api/content/read-aloud")
+async def get_read_aloud_content():
+    return {"status": "success", "content": ai_content_generator.generate_read_aloud_content()}
+
+@app.get("/api/content/repeats")
+async def get_repeats_content():
+    return {"status": "success", "content": ai_content_generator.generate_repeats_content()}
+
+@app.get("/api/content/sentence-builds")
+async def get_sentence_builds():
+    return {"status": "success", "content": ai_content_generator.generate_sentence_builds_content()}
+
+@app.get("/api/content/conversations")
+async def get_conversations():
+    return {"status": "success", "content": ai_content_generator.generate_conversations_content()}
+
+@app.get("/api/content/story-retelling")
+async def get_story_retelling():
+    return {"status": "success", "content": ai_content_generator.generate_story_retelling_content()}
+
+@app.get("/api/content/summary")
+async def get_summary_content():
+    return {"status": "success", "content": ai_content_generator.generate_summary_content()}
+
+@app.get("/api/content/quality-report")
+async def get_quality_report():
+    return ai_content_generator.get_content_quality_report()
+
+
+
+from company_assessment import company_assessment
+
+@app.get("/api/company/{company_id}")
+async def get_company_details(company_id: str):
+    return company_assessment.get_company_details(company_id)
+
+@app.post("/api/company/start-mock")
+async def start_company_mock(request: Request):
+    data = await request.json()
+    return company_assessment.start_company_mock(
+        data.get("email"),
+        data.get("company_id"),
+        data.get("pattern")
+    )
+
+@app.get("/api/company/{company_id}/questions/{section}")
+async def get_company_questions(company_id: str, section: str):
+    return company_assessment.generate_company_questions(company_id, section)
+
+@app.post("/api/company/submit-answer")
+async def submit_company_answer(request: Request):
+    data = await request.json()
+    return company_assessment.submit_company_answer(
+        data.get("session_id"),
+        data.get("question_id"),
+        data.get("answer")
+    )
+
+@app.post("/api/company/complete-mock")
+async def complete_company_mock(request: Request):
+    data = await request.json()
+    return company_assessment.complete_company_mock(data.get("session_id"))
+
+@app.get("/api/company/results/{session_id}")
+async def get_company_results(session_id: str):
+    return company_assessment.get_company_results(session_id)
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
