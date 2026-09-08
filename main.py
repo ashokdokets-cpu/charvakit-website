@@ -5123,6 +5123,27 @@ async def get_topic_questions(category: str, topic: str):
     return mcq_bank.get_topic_questions(category, topic)
 
 
+
+from ai_company_questions import ai_company_questions
+
+@app.get("/api/ai-company/{company_id}/questions")
+async def get_ai_company_questions(company_id: str):
+    return ai_company_questions.generate_company_mock_questions(company_id)
+
+@app.post("/api/ai-company/generate-topic")
+async def generate_topic_questions(request: Request):
+    data = await request.json()
+    return {
+        "status": "success",
+        "questions": ai_company_questions.generate_topic_questions(
+            data.get("company_name"),
+            data.get("topic"),
+            data.get("count", 10),
+            data.get("difficulty", "medium")
+        )
+    }
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
