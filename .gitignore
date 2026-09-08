@@ -49,3 +49,11 @@ create_mcq.py
 add_admin_route.py
 add_role_button.py
 final_check.py
+
+# Helper scripts
+add_*_routes.py
+create_*.py
+final_*.py
+test_*.py
+fix_*.py
+rebuild_*.py
