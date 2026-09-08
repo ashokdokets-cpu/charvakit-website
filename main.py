@@ -5059,6 +5059,45 @@ async def request_content_page(request: Request):
     return template_response("request-content.html", request, "Request Content - Charvak")
 
 
+
+from market_standard import market_standard
+
+@app.get("/api/market/versant-standard")
+async def get_versant_standard():
+    return market_standard.get_versant_market_standard()
+
+@app.get("/api/market/mcq-standard")
+async def get_mcq_standard():
+    return market_standard.get_mcq_market_standard()
+
+@app.get("/api/market/company-standard")
+async def get_company_standard():
+    return market_standard.get_company_market_standard()
+
+@app.get("/api/market/versant-questions/{section_id}")
+async def get_versant_questions(section_id: str):
+    return market_standard.generate_versant_questions(section_id)
+
+@app.post("/api/market/mcq-questions")
+async def generate_mcq(request: Request):
+    data = await request.json()
+    return market_standard.generate_mcq_questions(
+        data.get("category"),
+        data.get("topic"),
+        data.get("count", 10)
+    )
+
+@app.post("/api/market/generate-results")
+async def generate_results(request: Request):
+    data = await request.json()
+    return market_standard.generate_results(
+        data.get("email"),
+        data.get("assessment_type"),
+        data.get("answers"),
+        data.get("total_questions")
+    )
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
