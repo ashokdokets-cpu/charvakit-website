@@ -5144,6 +5144,47 @@ async def generate_topic_questions(request: Request):
     }
 
 
+
+from results_system import results_system
+
+@app.post("/api/results/record")
+async def record_result(request: Request):
+    data = await request.json()
+    return results_system.record_assessment_result(
+        data.get("email"),
+        data.get("assessment_type"),
+        data.get("assessment_name"),
+        data.get("score"),
+        data.get("total_questions"),
+        data.get("correct_answers"),
+        data.get("details")
+    )
+
+@app.get("/api/results/user/{email}")
+async def get_user_report(email: str):
+    return results_system.get_user_report(email)
+
+@app.get("/api/results/assessment/{result_id}")
+async def get_assessment_report(result_id: str):
+    return results_system.get_assessment_report(result_id)
+
+@app.get("/api/results/type/{assessment_type}")
+async def get_type_report(assessment_type: str):
+    return results_system.get_type_report(assessment_type)
+
+@app.get("/api/results/progress/{email}")
+async def get_user_progress(email: str):
+    return results_system.get_user_progress(email)
+
+@app.get("/api/results/readiness/{email}")
+async def get_placement_readiness(email: str):
+    return results_system.get_placement_readiness(email)
+
+@app.get("/api/results/detailed/{email}")
+async def get_detailed_report(email: str):
+    return results_system.generate_detailed_report(email)
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
