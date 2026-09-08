@@ -221,7 +221,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
+        <script>
         async function startMockDrive(companyId) {
             const email = prompt('Enter your email to start the mock drive:');
             if (!email) return;
@@ -237,85 +237,88 @@
                 });
                 const result = await response.json();
                 
-                if (result.status === 'success') {
+                if (result.status === 'success' && result.session) {
                     var session = result.session;
                     var detailBox = document.getElementById('detail-' + companyId);
                     
-                    // Build questions HTML
-                    var questionsHtml = '<div class="alert alert-success mt-3"><strong>✅ Mock Drive Started!</strong><br>Session: ' + session.session_id + '<br>Company: ' + session.company_name + '<br>Pattern: ' + session.pattern + '</div>';
-                    questionsHtml += '<h5 class="mt-3">📋 Test Sections:</h5>';
+                    var html = '<div class="alert alert-success mt-3">';
+                    html += '<strong>✅ Mock Drive Started!</strong><br>';
+                    html += 'Session: ' + session.session_id + '<br>';
+                    html += 'Company: ' + session.company + '<br>';
+                    html += 'Pattern: ' + session.pattern + '<br>';
+                    html += 'Total Questions: ' + session.total_questions;
+                    html += '</div>';
+                    
+                    html += '<h5 class="mt-3">📋 Test Sections:</h5>';
                     
                     session.sections.forEach(function(section) {
-                        questionsHtml += '<div class="section-item"><strong>' + section.name + ':</strong> ' + section.questions + ' Questions (' + section.time + ')';
-                        questionsHtml += '<br><small class="text-muted">Topics: ' + section.topics.join(', ') + '</small></div>';
+                        html += '<div class="section-item">';
+                        html += '<strong>' + section.name + ':</strong> ' + section.count + ' Questions (' + section.time + ')<br>';
+                        html += '<small class="text-muted">Topics: ' + section.topics.join(', ') + '</small>';
+                        html += '</div>';
                     });
                     
-                    questionsHtml += '<button class="btn btn-success rounded-pill mt-3" onclick="loadCompanyQuestions(\'' + companyId + '\', \'' + session.session_id + '\')">📝 View Questions →</button>';
-                    questionsHtml += '<div id="questions-' + companyId + '"></div>';
+                    html += '<button class="btn btn-success rounded-pill mt-3" onclick="showQuestions(\'' + session.session_id + '\', \'' + companyId + '\')">📝 View Questions →</button>';
+                    html += '<div id="questions-' + companyId + '" class="mt-3"></div>';
                     
                     if (detailBox) {
-                        detailBox.innerHTML = questionsHtml;
+                        detailBox.innerHTML = html;
                     }
-                } else {
-                    alert('❌ Error starting mock drive.');
                 }
             } catch (error) {
-                alert('❌ Error: ' + error.message);
+                alert('Error: ' + error.message);
             }
         }
 
-        async function loadCompanyQuestions(companyId, sessionId) {
-            var questionsDiv = document.getElementById('questions-' + companyId);
-            questionsDiv.innerHTML = '<p class="text-muted">Loading questions...</p>';
+        function showQuestions(sessionId, companyId) {
+            var div = document.getElementById('questions-' + companyId);
+            div.innerHTML = '<p class="text-muted">Loading questions...</p>';
             
-            // Questions are already in the session from start-complete
-            // Re-fetch to get the session with questions
-            const response = await fetch('/api/mock/start-complete', {
+            // Re-fetch session to get questions
+            fetch('/api/mock/start-complete', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    email: 'user@example.com',
-                    company_id: companyId
-                })
-            });
-            const result = await response.json();
-            
-            if (result.status === 'success' && result.session) {
-                var session = result.session;
-                var allHtml = '';
-                
-                session.sections.forEach(function(section) {
-                    allHtml += '<h5 class="mt-3">' + section.name + ' Section (' + section.questions.length + ' Questions):</h5>';
+                body: JSON.stringify({email: 'user@example.com', company_id: companyId})
+            })
+            .then(r => r.json())
+            .then(result => {
+                if (result.status === 'success' && result.session) {
+                    var session = result.session;
+                    var html = '';
                     
-                    section.questions.forEach(function(q, index) {
-                        allHtml += '<div class="section-item">';
-                        allHtml += '<strong>Q' + (index + 1) + ':</strong> ' + q.question;
-                        allHtml += '<br><small class="text-muted">Topic: ' + q.topic + '</small>';
+                    session.sections.forEach(function(section) {
+                        html += '<h5 class="mt-4">' + section.name + ' Section (' + section.questions.length + ' Questions)</h5>';
                         
-                        // Show options
-                        if (q.options) {
-                            q.options.forEach(function(opt, j) {
-                                allHtml += '<br>' + String.fromCharCode(65 + j) + ') ' + opt;
-                            });
-                        }
-                        
-                        allHtml += '</div>';
+                        section.questions.forEach(function(q, index) {
+                            html += '<div class="question-item mb-3 p-3 border rounded">';
+                            html += '<strong>Q' + (index + 1) + '.</strong> ' + q.question;
+                            html += '<br><small class="text-muted">Topic: ' + q.topic + '</small>';
+                            
+                            if (q.options && Array.isArray(q.options)) {
+                                html += '<div class="mt-2">';
+                                q.options.forEach(function(opt, j) {
+                                    html += '<div class="option-item">' + String.fromCharCode(65 + j) + ') ' + opt + '</div>';
+                                });
+                                html += '</div>';
+                            }
+                            
+                            html += '</div>';
+                        });
                     });
-                });
-                
-                questionsDiv.innerHTML = allHtml;
-            }
+                    
+                    div.innerHTML = html;
+                }
+            })
+            .catch(err => {
+                div.innerHTML = '<p class="text-danger">Error loading questions</p>';
+            });
         }
 
         function showCompany(companyId) {
-            // Update active card
             document.querySelectorAll('.company-card').forEach(c => c.classList.remove('active'));
             document.querySelector('[data-company="' + companyId + '"]').classList.add('active');
             
-            // Hide all detail boxes
             document.querySelectorAll('.detail-box').forEach(d => d.classList.remove('active'));
-            
-            // Show selected detail
             var detail = document.getElementById('detail-' + companyId);
             if (detail) {
                 detail.classList.add('active');
