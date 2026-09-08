@@ -5278,6 +5278,18 @@ async def get_ai_report(email: str):
     return ai_analysis.get_analysis_report(email)
 
 
+
+from course_pricing import course_pricing
+
+@app.get("/api/courses/pricing/{country_code}")
+async def get_course_prices(country_code: str):
+    return course_pricing.get_all_course_prices(country_code.upper())
+
+@app.get("/api/course/price/{course_name}/{country_code}")
+async def get_course_price(course_name: str, country_code: str):
+    return course_pricing.get_course_price(course_name, country_code.upper())
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
