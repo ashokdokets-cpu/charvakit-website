@@ -5327,6 +5327,26 @@ async def ai_courses_page(request: Request):
     return template_response("ai-courses.html", request, "AI Courses - Charvak")
 
 
+
+from ai_course_delivery import ai_delivery
+
+@app.get("/api/ai-course/plan/{course_name}/{duration_weeks}")
+async def get_course_plan(course_name: str, duration_weeks: int):
+    return ai_delivery.get_course_plan(course_name, duration_weeks)
+
+@app.get("/api/ai-course/lesson/{course_name}/{week_num}/{topic}")
+async def get_weekly_lesson(course_name: str, week_num: int, topic: str):
+    return ai_delivery.get_weekly_lesson(course_name, week_num, topic)
+
+@app.post("/api/ai-course/project-guidance")
+async def get_project_guidance(request: Request):
+    data = await request.json()
+    return ai_delivery.get_project_guidance(
+        data.get("course_name"),
+        data.get("project_description")
+    )
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
