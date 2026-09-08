@@ -3,325 +3,168 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Company Patterns - Charvak</title>
+    <title>Company Mock Drives - Charvak</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #3ba591; --primary-dark: #2e8a78; }
-        body { font-family: 'Poppins', sans-serif; background: #f8f9fa; }
-        .hero { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 50px 0; }
-        .company-card { cursor: pointer; border: 2px solid #e0e0e0; border-radius: 15px; padding: 20px; text-align: center; background: white; transition: all 0.3s; height: 100%; }
-        .company-card:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0,0,0,0.15); border-color: var(--primary); }
-        .company-card.active { border-color: var(--primary); background: #f0faf8; }
-        .logo-circle { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: bold; color: white; margin: 0 auto 10px; }
-        .question-count { font-size: 13px; color: #666; }
-        .detail-box { background: white; border-radius: 15px; padding: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); margin-top: 20px; display: none; }
-        .detail-box.active { display: block; }
-        .section-item { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px; margin-bottom: 8px; }
+        body { font-family: Arial, sans-serif; background: #f8f9fa; }
+        .hero { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 40px 0; }
+        .company-card { cursor: pointer; border: 2px solid #e0e0e0; border-radius: 10px; padding: 15px; text-align: center; background: white; transition: all 0.3s; height: 100%; }
+        .company-card:hover { border-color: #3ba591; transform: translateY(-3px); }
+        .company-card.active { border-color: #3ba591; background: #f0faf8; }
+        .question-box { background: white; border-radius: 10px; padding: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); margin-top: 20px; }
+        .question-item { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; margin-bottom: 10px; }
+        .option-item { cursor: pointer; padding: 10px; border: 1px solid #e0e0e0; border-radius: 6px; margin: 5px 0; }
+        .option-item:hover { background: #f0faf8; }
+        .option-item.selected { background: #e8f5e9; border-color: #2e7d32; }
+        .btn-custom { background: #3ba591; color: white; border-radius: 50px; padding: 12px 30px; font-weight: bold; border: none; }
     </style>
 </head>
 <body>
     <div class="hero text-center">
-        <h1>🏢 Company Patterns</h1>
-        <p>Mock Drives for 15+ Top IT Companies - Market Standard</p>
+        <h1>🏢 Company Mock Drives</h1>
+        <p>AI-Generated Questions Matching Real Company Patterns</p>
     </div>
 
     <div class="container py-4">
-        <div class="alert alert-info text-center">
-            <strong>📋 Click any company to see detailed section breakdown</strong>
-        </div>
-    </div>
-
-    <div class="container py-3">
         <div class="row g-3">
-            <div class="col-6 col-md-3">
-                <div class="company-card" data-company="tcs" onclick="showCompany('tcs')">
-                    <div class="logo-circle" style="background:#1565c0;">TCS</div>
-                    <h5>TCS</h5>
-                    <small class="text-muted">NQT, Digital, Innovator</small><br>
-                    <span class="badge bg-primary mt-2">37 Questions</span>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="company-card" data-company="infosys" onclick="showCompany('infosys')">
-                    <div class="logo-circle" style="background:#00796b;">INF</div>
-                    <h5>Infosys</h5>
-                    <small class="text-muted">InfyTQ, HackWithInfy</small><br>
-                    <span class="badge bg-primary mt-2">38 Questions</span>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="company-card" data-company="cognizant" onclick="showCompany('cognizant')">
-                    <div class="logo-circle" style="background:#00695c;">CTS</div>
-                    <h5>Cognizant</h5>
-                    <small class="text-muted">GenC, Elevate, Pro</small><br>
-                    <span class="badge bg-primary mt-2">35 Questions</span>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="company-card" data-company="wipro" onclick="showCompany('wipro')">
-                    <div class="logo-circle" style="background:#e65100;">WIP</div>
-                    <h5>Wipro</h5>
-                    <small class="text-muted">Elite NTH, Turbo</small><br>
-                    <span class="badge bg-primary mt-2">24 Questions</span>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="company-card" data-company="accenture" onclick="showCompany('accenture')">
-                    <div class="logo-circle" style="background:#7b1fa2;">ACC</div>
-                    <h5>Accenture</h5>
-                    <small class="text-muted">ASE, Advanced ASE</small><br>
-                    <span class="badge bg-primary mt-2">50 Questions</span>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="company-card" data-company="capgemini" onclick="showCompany('capgemini')">
-                    <div class="logo-circle" style="background:#00838f;">CAP</div>
-                    <h5>Capgemini</h5>
-                    <small class="text-muted">Exceller, Pro</small><br>
-                    <span class="badge bg-primary mt-2">37 Questions</span>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="company-card" data-company="ibm" onclick="showCompany('ibm')">
-                    <div class="logo-circle" style="background:#1a237e;">IBM</div>
-                    <h5>IBM</h5>
-                    <small class="text-muted">Associate, Developer</small><br>
-                    <span class="badge bg-primary mt-2">32 Questions</span>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="company-card" data-company="hcl" onclick="showCompany('hcl')">
-                    <div class="logo-circle" style="background:#bf360c;">HCL</div>
-                    <h5>HCLTech</h5>
-                    <small class="text-muted">TechBee, TSS</small><br>
-                    <span class="badge bg-primary mt-2">37 Questions</span>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="company-card" data-company="tech_mahindra" onclick="showCompany('tech_mahindra')">
-                    <div class="logo-circle" style="background:#e91e63;">TM</div>
-                    <h5>Tech Mahindra</h5>
-                    <small class="text-muted">Talent, Digital</small><br>
-                    <span class="badge bg-primary mt-2">35 Questions</span>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="company-card" data-company="lti" onclick="showCompany('lti')">
-                    <div class="logo-circle" style="background:#00bcd4;">LTI</div>
-                    <h5>LTI</h5>
-                    <small class="text-muted">GET, Digital</small><br>
-                    <span class="badge bg-primary mt-2">32 Questions</span>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="company-card" data-company="mindtree" onclick="showCompany('mindtree')">
-                    <div class="logo-circle" style="background:#ff5722;">MT</div>
-                    <h5>Mindtree</h5>
-                    <small class="text-muted">Graduate, Specialist</small><br>
-                    <span class="badge bg-primary mt-2">32 Questions</span>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="company-card" data-company="deloitte" onclick="showCompany('deloitte')">
-                    <div class="logo-circle" style="background:#4caf50;">DEL</div>
-                    <h5>Deloitte</h5>
-                    <small class="text-muted">Analyst, Consultant</small><br>
-                    <span class="badge bg-primary mt-2">40 Questions</span>
-                </div>
-            </div>
+            <div class="col-6 col-md-3"><div class="company-card" data-company="tcs" onclick="selectCompany('tcs')"><h5>TCS</h5><small>NQT | 37 Questions</small></div></div>
+            <div class="col-6 col-md-3"><div class="company-card" data-company="infosys" onclick="selectCompany('infosys')"><h5>Infosys</h5><small>InfyTQ | 38 Questions</small></div></div>
+            <div class="col-6 col-md-3"><div class="company-card" data-company="cognizant" onclick="selectCompany('cognizant')"><h5>Cognizant</h5><small>GenC | 35 Questions</small></div></div>
+            <div class="col-6 col-md-3"><div class="company-card" data-company="wipro" onclick="selectCompany('wipro')"><h5>Wipro</h5><small>Elite NTH | 24 Questions</small></div></div>
+            <div class="col-6 col-md-3"><div class="company-card" data-company="accenture" onclick="selectCompany('accenture')"><h5>Accenture</h5><small>ASE | 50 Questions</small></div></div>
+            <div class="col-6 col-md-3"><div class="company-card" data-company="capgemini" onclick="selectCompany('capgemini')"><h5>Capgemini</h5><small>Exceller | 37 Questions</small></div></div>
+            <div class="col-6 col-md-3"><div class="company-card" data-company="ibm" onclick="selectCompany('ibm')"><h5>IBM</h5><small>32 Questions</small></div></div>
+            <div class="col-6 col-md-3"><div class="company-card" data-company="hcl" onclick="selectCompany('hcl')"><h5>HCLTech</h5><small>TechBee | 37 Questions</small></div></div>
         </div>
 
-        <!-- Detail Box -->
-        <div class="detail-box active" id="detail-tcs">
-            <h4>🏢 TCS - NQT Pattern</h4>
-            <div class="section-item"><strong>Foundation:</strong> 25 Questions (75 min) - Aptitude, Logical, Verbal</div>
-            <div class="section-item"><strong>Advanced:</strong> 10 Questions (25 min) - Advanced Quant, Logic</div>
-            <div class="section-item"><strong>Coding:</strong> 2 Questions (55 min) - DSA Problems</div>
-            <button class="btn btn-primary rounded-pill mt-2" onclick="startMockDrive('tcs')">Start TCS Mock Drive →</button>
-        </div>
-        <div class="detail-box" id="detail-infosys">
-            <h4>🏢 Infosys - InfyTQ Pattern</h4>
-            <div class="section-item"><strong>Aptitude:</strong> 20 Questions (60 min)</div>
-            <div class="section-item"><strong>Technical:</strong> 15 Questions (30 min) - DSA, DBMS, OOPs</div>
-            <div class="section-item"><strong>Coding:</strong> 3 Questions (90 min)</div>
-            <button class="btn btn-primary rounded-pill mt-2" onclick="startMockDrive('infosys')">Start Infosys Mock Drive →</button>
-        </div>
-        <div class="detail-box" id="detail-cognizant">
-            <h4>🏢 Cognizant - GenC Pattern</h4>
-            <div class="section-item"><strong>Aptitude:</strong> 20 Questions (60 min)</div>
-            <div class="section-item"><strong>Communication:</strong> 10 Questions (20 min)</div>
-            <div class="section-item"><strong>Programming:</strong> 5 Questions (45 min) - SQL, Debugging</div>
-            <button class="btn btn-primary rounded-pill mt-2" onclick="startMockDrive('cognizant')">Start Cognizant Mock Drive →</button>
-        </div>
-        <div class="detail-box" id="detail-wipro">
-            <h4>🏢 Wipro - Elite NTH Pattern</h4>
-            <div class="section-item"><strong>Aptitude:</strong> 20 Questions (48 min)</div>
-            <div class="section-item"><strong>Communication:</strong> 2 Questions (20 min) - Essay, Email</div>
-            <div class="section-item"><strong>Coding:</strong> 2 Questions (45 min)</div>
-            <button class="btn btn-primary rounded-pill mt-2" onclick="startMockDrive('wipro')">Start Wipro Mock Drive →</button>
-        </div>
-        <div class="detail-box" id="detail-accenture">
-            <h4>🏢 Accenture - ASE Pattern</h4>
-            <div class="section-item"><strong>Cognitive:</strong> 25 Questions (60 min)</div>
-            <div class="section-item"><strong>Technical:</strong> 15 Questions (30 min)</div>
-            <div class="section-item"><strong>Communication:</strong> 10 Questions (20 min)</div>
-            <button class="btn btn-primary rounded-pill mt-2" onclick="startMockDrive('accenture')">Start Accenture Mock Drive →</button>
-        </div>
-        <div class="detail-box" id="detail-capgemini">
-            <h4>🏢 Capgemini - Exceller Pattern</h4>
-            <div class="section-item"><strong>Aptitude:</strong> 20 Questions (60 min)</div>
-            <div class="section-item"><strong>Technical:</strong> 15 Questions (30 min)</div>
-            <div class="section-item"><strong>Coding:</strong> 2 Questions (45 min)</div>
-            <button class="btn btn-primary rounded-pill mt-2" onclick="startMockDrive('capgemini')">Start Capgemini Mock Drive →</button>
-        </div>
-        <div class="detail-box" id="detail-ibm">
-            <h4>🏢 IBM - Associate Pattern</h4>
-            <div class="section-item"><strong>Aptitude:</strong> 20 Questions (60 min)</div>
-            <div class="section-item"><strong>Technical:</strong> 10 Questions (30 min)</div>
-            <div class="section-item"><strong>Coding:</strong> 2 Questions (45 min)</div>
-            <button class="btn btn-primary rounded-pill mt-2" onclick="startMockDrive('ibm')">Start IBM Mock Drive →</button>
-        </div>
-        <div class="detail-box" id="detail-hcl">
-            <h4>🏢 HCLTech - TechBee Pattern</h4>
-            <div class="section-item"><strong>Aptitude:</strong> 20 Questions (60 min)</div>
-            <div class="section-item"><strong>Technical:</strong> 15 Questions (30 min)</div>
-            <div class="section-item"><strong>Coding:</strong> 2 Questions (30 min)</div>
-            <button class="btn btn-primary rounded-pill mt-2" onclick="startMockDrive('hcl')">Start HCL Mock Drive →</button>
-        </div>
-        <div class="detail-box" id="detail-tech_mahindra">
-            <h4>🏢 Tech Mahindra Pattern</h4>
-            <div class="section-item"><strong>Aptitude:</strong> 20 Questions (60 min)</div>
-            <div class="section-item"><strong>Technical:</strong> 10 Questions (30 min)</div>
-            <div class="section-item"><strong>Coding:</strong> 2 Questions (45 min)</div>
-            <button class="btn btn-primary rounded-pill mt-2" onclick="startMockDrive('tech_mahindra')">Start Tech Mahindra Mock Drive →</button>
-        </div>
-        <div class="detail-box" id="detail-lti">
-            <h4>🏢 LTI Pattern</h4>
-            <div class="section-item"><strong>Aptitude:</strong> 20 Questions (60 min)</div>
-            <div class="section-item"><strong>Technical:</strong> 10 Questions (30 min)</div>
-            <div class="section-item"><strong>Coding:</strong> 2 Questions (45 min)</div>
-            <button class="btn btn-primary rounded-pill mt-2" onclick="startMockDrive('lti')">Start LTI Mock Drive →</button>
-        </div>
-        <div class="detail-box" id="detail-mindtree">
-            <h4>🏢 Mindtree Pattern</h4>
-            <div class="section-item"><strong>Aptitude:</strong> 20 Questions (60 min)</div>
-            <div class="section-item"><strong>Technical:</strong> 10 Questions (30 min)</div>
-            <div class="section-item"><strong>Coding:</strong> 2 Questions (45 min)</div>
-            <button class="btn btn-primary rounded-pill mt-2" onclick="startMockDrive('mindtree')">Start Mindtree Mock Drive →</button>
-        </div>
-        <div class="detail-box" id="detail-deloitte">
-            <h4>🏢 Deloitte Pattern</h4>
-            <div class="section-item"><strong>Aptitude:</strong> 25 Questions (60 min)</div>
-            <div class="section-item"><strong>Technical:</strong> 10 Questions (30 min)</div>
-            <div class="section-item"><strong>Communication:</strong> 5 Questions (15 min)</div>
-            <button class="btn btn-primary rounded-pill mt-2" onclick="startMockDrive('deloitte')">Start Deloitte Mock Drive →</button>
+        <div class="question-box" id="mainContent">
+            <h4>Select a company to start mock drive</h4>
+            <p class="text-muted">Click on a company card above to see their test pattern and start practicing.</p>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-        <script>
+    <script>
+        var currentSession = null;
+        var currentCompany = null;
+        var userAnswers = {};
+
+        function selectCompany(companyId) {
+            currentCompany = companyId;
+            document.querySelectorAll('.company-card').forEach(c => c.classList.remove('active'));
+            document.querySelector('[data-company="' + companyId + '"]').classList.add('active');
+            
+            var content = document.getElementById('mainContent');
+            content.innerHTML = '<h4>Selected: ' + companyId.toUpperCase() + '</h4>';
+            content.innerHTML += '<p class="text-muted">Click below to start your mock drive with AI-generated questions.</p>';
+            content.innerHTML += '<button class="btn-custom" onclick="startMockDrive(\'' + companyId + '\')">🚀 Start ' + companyId.toUpperCase() + ' Mock Drive</button>';
+        }
+
         async function startMockDrive(companyId) {
-            const email = prompt('Enter your email to start the mock drive:');
+            const email = prompt('Enter your email to start:');
             if (!email) return;
+            
+            var content = document.getElementById('mainContent');
+            content.innerHTML = '<p class="text-muted">Generating AI questions...</p>';
             
             try {
                 const response = await fetch('/api/mock/start-complete', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        email: email,
-                        company_id: companyId
-                    })
+                    body: JSON.stringify({email: email, company_id: companyId})
                 });
                 const result = await response.json();
                 
                 if (result.status === 'success' && result.session) {
-                    var session = result.session;
-                    var detailBox = document.getElementById('detail-' + companyId);
+                    currentSession = result.session;
+                    userAnswers = {};
                     
-                    var html = '<div class="alert alert-success mt-3">';
+                    var html = '<div class="alert alert-success">';
                     html += '<strong>✅ Mock Drive Started!</strong><br>';
-                    html += 'Session: ' + session.session_id + '<br>';
-                    html += 'Company: ' + session.company + '<br>';
-                    html += 'Pattern: ' + session.pattern + '<br>';
-                    html += 'Total Questions: ' + session.total_questions;
+                    html += 'Company: ' + result.session.company + '<br>';
+                    html += 'Pattern: ' + result.session.pattern + '<br>';
+                    html += 'Total Questions: ' + result.session.total_questions;
                     html += '</div>';
                     
-                    html += '<h5 class="mt-3">📋 Test Sections:</h5>';
-                    
-                    session.sections.forEach(function(section) {
-                        html += '<div class="section-item">';
-                        html += '<strong>' + section.name + ':</strong> ' + section.count + ' Questions (' + section.time + ')<br>';
-                        html += '<small class="text-muted">Topics: ' + section.topics.join(', ') + '</small>';
-                        html += '</div>';
-                    });
-                    
-                    html += '<button class="btn btn-success rounded-pill mt-3" onclick="showQuestions(\'' + session.session_id + '\', \'' + companyId + '\')">📝 View Questions →</button>';
-                    html += '<div id="questions-' + companyId + '" class="mt-3"></div>';
-                    
-                    if (detailBox) {
-                        detailBox.innerHTML = html;
-                    }
-                }
-            } catch (error) {
-                alert('Error: ' + error.message);
-            }
-        }
-
-        function showQuestions(sessionId, companyId) {
-            var div = document.getElementById('questions-' + companyId);
-            div.innerHTML = '<p class="text-muted">Loading questions...</p>';
-            
-            // Re-fetch session to get questions
-            fetch('/api/mock/start-complete', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({email: 'user@example.com', company_id: companyId})
-            })
-            .then(r => r.json())
-            .then(result => {
-                if (result.status === 'success' && result.session) {
-                    var session = result.session;
-                    var html = '';
-                    
-                    session.sections.forEach(function(section) {
-                        html += '<h5 class="mt-4">' + section.name + ' Section (' + section.questions.length + ' Questions)</h5>';
+                    // Show all questions
+                    result.session.sections.forEach(function(section) {
+                        html += '<h5 class="mt-4">' + section.name + ' (' + section.questions.length + ' Questions)</h5>';
                         
                         section.questions.forEach(function(q, index) {
-                            html += '<div class="question-item mb-3 p-3 border rounded">';
+                            var qId = section.name + '_' + index;
+                            html += '<div class="question-item">';
                             html += '<strong>Q' + (index + 1) + '.</strong> ' + q.question;
-                            html += '<br><small class="text-muted">Topic: ' + q.topic + '</small>';
                             
                             if (q.options && Array.isArray(q.options)) {
-                                html += '<div class="mt-2">';
                                 q.options.forEach(function(opt, j) {
-                                    html += '<div class="option-item">' + String.fromCharCode(65 + j) + ') ' + opt + '</div>';
+                                    html += '<div class="option-item" onclick="selectOption(\'' + qId + '\', ' + j + ', this)">' + String.fromCharCode(65 + j) + ') ' + opt + '</div>';
                                 });
-                                html += '</div>';
                             }
-                            
                             html += '</div>';
                         });
                     });
                     
-                    div.innerHTML = html;
+                    html += '<div class="text-center mt-4">';
+                    html += '<button class="btn-custom" onclick="completeMock()">📊 Complete Test & Get Results</button>';
+                    html += '</div>';
+                    html += '<div id="resultsBox" class="mt-3"></div>';
+                    
+                    content.innerHTML = html;
                 }
-            })
-            .catch(err => {
-                div.innerHTML = '<p class="text-danger">Error loading questions</p>';
-            });
+            } catch (error) {
+                content.innerHTML = '<p class="text-danger">Error: ' + error.message + '</p>';
+            }
         }
 
-        function showCompany(companyId) {
-            document.querySelectorAll('.company-card').forEach(c => c.classList.remove('active'));
-            document.querySelector('[data-company="' + companyId + '"]').classList.add('active');
+        function selectOption(questionId, optionIndex, element) {
+            // Deselect siblings
+            element.parentElement.querySelectorAll('.option-item').forEach(o => o.classList.remove('selected'));
+            element.classList.add('selected');
             
-            document.querySelectorAll('.detail-box').forEach(d => d.classList.remove('active'));
-            var detail = document.getElementById('detail-' + companyId);
-            if (detail) {
-                detail.classList.add('active');
+            // Store answer
+            userAnswers[questionId] = optionIndex;
+        }
+
+        async function completeMock() {
+            var resultsBox = document.getElementById('resultsBox');
+            resultsBox.innerHTML = '<p class="text-muted">Calculating results...</p>';
+            
+            // Submit all answers
+            for (var qId in userAnswers) {
+                await fetch('/api/mock/submit-complete', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        session_id: currentSession.session_id,
+                        section_name: qId.split('_')[0],
+                        question_id: parseInt(qId.split('_')[1]),
+                        selected_option: userAnswers[qId]
+                    })
+                });
+            }
+            
+            // Complete mock
+            try {
+                const response = await fetch('/api/mock/complete-full', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({session_id: currentSession.session_id})
+                });
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    var r = result.results;
+                    var html = '<div class="alert alert-info mt-3">';
+                    html += '<h5>📊 Results:</h5>';
+                    html += 'Company: ' + r.company + '<br>';
+                    html += 'Total Questions: ' + r.total_questions + '<br>';
+                    html += 'Answered: ' + r.answered + '<br>';
+                    html += 'Score: ' + r.score + '%<br>';
+                    html += 'Result: ' + (r.pass ? '✅ PASS' : '❌ FAIL') + '<br>';
+                    html += '</div>';
+                    resultsBox.innerHTML = html;
+                }
+            } catch (error) {
+                resultsBox.innerHTML = '<p class="text-danger">Error: ' + error.message + '</p>';
             }
         }
     </script>
