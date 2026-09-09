@@ -5438,6 +5438,29 @@ async def get_course_lesson(enrollment_id: str, week_num: int):
     return ai_courses.get_course_lesson(enrollment_id, week_num)
 
 
+
+from elevenlabs_voice import elevenlabs_voice
+
+@app.post("/api/voice/tts")
+async def text_to_speech(request: Request):
+    data = await request.json()
+    return elevenlabs_voice.text_to_speech(
+        data.get("text"),
+        data.get("voice_id")
+    )
+
+@app.post("/api/voice/generate-audio")
+async def generate_audio(request: Request):
+    data = await request.json()
+    return elevenlabs_voice.generate_audio_for_questions(
+        data.get("questions")
+    )
+
+@app.get("/api/voice/voices")
+async def get_voices():
+    return elevenlabs_voice.get_available_voices()
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
