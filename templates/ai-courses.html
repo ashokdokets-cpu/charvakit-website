@@ -100,13 +100,16 @@ function enrollCourse(i) {
     var email = prompt('Enter your email to enroll in ' + c.name + ':');
     if (!email) return;
     
-    var confirmMsg = 'Enroll in ' + c.name + '?
-Duration: ' + c.duration + ' weeks
-
-AI Tutor will start teaching you immediately after enrollment!';
+    var inst = getInstallments(c.duration);
+    var symbol = getCurrencySymbol();
+    var rate = getCurrencyRate();
+    var priceDisplay = Math.round(c.price / rate);
+    var instDisplay = Math.round(c.price / inst / rate);
+    
+    var confirmMsg = 'Enroll in ' + c.name + '? | Duration: ' + c.duration + ' weeks | Total: ' + symbol + priceDisplay + ' | First Installment: ' + symbol + instDisplay + ' | Pay to start AI Tutor.';
     if (!confirm(confirmMsg)) return;
     
-    fetch('/api/ai-course/start-chat', {
+    fetch('/api/enroll/payment', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
@@ -116,14 +119,22 @@ AI Tutor will start teaching you immediately after enrollment!';
         })
     })
     .then(function(r) { return r.json(); })
-    .then(function(result) {
-        if (result.status === 'success') {
-            alert('✅ Enrolled! AI Tutor started!
-
-AI: ' + result.ai_message);
-            
-            // Open chat window with AI Tutor
-            openCourseChat(result);
+    .then(function(enrollResult) {
+        if (enrollResult.status === 'success') {
+            return fetch('/api/enroll/pay-installment', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    enrollment_id: enrollResult.enrollment_id,
+                    installment_number: 1
+                })
+            });
+        }
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(payResult) {
+        if (payResult.status === 'success' && payResult.access_granted) {
+            alert('Payment successful! AI Tutor access granted!');
         }
     })
     .catch(function(e) { alert('Error: ' + e.message); });
