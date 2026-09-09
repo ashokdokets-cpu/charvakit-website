@@ -1,91 +1,130 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Versant English Assessment - Charvak</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body { font-family: Arial, sans-serif; background: #f8f9fa; }
-        .hero { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px 0; }
-        .section-tab { cursor: pointer; border: 2px solid #e0e0e0; border-radius: 10px; padding: 10px; text-align: center; background: white; }
-        .section-tab.active { border-color: #3ba591; background: #f0faf8; }
-        .section-box { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); margin-top: 20px; }
-        .question-item { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px; margin-bottom: 8px; }
-        .section-content { display: none; }
-        .section-content.active { display: block; }
-        .loading { color: #3ba591; font-style: italic; }
-    </style>
-</head>
-<body>
-    <div class="hero text-center">
-        <h1>🗣️ Versant English Assessment</h1>
-        <p>AI-Generated Unique Questions | 48 Questions | 50 Minutes</p>
+{% extends "base.html" %}
+{% block title %}Versant English Assessment - Charvak{% endblock %}
+{% block content %}
+<style>
+    .versant-hero { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px 0; }
+    .section-tab { cursor: pointer; border: 2px solid #e0e0e0; border-radius: 10px; padding: 10px; text-align: center; background: white; margin-bottom: 10px; }
+    .section-tab.active { border-color: #3ba591; background: #f0faf8; }
+    .question-item { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; margin-bottom: 10px; }
+    .btn-record { background: #e94d65; color: white; border: none; border-radius: 50px; padding: 8px 15px; cursor: pointer; font-size: 12px; }
+    .btn-play { background: #3ba591; color: white; border: none; border-radius: 50px; padding: 8px 15px; cursor: pointer; font-size: 12px; }
+</style>
+
+<div class="versant-hero text-center">
+    <h1>🗣️ Versant English Assessment</h1>
+    <p>AI-Generated Unique Questions | 48 Questions | 50 Minutes</p>
+</div>
+
+<div class="container py-4">
+    <div class="row g-2">
+        <div class="col-6 col-md-2"><div class="section-tab active" onclick="showSection('read_aloud')">📖 Read Aloud<br><small>8 Q</small></div></div>
+        <div class="col-6 col-md-2"><div class="section-tab" onclick="showSection('repeats')">🎧 Repeats<br><small>16 Q</small></div></div>
+        <div class="col-6 col-md-2"><div class="section-tab" onclick="showSection('sentence_builds')">✏️ Sentence Builds<br><small>10 Q</small></div></div>
+        <div class="col-6 col-md-2"><div class="section-tab" onclick="showSection('conversations')">💬 Conversations<br><small>10 Q</small></div></div>
+        <div class="col-6 col-md-2"><div class="section-tab" onclick="showSection('story_retelling')">📝 Story Retelling<br><small>3 Q</small></div></div>
+        <div class="col-6 col-md-2"><div class="section-tab" onclick="showSection('summary_opinion')">📄 Summary<br><small>1 Q</small></div></div>
     </div>
 
-    <div class="container py-4">
-        <div class="row g-2">
-            <div class="col-6 col-md-2"><div class="section-tab active" onclick="showSection('read_aloud')">📖 Read Aloud<br><small>8 Q</small></div></div>
-            <div class="col-6 col-md-2"><div class="section-tab" onclick="showSection('repeats')">🎧 Repeats<br><small>16 Q</small></div></div>
-            <div class="col-6 col-md-2"><div class="section-tab" onclick="showSection('sentence_builds')">✏️ Sentence Builds<br><small>10 Q</small></div></div>
-            <div class="col-6 col-md-2"><div class="section-tab" onclick="showSection('conversations')">💬 Conversations<br><small>10 Q</small></div></div>
-            <div class="col-6 col-md-2"><div class="section-tab" onclick="showSection('story_retelling')">📝 Story Retelling<br><small>3 Q</small></div></div>
-            <div class="col-6 col-md-2"><div class="section-tab" onclick="showSection('summary_opinion')">📄 Summary<br><small>1 Q</small></div></div>
-        </div>
-
-        <div class="section-box section-content active" id="content-read_aloud">
-            <h4>📖 Read Aloud (8 Questions)</h4>
-            <p class="text-muted">Read the following sentences aloud.</p>
-            <div id="questions-read_aloud" class="loading">Loading questions...</div>
-        </div>
-        <div class="section-box section-content" id="content-repeats">
-            <h4>🎧 Repeats (16 Questions)</h4>
-            <div id="questions-repeats" class="loading">Loading questions...</div>
-        </div>
-        <div class="section-box section-content" id="content-sentence_builds">
-            <h4>✏️ Sentence Builds (10 Questions)</h4>
-            <div id="questions-sentence_builds" class="loading">Loading questions...</div>
-        </div>
-        <div class="section-box section-content" id="content-conversations">
-            <h4>💬 Conversations (10 Questions)</h4>
-            <div id="questions-conversations" class="loading">Loading questions...</div>
-        </div>
-        <div class="section-box section-content" id="content-story_retelling">
-            <h4>📝 Story Retelling (3 Questions)</h4>
-            <div id="questions-story_retelling" class="loading">Loading questions...</div>
-        </div>
-        <div class="section-box section-content" id="content-summary_opinion">
-            <h4>📄 Summary & Opinion (1 Question)</h4>
-            <div id="questions-summary_opinion" class="loading">Loading questions...</div>
-        </div>
+    <div class="mt-4">
+        <h4 id="sectionTitle">📖 Read Aloud (8 Questions)</h4>
+        <p class="text-muted" id="sectionInstruction">Read the sentences aloud.</p>
+        <div id="questionsList"></div>
     </div>
+</div>
 
-    
 <script>
-var data = {
-    read_aloud: {questions: []},
-    repeats: {questions: []},
-    sentence_builds: {questions: []},
-    conversations: {questions: []},
-    story_retelling: {questions: []},
-    summary_opinion: {questions: []}
+var questionsData = {
+    read_aloud: [
+        'The company will announce quarterly results next week.',
+        'Please submit your assignment by Friday afternoon.',
+        'The new software update includes several improvements.',
+        'Our team meeting has been rescheduled to Monday.',
+        'Customer satisfaction is our top priority.',
+        'The annual report will be published in March.',
+        'Please review the document before signing.',
+        'The training session starts at nine sharp.'
+    ],
+    repeats: [
+        'Can you send me that report?',
+        'Let us schedule a meeting for tomorrow.',
+        'Please update me on the project.',
+        'Do you have any questions about this?',
+        'I need your input on this task.',
+        'Let us take a quick break now.',
+        'I will follow up with you later.',
+        'Can you review this document please?',
+        'We should discuss the next steps.',
+        'How is the progress on your end?',
+        'Please confirm your availability for Friday.',
+        'I appreciate your hard work on this.',
+        'Let me know if you need help.',
+        'We can brainstorm ideas together.',
+        'I will be out of the office tomorrow.',
+        'Thanks for bringing that to my attention.'
+    ],
+    sentence_builds: [
+        'the / meeting / starts / at / nine / sharp',
+        'please / submit / the / report / by / Friday',
+        'the / team / completed / the / project',
+        'we / will / discuss / the / budget / next / week',
+        'she / has / been / working / here / since / 2020',
+        'the / new / policy / takes / effect / from / Monday',
+        'they / are / planning / to / launch / the / product',
+        'the / manager / approved / the / proposal / yesterday',
+        'we / need / to / improve / customer / satisfaction',
+        'the / training / program / begins / next / month'
+    ],
+    conversations: [
+        'Would you find a stove in a kitchen or a bedroom?',
+        'What would you do if you missed an important deadline?',
+        'How do you prioritize tasks when everything is urgent?',
+        'What is the best way to handle a difficult customer?',
+        'Describe your ideal work environment.',
+        'How would you explain a complex idea to a colleague?',
+        'What qualities make a good team leader?',
+        'How do you handle constructive criticism?',
+        'What steps would you take to improve customer satisfaction?',
+        'How do you stay organized when managing multiple tasks?'
+    ],
+    story_retelling: [
+        'A young engineer joined a startup and built scalable systems.',
+        'The marketing team doubled their customer base in three months.',
+        'A company improved productivity through automation and training.'
+    ],
+    summary_opinion: [
+        'Write about the impact of AI on modern workplaces.'
+    ]
 };
 
 var currentSection = 'read_aloud';
-var mediaRecorder = null;
-var recordedChunks = [];
-var isRecording = false;
 
 function showSection(sectionId) {
     currentSection = sectionId;
+    
+    // Update tabs
+    var tabs = document.querySelectorAll('.section-tab');
+    for (var i = 0; i < tabs.length; i++) {
+        tabs[i].classList.remove('active');
+    }
+    event.target.closest('.section-tab').classList.add('active');
+    
+    // Update title
+    var titles = {
+        read_aloud: '📖 Read Aloud (8 Questions)',
+        repeats: '🎧 Repeats (16 Questions)',
+        sentence_builds: '✏️ Sentence Builds (10 Questions)',
+        conversations: '💬 Conversations (10 Questions)',
+        story_retelling: '📝 Story Retelling (3 Questions)',
+        summary_opinion: '📄 Summary (1 Question)'
+    };
+    document.getElementById('sectionTitle').textContent = titles[sectionId];
+    
     renderQuestions();
 }
 
 function renderQuestions() {
     var container = document.getElementById('questionsList');
-    if (!container) return;
-    
-    var questions = data[currentSection].questions;
+    var questions = questionsData[currentSection] || [];
     var html = '';
     
     for (var i = 0; i < questions.length; i++) {
@@ -94,10 +133,10 @@ function renderQuestions() {
         html += '<br>';
         
         if (currentSection === 'repeats') {
-            html += '<button class="btn btn-primary btn-sm mt-2 me-2" onclick="playAudio(' + i + ')">🔊 Play Audio</button>';
+            html += '<button class="btn-play mt-2 me-2" onclick="playAudio(' + i + ')">🔊 Play Audio</button>';
         }
         
-        html += '<button class="btn btn-danger btn-sm mt-2" onclick="toggleRecording(' + i + ')">🎤 Record</button>';
+        html += '<button class="btn-record mt-2" onclick="recordAudio(' + i + ')">🎤 Record</button>';
         html += '<audio id="playback-' + i + '" controls style="display:none; margin-top:10px; width:100%;"></audio>';
         html += '</div>';
     }
@@ -105,128 +144,63 @@ function renderQuestions() {
     container.innerHTML = html;
 }
 
-function playAudio(questionId) {
-    var audioText = data[currentSection].questions[questionId];
-    // ElevenLabs or TTS playback
+function playAudio(index) {
+    var text = questionsData[currentSection][index];
     fetch('/api/voice/tts', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({text: audioText})
+        body: JSON.stringify({text: text})
     })
     .then(function(r) { return r.json(); })
     .then(function(result) {
         if (result.status === 'success' && result.audio_base64) {
             var audio = new Audio('data:audio/mpeg;base64,' + result.audio_base64);
             audio.play();
+        } else {
+            // Fallback to browser TTS
+            var utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-US';
+            speechSynthesis.speak(utterance);
         }
     });
 }
 
-function toggleRecording(questionId) {
+var mediaRecorder = null;
+var recordedChunks = [];
+var isRecording = false;
+
+function recordAudio(index) {
     if (isRecording) {
         if (mediaRecorder) mediaRecorder.stop();
         isRecording = false;
-    } else {
-        navigator.mediaDevices.getUserMedia({audio: true})
-        .then(function(stream) {
-            mediaRecorder = new MediaRecorder(stream);
-            recordedChunks = [];
-            mediaRecorder.ondataavailable = function(e) {
-                if (e.data.size > 0) recordedChunks.push(e.data);
-            };
-            mediaRecorder.onstop = function() {
-                var blob = new Blob(recordedChunks, {type: 'audio/webm'});
-                var url = URL.createObjectURL(blob);
-                var playback = document.getElementById('playback-' + questionId);
-                if (playback) {
-                    playback.src = url;
-                    playback.style.display = 'block';
-                }
-            };
-            mediaRecorder.start();
-            isRecording = true;
-        });
+        return;
     }
-}
-
-async function loadAIQuestions() {
-    var email = prompt('Enter your email for unique AI questions:');
-    if (!email) return;
     
-    // Show loading
-    var container = document.getElementById('questionsList');
-    if (container) container.innerHTML = '<p>🤖 AI is generating your unique questions...</p>';
-    
-    try {
-        const response = await fetch('/api/versant/start-session', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({email: email})
-        });
-        const result = await response.json();
-        
-        if (result.status === 'success' && result.session) {
-            var questions = result.session.questions;
-            
-            // Load into data object
-            data.read_aloud.questions = questions.read_aloud || [];
-            data.repeats.questions = questions.repeats || [];
-            data.sentence_builds.questions = questions.sentence_builds || [];
-            data.conversations.questions = questions.conversations || [];
-            data.story_retelling.questions = questions.story_retelling || [];
-            data.summary_opinion.questions = questions.summary_opinion || [];
-            
-            // Render current section
-            renderQuestions();
-        }
-    } catch (e) {
-        // Fallback to default questions
-        loadDefaultQuestions();
-    }
+    navigator.mediaDevices.getUserMedia({audio: true})
+    .then(function(stream) {
+        mediaRecorder = new MediaRecorder(stream);
+        recordedChunks = [];
+        mediaRecorder.ondataavailable = function(e) {
+            if (e.data.size > 0) recordedChunks.push(e.data);
+        };
+        mediaRecorder.onstop = function() {
+            var blob = new Blob(recordedChunks, {type: 'audio/webm'});
+            var url = URL.createObjectURL(blob);
+            var playback = document.getElementById('playback-' + index);
+            if (playback) {
+                playback.src = url;
+                playback.style.display = 'block';
+            }
+        };
+        mediaRecorder.start();
+        isRecording = true;
+    })
+    .catch(function(err) {
+        alert('Microphone access denied.');
+    });
 }
 
-function loadDefaultQuestions() {
-    data.read_aloud.questions = [
-        'The company will announce quarterly results next week.',
-        'Please submit your assignment by Friday afternoon.',
-        'The new software update includes several improvements.',
-        'Our team meeting has been rescheduled to Monday.',
-        'Customer satisfaction is our top priority.',
-        'The annual report will be published in March.',
-        'Please review the document before signing.',
-        'The training session starts at nine o\'clock sharp.'
-    ];
-    data.repeats.questions = [
-        'Can you send me that report?',
-        'Let us schedule a meeting for tomorrow.',
-        'Please update me on the project.',
-        'Do you have any questions about this?'
-    ];
-    data.sentence_builds.questions = [
-        'the / meeting / starts / at / nine / sharp',
-        'please / submit / the / report / by / Friday'
-    ];
-    data.conversations.questions = [
-        'Would you find a stove in a kitchen or a bedroom?',
-        'What would you do if you missed a deadline?'
-    ];
-    data.story_retelling.questions = [
-        'A young engineer joined a startup and learned to build systems.'
-    ];
-    data.summary_opinion.questions = [
-        'Write about the impact of AI on modern workplaces.'
-    ];
-    renderQuestions();
-}
-
-// Load questions on page load
-document.addEventListener('DOMContentLoaded', function() {
-    loadDefaultQuestions();
-    // Try to get AI questions
-    loadAIQuestions();
-});
-
+// Render first section on page load
+renderQuestions();
 </script>
-
-</body>
-</html>
+{% endblock %}
