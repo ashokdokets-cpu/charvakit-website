@@ -84,7 +84,22 @@
                 if (typeof q === 'object') {
                     q = q.sentence || q.words || q.question || JSON.stringify(q);
                 }
-                html += '<div class="question-item"><strong>Question ' + (i + 1) + ':</strong> ' + q + '</div>';
+                html += '<div class="question-item">';
+        html += '<strong>Question ' + (i + 1) + ':</strong> ' + section.questions[i];
+        html += '<br>';
+        
+        // Add Play button for Repeats section
+        if (sectionId === 'repeats') {
+            html += '<button class="btn btn-primary btn-sm mt-2 me-2" id="playBtn-' + i + '" onclick="playAudio(\'' + section.questions[i] + '\', ' + i + ')">🔊 Play Audio</button>';
+        }
+        
+        // Add Record button for all sections
+        html += '<button class="btn btn-danger btn-sm mt-2 me-2" id="recordBtn-' + i + '" onclick="toggleRecording(' + i + ')">🎤 Record</button>';
+        
+        // Add playback audio element
+        html += '<audio id="playback-' + i + '" controls style="display:none; margin-top:10px; width:100%;"></audio>';
+        
+        html += '</div>';
             }
             div.innerHTML = html;
         }
