@@ -1,31 +1,5 @@
 {% extends "base.html" %}
-{% block title %}AI Training - Charvakfunction openAIChat() {
-    var email = prompt('Enter your email to start AI chat:');
-    if (!email) return;
-    
-    var topic = prompt('What topic do you want to learn? (e.g., Python, DSA, SQL):');
-    if (!topic) return;
-    
-    fetch('/api/tutor/start', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-            email: email,
-            course_name: topic,
-            topic: topic,
-            user_level: 'beginner'
-        })
-    })
-    .then(r => r.json())
-    .then(result => {
-        if (result.status === 'success') {
-            alert('🤖 AI Tutor connected!\n\nAI: ' + result.ai_message);
-        }
-    })
-    .catch(e => alert('Error: ' + e.message));
-}
-</script>
-{% endblock %}
+{% block title %}AI Training - Charvak{% endblock %}
 {% block content %}
 <style>
     .training-hero { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; padding: 50px 0; }
@@ -37,7 +11,7 @@
     .phase-3 { border-color: #f093fb; }
     .phase-4 { border-color: #f5576c; }
     .badge-ai { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 5px 15px; border-radius: 20px; font-size: 11px; }
-    .btn-custom { background: #3ba591; color: white; border-radius: 50px; padding: 10px 25px; font-weight: bold; border: none; }
+    .btn-custom { background: #3ba591; color: white; border-radius: 50px; padding: 10px 25px; font-weight: bold; border: none; cursor: pointer; }
 </style>
 
 <div class="training-hero text-center">
@@ -120,9 +94,33 @@
             <div class="card phase-card p-4 text-center">
                 <h4>💬 AI Chat Support</h4>
                 <p class="text-muted">24/7 real-time AI assistance</p>
-                <button class="btn btn-custom" onclick="openAIChat()">Start Chat</button>
+                <button class="btn btn-custom" id="chatBtn">Start Chat</button>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+document.getElementById('chatBtn').addEventListener('click', function() {
+    var email = prompt('Enter your email to start AI chat:');
+    if (!email) return;
+    var topic = prompt('What topic do you want to learn? (e.g., Python, DSA, SQL):');
+    if (!topic) return;
+    
+    fetch('/api/tutor/start', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({email: email, course_name: topic, topic: topic, user_level: 'beginner'})
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(result) {
+        if (result.status === 'success') {
+            alert('🤖 AI Tutor connected!
+
+AI: ' + result.ai_message);
+        }
+    })
+    .catch(function(e) { alert('Error: ' + e.message); });
+});
+</script>
 {% endblock %}
