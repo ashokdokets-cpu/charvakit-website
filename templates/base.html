@@ -508,7 +508,7 @@ function socialLogin(provider) {
     const clientId = redirects[provider];
     if (!clientId || clientId.startsWith('YOUR_')) {
         // Redirect to registration page instead of API endpoint
-        window.location.href = '/register";
+        window.location.href = '/register';
         return;
     }
     
@@ -696,7 +696,7 @@ async function logoutUser() {
     localStorage.removeItem('userEmail');
     
     alert('Logged out successfully!');
-    window.location.href = '/";
+    window.location.href = '/';
 }
 // Check login state on page load
 function checkLoginState() {
@@ -752,7 +752,7 @@ function showPaymentMethodModal(amount, toolName, callback) {
                 <button class="btn btn-secondary" onclick="this.closest('div[style]').parentElement.remove()">Cancel</button>
             </div>
         </div>
-    `;
+    ';
     document.body.appendChild(modal);
 }
 
@@ -844,7 +844,7 @@ function payWithPayPal(amount, toolName) {
                 <p>Amount: <strong>$' + usdAmount + ' USD</strong></p>
                 <div id="paypal-buttons"></div>
                 <button class="btn btn-secondary mt-3 w-100" onclick="this.parentElement.remove()">Cancel</button>
-            `;
+            ';
             document.body.appendChild(paypalContainer);
             
             // Render PayPal buttons
