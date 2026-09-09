@@ -148,6 +148,84 @@ function toggleRecording(questionId) {
         });
     }
 }
+
+async function loadAIQuestions() {
+    var email = prompt('Enter your email for unique AI questions:');
+    if (!email) return;
+    
+    // Show loading
+    var container = document.getElementById('questionsList');
+    if (container) container.innerHTML = '<p>🤖 AI is generating your unique questions...</p>';
+    
+    try {
+        const response = await fetch('/api/versant/start-session', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({email: email})
+        });
+        const result = await response.json();
+        
+        if (result.status === 'success' && result.session) {
+            var questions = result.session.questions;
+            
+            // Load into data object
+            data.read_aloud.questions = questions.read_aloud || [];
+            data.repeats.questions = questions.repeats || [];
+            data.sentence_builds.questions = questions.sentence_builds || [];
+            data.conversations.questions = questions.conversations || [];
+            data.story_retelling.questions = questions.story_retelling || [];
+            data.summary_opinion.questions = questions.summary_opinion || [];
+            
+            // Render current section
+            renderQuestions();
+        }
+    } catch (e) {
+        // Fallback to default questions
+        loadDefaultQuestions();
+    }
+}
+
+function loadDefaultQuestions() {
+    data.read_aloud.questions = [
+        'The company will announce quarterly results next week.',
+        'Please submit your assignment by Friday afternoon.',
+        'The new software update includes several improvements.',
+        'Our team meeting has been rescheduled to Monday.',
+        'Customer satisfaction is our top priority.',
+        'The annual report will be published in March.',
+        'Please review the document before signing.',
+        'The training session starts at nine o\'clock sharp.'
+    ];
+    data.repeats.questions = [
+        'Can you send me that report?',
+        'Let us schedule a meeting for tomorrow.',
+        'Please update me on the project.',
+        'Do you have any questions about this?'
+    ];
+    data.sentence_builds.questions = [
+        'the / meeting / starts / at / nine / sharp',
+        'please / submit / the / report / by / Friday'
+    ];
+    data.conversations.questions = [
+        'Would you find a stove in a kitchen or a bedroom?',
+        'What would you do if you missed a deadline?'
+    ];
+    data.story_retelling.questions = [
+        'A young engineer joined a startup and learned to build systems.'
+    ];
+    data.summary_opinion.questions = [
+        'Write about the impact of AI on modern workplaces.'
+    ];
+    renderQuestions();
+}
+
+// Load questions on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadDefaultQuestions();
+    // Try to get AI questions
+    loadAIQuestions();
+});
+
 </script>
 
 </body>
