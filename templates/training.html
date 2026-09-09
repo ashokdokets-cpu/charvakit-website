@@ -115,9 +115,7 @@ document.getElementById('chatBtn').addEventListener('click', function() {
     .then(function(r) { return r.json(); })
     .then(function(result) {
         if (result.status === 'success') {
-            alert('🤖 AI Tutor connected!
-
-AI: ' + result.ai_message);
+            alert('🤖 AI Tutor connected! | AI: ' + result.ai_message);
         }
     })
     .catch(function(e) { alert('Error: ' + e.message); });
