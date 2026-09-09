@@ -34,7 +34,8 @@ const CharvakCurrency = {
             localStorage.setItem('charvak_currency', currency);
             this.updateAllPrices();
             
-            // Dispatch event
+            // Dispatch event;
+
             window.dispatchEvent(new CustomEvent('charvakCurrencyChanged', {
                 detail: { currency: currency }
             }));
@@ -128,7 +129,8 @@ const CharvakCurrency = {
     }
 }
         
-        // Listen for changes from other scripts
+        // Listen for changes from other scripts;
+
         window.addEventListener('charvakCurrencyChange', (e) => {
             if (e.detail && e.detail.currency) {
                 this.setCurrency(e.detail.currency);
