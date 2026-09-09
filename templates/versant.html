@@ -70,125 +70,27 @@
             summary_opinion: ['Write about the impact of AI on workplaces.']
         };
 
-        function renderQuestions(sectionId, questions) {
-            var div = document.getElementById('questions-' + sectionId);
-            div.classList.remove('loading');
-            
-            if (!questions || questions.length === 0) {
-                questions = fallbackQuestions[sectionId] || [];
-            }
-            
-            var html = '';
-            for (var i = 0; i < questions.length; i++) {
-                var q = questions[i];
-                if (typeof q === 'object') {
-                    q = q.sentence || q.words || q.question || JSON.stringify(q);
-                }
-                html += '<div class="question-item">';
-        html += '<strong>Question ' + (i + 1) + ':</strong> ' + section.questions[i];
+        function renderQuestions(questions, sectionId) {
+    var container = document.getElementById('questionsList');
+    if (!container) return;
+    
+    var html = '';
+    for (var i = 0; i < questions.length; i++) {
+        html += '<div class="question-item">';
+        html += '<strong>Question ' + (i + 1) + ':</strong> ' + questions[i];
         html += '<br>';
         
         // Add Play button for Repeats section
         if (sectionId === 'repeats') {
-            html += '<button class="btn btn-primary btn-sm mt-2 me-2" id="playBtn-' + i + '" onclick="playAudio(\'' + section.questions[i] + '\', ' + i + ')">🔊 Play Audio</button>';
+            html += '<button class="btn btn-primary btn-sm mt-2 me-2" onclick="playAudio(\'' + questions[i].replace(/'/g, '\\'') + '\', ' + i + ')">🔊 Play Audio</button>';
         }
         
-        // Add Record button for all sections
-        html += '<button class="btn btn-danger btn-sm mt-2 me-2" id="recordBtn-' + i + '" onclick="toggleRecording(' + i + ')">🎤 Record</button>';
-        
-        // Add playback audio element
+        // Add Record button
+        html += '<button class="btn btn-danger btn-sm mt-2 me-2" onclick="toggleRecording(' + i + ')">🎤 Record</button>';
         html += '<audio id="playback-' + i + '" controls style="display:none; margin-top:10px; width:100%;"></audio>';
-        
         html += '</div>';
-            }
-            div.innerHTML = html;
-        }
-
-        function showSection(sectionId) {
-            document.querySelectorAll('.section-tab').forEach(t => t.classList.remove('active'));
-            event.target.closest('.section-tab').classList.add('active');
-            
-            document.querySelectorAll('.section-content').forEach(s => s.classList.remove('active'));
-            document.getElementById('content-' + sectionId).classList.add('active');
-        }
-
-        // Load fallback questions immediately
-        for (var key in fallbackQuestions) {
-            renderQuestions(key, fallbackQuestions[key]);
-        }
-
-        // Try to get AI questions
-        var email = prompt('Enter your email for unique AI questions (or cancel for default):');
-        if (email) {
-            fetch('/api/versant/start-session', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({email: email})
-            })
-            .then(r => r.json())
-            .then(result => {
-                if (result.status === 'success' && result.session) {
-                    var sessionId = result.session.session_id;
-                    ['read_aloud', 'repeats', 'sentence_builds', 'conversations', 'story_retelling', 'summary_opinion'].forEach(function(section) {
-                        fetch('/api/versant/session/' + sessionId + '/' + section)
-                            .then(r => r.json())
-                            .then(data => {
-                                if (data.status === 'success' && data.questions && data.questions.length > 0) {
-                                    renderQuestions(section, data.questions);
-                                }
-                            })
-                            .catch(() => {});
-                    });
-                }
-            })
-            .catch(() => {});
-        }
-    </script>
-
-<script>
-var mediaRecorder = null;
-var recordedChunks = [];
-var isRecording = false;
-var currentAudio = null;
-
-// Audio Recording
-async function startRecording(questionId) {
-    try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorder = new MediaRecorder(stream);
-        recordedChunks = [];
-        
-        mediaRecorder.ondataavailable = function(e) {
-            if (e.data.size > 0) recordedChunks.push(e.data);
-        };
-        
-        mediaRecorder.onstop = function() {
-            const blob = new Blob(recordedChunks, {type: 'audio/webm'});
-            const audioUrl = URL.createObjectURL(blob);
-            
-            // Show playback
-            var playback = document.getElementById('playback-' + questionId);
-            if (playback) {
-                playback.src = audioUrl;
-                playback.style.display = 'block';
-            }
-            
-            // Save recording
-            saveRecording(questionId, blob);
-        };
-        
-        mediaRecorder.start();
-        isRecording = true;
-        
-        // Update button
-        var btn = document.getElementById('recordBtn-' + questionId);
-        if (btn) {
-            btn.textContent = '⏹ Stop Recording';
-            btn.classList.add('recording');
-        }
-    } catch (err) {
-        alert('Microphone access denied. Please allow microphone access to record.');
     }
+    container.innerHTML = html;
 }
 
 function stopRecording(questionId) {
