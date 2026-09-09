@@ -1,147 +1,65 @@
-/**
- * Charvak IT Consulting - Global Currency Utilities
- * Supports 13 currencies with real-time conversion and location detection
- * Version: 2.0.0 - Unified currency system
- */
-
-const CharvakCurrency = {
-    rates: {
-        INR: 1, USD: 83.1, EUR: 90.2, GBP: 105.3, AED: 22.6,
-        SGD: 61.2, AUD: 54.8, CAD: 61.0, JPY: 0.56, CNY: 11.5,
-        BRL: 16.8, NGN: 0.055, ZAR: 4.45
-    },
+// Charvak Currency Utility
+var CharvakCurrency = {
+    current: 'INR',
+    rates: {INR: 1, USD: 83.1, EUR: 90.2, GBP: 105.3, AED: 22.6, SGD: 61.2, AUD: 54.8, CAD: 61.0, JPY: 0.56, CNY: 11.5, BRL: 16.8, NGN: 0.055, ZAR: 4.45},
+    symbols: {INR: '₹', USD: '$', EUR: '€', GBP: '£', AED: 'د.إ', SGD: 'S$', AUD: 'A$', CAD: 'C$', JPY: '¥', CNY: '¥', BRL: 'R$', NGN: '₦', ZAR: 'R'},
     
-    symbols: {
-        INR: '₹', USD: '$', EUR: '€', GBP: '£', AED: 'د.إ',
-        SGD: 'S$', AUD: 'A$', CAD: 'C$', JPY: '¥', CNY: '¥',
-        BRL: 'R$', NGN: '₦', ZAR: 'R'
-    },
-    
-    names: {
-        INR: 'Indian Rupee', USD: 'US Dollar', EUR: 'Euro',
-        GBP: 'British Pound', AED: 'UAE Dirham', SGD: 'Singapore Dollar',
-        AUD: 'Australian Dollar', CAD: 'Canadian Dollar', JPY: 'Japanese Yen',
-        CNY: 'Chinese Yuan', BRL: 'Brazilian Real', NGN: 'Nigerian Naira',
-        ZAR: 'South African Rand'
-    },
-    
-    getCurrent() {
-        return localStorage.getItem('charvak_currency') || 'INR';
-    },
-    
-    setCurrency(currency) {
-        if (this.rates[currency]) {
-            localStorage.setItem('charvak_currency', currency);
-            this.updateAllPrices();
-            
-            // Dispatch event;
-
-            window.dispatchEvent(new CustomEvent('charvakCurrencyChanged', {
-                detail: { currency: currency }
-            }));
-            
-            // Show notification
-            this.showNotification(`Currency: ' + this.symbols[currency] + ' ' + currency + ' (' + this.names[currency] + ')`);
-            
-            return true;
+    init: function() {
+        var saved = localStorage.getItem('charvak_currency');
+        if (saved) {
+            this.current = saved;
         }
-        return false;
+        this.updateSelector();
     },
     
-    convert(inrAmount) {
-        const currency = this.getCurrent();
-        if (currency === 'INR') return inrAmount;
-        const rate = this.rates[currency];
-        if (!rate) return inrAmount;
-        return inrAmount / rate;
+    getCurrent: function() {
+        return this.current;
     },
     
-    format(inrAmount) {
-        const converted = this.convert(inrAmount);
-        const currency = this.getCurrent();
-        const symbol = this.symbols[currency] || '$';
-        
-        let formatted;
-        if (['JPY', 'NGN', 'ZAR', 'CNY'].includes(currency)) {
-            formatted = Math.round(converted).toLocaleString();
-        } else if (['INR', 'AED', 'BRL'].includes(currency)) {
-            formatted = Math.round(converted).toLocaleString();
-        } else {
-            formatted = converted.toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            });
+    setCurrency: function(currency) {
+        this.current = currency;
+        localStorage.setItem('charvak_currency', currency);
+        this.updateSelector();
+        this.updateAllPrices();
+        window.dispatchEvent(new CustomEvent('charvakCurrencyChanged', {detail: {currency: currency}}));
+    },
+    
+    getSymbol: function() {
+        return this.symbols[this.current] || '₹';
+    },
+    
+    getRate: function() {
+        return this.rates[this.current] || 1;
+    },
+    
+    updateSelector: function() {
+        var selector = document.getElementById('currencySelector');
+        if (selector) {
+            selector.value = this.current;
         }
-        
-        return symbol + formatted;
     },
     
-    getSymbol() {
-        return this.symbols[this.getCurrent()] || '$';
-    },
-    
-    getName() {
-        return this.names[this.getCurrent()] || 'US Dollar';
-    },
-    
-    updateAllPrices() {
-        document.querySelectorAll('[data-inr]').forEach(el => {
-            const inrAmount = parseFloat(el.getAttribute('data-inr'));
-            if (inrAmount) {
-                el.textContent = this.format(inrAmount);
+    updateAllPrices: function() {
+        var symbol = this.getSymbol();
+        var rate = this.getRate();
+        document.querySelectorAll('[data-inr]').forEach(function(el) {
+            var inrAmount = parseFloat(el.getAttribute('data-inr'));
+            if (inrAmount && rate) {
+                var converted = inrAmount / rate;
+                el.textContent = symbol + Math.round(converted);
             }
         });
-    },
-    
-    showNotification(msg) {
-        const div = document.createElement('div');
-        div.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#3ba591;color:#fff;padding:10px 20px;border-radius:5px;z-index:9999;';
-        div.textContent = msg;
-        document.body.appendChild(div);
-        setTimeout(() => div.remove(), 3000);
-    },
-    
-    async detectLocation() {
-        // Default to INR (Charvak is Indian company)
-        const existing = localStorage.getItem('charvak_currency');
-        if (existing) {
-            this.updateAllPrices();
-            return existing;
-        }
-        
-        localStorage.setItem('charvak_currency', 'INR');
-        this.updateAllPrices();
-        console.log('Default currency: INR');
-        return 'INR';
-    },
-    
-    async init() {
-    // Set INR as default if no currency selected
-    if (!localStorage.getItem('charvak_currency')) {
-        localStorage.setItem('charvak_currency', 'INR');
     }
-    this.updateAllPrices();
-    
-    // Update currency dropdown
-    const selector = document.getElementById('currencySelector');
-    if (selector) {
-        selector.value = this.getCurrent();
-    }
-}
-        
+};
 
-    // Listen for changes from other scripts
-    window.addEventListener('charvakCurrencyChange', (e) => {
-        if (e.detail && e.detail.currency) {
-            this.setCurrency(e.detail.currency);
-        }
-    });
-}
-
-
-// Initialize
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => CharvakCurrency.init());
-} else {
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
     CharvakCurrency.init();
-}
+});
+
+// Listen for currency changes
+window.addEventListener('charvakCurrencyChange', function(e) {
+    if (e.detail && e.detail.currency) {
+        CharvakCurrency.setCurrency(e.detail.currency);
+    }
+});
