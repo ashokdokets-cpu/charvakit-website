@@ -5423,6 +5423,21 @@ async def pay_extension(request: Request):
     )
 
 
+
+@app.post("/api/ai-course/start-chat")
+async def start_course_chat(request: Request):
+    data = await request.json()
+    return ai_courses.start_course_chat(
+        data.get("email"),
+        data.get("course_name"),
+        data.get("duration_weeks")
+    )
+
+@app.get("/api/ai-course/lesson/{enrollment_id}/{week_num}")
+async def get_course_lesson(enrollment_id: str, week_num: int):
+    return ai_courses.get_course_lesson(enrollment_id, week_num)
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
