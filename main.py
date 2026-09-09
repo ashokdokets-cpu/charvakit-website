@@ -142,7 +142,7 @@ async def global_rate_limit(request: Request, call_next):
         if (now - counts[client_ip]["timestamp"]).seconds < 60:
             counts[client_ip]["count"] += 1
             if counts[client_ip]["count"] > 60:
-                return JSONResponse({"error": "Too many requests"}, status_code=429)
+                return JSONResponse({"error": "Rate limit exceeded. Please try again shortly."}, status_code=429)
         else:
             counts[client_ip] = {"count": 1, "timestamp": now}
     else:
@@ -961,7 +961,7 @@ async def api_register(data: RegisterRequest):
         )
 
 @app.post("/api/auth/login")
-@limiter.limit("5/minute")
+@limiter.limit("30/minute")
 async def api_login(request: Request, data: LoginRequest):
     try:
         result = login_user(data.email, data.password)
@@ -1162,7 +1162,7 @@ async def ai_health_check():
         return {"openai_configured": False, "models_activated": 0}
 
 @app.post("/api/ai/generate-questions")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def api_generate_questions(request: Request):
     try:
         data = await request.json()
@@ -1177,7 +1177,7 @@ async def api_generate_questions(request: Request):
         return handle_error(e, "generating questions", {"questions": [], "count": 0})
 
 @app.post("/api/ai/voice-to-web")
-@limiter.limit("5/minute")
+@limiter.limit("30/minute")
 async def api_voice_to_web(request: Request):
     try:
         data = await request.json()
@@ -1191,7 +1191,7 @@ async def api_voice_to_web(request: Request):
 # ============================================================
 
 @app.post("/api/voice-to-web/create")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def v2w_create(request: Request):
     """Create website from voice data."""
     data = await request.json()
@@ -1203,7 +1203,7 @@ async def v2w_create(request: Request):
     )
 
 @app.post("/api/voice-to-web/domain")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def v2w_domain(request: Request):
     """Setup custom domain."""
     data = await request.json()
@@ -1213,7 +1213,7 @@ async def v2w_domain(request: Request):
     )
 
 @app.post("/api/voice-to-web/seo")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def v2w_seo(request: Request):
     """Enable AI SEO."""
     data = await request.json()
@@ -1257,7 +1257,7 @@ async def v2w_stats():
     return voice_to_web_engine.get_stats()
 
 @app.post("/api/ai/neural-wireframe")
-@limiter.limit("5/minute")
+@limiter.limit("30/minute")
 async def api_neural_wireframe(request: Request):
     try:
         data = await request.json()
@@ -1268,7 +1268,7 @@ async def api_neural_wireframe(request: Request):
         return handle_error(e, "neural wireframe", {"code": "", "error": "Wireframe generation failed"})
 
 @app.post("/api/ai/localize")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def api_localize(request: Request):
     try:
         data = await request.json()
@@ -1279,7 +1279,7 @@ async def api_localize(request: Request):
         return handle_error(e, "localization", {"status": "error", "message": "Localization failed"})
 
 @app.post("/api/ai/generate-contract")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def api_generate_contract(request: Request):
     try:
         data = await request.json()
@@ -1294,7 +1294,7 @@ async def api_generate_contract(request: Request):
         return handle_error(e, "contract generation", {"contract": "", "error": "Contract generation failed"})
 
 @app.post("/api/ai/analyze-legacy")
-@limiter.limit("5/minute")
+@limiter.limit("30/minute")
 async def api_analyze_legacy(request: Request):
     try:
         data = await request.json()
@@ -1305,7 +1305,7 @@ async def api_analyze_legacy(request: Request):
         return handle_error(e, "legacy analysis", {"status": "error", "message": "Legacy analysis failed"})
 
 @app.post("/api/ai/generate-schema")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def api_generate_schema(request: Request):
     try:
         data = await request.json()
@@ -1408,7 +1408,7 @@ async def get_na_jobs(skill: str = None, location: str = None, visa_type: str = 
         return handle_error(e, "NA jobs fetch", {"jobs": [], "count": 0})
 
 @app.post("/api/na/submit-candidate")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def submit_candidate(request: Request):
     try:
         data = await request.json()
@@ -1654,7 +1654,7 @@ async def pitch_roast_page(request: Request):
 # ============================================================
 
 @app.post("/api/tools/resume-roast")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def api_resume_roast(request: Request):
     try:
         data = await request.json()
@@ -1665,7 +1665,7 @@ async def api_resume_roast(request: Request):
         return handle_error(e, "resume roast")
 
 @app.post("/api/tools/ghost-bounty")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def api_ghost_bounty(request: Request):
     try:
         data = await request.json()
@@ -1676,7 +1676,7 @@ async def api_ghost_bounty(request: Request):
         return handle_error(e, "ghost bounty")
 
 @app.post("/api/tools/role-mirror")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def api_role_mirror(request: Request):
     try:
         data = await request.json()
@@ -1687,7 +1687,7 @@ async def api_role_mirror(request: Request):
         return handle_error(e, "role mirror")
 
 @app.post("/api/tools/offer-matcher")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def api_offer_matcher(request: Request):
     try:
         data = await request.json()
@@ -1698,7 +1698,7 @@ async def api_offer_matcher(request: Request):
         return handle_error(e, "offer matcher")
 
 @app.post("/api/tools/ghost-job")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def api_ghost_job(request: Request):
     try:
         data = await request.json()
@@ -1709,7 +1709,7 @@ async def api_ghost_job(request: Request):
         return handle_error(e, "ghost job detection")
 
 @app.post("/api/tools/counter-offer")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def api_counter_offer(request: Request):
     try:
         data = await request.json()
@@ -1720,7 +1720,7 @@ async def api_counter_offer(request: Request):
         return handle_error(e, "counter offer")
 
 @app.post("/api/tools/pitch-roast")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def api_pitch_roast(request: Request):
     try:
         data = await request.json()
@@ -1731,7 +1731,7 @@ async def api_pitch_roast(request: Request):
         return handle_error(e, "pitch roast")
 
 @app.post("/api/tools/ref-check")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def api_ref_check(request: Request):
     try:
         data = await request.json()
@@ -1742,35 +1742,35 @@ async def api_ref_check(request: Request):
         return handle_error(e, "reference check")
 
 @app.post("/api/tools/bounty-swap")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def api_bounty_swap(request: Request):
     data = await request.json()
     result = await bounty_swap_ai(data.get("bounty_amount", 500), data.get("referrer_name", ""))
     return result
 
 @app.post("/api/tools/micro-trial")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def api_micro_trial(request: Request):
     data = await request.json()
     result = await micro_trial_ai(data.get("trial_type", "Frontend"), data.get("skills", ""))
     return result
 
 @app.post("/api/tools/ghost-job-shield")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def api_ghost_job_shield(request: Request):
     data = await request.json()
     result = await ghost_job_ai(data.get("url", ""))
     return result
 
 @app.post("/api/tools/ref-swap")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def api_ref_swap(request: Request):
     data = await request.json()
     result = await ref_swap_ai(data.get("ref_type", "Professional"), data.get("industry", ""))
     return result
 
 @app.post("/api/tools/ghost-tracker")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def api_ghosted_tracker(request: Request):
     data = await request.json()
     result = await ghosted_tracker_ai(data.get("applications", []))
@@ -2012,7 +2012,7 @@ async def kyc_pricing():
     return kyc_engine.PRICING
 
 @app.post("/api/kyc/initiate")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def initiate_verification(request: Request):
     """Start a new background verification."""
     try:
@@ -2044,7 +2044,7 @@ async def get_badge(email: str):
     return kyc_engine.get_verified_badge(email)
 
 @app.post("/api/kyc/submit-documents")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def submit_kyc_documents(request: Request):
     """Submit documents for verification."""
     try:
@@ -2073,7 +2073,7 @@ async def review_verification(request: Request):
 
 # Partner routes
 @app.post("/api/kyc/partner/register")
-@limiter.limit("5/minute")
+@limiter.limit("30/minute")
 async def register_partner(request: Request):
     """Register as a verification partner."""
     try:
@@ -2113,7 +2113,7 @@ async def assign_verification(request: Request):
         return {"status": "error", "message": str(e)}
 
 @app.post("/api/background-verification/initiate")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def initiate_background_verification(request: Request):
     """Initiate background verification from career engine."""
     try:
@@ -2153,7 +2153,7 @@ async def create_escrow(request: Request):
         return {"status": "error", "message": "Failed to create escrow"}
 
 @app.post("/api/escrow/deposit")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def deposit_escrow(request: Request):
     """Deposit funds into escrow."""
     try:
@@ -2181,7 +2181,7 @@ async def deliver_work(request: Request):
         return {"status": "error", "message": str(e)}
 
 @app.post("/api/escrow/release")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def release_escrow(request: Request):
     """Release funds to vendor."""
     try:
@@ -2192,7 +2192,7 @@ async def release_escrow(request: Request):
         return {"status": "error", "message": str(e)}
 
 @app.post("/api/escrow/dispute")
-@limiter.limit("5/minute")
+@limiter.limit("30/minute")
 async def dispute_escrow(request: Request):
     """Raise a dispute."""
     try:
@@ -2238,7 +2238,7 @@ async def referral_stats():
     return referral_engine.get_stats()
 
 @app.post("/api/referral/create-link")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def create_referral_link(request: Request):
     """Create a referral link."""
     try:
@@ -2298,7 +2298,7 @@ async def referral_leaderboard(limit: int = 10):
     return referral_engine.get_leaderboard(limit)
 
 @app.post("/api/affiliate/register")
-@limiter.limit("5/minute")
+@limiter.limit("30/minute")
 async def register_affiliate(request: Request):
     """Register as an affiliate."""
     try:
@@ -2318,7 +2318,7 @@ async def micro_internship_stats():
     return micro_internship_engine.get_stats()
 
 @app.post("/api/micro-internship/client/register")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def register_micro_client(request: Request):
     """Register a client company."""
     try:
@@ -2360,7 +2360,7 @@ async def get_project(project_id: str):
     return micro_internship_engine.get_project(project_id)
 
 @app.post("/api/micro-internship/apply")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def apply_to_project(request: Request):
     """Apply to a project."""
     try:
@@ -2559,7 +2559,7 @@ async def sso_providers():
     return sso_engine.get_configured_providers()
 
 @app.post("/api/sso/login")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def sso_login(request: Request):
     """Initiate SSO login."""
     try:
@@ -2620,7 +2620,7 @@ async def client_dashboard_page(request: Request):
 # ============================================================
 
 @app.post("/api/training/post-course")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def post_course_api(request: Request):
     """Post a new course."""
     try:
@@ -2666,7 +2666,7 @@ async def student_dashboard(email: str):
 # ============================================================
 
 @app.post("/api/interview-prep/start")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def start_interview_prep(request: Request):
     """Start an interview prep session."""
     try:
@@ -2697,67 +2697,67 @@ async def get_prep_session(session_id: str):
 # ============================================================
 
 @app.post("/api/products/lock-in-breaker/audit")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def api_lock_in_breaker(request: Request):
     data = await request.json()
     return products_engine.lock_in_breaker_audit(data)
 
 @app.post("/api/products/reverse-staffing/match")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def api_reverse_staffing(request: Request):
     data = await request.json()
     return products_engine.reverse_staffing_match(data)
 
 @app.post("/api/products/auditbot/scan")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def api_auditbot(request: Request):
     data = await request.json()
     return products_engine.auditbot_scan(data)
 
 @app.post("/api/products/skill-twin/assess")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def api_skill_twin(request: Request):
     data = await request.json()
     return products_engine.skill_twin_assess(data)
 
 @app.post("/api/products/micro-squads/assemble")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def api_micro_squads(request: Request):
     data = await request.json()
     return products_engine.micro_squads_assemble(data)
 
 @app.post("/api/products/agency-twin/automate")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def api_agency_twin(request: Request):
     data = await request.json()
     return products_engine.agency_twin_automate(data)
 
 @app.post("/api/products/geo-compliance/check")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def api_geo_compliance(request: Request):
     data = await request.json()
     return products_engine.geo_compliance_check(data)
 
 @app.post("/api/products/design-token/check")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def api_design_token(request: Request):
     data = await request.json()
     return products_engine.design_token_check(data)
 
 @app.post("/api/products/silent-killer/monitor")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def api_silent_killer(request: Request):
     data = await request.json()
     return products_engine.silent_killer_monitor(data)
 
 @app.post("/api/products/ai-slop/scan")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def api_ai_slop(request: Request):
     data = await request.json()
     return products_engine.ai_slop_scan(data)
 
 @app.post("/api/products/developer-entropy/score")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def api_developer_entropy(request: Request):
     data = await request.json()
     return products_engine.developer_entropy_score(data)
@@ -2790,7 +2790,7 @@ async def hiring_savings_calculator(request: Request):
         return {"status": "error", "message": "Calculation failed"}
 
 @app.post("/api/demo/book")
-@limiter.limit("5/minute")
+@limiter.limit("30/minute")
 async def book_demo(request: Request):
     """Book a demo request."""
     try:
@@ -2887,7 +2887,7 @@ async def web_design_proposal(request: Request):
 # ============================================================
 
 @app.post("/api/candidate/register")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def register_candidate(request: Request):
     """Register a new candidate."""
     try:
@@ -3022,7 +3022,7 @@ async def messaging_stats():
 # ============================================================
 
 @app.post("/api/events/create")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def create_event(request: Request):
     """Create an event."""
     try:
@@ -3073,7 +3073,7 @@ async def check_in_event(request: Request):
 # ============================================================
 
 @app.post("/api/brand/create")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def create_brand_page(request: Request):
     """Create a company brand page."""
     try:
@@ -3099,7 +3099,7 @@ async def get_brand(brand_id: str):
     return brand_engine.get_brand_page(brand_id)
 
 @app.post("/api/brand/review")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def post_review(request: Request):
     """Post an employer review."""
     try:
@@ -3110,7 +3110,7 @@ async def post_review(request: Request):
         return {"status": "error", "message": str(e)}
 
 @app.post("/api/brand/promote")
-@limiter.limit("5/minute")
+@limiter.limit("30/minute")
 async def promote_job(request: Request):
     """Promote a job."""
     try:
@@ -3130,7 +3130,7 @@ async def email_stats():
     return email_engine.get_stats()
 
 @app.post("/api/email/test")
-@limiter.limit("5/minute")
+@limiter.limit("30/minute")
 async def test_email(request: Request):
     """Send a test email."""
     try:
@@ -3169,7 +3169,7 @@ async def company_detail_page(request: Request, brand_id: str):
 # ============================================================
 
 @app.post("/api/team/create")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def create_team(request: Request):
     data = await request.json()
     return team_engine.create_team(data)
@@ -3194,7 +3194,7 @@ async def invite_member(request: Request):
 # ============================================================
 
 @app.post("/api/ats/connect")
-@limiter.limit("5/minute")
+@limiter.limit("30/minute")
 async def connect_ats(request: Request):
     data = await request.json()
     return ats_engine.connect_external_ats(data)  # Changed from connect_ats
@@ -3218,7 +3218,7 @@ async def ats_stats():
 # ============================================================
 
 @app.post("/api/university/register")
-@limiter.limit("5/minute")
+@limiter.limit("30/minute")
 async def register_university(request: Request):
     data = await request.json()
     return university_engine.register_university(data)
@@ -3274,7 +3274,7 @@ async def salary_benchmarks(university: str = None, major: str = None, industry:
     return enterprise_engine.get_salary_benchmarks(filters)
 
 @app.post("/api/enterprise/pathway/create")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def create_pathway(request: Request):
     data = await request.json()
     return enterprise_engine.create_pathway(data)
@@ -3306,7 +3306,7 @@ async def get_appointments(advisor_id: str = None):
     return enterprise_engine.get_appointments(advisor_id)
 
 @app.post("/api/enterprise/employer/tier")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def set_tier(request: Request):
     data = await request.json()
     return enterprise_engine.set_employer_tier(data)
@@ -3316,19 +3316,19 @@ async def get_employers(tier: str = None):
     return enterprise_engine.get_employers_by_tier(tier)
 
 @app.post("/api/enterprise/resume-book/create")
-@limiter.limit("5/minute")
+@limiter.limit("30/minute")
 async def create_resume_book(request: Request):
     data = await request.json()
     return enterprise_engine.create_resume_book(data)
 
 @app.post("/api/enterprise/survey/create")
-@limiter.limit("5/minute")
+@limiter.limit("30/minute")
 async def create_survey(request: Request):
     data = await request.json()
     return enterprise_engine.create_survey(data)
 
 @app.post("/api/enterprise/kiosk/start")
-@limiter.limit("5/minute")
+@limiter.limit("30/minute")
 async def start_kiosk(request: Request):
     data = await request.json()
     return enterprise_engine.start_kiosk(data)
@@ -3347,7 +3347,7 @@ async def enterprise_stats():
 # ============================================================
 
 @app.post("/api/marketing/job-ad")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def generate_job_ad(request: Request):
     data = await request.json()
     return await marketing_ai_engine.generate_job_ad(data)
@@ -3359,7 +3359,7 @@ async def generate_social_post(request: Request):
     return await marketing_ai_engine.generate_social_post(data)
 
 @app.post("/api/marketing/lead-drip")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def create_lead_drip(request: Request):
     data = await request.json()
     return await marketing_ai_engine.create_lead_drip(data)
@@ -3382,7 +3382,7 @@ async def get_indian_languages():
     return indian_language_ai.get_languages()
 
 @app.post("/api/indian-languages/assessment")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def create_language_assessment(request: Request):
     """Create assessment in Indian language."""
     data = await request.json()
@@ -3426,7 +3426,7 @@ async def get_course_ratings(course_id: str):
     return lms_engine.get_course_ratings(course_id)
 
 @app.post("/api/lms/quiz/create")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def create_quiz(request: Request):
     data = await request.json()
     return lms_engine.create_quiz(data)
@@ -3438,7 +3438,7 @@ async def submit_quiz(request: Request):
     return lms_engine.submit_quiz(data)
 
 @app.post("/api/lms/certificate/issue")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def issue_certificate(request: Request):
     data = await request.json()
     return lms_engine.issue_certificate(data)
@@ -3493,7 +3493,7 @@ async def get_lessons(course_id: str):
     return lms_engine.get_course_lessons(course_id)
 
 @app.post("/api/lms/payout/request")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def request_payout(request: Request):
     data = await request.json()
     return lms_engine.request_payout(data)
@@ -3503,7 +3503,7 @@ async def get_payouts(trainer_email: str):
     return lms_engine.get_payouts(trainer_email)
 
 @app.post("/api/lms/language/add")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def add_course_language(request: Request):
     data = await request.json()
     return lms_engine.add_course_language(data)
@@ -3529,7 +3529,7 @@ async def search_courses(query: str = None, category: str = None, max_price: flo
 # ============================================================
 
 @app.post("/api/career/alert")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def create_job_alert(request: Request):
     data = await request.json()
     return career_v2_engine.create_job_alert(data)
@@ -3551,7 +3551,7 @@ async def follow_company(request: Request):
     return career_v2_engine.follow_company(data)
 
 @app.post("/api/career/salary")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def add_salary(request: Request):
     data = await request.json()
     return career_v2_engine.add_salary(data)
@@ -3561,13 +3561,13 @@ async def get_salary_insights(role: str = None):
     return career_v2_engine.get_salary_insights(role)
 
 @app.post("/api/career/interview")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def schedule_interview(request: Request):
     data = await request.json()
     return career_v2_engine.schedule_interview(data)
 
 @app.post("/api/career/offer")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def add_offer(request: Request):
     data = await request.json()
     return career_v2_engine.add_offer(data)
@@ -3587,13 +3587,13 @@ async def career_center_page(request: Request):
 # Micro-Internship Global
 
 @app.post("/api/micro-internship/global/post")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def post_global_project(request: Request):
     data = await request.json()
     return micro_internship_global.post_global_project(data)
 
 @app.post("/api/micro-internship/global/mentor")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def assign_mentor(request: Request):
     data = await request.json()
     return micro_internship_global.assign_mentor(data)
@@ -3669,7 +3669,7 @@ async def blacklist_ip(request: Request):
 # ============================================================
 
 @app.post("/api/bridge/start")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def start_bridge(request: Request):
     data = await request.json() if request.body() else {}
     return bridge_engine.start_journey(data)
@@ -3681,7 +3681,7 @@ async def submit_bridge_answer(request: Request):
     return bridge_engine.submit_answer(data)
 
 @app.post("/api/bridge/revenue")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def calculate_bridge_revenue(request: Request):
     data = await request.json()
     return bridge_engine.calculate_revenue(data)
@@ -3696,7 +3696,7 @@ async def bridge_stats():
 # ============================================================
 
 @app.post("/api/ai-bridge/start")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def start_ai_bridge(request: Request):
     data = await request.json()
     return ai_bridge_engine.start_ai_assessment(data)
@@ -3708,7 +3708,7 @@ async def submit_ai_answer(request: Request):
     return ai_bridge_engine.submit_ai_answer(data)
 
 @app.post("/api/ai-bridge/premium")
-@limiter.limit("5/minute")
+@limiter.limit("30/minute")
 async def get_premium_report(request: Request):
     data = await request.json()
     return ai_bridge_engine.get_premium_report(data.get("session_id"))
@@ -3729,7 +3729,7 @@ async def bridge_page(request: Request):
 # Student Suite
 
 @app.post("/api/student/subscribe")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def student_subscribe(request: Request):
     data = await request.json()
     email = data.get("email") or data.get("student_email")
@@ -3767,7 +3767,7 @@ async def student_suite_page(request: Request):
     return template_response("student-suite.html", request, "AI Student Suite - Charvak IT Consulting")
 
 @app.post("/api/profile/create")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def create_master_profile(request: Request):
     data = await request.json()
     return profile_network_engine.create_master_profile(data)
@@ -3777,7 +3777,7 @@ async def get_master_profile(email: str):
     return profile_network_engine.get_master_profile(email)
 
 @app.post("/api/alumni/add")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def add_alumni(request: Request):
     data = await request.json()
     return profile_network_engine.add_alumni_connection(data)
@@ -3787,7 +3787,7 @@ async def find_alumni(university: str = None, company: str = None):
     return profile_network_engine.find_alumni(university, company)
 
 @app.post("/api/referral/match")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def find_referral(request: Request):
     data = await request.json()
     return profile_network_engine.find_referral_match(data)
@@ -3813,7 +3813,7 @@ async def get_doketsrb_banner(context: str = "career"):
     return doketsrb_integration.get_promotional_banner(context)
 
 @app.post("/api/doketsrb/bundle")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def subscribe_doketsrb_bundle(request: Request):
     data = await request.json()
     return doketsrb_integration.subscribe_bundle(data)
@@ -3835,13 +3835,13 @@ async def payments_page(request: Request):
 # ============================================================
 
 @app.post("/api/outreach/cold-email")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def find_cold_email(request: Request):
     data = await request.json()
     return outreach_engine.find_hiring_manager_email(data)
 
 @app.post("/api/outreach/gmail-sync")
-@limiter.limit("5/minute")
+@limiter.limit("30/minute")
 async def connect_gmail_sync(request: Request):
     data = await request.json()
     return outreach_engine.connect_gmail(data)
@@ -3857,7 +3857,7 @@ async def get_tracked_applications(email: str):
     return outreach_engine.get_tracked_applications(email)
 
 @app.post("/api/outreach/premium")
-@limiter.limit("5/minute")
+@limiter.limit("30/minute")
 async def subscribe_outreach_premium(request: Request):
     data = await request.json()
     return outreach_engine.subscribe_premium(data)
@@ -3973,31 +3973,31 @@ async def lifecycle_stats():
 
 # FYP — AI-Powered
 @app.post("/api/fyp/suggest-topics")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def suggest_fyp_topics(request: Request):
     data = await request.json()
     return final_year_project_engine.suggest_topics_ai(data)
 
 @app.post("/api/fyp/generate-proposal")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def generate_fyp_proposal(request: Request):
     data = await request.json()
     return final_year_project_engine.generate_proposal_ai(data)
 
 @app.post("/api/fyp/generate-documentation")
-@limiter.limit("5/minute")
+@limiter.limit("30/minute")
 async def generate_fyp_documentation(request: Request):
     data = await request.json()
     return final_year_project_engine.generate_documentation_ai(data)
 
 @app.post("/api/fyp/viva-questions")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def fyp_viva_questions(request: Request):
     data = await request.json()
     return final_year_project_engine.generate_viva_ai(data)
 
 @app.post("/api/fyp/subscribe")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def fyp_subscribe(request: Request):
     data = await request.json()
     return final_year_project_engine.subscribe(data)
@@ -4053,14 +4053,14 @@ async def check_credits(request: Request):
     return ai_credit_engine.check_and_deduct(data.get("email"), data.get("feature"))
 
 @app.post("/api/credits/purchase")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def purchase_credits(request: Request):
     """Purchase credit plan."""
     data = await request.json()
     return ai_credit_engine.purchase_credits(data.get("email"), data.get("plan"))
 
 @app.post("/api/credits/daily-bonus")
-@limiter.limit("5/minute")
+@limiter.limit("30/minute")
 async def daily_bonus(request: Request):
     """Claim daily bonus."""
     data = await request.json()
@@ -4081,7 +4081,7 @@ async def credit_dashboard_page(request: Request):
     return templates.TemplateResponse("credit_dashboard.html", {"request": request})
 
 @app.post("/api/notifications/check")
-@limiter.limit("10/minute")
+@limiter.limit("60/minute")
 async def check_notifications(request: Request):
     """Check and send notifications."""
     data = await request.json()

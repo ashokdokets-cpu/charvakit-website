@@ -53,6 +53,11 @@ class ElevenLabsVoice:
                     "content_type": "audio/mpeg"
                 }
             else:
+                elif response.status_code == 429:
+                import time
+                time.sleep(3)
+                return {"status": "error", "message": "ElevenLabs rate limit reached. Please wait a moment."}
+            else:
                 return {"status": "error", "message": f"ElevenLabs error: {response.status_code}"}
         except Exception as e:
             logger.error(f"ElevenLabs TTS failed: {e}")
