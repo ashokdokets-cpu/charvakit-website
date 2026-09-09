@@ -44,7 +44,7 @@ async function loginUser(e) {
     if (data.status === 'success') { 
     localStorage.setItem('charvak_token', data.token); 
     localStorage.setItem('auth_token', data.token); 
-    localStorage.setItem('userEmail', document.getElementById('email').value);
+     localStorage.setItem('userName', document.getElementById('email').value.split('@')[0]); localStorage.setItem('userEmail', document.getElementById('email').value);
     const redirect = new URLSearchParams(window.location.search).get('redirect') || '/';
 setTimeout(() => window.location = redirect, 500); 
 }
