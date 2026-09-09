@@ -1,4 +1,4 @@
-﻿"""
+"""
 Charvak ElevenLabs AI Voice Integration
 Professional AI voice for Versant audio playback
 """
@@ -7,6 +7,7 @@ import json
 import os
 import base64
 import requests
+import time
 
 logger = logging.getLogger("charvakit.elevenlabs")
 
@@ -15,12 +16,11 @@ class ElevenLabsVoice:
         from dotenv import load_dotenv
         load_dotenv()
         self.api_key = os.getenv("ELEVENLABS_API_KEY", "")
-        self.voice_id = "21m00Tcm4TlvDq8ikWAM"  # Default "Rachel" voice
+        self.voice_id = "21m00Tcm4TlvDq8ikWAM"
         self.base_url = "https://api.elevenlabs.io/v1"
         logger.info(f"ElevenLabs: {'ENABLED' if self.api_key else 'DISABLED'}")
     
     def text_to_speech(self, text, voice_id=None):
-        """Convert text to speech using ElevenLabs."""
         if not self.api_key:
             return {"status": "error", "message": "ElevenLabs API key not set"}
         
@@ -45,18 +45,15 @@ class ElevenLabsVoice:
             )
             
             if response.status_code == 200:
-                # Return audio as base64
                 audio_base64 = base64.b64encode(response.content).decode('utf-8')
                 return {
                     "status": "success",
                     "audio_base64": audio_base64,
                     "content_type": "audio/mpeg"
                 }
-            else:
-                elif response.status_code == 429:
-                import time
+            elif response.status_code == 429:
                 time.sleep(3)
-                return {"status": "error", "message": "ElevenLabs rate limit reached. Please wait a moment."}
+                return {"status": "error", "message": "Rate limit reached. Please wait."}
             else:
                 return {"status": "error", "message": f"ElevenLabs error: {response.status_code}"}
         except Exception as e:
@@ -64,9 +61,7 @@ class ElevenLabsVoice:
             return {"status": "error", "message": str(e)}
     
     def generate_audio_for_questions(self, questions):
-        """Generate audio for multiple questions."""
         audio_results = []
-        
         for i, question in enumerate(questions):
             result = self.text_to_speech(question)
             if result["status"] == "success":
@@ -75,11 +70,9 @@ class ElevenLabsVoice:
                     "question": question,
                     "audio_base64": result["audio_base64"]
                 })
-        
         return {"status": "success", "total": len(audio_results), "audio_files": audio_results}
     
     def get_available_voices(self):
-        """Get available ElevenLabs voices."""
         if not self.api_key:
             return {"status": "error", "message": "API key not set"}
         
