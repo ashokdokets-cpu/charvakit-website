@@ -1,5 +1,27 @@
 {% extends "base.html" %}
-{% block title %}AI Training - Charvak{% endblock %}
+{% block title %}AI Training - Charvak
+<script>
+document.getElementById('chatBtn').addEventListener('click', function() {
+    var email = prompt('Enter your email to start AI chat:');
+    if (!email) return;
+    var topic = prompt('What topic do you want to learn?');
+    if (!topic) return;
+    
+    fetch('/api/tutor/start', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({email: email, course_name: topic, topic: topic, user_level: 'beginner'})
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(result) {
+        if (result.status === 'success') {
+            alert('AI Tutor: ' + result.ai_message);
+        }
+    })
+    .catch(function(e) { alert('Error: ' + e.message); });
+});
+</script>
+{% endblock %}
 {% block content %}
 <style>
     .training-hero { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; padding: 50px 0; }
