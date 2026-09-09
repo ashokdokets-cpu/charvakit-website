@@ -13,6 +13,7 @@
 <div class="versant-hero text-center">
     <h1>🗣️ Versant English Assessment</h1>
     <p>AI-Generated Unique Questions | 48 Questions | 50 Minutes</p>
+    <button class="btn btn-light mt-2" onclick="startAIAssessment()">🤖 Start AI Assessment</button>
 </div>
 
 <div class="container py-4">
@@ -27,88 +28,61 @@
 
     <div class="mt-4">
         <h4 id="sectionTitle">📖 Read Aloud (8 Questions)</h4>
-        <p class="text-muted" id="sectionInstruction">Read the sentences aloud.</p>
-        <div id="questionsList"></div>
+        <p class="text-muted" id="sectionInstruction">Click "Start AI Assessment" to generate your unique questions.</p>
+        <div id="questionsList">
+            <p class="text-muted">🤖 AI will generate unique questions for you.</p>
+        </div>
     </div>
 </div>
 
 <script>
-var questionsData = {
-    read_aloud: [
-        'The company will announce quarterly results next week.',
-        'Please submit your assignment by Friday afternoon.',
-        'The new software update includes several improvements.',
-        'Our team meeting has been rescheduled to Monday.',
-        'Customer satisfaction is our top priority.',
-        'The annual report will be published in March.',
-        'Please review the document before signing.',
-        'The training session starts at nine sharp.'
-    ],
-    repeats: [
-        'Can you send me that report?',
-        'Let us schedule a meeting for tomorrow.',
-        'Please update me on the project.',
-        'Do you have any questions about this?',
-        'I need your input on this task.',
-        'Let us take a quick break now.',
-        'I will follow up with you later.',
-        'Can you review this document please?',
-        'We should discuss the next steps.',
-        'How is the progress on your end?',
-        'Please confirm your availability for Friday.',
-        'I appreciate your hard work on this.',
-        'Let me know if you need help.',
-        'We can brainstorm ideas together.',
-        'I will be out of the office tomorrow.',
-        'Thanks for bringing that to my attention.'
-    ],
-    sentence_builds: [
-        'the / meeting / starts / at / nine / sharp',
-        'please / submit / the / report / by / Friday',
-        'the / team / completed / the / project',
-        'we / will / discuss / the / budget / next / week',
-        'she / has / been / working / here / since / 2020',
-        'the / new / policy / takes / effect / from / Monday',
-        'they / are / planning / to / launch / the / product',
-        'the / manager / approved / the / proposal / yesterday',
-        'we / need / to / improve / customer / satisfaction',
-        'the / training / program / begins / next / month'
-    ],
-    conversations: [
-        'Would you find a stove in a kitchen or a bedroom?',
-        'What would you do if you missed an important deadline?',
-        'How do you prioritize tasks when everything is urgent?',
-        'What is the best way to handle a difficult customer?',
-        'Describe your ideal work environment.',
-        'How would you explain a complex idea to a colleague?',
-        'What qualities make a good team leader?',
-        'How do you handle constructive criticism?',
-        'What steps would you take to improve customer satisfaction?',
-        'How do you stay organized when managing multiple tasks?'
-    ],
-    story_retelling: [
-        'A young engineer joined a startup and built scalable systems.',
-        'The marketing team doubled their customer base in three months.',
-        'A company improved productivity through automation and training.'
-    ],
-    summary_opinion: [
-        'Write about the impact of AI on modern workplaces.'
-    ]
-};
-
+var questionsData = {read_aloud: [], repeats: [], sentence_builds: [], conversations: [], story_retelling: [], summary_opinion: []};
 var currentSection = 'read_aloud';
+var sessionId = null;
+
+function startAIAssessment() {
+    var email = prompt('Enter your email for AI-generated unique questions:');
+    if (!email) return;
+    
+    var btn = document.querySelector('.btn-light');
+    btn.textContent = '🤖 AI Generating...';
+    btn.disabled = true;
+    
+    fetch('/api/versant/start-session', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({email: email})
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(result) {
+        if (result.status === 'success' && result.session) {
+            sessionId = result.session.session_id;
+            var q = result.session.questions;
+            
+            questionsData.read_aloud = q.read_aloud || [];
+            questionsData.repeats = q.repeats || [];
+            questionsData.sentence_builds = q.sentence_builds || [];
+            questionsData.conversations = q.conversations || [];
+            questionsData.story_retelling = q.story_retelling || [];
+            questionsData.summary_opinion = q.summary_opinion || [];
+            
+            document.getElementById('sectionInstruction').textContent = 'AI-generated unique questions ready!';
+            btn.textContent = '✅ AI Questions Generated!';
+            renderQuestions();
+        }
+    })
+    .catch(function(e) {
+        btn.textContent = '❌ Error. Try again.';
+        btn.disabled = false;
+    });
+}
 
 function showSection(sectionId) {
     currentSection = sectionId;
-    
-    // Update tabs
     var tabs = document.querySelectorAll('.section-tab');
-    for (var i = 0; i < tabs.length; i++) {
-        tabs[i].classList.remove('active');
-    }
+    for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
     event.target.closest('.section-tab').classList.add('active');
     
-    // Update title
     var titles = {
         read_aloud: '📖 Read Aloud (8 Questions)',
         repeats: '🎧 Repeats (16 Questions)',
@@ -118,29 +92,30 @@ function showSection(sectionId) {
         summary_opinion: '📄 Summary (1 Question)'
     };
     document.getElementById('sectionTitle').textContent = titles[sectionId];
-    
     renderQuestions();
 }
 
 function renderQuestions() {
     var container = document.getElementById('questionsList');
     var questions = questionsData[currentSection] || [];
-    var html = '';
     
+    if (questions.length === 0) {
+        container.innerHTML = '<p class="text-muted">🤖 Click "Start AI Assessment" to generate questions.</p>';
+        return;
+    }
+    
+    var html = '';
     for (var i = 0; i < questions.length; i++) {
         html += '<div class="question-item">';
         html += '<strong>Question ' + (i + 1) + ':</strong> ' + questions[i];
         html += '<br>';
-        
         if (currentSection === 'repeats') {
             html += '<button class="btn-play mt-2 me-2" onclick="playAudio(' + i + ')">🔊 Play Audio</button>';
         }
-        
         html += '<button class="btn-record mt-2" onclick="recordAudio(' + i + ')">🎤 Record</button>';
         html += '<audio id="playback-' + i + '" controls style="display:none; margin-top:10px; width:100%;"></audio>';
         html += '</div>';
     }
-    
     container.innerHTML = html;
 }
 
@@ -157,7 +132,6 @@ function playAudio(index) {
             var audio = new Audio('data:audio/mpeg;base64,' + result.audio_base64);
             audio.play();
         } else {
-            // Fallback to browser TTS
             var utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = 'en-US';
             speechSynthesis.speak(utterance);
@@ -175,32 +149,21 @@ function recordAudio(index) {
         isRecording = false;
         return;
     }
-    
     navigator.mediaDevices.getUserMedia({audio: true})
     .then(function(stream) {
         mediaRecorder = new MediaRecorder(stream);
         recordedChunks = [];
-        mediaRecorder.ondataavailable = function(e) {
-            if (e.data.size > 0) recordedChunks.push(e.data);
-        };
+        mediaRecorder.ondataavailable = function(e) { if (e.data.size > 0) recordedChunks.push(e.data); };
         mediaRecorder.onstop = function() {
             var blob = new Blob(recordedChunks, {type: 'audio/webm'});
             var url = URL.createObjectURL(blob);
             var playback = document.getElementById('playback-' + index);
-            if (playback) {
-                playback.src = url;
-                playback.style.display = 'block';
-            }
+            if (playback) { playback.src = url; playback.style.display = 'block'; }
         };
         mediaRecorder.start();
         isRecording = true;
     })
-    .catch(function(err) {
-        alert('Microphone access denied.');
-    });
+    .catch(function(err) { alert('Microphone access denied.'); });
 }
-
-// Render first section on page load
-renderQuestions();
 </script>
 {% endblock %}
