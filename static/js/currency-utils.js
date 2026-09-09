@@ -129,15 +129,15 @@ const CharvakCurrency = {
     }
 }
         
-        // Listen for changes from other scripts;
 
-        window.addEventListener('charvakCurrencyChange', (e) => {
-            if (e.detail && e.detail.currency) {
-                this.setCurrency(e.detail.currency);
-            }
-        });
-    }
-;
+    // Listen for changes from other scripts
+    window.addEventListener('charvakCurrencyChange', (e) => {
+        if (e.detail && e.detail.currency) {
+            this.setCurrency(e.detail.currency);
+        }
+    });
+}
+
 
 // Initialize
 if (document.readyState === 'loading') {
