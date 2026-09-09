@@ -90,12 +90,12 @@ class InteractiveAITutor:
                 
                 Student says: {user_message}
                 
-                Respond as a helpful tutor:
-                - Answer their question
-                - Provide relevant example
-                - Ask follow-up question
-                - Give practice exercise if appropriate
-                - Keep it conversational
+                Teach effectively:
+                1. Answer clearly
+                2. Give a simple example
+                3. Provide a practice exercise
+                4. Encourage the student
+                5. Keep it under 150 words
                 """
                 
                 response = requests.post(
