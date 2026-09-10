@@ -19,7 +19,13 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/static/css/style.css">
     <link rel="manifest" href="/static/manifest.json">
-    <script src="/static/js/currency-utils.js"></script>
+    <script src="/static/js/currency-utils.js">// Ensure login state displays
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", checkLoginState);
+} else {
+    checkLoginState();
+}
+</script>
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script src="https://www.paypal.com/sdk/js?client-id=Aaj9jDnwPl93PWiV_sZR5LuHpOmmDCGTPJCCasN7FR7dDJGUrGLA14p5zUok1R61Zy-JgJdmq4GhIeoL&currency=USD"></script>
     <script src="/static/js/payment-helper.js"></script>
@@ -746,6 +752,7 @@ function checkLoginState() {
 
 // Run on page load
 document.addEventListener('DOMContentLoaded', checkLoginState);
+checkLoginState(); // Also run immediately
 </script>
 <script>
 function processToolPayment(amount, toolName, callback) {
