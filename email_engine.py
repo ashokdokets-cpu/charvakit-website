@@ -29,39 +29,60 @@ class EmailEngine:
             logger.warning("Email Engine: DISABLED (set SENDGRID_API_KEY)")
 
     def send_email(self, to_email: str, subject: str, body: str, is_html: bool = True) -> Dict:
-        """Send email via SendGrid API with HTML support."""
+        """Send email via SendGrid with reply-to set to GoDaddy email."""
         if not self.enabled:
-            return {"status": "disabled", "message": "SendGrid not configured"}
+            logger.warning(f"Email disabled - would send to {to_email}: {subject}")
+            return {"status": "disabled", "message": "Email not configured"}
 
         try:
             import requests
+            import json
+
+            payload = {
+                "personalizations": [
+                    {
+                        "to": [{"email": to_email}],
+                        "subject": subject
+                    }
+                ],
+                "from": {
+                    "email": "charvakit@gmail.com",
+                    "name": "Charvak IT Consulting"
+                },
+                "reply_to": {
+                    "email": "hr@charvakit.com",
+                    "name": "Charvak IT Consulting"
+                },
+                "content": [
+                    {
+                        "type": "text/html" if is_html else "text/plain",
+                        "value": body
+                    }
+                ]
+            }
 
             response = requests.post(
                 "https://api.sendgrid.com/v3/mail/send",
                 headers={
-                    "Authorization": f"Bearer {SENDGRID_API_KEY}",
+                    "Authorization": f"Bearer {self.sendgrid_api_key}",
                     "Content-Type": "application/json"
                 },
-                json={
-                    "personalizations": [{"to": [{"email": to_email}]}],
-                    "from": {"email": FROM_EMAIL, "name": "Charvak IT Consulting"},
-                    "subject": subject,
-                    "content": [{"type": "text/html", "value": body}]
-                },
+                data=json.dumps(payload),
                 timeout=10
             )
 
-            if response.status_code in [200, 202]:
+            if response.status_code == 202:
                 self.sent_count += 1
-                logger.info(f"Email sent to {to_email}")
+                logger.info(f"Email sent to {to_email}: {subject}")
                 return {"status": "success", "message": "Email sent successfully", "to": to_email}
             else:
-                logger.error(f"SendGrid error: {response.status_code}")
+                logger.error(f"SendGrid error: {response.status_code} - {response.text}")
                 return {"status": "error", "message": f"SendGrid error: {response.status_code}"}
 
         except Exception as e:
-            logger.error(f"Email failed: {e}")
+            logger.error(f"Email send failed: {e}")
             return {"status": "error", "message": str(e)}
+
 
     def notify_admin(self, subject: str, message: str) -> Dict:
         return self.send_email(ADMIN_EMAIL, subject, message)
