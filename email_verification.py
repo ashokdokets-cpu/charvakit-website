@@ -3,7 +3,7 @@ Charvak Email Verification - Database-backed
 """
 import logging
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, timezone
 
 logger = logging.getLogger("charvakit.email_verification")
 
