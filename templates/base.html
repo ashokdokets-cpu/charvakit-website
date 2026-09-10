@@ -725,9 +725,21 @@ async function logoutUser() {
 }
 // Check login state on page load
 function checkLoginState() {
-    const token = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token');
-    const email = localStorage.getItem('userEmail');
-    const userName = localStorage.getItem('userName') || (email ? email.split('@')[0] : '');
+    // Check all possible token storage keys
+    var token = localStorage.getItem('auth_token') || 
+                localStorage.getItem('charvak_token') || 
+                localStorage.getItem('token') ||
+                sessionStorage.getItem('auth_token');
+    
+    var email = localStorage.getItem('userEmail') || 
+                localStorage.getItem('email') ||
+                localStorage.getItem('user_email');
+    
+    var userName = localStorage.getItem('userName') || 
+                   localStorage.getItem('name') ||
+                   (email ? email.split('@')[0] : '');
+    
+    console.log('Login check - Token:', !!token, 'Email:', email);
     
     if (token && email) {
         var loggedInMenu = document.getElementById('loggedInMenu');
@@ -739,6 +751,8 @@ function checkLoginState() {
         if (loggedOutMenu) loggedOutMenu.style.display = 'none';
         if (userMenuLabel) userMenuLabel.textContent = userName || email.split('@')[0];
         if (loggedInEmail) loggedInEmail.textContent = email;
+        
+        console.log('User logged in:', userName);
     } else {
         var loggedInMenu = document.getElementById('loggedInMenu');
         var loggedOutMenu = document.getElementById('loggedOutMenu');
@@ -747,8 +761,24 @@ function checkLoginState() {
         if (loggedInMenu) loggedInMenu.style.display = 'none';
         if (loggedOutMenu) loggedOutMenu.style.display = 'block';
         if (userMenuLabel) userMenuLabel.textContent = 'Login';
+        
+        console.log('User not logged in');
     }
 }
+
+// Run checkLoginState on page load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', checkLoginState);
+} else {
+    checkLoginState();
+}
+
+// Also re-check when localStorage changes
+window.addEventListener('storage', function(e) {
+    if (e.key && (e.key.includes('token') || e.key.includes('email') || e.key.includes('user'))) {
+        checkLoginState();
+    }
+});
 
 // Run on page load
 document.addEventListener('DOMContentLoaded', checkLoginState);
