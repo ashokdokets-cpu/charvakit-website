@@ -996,6 +996,15 @@ async def api_login(request: Request, data: LoginRequest):
                 # return JSONResponse({"status": "error", "message": "Please verify your email first. Check your inbox."}, status_code=403)
         
         result = login_user(data.email, data.password)
+        # Send login notification
+        if result.get("status") == "success":
+            try:
+                ip = request.client.host if request.client else "unknown"
+                ua = request.headers.get("user-agent", "unknown")
+                login_notifications.send_login_alert(data.email, ip, ua)
+            except Exception as e:
+                logger.error(f"Login notification failed: {e}")
+        
         return JSONResponse(result)
     except Exception as e:
         logger.error(f"Login failed for {data.email}: {str(e)}")
@@ -5543,6 +5552,52 @@ async def resend_verification(request: Request):
     token = email_verification.generate_token(email)
     result = email_verification.send_verification_email(email, name, token)
     return result
+
+
+
+from password_reset import password_reset
+from login_notifications import login_notifications
+
+@app.get("/forgot-password", response_class=HTMLResponse)
+async def forgot_password_page(request: Request):
+    return template_response("forgot-password.html", request, "Forgot Password - Charvak")
+
+@app.post("/api/auth/forgot-password")
+async def api_forgot_password(request: Request):
+    data = await request.json()
+    email = data.get("email")
+    
+    # Check if user exists
+    from database import db
+    try:
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT email FROM users WHERE email = %s", (email,))
+        user = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if user:
+            token = password_reset.generate_reset_token(email)
+            result = password_reset.send_reset_email(email, token)
+            return {"status": "success", "message": "Reset link sent to your email"}
+    except Exception as e:
+        logger.error(f"Forgot password error: {e}")
+    
+    # Always return success (don't reveal if email exists)
+    return {"status": "success", "message": "If your email exists, a reset link has been sent"}
+
+@app.get("/reset-password", response_class=HTMLResponse)
+async def reset_password_page(request: Request, token: str = ""):
+    return template_response("reset-password.html", request, "Reset Password - Charvak", token=token)
+
+@app.post("/api/auth/reset-password")
+async def api_reset_password(request: Request):
+    data = await request.json()
+    return password_reset.reset_password(
+        data.get("token"),
+        data.get("new_password")
+    )
 
 
 if __name__ == "__main__":
