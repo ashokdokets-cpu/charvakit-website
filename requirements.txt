@@ -1,17 +1,24 @@
-fastapi==0.104.1 
-uvicorn[standard]==0.24.0 
-jinja2==3.1.2 
-python-multipart==0.0.6 
+﻿# Web framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+starlette
+jinja2==3.1.2
+python-multipart==0.0.6
 aiofiles==23.2.1
+
+# HTTP / AI
 openai>=1.0.0
 requests>=2.31.0
+httpx>=0.25.0
+
+# Data / validation
 pydantic>=2.0.0
-httpx>=0.25.0 
 psycopg2-binary>=2.9.0
+python-dotenv>=1.0.0
+
+# Security / rate limiting
 slowapi>=0.1.9
+cryptography>=41.0.0,<45.0.0
+
+# SSO
 python3-saml>=1.16.0
-cryptography>=50.0.0
-python3-saml>=1.16.0
-cryptography>=50.0.0
-python3-saml>=1.16.0
-cryptography>=50.0.0
