@@ -943,7 +943,7 @@ async def sync_health():
 # ============================================================
 
 @app.post("/api/auth/register")
-@limiter.limit("3/hour")
+@limiter.limit("10/hour")
 async def api_register(request: Request, data: RegisterRequest):
     try:
         # Validate registration (anti-bot)
@@ -5563,6 +5563,7 @@ async def forgot_password_page(request: Request):
     return template_response("forgot-password.html", request, "Forgot Password - Charvak")
 
 @app.post("/api/auth/forgot-password")
+@limiter.limit("60/minute")
 async def api_forgot_password(request: Request):
     data = await request.json()
     email = data.get("email")
