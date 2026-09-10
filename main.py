@@ -3933,7 +3933,7 @@ async def reset_password(request: Request):
         new_password = data.get("new_password", "Charvak@2026")
         
         if email != "charvakit@gmail.com":
-            return JSONResponse({"status": "error", "message": "Only admin email allowed"}, status_code=403)
+            return JSONResponse({"status": "error", "message": "Reset link expired. Please request a new one"}, status_code=403)
         
         from auth import hash_password
         hashed = hash_password(new_password)
