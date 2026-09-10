@@ -451,7 +451,7 @@ def require_auth(request: Request) -> Dict:
     return user
 
 
-ADMIN_EMAIL = "hr@charvakit.com"
+ADMIN_EMAIL = "charvakit@gmail.com"
 
 def require_admin(request: Request) -> Dict:
     """Authenticate and ensure user is admin."""
@@ -991,7 +991,7 @@ async def api_login(request: Request, data: LoginRequest):
         from email_verification import email_verification
         if not email_verification.is_verified(data.email):
             # Allow admin without verification
-            if data.email != "hr@charvakit.com":
+            if data.email != "charvakit@gmail.com":
                 pass  # Temporarily allow all - enable below line after transition
                 # return JSONResponse({"status": "error", "message": "Please verify your email first. Check your inbox."}, status_code=403)
         
@@ -2567,7 +2567,7 @@ async def send_chat(request: Request):
         )
         return result
     except Exception as e:
-        return {"status": "error", "message": "Chat failed. Please email hr@charvakit.com"}
+        return {"status": "error", "message": "Chat failed. Please email charvakit@gmail.com"}
 
 @app.get("/api/chat/faqs")
 async def get_faqs():
@@ -3176,7 +3176,7 @@ async def test_email(request: Request):
     try:
         data = await request.json()
         result = email_engine.send_email(
-            to_email=data.get("email", "hr@charvakit.com"),
+            to_email=data.get("email", "charvakit@gmail.com"),
             subject="Charvak Email Test",
             body="This is a test email from Charvak IT Consulting."
         )
@@ -3916,7 +3916,7 @@ async def how_it_works_page(request: Request):
 
 @app.get("/admin-control", response_class=HTMLResponse)
 async def admin_control_center(request: Request):
-    """Admin Control Center — hr@charvakit.com"""
+    """Admin Control Center — charvakit@gmail.com"""
     return template_response("admin-unified.html", request, "Admin Control Center - Charvak")
 
 @app.get("/admin-login", response_class=HTMLResponse)
@@ -3932,7 +3932,7 @@ async def reset_password(request: Request):
         email = data.get("email")
         new_password = data.get("new_password", "Charvak@2026")
         
-        if email != "hr@charvakit.com":
+        if email != "charvakit@gmail.com":
             return JSONResponse({"status": "error", "message": "Only admin email allowed"}, status_code=403)
         
         from auth import hash_password

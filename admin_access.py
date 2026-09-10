@@ -1,11 +1,11 @@
 ﻿"""
-Admin Access Control - hr@charvakit.com bypasses payment
+Admin Access Control - charvakit@gmail.com bypasses payment
 """
 import logging
 
 logger = logging.getLogger("charvakit.admin_access")
 
-ADMIN_EMAILS = ["hr@charvakit.com", "admin@charvakit.com"]
+ADMIN_EMAILS = ["charvakit@gmail.com", "admin@charvakit.com"]
 
 def is_admin(email):
     """Check if email has admin access."""

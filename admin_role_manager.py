@@ -9,7 +9,7 @@ logger = logging.getLogger("charvakit.admin_roles")
 
 class AdminRoleManager:
     def __init__(self):
-        self.admin_emails = ["hr@charvakit.com", "admin@charvakit.com"]
+        self.admin_emails = ["charvakit@gmail.com", "admin@charvakit.com"]
         logger.info("Admin Role Manager ready")
     
     def is_admin(self, email):
