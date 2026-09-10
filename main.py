@@ -944,7 +944,7 @@ async def sync_health():
 
 @app.post("/api/auth/register")
 @limiter.limit("3/hour")
-async def api_register(data: RegisterRequest):
+async def api_register(request: Request, data: RegisterRequest):
     try:
         # Validate registration (anti-bot)
         from registration_guard import validate_registration
