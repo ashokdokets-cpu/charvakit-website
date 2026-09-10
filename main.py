@@ -5461,6 +5461,15 @@ async def get_voices():
     return elevenlabs_voice.get_available_voices()
 
 
+
+from admin_cleanup import cleanup_suspicious_users
+
+@app.get("/admin/cleanup-users")
+async def admin_cleanup_users():
+    """Remove suspicious users - ADMIN ONLY."""
+    return cleanup_suspicious_users()
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
