@@ -943,6 +943,7 @@ async def sync_health():
 # ============================================================
 
 @app.post("/api/auth/register")
+@limiter.limit("3/hour")
 async def api_register(data: RegisterRequest):
     try:
         result = register_user(
@@ -5463,6 +5464,7 @@ async def get_voices():
 
 
 from admin_cleanup import cleanup_suspicious_users
+from registration_guard import validate_registration
 
 @app.get("/admin/cleanup-users")
 async def admin_cleanup_users():
