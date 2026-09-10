@@ -946,6 +946,13 @@ async def sync_health():
 @limiter.limit("3/hour")
 async def api_register(data: RegisterRequest):
     try:
+        # Validate registration (anti-bot)
+        from registration_guard import validate_registration
+        validation = validate_registration(data.email, data.name, data.password)
+        if validation["status"] != "success":
+            return JSONResponse(validation, status_code=400)
+        
+        # Register user
         result = register_user(
             email=data.email,
             password=data.password,
@@ -953,6 +960,21 @@ async def api_register(data: RegisterRequest):
             role=data.role,
             phone=data.phone
         )
+        
+        # Send verification email
+        if result.get("status") == "success":
+            try:
+                from email_verification import email_verification
+                token = email_verification.generate_token(data.email)
+                email_result = email_verification.send_verification_email(
+                    data.email, data.name, token
+                )
+                result["verification_sent"] = email_result.get("email_sent", False)
+                result["message"] = "Account created! Please check your email to verify."
+            except Exception as e:
+                logger.error(f"Verification email failed: {e}")
+                result["message"] = "Account created! Email verification pending."
+        
         return JSONResponse(result)
     except Exception as e:
         logger.error(f"Registration failed for {data.email}: {str(e)}")
@@ -965,6 +987,14 @@ async def api_register(data: RegisterRequest):
 @limiter.limit("30/minute")
 async def api_login(request: Request, data: LoginRequest):
     try:
+        # Check verification
+        from email_verification import email_verification
+        if not email_verification.is_verified(data.email):
+            # Allow admin without verification
+            if data.email != "hr@charvakit.com":
+                pass  # Temporarily allow all - enable below line after transition
+                # return JSONResponse({"status": "error", "message": "Please verify your email first. Check your inbox."}, status_code=403)
+        
         result = login_user(data.email, data.password)
         return JSONResponse(result)
     except Exception as e:
@@ -5470,6 +5500,49 @@ from registration_guard import validate_registration
 async def admin_cleanup_users():
     """Remove suspicious users - ADMIN ONLY."""
     return cleanup_suspicious_users()
+
+
+
+from email_verification import email_verification
+
+@app.get("/verify-email", response_class=HTMLResponse)
+async def verify_email_page(request: Request, token: str = ""):
+    """Email verification page."""
+    if not token:
+        return template_response("verify-email.html", request, "Verify Email - Charvak", 
+                                message="No verification token provided", success=False)
+    
+    result = email_verification.verify_token(token)
+    
+    if result["status"] == "success":
+        # Activate user account
+        from database import db
+        try:
+            conn = db.get_connection()
+            cursor = conn.cursor()
+            cursor.execute("UPDATE users SET verified = TRUE WHERE email = %s", (result["email"],))
+            conn.commit()
+            cursor.close()
+            conn.close()
+        except:
+            pass
+        
+        return template_response("verify-email.html", request, "Email Verified - Charvak",
+                                message="Your email has been verified! You can now login.", success=True)
+    else:
+        return template_response("verify-email.html", request, "Verification Failed - Charvak",
+                                message=result["message"], success=False)
+
+@app.post("/api/auth/resend-verification")
+async def resend_verification(request: Request):
+    """Resend verification email."""
+    data = await request.json()
+    email = data.get("email")
+    name = data.get("name", "User")
+    
+    token = email_verification.generate_token(email)
+    result = email_verification.send_verification_email(email, name, token)
+    return result
 
 
 if __name__ == "__main__":
