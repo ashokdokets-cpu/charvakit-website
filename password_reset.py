@@ -37,7 +37,7 @@ class PasswordReset:
     def generate_reset_token(self, email):
         """Generate and store reset token in database."""
         token = secrets.token_urlsafe(32)
-        expires_at = datetime.now() + timedelta(hours=1)
+        expires_at = datetime.now() + timedelta(minutes=30)
         
         try:
             from database import db
@@ -74,7 +74,7 @@ class PasswordReset:
                 </div>
                 <p style="color: #666; font-size: 14px;">Or copy: <a href="{reset_url}">{reset_url}</a></p>
                 <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-top: 20px;">
-                    <strong>⏰ Link expires in 1 hour.</strong>
+                    <strong>⏰ Link expires in 30 minutes.</strong>
                 </div>
                 <p style="color: #666; font-size: 12px; margin-top: 20px;">
                     If you didn't request this, ignore this email.
