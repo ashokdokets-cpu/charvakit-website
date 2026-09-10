@@ -1,32 +1,60 @@
 ﻿"""
-Charvak Email Verification System
-Prevents bot registrations, verifies real users
+Charvak Email Verification - Database-backed
 """
 import logging
 import secrets
-import os
 from datetime import datetime, timedelta
 
 logger = logging.getLogger("charvakit.email_verification")
 
 class EmailVerification:
     def __init__(self):
-        self.verification_tokens = {}
-        logger.info("Email Verification ready")
+        self._ensure_table()
+        logger.info("Email Verification ready (database-backed)")
     
-    def generate_token(self, email):
-        """Generate verification token."""
+    def _ensure_table(self):
+        try:
+            from database import db
+            conn = db.get_connection()
+            cursor = conn.cursor()
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS email_verification_tokens (
+                    token TEXT PRIMARY KEY,
+                    email TEXT NOT NULL,
+                    name TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    expires_at TIMESTAMP NOT NULL,
+                    verified BOOLEAN DEFAULT FALSE
+                )
+            """)
+            conn.commit()
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            logger.error(f"Table creation failed: {e}")
+    
+    def generate_token(self, email, name="User"):
+        """Generate verification token in database."""
         token = secrets.token_urlsafe(32)
-        self.verification_tokens[token] = {
-            "email": email,
-            "created_at": datetime.now().isoformat(),
-            "expires_at": (datetime.now() + timedelta(hours=24)).isoformat(),
-            "verified": False
-        }
-        return token
+        expires_at = datetime.now() + timedelta(hours=24)
+        
+        try:
+            from database import db
+            conn = db.get_connection()
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT INTO email_verification_tokens (token, email, name, expires_at) VALUES (%s, %s, %s, %s)",
+                (token, email, name, expires_at)
+            )
+            conn.commit()
+            cursor.close()
+            conn.close()
+            return token
+        except Exception as e:
+            logger.error(f"Token generation failed: {e}")
+            return None
     
     def send_verification_email(self, email, name, token):
-        """Send verification email via SendGrid."""
         from email_engine import email_engine
         
         verification_url = f"https://charvakit-website.onrender.com/verify-email?token={token}"
@@ -34,40 +62,15 @@ class EmailVerification:
         subject = "🎉 Welcome to Charvak - Verify Your Account"
         content = f"""
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-                <h1 style="margin: 0;">Welcome to Charvak!</h1>
-                <p style="margin: 10px 0 0 0;">Hi {name}, let's get you started</p>
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center;">
+                <h1>Welcome to Charvak!</h1>
+                <p>Hi {name}, verify your email</p>
             </div>
-            <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
-                <h3>Verify Your Email Address</h3>
-                <p>Thanks for signing up! Please click the button below to verify your email and activate your account.</p>
-                
+            <div style="background: #f8f9fa; padding: 30px;">
                 <div style="text-align: center; margin: 30px 0;">
-                    <a href="{verification_url}" style="background: #3ba591; color: white; padding: 15px 40px; text-decoration: none; border-radius: 50px; font-weight: bold; display: inline-block;">✅ Verify Email</a>
+                    <a href="{verification_url}" style="background: #3ba591; color: white; padding: 15px 40px; text-decoration: none; border-radius: 50px; font-weight: bold;">✅ Verify Email</a>
                 </div>
-                
-                <p style="color: #666; font-size: 14px;">Or copy this link:<br>
-                <a href="{verification_url}" style="color: #3ba591; word-break: break-all;">{verification_url}</a></p>
-                
-                <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-top: 20px;">
-                    <strong>⏰ Important:</strong> This link expires in 24 hours.
-                </div>
-                
-                <hr style="margin: 30px 0;">
-                
-                <p><strong>What you get with Charvak:</strong></p>
-                <ul>
-                    <li>🤖 25 AI-Driven Courses with personal tutor</li>
-                    <li>📝 AI-Powered Assessments (Versant, MCQ)</li>
-                    <li>🏢 Company Mock Drives (18 companies)</li>
-                    <li>🎯 Career Guidance with AI analysis</li>
-                    <li>💼 C2C Placement Platform</li>
-                </ul>
-                
-                <p style="color: #666; font-size: 12px; margin-top: 30px;">
-                    If you didn't create this account, please ignore this email.<br>
-                    Questions? Contact us at hr@charvakit.com
-                </p>
+                <p>Link expires in 24 hours.</p>
             </div>
         </div>
         """
@@ -76,29 +79,59 @@ class EmailVerification:
         return {"status": "success", "email_sent": result.get("status") == "success"}
     
     def verify_token(self, token):
-        """Verify email token."""
-        if token not in self.verification_tokens:
-            return {"status": "error", "message": "Invalid or expired token"}
+        if not token:
+            return {"status": "error", "message": "No token provided"}
         
-        data = self.verification_tokens[token]
-        
-        # Check expiry
-        expires_at = datetime.fromisoformat(data["expires_at"])
-        if datetime.now() > expires_at:
-            del self.verification_tokens[token]
-            return {"status": "error", "message": "Token expired"}
-        
-        # Mark verified
-        data["verified"] = True
-        email = data["email"]
-        
-        return {"status": "success", "email": email, "message": "Email verified successfully"}
+        try:
+            from database import db
+            conn = db.get_connection()
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT email, expires_at, verified FROM email_verification_tokens WHERE token = %s",
+                (token,)
+            )
+            row = cursor.fetchone()
+            
+            if not row:
+                cursor.close()
+                conn.close()
+                return {"status": "error", "message": "Invalid verification link"}
+            
+            email, expires_at, verified = row
+            
+            if datetime.now() > expires_at:
+                cursor.close()
+                conn.close()
+                return {"status": "error", "message": "Link expired"}
+            
+            # Mark as verified
+            cursor.execute(
+                "UPDATE email_verification_tokens SET verified = TRUE WHERE token = %s",
+                (token,)
+            )
+            conn.commit()
+            cursor.close()
+            conn.close()
+            
+            return {"status": "success", "email": email, "message": "Email verified"}
+        except Exception as e:
+            logger.error(f"Verification failed: {e}")
+            return {"status": "error", "message": "Verification failed"}
     
     def is_verified(self, email):
-        """Check if email is verified."""
-        for token, data in self.verification_tokens.items():
-            if data["email"] == email and data["verified"]:
-                return True
-        return False
+        try:
+            from database import db
+            conn = db.get_connection()
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT verified FROM email_verification_tokens WHERE email = %s AND verified = TRUE LIMIT 1",
+                (email,)
+            )
+            row = cursor.fetchone()
+            cursor.close()
+            conn.close()
+            return row is not None
+        except:
+            return False
 
 email_verification = EmailVerification()
