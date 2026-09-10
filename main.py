@@ -464,7 +464,7 @@ def template_response(template_name: str, request: Request, title: str, **extra_
 # CORE PAGE ROUTES
 # ============================================================
 
-@app.get("/", response_class=HTMLResponse)
+@app.api_route("/", methods=["GET", "HEAD"], response_class=HTMLResponse)
 async def home(request: Request):
     return template_response("index.html", request, "Charvak IT Consulting Pvt Ltd - Web Designing | Staff Augmentation")
 
