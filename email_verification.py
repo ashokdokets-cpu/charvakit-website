@@ -3,7 +3,7 @@ Charvak Email Verification - Database-backed
 """
 import logging
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 logger = logging.getLogger("charvakit.email_verification")
 
@@ -36,7 +36,7 @@ class EmailVerification:
     def generate_token(self, email, name="User"):
         """Generate verification token in database."""
         token = secrets.token_urlsafe(32)
-        expires_at = datetime.now() + timedelta(hours=24)
+        expires_at = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(hours=24)
         
         try:
             from database import db
@@ -99,7 +99,7 @@ class EmailVerification:
             
             email, expires_at, verified = row
             
-            if datetime.now() > expires_at:
+            if datetime.now(timezone.utc).replace(tzinfo=None) > expires_at:
                 cursor.close()
                 conn.close()
                 return {"status": "error", "message": "Link expired"}

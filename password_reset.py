@@ -1,20 +1,18 @@
 ﻿"""
-Charvak Password Reset System - Database-backed
-Tokens persist across server restarts
+Charvak Password Reset - UTC-based, database-backed
 """
 import logging
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 logger = logging.getLogger("charvakit.password_reset")
 
 class PasswordReset:
     def __init__(self):
         self._ensure_table()
-        logger.info("Password Reset System ready (database-backed)")
+        logger.info("Password Reset ready")
     
     def _ensure_table(self):
-        """Create reset tokens table if not exists."""
         try:
             from database import db
             conn = db.get_connection()
@@ -35,28 +33,37 @@ class PasswordReset:
             logger.error(f"Table creation failed: {e}")
     
     def generate_reset_token(self, email):
-        """Generate and store reset token in database."""
+        """Generate token with UTC expiration."""
         token = secrets.token_urlsafe(32)
-        expires_at = datetime.now() + timedelta(minutes=30)
+        expires_at = datetime.now(timezone.utc) + timedelta(minutes=30)
+        
+        # Convert to naive UTC (remove tzinfo for PostgreSQL TIMESTAMP)
+        expires_at_naive = expires_at.replace(tzinfo=None)
         
         try:
             from database import db
             conn = db.get_connection()
             cursor = conn.cursor()
+            
+            # Delete old tokens for this email
+            cursor.execute("DELETE FROM password_reset_tokens WHERE email = %s", (email,))
+            
+            # Insert new token
             cursor.execute(
                 "INSERT INTO password_reset_tokens (token, email, expires_at) VALUES (%s, %s, %s)",
-                (token, email, expires_at)
+                (token, email, expires_at_naive)
             )
             conn.commit()
             cursor.close()
             conn.close()
+            
+            logger.info(f"Token generated for {email}, expires at {expires_at_naive} UTC")
             return token
         except Exception as e:
             logger.error(f"Token generation failed: {e}")
             return None
     
     def send_reset_email(self, email, token):
-        """Send password reset email."""
         from email_engine import email_engine
         
         reset_url = f"https://charvakit-website.onrender.com/reset-password?token={token}"
@@ -65,10 +72,10 @@ class PasswordReset:
         content = f"""
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-                <h1 style="margin: 0;">🔐 Password Reset</h1>
+                <h1>🔐 Password Reset</h1>
             </div>
             <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
-                <p>Click the button below to reset your password:</p>
+                <p>Click below to reset your password:</p>
                 <div style="text-align: center; margin: 30px 0;">
                     <a href="{reset_url}" style="background: #3ba591; color: white; padding: 15px 40px; text-decoration: none; border-radius: 50px; font-weight: bold; display: inline-block;">Reset Password</a>
                 </div>
@@ -76,9 +83,6 @@ class PasswordReset:
                 <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-top: 20px;">
                     <strong>⏰ Link expires in 30 minutes.</strong>
                 </div>
-                <p style="color: #666; font-size: 12px; margin-top: 20px;">
-                    If you didn't request this, ignore this email.
-                </p>
             </div>
         </div>
         """
@@ -87,7 +91,7 @@ class PasswordReset:
         return {"status": "success", "email_sent": result.get("status") == "success"}
     
     def verify_reset_token(self, token):
-        """Verify reset token from database."""
+        """Verify token - use UTC comparison."""
         if not token:
             return {"status": "error", "message": "No token provided"}
         
@@ -104,23 +108,28 @@ class PasswordReset:
             conn.close()
             
             if not row:
-                return {"status": "error", "message": "Invalid or expired reset link"}
+                logger.warning(f"Token not found: {token[:20]}...")
+                return {"status": "error", "message": "Invalid reset link. Please request a new one."}
             
             email, expires_at, used = row
             
             if used:
                 return {"status": "error", "message": "This reset link has already been used"}
             
-            if datetime.now() > expires_at:
-                return {"status": "error", "message": "Reset link expired. Please request a new one"}
+            # Use UTC now
+            now_utc = datetime.now(timezone.utc).replace(tzinfo=None)
+            
+            logger.info(f"Token check: now={now_utc}, expires={expires_at}")
+            
+            if now_utc > expires_at:
+                return {"status": "error", "message": "Reset link expired. Please request a new one."}
             
             return {"status": "success", "email": email}
         except Exception as e:
-            logger.error(f"Token verification failed: {e}")
+            logger.error(f"Verification failed: {e}")
             return {"status": "error", "message": "Verification failed"}
     
     def reset_password(self, token, new_password):
-        """Reset password with token."""
         result = self.verify_reset_token(token)
         if result["status"] != "success":
             return result
@@ -132,17 +141,14 @@ class PasswordReset:
             from database import db
             
             hashed = hash_password(new_password)
-            
             conn = db.get_connection()
             cursor = conn.cursor()
             
-            # Update password
             cursor.execute(
                 "UPDATE users SET password_hash = %s WHERE email = %s",
                 (hashed, email)
             )
             
-            # Mark token as used
             cursor.execute(
                 "UPDATE password_reset_tokens SET used = TRUE WHERE token = %s",
                 (token,)
