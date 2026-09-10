@@ -5585,12 +5585,83 @@ async def reset_password_page(request: Request, token: str = ""):
 
 @app.post("/api/auth/reset-password")
 async def api_reset_password(request: Request):
+    """Reset password - direct DB check."""
+    from datetime import datetime, timezone
+    from database import db
+    from auth import hash_password
+    
     data = await request.json()
-    return password_reset.reset_password(
-        data.get("token"),
-        data.get("new_password")
-    )
-
+    token = data.get("token", "").strip()
+    new_password = data.get("new_password", "")
+    
+    logger.info(f"RESET attempt - token: {token[:20] if token else 'EMPTY'}...")
+    
+    if not token:
+        return JSONResponse({"status": "error", "message": "No token"}, status_code=400)
+    
+    if not new_password or len(new_password) < 8:
+        return JSONResponse({"status": "error", "message": "Password must be 8+ chars"}, status_code=400)
+    
+    try:
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT email, expires_at, used FROM password_reset_tokens WHERE token = %s",
+            (token,)
+        )
+        row = cursor.fetchone()
+        
+        if not row:
+            cursor.close()
+            conn.close()
+            logger.warning(f"RESET: Token not found")
+            return JSONResponse(
+                {"status": "error", "message": "Invalid reset link. Please request a new one."},
+                status_code=400
+            )
+        
+        email, expires_at, used = row
+        logger.info(f"RESET: Token found - {email}, exp: {expires_at}, used: {used}")
+        
+        if used:
+            cursor.close()
+            conn.close()
+            return JSONResponse({"status": "error", "message": "Link already used"}, status_code=400)
+        
+        now_utc = datetime.now(timezone.utc).replace(tzinfo=None)
+        logger.info(f"RESET: now={now_utc}, expires={expires_at}")
+        
+        if now_utc > expires_at:
+            cursor.close()
+            conn.close()
+            return JSONResponse(
+                {"status": "error", "message": "Reset link expired. Please request a new one."},
+                status_code=400
+            )
+        
+        hashed = hash_password(new_password)
+        cursor.execute(
+            "UPDATE users SET password_hash = %s WHERE email = %s",
+            (hashed, email)
+        )
+        cursor.execute(
+            "UPDATE password_reset_tokens SET used = TRUE WHERE token = %s",
+            (token,)
+        )
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        logger.info(f"RESET: SUCCESS for {email}")
+        return JSONResponse({"status": "success", "message": "Password reset successfully"})
+        
+    except Exception as e:
+        logger.error(f"RESET ERROR: {e}", exc_info=True)
+        return JSONResponse(
+            {"status": "error", "message": f"Reset failed: {str(e)[:100]}"},
+            status_code=500
+        )
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
