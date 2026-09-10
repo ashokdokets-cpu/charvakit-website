@@ -12,7 +12,7 @@ logger = logging.getLogger("charvakit.email")
 
 SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY", "")
 ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "charvakit@gmail.com")
-FROM_EMAIL = "hr@charvakit.com"
+FROM_EMAIL = "charvakit@gmail.com"
 
 EMAIL_ENABLED = bool(SENDGRID_API_KEY)
 
@@ -28,8 +28,8 @@ class EmailEngine:
         else:
             logger.warning("Email Engine: DISABLED (set SENDGRID_API_KEY)")
 
-    def send_email(self, to_email: str, subject: str, body: str, is_html: bool = False) -> Dict:
-        """Send email via SendGrid API."""
+    def send_email(self, to_email: str, subject: str, body: str, is_html: bool = True) -> Dict:
+        """Send email via SendGrid API with HTML support."""
         if not self.enabled:
             return {"status": "disabled", "message": "SendGrid not configured"}
 
@@ -46,7 +46,7 @@ class EmailEngine:
                     "personalizations": [{"to": [{"email": to_email}]}],
                     "from": {"email": FROM_EMAIL, "name": "Charvak IT Consulting"},
                     "subject": subject,
-                    "content": [{"type": "text/plain", "value": body}]
+                    "content": [{"type": "text/html", "value": body}]
                 },
                 timeout=10
             )
