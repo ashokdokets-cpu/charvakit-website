@@ -66,8 +66,10 @@ function startAIAssessment() {
             questionsData.story_retelling = q.story_retelling || [];
             questionsData.summary_opinion = q.summary_opinion || [];
             
-            document.getElementById('sectionInstruction').textContent = 'AI-generated unique questions ready!';
-            btn.textContent = '✅ AI Questions Generated!';
+            var total = 0;
+            for (var key in questionsData) { total += questionsData[key].length; }
+            document.getElementById('sectionInstruction').textContent = '✅ AI generated ' + total + ' unique questions across all 6 sections. Click any tab to view.';
+            btn.textContent = '✅ ' + total + ' Questions Generated!';
             renderQuestions();
         }
     })
