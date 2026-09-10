@@ -64,7 +64,7 @@ class EmailEngine:
             response = requests.post(
                 "https://api.sendgrid.com/v3/mail/send",
                 headers={
-                    "Authorization": f"Bearer {self.sendgrid_api_key}",
+                    "Authorization": f"Bearer {SENDGRID_API_KEY}",
                     "Content-Type": "application/json"
                 },
                 data=json.dumps(payload),
