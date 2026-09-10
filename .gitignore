@@ -57,3 +57,8 @@ final_*.py
 test_*.py
 fix_*.py
 rebuild_*.py
+
+# Dev-only scripts folder
+scripts/
+requirements.txt.bak
+runtime.txt.bak
