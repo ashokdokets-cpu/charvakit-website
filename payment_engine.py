@@ -93,7 +93,7 @@ class PaymentEngine:
             })
             data["key_id"] = self.razorpay_key_id
             data["key"] = self.razorpay_key_id
-            return {"status": "success", **data}
+            return {**data, "status": "success", "order_id": data.get("id")}
         except Exception as e:
             logger.error(f"Razorpay order creation failed: {e}")
             return {"status": "error", "message": str(e)}
@@ -117,16 +117,30 @@ class PaymentEngine:
 
         return {"status": "error", "verified": False, "message": "Signature mismatch"}
 
-    def create_paypal_order(self, amount_usd: float, description: str) -> Dict:
+    # INR ? target currency conversion rates (approx ? update periodically)
+    INR_RATES = {
+        "USD": 0.012, "EUR": 0.011, "GBP": 0.0095,
+        "AUD": 0.018, "CAD": 0.016, "JPY": 1.80,
+        "SGD": 0.016, "HKD": 0.094, "NZD": 0.020,
+        "CHF": 0.011, "SEK": 0.13, "NOK": 0.13,
+        "DKK": 0.083, "PLN": 0.048, "MXN": 0.21,
+        "BRL": 0.065,
+    }
+
+    def create_paypal_order(self, amount_inr: float, target_currency: str = "USD", description: str = "") -> Dict:
         """Create a PayPal order."""
         if not self.paypal_client_id:
             return {"status": "error", "message": "PayPal not configured"}
 
+        target = (target_currency or "USD").upper()
+        rate = self.INR_RATES.get(target, self.INR_RATES["USD"])
+        amount_converted = round(amount_inr * rate, 2)
+
         order_id = f"PAYPAL_{secrets.token_hex(8)}"
         self._save_payment({
             "order_id": order_id,
-            "amount": amount_usd,
-            "currency": "USD",
+            "amount": amount_converted,
+            "currency": target,
             "method": "paypal",
             "description": description,
             "status": "created",
@@ -137,7 +151,8 @@ class PaymentEngine:
             "status": "success",
             "order_id": order_id,
             "client_id": self.paypal_client_id,
-            "amount": amount_usd
+            "amount": amount_converted,
+            "currency": target
         }
 
     def verify_paypal_payment(self, order_id: str, paypal_order_id: str) -> Dict:

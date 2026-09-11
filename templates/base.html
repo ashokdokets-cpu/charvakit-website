@@ -27,7 +27,20 @@ if (document.readyState === "loading") {
 }
 </script>
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-    <script src="https://www.paypal.com/sdk/js?client-id=Aaj9jDnwPl93PWiV_sZR5LuHpOmmDCGTPJCCasN7FR7dDJGUrGLA14p5zUok1R61Zy-JgJdmq4GhIeoL&currency=USD"></script>
+    <script>
+// Load PayPal SDK with the user's local currency (falls back to USD)
+(function() {
+    var PAYPAL_CURRENCIES = ['USD','EUR','GBP','AUD','CAD','JPY','SGD','HKD','NZD','CHF','SEK','NOK','DKK','PLN','MXN','BRL'];
+    var curr = (localStorage.getItem('charvak_currency') || 'USD').toUpperCase();
+    if (PAYPAL_CURRENCIES.indexOf(curr) === -1) curr = 'USD';
+    window.__paypalCurrency = curr;
+    var s = document.createElement('script');
+    s.src = 'https://www.paypal.com/sdk/js?client-id=Aaj9jDnwPl93PWiV_sZR5LuHpOmmDCGTPJCCasN7FR7dDJGUrGLA14p5zUok1R61Zy-JgJdmq4GhIeoL&currency=' + curr;
+    s.async = true;
+    document.head.appendChild(s);
+    console.log('[Charvak] PayPal SDK loading with currency:', curr);
+})();
+</script>
     <script src="/static/js/payment-helper.js?v=2.1"></script>
     
     <style>

@@ -8,7 +8,7 @@ fetch('/api/payment/status')
     .then(data => {
         if (data.paypal && data.mode === 'live') {
             const script = document.createElement('script');
-            script.src = 'https://www.paypal.com/sdk/js?client-id=' + data.paypal_client_id + '&currency=INR';
+            // PayPal SDK is already loaded in base.html with correct per-user currency
             document.head.appendChild(script);
         }
     });
@@ -61,11 +61,11 @@ async function processToolPayment(amount, name, callback) {
         const response = await fetch('/api/payment/create-order', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ amount, name, method })
+            body: JSON.stringify({ amount, name, method, currency })
         });
         const order = await response.json();
 
-        if (order.status !== 'success') {
+        if (!order.order_id && !order.id) {
             alert('Payment setup failed. Please try again.');
             callback(false);
             return;
@@ -98,7 +98,7 @@ function processRazorpay(order, callback) {
         currency: order.currency || 'INR',
         name: 'Charvak IT Consulting',
         description: 'AI Tool Unlock',
-        order_id: order.order_id,
+        order_id: order.order_id || order.id,
         handler: async function(response) {
             // Verify payment on backend
             const verifyResp = await fetch('/api/payment/verify', {
@@ -136,7 +136,7 @@ function processPayPal(order, callback) {
         createOrder: function(data, actions) {
             return actions.order.create({
                 purchase_units: [{
-                    amount: { value: order.amount }
+                    amount: { currency_code: (window.__paypalCurrency || 'USD'), value: order.amount.toString() }
                 }]
             });
         },
@@ -146,7 +146,7 @@ function processPayPal(order, callback) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     method: 'paypal',
-                    order_id: order.order_id,
+                    order_id: order.order_id || order.id,
                     paypal_order_id: data.orderID
                 })
             });

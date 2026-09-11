@@ -1966,10 +1966,10 @@ async def create_payment_order(request: Request):
             result["key_id"] = os.getenv("RAZORPAY_KEY_ID", "")
             result["key"] = os.getenv("RAZORPAY_KEY_ID", "")
         elif method == "paypal":
-            # Convert INR to USD (approximate)
-            amount_usd = round(amount / 83, 2)
+            target_currency = (data.get("currency") or "USD").upper()
             result = payment_engine.create_paypal_order(
-                amount_usd=amount_usd,
+                amount_inr=amount,
+                target_currency=target_currency,
                 description=name
             )
         else:
