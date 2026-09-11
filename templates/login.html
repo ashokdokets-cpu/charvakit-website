@@ -44,7 +44,7 @@ async function loginUser(e) {
     if (data.status === 'success') { 
     localStorage.setItem('charvak_token', data.token); 
     localStorage.setItem('auth_token', data.token); 
-     localStorage.setItem('userName', document.getElementById('email').value.split('@')[0]); localStorage.setItem('userEmail', document.getElementById('email').value);
+     const _u = data.user || {}; const _email = (_u.email || document.getElementById('email')?.value || '').trim(); localStorage.setItem('userEmail', _email); localStorage.setItem('userName', (_u.name || (_email ? _email.split('@')[0] : '')));
     const redirect = new URLSearchParams(window.location.search).get('redirect') || '/';
 setTimeout(() => window.location = redirect, 500); 
 }
