@@ -1040,13 +1040,16 @@ async def api_register(request: Request, data: RegisterRequest):
 @limiter.limit("30/minute")
 async def api_login(request: Request, data: LoginRequest):
     try:
-        # Check verification
+        # Check email verification (admins bypass)
+        ADMIN_EMAILS_SET = {"charvakit@gmail.com", "hr@charvakit.com"}
         from email_verification import email_verification
-        if not email_verification.is_verified(data.email):
-            # Allow admin without verification
-            if data.email != "charvakit@gmail.com":
-                pass  # Temporarily allow all - enable below line after transition
-                # return JSONResponse({"status": "error", "message": "Please verify your email first. Check your inbox."}, status_code=403)
+        if data.email not in ADMIN_EMAILS_SET:
+            if not email_verification.is_verified(data.email):
+                return JSONResponse({
+                    "status": "error",
+                    "message": "Please verify your email before logging in. Check your inbox for the verification link.",
+                    "action": "verify_email"
+                }, status_code=403)
         
         result = login_user(data.email, data.password)
         # Send login notification
