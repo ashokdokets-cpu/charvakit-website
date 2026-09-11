@@ -67,3 +67,7 @@ runtime.txt.bak
 *.bak-*
 *.before-*
 *.before-fix
+
+# Backup file patterns (created by fix scripts)
+*.bak-*
+*.before-*
