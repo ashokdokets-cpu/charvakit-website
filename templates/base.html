@@ -21,12 +21,22 @@
     <link rel="manifest" href="/static/manifest.json">
     <script src="/static/js/currency-utils.js"></script>
 <script>
-// Ensure login state displays
-if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", checkLoginState);
-} else {
-    checkLoginState();
-}
+// Safe wrapper ? defers until checkLoginState is defined
+(function() {
+    function tryCheck() {
+        if (typeof checkLoginState === 'function') {
+            checkLoginState();
+        } else {
+            // Check again in 50ms (checkLoginState defined later in page)
+            setTimeout(tryCheck, 50);
+        }
+    }
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", tryCheck);
+    } else {
+        tryCheck();
+    }
+})();
 </script>
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script>

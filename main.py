@@ -1124,6 +1124,8 @@ async def api_me(request: Request):
 
 @app.post("/api/contact")
 async def submit_contact(data: ContactRequest):
+    # 1) Save to DB (best-effort)
+    db_saved = False
     try:
         result = db.save_contact(
             name=data.name,
@@ -1132,23 +1134,43 @@ async def submit_contact(data: ContactRequest):
             subject=data.subject,
             message=data.message
         )
-    except Exception:
-        result = {"status": "success", "message": "Message received"}
-    
-    # Send email notification to admin
+        db_saved = (result.get("status") == "success")
+        if not db_saved:
+            logger.warning(f"Contact DB save non-fatal error: {result.get('message')}")
+    except Exception as e:
+        logger.error(f"Contact DB save failed: {e}")
+
+    # 2) Send email to admin (critical)
+    email_sent = False
+    email_error = None
     try:
-        email_engine.notify_admin(
+        result = email_engine.notify_admin(
             subject=f"New Contact: {data.subject}",
             message=f"Name: {data.name}\nEmail: {data.email}\nPhone: {data.phone}\n\nMessage: {data.message}"
         )
+        email_sent = (result.get("status") == "success")
+        if not email_sent:
+            email_error = result.get("message", "Unknown email error")
     except Exception as e:
-        logger.error(f"Email notification failed: {e}")
-    
-    return JSONResponse({"status": "success", "message": "Message sent successfully!"})
+        email_error = str(e)
+        logger.error(f"Contact email exception: {e}")
 
-
-# ============================================================
-# JOB BOARD API ENDPOINTS (Database-backed)
+    # 3) Honest result
+    if email_sent:
+        return JSONResponse({
+            "status": "success",
+            "message": "Message sent! We'll respond within 24 hours.",
+            "db_saved": db_saved,
+            "email_sent": True,
+        })
+    else:
+        logger.error(f"Contact form failed: db_saved={db_saved}, email_error={email_error}")
+        return JSONResponse({
+            "status": "error",
+            "message": "We couldn't send your message. Please email us directly at hr@charvakit.com",
+            "db_saved": db_saved,
+            "email_sent": False,
+        }, status_code=500)# JOB BOARD API ENDPOINTS (Database-backed)
 # ============================================================
 
 @app.post("/api/jobs/post")

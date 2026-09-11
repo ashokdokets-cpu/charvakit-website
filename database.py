@@ -147,6 +147,36 @@ class Database:
             print(f"Get user error: {e}")
             return None
 
+    def save_contact(self, name, email, phone, subject, message):
+        """Save a contact form submission to the database."""
+        try:
+            conn = self.get_connection()
+            cursor = conn.cursor()
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS contacts (
+                    id SERIAL PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    email TEXT NOT NULL,
+                    phone TEXT,
+                    subject TEXT,
+                    message TEXT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            conn.commit()
+            cursor.execute(
+                "INSERT INTO contacts (name, email, phone, subject, message) VALUES (%s, %s, %s, %s, %s)",
+                (name, email, phone, subject, message)
+            )
+            conn.commit()
+            cursor.close()
+            conn.close()
+            logger.info(f"Contact saved: {email} ? {subject}")
+            return {"status": "success"}
+        except Exception as e:
+            logger.error(f"save_contact failed: {e}")
+            return {"status": "error", "message": str(e)}
+
     def update_user(self, user_id, **kwargs):
         """Update user fields."""
         try:
