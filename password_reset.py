@@ -1,4 +1,4 @@
-﻿"""
+"""
 Charvak Password Reset - UTC-based, database-backed
 """
 import logging
@@ -66,7 +66,9 @@ class PasswordReset:
     def send_reset_email(self, email, token):
         from email_engine import email_engine
         
-        reset_url = f"https://charvakit-website.onrender.com/reset-password?token={token}"
+        import os as _os
+        _base = _os.getenv("SITE_URL", "https://www.charvakit.com").rstrip("/")
+        reset_url = f"{_base}/reset-password?token={token}"
         
         subject = "Reset Your Charvak Password"
         content = f"""
