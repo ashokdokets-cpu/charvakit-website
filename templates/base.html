@@ -19,7 +19,9 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/static/css/style.css">
     <link rel="manifest" href="/static/manifest.json">
-    <script src="/static/js/currency-utils.js">// Ensure login state displays
+    <script src="/static/js/currency-utils.js"></script>
+<script>
+// Ensure login state displays
 if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", checkLoginState);
 } else {
@@ -588,34 +590,13 @@ function changeCurrency(curr) {
 }
 
 function updateAllPrices(currency) {
-    // Use global CharvakCurrency if available
+    // Delegate to CharvakCurrency ? single source of truth
     if (typeof CharvakCurrency !== 'undefined') {
         CharvakCurrency.updateAllPrices();
         return;
     }
-    
-    // Fallback conversion
-    const rates = {
-        INR: 1, USD: 83.1, EUR: 90.2, GBP: 105.3, AED: 22.6,
-        SGD: 61.2, AUD: 54.8, CAD: 61.0, JPY: 0.56, CNY: 11.5,
-        BRL: 16.8, NGN: 0.055, ZAR: 4.45
-    };
-    const symbols = {
-        INR: '₹', USD: '$', EUR: '€', GBP: '£', AED: 'AED',
-        SGD: 'S$', AUD: 'A$', CAD: 'C$', JPY: 'JPY', CNY: 'JPY',
-        BRL: 'R$', NGN: 'NGN', ZAR: 'R'
-    };
-    
-    document.querySelectorAll('[data-inr]').forEach(el => {
-        const inrAmount = parseFloat(el.getAttribute('data-inr'));
-        if (inrAmount && rates[currency]) {
-            const converted = inrAmount / rates[currency];
-            const formatted = ['JPY', 'NGN', 'ZAR', 'CNY'].includes(currency) 
-                ? Math.round(converted).toLocaleString() 
-                : converted.toFixed(2);
-            el.textContent = (symbols[currency] || '$') + formatted;
-        }
-    });
+    // Fallback: no-op if CharvakCurrency isn't loaded yet
+    console.warn('CharvakCurrency not loaded; price update skipped');
 }
 
 function showNotification(msg) {

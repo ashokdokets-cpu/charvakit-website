@@ -905,6 +905,15 @@ async def pricing_page(request: Request):
 
 
 # ============================================================
+
+@app.get("/capabilities", response_class=HTMLResponse)
+async def capabilities_page(request: Request):
+    """Standalone capabilities sheet ? print-friendly, no prices."""
+    from fastapi.responses import FileResponse
+    import os
+    path = os.path.join("templates", "capabilities.html")
+    return FileResponse(path, media_type="text/html")
+
 # WHATSAPP WEBHOOK
 # ============================================================
 
