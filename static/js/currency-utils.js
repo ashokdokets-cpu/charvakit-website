@@ -1,7 +1,7 @@
 // Charvak Currency Utility
 var CharvakCurrency = {
     current: 'INR',
-    rates: {INR: 1, USD: 83.1, EUR: 90.2, GBP: 105.3, AED: 22.6, SGD: 61.2, AUD: 54.8, CAD: 61.0, JPY: 0.56, CNY: 11.5, BRL: 16.8, NGN: 0.055, ZAR: 4.45},
+    rates: {INR: 1, USD: 0.012, EUR: 0.011, GBP: 0.0095, AED: 0.044, SGD: 0.016, AUD: 0.018, CAD: 0.016, JPY: 1.75, CNY: 0.087, BRL: 0.059, NGN: 18.5, ZAR: 0.22},
     symbols: {INR: '₹', USD: '$', EUR: '€', GBP: '£', AED: 'د.إ', SGD: 'S$', AUD: 'A$', CAD: 'C$', JPY: '¥', CNY: '¥', BRL: 'R$', NGN: '₦', ZAR: 'R'},
     
     init: function() {
@@ -45,7 +45,7 @@ var CharvakCurrency = {
         document.querySelectorAll('[data-inr]').forEach(function(el) {
             var inrAmount = parseFloat(el.getAttribute('data-inr'));
             if (inrAmount && rate) {
-                var converted = inrAmount / rate;
+                var converted = inrAmount * rate;
                 el.textContent = symbol + Math.round(converted);
             }
         });

@@ -71,3 +71,9 @@ runtime.txt.bak
 # Backup file patterns (created by fix scripts)
 *.bak-*
 *.before-*
+
+# Standalone template backups (created when converting templates)
+*.standalone-*
+
+# Standalone template backups (created when converting templates)
+*.standalone-*

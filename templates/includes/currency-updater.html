@@ -1,75 +1,22 @@
 <script>
-// Universal Currency Updater — auto-converts ₹ prices based on user region
+// Universal Currency Updater ? delegates to CharvakCurrency for the single source of truth.
 (function() {
-    const EXCHANGE_RATES = {
-    INR: 1,
-    USD: 0.05,  // Premium pricing for global (not just exchange rate)
-    EUR: 0.045,
-    GBP: 0.04,
-    AED: 0.18,
-    SGD: 0.068,
-    CAD: 0.068,
-    AUD: 0.075,
-    JPY: 7.5,
-    CNY: 0.36,
-    BRL: 0.25,
-    NGN: 80,
-    ZAR: 0.92,
-    KES: 6.4
-};
-    
-    const CURRENCY_SYMBOLS = {
-        INR: '₹', USD: '$', EUR: '€', GBP: '£', AED: 'د.إ',
-        SGD: 'S$', CAD: 'C$', AUD: 'A$', JPY: '¥', CNY: '¥',
-        BRL: 'R$', NGN: '₦', ZAR: 'R', KES: 'KSh'
-    };
-    
-    function getCurrency() {
-        return localStorage.getItem('charvak_currency') || 'INR';
+    function refresh() {
+        if (typeof CharvakCurrency === 'undefined') return;
+        CharvakCurrency.updateAllPrices();
     }
-    
-    function convertPrice(inrAmount, targetCurrency) {
-        const rate = EXCHANGE_RATES[targetCurrency] || 1;
-        const converted = inrAmount * rate;
-        const symbol = CURRENCY_SYMBOLS[targetCurrency] || '₹';
-        return symbol + Math.round(converted).toLocaleString('en-IN');
+
+    // On load
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', refresh);
+    } else {
+        refresh();
     }
-    
-    function updatePrices() {
-        const currency = getCurrency();
-        
-        // Update all elements with data-inr attribute
-        document.querySelectorAll('[data-inr]').forEach(el => {
-            const inrAmount = parseFloat(el.getAttribute('data-inr'));
-            if (inrAmount) {
-                el.textContent = convertPrice(inrAmount, currency);
-            }
-        });
-        
-        // Update all elements with class "price-inr"
-        document.querySelectorAll('.price-inr').forEach(el => {
-            const inrText = el.textContent.replace(/[^\d]/g, '');
-            const inrAmount = parseFloat(inrText);
-            if (inrAmount) {
-                el.textContent = convertPrice(inrAmount, currency);
-            }
-        });
-    }
-    
-    // Auto-detect currency first
-    fetch('/api/region')
-        .then(res => res.json())
-        .then(data => {
-            if (data && data.currency) {
-                localStorage.setItem('charvak_currency', data.currency);
-            }
-            updatePrices();
-        })
-        .catch(() => updatePrices());
-    
-    // Update prices when currency changes
-    window.addEventListener('storage', (e) => {
-        if (e.key === 'charvak_currency') updatePrices();
+
+    // React to currency changes
+    window.addEventListener('charvakCurrencyChanged', refresh);
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'charvak_currency') refresh();
     });
 })();
 </script>

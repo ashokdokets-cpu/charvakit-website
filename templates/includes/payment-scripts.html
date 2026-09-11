@@ -2,16 +2,7 @@
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <!-- PayPal -->
 <script>
-// Dynamically load PayPal SDK with client ID from backend
-fetch('/api/payment/status')
-    .then(res => res.json())
-    .then(data => {
-        if (data.paypal && data.mode === 'live') {
-            const script = document.createElement('script');
-            // PayPal SDK is already loaded in base.html with correct per-user currency
-            document.head.appendChild(script);
-        }
-    });
+// PayPal SDK is loaded once in base.html with the correct per-user currency.
 // Auto-detect user's currency from their browser/region
 fetch('/api/region')
     .then(res => res.json())
