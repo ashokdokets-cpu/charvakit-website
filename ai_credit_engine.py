@@ -9,6 +9,9 @@ import secrets
 
 logger = logging.getLogger("charvakit.credits")
 
+# Admin emails ? full access, no credit deduction
+ADMIN_EMAILS = {"charvakit@gmail.com", "hr@charvakit.com"}
+
 
 class CreditPlan:
     FREE = "free"
@@ -172,6 +175,16 @@ class AICreditEngine:
     
     def check_and_deduct(self, email: str, feature: str) -> Dict:
         """Check credits and deduct for AI usage."""
+        # Admin bypass ? unlimited credits, no deduction
+        if (email or "").lower() in ADMIN_EMAILS:
+            return {
+                "status": "success",
+                "credits_deducted": 0,
+                "credits_remaining": 999999999,
+                "admin_bypass": True,
+                "feature": feature,
+            }
+
         user = self.user_credits.get(email)
         if not user:
             init_result = self.initialize_user(email)

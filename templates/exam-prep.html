@@ -79,6 +79,13 @@
 
 <script>
 // Plan configuration
+// Admin bypass ? admins get full access to test the system
+const ADMIN_EMAILS = ['charvakit@gmail.com', 'hr@charvakit.com'];
+function isAdminUser() {
+    const email = (localStorage.getItem('userEmail') || '').toLowerCase();
+    return ADMIN_EMAILS.includes(email);
+}
+
 const planLimits = {
     'free': {'daily_questions': 10, 'weekly_mock_tests': 1, 'practice_modes': ['quick'], 'analytics': false, 'price': 0},
     'starter': {'daily_questions': 50, 'weekly_mock_tests': 2, 'practice_modes': ['quick', 'full'], 'analytics': false, 'price': 99},
@@ -90,6 +97,9 @@ let dailyQuestionsUsed = parseInt(localStorage.getItem('daily_questions_used') |
 let weeklyMockTestsUsed = parseInt(localStorage.getItem('weekly_mock_tests_used') || '0');
 
 function canPractice(mode) {
+    // Admin bypass ? full access for testing
+    if (isAdminUser()) return true;
+
     const plan = localStorage.getItem('exam_plan') || 'free';
     const limits = planLimits[plan];
     if (!limits) return false;
@@ -131,7 +141,16 @@ let currentPlan = localStorage.getItem('exam_plan') || 'free';
 // SUBSCRIPTION
 // ============================================================
 function subscribeExam(plan) {
-    const email = prompt('Enter your email:');
+    // Admin bypass ? activate any plan without payment
+    if (isAdminUser()) {
+        localStorage.setItem('exam_plan', plan);
+        alert('? Admin bypass: ' + plan + ' plan activated');
+        if (typeof loadCategories === 'function') loadCategories();
+        return;
+    }
+
+    // Use logged-in email if available, else prompt
+    const email = localStorage.getItem('userEmail') || prompt('Enter your email:');
     if (!email) return;
     
     if (plan === 'free') {
@@ -306,7 +325,7 @@ async function loadPracticeQuestions(examId, topic, count = 10) {
         const response = await fetch('/api/exam/ai-questions', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({exam_id: examId, topic: topic, count: count})
+            body: JSON.stringify({exam_id: examId, topic: topic, count: count, user_email: localStorage.getItem('userEmail') || ''})
         });
         const data = await response.json();
         displayQuestions(data.questions, examId, topic);
@@ -318,13 +337,27 @@ async function loadPracticeQuestions(examId, topic, count = 10) {
 
 function displayQuestions(questions, examId, topic) {
     const container = document.getElementById('practiceArea');
+
+    // Safety: if questions is undefined, null, or empty, show a friendly message
+    if (!Array.isArray(questions) || questions.length === 0) {
+        console.warn('[displayQuestions] No questions to display', {questions, examId, topic});
+        container.innerHTML = `
+            <div class="alert alert-warning">
+                <strong>No questions available right now.</strong><br>
+                This can happen if the AI is still generating or if there's a temporary issue.
+                <button class="btn btn-sm btn-primary ms-2" onclick="selectTopic('${examId}', '${topic}')">Try Again</button>
+            </div>
+        `;
+        return;
+    }
+
     container.innerHTML = `
         <h5>Practice: ${topic}</h5>
         <div class="list-group">
             ${questions.map((q, i) => `
                 <div class="list-group-item">
                     <p class="mb-2"><strong>Q${i+1}.</strong> ${q.question}</p>
-                    ${q.options.map((opt, j) => `
+                    ${(q.options || []).map((opt, j) => `
                         <label class="d-block">
                             <input type="radio" name="q${i}" value="${j}"> ${opt}
                         </label>
@@ -415,20 +448,42 @@ async function startMockTest(examId) {
     const plan = localStorage.getItem('exam_plan') || 'free';
     const limits = planLimits[plan];
     
-    if (!limits.practice_modes.includes('mock')) {
+    // Admin bypass ? full access for testing
+
+    
+    if (typeof isAdminUser === 'function' && isAdminUser()) {
+
+    
+        console.log('[Admin] Mock test bypass ? full access');
+
+    
+    } else if (!limits.practice_modes.includes('mock')) {
+
+    
         alert('Mock tests require Premium plan. Upgrade now!');
+
+    
         showUpgradeModal();
+
+    
         return;
+
+    
     }
     
-    if (limits.weekly_mock_tests !== -1 && weeklyMockTestsUsed >= limits.weekly_mock_tests) {
+    // Admin bypass ? skip weekly mock limit
+    const _isAdminUser = (typeof isAdminUser === 'function' && isAdminUser());
+
+    if (!_isAdminUser && limits.weekly_mock_tests !== -1 && weeklyMockTestsUsed >= limits.weekly_mock_tests) {
         alert('Weekly mock test limit reached. Upgrade!');
         showUpgradeModal();
         return;
     }
-    
-    weeklyMockTestsUsed++;
-    localStorage.setItem('weekly_mock_tests_used', weeklyMockTestsUsed);
+
+    if (!_isAdminUser) {
+        weeklyMockTestsUsed++;
+        localStorage.setItem('weekly_mock_tests_used', weeklyMockTestsUsed);
+    }
     
     const container = document.getElementById('mockTestArea');
     container.innerHTML = '<p class="text-center">Preparing mock test...</p>';
@@ -464,7 +519,7 @@ async function startMockTest(examId) {
                 const questionsResponse = await fetch('/api/exam/ai-questions', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({exam_id: examId, topic: section, count: batchCount})
+                    body: JSON.stringify({exam_id: examId, topic: section, count: batchCount, user_email: localStorage.getItem('userEmail') || ''})
                 });
                 const questionsData = await questionsResponse.json();
                 if (questionsData.questions) {

@@ -13,6 +13,9 @@ from typing import Dict, List, Optional
 
 logger = logging.getLogger("charvakit.ai_questions")
 
+# Admin emails ? no daily limits, full AI access
+ADMIN_EMAILS = {"charvakit@gmail.com", "hr@charvakit.com"}
+
 class AIQuestionGenerator:
     def __init__(self):
         self.openai_api_key = os.getenv("OPENAI_API_KEY", "")
@@ -108,9 +111,10 @@ class AIQuestionGenerator:
                 return self._apply_variation(sampled)[:count]
         
         # Check daily AI limit
+        is_admin = (user_email or "").lower() in ADMIN_EMAILS
         can_use_ai = True
-        if user_email:
-            today = datetime.now().strftime("%Y-%m-%d")
+        today = datetime.now().strftime("%Y-%m-%d")
+        if user_email and not is_admin:
             if user_email not in self.daily_ai_usage:
                 self.daily_ai_usage[user_email] = {}
             if today not in self.daily_ai_usage[user_email]:
@@ -118,11 +122,11 @@ class AIQuestionGenerator:
             can_use_ai = self.daily_ai_usage[user_email][today] + count <= self.max_daily_ai
         
         # Use OpenAI for small batches
-        if self.openai_api_key and count <= 20 and can_use_ai:
+        if self.openai_api_key and (count <= 20 or is_admin) and (can_use_ai or is_admin):
             try:
                 questions = self.generate_with_openai(exam_id, topic, count * 3)
                 if questions:
-                    if user_email:
+                    if user_email and not is_admin:
                         self.daily_ai_usage[user_email][today] += count
                     if cache_key not in self.question_cache:
                         self.question_cache[cache_key] = {"questions": [], "timestamp": datetime.now()}
