@@ -11,7 +11,7 @@
                     <form onsubmit="adminLogin(event)">
                         <div class="mb-3">
                             <label class="form-label">Email</label>
-                            <input type="email" class="form-control" id="adminEmail" value="hr@charvakit.com" required>
+                            <input type="email" class="form-control" id="adminEmail" placeholder="admin email" required>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Password</label>
@@ -38,8 +38,9 @@ async function adminLogin(e) {
     const email = document.getElementById('adminEmail').value;
     const password = document.getElementById('adminPassword').value;
     
-    if (email !== 'hr@charvakit.com') {
-        document.getElementById('adminError').textContent = 'Only hr@charvakit.com can access admin.';
+    const ADMIN_EMAILS = ['hr@charvakit.com', 'charvakit@gmail.com'];
+    if (!ADMIN_EMAILS.includes(email)) {
+        document.getElementById('adminError').textContent = 'Only admin emails can access this page.';
         document.getElementById('adminError').style.display = 'block';
         return;
     }

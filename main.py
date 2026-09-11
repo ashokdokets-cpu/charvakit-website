@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request, Depends, HTTPException
-from fastapi.responses import HTMLResponse, PlainTextResponse, FileResponse, JSONResponse
+from fastapi.responses import HTMLResponse, PlainTextResponse, FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
@@ -198,6 +198,55 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE"],  # Explicit, not wildcard
     allow_headers=["Content-Type", "Authorization", "X-API-Key"],  # Explicit, not wildcard
 )
+
+# ============================================================
+# ADMIN AUTH GUARD MIDDLEWARE
+# Protects every /admin* and /api/admin* route.
+# ============================================================
+
+_ADMIN_PUBLIC_PATHS = {
+    "/admin-login",
+    "/api/auth/login",
+    "/api/auth/admin-login",
+    "/api/auth/register",
+    "/api/auth/verify-reset-token",
+    "/api/auth/reset-password",
+}
+
+@app.middleware("http")
+async def admin_auth_guard(request: Request, call_next):
+    """Block unauthenticated access to admin routes."""
+    path = request.url.path
+    is_admin_area = path.startswith("/admin") or path.startswith("/api/admin")
+    if not is_admin_area or path in _ADMIN_PUBLIC_PATHS:
+        return await call_next(request)
+
+    token = request.headers.get("Authorization", "").replace("Bearer ", "").strip()
+    if not token:
+        token = request.cookies.get("charvak_admin_token", "")
+
+    is_api = path.startswith("/api/")
+    if not token:
+        if is_api:
+            return JSONResponse({"detail": "Authentication required"}, status_code=401)
+        return RedirectResponse(url="/admin-login?next=" + path, status_code=302)
+
+    user = get_current_user(token)
+    if not user:
+        if is_api:
+            return JSONResponse({"detail": "Invalid or expired token"}, status_code=401)
+        return RedirectResponse(url="/admin-login?next=" + path, status_code=302)
+
+    role_ok = user.get("role") == "admin"
+    email_ok = user.get("email") in ("charvakit@gmail.com", "hr@charvakit.com")
+    if not (role_ok or email_ok):
+        if is_api:
+            return JSONResponse({"detail": "Admin access required"}, status_code=403)
+        return RedirectResponse(url="/admin-login?error=forbidden", status_code=302)
+
+    return await call_next(request)
+
+
 
 
 # ============================================================
@@ -437,9 +486,20 @@ def require_auth(request: Request) -> Dict:
 
 ADMIN_EMAIL = "charvakit@gmail.com"
 
+# Admin emails ? both can access admin routes
+ADMIN_EMAILS = {"charvakit@gmail.com", "hr@charvakit.com"}
+
 def require_admin(request: Request) -> Dict:
     """Authenticate and ensure user is admin."""
-    if user.get("role") != "admin" and user.get("email") != ADMIN_EMAIL:
+    token = request.headers.get("Authorization", "").replace("Bearer ", "").strip()
+    if not token:
+        token = request.cookies.get("charvak_admin_token", "")
+    if not token:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    user = get_current_user(token)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+    if user.get("role") != "admin" and user.get("email") not in ADMIN_EMAILS:
         raise HTTPException(status_code=403, detail="Admin access required")
     return user
 
@@ -989,6 +1049,30 @@ async def api_login(request: Request, data: LoginRequest):
             except Exception as e:
                 logger.error(f"Login notification failed: {e}")
         
+
+        # Strip password_hash from response (security)
+        if isinstance(result.get("user"), dict) and "password_hash" in result["user"]:
+            result["user"] = {k: v for k, v in result["user"].items() if k != "password_hash"}
+
+        # Set admin cookie for admin users so /admin* pages can load
+        if result.get("status") == "success":
+            email = (data.email or "").lower()
+            role = (result.get("user") or {}).get("role", "")
+            is_admin = email in ("charvakit@gmail.com", "hr@charvakit.com") or role == "admin"
+            if is_admin and result.get("token"):
+                resp = JSONResponse(result)
+                resp.set_cookie(
+                    key="charvak_admin_token",
+                    value=result["token"],
+                    httponly=True,
+                    secure=True,
+                    samesite="lax",
+                    max_age=86400 * 7,
+                    path="/",
+                )
+                logger.info(f"Admin cookie set for {email}")
+                return resp
+
         return JSONResponse(result)
     except Exception as e:
         logger.error(f"Login failed for {data.email}: {str(e)}")
