@@ -1963,8 +1963,8 @@ async def create_payment_order(request: Request):
                 notes={"tool": name, "amount_inr": amount}
             )
             # ADD KEY TO RESPONSE
-            result["key_id"] = os.getenv("RAZORPAY_KEY_ID", "rzp_live_TSniXv6CyEnZ9B")
-            result["key"] = os.getenv("RAZORPAY_KEY_ID", "rzp_live_TSniXv6CyEnZ9B")
+            result["key_id"] = os.getenv("RAZORPAY_KEY_ID", "")
+            result["key"] = os.getenv("RAZORPAY_KEY_ID", "")
         elif method == "paypal":
             # Convert INR to USD (approximate)
             amount_usd = round(amount / 83, 2)
