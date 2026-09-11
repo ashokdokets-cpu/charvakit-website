@@ -5525,9 +5525,15 @@ async def get_voices():
 from admin_cleanup import cleanup_suspicious_users
 from registration_guard import validate_registration
 
-@app.get("/admin/cleanup-users")
-async def admin_cleanup_users():
-    """Remove suspicious users - ADMIN ONLY."""
+@app.get("/admin/cleanup-users", response_class=HTMLResponse)
+async def admin_cleanup_users_page(request: Request):
+    """Admin page for user cleanup."""
+    return template_response("admin-cleanup-users.html", request, "User Cleanup - Charvak Admin")
+
+
+@app.get("/api/admin/cleanup-users")
+async def admin_cleanup_users_api():
+    """API endpoint returning cleanup/user data as JSON."""
     return cleanup_suspicious_users()
 
 

@@ -1,0 +1,114 @@
+﻿{% extends "base.html" %}
+{% block title %}User Cleanup - Charvak Admin{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">🧹 User Cleanup</h2>
+            <p class="text-muted mb-0">Review and clean up suspicious accounts. Only authorized admins can access this page.</p>
+        </div>
+        <a href="/admin-control" class="btn btn-outline-secondary">← Back to Admin</a>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="mb-3">Summary</h5>
+            <div class="row text-center">
+                <div class="col-4">
+                    <h3 id="totalUsers" class="text-primary">—</h3>
+                    <p class="text-muted mb-0">Total Users</p>
+                </div>
+                <div class="col-4">
+                    <h3 id="removedCount" class="text-warning">—</h3>
+                    <p class="text-muted mb-0">Removed (Suspicious)</p>
+                </div>
+                <div class="col-4">
+                    <h3 id="remainingCount" class="text-success">—</h3>
+                    <p class="text-muted mb-0">Remaining</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">User List</h5>
+                <button id="refreshBtn" class="btn btn-sm btn-outline-primary" onclick="loadUsers()">🔄 Refresh</button>
+            </div>
+            <div id="loading" class="text-center py-3" style="display:none;">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="text-muted mt-2 mb-0">Loading users...</p>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>User ID</th>
+                            <th>Email</th>
+                            <th>Name</th>
+                            <th>Role</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userTableBody">
+                        <tr><td colspan="5" class="text-center text-muted">Click Refresh to load users</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <p id="errorMsg" class="text-danger mt-3 mb-0" style="display:none;"></p>
+        </div>
+    </div>
+
+    <div class="alert alert-info mt-4">
+        <strong>Note:</strong> This page is read-only for safety. To actually remove users, contact the platform owner.
+    </div>
+</div>
+
+<script>
+async function loadUsers() {
+    const loading = document.getElementById('loading');
+    const errorMsg = document.getElementById('errorMsg');
+    const tbody = document.getElementById('userTableBody');
+    const refreshBtn = document.getElementById('refreshBtn');
+
+    loading.style.display = 'block';
+    errorMsg.style.display = 'none';
+    refreshBtn.disabled = true;
+    tbody.innerHTML = '';
+
+    try {
+        const r = await fetch('/api/admin/cleanup-users', {credentials: 'include'});
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const data = await r.json();
+
+        document.getElementById('totalUsers').textContent =
+            (data.remaining_count || 0) + (data.removed_count || 0);
+        document.getElementById('removedCount').textContent = data.removed_count || 0;
+        document.getElementById('remainingCount').textContent = data.remaining_count || 0;
+
+        const users = data.remaining_users || [];
+        if (users.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No users</td></tr>';
+        } else {
+            tbody.innerHTML = users.map((u, i) => `
+                <tr>
+                    <td>${i + 1}</td>
+                    <td><code>${u.user_id || '-'}</code></td>
+                    <td>${u.email || '-'}</td>
+                    <td>${u.name || '-'}</td>
+                    <td><span class="badge bg-secondary">${u.role || 'user'}</span></td>
+                </tr>
+            `).join('');
+        }
+    } catch(e) {
+        errorMsg.textContent = 'Failed to load users: ' + e.message;
+        errorMsg.style.display = 'block';
+    } finally {
+        loading.style.display = 'none';
+        refreshBtn.disabled = false;
+    }
+}
+document.addEventListener('DOMContentLoaded', loadUsers);
+</script>
+{% endblock %}
