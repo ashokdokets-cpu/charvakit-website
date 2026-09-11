@@ -73,7 +73,7 @@ function payWithRazorpay(email, amount, featureName, hasCallback) {
                 const orderId = orderData.order_id || orderData.id;
 
                 if (!orderId) {
-                    alert('? Failed to create payment order');
+                    alert('❌ Failed to create payment order');
                     return;
                 }
 
@@ -140,7 +140,7 @@ function payWithPayPal(email, amount, featureName, hasCallback) {
         const paypalOrderId = orderData.order_id || orderData.id;
 
         if (!paypalOrderId) {
-            alert('? Failed to create PayPal order');
+            alert('❌ Failed to create PayPal order');
             return;
         }
 
