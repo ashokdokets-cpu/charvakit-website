@@ -62,3 +62,8 @@ rebuild_*.py
 scripts/
 requirements.txt.bak
 runtime.txt.bak
+
+# Backup files from scripts
+*.bak-*
+*.before-*
+*.before-fix
