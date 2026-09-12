@@ -19,6 +19,7 @@ PAYPAL_CLIENT_ID = os.getenv("PAYPAL_CLIENT_ID", "")
 PAYPAL_CLIENT_SECRET = os.getenv("PAYPAL_CLIENT_SECRET", "")
 UPI_ID = os.getenv("UPI_ID", "charvakit@upi")
 PAYMENT_MODE = os.getenv("PAYMENT_MODE", "live")
+RAZORPAY_WEBHOOK_SECRET = os.getenv("RAZORPAY_WEBHOOK_SECRET", "")
 
 
 class PaymentEngine:
@@ -173,6 +174,28 @@ class PaymentEngine:
         "DKK": 0.083, "PLN": 0.048, "MXN": 0.21,
         "BRL": 0.065,
     }
+
+    def verify_webhook_signature(self, raw_body: bytes, signature: str) -> bool:
+        """Verify a Razorpay webhook signature.
+
+        Razorpay signs the raw request body with the webhook secret using
+        HMAC-SHA256 and sends the hex digest in the X-Razorpay-Signature header.
+        """
+        if not RAZORPAY_WEBHOOK_SECRET:
+            logger.error("RAZORPAY_WEBHOOK_SECRET not configured")
+            return False
+        if not signature:
+            return False
+        try:
+            expected = hmac.new(
+                RAZORPAY_WEBHOOK_SECRET.encode(),
+                raw_body,
+                hashlib.sha256
+            ).hexdigest()
+            return hmac.compare_digest(expected, signature)
+        except Exception as e:
+            logger.error(f"Webhook signature verification failed: {e}")
+            return False
 
     def create_paypal_order(self, amount_inr: float, target_currency: str = "USD", description: str = "") -> Dict:
         """Create a PayPal order."""

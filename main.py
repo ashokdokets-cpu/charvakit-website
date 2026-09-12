@@ -2070,7 +2070,7 @@ async def create_payment_order(request: Request):
         amount = data.get("amount", 0)
         name = data.get("name", "Service")
         method = data.get("method", "razorpay")
-        
+
         if method == "razorpay":
             # Convert to paise (Razorpay uses smallest unit)
             amount_paise = int(amount * 100)
@@ -2078,7 +2078,12 @@ async def create_payment_order(request: Request):
             result = payment_engine.create_razorpay_order(
                 amount_inr=amount_paise,
                 receipt=receipt,
-                notes={"tool": name, "amount_inr": amount}
+                notes={
+                    "tool": name,
+                    "amount_inr": amount,
+                    "plan": data.get("plan", ""),
+                    "email": data.get("email", "")
+                }
             )
             # ADD KEY TO RESPONSE
             result["key_id"] = os.getenv("RAZORPAY_KEY_ID", "")
@@ -2092,7 +2097,7 @@ async def create_payment_order(request: Request):
             )
         else:
             result = {"status": "error", "message": f"Unknown payment method: {method}"}
-        
+
         return result
     except Exception as e:
         logger.error(f"Payment order creation failed: {e}", exc_info=True)
@@ -2133,6 +2138,79 @@ async def verify_payment(request: Request):
     except Exception as e:
         logger.error(f"Payment verification failed: {e}", exc_info=True)
         return {"status": "error", "verified": False, "message": "Verification failed"}
+
+    except Exception as e:
+        logger.error(f"Payment verification failed: {e}", exc_info=True)
+        return {"status": "error", "verified": False, "message": "Verification failed"}
+
+
+@app.post("/webhook/razorpay")
+async def razorpay_webhook(request: Request):
+    """Razorpay webhook receiver.
+
+    Razorpay calls this server-to-server on payment events. This is the safety
+    net for the case where the user's browser closed mid-checkout and the
+    client-callback never fired. Idempotent on payment_id — safe to receive
+    the same event twice.
+    """
+    try:
+        raw_body = await request.body()
+        signature = request.headers.get("X-Razorpay-Signature", "")
+
+        if not payment_engine.verify_webhook_signature(raw_body, signature):
+            logger.warning("Razorpay webhook: signature verification failed")
+            return JSONResponse({"status": "error", "message": "Invalid signature"}, status_code=400)
+
+        try:
+            payload = json.loads(raw_body.decode("utf-8"))
+        except Exception as e:
+            logger.error(f"Razorpay webhook: invalid JSON — {e}")
+            return JSONResponse({"status": "error", "message": "Invalid JSON"}, status_code=400)
+
+        event = payload.get("event", "")
+        logger.info(f"Razorpay webhook received: {event}")
+
+        if event not in ("payment.captured", "order.paid"):
+            return JSONResponse({"status": "ignored", "event": event})
+
+        payment_entity = (
+            payload.get("payload", {})
+                   .get("payment", {})
+                   .get("entity", {})
+        )
+        if not payment_entity:
+            logger.warning("Razorpay webhook: no payment entity in payload")
+            return JSONResponse({"status": "ignored", "message": "no payment entity"})
+
+        payment_id = payment_entity.get("id", "")
+        order_id = payment_entity.get("order_id", "")
+        notes = payment_entity.get("notes") or {}
+        plan = (notes.get("plan") or "").strip().lower()
+        email = (notes.get("email") or payment_entity.get("email") or "").strip().lower()
+
+        logger.info(f"Razorpay webhook: payment_id={payment_id} order_id={order_id} plan={plan} email={email}")
+
+        if not payment_id or not plan or not email:
+            logger.warning(f"Razorpay webhook: missing data (payment={bool(payment_id)} plan={bool(plan)} email={bool(email)})")
+            return JSONResponse({"status": "ignored", "message": "missing data"})
+
+        if plan == "free":
+            return JSONResponse({"status": "ignored", "message": "free plan has no payment"})
+
+        result = ai_credit_engine.purchase_credits(email, plan, payment_id=payment_id)
+        logger.info(f"Razorpay webhook crediting result: {result.get('status')} for {email} plan={plan}")
+
+        return JSONResponse({"status": "success", "payment_id": payment_id, "credited": result.get("status") == "success"})
+
+    except Exception as e:
+        logger.error(f"Razorpay webhook error: {e}", exc_info=True)
+        return JSONResponse({"status": "error", "message": "Internal error"}, status_code=200)
+
+
+@app.get("/api/payment/history")
+async def payment_history():
+    """Get all payment records."""
+    return payment_engine.get_all_payments()
 
 @app.get("/api/payment/history")
 async def payment_history():
