@@ -98,6 +98,7 @@ from global_exams_engine import global_exams_engine
 from ai_question_generator import ai_question_generator
 from exam_analytics_engine import exam_analytics_engine
 from ai_internship_engine import ai_internship_engine
+from fastapi.responses import HTMLResponse, PlainTextResponse, FileResponse, JSONResponse, RedirectResponse
 
 
 
@@ -4538,11 +4539,35 @@ async def internship_progress(enrollment_id: str):
 # ============================================================
 
 @app.get("/sitemap.xml")
+@app.head("/sitemap.xml")
 async def sitemap():
     sitemap_path = "templates/sitemap.xml"
     if os.path.exists(sitemap_path):
         return FileResponse(sitemap_path, media_type="application/xml")
     return JSONResponse({"error": "Sitemap not found"}, status_code=404)
+
+
+@app.get("/robots.txt")
+@app.head("/robots.txt")
+async def robots_txt():
+    """Serve robots.txt with sitemap directive for search engines."""
+    content = (
+        "User-agent: *\n"
+        "Allow: /\n"
+        "Disallow: /admin\n"
+        "Disallow: /admin-login\n"
+        "Disallow: /admin-control\n"
+        "Disallow: /api/admin\n"
+        "Disallow: /api/auth\n"
+        "Disallow: /webhook\n"
+        "\n"
+        "User-agent: GPTBot\n"
+        "Disallow: /api/\n"
+        "Disallow: /admin\n"
+        "\n"
+        "Sitemap: https://www.charvakit.com/sitemap.xml\n"
+    )
+    return PlainTextResponse(content, media_type="text/plain")
 
 @app.get("/api/region")
 async def detect_region(request: Request):
