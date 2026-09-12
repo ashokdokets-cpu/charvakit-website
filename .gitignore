@@ -77,3 +77,10 @@ runtime.txt.bak
 
 # Standalone template backups (created when converting templates)
 *.standalone-*
+
+# Local backups
+*.pre-fixb
+*.bak-*
+
+# But keep our persistence test (explicit exception)
+!test_credits_persistence.py
