@@ -4149,9 +4149,82 @@ async def check_credits(request: Request):
 @app.post("/api/credits/purchase")
 @limiter.limit("60/minute")
 async def purchase_credits(request: Request):
-    """Purchase credit plan."""
+    """Purchase credit plan.
+
+    Free plan: no payment needed.
+    Paid plans: require a verified, captured Razorpay payment whose amount
+    matches the plan price. Idempotent on payment_id (no double-credit).
+    """
     data = await request.json()
-    return ai_credit_engine.purchase_credits(data.get("email"), data.get("plan"))
+    email = (data.get("email") or "").strip().lower()
+    plan = (data.get("plan") or "").strip().lower()
+    payment_id = (data.get("payment_id") or "").strip() or None
+
+    if not email or not plan:
+        return JSONResponse({
+            "status": "error",
+            "message": "email and plan are required"
+        }, status_code=400)
+
+    plan_data = ai_credit_engine.PLANS.get(plan)
+    if not plan_data:
+        return JSONResponse({
+            "status": "error",
+            "message": "Invalid plan"
+        }, status_code=400)
+
+    # Free plan: no payment required
+    if plan == "free" or plan_data["price"] == 0:
+        return JSONResponse(
+            ai_credit_engine.purchase_credits(email, plan, payment_id=None)
+        )
+
+    # Paid plan: payment_id is mandatory
+    if not payment_id:
+        return JSONResponse({
+            "status": "error",
+            "message": "Payment verification required. Complete checkout to receive credits."
+        }, status_code=402)
+
+    # Fetch the payment from Razorpay and verify it matches this plan
+    try:
+        fetch = payment_engine.fetch_razorpay_payment(payment_id)
+    except Exception as e:
+        logger.error(f"Razorpay fetch error for {payment_id}: {e}")
+        return JSONResponse({
+            "status": "error",
+            "message": "Could not verify payment with gateway"
+        }, status_code=502)
+
+    if fetch.get("status") != "success":
+        return JSONResponse({
+            "status": "error",
+            "message": fetch.get("message") or "Payment not found"
+        }, status_code=402)
+
+    # Check capture status
+    if fetch.get("status_field") != "captured" and not fetch.get("captured"):
+        return JSONResponse({
+            "status": "error",
+            "message": f"Payment not captured (status: {fetch.get('status_field')})"
+        }, status_code=402)
+
+    # Check amount matches plan price (Razorpay returns paise)
+    expected_paise = int(plan_data["price"]) * 100
+    if int(fetch.get("amount") or 0) != expected_paise:
+        logger.warning(
+            f"Payment amount mismatch: {payment_id} expected {expected_paise} paise, "
+            f"got {fetch.get('amount')} for plan {plan}"
+        )
+        return JSONResponse({
+            "status": "error",
+            "message": "Payment amount does not match plan price"
+        }, status_code=402)
+
+    # All checks passed — grant credits (idempotent on payment_id)
+    result = ai_credit_engine.purchase_credits(email, plan, payment_id=payment_id)
+    logger.info(f"Credits granted: {email} - {plan} - payment {payment_id}")
+    return JSONResponse(result)
 
 @app.post("/api/credits/daily-bonus")
 @limiter.limit("30/minute")

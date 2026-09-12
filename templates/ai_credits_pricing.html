@@ -177,8 +177,12 @@
             </div>
         `;
 
-        const modal = new bootstrap.Modal(document.getElementById('payment-modal'));
-        modal.show();
+        const modalEl = document.getElementById('payment-modal');
+let modal = bootstrap.Modal.getInstance(modalEl);
+if (!modal) {
+    modal = new bootstrap.Modal(modalEl);
+}
+modal.show();
     }
 
     async function processSubscription() {

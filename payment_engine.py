@@ -117,6 +117,53 @@ class PaymentEngine:
 
         return {"status": "error", "verified": False, "message": "Signature mismatch"}
 
+
+    def fetch_razorpay_payment(self, payment_id: str) -> Dict:
+        """Fetch a Razorpay payment's details from their API.
+
+        Used for server-side verification: confirms the payment was actually
+        captured by Razorpay and returns its amount, status, and email so the
+        caller can match them against the plan being purchased.
+        """
+        if not self.razorpay_key_id or not self.razorpay_key_secret:
+            return {"status": "error", "message": "Razorpay not configured"}
+
+        if not payment_id or not payment_id.startswith("pay_"):
+            return {"status": "error", "message": "Invalid payment_id format"}
+
+        try:
+            import requests
+            response = requests.get(
+                f"https://api.razorpay.com/v1/payments/{payment_id}",
+                auth=(self.razorpay_key_id, self.razorpay_key_secret),
+                timeout=10
+            )
+
+            if response.status_code == 404:
+                return {"status": "error", "message": "Payment not found in Razorpay"}
+
+            if response.status_code != 200:
+                logger.error(f"Razorpay fetch failed: {response.status_code} {response.text[:200]}")
+                return {"status": "error", "message": f"Razorpay API error: {response.status_code}"}
+
+            data = response.json()
+            return {
+                "status": "success",
+                "payment_id": data.get("id"),
+                "order_id": data.get("order_id"),
+                "amount": data.get("amount"),          # in paise
+                "currency": data.get("currency"),
+                "status_field": data.get("status"),    # 'captured', 'authorized', 'failed', etc.
+                "email": data.get("email"),
+                "contact": data.get("contact"),
+                "method": data.get("method"),
+                "captured": data.get("captured"),
+                "raw": data
+            }
+        except Exception as e:
+            logger.error(f"Razorpay fetch exception: {e}")
+            return {"status": "error", "message": str(e)}
+
     # INR ? target currency conversion rates (approx ? update periodically)
     INR_RATES = {
         "USD": 0.012, "EUR": 0.011, "GBP": 0.0095,
