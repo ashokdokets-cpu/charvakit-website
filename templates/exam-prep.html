@@ -1,4 +1,4 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 {% block title %}Global Exam Preparation Center - Charvak{% endblock %}
 {% block content %}
 <div class="page-hero bg-gradient-primary text-white py-5">
@@ -156,7 +156,7 @@ function subscribeExam(plan) {
     if (plan === 'free') {
         localStorage.setItem('exam_plan', 'free');
         localStorage.setItem('userEmail', email);
-        alert('âœ… Free plan activated!');
+        alert('✅ Free plan activated!');
         loadCategories();
         return;
     }
@@ -171,7 +171,7 @@ function subscribeExam(plan) {
     processCharvakPayment(email, selected.price, 'Exam Prep ' + selected.name, function(response) {
         localStorage.setItem('exam_plan', plan);
         localStorage.setItem('userEmail', email);
-        alert('âœ… ' + selected.name + ' activated!');
+        alert('✅ ' + selected.name + ' activated!');
         loadCategories();
     });
 }
