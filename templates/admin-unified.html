@@ -202,45 +202,52 @@ async function loadAdminStats() {
     }
 }
 
-// Load immediately
-loadAdminStats();
 // ============================================================
 // CHARTS (Revenue Trends & User Growth)
 // ============================================================
 let revenueChart = null;
 let userChart = null;
 
-function loadCharts() {
-    // Revenue Chart
+async function loadCharts() {
+    let stats = null;
+    try {
+        const r = await fetch('/api/credits/admin/stats');
+        stats = await r.json();
+    } catch (e) {
+        console.warn('Charts: could not load stats', e);
+    }
+
+    const totalUsers = stats?.stats?.total_users || 0;
+    const totalRevenue = stats?.stats?.total_revenue || 0;
+    const totalPurchases = stats?.stats?.total_purchases || 0;
+
     const revenueCtx = document.getElementById('revenueChart');
     if (revenueCtx) {
+        if (revenueChart) revenueChart.destroy();
         revenueChart = new Chart(revenueCtx, {
-            type: 'line',
-            data: {
-                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-                datasets: [{
-                    label: 'Revenue',
-                    data: [0, 0, 0, 0],
-                    borderColor: '#3ba591',
-                    backgroundColor: 'rgba(59, 165, 145, 0.1)',
-                    tension: 0.4
-                }]
-            },
-            options: { responsive: true }
-        });
-    }
-    
-    // User Growth Chart
-    const userCtx = document.getElementById('userChart');
-    if (userCtx) {
-        userChart = new Chart(userCtx, {
             type: 'bar',
             data: {
-                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                labels: ['Users', 'Purchases', 'Revenue (INR)'],
                 datasets: [{
-                    label: 'New Users',
-                    data: [0, 0, 0, 0],
-                    backgroundColor: '#3ba591'
+                    label: 'Current Totals',
+                    data: [totalUsers, totalPurchases, totalRevenue],
+                    backgroundColor: ['#3ba591', '#4a90d9', '#28a745']
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { display: false } } }
+        });
+    }
+
+    const userCtx = document.getElementById('userChart');
+    if (userCtx) {
+        if (userChart) userChart.destroy();
+        userChart = new Chart(userCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Users with Credits', 'Everyone Else'],
+                datasets: [{
+                    data: [totalUsers, Math.max(0, 10 - totalUsers)],
+                    backgroundColor: ['#3ba591', '#e9ecef']
                 }]
             },
             options: { responsive: true }
@@ -263,22 +270,31 @@ function exportCSV(data, filename) {
 }
 
 function JSONToCSV(data) {
-    if (data.length === 0) return '';
+    if (!data || data.length === 0) return '';
     const headers = Object.keys(data[0]);
-    const rows = data.map(obj => headers.map(h => obj[h]).join(','));
+    const escape = (v) => {
+        const s = String(v === null || v === undefined ? '' : v);
+        if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+            return '"' + s.replace(/"/g, '""') + '"';
+        }
+        return s;
+    };
+    const rows = data.map(obj => headers.map(h => escape(obj[h])).join(','));
     return [headers.join(','), ...rows].join('\n');
 }
 
 function exportUsers() {
     fetch('/api/admin/users')
         .then(r => r.json())
-        .then(data => exportCSV(data.users || [], 'charvak-users.csv'));
+        .then(data => exportCSV(data.users || [], 'charvak-users.csv'))
+        .catch(e => alert('Export failed: ' + e));
 }
 
 function exportPayments() {
-    fetch('/api/payment/history')
+    fetch('/api/admin/purchases')
         .then(r => r.json())
-        .then(data => exportCSV(data.payments || [], 'charvak-payments.csv'));
+        .then(data => exportCSV(data.purchases || [], 'charvak-purchases.csv'))
+        .catch(e => alert('Export failed: ' + e));
 }
 
 function exportAll() {
@@ -320,11 +336,12 @@ function displayAlerts(alerts) {
 
 // Initialize everything
 document.addEventListener('DOMContentLoaded', function() {
+    loadAdmin();
     loadAdminStats();
     loadCharts();
     checkAlerts();
     setInterval(loadAdminStats, 30000);
-    setInterval(checkAlerts, 60000); // Check alerts every minute
+    setInterval(checkAlerts, 60000);
 });
 </script>
 {% endblock %}

@@ -5033,7 +5033,68 @@ async def update_admin_settings(request: Request):
     data = await request.json()
     return admin_analytics.update_setting(data.get("key"), data.get("value"))
 
+@app.get("/api/admin/users")
+async def admin_list_users(request: Request):
+    """List all users for admin CSV export."""
+    try:
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT user_id, email, name, phone, role, created_at
+            FROM users ORDER BY created_at DESC LIMIT 5000
+        """)
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        users = [
+            {
+                "user_id": r[0],
+                "email": r[1],
+                "name": r[2] or "",
+                "phone": r[3] or "",
+                "role": r[4] or "",
+                "created_at": r[5].isoformat() if r[5] else ""
+            }
+            for r in rows
+        ]
+        return JSONResponse({"status": "success", "users": users, "count": len(users)})
+    except Exception as e:
+        logger.error(f"admin_list_users failed: {e}")
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
 
+
+@app.get("/api/admin/purchases")
+async def admin_list_purchases(request: Request):
+    """List all credit purchases for admin CSV export."""
+    try:
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT purchase_id, email, plan, price, credits_added, payment_id, status, created_at
+            FROM charvak_credit_purchases ORDER BY created_at DESC LIMIT 5000
+        """)
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        purchases = [
+            {
+                "purchase_id": r[0],
+                "email": r[1],
+                "plan": r[2],
+                "price": r[3],
+                "credits_added": r[4],
+                "payment_id": r[5] or "",
+                "status": r[6],
+                "created_at": r[7].isoformat() if r[7] else ""
+            }
+            for r in rows
+        ]
+        return JSONResponse({"status": "success", "purchases": purchases, "count": len(purchases)})
+    except Exception as e:
+        logger.error(f"admin_list_purchases failed: {e}")
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
 
 @app.get("/assessments", response_class=HTMLResponse)
 async def assessments_home(request: Request):
