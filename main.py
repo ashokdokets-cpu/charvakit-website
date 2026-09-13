@@ -426,7 +426,7 @@ class ContactRequest(BaseModel):
 
 class RegisterRequest(BaseModel):
     email: str = Field(..., max_length=200)
-    password: str = Field(..., min_length=8, max_length=100)
+    password: str = Field(..., min_length=12, max_length=100)
     name: str = Field(..., min_length=1, max_length=200)
     role: str = Field(default="candidate", max_length=50)
     phone: Optional[str] = None

@@ -37,12 +37,20 @@ def verify_password(password: str, stored_hash: str) -> bool:
 
 def register_user(email: str, password: str, name: str, role: str = "candidate", phone: str = None):
     """Register a new user with hashed password."""
-    if len(password) < 8:
-        return {"status": "error", "message": "Password must be at least 8 characters"}
+    # Password strength enforcement (12+ chars, mixed case, digit)
+    if len(password) < 12:
+        return {"status": "error", "message": "Password must be at least 12 characters"}
     if not any(c.isupper() for c in password):
         return {"status": "error", "message": "Password must contain an uppercase letter"}
+    if not any(c.islower() for c in password):
+        return {"status": "error", "message": "Password must contain a lowercase letter"}
     if not any(c.isdigit() for c in password):
         return {"status": "error", "message": "Password must contain a number"}
+    # Reject obvious weak patterns
+    lower = password.lower()
+    common_weak = ["password", "123456", "qwerty", "admin", "letmein", "welcome"]
+    if any(weak in lower for weak in common_weak):
+        return {"status": "error", "message": "Password contains a common weak pattern. Please choose a stronger password."}
 
     hashed_password = hash_password(password)
     result = db.create_user(email, hashed_password, name, role, phone)
