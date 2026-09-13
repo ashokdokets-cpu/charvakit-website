@@ -124,7 +124,22 @@ app = FastAPI(
 # ============================================================
 # RATE LIMITING
 # ============================================================
-limiter = Limiter(key_func=get_remote_address)
+def get_real_ip(request: Request) -> str:
+    """Get real client IP, handling Cloudflare proxy.
+
+    Cloudflare sets CF-Connecting-IP to the real client IP.
+    Falls back to X-Forwarded-For if not present.
+    """
+    cf_ip = request.headers.get("CF-Connecting-IP")
+    if cf_ip:
+        return cf_ip.strip()
+    xff = request.headers.get("X-Forwarded-For")
+    if xff:
+        return xff.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
+limiter = Limiter(key_func=get_real_ip)
 app.state.limiter = limiter
 
 @app.exception_handler(RateLimitExceeded)
@@ -586,19 +601,19 @@ async def products(request: Request):
         {"name": "Dokets VouchAI", "description": "AI-powered escrow platform", "features": ["1% Fee", "34 Languages", "13 Currencies", "WhatsApp"], "link": "/products/dokets-vouchai", "icon": "shield-check", "badge": "Featured"},
         {"name": "Dokets Shop", "description": "Modern e-commerce store solution", "features": ["Easy Setup", "Secure Payments", "Inventory", "Mobile Ready"], "link": "https://dokets.shop", "icon": "cart", "badge": "New"},
         {"name": "Dokets RB", "description": "AI-powered resume builder", "features": ["AI Templates", "ATS-Friendly", "Quick Export", "Multiple Formats"], "link": "https://doketsrb.com", "icon": "file-text", "badge": "New"},
-        {"name": "Voice-to-Web", "description": "Voice → Live Website in 3 minutes", "features": ["WhatsApp Bot", "34 Languages", "Free Build", "Pro Hosting"], "link": "/voice-to-web", "icon": "mic"},
+        {"name": "Voice-to-Web", "description": "Voice â†’ Live Website in 3 minutes", "features": ["WhatsApp Bot", "34 Languages", "Free Build", "Pro Hosting"], "link": "/voice-to-web", "icon": "mic"},
         {"name": "Lock-In Breaker", "description": "Cloud cost optimization engine", "features": ["Cloud Audit", "Migration Scripts", "30-50% Savings", "24/7 Monitor"], "link": "/lock-in-breaker", "icon": "lock"},
-        {"name": "Reverse Staffing", "description": "Build projects → Get verified → Get hired", "features": ["AI Code Review", "Verified Portfolio", "48hr Placement", "Zero Risk"], "link": "/reverse-staffing", "icon": "people"},
+        {"name": "Reverse Staffing", "description": "Build projects â†’ Get verified â†’ Get hired", "features": ["AI Code Review", "Verified Portfolio", "48hr Placement", "Zero Risk"], "link": "/reverse-staffing", "icon": "people"},
         {"name": "AuditBot", "description": "AI security & code health scanner", "features": ["OWASP Scan", "Auto-Fix Patches", "WCAG Check", "10min Scan"], "link": "/auditbot", "icon": "shield"},
-        {"name": "Neural Wireframe", "description": "Sketch → Production React/Tailwind code", "features": ["Hand-Drawn Input", "AI Vision", "Instant Deploy", "Responsive"], "link": "/neural-wireframe", "icon": "pencil"},
-        {"name": "Skill-Twin", "description": "AI simulation → Verified skill scorecard", "features": ["AI Assessment", "Verified Badge", "LinkedIn Share", "20+ Stacks"], "link": "/skill-twin", "icon": "robot"},
+        {"name": "Neural Wireframe", "description": "Sketch â†’ Production React/Tailwind code", "features": ["Hand-Drawn Input", "AI Vision", "Instant Deploy", "Responsive"], "link": "/neural-wireframe", "icon": "pencil"},
+        {"name": "Skill-Twin", "description": "AI simulation â†’ Verified skill scorecard", "features": ["AI Assessment", "Verified Badge", "LinkedIn Share", "20+ Stacks"], "link": "/skill-twin", "icon": "robot"},
         {"name": "Globalize.ai", "description": "Instant website localization", "features": ["34 Languages", "Cultural Adapt", "Auto-Compliance", "1 Script Tag"], "link": "/globalize", "icon": "globe"},
         {"name": "Micro-Squads", "description": "14-day AI+Human sprint teams", "features": ["72hr Assembly", "AI Managed", "Outcome Pay", "14-Day Sprint"], "link": "/micro-squads", "icon": "calendar-check"},
         {"name": "Agency-Twin", "description": "AI COO for freelancers", "features": ["Auto-Scoping", "Task Delegation", "Auto-Invoicing", "Talent Pool"], "link": "/agency-twin", "icon": "envelope"},
         {"name": "Geo-Compliance Shield", "description": "Cross-border contracts + payouts", "features": ["50+ Countries", "Auto-Contracts", "Escrow Protected", "13 Currencies"], "link": "/geo-compliance", "icon": "file-text"},
-        {"name": "Design-Token Sentinel", "description": "Figma ↔ GitHub brand sync", "features": ["Figma Sync", "Auto PRs", "Multi-Domain", "WCAG Check"], "link": "/design-token-sentinel", "icon": "palette"},
-        {"name": "Legacy-Shift", "description": "Old code → Next.js Jamstack", "features": ["Legacy Parse", "Auto-Convert", "10x Faster", "Auto-Tested"], "link": "/legacy-shift", "icon": "clock-history"},
-        {"name": "Agent-Ready Wrapper", "description": "JSON-LD → AI agent storefront", "features": ["Structured Data", "Micro-APIs", "Auto-Sync", "AI Commerce"], "link": "/agent-ready", "icon": "cpu"},
+        {"name": "Design-Token Sentinel", "description": "Figma â†” GitHub brand sync", "features": ["Figma Sync", "Auto PRs", "Multi-Domain", "WCAG Check"], "link": "/design-token-sentinel", "icon": "palette"},
+        {"name": "Legacy-Shift", "description": "Old code â†’ Next.js Jamstack", "features": ["Legacy Parse", "Auto-Convert", "10x Faster", "Auto-Tested"], "link": "/legacy-shift", "icon": "clock-history"},
+        {"name": "Agent-Ready Wrapper", "description": "JSON-LD â†’ AI agent storefront", "features": ["Structured Data", "Micro-APIs", "Auto-Sync", "AI Commerce"], "link": "/agent-ready", "icon": "cpu"},
         {"name": "Silent-Killer Sentinel", "description": "24/7 monitoring & auto-fix for webhooks", "features": ["5-Min Checks", "Instant Alerts", "Auto-Hotfix"], "link": "/silent-killer", "icon": "activity"},
         {"name": "AI-Slop Quarantine", "description": "Clean AI-generated code bloat & WCAG errors", "features": ["De-Bloat", "Fix Layouts", "WCAG Fix"], "link": "/ai-slop-quarantine", "icon": "recycle"},
         {"name": "Developer Entropy Engine", "description": "Track team skill decay & upskill", "features": ["Code Quality", "Skill Gaps", "Auto-Learning"], "link": "/developer-entropy", "icon": "graph-down"},
@@ -1047,7 +1062,7 @@ async def api_register(request: Request, data: RegisterRequest):
         )
 
 @app.post("/api/auth/login")
-@limiter.limit("30/minute")
+@limiter.limit("5/minute")
 async def api_login(request: Request, data: LoginRequest):
     try:
         # Check email verification (admins bypass)
@@ -2006,12 +2021,12 @@ async def generate_invoice(request: Request):
             "service": service,
             "description": "Professional services as per agreement",
             "qty": 1,
-            "rate": f"₹{amount_int}",
-            "amount": f"₹{amount_int}"
+            "rate": f"â‚¹{amount_int}",
+            "amount": f"â‚¹{amount_int}"
         }],
-        subtotal=f"₹{amount_int}",
-        gst_amount=f"₹{int(amount_int * 0.18)}",
-        total_amount=f"₹{int(amount_int * 1.18)}",
+        subtotal=f"â‚¹{amount_int}",
+        gst_amount=f"â‚¹{int(amount_int * 0.18)}",
+        total_amount=f"â‚¹{int(amount_int * 1.18)}",
         payment_terms="15"
     )
 
@@ -2142,7 +2157,7 @@ async def verify_payment(request: Request):
             result = {"status": "error", "message": f"Unknown method: {method}"}
         
         if result.get("verified"):
-            logger.info(f"✅ Payment verified: {method} - {data.get('order_id')}")
+            logger.info(f"âœ… Payment verified: {method} - {data.get('order_id')}")
         
         return result
     except Exception as e:
@@ -2160,7 +2175,7 @@ async def razorpay_webhook(request: Request):
 
     Razorpay calls this server-to-server on payment events. This is the safety
     net for the case where the user's browser closed mid-checkout and the
-    client-callback never fired. Idempotent on payment_id — safe to receive
+    client-callback never fired. Idempotent on payment_id â€” safe to receive
     the same event twice.
     """
     try:
@@ -2174,7 +2189,7 @@ async def razorpay_webhook(request: Request):
         try:
             payload = json.loads(raw_body.decode("utf-8"))
         except Exception as e:
-            logger.error(f"Razorpay webhook: invalid JSON — {e}")
+            logger.error(f"Razorpay webhook: invalid JSON â€” {e}")
             return JSONResponse({"status": "error", "message": "Invalid JSON"}, status_code=400)
 
         event = payload.get("event", "")
@@ -2804,7 +2819,7 @@ async def sso_login(request: Request):
 
 @app.post("/saml/acs")
 async def saml_acs(request: Request):
-    """SAML Assertion Consumer Service — receives IdP response."""
+    """SAML Assertion Consumer Service â€” receives IdP response."""
     try:
         form_data = await request.form()
         saml_response = form_data.get("SAMLResponse", "")
@@ -3014,7 +3029,7 @@ async def hiring_savings_calculator(request: Request):
             "charvak_cost": charvak_cost,
             "savings": savings,
             "savings_percent": savings_percent,
-            "message": f"You save ₹{savings:,} per year ({savings_percent}%)"
+            "message": f"You save â‚¹{savings:,} per year ({savings_percent}%)"
         }
     except Exception as e:
         return {"status": "error", "message": "Calculation failed"}
@@ -3711,7 +3726,7 @@ async def lms_stats():
 async def lms_page(request: Request):
     return template_response("lms.html", request, "Learning Management System - Charvak IT Consulting")
 
-# LMS — Additional Features
+# LMS â€” Additional Features
 @app.post("/api/lms/lesson/add")
 @limiter.limit("20/minute")
 async def add_lesson(request: Request):
@@ -4106,7 +4121,7 @@ async def how_it_works_page(request: Request):
 
 @app.get("/admin-control", response_class=HTMLResponse)
 async def admin_control_center(request: Request):
-    """Admin Control Center — charvakit@gmail.com"""
+    """Admin Control Center â€” charvakit@gmail.com"""
     return template_response("admin-unified.html", request, "Admin Control Center - Charvak")
 
 @app.get("/admin-login", response_class=HTMLResponse)
@@ -4153,7 +4168,7 @@ async def lifecycle_stats():
     """Get lifecycle statistics."""
     return data_lifecycle.get_stats()
 
-# FYP — AI-Powered
+# FYP â€” AI-Powered
 @app.post("/api/fyp/suggest-topics")
 @limiter.limit("60/minute")
 async def suggest_fyp_topics(request: Request):
@@ -4309,7 +4324,7 @@ async def purchase_credits(request: Request):
             "message": "Payment amount does not match plan price"
         }, status_code=402)
 
-    # All checks passed — grant credits (idempotent on payment_id)
+    # All checks passed â€” grant credits (idempotent on payment_id)
     result = ai_credit_engine.purchase_credits(email, plan, payment_id=payment_id)
     logger.info(f"Credits granted: {email} - {plan} - payment {payment_id}")
     return JSONResponse(result)
@@ -5788,6 +5803,7 @@ async def verify_email_page(request: Request, token: str = ""):
                                 message=result["message"], success=False)
 
 @app.post("/api/auth/resend-verification")
+@limiter.limit("3/minute")
 async def resend_verification(request: Request):
     """Resend verification email."""
     data = await request.json()
@@ -5808,7 +5824,7 @@ async def forgot_password_page(request: Request):
     return template_response("forgot-password.html", request, "Forgot Password - Charvak")
 
 @app.post("/api/auth/forgot-password")
-@limiter.limit("20/minute")
+@limiter.limit("3/minute")
 async def api_forgot_password(request: Request):
     data = await request.json()
     email = data.get("email")
@@ -5845,6 +5861,7 @@ async def reset_password_page(request: Request, token: str = ""):
     return template_response("reset-password.html", request, "Reset Password - Charvak", token=token)
 
 @app.post("/api/auth/reset-password")
+@limiter.limit("5/minute")
 async def api_reset_password(request: Request):
     """Reset password - direct DB check."""
     from datetime import datetime, timezone
