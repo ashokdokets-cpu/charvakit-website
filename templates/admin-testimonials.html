@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block title %}Testimonials Moderation - Charvak{% endblock %}
+{% block content %}
+<div class="page-hero bg-dark text-white py-4">
+    <div class="container py-3">
+        <h1 class="display-5 fw-bold">⭐ Testimonials Moderation</h1>
+        <p class="lead mb-0">Review, approve, or reject testimonial submissions</p>
+    </div>
+</div>
+
+<div class="container py-4">
+    <!-- Stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3"><div class="card bg-warning h-100"><div class="card-body"><h6>⏳ Pending</h6><h3 id="statPending">0</h3></div></div></div>
+        <div class="col-md-3"><div class="card bg-success text-white h-100"><div class="card-body"><h6>✅ Approved</h6><h3 id="statApproved">0</h3></div></div></div>
+        <div class="col-md-3"><div class="card bg-danger text-white h-100"><div class="card-body"><h6>❌ Rejected</h6><h3 id="statRejected">0</h3></div></div></div>
+        <div class="col-md-3"><div class="card bg-primary text-white h-100"><div class="card-body"><h6>📊 Total</h6><h3 id="statTotal">0</h3></div></div></div>
+    </div>
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-3" role="tablist">
+        <li class="nav-item"><button class="nav-link active" id="tab-pending" data-bs-toggle="tab" data-bs-target="#pane-pending" onclick="switchTab('pending')">⏳ Pending</button></li>
+        <li class="nav-item"><button class="nav-link" id="tab-approved" data-bs-toggle="tab" data-bs-target="#pane-approved" onclick="switchTab('approved')">✅ Approved</button></li>
+        <li class="nav-item"><button class="nav-link" id="tab-rejected" data-bs-toggle="tab" data-bs-target="#pane-rejected" onclick="switchTab('rejected')">❌ Rejected</button></li>
+        <li class="nav-item"><button class="nav-link" id="tab-all" data-bs-toggle="tab" data-bs-target="#pane-all" onclick="switchTab('all')">📋 All</button></li>
+    </ul>
+
+    <div class="tab-content">
+        <div class="tab-pane fade show active" id="pane-pending"><div id="list-pending">Loading...</div></div>
+        <div class="tab-pane fade" id="pane-approved"><div id="list-approved">Loading...</div></div>
+        <div class="tab-pane fade" id="pane-rejected"><div id="list-rejected">Loading...</div></div>
+        <div class="tab-pane fade" id="pane-all"><div id="list-all">Loading...</div></div>
+    </div>
+</div>
+
+<script>
+let currentTab = 'pending';
+
+async function loadStats() {
+    try {
+        const r = await fetch('/api/admin/testimonials/stats');
+        const d = await r.json();
+        if (d.status === 'success') {
+            document.getElementById('statPending').textContent = d.pending;
+            document.getElementById('statApproved').textContent = d.approved;
+            document.getElementById('statRejected').textContent = d.rejected;
+            document.getElementById('statTotal').textContent = d.total;
+        }
+    } catch (e) { console.error('stats:', e); }
+}
+
+async function loadList(status) {
+    const container = document.getElementById('list-' + status);
+    container.innerHTML = '<p class="text-muted">Loading...</p>';
+    try {
+        const r = await fetch('/api/admin/testimonials?status=' + status);
+        const d = await r.json();
+        if (d.status !== 'success') {
+            container.innerHTML = '<p class="text-danger">Failed to load: ' + (d.message || 'unknown') + '</p>';
+            return;
+        }
+        if (d.count === 0) {
+            container.innerHTML = '<p class="text-muted text-center py-4">No testimonials with status "' + status + '"</p>';
+            return;
+        }
+        container.innerHTML = d.testimonials.map(t => renderCard(t)).join('');
+    } catch (e) {
+        container.innerHTML = '<p class="text-danger">Error: ' + e + '</p>';
+    }
+}
+
+function renderCard(t) {
+    const stars = '⭐'.repeat(t.rating);
+    const statusBadge = t.status === 'pending'
+        ? '<span class="badge bg-warning text-dark">Pending</span>'
+        : t.status === 'approved'
+            ? '<span class="badge bg-success">Approved</span>'
+            : '<span class="badge bg-danger">Rejected</span>';
+
+    const actions = t.status === 'pending'
+        ? `<button class="btn btn-success btn-sm me-1" onclick="approveT(${t.id})">✅ Approve</button>
+           <button class="btn btn-danger btn-sm me-1" onclick="rejectT(${t.id})">❌ Reject</button>`
+        : t.status === 'approved'
+            ? `<button class="btn btn-warning btn-sm me-1" onclick="rejectT(${t.id})">Reject</button>`
+            : `<button class="btn btn-success btn-sm me-1" onclick="approveT(${t.id})">Approve</button>`;
+    const del = `<button class="btn btn-outline-danger btn-sm" onclick="deleteT(${t.id})">🗑️ Delete</button>`;
+
+    return `
+        <div class="card mb-3 border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                        <div class="mb-1">${stars} ${statusBadge}</div>
+                        <h6 class="mb-0">${escapeHtml(t.name)} ${t.role ? '<small class="text-muted">— ' + escapeHtml(t.role) + '</small>' : ''}</h6>
+                        <small class="text-muted">${escapeHtml(t.email)}${t.company ? ' • ' + escapeHtml(t.company) : ''}</small>
+                    </div>
+                    <small class="text-muted">${t.created_at.slice(0,10)}</small>
+                </div>
+                <p class="mb-3">${escapeHtml(t.message)}</p>
+                <div class="d-flex gap-2">${actions}${del}</div>
+            </div>
+        </div>
+    `;
+}
+
+function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+async function approveT(id) {
+    if (!confirm('Approve this testimonial? It will appear on /testimonials.')) return;
+    const r = await fetch('/api/admin/testimonials/' + id + '/approve', {method: 'POST'});
+    const d = await r.json();
+    alert(d.message || 'Done');
+    refresh();
+}
+
+async function rejectT(id) {
+    if (!confirm('Reject this testimonial?')) return;
+    const r = await fetch('/api/admin/testimonials/' + id + '/reject', {method: 'POST'});
+    const d = await r.json();
+    alert(d.message || 'Done');
+    refresh();
+}
+
+async function deleteT(id) {
+    if (!confirm('Permanently delete this testimonial? This cannot be undone.')) return;
+    const r = await fetch('/api/admin/testimonials/' + id + '/delete', {method: 'POST'});
+    const d = await r.json();
+    alert(d.message || 'Deleted');
+    refresh();
+}
+
+function switchTab(status) {
+    currentTab = status;
+    loadList(status);
+}
+
+function refresh() {
+    loadStats();
+    loadList(currentTab);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadStats();
+    loadList('pending');
+});
+</script>
+{% endblock %}

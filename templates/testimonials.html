@@ -22,39 +22,15 @@
         <div class="col-6 col-md-3"><h2 class="text-primary">17</h2><small>Visa Types Covered</small></div>
     </div>
 
-    <div class="row g-4">
-        <div class="col-md-6 col-lg-4">
-            <div class="card h-100 p-4 border-0 shadow-sm">
-                <div class="mb-2">⭐⭐⭐⭐⭐ <span class="badge bg-success ms-2">Verified Client</span></div>
-                <p class="card-text">"Charvak found us 3 senior developers in under 48 hours. Saved us 40% vs traditional staffing."</p>
-                <hr>
-                <div class="d-flex align-items-center">
-                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width:48px;height:48px;">RS</div>
-                    <div><h6 class="mb-0">Rahul S.</h6><small class="text-muted">CTO, TechStart India</small></div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6 col-lg-4">
-            <div class="card h-100 p-4 border-0 shadow-sm">
-                <div class="mb-2">⭐⭐⭐⭐⭐ <span class="badge bg-success ms-2">Verified Client</span></div>
-                <p class="card-text">"The NA module handled H-1B and OPT verification seamlessly. Reduced our compliance risk to zero."</p>
-                <hr>
-                <div class="d-flex align-items-center">
-                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width:48px;height:48px;">SM</div>
-                    <div><h6 class="mb-0">Sarah M.</h6><small class="text-muted">HR Director, GlobalTech USA</small></div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6 col-lg-4">
-            <div class="card h-100 p-4 border-0 shadow-sm">
-                <div class="mb-2">⭐⭐⭐⭐⭐ <span class="badge bg-success ms-2">Verified Candidate</span></div>
-                <p class="card-text">"Got my Skill-Twin badge and 3 job offers in 2 weeks. The career engine is a game-changer!"</p>
-                <hr>
-                <div class="d-flex align-items-center">
-                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width:48px;height:48px;">PK</div>
-                    <div><h6 class="mb-0">Priya K.</h6><small class="text-muted">Full-Stack Developer</small></div>
-                </div>
-            </div>
+<!-- ============================================================
+     SAMPLE TESTIMONIALS — Replace with real customer quotes before
+     adding schema.org markup. Do NOT submit to Google for rich results
+     until these are verified real testimonials.
+     ============================================================ -->    
+    <!-- Dynamic testimonials container -->
+    <div id="testimonialsContainer" class="row g-4">
+        <div class="col-12 text-center py-4">
+            <p class="text-muted">Loading testimonials...</p>
         </div>
     </div>
 
@@ -67,12 +43,13 @@
     <div class="card border-0 shadow-sm">
         <div class="card-body p-4">
             <form onsubmit="submitTestimonial(event)">
-                <div class="row g-3">
-                    <div class="col-md-6"><input type="text" class="form-control" id="testName" placeholder="Your Name" required></div>
-                    <div class="col-md-6"><input type="text" class="form-control" id="testRole" placeholder="Your Role (e.g., CTO, Developer)" required></div>
-                    <div class="col-md-6"><input type="text" class="form-control" id="testCompany" placeholder="Company"></div>
-                    <div class="col-md-6">
-                        <select class="form-select" id="testRating">
+    <div class="row g-3">
+        <div class="col-md-6"><input type="text" class="form-control" id="testName" placeholder="Your Name" required></div>
+        <div class="col-md-6"><input type="email" class="form-control" id="testEmail" placeholder="Your Email" required></div>
+        <div class="col-md-6"><input type="text" class="form-control" id="testRole" placeholder="Your Role (e.g., CTO, Developer)" required></div>
+        <div class="col-md-6"><input type="text" class="form-control" id="testCompany" placeholder="Company"></div>
+        <div class="col-md-6">
+            <select class="form-select" id="testRating">
                             <option value="5">⭐⭐⭐⭐⭐ (Excellent)</option>
                             <option value="4">⭐⭐⭐⭐ (Good)</option>
                             <option value="3">⭐⭐⭐ (Average)</option>
@@ -90,30 +67,87 @@
 <script>
 async function submitTestimonial(e) {
     e.preventDefault();
+    const msg = document.getElementById('testMsg');
+    msg.style.color = '';
     const data = {
         name: document.getElementById('testName').value,
-        email: 'testimonial@charvakit.com',
-        phone: '',
-        subject: 'New Testimonial Submission',
-        message: `Role: ${document.getElementById('testRole').value}\nCompany: ${document.getElementById('testCompany').value}\nRating: ${document.getElementById('testRating').value} stars\n\nTestimonial: ${document.getElementById('testMessage').value}`
+        email: document.getElementById('testEmail').value,
+        role: document.getElementById('testRole').value,
+        company: document.getElementById('testCompany').value,
+        rating: parseInt(document.getElementById('testRating').value),
+        message: document.getElementById('testMessage').value
     };
     try {
-        const resp = await fetch('/api/contact', {
+        const resp = await fetch('/api/testimonials/submit', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(data)
         });
         const result = await resp.json();
-        const msg = document.getElementById('testMsg');
-        msg.textContent = '✅ Thank you! Your testimonial has been submitted for review.';
-        msg.style.display = 'block';
-        document.querySelector('#testimonialForm form').reset();
+        if (result.status === 'success') {
+            msg.textContent = '✅ Thank you! Your testimonial has been submitted for review.';
+            msg.style.color = 'green';
+            msg.style.display = 'block';
+            document.querySelector('#testimonialForm form').reset();
+        } else {
+            throw new Error(result.message || 'Submission failed');
+        }
     } catch (err) {
-        const msg = document.getElementById('testMsg');
-        msg.textContent = '✅ Thank you! Your testimonial has been noted.';
+        msg.textContent = '❌ Something went wrong. Please email us at hr@charvakit.com';
+        msg.style.color = 'red';
         msg.style.display = 'block';
     }
 }
+async function loadTestimonials() {
+    const container = document.getElementById('testimonialsContainer');
+    if (!container) return;
+    try {
+        const r = await fetch('/api/testimonials');
+        const d = await r.json();
+        if (d.status !== 'success' || d.count === 0) {
+            container.innerHTML = `
+                <div class="col-12 text-center py-4">
+                    <p class="text-muted mb-0">No testimonials to display yet.</p>
+                    <p class="text-muted small">Be the first to share your story — use the form below.</p>
+                </div>
+            `;
+            return;
+        }
+        container.innerHTML = d.testimonials.map(t => renderTestimonialCard(t)).join('');
+    } catch (e) {
+        container.innerHTML = '<p class="text-danger text-center">Could not load testimonials.</p>';
+    }
+}
+
+function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+function renderTestimonialCard(t) {
+    const stars = '⭐'.repeat(t.rating);
+    const initials = (t.name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    const badge = t.role && t.role.toLowerCase().includes('candidate') ? 'Verified Candidate' : 'Verified Client';
+    return `
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 p-4 border-0 shadow-sm">
+                <div class="mb-2">${stars} <span class="badge bg-success ms-2">${badge}</span></div>
+                <p class="card-text">"${escapeHtml(t.message)}"</p>
+                <hr>
+                <div class="d-flex align-items-center">
+                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width:48px;height:48px;">${initials}</div>
+                    <div>
+                        <h6 class="mb-0">${escapeHtml(t.name)}</h6>
+                        <small class="text-muted">${escapeHtml(t.role)}${t.company ? ', ' + escapeHtml(t.company) : ''}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Load on page ready
+document.addEventListener('DOMContentLoaded', loadTestimonials);
+if (document.readyState !== 'loading') loadTestimonials();
 </script>
     </div>
 </div>

@@ -2699,6 +2699,106 @@ async def revoke_badge(request: Request):
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
+class TestimonialSubmission(BaseModel):
+    name: str = Field(..., min_length=1, max_length=200)
+    email: str = Field(..., min_length=5, max_length=200)
+    role: str = Field(default="", max_length=200)
+    company: str = Field(default="", max_length=200)
+    rating: int = Field(default=5, ge=1, le=5)
+    message: str = Field(..., min_length=10, max_length=2000)
+
+
+@app.post("/api/testimonials/submit")
+@limiter.limit("3/hour")
+async def submit_testimonial(request: Request, data: TestimonialSubmission):
+    """Public endpoint: submit a testimonial for review."""
+    try:
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            INSERT INTO testimonials (name, email, role, company, rating, message, status)
+            VALUES (%s, %s, %s, %s, %s, %s, 'pending')
+            RETURNING id
+        """, (data.name, data.email, data.role, data.company, data.rating, data.message))
+        new_id = cur.fetchone()[0]
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        # Notify HR
+        try:
+            from email_engine import email_engine
+            html = f"""
+            <div style="font-family:sans-serif;max-width:600px;">
+              <h2 style="color:#3ba591;">New Testimonial Submission</h2>
+              <p><strong>From:</strong> {data.name} ({data.email})</p>
+              <p><strong>Role:</strong> {data.role or '—'}</p>
+              <p><strong>Company:</strong> {data.company or '—'}</p>
+              <p><strong>Rating:</strong> {data.rating}/5</p>
+              <hr>
+              <p>{data.message}</p>
+              <hr>
+              <p><a href="https://www.charvakit.com/admin/testimonials" style="background:#3ba591;color:#fff;padding:10px 20px;text-decoration:none;border-radius:5px;">Review in Admin</a></p>
+            </div>
+            """
+            email_engine.send_email('hr@charvakit.com', f'New Testimonial — {data.name}', html)
+        except Exception as e:
+            logger.error(f"Testimonial notification email failed: {e}")
+
+        return JSONResponse({
+            "status": "success",
+            "message": "Thank you! Your testimonial has been submitted for review.",
+            "id": new_id
+        })
+    except Exception as e:
+        logger.error(f"submit_testimonial failed: {e}")
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+
+@app.get("/api/testimonials")
+async def get_testimonials():
+    """Public: fetch approved testimonials."""
+    try:
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT id, name, role, company, rating, message, approved_at
+            FROM testimonials WHERE status = 'approved'
+            ORDER BY approved_at DESC NULLS LAST, created_at DESC LIMIT 100
+        """)
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+
+        testimonials = [
+            {
+                "id": r[0],
+                "name": r[1],
+                "role": r[2] or "",
+                "company": r[3] or "",
+                "rating": r[4],
+                "message": r[5],
+                "approved_at": r[6].isoformat() if r[6] else ""
+            }
+            for r in rows
+        ]
+
+        # Summary stats
+        total = len(testimonials)
+        avg_rating = round(sum(t["rating"] for t in testimonials) / total, 1) if total else 0
+
+        return JSONResponse({
+            "status": "success",
+            "testimonials": testimonials,
+            "count": total,
+            "average_rating": avg_rating
+        })
+    except Exception as e:
+        logger.error(f"get_testimonials failed: {e}")
+        return JSONResponse({"status": "error", "testimonials": [], "count": 0, "average_rating": 0})
+
 @app.get("/testimonials", response_class=HTMLResponse)
 async def testimonials(request: Request):
     """Testimonials & social proof page."""
@@ -5096,6 +5196,140 @@ async def admin_list_purchases(request: Request):
         logger.error(f"admin_list_purchases failed: {e}")
         return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
 
+
+
+@app.get("/api/admin/testimonials")
+async def admin_list_testimonials(request: Request, status: str = "pending"):
+    """Admin: list testimonials filtered by status."""
+    try:
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+        if status == "all":
+            cur.execute("""
+                SELECT id, name, email, role, company, rating, message, status, created_at, approved_at
+                FROM testimonials ORDER BY created_at DESC LIMIT 500
+            """)
+        else:
+            cur.execute("""
+                SELECT id, name, email, role, company, rating, message, status, created_at, approved_at
+                FROM testimonials WHERE status = %s ORDER BY created_at DESC LIMIT 500
+            """, (status,))
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+
+        items = [
+            {
+                "id": r[0],
+                "name": r[1],
+                "email": r[2],
+                "role": r[3] or "",
+                "company": r[4] or "",
+                "rating": r[5],
+                "message": r[6],
+                "status": r[7],
+                "created_at": r[8].isoformat() if r[8] else "",
+                "approved_at": r[9].isoformat() if r[9] else ""
+            }
+            for r in rows
+        ]
+        return JSONResponse({"status": "success", "testimonials": items, "count": len(items)})
+    except Exception as e:
+        logger.error(f"admin_list_testimonials failed: {e}")
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+
+@app.get("/api/admin/testimonials/stats")
+async def admin_testimonial_stats(request: Request):
+    """Admin: counts by status."""
+    try:
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT status, COUNT(*) FROM testimonials GROUP BY status
+        """)
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        counts = {r[0]: r[1] for r in rows}
+        return JSONResponse({
+            "status": "success",
+            "pending": counts.get("pending", 0),
+            "approved": counts.get("approved", 0),
+            "rejected": counts.get("rejected", 0),
+            "total": sum(counts.values())
+        })
+    except Exception as e:
+        logger.error(f"admin_testimonial_stats failed: {e}")
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+
+@app.post("/api/admin/testimonials/{testimonial_id}/approve")
+async def admin_approve_testimonial(request: Request, testimonial_id: int):
+    """Admin: approve a testimonial."""
+    try:
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            UPDATE testimonials SET status = 'approved', approved_at = CURRENT_TIMESTAMP
+            WHERE id = %s RETURNING id, name
+        """, (testimonial_id,))
+        row = cur.fetchone()
+        conn.commit()
+        cur.close()
+        conn.close()
+        if not row:
+            return JSONResponse({"status": "error", "message": "Testimonial not found"}, status_code=404)
+        return JSONResponse({"status": "success", "id": row[0], "message": f"Approved testimonial from {row[1]}"})
+    except Exception as e:
+        logger.error(f"admin_approve_testimonial failed: {e}")
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+
+@app.post("/api/admin/testimonials/{testimonial_id}/reject")
+async def admin_reject_testimonial(request: Request, testimonial_id: int):
+    """Admin: reject a testimonial."""
+    try:
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            UPDATE testimonials SET status = 'rejected' WHERE id = %s RETURNING id, name
+        """, (testimonial_id,))
+        row = cur.fetchone()
+        conn.commit()
+        cur.close()
+        conn.close()
+        if not row:
+            return JSONResponse({"status": "error", "message": "Testimonial not found"}, status_code=404)
+        return JSONResponse({"status": "success", "id": row[0], "message": f"Rejected testimonial from {row[1]}"})
+    except Exception as e:
+        logger.error(f"admin_reject_testimonial failed: {e}")
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+
+@app.post("/api/admin/testimonials/{testimonial_id}/delete")
+async def admin_delete_testimonial(request: Request, testimonial_id: int):
+    """Admin: permanently delete a testimonial."""
+    try:
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM testimonials WHERE id = %s RETURNING id", (testimonial_id,))
+        row = cur.fetchone()
+        conn.commit()
+        cur.close()
+        conn.close()
+        if not row:
+            return JSONResponse({"status": "error", "message": "Testimonial not found"}, status_code=404)
+        return JSONResponse({"status": "success", "id": row[0], "message": "Testimonial deleted"})
+    except Exception as e:
+        logger.error(f"admin_delete_testimonial failed: {e}")
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
 @app.get("/assessments", response_class=HTMLResponse)
 async def assessments_home(request: Request):
     """Unified assessments hub."""
@@ -5150,6 +5384,11 @@ async def add_role_with_ai(request: Request):
 async def get_role_details(role_id: str):
     return role_manager.get_role_details(role_id)
 
+
+@app.get("/admin/testimonials", response_class=HTMLResponse)
+async def admin_testimonials_page(request: Request):
+    """Admin: testimonials moderation page."""
+    return template_response("admin-testimonials.html", request, "Testimonials Moderation - Charvak")
 
 
 @app.get("/admin-roles", response_class=HTMLResponse)
