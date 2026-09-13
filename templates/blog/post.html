@@ -1,8 +1,7 @@
 {% extends "base.html" %}
 {% block title %}{{ post.seo_title }}{% endblock %}
-{% block meta %}
-<meta name="description" content="{{ post.seo_description }}">
-{% endblock %}
+{% block description %}{{ post.seo_description }}{% endblock %}
+{% block og_title %}{{ post.title }} | Charvak Blog{% endblock %}
 {% block content %}
 <div class="container py-5">
     <div class="row"><div class="col-lg-8 mx-auto">
@@ -11,7 +10,11 @@
         <p class="text-muted">{{ post.author }} · {{ post.read_time }} read · {{ post.published_at[:10] }}</p>
         <div class="mb-3">{% for tag in post.tags %}<span class="badge bg-light text-dark me-1">{{ tag }}</span>{% endfor %}</div>
         <hr>
-        <div class="blog-content"><p>{{ post.content }}</p></div>
+        <div class="blog-content">
+            {% for paragraph in post.content.split('\n\n') %}
+                <p>{{ paragraph }}</p>
+            {% endfor %}
+        </div>
         <hr>
         <div class="text-center"><a href="/blog" class="btn btn-outline-primary">← Back to Blog</a></div>
         {% if related %}
@@ -24,4 +27,34 @@
         {% endif %}
     </div></div>
 </div>
+
+<!-- Schema.org BlogPosting markup -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "{{ post.title }}",
+  "description": "{{ post.seo_description }}",
+  "author": {
+    "@type": "Organization",
+    "name": "{{ post.author }}"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Charvak IT Consulting Pvt Ltd",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://www.charvakit.com/static/images/logo.png"
+    }
+  },
+  "datePublished": "{{ post.published_at[:10] }}",
+  "dateModified": "{{ post.published_at[:10] }}",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://www.charvakit.com/blog/{{ post.slug }}"
+  },
+  "keywords": "{{ post.tags|join(', ') }}",
+  "articleSection": "{{ post.category }}"
+}
+</script>
 {% endblock %}

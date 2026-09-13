@@ -1,5 +1,6 @@
 {% extends "base.html" %}
-{% block title %}Blog - Charvak IT Consulting{% endblock %}
+{% block title %}Blog - AI, Staffing & Remote Work Insights | Charvak{% endblock %}
+{% block description %}Insights on AI-powered staffing, US work visas, remote hiring, and escrow payments from Charvak IT Consulting.{% endblock %}
 {% block content %}
 <div class="page-hero bg-gradient-primary text-white py-5">
     <div class="container py-4"><h1 class="display-4 fw-bold">Charvak Blog</h1><p class="lead">Insights on AI, staffing, visas, and remote work</p></div>
@@ -23,4 +24,30 @@
         {% endfor %}
     </div>
 </div>
+
+<!-- Schema.org Blog markup -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Blog",
+  "name": "Charvak Blog",
+  "description": "Insights on AI, staffing, visas, and remote work",
+  "url": "https://www.charvakit.com/blog",
+  "publisher": {
+    "@type": "Organization",
+    "name": "Charvak IT Consulting Pvt Ltd"
+  },
+  "blogPost": [
+    {% for post in posts.posts %}
+    {
+      "@type": "BlogPosting",
+      "headline": "{{ post.title }}",
+      "url": "https://www.charvakit.com/blog/{{ post.slug }}",
+      "datePublished": "{{ post.published_at[:10] }}",
+      "author": {"@type": "Organization", "name": "{{ post.author }}"}
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ]
+}
+</script>
 {% endblock %}

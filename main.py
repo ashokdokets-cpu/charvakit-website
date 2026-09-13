@@ -2814,6 +2814,32 @@ async def blog_index(request: Request):
     posts = blog_engine.get_all_posts()
     return template_response("blog/index.html", request, "Blog - Charvak IT Consulting", posts=posts)
 
+@app.get("/blog/rss.xml")
+async def blog_rss():
+    """RSS feed for blog posts."""
+    posts = blog_engine.get_all_posts()["posts"]
+    items_xml = ""
+    for p in posts:
+        items_xml += f"""    <item>
+      <title><![CDATA[{p['title']}]]></title>
+      <link>https://www.charvakit.com/blog/{p['slug']}</link>
+      <description><![CDATA[{p['excerpt']}]]></description>
+      <pubDate>{p['published_at'][:10]}</pubDate>
+      <guid>https://www.charvakit.com/blog/{p['slug']}</guid>
+    </item>
+"""
+    xml = f"""<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Charvak Blog</title>
+    <link>https://www.charvakit.com/blog</link>
+    <description>Insights on AI, staffing, visas, and remote work</description>
+    <language>en-us</language>
+{items_xml}  </channel>
+</rss>"""
+    return PlainTextResponse(xml, media_type="application/rss+xml")
+
+
 @app.get("/blog/{slug}", response_class=HTMLResponse)
 async def blog_post(request: Request, slug: str):
     """Individual blog post."""
