@@ -160,6 +160,11 @@ Contains: all source, templates, static, `.env`, `.git`, `scripts/`, master docs
 - **Root directory has ~30 one-off dev scripts** — cosmetic cleanup pending
 - **PayPal client ID** — hardcoded in a few places (low priority)
 - **503 files have UTF-8 BOM** — harmless (only `base.html` needed stripping)
+- **SYNC_API_KEY / SYNC_API_SECRET** — hardcoded defaults in public repo. 
+  Dokets RB integration callable by anyone who reads the repo. 
+  Needs dual-key rotation + Dokets RB env var update. 
+  Risk: medium (sync endpoints not critical but not private). 
+  Deferred until we confirm Dokets RB's deployment location.
 
 ---
 
