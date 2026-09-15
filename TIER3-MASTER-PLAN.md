@@ -95,7 +95,7 @@
 
 ---
 
-### Session 3 — Interview Prep E2E (2 hr)
+### Session 3 — Interview Prep E2E (2 hr)  **Status:** ✅ Done 2026-09-16. Tagged `v1.7-interview-prep-ai-20260916`. Full AI scoring + 8 questions + credit integration verified.
 
 **Tasks:**
 1. Create tables: `charvak_interview_sessions`, `charvak_interview_questions`
