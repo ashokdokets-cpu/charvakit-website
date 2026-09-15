@@ -445,6 +445,7 @@ class RegisterRequest(BaseModel):
     name: str = Field(..., min_length=1, max_length=200)
     role: str = Field(default="candidate", max_length=50)
     phone: Optional[str] = None
+    referral_code: Optional[str] = Field(default=None, max_length=100)
 
 
 class LoginRequest(BaseModel):
@@ -837,6 +838,27 @@ async def post_job(request: Request):
 async def track_application(request: Request):
     return template_response("track-application.html", request, "Track Application - Charvak")
 
+@app.get("/ref/{referral_code}")
+async def referral_redirect(referral_code: str, request: Request):
+    """Handle referral link clicks — log + redirect to registration with ?ref= param."""
+    try:
+        source = request.query_params.get("src", "direct")
+        result = referral_engine.track_click(referral_code, source)
+        if result.get("status") == "error":
+            logger.warning(f"Invalid referral code: {referral_code}")
+        # Redirect to register with the referral code
+        return RedirectResponse(url=f"/register?ref={referral_code}", status_code=302)
+    except Exception as e:
+        logger.error(f"referral_redirect failed: {e}")
+        return RedirectResponse(url="/register", status_code=302)
+
+
+@app.get("/referral-dashboard", response_class=HTMLResponse)
+async def referral_dashboard(request: Request):
+    """User's referral dashboard."""
+    return template_response("referral-dashboard.html", request, "Referral Dashboard - Charvak")
+
+
 @app.get("/submit-referral", response_class=HTMLResponse)
 async def submit_referral(request: Request):
     return template_response("submit-referral.html", request, "Submit Referral - Charvak")
@@ -1053,7 +1075,32 @@ async def api_register(request: Request, data: RegisterRequest):
             except Exception as e:
                 logger.error(f"Verification email failed: {e}")
                 result["message"] = "Account created! Email verification pending."
-        
+
+            # Capture referral code if present
+            try:
+                referral_code = data.referral_code or request.query_params.get("ref")
+                if referral_code:
+                    ref_result = referral_engine.track_signup(referral_code, data.email)
+                    if ref_result.get("status") == "success":
+                        logger.info(f"Referral signup tracked: {referral_code} -> {data.email}")
+                        try:
+                            referrer_email = ref_result.get("referrer_email")
+                            if referrer_email:
+                                from email_engine import email_engine
+                                html = f"""
+                                <div style="font-family:sans-serif;max-width:600px;">
+                                  <h2 style="color:#3ba591;">Someone signed up using your referral!</h2>
+                                  <p><strong>{data.email}</strong> just signed up on Charvak using your referral link.</p>
+                                  <p>You've earned a bounty of <strong>Rs 500</strong>. It will be credited when they complete onboarding.</p>
+                                  <p><a href="https://www.charvakit.com/referral-dashboard">View your dashboard</a></p>
+                                </div>
+                                """
+                                email_engine.send_email(referrer_email, "Someone used your Charvak referral", html)
+                        except Exception as e:
+                            logger.warning(f"Referral notification email failed: {e}")
+            except Exception as e:
+                logger.warning(f"Referral signup tracking failed: {e}")
+
         return JSONResponse(result)
     except Exception as e:
         logger.error(f"Registration failed for {data.email}: {str(e)}")
@@ -2497,10 +2544,67 @@ async def get_user_escrows(email: str):
 # REFERRAL & AFFILIATE API ENDPOINTS
 # ============================================================
 
+@app.get("/api/referral/stats/{email}")
+async def referral_stats_for_user(email: str):
+    """Get referral stats for a specific user."""
+    return referral_engine.get_referrer_stats(email)
+
+
 @app.get("/api/referral/stats")
 async def referral_stats():
     """Get referral system statistics."""
     return referral_engine.get_stats()
+
+class ReferralSubmitRequest(BaseModel):
+    name: str = Field(..., min_length=1, max_length=200)
+    email: str = Field(..., min_length=5, max_length=200)
+    job_title: str = Field(default="", max_length=200)
+    job_url: str = Field(default="", max_length=500)
+    notes: str = Field(default="", max_length=1000)
+
+
+@app.post("/api/referral/submit")
+@limiter.limit("10/hour")
+async def submit_referral_api(request: Request, data: ReferralSubmitRequest):
+    """Public: submit a job referral. Creates a referral record for the user."""
+    try:
+        result = referral_engine.create_referral_link({
+            "name": data.name,
+            "email": data.email,
+            "user_type": "candidate"
+        })
+        if result.get("status") == "success":
+            # Also log the submitted job context as a note
+            try:
+                from database import db
+                conn = db.get_connection()
+                cur = conn.cursor()
+                cur.execute("""
+                    INSERT INTO contacts (name, email, phone, subject, message)
+                    VALUES (%s, %s, '', %s, %s)
+                """, (
+                    data.name,
+                    data.email,
+                    f"Referral submission: {data.job_title or 'N/A'}",
+                    f"Job URL: {data.job_url}\n\nNotes: {data.notes}"
+                ))
+                conn.commit()
+                cur.close()
+                conn.close()
+            except Exception as e:
+                logger.warning(f"Referral context log failed: {e}")
+
+            return JSONResponse({
+                "status": "success",
+                "referral_code": result.get("referral_code"),
+                "referral_link": result.get("referral_link"),
+                "message": "Referral submitted! Share your link to earn rewards."
+            })
+        return JSONResponse(result, status_code=500)
+    except Exception as e:
+        logger.error(f"submit_referral_api failed: {e}")
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
 
 @app.post("/api/referral/create-link")
 @limiter.limit("60/minute")

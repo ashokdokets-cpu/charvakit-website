@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% block title %}Referral Dashboard - Charvak{% endblock %}
+{% block description %}Track your referrals, bounties, and rewards on Charvak.{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4 text-center">
+        <h1 class="display-4 fw-bold">🎁 Referral Dashboard</h1>
+        <p class="lead">Track your referrals, bounties, and earnings</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div id="loadingMsg" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-3 text-muted">Loading your referral stats...</p>
+    </div>
+
+    <div id="notLoggedIn" class="text-center py-5" style="display:none;">
+        <h4>Please log in to view your referral dashboard</h4>
+        <a href="/login" class="btn btn-primary mt-3">Login</a>
+        <a href="/register" class="btn btn-outline-primary mt-3">Register</a>
+    </div>
+
+    <div id="noReferral" class="text-center py-5" style="display:none;">
+        <h4>You don't have a referral link yet</h4>
+        <p class="text-muted">Generate your unique referral link and start earning.</p>
+        <button class="btn btn-success btn-lg mt-3" onclick="createLink()">Generate My Referral Link</button>
+    </div>
+
+    <div id="dashboard" style="display:none;">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+                <h5 class="mb-3">🔗 Your Referral Link</h5>
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" id="refLink" readonly>
+                    <button class="btn btn-success" onclick="copyLink()">📋 Copy</button>
+                </div>
+                <div class="d-flex gap-2 flex-wrap">
+                    <a id="shareWhatsapp" href="#" target="_blank" class="btn btn-success btn-sm">WhatsApp</a>
+                    <a id="shareLinkedin" href="#" target="_blank" class="btn btn-primary btn-sm">LinkedIn</a>
+                    <a id="shareTwitter" href="#" target="_blank" class="btn btn-info btn-sm">Twitter</a>
+                    <a id="shareEmail" href="#" class="btn btn-secondary btn-sm">Email</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-md-3"><div class="card text-center bg-light h-100"><div class="card-body"><h3 id="statClicks" class="text-primary">0</h3><small class="text-muted">Clicks</small></div></div></div>
+            <div class="col-6 col-md-3"><div class="card text-center bg-light h-100"><div class="card-body"><h3 id="statSignups" class="text-success">0</h3><small class="text-muted">Signups</small></div></div></div>
+            <div class="col-6 col-md-3"><div class="card text-center bg-light h-100"><div class="card-body"><h3 id="statConversions" class="text-warning">0</h3><small class="text-muted">Conversions</small></div></div></div>
+            <div class="col-6 col-md-3"><div class="card text-center bg-light h-100"><div class="card-body"><h3 id="statEarned" class="text-success">₹0</h3><small class="text-muted">Total Earned</small></div></div></div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <h5 class="mb-3">💰 Your Bounties</h5>
+                <div id="bountiesList" class="table-responsive">
+                    <p class="text-muted text-center py-3">No bounties yet. Share your link to start earning!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const userEmail = localStorage.getItem('userEmail');
+const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token');
+
+async function loadDashboard() {
+    document.getElementById('loadingMsg').style.display = 'block';
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('notLoggedIn').style.display = 'none';
+    document.getElementById('noReferral').style.display = 'none';
+
+    if (!userEmail) {
+        document.getElementById('loadingMsg').style.display = 'none';
+        document.getElementById('notLoggedIn').style.display = 'block';
+        return;
+    }
+
+    try {
+        const r = await fetch('/api/referral/stats/' + encodeURIComponent(userEmail));
+        const d = await r.json();
+
+        document.getElementById('loadingMsg').style.display = 'none';
+
+        if (d.status !== 'success') {
+            document.getElementById('noReferral').style.display = 'block';
+            return;
+        }
+
+        const ref = d.referral;
+        document.getElementById('dashboard').style.display = 'block';
+        document.getElementById('refLink').value = ref.referral_link;
+        document.getElementById('statClicks').textContent = ref.clicks || 0;
+        document.getElementById('statSignups').textContent = ref.signups || 0;
+        document.getElementById('statConversions').textContent = ref.conversions || 0;
+        document.getElementById('statEarned').textContent = '₹' + (ref.total_earned || 0);
+
+        const shareText = encodeURIComponent('Join Charvak IT Consulting! Use my referral: ' + ref.referral_link);
+        document.getElementById('shareWhatsapp').href = 'https://wa.me/?text=' + shareText;
+        document.getElementById('shareLinkedin').href = 'https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(ref.referral_link);
+        document.getElementById('shareTwitter').href = 'https://twitter.com/intent/tweet?text=' + shareText;
+        document.getElementById('shareEmail').href = 'mailto:?subject=Join Charvak&body=' + shareText;
+
+        renderBounties(d.bounties || []);
+    } catch (e) {
+        document.getElementById('loadingMsg').style.display = 'none';
+        document.getElementById('noReferral').style.display = 'block';
+        console.error(e);
+    }
+}
+
+function renderBounties(bounties) {
+    const container = document.getElementById('bountiesList');
+    if (!bounties.length) {
+        container.innerHTML = '<p class="text-muted text-center py-3">No bounties yet. Share your link to start earning!</p>';
+        return;
+    }
+    const rows = bounties.map(b => {
+        const badge = b.status === 'signed_up' ? '<span class="badge bg-warning text-dark">Signed Up</span>'
+                    : b.status === 'converted' ? '<span class="badge bg-success">Converted</span>'
+                    : b.status === 'paid' ? '<span class="badge bg-primary">Paid</span>'
+                    : '<span class="badge bg-secondary">' + b.status + '</span>';
+        return `<tr>
+            <td><small>${escapeHtml(b.new_user_email || '—')}</small></td>
+            <td>₹${b.amount_inr}</td>
+            <td>${badge}</td>
+            <td><small class="text-muted">${(b.created_at || '').slice(0,10)}</small></td>
+        </tr>`;
+    }).join('');
+    container.innerHTML = `<table class="table">
+        <thead><tr><th>Referred User</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
+        <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+function copyLink() {
+    const el = document.getElementById('refLink');
+    el.select();
+    el.setSelectionRange(0, 99999);
+    navigator.clipboard.writeText(el.value).then(() => {
+        const btn = event.target;
+        const orig = btn.textContent;
+        btn.textContent = '✅ Copied!';
+        setTimeout(() => btn.textContent = orig, 2000);
+    });
+}
+
+async function createLink() {
+    try {
+        const r = await fetch('/api/referral/create-link', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                name: localStorage.getItem('userName') || 'User',
+                email: userEmail,
+                user_type: 'candidate'
+            })
+        });
+        const d = await r.json();
+        if (d.status === 'success') {
+            alert('Referral link created!');
+            loadDashboard();
+        } else {
+            alert('Could not create link: ' + (d.message || 'unknown'));
+        }
+    } catch (e) {
+        alert('Failed: ' + e);
+    }
+}
+
+loadDashboard();
+</script>
+{% endblock %}

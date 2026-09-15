@@ -100,7 +100,8 @@ async function registerUser(e) {
         email: document.getElementById('regEmail').value,
         password: document.getElementById('regPassword').value,
         phone: document.getElementById('regPhone').value,
-        role: document.getElementById('regRole').value
+        role: document.getElementById('regRole').value,
+        referral_code: new URLSearchParams(window.location.search).get('ref') || null
     };
     
     try {
