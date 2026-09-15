@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}My Courses - Charvak{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-4">
+    <div class="container py-3 text-center">
+        <h1 class="display-5 fw-bold">📚 My Courses</h1>
+        <p class="lead mb-0">Continue learning where you left off</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div id="loading" class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+
+    <div id="noLogin" class="text-center py-5" style="display:none;">
+        <h4>Please log in</h4>
+        <a href="/login" class="btn btn-primary mt-3">Login</a>
+    </div>
+
+    <div id="empty" class="text-center py-5" style="display:none;">
+        <h4>You haven't enrolled in any courses yet</h4>
+        <a href="/ai-courses" class="btn btn-success mt-3">Browse Courses</a>
+    </div>
+
+    <div id="coursesList" style="display:none;">
+        <div class="row g-4" id="enrollmentsContainer"></div>
+    </div>
+</div>
+
+<script>
+const myEmail = localStorage.getItem('userEmail');
+
+async function loadMyCourses() {
+    if (!myEmail) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('noLogin').style.display = 'block';
+        return;
+    }
+    try {
+        const r = await fetch('/api/ai-course/my-enrollments/' + encodeURIComponent(myEmail));
+        const d = await r.json();
+        document.getElementById('loading').style.display = 'none';
+
+        if (d.status !== 'success' || !d.enrollments.length) {
+            document.getElementById('empty').style.display = 'block';
+            return;
+        }
+
+        document.getElementById('coursesList').style.display = 'block';
+        const pct = (p, t) => Math.round((p / t) * 100);
+
+        document.getElementById('enrollmentsContainer').innerHTML = d.enrollments.map(e => `
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="badge ${e.status === 'completed' ? 'bg-success' : 'bg-primary'}">${e.status}</span>
+                            <small class="text-muted">${e.duration_weeks} weeks</small>
+                        </div>
+                        <h5 class="fw-bold mb-3">${escapeHtml(e.course_name)}</h5>
+                        <div class="progress mb-2" style="height:6px;">
+                            <div class="progress-bar bg-success" style="width:${pct(e.progress, e.total_weeks)}%"></div>
+                        </div>
+                        <small class="text-muted d-block mb-3">${e.progress}/${e.total_weeks} weeks (${pct(e.progress, e.total_weeks)}%)</small>
+                        <a href="/my-course/${e.enrollment_id}" class="btn ${e.status === 'completed' ? 'btn-outline-success' : 'btn-success'} w-100">
+                            ${e.status === 'completed' ? '✅ View Certificate' : '▶ Continue Learning'}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    } catch (e) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('empty').style.display = 'block';
+    }
+}
+
+function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+loadMyCourses();
+</script>
+{% endblock %}

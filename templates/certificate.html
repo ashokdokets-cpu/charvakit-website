@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Certificate - Charvak{% endblock %}
+{% block content %}
+<style>
+    .cert-frame {
+        border: 12px double #3ba591;
+        padding: 60px 40px;
+        background: #fff;
+        max-width: 900px;
+        margin: 0 auto;
+        text-align: center;
+        position: relative;
+    }
+    .cert-frame::before {
+        content: '';
+        position: absolute;
+        inset: 20px;
+        border: 2px solid #e0e0e0;
+        pointer-events: none;
+    }
+    @media print {
+        .no-print { display: none !important; }
+        .cert-frame { border-color: #3ba591; }
+    }
+</style>
+
+<div class="container py-5">
+    <div id="loading" class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+
+    <div id="errorState" class="text-center py-5" style="display:none;">
+        <h3>Certificate not found</h3>
+        <a href="/my-courses" class="btn btn-primary mt-3">My Courses</a>
+    </div>
+
+    <div id="certArea" style="display:none;">
+        <div class="cert-frame">
+            <div style="font-size: 60px; color: #3ba591;">🎓</div>
+            <h1 style="font-family: Georgia, serif; color: #1a1a2e; font-size: 2.5rem; margin: 20px 0 5px;">Certificate of Completion</h1>
+            <p style="font-size: 1.2rem; color: #666; letter-spacing: 3px; text-transform: uppercase;">Charvak IT Consulting Pvt Ltd</p>
+            <hr style="width: 200px; margin: 30px auto; border-top: 2px solid #3ba591;">
+            <p style="font-size: 1.1rem; color: #333;">This is to certify that</p>
+            <h2 style="font-family: Georgia, serif; color: #3ba591; font-size: 2.2rem; margin: 20px 0;" id="certName">—</h2>
+            <p style="font-size: 1.1rem; color: #333;">has successfully completed the course</p>
+            <h3 style="color: #1a1a2e; margin: 20px 0; font-size: 1.6rem;" id="certCourse">—</h3>
+            <p style="font-size: 1rem; color: #666;" id="certDuration">— weeks</p>
+            <hr style="width: 200px; margin: 30px auto; border-top: 1px solid #ccc;">
+            <div style="display: flex; justify-content: space-around; margin-top: 40px;">
+                <div>
+                    <p style="font-family: Georgia, serif; border-bottom: 1px solid #333; padding-bottom: 5px; min-width: 200px; margin-bottom: 5px;">Charvak Team</p>
+                    <small style="color: #666;">Authorized Signatory</small>
+                </div>
+                <div>
+                    <p style="font-family: Georgia, serif; border-bottom: 1px solid #333; padding-bottom: 5px; min-width: 200px; margin-bottom: 5px;" id="certDate">—</p>
+                    <small style="color: #666;">Date of Issue</small>
+                </div>
+            </div>
+            <p style="margin-top: 40px; font-size: 0.85rem; color: #888;">
+                Certificate ID: <span id="certId" style="font-family: monospace;">—</span><br>
+                Verify at: www.charvakit.com/certificate/<span id="certIdShort">—</span>
+            </p>
+        </div>
+
+        <div class="text-center mt-4 no-print">
+            <button class="btn btn-primary btn-lg me-2" onclick="window.print()">🖨️ Print / Download PDF</button>
+            <a href="/my-courses" class="btn btn-outline-primary btn-lg">📚 My Courses</a>
+        </div>
+    </div>
+</div>
+
+<script>
+const certId = window.location.pathname.split('/certificate/')[1] || '';
+
+async function loadCert() {
+    try {
+        const r = await fetch('/api/ai-course/certificate/' + certId);
+        const d = await r.json();
+        if (d.status !== 'success') throw new Error(d.message);
+
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('certArea').style.display = 'block';
+
+        const c = d.certificate;
+        document.getElementById('certId').textContent = c.certificate_id;
+        document.getElementById('certIdShort').textContent = c.certificate_id;
+        document.getElementById('certName').textContent = c.email.split('@')[0].replace(/[._]/g, ' ');
+        document.getElementById('certCourse').textContent = c.course_name;
+        document.getElementById('certDuration').textContent = c.duration_weeks + ' weeks';
+        document.getElementById('certDate').textContent = new Date(c.issued_at).toLocaleDateString('en-IN', {day: 'numeric', month: 'long', year: 'numeric'});
+    } catch (e) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('errorState').style.display = 'block';
+    }
+}
+
+loadCert();
+</script>
+{% endblock %}

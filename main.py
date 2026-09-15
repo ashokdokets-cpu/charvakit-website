@@ -6088,7 +6088,28 @@ async def complete_course(request: Request):
     data = await request.json()
     return ai_courses.complete_course(data.get("enrollment_id"))
 
+@app.get("/course/{course_name}", response_class=HTMLResponse)
+async def course_detail_page(course_name: str, request: Request):
+    """Course detail page."""
+    return template_response("course-detail.html", request, f"{course_name} - Charvak")
 
+
+@app.get("/my-course/{enrollment_id}", response_class=HTMLResponse)
+async def my_course_page(enrollment_id: str, request: Request):
+    """Lesson player for enrolled course."""
+    return template_response("my-course.html", request, "My Course - Charvak")
+
+
+@app.get("/certificate/{certificate_id}", response_class=HTMLResponse)
+async def certificate_page(certificate_id: str, request: Request):
+    """Certificate view page."""
+    return template_response("certificate.html", request, "Certificate - Charvak")
+
+
+@app.get("/my-courses", response_class=HTMLResponse)
+async def my_courses_page(request: Request):
+    """User's enrolled courses."""
+    return template_response("my-courses.html", request, "My Courses - Charvak")
 
 @app.get("/ai-courses", response_class=HTMLResponse)
 async def ai_courses_page(request: Request):
@@ -6190,7 +6211,41 @@ async def pay_extension(request: Request):
         data.get("additional_weeks")
     )
 
+@app.get("/api/ai-course/catalog")
+async def ai_course_catalog(category: str = None):
+    """Get all courses from DB catalog."""
+    return ai_courses.get_catalog(category)
 
+
+@app.get("/api/ai-course/course/{course_name}")
+async def ai_course_detail(course_name: str):
+    """Get course details."""
+    return ai_courses.get_course(course_name)
+
+
+@app.get("/api/ai-course/my-enrollments/{email}")
+async def ai_course_my_enrollments(email: str):
+    """Get user's enrollments."""
+    return ai_courses.get_user_enrollments(email)
+
+
+@app.get("/api/ai-course/enrollment/{enrollment_id}")
+async def ai_course_enrollment(enrollment_id: str):
+    """Get full enrollment state with lessons."""
+    return ai_courses.get_enrollment(enrollment_id)
+
+
+@app.post("/api/ai-course/complete-week")
+async def ai_course_complete_week(request: Request):
+    """Mark a week as completed."""
+    data = await request.json()
+    return ai_courses.complete_week(data.get("enrollment_id"), data.get("week_num"))
+
+
+@app.get("/api/ai-course/certificate/{certificate_id}")
+async def ai_course_get_certificate(certificate_id: str):
+    """Get a certificate."""
+    return ai_courses.get_certificate(certificate_id)
 
 @app.post("/api/ai-course/start-chat")
 async def start_course_chat(request: Request):

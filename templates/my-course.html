@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+{% block title %}My Course - Charvak{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-4">
+    <div class="container py-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <a href="/my-courses" class="text-white-50 text-decoration-none">← My Courses</a>
+                <h1 class="display-5 fw-bold mt-1 mb-0" id="courseTitle">Loading...</h1>
+            </div>
+            <div class="text-end">
+                <div class="fs-4 fw-bold" id="progressText">0/0</div>
+                <small>weeks complete</small>
+            </div>
+        </div>
+        <div class="progress mt-3" style="height:8px;">
+            <div class="progress-bar bg-success" id="progressBar" style="width:0%"></div>
+        </div>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div id="loading" class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+
+    <div id="courseArea" style="display:none;">
+        <!-- Week Tabs -->
+        <div class="mb-4">
+            <div class="d-flex flex-wrap gap-2" id="weekTabs"></div>
+        </div>
+
+        <!-- Lesson Content -->
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <span class="badge bg-primary mb-2">Week <span id="currentWeek">1</span></span>
+                                <h3 class="mb-0" id="lessonTopic">Loading topic...</h3>
+                            </div>
+                            <span class="badge bg-success" id="weekStatus">Not started</span>
+                        </div>
+
+                        <div id="lessonLoading" class="text-center py-5">
+                            <div class="spinner-border text-primary"></div>
+                            <p class="text-muted mt-3">🤖 AI is preparing your lesson...</p>
+                        </div>
+
+                        <div id="lessonContent" style="display:none;">
+                            <h5 class="mt-4 mb-2">📖 Explanation</h5>
+                            <p id="lessonExplanation" style="white-space:pre-wrap;"></p>
+
+                            <h5 class="mt-4 mb-2">💡 Code Examples</h5>
+                            <ul id="lessonExamples" class="list-unstyled"></ul>
+
+                            <h5 class="mt-4 mb-2">🏋️ Practice Exercises</h5>
+                            <ol id="lessonPractice"></ol>
+
+                            <h5 class="mt-4 mb-2">🎯 Key Takeaways</h5>
+                            <ul id="lessonTakeaways" class="list-unstyled"></ul>
+
+                            <div class="d-flex gap-2 mt-4">
+                                <button class="btn btn-success" id="completeBtn" onclick="completeWeek()">
+                                    ✅ Mark This Week Complete
+                                </button>
+                                <button class="btn btn-outline-primary" onclick="toggleAskAI()">
+                                    🤖 Ask AI Tutor (2 credits)
+                                </button>
+                            </div>
+
+                            <div id="askAIBox" class="mt-3" style="display:none;">
+                                <textarea class="form-control" id="aiQuestion" rows="3" placeholder="Ask anything about this week's topic..."></textarea>
+                                <button class="btn btn-primary mt-2" onclick="askAI()">Ask AI</button>
+                                <div id="aiAnswer" class="alert alert-info mt-3" style="display:none;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-4">
+                        <h5 class="mb-3">🎓 Complete Course?</h5>
+                        <p class="small text-muted">Finish all weeks to unlock your certificate.</p>
+                        <button class="btn btn-warning w-100" id="certBtn" onclick="getCertificate()" disabled>
+                            Get Certificate
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <h5 class="mb-2">📊 Course Stats</h5>
+                        <p class="mb-1 small">Weeks total: <strong id="statTotalWeeks">-</strong></p>
+                        <p class="mb-1 small">Weeks complete: <strong id="statDone">-</strong></p>
+                        <p class="mb-0 small">Progress: <strong id="statPct">-</strong></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const enrollmentId = window.location.pathname.split('/my-course/')[1] || '';
+let enrollment = null;
+let currentWeek = 1;
+
+async function loadEnrollment() {
+    try {
+        const r = await fetch('/api/ai-course/enrollment/' + enrollmentId);
+        const d = await r.json();
+        if (d.status !== 'success') throw new Error(d.message);
+
+        enrollment = d.enrollment;
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('courseArea').style.display = 'block';
+        document.getElementById('courseTitle').textContent = enrollment.course_name;
+
+        renderWeekTabs();
+        updateProgress();
+        loadWeek(currentWeek);
+    } catch (e) {
+        document.getElementById('loading').innerHTML = '<p class="text-danger">Course not found.</p>';
+    }
+}
+
+function renderWeekTabs() {
+    const tabs = document.getElementById('weekTabs');
+    const html = [];
+    for (let w = 1; w <= enrollment.total_weeks; w++) {
+        const lesson = enrollment.lessons.find(l => l.week_num === w);
+        const done = lesson && lesson.completed;
+        html.push(`<button class="btn btn-sm ${done ? 'btn-success' : 'btn-outline-primary'}" onclick="loadWeek(${w})">
+            Week ${w} ${done ? '✅' : ''}
+        </button>`);
+    }
+    tabs.innerHTML = html.join('');
+}
+
+function updateProgress() {
+    const done = enrollment.lessons.filter(l => l.completed).length;
+    document.getElementById('progressText').textContent = done + '/' + enrollment.total_weeks;
+    const pct = Math.round((done / enrollment.total_weeks) * 100);
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('statTotalWeeks').textContent = enrollment.total_weeks;
+    document.getElementById('statDone').textContent = done;
+    document.getElementById('statPct').textContent = pct + '%';
+    document.getElementById('certBtn').disabled = done < enrollment.total_weeks;
+}
+
+async function loadWeek(weekNum) {
+    currentWeek = weekNum;
+    document.getElementById('currentWeek').textContent = weekNum;
+    document.getElementById('lessonLoading').style.display = 'block';
+    document.getElementById('lessonContent').style.display = 'none';
+
+    const existing = enrollment.lessons.find(l => l.week_num === weekNum);
+    if (existing && existing.content) {
+        renderLesson(existing);
+        return;
+    }
+
+    try {
+        const r = await fetch('/api/ai-course/lesson/' + enrollmentId + '/' + weekNum);
+        const d = await r.json();
+        if (d.status === 'success') {
+            existing_lesson = { week_num: weekNum, topic: d.lesson.topic || '', content: d.lesson, completed: false };
+            renderLesson(existing_lesson);
+        }
+    } catch (e) {
+        document.getElementById('lessonLoading').innerHTML = '<p class="text-danger">Failed to load lesson</p>';
+    }
+}
+
+function renderLesson(lesson) {
+    document.getElementById('lessonLoading').style.display = 'none';
+    document.getElementById('lessonContent').style.display = 'block';
+
+    const c = lesson.content || {};
+    document.getElementById('lessonTopic').textContent = lesson.topic || ('Week ' + lesson.week_num + ' Lesson');
+    document.getElementById('weekStatus').textContent = lesson.completed ? 'Completed ✅' : 'Not started';
+    document.getElementById('weekStatus').className = 'badge ' + (lesson.completed ? 'bg-success' : 'bg-secondary');
+
+    document.getElementById('lessonExplanation').textContent = c.explanation || c.lesson || '';
+    document.getElementById('lessonExamples').innerHTML = (c.examples || []).map(e => '<li><pre class="bg-light p-2 rounded">' + escapeHtml(e) + '</pre></li>').join('') || '<li>—</li>';
+    document.getElementById('lessonPractice').innerHTML = (c.practice || c.exercises || []).map(e => '<li>' + escapeHtml(e) + '</li>').join('') || '<li>—</li>';
+    document.getElementById('lessonTakeaways').innerHTML = (c.key_takeaways || []).map(e => '<li>✅ ' + escapeHtml(e) + '</li>').join('') || '<li>—</li>';
+
+    document.getElementById('completeBtn').disabled = lesson.completed;
+    document.getElementById('completeBtn').textContent = lesson.completed ? '✅ Completed' : '✅ Mark This Week Complete';
+}
+
+async function completeWeek() {
+    try {
+        const r = await fetch('/api/ai-course/complete-week', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({enrollment_id: enrollmentId, week_num: currentWeek})
+        });
+        const d = await r.json();
+                if (d.status === 'success') {
+            // Update or add the lesson in local state
+            let lesson = enrollment.lessons.find(l => l.week_num === currentWeek);
+            if (!lesson) {
+                lesson = { week_num: currentWeek, topic: '', content: null, completed: true };
+                enrollment.lessons.push(lesson);
+            } else {
+                lesson.completed = true;
+            }
+            renderWeekTabs();
+            updateProgress();
+            // Only re-render if we have content
+            if (lesson.content) {
+                renderLesson(lesson);
+            }
+            if (d.course_completed) alert('🎉 Course complete! You can now get your certificate.');
+        }
+         
+    } catch (e) { alert('Error: ' + e.message); }
+}
+
+function toggleAskAI() {
+    const box = document.getElementById('askAIBox');
+    box.style.display = box.style.display === 'none' ? 'block' : 'none';
+}
+
+async function askAI() {
+    const q = document.getElementById('aiQuestion').value.trim();
+    if (!q) return;
+    const box = document.getElementById('aiAnswer');
+    box.textContent = '🤖 Thinking...';
+    box.style.display = 'block';
+    try {
+        const r = await fetch('/api/ai-course/project-help', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({enrollment_id: enrollmentId, project_question: q})
+        });
+        const d = await r.json();
+        box.textContent = d.assistance || d.message || 'No answer';
+    } catch (e) { box.textContent = 'Error: ' + e.message; }
+}
+
+async function getCertificate() {
+    try {
+        const r = await fetch('/api/ai-course/complete', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({enrollment_id: enrollmentId})
+        });
+        const d = await r.json();
+        if (d.status === 'success') {
+            window.location.href = '/certificate/' + d.certificate.certificate_id;
+        }
+    } catch (e) { alert('Error: ' + e.message); }
+}
+
+function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+loadEnrollment();
+</script>
+{% endblock %}

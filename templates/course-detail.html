@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block title %}Course - Charvak{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-3">
+        <a href="/ai-courses" class="text-white-50 text-decoration-none">← Back to Courses</a>
+        <h1 class="display-5 fw-bold mt-2" id="courseName">Loading...</h1>
+        <p class="lead mb-0" id="courseDesc"></p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div id="loading" class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+
+    <div id="errorState" class="text-center py-5" style="display:none;">
+        <h3>Course not found</h3>
+        <a href="/ai-courses" class="btn btn-primary mt-3">Browse Courses</a>
+    </div>
+
+    <div id="courseArea" style="display:none;">
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-4">
+                        <h3 class="mb-3">📚 About This Course</h3>
+                        <p id="courseAbout"></p>
+                        <div class="row g-3 mt-3">
+                            <div class="col-md-4 text-center"><h4 class="text-primary" id="statWeeks">-</h4><small class="text-muted">Weeks</small></div>
+                            <div class="col-md-4 text-center"><h4 class="text-success" id="statPrice">-</h4><small class="text-muted">Price</small></div>
+                            <div class="col-md-4 text-center"><h4 class="text-info" id="statLevel">-</h4><small class="text-muted">Level</small></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-4">
+                        <h4 class="mb-3">✨ What You Get</h4>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">✅ <strong>AI-generated curriculum</strong> tailored to your level</li>
+                            <li class="mb-2">✅ <strong>Weekly lessons</strong> with examples + practice exercises</li>
+                            <li class="mb-2">✅ <strong>24/7 AI Tutor</strong> — ask anything, get instant help (uses credits)</li>
+                            <li class="mb-2">✅ <strong>Real projects</strong> to build your portfolio</li>
+                            <li class="mb-2">✅ <strong>Certificate</strong> on completion with verification ID</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-lg sticky-top" style="top:100px;">
+                    <div class="card-body p-4">
+                        <h5 class="mb-3">Enroll Now</h5>
+                        <div class="alert alert-success">
+                            <strong>🎉 Free Enrollment</strong><br>
+                            <small>No payment required. AI tutor uses credits per question.</small>
+                        </div>
+
+                        <div id="enrollMsg" class="alert" style="display:none;"></div>
+
+                        <button class="btn btn-success btn-lg w-100" id="enrollBtn" onclick="enrollNow()">
+                            🎓 Enroll Free
+                        </button>
+
+                        <hr class="my-4">
+                        <div class="small text-muted">
+                            <strong>Login required</strong><br>
+                            Make sure you're <a href="/login">logged in</a> before enrolling.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const courseName = decodeURIComponent(window.location.pathname.split('/course/')[1] || '');
+const userEmail = localStorage.getItem('userEmail');
+
+async function loadCourse() {
+    try {
+        const r = await fetch('/api/ai-course/course/' + encodeURIComponent(courseName));
+        const d = await r.json();
+        if (d.status !== 'success') throw new Error(d.message || 'Not found');
+
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('courseArea').style.display = 'block';
+
+        const c = d.course;
+        document.getElementById('courseName').textContent = c.course_name;
+        document.getElementById('courseDesc').textContent = c.description;
+        document.getElementById('courseAbout').textContent = c.description || 'Learn this course with AI-generated lessons tailored to your pace.';
+        document.getElementById('statWeeks').textContent = c.duration_weeks;
+        document.getElementById('statPrice').textContent = c.price_inr === 0 ? 'Free' : '₹' + c.price_inr.toLocaleString();
+        document.getElementById('statLevel').textContent = c.level;
+    } catch (e) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('errorState').style.display = 'block';
+    }
+}
+
+async function enrollNow() {
+    const msg = document.getElementById('enrollMsg');
+    const btn = document.getElementById('enrollBtn');
+
+    if (!userEmail) {
+        msg.className = 'alert alert-warning';
+        msg.innerHTML = '⚠️ Please <a href="/login">login</a> first.';
+        msg.style.display = 'block';
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = '⏳ Generating curriculum with AI...';
+    msg.style.display = 'none';
+
+    try {
+        const r = await fetch('/api/ai-course/enroll', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                email: userEmail,
+                course_name: courseName,
+                duration_weeks: parseInt(document.getElementById('statWeeks').textContent) || 8
+            })
+        });
+        const d = await r.json();
+
+        if (d.status === 'success' || d.status === 'exists') {
+            msg.className = 'alert alert-success';
+            msg.textContent = '✅ Enrolled! Redirecting...';
+            msg.style.display = 'block';
+            const enrollId = d.enrollment_id || (d.enrollment && d.enrollment.enrollment_id);
+            setTimeout(() => window.location.href = '/my-course/' + enrollId, 800);
+        } else {
+            throw new Error(d.message || 'Enrollment failed');
+        }
+    } catch (e) {
+        msg.className = 'alert alert-danger';
+        msg.textContent = '❌ ' + e.message;
+        msg.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = '🎓 Enroll Free';
+    }
+}
+
+loadCourse();
+</script>
+{% endblock %}
