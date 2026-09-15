@@ -130,6 +130,61 @@
 **Pages:** /ai-courses, /course/{name}, /my-course/{id}, /my-courses, /certificate/{id}
 **Verified:** enroll → 25-course catalog → AI curriculum → lessons → AI tutor (2 credits) → certificate with custom name
 
+---
+
+## TODO — AI Courses: Course Fee + EMI (Next Session)
+
+**Status:** ⏳ Queued 2026-09-16
+**Priority:** Tier 3, high (revenue-impacting)
+**Estimate:** 2–3 hours
+
+### Business Model
+
+**Two separate revenue streams per student:**
+
+1. **Course Fee** — paid upfront OR via EMI
+   - Range: ₹499 – ₹6,999 (already in `charvak_courses.price_inr`)
+   - Currently: enrollment is FREE (fee is display-only)
+   - Fix: gate enrollment behind payment
+
+2. **AI Credits** — separate, consumable, per-interaction
+   - ✅ Already live: AI Tutor = 2 credits/question
+   - ✅ Already live: Interview Prep = 8 credits/session
+   - ✅ Already live: AI Courses lesson generation = free (cached)
+   - Purpose: meters heavy usage, keeps AI costs sustainable
+
+### Implementation Tasks
+
+**A. Database — 3 new tables**
+
+```sql
+CREATE TABLE charvak_course_payments (
+    payment_id TEXT PRIMARY KEY,
+    enrollment_id TEXT NOT NULL,
+    email TEXT NOT NULL,
+    amount_inr INTEGER NOT NULL,
+    payment_type TEXT,  -- 'full' | 'emi_installment'
+    razorpay_payment_id TEXT,
+    razorpay_order_id TEXT,
+    installment_num INTEGER,  -- NULL for full, 1..N for EMI
+    status TEXT DEFAULT 'pending',  -- pending | paid | failed
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE charvak_course_installments (
+    installment_id TEXT PRIMARY KEY,
+    enrollment_id TEXT NOT NULL,
+    email TEXT NOT NULL,
+    installment_num INTEGER NOT NULL,
+    total_installments INTEGER NOT NULL,
+    amount_inr INTEGER NOT NULL,
+    due_date DATE NOT NULL,
+    status TEXT DEFAULT 'pending',  -- pending | paid | overdue | cancelled
+    paid_at TIMESTAMP,
+    payment_id TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 **AI Courses:**
 1. Create `charvak_courses`, `charvak_enrollments`, `charvak_lessons`, `charvak_certificates`
 2. Refactor `ai_courses.py` + `ai_course_delivery.py`
