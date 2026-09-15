@@ -148,7 +148,18 @@
 
 ---
 
-### Session 6 — Enterprise + WhatsApp + Cleanup (4 hr)
+### Session 6 — Enterprise + WhatsApp + Cleanup (4 hr)     ## Enterprise Page — ✅ Complete 2026-09-16
+
+- **Tag:** `v1.9-enterprise-page-20260916`
+- **Route:** `/enterprise`
+- **Content:** Hero, 6 features, 3 use-cases, pricing card, lead form
+- **Lead capture:** POSTs to `/api/contact` → persists to `contacts` table (verified)
+- **TODO — Option B (future session):** Expose enterprise engine features as public pages:
+  - `/enterprise/salary-benchmarks` — salary data + benchmarks
+  - `/enterprise/employers` — employer tier directory
+  - `/enterprise/resume-books` — university resume books
+  - `/enterprise/kiosk` — student check-in kiosk
+  - Requires: 4 tables + 4 routes + 4 templates (~3 hr)
 
 **Enterprise:**
 1. Build the missing `/enterprise` page
