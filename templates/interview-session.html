@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+{% block title %}Interview Session - Charvak{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-4">
+    <div class="container py-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="display-5 fw-bold mb-1">🎤 Mock Interview</h1>
+                <p class="lead mb-0" id="sessionHeader">Loading session...</p>
+            </div>
+            <div class="text-end">
+                <div class="fs-3 fw-bold" id="progressText">—</div>
+                <div class="small" id="progressSub">question</div>
+            </div>
+        </div>
+        <div class="progress mt-3" style="height:8px;">
+            <div class="progress-bar bg-success" id="progressBar" style="width:0%"></div>
+        </div>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div id="loading" class="text-center py-5">
+        <div class="spinner-border text-primary"></div>
+        <p class="mt-3 text-muted">Loading your session...</p>
+    </div>
+
+    <div id="errorState" class="text-center py-5" style="display:none;">
+        <h3>Session not found</h3>
+        <a href="/interview-prep" class="btn btn-primary mt-3">Start New Session</a>
+    </div>
+
+    <div id="sessionArea" style="display:none;">
+        <!-- Question Card -->
+        <div class="row mb-4">
+            <div class="col-lg-8 mx-auto">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="badge bg-primary" id="qCategory">Technical</span>
+                            <small class="text-muted">Question <span id="qNum">—</span></small>
+                        </div>
+                        <h3 class="mb-4" id="qText">Loading question...</h3>
+
+                        <label class="form-label fw-bold">Your Answer</label>
+                        <textarea class="form-control form-control-lg" id="userAnswer" rows="7"
+                                  placeholder="Type your answer here. Be specific, use examples, and structure your response."></textarea>
+                        <small class="text-muted d-block mt-2">
+                            <strong>Tip:</strong> Strong answers are specific, use real examples, and address the question directly.
+                        </small>
+
+                        <button class="btn btn-success btn-lg w-100 mt-3" id="submitBtn" onclick="submitAnswer()">
+                            Submit Answer & Get AI Feedback
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feedback Card (hidden until submit) -->
+        <div id="feedbackCard" class="row mb-4" style="display:none;">
+            <div class="col-lg-8 mx-auto">
+                <div class="card border-0 shadow-sm border-start border-4 border-success">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0">✅ AI Feedback</h5>
+                            <div class="text-end">
+                                <div class="fs-3 fw-bold text-success" id="feedbackScore">—</div>
+                                <small class="text-muted">/ 100</small>
+                            </div>
+                        </div>
+                        <p id="feedbackText"></p>
+                        <div class="row g-3 mt-2">
+                            <div class="col-md-6">
+                                <h6 class="text-success">💪 Strengths</h6>
+                                <ul id="strengthsList" class="small"></ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-warning">📈 Improvements</h6>
+                                <ul id="improvementsList" class="small"></ul>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary btn-lg w-100 mt-4" id="nextBtn" onclick="loadNextQuestion()">
+                            Next Question →
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const sessionId = window.location.pathname.split('/').pop();
+let currentSession = null;
+let currentAnswerId = null;
+
+async function loadSession() {
+    try {
+        const r = await fetch('/api/interview-prep/session/' + sessionId);
+        const d = await r.json();
+        if (d.status !== 'success') throw new Error(d.message || 'Session not found');
+
+        currentSession = d.session;
+        document.getElementById('sessionHeader').textContent =
+            currentSession.role + ' • ' + currentSession.difficulty;
+
+        if (currentSession.status === 'completed') {
+            window.location.href = '/interview-results/' + sessionId;
+            return;
+        }
+
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('sessionArea').style.display = 'block';
+
+        renderCurrentQuestion();
+    } catch (e) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('errorState').style.display = 'block';
+        console.error(e);
+    }
+}
+
+function renderCurrentQuestion() {
+    const next = currentSession.next_question;
+    if (!next) {
+        // All answered — go to results
+        window.location.href = '/interview-results/' + sessionId;
+        return;
+    }
+
+    currentAnswerId = next.answer_id;
+    document.getElementById('qNum').textContent = next.question_num + ' of ' + currentSession.questions_count;
+    document.getElementById('qText').textContent = next.question_text;
+    document.getElementById('qCategory').textContent = next.category || 'General';
+    document.getElementById('userAnswer').value = '';
+    document.getElementById('submitBtn').disabled = false;
+    document.getElementById('submitBtn').textContent = 'Submit Answer & Get AI Feedback';
+
+    // Progress
+    const pct = Math.round(((next.question_num - 1) / currentSession.questions_count) * 100);
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('progressText').textContent = next.question_num + '/' + currentSession.questions_count;
+    document.getElementById('progressSub').textContent = 'question';
+
+    // Scroll to top
+    window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+async function submitAnswer() {
+    const answer = document.getElementById('userAnswer').value.trim();
+    if (!answer || answer.split(' ').length < 5) {
+        alert('Please write a longer answer (at least a few sentences).');
+        return;
+    }
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = '🤖 AI is evaluating your answer...';
+
+    try {
+        const r = await fetch('/api/interview-prep/submit', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                session_id: sessionId,
+                answer_id: currentAnswerId,
+                answer: answer
+            })
+        });
+        const d = await r.json();
+
+        if (d.status !== 'success') throw new Error(d.message || 'Scoring failed');
+
+        // Hide question, show feedback
+        document.getElementById('qText').parentElement.parentElement.parentElement.style.display = 'none';
+        document.getElementById('feedbackCard').style.display = 'block';
+        document.getElementById('feedbackScore').textContent = d.score;
+        document.getElementById('feedbackText').textContent = d.feedback || '';
+
+        const strengthsHtml = (d.strengths || []).map(s => '<li>' + escapeHtml(s) + '</li>').join('') || '<li>—</li>';
+        const improvementsHtml = (d.improvements || []).map(s => '<li>' + escapeHtml(s) + '</li>').join('') || '<li>—</li>';
+        document.getElementById('strengthsList').innerHTML = strengthsHtml;
+        document.getElementById('improvementsList').innerHTML = improvementsHtml;
+
+        if (d.completed) {
+            document.getElementById('nextBtn').textContent = '🎉 View Final Results →';
+            document.getElementById('nextBtn').onclick = () => window.location.href = '/interview-results/' + sessionId;
+        } else {
+            document.getElementById('nextBtn').textContent = 'Next Question →';
+            document.getElementById('nextBtn').onclick = loadNextQuestion;
+        }
+    } catch (e) {
+        alert('Error: ' + e.message);
+        btn.disabled = false;
+        btn.textContent = 'Submit Answer & Get AI Feedback';
+    }
+}
+
+async function loadNextQuestion() {
+    document.getElementById('feedbackCard').style.display = 'none';
+    document.getElementById('qText').parentElement.parentElement.parentElement.style.display = 'block';
+    await loadSession();
+}
+
+function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+loadSession();
+</script>
+{% endblock %}

@@ -1,24 +1,83 @@
 {% extends "base.html" %}
 {% block title %}Interview Preparation - Charvak Career Engine{% endblock %}
+{% block description %}AI-powered mock interviews with real-time scoring. Practice with role-specific questions, get instant AI feedback, and track your progress.{% endblock %}
 {% block content %}
 <div class="page-hero bg-gradient-primary text-white py-5">
     <div class="container py-4">
         <span class="badge bg-success mb-2 px-3 py-2">Step 3 of 6</span>
         <h1 class="display-4 fw-bold">Interview Preparation</h1>
-        <p class="lead">Get job-ready with AI mock interviews, question banks, and skill gap analysis.</p>
+        <p class="lead">AI-powered mock interviews with instant scoring and personalized feedback.</p>
     </div>
 </div>
 
 <div class="container py-5">
+
+    <!-- Start Session Form -->
+    <div class="row mb-5">
+        <div class="col-lg-8 mx-auto">
+            <div class="card border-0 shadow-lg p-4">
+                <div class="card-body">
+                    <h3 class="mb-3">🎯 Start a Mock Interview</h3>
+                    <p class="text-muted">AI generates role-specific questions, scores your answers, and gives you actionable feedback.</p>
+
+                    <div id="startMsg" class="alert" style="display:none;"></div>
+
+                    <form id="startForm" onsubmit="startSession(event)">
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Role / Position</label>
+                                <input type="text" class="form-control form-control-lg" id="ipRole"
+                                       placeholder="e.g. Python Developer, Data Scientist, Product Manager" required>
+                                <small class="text-muted">Be specific — better questions come from better context.</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Difficulty</label>
+                                <select class="form-select form-select-lg" id="ipDifficulty">
+                                    <option value="Beginner">Beginner</option>
+                                    <option value="Intermediate" selected>Intermediate</option>
+                                    <option value="Advanced">Advanced</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>Cost:</strong> 8 AI credits per session
+                                <br>
+                                <small>Includes 8 role-specific questions + AI scoring + detailed feedback</small>
+                            </div>
+                            <div class="text-end">
+                                <small class="d-block text-muted">Your balance</small>
+                                <strong id="userCredits" class="fs-5">-</strong>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-success btn-lg w-100" id="startBtn">
+                            🎤 Start Mock Interview (8 credits)
+                        </button>
+
+                        <div class="text-center mt-3">
+                            <small class="text-muted">
+                                Need credits? <a href="/pricing">View plans</a> •
+                                <a href="/interview-dashboard">My Sessions</a>
+                            </small>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feature Cards -->
     <div class="row g-4 mb-5">
-        <div class="col-md-4"><div class="card h-100 p-4 text-center"><i class="bi bi-mic display-3 text-primary mb-3"></i><h4>AI Mock Interview</h4><p class="text-muted">Practice with AI. Real-time feedback on answers, tone, and confidence.</p><h3><span data-inr="199">199</span>/session</h3><a href="/contact" class="btn btn-primary">Start Mock Interview</a></div></div>
-        <div class="col-md-4"><div class="card h-100 p-4 text-center"><i class="bi bi-journal-check display-3 text-primary mb-3"></i><h4>Question Bank</h4><p class="text-muted">500+ curated questions by role, company, and difficulty level.</p><h3>Free</h3><a href="/contact" class="btn btn-primary">Browse Questions</a></div></div>
-        <div class="col-md-4"><div class="card h-100 p-4 text-center"><i class="bi bi-graph-up display-3 text-primary mb-3"></i><h4>Skill Gap Analyzer</h4><p class="text-muted">Compare skills vs job requirements. Get personalized learning path.</p><h3>Free</h3><a href="/skill-check" class="btn btn-primary">Analyze Skills</a></div></div>
+        <div class="col-md-4"><div class="card h-100 p-4 text-center border-0 shadow-sm"><i class="bi bi-mic display-3 text-primary mb-3"></i><h4>AI Mock Interview</h4><p class="text-muted">Role-specific questions generated by AI. Real-time scoring on relevance, depth, and clarity.</p></div></div>
+        <div class="col-md-4"><div class="card h-100 p-4 text-center border-0 shadow-sm"><i class="bi bi-journal-check display-3 text-primary mb-3"></i><h4>Feedback per Answer</h4><p class="text-muted">Each answer gets a score, strengths, and specific improvement suggestions.</p></div></div>
+        <div class="col-md-4"><div class="card h-100 border-0 shadow-sm p-4 text-center"><i class="bi bi-graph-up display-3 text-primary mb-3"></i><h4>Track Progress</h4><p class="text-muted">See all your past sessions, scores, and improvement over time in your dashboard.</p></div></div>
     </div>
 
     <div class="row g-4 mb-4">
-        <div class="col-md-6"><div class="card p-4 bg-success text-white"><h4>Cleared the Interview?</h4><p>Plan your upgrade path or proceed to verification.</p><a href="/training-engine" class="btn btn-light me-2">Upgrade Skills</a><a href="/background-verification" class="btn btn-outline-light">Start Verification</a></div></div>
-        <div class="col-md-6"><div class="card p-4 bg-warning"><h4>Didn't Clear?</h4><p>We analyze the gap and build a training plan just for you.</p><a href="/training-engine" class="btn btn-dark">View Training Plan</a></div></div>
+        <div class="col-md-6"><div class="card p-4 bg-success text-white border-0"><h4>Cleared the Interview?</h4><p>Plan your upgrade path or proceed to verification.</p><a href="/training-engine" class="btn btn-light me-2">Upgrade Skills</a></div></div>
+        <div class="col-md-6"><div class="card p-4 bg-warning border-0"><h4>Didn't Clear?</h4><p>We analyze the gap and build a training plan just for you.</p><a href="/training-engine" class="btn btn-dark">View Training Plan</a></div></div>
     </div>
 
     <div class="text-center">
@@ -26,4 +85,87 @@
         <a href="https://doketsrb.com" target="_blank" class="btn btn-primary">Prepare on DoketsRB</a>
     </div>
 </div>
+
+<script>
+const ipEmail = localStorage.getItem('userEmail');
+
+async function loadCredits() {
+    if (!ipEmail) {
+        document.getElementById('userCredits').textContent = 'Login required';
+        return;
+    }
+    try {
+        const r = await fetch('/api/credits/' + encodeURIComponent(ipEmail));
+        const d = await r.json();
+        if (d.status === 'success') {
+            document.getElementById('userCredits').textContent = d.credits_remaining + ' credits';
+        }
+    } catch (e) { console.error(e); }
+}
+
+async function startSession(e) {
+    e.preventDefault();
+    const msg = document.getElementById('startMsg');
+    const btn = document.getElementById('startBtn');
+
+    if (!ipEmail) {
+        msg.className = 'alert alert-warning';
+        msg.textContent = 'Please log in to start a session.';
+        msg.style.display = 'block';
+        return;
+    }
+
+    const role = document.getElementById('ipRole').value.trim();
+    const difficulty = document.getElementById('ipDifficulty').value;
+
+    if (!role) {
+        msg.className = 'alert alert-warning';
+        msg.textContent = 'Please enter a role.';
+        msg.style.display = 'block';
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = '⏳ Generating questions with AI...';
+    msg.style.display = 'none';
+
+    try {
+        const r = await fetch('/api/interview-prep/start', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                candidate_email: ipEmail,
+                role: role,
+                difficulty: difficulty,
+                stack: role
+            })
+        });
+        const d = await r.json();
+
+        if (d.status === 'success') {
+            msg.className = 'alert alert-success';
+            msg.textContent = '✅ Session ready! Redirecting...';
+            msg.style.display = 'block';
+            setTimeout(() => window.location.href = '/interview-session/' + d.session_id, 800);
+        } else {
+            msg.className = 'alert alert-danger';
+            msg.textContent = '❌ ' + (d.message || 'Could not start session');
+            if (d.top_up_url) {
+                msg.innerHTML += ' <a href="' + d.top_up_url + '" class="alert-link">Buy credits</a>';
+            }
+            msg.style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = '🎤 Start Mock Interview (8 credits)';
+        }
+    } catch (err) {
+        msg.className = 'alert alert-danger';
+        msg.textContent = '❌ Error: ' + err.message;
+        msg.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = '🎤 Start Mock Interview (8 credits)';
+    }
+}
+
+loadCredits();
+</script>
 {% endblock %}

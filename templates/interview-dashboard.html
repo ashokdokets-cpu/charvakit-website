@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Interview Dashboard - Charvak{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-4">
+    <div class="container py-3 text-center">
+        <h1 class="display-5 fw-bold">📊 Interview Dashboard</h1>
+        <p class="lead mb-0">Track your progress across all mock sessions</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div id="loading" class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+
+    <div id="noLogin" class="text-center py-5" style="display:none;">
+        <h4>Please log in to view your dashboard</h4>
+        <a href="/login" class="btn btn-primary mt-3">Login</a>
+    </div>
+
+    <div id="dashboard" style="display:none;">
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-md-3"><div class="card text-center border-0 shadow-sm"><div class="card-body"><h3 class="text-primary" id="statTotal">0</h3><small class="text-muted">Total Sessions</small></div></div></div>
+            <div class="col-6 col-md-3"><div class="card text-center border-0 shadow-sm"><div class="card-body"><h3 class="text-success" id="statCompleted">0</h3><small class="text-muted">Completed</small></div></div></div>
+            <div class="col-6 col-md-3"><div class="card text-center border-0 shadow-sm"><div class="card-body"><h3 class="text-info" id="statAvg">0</h3><small class="text-muted">Avg Score</small></div></div></div>
+            <div class="col-6 col-md-3"><div class="card text-center border-0 shadow-sm"><div class="card-body"><h3 class="text-warning" id="statBest">0</h3><small class="text-muted">Best Score</small></div></div></div>
+        </div>
+
+        <div class="text-center mb-4">
+            <a href="/interview-prep" class="btn btn-success btn-lg">🎤 Start New Session (8 credits)</a>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <h5 class="mb-3">Session History</h5>
+                <div id="sessionList">
+                    <p class="text-muted text-center py-3">No sessions yet. Start your first mock interview!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const dashEmail = localStorage.getItem('userEmail');
+
+async function loadDashboard() {
+    if (!dashEmail) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('noLogin').style.display = 'block';
+        return;
+    }
+
+    try {
+        const r = await fetch('/api/interview-prep/dashboard/' + encodeURIComponent(dashEmail));
+        const d = await r.json();
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+
+        if (d.status !== 'success') return;
+
+        const completed = d.sessions.filter(s => s.status === 'completed');
+        const best = completed.length ? Math.max(...completed.map(s => s.total_score)) : 0;
+        document.getElementById('statTotal').textContent = d.count || 0;
+        document.getElementById('statCompleted').textContent = d.completed_count || 0;
+        document.getElementById('statAvg').textContent = d.average_score || 0;
+        document.getElementById('statBest').textContent = best;
+
+        if (!d.sessions || d.sessions.length === 0) return;
+
+        const rows = d.sessions.map(s => {
+            const pct = s.max_score > 0 ? Math.round(s.total_score / s.max_score * 100) : 0;
+            const badge = s.status === 'completed'
+                ? `<span class="badge bg-success">${s.total_score}/${s.max_score} (${pct}%)</span>`
+                : '<span class="badge bg-warning text-dark">In Progress</span>';
+            const action = s.status === 'completed'
+                ? `<a href="/interview-results/${s.session_id}" class="btn btn-sm btn-outline-primary">View</a>`
+                : `<a href="/interview-session/${s.session_id}" class="btn btn-sm btn-success">Continue</a>`;
+            return `<tr>
+                <td><strong>${escapeHtml(s.role)}</strong><br><small class="text-muted">${escapeHtml(s.difficulty)}</small></td>
+                <td>${badge}</td>
+                <td><small>${(s.started_at || '').slice(0, 10)}</small></td>
+                <td>${action}</td>
+            </tr>`;
+        }).join('');
+
+        document.getElementById('sessionList').innerHTML = `<table class="table align-middle">
+            <thead><tr><th>Role</th><th>Score</th><th>Date</th><th></th></tr></thead>
+            <tbody>${rows}</tbody>
+        </table>`;
+    } catch (e) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        console.error(e);
+    }
+}
+
+function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+loadDashboard();
+</script>
+{% endblock %}

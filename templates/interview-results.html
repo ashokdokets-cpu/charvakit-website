@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}Interview Results - Charvak{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-4">
+    <div class="container py-3 text-center">
+        <h1 class="display-5 fw-bold">📊 Session Results</h1>
+        <p class="lead mb-0" id="resultsHeader">Loading...</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div id="loading" class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+
+    <div id="errorState" class="text-center py-5" style="display:none;">
+        <h3>Results not found</h3>
+        <a href="/interview-prep" class="btn btn-primary mt-3">Start New Session</a>
+    </div>
+
+    <div id="resultsArea" style="display:none;">
+        <!-- Score Summary -->
+        <div class="row mb-4">
+            <div class="col-lg-8 mx-auto">
+                <div class="card border-0 shadow-lg text-center">
+                    <div class="card-body p-5">
+                        <div class="mb-3" style="font-size:5rem;" id="scoreEmoji">🎯</div>
+                        <h2 class="mb-3">
+                            <span id="totalScore" class="display-3 fw-bold text-success">0</span>
+                            <span class="text-muted fs-4">/ <span id="maxScore">0</span></span>
+                        </h2>
+                        <p class="lead mb-0" id="scoreLabel">Calculating...</p>
+                        <div class="mt-4">
+                            <span class="badge bg-secondary me-2" id="roleBadge">Role</span>
+                            <span class="badge bg-info" id="difficultyBadge">Difficulty</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Per-Question Breakdown -->
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <h3 class="mb-4">Question-by-Question Breakdown</h3>
+                <div id="questionList"></div>
+
+                <div class="text-center mt-5">
+                    <a href="/interview-prep" class="btn btn-success btn-lg me-2">🎤 Start Another Session</a>
+                    <a href="/interview-dashboard" class="btn btn-outline-primary btn-lg">📊 My Dashboard</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const sessionId = window.location.pathname.split('/').pop();
+
+async function loadResults() {
+    try {
+        const r = await fetch('/api/interview-prep/session/' + sessionId);
+        const d = await r.json();
+        if (d.status !== 'success') throw new Error(d.message || 'Not found');
+
+        const s = d.session;
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('resultsArea').style.display = 'block';
+
+        document.getElementById('resultsHeader').textContent = s.role + ' • ' + s.difficulty;
+        document.getElementById('roleBadge').textContent = s.role;
+        document.getElementById('difficultyBadge').textContent = s.difficulty;
+        document.getElementById('totalScore').textContent = s.total_score;
+        document.getElementById('maxScore').textContent = s.max_score;
+
+        const pct = s.max_score > 0 ? (s.total_score / s.max_score * 100) : 0;
+        let label, emoji;
+        if (pct >= 80) { label = '🏆 Excellent!'; emoji = '🏆'; }
+        else if (pct >= 60) { label = '👍 Good — keep improving'; emoji = '👍'; }
+        else if (pct >= 40) { label = '📚 Room for growth'; emoji = '📚'; }
+        else { label = '💪 Keep practicing!'; emoji = '💪'; }
+        document.getElementById('scoreLabel').textContent = label + ' (' + Math.round(pct) + '%)';
+        document.getElementById('scoreEmoji').textContent = emoji;
+
+        const qList = document.getElementById('questionList');
+        qList.innerHTML = (s.answers || []).map((a, i) => renderAnswer(a, i + 1)).join('');
+    } catch (e) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('errorState').style.display = 'block';
+        console.error(e);
+    }
+}
+
+function renderAnswer(a, num) {
+    let fb = {};
+    try { fb = JSON.parse(a.ai_feedback || '{}'); } catch(e) { fb = {text: a.ai_feedback || ''}; }
+
+    const scoreColor = a.ai_score >= 70 ? 'success' : (a.ai_score >= 50 ? 'warning' : 'danger');
+    const strengthList = (fb.strengths || []).map(s => '<li>' + escapeHtml(s) + '</li>').join('');
+    const improveList = (fb.improvements || []).map(s => '<li>' + escapeHtml(s) + '</li>').join('');
+
+    return `
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h5 class="mb-0">Q${num}. ${escapeHtml(a.question_text)}</h5>
+                    <span class="badge bg-${scoreColor} fs-6">${a.ai_score || 0}/100</span>
+                </div>
+                <small class="text-muted">Category: ${escapeHtml(a.category || 'General')}</small>
+                <hr>
+                <p class="mb-2"><strong>Your answer:</strong></p>
+                <p class="text-muted small" style="white-space:pre-wrap;">${escapeHtml(a.user_answer || '(no answer)')}</p>
+                <p class="mb-2"><strong>AI Feedback:</strong></p>
+                <p>${escapeHtml(fb.text || '')}</p>
+                ${strengthList ? `<div class="small"><strong class="text-success">Strengths:</strong><ul>${strengthList}</ul></div>` : ''}
+                ${improveList ? `<div class="small"><strong class="text-warning">Improvements:</strong><ul>${improveList}</ul></div>` : ''}
+            </div>
+        </div>
+    `;
+}
+
+function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+loadResults();
+</script>
+{% endblock %}

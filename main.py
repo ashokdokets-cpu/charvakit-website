@@ -826,6 +826,24 @@ async def ai_generate_stack(request: Request):
 async def career_engine(request: Request):
     return template_response("career-engine.html", request, "Career Engine - Charvak")
 
+@app.get("/interview-session/{session_id}", response_class=HTMLResponse)
+async def interview_session_page(session_id: str, request: Request):
+    """Live interview prep session page."""
+    return template_response("interview-session.html", request, "Interview Session - Charvak")
+
+
+@app.get("/interview-results/{session_id}", response_class=HTMLResponse)
+async def interview_results_page(session_id: str, request: Request):
+    """Interview prep results page."""
+    return template_response("interview-results.html", request, "Interview Results - Charvak")
+
+
+@app.get("/interview-dashboard", response_class=HTMLResponse)
+async def interview_dashboard_page(request: Request):
+    """User's interview prep history."""
+    return template_response("interview-dashboard.html", request, "Interview Dashboard - Charvak")
+
+
 @app.get("/interview-prep", response_class=HTMLResponse)
 async def interview_prep(request: Request):
     return template_response("interview-prep.html", request, "Interview Prep - Charvak Career Engine")
@@ -3159,6 +3177,12 @@ async def student_dashboard(email: str):
 # ============================================================
 # INTERVIEW PREP API ENDPOINTS
 # ============================================================
+
+@app.get("/api/interview-prep/dashboard/{email}")
+async def interview_prep_dashboard(email: str):
+    """Get user's interview prep history."""
+    return interview_prep_engine.get_dashboard(email)
+
 
 @app.post("/api/interview-prep/start")
 @limiter.limit("60/minute")
