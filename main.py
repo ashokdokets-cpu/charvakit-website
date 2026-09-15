@@ -3774,6 +3774,12 @@ async def ats_page(request: Request):
 async def university_page(request: Request):
     return template_response("university.html", request, "University Portal - Charvak IT Consulting")
 
+@app.get("/enterprise", response_class=HTMLResponse)
+async def enterprise_page(request: Request):
+    """Enterprise landing page."""
+    return template_response("enterprise.html", request, "Enterprise - Charvak IT Consulting")
+
+
 # ============================================================
 # ENTERPRISE API ENDPOINTS
 # ============================================================
