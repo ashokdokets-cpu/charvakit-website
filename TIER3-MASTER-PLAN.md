@@ -46,8 +46,9 @@
 
 ## Execution Order (by priority + effort)
 
-### Session 1 — Job Board E2E (2.5 hr) ← START HERE
+### Session 1 — Job Board E2E (2.5 hr) ← START HERE ✅ **COMPLETE 2026-09-15**
 
+**Status:** ✅ Complete. Tagged `v1.5-jobboard-persistent-20260915`. Verified on prod (version 1.1.0).
 **Why first:**
 - Already has a `jobs` DB table — closest to complete
 - Single-engine scope — no cross-dependencies
