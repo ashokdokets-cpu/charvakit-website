@@ -76,7 +76,7 @@
 
 ---
 
-### Session 2 — Referral System E2E (3 hr)
+### Session 2 — Referral System E2E (3 hr) **Status:** ✅ Done 2026-09-15. Tagged `v1.6-referral-persistent-20260915`.
 
 **Tasks:**
 1. Create tables: `charvak_referrals`, `charvak_referral_clicks`, `charvak_referral_rewards`
