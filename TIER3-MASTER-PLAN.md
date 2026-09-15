@@ -123,7 +123,12 @@
 
 ---
 
-### Session 5 — The Big Three (5 hr)
+### Session 5 — The Big Three (5 hr)   ### AI Courses — ✅ COMPLETE 2026-09-16
+
+**Tag:** `v1.8-ai-courses-20260916`
+**Tables:** charvak_courses, charvak_enrollments, charvak_course_lessons, charvak_certificates
+**Pages:** /ai-courses, /course/{name}, /my-course/{id}, /my-courses, /certificate/{id}
+**Verified:** enroll → 25-course catalog → AI curriculum → lessons → AI tutor (2 credits) → certificate with custom name
 
 **AI Courses:**
 1. Create `charvak_courses`, `charvak_enrollments`, `charvak_lessons`, `charvak_certificates`
