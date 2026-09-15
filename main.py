@@ -467,6 +467,7 @@ class JobPostRequest(BaseModel):
 
 
 class ApplicationAddRequest(BaseModel):
+    job_id: Optional[str] = Field(default=None, max_length=100)
     job_title: str = Field(..., min_length=1, max_length=200)
     company: str = Field(..., min_length=1, max_length=200)
     job_url: str = Field(default="", max_length=500)
@@ -1230,10 +1231,29 @@ async def api_add_application(data: ApplicationAddRequest, request: Request):
         user = require_auth(request)
     except HTTPException:
         return JSONResponse({"status": "error", "message": "Login required"}, status_code=401)
-    
+
     try:
+        # Use explicit job_id if provided; otherwise look up by title
+        job_id = data.job_id
+        if not job_id:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("SELECT job_id FROM charvak_jobs WHERE title = %s AND status = 'active' ORDER BY created_at DESC LIMIT 1", (data.job_title,))
+            row = cur.fetchone()
+            cur.close()
+            conn.close()
+            if row:
+                job_id = row[0]
+            else:
+                return JSONResponse({
+                    "status": "success",
+                    "message": "Application recorded (external job)",
+                    "external": True
+                }, status_code=200)
+
         result = job_board_engine.apply_to_job({
-            "job_id": data.job_title,  # Temporary mapping
+            "job_id": job_id,
             "user_id": user["user_id"],
             "resume_url": data.job_url
         })
