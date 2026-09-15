@@ -79,9 +79,21 @@
             </div>
 
             <div class="col-lg-4">
+                                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-4">
+                        <h5 class="mb-3">🎓 Certificate Name</h5>
+                        <p class="small text-muted mb-2">This name will appear on your certificate.</p>
+                        <input type="text" class="form-control mb-2" id="certNameInput" placeholder="Your full name">
+                        <button class="btn btn-outline-primary btn-sm w-100 mb-3" onclick="saveName()">
+                            💾 Save Name
+                        </button>
+                        <div id="nameMsg" class="small" style="display:none;"></div>
+                    </div>
+                </div>
+
                 <div class="card border-0 shadow-sm mb-4">
                     <div class="card-body p-4">
-                        <h5 class="mb-3">🎓 Complete Course?</h5>
+                        <h5 class="mb-3">🎉 Complete Course?</h5>
                         <p class="small text-muted">Finish all weeks to unlock your certificate.</p>
                         <button class="btn btn-warning w-100" id="certBtn" onclick="getCertificate()" disabled>
                             Get Certificate
@@ -107,6 +119,37 @@ const enrollmentId = window.location.pathname.split('/my-course/')[1] || '';
 let enrollment = null;
 let currentWeek = 1;
 
+async function saveName() {
+    const name = document.getElementById('certNameInput').value.trim();
+    const msg = document.getElementById('nameMsg');
+    if (!name || name.length < 2) {
+        msg.textContent = '⚠️ Please enter a valid name.';
+        msg.style.color = '#ef4444';
+        msg.style.display = 'block';
+        return;
+    }
+    try {
+        const r = await fetch('/api/ai-course/set-recipient-name', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({enrollment_id: enrollmentId, name: name})
+        });
+        const d = await r.json();
+        if (d.status === 'success') {
+            msg.textContent = '✅ Saved! This name will appear on your certificate.';
+            msg.style.color = '#22c55e';
+            msg.style.display = 'block';
+            setTimeout(() => msg.style.display = 'none', 3000);
+        } else {
+            throw new Error(d.message);
+        }
+    } catch (e) {
+        msg.textContent = '❌ ' + e.message;
+        msg.style.color = '#ef4444';
+        msg.style.display = 'block';
+    }
+}
+
 async function loadEnrollment() {
     try {
         const r = await fetch('/api/ai-course/enrollment/' + enrollmentId);
@@ -117,6 +160,11 @@ async function loadEnrollment() {
         document.getElementById('loading').style.display = 'none';
         document.getElementById('courseArea').style.display = 'block';
         document.getElementById('courseTitle').textContent = enrollment.course_name;
+
+        // Load existing recipient name
+        if (enrollment.recipient_name) {
+            document.getElementById('certNameInput').value = enrollment.recipient_name;
+        }
 
         renderWeekTabs();
         updateProgress();

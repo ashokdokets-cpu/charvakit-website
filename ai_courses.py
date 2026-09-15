@@ -384,7 +384,8 @@ class AICourseSystem:
             cur = conn.cursor()
             cur.execute("""
                 SELECT enrollment_id, email, course_name, duration_weeks, user_level,
-                       curriculum, progress, total_weeks, status, started_at, completed_at
+                       curriculum, progress, total_weeks, status, started_at, completed_at,
+                       recipient_name
                 FROM charvak_enrollments WHERE enrollment_id = %s
             """, (enrollment_id,))
             row = cur.fetchone()
@@ -404,7 +405,8 @@ class AICourseSystem:
                 "total_weeks": row[7],
                 "status": row[8],
                 "started_at": row[9].isoformat() if row[9] else None,
-                "completed_at": row[10].isoformat() if row[10] else None
+                "completed_at": row[10].isoformat() if row[10] else None,
+                "recipient_name": row[11]
             }
 
             # Load lessons
@@ -573,16 +575,34 @@ Return JSON:
     # CERTIFICATES
     # ============================================================
 
+    def set_recipient_name(self, enrollment_id: str, name: str) -> dict:
+        """Save a custom recipient name for the certificate."""
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                UPDATE charvak_enrollments SET recipient_name = %s
+                WHERE enrollment_id = %s
+            """, (name.strip()[:100], enrollment_id))
+            conn.commit()
+            cur.close()
+            conn.close()
+            return {"status": "success", "recipient_name": name.strip()[:100]}
+        except Exception as e:
+            logger.error(f"set_recipient_name failed: {e}")
+            return {"status": "error", "message": str(e)}
+    
     def complete_course(self, enrollment_id: str) -> dict:
-        """Issue a certificate on completion."""
+        """Issue a certificate on completion. Uses recipient_name if set, else user's real name from users table."""
         try:
             from database import db
             conn = db.get_connection()
             cur = conn.cursor()
 
             cur.execute("""
-                SELECT email, course_name, duration_weeks FROM charvak_enrollments
-                WHERE enrollment_id = %s
+                SELECT email, course_name, duration_weeks, recipient_name
+                FROM charvak_enrollments WHERE enrollment_id = %s
             """, (enrollment_id,))
             row = cur.fetchone()
             if not row:
@@ -590,14 +610,24 @@ Return JSON:
                 conn.close()
                 return {"status": "error", "message": "Enrollment not found"}
 
-            email, course_name, duration_weeks = row
+            email, course_name, duration_weeks, recipient_name = row
+
+            # If enrollment has no name, look up the user's real name
+            if not recipient_name:
+                cur.execute("SELECT name FROM users WHERE email = %s", (email,))
+                user_row = cur.fetchone()
+                if user_row and user_row[0]:
+                    recipient_name = user_row[0]
+                else:
+                    recipient_name = email.split('@')[0]
+
             cert_id = f"CERT-{secrets.token_hex(6).upper()}"
 
             cur.execute("""
                 INSERT INTO charvak_certificates
-                    (certificate_id, enrollment_id, email, course_name, duration_weeks)
-                VALUES (%s, %s, %s, %s, %s)
-            """, (cert_id, enrollment_id, email, course_name, duration_weeks))
+                    (certificate_id, enrollment_id, email, course_name, duration_weeks, recipient_name)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (cert_id, enrollment_id, email, course_name, duration_weeks, recipient_name))
 
             cur.execute("""
                 UPDATE charvak_enrollments
@@ -617,6 +647,7 @@ Return JSON:
                     "email": email,
                     "course_name": course_name,
                     "duration_weeks": duration_weeks,
+                    "recipient_name": recipient_name,
                     "issued_at": datetime.now().isoformat()
                 }
             }
@@ -631,7 +662,7 @@ Return JSON:
             conn = db.get_connection()
             cur = conn.cursor()
             cur.execute("""
-                SELECT certificate_id, enrollment_id, email, course_name, duration_weeks, issued_at
+                SELECT certificate_id, enrollment_id, email, course_name, duration_weeks, issued_at, recipient_name
                 FROM charvak_certificates WHERE certificate_id = %s
             """, (certificate_id,))
             row = cur.fetchone()
@@ -647,7 +678,8 @@ Return JSON:
                     "email": row[2],
                     "course_name": row[3],
                     "duration_weeks": row[4],
-                    "issued_at": row[5].isoformat() if row[5] else None
+                    "issued_at": row[5].isoformat() if row[5] else None,
+                    "recipient_name": row[6] or row[2].split('@')[0]
                 }
             }
         except Exception as e:

@@ -6234,6 +6234,11 @@ async def ai_course_enrollment(enrollment_id: str):
     """Get full enrollment state with lessons."""
     return ai_courses.get_enrollment(enrollment_id)
 
+@app.post("/api/ai-course/set-recipient-name")
+async def ai_course_set_recipient_name(request: Request):
+    """Save the name to print on the certificate."""
+    data = await request.json()
+    return ai_courses.set_recipient_name(data.get("enrollment_id"), data.get("name", ""))
 
 @app.post("/api/ai-course/complete-week")
 async def ai_course_complete_week(request: Request):

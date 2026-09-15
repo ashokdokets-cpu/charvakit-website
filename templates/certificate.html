@@ -82,7 +82,7 @@ async function loadCert() {
         const c = d.certificate;
         document.getElementById('certId').textContent = c.certificate_id;
         document.getElementById('certIdShort').textContent = c.certificate_id;
-        document.getElementById('certName').textContent = c.email.split('@')[0].replace(/[._]/g, ' ');
+        document.getElementById('certName').textContent = c.recipient_name || c.email.split('@')[0].replace(/[._]/g, ' ');
         document.getElementById('certCourse').textContent = c.course_name;
         document.getElementById('certDuration').textContent = c.duration_weeks + ' weeks';
         document.getElementById('certDate').textContent = new Date(c.issued_at).toLocaleDateString('en-IN', {day: 'numeric', month: 'long', year: 'numeric'});
