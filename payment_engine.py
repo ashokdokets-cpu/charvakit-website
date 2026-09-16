@@ -173,6 +173,7 @@ class PaymentEngine:
         "CHF": 0.011, "SEK": 0.13, "NOK": 0.13,
         "DKK": 0.083, "PLN": 0.048, "MXN": 0.21,
         "BRL": 0.065,
+        "AED": 0.044,
     }
 
     def verify_webhook_signature(self, raw_body: bytes, signature: str) -> bool:
@@ -197,7 +198,12 @@ class PaymentEngine:
             logger.error(f"Webhook signature verification failed: {e}")
             return False
 
-    def create_paypal_order(self, amount_inr: float, target_currency: str = "USD", description: str = "") -> Dict:
+    def create_paypal_order(self, amount_inr: float, target_currency: str = "USD", description: str = "", custom_id: str = None) -> Dict:
+        """Create a PayPal order.
+
+        custom_id is echoed back by PayPal on capture. Use it to carry
+        structured metadata (e.g. 'ai_course|email|course|enrollment|country').
+        """
         """Create a PayPal order."""
         if not self.paypal_client_id:
             return {"status": "error", "message": "PayPal not configured"}
@@ -213,6 +219,7 @@ class PaymentEngine:
             "currency": target,
             "method": "paypal",
             "description": description,
+            "custom_id": custom_id,
             "status": "created",
             "created_at": datetime.now().isoformat()
         })
@@ -222,7 +229,9 @@ class PaymentEngine:
             "order_id": order_id,
             "client_id": self.paypal_client_id,
             "amount": amount_converted,
-            "currency": target
+            "currency": target,
+            "custom_id": custom_id,
+            "description": description
         }
 
     def verify_paypal_payment(self, order_id: str, paypal_order_id: str) -> Dict:

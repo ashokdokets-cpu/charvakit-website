@@ -1,4 +1,4 @@
-﻿"""
+"""
 Charvak AI-Driven Course System
 AI plans curriculum, delivers content, assists projects, issues certificates.
 Database-backed: charvak_courses, charvak_enrollments, charvak_course_lessons, charvak_certificates.
@@ -326,7 +326,7 @@ class AICourseSystem:
             cur.close()
             conn.close()
 
-            logger.info(f"Enrolled: {email} → {course_name} ({enrollment_id})")
+            logger.info(f"Enrolled: {email} -> {course_name} ({enrollment_id})")
 
             return {
                 "status": "success",
@@ -730,5 +730,101 @@ Return JSON:
             logger.error(f"assist_project failed: {e}")
             return {"status": "error", "message": str(e)}
 
+
+    # ============================================================
+    # PAID ENROLLMENT + EMI (Tier 3 - 2026-09-16)
+    # Delegates to ai_courses_payments. Existing methods above are
+    # unchanged. Free enroll_student() still exists for price-0 courses.
+    # ============================================================
+
+    def enroll_student_paid(self, email: str, course_name: str,
+                            duration_weeks: int = None,
+                            country_code: str = "IN") -> dict:
+        """Paid enrollment: creates the enrollment + (for EMI countries)
+        the installment schedule via ai_courses_payments. Returns the plan
+        the frontend should charge against."""
+        try:
+            from ai_courses_payments import ai_course_payments
+            plan = ai_course_payments.create_enrollment_paid(
+                email=email,
+                course_name=course_name,
+                duration_weeks=duration_weeks,
+                country_code=country_code,
+            )
+            if plan.get("status") == "exists":
+                return plan
+            if plan.get("status") != "success":
+                return plan
+            # Generate + persist curriculum so lessons can start immediately
+            # once the first payment confirms.
+            try:
+                curriculum = self.plan_curriculum(course_name, duration_weeks)
+                from database import db
+                conn = db.get_connection()
+                cur = conn.cursor()
+                cur.execute(
+                    "UPDATE charvak_enrollments SET curriculum = %s::jsonb, user_level = 'beginner' WHERE enrollment_id = %s",
+                    (json.dumps(curriculum), plan["enrollment_id"]),
+                )
+                conn.commit()
+                cur.close()
+                conn.close()
+                plan["curriculum_ready"] = True
+            except Exception as ce:
+                logger.warning(f"curriculum pre-gen failed (non-fatal): {ce}")
+                plan["curriculum_ready"] = False
+            return plan
+        except Exception as e:
+            logger.error(f"enroll_student_paid failed: {e}")
+            return {"status": "error", "message": str(e)}
+
+    def check_course_access(self, enrollment_id: str, week_num: int) -> dict:
+        """Returns {allowed: True} OR the full unlock offer with installment
+        details, amount, due date, and resume week."""
+        try:
+            from ai_courses_payments import ai_course_payments
+            return ai_course_payments.check_access(enrollment_id, week_num)
+        except Exception as e:
+            logger.error(f"check_course_access failed: {e}")
+            return {"status": "error", "message": str(e)}
+
+    def get_course_installments(self, enrollment_id: str) -> dict:
+        """Return the installment schedule for an enrollment."""
+        try:
+            from ai_courses_payments import ai_course_payments
+            return ai_course_payments.get_installments(enrollment_id)
+        except Exception as e:
+            logger.error(f"get_course_installments failed: {e}")
+            return {"status": "error", "installments": [], "count": 0}
+
+    def record_course_payment(self, enrollment_id: str, email: str,
+                              course_name: str, country_code: str,
+                              currency: str, amount_local,
+                              amount_inr: int, payment_type: str,
+                              gateway: str, installment_num=None,
+                              razorpay_payment_id=None,
+                              razorpay_order_id=None,
+                              paypal_order_id=None) -> dict:
+        """Record a captured payment. Idempotent on razorpay_payment_id."""
+        try:
+            from ai_courses_payments import ai_course_payments
+            return ai_course_payments.record_payment(
+                enrollment_id=enrollment_id,
+                email=email,
+                course_name=course_name,
+                country_code=country_code,
+                currency=currency,
+                amount_local=amount_local,
+                amount_inr=amount_inr,
+                payment_type=payment_type,
+                gateway=gateway,
+                installment_num=installment_num,
+                razorpay_payment_id=razorpay_payment_id,
+                razorpay_order_id=razorpay_order_id,
+                paypal_order_id=paypal_order_id,
+            )
+        except Exception as e:
+            logger.error(f"record_course_payment failed: {e}")
+            return {"status": "error", "message": str(e)}
 
 ai_courses = AICourseSystem()
