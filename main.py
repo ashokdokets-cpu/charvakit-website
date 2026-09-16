@@ -2307,6 +2307,73 @@ async def razorpay_webhook(request: Request):
         if plan == "free":
             return JSONResponse({"status": "ignored", "message": "free plan has no payment"})
 
+        # --- course_branch_marker_ai_course ---
+        # If this payment was for a course, route it to the course engine
+        # instead of credits. Idempotent on razorpay_payment_id.
+        tool = (notes.get("tool") or "").strip().lower()
+        if tool == "ai_course":
+            try:
+                course_name = (notes.get("course_name") or "").strip()
+                enrollment_id = (notes.get("enrollment_id") or "").strip()
+                country_code = (notes.get("country_code") or "IN").strip().upper()
+                payment_type = (notes.get("payment_type") or "full").strip()
+                inst_raw = notes.get("installment_num") or ""
+                try:
+                    installment_num = int(inst_raw) if str(inst_raw).strip() else None
+                except Exception:
+                    installment_num = None
+
+                if not (course_name and enrollment_id and email):
+                    logger.warning("Razorpay webhook: ai_course payment missing fields")
+                    return JSONResponse({"status": "ignored", "message": "missing course fields"})
+
+                # Look up what amount we should have charged
+                price = ai_course_payments.resolve_price(course_name, country_code)
+                if price.get("status") != "success":
+                    logger.warning("Razorpay webhook: ai_course price lookup failed")
+                    return JSONResponse({"status": "ignored", "message": "course not found"})
+
+                if country_code in {"IN"}:
+                    sched = ai_course_payments.compute_emi_schedule(price["amount_inr"], price["duration_weeks"])
+                    idx = (installment_num or 1) - 1
+                    if idx < 0 or idx >= len(sched["blocks"]):
+                        idx = 0
+                    block = sched["blocks"][idx]
+                    expected_paise = block["amount_inr"] * 100
+                    amount_inr = block["amount_inr"]
+                    amount_local = float(block["amount_inr"])
+                    currency = "INR"
+                else:
+                    expected_paise = int(price["amount_local"] * 100)
+                    amount_inr = price["amount_inr"]
+                    amount_local = price["amount_local"]
+                    currency = price["currency"]
+
+                got = int(payment_entity.get("amount") or 0)
+                if got != expected_paise:
+                    logger.warning(f"webhook course amount mismatch: got {got}, expected {expected_paise}")
+                    return JSONResponse({"status": "ignored", "message": "amount mismatch"})
+
+                rec = ai_courses.record_course_payment(
+                    enrollment_id=enrollment_id,
+                    email=email,
+                    course_name=course_name,
+                    country_code=country_code,
+                    currency=currency,
+                    amount_local=amount_local,
+                    amount_inr=amount_inr,
+                    payment_type=payment_type,
+                    gateway="razorpay",
+                    installment_num=installment_num,
+                    razorpay_payment_id=payment_id,
+                    razorpay_order_id=order_id,
+                )
+                logger.info(f"Razorpay webhook: ai_course recorded status={rec.get('status')} already={rec.get('already_recorded')}")
+                return JSONResponse({"status": "success", "payment_id": payment_id, "course": True, "recorded": rec.get("status") == "success"})
+            except Exception as ce:
+                logger.error(f"Razorpay webhook: ai_course branch failed: {ce}", exc_info=True)
+                return JSONResponse({"status": "error", "message": "course processing failed"}, status_code=200)
+
         result = ai_credit_engine.purchase_credits(email, plan, payment_id=payment_id)
         logger.info(f"Razorpay webhook crediting result: {result.get('status')} for {email} plan={plan}")
 
@@ -2316,6 +2383,90 @@ async def razorpay_webhook(request: Request):
         logger.error(f"Razorpay webhook error: {e}", exc_info=True)
         return JSONResponse({"status": "error", "message": "Internal error"}, status_code=200)
 
+
+@app.post("/webhook/paypal")
+async def paypal_webhook(request: Request):
+    """PayPal webhook receiver (course payments, non-IN only).
+
+    Verifies the transmission signature, then records the course payment
+    via the same idempotent path as the browser callback. Returns 200 on
+    error to prevent PayPal retry storms.
+    """
+    try:
+        raw_body = await request.body()
+        try:
+            payload = json.loads(raw_body.decode("utf-8"))
+        except Exception as e:
+            logger.error(f"PayPal webhook: invalid JSON - {e}")
+            return JSONResponse({"status": "error", "message": "Invalid JSON"}, status_code=400)
+
+        event_type = payload.get("event_type", "")
+        logger.info(f"PayPal webhook received: {event_type}")
+
+        if event_type not in ("PAYMENT.CAPTURE.COMPLETED", "CHECKOUT.ORDER.APPROVED"):
+            return JSONResponse({"status": "ignored", "event": event_type})
+
+        resource = payload.get("resource", {}) or {}
+        # Try to read our notes from custom_id or purchase_units
+        custom_id = resource.get("custom_id") or ""
+        pu = (resource.get("purchase_units") or [{}])[0] if isinstance(resource.get("purchase_units"), list) else {}
+        pu_custom = pu.get("custom_id") or ""
+        notes = resource.get("notes") or {}
+
+        def _pick(*vals):
+            for v in vals:
+                if v:
+                    return str(v)
+            return ""
+
+        tool = _pick(notes.get("tool"), pu.get("description"), custom_id.split("|")[0] if custom_id else "")
+        email = _pick(notes.get("email"), custom_id.split("|")[1] if "|" in custom_id else "")
+        course_name = _pick(notes.get("course_name"), custom_id.split("|")[2] if custom_id.count("|") >= 2 else "")
+        enrollment_id = _pick(notes.get("enrollment_id"), custom_id.split("|")[3] if custom_id.count("|") >= 3 else "")
+        country_code = _pick(notes.get("country_code"), pu.get("custom_id", "").split("|")[4] if custom_id.count("|") >= 4 else "") or "US"
+
+        if tool != "ai_course" or not (email and course_name and enrollment_id):
+            logger.info("PayPal webhook: not an ai_course payment or missing fields")
+            return JSONResponse({"status": "ignored", "message": "not a course payment"})
+
+        paypal_order_id = resource.get("id") or payload.get("id") or ""
+        # PayPal amounts are strings in major units
+        amt_obj = (resource.get("amount") or pu.get("amount") or {})
+        try:
+            amount_local = float(amt_obj.get("value") or 0)
+        except Exception:
+            amount_local = 0.0
+        currency = (amt_obj.get("currency_code") or "USD").upper()
+
+        price = ai_course_payments.resolve_price(course_name, country_code)
+        if price.get("status") != "success":
+            logger.warning("PayPal webhook: course price lookup failed")
+            return JSONResponse({"status": "ignored", "message": "course not found"}, status_code=200)
+
+        # Match amount within a small tolerance for FX rounding
+        expected = float(price["amount_local"])
+        if abs(amount_local - expected) > max(1.0, expected * 0.02):
+            logger.warning(f"PayPal webhook: amount mismatch got {amount_local}, expected {expected}")
+            return JSONResponse({"status": "ignored", "message": "amount mismatch"}, status_code=200)
+
+        rec = ai_courses.record_course_payment(
+            enrollment_id=enrollment_id,
+            email=email,
+            course_name=course_name,
+            country_code=country_code,
+            currency=currency,
+            amount_local=amount_local,
+            amount_inr=price["amount_inr"],
+            payment_type="full",
+            gateway="paypal",
+            installment_num=None,
+            paypal_order_id=paypal_order_id,
+        )
+        logger.info(f"PayPal webhook: course recorded status={rec.get('status')} already={rec.get('already_recorded')}")
+        return JSONResponse({"status": "success", "order_id": paypal_order_id, "recorded": rec.get("status") == "success"})
+    except Exception as e:
+        logger.error(f"PayPal webhook error: {e}", exc_info=True)
+        return JSONResponse({"status": "error", "message": "Internal error"}, status_code=200)
 
 @app.get("/api/payment/history")
 async def payment_history():
@@ -4887,6 +5038,288 @@ async def doketsrb_page(request: Request):
 
 
 # ============================================================
+# AI COURSE - PAID ENROLLMENT + EMI (Tier 3, 2026-09-16)
+# Additive. Free /api/ai-course/enroll above is untouched.
+# ============================================================
+
+@app.get("/api/ai-course/price/{course_name}")
+async def ai_course_price(course_name: str, request: Request):
+    """Resolve course price for the caller's location."""
+    try:
+        # ip_fallback_marker_v1
+        cc = (request.query_params.get("country") or "").strip().upper()
+        if not cc:
+            # Primary: Accept-Language header
+            try:
+                from global_config import detect_user_region
+                accept = request.headers.get("accept-language", "en")
+                region = detect_user_region(accept_language=accept)
+                cc = (region or {}).get("country", "").strip().upper()
+            except Exception:
+                cc = ""
+            # Fallback: IP-based detection when header is ambiguous
+            if not cc or cc in ("", "UNKNOWN"):
+                try:
+                    from improved_ip_detection import improved_ip_detector
+                    loc = improved_ip_detector.detect_from_request(request)
+                    cc = (loc or {}).get("country", "").strip().upper()
+                except Exception as e:
+                    logger.warning(f"ip fallback failed: {e}")
+            if not cc:
+                cc = "US"
+        price = ai_course_payments.resolve_price(course_name, cc)
+        if price.get("status") != "success":
+            return JSONResponse(price, status_code=404)
+        emi_eligible = cc in {"IN"}
+        schedule = None
+        if emi_eligible:
+            schedule = ai_course_payments.compute_emi_schedule(
+                price["amount_inr"], price["duration_weeks"]
+            )
+        rails = ["razorpay"] if cc == "IN" else ["razorpay", "paypal"]
+        return JSONResponse({
+            "status": "success",
+            "course_name": course_name,
+            "country_code": cc,
+            "currency": price["currency"],
+            "amount_local": price["amount_local"],
+            "amount_inr": price["amount_inr"],
+            "razorpay_paise": price["razorpay_paise"],
+            "duration_weeks": price["duration_weeks"],
+            "emi_eligible": emi_eligible,
+            "schedule": schedule,
+            "rails": rails,
+        })
+    except Exception as e:
+        logger.error(f"ai_course_price failed: {e}")
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+
+@app.post("/api/ai-course/create-order")
+@limiter.limit("30/minute")
+async def ai_course_create_order(request: Request):
+    """Create a gateway order for a course."""
+    try:
+        data = await request.json()
+        email = (data.get("email") or "").strip().lower()
+        course_name = (data.get("course_name") or "").strip()
+        country_code = (data.get("country_code") or "IN").strip().upper()
+        gateway = (data.get("gateway") or "razorpay").strip().lower()
+
+        if not email or not course_name:
+            return JSONResponse({"status": "error", "message": "email and course_name required"}, status_code=400)
+
+        enroll_plan = ai_courses.enroll_student_paid(email, course_name, country_code=country_code)
+        if enroll_plan.get("status") == "error":
+            return JSONResponse(enroll_plan, status_code=400)
+        enrollment_id = enroll_plan["enrollment_id"]
+
+        price = ai_course_payments.resolve_price(course_name, country_code)
+        if price.get("status") != "success":
+            return JSONResponse(price, status_code=400)
+
+        if country_code in {"IN"}:
+            plan = ai_course_payments.compute_emi_schedule(
+                price["amount_inr"], price["duration_weeks"]
+            )
+            amount_inr_paise = plan["blocks"][0]["amount_inr"] * 100
+            payment_type = "emi_installment"
+            installment_num = 1
+            amount_local = float(plan["blocks"][0]["amount_inr"])
+            currency = "INR"
+        else:
+            amount_inr_paise = int(price["amount_local"] * 100)
+            payment_type = "full"
+            installment_num = None
+            amount_local = price["amount_local"]
+            currency = price["currency"]
+
+        notes = {
+            "tool": "ai_course",
+            "email": email,
+            "course_name": course_name,
+            "country_code": country_code,
+            "enrollment_id": enrollment_id,
+            "payment_type": payment_type,
+            "installment_num": installment_num or "",
+            "gateway": gateway,
+        }
+
+        if gateway == "paypal" and country_code != "IN":
+            custom_id = f"ai_course|{email}|{course_name}|{enrollment_id}|{country_code}"
+            result = payment_engine.create_paypal_order(
+                amount_inr=price["amount_inr"],
+                target_currency=currency,
+                description=f"Course: {course_name}",
+                custom_id=custom_id,
+            )
+            result["enrollment_id"] = enrollment_id
+            result["payment_type"] = payment_type
+            result["installment_num"] = installment_num
+            return JSONResponse(result)
+
+        receipt = f"course_{datetime.now().strftime('%Y%m%d%H%M%S')}_{secrets.token_hex(3)}"
+        result = payment_engine.create_razorpay_order(
+            amount_inr=amount_inr_paise,
+            receipt=receipt,
+            notes=notes,
+        )
+        result["key_id"] = os.getenv("RAZORPAY_KEY_ID", "")
+        result["key"] = os.getenv("RAZORPAY_KEY_ID", "")
+        result["enrollment_id"] = enrollment_id
+        result["payment_type"] = payment_type
+        result["installment_num"] = installment_num
+        result["currency"] = currency
+        result["amount_local"] = amount_local
+        return JSONResponse(result)
+    except Exception as e:
+        logger.error(f"ai_course_create_order failed: {e}", exc_info=True)
+        return JSONResponse({"status": "error", "message": "Could not create order"}, status_code=500)
+
+
+@app.post("/api/ai-course/confirm-payment")
+@limiter.limit("30/minute")
+async def ai_course_confirm_payment(request: Request):
+    """Client-side callback: verify + record + unlock the block."""
+    try:
+        data = await request.json()
+        enrollment_id = (data.get("enrollment_id") or "").strip()
+        payment_id = (data.get("payment_id") or "").strip()
+        order_id = (data.get("order_id") or "").strip()
+        signature = (data.get("signature") or "").strip()
+        course_name = (data.get("course_name") or "").strip()
+        country_code = (data.get("country_code") or "IN").strip().upper()
+        email = (data.get("email") or "").strip().lower()
+
+        if not (enrollment_id and payment_id and course_name and email):
+            return JSONResponse({"status": "error", "message": "Missing fields"}, status_code=400)
+
+        verify = payment_engine.verify_razorpay_payment(payment_id, order_id, signature)
+        if verify.get("status") != "success" or not verify.get("verified"):
+            return JSONResponse({"status": "error", "message": "Signature verification failed"}, status_code=402)
+
+        fetch = payment_engine.fetch_razorpay_payment(payment_id)
+        if fetch.get("status") != "success":
+            return JSONResponse({"status": "error", "message": fetch.get("message") or "Payment not found"}, status_code=402)
+        if fetch.get("status_field") != "captured" and not fetch.get("captured"):
+            return JSONResponse({"status": "error", "message": "Payment not captured"}, status_code=402)
+
+        price = ai_course_payments.resolve_price(course_name, country_code)
+        if price.get("status") != "success":
+            return JSONResponse(price, status_code=400)
+
+        if country_code in {"IN"}:
+            plan = ai_course_payments.compute_emi_schedule(price["amount_inr"], price["duration_weeks"])
+            inst_num = int(data.get("installment_num") or 1)
+            block = plan["blocks"][inst_num - 1]
+            expected_paise = block["amount_inr"] * 100
+            amount_inr = block["amount_inr"]
+            amount_local = float(block["amount_inr"])
+            currency = "INR"
+            payment_type = "emi_installment"
+        else:
+            expected_paise = int(price["amount_local"] * 100)
+            amount_inr = price["amount_inr"]
+            amount_local = price["amount_local"]
+            currency = price["currency"]
+            payment_type = "full"
+            inst_num = None
+
+        got = int(fetch.get("amount") or 0)
+        if got != expected_paise:
+            logger.warning(f"course payment amount mismatch: got {got}, expected {expected_paise}")
+            return JSONResponse({"status": "error", "message": "Amount mismatch"}, status_code=402)
+
+        result = ai_courses.record_course_payment(
+            enrollment_id=enrollment_id,
+            email=email,
+            course_name=course_name,
+            country_code=country_code,
+            currency=currency,
+            amount_local=amount_local,
+            amount_inr=amount_inr,
+            payment_type=payment_type,
+            gateway="razorpay",
+            installment_num=inst_num,
+            razorpay_payment_id=payment_id,
+            razorpay_order_id=order_id,
+        )
+        result["enrollment_id"] = enrollment_id
+        return JSONResponse(result)
+    except Exception as e:
+        logger.error(f"ai_course_confirm_payment failed: {e}", exc_info=True)
+        return JSONResponse({"status": "error", "message": "Payment confirmation failed"}, status_code=500)
+
+
+@app.get("/api/ai-course/installments/{enrollment_id}")
+async def ai_course_installments(enrollment_id: str):
+    """Return the installment schedule for an enrollment."""
+    return JSONResponse(ai_courses.get_course_installments(enrollment_id))
+
+
+@app.get("/api/ai-course/access/{enrollment_id}/{week_num}")
+async def ai_course_access(enrollment_id: str, week_num: int):
+    """Returns {allowed:true} OR the full unlock offer.
+
+    If access is denied, fires an in-context reminder email to the student
+    (throttled to once per 24h per installment) so they know exactly what
+    to pay and what weeks they will unlock. access_reminder_marker_v1
+    """
+    payload = ai_courses.check_course_access(enrollment_id, week_num)
+
+    if payload.get("status") == "success" and payload.get("allowed") is False:
+        try:
+            inst_num = (payload.get("installment") or {}).get("num")
+            if inst_num:
+                from database import db
+                conn = db.get_connection()
+                cur = conn.cursor()
+                cur.execute("""
+                    SELECT email, last_access_reminder_at
+                    FROM charvak_course_installments
+                    WHERE enrollment_id = %s AND installment_num = %s
+                """, (enrollment_id, inst_num))
+                row = cur.fetchone()
+                if row:
+                    email, last_at = row[0], row[1]
+                    from datetime import datetime as _dt, timedelta as _td
+                    now = _dt.utcnow()
+                    should_send = (last_at is None) or (now - last_at > _td(hours=24))
+                    if should_send and email:
+                        try:
+                            cur.execute("""
+                                SELECT course_name FROM charvak_enrollments
+                                WHERE enrollment_id = %s
+                            """, (enrollment_id,))
+                            cn_row = cur.fetchone()
+                            course_name = cn_row[0] if cn_row else "your course"
+                            notification_engine.notify_access_attempt_blocked(
+                                email=email,
+                                enrollment_id=enrollment_id,
+                                course_name=course_name,
+                                week_num=week_num,
+                                installment_num=inst_num,
+                                total=(payload.get("installment") or {}).get("of") or 1,
+                                amount_inr=payload.get("amount_inr", 0),
+                                unlocks_weeks=payload.get("unlocks_weeks", ""),
+                                due_date=payload.get("due_date") or "",
+                            )
+                            cur.execute("""
+                                UPDATE charvak_course_installments
+                                SET last_access_reminder_at = %s
+                                WHERE enrollment_id = %s AND installment_num = %s
+                            """, (now, enrollment_id, inst_num))
+                            conn.commit()
+                        except Exception as ie:
+                            logger.warning(f"access reminder email failed: {ie}")
+                cur.close()
+                conn.close()
+        except Exception as e:
+            logger.warning(f"access reminder throttle check failed: {e}")
+
+    return JSONResponse(payload)
+
+# ============================================================
 # HEALTH CHECKS
 # ============================================================
 
@@ -6066,6 +6499,7 @@ async def get_course_price(course_name: str, country_code: str):
 
 
 from ai_courses import ai_courses
+from ai_courses_payments import ai_course_payments
 
 @app.post("/api/ai-course/enroll")
 async def enroll_ai_course(request: Request):
