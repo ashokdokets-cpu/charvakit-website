@@ -47,24 +47,41 @@
             </div>
 
             <div class="col-lg-4">
-                <div class="card border-0 shadow-lg sticky-top" style="top:100px;">
+                <div class="card border-0 shadow-lg sticky-top" style="top:100px;" id="priceCardArea">
                     <div class="card-body p-4">
                         <h5 class="mb-3">Enroll Now</h5>
-                        <div class="alert alert-success">
-                            <strong>🎉 Free Enrollment</strong><br>
-                            <small>No payment required. AI tutor uses credits per question.</small>
+
+                        <div id="priceLoading" class="text-center py-3">
+                            <div class="spinner-border spinner-border-sm text-primary"></div>
+                            <small class="text-muted ms-2">Loading price...</small>
                         </div>
 
-                        <div id="enrollMsg" class="alert" style="display:none;"></div>
+                        <div id="priceCard" style="display:none;">
+                            <div class="d-flex align-items-baseline gap-2 mb-2">
+                                <span class="fs-3 fw-bold" id="priceAmount">-</span>
+                                <span class="text-muted small" id="priceCurrencyNote"></span>
+                            </div>
 
-                        <button class="btn btn-success btn-lg w-100" id="enrollBtn" onclick="enrollNow()">
-                            🎓 Enroll Free
-                        </button>
+                            <div id="emiBox" class="alert alert-info small" style="display:none;">
+                                <strong>Pay in EMIs</strong><br>
+                                <span id="emiSummary"></span>
+                            </div>
 
-                        <hr class="my-4">
-                        <div class="small text-muted">
-                            <strong>Login required</strong><br>
-                            Make sure you're <a href="/login">logged in</a> before enrolling.
+                            <div id="fullPriceBox" class="alert alert-light small" style="display:none;">
+                                One-time payment for full access.
+                            </div>
+
+                            <div id="enrollMsg" class="alert" style="display:none;"></div>
+
+                            <button class="btn btn-success btn-lg w-100" id="enrollBtn" onclick="startEnroll()">
+                                Enroll Now
+                            </button>
+
+                            <hr class="my-4">
+                            <div class="small text-muted">
+                                <strong>Login required</strong><br>
+                                Make sure you're <a href="/login">logged in</a> before enrolling.
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -73,9 +90,11 @@
     </div>
 </div>
 
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
 const courseName = decodeURIComponent(window.location.pathname.split('/course/')[1] || '');
 const userEmail = localStorage.getItem('userEmail');
+let currentPlan = null;
 
 async function loadCourse() {
     try {
@@ -91,56 +110,148 @@ async function loadCourse() {
         document.getElementById('courseDesc').textContent = c.description;
         document.getElementById('courseAbout').textContent = c.description || 'Learn this course with AI-generated lessons tailored to your pace.';
         document.getElementById('statWeeks').textContent = c.duration_weeks;
-        document.getElementById('statPrice').textContent = c.price_inr === 0 ? 'Free' : '₹' + c.price_inr.toLocaleString();
         document.getElementById('statLevel').textContent = c.level;
+
+        await loadPrice();
     } catch (e) {
         document.getElementById('loading').style.display = 'none';
         document.getElementById('errorState').style.display = 'block';
     }
 }
 
-async function enrollNow() {
+async function loadPrice() {
+    try {
+        const r = await fetch('/api/ai-course/price/' + encodeURIComponent(courseName));
+        const d = await r.json();
+        if (d.status !== 'success') throw new Error(d.message || 'Price unavailable');
+
+        currentPlan = d;
+        document.getElementById('priceLoading').style.display = 'none';
+        document.getElementById('priceCard').style.display = 'block';
+
+        const cur = d.currency || 'INR';
+        const amt = Number(d.amount_local || 0).toLocaleString();
+        document.getElementById('priceAmount').textContent = cur + ' ' + amt;
+        document.getElementById('priceCurrencyNote').textContent = d.emi_eligible ? 'per installment (EMI)' : 'one-time';
+        document.getElementById('statPrice').textContent = d.emi_eligible ? ('from ' + cur + ' ' + amt) : (cur + ' ' + amt);
+
+        if (d.emi_eligible && d.schedule && d.schedule.blocks) {
+            document.getElementById('emiBox').style.display = 'block';
+            const total = Number(d.amount_inr || 0).toLocaleString();
+            const parts = d.schedule.blocks.map(b => cur + ' ' + Number(b.amount_inr).toLocaleString() + ' (wk ' + b.from + '-' + b.to + ')');
+            document.getElementById('emiSummary').innerHTML = 'Total: ' + cur + ' ' + total + '<br>' + d.schedule.blocks.length + ' installments: ' + parts.join(', ');
+            document.getElementById('fullPriceBox').style.display = 'none';
+        } else {
+            document.getElementById('fullPriceBox').style.display = 'block';
+            document.getElementById('emiBox').style.display = 'none';
+        }
+    } catch (e) {
+        document.getElementById('priceLoading').innerHTML = '<div class="alert alert-warning small">Price unavailable. Refresh to retry.</div>';
+    }
+}
+
+async function startEnroll() {
     const msg = document.getElementById('enrollMsg');
     const btn = document.getElementById('enrollBtn');
 
     if (!userEmail) {
         msg.className = 'alert alert-warning';
-        msg.innerHTML = '⚠️ Please <a href="/login">login</a> first.';
+        msg.innerHTML = 'Please <a href="/login">login</a> first.';
+        msg.style.display = 'block';
+        return;
+    }
+    if (!currentPlan) {
+        msg.className = 'alert alert-warning';
+        msg.textContent = 'Price still loading. Try again in a moment.';
         msg.style.display = 'block';
         return;
     }
 
     btn.disabled = true;
-    btn.textContent = '⏳ Generating curriculum with AI...';
+    btn.textContent = 'Preparing checkout...';
     msg.style.display = 'none';
 
     try {
-        const r = await fetch('/api/ai-course/enroll', {
+        const co = await fetch('/api/ai-course/create-order', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
                 email: userEmail,
                 course_name: courseName,
-                duration_weeks: parseInt(document.getElementById('statWeeks').textContent) || 8
+                country_code: currentPlan.country_code,
+                gateway: 'razorpay'
             })
         });
-        const d = await r.json();
+        const order = await co.json();
 
-        if (d.status === 'success' || d.status === 'exists') {
-            msg.className = 'alert alert-success';
-            msg.textContent = '✅ Enrolled! Redirecting...';
-            msg.style.display = 'block';
-            const enrollId = d.enrollment_id || (d.enrollment && d.enrollment.enrollment_id);
-            setTimeout(() => window.location.href = '/my-course/' + enrollId, 800);
-        } else {
-            throw new Error(d.message || 'Enrollment failed');
+        if (order.status === 'exists' && order.enrollment_id) {
+            window.location.href = '/my-course/' + order.enrollment_id;
+            return;
         }
+        if (order.status !== 'success' || !order.order_id) {
+            throw new Error(order.message || 'Could not create order');
+        }
+
+        if (typeof Razorpay === 'undefined') {
+            throw new Error('Payment system still loading. Retry in 2 seconds.');
+        }
+
+        const options = {
+            key: order.key_id || order.key,
+            amount: order.amount,
+            currency: order.currency || 'INR',
+            name: 'Charvak IT Consulting',
+            description: courseName,
+            order_id: order.order_id,
+            prefill: { email: userEmail },
+            theme: { color: '#3ba591' },
+            handler: async function (response) {
+                try {
+                    btn.textContent = 'Confirming payment...';
+                    const cf = await fetch('/api/ai-course/confirm-payment', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            enrollment_id: order.enrollment_id,
+                            course_name: courseName,
+                            country_code: currentPlan.country_code,
+                            email: userEmail,
+                            installment_num: order.installment_num || 1,
+                            payment_id: response.razorpay_payment_id,
+                            order_id: response.razorpay_order_id,
+                            signature: response.razorpay_signature
+                        })
+                    });
+                    const cr = await cf.json();
+                    if (cr.status === 'success' || cr.already_recorded) {
+                        window.location.href = '/my-course/' + order.enrollment_id;
+                    } else {
+                        throw new Error(cr.message || 'Confirmation failed');
+                    }
+                } catch (e) {
+                    msg.className = 'alert alert-danger';
+                    msg.textContent = 'Payment succeeded but confirmation had an issue. If you were charged, email hr@charvakit.com with your payment id: ' + response.razorpay_payment_id;
+                    msg.style.display = 'block';
+                    btn.disabled = false;
+                    btn.textContent = 'Enroll Now';
+                }
+            },
+            modal: {
+                ondismiss: function () {
+                    btn.disabled = false;
+                    btn.textContent = 'Enroll Now';
+                }
+            }
+        };
+
+        const rzp = new Razorpay(options);
+        rzp.open();
     } catch (e) {
         msg.className = 'alert alert-danger';
-        msg.textContent = '❌ ' + e.message;
+        msg.textContent = e.message || 'Something went wrong. Try again.';
         msg.style.display = 'block';
         btn.disabled = false;
-        btn.textContent = '🎓 Enroll Free';
+        btn.textContent = 'Enroll Now';
     }
 }
 

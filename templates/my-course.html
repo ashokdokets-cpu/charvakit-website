@@ -46,6 +46,27 @@
                             <p class="text-muted mt-3">🤖 AI is preparing your lesson...</p>
                         </div>
 
+                        <div id="paywallCard" class="card border-0" style="display:none;">
+                            <div class="card-body p-4 text-center">
+                                <div class="mb-3" style="font-size:2.5rem;">🔒</div>
+                                <h4 class="mb-2" id="paywallTitle">Unlock this week</h4>
+                                <p class="text-muted mb-4" id="paywallMessage"></p>
+                                <div class="alert alert-info text-start d-inline-block" style="min-width:280px;">
+                                    <div class="mb-1">Installment <strong id="pwInstNum">-</strong> of <strong id="pwInstTotal">-</strong></div>
+                                    <div class="mb-1">Amount: <strong id="pwAmount">-</strong></div>
+                                    <div class="mb-1">Unlocks: <strong id="pwWeeks">-</strong></div>
+                                    <div class="mb-0">Due: <strong id="pwDue">-</strong> <span id="pwDays" class="text-muted small"></span></div>
+                                </div>
+                                <div id="paywallMsg" class="alert" style="display:none;margin-top:16px;"></div>
+                                <div class="mt-3">
+                                    <button class="btn btn-success btn-lg" id="paywallBtn" onclick="payForUnlock()">
+                                        Pay Now
+                                    </button>
+                                </div>
+                                <p class="small text-muted mt-3 mb-0">You keep full access to weeks you have already unlocked.</p>
+                            </div>
+                        </div>
+
                         <div id="lessonContent" style="display:none;">
                             <h5 class="mt-4 mb-2">📖 Explanation</h5>
                             <p id="lessonExplanation" style="white-space:pre-wrap;"></p>
@@ -150,6 +171,8 @@ async function saveName() {
     }
 }
 
+let installments = [];
+
 async function loadEnrollment() {
     try {
         const r = await fetch('/api/ai-course/enrollment/' + enrollmentId);
@@ -161,17 +184,35 @@ async function loadEnrollment() {
         document.getElementById('courseArea').style.display = 'block';
         document.getElementById('courseTitle').textContent = enrollment.course_name;
 
-        // Load existing recipient name
         if (enrollment.recipient_name) {
             document.getElementById('certNameInput').value = enrollment.recipient_name;
         }
 
+        try {
+            const ir = await fetch('/api/ai-course/installments/' + enrollmentId);
+            const id = await ir.json();
+            if (id.status === 'success') { installments = id.installments || []; }
+        } catch (e) { installments = []; }
+
         renderWeekTabs();
         updateProgress();
-        loadWeek(currentWeek);
+
+        let startWeek = 1;
+        for (let w = 1; w <= enrollment.total_weeks; w++) {
+            const l = enrollment.lessons.find(x => x.week_num === w);
+            if (!l || !l.completed) { startWeek = w; break; }
+        }
+        loadWeek(startWeek);
     } catch (e) {
         document.getElementById('loading').innerHTML = '<p class="text-danger">Course not found.</p>';
     }
+}
+
+function isWeekLocked(w) {
+    if (!installments || installments.length === 0) return false;
+    const inst = installments.find(i => w >= i.unlocks_from_week && w <= i.unlocks_to_week);
+    if (!inst) return false;
+    return inst.status !== 'paid';
 }
 
 function renderWeekTabs() {
@@ -180,29 +221,29 @@ function renderWeekTabs() {
     for (let w = 1; w <= enrollment.total_weeks; w++) {
         const lesson = enrollment.lessons.find(l => l.week_num === w);
         const done = lesson && lesson.completed;
-        html.push(`<button class="btn btn-sm ${done ? 'btn-success' : 'btn-outline-primary'}" onclick="loadWeek(${w})">
-            Week ${w} ${done ? '✅' : ''}
-        </button>`);
+        const locked = isWeekLocked(w);
+        const icon = locked ? ' 🔒' : (done ? ' ✔️' : '');
+        const cls = done ? 'btn-success' : (locked ? 'btn-outline-secondary' : 'btn-outline-primary');
+        html.push('<button class="btn btn-sm ' + cls + '" onclick="loadWeek(' + w + ')">Week ' + w + icon + '</button>');
     }
     tabs.innerHTML = html.join('');
-}
-
-function updateProgress() {
-    const done = enrollment.lessons.filter(l => l.completed).length;
-    document.getElementById('progressText').textContent = done + '/' + enrollment.total_weeks;
-    const pct = Math.round((done / enrollment.total_weeks) * 100);
-    document.getElementById('progressBar').style.width = pct + '%';
-    document.getElementById('statTotalWeeks').textContent = enrollment.total_weeks;
-    document.getElementById('statDone').textContent = done;
-    document.getElementById('statPct').textContent = pct + '%';
-    document.getElementById('certBtn').disabled = done < enrollment.total_weeks;
 }
 
 async function loadWeek(weekNum) {
     currentWeek = weekNum;
     document.getElementById('currentWeek').textContent = weekNum;
+    document.getElementById('paywallCard').style.display = 'none';
     document.getElementById('lessonLoading').style.display = 'block';
     document.getElementById('lessonContent').style.display = 'none';
+
+    try {
+        const ar = await fetch('/api/ai-course/access/' + enrollmentId + '/' + weekNum);
+        const ad = await ar.json();
+        if (ad.status === 'success' && ad.allowed === false) {
+            showPaywall(ad);
+            return;
+        }
+    } catch (e) { }
 
     const existing = enrollment.lessons.find(l => l.week_num === weekNum);
     if (existing && existing.content) {
@@ -214,14 +255,121 @@ async function loadWeek(weekNum) {
         const r = await fetch('/api/ai-course/lesson/' + enrollmentId + '/' + weekNum);
         const d = await r.json();
         if (d.status === 'success') {
-            existing_lesson = { week_num: weekNum, topic: d.lesson.topic || '', content: d.lesson, completed: false };
-            renderLesson(existing_lesson);
+            const lessonObj = { week_num: weekNum, topic: d.lesson.topic || '', content: d.lesson, completed: false };
+            renderLesson(lessonObj);
         }
     } catch (e) {
         document.getElementById('lessonLoading').innerHTML = '<p class="text-danger">Failed to load lesson</p>';
     }
 }
 
+function showPaywall(offer) {
+    document.getElementById('lessonLoading').style.display = 'none';
+    document.getElementById('lessonContent').style.display = 'none';
+    const card = document.getElementById('paywallCard');
+    card.style.display = 'block';
+
+    const inst = offer.installment || {};
+    document.getElementById('pwInstNum').textContent = inst.num || '-';
+    document.getElementById('pwInstTotal').textContent = inst.of || '-';
+    document.getElementById('pwAmount').textContent = '₹' + Number(offer.amount_inr || 0).toLocaleString();
+    document.getElementById('pwWeeks').textContent = 'Weeks ' + (offer.unlocks_weeks || '-');
+    document.getElementById('pwDue').textContent = offer.due_date || '-';
+    document.getElementById('paywallTitle').textContent = 'Unlock Week ' + offer.week_num;
+    document.getElementById('paywallMessage').textContent = offer.message || '';
+
+    const days = offer.days_until_due;
+    let daysTxt = '';
+    if (days === 0) daysTxt = '(due today)';
+    else if (days > 0) daysTxt = '(in ' + days + ' days)';
+    else if (days < 0) daysTxt = '(overdue by ' + Math.abs(days) + ' days)';
+    document.getElementById('pwDays').textContent = daysTxt;
+    window._currentOffer = offer;
+}
+
+async function payForUnlock() {
+    const offer = window._currentOffer;
+    const msg = document.getElementById('paywallMsg');
+    const btn = document.getElementById('paywallBtn');
+    if (!offer) { return; }
+
+    btn.disabled = true;
+    btn.textContent = 'Preparing checkout...';
+    msg.style.display = 'none';
+
+    try {
+        const co = await fetch('/api/ai-course/create-order', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ email: enrollment.email, course_name: enrollment.course_name, country_code: 'IN' })
+        });
+        const order = await co.json();
+        if (order.status !== 'success' || !order.order_id) {
+            throw new Error(order.message || 'Could not create order');
+        }
+        if (typeof Razorpay === 'undefined') {
+            throw new Error('Payment system loading. Retry in 2 seconds.');
+        }
+        const options = {
+            key: order.key_id || order.key,
+            amount: order.amount,
+            currency: order.currency || 'INR',
+            name: 'Charvak IT Consulting',
+            description: enrollment.course_name + ' - Installment ' + ((offer.installment && offer.installment.num) || ''),
+            order_id: order.order_id,
+            prefill: { email: enrollment.email },
+            theme: { color: '#3ba591' },
+            handler: async function (response) {
+                try {
+                    btn.textContent = 'Confirming...';
+                    const cf = await fetch('/api/ai-course/confirm-payment', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            enrollment_id: enrollmentId,
+                            course_name: enrollment.course_name,
+                            country_code: 'IN',
+                            email: enrollment.email,
+                            installment_num: ((offer.installment && offer.installment.num) || 1),
+                            payment_id: response.razorpay_payment_id,
+                            order_id: response.razorpay_order_id,
+                            signature: response.razorpay_signature
+                        })
+                    });
+                    const cr = await cf.json();
+                    if (cr.status === 'success' || cr.already_recorded) {
+                        msg.className = 'alert alert-success';
+                        msg.textContent = 'Unlocked! Reloading...';
+                        msg.style.display = 'block';
+                        setTimeout(() => window.location.reload(), 800);
+                    } else {
+                        throw new Error(cr.message || 'Confirmation failed');
+                    }
+                } catch (e) {
+                    msg.className = 'alert alert-danger';
+                    msg.textContent = 'Payment succeeded but confirmation had an issue. If charged, email hr@charvakit.com with payment id: ' + response.razorpay_payment_id;
+                    msg.style.display = 'block';
+                    btn.disabled = false;
+                    btn.textContent = 'Pay Now';
+                }
+            },
+            modal: {
+                ondismiss: function () {
+                    btn.disabled = false;
+                    btn.textContent = 'Pay Now';
+                }
+            }
+        };
+        const rzp = new Razorpay(options);
+        rzp.open();
+    } catch (e) {
+        msg.className = 'alert alert-danger';
+        msg.textContent = e.message || 'Something went wrong. Try again.';
+        msg.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Pay Now';
+    }
+}
 function renderLesson(lesson) {
     document.getElementById('lessonLoading').style.display = 'none';
     document.getElementById('lessonContent').style.display = 'block';
