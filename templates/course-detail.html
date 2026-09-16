@@ -57,6 +57,15 @@
                         </div>
 
                         <div id="priceCard" style="display:none;">
+
+                            <div id="levelSelector" class="mb-3">
+                                <label class="form-label small text-muted mb-1">Choose your level:</label>
+                                <div class="btn-group w-100" role="group" id="levelButtons">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" data-level="beginner" onclick="selectLevel('beginner')">Beginner</button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm active" data-level="intermediate" onclick="selectLevel('intermediate')">Intermediate</button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" data-level="advanced" onclick="selectLevel('advanced')">Advanced</button>
+                                </div>
+                            </div>
                             <div class="d-flex align-items-baseline gap-2 mb-2">
                                 <span class="fs-3 fw-bold" id="priceAmount">-</span>
                                 <span class="text-muted small" id="priceCurrencyNote"></span>
@@ -95,6 +104,23 @@
 const courseName = decodeURIComponent(window.location.pathname.split('/course/')[1] || '');
 const userEmail = localStorage.getItem('userEmail');
 let currentPlan = null;
+let currentLevel = "intermediate";
+const LEVEL_LABELS = { beginner: "Beginner", intermediate: "Intermediate", advanced: "Advanced" };
+
+function selectLevel(lvl) {
+    currentLevel = lvl;
+    const buttons = document.querySelectorAll('#levelButtons button');
+    buttons.forEach(b => {
+        if (b.getAttribute('data-level') === lvl) {
+            b.classList.add('active');
+        } else {
+            b.classList.remove('active');
+        }
+    });
+    document.getElementById('priceCard').style.display = 'none';
+    document.getElementById('priceLoading').style.display = 'block';
+    loadPrice();
+}
 
 async function loadCourse() {
     try {
@@ -121,7 +147,7 @@ async function loadCourse() {
 
 async function loadPrice() {
     try {
-        const r = await fetch('/api/ai-course/price/' + encodeURIComponent(courseName));
+        const r = await fetch('/api/ai-course/price/' + encodeURIComponent(courseName) + '?level=' + encodeURIComponent(currentLevel));
         const d = await r.json();
         if (d.status !== 'success') throw new Error(d.message || 'Price unavailable');
 
@@ -179,7 +205,8 @@ async function startEnroll() {
                 email: userEmail,
                 course_name: courseName,
                 country_code: currentPlan.country_code,
-                gateway: 'razorpay'
+                gateway: 'razorpay',
+                level: currentLevel
             })
         });
         const order = await co.json();
@@ -217,6 +244,7 @@ async function startEnroll() {
                             country_code: currentPlan.country_code,
                             email: userEmail,
                             installment_num: order.installment_num || 1,
+                            level: currentLevel,
                             payment_id: response.razorpay_payment_id,
                             order_id: response.razorpay_order_id,
                             signature: response.razorpay_signature

@@ -5067,7 +5067,10 @@ async def ai_course_price(course_name: str, request: Request):
                     logger.warning(f"ip fallback failed: {e}")
             if not cc:
                 cc = "US"
-        price = ai_course_payments.resolve_price(course_name, cc)
+        level = (request.query_params.get("level") or "intermediate").strip().lower()
+        if level not in ("beginner", "intermediate", "advanced"):
+            level = "intermediate"
+        price = ai_course_payments.resolve_price(course_name, cc, level)
         if price.get("status") != "success":
             return JSONResponse(price, status_code=404)
         emi_eligible = cc in {"IN"}
@@ -5081,6 +5084,7 @@ async def ai_course_price(course_name: str, request: Request):
             "status": "success",
             "course_name": course_name,
             "country_code": cc,
+            "level": level,
             "currency": price["currency"],
             "amount_local": price["amount_local"],
             "amount_inr": price["amount_inr"],
@@ -5105,16 +5109,19 @@ async def ai_course_create_order(request: Request):
         course_name = (data.get("course_name") or "").strip()
         country_code = (data.get("country_code") or "IN").strip().upper()
         gateway = (data.get("gateway") or "razorpay").strip().lower()
+        level = (data.get("level") or "intermediate").strip().lower()
+        if level not in ("beginner", "intermediate", "advanced"):
+            level = "intermediate"
 
         if not email or not course_name:
             return JSONResponse({"status": "error", "message": "email and course_name required"}, status_code=400)
 
-        enroll_plan = ai_courses.enroll_student_paid(email, course_name, country_code=country_code)
+        enroll_plan = ai_courses.enroll_student_paid(email, course_name, country_code=country_code, level=level)
         if enroll_plan.get("status") == "error":
             return JSONResponse(enroll_plan, status_code=400)
         enrollment_id = enroll_plan["enrollment_id"]
 
-        price = ai_course_payments.resolve_price(course_name, country_code)
+        price = ai_course_payments.resolve_price(course_name, country_code, level)
         if price.get("status") != "success":
             return JSONResponse(price, status_code=400)
 
@@ -5143,10 +5150,11 @@ async def ai_course_create_order(request: Request):
             "payment_type": payment_type,
             "installment_num": installment_num or "",
             "gateway": gateway,
+            "level": level,
         }
 
         if gateway == "paypal" and country_code != "IN":
-            custom_id = f"ai_course|{email}|{course_name}|{enrollment_id}|{country_code}"
+            custom_id = f"ai_course|{email}|{course_name}|{enrollment_id}|{country_code}|{level}"
             result = payment_engine.create_paypal_order(
                 amount_inr=price["amount_inr"],
                 target_currency=currency,
@@ -5190,6 +5198,9 @@ async def ai_course_confirm_payment(request: Request):
         course_name = (data.get("course_name") or "").strip()
         country_code = (data.get("country_code") or "IN").strip().upper()
         email = (data.get("email") or "").strip().lower()
+        level = (data.get("level") or "intermediate").strip().lower()
+        if level not in ("beginner", "intermediate", "advanced"):
+            level = "intermediate"
 
         if not (enrollment_id and payment_id and course_name and email):
             return JSONResponse({"status": "error", "message": "Missing fields"}, status_code=400)
@@ -5204,7 +5215,7 @@ async def ai_course_confirm_payment(request: Request):
         if fetch.get("status_field") != "captured" and not fetch.get("captured"):
             return JSONResponse({"status": "error", "message": "Payment not captured"}, status_code=402)
 
-        price = ai_course_payments.resolve_price(course_name, country_code)
+        price = ai_course_payments.resolve_price(course_name, country_code, level)
         if price.get("status") != "success":
             return JSONResponse(price, status_code=400)
 
