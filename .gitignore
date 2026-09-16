@@ -87,3 +87,6 @@ runtime.txt.bak
 
 # Database dump folders (from backup scripts)
 _DB_DUMP/
+
+# Audit data (local reference only, not tracked)
+audits/
