@@ -19,6 +19,13 @@ EMI_COUNTRIES = {"IN"}
 # Markets with a fixed local price card. Rest of world converts from INR.
 TIER1_MARKETS = {"IN", "US", "GB", "EU", "AE", "SG", "AU"}
 
+# Multipliers applied to the base price / duration for level variants.
+LEVEL_MULTIPLIERS = {
+    "beginner":     {"price": 0.60, "weeks": 0.70},
+    "intermediate": {"price": 1.00, "weeks": 1.00},
+    "advanced":     {"price": 1.60, "weeks": 1.30},
+}
+
 # Country -> currency
 CURRENCY_BY_COUNTRY = {
     "IN": "INR", "US": "USD", "GB": "GBP", "EU": "EUR",
@@ -112,29 +119,50 @@ class AICoursePayments:
     # ------------------------------------------------------------------
     # Price resolution
     # ------------------------------------------------------------------
-    def resolve_price(self, course_name, country_code):
+    def resolve_price(self, course_name, country_code, level="intermediate"):
         """
         Returns:
-          {status, course_name, country_code, currency, amount_local,
+          {status, course_name, country_code, level, currency, amount_local,
            amount_inr, razorpay_paise, duration_weeks, source}
         source is 'inr' | 'tier1' | 'converted'
+        level: beginner | intermediate | advanced (default intermediate)
         """
         country_code = (country_code or "US").upper()
+        level = (level or "intermediate").lower()
+        if level not in LEVEL_MULTIPLIERS:
+            level = "intermediate"
         try:
             from database import db
             conn = db.get_connection()
             cur = conn.cursor()
 
+            # 1) Try charvak_course_levels for the specific (course, level)
+            cur.execute("""
+                SELECT price_inr, duration_weeks FROM charvak_course_levels
+                WHERE course_name = %s AND level = %s AND status = 'active'
+            """, (course_name, level))
+            lvl_row = cur.fetchone()
+
+            # 2) Fallback: base catalog row (its duration_weeks)
             cur.execute(
                 "SELECT price_inr, duration_weeks FROM charvak_courses WHERE course_name = %s",
                 (course_name,)
             )
-            row = cur.fetchone()
-            if not row:
+            base_row = cur.fetchone()
+            if not base_row and not lvl_row:
                 cur.close(); conn.close()
                 return {"status": "error", "message": "Course not found"}
-            price_inr = int(row[0] or 0)
-            duration_weeks = int(row[1] or 8)
+
+            if lvl_row:
+                price_inr = int(lvl_row[0] or 0)
+                duration_weeks = int(lvl_row[1] or 8)
+            else:
+                # Backward compat: no level row -> base price scaled by multiplier
+                base_price = int(base_row[0] or 0)
+                base_weeks = int(base_row[1] or 8)
+                mul = LEVEL_MULTIPLIERS.get(level, LEVEL_MULTIPLIERS["intermediate"])
+                price_inr = int(round(base_price * mul["price"]))
+                duration_weeks = max(1, int(round(base_weeks * mul["weeks"])))
 
             if country_code == "IN":
                 cur.close(); conn.close()
@@ -142,6 +170,7 @@ class AICoursePayments:
                     "status": "success",
                     "course_name": course_name,
                     "country_code": "IN",
+                    "level": level,
                     "currency": "INR",
                     "amount_local": float(price_inr),
                     "amount_inr": price_inr,
@@ -150,6 +179,7 @@ class AICoursePayments:
                     "source": "inr",
                 }
 
+            # Tier-1: read base regional price, apply level multiplier
             cur.execute("""
                 SELECT currency, amount_local, razorpay_paise
                 FROM charvak_course_prices
@@ -158,18 +188,30 @@ class AICoursePayments:
             t1 = cur.fetchone()
             if t1:
                 cur.close(); conn.close()
+                base_local = float(t1[1])
+                mul = LEVEL_MULTIPLIERS.get(level, LEVEL_MULTIPLIERS["intermediate"])
+                # Intermediate uses the fixed regional price verbatim;
+                # Beginner/Advanced scale then round to X.99
+                if level == "intermediate":
+                    amount_local = base_local
+                else:
+                    amount_local = base_local * mul["price"]
+                    # Round to nearest whole, then subtract 0.01 for .99 ending
+                    amount_local = max(0.99, round(amount_local) - 0.01)
                 return {
                     "status": "success",
                     "course_name": course_name,
                     "country_code": country_code,
+                    "level": level,
                     "currency": t1[0],
-                    "amount_local": float(t1[1]),
+                    "amount_local": round(amount_local, 2),
                     "amount_inr": price_inr,
-                    "razorpay_paise": int(t1[2]) if t1[2] else int(float(t1[1]) * 100),
+                    "razorpay_paise": int(round(amount_local * 100)),
                     "duration_weeks": duration_weeks,
                     "source": "tier1",
                 }
 
+            # Rest of world: convert from the level-specific INR price
             currency = CURRENCY_BY_COUNTRY.get(country_code, DEFAULT_CURRENCY)
             from payment_engine import payment_engine
             rate = payment_engine.INR_RATES.get(currency, payment_engine.INR_RATES["USD"])
@@ -181,6 +223,7 @@ class AICoursePayments:
                 "status": "success",
                 "course_name": course_name,
                 "country_code": country_code,
+                "level": level,
                 "currency": currency,
                 "amount_local": amount_local,
                 "amount_inr": price_inr,
@@ -191,10 +234,6 @@ class AICoursePayments:
         except Exception as e:
             logger.error(f"resolve_price failed: {e}")
             return {"status": "error", "message": str(e)}
-
-    # ------------------------------------------------------------------
-    # EMI schedule (milestone-block model)
-    # ------------------------------------------------------------------
     def compute_emi_schedule(self, price_inr, duration_weeks):
         """
         2 blocks for <= 8 weeks, 3 blocks for > 8 weeks.
@@ -233,7 +272,7 @@ class AICoursePayments:
     # Create paid enrollment + schedule
     # ------------------------------------------------------------------
     def create_enrollment_paid(self, email, course_name, duration_weeks=None,
-                               country_code="IN"):
+                               country_code="IN", level="intermediate"):
         """
         Creates a pending_payment enrollment + (for EMI countries) the
         installment schedule. Reuses any existing pending_payment row so
@@ -246,10 +285,10 @@ class AICoursePayments:
 
             cur.execute("""
                 SELECT enrollment_id, status FROM charvak_enrollments
-                WHERE email = %s AND course_name = %s
+                WHERE email = %s AND course_name = %s AND user_level = %s
                   AND status IN ('active', 'pending_payment')
                 ORDER BY started_at DESC LIMIT 1
-            """, (email, course_name))
+            """, (email, course_name, level))
             existing = cur.fetchone()
             if existing:
                 cur.close(); conn.close()
@@ -257,19 +296,14 @@ class AICoursePayments:
                         "enrollment_id": existing[0],
                         "existing_status": existing[1]}
 
-            # durationfix: look up duration from course if caller didn't pass it
-            if not duration_weeks:
-                cur.execute(
-                    "SELECT duration_weeks FROM charvak_courses WHERE course_name = %s",
-                    (course_name,)
-                )
-                row_dw = cur.fetchone()
-                duration_weeks = int(row_dw[0]) if (row_dw and row_dw[0]) else 8
-
-            price = self.resolve_price(course_name, country_code)
+            # Resolve level-specific price and duration first.
+            price = self.resolve_price(course_name, country_code, level)
             if price.get("status") != "success":
                 cur.close(); conn.close()
                 return price
+
+            # Level-specific duration (overrides base course duration).
+            level_weeks = int(price.get("duration_weeks") or duration_weeks or 8)
 
             enrollment_id = f"ENROLL-{secrets.token_hex(4).upper()}"
 
@@ -277,16 +311,16 @@ class AICoursePayments:
                 INSERT INTO charvak_enrollments
                     (enrollment_id, email, course_name, duration_weeks, user_level,
                      curriculum, total_weeks, status)
-                VALUES (%s, %s, %s, %s, 'beginner', NULL, %s, 'pending_payment')
-            """, (enrollment_id, email, course_name, duration_weeks, duration_weeks))
+                VALUES (%s, %s, %s, %s, %s, NULL, %s, 'pending_payment')
+            """, (enrollment_id, email, course_name, level_weeks, level, level_weeks))
 
             schedule = None
             if country_code.upper() in EMI_COUNTRIES:
-                sched = self.compute_emi_schedule(price["amount_inr"], duration_weeks)
+                sched = self.compute_emi_schedule(price["amount_inr"], level_weeks)
                 # sanity: every block must be within the course
                 for _b in sched["blocks"]:
-                    if _b["to"] > duration_weeks or _b["from"] < 1:
-                        logger.warning(f"EMI block out of range: {_b}, duration={duration_weeks}")
+                    if _b["to"] > level_weeks or _b["from"] < 1:
+                        logger.warning(f"EMI block out of range: {_b}, duration={level_weeks}")
                 schedule = sched
                 for b in sched["blocks"]:
                     inst_id = f"INST-{secrets.token_hex(4).upper()}"
@@ -309,19 +343,18 @@ class AICoursePayments:
                 "status": "success",
                 "enrollment_id": enrollment_id,
                 "country_code": country_code.upper(),
+                "level": level,
                 "currency": price["currency"],
                 "amount_local": price["amount_local"],
                 "amount_inr": price["amount_inr"],
                 "razorpay_paise": price["razorpay_paise"],
+                "duration_weeks": level_weeks,
                 "payment_type": "emi_installment" if schedule else "full",
                 "schedule": schedule,
             }
         except Exception as e:
             logger.error(f"create_enrollment_paid failed: {e}")
             return {"status": "error", "message": str(e)}
-    # ------------------------------------------------------------------
-    # Record a payment (idempotent on razorpay_payment_id)
-    # ------------------------------------------------------------------
     def record_payment(self, enrollment_id, email, course_name, country_code,
                        currency, amount_local, amount_inr, payment_type,
                        gateway, installment_num=None,
@@ -544,5 +577,43 @@ class AICoursePayments:
             logger.error(f"get_due_installments failed: {e}")
             return {"status": "error", "installments": [], "count": 0}
 
+
+
+    # ------------------------------------------------------------------
+    # Level listing (for the frontend selector)
+    # ------------------------------------------------------------------
+    def get_course_levels(self, course_name):
+        """Return all 3 levels for a course with their India prices."""
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT level, price_inr, duration_weeks, description
+                FROM charvak_course_levels
+                WHERE course_name = %s AND status = 'active'
+                ORDER BY CASE level
+                    WHEN 'beginner' THEN 1
+                    WHEN 'intermediate' THEN 2
+                    ELSE 3 END
+            """, (course_name,))
+            rows = cur.fetchall()
+            cur.close(); conn.close()
+            if not rows:
+                # Fallback: synthesize 3 levels from catalog price
+                cur2 = db.get_connection().cursor()
+                return {"status": "error", "message": "No levels found for course"}
+            levels = []
+            for r in rows:
+                levels.append({
+                    "level": r[0],
+                    "price_inr": int(r[1]),
+                    "duration_weeks": int(r[2]),
+                    "description": r[3] or "",
+                })
+            return {"status": "success", "course_name": course_name, "levels": levels}
+        except Exception as e:
+            logger.error(f"get_course_levels failed: {e}")
+            return {"status": "error", "message": str(e)}
 
 ai_course_payments = AICoursePayments()
