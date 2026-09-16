@@ -1,16 +1,16 @@
-﻿# Charvak IT Consulting — Project Status
+# Charvak IT Consulting - Project Status
 
-**Last updated:** 2026-09-13
-**Version:** v1.3-accessibility-20260913
+**Last updated:** 2026-09-17
+**Version:** v2.2-mock-drives-20260917
 **Live:** https://www.charvakit.com
-**Status:** Tier 1 complete. Production-live, real users OK.
+**Status:** Tier 1 + Tier 2 complete. Tier 3 in progress (6 of 10 features shipped). Production-live, real users OK.
 
 ---
 
 ## Quick Links
 
 - **Production:** https://www.charvakit.com
-- **Render (Charvak):** https://dashboard.render.com — service `srv-d9hhljd8nd3s73d2hoeg`
+- **Render (Charvak):** https://dashboard.render.com - service `srv-d9hhljd8nd3s73d2hoeg`
 - **Render (VouchAI):** service `srv-d9nque942hec7386q3mg`
 - **GitHub:** https://github.com/ashokdokets-cpu/charvakit-website
 - **Razorpay:** https://dashboard.razorpay.com
@@ -18,9 +18,10 @@
 - **Cloudflare:** https://dash.cloudflare.com
 
 **Full docs:**
-- `MASTER-REFERENCE.md` — comprehensive technical reference
-- `ARCHITECTURE.md` — system architecture, flows, schema
-- `PAGES-INVENTORY.md` — every template documented
+- `MASTER-REFERENCE.md` - comprehensive technical reference
+- `ARCHITECTURE.md` - system architecture, flows, schema
+- `PAGES-INVENTORY.md` - every template documented
+- `TIER3-MASTER-PLAN.md` - Tier 3 execution plan
 
 ---
 
@@ -28,143 +29,150 @@
 
 | Layer | Where |
 |---|---|
-| App | Render (Singapore) — Python 3.11.9 + FastAPI + Uvicorn |
+| App | Render (Singapore) - Python 3.11.9 + FastAPI + Uvicorn |
 | Database | Render Postgres `dpg-d9m92j0ae00c73blvoq0-a`, db `vouchai` (shared with Dokets VouchAI) |
 | CDN | Cloudflare |
 | Email | SendGrid |
-| Payments | Razorpay (INR) + PayPal (multi-currency) |
+| Payments | Razorpay (INR + international) + PayPal (multi-currency) |
 | AI | OpenAI GPT-4o-mini + ElevenLabs |
+| Cron | Render Cron Job `send-emi-reminders` (daily 9:00 AM IST) |
 
 ---
 
 ## Git Tags
 
-| Tag | Meaning |
-|---|---|
-| `v1.3-accessibility-20260913` | **Latest** — Accessibility 69→90, Performance 42→52 |
-| `v1.2-tier1-complete-20260913` | Tier 1 complete |
-| `v1.1-stable-20260913` | Docs milestone |
-| `v1.0-stable-20260911` | Pre-session stable |
-| `v1.0.1-pre-fix-b` | Before Fix B |
+| Tag | Date | Meaning |
+|---|---|---|
+| `v2.2-mock-drives-20260917` | 2026-09-17 | **Latest** - Company mock drives persist + frontend fixes |
+| `v2.1-tiered-pricing-20260916` | 2026-09-16 | Basic/Intermediate/Advanced tiered pricing |
+| `v2.0-course-emi-20260916` | 2026-09-16 | AI course fee + India EMI + global pricing |
+| `v1.9.1-precourseEMI-20260916` | 2026-09-16 | Safety tag before EMI work |
+| `v1.9-enterprise-page-20260916` | 2026-09-16 | Enterprise landing page + lead capture |
+| `v1.8-ai-courses-20260916` | 2026-09-16 | AI Courses (catalog, lessons, certificates) |
+| `v1.7-interview-prep-ai-20260916` | 2026-09-16 | Interview prep with AI scoring + credits |
+| `v1.6-referral-persistent-20260915` | 2026-09-15 | Referral system persistence |
+| `v1.5-jobboard-persistent-20260915` | 2026-09-15 | Job board persistence |
+| `v1.4-tier2-complete-20260914` | 2026-09-14 | Tier 2 complete |
+| `v1.3-accessibility-20260913` | 2026-09-13 | Accessibility 69 to 90 |
+| `v1.2-tier1-complete-20260913` | 2026-09-13 | Tier 1 complete |
+| `v1.1-stable-20260913` | 2026-09-13 | Docs milestone |
+| `v1.0-stable-20260911` | 2026-09-11 | Pre-session stable |
+| `v1.0.1-pre-fix-b` | 2026-09-11 | Before Fix B (credits persistence) |
+
+---
 
 ## Latest Backup
 
-`C:\Users\lenovo\OneDrive\Desktop\Charvak_Complete_Backup_20260913_195932.zip` (24.92 MB)
+`C:\Users\lenovo\OneDrive\Desktop\Charvak_Complete_Backup_20260917_012029.zip` (6.39 MB, 1,014 entries)
 
-Contains: all source, templates, static, `.env`, `.git`, `scripts/`, master docs.
-
----
-
-## Session 2026-09-12/13 — Summary
-
-### 🔒 Security (P0 fixes)
-- [x] **Fix A** — `/api/credits/purchase` now requires a verified, captured Razorpay payment for paid plans
-- [x] **Fix B** — Credits persisted to Postgres (`charvak_user_credits`, `charvak_credit_usage_history`, `charvak_credit_purchases`)
-- [x] **Fix C** — Razorpay webhook at `/webhook/razorpay` (abandoned-checkout safety net)
-- [x] Render Postgres password rotated (Charvak + VouchAI)
-- [x] Admin password rotated (old `CharvakAdmin@2026!` dead)
-- [x] `RAZORPAY_WEBHOOK_SECRET` set on Render + local
-
-### ⚡ Performance
-- [x] `defer` on Razorpay, PayPal, Chart.js, Bootstrap JS
-- [x] Preconnect to jsdelivr + Google Fonts
-- [x] Google Fonts moved from `@import` to `<link>`
-- [x] 1-year cache headers on `/static/*`
-- [x] Hero image 418 KB → 71 KB
-- [x] 8 more images compressed
-- [x] **Performance: 42 → 52** (LCP 8.3s → 4.8s)
-
-### ♿ Accessibility
-- [x] 7 `aria-label` additions (selects, social links, user menu, WhatsApp)
-- [x] Heading order fixed (`index.html`, `base.html`)
-- [x] `aria-label` on Learn More / Read More links
-- [x] **Accessibility: 69 → 90**
-
-### 🧹 Content cleanups
-- [x] Legal pages updated to September 2026
-- [x] **Full mojibake repair** — all emojis, accents, arrows, currency symbols across all templates
-- [x] `exam-prep.html` BOM stripped
-
-### 🔍 SEO
-- [x] `/sitemap.xml` now supports HEAD (was 405)
-- [x] `/robots.txt` added with sitemap directive
-- [x] Search Console: verified + sitemap Success
-- [x] GA4 already installed (`G-HVHHD3KJ9G`)
-
-### 🏷️ Documentation
-- [x] `MASTER-REFERENCE.md` — technical reference
-- [x] `ARCHITECTURE.md` — system architecture
-- [x] `PAGES-INVENTORY.md` — template catalog
-
-### 💰 Real-world verification
-- [x] Real ₹99 payment completed on production
-- [x] Webhook fired, idempotent no-op (correct behavior)
-- [x] Credits granted + persisted + shown in UI
+Contains: all source code, templates, static assets, migrations, scripts, `.env`, `.git/` history, DB dump (24 tables, 362 rows), and master docs.
 
 ---
 
-## Tier 1 — ✅ COMPLETE (10/10)
+## Session 2026-09-16/17 - Tier 3 (Course Fee, EMI, Tiered Pricing, Mock Drives)
 
-| # | Task | Status |
+### Shipped to production
+
+**AI Course Fee + India EMI + Global Pricing (v2.0)**
+- 3 new tables: `charvak_course_prices`, `charvak_course_payments`, `charvak_course_installments`
+- 175 seed prices (25 courses x 7 Tier-1 markets)
+- India: 2 or 3 milestone-block EMIs based on course duration
+- Global: one-time Razorpay (international) or PayPal, in local currency
+- IP-based location fallback for currency detection
+- PayPal webhook added; Razorpay webhook extended for course payments
+- Race-safe idempotency on `razorpay_payment_id`
+
+**Basic/Intermediate/Advanced Tiered Pricing (v2.1)**
+- 1 new table: `charvak_course_levels` (75 rows = 25 courses x 3 levels)
+- Multipliers: Beginner 0.60x price / 0.70x weeks; Advanced 1.60x / 1.30x
+- Level selector on course page with live price/EMI refresh
+- Level-aware reuse check (same level reuses, different level creates new)
+
+**Company Mock Drives persistence + frontend (v2.2)**
+- 3 new tables: `charvak_mock_sessions`, `charvak_mock_answers`, `charvak_assessment_results`
+- `complete_mock_drive.py` and `results_system.py` now persist to Postgres
+- 4 frontend bugs fixed in `companies.html` (fake score, lost answers, prompt(), quote escaping)
+- New `GET /mock-drive` route + nav link
+- `companies.html` converted to `{% extends "base.html" %}`
+
+### Verification
+
+- All 3 features tested E2E on production
+- Real browser test: TCS mock drive with 9 answers, real score 18.9%
+- All DB tables verified in prod
+
+### Cron
+
+- Render Cron Job `send-emi-reminders` running daily at 9:00 AM IST
+- Sends T-3d, due-date, +1d, +3d, +7d escalating EMI reminders
+
+### Backup
+
+- `Charvak_Complete_Backup_20260917_012029.zip` (6.39 MB, 1,014 entries)
+- Includes code + DB dump + `.git` history + docs
+
+### Bugs caught by testing (before deploy)
+
+- SQL identifier vs parameter (would 500 every course enrollment)
+- Wrong duration source (wrong EMI blocks)
+- Hardcoded `user_level='beginner'` overwrite (all tiers reset)
+- Reuse check too broad (wrong level silently reused)
+- Duplicate `let currentPlan` (infinite spinner)
+- AI 'correct' field returned as string (crash on int())
+- Onclick quote escaping in JS template (killed entire script block)
+
+---
+
+## Tier 1 - COMPLETE (10/10)
+
+See archived sessions below.
+
+---
+
+## Tier 2 - COMPLETE
+
+See archived sessions below.
+
+---
+
+## Tier 3 - In Progress (6 of 10 shipped)
+
+| # | Feature | Status |
 |---|---|---|
-| 1 | End-to-end user journey test | ✅ |
-| 2 | Enable email verification | ✅ |
-| 3 | Test email templates | ✅ |
-| 4 | Verify legal pages | ✅ |
-| 5 | User journey test | ✅ |
-| 6 | Real ₹1 payment test | ✅ |
-| 7 | Mobile responsiveness | ✅ |
-| 8 | Performance audit | ✅ |
-| 9 | SEO basics | ✅ |
-| 10 | GA4 + Search Console | ✅ |
+| 1 | Job Board | Shipped (v1.5) |
+| 2 | Referral System | Shipped (v1.6) |
+| 3 | Interview Prep | Shipped (v1.7) |
+| 4 | AI Courses | Shipped (v1.8) + course fee/EMI (v2.0) + tiered pricing (v2.1) |
+| 5 | Enterprise page | Shipped (v1.9) |
+| 6 | Company Mock Drives | Shipped (v2.2) |
+| 7 | University Portal | Next - Session 4 |
+| 8 | Analytics Dashboards | Next - Session 4 |
+| 9 | Micro-Internship | Session 5A (queued) |
+| 10 | WhatsApp Bot | Blocked (Meta number registration) |
 
----
+### Session 5C - Flagged for future
 
-## Tier 2 — In Progress
+Three more in-memory mock systems that deserve their own pass:
 
-| # | Task | Status |
-|---|---|---|
-| 1 | Mojibake scan of templates | ✅ Done |
-| 2 | Password strength enforcement | ⏳ Next |
-| 3 | Rate limiting review | ⏳ |
-| 4 | Backend health audit | ⏳ |
-| 5 | Admin dashboard polish | ⏳ |
-| 6 | Blog / case studies | ⏳ |
-| 7 | Testimonials | ⏳ |
-| 8 | STATUS.md maintain | ✅ Ongoing |
-
----
-
-## Tier 3 — Nice to Have
-
-- AI courses E2E
-- Interview prep flow
-- Micro-internship flow
-- Job board flow
-- Company patterns / mock drives
-- University portal
-- Enterprise features
-- Analytics dashboards
-- Referral / bounty system
-- WhatsApp bot testing
+- `advanced_assessment_engine.py` - separate mock-drive variant at `/api/assessment/mock-drive`
+- `company_assessment` / `company_mock_complete.py` - separate mock at `/api/company/*-mock`
+- `/companies` route currently renders the mock-drive UI; should eventually become a brand directory while the mock UI stays at `/mock-drive`
 
 ---
 
 ## Known Issues
 
-- **Heading order** — `index.html` and `base.html` fixed; other pages may still have issues
-- **Contrast** — Lighthouse flags some text/background pairs
-- **Buttons without accessible names** — icon-only buttons somewhere
-- **TBT ~1,900 ms mobile** — deferred scripts fire in burst; needs conditional loading (deferred — risky for payments)
-- **`.env` in backup ZIPs** — treat backup archives as sensitive
-- **Root directory has ~30 one-off dev scripts** — cosmetic cleanup pending
-- **PayPal client ID** — hardcoded in a few places (low priority)
-- **503 files have UTF-8 BOM** — harmless (only `base.html` needed stripping)
-- **SYNC_API_KEY / SYNC_API_SECRET** — hardcoded defaults in public repo. 
-  Dokets RB integration callable by anyone who reads the repo. 
-  Needs dual-key rotation + Dokets RB env var update. 
-  Risk: medium (sync endpoints not critical but not private). 
-  Deferred until we confirm Dokets RB's deployment location.
+- **Heading order** - some pages may still have h4-to-h3 skips (accessibility)
+- **Contrast** - Lighthouse flags some text/background pairs
+- **TBT ~1,900 ms mobile** - deferred scripts fire in burst
+- **`.env` in backup ZIPs** - treat backup archives as sensitive
+- **Root directory has ~30 one-off dev scripts** - cosmetic cleanup pending
+- **`.bak-*` files in root** - 30+ historical backups; cleanup pending
+- **BOM in some files** - harmless in `.py` (Python 3 strips it); verify before editing `.html`
+- **`wget.exe` in project root** - 6.88 MB binary, unused; delete candidate
+- **OneDrive file-lock issues** - project lives in `OneDrive/Desktop`; several git operations hit transient locks. Consider moving to `C:\projects\charvakit-new`.
+- **Rotate leaked credentials** - Render Postgres password + PayPal secret were displayed in chat 2026-09-16; rotation pending
+- **SYNC_API_KEY / SYNC_API_SECRET** - hardcoded defaults in public repo; dual-key rotation pending
 
 ---
 
@@ -181,6 +189,77 @@ SENDGRID_API_KEY
 OPENAI_API_KEY
 ELEVENLABS_API_KEY
 SECRET_KEY (64 chars)
-SITE_URL=https://www.charvakit.com
-ADMIN_EMAIL=charvakit@gmail.com
-HR_EMAIL=hr@charvakit.com
+SITE_URL (https://www.charvakit.com)
+ADMIN_EMAIL (charvakit@gmail.com)
+HR_EMAIL (hr@charvakit.com)
+
+text
+
+---
+
+## Archived Sessions
+
+### Session 2026-09-12/13 - Tier 1 + Security + Performance
+
+**Security (P0 fixes):**
+- Fix A - `/api/credits/purchase` now requires verified Razorpay payment for paid plans
+- Fix B - Credits persisted to Postgres (`charvak_user_credits`, `charvak_credit_usage_history`, `charvak_credit_purchases`)
+- Fix C - Razorpay webhook at `/webhook/razorpay` (abandoned-checkout safety net)
+- Render Postgres password rotated (Charvak + VouchAI)
+- Admin password rotated
+- `RAZORPAY_WEBHOOK_SECRET` set on Render + local
+
+**Performance:**
+- `defer` on Razorpay, PayPal, Chart.js, Bootstrap JS
+- Preconnect to jsdelivr + Google Fonts
+- 1-year cache headers on `/static/*`
+- Hero image 418 KB -> 71 KB
+- Performance: 42 -> 52
+
+**Accessibility:**
+- aria-label additions (selects, social links, user menu, WhatsApp)
+- Heading order fixed (`index.html`, `base.html`)
+- Accessibility: 69 -> 90
+
+**Content cleanups:**
+- Legal pages updated to September 2026
+- Full mojibake repair across all templates
+- `exam-prep.html` BOM stripped
+
+**SEO:**
+- `/sitemap.xml` supports HEAD
+- `/robots.txt` added with sitemap directive
+- GA4 installed (`G-HVHHD3KJ9G`)
+
+**Documentation:**
+- `MASTER-REFERENCE.md` - technical reference
+- `ARCHITECTURE.md` - system architecture
+- `PAGES-INVENTORY.md` - template catalog
+
+**Real-world verification:**
+- Real Rs.99 payment completed on production
+- Webhook fired, idempotent no-op (correct behavior)
+- Credits granted + persisted + shown in UI
+
+### Tier 1 - COMPLETE (10/10)
+
+| # | Task | Status |
+|---|---|---|
+| 1 | End-to-end user journey test | Done |
+| 2 | Enable email verification | Done |
+| 3 | Test email templates | Done |
+| 4 | Verify legal pages | Done |
+| 5 | User journey test | Done |
+| 6 | Real Rs.1 payment test | Done |
+| 7 | Mobile responsiveness | Done |
+| 8 | Performance audit | Done |
+| 9 | SEO basics | Done |
+| 10 | GA4 + Search Console | Done |
+
+### Tier 2 - COMPLETE
+
+Mojibake repair, password strength, rate limiting, backend health audit, admin polish, blog/case studies, testimonials, ongoing STATUS.md maintenance.
+
+---
+
+*Update this file after each session. Most recent session goes at the top.*

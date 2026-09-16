@@ -84,3 +84,6 @@ runtime.txt.bak
 
 # But keep our persistence test (explicit exception)
 !test_credits_persistence.py
+
+# Database dump folders (from backup scripts)
+_DB_DUMP/
