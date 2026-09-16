@@ -3824,6 +3824,12 @@ async def events_page(request: Request):
     """Career events page."""
     return template_response("events.html", request, "Career Events - Charvak IT Consulting")
 
+@app.get("/mock-drive", response_class=HTMLResponse)
+async def mock_drive_page(request: Request):
+    """Company mock drives - pick a company, take an AI-generated mock test."""
+    return template_response("companies.html", request, "Company Mock Drives - Charvak")
+
+
 @app.get("/companies", response_class=HTMLResponse)
 async def companies_page(request: Request):
     """Companies brand pages listing."""
