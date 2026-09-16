@@ -1,6 +1,8 @@
 # Charvak Tier 3 — Master Completion Plan
 
 **Created:** 2026-09-15
+**Last updated:** 2026-09-17
+**Status:** 6 of 10 features shipped to production
 **Purpose:** Bring all 10 Tier 3 features to production-ready status
 **Estimated total:** 15–20 hours across multiple sessions
 **Goal:** Every Tier 3 feature persists data to Postgres, handles errors gracefully, and completes end-to-end
@@ -230,6 +232,59 @@ CREATE TABLE charvak_course_installments (
 3. Full system audit re-run
 4. Tag `v2.0-tier3-complete-YYYYMMDD`
 5. Final backup
+
+---
+
+
+### Session 5B - Company Mock Drives E2E (2 hr) - COMPLETE 2026-09-17
+
+**Status:** Shipped as `v2.2-mock-drives-20260917`.
+
+**Tables created:**
+- `charvak_mock_sessions` - one row per started mock drive
+- `charvak_mock_answers` - one row per answered question
+- `charvak_assessment_results` - every assessment result across the platform (backs `results_system.py`)
+
+**Engine refactors (both DB-backed, signatures preserved):**
+- `complete_mock_drive.py` - sessions + answers persist across Render restarts
+- `results_system.py` - all assessment results persist to Postgres
+- `_sanitize_questions` method added to harden AI output (correct value is always int 0..N-1)
+- AI prompt updated to specify 'correct is the 0-based INDEX'
+- Defensive `int()` on `selected_option`
+
+**Route:**
+- `GET /mock-drive` (renders `companies.html`)
+
+**Frontend fixes (4 real bugs in `companies.html`):**
+- `completeMock()` was returning a fake 75% score; now calls `/api/mock/complete-full`
+- `selectOption()` was browser-only; now POSTs `/api/mock/submit-complete` per answer
+- Used browser `prompt()` for email; now reads `localStorage.userEmail`
+- Onclick quote escaping killed the entire script block; fixed via `startArgs`/`optArgs`
+
+**Other UX:**
+- Converted `companies.html` to `{% extends "base.html" %}` (gets nav, footer, theme)
+- Sticky progress bar ("Answered X / N")
+- Loading spinner with estimated time for AI generation
+- Real results card with pass/fail, "Take Another Mock Drive" button
+
+**Nav:**
+- Added "Mock Drives" link after "Assessments"
+
+**Verified:** Real browser E2E - TCS mock drive with 9 answers, real score 18.9%, session + result recorded in DB.
+
+---
+
+### Session 5C - Mock Engine Consolidation (flagged for future, ~2 hr)
+
+**Status:** Queued - not yet started.
+
+Three more in-memory mock systems that also need persisting:
+
+- `advanced_assessment_engine.py` - separate mock-drive variant at `/api/assessment/mock-drive`
+- `company_assessment` / `company_mock_complete.py` - separate mock at `/api/company/*-mock`
+- `/companies` route currently renders the mock-drive UI; should eventually become a brand directory while the mock UI stays at `/mock-drive`
+
+**Goal:** Consolidate or persist these three, so all mock variants behave consistently.
 
 ---
 

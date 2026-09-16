@@ -1,7 +1,7 @@
 # Charvak — Pages Inventory
 
-**Last updated:** 2026-09-13
-**Version:** v1.1-stable-20260913
+**Last updated:** 2026-09-17
+**Version:** v2.2-mock-drives-20260917
 
 Every template in `templates/`. Grouped by purpose.
 
@@ -14,14 +14,35 @@ Every template in `templates/`. Grouped by purpose.
 | `base.html` | (layout) | Master layout — nav, footer, scripts | — |
 | `index.html` | `/` | Homepage — hero, features, products, testimonials | No |
 | `about.html` | `/about` | About Charvak | No |
+| `services.html` | `/services` | Services overview | No |
+| `web-design.html` | `/services/web-design` | Web design service page | No |
+| `web-design-proposal.html` | `/services/web-design/proposal` | Proposal request | No |
+| `staff-augmentation.html` | `/services/staff-augmentation` | Staff augmentation service | No |
+| `staff-augmentation-proposal.html` | `/staff-augmentation/proposal` | Staffing proposal | No |
+| `products.html` | `/products/dokets-vouchai` | Product detail page | No |
+| `products-list.html` | `/products` | All products listing | No |
 | `team.html` | `/team` | Team page | No |
-| `careers.html` | `/careers` | Careers listing | No |
-| `contact.html` | `/contact` | Contact form + info | No |
-| `capabilities.html` | `/capabilities` | Mission-driven capabilities sheet | No |
-| `help.html` | `/help` | Help / FAQ | No |
-| `pricing.html` | `/pricing` | Pricing page (INR + multi-currency) | No |
-| `ai_credits_pricing.html` | `/ai-credits-pricing` | AI credits plans + purchase | Optional |
-| `credit_dashboard.html` | `/credit-dashboard` | User's credit balance + usage | Yes |
+| `careers.html` | `/careers` | Careers page | No |
+| `contact.html` | `/contact` | Contact form | No |
+| `register.html` | `/register` | Registration page | No |
+| `login.html` | `/login` | Unified login (email + SSO) | No |
+| `forgot-password.html` | `/forgot-password` | Password reset request | No |
+| `reset-password.html` | `/reset-password` | Password reset form | No |
+| `verify-email.html` | `/verify-email` | Email verification landing | No |
+| `roadmap.html` | `/roadmap` | Product roadmap | No |
+| `how-it-works.html` | `/how-it-works` | How Charvak works | No |
+| `for-candidates.html` | `/for-candidates` | Candidate landing | No |
+| `for-employers.html` | `/for-employers` | Employer landing (also `/demo`) | No |
+| `hire-talent.html` | `/hire-talent` | Hire vetted talent | No |
+| `developer-signup.html` | `/developer-signup` | Developer pool signup | No |
+| `demos.html` | `/demos` | Product demo videos | No |
+| `pricing.html` | `/pricing` | Pricing overview | No |
+| `payments.html` | `/payments` | Payments info page | No |
+| `assessments.html` | `/assessments` | Assessments hub | No |
+| `training.html` | `/training` | Training programs hub | No |
+| `roles.html` | `/roles` | Career roles catalog | No |
+| `ai_credits_pricing.html` | `/ai-credits-pricing` | AI credits pricing | No |
+| `credit_dashboard.html` | `/credit-dashboard` | Credit dashboard | Yes |
 
 ---
 
@@ -29,260 +50,272 @@ Every template in `templates/`. Grouped by purpose.
 
 | Template | Route | Purpose |
 |---|---|---|
-| `login.html` | `/login` | Login form |
-| `register.html` | `/register` | Registration form |
-| `forgot-password.html` | `/forgot-password` | Request password reset |
-| `reset-password.html` | `/reset-password?token=...` | Reset form |
-| `verify-email.html` | `/verify-email?token=...` | Verification result page |
-| `admin-login.html` | `/admin-login` | Admin-only login |
+| `register.html` | `/register` | Registration |
+| `login.html` | `/login` | Login (with SSO options) |
+| `forgot-password.html` | `/forgot-password` | Forgot password |
+| `reset-password.html` | `/reset-password` | Reset password |
+| `verify-email.html` | `/verify-email` | Email verification |
+| `sso-success.html` | (SAML ACS) | SSO success page |
+| `sso-error.html` | (SAML ACS) | SSO error page |
 
 ---
 
-## AI Tools
+## AI Tools (12 viral + more)
 
-| Template | Route | What it does |
+| Template | Route | Purpose | Credits |
+|---|---|---|---|
+| `tools/index.html` | `/tools` | AI tools suite index | — |
+| `tools/resume-roast.html` | `/tools/resume-roast` | Resume critique | 5 |
+| `tools/ghost-bounty.html` | `/tools/ghost-bounty` | Ghost job detection | 10 |
+| `tools/ref-check.html` | `/tools/ref-check` | Reference check | 10 |
+| `tools/role-mirror.html` | `/tools/role-mirror` | Role match | 5 |
+| `tools/bounty-swap.html` | `/tools/bounty-swap` | Referral bounty swap | 10 |
+| `tools/micro-trial.html` | `/tools/micro-trial` | Micro-trial brief | 10 |
+| `tools/offer-matcher.html` | `/tools/offer-matcher` | Offer comparison | 5 |
+| `tools/ghost-job-shield.html` | `/tools/ghost-job-shield` | Ghost job shield | 10 |
+| `tools/counter-offer.html` | `/tools/counter-offer` | Counter-offer analysis | 5 |
+| `tools/ref-swap.html` | `/tools/ref-swap` | Reference swap | 10 |
+| `tools/ghost-tracker.html` | `/tools/ghost-tracker` | Ghosted applications tracker | 5 |
+| `tools/pitch-roast.html` | `/tools/pitch-roast` | Recruiter pitch roast | 5 |
+
+---
+
+## AI Products
+
+| Template | Route | Purpose |
 |---|---|---|
-| `tools.html` | `/tools` | AI Tools Suite overview |
-| `resume-roast.html` | `/resume-roast` | Resume critique |
-| `role-mirror.html` | `/role-mirror` | Role fit analysis |
-| `ghost-bounty.html` | `/ghost-bounty` | Bounty tracking |
-| `ref-check.html` | `/ref-check` | Reference checks |
-| `ghost-tracker.html` | `/ghost-tracker` | Ghost job detection |
-| `offer-matcher.html` | `/offer-matcher` | Offer comparison |
-| `pitch-roast.html` | `/pitch-roast` | Pitch critique |
-| `ref-swap.html` | `/ref-swap` | Referral matching |
-| `bounty-swap.html` | `/bounty-swap` | Bounty exchange |
-| `counter-offer.html` | `/counter-offer` | Counter-offer builder |
-| `ghost-job-shield.html` | `/ghost-job-shield` | Job fraud detection |
-| `micro-trial.html` | `/micro-trial` | Micro-trial projects |
-| `voice-to-web.html` | `/voice-to-web` | Voice-to-website |
-| `neural-wireframe.html` | `/neural-wireframe` | AI wireframes |
-| `outreach.html` | `/outreach` | Outreach tools |
-| `student-suite.html` | `/student-suite` | Student tools bundle |
-| `indian-language-ai.html` | `/indian-language-ai` | 12 Indian languages |
-| `marketing-ai.html` | `/marketing-ai` | Marketing content gen |
+| `voice-to-web.html` | `/voice-to-web` | Voice → website |
+| `cloud-waste-calculator.html` | `/cloud-waste-calculator` | Cloud waste calculator |
+| `lock-in-breaker.html` | `/lock-in-breaker` | Vendor lock-in breaker |
+| `lock-in-breaker-pricing.html` | `/lock-in-breaker-pricing` | Lock-In Breaker plans |
+| `reverse-staffing.html` | `/reverse-staffing` | Reverse staffing |
+| `code-quality-checker.html` | `/code-quality-checker` | Code quality checker |
+| `auditbot.html` | `/auditbot` | AI security scanner |
+| `digital-health-checker.html` | `/digital-health-checker` | Digital health checker |
+| `neural-wireframe.html` | `/neural-wireframe` | Sketch → code |
+| `napkin-challenge.html` | `/napkin-challenge` | Napkin to live challenge |
+| `skill-twin.html` | `/skill-twin` | AI skill twin |
+| `skill-check.html` | `/skill-check` | Free skill check |
+| `globalize.html` | `/globalize` | Website localization |
+| `revenue-leak-detector.html` | `/revenue-leak-detector` | Revenue leak detector |
+| `micro-squads.html` | `/micro-squads` | Micro-squads |
+| `scope-simulator.html` | `/scope-simulator` | Scope simulator |
+| `agency-twin.html` | `/agency-twin` | AI agency twin |
+| `burnout-calculator.html` | `/burnout-calculator` | Burnout calculator |
+| `geo-compliance.html` | `/geo-compliance` | Geo-compliance shield |
+| `contract-risk-radar.html` | `/contract-risk-radar` | Contract risk radar |
+| `design-token-sentinel.html` | `/design-token-sentinel` | Design token sync |
+| `brand-drift-inspector.html` | `/brand-drift-inspector` | Brand drift inspector |
+| `legacy-shift.html` | `/legacy-shift` | Legacy modernization |
+| `time-machine-checker.html` | `/time-machine-checker` | Time machine checker |
+| `agent-ready.html` | `/agent-ready` | Agent-ready wrapper |
+| `ai-commerce-scorecard.html` | `/ai-commerce-scorecard` | AI commerce scorecard |
+| `silent-killer.html` | `/silent-killer` | Silent killer sentinel |
+| `dead-link-auditor.html` | `/dead-link-auditor` | Dead link auditor |
+| `ai-slop-quarantine.html` | `/ai-slop-quarantine` | AI-slop quarantine |
+| `ai-contamination-detector.html` | `/ai-contamination-detector` | AI contamination detector |
+| `developer-entropy.html` | `/developer-entropy` | Developer entropy |
+| `team-entropy-scorecard.html` | `/team-entropy-scorecard` | Team entropy scorecard |
 
 ---
 
 ## Exam Prep
 
-| Template | Route | What it does |
+| Template | Route | Purpose |
 |---|---|---|
-| `exam-prep.html` | `/exam-prep` | Exam prep hub |
-| `exam-analytics.html` | `/exam-analytics` | User's performance |
-| `mcq.html` | varies | MCQ practice/mock |
-| `practice-test.html` | varies | Practice mode |
-| `mock-test.html` | varies | Mock exam mode |
-| `results.html` | varies | Result display |
+| `exam-prep.html` | `/exam-prep` | Global exam prep (122 exams, has built-in mock test UI) |
+| `mcq.html` | `/mcq` | MCQ assessment |
+| `versant.html` | `/versant` | Versant English assessment |
+| `companies.html` | `/company-patterns` | Company patterns (mock drive UI) |
+| `advanced-assessment.html` | `/advanced-assessment` | Advanced assessment suite |
+| `custom-assessment.html` | `/custom-assessment` | Custom assessment |
+| `ai-generate-stack.html` | `/ai-generate-stack` | AI stack generator |
+| `assessments.html` | `/assessments` | Unified assessments hub |
 
 ---
 
 ## Career Engine
 
-| Template | Route | What it does |
+| Template | Route | Purpose |
 |---|---|---|
-| `career-engine.html` | `/career-engine` | Career engine overview |
-| `career-v2.html` | `/career-v2` | v2 career flow |
-| `job-board.html` | `/job-board` | Public job listings |
-| `post-job.html` | `/post-job` | Employer: post a job |
+| `career-engine.html` | `/career-engine` | Career engine hub |
+| `interview-prep.html` | `/interview-prep` | Interview prep landing |
+| `interview-session.html` | `/interview-session/{session_id}` | Live interview session |
+| `interview-results.html` | `/interview-results/{session_id}` | Interview results |
+| `interview-dashboard.html` | `/interview-dashboard` | Interview history |
+| `post-job.html` | `/post-job` | Post a job |
+| `job-board.html` | `/job-board` | Job board listing |
+| `track-application.html` | `/track-application` | Application tracking |
+| `application-dashboard.html` | `/application-dashboard` | User's applications |
+| `submit-referral.html` | `/submit-referral` | Submit a referral |
+| `referral-dashboard.html` | `/referral-dashboard` | Referral stats |
+| `training-engine.html` | `/training-engine` | Training engine |
+| `online-classroom.html` | `/online-classroom` | Online classroom |
+| `background-verification.html` | `/background-verification` | Background check |
+| `career-v2.html` | `/career-center` | Career center v2 |
+| `micro-internship.html` | `/micro-internship` | Micro-internships |
 | `post-micro-project.html` | `/post-micro-project` | Post a micro-project |
-| `interview-prep.html` | `/interview-prep` | Interview preparation |
-| `micro-internship.html` | `/micro-internship` | Micro-internship program |
-| `ai-internship.html` | `/ai-internship` | AI internship |
-| `hire-talent.html` | `/hire-talent` | Employer landing |
-| `candidate-signup.html` | `/candidate-signup` | Candidate signup |
-| `developer-signup.html` | `/developer-signup` | Developer signup |
-| `na-client-signup.html` | `/na-client-signup` | NA client signup |
+| `ai-internship.html` | `/ai-internship` | AI internship program |
+| `client-dashboard.html` | `/client-dashboard` | Client dashboard |
+| `badge.html` | `/badge` | Verified badge |
+| `candidate-signup.html` | `/candidate-signup` | Candidate pool signup |
+| `profile-network.html` | `/profile-network` | Profile & network |
+| `outreach.html` | `/outreach` | Outreach tools |
+| `final-year-project.html` | `/final-year-project` | Final year project assistant |
 
 ---
 
 ## Training / Courses / LMS
 
-| Template | Route | What it does |
+| Template | Route | Purpose |
 |---|---|---|
+| `ai-courses.html` | `/ai-courses` | AI courses catalog (updated copy for EMI) |
+| `trainers.html` | `/trainers` | Trainers listing |
+| `post-course.html` | `/post-course` | Post a course |
+| `request-training.html` | `/request-training` | Request training |
 | `training.html` | `/training` | Training hub |
-| `training-engine.html` | `/training-engine` | Training engine UI |
-| `ai-courses.html` | `/ai-courses` | AI courses catalog |
-| `lms.html` | `/lms` | Learning management |
-| `course-player.html` | varies | Lesson player |
-| `monetized-training.html` | varies | Paid training |
+| `course-detail.html` | `/course/{course_name}` | Course detail + level selector + EMI |
+| `my-course.html` | `/my-course/{enrollment_id}` | Lesson player + Pay-to-Unlock card |
+| `my-courses.html` | `/my-courses` | User's enrolled courses |
+| `certificate.html` | `/certificate/{certificate_id}` | Certificate view |
+| `lms.html` | `/lms` | LMS hub |
+| `student-suite.html` | `/student-suite` | AI student suite |
+| `skill-check.html` | `/skill-check` | Skill check (also `/ai-generate-stack`) |
 
 ---
 
 ## Products
 
-| Template | Route | What it does |
+| Template | Route | Purpose |
 |---|---|---|
-| `products.html` | `/products` | All products overview |
-| `dokets-vouchai.html` | `/products/dokets-vouchai` | VouchAI product page |
-| `doketsrb.html` | `/doketsrb` | DoketsRB product page |
-| `lock-in-breaker-pricing.html` | `/lock-in-breaker` | Lock-In Breaker |
-| `auditbot.html` | `/auditbot` | AuditBot |
-| `skill-twin.html` | `/skill-twin` | Skill-Twin |
-| `micro-squads.html` | `/micro-squads` | Micro-Squads |
-| `globalize.html` | `/globalize` | Globalize.ai |
-| `agency-twin.html` | `/agency-twin` | Agency-Twin |
-| `geo-compliance.html` | `/geo-compliance` | Geo-Compliance |
-| `design-token-sentinel.html` | `/design-token-sentinel` | Design-Token Sentinel |
-| `legacy-shift.html` | `/legacy-shift` | Legacy-Shift |
-| `agent-ready.html` | `/agent-ready` | Agent-Ready |
-| `silent-killer.html` | `/silent-killer` | Silent-Killer |
-| `ai-slop-quarantine.html` | `/ai-slop-quarantine` | AI-Slop Quarantine |
-| `developer-entropy.html` | `/developer-entropy` | Developer Entropy |
+| `products.html` | `/products/dokets-vouchai` | Product detail |
+| `products-list.html` | `/products` | Products listing |
+| `doketsrb.html` | `/doketsrb` | DoketsRB Suite |
 
 ---
 
-## Free Tools
+## Free Tools & Calculators
 
-| Template | Route | What it does |
+| Template | Route | Purpose |
 |---|---|---|
-| `cloud-waste-calculator.html` | `/cloud-waste-calculator` | Cloud cost estimator |
-| `code-quality-checker.html` | `/code-quality-checker` | Code quality audit |
-| `digital-health-checker.html` | `/digital-health-checker` | Digital health score |
-| `skill-check.html` | `/skill-check` | Free skill assessment |
-| `revenue-leak-detector.html` | `/revenue-leak-detector` | Revenue leak finder |
-| `scope-simulator.html` | `/scope-simulator` | Project scope tool |
-| `burnout-calculator.html` | `/burnout-calculator` | Team burnout score |
-| `contract-risk-radar.html` | `/contract-risk-radar` | Contract risk scan |
-| `brand-drift-inspector.html` | `/brand-drift-inspector` | Brand consistency |
-| `time-machine-checker.html` | `/time-machine-checker` | Historical analysis |
-| `ai-commerce-scorecard.html` | `/ai-commerce-scorecard` | E-commerce scoring |
-| `dead-link-auditor.html` | `/dead-link-auditor` | Dead link scanner |
-| `ai-contamination-detector.html` | `/ai-contamination-detector` | AI-slop detection |
-| `team-entropy-scorecard.html` | `/team-entropy-scorecard` | Team entropy metric |
+| `tools/index.html` | `/tools` | Tools index |
+| All `tools/*.html` | (see AI Tools) | — |
 
 ---
 
 ## Assessments
 
-| Template | Route | What it does |
+| Template | Route | Purpose |
 |---|---|---|
-| `assessments.html` | `/assessments` | Assessment hub |
-| `assessment.html` | varies | Generic assessment |
-| `assessment-complete.html` | varies | Completion state |
-| `advanced-assessment.html` | varies | Advanced mode |
-| `company-assessment.html` | varies | Company-specific |
+| `assessments.html` | `/assessments` | Assessments hub |
+| `advanced-assessment.html` | `/advanced-assessment` | Advanced assessment |
+| `custom-assessment.html` | `/custom-assessment` | Custom assessment |
+| `reports.html` | `/reports` | Assessment reports |
+| `skill-check.html` | `/skill-check` | Skill check |
+| `skill-twin.html` | `/skill-twin` | Skill twin |
+| `ai-bridge.html` | `/ai-assessment` | AI bridge assessment |
+| `bridge.html` | `/bridge` | Bridge journey |
+
+---
+
+## Mock Drives (v2.2)
+
+| Template | Route | Purpose | Notes |
+|---|---|---|---|
+| `companies.html` | `/mock-drive` | Company mock drives (18 companies) | Jinja template with base.html (v2.2) |
+| `companies.html` | `/company-patterns` | (alias) | Same template |
+| `companies.html` | `/companies` | (alias) | Same template — will be repurposed as brand directory in future |
 
 ---
 
 ## NA (North America) Module
 
-| Template | Route | What it does |
+| Template | Route | Purpose |
 |---|---|---|
 | `na-bench-staffing.html` | `/na-bench-staffing` | NA bench staffing |
-| `reverse-staffing.html` | `/reverse-staffing` | Reverse staffing |
-| `bridge.html` | `/bridge` | Bridge program |
-| `final-year-project.html` | `/final-year-project` | FYP hub |
+| `na-client-signup.html` | `/na-client-signup` | NA client signup |
 
 ---
 
 ## Admin
 
-| Template | Route | What it does |
+| Template | Route | Purpose |
 |---|---|---|
-| `admin-unified.html` | `/admin-control` | Unified admin dashboard |
-| `admin-cleanup-users.html` | varies | User cleanup page |
-| `admin-role-management.html` | varies | Role CRUD |
-| `admin-invoices.html` | varies | Invoice list |
-| `admin-analytics.html` | varies | Analytics charts |
+| `admin-login.html` | `/admin-login` | Admin login |
+| `admin-unified.html` | `/admin-control`, `/admin-dashboard` | Admin control center |
+| `admin-invoices.html` | `/admin-invoices` | Invoice management |
+| `admin-cleanup-users.html` | `/admin/cleanup-users` | User cleanup |
+| `admin-testimonials.html` | `/admin/testimonials` | Testimonials moderation |
+| `admin-roles.html` | `/admin-roles` | Role management |
 
 ---
 
 ## Legal
 
-| Template | Route | What it does |
+| Template | Route | Purpose |
 |---|---|---|
-| `privacy.html` | `/privacy` | Privacy policy (GDPR/CCPA/LGPD/PIPEDA) |
-| `terms.html` | `/terms` | Terms & conditions |
-| `refund.html` | `/refund` | Refund & cancellation |
+| `terms.html` | `/terms` | Terms & Conditions |
+| `privacy.html` | `/privacy` | Privacy Policy |
+| `refund.html` | `/refund` | Refund policy |
 | `cookie-policy.html` | `/cookie-policy` | Cookie policy |
 | `accessibility.html` | `/accessibility` | Accessibility statement |
+| `sla.html` | `/sla` | SLA & uptime |
+| `help.html` | `/help` | Help center |
 
 ---
 
 ## Blog / Content
 
-| Template | Route | What it does |
+| Template | Route | Purpose |
 |---|---|---|
-| `blog.html` | `/blog` | Blog index |
-| `blog-post.html` | varies | Individual post |
+| `blog/index.html` | `/blog` | Blog listing |
+| `blog/post.html` | `/blog/{slug}` | Blog post |
 | `case-studies.html` | `/case-studies` | Case studies |
-| `testimonials.html` | `/testimonials` | Customer testimonials |
-| `events.html` | `/events` | Events listing |
-| `companies.html` | `/companies` | Company directory |
-| `how-it-works.html` | `/how-it-works` | Explainer page |
+| `testimonials.html` | `/testimonials` | Client testimonials |
 
 ---
 
 ## Payments / Billing
 
-| Template | Route | What it does |
+| Template | Route | Purpose |
 |---|---|---|
-| `payments.html` | `/payments` | Payment hub |
-| `payment-success.html` | varies | Post-payment confirmation |
-| `payment-failed.html` | varies | Failure page |
-| `invoice.html` | varies | Invoice view |
+| `payments.html` | `/payments` | Payment methods info |
+| `pricing.html` | `/pricing` | Pricing tiers |
+| `ai_credits_pricing.html` | `/ai-credits-pricing` | AI credits plans |
+| `credit_dashboard.html` | `/credit-dashboard` | User credit dashboard |
+| `invoice.html` | `/invoice` | Invoice generator |
+| `agreement.html` | `/agreement` | Agreement signing |
 
 ---
 
 ## Includes (reusable partials)
 
-| Template | Used by | What it renders |
-|---|---|---|
-| `includes/nav.html` | base.html | (may be inlined) |
-| `includes/footer.html` | base.html | (may be inlined) |
-| `includes/payment-scripts.html` | base.html | Payment SDK loaders |
-| `includes/currency-updater.html` | base.html | Currency conversion |
-| `includes/cookie-banner.html` | base.html | Cookie consent |
-| `includes/whatsapp-widget.html` | base.html | WhatsApp float button |
+| Template | Purpose |
+|---|---|
+| `includes/*.html` | Header, footer, nav, modals, shared components |
 
 ---
 
 ## Templates with Payment Integration
 
-These templates reference Razorpay/PayPal SDK directly:
-
-- `pricing.html`
-- `ai_credits_pricing.html`
-- `student-suite.html`
-- `voice-to-web.html`
-- `neural-wireframe.html`
-- `bridge.html`
-- `doketsrb.html`
-- `lock-in-breaker-pricing.html`
-- `payments.html`
-- `na-bench-staffing.html`
-- `reverse-staffing.html`
-- `outreach.html`
-- `skill-check.html`
-- `final-year-project.html`
-- `indian-language-ai.html`
-- `training-engine.html`
-- `post-course.html`
-- `post-job.html`
-
-**Note:** SDK loading is centralized in `base.html` with `defer`. Pages don't need to add their own `<script src="razorpay...">`.
+| Template | Payment type |
+|---|---|
+| `pricing.html` | Razorpay (credits) |
+| `ai_credits_pricing.html` | Razorpay (credits) |
+| `course-detail.html` | Razorpay (course fee / EMI first installment) |
+| `my-course.html` | Razorpay (EMI pay-to-unlock) |
+| `payments.html` | Info page only |
 
 ---
 
 ## Layout Notes
 
-### `base.html` structure
-- `{% block title %}` — page title
-- `{% block description %}` — meta description
-- `{% block content %}` — main content area
-- `{% block scripts %}` — page-specific JS (runs **after** Bootstrap loads)
+- All templates extend `base.html` except legacy standalone pages
+- `base.html` provides nav (with Mock Drives link), footer, GA4, scripts block
+- Page-specific CSS goes in a `<style>` block at the top of `{% block content %}`
+- Page-specific JS goes in `{% block scripts %}`
+- Dark/light theme handled by CSS variables in `base.html`
 
-### Standard page template
-```jinja
-{% extends "base.html" %}
-{% block title %}Page Title{% endblock %}
-{% block description %}Meta description{% endblock %}
-{% block content %}
-    <!-- page HTML -->
-{% endblock %}
-{% block scripts %}
-<script>
-    // page-specific JS that needs Bootstrap or Razorpay
-</script>
-{% endblock %}
+---
+
+*Keep in sync with MASTER-REFERENCE.md.*

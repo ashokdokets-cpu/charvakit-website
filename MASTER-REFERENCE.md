@@ -1,23 +1,26 @@
-﻿# CHARVAKIT.COM — MASTER REFERENCE
+# CHARVAKIT.COM - MASTER REFERENCE
 ## Charvak IT Consulting Pvt Ltd
-### Last updated: September 13, 2026
+### Last updated: September 17, 2026
 
 **Live:** https://www.charvakit.com
-**Version:** v1.1-stable-20260913
+**Version:** v2.2-mock-drives-20260917
 
 ---
 
 ## SYSTEM OVERVIEW
 
-- Engines: 29+
-- Templates: 180+
-- APIs: 160+
+- Engines: 32+
+- Templates: 203
+- APIs: 180+
 - Languages: 34 global + 12 Indian
 - Visa Types: 17
 - Security: 7 layers
-- Payments: LIVE (Razorpay + PayPal + UPI)
-- AI Credits: DB-backed, persisted (Fix B — 2026-09-12)
-- Webhook safety net: LIVE (Fix C — 2026-09-13)
+- Payments: LIVE (Razorpay INR + international, PayPal multi-currency)
+- AI Credits: DB-backed, persisted (Fix B - 2026-09-12)
+- Course Payments + India EMI: LIVE (2026-09-16)
+- Tiered Pricing (Basic/Intermediate/Advanced): LIVE (2026-09-16)
+- Mock Drives: DB-backed (2026-09-17)
+- Webhook safety net: LIVE (Razorpay + PayPal)
 
 ---
 
@@ -28,8 +31,8 @@
 - **Phone:** +91 799 7871 701
 
 **Two products share one Render Postgres database:**
-1. **Charvak** (this project) — AI tools, exams, credits, career engine
-2. **Dokets VouchAI** — AI escrow platform (dokets.com)
+1. **Charvak** (this project) - AI tools, exams, credits, career engine
+2. **Dokets VouchAI** - AI escrow platform (dokets.com)
 
 ---
 
@@ -39,11 +42,12 @@
 |---|---|---|
 | Render (Charvak) | `srv-d9hhljd8nd3s73d2hoeg` | Python 3.11.9, Singapore |
 | Render (VouchAI) | `srv-d9nque942hec7386q3mg` | Node, Singapore |
+| Render Cron | `send-emi-reminders` | Daily 9:00 AM IST - EMI reminder emails |
 | Render Postgres | `dpg-d9m92j0ae00c73blvoq0-a` | DB: `vouchai` (shared) |
 | GitHub | `ashokdokets-cpu/charvakit-website` | main branch |
 | Cloudflare | www.charvakit.com | CDN + DNS |
-| Razorpay | LIVE | INR payments + webhook |
-| PayPal | LIVE | 16 currencies |
+| Razorpay | LIVE | INR + International payments + webhook |
+| PayPal | LIVE | Multi-currency |
 | SendGrid | LIVE | Transactional email |
 | OpenAI | GPT-4o-mini | AI features |
 | ElevenLabs | LIVE | Voice features |
@@ -72,24 +76,24 @@ text
 | Layer | Technology |
 |---|---|
 | Backend | Python 3.11.9 + FastAPI + Uvicorn |
-| Templates | Jinja2 (180+) |
+| Templates | Jinja2 (203) |
 | Database | PostgreSQL via psycopg2 |
 | Frontend | Bootstrap 5, vanilla JS, Chart.js |
 | Hosting | Render (Singapore) |
 | CDN | Cloudflare |
-| CI/CD | GitHub push → Render auto-deploy |
+| CI/CD | GitHub push -> Render auto-deploy |
 
 ---
 
-## ENGINES (29)
+## ENGINES (32+)
 
-payment, kyc, escrow, referral, badge, blog, chatbot, sso,
+Core: payment, kyc, escrow, referral, badge, blog, chatbot, sso,
 micro_internship, training, interview_prep, job_board,
 products, candidate, email, messaging, events, brand, team,
 ats, university, enterprise, invoice, tools,
 marketing_ai, indian_language_ai, lms, career_v2
 
-Plus newer: `ai_credit_engine` (DB-backed), `email_verification` (DB-backed)
+Data-backed: `ai_credit_engine`, `email_verification`, `ai_courses`, `ai_courses_payments`, `complete_mock_drive`, `results_system`
 
 ---
 
@@ -102,8 +106,12 @@ Plus newer: `ai_credit_engine` (DB-backed), `email_verification` (DB-backed)
 - Marketing AI (job ads, social posts)
 - Indian Language AI (12 languages)
 - Enterprise (Teams, ATS, University, Enterprise)
-- **AI Credits** (purchase, daily bonus, usage history — persisted)
-- **Exam Prep** (122 exams, Indian + global)
+- AI Credits (purchase, daily bonus, usage history - persisted)
+- Exam Prep (122 exams, Indian + global)
+- **AI Courses** (catalog, lessons, certificates - persisted)
+- **AI Course Fee + India EMI + Global Pricing** (v2.0)
+- **Tiered Pricing** (Basic/Intermediate/Advanced - v2.1)
+- **Company Mock Drives** (18 companies, AI-generated, persisted - v2.2)
 
 ---
 
@@ -120,10 +128,31 @@ Plus newer: `ai_credit_engine` (DB-backed), `email_verification` (DB-backed)
 | `charvak_user_credits` | email PK, plan, credits_remaining, daily_usage (JSONB), expires_at |
 | `charvak_credit_usage_history` | every deduction |
 | `charvak_credit_purchases` | purchase log; `payment_id` UNIQUE for idempotency |
+| `charvak_courses` | 25-course catalog, price_inr source of truth |
+| `charvak_enrollments` | enrollment state, user_level (beginner/intermediate/advanced) |
+| `charvak_course_lessons` | weekly lessons (JSONB content) |
+| `charvak_certificates` | issued certificates with recipient name |
+| `charvak_course_prices` | 175 rows (25 courses x 7 Tier-1 markets) |
+| `charvak_course_payments` | per-payment log; `razorpay_payment_id` UNIQUE |
+| `charvak_course_installments` | India EMI schedule (milestone-block model) |
+| `charvak_course_levels` | 75 rows (25 courses x 3 levels) |
+| `charvak_mock_sessions` | one row per started company mock drive |
+| `charvak_mock_answers` | one row per answered question |
+| `charvak_assessment_results` | every assessment result |
+| `charvak_interview_sessions` | Interview prep sessions |
+| `charvak_interview_answers` | Interview prep answers |
+| `charvak_referrals` | referral codes + referrer info |
+| `charvak_referral_clicks` | click tracking |
+| `charvak_referral_bounties` | bounty payments |
+| `charvak_jobs` | job board postings |
+| `charvak_applications` | job applications |
+| `charvak_skill_gaps` | skill gap analysis |
+| `charvak_synced_users` | Dokets RB sync |
+| `charvak_synced_applications` | Dokets RB sync |
 
 ### VouchAI-owned tables (shared DB, do not touch)
 
-`Contract`, `Dispute`, `Milestone`, `Payment`, `User`, `UserAchievement`, `jobs`, `applications`
+`Contract`, `Dispute`, `Milestone`, `Payment`, `User`, `UserAchievement`
 
 ---
 
@@ -131,7 +160,7 @@ Plus newer: `ai_credit_engine` (DB-backed), `email_verification` (DB-backed)
 
 ### Auth
 - `POST /api/auth/register`
-- `POST /api/auth/login` — email verification check + admin bypass
+- `POST /api/auth/login` - email verification check + admin bypass
 - `POST /api/auth/logout`, `/api/auth/logout-all`
 - `GET /api/auth/me`
 
@@ -139,16 +168,42 @@ Plus newer: `ai_credit_engine` (DB-backed), `email_verification` (DB-backed)
 - `GET /api/credits/plans`
 - `GET /api/credits/{email}`
 - `POST /api/credits/check`
-- `POST /api/credits/purchase` — **Fix A: requires verified payment for paid plans**
+- `POST /api/credits/purchase`
 - `POST /api/credits/daily-bonus`
 - `GET /api/credits/expiry/{email}`, `/api/credits/usage/{email}`
 - `GET /api/credits/admin/stats`
 
 ### Payments
-- `POST /api/payment/create-order` — creates Razorpay/PayPal order
-- `POST /api/payment/verify` — client-side callback verification
+- `POST /api/payment/create-order`
+- `POST /api/payment/verify`
 - `GET /api/payment/history`
-- **`POST /webhook/razorpay`** — server-to-server webhook (Fix C)
+- `POST /webhook/razorpay`
+- `POST /webhook/paypal`
+
+### AI Courses
+- `GET /api/ai-course/catalog`
+- `GET /api/ai-course/course/{course_name}` - returns levels[]
+- `GET /api/ai-course/price/{course_name}?level=X&country=YY`
+- `POST /api/ai-course/enroll` - FREE path (price 0)
+- `POST /api/ai-course/create-order`
+- `POST /api/ai-course/confirm-payment`
+- `GET /api/ai-course/installments/{enrollment_id}`
+- `GET /api/ai-course/access/{enrollment_id}/{week_num}`
+- `POST /api/ai-course/complete-week`
+- `POST /api/ai-course/complete`
+- `GET /api/ai-course/certificate/{certificate_id}`
+
+### Company Mock Drives
+- `GET /mock-drive` - page (v2.2)
+- `GET /api/company-patterns/{company_id}`
+- `POST /api/mock/start-complete`
+- `POST /api/mock/submit-complete`
+- `POST /api/mock/complete-full`
+
+### Results
+- `POST /api/results/record`
+- `GET /api/results/user/{email}`
+- `GET /api/results/readiness/{email}`
 
 ### Admin
 - `/admin-login`, `/admin-control`
@@ -156,30 +211,45 @@ Plus newer: `ai_credit_engine` (DB-backed), `email_verification` (DB-backed)
 
 ---
 
-## PAYMENT FLOW (post Fix A/B/C)
+## PAYMENT FLOW
+
+### Credit purchase
 User selects plan
-→ POST /api/payment/create-order
-→ payment_engine.create_razorpay_order()
-→ order notes: {plan, email, tool, amount_inr}
-
-Razorpay modal opens; user pays
-
-Client callback fires (in browser):
-→ POST /api/payment/verify (HMAC signature check)
-→ POST /api/credits/purchase {email, plan, payment_id}
-→ purchase_credits() verifies payment via Razorpay API
-→ credits granted + plan upgraded
-
-Webhook fires (server-to-server, parallel):
-→ POST /webhook/razorpay (HMAC with RAZORPAY_WEBHOOK_SECRET)
-→ extracts plan/email from payment.notes
-→ calls purchase_credits() — idempotent, no double-credit
+-> POST /api/payment/create-order
+-> Razorpay order created with notes: {plan, email, tool, amount_inr}
+-> Client pays, calls /api/payment/verify + /api/credits/purchase
+-> Webhook /webhook/razorpay idempotent fallback
 
 text
 
-**Idempotency:** `payment_id` UNIQUE in `charvak_credit_purchases`. Second call returns `already_credited: true`.
+### Course fee + EMI (v2.0)
+Student picks level (beginner/intermediate/advanced)
+-> GET /api/ai-course/price/{course}?level=X&country=YY
 
-**Admin bypass:** admins skip verification and credit checks.
+Student clicks Enroll
+-> POST /api/ai-course/create-order
+India: charges first installment only
+Global: charges full price
+
+-> POST /api/ai-course/confirm-payment
+Verifies, fetches gateway, records, unlocks block
+
+-> Webhook branches on notes.tool == "ai_course"
+
+text
+
+### EMI milestone-block model (India only)
+- 2 blocks up to 8 weeks, 3 blocks for longer
+- Each paid installment unlocks its block
+- Locked weeks show "Pay to Unlock" card
+- 24h-throttled in-context reminder email
+
+### Reminder emails
+- Render Cron `send-emi-reminders` daily 9 AM IST
+- Stages: T-3d, due-date, +1d, +3d, +7d
+- Dedupe via `last_reminder_stage`
+
+**Idempotency:** `payment_id` UNIQUE on purchases + course_payments
 
 ---
 
@@ -190,31 +260,37 @@ text
 | charvakit@gmail.com | Admin |
 | hr@charvakit.com | Admin |
 
-**Rotate password:** `python scripts\rotate_admin_password.py`
+**Rotate password:** `python scripts/rotate_admin_password.py`
 
 ---
 
 ## PROJECT STRUCTURE
 charvakit-new/
-├── main.py # FastAPI app (~4500 lines)
+├── main.py # FastAPI app (~5900 lines)
 ├── auth.py # Register, login, tokens
 ├── database.py # DB connection + user CRUD
 ├── payment_engine.py # Razorpay + PayPal + webhook sig verify
 ├── ai_credit_engine.py # DB-backed credits
+├── ai_courses.py # AI courses + certificates
+├── ai_courses_payments.py # Course payments + India EMI (NEW v2.0)
+├── complete_mock_drive.py # Company mock drives (DB-backed v2.2)
+├── results_system.py # Assessment results (DB-backed v2.2)
+├── notification_engine.py # Email notifications + EMI reminders
 ├── email_verification.py # DB-backed verification
 ├── password_reset.py
 ├── email_engine.py # SendGrid
-├── admin_access.py, admin_role_manager.py
 ├── [40+ other engines]
-├── templates/ # 180+ Jinja2 pages
+├── templates/ # 203 Jinja2 pages
 ├── static/ # css, js, images, fonts
 ├── na_module/ # North America modules
+├── migrations/ # SQL migrations (idempotent)
 ├── scripts/ # Dev/ops scripts
 ├── requirements.txt, runtime.txt
 ├── .env # Never committed
-├── STATUS.md # Session continuity
-├── MASTER-REFERENCE.md # ← this file
+├── STATUS.md
+├── MASTER-REFERENCE.md # <- this file
 ├── ARCHITECTURE.md
+├── TIER3-MASTER-PLAN.md
 ├── PAGES-INVENTORY.md
 
 text
@@ -227,42 +303,42 @@ text
 # Local dev
 uvicorn main:app --reload --port 8000
 
-# Backup (creates Desktop folder + ZIP)
-python scripts\full_backup.py
+# Backup
+python scripts/full_backup.py
 
 # Rotate admin password
-python scripts\rotate_admin_password.py
+python scripts/rotate_admin_password.py
+
+# Send EMI reminders manually
+python scripts/send_emi_reminders.py
 
 # Tag a stable release
 git tag -a "vX.Y-stable-YYYYMMDD" -m "description"
 git push --tags
-
-# Push code
-git add .
-git commit -m "message"
-git push origin main
 BACKUPS
-Latest: Charvak_Complete_Backup_20260913_024908.zip (24.75 MB, 4,597 entries)
+Latest: Charvak_Complete_Backup_20260917_012029.zip (6.39 MB, 1,014 entries)
 
-Includes:
+Includes source, templates, static, migrations, scripts, .env, .git/, _DB_DUMP/ (24 tables), docs.
 
-All source code, templates, static assets
-
-.env (with secrets)
-
-.git (full history)
-
-scripts/
-
-_MANIFEST.txt, _README.txt
-
-Security note: backup ZIPs contain .env secrets — do not email or share publicly.
+Security note: backup ZIPs contain .env secrets - do not share publicly.
 
 KNOWN ISSUES / TODO
-□ Heading order on index.html (h4→h3 skip)
-□ TBT ~1,900ms mobile — needs conditional script loading
-□ Mojibake scan of remaining templates
-□ Real abandoned-checkout webhook test
+Rotate leaked credentials (Render Postgres password + PayPal secret)
+
+Fix heading order on remaining pages (accessibility)
+
+TBT ~1,900ms mobile - needs conditional script loading
+
+Move project out of OneDrive (file-lock issues)
+
+wget.exe in project root - 6.88 MB, unused
+
+Root directory cleanup (~30 scripts + 30+ .bak-* files)
+
+Session 5A (Micro-Internship) not started
+
+Session 5C (mock engine consolidation) queued
+
 EXTERNAL DASHBOARDS
 Render: https://dashboard.render.com
 
@@ -280,14 +356,27 @@ Keep this file updated after major changes.
 
 text
 
-**Save with Ctrl+S.** Close Notepad.
+---
 
-### Step 4 — Verify
+## Step 3 — After saving, verify
 
 ```powershell
-Get-ChildItem MASTER-REFERENCE.md* | Select-Object Name, Length
-Expected:
+Set-Location "C:\Users\lenovo\OneDrive\Desktop\charvakit-new"
 
-MASTER-REFERENCE.md — ~7000 bytes (new comprehensive version)
+$bytes = [System.IO.File]::ReadAllBytes("MASTER-REFERENCE.md")
+Write-Host "Size: $($bytes.Length) bytes"
+Write-Host "Lines: $((Get-Content MASTER-REFERENCE.md).Count)"
+Write-Host "First 3 bytes: $($bytes[0]) $($bytes[1]) $($bytes[2])"
 
-MASTER-REFERENCE.md.pre-20260913 — 874 bytes (old preserved)
+Write-Host "`nFirst 5 lines (UTF-8 aware):" -ForegroundColor Cyan
+$lines = [System.IO.File]::ReadAllLines("MASTER-REFERENCE.md", [System.Text.Encoding]::UTF8)
+for ($i = 0; $i -lt 5; $i++) {
+    Write-Host ("{0,4}: {1}" -f ($i+1), $lines[$i])
+}
+
+Write-Host "`nMarkers:" -ForegroundColor Cyan
+@("v2.2-mock-drives-20260917","charvak_course_levels","AI Course Fee") | ForEach-Object {
+    $found = $false
+    foreach ($l in $lines) { if ($l -match [regex]::Escape($_)) { $found = $true; break } }
+    Write-Host ("  {0,-40} {1}" -f $_, $(if ($found) { 'OK' } else { 'MISSING' })) -ForegroundColor $(if ($found) { 'Green' } else { 'Red' })
+}
