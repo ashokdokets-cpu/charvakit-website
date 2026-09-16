@@ -1,173 +1,264 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Company Mock Drives - Charvak</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body { font-family: Arial, sans-serif; background: #f8f9fa; }
-        .hero { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 40px 0; }
-        .company-card { cursor: pointer; border: 2px solid #e0e0e0; border-radius: 10px; padding: 15px; text-align: center; background: white; transition: all 0.3s; height: 100%; }
-        .company-card:hover { border-color: #3ba591; transform: translateY(-3px); }
-        .company-card.active { border-color: #3ba591; background: #f0faf8; }
-        .pattern-card { border: 2px solid #e0e0e0; border-radius: 10px; padding: 15px; margin-bottom: 10px; background: white; }
-        .pattern-card:hover { border-color: #3ba591; }
-        .question-box { background: white; border-radius: 10px; padding: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); margin-top: 20px; }
-        .question-item { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; margin-bottom: 10px; }
-        .option-item { cursor: pointer; padding: 10px; border: 1px solid #e0e0e0; border-radius: 6px; margin: 5px 0; }
-        .option-item:hover { background: #f0faf8; }
-        .option-item.selected { background: #e8f5e9; border-color: #2e7d32; }
-        .btn-custom { background: #3ba591; color: white; border-radius: 50px; padding: 12px 30px; font-weight: bold; border: none; }
-    </style>
-</head>
-<body>
-    <div class="hero text-center">
-        <h1>🏢 Company Mock Drives</h1>
-        <p>18 Companies | 38 Patterns | AI-Generated Unique Questions</p>
+{% extends "base.html" %}
+{% block title %}Company Mock Drives - Charvak{% endblock %}
+{% block description %}AI-powered mock drives for TCS, Infosys, Wipro, Amazon and 15+ top companies. Real exam patterns, instant scoring, placement readiness.{% endblock %}
+{% block content %}
+<style>
+    .md-hero { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px 0; }
+    .md-company-card { cursor: pointer; border: 2px solid #e0e0e0; border-radius: 10px; padding: 15px; text-align: center; background: white; transition: all 0.3s; height: 100%; }
+    .md-company-card:hover { border-color: #3ba591; transform: translateY(-3px); }
+    .md-company-card.active { border-color: #3ba591; background: #f0faf8; }
+    .md-pattern-card { border: 2px solid #e0e0e0; border-radius: 10px; padding: 15px; margin-bottom: 10px; background: white; transition: all 0.2s; }
+    .md-pattern-card:hover { border-color: #3ba591; }
+    .md-question-item { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; margin-bottom: 10px; }
+    .md-option-item { cursor: pointer; padding: 10px; border: 1px solid #e0e0e0; border-radius: 6px; margin: 5px 0; transition: all 0.15s; }
+    .md-option-item:hover { background: #f0faf8; border-color: #3ba591; }
+    .md-option-item.selected { background: #e8f5e9; border-color: #2e7d32; font-weight: 600; }
+    .md-btn-primary { background: #3ba591; color: white; border-radius: 50px; padding: 10px 24px; font-weight: 600; border: none; }
+    .md-btn-primary:hover { background: #2d8a78; }
+    .md-btn-primary:disabled { background: #b0b0b0; cursor: not-allowed; }
+    .md-progress { position: sticky; top: 0; z-index: 100; background: white; padding: 12px 0; border-bottom: 1px solid #e0e0e0; }
+</style>
+
+<div class="md-hero text-center">
+    <div class="container">
+        <h1 class="display-5 fw-bold mb-1">Company Mock Drives</h1>
+        <p class="lead mb-0">18 Companies | Real Exam Patterns | AI-Generated Questions | Instant Scoring</p>
+    </div>
+</div>
+
+<div class="container py-4">
+
+    <div id="companiesGrid" class="row g-2 mb-4">
+        <div class="col-6 col-md-2"><div class="md-company-card" data-company="tcs" onclick="selectCompany('tcs')"><h6>TCS</h6><small>3 Patterns</small></div></div>
+        <div class="col-6 col-md-2"><div class="md-company-card" data-company="infosys" onclick="selectCompany('infosys')"><h6>Infosys</h6><small>2 Patterns</small></div></div>
+        <div class="col-6 col-md-2"><div class="md-company-card" data-company="cognizant" onclick="selectCompany('cognizant')"><h6>Cognizant</h6><small>3 Patterns</small></div></div>
+        <div class="col-6 col-md-2"><div class="md-company-card" data-company="wipro" onclick="selectCompany('wipro')"><h6>Wipro</h6><small>2 Patterns</small></div></div>
+        <div class="col-6 col-md-2"><div class="md-company-card" data-company="accenture" onclick="selectCompany('accenture')"><h6>Accenture</h6><small>2 Patterns</small></div></div>
+        <div class="col-6 col-md-2"><div class="md-company-card" data-company="capgemini" onclick="selectCompany('capgemini')"><h6>Capgemini</h6><small>2 Patterns</small></div></div>
+        <div class="col-6 col-md-2"><div class="md-company-card" data-company="ibm" onclick="selectCompany('ibm')"><h6>IBM</h6><small>2 Patterns</small></div></div>
+        <div class="col-6 col-md-2"><div class="md-company-card" data-company="hcl" onclick="selectCompany('hcl')"><h6>HCLTech</h6><small>2 Patterns</small></div></div>
+        <div class="col-6 col-md-2"><div class="md-company-card" data-company="tech_mahindra" onclick="selectCompany('tech_mahindra')"><h6>Tech Mahindra</h6><small>2 Patterns</small></div></div>
+        <div class="col-6 col-md-2"><div class="md-company-card" data-company="lti" onclick="selectCompany('lti')"><h6>LTI</h6><small>2 Patterns</small></div></div>
+        <div class="col-6 col-md-2"><div class="md-company-card" data-company="mindtree" onclick="selectCompany('mindtree')"><h6>Mindtree</h6><small>2 Patterns</small></div></div>
+        <div class="col-6 col-md-2"><div class="md-company-card" data-company="deloitte" onclick="selectCompany('deloitte')"><h6>Deloitte</h6><small>2 Patterns</small></div></div>
+        <div class="col-6 col-md-2"><div class="md-company-card" data-company="kpmg" onclick="selectCompany('kpmg')"><h6>KPMG</h6><small>2 Patterns</small></div></div>
+        <div class="col-6 col-md-2"><div class="md-company-card" data-company="ey" onclick="selectCompany('ey')"><h6>EY</h6><small>2 Patterns</small></div></div>
+        <div class="col-6 col-md-2"><div class="md-company-card" data-company="pwc" onclick="selectCompany('pwc')"><h6>PwC</h6><small>2 Patterns</small></div></div>
+        <div class="col-6 col-md-2"><div class="md-company-card" data-company="amazon" onclick="selectCompany('amazon')"><h6>Amazon</h6><small>2 Patterns</small></div></div>
+        <div class="col-6 col-md-2"><div class="md-company-card" data-company="google" onclick="selectCompany('google')"><h6>Google</h6><small>2 Patterns</small></div></div>
+        <div class="col-6 col-md-2"><div class="md-company-card" data-company="microsoft" onclick="selectCompany('microsoft')"><h6>Microsoft</h6><small>2 Patterns</small></div></div>
     </div>
 
-    <div class="container py-4">
-        <div class="row g-2">
-            <div class="col-6 col-md-2"><div class="company-card" data-company="tcs" onclick="selectCompany('tcs')"><h6>TCS</h6><small>3 Patterns</small></div></div>
-            <div class="col-6 col-md-2"><div class="company-card" data-company="infosys" onclick="selectCompany('infosys')"><h6>Infosys</h6><small>2 Patterns</small></div></div>
-            <div class="col-6 col-md-2"><div class="company-card" data-company="cognizant" onclick="selectCompany('cognizant')"><h6>Cognizant</h6><small>3 Patterns</small></div></div>
-            <div class="col-6 col-md-2"><div class="company-card" data-company="wipro" onclick="selectCompany('wipro')"><h6>Wipro</h6><small>2 Patterns</small></div></div>
-            <div class="col-6 col-md-2"><div class="company-card" data-company="accenture" onclick="selectCompany('accenture')"><h6>Accenture</h6><small>2 Patterns</small></div></div>
-            <div class="col-6 col-md-2"><div class="company-card" data-company="capgemini" onclick="selectCompany('capgemini')"><h6>Capgemini</h6><small>2 Patterns</small></div></div>
-            <div class="col-6 col-md-2"><div class="company-card" data-company="ibm" onclick="selectCompany('ibm')"><h6>IBM</h6><small>2 Patterns</small></div></div>
-            <div class="col-6 col-md-2"><div class="company-card" data-company="hcl" onclick="selectCompany('hcl')"><h6>HCLTech</h6><small>2 Patterns</small></div></div>
-            <div class="col-6 col-md-2"><div class="company-card" data-company="tech_mahindra" onclick="selectCompany('tech_mahindra')"><h6>Tech Mahindra</h6><small>2 Patterns</small></div></div>
-            <div class="col-6 col-md-2"><div class="company-card" data-company="lti" onclick="selectCompany('lti')"><h6>LTI</h6><small>2 Patterns</small></div></div>
-            <div class="col-6 col-md-2"><div class="company-card" data-company="mindtree" onclick="selectCompany('mindtree')"><h6>Mindtree</h6><small>2 Patterns</small></div></div>
-            <div class="col-6 col-md-2"><div class="company-card" data-company="deloitte" onclick="selectCompany('deloitte')"><h6>Deloitte</h6><small>2 Patterns</small></div></div>
-            <div class="col-6 col-md-2"><div class="company-card" data-company="kpmg" onclick="selectCompany('kpmg')"><h6>KPMG</h6><small>2 Patterns</small></div></div>
-            <div class="col-6 col-md-2"><div class="company-card" data-company="ey" onclick="selectCompany('ey')"><h6>EY</h6><small>2 Patterns</small></div></div>
-            <div class="col-6 col-md-2"><div class="company-card" data-company="pwc" onclick="selectCompany('pwc')"><h6>PwC</h6><small>2 Patterns</small></div></div>
-            <div class="col-6 col-md-2"><div class="company-card" data-company="amazon" onclick="selectCompany('amazon')"><h6>Amazon</h6><small>2 Patterns</small></div></div>
-            <div class="col-6 col-md-2"><div class="company-card" data-company="google" onclick="selectCompany('google')"><h6>Google</h6><small>2 Patterns</small></div></div>
-            <div class="col-6 col-md-2"><div class="company-card" data-company="microsoft" onclick="selectCompany('microsoft')"><h6>Microsoft</h6><small>2 Patterns</small></div></div>
-        </div>
-
-        <div class="question-box" id="mainContent">
+    <div id="mainContent" class="card border-0 shadow-sm">
+        <div class="card-body p-4 text-center">
             <h4>Select a company to see available patterns</h4>
-            <p class="text-muted">Click on any company card above.</p>
+            <p class="text-muted mb-0">Click on any company card above.</p>
         </div>
     </div>
+</div>
 
-    <script>
-        var userAnswers = {};
-        var currentSessionId = null;
+{% endblock %}
 
-        async function selectCompany(companyId) {
-            document.querySelectorAll('.company-card').forEach(c => c.classList.remove('active'));
-            document.querySelector('[data-company="' + companyId + '"]').classList.add('active');
-            
-            var content = document.getElementById('mainContent');
-            content.innerHTML = '<h4>Loading patterns...</h4>';
-            
-            try {
-                const response = await fetch('/api/company-patterns/' + companyId);
-                const result = await response.json();
-                
-                if (result.status === 'success') {
-                    var html = '<h4>' + result.company + ' - Available Patterns</h4>';
-                    
-                    result.patterns.forEach(function(pattern) {
-                        html += '<div class="pattern-card">';
-                        html += '<strong>' + pattern.name + '</strong> ';
-                        html += '<span class="badge" style="background:' + getColor(pattern.difficulty) + ';color:white;">' + pattern.difficulty + '</span><br>';
-                        html += '<small>' + (pattern.description || '') + '</small><br>';
-                        html += '<small>Total Questions: ' + pattern.total_questions + '</small><br>';
-                        html += '<button class="btn-custom mt-2" onclick="startAIQuestions(\'' + companyId + '\', \'' + pattern.id + '\', \'' + pattern.name + '\', \'' + pattern.difficulty + '\', \'' + pattern.total_questions + '\')">🚀 Start ' + pattern.name + ' →</button>';
-                        html += '</div>';
-                    });
-                    
-                    content.innerHTML = html;
-                }
-            } catch (error) {
-                content.innerHTML = '<p class="text-danger">Error: ' + error.message + '</p>';
-            }
-        }
+{% block scripts %}
+<script>
+    var userAnswers = {};
+    var currentSessionId = null;
+    var currentSectionQuestions = [];
+    var totalQuestionsGlobal = 0;
 
-        function getColor(difficulty) {
-            if (difficulty === 'Moderate') return '#4caf50';
-            if (difficulty === 'Hard') return '#ff9800';
-            return '#f44336';
-        }
+    function esc(s) {
+        return String(s || "").replace(/[&<>"']/g, function(m) {
+            return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m];
+        });
+    }
 
-        async function startAIQuestions(companyId, patternId, patternName, difficulty, totalQuestions) {
-            const email = prompt('Enter your email to start:');
-            if (!email) return;
-            
-            var content = document.getElementById('mainContent');
-            content.innerHTML = '<h4>🤖 AI is generating questions for ' + patternName + '...</h4>';
-            
-            try {
-                const response = await fetch('/api/mock/start-complete', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({email: email, company_id: companyId})
-                });
-                const result = await response.json();
-                
-                if (result.status === 'success' && result.session) {
-                    var session = result.session;
-                    currentSessionId = session.session_id;
-                    userAnswers = {};
-                    
-                    var html = '<div class="alert alert-success">';
-                    html += '<strong>✅ ' + session.pattern + ' Mock Drive Started!</strong><br>';
-                    html += 'Company: ' + session.company + '<br>';
-                    html += 'Total Questions: ' + session.total_questions;
+    function getUserEmail() {
+        return (localStorage.getItem("userEmail") || "").trim();
+    }
+
+    async function selectCompany(companyId) {
+        document.querySelectorAll(".md-company-card").forEach(function(c) { c.classList.remove("active"); });
+        var card = document.querySelector('[data-company="' + companyId + '"]');
+        if (card) card.classList.add("active");
+
+        var content = document.getElementById("mainContent");
+        content.innerHTML = '<div class="card-body p-4 text-center"><div class="spinner-border text-primary"></div><p class="mt-3 text-muted">Loading patterns...</p></div>';
+
+        try {
+            var response = await fetch("/api/company-patterns/" + encodeURIComponent(companyId));
+            var result = await response.json();
+
+            if (result.status === "success" && result.patterns) {
+                var html = '<div class="card-body p-4">';
+                html += '<h4 class="mb-3">' + esc(result.company) + ' &mdash; Available Patterns</h4>';
+                result.patterns.forEach(function(pattern) {
+                    var diffColor = pattern.difficulty === "Moderate" ? "#4caf50" : (pattern.difficulty === "Hard" ? "#ff9800" : "#f44336");
+                    html += '<div class="md-pattern-card">';
+                    html += '<div class="d-flex justify-content-between align-items-center">';
+                    html += '<div><strong>' + esc(pattern.name) + '</strong> <span class="badge" style="background:' + diffColor + ';">' + esc(pattern.difficulty) + '</span></div>';
+                    html += '<div class="text-muted small">' + (pattern.total_questions || 0) + ' questions</div>';
                     html += '</div>';
-                    
-                    session.sections.forEach(function(section) {
-                        html += '<h5 class="mt-4">' + section.name + ' (' + section.questions.length + ' Questions)</h5>';
-                        html += '<small class="text-muted">Topics: ' + section.topics.join(', ') + '</small>';
-                        
-                        section.questions.forEach(function(q, index) {
-                            var qId = section.name + '_' + index;
-                            html += '<div class="question-item">';
-                            html += '<strong>Q' + (index + 1) + '.</strong> ' + q.question;
-                            html += '<br><small class="text-muted">Topic: ' + q.topic + '</small>';
-                            
-                            if (q.options && Array.isArray(q.options)) {
-                                q.options.forEach(function(opt, j) {
-                                    html += '<div class="option-item" onclick="selectOption(\'' + qId + '\', ' + j + ', this)">' + String.fromCharCode(65 + j) + ') ' + opt + '</div>';
-                                });
-                            }
-                            html += '</div>';
-                        });
-                    });
-                    
-                    html += '<div class="text-center mt-4"><button class="btn-custom" onclick="completeMock()">📊 Complete Test & Get Results</button></div>';
-                    html += '<div id="resultsBox" class="mt-3"></div>';
-                    
-                    content.innerHTML = html;
-                }
-            } catch (error) {
-                content.innerHTML = '<p class="text-danger">Error: ' + error.message + '</p>';
+                    html += '<p class="text-muted small mb-2 mt-2">' + esc(pattern.description || "") + '</p>';
+                    var startArgs = "'" + esc(companyId) + "','" + esc(pattern.id || "") + "','" + esc(pattern.name) + "','" + esc(pattern.difficulty) + "'";
+                    html += '<button class="md-btn-primary" onclick="startAIQuestions(' + startArgs + ')">Start ' + esc(pattern.name) + ' &rarr;</button>';
+                    html += '</div>';
+                });
+                html += '</div>';
+                content.innerHTML = html;
+            } else {
+                content.innerHTML = '<div class="card-body p-4"><p class="text-danger">Could not load patterns for this company.</p></div>';
             }
+        } catch (e) {
+            content.innerHTML = '<div class="card-body p-4"><p class="text-danger">Error: ' + esc(e.message) + '</p></div>';
+        }
+    }
+
+    async function startAIQuestions(companyId, patternId, patternName, difficulty) {
+        var email = getUserEmail();
+        if (!email) {
+            alert("Please log in first to start a mock drive.");
+            window.location.href = "/login";
+            return;
         }
 
-        function selectOption(questionId, optionIndex, element) {
-            element.parentElement.querySelectorAll('.option-item').forEach(o => o.classList.remove('selected'));
-            element.classList.add('selected');
-            userAnswers[questionId] = optionIndex;
-        }
+        var content = document.getElementById("mainContent");
+        content.innerHTML = '<div class="card-body p-4 text-center"><div class="spinner-border text-primary"></div><p class="mt-3 text-muted">AI is generating questions for ' + esc(patternName) + '... this may take 15-30 seconds.</p></div>';
 
-        async function completeMock() {
-            var resultsBox = document.getElementById('resultsBox');
-            var answered = Object.keys(userAnswers).length;
-            
-            resultsBox.innerHTML = '<div class="alert alert-info mt-3">';
-            resultsBox.innerHTML += '<h5>📊 Test Results:</h5>';
-            resultsBox.innerHTML += 'Questions Answered: ' + answered + '<br>';
-            resultsBox.innerHTML += 'Score: ' + (answered > 0 ? 75 : 0) + '%<br>';
-            resultsBox.innerHTML += 'Result: ' + (answered > 0 ? '✅ PASS' : '❌ Incomplete') + '<br>';
-            resultsBox.innerHTML += '</div>';
+        try {
+            var response = await fetch("/api/mock/start-complete", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({email: email, company_id: companyId})
+            });
+            var result = await response.json();
+
+            if (result.status !== "success" || !result.session) {
+                content.innerHTML = '<div class="card-body p-4"><p class="text-danger">' + esc(result.message || "Could not start the mock drive.") + '</p></div>';
+                return;
+            }
+
+            var session = result.session;
+            currentSessionId = session.session_id;
+            userAnswers = {};
+            currentSectionQuestions = [];
+            totalQuestionsGlobal = session.total_questions;
+
+            var html = '<div class="card-body p-4">';
+            html += '<div class="alert alert-success"><strong>' + esc(session.company) + ' &mdash; ' + esc(session.pattern) + '</strong><br>Total Questions: ' + session.total_questions + ' | Sections: ' + session.sections.length + '</div>';
+
+            html += '<div class="md-progress">';
+            html += '<div class="d-flex justify-content-between align-items-center">';
+            html += '<span><strong>Progress:</strong> <span id="mdAnswered">0</span> / ' + totalQuestionsGlobal + '</span>';
+            html += '<button class="btn btn-sm btn-success" id="mdCompleteBtn" onclick="completeMock()">Submit &amp; Get Results</button>';
+            html += '</div></div>';
+
+            session.sections.forEach(function(section, sIdx) {
+                html += '<h5 class="mt-4 mb-2">' + esc(section.name) + ' <small class="text-muted">(' + section.questions.length + ' questions &middot; ' + esc(section.time) + ')</small></h5>';
+                section.questions.forEach(function(q, qIdx) {
+                    var qId = section.name + "__" + q.id;
+                    currentSectionQuestions.push({ id: qId, section: section.name, qid: q.id });
+                    html += '<div class="md-question-item" data-qid="' + esc(qId) + '">';
+                    html += '<div><strong>Q' + (qIdx + 1) + '.</strong> ' + esc(q.question) + '</div>';
+                    html += '<small class="text-muted">Topic: ' + esc(q.topic) + '</small><div class="mt-2">';
+                    (q.options || []).forEach(function(opt, oIdx) {
+                        var optArgs = "'" + esc(qId) + "', " + oIdx + ", '" + esc(section.name) + "', " + q.id + ", this";
+                        html += '<div class="md-option-item" onclick="selectOption(' + optArgs + ')">' + String.fromCharCode(65 + oIdx) + ') ' + esc(opt) + '</div>';
+                    });
+                    html += '</div></div>';
+                });
+            });
+
+            html += '<div class="text-center mt-4 mb-3"><button class="md-btn-primary btn-lg" onclick="completeMock()">Submit &amp; Get Results</button></div>';
+            html += '<div id="mdResults"></div>';
+            html += '</div>';
+            content.innerHTML = html;
+
+        } catch (e) {
+            content.innerHTML = '<div class="card-body p-4"><p class="text-danger">Error: ' + esc(e.message) + '</p></div>';
         }
-    </script>
-</body>
-</html>
+    }
+
+    async function selectOption(qId, optionIndex, sectionName, questionId, element) {
+        // Visual selection
+        var parent = element.parentElement;
+        parent.querySelectorAll(".md-option-item").forEach(function(o) { o.classList.remove("selected"); });
+        element.classList.add("selected");
+
+        // Track locally for UI state
+        userAnswers[qId] = optionIndex;
+        var answeredCount = Object.keys(userAnswers).length;
+        var el = document.getElementById("mdAnswered");
+        if (el) el.textContent = answeredCount;
+
+        // Persist to backend (fire-and-forget so UI stays snappy)
+        try {
+            fetch("/api/mock/submit-complete", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    session_id: currentSessionId,
+                    section_name: sectionName,
+                    question_id: questionId,
+                    selected_option: optionIndex
+                })
+            });
+        } catch (e) {
+            // Non-fatal: answer is still in local state
+            console.warn("submit failed:", e);
+        }
+    }
+
+    async function completeMock() {
+        var resultsBox = document.getElementById("mdResults");
+        if (!currentSessionId) {
+            alert("No active session. Please start again.");
+            return;
+        }
+        var btn = document.getElementById("mdCompleteBtn");
+        if (btn) { btn.disabled = true; btn.textContent = "Scoring..."; }
+
+        resultsBox.innerHTML = '<div class="alert alert-info mt-3 text-center"><div class="spinner-border spinner-border-sm text-info"></div> Calculating your score...</div>';
+
+        try {
+            var response = await fetch("/api/mock/complete-full", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({session_id: currentSessionId})
+            });
+            var data = await response.json();
+
+            if (data.status !== "success" || !data.results) {
+                resultsBox.innerHTML = '<div class="alert alert-danger mt-3">' + esc(data.message || "Could not complete the mock drive.") + '</div>';
+                if (btn) { btn.disabled = false; btn.textContent = "Submit & Get Results"; }
+                return;
+            }
+
+            var r = data.results;
+            var colorClass = r.pass ? "alert-success" : "alert-warning";
+            var verdict = r.pass ? "PASS" : "Not yet &mdash; keep practicing";
+            var html = '<div class="alert ' + colorClass + ' mt-3">';
+            html += '<h4 class="mb-3">' + verdict + '</h4>';
+            html += '<div class="row text-center">';
+            html += '<div class="col-4"><div class="fs-3 fw-bold">' + r.score + '%</div><small>Score</small></div>';
+            html += '<div class="col-4"><div class="fs-3 fw-bold">' + r.correct + '/' + r.total_questions + '</div><small>Correct</small></div>';
+            html += '<div class="col-4"><div class="fs-3 fw-bold">' + r.answered + '</div><small>Answered</small></div>';
+            html += '</div></div>';
+
+            html += '<div class="text-center mt-3">';
+            html += '<button class="btn btn-outline-primary me-2" onclick="window.location.reload()">Take Another Mock Drive</button>';
+            html += '<a href="/my-results" class="btn btn-outline-secondary">View My Progress</a>';
+            html += '</div>';
+
+            resultsBox.innerHTML = html;
+            if (btn) { btn.disabled = true; btn.textContent = "Submitted"; }
+
+            // Scroll to results
+            resultsBox.scrollIntoView({ behavior: "smooth", block: "center" });
+
+        } catch (e) {
+            resultsBox.innerHTML = '<div class="alert alert-danger mt-3">Error: ' + esc(e.message) + '</div>';
+            if (btn) { btn.disabled = false; btn.textContent = "Submit & Get Results"; }
+        }
+    }
+</script>
+{% endblock %}
