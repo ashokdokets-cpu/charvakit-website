@@ -739,7 +739,7 @@ Return JSON:
 
     def enroll_student_paid(self, email: str, course_name: str,
                             duration_weeks: int = None,
-                            country_code: str = "IN") -> dict:
+                            country_code: str = "IN", level: str = "intermediate") -> dict:
         """Paid enrollment: creates the enrollment + (for EMI countries)
         the installment schedule via ai_courses_payments. Returns the plan
         the frontend should charge against."""
@@ -750,6 +750,7 @@ Return JSON:
                 course_name=course_name,
                 duration_weeks=duration_weeks,
                 country_code=country_code,
+                level=level,
             )
             if plan.get("status") == "exists":
                 return plan
@@ -758,13 +759,13 @@ Return JSON:
             # Generate + persist curriculum so lessons can start immediately
             # once the first payment confirms.
             try:
-                curriculum = self.plan_curriculum(course_name, duration_weeks)
+                curriculum = self.plan_curriculum(course_name, duration_weeks, level)
                 from database import db
                 conn = db.get_connection()
                 cur = conn.cursor()
                 cur.execute(
-                    "UPDATE charvak_enrollments SET curriculum = %s::jsonb, user_level = 'beginner' WHERE enrollment_id = %s",
-                    (json.dumps(curriculum), plan["enrollment_id"]),
+                    "UPDATE charvak_enrollments SET curriculum = %s::jsonb, user_level = %s WHERE enrollment_id = %s",
+                    (json.dumps(curriculum), level, plan["enrollment_id"]),
                 )
                 conn.commit()
                 cur.close()
