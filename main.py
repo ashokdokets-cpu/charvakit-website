@@ -5337,6 +5337,65 @@ async def ai_course_access(enrollment_id: str, week_num: int):
     return JSONResponse(payload)
 
 # ============================================================
+# ADMIN - ESCROW + MICRO-INTERNSHIP (Session 5A)
+# ============================================================
+
+@app.get("/api/admin/escrow/pending-payouts")
+async def admin_pending_payouts(request: Request):
+    """Admin: list escrows awaiting manual payout."""
+    try:
+        require_admin(request)
+        from escrow_engine import escrow_engine
+        return JSONResponse(escrow_engine.get_pending_payouts())
+    except HTTPException:
+        return JSONResponse({"status": "error", "message": "Admin required"}, status_code=403)
+    except Exception as e:
+        logger.error(f"admin_pending_payouts failed: {e}")
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+
+@app.post("/api/admin/escrow/mark-paid")
+async def admin_mark_payout_paid(request: Request):
+    """Admin: mark a manual payout as completed."""
+    try:
+        require_admin(request)
+        data = await request.json()
+        escrow_id = (data.get("escrow_id") or "").strip()
+        method = (data.get("method") or "bank").strip()
+        reference = (data.get("reference") or "").strip()
+        notes = (data.get("notes") or "").strip()
+        if not escrow_id:
+            return JSONResponse({"status": "error", "message": "escrow_id required"}, status_code=400)
+        from escrow_engine import escrow_engine
+        result = escrow_engine.mark_payout_paid(escrow_id, method=method, reference=reference, notes=notes)
+        return JSONResponse(result)
+    except HTTPException:
+        return JSONResponse({"status": "error", "message": "Admin required"}, status_code=403)
+    except Exception as e:
+        logger.error(f"admin_mark_payout_paid failed: {e}")
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+
+@app.get("/api/admin/micro-internship/overview")
+async def admin_micro_overview(request: Request):
+    """Admin: combined micro-internship + escrow overview."""
+    try:
+        require_admin(request)
+        from micro_internship_engine import micro_internship_engine
+        from escrow_engine import escrow_engine
+        return JSONResponse({
+            "status": "success",
+            "micro": micro_internship_engine.get_stats().get("stats", {}),
+            "escrow": escrow_engine.get_stats().get("stats", {}),
+            "pending_payouts": escrow_engine.get_pending_payouts(),
+        })
+    except HTTPException:
+        return JSONResponse({"status": "error", "message": "Admin required"}, status_code=403)
+    except Exception as e:
+        logger.error(f"admin_micro_overview failed: {e}")
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+# ============================================================
 # HEALTH CHECKS
 # ============================================================
 
