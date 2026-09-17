@@ -1,10 +1,10 @@
 ﻿# Charvak Persistence Project — Master Plan
 
 **Created:** 2026-09-17
-**Updated:** 2026-09-18 (after Session D)
+**Updated:** 2026-09-18 (after Tier E verification)
 **Purpose:** Persist all 41 in-memory engines to Postgres
 **Total estimate:** ~32 hours across 8 sessions
-**Progress:** 26/41 engines persisted (Sessions A, C, D, E, F, G complete)
+**Progress:** 27/41 engines persisted (Sessions A, C, D, E, F, G + payment_engine log) + Tier E verified (3 confirmed skip, 1 fixed)
 
 ## Tier A — Revenue + user-critical (fix first)
 
@@ -41,12 +41,15 @@
 |---|---|---|
 | 30-37 | chatbot, bridges, assessment engines, training_mapping | H |
 
-## Tier E — Internal (skip)
+## Tier E — Internal (verified 2026-09-18)
 
-- payment_engine (log only — real data in DB)
-- notification_engine (email log)
-- products_engine (logic only)
-- tools_engine (analytics log)
+| Engine | Verdict |
+|---|---|
+| payment_engine | ⚠️ Fixed — see PR (log now persisted to `charvak_payment_log`) |
+| notification_engine | ✅ Verified skip — SendGrid is the durable state |
+| products_engine | ✅ Verified skip — `self.results` is a dead field |
+| tools_ai_backend | ✅ Verified skip — completely stateless |
+
 
 ## Pattern (proven 7x)
 

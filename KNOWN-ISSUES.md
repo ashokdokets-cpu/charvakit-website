@@ -15,6 +15,7 @@
 | 2026-09-18 | G/2 | `na_module/vms_connector.py` | `job_id = f"NA-JOB-{hash(str(raw_data))}"` — `hash()` randomized per process, IDs changed on every restart | `secrets.token_hex(4).upper()` |
 | 2026-09-18 | G/4 | `na_module/resume_engine.py` | `vendor_id = f"VEN-{hash(...)}"` — same bug | `secrets.token_hex(4).upper()` |
 | 2026-09-18 | E/4 | `final_year_project_engine.py` | AI methods called `json.loads(response.choices[0].message.content)` without `response_format`; GPT-4o-mini returned prose + markdown fences → `Expecting value: line 1 column 1` | `response_format={"type": "json_object"}` + defensive fence strip |
+| 2026-09-18 | TierE | `payment_engine.py` | `self.payments` in-memory list backed admin endpoints (`get_all_payments`, `get_payment_status`); all reset on restart | Persist to `charvak_payment_log` with `raw_data JSONB` |
 | 2026-09-18 | D/2 | `brand_engine.py` | `promote_job` used `timedelta` without importing it — every call would `NameError` | Added `from datetime import timedelta` |
 | 2026-09-18 | D/1 | `badge_engine.py` | `share_text` had mojibake `ðŸ†` instead of 🏆 | `\U0001F3C6` unicode escape |
 | 2026-09-18 | F/3 | `marketing_ai_engine.py` | Mojibake in templates — `ðŸš€` instead of 🚀 in every generated job ad / social post | `\U0001F680` unicode escapes (source stays ASCII) |
@@ -32,6 +33,7 @@
 | 2 | `na_module/resume_engine.py` | `SubVendorManager.track_submission` | Duplicate `(vendor, candidate, job)` bumps `active_candidates` counter even though the row is deduped via `ON CONFLICT DO NOTHING` | TBD |
 | 3 | `na_module/charvak_vms.py` | `approve_timecard` | Repeated approvals grow `approval_history` and overwrite `payment_reference` (no guard for already-approved state) | TBD |
 | 4 | `migrations/20260916_course_payments.sql` | Foreign key | References `charvak_enrollments` which no migration creates. Fresh-clone / DR restore fails | Session I |
+| 5a | `payment_engine.py` | `is_ready()` | `/api/payment/status` publicly returns `razorpay_key_id` + `paypal_client_id` — should trim to just bool flags. (Secret values NOT leaked — key_id is the public half.) | Security audit |
 | 5 | `main.py` | `/api/exam/progress`, `/api/exam/history`, `/api/exam/study-plan` | No auth check — anyone can query any email's data | Security audit |
 | 6 | `whatsapp_bot.py` | ~line 92 | AI JSON parsing bug (same as fixed in E/4) | When WhatsApp unblocks (external) |
 | 6a | `badge_engine.py` | `self.certifications` | Dead field — declared but never written to, no table created | Session I or future work |
@@ -65,6 +67,8 @@
 
 | # | File | Issue |
 |---|---|---|
+| 15a | `notification_engine.py` | Mojibake in email subject (`âš ï¸` instead of warning emoji) — fix in Session H |
+| 15b | `products_engine.py` | Mojibake in log message (`âœ…`) — fix in Session H |
 | 16 | Multiple engines | Heading order on remaining pages (accessibility) |
 | 17 | Site-wide | TBT ~1,900ms mobile — needs conditional script loading |
 | 18 | `na_module/vector_matcher.py`, `work_auth.py`, etc. | Emoji icons in some docstrings — clean up during Session I |

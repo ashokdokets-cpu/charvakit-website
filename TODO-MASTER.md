@@ -1,7 +1,7 @@
 # Charvak - Master TODO List
 
 **Created:** 2026-09-17
-**Last updated:** 2026-09-18 (after Session D)
+**Last updated:** 2026-09-18 (after Tier E verification)
 **Purpose:** Single source of truth for all flagged / deferred / pending work
 **See also:** KNOWN-ISSUES.md (bug registry), TIER3-PERSISTENCE-PROJECT.md (persistence plan), DEV-SETUP.md (local dev workflow), MASTER-REFERENCE.md (system reference)
 
@@ -68,10 +68,10 @@ See `TIER3-PERSISTENCE-PROJECT.md` for the full plan.
 
 ### Tier E - Internal (skip - verify each)
 
-- [ ] payment_engine - verify log-only is fine
-- [ ] notification_engine - verify email log is fine
-- [ ] products_engine - logic only (Beta labels done)
-- [ ] tools_engine - analytics log
+- [x] payment_engine - FIXED: log now persisted to `charvak_payment_log`
+- [x] notification_engine - verified skip (SendGrid is state)
+- [x] products_engine - verified skip (dead `results` field)
+- [x] tools_ai_backend - verified skip (stateless)
 
 ---
 
@@ -147,6 +147,13 @@ See `TIER3-PERSISTENCE-PROJECT.md` for the full plan.
 - [x] Fixed: mojibake in badge_engine share_text (trophy emoji)
 - [x] Preserved JSONB dict.update() semantics via Postgres `||` operator
 - [x] Normalized messaging conversation_key (sorted pair)
+
+## Completed - 2026-09-18 (Tier E verification)
+
+- [x] Tier E audit - verified all 4 "skip" engines
+- [x] payment_engine - real gap found + fixed (log now DB-backed)
+- [x] 3 of 4 confirmed as genuine skip
+- [x] Migrations: `charvak_payment_log`
 
 ## Completed - 2026-09-18 (Session F)
 
