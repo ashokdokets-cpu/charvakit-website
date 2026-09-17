@@ -1,7 +1,7 @@
 # Charvak - Master TODO List
 
 **Created:** 2026-09-17
-**Last updated:** 2026-09-18 (after Tier E verification)
+**Last updated:** 2026-09-18 (after audit reconciliation)
 **Purpose:** Single source of truth for all flagged / deferred / pending work
 **See also:** KNOWN-ISSUES.md (bug registry), TIER3-PERSISTENCE-PROJECT.md (persistence plan), DEV-SETUP.md (local dev workflow), MASTER-REFERENCE.md (system reference)
 
@@ -65,6 +65,15 @@ See `TIER3-PERSISTENCE-PROJECT.md` for the full plan.
 - [ ] company_content_engine (Session H)
 - [ ] assessment_report_engine (Session H)
 - [ ] training_mapping_engine (Session H)
+
+### Tier F - Backlog (Session J) - engines missed by original audit
+
+- [ ] doketsrb_integration.py
+- [ ] indian_language_ai.py
+- [ ] role_manager.py
+- [ ] ai_question_generator.py
+- [ ] content_generator.py
+- [ ] monitor_service.py
 
 ### Tier E - Internal (skip - verify each)
 
