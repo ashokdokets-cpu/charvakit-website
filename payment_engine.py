@@ -32,12 +32,34 @@ class PaymentEngine:
         self.paypal_client_secret = PAYPAL_CLIENT_SECRET
         self.upi_id = UPI_ID
         self.mode = PAYMENT_MODE
-        self.payments = []
+        self._ensure_tables()
 
         if self.mode == "live":
             logger.info("Payment Engine: LIVE mode")
         else:
             logger.warning("Payment Engine: TEST mode")
+
+    def _ensure_tables(self):
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS charvak_payment_log (
+                    order_id     TEXT PRIMARY KEY,
+                    status       TEXT,
+                    amount       NUMERIC(12,2) DEFAULT 0,
+                    raw_data     JSONB NOT NULL DEFAULT '{}'::jsonb,
+                    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            cur.execute('''CREATE INDEX IF NOT EXISTS idx_payment_log_status  ON charvak_payment_log(status)''')
+            cur.execute('''CREATE INDEX IF NOT EXISTS idx_payment_log_created ON charvak_payment_log(created_at)''')
+            conn.commit()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"payment_log tables init failed: {e}")
 
     def is_ready(self) -> Dict:
         """Check which payment methods are configured."""
@@ -280,29 +302,96 @@ class PaymentEngine:
         return {"status": "success", "message": "UPI payment recorded", "order_id": order_id, "txn_id": txn_id}
 
     def _save_payment(self, data: Dict):
-        self.payments.append(data)
-        logger.info(f"Payment recorded: {data.get('order_id')}")
+        """Persist a payment record to the log. Idempotent per order_id."""
+        order_id = data.get("order_id")
+        if not order_id:
+            logger.warning("_save_payment called without order_id - skipping")
+            return
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute('''
+                INSERT INTO charvak_payment_log (order_id, status, amount, raw_data)
+                VALUES (%s, %s, %s, %s::jsonb)
+                ON CONFLICT (order_id) DO NOTHING
+            ''', (
+                order_id,
+                data.get("status"),
+                float(data.get("amount") or 0),
+                json.dumps(data, default=str),
+            ))
+            conn.commit()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"_save_payment failed: {e}")
+            return
+        logger.info(f"Payment recorded: {order_id}")
 
     def _update_payment(self, order_id: str, status: str, txn_id: str = None):
-        for payment in self.payments:
-            if payment.get("order_id") == order_id:
-                payment["status"] = status
-                if txn_id:
-                    payment["txn_id"] = txn_id
-                payment["updated_at"] = datetime.now().isoformat()
+        """Merge status/txn_id into the stored raw_data dict."""
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            # Fetch, patch in Python, write back - preserves dict.update() semantics
+            cur.execute('SELECT raw_data FROM charvak_payment_log WHERE order_id = %s', (order_id,))
+            row = cur.fetchone()
+            if not row:
+                cur.close(); conn.close()
                 return
+            raw = row[0] if isinstance(row[0], dict) else json.loads(row[0] or "{}")
+            raw["status"] = status
+            if txn_id:
+                raw["txn_id"] = txn_id
+            raw["updated_at"] = datetime.now().isoformat()
+            cur.execute('''
+                UPDATE charvak_payment_log
+                SET status = %s, raw_data = %s::jsonb, updated_at = CURRENT_TIMESTAMP
+                WHERE order_id = %s
+            ''', (status, json.dumps(raw, default=str), order_id))
+            conn.commit()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"_update_payment failed: {e}")
 
     def get_payment_status(self, order_id: str) -> Dict:
-        for payment in self.payments:
-            if payment.get("order_id") == order_id:
-                return payment
-        return {"status": "not_found"}
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute('SELECT raw_data FROM charvak_payment_log WHERE order_id = %s', (order_id,))
+            row = cur.fetchone()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"get_payment_status failed: {e}")
+            return {"status": "not_found"}
+
+        if not row:
+            return {"status": "not_found"}
+        return row[0] if isinstance(row[0], dict) else json.loads(row[0] or "{}")
 
     def get_all_payments(self) -> Dict:
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute('SELECT raw_data FROM charvak_payment_log ORDER BY created_at ASC')
+            rows = cur.fetchall()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"get_all_payments failed: {e}")
+            return {"payments": [], "count": 0, "total_revenue": 0}
+
+        payments = [r[0] if isinstance(r[0], dict) else json.loads(r[0] or "{}") for r in rows]
+
+        # total_revenue preserves the original formula: sum of amount where status == 'completed'
+        total_revenue = sum(p.get("amount", 0) for p in payments if p.get("status") == "completed")
+
         return {
-            "payments": self.payments,
-            "count": len(self.payments),
-            "total_revenue": sum(p.get("amount", 0) for p in self.payments if p.get("status") == "completed")
+            "payments": payments,
+            "count": len(payments),
+            "total_revenue": total_revenue,
         }
 
 
