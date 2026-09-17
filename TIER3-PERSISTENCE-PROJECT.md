@@ -2,9 +2,10 @@
 
 **Created:** 2026-09-17
 **Updated:** 2026-09-18 (after Tier E verification)
-**Purpose:** Persist all 41 in-memory engines to Postgres
-**Total estimate:** ~32 hours across 8 sessions
-**Progress:** 27/41 engines persisted (Sessions A, C, D, E, F, G + payment_engine log) + Tier E verified (3 confirmed skip, 1 fixed)
+**Purpose:** Persist all in-memory engines to Postgres
+**Total estimate:** ~32 hours across 8+ sessions
+**Progress:** 33/62 engines DB-backed; 9 verified skip; ~15–17 remaining (Sessions B, H, J)
+**Note:** the original audit ("41 in-memory engines") counted only URL-reachable engines. A 2026-09-18 re-audit found ~62 engine-like files total, of which some were already DB-backed and others are stateless. See "Audit reconciliation" below.
 
 ## Tier A — Revenue + user-critical (fix first)
 
@@ -88,3 +89,56 @@ Branch: persist-batch-a
 3. **`Out-File -Encoding utf8` adds a BOM** → Python will choke on it. Use `[System.IO.File]::WriteAllText(path, content, (New-Object System.Text.UTF8Encoding($false)))` or strip bytes 0–2.
 4. **Smoke tests against prod are dangerous** → we now have a local Postgres 15. See `DEV-SETUP.md`.
 5. **Migration file ordering** — `20260916_course_payments.sql` references `charvak_enrollments` which no migration creates (was created by an ad-hoc script on prod). Fresh-clone / DR restore will fail. Backfill this migration in Session I.
+
+
+## Audit reconciliation (2026-09-18)
+
+**Original count:** 41 in-memory engines
+**Real total:** ~62 engine-like files across root + na_module + service/manager patterns
+
+### What the original audit missed
+
+1. `na_module/` wasn't fully walked - we did `vector_matcher`, `vms_connector`, `revenue_engine`, `resume_engine`, `work_auth`, `charvak_vms` in Session G. Total 6.
+2. Two engines were mis-classified as IN-MEMORY but were already DB-backed: `job_board_engine`, `interview_prep_engine`.
+3. Referral, escrow, ai_credit, micro_internship - already DB-backed before this project.
+4. A handful of small engines were never classified at all (see Session J below).
+
+### Reconciled remaining work
+
+| Session | Engines | Count |
+|---|---|---|
+| B | enterprise, ats, voice_to_web | 3 |
+| H | chatbot, bridge, ai_bridge, advanced_assessment, enhanced_assessment, company_content, assessment_report, training_mapping | 8 |
+| **J (new)** | doketsrb_integration, indian_language_ai, role_manager, ai_question_generator, content_generator, monitor_service | 6 |
+| **TOTAL** | | **17** |
+
+### Session J - Backlog (audit gap)
+
+Engines with real in-memory state that were never assigned a session:
+
+| # | Engine | State | Verdict |
+|---|---|---|---|
+| J/1 | `doketsrb_integration.py` | `bundle_subscriptions = []` | persist |
+| J/2 | `indian_language_ai.py` | `assessments = []`, `translations = []` | persist |
+| J/3 | `role_manager.py` | `custom_roles = {}` | persist (may overlap with F/4) |
+| J/4 | `ai_question_generator.py` | `used_questions`, `question_cache`, `daily_ai_usage` | persist caches |
+| J/5 | `content_generator.py` | `content_cache = {}` | persist (cache) |
+| J/6 | `monitor_service.py` | `issues = []` | persist (log) |
+
+Estimate: ~2-3 hours.
+
+### Verified skip - no persistence needed
+
+| Engine | Reason |
+|---|---|
+| `blog_engine` | stateless / already DB-backed |
+| `email_engine` | stateless (SendGrid) |
+| `global_exams_engine` | static catalog |
+| `invoice_engine` | stateless |
+| `sso_engine` | stateless |
+| `ai_service` | stateless |
+| `admin_role_manager` | hardcoded config list |
+| `tools_ai_backend` | stateless (Tier E) |
+| `products_engine` | dead field (Tier E) |
+| `notification_engine` | SendGrid is state (Tier E) |
+| `whatsapp_bot` | external block (Meta number) |
