@@ -1,7 +1,7 @@
 # Charvak - Master TODO List
 
 **Created:** 2026-09-17
-**Last updated:** 2026-09-18 (after Session F)
+**Last updated:** 2026-09-18 (after Session D)
 **Purpose:** Single source of truth for all flagged / deferred / pending work
 **See also:** KNOWN-ISSUES.md (bug registry), TIER3-PERSISTENCE-PROJECT.md (persistence plan), DEV-SETUP.md (local dev workflow), MASTER-REFERENCE.md (system reference)
 
@@ -13,7 +13,7 @@
 
 ---
 
-## PERSISTENCE PROJECT (21 / 41 engines)
+## PERSISTENCE PROJECT (26 / 41 engines)
 
 See `TIER3-PERSISTENCE-PROJECT.md` for the full plan.
 
@@ -32,11 +32,11 @@ See `TIER3-PERSISTENCE-PROJECT.md` for the full plan.
 
 ### Tier B - User-facing
 
-- [ ] messaging_engine (Session D)
-- [ ] profile_network_engine (Session D)
-- [ ] badge_engine (Session D)
-- [ ] university_engine (Session D)
-- [ ] brand_engine (Session D)
+- [x] messaging_engine (Session D - PR #19)
+- [x] profile_network_engine (Session D - PR #19)
+- [x] badge_engine (Session D - PR #19)
+- [x] university_engine (Session D - PR #19)
+- [x] brand_engine (Session D - PR #19)
 - [x] final_year_project_engine (Session E - PR #16)
 - [x] student_suite_engine (Session E - PR #14)
 - [x] ai_internship_engine (Session E - PR #15)
@@ -139,6 +139,14 @@ See `TIER3-PERSISTENCE-PROJECT.md` for the full plan.
 - **Committed to git** so it survives across machines
 
 ---
+
+## Completed - 2026-09-18 (Session D)
+
+- [x] Session D - Tier B user-facing engines (5 engines, 11 tables) - PR #19
+- [x] Fixed: missing `timedelta` import in brand_engine.promote_job (would NameError)
+- [x] Fixed: mojibake in badge_engine share_text (trophy emoji)
+- [x] Preserved JSONB dict.update() semantics via Postgres `||` operator
+- [x] Normalized messaging conversation_key (sorted pair)
 
 ## Completed - 2026-09-18 (Session F)
 
