@@ -1,9 +1,9 @@
 # CHARVAKIT.COM - MASTER REFERENCE
 ## Charvak IT Consulting Pvt Ltd
-### Last updated: September 17, 2026 (after Session C persistence)
+### Last updated: September 18, 2026 (after Session G persistence)
 
 **Live:** https://www.charvakit.com
-**Version:** v2.3-persistence-A-C-20260917
+**Version:** v2.4-persistence-A-C-E-G-20260918
 
 ---
 
@@ -332,23 +332,17 @@ Security note: backup ZIPs contain .env secrets - do not share publicly.
 
 KNOWN ISSUES / TODO
 
-- [x] Rotate Render Postgres password (leaked in session chat)
+See KNOWN-ISSUES.md for the full list.
+
 - [ ] Rotate PayPal client secret (deferred)
-- [x] Add "Beta Preview" labels to 15 AI Products
-- [x] Soften overstated product claims ("24/7 monitoring" etc.)
 - [ ] Fix heading order on remaining pages (accessibility)
 - [ ] TBT ~1,900ms mobile - needs conditional script loading
-- [x] Move project out of OneDrive (file-lock issues)
-- [x] wget.exe removed (6.88 MB, unused)
-- [x] Root directory cleanup (32 orphans/one-offs moved, 15 .bak files deleted)
-- [x] Session 5A (Micro-Internship) done
-- [x] Session 5B (Company Mock Drives) done
 - [ ] Session 5C (mock engine consolidation) queued
 - [ ] Backfill missing migrations/20260916_charvak_enrollments.sql
-  (fresh-clone / DR restore fails: 20260916_course_payments.sql references
-  charvak_enrollments which no migration creates)
-- [ ] Persist remaining 34 engines (Sessions B, D, E, F, G, H) - see TIER3-PERSISTENCE-PROJECT.md
+- [ ] Fix 20260916_course_payments.sql FK ordering
+- [ ] Persist remaining 24 engines (Sessions B, D, F, H + Tier E verify)
 - [ ] Exam prep frontend mock-test UI (backend + routes are live)
+- [ ] Analytics Dashboards audit
 
 EXTERNAL DASHBOARDS
 Render: https://dashboard.render.com

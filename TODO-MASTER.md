@@ -1,112 +1,133 @@
-﻿# Charvak — Consolidated TODO (Master List)
+# Charvak - Master TODO List
 
 **Created:** 2026-09-17
+**Last updated:** 2026-09-18 (after Session G)
 **Purpose:** Single source of truth for all flagged / deferred / pending work
-**Context:** Captures everything from Session 2026-09-16/17
+**See also:** KNOWN-ISSUES.md (bug registry), TIER3-PERSISTENCE-PROJECT.md (persistence plan), DEV-SETUP.md (local dev workflow), MASTER-REFERENCE.md (system reference)
 
 ---
 
-## 🔴 URGENT — Do Soon (10–30 min total)
+## URGENT
 
-- [ ] Rotate Render Postgres password (leaked in session chat)
 - [ ] Rotate PayPal client secret (leaked in session chat)
-- [ ] Add "Beta Preview" labels to 15 AI Products (products_engine has no real backend)
-- [ ] Soften overstated product claims ("24/7 monitoring" etc.)
 
-## 🟡 PERSISTENCE PROJECT — Sessions A–H (~32 hr)
+---
+
+## PERSISTENCE PROJECT (17 / 41 engines)
 
 See `TIER3-PERSISTENCE-PROJECT.md` for the full plan.
 
-### Tier A — Revenue-critical
-- [ ] kyc_engine (Session A)
-- [ ] candidate_engine (Session A)
-- [ ] training_engine (Session A)
-- [ ] lms_engine (Session A)
+### Tier A - Revenue-critical
+
+- [x] kyc_engine (Session A - PR #5)
+- [x] candidate_engine (Session A - PR #6)
+- [x] training_engine (Session A - PR #7)
+- [x] lms_engine (Session A - PR #8)
 - [ ] enterprise_engine (Session B)
 - [ ] ats_engine (Session B)
 - [ ] voice_to_web_engine (Session B)
-- [ ] career_v2_engine (Session C)
-- [ ] exam_prep_engine (Session C)
-- [ ] events_engine (Session C)
+- [x] career_v2_engine (Session C - PR #10)
+- [x] exam_prep_engine (Session C - PR #11 engine, #12 routes)
+- [x] events_engine (Session C - PR #9)
 
-### Tier B — User-facing
-- [ ] messaging_engine (Session C/D)
+### Tier B - User-facing
+
+- [ ] messaging_engine (Session D)
 - [ ] profile_network_engine (Session D)
 - [ ] badge_engine (Session D)
 - [ ] university_engine (Session D)
 - [ ] brand_engine (Session D)
-- [ ] final_year_project_engine (Session E)
-- [ ] student_suite_engine (Session E)
-- [ ] ai_internship_engine (Session E)
-- [ ] team_engine (Session E)
+- [x] final_year_project_engine (Session E - PR #16)
+- [x] student_suite_engine (Session E - PR #14)
+- [x] ai_internship_engine (Session E - PR #15)
+- [x] team_engine (Session E - PR #13)
 - [ ] outreach_engine (Session F)
 - [ ] marketing_ai_engine (Session F)
 - [ ] exam_analytics_engine (Session F)
 - [ ] dynamic_role_engine (Session F)
 
-### Tier C — NA module B2B
-- [ ] na_module/charvak_vms.py (Session F)
-- [ ] na_module/revenue_engine.py (Session G)
-- [ ] na_module/work_auth.py (Session G)
-- [ ] na_module/vms_connector.py (Session G)
-- [ ] na_module/resume_engine.py (Session G)
-- [ ] na_module/vector_matcher.py (Session G)
+### Tier C - NA module B2B
 
-### Tier D — Ephemeral (tolerable loss)
+- [x] na_module/charvak_vms.py (Session G - PR #17)
+- [x] na_module/revenue_engine.py (Session G - PR #17)
+- [x] na_module/work_auth.py (Session G - PR #17)
+- [x] na_module/vms_connector.py (Session G - PR #17)
+- [x] na_module/resume_engine.py (Session G - PR #17)
+- [x] na_module/vector_matcher.py (Session G - PR #17)
+
+### Tier D - Ephemeral (tolerable loss)
+
 - [ ] chatbot_engine (Session H)
 - [ ] bridge_engine (Session H)
 - [ ] ai_bridge_engine (Session H)
-- [ ] advanced_assessment_engine (Session H — was Session 5C)
+- [ ] advanced_assessment_engine (Session H - was Session 5C)
 - [ ] enhanced_assessment_engine (Session H)
 - [ ] company_content_engine (Session H)
 - [ ] assessment_report_engine (Session H)
 - [ ] training_mapping_engine (Session H)
 
-### Tier E — Internal (skip — verify each)
-- [ ] payment_engine — verify log-only is fine
-- [ ] notification_engine — verify email log is fine
-- [ ] products_engine — logic only (needs Beta label, not persistence)
-- [ ] tools_engine — analytics log
+### Tier E - Internal (skip - verify each)
 
-## 🟠 TIER 3 — Genuinely Outstanding Items
+- [ ] payment_engine - verify log-only is fine
+- [ ] notification_engine - verify email log is fine
+- [ ] products_engine - logic only (Beta labels done)
+- [ ] tools_engine - analytics log
 
-- [ ] **Analytics Dashboards** — was UNKNOWN in audit. Needs its own audit + completion.
-- [ ] **University Portal FEATURE completeness** — verify signup flow + dashboard exist; persistence is in Session D
-- [ ] **WhatsApp bot** — Meta number registration (external); verify bot E2E when unblocked
-- [ ] **Session I — Final Tier 3 cleanup:**
-  - Root directory reorg (move one-off scripts to scripts/one-off/)
-  - Delete root .bak-* files
-  - Delete wget.exe (6.88 MB unused)
+---
+
+## TIER 3 - Genuinely Outstanding
+
+- [ ] **Analytics Dashboards** - was UNKNOWN in audit. Needs its own audit + completion.
+- [ ] **University Portal FEATURE completeness** - verify signup flow + dashboard exist
+- [ ] **WhatsApp bot** - Meta number registration (external block); also has AI JSON bug at whatsapp_bot.py:92
+- [ ] **Exam prep frontend mock-test UI** - backend + routes are live; UI not built
+- [ ] **Session I - Final Tier 3 cleanup:**
+  - Root directory reorg (move one-off scripts, consolidate docs)
+  - Delete root .bak-* files (if any remain)
+  - Backfill migrations/20260916_charvak_enrollments.sql
+  - Fix 20260916_course_payments.sql FK ordering
+  - Consolidate doc sprawl (TODO-MASTER, TIER3-MASTER-PLAN, TIER3-PERSISTENCE-PROJECT, COMPLETION-PLAN overlap)
+  - Archive old-*.txt, CHAT_CONTEXT.md, SESSION_LOG_*.md, DEPLOY_TRIGGER.md
   - Final audit re-run
   - Tag v3.0-tier3-complete-YYYYMMDD
   - Final backup
 
-## 🟢 HOUSEKEEPING
+---
 
-- [ ] Delete GitHub branches: feat-course-fee-emi, feat-tiered-pricing, feat-mock-drives, feat-micro-internship-escrow
+## HOUSEKEEPING
+
+- [ ] Delete GitHub branches: feat-course-fee-emi, feat-mock-drives, feat-micro-internship-escrow
 - [ ] Delete local feat-micro-internship-escrow branch
 - [ ] Rename old folder to charvakit-new-OLD (OneDrive lock issue)
 - [ ] Delete old location after a few days
-- [ ] `pip install sendgrid` locally (email notifications failed locally)
+- [ ] pip install sendgrid locally (email notifications failed locally)
 - [ ] Document full charvak_* schema in MASTER-REFERENCE.md
+- [ ] Fix heading order on remaining pages (accessibility)
+- [ ] TBT ~1,900ms mobile - conditional script loading
 
-## 🔵 OPTIONAL / FUTURE FEATURES
+---
 
-- [ ] RazorpayX integration — automate escrow payouts (currently manual bank/UPI)
-- [ ] AI Products real integrations — pick 2-3 flagships to make real
-  - Lock-In Breaker — real AWS/GCP/Azure billing
-  - Design-Token Sentinel — real GitHub + Figma
-  - AuditBot — real code analysis (semgrep/bandit)
-- [ ] Enterprise Option B — public engine pages (salary benchmarks, employers, resume books, kiosk)
+## OPTIONAL / FUTURE FEATURES
+
+- [ ] RazorpayX integration - automate escrow payouts (currently manual bank/UPI)
+- [ ] AI Products real integrations - pick 2-3 flagships to make real
+  - Lock-In Breaker - real AWS/GCP/Azure billing
+  - Design-Token Sentinel - real GitHub + Figma
+  - AuditBot - real code analysis (semgrep/bandit)
+- [ ] Enterprise Option B - public engine pages (salary benchmarks, employers, resume books, kiosk)
 - [ ] Per-level curriculum quality verification (tiers built, content quality not audited)
 - [ ] International EMI via PayPal invoicing (deferred from v2.0)
 - [ ] Verify /mock-test route (we built /mock-drive instead)
 
-## 🟣 PROCESS / HYGIENE
+---
+
+## PROCESS / HYGIENE
 
 - [ ] Add git status check to session start checklist
 - [ ] Update STATUS.md at end of every session
 - [ ] Keep TIER3-PERSISTENCE-PROJECT.md in sync as sessions complete
+- [ ] **Append to KNOWN-ISSUES.md every session** - if you preserve a bug, note it
+- [ ] Run local smoke tests against local Postgres (see DEV-SETUP.md), never against prod
 
 ---
 
@@ -117,17 +138,46 @@ See `TIER3-PERSISTENCE-PROJECT.md` for the full plan.
 - **After:** mark done, move to "Completed" section below
 - **Committed to git** so it survives across machines
 
-## Completed (this session — 2026-09-16/17)
+---
 
-- [x] Session 5A — Micro-Internship + Escrow persistence + integration
-- [x] Session 5B — Company Mock Drives persistence + frontend fixes
+## Completed - 2026-09-18 (Session G)
+
+- [x] Session G - NA module persistence (6 engines, 13 tables) - PR #17
+- [x] Fixed: hash() ID generation bug in vms_connector (job_id)
+- [x] Fixed: hash() ID generation bug in resume_engine (vendor_id)
+- [x] Fixed: PII phone regex corruption in resume_engine
+- [x] Gated demo data behind env vars (CHARVAK_LOAD_DEMO_*)
+- [x] Created KNOWN-ISSUES.md registry
+- [x] Local Postgres 15 dev workflow established (DEV-SETUP.md)
+
+## Completed - 2026-09-18 (Session E)
+
+- [x] Session E - User-facing persistence (4 engines) - PRs #13, #14, #15, #16
+- [x] Fixed: AI JSON parsing bug in final_year_project_engine (response_format)
+- [x] Installed local Postgres 15 + created DEV-SETUP.md
+- [x] Created .env.local + smoke test workflow
+
+## Completed - 2026-09-17 (Session C)
+
+- [x] Session C - events, career_v2, exam_prep persistence - PRs #9, #10, #11, #12
+- [x] Exam prep API routes + route ordering fix
+- [x] Beta Preview badge on 15 product pages
+- [x] Root directory cleanup (32 orphans, 15 .bak files)
+- [x] Stale branch cleanup (local + remote)
+- [x] Rotate Render Postgres password
+- [x] Docs sync + DEV-SETUP.md created
+
+## Completed - 2026-09-17 (earlier session)
+
+- [x] Session 5A - Micro-Internship + Escrow persistence + integration
+- [x] Session 5B - Company Mock Drives persistence + frontend fixes
 - [x] AI Course Fee + India EMI + Global Pricing (v2.0)
 - [x] Basic/Intermediate/Advanced Tiered Pricing (v2.1)
 - [x] All 5 master docs updated to v2.2
 - [x] Complete backup (Charvak_Complete_Backup_20260917_021435.zip)
 - [x] Working repo moved out of OneDrive
 - [x] UTF-8 console fixed
-- [x] Full system audit — 41 in-memory engines identified
-- [x] Nav verification — all 19 URLs return 200
+- [x] Full system audit - 41 in-memory engines identified
+- [x] Nav verification - all 19 URLs return 200
 - [x] Audit files saved to audits/
 - [x] TIER3-PERSISTENCE-PROJECT.md created
