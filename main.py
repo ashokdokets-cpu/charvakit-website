@@ -4843,6 +4843,21 @@ async def exam_by_category(category_id: str):
     """Get exams by category."""
     return exam_prep_engine.get_exams_by_category(category_id)
 
+@app.get("/api/exam/progress")
+async def exam_progress(email: str, exam_id: str = None):
+    """Get per-topic progress for a user (optionally scoped to one exam)."""
+    return exam_prep_engine.get_user_progress(email=email, exam_id=exam_id)
+
+@app.get("/api/exam/history")
+async def exam_history(email: str, exam_id: str = None):
+    """Get mock test history for a user (optionally scoped to one exam)."""
+    return exam_prep_engine.get_test_history(email=email, exam_id=exam_id)
+
+@app.get("/api/exam/study-plan")
+async def get_study_plan_route(email: str, exam_id: str = None):
+    """Get study plans for a user (optionally scoped to one exam)."""
+    return exam_prep_engine.get_study_plan(email=email, exam_id=exam_id)
+
 @app.get("/api/exam/{exam_id}")
 async def exam_details(exam_id: str):
     """Get exam details - searches both Indian and Global exams."""
@@ -4881,12 +4896,36 @@ async def start_mock_test(request: Request):
     
     result = exam_prep_engine.start_mock_test(
         exam_id=data.get("exam_id"),
-        email=email
+        email=email,
+        topic=data.get("topic"),
+        count=data.get("count", 10)
     )
     
     result["credits_deducted"] = 20
     result["credits_remaining"] = credit_result.get("credits_remaining", 0)
     return result
+
+@app.post("/api/exam/mock-test-submit-answer")
+async def mock_test_submit_answer(request: Request):
+    """Record one answer for a question in an active mock test."""
+    data = await request.json()
+    return exam_prep_engine.submit_answer(
+        test_id=data.get("test_id"),
+        question_id=data.get("question_id"),
+        selected_index=data.get("selected_index", 0)
+    )
+
+@app.post("/api/exam/mock-test-complete")
+async def mock_test_complete(request: Request):
+    """Finalize a mock test - scores it and updates user progress."""
+    data = await request.json()
+    return exam_prep_engine.complete_test(test_id=data.get("test_id"))
+
+@app.post("/api/exam/study-plan")
+async def create_study_plan_route(request: Request):
+    """Create a new study plan."""
+    data = await request.json()
+    return exam_prep_engine.create_study_plan(data)
 
 @app.get("/api/global-exam/categories")
 async def global_exam_categories():
