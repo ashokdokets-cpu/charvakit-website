@@ -140,6 +140,22 @@ See `TIER3-PERSISTENCE-PROJECT.md` for the full plan.
 
 ---
 
+## BUG CLEANUP (Session K)
+
+Dedicated pass to resolve open KNOWN-ISSUES.md items that no other session owns.
+
+- [ ] K/1: Auth on `/api/exam/progress`, `/api/exam/history`, `/api/exam/study-plan`
+- [ ] K/2: Trim `/api/payment/status` to bool flags only
+- [ ] K/3: Admin-only auth on `dynamic_role_engine.recommend_custom_role`
+- [ ] K/4: `revenue_engine.create_subscription` double-count fix
+- [ ] K/5: `resume_engine.SubVendorManager.track_submission` counter fix
+- [ ] K/6: `charvak_vms.approve_timecard` guard
+- [ ] K/7: `outreach_engine` UNIQUE or document
+- [ ] K/8: `messaging_engine.unread_messages` decide on `replied`
+- [ ] Formal deferrals (5d, 6c, 6d, 9) — document in KNOWN-ISSUES
+
+---
+
 ## How to use this file
 
 - **Before each session:** review open items

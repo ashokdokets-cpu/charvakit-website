@@ -142,3 +142,40 @@ Estimate: ~2-3 hours.
 | `products_engine` | dead field (Tier E) |
 | `notification_engine` | SendGrid is state (Tier E) |
 | `whatsapp_bot` | external block (Meta number) |
+
+
+## Session K — Bug cleanup (new, after Session H)
+
+Dedicated pass to resolve open KNOWN-ISSUES.md items that no other session owns.
+
+### Security (from KNOWN-ISSUES items 5, 5a, 5c)
+
+- K/1: Add auth check to `/api/exam/progress`, `/api/exam/history`, `/api/exam/study-plan` (currently open)
+- K/2: Trim `/api/payment/status` response to bools only (remove `razorpay_key_id`, `paypal_client_id`)
+- K/3: Restrict `dynamic_role_engine.recommend_custom_role` to admin-only
+
+### Data integrity (items 1, 2, 3, 5b, 6e)
+
+- K/4: `revenue_engine.create_subscription` — prevent double-count on resubscribe
+- K/5: `resume_engine.SubVendorManager.track_submission` — only bump counter on new insert
+- K/6: `charvak_vms.approve_timecard` — guard repeated approvals
+- K/7: `outreach_engine` — add UNIQUE or document as designed
+- K/8: `messaging_engine.unread_messages` — decide on `replied` inclusion
+
+### Formal deferrals (items 5d, 6c, 6d, 9)
+
+Document as "won't fix / by design" in KNOWN-ISSUES with rationale.
+
+### Estimate
+
+~2 hours. Run after Session H, before Session I.
+
+## Session I — Final cleanup (existing, unchanged)
+
+- Backfill `migrations/20260916_charvak_enrollments.sql`
+- Delete dead fields (items 6a, 6b)
+- Emoji cleanup in docstrings (item 18)
+- Doc consolidation (TODO-MASTER, TIER3-MASTER-PLAN, COMPLETION-PLAN, etc.)
+- Final audit re-run
+- Tag `v3.0-tier3-complete-YYYYMMDD`
+- Final backup
