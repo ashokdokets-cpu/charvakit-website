@@ -1,23 +1,25 @@
 ﻿# Charvak Persistence Project — Master Plan
 
 **Created:** 2026-09-17
+**Updated:** 2026-09-17 (after Session C)
 **Purpose:** Persist all 41 in-memory engines to Postgres
 **Total estimate:** ~32 hours across 8 sessions
+**Progress:** 7/41 engines persisted (Sessions A + C complete)
 
 ## Tier A — Revenue + user-critical (fix first)
 
 | # | Engine | Sessions | Status |
 |---|---|---|---|
-| 1 | kyc_engine | A | pending |
-| 2 | candidate_engine | A | pending |
-| 3 | training_engine | A | pending |
-| 4 | lms_engine | A | pending |
+| 1 | kyc_engine | A | ✅ merged (#5) |
+| 2 | candidate_engine | A | ✅ merged (#6) |
+| 3 | training_engine | A | ✅ merged (#7) |
+| 4 | lms_engine | A | ✅ merged (#8) |
 | 5 | enterprise_engine | B | pending |
 | 6 | ats_engine | B | pending |
 | 7 | voice_to_web_engine | B | pending |
-| 8 | career_v2_engine | C | pending |
-| 9 | exam_prep_engine | C | pending |
-| 10 | events_engine | C | pending |
+| 8 | career_v2_engine | C | ✅ merged (#10) |
+| 9 | exam_prep_engine | C | ✅ merged (#11 engine, #12 routes) |
+| 10 | events_engine | C | ✅ merged (#9) |
 
 ## Tier B — User-facing (fix next)
 
@@ -46,7 +48,7 @@
 - products_engine (logic only)
 - tools_engine (analytics log)
 
-## Pattern (proven 4x)
+## Pattern (proven 7x)
 
 For each engine:
 1. Read current file, identify in-memory vars
@@ -62,3 +64,24 @@ For each engine:
 Engines: kyc, candidate, training, lms
 Estimate: 4 hours
 Branch: persist-batch-a
+
+## Session status
+
+| Session | Engines | Status |
+|---|---|---|
+| A | kyc, candidate, training, lms | ✅ done (PRs #5–8) |
+| B | enterprise, ats, voice_to_web | ⏳ next |
+| C | events, career_v2, exam_prep | ✅ done (PRs #9–12) |
+| D | messaging, profile_network, badge, university, brand | ⏳ |
+| E | final_year_project, student_suite, ai_internship, team | ⏳ |
+| F | outreach, marketing_ai, exam_analytics, dynamic_role | ⏳ |
+| G | 6 NA module engines | ⏳ |
+| H | 8 ephemeral engines | ⏳ |
+
+## Lessons learned
+
+1. **PowerShell + `curl.exe` + JSON body** → always use `--data-binary @file.json`. Single-quoted JSON still gets mangled by PowerShell's native-arg passing.
+2. **PowerShell + `python -c "..."`** with nested quotes → always write a temp `.py` file (and strip the BOM if you used `Out-File -Encoding utf8`).
+3. **`Out-File -Encoding utf8` adds a BOM** → Python will choke on it. Use `[System.IO.File]::WriteAllText(path, content, (New-Object System.Text.UTF8Encoding($false)))` or strip bytes 0–2.
+4. **Smoke tests against prod are dangerous** → we now have a local Postgres 15. See `DEV-SETUP.md`.
+5. **Migration file ordering** — `20260916_course_payments.sql` references `charvak_enrollments` which no migration creates (was created by an ad-hoc script on prod). Fresh-clone / DR restore will fail. Backfill this migration in Session I.

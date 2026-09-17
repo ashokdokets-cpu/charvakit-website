@@ -1,9 +1,9 @@
 # CHARVAKIT.COM - MASTER REFERENCE
 ## Charvak IT Consulting Pvt Ltd
-### Last updated: September 17, 2026
+### Last updated: September 17, 2026 (after Session C persistence)
 
 **Live:** https://www.charvakit.com
-**Version:** v2.2-mock-drives-20260917
+**Version:** v2.3-persistence-A-C-20260917
 
 ---
 
@@ -51,6 +51,14 @@
 | SendGrid | LIVE | Transactional email |
 | OpenAI | GPT-4o-mini | AI features |
 | ElevenLabs | LIVE | Voice features |
+
+### Local dev
+
+- Postgres 15 installed at `C:\Program Files\PostgreSQL\15`
+- Service: `postgresql-x64-15` (Automatic start)
+- DB: `vouchai` at `postgresql://postgres:dev@localhost:5432/vouchai`
+- `.env.local` present, not committed
+- See `DEV-SETUP.md`
 
 ### Render env vars
 DATABASE_URL (Render Postgres internal URL)
@@ -323,21 +331,24 @@ Includes source, templates, static, migrations, scripts, .env, .git/, _DB_DUMP/ 
 Security note: backup ZIPs contain .env secrets - do not share publicly.
 
 KNOWN ISSUES / TODO
-Rotate leaked credentials (Render Postgres password + PayPal secret)
 
-Fix heading order on remaining pages (accessibility)
-
-TBT ~1,900ms mobile - needs conditional script loading
-
-Move project out of OneDrive (file-lock issues)
-
-wget.exe in project root - 6.88 MB, unused
-
-Root directory cleanup (~30 scripts + 30+ .bak-* files)
-
-Session 5A (Micro-Internship) not started
-
-Session 5C (mock engine consolidation) queued
+- [x] Rotate Render Postgres password (leaked in session chat)
+- [ ] Rotate PayPal client secret (deferred)
+- [x] Add "Beta Preview" labels to 15 AI Products
+- [x] Soften overstated product claims ("24/7 monitoring" etc.)
+- [ ] Fix heading order on remaining pages (accessibility)
+- [ ] TBT ~1,900ms mobile - needs conditional script loading
+- [x] Move project out of OneDrive (file-lock issues)
+- [x] wget.exe removed (6.88 MB, unused)
+- [x] Root directory cleanup (32 orphans/one-offs moved, 15 .bak files deleted)
+- [x] Session 5A (Micro-Internship) done
+- [x] Session 5B (Company Mock Drives) done
+- [ ] Session 5C (mock engine consolidation) queued
+- [ ] Backfill missing migrations/20260916_charvak_enrollments.sql
+  (fresh-clone / DR restore fails: 20260916_course_payments.sql references
+  charvak_enrollments which no migration creates)
+- [ ] Persist remaining 34 engines (Sessions B, D, E, F, G, H) - see TIER3-PERSISTENCE-PROJECT.md
+- [ ] Exam prep frontend mock-test UI (backend + routes are live)
 
 EXTERNAL DASHBOARDS
 Render: https://dashboard.render.com
