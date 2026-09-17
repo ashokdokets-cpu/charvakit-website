@@ -18,17 +18,80 @@ class EventStatus:
 
 
 class EventsEngine:
-    """Complete events management system."""
-    
+    """Complete events management system (DB-backed)."""
+
     def __init__(self):
-        self.events = []
-        self.rsvps = []
-        logger.info("✅ Events Engine ready")
-    
+        self._ensure_tables()
+        logger.info("Events Engine ready (DB-backed)")
+
+    def _ensure_tables(self):
+        """Idempotent table creation for events tables."""
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS charvak_events (
+                    event_id          TEXT PRIMARY KEY,
+                    title             TEXT,
+                    description       TEXT DEFAULT '',
+                    event_type        TEXT DEFAULT 'webinar',
+                    organizer_id      TEXT,
+                    organizer_name    TEXT,
+                    date              TEXT,
+                    duration_minutes  INTEGER DEFAULT 60,
+                    platform          TEXT DEFAULT 'zoom',
+                    location          TEXT DEFAULT '',
+                    link              TEXT DEFAULT '',
+                    max_attendees     INTEGER DEFAULT 100,
+                    target_audience   TEXT DEFAULT 'All',
+                    rsvp_count        INTEGER DEFAULT 0,
+                    status            TEXT NOT NULL DEFAULT 'upcoming',
+                    created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            cur.execute('''
+                CREATE INDEX IF NOT EXISTS idx_events_status ON charvak_events(status)
+            ''')
+            cur.execute('''
+                CREATE INDEX IF NOT EXISTS idx_events_type ON charvak_events(event_type)
+            ''')
+            cur.execute('''
+                CREATE INDEX IF NOT EXISTS idx_events_date ON charvak_events(date)
+            ''')
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS charvak_event_rsvps (
+                    rsvp_id         TEXT PRIMARY KEY,
+                    event_id        TEXT NOT NULL,
+                    user_id         TEXT,
+                    user_name       TEXT,
+                    user_email      TEXT NOT NULL,
+                    user_type       TEXT DEFAULT 'student',
+                    checked_in      BOOLEAN DEFAULT FALSE,
+                    checked_in_at   TIMESTAMP,
+                    rsvp_at         TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(event_id, user_email)
+                )
+            ''')
+            cur.execute('''
+                CREATE INDEX IF NOT EXISTS idx_rsvps_event_id ON charvak_event_rsvps(event_id)
+            ''')
+            cur.execute('''
+                CREATE INDEX IF NOT EXISTS idx_rsvps_email ON charvak_event_rsvps(user_email)
+            ''')
+            conn.commit()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"events tables init failed: {e}")
+
+    # ============================================================
+    # EVENT CREATION
+    # ============================================================
+
     def create_event(self, data: Dict) -> Dict:
         """
         Create a career fair, webinar, or info session.
-        
+
         data = {
             "title": str,
             "description": str,
@@ -45,40 +108,56 @@ class EventsEngine:
         }
         """
         event_id = f"EVT-{secrets.token_hex(4).upper()}"
-        
-        event = {
-            "event_id": event_id,
-            "title": data.get("title"),
-            "description": data.get("description", ""),
-            "event_type": data.get("event_type", "webinar"),
-            "organizer_id": data.get("organizer_id"),
-            "organizer_name": data.get("organizer_name"),
-            "date": data.get("date"),
-            "duration_minutes": int(data.get("duration_minutes", 60)),
-            "platform": data.get("platform", "zoom"),
-            "location": data.get("location", ""),
-            "link": data.get("link", ""),
-            "max_attendees": int(data.get("max_attendees", 100)),
-            "target_audience": data.get("target_audience", "All"),
-            "rsvp_count": 0,
-            "status": EventStatus.UPCOMING,
-            "created_at": datetime.now().isoformat()
-        }
-        
-        self.events.append(event)
+
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute('''
+                INSERT INTO charvak_events (
+                    event_id, title, description, event_type, organizer_id,
+                    organizer_name, date, duration_minutes, platform, location,
+                    link, max_attendees, target_audience, rsvp_count, status
+                ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,0,%s)
+            ''', (
+                event_id,
+                data.get("title"),
+                data.get("description", ""),
+                data.get("event_type", "webinar"),
+                data.get("organizer_id"),
+                data.get("organizer_name"),
+                data.get("date"),
+                int(data.get("duration_minutes", 60)),
+                data.get("platform", "zoom"),
+                data.get("location", ""),
+                data.get("link", ""),
+                int(data.get("max_attendees", 100)),
+                data.get("target_audience", "All"),
+                EventStatus.UPCOMING,
+            ))
+            conn.commit()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"create_event failed: {e}")
+            return {"status": "error", "message": "Could not create event"}
+
         logger.info(f"Event created: {event_id} - {data.get('title')}")
-        
+
         return {
             "status": "success",
             "event_id": event_id,
             "message": "Event created! RSVP is open.",
-            "event_url": f"https://charvakit.com/events/{event_id}"
+            "event_url": f"https://charvakit.com/events/{event_id}",
         }
-    
+
+    # ============================================================
+    # RSVP
+    # ============================================================
+
     def rsvp_to_event(self, data: Dict) -> Dict:
         """
         RSVP to an event.
-        
+
         data = {
             "event_id": str,
             "user_id": str,
@@ -90,102 +169,287 @@ class EventsEngine:
         event = self._find_event(data.get("event_id"))
         if not event:
             return {"status": "error", "message": "Event not found"}
-        
+
         if event["rsvp_count"] >= event["max_attendees"]:
             return {"status": "error", "message": "Event is full"}
-        
+
         rsvp_id = f"RSVP-{secrets.token_hex(4).upper()}"
-        
-        rsvp = {
-            "rsvp_id": rsvp_id,
-            "event_id": data.get("event_id"),
-            "user_id": data.get("user_id"),
-            "user_name": data.get("user_name"),
-            "user_email": data.get("user_email"),
-            "user_type": data.get("user_type", "student"),
-            "checked_in": False,
-            "rsvp_at": datetime.now().isoformat()
-        }
-        
-        self.rsvps.append(rsvp)
-        event["rsvp_count"] += 1
-        
+
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute('''
+                INSERT INTO charvak_event_rsvps (
+                    rsvp_id, event_id, user_id, user_name, user_email,
+                    user_type, checked_in
+                ) VALUES (%s,%s,%s,%s,%s,%s,FALSE)
+            ''', (
+                rsvp_id,
+                data.get("event_id"),
+                data.get("user_id"),
+                data.get("user_name"),
+                data.get("user_email"),
+                data.get("user_type", "student"),
+            ))
+            cur.execute('''
+                UPDATE charvak_events
+                SET rsvp_count = rsvp_count + 1
+                WHERE event_id = %s
+            ''', (data.get("event_id"),))
+            conn.commit()
+            cur.close(); conn.close()
+        except Exception as e:
+            # Unique violation on (event_id, user_email) -> friendly message
+            msg = str(e).lower()
+            if "unique" in msg or "duplicate" in msg:
+                return {
+                    "status": "error",
+                    "message": "You are already registered for this event",
+                }
+            logger.error(f"rsvp_to_event failed: {e}")
+            return {"status": "error", "message": "Could not RSVP"}
+
         logger.info(f"RSVP: {rsvp_id} for {event['event_id']}")
-        
+
         return {
             "status": "success",
             "rsvp_id": rsvp_id,
             "message": f"RSVP confirmed for {event['title']}!",
-            "confirmation": f"Details sent to {data.get('user_email')}"
+            "confirmation": f"Details sent to {data.get('user_email')}",
         }
-    
+
+    # ============================================================
+    # READS
+    # ============================================================
+
     def get_events(self, event_type: str = None) -> Dict:
         """Get all upcoming events."""
-        events = [e for e in self.events if e["status"] == EventStatus.UPCOMING]
-        if event_type:
-            events = [e for e in events if e["event_type"] == event_type]
-        
-        events.sort(key=lambda e: e["date"])
-        
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+
+            if event_type:
+                cur.execute('''
+                    SELECT event_id, title, description, event_type, organizer_id,
+                           organizer_name, date, duration_minutes, platform,
+                           location, link, max_attendees, target_audience,
+                           rsvp_count, status, created_at
+                    FROM charvak_events
+                    WHERE status = %s AND event_type = %s
+                    ORDER BY date ASC
+                ''', (EventStatus.UPCOMING, event_type))
+            else:
+                cur.execute('''
+                    SELECT event_id, title, description, event_type, organizer_id,
+                           organizer_name, date, duration_minutes, platform,
+                           location, link, max_attendees, target_audience,
+                           rsvp_count, status, created_at
+                    FROM charvak_events
+                    WHERE status = %s
+                    ORDER BY date ASC
+                ''', (EventStatus.UPCOMING,))
+
+            events = [self._row_to_event(r) for r in cur.fetchall()]
+
+            cur.execute('SELECT DISTINCT event_type FROM charvak_events')
+            types = [r[0] for r in cur.fetchall() if r[0]]
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"get_events failed: {e}")
+            return {"status": "error", "message": "Could not load events"}
+
         return {
             "status": "success",
             "events": events,
             "count": len(events),
             "total_rsvps": sum(e["rsvp_count"] for e in events),
-            "types": list(set(e["event_type"] for e in self.events))
+            "types": types,
         }
-    
+
     def get_event(self, event_id: str) -> Dict:
         """Get event details."""
         event = self._find_event(event_id)
         if not event:
             return {"status": "error", "message": "Event not found"}
-        
-        event_rsvps = [r for r in self.rsvps if r["event_id"] == event_id]
-        
+
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute('''
+                SELECT rsvp_id, event_id, user_id, user_name, user_email,
+                       user_type, checked_in, checked_in_at, rsvp_at
+                FROM charvak_event_rsvps
+                WHERE event_id = %s
+                ORDER BY rsvp_at ASC
+            ''', (event_id,))
+            event_rsvps = [self._row_to_rsvp(r) for r in cur.fetchall()]
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"get_event failed: {e}")
+            return {"status": "error", "message": "Could not load event"}
+
         return {
             "status": "success",
             "event": event,
             "rsvps": event_rsvps,
             "rsvp_count": len(event_rsvps),
-            "check_in_count": len([r for r in event_rsvps if r["checked_in"]])
+            "check_in_count": len([r for r in event_rsvps if r["checked_in"]]),
         }
-    
+
+    # ============================================================
+    # ATTENDEE ACTIONS
+    # ============================================================
+
     def check_in(self, rsvp_id: str) -> Dict:
         """Check in attendee."""
-        for rsvp in self.rsvps:
-            if rsvp["rsvp_id"] == rsvp_id:
-                rsvp["checked_in"] = True
-                rsvp["checked_in_at"] = datetime.now().isoformat()
-                return {"status": "success", "message": "Checked in!"}
-        return {"status": "error", "message": "RSVP not found"}
-    
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute('''
+                UPDATE charvak_event_rsvps
+                SET checked_in = TRUE, checked_in_at = CURRENT_TIMESTAMP
+                WHERE rsvp_id = %s
+            ''', (rsvp_id,))
+            affected = cur.rowcount
+            conn.commit()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"check_in failed: {e}")
+            return {"status": "error", "message": "Could not check in"}
+
+        if affected == 0:
+            return {"status": "error", "message": "RSVP not found"}
+        return {"status": "success", "message": "Checked in!"}
+
     def cancel_event(self, event_id: str) -> Dict:
         """Cancel an event."""
         event = self._find_event(event_id)
         if not event:
             return {"status": "error", "message": "Event not found"}
-        
-        event["status"] = EventStatus.CANCELLED
+
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute('''
+                UPDATE charvak_events SET status = %s WHERE event_id = %s
+            ''', (EventStatus.CANCELLED, event_id))
+            conn.commit()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"cancel_event failed: {e}")
+            return {"status": "error", "message": "Could not cancel event"}
+
         return {"status": "success", "message": "Event cancelled"}
-    
+
+    # ============================================================
+    # STATS + HELPERS
+    # ============================================================
+
     def get_stats(self) -> Dict:
         """Get event statistics."""
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute('SELECT COUNT(*) FROM charvak_events')
+            total_events = cur.fetchone()[0]
+            cur.execute(
+                'SELECT COUNT(*) FROM charvak_events WHERE status = %s',
+                (EventStatus.UPCOMING,),
+            )
+            upcoming = cur.fetchone()[0]
+            cur.execute('SELECT COUNT(*) FROM charvak_event_rsvps')
+            total_rsvps = cur.fetchone()[0]
+            cur.execute(
+                'SELECT COUNT(*) FROM charvak_event_rsvps WHERE checked_in = TRUE'
+            )
+            total_check_ins = cur.fetchone()[0]
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"get_stats failed: {e}")
+            return {"status": "error", "message": "Could not load stats"}
+
         return {
             "status": "success",
             "stats": {
-                "total_events": len(self.events),
-                "upcoming_events": len([e for e in self.events if e["status"] == EventStatus.UPCOMING]),
-                "total_rsvps": len(self.rsvps),
-                "total_check_ins": len([r for r in self.rsvps if r["checked_in"]])
-            }
+                "total_events": total_events,
+                "upcoming_events": upcoming,
+                "total_rsvps": total_rsvps,
+                "total_check_ins": total_check_ins,
+            },
         }
-    
+
     def _find_event(self, event_id: str) -> Optional[Dict]:
-        for event in self.events:
-            if event["event_id"] == event_id:
-                return event
-        return None
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute('''
+                SELECT event_id, title, description, event_type, organizer_id,
+                       organizer_name, date, duration_minutes, platform,
+                       location, link, max_attendees, target_audience,
+                       rsvp_count, status, created_at
+                FROM charvak_events WHERE event_id = %s
+            ''', (event_id,))
+            row = cur.fetchone()
+            cur.close(); conn.close()
+            return self._row_to_event(row) if row else None
+        except Exception as e:
+            logger.error(f"_find_event failed: {e}")
+            return None
+
+    # ============================================================
+    # ROW SERIALIZERS
+    # ============================================================
+
+    @staticmethod
+    def _row_to_event(row) -> Dict:
+        if not row:
+            return {}
+        (event_id, title, description, event_type, organizer_id, organizer_name,
+         date, duration_minutes, platform, location, link, max_attendees,
+         target_audience, rsvp_count, status, created_at) = row
+        return {
+            "event_id": event_id,
+            "title": title,
+            "description": description or "",
+            "event_type": event_type,
+            "organizer_id": organizer_id,
+            "organizer_name": organizer_name,
+            "date": date,
+            "duration_minutes": duration_minutes,
+            "platform": platform,
+            "location": location or "",
+            "link": link or "",
+            "max_attendees": max_attendees,
+            "target_audience": target_audience,
+            "rsvp_count": rsvp_count,
+            "status": status,
+            "created_at": created_at.isoformat() if hasattr(created_at, "isoformat") else str(created_at),
+        }
+
+    @staticmethod
+    def _row_to_rsvp(row) -> Dict:
+        if not row:
+            return {}
+        (rsvp_id, event_id, user_id, user_name, user_email,
+         user_type, checked_in, checked_in_at, rsvp_at) = row
+        return {
+            "rsvp_id": rsvp_id,
+            "event_id": event_id,
+            "user_id": user_id,
+            "user_name": user_name,
+            "user_email": user_email,
+            "user_type": user_type,
+            "checked_in": bool(checked_in),
+            "checked_in_at": checked_in_at.isoformat() if checked_in_at and hasattr(checked_in_at, "isoformat") else None,
+            "rsvp_at": rsvp_at.isoformat() if hasattr(rsvp_at, "isoformat") else str(rsvp_at),
+        }
 
 
 events_engine = EventsEngine()
