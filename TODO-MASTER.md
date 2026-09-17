@@ -1,7 +1,7 @@
 # Charvak - Master TODO List
 
 **Created:** 2026-09-17
-**Last updated:** 2026-09-18 (after Session G)
+**Last updated:** 2026-09-18 (after Session F)
 **Purpose:** Single source of truth for all flagged / deferred / pending work
 **See also:** KNOWN-ISSUES.md (bug registry), TIER3-PERSISTENCE-PROJECT.md (persistence plan), DEV-SETUP.md (local dev workflow), MASTER-REFERENCE.md (system reference)
 
@@ -13,7 +13,7 @@
 
 ---
 
-## PERSISTENCE PROJECT (17 / 41 engines)
+## PERSISTENCE PROJECT (21 / 41 engines)
 
 See `TIER3-PERSISTENCE-PROJECT.md` for the full plan.
 
@@ -41,10 +41,10 @@ See `TIER3-PERSISTENCE-PROJECT.md` for the full plan.
 - [x] student_suite_engine (Session E - PR #14)
 - [x] ai_internship_engine (Session E - PR #15)
 - [x] team_engine (Session E - PR #13)
-- [ ] outreach_engine (Session F)
-- [ ] marketing_ai_engine (Session F)
-- [ ] exam_analytics_engine (Session F)
-- [ ] dynamic_role_engine (Session F)
+- [x] outreach_engine (Session F - PR #18)
+- [x] marketing_ai_engine (Session F - PR #18)
+- [x] exam_analytics_engine (Session F - PR #18)
+- [x] dynamic_role_engine (Session F - PR #18)
 
 ### Tier C - NA module B2B
 
@@ -139,6 +139,13 @@ See `TIER3-PERSISTENCE-PROJECT.md` for the full plan.
 - **Committed to git** so it survives across machines
 
 ---
+
+## Completed - 2026-09-18 (Session F)
+
+- [x] Session F - Tier B engines (4 engines, 11 tables) - PR #18
+- [x] Fixed: mojibake in marketing_ai_engine templates (emoji rendering)
+- [x] Fixed: dynamic_role_engine custom roles now persist across restarts
+- [x] Closed Session C loop: exam_analytics routes now DB-backed
 
 ## Completed - 2026-09-18 (Session G)
 

@@ -15,6 +15,8 @@
 | 2026-09-18 | G/2 | `na_module/vms_connector.py` | `job_id = f"NA-JOB-{hash(str(raw_data))}"` — `hash()` randomized per process, IDs changed on every restart | `secrets.token_hex(4).upper()` |
 | 2026-09-18 | G/4 | `na_module/resume_engine.py` | `vendor_id = f"VEN-{hash(...)}"` — same bug | `secrets.token_hex(4).upper()` |
 | 2026-09-18 | E/4 | `final_year_project_engine.py` | AI methods called `json.loads(response.choices[0].message.content)` without `response_format`; GPT-4o-mini returned prose + markdown fences → `Expecting value: line 1 column 1` | `response_format={"type": "json_object"}` + defensive fence strip |
+| 2026-09-18 | F/3 | `marketing_ai_engine.py` | Mojibake in templates — `ðŸš€` instead of 🚀 in every generated job ad / social post | `\U0001F680` unicode escapes (source stays ASCII) |
+| 2026-09-18 | F/4 | `dynamic_role_engine.py` | `recommend_custom_role` mutated in-memory `role_database` — custom roles lost on every restart | Persist to `charvak_dynamic_custom_roles`, merge into `get_all_roles()` |
 | 2026-09-17 | C | `main.py` | `GET /api/exam/progress` shadowed by `/api/exam/{exam_id}` catch-all | Routes inserted before catch-all |
 | 2026-09-17 | C/3 | `exam_prep_engine.py` | Docstring said "83 exams" but actual catalog is 67 | Updated to 67 |
 
@@ -31,6 +33,9 @@
 | 5 | `main.py` | `/api/exam/progress`, `/api/exam/history`, `/api/exam/study-plan` | No auth check — anyone can query any email's data | Security audit |
 | 6 | `whatsapp_bot.py` | ~line 92 | AI JSON parsing bug (same as fixed in E/4) | When WhatsApp unblocks (external) |
 | 7 | `ai_bridge_engine.py` | ~line 164 | AI JSON parsing bug (same as fixed in E/4) | Session H |
+| 5b | `outreach_engine.py` | `subscribe_premium`, `connect_gmail` | No UNIQUE constraint — multiple subscriptions and Gmail syncs allowed per email (matches original behavior) | Product decision |
+| 5c | `dynamic_role_engine.py` | `recommend_custom_role` | Anyone can add a global custom role — no auth, no per-user scoping | Security audit |
+| 5d | `dynamic_role_engine.py` | `create_dynamic_training_plan` | Stateless — plan returned but not stored (matches original) | Product decision |
 
 ---
 
