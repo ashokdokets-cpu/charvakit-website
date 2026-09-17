@@ -15,6 +15,8 @@
 | 2026-09-18 | G/2 | `na_module/vms_connector.py` | `job_id = f"NA-JOB-{hash(str(raw_data))}"` — `hash()` randomized per process, IDs changed on every restart | `secrets.token_hex(4).upper()` |
 | 2026-09-18 | G/4 | `na_module/resume_engine.py` | `vendor_id = f"VEN-{hash(...)}"` — same bug | `secrets.token_hex(4).upper()` |
 | 2026-09-18 | E/4 | `final_year_project_engine.py` | AI methods called `json.loads(response.choices[0].message.content)` without `response_format`; GPT-4o-mini returned prose + markdown fences → `Expecting value: line 1 column 1` | `response_format={"type": "json_object"}` + defensive fence strip |
+| 2026-09-18 | D/2 | `brand_engine.py` | `promote_job` used `timedelta` without importing it — every call would `NameError` | Added `from datetime import timedelta` |
+| 2026-09-18 | D/1 | `badge_engine.py` | `share_text` had mojibake `ðŸ†` instead of 🏆 | `\U0001F3C6` unicode escape |
 | 2026-09-18 | F/3 | `marketing_ai_engine.py` | Mojibake in templates — `ðŸš€` instead of 🚀 in every generated job ad / social post | `\U0001F680` unicode escapes (source stays ASCII) |
 | 2026-09-18 | F/4 | `dynamic_role_engine.py` | `recommend_custom_role` mutated in-memory `role_database` — custom roles lost on every restart | Persist to `charvak_dynamic_custom_roles`, merge into `get_all_roles()` |
 | 2026-09-17 | C | `main.py` | `GET /api/exam/progress` shadowed by `/api/exam/{exam_id}` catch-all | Routes inserted before catch-all |
@@ -32,6 +34,11 @@
 | 4 | `migrations/20260916_course_payments.sql` | Foreign key | References `charvak_enrollments` which no migration creates. Fresh-clone / DR restore fails | Session I |
 | 5 | `main.py` | `/api/exam/progress`, `/api/exam/history`, `/api/exam/study-plan` | No auth check — anyone can query any email's data | Security audit |
 | 6 | `whatsapp_bot.py` | ~line 92 | AI JSON parsing bug (same as fixed in E/4) | When WhatsApp unblocks (external) |
+| 6a | `badge_engine.py` | `self.certifications` | Dead field — declared but never written to, no table created | Session I or future work |
+| 6b | `profile_network_engine.py` | `self.referral_matches` | Dead field — computed inline but never stored in list, no table created | Session I |
+| 6c | `profile_network_engine.py` | `candidate_data` in master_profiles | Snapshot at create time — goes stale after candidate updates their own profile | Product decision |
+| 6d | `university_engine.py` | `student_count` | Denormalized counter — only increments (no `remove_student` method exists) | Product decision |
+| 6e | `messaging_engine.py` | `get_stats.unread_messages` | Counts only `sent`+`delivered` — excludes `replied` | Product decision |
 | 7 | `ai_bridge_engine.py` | ~line 164 | AI JSON parsing bug (same as fixed in E/4) | Session H |
 | 5b | `outreach_engine.py` | `subscribe_premium`, `connect_gmail` | No UNIQUE constraint — multiple subscriptions and Gmail syncs allowed per email (matches original behavior) | Product decision |
 | 5c | `dynamic_role_engine.py` | `recommend_custom_role` | Anyone can add a global custom role — no auth, no per-user scoping | Security audit |
