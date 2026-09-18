@@ -62,14 +62,11 @@ class PaymentEngine:
             logger.error(f"payment_log tables init failed: {e}")
 
     def is_ready(self) -> Dict:
-        """Check which payment methods are configured."""
+        """Check which payment methods are configured. Booleans only."""
         return {
             "razorpay": bool(self.razorpay_key_id and self.razorpay_key_secret),
             "paypal": bool(self.paypal_client_id and self.paypal_client_secret),
             "upi": bool(self.upi_id),
-            "mode": self.mode,
-            "paypal_client_id": self.paypal_client_id,
-            "razorpay_key_id": self.razorpay_key_id
         }
 
     def create_razorpay_order(self, amount_inr: int, receipt: str, notes: Dict = None) -> Dict:
