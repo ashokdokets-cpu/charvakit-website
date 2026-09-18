@@ -1,10 +1,10 @@
 ﻿# Charvak Persistence Project — Master Plan
 
 **Created:** 2026-09-17
-**Updated:** 2026-09-18 (after Session H)
+**Updated:** 2026-09-18 (after Session B partial)
 **Purpose:** Persist all in-memory engines to Postgres
 **Total estimate:** ~32 hours across 8+ sessions
-**Progress:** 41/62 engines DB-backed; 9 verified skip; ~11 remaining (Sessions B, J)
+**Progress:** 43/62 engines DB-backed; 9 verified skip; ~10 remaining (Session B-2 + Session J)
 **Note:** the original audit ("41 in-memory engines") counted only URL-reachable engines. A 2026-09-18 re-audit found ~62 engine-like files total, of which some were already DB-backed and others are stateless. See "Audit reconciliation" below.
 
 ## Tier A — Revenue + user-critical (fix first)
@@ -74,7 +74,7 @@ Branch: persist-batch-a
 | Session | Engines | Status |
 |---|---|---|
 | A | kyc, candidate, training, lms | ✅ done (PRs #5–8) |
-| B | enterprise, ats, voice_to_web | ⏳ |
+| B | enterprise, ats (PR #22); voice_to_web deferred to B-2 | ✅ partial |
 | C | events, career_v2, exam_prep | ✅ done (PRs #9–12) |
 | D | messaging, profile_network, badge, university, brand | ✅ done (PR #19) |
 | E | final_year_project, student_suite, ai_internship, team | ✅ done (PRs #13–16) |
