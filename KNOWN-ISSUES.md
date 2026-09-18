@@ -15,6 +15,11 @@
 | 2026-09-18 | G/2 | `na_module/vms_connector.py` | `job_id = f"NA-JOB-{hash(str(raw_data))}"` — `hash()` randomized per process, IDs changed on every restart | `secrets.token_hex(4).upper()` |
 | 2026-09-18 | G/4 | `na_module/resume_engine.py` | `vendor_id = f"VEN-{hash(...)}"` — same bug | `secrets.token_hex(4).upper()` |
 | 2026-09-18 | E/4 | `final_year_project_engine.py` | AI methods called `json.loads(response.choices[0].message.content)` without `response_format`; GPT-4o-mini returned prose + markdown fences → `Expecting value: line 1 column 1` | `response_format={"type": "json_object"}` + defensive fence strip |
+| 2026-09-18 | H/8 | `advanced_assessment_engine.py` | `_generate_mcq_with_openai` AI JSON parsing without `response_format` + no timeout + fragile regex-only extraction | Added `response_format={"type": "json_object"}` + timeout + defensive fence strip + regex fallback |
+| 2026-09-18 | H/8 | `advanced_assessment_engine.py` | Dead `user_scores` field (declared, never written) | Removed; no table created |
+| 2026-09-18 | H/6 | `ai_bridge_engine.py` | Two AI JSON parsing calls without `response_format` (question generation + report evaluation) | Added `_ai_json()` helper with `response_format={"type": "json_object"}` + defensive fence strip |
+| 2026-09-18 | H/5 | `training_mapping_engine.py` | `get_job_market_insights` avg_salary mojibake stripped to bare `",000 - ,000"` (both ranges empty). Restored to sensible `Rs.8L - Rs.30L` style | Manual restoration |
+| 2026-09-18 | H/2 | `enhanced_assessment_engine.py` | Dead `question_cache` field + missing `response_format` on AI call | Removed dead field; added `response_format` + timeout + defensive fence strip |
 | 2026-09-18 | TierE | `payment_engine.py` | `self.payments` in-memory list backed admin endpoints (`get_all_payments`, `get_payment_status`); all reset on restart | Persist to `charvak_payment_log` with `raw_data JSONB` |
 | 2026-09-18 | D/2 | `brand_engine.py` | `promote_job` used `timedelta` without importing it — every call would `NameError` | Added `from datetime import timedelta` |
 | 2026-09-18 | D/1 | `badge_engine.py` | `share_text` had mojibake `ðŸ†` instead of 🏆 | `\U0001F3C6` unicode escape |
@@ -41,7 +46,9 @@
 | 6c | `profile_network_engine.py` | `candidate_data` in master_profiles | Snapshot at create time — goes stale after candidate updates their own profile | Product decision |
 | 6d | `university_engine.py` | `student_count` | Denormalized counter — only increments (no `remove_student` method exists) | Product decision |
 | 6e | `messaging_engine.py` | `get_stats.unread_messages` | Counts only `sent`+`delivered` — excludes `replied` | Product decision |
-| 7 | `ai_bridge_engine.py` | ~line 164 | AI JSON parsing bug (same as fixed in E/4) | Session H |
+| 26 | `ai_bridge_engine.py` | `get_premium_report` | Not idempotent - calling twice for same session creates 2 premium rows + doubles revenue | Product decision / bug fix |
+| 25 | `chatbot_engine.py` | `_match_faq` | Keyword keys don't match FAQ question text - some FAQs unreachable (e.g. "pricing" keyword vs "cost" in question text). Falls back to AI. | Product decision / bug fix |
+| 7 | `ai_bridge_engine.py` | `_generate_ai_questions` + `_generate_report` | AI JSON parsing bug (missing `response_format`, both places) | FIXED in H/6 |
 | 5b | `outreach_engine.py` | `subscribe_premium`, `connect_gmail` | No UNIQUE constraint — multiple subscriptions and Gmail syncs allowed per email (matches original behavior) | Product decision |
 | 5c | `dynamic_role_engine.py` | `recommend_custom_role` | Anyone can add a global custom role — no auth, no per-user scoping | Security audit |
 | 5d | `dynamic_role_engine.py` | `create_dynamic_training_plan` | Stateless — plan returned but not stored (matches original) | Product decision |
@@ -58,6 +65,7 @@
 | 11 | `main.py` | Exam prep frontend mock-test UI doesn't exist (backend + routes live) | Dedicated UI session |
 | 12 | `na_module/charvak_vms.py` | `vendor_performance` dead field — never written to | Future feature work |
 | 13 | `student_suite_engine.py` | `assist_assignment` / `assist_research` return stubs — no real AI | Feature work |
+| 26 | `advanced_assessment_engine.py` | `_generate_versant_questions` | Declared question counts (e.g. repeats=16) exceed available static prompts (4) — questions limited by prompt count | Feature gap |
 | 14 | `na_module/vector_matcher.py` | `SKILL_EMBEDDINGS` is a small static dict; comment says "in production, use pgvector/Pinecone" | Future scaling |
 | 15 | Analytics Dashboards | Never audited; page exists but no data source verified | Dedicated audit |
 
