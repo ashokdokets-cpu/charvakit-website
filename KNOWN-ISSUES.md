@@ -46,7 +46,11 @@
 | 6c | `profile_network_engine.py` | `candidate_data` in master_profiles | Snapshot at create time — goes stale after candidate updates their own profile | Product decision |
 | 6d | `university_engine.py` | `student_count` | Denormalized counter — only increments (no `remove_student` method exists) | Product decision |
 | 6e | `messaging_engine.py` | `get_stats.unread_messages` | Counts only `sent`+`delivered` — excludes `replied` | Product decision |
-| 26 | `ai_bridge_engine.py` | `get_premium_report` | Not idempotent - calling twice for same session creates 2 premium rows + doubles revenue | Product decision / bug fix |
+| 26 | `ai_bridge_engine.py` | `get_premium_report` |
+| 27 | `enterprise_engine.py` | `review_resume` | Typo in response: `f"Resume {decision}d"` → "Resume rejectd" for reject | Cosmetic / Session K |
+| 28 | `enterprise_engine.py` | `record_survey_response` / `kiosk_check_in` | Increment counters but don't store respondent/student data (matches original) | Product decision |
+| 29 | `voice_to_web_engine.py` | (not audited yet) | Persistence deferred to Session B-2 | Session B-2 |
+ Not idempotent - calling twice for same session creates 2 premium rows + doubles revenue | Product decision / bug fix |
 | 25 | `chatbot_engine.py` | `_match_faq` | Keyword keys don't match FAQ question text - some FAQs unreachable (e.g. "pricing" keyword vs "cost" in question text). Falls back to AI. | Product decision / bug fix |
 | 7 | `ai_bridge_engine.py` | `_generate_ai_questions` + `_generate_report` | AI JSON parsing bug (missing `response_format`, both places) | FIXED in H/6 |
 | 5b | `outreach_engine.py` | `subscribe_premium`, `connect_gmail` | No UNIQUE constraint — multiple subscriptions and Gmail syncs allowed per email (matches original behavior) | Product decision |
