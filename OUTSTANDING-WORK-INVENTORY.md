@@ -36,7 +36,7 @@
 |---|---|---|---|
 | 6 | ~~revenue_engine.create_subscription re-subscribe inflates revenue~~ **FIXED 2026-09-19** | K/4 | DONE |
 | 7 | ~~resume_engine.SubVendorManager.track_submission duplicate bumps counter~~ **FIXED 2026-09-19** | K/5 | DONE |
-| 8 | charvak_vms.approve_timecard | Repeated approvals grow history | K/6 |
+| 8 | ~~charvak_vms.approve_timecard repeat approvals grow history + overwrite payment_reference~~ **FIXED 2026-09-19** | K/6 | DONE |
 | 9 | outreach_engine.subscribe_premium / connect_gmail | No UNIQUE | K/7 |
 | 10 | messaging_engine.get_stats.unread_messages | Excludes replied | K/8 |
 
