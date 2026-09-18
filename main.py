@@ -5651,6 +5651,7 @@ async def create_role_plan(request: Request):
 
 @app.post("/api/roles/custom")
 async def add_custom_role(request: Request):
+    require_admin(request)
     data = await request.json()
     return dynamic_role_engine.recommend_custom_role(
         data.get("email"),
