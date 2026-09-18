@@ -78,7 +78,7 @@
 | 26 | ~~content_generator.content_cache~~ **[ALREADY RESOLVED - field no longer exists]** | No-op |
 | 27 | ~~ai_question_generator.used_questions~~ **[ALREADY RESOLVED - field no longer exists]** | No-op |
 | 28 | ~~indian_language_ai.translations~~ **RECLASSIFIED** - translations dict is live; removed only unused total_translations placeholder | DONE |
-| 29 | indian_language_ai.submit_assessment | Score not persisted |
+| 29 | ~~indian_language_ai.submit_assessment~~ **FIXED 2026-09-19** - persists to charvak_lang_ai_submissions | DONE |
 | 30 | ~~role_manager + dynamic_role_engine~~ **[DEFERRED - by design, see DEFERRALS.md]** | DONE |
 | 31 | ~~monitor_service.SiteMonitor.check_site~~ **FIXED 2026-09-19** - switched to httpx.AsyncClient | DONE |
 | 32 | ~~chatbot_engine._match_faq~~ **FIXED 2026-09-19** - key normalization | DONE |
