@@ -42,7 +42,7 @@ class OutreachEngine:
             cur.execute('''
                 CREATE TABLE IF NOT EXISTS charvak_outreach_email_syncs (
                     sync_id       TEXT PRIMARY KEY,
-                    email         TEXT NOT NULL,
+                    email         TEXT NOT NULL UNIQUE,
                     sync_type     TEXT DEFAULT 'all',
                     status        TEXT DEFAULT 'connected',
                     connected_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -64,7 +64,7 @@ class OutreachEngine:
             cur.execute('''
                 CREATE TABLE IF NOT EXISTS charvak_outreach_premium_users (
                     subscription_id  TEXT PRIMARY KEY,
-                    email            TEXT NOT NULL,
+                    email            TEXT NOT NULL UNIQUE,
                     plan             TEXT DEFAULT 'basic',
                     price            INTEGER DEFAULT 0,
                     features         JSONB DEFAULT '[]'::jsonb,
@@ -180,6 +180,11 @@ Best regards,
                 INSERT INTO charvak_outreach_email_syncs
                     (sync_id, email, sync_type, status)
                 VALUES (%s, %s, %s, 'connected')
+                ON CONFLICT (email) DO UPDATE SET
+                    sync_id = EXCLUDED.sync_id,
+                    sync_type = EXCLUDED.sync_type,
+                    status = 'connected',
+                    connected_at = CURRENT_TIMESTAMP
             ''', (sync_id, data.get("email"), sync_type))
             conn.commit()
             cur.close(); conn.close()
@@ -272,6 +277,12 @@ Best regards,
                 INSERT INTO charvak_outreach_premium_users
                     (subscription_id, email, plan, price, features)
                 VALUES (%s, %s, %s, %s, %s::jsonb)
+                ON CONFLICT (email) DO UPDATE SET
+                    subscription_id = EXCLUDED.subscription_id,
+                    plan = EXCLUDED.plan,
+                    price = EXCLUDED.price,
+                    features = EXCLUDED.features,
+                    subscribed_at = CURRENT_TIMESTAMP
             ''', (subscription_id, data.get("email"), plan, price, json.dumps(features)))
             conn.commit()
             cur.close(); conn.close()
