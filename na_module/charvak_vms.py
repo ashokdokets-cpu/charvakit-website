@@ -362,18 +362,30 @@ class CharvakVMS:
             conn = db.get_connection()
             cur = conn.cursor()
 
-            cur.execute('SELECT approval_history FROM charvak_na_cvms_timecards WHERE timecard_id = %s', (timecard_id,))
+            cur.execute(
+                'SELECT status, approval_history, payment_reference FROM charvak_na_cvms_timecards WHERE timecard_id = %s',
+                (timecard_id,)
+            )
             row = cur.fetchone()
             if not row:
                 cur.close(); conn.close()
                 return {"error": "Timecard not found"}
 
-            history = row[0] if isinstance(row[0], list) else (json.loads(row[0]) if row[0] else [])
+            current_status, raw_history, existing_payment_ref = row
+
+            # K/6 fix: idempotency guard - already approved means no-op
+            if current_status == TimecardStatus.APPROVED.value:
+                cur.close(); conn.close()
+                return self._get_timecard(timecard_id)
+
+            history = raw_history if isinstance(raw_history, list) else (json.loads(raw_history) if raw_history else [])
             history.append({
                 "action": "Approved",
                 "timestamp": datetime.now().isoformat(),
             })
-            payment_ref = f"PAY-{secrets.token_hex(4).upper()}"
+
+            # K/6 fix: preserve existing payment_reference if present
+            payment_ref = existing_payment_ref or f"PAY-{secrets.token_hex(4).upper()}"
 
             cur.execute('''
                 UPDATE charvak_na_cvms_timecards
