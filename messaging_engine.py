@@ -355,7 +355,11 @@ class MessagingEngine:
             ''', (MessageStatus.SENT, MessageStatus.DELIVERED))
             unread_messages = int(cur.fetchone()[0] or 0)
 
-            cur.execute('SELECT COUNT(*) FROM charvak_messages WHERE status = %s', (MessageStatus.READ,))
+            # read_messages: explicitly read OR replied (replying implies reading)
+            cur.execute('''
+                SELECT COUNT(*) FROM charvak_messages
+                WHERE status IN (%s, %s)
+            ''', (MessageStatus.READ, MessageStatus.REPLIED))
             read_messages = int(cur.fetchone()[0] or 0)
 
             # active conversations = conversations with >1 message
