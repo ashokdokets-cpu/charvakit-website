@@ -24,7 +24,7 @@
 
 | # | Item | Session | Risk |
 |---|---|---|---|
-| 3 | Auth check missing on /api/exam/progress, /api/exam/history, /api/exam/study-plan | K/1 | High |
+| 3 | ~~Auth check missing on /api/exam/progress, /api/exam/history, /api/exam/study-plan~~ **FIXED 2026-09-19** | K/1 | ~~High~~ DONE |
 | 4 | /api/payment/status publicly returns razorpay_key_id + paypal_client_id | K/2 | Medium |
 | 5 | dynamic_role_engine.recommend_custom_role — no auth | K/3 | Medium |
 
