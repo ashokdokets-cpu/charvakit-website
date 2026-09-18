@@ -123,4 +123,100 @@ next_steps) so the calling code needs no changes.
 All 4 items are **intentional design decisions**. None are bugs. Documenting
 here so the inventory can be cleaned up and future devs understand the why.
 
+---## #30 — role_manager vs dynamic_role_engine (parallel custom-role stores)
+
+**Files:** `role_manager.py`, `dynamic_role_engine.py`
+**Filed as:** Two parallel custom-role stores, no consolidation.
+
+**Why it is by design:**
+These serve two distinct interfaces to the same underlying data:
+
+- `role_manager.py` — **admin tooling**: `add_new_role`, `add_role_with_ai`,
+  `get_role_details`. Lets administrators define new roles.
+- `dynamic_role_engine.py` — **user-facing**: `analyze_skills_and_recommend`,
+  `create_dynamic_training_plan`. Lets users discover roles matching their skills.
+
+Both read from `charvak_dynamic_custom_roles`. The split is intentional — different
+audiences, different validation, different UI routes.
+
+**Escalation trigger:**
+If the two engines start drifting (e.g., `role_manager` adds a role that
+`dynamic_role_engine` can't see), THAT is a bug. Revisit if any inconsistency
+appears between the two read paths.
+
+**Verdict:** DEFERRED (by design - intentional separation of concerns)
+
+---
+
+## #35 — advanced_assessment_engine._generate_versant_questions (count mismatch)
+
+**File:** `advanced_assessment_engine.py` line ~276
+**Filed as:** Declared counts (e.g., 16) exceed static prompt lists (4).
+
+**Why it is by design:**
+The method caps iterating at `min(section["questions"], len(section_prompts))`.
+If the section declares 16 questions but the static prompt list has 4, the loop
+runs 4 times — safely. No error, no overflow.
+
+The result is fewer questions than declared. This is a **content gap, not a
+code bug** — the fix requires either:
+
+- (a) A content writer adding more prompt items per section (to reach declared counts)
+- (b) Lowering the declared count in the section config to match available prompts
+
+**Escalation trigger:**
+If product requires full question counts (e.g., 16 per section), assign content
+writer to expand prompts. No code change needed.
+
+**Verdict:** DEFERRED (content gap, not code bug)
+
+---
+
+## #37a — enterprise_engine.record_survey_response (counter-only)
+
+**File:** `enterprise_engine.py` line ~622
+**Filed as:** Increments counter but doesn't store respondent data.
+
+**Why it is by design:**
+The docstring says "matches original" — this behavior is intentional preservation
+from an earlier in-memory version. The counter (`responses = responses + 1`)
+is the requirement. Storing per-response data would need a new table and API.
+
+**Escalation trigger:**
+If product wants per-response data (analytics, filtering, export), add:
+- New table: `charvak_enterprise_survey_responses`
+- New column: `respondent_data JSONB`
+- Modify `record_survey_response` to INSERT in addition to increment
+
+**Verdict:** DEFERRED (by design - counter is the requirement)
+
+---
+
+## #37b — enterprise_engine.kiosk_check_in (dead parameter)
+
+**File:** `enterprise_engine.py` line 678
+**Filed as:** Accepts `student_id` but doesn't store it.
+
+**Why this IS a real bug:**
+Unlike 37a, `kiosk_check_in` receives `student_id` from the caller (`main.py:4032`
+passes `data.get("student_id")`) but the engine never uses it. The response
+message claims "Student {student_id} checked in!" but no record of the student
+exists in the database — only the session's `check_ins` counter increments.
+
+This means there is no audit trail of WHO checked in, only HOW MANY.
+
+**Fix (scheduled with K/29 migration batch):**
+- New table: `charvak_enterprise_kiosk_events`
+  - `event_id TEXT PRIMARY KEY`
+  - `kiosk_id TEXT NOT NULL`
+  - `student_id TEXT NOT NULL`
+  - `checked_in_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP`
+- Patch `kiosk_check_in` to INSERT an event row before incrementing the counter
+- Keep the counter (for fast reads)
+- Add index on `(kiosk_id, checked_in_at)` for reporting
+
+**Escalation status:** SCHEDULED (not deferred indefinitely)
+
+**Verdict:** DEFERRED to Session K-2 migration batch (real bug, needs table)
+
 ---
