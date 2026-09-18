@@ -2,9 +2,9 @@
 
 **Purpose:** One-file resume pointer. Paste this file into a fresh chat to instantly orient.
 
-**Last updated:** 2026-09-19 (end of Session K security + data integrity)
-**HEAD at time of writing:** `3805feb docs: add Session K summary`
-**Version:** `v3.1-security-K123-plus-K4-K8-20260919`
+**Last updated:** 2026-09-19 (Session K fully complete - 30 items)
+**HEAD at time of writing:** `4b22acc docs: mark #37b kiosk as fixed`
+**Version:** `v3.2-session-K-complete-20260919`
 
 ---
 
