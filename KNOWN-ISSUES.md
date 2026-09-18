@@ -56,6 +56,8 @@
 | 31 | `indian_language_ai.py` | `self.translations` | Dead field — declared but never written, `get_stats.total_translations` always 0 | Session K or later |
 | 32 | `indian_language_ai.py` |
 | 33 | `role_manager.py` + `dynamic_role_engine.py` | Custom roles | Two parallel custom-role stores (`charvak_role_manager_custom_roles` + `charvak_dynamic_custom_roles`). `role_manager.get_all_roles()` merges both via `dynamic_role_engine.get_all_roles()` + own table. Consolidation is a future refactor | Session K or I |
+| 34 | `monitor_service.py` | `SiteMonitor.check_site` | `requests.Session(timeout=10)` is invalid - Session takes no `timeout` kwarg. Every check fails with TypeError, but the error is captured in `issues` (matches original behavior) | Session K or I |
+| 35 | `monitor_service.py` | module-level state | Original used module-level `monitored_sites = {}` and `alert_history = []`. Now DB-backed; dummy `monitor = SiteMonitor("", "")` kept for backwards-compat | Done (this session) |
  `submit_assessment` | Score not persisted back to assessment record (matches original) | Product decision |
  `self.content_cache` | Dead field — declared but never written to, no table created | Session K or later |
 | 29 | `voice_to_web_engine.py` | (not audited yet) | Persistence deferred to Session B-2 | Session B-2 |
