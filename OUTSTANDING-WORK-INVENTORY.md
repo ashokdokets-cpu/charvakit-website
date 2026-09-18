@@ -34,7 +34,7 @@
 
 | # | File | Issue | Session |
 |---|---|---|---|
-| 6 | revenue_engine.create_subscription | Re-subscribe inflates revenue | K/4 |
+| 6 | ~~revenue_engine.create_subscription re-subscribe inflates revenue~~ **FIXED 2026-09-19** | K/4 | DONE |
 | 7 | resume_engine.SubVendorManager.track_submission | Duplicate bumps counter | K/5 |
 | 8 | charvak_vms.approve_timecard | Repeated approvals grow history | K/6 |
 | 9 | outreach_engine.subscribe_premium / connect_gmail | No UNIQUE | K/7 |
