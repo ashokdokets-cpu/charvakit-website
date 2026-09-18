@@ -358,14 +358,18 @@ class SubVendorManager:
                     (submission_key, vendor_id, candidate_id, job_id, status)
                 VALUES (%s, %s, %s, %s, 'submitted')
                 ON CONFLICT (submission_key) DO NOTHING
+                RETURNING submission_key
             ''', (submission_key, vendor_id, candidate_id, job_id))
+            inserted_row = cur.fetchone()
+            is_new_submission = inserted_row is not None
 
-            # Preserve original behavior: bump counter regardless
-            cur.execute('''
-                UPDATE charvak_na_sub_vendors
-                SET active_candidates = active_candidates + 1
-                WHERE vendor_id = %s
-            ''', (vendor_id,))
+            # K/5 fix: only bump counter on genuinely new submissions
+            if is_new_submission:
+                cur.execute('''
+                    UPDATE charvak_na_sub_vendors
+                    SET active_candidates = active_candidates + 1
+                    WHERE vendor_id = %s
+                ''', (vendor_id,))
 
             conn.commit()
             cur.close(); conn.close()
