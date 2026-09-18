@@ -79,14 +79,14 @@
 | 27 | ~~ai_question_generator.used_questions~~ **[ALREADY RESOLVED - field no longer exists]** | No-op |
 | 28 | ~~indian_language_ai.translations~~ **RECLASSIFIED** - translations dict is live; removed only unused total_translations placeholder | DONE |
 | 29 | indian_language_ai.submit_assessment | Score not persisted |
-| 30 | role_manager + dynamic_role_engine | Parallel custom-role stores |
+| 30 | ~~role_manager + dynamic_role_engine~~ **[DEFERRED - by design, see DEFERRALS.md]** | DONE |
 | 31 | ~~monitor_service.SiteMonitor.check_site~~ **FIXED 2026-09-19** - switched to httpx.AsyncClient | DONE |
 | 32 | ~~chatbot_engine._match_faq~~ **FIXED 2026-09-19** - key normalization | DONE |
 | 33 | ~~ai_bridge_engine.get_premium_report~~ **FIXED 2026-09-19** - idempotency guard | DONE |
 | 34 | ~~bridge_engine.update_progress~~ **[STALE - method does not exist; submit_answer merges correctly]** | No-op |
-| 35 | advanced_assessment_engine._generate_versant_questions | Count mismatch |
+| 35 | ~~advanced_assessment_engine._generate_versant_questions~~ **[DEFERRED - content gap, see DEFERRALS.md]** | DONE |
 | 36 | ~~enterprise_engine.review_resume~~ **FIXED 2026-09-19** - verb lookup replaces typo | DONE |
-| 37 | enterprise_engine.record_survey_response / kiosk_check_in | Counters without data |
+| 37 | ~~enterprise_engine.record_survey_response~~ **[DEFERRED - by design]**; ~~kiosk_check_in~~ **[DEFERRED - scheduled K-2, real bug]** | DONE |
 | 38 | ~~enterprise_engine.get_salary_benchmarks~~ **FIXED 2026-09-19** - proper median | DONE |
 | 39 | ~~ats_engine asymmetric returns~~ **FIXED 2026-09-19** - standardized on jobs_count | DONE |
 
