@@ -111,6 +111,7 @@
 | 22 | `Out-File -Encoding utf8` writes BOM | Documented in DEV-SETUP.md; scripts strip it manually |
 | 23 | PowerShell `python -c` + quotes | Documented in DEV-SETUP.md; always use temp `.py` files |
 | 24 | PowerShell `curl.exe` + JSON body | Documented in DEV-SETUP.md; always use `--data-binary @file.json` |
+| 24b | Markdown files | Never use emoji or em-dash in `.md` sources. Use ASCII markers `[OK]`, `[WAIT]`, `[RED]`, etc. Emoji cause non-ASCII byte creep that breaks normalizer checks. | Session K or I |
 
 ---
 
