@@ -253,7 +253,6 @@ class IndianLanguageAI:
             "stats": {
                 "total_languages": len(INDIAN_LANGUAGES),
                 "total_assessments": total_assessments,
-                "total_translations": 0,
                 "languages_available": list(INDIAN_LANGUAGES.keys()),
             },
         }
