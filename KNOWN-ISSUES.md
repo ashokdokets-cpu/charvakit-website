@@ -15,6 +15,7 @@
 | 2026-09-18 | G/2 | `na_module/vms_connector.py` | `job_id = f"NA-JOB-{hash(str(raw_data))}"` — `hash()` randomized per process, IDs changed on every restart | `secrets.token_hex(4).upper()` |
 | 2026-09-18 | G/4 | `na_module/resume_engine.py` | `vendor_id = f"VEN-{hash(...)}"` — same bug | `secrets.token_hex(4).upper()` |
 | 2026-09-18 | E/4 | `final_year_project_engine.py` | AI methods called `json.loads(response.choices[0].message.content)` without `response_format`; GPT-4o-mini returned prose + markdown fences → `Expecting value: line 1 column 1` | `response_format={"type": "json_object"}` + defensive fence strip |
+| 2026-09-18 | J/6 | `ai_question_generator.py` | `generate_with_openai` had no `response_format` (same AI JSON bug class) | Added `response_format={"type": "json_object"}` + defensive fence strip + regex fallback |
 | 2026-09-18 | J/3 | `indian_language_ai.py` | Mojibake emoji in `translate_job_ad` ad string (rocket, pin, arrow) | Converted to `\U` escapes; real Hindi/Tamil/Telugu content preserved as raw UTF-8 |
 | 2026-09-18 | J/2 | `content_generator.py` | `_deduplicate` crashed on `sentence_builds` items (dict with list `words` value — unhashable) | Stringify non-string keys via `str()` |
 | 2026-09-18 | J/2 | `content_generator.py` | `_generate_with_ai` had no `response_format` + no timeout (same AI JSON bug class) | Added `response_format={"type": "json_object"}` + timeout + defensive fence strip |
@@ -57,7 +58,9 @@
 | 32 | `indian_language_ai.py` |
 | 33 | `role_manager.py` + `dynamic_role_engine.py` | Custom roles | Two parallel custom-role stores (`charvak_role_manager_custom_roles` + `charvak_dynamic_custom_roles`). `role_manager.get_all_roles()` merges both via `dynamic_role_engine.get_all_roles()` + own table. Consolidation is a future refactor | Session K or I |
 | 34 | `monitor_service.py` | `SiteMonitor.check_site` | `requests.Session(timeout=10)` is invalid - Session takes no `timeout` kwarg. Every check fails with TypeError, but the error is captured in `issues` (matches original behavior) | Session K or I |
-| 35 | `monitor_service.py` | module-level state | Original used module-level `monitored_sites = {}` and `alert_history = []`. Now DB-backed; dummy `monitor = SiteMonitor("", "")` kept for backwards-compat | Done (this session) |
+| 35 | `monitor_service.py` |
+| 36 | `ai_question_generator.py` | `self.used_questions` | Dead field - declared but never written or read | Session K or later |
+ module-level state | Original used module-level `monitored_sites = {}` and `alert_history = []`. Now DB-backed; dummy `monitor = SiteMonitor("", "")` kept for backwards-compat | Done (this session) |
  `submit_assessment` | Score not persisted back to assessment record (matches original) | Product decision |
  `self.content_cache` | Dead field — declared but never written to, no table created | Session K or later |
 | 29 | `voice_to_web_engine.py` | (not audited yet) | Persistence deferred to Session B-2 | Session B-2 |
