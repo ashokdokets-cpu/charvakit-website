@@ -100,5 +100,5 @@
 
 1. **Every session appends to it** — if you preserve a bug, note it here.
 2. **Fixed items move to "Fixed"** with date + fix reference.
-3. **Session I sweeps it** and resolves open items or formally defers them.
+3. **Session K** is the dedicated bug-cleanup session. **Session I** does the final capstone + tag.
 4. **Keep it in git** so it survives across machines and sessions.
