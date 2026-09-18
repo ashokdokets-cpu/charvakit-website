@@ -73,11 +73,11 @@
 
 | # | File | Issue |
 |---|---|---|
-| 24 | badge_engine.certifications | Dead field |
-| 25 | profile_network.referral_matches | Dead field |
-| 26 | content_generator.content_cache | Dead field |
-| 27 | ai_question_generator.used_questions | Dead field |
-| 28 | indian_language_ai.translations | Dead field |
+| 24 | ~~badge_engine.certifications~~ **[ALREADY RESOLVED - field no longer exists]** | No-op |
+| 25 | ~~profile_network.referral_matches~~ **FIXED 2026-09-19** - placeholder stat removed | DONE |
+| 26 | ~~content_generator.content_cache~~ **[ALREADY RESOLVED - field no longer exists]** | No-op |
+| 27 | ~~ai_question_generator.used_questions~~ **[ALREADY RESOLVED - field no longer exists]** | No-op |
+| 28 | ~~indian_language_ai.translations~~ **RECLASSIFIED** - translations dict is live; removed only unused total_translations placeholder | DONE |
 | 29 | indian_language_ai.submit_assessment | Score not persisted |
 | 30 | role_manager + dynamic_role_engine | Parallel custom-role stores |
 | 31 | monitor_service.SiteMonitor.check_site | Invalid Session(timeout=10) |
