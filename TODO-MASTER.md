@@ -1,7 +1,7 @@
 # Charvak - Master TODO List
 
 **Created:** 2026-09-17
-**Last updated:** 2026-09-18 (after Session H)
+**Last updated:** 2026-09-18 (after Session B partial)
 **Purpose:** Single source of truth for all flagged / deferred / pending work
 **See also:** KNOWN-ISSUES.md (bug registry), TIER3-PERSISTENCE-PROJECT.md (persistence plan), DEV-SETUP.md (local dev workflow), MASTER-REFERENCE.md (system reference)
 
@@ -23,9 +23,9 @@ See `TIER3-PERSISTENCE-PROJECT.md` for the full plan.
 - [x] candidate_engine (Session A - PR #6)
 - [x] training_engine (Session A - PR #7)
 - [x] lms_engine (Session A - PR #8)
-- [ ] enterprise_engine (Session B)
-- [ ] ats_engine (Session B)
-- [ ] voice_to_web_engine (Session B)
+- [x] enterprise_engine (Session B - PR #22)
+- [x] ats_engine (Session B - PR #22)
+- [ ] voice_to_web_engine (deferred to Session B-2)
 - [x] career_v2_engine (Session C - PR #10)
 - [x] exam_prep_engine (Session C - PR #11 engine, #12 routes)
 - [x] events_engine (Session C - PR #9)
@@ -172,6 +172,14 @@ Dedicated pass to resolve open KNOWN-ISSUES.md items that no other session owns.
 - [x] Fixed: mojibake in badge_engine share_text (trophy emoji)
 - [x] Preserved JSONB dict.update() semantics via Postgres `||` operator
 - [x] Normalized messaging conversation_key (sorted pair)
+
+## Completed - 2026-09-18 (Session B partial)
+
+- [x] Session B partial - ats_engine + enterprise_engine (2 engines, 10 tables) - PR #22
+- [x] enterprise_engine: all 8 modules persisted (salary, pathways, resume approvals, appointments, tiers, resume books, surveys, kiosk)
+- [x] ats_engine: integrations + sync log persisted
+- [x] voice_to_web_engine deferred to Session B-2 (scope management)
+- [x] Mojibake fixes in both engines
 
 ## Completed - 2026-09-18 (Session H)
 
