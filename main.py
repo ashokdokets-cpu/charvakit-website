@@ -531,6 +531,17 @@ def require_admin(request: Request) -> Dict:
     return user
 
 
+def require_self_or_admin(caller: Dict, email: str) -> None:
+    """Raise 403 unless the caller is the target user or an admin."""
+    if not caller:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    caller_email = (caller.get("email") or "").lower()
+    target_email = (email or "").lower()
+    is_admin = caller.get("role") == "admin" or caller_email in ADMIN_EMAILS
+    if caller_email != target_email and not is_admin:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+
 def handle_error(e: Exception, operation: str, default_return: Any = None) -> Dict:
     """Centralized error handling with logging."""
     logger.error(f"Error during {operation}: {str(e)}", exc_info=True)
@@ -4844,18 +4855,24 @@ async def exam_by_category(category_id: str):
     return exam_prep_engine.get_exams_by_category(category_id)
 
 @app.get("/api/exam/progress")
-async def exam_progress(email: str, exam_id: str = None):
+async def exam_progress(request: Request, email: str, exam_id: str = None):
     """Get per-topic progress for a user (optionally scoped to one exam)."""
+    caller = require_auth(request)
+    require_self_or_admin(caller, email)
     return exam_prep_engine.get_user_progress(email=email, exam_id=exam_id)
 
 @app.get("/api/exam/history")
-async def exam_history(email: str, exam_id: str = None):
+async def exam_history(request: Request, email: str, exam_id: str = None):
     """Get mock test history for a user (optionally scoped to one exam)."""
+    caller = require_auth(request)
+    require_self_or_admin(caller, email)
     return exam_prep_engine.get_test_history(email=email, exam_id=exam_id)
 
 @app.get("/api/exam/study-plan")
-async def get_study_plan_route(email: str, exam_id: str = None):
+async def get_study_plan_route(request: Request, email: str, exam_id: str = None):
     """Get study plans for a user (optionally scoped to one exam)."""
+    caller = require_auth(request)
+    require_self_or_admin(caller, email)
     return exam_prep_engine.get_study_plan(email=email, exam_id=exam_id)
 
 @app.get("/api/exam/{exam_id}")
@@ -4924,7 +4941,9 @@ async def mock_test_complete(request: Request):
 @app.post("/api/exam/study-plan")
 async def create_study_plan_route(request: Request):
     """Create a new study plan."""
+    caller = require_auth(request)
     data = await request.json()
+    require_self_or_admin(caller, data.get("email", ""))
     return exam_prep_engine.create_study_plan(data)
 
 @app.get("/api/global-exam/categories")
