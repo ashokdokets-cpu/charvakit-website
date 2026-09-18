@@ -3,6 +3,7 @@
 ### Last updated: September 18, 2026 (after Session J)
 
 **Live:** https://www.charvakit.com
+**Resume here:** see `SESSION-CONTEXT.md` (one-file state snapshot for fresh chat windows)
 **Version:** v3.0-persistence-A-B-C-D-E-F-G-H-J-20260918
 
 ---
