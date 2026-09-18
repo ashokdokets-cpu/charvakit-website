@@ -1,7 +1,7 @@
 # Charvak - Master TODO List
 
 **Created:** 2026-09-17
-**Last updated:** 2026-09-18 (after audit reconciliation)
+**Last updated:** 2026-09-18 (after Session H)
 **Purpose:** Single source of truth for all flagged / deferred / pending work
 **See also:** KNOWN-ISSUES.md (bug registry), TIER3-PERSISTENCE-PROJECT.md (persistence plan), DEV-SETUP.md (local dev workflow), MASTER-REFERENCE.md (system reference)
 
@@ -57,14 +57,14 @@ See `TIER3-PERSISTENCE-PROJECT.md` for the full plan.
 
 ### Tier D - Ephemeral (tolerable loss)
 
-- [ ] chatbot_engine (Session H)
-- [ ] bridge_engine (Session H)
-- [ ] ai_bridge_engine (Session H)
+- [x] chatbot_engine (Session H - PR #21)
+- [x] bridge_engine (Session H - PR #21)
+- [x] ai_bridge_engine (Session H - PR #21)
 - [ ] advanced_assessment_engine (Session H - was Session 5C)
-- [ ] enhanced_assessment_engine (Session H)
-- [ ] company_content_engine (Session H)
-- [ ] assessment_report_engine (Session H)
-- [ ] training_mapping_engine (Session H)
+- [x] enhanced_assessment_engine (Session H - PR #21)
+- [x] company_content_engine (Session H - PR #21)
+- [x] assessment_report_engine (Session H - PR #21)
+- [x] training_mapping_engine (Session H - PR #21)
 
 ### Tier F - Backlog (Session J) - engines missed by original audit
 
@@ -172,6 +172,14 @@ Dedicated pass to resolve open KNOWN-ISSUES.md items that no other session owns.
 - [x] Fixed: mojibake in badge_engine share_text (trophy emoji)
 - [x] Preserved JSONB dict.update() semantics via Postgres `||` operator
 - [x] Normalized messaging conversation_key (sorted pair)
+
+## Completed - 2026-09-18 (Session H)
+
+- [x] Session H - Tier D ephemeral engines (8 engines, 11 tables) - PR #21
+- [x] Fixed: AI JSON parsing bug in 3 engines (enhanced_assessment, ai_bridge x2, advanced_assessment)
+- [x] Fixed: mojibake in chatbot, bridge, company_content, training_mapping
+- [x] Removed dead fields in enhanced_assessment, advanced_assessment
+- [x] Session H complete - all Tier D engines done
 
 ## Completed - 2026-09-18 (Tier E verification)
 

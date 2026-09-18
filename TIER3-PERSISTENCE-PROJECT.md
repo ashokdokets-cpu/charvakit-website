@@ -1,10 +1,10 @@
 ﻿# Charvak Persistence Project — Master Plan
 
 **Created:** 2026-09-17
-**Updated:** 2026-09-18 (after Tier E verification)
+**Updated:** 2026-09-18 (after Session H)
 **Purpose:** Persist all in-memory engines to Postgres
 **Total estimate:** ~32 hours across 8+ sessions
-**Progress:** 33/62 engines DB-backed; 9 verified skip; ~15–17 remaining (Sessions B, H, J)
+**Progress:** 41/62 engines DB-backed; 9 verified skip; ~11 remaining (Sessions B, J)
 **Note:** the original audit ("41 in-memory engines") counted only URL-reachable engines. A 2026-09-18 re-audit found ~62 engine-like files total, of which some were already DB-backed and others are stateless. See "Audit reconciliation" below.
 
 ## Tier A — Revenue + user-critical (fix first)
@@ -80,7 +80,7 @@ Branch: persist-batch-a
 | E | final_year_project, student_suite, ai_internship, team | ✅ done (PRs #13–16) |
 | F | outreach, marketing_ai, exam_analytics, dynamic_role | ✅ done (PR #18) |
 | G | na_module: vector_matcher, vms_connector, revenue_engine, resume_engine, work_auth, charvak_vms | ✅ done (PR #17) |
-| H | 8 ephemeral engines | ⏳ |
+| H | chatbot, bridge, ai_bridge, advanced_assessment, enhanced_assessment, company_content, assessment_report, training_mapping | ✅ done (PR #21) |
 
 ## Lessons learned
 
