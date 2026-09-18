@@ -1,4 +1,4 @@
-﻿"""
+"""
 Charvak Enhanced AI-Driven Assessment System
 Supports: Any Company, Any Topic, Dynamic AI Content
 """
@@ -14,7 +14,6 @@ logger = logging.getLogger("charvakit.enhanced_assessment")
 class EnhancedAssessmentEngine:
     def __init__(self):
         self.openai_api_key = os.getenv("OPENAI_API_KEY", "")
-        self.question_cache = {}
         self.company_templates = self._initialize_company_templates()
         logger.info("Enhanced Assessment Engine ready")
     
@@ -74,15 +73,42 @@ class EnhancedAssessmentEngine:
         if self.openai_api_key:
             try:
                 import requests
-                prompt = f"Generate {count} UNIQUE {difficulty} MCQs on {topic}. Return JSON array with question, options, correct_index, explanation."
+                import re
+                prompt = (f"Generate {count} UNIQUE {difficulty} MCQs on {topic}. "
+                          "Return a JSON object with a 'questions' key containing an array of "
+                          "{question, options, correct_index, explanation}.")
                 response = requests.post(
                     "https://api.openai.com/v1/chat/completions",
                     headers={"Authorization": f"Bearer {self.openai_api_key}"},
-                    json={"model": "gpt-4o-mini", "messages": [{"role": "user", "content": prompt}], "temperature": 0.9}
+                    json={
+                        "model": "gpt-4o-mini",
+                        "messages": [{"role": "user", "content": prompt}],
+                        "temperature": 0.9,
+                        "response_format": {"type": "json_object"},
+                    },
+                    timeout=20,
                 )
                 data = response.json()
-                content = data["choices"][0]["message"]["content"]
-                import re
+                content = (data.get("choices", [{}])[0].get("message", {}).get("content") or "").strip()
+
+                # Defensive: strip markdown fences if present
+                if content.startswith("```"):
+                    content = content.split("```", 2)[1]
+                    if content.startswith("json"):
+                        content = content[4:]
+                    content = content.strip()
+
+                # Try direct JSON first (response_format=json_object returns pure JSON)
+                try:
+                    parsed = json.loads(content)
+                    if isinstance(parsed, dict) and "questions" in parsed:
+                        return parsed["questions"]
+                    if isinstance(parsed, list):
+                        return parsed
+                except Exception:
+                    pass
+
+                # Fallback: regex-extract array from prose/fence-wrapped output
                 match = re.search(r'\[.*\]', content, re.DOTALL)
                 if match:
                     return json.loads(match.group())
