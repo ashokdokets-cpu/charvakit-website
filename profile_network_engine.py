@@ -394,7 +394,6 @@ Best regards,
                 "master_profiles": master_profiles,
                 "alumni_connections": alumni_connections,
                 "network_tracked": network_tracked,
-                "referral_matches": 0,
             },
         }
 
