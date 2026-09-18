@@ -80,12 +80,12 @@
 | 28 | ~~indian_language_ai.translations~~ **RECLASSIFIED** - translations dict is live; removed only unused total_translations placeholder | DONE |
 | 29 | indian_language_ai.submit_assessment | Score not persisted |
 | 30 | role_manager + dynamic_role_engine | Parallel custom-role stores |
-| 31 | monitor_service.SiteMonitor.check_site | Invalid Session(timeout=10) |
+| 31 | ~~monitor_service.SiteMonitor.check_site~~ **FIXED 2026-09-19** - switched to httpx.AsyncClient | DONE |
 | 32 | chatbot_engine._match_faq | Keyword keys don't match FAQ |
 | 33 | ai_bridge_engine.get_premium_report | Not idempotent |
 | 34 | bridge_engine.update_progress | Replaces instead of merges |
 | 35 | advanced_assessment_engine._generate_versant_questions | Count mismatch |
-| 36 | enterprise_engine.review_resume | Typo "rejectd" |
+| 36 | ~~enterprise_engine.review_resume~~ **FIXED 2026-09-19** - verb lookup replaces typo | DONE |
 | 37 | enterprise_engine.record_survey_response / kiosk_check_in | Counters without data |
 | 38 | enterprise_engine.get_salary_benchmarks | Wrong median |
 | 39 | ats_engine.sync_jobs_from_charvak vs receive_webhook | Asymmetric returns |
