@@ -1,7 +1,7 @@
 # Charvak - Master TODO List
 
 **Created:** 2026-09-17
-**Last updated:** 2026-09-18 (after Session B partial)
+**Last updated:** 2026-09-18 (after Session J)
 **Purpose:** Single source of truth for all flagged / deferred / pending work
 **See also:** KNOWN-ISSUES.md (bug registry), TIER3-PERSISTENCE-PROJECT.md (persistence plan), DEV-SETUP.md (local dev workflow), MASTER-REFERENCE.md (system reference)
 
@@ -68,12 +68,12 @@ See `TIER3-PERSISTENCE-PROJECT.md` for the full plan.
 
 ### Tier F - Backlog (Session J) - engines missed by original audit
 
-- [ ] doketsrb_integration.py
-- [ ] indian_language_ai.py
-- [ ] role_manager.py
-- [ ] ai_question_generator.py
-- [ ] content_generator.py
-- [ ] monitor_service.py
+- [x] doketsrb_integration.py (Session J - PR #23)
+- [x] indian_language_ai.py (Session J - PR #23)
+- [x] role_manager.py (Session J - PR #23)
+- [x] ai_question_generator.py (Session J - PR #23)
+- [x] content_generator.py (Session J - PR #23)
+- [x] monitor_service.py (Session J - PR #23)
 
 ### Tier E - Internal (skip - verify each)
 
@@ -172,6 +172,14 @@ Dedicated pass to resolve open KNOWN-ISSUES.md items that no other session owns.
 - [x] Fixed: mojibake in badge_engine share_text (trophy emoji)
 - [x] Preserved JSONB dict.update() semantics via Postgres `||` operator
 - [x] Normalized messaging conversation_key (sorted pair)
+
+## Completed - 2026-09-18 (Session J)
+
+- [x] Session J - Backlog engines (6 engines, 8 tables) - PR #23
+- [x] Fixed: content_generator._deduplicate crash on list-valued keys
+- [x] Fixed: AI JSON mode in content_generator + ai_question_generator
+- [x] Fixed: mojibake emoji in indian_language_ai (real UTF-8 preserved)
+- [x] Closes audit gap - 6 engines from "62 vs 41" reconciliation
 
 ## Completed - 2026-09-18 (Session B partial)
 

@@ -1,9 +1,9 @@
 # CHARVAKIT.COM - MASTER REFERENCE
 ## Charvak IT Consulting Pvt Ltd
-### Last updated: September 18, 2026 (after Session B partial)
+### Last updated: September 18, 2026 (after Session J)
 
 **Live:** https://www.charvakit.com
-**Version:** v2.9-persistence-A-B-C-D-E-F-G-H-20260918
+**Version:** v3.0-persistence-A-B-C-D-E-F-G-H-J-20260918
 
 ---
 
