@@ -132,6 +132,18 @@ class EnterpriseEngine:
             cur.execute('''CREATE INDEX IF NOT EXISTS idx_ent_kiosks_event  ON charvak_enterprise_kiosk_sessions(event_id)''')
             cur.execute('''CREATE INDEX IF NOT EXISTS idx_ent_kiosks_status ON charvak_enterprise_kiosk_sessions(status)''')
 
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS charvak_enterprise_kiosk_events (
+                    event_id        TEXT PRIMARY KEY,
+                    kiosk_id        TEXT NOT NULL,
+                    student_id      TEXT NOT NULL,
+                    checked_in_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            cur.execute('''CREATE INDEX IF NOT EXISTS idx_kiosk_events_kiosk   ON charvak_enterprise_kiosk_events(kiosk_id)''')
+            cur.execute('''CREATE INDEX IF NOT EXISTS idx_kiosk_events_student ON charvak_enterprise_kiosk_events(student_id)''')
+            cur.execute('''CREATE INDEX IF NOT EXISTS idx_kiosk_events_time    ON charvak_enterprise_kiosk_events(checked_in_at)''')
+
             conn.commit()
             cur.close(); conn.close()
         except Exception as e:
@@ -676,26 +688,42 @@ class EnterpriseEngine:
         }
 
     def kiosk_check_in(self, kiosk_id: str, student_id: str) -> Dict:
-        """Check in student via kiosk (increments counter only - matches original)."""
+        """Check in student via kiosk (increments counter AND logs event)."""
+        event_id = f"KEVT-{secrets.token_hex(4).upper()}"
         try:
             from database import db
             conn = db.get_connection()
             cur = conn.cursor()
-            cur.execute('''
+
+            cur.execute('SELECT 1 FROM charvak_enterprise_kiosk_sessions WHERE kiosk_id = %s', (kiosk_id,))
+            if cur.fetchone() is None:
+                cur.close(); conn.close()
+                return {"status": "error", "message": "Kiosk not found"}
+
+            # #37b fix: log the check-in event (who + when)
+            cur.execute("""
+                INSERT INTO charvak_enterprise_kiosk_events
+                    (event_id, kiosk_id, student_id)
+                VALUES (%s, %s, %s)
+            """, (event_id, kiosk_id, student_id))
+
+            cur.execute("""
                 UPDATE charvak_enterprise_kiosk_sessions
                 SET check_ins = check_ins + 1
                 WHERE kiosk_id = %s
-            ''', (kiosk_id,))
-            affected = cur.rowcount
+            """, (kiosk_id,))
+
             conn.commit()
             cur.close(); conn.close()
         except Exception as e:
             logger.error(f"kiosk_check_in failed: {e}")
-            return {"status": "error", "message": "Kiosk not found"}
+            return {"status": "error", "message": "Could not check in"}
 
-        if affected == 0:
-            return {"status": "error", "message": "Kiosk not found"}
-        return {"status": "success", "message": f"Student {student_id} checked in!"}
+        return {
+            "status": "success",
+            "event_id": event_id,
+            "message": f"Student {student_id} checked in!",
+        }
 
     # ============================================================
     # HELPERS

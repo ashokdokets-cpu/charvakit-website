@@ -58,6 +58,20 @@ class IndianLanguageAI:
             cur.execute('''CREATE INDEX IF NOT EXISTS idx_lang_ai_language ON charvak_lang_ai_assessments(language)''')
             cur.execute('''CREATE INDEX IF NOT EXISTS idx_lang_ai_skill    ON charvak_lang_ai_assessments(skill)''')
             cur.execute('''CREATE INDEX IF NOT EXISTS idx_lang_ai_created  ON charvak_lang_ai_assessments(created_at)''')
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS charvak_lang_ai_submissions (
+                    submission_id   TEXT PRIMARY KEY,
+                    assessment_id   TEXT NOT NULL,
+                    email           TEXT,
+                    answers         JSONB DEFAULT '[]'::jsonb,
+                    score           INTEGER DEFAULT 0,
+                    passed          BOOLEAN DEFAULT FALSE,
+                    submitted_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            cur.execute('''CREATE INDEX IF NOT EXISTS idx_lang_ai_subs_assessment ON charvak_lang_ai_submissions(assessment_id)''')
+            cur.execute('''CREATE INDEX IF NOT EXISTS idx_lang_ai_subs_email      ON charvak_lang_ai_submissions(email)''')
+            cur.execute('''CREATE INDEX IF NOT EXISTS idx_lang_ai_subs_submitted  ON charvak_lang_ai_submissions(submitted_at)''')
             conn.commit()
             cur.close(); conn.close()
         except Exception as e:
@@ -183,12 +197,35 @@ class IndianLanguageAI:
 
         # Score based on answer quality (matches original formula)
         score = min(len(answers) * 30 + 10, 100) if answers else 0
+        passed = score >= 70
+        submission_id = f"LSUB-{secrets.token_hex(4).upper()}"
+
+        # K/29 fix: persist the submission (was previously returned but not stored)
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                INSERT INTO charvak_lang_ai_submissions
+                    (submission_id, assessment_id, email, answers, score, passed)
+                VALUES (%s, %s, %s, %s::jsonb, %s, %s)
+            """, (
+                submission_id, assessment_id,
+                data.get("email"),
+                json.dumps(answers),
+                score, passed,
+            ))
+            conn.commit()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"submit_assessment persist failed: {e}")
 
         return {
             "status": "success",
+            "submission_id": submission_id,
             "assessment_id": assessment_id,
             "score": score,
-            "passed": score >= 70,
+            "passed": passed,
             "message": "Assessment submitted!",
         }
 
