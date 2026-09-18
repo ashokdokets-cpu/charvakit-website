@@ -86,7 +86,7 @@
 | 34 | ~~bridge_engine.update_progress~~ **[STALE - method does not exist; submit_answer merges correctly]** | No-op |
 | 35 | ~~advanced_assessment_engine._generate_versant_questions~~ **[DEFERRED - content gap, see DEFERRALS.md]** | DONE |
 | 36 | ~~enterprise_engine.review_resume~~ **FIXED 2026-09-19** - verb lookup replaces typo | DONE |
-| 37 | ~~enterprise_engine.record_survey_response~~ **[DEFERRED - by design]**; ~~kiosk_check_in~~ **[DEFERRED - scheduled K-2, real bug]** | DONE |
+| 37 | ~~enterprise_engine.record_survey_response~~ **[DEFERRED - by design]**; ~~kiosk_check_in~~ **FIXED 2026-09-19** - logs to kiosk_events | DONE |
 | 38 | ~~enterprise_engine.get_salary_benchmarks~~ **FIXED 2026-09-19** - proper median | DONE |
 | 39 | ~~ats_engine asymmetric returns~~ **FIXED 2026-09-19** - standardized on jobs_count | DONE |
 
