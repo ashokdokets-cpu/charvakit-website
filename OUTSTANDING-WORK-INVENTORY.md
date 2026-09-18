@@ -1,6 +1,8 @@
 # Charvak — Complete Outstanding Work Inventory
 
-**State at time of writing:** HEAD 1901256, 49/62 engines persisted (79%), working tree clean
+**State at time of writing:** HEAD b346012, reconciliation scan complete
+**Engine count:** 59 total (54 root + 6 na_module - 1 dup in scripts/one-off)
+**DB-backed:** ~46 confirmed via scan (49 claimed in docs, delta likely na_module + top-level modules)
 **Pulled from:** KNOWN-ISSUES.md, TODO-MASTER.md, TIER3-PERSISTENCE-PROJECT.md, master docs
 **Filed:** 2026-09-19
 **Total line items:** ~77
@@ -170,6 +172,28 @@
 
 ---
 
+## 🆕 SCAN FINDINGS (added 2026-09-19 post-reconciliation)
+
+| # | New Item | Priority | Notes |
+|---|---|---|---|
+| 78 | notification_engine.py -- in-memory, 6 main.py refs | Medium | Persistence candidate missed in original audit |
+| 79 | products_engine.py -- in-memory, 12 main.py refs, 18 KB | High | Heaviest-used in-memory engine |
+| 80 | tools_engine.py -- in-memory, scope unclear | Low | Audit needed |
+| 81 | job_service.py -- in-memory, 1 main.py ref | Low | Likely thin wrapper |
+| 82 | scripts/one-off/resume_engine.py -- dead duplicate | Trivial | Delete |
+| 83 | enhanced_assessment_engine.py -- 0 DB signals | Low | Verify legacy vs active |
+| 84 | chatbot_engine.py -- AI JSON mode missing | Medium | Confirm real bug or false positive |
+
+### Resolved by scan (updates audit bucket #71-75)
+
+- #71 -- DONE: reconciliation scan ran 2026-09-19
+- #73 -- DONE: voice_to_web_engine.py unchanged since Aug 27 2026
+- #74 -- DONE: found 4 new in-memory + 9 unclear
+- #75 -- DONE: admin_role_manager IS used (main.py:6088-6093)
+- #72 -- PARTIAL: unclear files now identified, formalize in Session I
+
+---
+
 ## Summary counts
 
 | Bucket | Count |
@@ -185,8 +209,8 @@
 | 🔵 Optional / future | 9 |
 | 🟣 Process | 5 |
 | 🟠 Audit/verify | 5 |
-| 🟡 Persistence engines remaining | 2 |
-| **TOTAL** | **~77** |
+| 🟡 Persistence engines remaining | 2 (+4 new from scan) |
+| **TOTAL** | **~84** (after scan additions) |
 
 ---
 
