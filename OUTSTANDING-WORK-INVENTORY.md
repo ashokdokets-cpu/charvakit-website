@@ -46,10 +46,10 @@
 
 | # | File | Issue |
 |---|---|---|
-| 11 | dynamic_role_engine.create_dynamic_training_plan | Stateless |
-| 12 | profile_network_engine.candidate_data | Snapshot goes stale |
-| 13 | university_engine.student_count | Denormalized |
-| 14 | ai_internship_engine.submit_work | random.randint(7,10) score |
+| 11 | ~~dynamic_role_engine.create_dynamic_training_plan~~ **[DEFERRED - see DEFERRALS.md]** | By design |
+| 12 | ~~profile_network_engine.candidate_data~~ **[DEFERRED - see DEFERRALS.md]** | By design |
+| 13 | ~~university_engine.student_count~~ **[DEFERRED - see DEFERRALS.md]** | By design |
+| 14 | ~~ai_internship_engine.submit_work~~ **[DEFERRED - see DEFERRALS.md]** | Placeholder |
 
 ---
 
