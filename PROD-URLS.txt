@@ -1,0 +1,2 @@
+﻿PROD_BASE_URL=https://www.charvakit.com
+RENDER_BASE_URL=https://charvakit-website.onrender.com
