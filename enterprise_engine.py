@@ -226,13 +226,21 @@ class EnterpriseEngine:
         salaries = [d["base_salary"] for d in data if d["base_salary"] > 0]
         bonuses = [d["signing_bonus"] for d in data if d["signing_bonus"] > 0]
 
+        def _median(vals):
+            if not vals:
+                return 0
+            s = sorted(vals)
+            n = len(s)
+            return s[n // 2] if n % 2 else (s[n // 2 - 1] + s[n // 2]) / 2
+
         return {
             "status": "success",
             "count": len(data),
             "benchmarks": {
                 "average_base_salary": round(sum(salaries) / len(salaries), 2) if salaries else 0,
-                "median_base_salary": round(sorted(salaries)[len(salaries) // 2], 2) if salaries else 0,
+                "median_base_salary": round(_median(salaries), 2),
                 "average_signing_bonus": round(sum(bonuses) / len(bonuses), 2) if bonuses else 0,
+                "median_signing_bonus": round(_median(bonuses), 2),
                 "top_industries": self._get_top_industries(data),
                 "top_locations": self._get_top_locations(data),
             },

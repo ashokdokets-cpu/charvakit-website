@@ -245,7 +245,7 @@ class ATSEngine:
             "sync_id": sync_id,
             "direction": "inbound",
             "provider": integration["provider"],
-            "jobs_received": jobs_received,
+            "jobs_count": jobs_received,
             "received_at": datetime.now().isoformat(),
         }
 
@@ -318,7 +318,7 @@ class ATSEngine:
             # get_stats uses different keys for inbound vs outbound - preserved via JSONB details
             cur.execute("SELECT details FROM charvak_ats_sync_log WHERE direction = 'inbound'")
             inbound_jobs = sum(
-                (r[0] if isinstance(r[0], dict) else json.loads(r[0] or "{}")).get("jobs_received", 0)
+                (r[0] if isinstance(r[0], dict) else json.loads(r[0] or "{}")).get("jobs_count", 0)
                 for r in cur.fetchall()
             )
 

@@ -190,8 +190,9 @@ class ChatbotEngine:
 
         for key, keywords in keywords_map.items():
             if any(kw in message_lower for kw in keywords):
+                normalized_key = key.replace(" ", "")
                 for faq in self.faqs:
-                    if key in faq["q"].lower().replace(" ", ""):
+                    if normalized_key in faq["q"].lower().replace(" ", ""):
                         return faq["a"]
 
         return None
