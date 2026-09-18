@@ -59,3 +59,68 @@ two options:
 **Verdict:** DEFERRED (by design)
 
 ---
+## #13 — university_engine.student_count (denormalized)
+
+**File:** `university_engine.py` (CREATE TABLE line 34; increment line 165)
+**Filed as:** student_count only increments; no decrement path exists.
+
+**Why it is by design:**
+There is no "remove student" flow in the product. Until that flow exists,
+the counter is always accurate. Denormalization is deliberate — the counter
+is read frequently (dashboards, listings) and a live COUNT(*) on a large
+students table would be slower.
+
+**Behavior:**
+- On university creation: `student_count = 0`
+- On student add: `SET student_count = student_count + 1`
+- No decrement on any code path
+
+**Escalation trigger:**
+When a `remove_student` (or equivalent) method is added, it MUST include a
+paired decrement:
+UPDATE charvak_universities SET student_count = student_count - 1 WHERE ...
+Alternatively, migrate to SELECT COUNT(*) FROM students WHERE university_id = %s
+at read time. Pick one approach and use it consistently.
+
+**Verdict:** DEFERRED (by design, contingent on no remove flow)
+
+---
+
+## #14 — ai_internship_engine.submit_work (random score)
+
+**File:** `ai_internship_engine.py` line 287
+**Filed as:** Submission score uses random.randint(7, 10) instead of real AI evaluation.
+
+**Why it is by design:**
+This is a placeholder awaiting real AI integration. The surrounding code
+is fully DB-backed (enrollment lookup, INSERT with ON CONFLICT, etc.),
+so the only stub is the score generation.
+
+**Behavior:**
+Every submission gets a random score in [7, 10]. Strengths/improvements
+are static strings. No call to any AI provider.
+
+**Escalation trigger:**
+When AI evaluation budget is allocated, replace with an OpenAI call:
+resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": "Evaluate this submission"}], response_format={"type": "json_object"})
+feedback = json.loads(resp.choices[0].message.content)
+The JSON output should have the same keys (score, strengths, improvements,
+next_steps) so the calling code needs no changes.
+
+**Verdict:** DEFERRED (placeholder for future AI integration)
+
+---
+
+## Summary
+
+| # | Item | Verdict | Escalation Trigger |
+|---|---|---|---|
+| 11 | dynamic_role_engine stateless plan | DEFERRED | Product adds "enroll in plan" feature |
+| 12 | profile_network candidate_data snapshot | DEFERRED | Product requires live title updates |
+| 13 | university student_count denormalized | DEFERRED | remove_student method added |
+| 14 | ai_internship random score | DEFERRED | AI evaluation budget allocated |
+
+All 4 items are **intentional design decisions**. None are bugs. Documenting
+here so the inventory can be cleaned up and future devs understand the why.
+
+---
