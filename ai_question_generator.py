@@ -1,29 +1,27 @@
 """
 Charvak AI-Powered Question Generator
 Smart Variation System - Cost-optimized with high engagement
+(DB-backed - Session J/6)
 """
-import os
 import json
 import logging
+import os
 import random
-import hashlib
 import re
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 
 logger = logging.getLogger("charvakit.ai_questions")
 
-# Admin emails ? no daily limits, full AI access
+# Admin emails -> no daily limits, full AI access
 ADMIN_EMAILS = {"charvakit@gmail.com", "hr@charvakit.com"}
+
 
 class AIQuestionGenerator:
     def __init__(self):
         self.openai_api_key = os.getenv("OPENAI_API_KEY", "")
-        self.used_questions = {}
         self.topic_fallback = self._initialize_fallback_topics()
-        self.question_cache = {}
-        self.cache_ttl = timedelta(days=30)  # Keep questions for 30 days
-        self.daily_ai_usage = {}
+        self.cache_ttl = timedelta(days=30)
         self.max_daily_ai = 100
         self.variation_prefixes = [
             "Identify: ",
@@ -33,12 +31,41 @@ class AIQuestionGenerator:
             "Determine: ",
             "Analyze and answer: ",
             "Pick the right option: ",
-            "Find the correct answer: "
+            "Find the correct answer: ",
         ]
-        logger.info(f"Smart Variation System ready - OpenAI: {'ENABLED' if self.openai_api_key else 'DISABLED'}")
-    
+        self._ensure_tables()
+        logger.info("Smart Variation System ready (DB-backed) | OpenAI: %s",
+                    "ENABLED" if self.openai_api_key else "DISABLED")
+
+    def _ensure_tables(self):
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS charvak_aiqg_question_cache (
+                    cache_key    TEXT PRIMARY KEY,
+                    questions    JSONB NOT NULL DEFAULT '[]'::jsonb,
+                    timestamp    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            cur.execute('''CREATE INDEX IF NOT EXISTS idx_aiqg_cache_ts ON charvak_aiqg_question_cache(timestamp)''')
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS charvak_aiqg_daily_usage (
+                    email        TEXT NOT NULL,
+                    usage_date   DATE NOT NULL,
+                    count        INTEGER DEFAULT 0,
+                    PRIMARY KEY (email, usage_date)
+                )
+            ''')
+            cur.execute('''CREATE INDEX IF NOT EXISTS idx_aiqg_usage_date ON charvak_aiqg_daily_usage(usage_date)''')
+            conn.commit()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"ai_question_generator tables init failed: {e}")
+
     def _initialize_fallback_topics(self):
-        """Fallback topics - FREE."""
+        """Fallback topics - FREE (static catalog - unchanged)."""
         return {
             "reasoning": {"questions": ["If A > B and B > C, which is true?", "Find next: 2, 6, 12, 20, ?", "Odd one: Square, Circle, Triangle", "If CAT = 24, DOG = ?", "Complete: 3, 9, 27, 81, ?"], "options": [["A > C", "A < C", "A = C"], ["42", "40", "44"], ["Square", "Circle", "All"], ["26", "28", "30"], ["243", "162", "324"]], "correct": [0, 0, 2, 0, 0]},
             "quant": {"questions": ["15% of 200?", "Square root of 144?", "2^8?", "20% of 500?", "LCM of 4 and 6?"], "options": [["30", "25", "35"], ["12", "11", "13"], ["256", "128", "512"], ["100", "50", "150"], ["12", "24", "6"]], "correct": [0, 0, 0, 0, 0]},
@@ -94,84 +121,134 @@ class AIQuestionGenerator:
             "chemistry": {"questions": ["Carbon atomic #?", "Water formula?", "pH of water?", "Abundant gas?", "Gold symbol?"], "options": [["6", "12", "8"], ["H2O", "CO2", "O2"], ["7", "0", "14"], ["Nitrogen", "Oxygen", "CO2"], ["Au", "Ag", "Fe"]], "correct": [0, 0, 0, 0, 0]},
             "math": {"questions": ["15% of 200?", "Square root of 144?", "2^8?", "7 x 8?", "100/4?"], "options": [["30", "25", "35"], ["12", "11", "13"], ["256", "128", "512"], ["56", "54", "58"], ["25", "20", "30"]], "correct": [0, 0, 0, 0, 0]},
             "aptitude": {"questions": ["Train speed?", "25% of 80?", "Workers time?", "Ratio?", "Average?"], "options": [["60 km/h", "50", "55"], ["20", "25", "30"], ["5 days", "10", "15"], ["30", "20", "25"], ["4", "3", "5"]], "correct": [0, 0, 0, 0, 0]},
-            "technical": {"questions": ["API?", "Database?", "Algorithm?", "OOP?", "HTML?"], "options": [["Interface", "Hardware", "Bug"], ["Data storage", "Editor", "Browser"], ["Step-by-step", "Random", "Data type"], ["Object", "Old", "Only"], ["Markup", "Programming", "Database"]], "correct": [0, 0, 0, 0, 0]}
+            "technical": {"questions": ["API?", "Database?", "Algorithm?", "OOP?", "HTML?"], "options": [["Interface", "Hardware", "Bug"], ["Data storage", "Editor", "Browser"], ["Step-by-step", "Random", "Data type"], ["Object", "Old", "Only"], ["Markup", "Programming", "Database"]], "correct": [0, 0, 0, 0, 0]},
         }
-    
+
+    # ============================================================
+    # GENERATION
+    # ============================================================
+
     def generate_questions(self, exam_id, topic, count=10, user_email=None):
         """Smart generation with variation."""
         topic_lower = topic.lower().strip()
         cache_key = f"{exam_id}_{topic_lower}"
-        
-        # Check cache with variation
-        if cache_key in self.question_cache:
-            cache_data = self.question_cache[cache_key]
-            cached = cache_data["questions"]
-            if len(cached) >= count * 3:
-                sampled = random.sample(cached, min(count * 3, len(cached)))
-                return self._apply_variation(sampled)[:count]
-        
+
+        # Check cache with variation (single SELECT)
+        cached_questions = None
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute('SELECT questions FROM charvak_aiqg_question_cache WHERE cache_key = %s', (cache_key,))
+            row = cur.fetchone()
+            cur.close(); conn.close()
+            if row:
+                cached_questions = row[0] if isinstance(row[0], list) else json.loads(row[0] or "[]")
+        except Exception as e:
+            logger.error(f"cache read failed: {e}")
+
+        if cached_questions and len(cached_questions) >= count * 3:
+            sampled = random.sample(cached_questions, min(count * 3, len(cached_questions)))
+            return self._apply_variation(sampled)[:count]
+
         # Check daily AI limit
         is_admin = (user_email or "").lower() in ADMIN_EMAILS
         can_use_ai = True
         today = datetime.now().strftime("%Y-%m-%d")
         if user_email and not is_admin:
-            if user_email not in self.daily_ai_usage:
-                self.daily_ai_usage[user_email] = {}
-            if today not in self.daily_ai_usage[user_email]:
-                self.daily_ai_usage[user_email][today] = 0
-            can_use_ai = self.daily_ai_usage[user_email][today] + count <= self.max_daily_ai
-        
+            try:
+                from database import db
+                conn = db.get_connection()
+                cur = conn.cursor()
+                cur.execute('''
+                    SELECT count FROM charvak_aiqg_daily_usage
+                    WHERE email = %s AND usage_date = %s
+                ''', (user_email, today))
+                row = cur.fetchone()
+                cur.close(); conn.close()
+                current = int(row[0]) if row else 0
+                can_use_ai = current + count <= self.max_daily_ai
+            except Exception as e:
+                logger.error(f"daily_usage read failed: {e}")
+
         # Use OpenAI for small batches
         if self.openai_api_key and (count <= 20 or is_admin) and (can_use_ai or is_admin):
             try:
                 questions = self.generate_with_openai(exam_id, topic, count * 3)
                 if questions:
+                    # Increment daily usage
                     if user_email and not is_admin:
-                        self.daily_ai_usage[user_email][today] += count
-                    if cache_key not in self.question_cache:
-                        self.question_cache[cache_key] = {"questions": [], "timestamp": datetime.now()}
-                    self.question_cache[cache_key]["questions"].extend(questions)
+                        try:
+                            from database import db
+                            conn = db.get_connection()
+                            cur = conn.cursor()
+                            cur.execute('''
+                                INSERT INTO charvak_aiqg_daily_usage (email, usage_date, count)
+                                VALUES (%s, %s, %s)
+                                ON CONFLICT (email, usage_date) DO UPDATE SET
+                                    count = charvak_aiqg_daily_usage.count + EXCLUDED.count
+                            ''', (user_email, today, count))
+                            conn.commit()
+                            cur.close(); conn.close()
+                        except Exception as e:
+                            logger.error(f"daily_usage write failed: {e}")
+
+                    # Extend cache (append via JSONB ||)
+                    try:
+                        from database import db
+                        conn = db.get_connection()
+                        cur = conn.cursor()
+                        cur.execute('''
+                            INSERT INTO charvak_aiqg_question_cache (cache_key, questions)
+                            VALUES (%s, %s::jsonb)
+                            ON CONFLICT (cache_key) DO UPDATE SET
+                                questions = charvak_aiqg_question_cache.questions || EXCLUDED.questions
+                        ''', (cache_key, json.dumps(questions)))
+                        conn.commit()
+                        cur.close(); conn.close()
+                    except Exception as e:
+                        logger.error(f"cache write failed: {e}")
+
                     sampled = random.sample(questions, min(count, len(questions)))
                     return self._apply_variation(sampled)
             except Exception as e:
                 logger.error(f"OpenAI failed: {e}")
-        
+
         # Fallback with variation
         return self._generate_fallback_with_variation(exam_id, topic, count)
-    
+
     def _generate_fallback_with_variation(self, exam_id, topic, count=10):
-        """Generate fallback with variation."""
+        """Generate fallback with variation (pure Python - static catalog + random)."""
         topic_lower = topic.lower().strip()
         topic_data = self.topic_fallback.get(topic_lower, self.topic_fallback.get("reasoning", {}))
-        
+
         questions = []
         base_q = topic_data.get("questions", [])
         base_o = topic_data.get("options", [])
         base_c = topic_data.get("correct", [])
-        
+
         indices = list(range(len(base_q))) if base_q else [0]
         random.shuffle(indices)
-        
+
         for i in range(min(count, 20)):
             idx = indices[i % len(indices)]
             questions.append({
                 "id": i + 1,
-                "question": base_q[idx] if base_q else topic + " - Question " + str(i+1),
+                "question": base_q[idx] if base_q else topic + " - Question " + str(i + 1),
                 "options": base_o[idx] if base_o else ["Option A", "Option B", "Option C", "Option D"],
                 "correct": base_c[idx] if base_c else 0,
-                "explanation": "Explanation for question " + str(i+1),
+                "explanation": "Explanation for question " + str(i + 1),
                 "difficulty": "Medium",
                 "topic": topic,
-                "ai_generated": False
+                "ai_generated": False,
             })
-        
+
         return self._apply_variation(questions)
-    
+
     def _apply_variation(self, questions):
-        """Apply variations - shuffle options, add prefix."""
+        """Apply variations - shuffle options, add prefix (pure Python)."""
         varied = []
         for i, q in enumerate(questions):
-            # Shuffle options
             options = list(q["options"])
             correct_idx = q["correct"]
             if correct_idx < len(options):
@@ -180,13 +257,12 @@ class AIQuestionGenerator:
                 new_correct = options.index(correct_option)
             else:
                 new_correct = 0
-            
-            # Add random prefix
+
             prefix = random.choice(self.variation_prefixes)
             question_text = q["question"]
             if random.random() > 0.5:
                 question_text = prefix + question_text
-            
+
             varied.append({
                 "id": i + 1,
                 "question": question_text,
@@ -196,53 +272,89 @@ class AIQuestionGenerator:
                 "difficulty": q.get("difficulty", "Medium"),
                 "topic": q.get("topic", ""),
                 "ai_generated": q.get("ai_generated", False),
-                "variation_id": random.randint(1, 99999)
+                "variation_id": random.randint(1, 99999),
             })
-        
-        # Shuffle question order
+
         random.shuffle(varied)
-        
-        # Reassign IDs
         for i, q in enumerate(varied):
             q["id"] = i + 1
-        
+
         return varied
-    
+
+    # ============================================================
+    # OPENAI (JSON mode)
+    # ============================================================
+
     def generate_with_openai(self, exam_id, topic, count=10):
-        """Generate questions using OpenAI."""
+        """Generate questions using OpenAI (JSON mode)."""
         try:
             import requests
-            prompt = f"Generate {count} unique multiple-choice questions for '{topic}' topic in '{exam_id}' exam. Return as JSON array with fields: question, options (array of 4), correct (index 0-3), explanation."
-            
+            prompt = (
+                f"Generate {count} unique multiple-choice questions for '{topic}' topic in '{exam_id}' exam. "
+                'Return a JSON object: {"questions":[{"question":"...","options":["A","B","C","D"],'
+                '"correct":0,"explanation":"..."}]} where correct is the 0-based index.'
+            )
+
             response = requests.post(
                 "https://api.openai.com/v1/chat/completions",
                 headers={"Authorization": f"Bearer {self.openai_api_key}", "Content-Type": "application/json"},
-                json={"model": "gpt-4o-mini", "messages": [{"role": "user", "content": prompt}], "temperature": 0.8, "max_tokens": 2000},
-                timeout=30
+                json={
+                    "model": "gpt-4o-mini",
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": 0.8,
+                    "max_tokens": 2000,
+                    "response_format": {"type": "json_object"},
+                },
+                timeout=30,
             )
-            
+
             data = response.json()
-            content = data["choices"][0]["message"]["content"]
-            
-            json_match = re.search(r'\[.*\]', content, re.DOTALL)
-            if json_match:
-                questions = json.loads(json_match.group())
-                formatted = []
-                for i, q in enumerate(questions):
-                    formatted.append({
-                        "id": i + 1,
-                        "question": q.get("question", ""),
-                        "options": q.get("options", ["A", "B", "C", "D"]),
-                        "correct": q.get("correct", 0),
-                        "explanation": q.get("explanation", ""),
-                        "difficulty": "Medium",
-                        "topic": topic,
-                        "ai_generated": True
-                    })
-                return formatted
-            return []
+            content = (data.get("choices", [{}])[0].get("message", {}).get("content") or "").strip()
+
+            # Defensive: strip markdown fences
+            if content.startswith("```"):
+                content = content.split("```", 2)[1]
+                if content.startswith("json"):
+                    content = content[4:]
+                content = content.strip()
+
+            # Try direct JSON (response_format=json_object returns pure JSON)
+            parsed = None
+            try:
+                parsed = json.loads(content)
+            except Exception:
+                pass
+
+            questions = None
+            if isinstance(parsed, dict) and "questions" in parsed:
+                questions = parsed["questions"]
+            elif isinstance(parsed, list):
+                questions = parsed
+            else:
+                # Fallback: regex-extract array
+                json_match = re.search(r'\[.*\]', content, re.DOTALL)
+                if json_match:
+                    questions = json.loads(json_match.group())
+
+            if not questions:
+                return []
+
+            formatted = []
+            for i, q in enumerate(questions):
+                formatted.append({
+                    "id": i + 1,
+                    "question": q.get("question", ""),
+                    "options": q.get("options", ["A", "B", "C", "D"]),
+                    "correct": q.get("correct", 0),
+                    "explanation": q.get("explanation", ""),
+                    "difficulty": "Medium",
+                    "topic": topic,
+                    "ai_generated": True,
+                })
+            return formatted
         except Exception as e:
             logger.error(f"OpenAI error: {e}")
             return []
+
 
 ai_question_generator = AIQuestionGenerator()
