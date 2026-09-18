@@ -15,6 +15,8 @@
 | 2026-09-18 | G/2 | `na_module/vms_connector.py` | `job_id = f"NA-JOB-{hash(str(raw_data))}"` — `hash()` randomized per process, IDs changed on every restart | `secrets.token_hex(4).upper()` |
 | 2026-09-18 | G/4 | `na_module/resume_engine.py` | `vendor_id = f"VEN-{hash(...)}"` — same bug | `secrets.token_hex(4).upper()` |
 | 2026-09-18 | E/4 | `final_year_project_engine.py` | AI methods called `json.loads(response.choices[0].message.content)` without `response_format`; GPT-4o-mini returned prose + markdown fences → `Expecting value: line 1 column 1` | `response_format={"type": "json_object"}` + defensive fence strip |
+| 2026-09-18 | J/2 | `content_generator.py` | `_deduplicate` crashed on `sentence_builds` items (dict with list `words` value — unhashable) | Stringify non-string keys via `str()` |
+| 2026-09-18 | J/2 | `content_generator.py` | `_generate_with_ai` had no `response_format` + no timeout (same AI JSON bug class) | Added `response_format={"type": "json_object"}` + timeout + defensive fence strip |
 | 2026-09-18 | H/8 | `advanced_assessment_engine.py` | `_generate_mcq_with_openai` AI JSON parsing without `response_format` + no timeout + fragile regex-only extraction | Added `response_format={"type": "json_object"}` + timeout + defensive fence strip + regex fallback |
 | 2026-09-18 | H/8 | `advanced_assessment_engine.py` | Dead `user_scores` field (declared, never written) | Removed; no table created |
 | 2026-09-18 | H/6 | `ai_bridge_engine.py` | Two AI JSON parsing calls without `response_format` (question generation + report evaluation) | Added `_ai_json()` helper with `response_format={"type": "json_object"}` + defensive fence strip |
@@ -49,6 +51,7 @@
 | 26 | `ai_bridge_engine.py` | `get_premium_report` |
 | 27 | `enterprise_engine.py` | `review_resume` | Typo in response: `f"Resume {decision}d"` → "Resume rejectd" for reject | Cosmetic / Session K |
 | 28 | `enterprise_engine.py` | `record_survey_response` / `kiosk_check_in` | Increment counters but don't store respondent/student data (matches original) | Product decision |
+| 30 | `content_generator.py` | `self.content_cache` | Dead field — declared but never written to, no table created | Session K or later |
 | 29 | `voice_to_web_engine.py` | (not audited yet) | Persistence deferred to Session B-2 | Session B-2 |
  Not idempotent - calling twice for same session creates 2 premium rows + doubles revenue | Product decision / bug fix |
 | 25 | `chatbot_engine.py` | `_match_faq` | Keyword keys don't match FAQ question text - some FAQs unreachable (e.g. "pricing" keyword vs "cost" in question text). Falls back to AI. | Product decision / bug fix |
