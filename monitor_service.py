@@ -12,7 +12,7 @@ import time
 from datetime import datetime
 from typing import Dict, List
 
-import requests
+import httpx
 
 logger = logging.getLogger("charvakit.monitor")
 
@@ -71,7 +71,7 @@ class SiteMonitor:
         """Check website health (async - preserves original signature)."""
         issues = []
         try:
-            async with requests.Session(timeout=10) as client:
+            async with httpx.AsyncClient(timeout=10) as client:
                 start = time.time()
                 response = await client.get(self.url)
                 response_time = time.time() - start

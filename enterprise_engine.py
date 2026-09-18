@@ -360,7 +360,8 @@ class EnterpriseEngine:
 
         if affected == 0:
             return {"status": "error", "message": "Review not found"}
-        return {"status": "success", "message": f"Resume {decision}d"}
+        verb = {"approve": "approved", "reject": "rejected"}.get(decision, decision)
+        return {"status": "success", "message": f"Resume {verb}"}
 
     def get_pending_reviews(self) -> Dict:
         """Get all pending resume reviews."""
