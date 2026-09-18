@@ -299,6 +299,24 @@ class AIBridgeEngine:
         if not session:
             return {"status": "error", "message": "Session not found"}
 
+        # K#33 fix: idempotency - return existing report if already purchased
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT premium_id, data, purchased_at FROM charvak_ai_bridge_premium_reports WHERE session_id = %s LIMIT 1",
+                (session_id,)
+            )
+            existing = cur.fetchone()
+            cur.close(); conn.close()
+            if existing:
+                existing_data = existing[1] if isinstance(existing[1], dict) else json.loads(existing[1] or "{}")
+                existing_data["already_purchased"] = True
+                return {"status": "success", "premium_report": existing_data}
+        except Exception as e:
+            logger.error(f"get_premium_report idempotency check failed: {e}")
+
         premium_id = f"PREM-{secrets.token_hex(4).upper()}"
 
         premium_report = {
