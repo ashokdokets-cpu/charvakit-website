@@ -2,9 +2,9 @@
 
 **Purpose:** One-file resume pointer. Paste this file into a fresh chat to instantly orient.
 
-**Last updated:** 2026-09-18 (end of Session J)
-**HEAD at time of writing:** `056d321 docs: sync plan + reference + TODO after Session J`
-**Version:** `v3.0-persistence-A-B-C-D-E-F-G-H-J-20260918`
+**Last updated:** 2026-09-19 (end of Session K security + data integrity)
+**HEAD at time of writing:** `3805feb docs: add Session K summary`
+**Version:** `v3.1-security-K123-plus-K4-K8-20260919`
 
 ---
 
