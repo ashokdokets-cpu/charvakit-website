@@ -113,6 +113,16 @@ class RevenueEngine:
             from database import db
             conn = db.get_connection()
             cur = conn.cursor()
+
+            # Check for existing subscription before UPSERT (K/4 fix)
+            cur.execute(
+                "SELECT tier, monthly_fee FROM charvak_na_revenue_subscriptions WHERE firm_id = %s",
+                (firm_id,),
+            )
+            existing = cur.fetchone()
+            is_new_subscription = existing is None
+            previous_fee = float(existing[1]) if existing and existing[1] is not None else 0.0
+
             cur.execute('''
                 INSERT INTO charvak_na_revenue_subscriptions (
                     firm_id, subscription_id, tier, bench_limit, features,
@@ -136,10 +146,25 @@ class RevenueEngine:
                 subscription["payment_method"], subscription["auto_renew"],
             ))
 
-            self._insert_transaction(
-                cur, RevenueStream.SAAS_SUBSCRIPTION.value, firm_id,
-                subscription["monthly_fee"], subscription,
-            )
+            # Only record revenue when it actually changes (K/4 fix)
+            new_fee = subscription["monthly_fee"]
+            if is_new_subscription:
+                self._insert_transaction(
+                    cur, RevenueStream.SAAS_SUBSCRIPTION.value, firm_id,
+                    new_fee, subscription,
+                )
+            elif new_fee > previous_fee:
+                delta = new_fee - previous_fee
+                upgrade_details = dict(subscription)
+                upgrade_details["event"] = "upgrade"
+                upgrade_details["previous_fee"] = previous_fee
+                upgrade_details["delta"] = delta
+                self._insert_transaction(
+                    cur, RevenueStream.SAAS_SUBSCRIPTION.value, firm_id,
+                    delta, upgrade_details,
+                )
+            # else: same-tier re-subscribe or downgrade - no revenue event
+
             conn.commit()
             cur.close(); conn.close()
         except Exception as e:
