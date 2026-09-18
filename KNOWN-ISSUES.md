@@ -54,7 +54,9 @@
 | 28 | `enterprise_engine.py` | `record_survey_response` / `kiosk_check_in` | Increment counters but don't store respondent/student data (matches original) | Product decision |
 | 30 | `content_generator.py` |
 | 31 | `indian_language_ai.py` | `self.translations` | Dead field — declared but never written, `get_stats.total_translations` always 0 | Session K or later |
-| 32 | `indian_language_ai.py` | `submit_assessment` | Score not persisted back to assessment record (matches original) | Product decision |
+| 32 | `indian_language_ai.py` |
+| 33 | `role_manager.py` + `dynamic_role_engine.py` | Custom roles | Two parallel custom-role stores (`charvak_role_manager_custom_roles` + `charvak_dynamic_custom_roles`). `role_manager.get_all_roles()` merges both via `dynamic_role_engine.get_all_roles()` + own table. Consolidation is a future refactor | Session K or I |
+ `submit_assessment` | Score not persisted back to assessment record (matches original) | Product decision |
  `self.content_cache` | Dead field — declared but never written to, no table created | Session K or later |
 | 29 | `voice_to_web_engine.py` | (not audited yet) | Persistence deferred to Session B-2 | Session B-2 |
  Not idempotent - calling twice for same session creates 2 premium rows + doubles revenue | Product decision / bug fix |
