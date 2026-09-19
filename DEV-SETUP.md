@@ -2,6 +2,34 @@
 
 **Purpose:** How to run local smoke tests without touching prod.
 **Created:** 2026-09-17 (Session C)
+**Updated:** 2026-09-19 (Session H-2) - added Session Start Checklist
+
+---
+
+## Session Start Checklist
+
+Run these at the start of every session:
+
+    cd C:\projects\charvakit-new
+    .\venv\Scripts\Activate.ps1
+
+    # 1. Working tree must be clean
+    git status --short
+
+    # 2. Confirm HEAD matches SESSION-CONTEXT.md
+    git log --oneline -3
+
+    # 3. Ensure Postgres is running
+    Get-Service postgresql-x64-15
+
+    # 4. Prod is reachable
+    try { (Invoke-WebRequest -Uri "https://www.charvakit.com/api/payment/status" -UseBasicParsing -TimeoutSec 5).StatusCode } catch { $_.Exception.Message }
+
+If any check fails:
+- Dirty tree -> git stash or commit before proceeding
+- HEAD mismatch -> update SESSION-CONTEXT.md
+- Postgres stopped -> Start-Service postgresql-x64-15
+- Prod down -> check Render dashboard
 
 ---
 

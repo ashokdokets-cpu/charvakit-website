@@ -1,9 +1,60 @@
 # Charvak IT Consulting - Project Status
 
-**Last updated:** 2026-09-17
-**Version:** v2.2-mock-drives-20260917
+**Last updated:** 2026-09-19 (end of Session K + B-3/B-4)
+**Version:** v3.2-session-K-complete-20260919
 **Live:** https://www.charvakit.com
-**Status:** Tier 1 + Tier 2 complete. Tier 3 in progress (6 of 10 features shipped). Production-live, real users OK.
+**Status:** Tier 1 + Tier 2 complete. Tier 3 in progress (6 of 10 features shipped). Session K closed: 3 security + 5 data integrity + 4 deferrals + 16 dead-field/easy-bug fixes + 2 migration features. B-3 notification persistence done. B-4 products verified stateless.
+
+---
+
+## Session 2026-09-19 - Session K (Security + Data Integrity + Cleanup)
+
+### Shipped to production
+
+**Security (3 items)**
+- K/1: Auth guard on `/api/exam/{progress,history,study-plan}` (was IDOR)
+- K/2: `/api/payment/status` trimmed to booleans only (was leaking key_ids + mode)
+- K/3: `recommend_custom_role` restricted to admin-only
+
+**Data integrity (5 items)**
+- K/4: `revenue_engine.create_subscription` no longer double-counts on tier change
+- K/5: `resume_engine.SubVendorManager.track_submission` counter only bumps on new inserts
+- K/6: `charvak_vms.approve_timecard` idempotency guard
+- K/7: outreach UNIQUE constraint on email (migration applied to prod)
+- K/8: `messaging_engine.get_stats` includes `replied` in read count
+
+**Dead fields + easy bugs (16 items)**
+- Removed 2 misleading placeholder stats
+- Fixed 11 small logic bugs (chatbot FAQ, review typo, monitor async, ATS keys, median math, etc.)
+- Verified 5 dead fields already resolved
+
+**New persistence features (2 items)**
+- K/29: `indian_language_ai.submit_assessment` persists to `charvak_lang_ai_submissions`
+- #37b: `enterprise_engine.kiosk_check_in` logs events to `charvak_enterprise_kiosk_events`
+
+**B-3: notification_engine persistence**
+- New table: `charvak_notifications`
+- `send_email` INSERTs every notification (was in-memory only)
+- `get_notification_history` and `get_stats` read from DB
+
+**B-4: products_engine verified stateless**
+- Removed dead `self.results = []` field
+- All 11 product methods were already compute-and-return
+
+### Migrations applied
+
+- `migrations/20260919_outreach_unique_email.sql` (K/7)
+- `migrations/20260919_lang_and_kiosk.sql` (K/29 + #37b)
+
+Both applied to prod via Render Shell 2026-09-19.
+
+### Documentation
+
+- `SESSION-K-SUMMARY.md` — Session K record
+- `DEFERRALS.md` — 8 documented design decisions
+- `DOC-STYLE.md` — code/doc/commit style guide
+- `SCHEMA.md` — auto-generated schema for all 128 tables
+- `OUTSTANDING-WORK-INVENTORY.md` — master backlog
 
 ---
 
