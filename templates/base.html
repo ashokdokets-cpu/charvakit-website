@@ -21,28 +21,19 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">    
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"></noscript>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css"></noscript>
     <link rel="stylesheet" href="/static/css/style.css">
     <link rel="manifest" href="/static/manifest.json">
     <script src="/static/js/currency-utils.js" defer></script>
 <script>
-// Safe wrapper ? defers until checkLoginState is defined
-(function() {
-    function tryCheck() {
-        if (typeof checkLoginState === 'function') {
-            checkLoginState();
-        } else {
-            // Check again in 50ms (checkLoginState defined later in page)
-            setTimeout(tryCheck, 50);
-        }
-    }
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", tryCheck);
-    } else {
-        tryCheck();
-    }
-})();
+// Fires once when main.js is ready (event dispatched at end of main.js)
+// Replaces a 50ms polling loop that ran until main.js loaded (A-2 perf fix)
+window.addEventListener('charvak:mainready', function() {
+    if (typeof checkLoginState === 'function') checkLoginState();
+}, { once: true });
 </script>
     <script src="https://checkout.razorpay.com/v1/checkout.js" defer></script>
     <script defer>

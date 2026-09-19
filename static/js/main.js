@@ -231,3 +231,8 @@ window.addEventListener('load', function() {
     console.log('Charvakit - Digital Solutions');
     console.log('Website loaded successfully!');
 });
+
+// ========== Session A-2: signal that main.js is fully loaded ==========
+// Base.html listens for this event to safely call checkLoginState
+// (replaces a polling loop)
+window.dispatchEvent(new Event('charvak:mainready'));
