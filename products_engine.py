@@ -16,7 +16,9 @@ class ProductsEngine:
     """Handles all AI product functionality."""
     
     def __init__(self):
-        self.results = []
+        # B-4: self.results removed - all 11 product methods are stateless
+        # (results are computed and returned directly to the HTTP response;
+        # no read path existed for the old in-memory store)
         logger.info("✅ Products Engine ready")
     
     # ============================================================
@@ -50,7 +52,7 @@ class ProductsEngine:
             "created_at": datetime.now().isoformat()
         }
         
-        self.results.append({"type": "lock_in_breaker", **result})
+        # B-4: removed self.results.append - no read path existed
         return {"status": "success", **result}
     
     def _assess_complexity(self, services: List[str]) -> str:
