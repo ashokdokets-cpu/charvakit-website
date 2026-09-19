@@ -134,6 +134,9 @@
 
 ## 🔵 OPTIONAL / FUTURE
 
+- **#88** `job_service.py` persistence — has `self.applications = []` used by `job_board` in main.py (line 42). Small (3.7 KB) but real in-memory store. `total_applications` currently returns `len(self.applications) + 45` (fake inflation). Needs persistence + fix the fake offset. Est ~30 min.
+
+
 - **#86** Product audit trail (deferred feature) — products_engine is stateless; if business wants an audit trail, needs: table `charvak_product_results`, INSERT in 11 methods, read endpoint `/api/products/results`, filter UI. Est ~3 hr.
 - **#87** Notification retention policy — charvak_notifications grows unbounded; add nightly archive/delete job (e.g., >90 days). Est ~1 hr.
 
@@ -169,7 +172,7 @@
 | # | Item |
 |---|---|
 | 73 | Reconciliation scan — precise remaining engine count |
-| 74 | Formalize "verified skip" list (9 items) |
+| 74 | ~~Formalize the "verified skip" list in TIER3-PERSISTENCE-PROJECT.md~~ **FIXED 2026-09-19** - full section added with 5 categories + re-eval triggers | DONE |
 | 75 | Verify voice_to_web_engine.py unchanged since 2026-09-17 |
 | 76 | Check other unclassified engines post-Session-J |
 | 77 | admin_role_manager.py add_role_as_admin actually used? |

@@ -186,3 +186,52 @@ Document as "won't fix / by design" in KNOWN-ISSUES with rationale.
 - Final audit re-run
 - Tag `v3.0-tier3-complete-YYYYMMDD`
 - Final backup
+
+## Verified Skip List (2026-09-19)
+
+Engines audited and confirmed as NOT requiring persistence. Each entry documents
+the reason and a re-evaluation trigger.
+
+### Category A — Stateless (compute-and-return)
+
+| Engine | Why Skip | Re-eval Trigger |
+|---|---|---|
+| `blog_engine.py` | Static content, no state | If user-generated posts added |
+| `invoice_engine.py` | Derived PDFs, on-demand | If invoices need retention |
+| `ai_service.py` | Thin router to other services | — |
+| `admin_role_manager.py` | Config reader, no persistent state | — |
+
+### Category B — External durable state
+
+| Engine | Why Skip | Re-eval Trigger |
+|---|---|---|
+| `email_engine.py` | SendGrid is the durable store | — |
+| `sso_engine.py` | SAML/OAuth IdP is source of truth | — |
+
+### Category C — Static config
+
+| Engine | Why Skip | Re-eval Trigger |
+|---|---|---|
+| `global_exams_engine.py` | Catalog data embedded in code | If catalog becomes user-editable |
+| `enhanced_assessment_engine.py` | Likely legacy; verify before touching | TBD if actually used |
+
+### Category D — Already verified stateless
+
+| Engine | Why Skip | Re-eval Trigger |
+|---|---|---|
+| `products_engine.py` | All 11 methods compute-and-return (B-4) | If audit trail feature added |
+| `tools_ai_backend.py` | Completely stateless | — |
+
+### Category E — External block
+
+| Engine | Why Skip | Re-eval Trigger |
+|---|---|---|
+| `whatsapp_bot.py` | Awaiting Meta number registration | When Meta unblocks |
+
+### Not Skip (added to backlog)
+
+| Engine | Why | Backlog Ref |
+|---|---|---|
+| `job_service.py` | Has `self.applications = []` used by `job_board` (main.py:42) | #88 in OUTSTANDING-WORK-INVENTORY.md |
+
+---
