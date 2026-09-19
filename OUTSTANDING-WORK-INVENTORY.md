@@ -108,7 +108,7 @@
 
 | # | Item |
 |---|---|
-| 45 | ~~Fix heading order on remaining pages~~ **PARTIAL 2026-09-19** - 20/142 templates fixed (all top-traffic pages). Remaining 122 filed as Session A-1.2. | PARTIAL |
+| 45 | ~~Fix heading order on remaining pages~~ **MOSTLY FIXED 2026-09-19** - A-1 (20 templates) + A-1.2 (73 templates) = 93/165 fixed. Remaining 26 templates have JS template literals (client-side rendering) - filed as A-1.3 for manual handling. | PARTIAL |
 | 46 | ~~TBT ~1,900ms mobile~~ **PARTIAL 2026-09-19** - defer added to remaining 3 scripts; full optimization needs template refactor (see Session A-2) | PARTIAL |
 | 47 | ~~Emoji icons in docstrings~~ **[ALREADY RESOLVED - na_module files 100% ASCII; remaining emoji are user-facing/logger/icon-data]** | DONE |
 | 48 | ~~Mojibake in notification_engine.py subject~~ **[ALREADY RESOLVED - emoji are real UTF-8]** | DONE |
@@ -248,3 +248,20 @@
 5. **Post-I features** — pick what matters
 
 **Keep this file in sync after every session.** It is the master backlog.
+
+## Session A-1.3 — JS-Templated Templates (filed 2026-09-19)
+
+**Scope:** 26 templates using JS template literals where headings live inside `<script>` blocks. Cannot be safely bulk-fixed.
+
+**Files:**
+ai-bridge, ai-generate-stack, ai-internship, ai_credits_pricing, application-dashboard, bridge, client-dashboard, company-detail, credit_dashboard, doketsrb, exam-prep, inbox, indian-language-ai, interview-dashboard, interview-results, marketing-ai, my-courses, na-bench-staffing, napkin-challenge, referral-dashboard, skill-check, staff-augmentation-proposal, student-suite, submit-referral, testimonials, web-design-proposal
+
+**Approach:**
+1. Open each file, find heading patterns inside JS strings
+2. Update the heading tag inside the template literal
+3. Update any JS that queries by tag name (rare but check)
+4. Test rendered output in browser
+5. Commit per batch of 5 files
+
+**Estimated:** 2-3 hr.
+
