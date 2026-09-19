@@ -6,7 +6,7 @@
 </div>
 <div class="container py-5"><div class="row"><div class="col-lg-7 mx-auto">
     <div class="card border-0 shadow-lg p-4 mb-4"><div class="card-body text-center">
-        <h4>🏺 Enter Your Legacy Site</h4>
+        <h2 class="as-h4">🏺 Enter Your Legacy Site</h2>
         <input type="url" class="form-control mb-3" id="siteUrl" placeholder="https://youroldsite.com">
         <div class="mb-3"><label class="form-label">Current Platform</label><select class="form-select" id="platform"><option>WordPress</option><option>PHP Custom</option><option>HTML/CSS Static</option><option>Joomla/Drupal</option><option>Not Sure</option></select></div>
         <button class="btn btn-primary btn-lg w-100" onclick="runTimeMachine()">Run Time Machine</button>
@@ -14,8 +14,8 @@
     <div class="card border-0 shadow-lg p-4 d-none" id="resultCard" style="border-left:5px solid #14b8a6;"><div class="card-body text-center">
         <h3>⏰ Transformation Preview</h3>
         <div class="row g-3 mt-3">
-            <div class="col-6"><div class="bg-danger text-white p-3 rounded"><h5>Before</h5><p id="beforeScore">--</p><small>Performance Score</small></div></div>
-            <div class="col-6"><div class="bg-success text-white p-3 rounded"><h5>After (Estimated)</h5><p id="afterScore">--</p><small>Performance Score</small></div></div>
+            <div class="col-6"><div class="bg-danger text-white p-3 rounded"><h4 class="as-h5">Before</h4><p id="beforeScore">--</p><small>Performance Score</small></div></div>
+            <div class="col-6"><div class="bg-success text-white p-3 rounded"><h4 class="as-h5">After (Estimated)</h4><p id="afterScore">--</p><small>Performance Score</small></div></div>
         </div>
         <div class="row g-3 mt-2">
             <div class="col-4"><div class="bg-light p-2 rounded"><small>Security Issues</small><h5 id="secIssues">--</h5></div></div>

@@ -14,7 +14,7 @@
         <div class="col-md-6">
             <div class="card h-100 border-0 shadow-sm">
                 <div class="card-body p-4">
-                    <h5>📝 Generate Report</h5>
+                    <h2 class="as-h5">📝 Generate Report</h2>
                     <form onsubmit="generateReport(event)">
                         <div class="mb-2">
                             <select class="form-select" id="reportType">
@@ -39,7 +39,7 @@
         <div class="col-md-6">
             <div class="card h-100 border-0 shadow-sm">
                 <div class="card-body p-4">
-                    <h5>🔍 Verify Report</h5>
+                    <h2 class="as-h5">🔍 Verify Report</h2>
                     <form onsubmit="verifyReport(event)">
                         <input type="text" class="form-control mb-3" id="verificationId" placeholder="Verification ID (e.g. VERIFY-XXXX)" required>
                         <button class="btn btn-outline-primary w-100" type="submit">Verify</button>
@@ -53,7 +53,7 @@
         <div class="col-md-12">
             <div class="card border-0 shadow-sm">
                 <div class="card-body">
-                    <h5>📂 My Reports</h5>
+                    <h2 class="as-h5">📂 My Reports</h2>
                     <form onsubmit="getMyReports(event)" class="mb-3">
                         <div class="row g-2">
                             <div class="col-md-8"><input type="email" class="form-control" id="myEmail" placeholder="Your Email" required></div>

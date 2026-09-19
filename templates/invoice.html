@@ -5,7 +5,7 @@
     <div class="row"><div class="col-lg-8 mx-auto">
         <div class="card border-0 shadow-lg p-4 no-print">
             <div class="card-body text-center">
-                <h4>📄 Invoice Generated</h4>
+                <h2 class="as-h4">📄 Invoice Generated</h2>
                 <p class="text-muted">Invoice #{{ invoice_number }} has been generated for {{ client_name }}.</p>
                 <button class="btn btn-primary btn-lg" onclick="window.print()">📥 Download Invoice</button>
             </div>
@@ -15,7 +15,7 @@
             <div class="card-body">
                 <div class="row mb-4">
                     <div class="col-6">
-                        <h4>Charvak IT Consulting Pvt Ltd</h4>
+                        <h2 class="as-h4">Charvak IT Consulting Pvt Ltd</h2>
                         <p class="mb-1">#301, Sri Padmavati Towers, 3rd Lane</p>
                         <p class="mb-1">Seetaram Nagar, Guntur 522001</p>
                         <p class="mb-1">Andhra Pradesh, India</p>
@@ -32,7 +32,7 @@
                 
                 <div class="row mb-4">
                     <div class="col-6">
-                        <h5>Bill To:</h5>
+                        <h3 class="as-h5">Bill To:</h3>
                         <p class="mb-1"><strong>{{ client_name }}</strong></p>
                         <p class="mb-1">{{ client_address }}</p>
                         <p>{{ client_email }}</p>
@@ -61,7 +61,7 @@
                 
                 <div class="row mt-4">
                     <div class="col-12">
-                        <h6>Payment Instructions:</h6>
+                        <h4 class="as-h6">Payment Instructions:</h4>
                         <p class="mb-1">Bank Transfer to:</p>
                         <p class="mb-1"><strong>Account Name:</strong> Charvak IT Consulting Pvt Ltd</p>
                         <p class="mb-1"><strong>Bank:</strong> [Bank Name]</p>
