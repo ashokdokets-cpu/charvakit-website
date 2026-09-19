@@ -109,7 +109,7 @@
 | # | Item |
 |---|---|
 | 45 | ~~Fix heading order on remaining pages~~ **COMPLETE 2026-09-19** - A-1 (20) + A-1.2 (73) + A-1.3 (24) = 117/165 templates fixed. Remaining ~48 excluded (admin/blog/tools/includes + shared layout + inline labels). | DONE |
-| 46 | ~~TBT ~1,900ms mobile~~ **PARTIAL 2026-09-19** - defer added to remaining 3 scripts; full optimization needs template refactor (see Session A-2) | PARTIAL |
+| 46 | ~~TBT ~1,900ms mobile~~ **PARTIAL 2026-09-20** - actual TBT was 110ms (inventory stale). Polling loop fixed + 18 image dimensions added. Desktop CLS 0->0.009. Mobile CLS 0.135 remains (needs investigation). Overall perf 68->69 mobile, 92->93 desktop. | PARTIAL |
 | 47 | ~~Emoji icons in docstrings~~ **[ALREADY RESOLVED - na_module files 100% ASCII; remaining emoji are user-facing/logger/icon-data]** | DONE |
 | 48 | ~~Mojibake in notification_engine.py subject~~ **[ALREADY RESOLVED - emoji are real UTF-8]** | DONE |
 | 49 | ~~Mojibake in products_engine.py log~~ **[ALREADY RESOLVED - emoji are real UTF-8]** | DONE |
