@@ -110,7 +110,7 @@
 |---|---|
 | 45 | Fix heading order on remaining pages |
 | 46 | TBT ~1,900ms mobile |
-| 47 | Emoji icons in docstrings |
+| 47 | ~~Emoji icons in docstrings~~ **[ALREADY RESOLVED - na_module files 100% ASCII; remaining emoji are user-facing/logger/icon-data]** | DONE |
 | 48 | ~~Mojibake in notification_engine.py subject~~ **[ALREADY RESOLVED - emoji are real UTF-8]** | DONE |
 | 49 | ~~Mojibake in products_engine.py log~~ **[ALREADY RESOLVED - emoji are real UTF-8]** | DONE |
 
