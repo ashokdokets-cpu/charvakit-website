@@ -1,10 +1,16 @@
 ﻿# Charvak Persistence Project — Master Plan
 
 **Created:** 2026-09-17
-**Updated:** 2026-09-18 (after Session J)
+**Updated:** 2026-09-19 (after Session K + B-3/B-4)
 **Purpose:** Persist all in-memory engines to Postgres
 **Total estimate:** ~32 hours across 8+ sessions
-**Progress:** 49/62 engines DB-backed; 9 verified skip; ~4 remaining (Session B-2 + voice_to_web)
+**Progress:** All reachable engines DB-backed or verified stateless. Only B-2 (voice_to_web) remains, deferred to a dedicated session.
+
+**2026-09-19 status:**
+- B-3 (notification_engine): persisted to `charvak_notifications` [OK]
+- B-4 (products_engine): verified already stateless - no work needed [OK]
+- B-2 (voice_to_web_engine): still pending - last remaining persistence item
+- K-2 migration batch: 2 new tables (`charvak_lang_ai_submissions`, `charvak_enterprise_kiosk_events`) [OK]
 **Note:** the original audit ("41 in-memory engines") counted only URL-reachable engines. A 2026-09-18 re-audit found ~62 engine-like files total, of which some were already DB-backed and others are stateless. See "Audit reconciliation" below.
 
 ## Tier A — Revenue + user-critical (fix first)
