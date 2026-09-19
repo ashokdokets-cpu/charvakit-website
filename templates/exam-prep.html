@@ -117,7 +117,7 @@ function canPractice(mode) {
 function showUpgradeModal() {
     const modal = document.createElement('div');
     modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:99999;display:flex;align-items:center;justify-content:center;';
-    modal.innerHTML = '<div class="bg-white p-4 rounded" style="max-width:400px;width:90%;"><h5 class="mb-3">Upgrade Your Plan</h5><button class="btn btn-outline-primary w-100 mb-2" onclick="subscribeExam(\'starter\')">Starter - ₹99/mo</button><button class="btn btn-primary w-100 mb-2" onclick="subscribeExam(\'pro\')">Pro - ₹199/mo</button><button class="btn btn-success w-100 mb-2" onclick="subscribeExam(\'premium\')">Premium - ₹999/mo</button><button class="btn btn-secondary w-100" onclick="this.closest(\'div[style]\').parentElement.remove()">Cancel</button></div>';
+    modal.innerHTML = '<div class="bg-white p-4 rounded" style="max-width:400px;width:90%;"><h3 class="as-h5 mb-3">Upgrade Your Plan</h3><button class="btn btn-outline-primary w-100 mb-2" onclick="subscribeExam(\'starter\')">Starter - ₹99/mo</button><button class="btn btn-primary w-100 mb-2" onclick="subscribeExam(\'pro\')">Pro - ₹199/mo</button><button class="btn btn-success w-100 mb-2" onclick="subscribeExam(\'premium\')">Premium - ₹999/mo</button><button class="btn btn-secondary w-100" onclick="this.closest(\'div[style]\').parentElement.remove()">Cancel</button></div>';
     document.body.appendChild(modal);
 }
 
@@ -209,7 +209,7 @@ function displayCategories(categories) {
             <div class="card h-100 text-center shadow-sm" style="cursor:pointer;" onclick="loadExams('${cat.id}')">
                 <div class="card-body">
                     <div style="font-size:48px;">${cat.icon}</div>
-                    <h6 class="mt-2">${cat.name}</h6>
+                    <h3 class="as-h6 mt-2">${cat.name}</h3>
                     <span class="badge bg-primary">${cat.exam_count} Exams</span>
                 </div>
             </div>
@@ -243,13 +243,13 @@ async function loadExams(categoryId) {
 function displayExams(data) {
     const container = document.getElementById('examListing');
     container.innerHTML = `
-        <h4>${data.icon} ${data.category}</h4>
+        <h3 class="as-h4">${data.icon} ${data.category}</h3>
         <div class="row g-3">
             ${data.exams.map(exam => `
                 <div class="col-md-4">
                     <div class="card h-100 shadow-sm">
                         <div class="card-body">
-                            <h6>${exam.name}</h6>
+                            <h3 class="as-h6">${exam.name}</h3>
                             <small class="text-muted">${exam.full_name}</small>
                             <p class="small mt-2 mb-1"><strong>Tier:</strong> ${exam.tier}</p>
                             <p class="small mb-1"><strong>Sections:</strong> ${exam.sections.join(', ')}</p>
@@ -296,7 +296,7 @@ function showTopicSelection(examId, examName, topics, questionCount = 10) {
     modal.id = 'topic-modal';
     modal.innerHTML = `
         <div class="bg-white p-4 rounded" style="max-width:400px;width:90%;background:white;border-radius:12px;">
-            <h5 class="mb-3">Choose Topic for ${examName}</h5>
+            <h3 class="as-h5 mb-3">Choose Topic for ${examName}</h3>
             <div class="list-group mb-3">
                 ${topics.map(topic => `
                     <button class="list-group-item list-group-item-action" onclick="selectTopic('${examId}', '${topic}', ${questionCount})">
@@ -352,7 +352,7 @@ function displayQuestions(questions, examId, topic) {
     }
 
     container.innerHTML = `
-        <h5>Practice: ${topic}</h5>
+        <h3 class="as-h5">Practice: ${topic}</h3>
         <div class="list-group">
             ${questions.map((q, i) => `
                 <div class="list-group-item">
@@ -407,7 +407,7 @@ function choosePracticeMode(examId, examName, topics) {
     modal.id = 'practice-mode-modal';
     modal.innerHTML = `
         <div class="bg-white p-4 rounded" style="max-width:400px;width:90%;background:white;border-radius:12px;">
-            <h5 class="mb-3">Choose Practice Mode - ${examName}</h5>
+            <h3 class="as-h5 mb-3">Choose Practice Mode - ${examName}</h3>
             <div class="list-group mb-3">
                 <button class="list-group-item list-group-item-action" onclick="startQuickPractice('${examId}', '${topics[0] || 'General'}')">
                     <strong>Quick Practice</strong><br>
@@ -569,7 +569,7 @@ function displayMockTest(testId, examId, exam, questions) {
     container.innerHTML = `
         <div class="card shadow-sm">
             <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Mock Test: ${exam.name || examId}</h5>
+                <h3 class="as-h5 mb-0">Mock Test: ${exam.name || examId}</h3>
                 <span id="timer" class="badge bg-warning text-dark">60:00</span>
             </div>
             <div class="card-body">
@@ -640,7 +640,7 @@ async function submitMockTest(testId, totalQuestions) {
     mockTestArea.innerHTML = `
         <div class="card shadow-sm">
             <div class="card-body text-center">
-                <h4>Test Submitted!</h4>
+                <h2 class="as-h4">Test Submitted!</h2>
                 <div class="display-4 text-primary">${Math.round((correctCount / totalQuestions) * 100)}%</div>
                 <p>Answered: ${answered}/${totalQuestions}</p>
                 <p>Correct: ${correctCount}</p>
@@ -668,7 +668,7 @@ function loadProgress() {
     }
     
     container.innerHTML = `
-        <h5>Your Progress</h5>
+        <h3 class="as-h5">Your Progress</h3>
         <div class="table-responsive">
             <table class="table table-bordered">
                 <thead><tr><th>Exam/Topic</th><th>Questions Practiced</th></tr></thead>
