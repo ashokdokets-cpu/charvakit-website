@@ -61,6 +61,7 @@ rebuild_*.py
 # Dev-only scripts folder
 scripts/*
 !scripts/regenerate_schema.py
+!scripts/cleanup_notifications.py
 !scripts/migrate_cert_name.py
 !scripts/migrate_tier3_courses.py
 !scripts/migrate_tier3_interview.py
