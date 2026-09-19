@@ -163,7 +163,7 @@
 | 69 | ~~Keep TIER3-PERSISTENCE-PROJECT.md in sync~~ **FIXED 2026-09-19** - updated with B-3/B-4 status | DONE |
 | 70 | Add markdown-emoji hygiene rule to DEV-SETUP.md |
 | 71 | Add smoke-test safety gate to DEV-SETUP.md |
-| 72 | Consolidate doc sprawl |
+| 72 | ~~Consolidate doc sprawl~~ **FIXED 2026-09-19** - 6 docs archived to docs/archive/, DEPLOY_TRIGGER.md removed, root reduced 21 -> 14 | DONE |
 
 ---
 
