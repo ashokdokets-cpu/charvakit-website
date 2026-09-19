@@ -39,7 +39,6 @@ from ai_service import (
     generate_agent_schema, is_ai_ready
 )
 from monitor_service import add_monitor, check_all_sites, get_monitor_status
-from job_service import job_board
 from whatsapp_bot import whatsapp_handler, VERIFY_TOKEN
 from na_module.work_auth import work_auth_engine, VisaType
 from na_module.vms_connector import vms_connector
