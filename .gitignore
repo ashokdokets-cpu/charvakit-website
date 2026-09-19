@@ -59,7 +59,15 @@ fix_*.py
 rebuild_*.py
 
 # Dev-only scripts folder
-scripts/
+scripts/*
+!scripts/regenerate_schema.py
+!scripts/migrate_cert_name.py
+!scripts/migrate_tier3_courses.py
+!scripts/migrate_tier3_interview.py
+!scripts/migrate_tier3_jobboard.py
+!scripts/migrate_tier3_referral.py
+!scripts/send_emi_reminders.py
+!scripts/system_audit.py
 requirements.txt.bak
 runtime.txt.bak
 
@@ -92,3 +100,4 @@ _DB_DUMP/
 audits/
 
 *.bak-*
+

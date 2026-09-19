@@ -1,10 +1,21 @@
 # CHARVAKIT.COM - MASTER REFERENCE
 ## Charvak IT Consulting Pvt Ltd
-### Last updated: September 18, 2026 (after Session J)
+### Last updated: September 19, 2026 (after Session K + H-2 progress)
 
 **Live:** https://www.charvakit.com
 **Resume here:** see `SESSION-CONTEXT.md` (one-file state snapshot for fresh chat windows)
-**Version:** v3.0-persistence-A-B-C-D-E-F-G-H-J-20260918
+**Backlog:** see `OUTSTANDING-WORK-INVENTORY.md` (master list of remaining work)
+**Version:** v3.2-session-K-complete-20260919
+
+### Reference Documents
+
+- **`SCHEMA.md`** — Complete DB schema (all `charvak_*` tables). Regenerate with `python scripts/regenerate_schema.py`.
+- **`OUTSTANDING-WORK-INVENTORY.md`** — Master backlog (~87 items, categorized by session).
+- **`DEFERRALS.md`** — Documented design decisions (won't-fix with rationale + escalation triggers).
+- **`DOC-STYLE.md`** — Code/doc/commit style guide (emoji policy, naming, migrations).
+- **`SESSION-CONTEXT.md`** — One-file resume pointer for fresh chat windows.
+- **`KNOWN-ISSUES.md`** — Bug registry (fixed + open, categorized).
+- **`TIER3-PERSISTENCE-PROJECT.md`** — Persistence tracking for the 62-engine project.
 
 ---
 
