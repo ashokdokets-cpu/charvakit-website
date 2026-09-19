@@ -61,8 +61,8 @@
 | 16 | University Portal FEATURE completeness | Dedicated | Feature gap |
 | 17 | Exam prep frontend mock-test UI | Dedicated UI | Backend done |
 | 18 | WhatsApp bot E2E | External block | — |
-| 19 | Backfill migrations/20260916_charvak_enrollments.sql | Session I | DR restore fails |
-| 20 | Fix 20260916_course_payments.sql FK ordering | Session I | — |
+| 19 | ~~Backfill missing migrations/20260916_charvak_enrollments.sql~~ **FIXED 2026-09-19** - migration created (index ordering was the real issue, no FK) | DONE |
+| 20 | ~~Fix 20260916_course_payments.sql FK ordering~~ **[STALE - no FK constraints in migration; original issue no longer exists]** | DONE |
 | 21 | Session I capstone bundle | Session I | — |
 | 22 | Tag v3.0-tier3-complete-YYYYMMDD | Session I | Release marker |
 | 23 | Final backup | Session I | Durability |
