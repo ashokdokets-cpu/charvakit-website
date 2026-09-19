@@ -27,7 +27,7 @@ fetch('/api/brand/' + brandId)
                             <strong>${r.reviewer_name}</strong>
                             <span>${'⭐'.repeat(r.rating)}</span>
                         </div>
-                        <h6>${r.title}</h6>
+                        <h3 class="as-h6">${r.title}</h3>
                         <p class="small">${r.review}</p>
                     </div></div>
                 `).join('') : '<p class="text-muted">No reviews yet.</p>'}

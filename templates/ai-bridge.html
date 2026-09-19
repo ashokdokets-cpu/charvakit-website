@@ -96,7 +96,7 @@ function showAIQuestion() {
         document.getElementById('questionArea').innerHTML = `
             <div class="card border-0 shadow-sm p-4">
                 <small class="text-muted">Question ${currentQIndex + 1} of 5</small>
-                <h5 class="mt-2">${q.prompt}</h5>
+                <h3 class="as-h5 mt-2">${q.prompt}</h3>
                 <textarea class="form-control mt-3" id="answerText" rows="4" placeholder="Type your answer..."></textarea>
                 <button class="btn btn-primary mt-3" onclick="submitAIAnswer('${q.id}')">Submit Answer</button>
             </div>
@@ -127,7 +127,7 @@ function showReport(report) {
     document.getElementById('questionArea').innerHTML = '';
     document.getElementById('reportArea').innerHTML = `
         <div class="card border-0 shadow-sm p-4">
-            <h5 class="text-success">✅ Assessment Complete!</h5>
+            <h2 class="as-h5 text-success">✅ Assessment Complete!</h2>
             <h2>Score: ${report.score || 72}/100</h2>
             <hr>
             <h6>Strengths:</h6>
