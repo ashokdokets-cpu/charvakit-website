@@ -90,7 +90,7 @@ function showQuestion(question) {
     document.getElementById('journeyOutput').innerHTML = `
         <div class="card border-0 shadow-sm p-3">
             <div class="mb-2"><small class="text-muted">Question ${answeredCount + 1} of 5</small></div>
-            <h6>${question.prompt}</h6>
+            <h3 class="as-h6">${question.prompt}</h3>
             ${question.options.map((opt, i) => `
                 <button class="btn btn-outline-primary btn-sm w-100 mb-2" onclick="answerQuestion('${question.id}', ${i})">
                     ${opt}
@@ -113,7 +113,7 @@ async function answerQuestion(questionId, answerIndex) {
     if (j.complete) {
         document.getElementById('journeyOutput').innerHTML = `
             <div class="alert alert-success">
-                <h5>✅ Assessment Complete!</h5>
+                <h2 class="as-h5">✅ Assessment Complete!</h2>
                 <p>Your Readiness Score: <strong>${j.readiness}/100</strong></p>
                 <hr>
                 <h6>Skill Breakdown:</h6>

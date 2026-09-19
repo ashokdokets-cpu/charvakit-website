@@ -144,7 +144,7 @@ function startAssessment() {
         beginQuiz();
     } else {
         // Call AI API
-        document.getElementById('chooseCard').innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary mb-3"></div><h5>AI is generating your assessment...</h5></div>';
+        document.getElementById('chooseCard').innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary mb-3"></div><h2 class="as-h5">AI is generating your assessment...</h2></div>';
         
         fetch('/api/ai/generate-questions', {
             method: 'POST',
