@@ -12,7 +12,7 @@
         <div class="col-md-8 mx-auto">
             <div class="card border-0 shadow-sm">
                 <div class="card-body">
-                    <h5 class="mb-3">Your Conversations</h5>
+                    <h2 class="as-h5 mb-3">Your Conversations</h2>
                     <div id="conversationList">
                         <p class="text-muted text-center">No conversations yet.</p>
                     </div>
@@ -43,7 +43,7 @@ fetch('/api/messaging/inbox/' + userId)
 <div class="container py-4">
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-body">
-            <h5>Send a Message</h5>
+            <h2 class="as-h5">Send a Message</h2>
             <form onsubmit="sendMessage(event)">
                 <div class="row g-3">
                     <div class="col-md-6"><input type="text" class="form-control" id="recipientId" placeholder="Recipient ID (e.g. CAND-001)" required></div>
