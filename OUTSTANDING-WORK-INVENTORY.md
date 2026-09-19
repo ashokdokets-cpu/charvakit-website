@@ -125,7 +125,7 @@
 | 52 | Rename old folder to charvakit-new-OLD |
 | 53 | Delete old location after a few days |
 | 54 | ~~pip install sendgrid locally~~ **[DONE 2026-09-19 - sendgrid 6.12.5 installed]** | DONE |
-| 55 | Document full charvak_* schema in MASTER-REFERENCE.md |
+| 55 | ~~Document full charvak_* schema in MASTER-REFERENCE.md~~ **FIXED 2026-09-19** - SCHEMA.md (128 tables auto-generated) + generator script + MASTER-REFERENCE link | DONE |
 | 56 | Root directory final reorg |
 | 57 | ~~Delete wget.exe if reappeared~~ **[ALREADY RESOLVED - not present]** | DONE |
 | 58 | Add git status check to session start |
