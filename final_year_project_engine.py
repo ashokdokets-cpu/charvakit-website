@@ -250,7 +250,7 @@ class FinalYearProjectEngine:
         return {
             "status": "success",
             "stats": {
-                "total_projects": 0,
+                # total_projects removed - was hardcoded 0 with no live consumers
                 "total_subscriptions": total_subscriptions,
                 "total_revenue": total_revenue,
                 "ai_enabled": bool(OPENAI_API_KEY),

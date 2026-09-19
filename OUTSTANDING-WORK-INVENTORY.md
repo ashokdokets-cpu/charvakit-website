@@ -96,11 +96,11 @@
 
 | # | File | Issue |
 |---|---|---|
-| 40 | final_year_project_engine.total_projects | Always 0 |
+| 40 | ~~final_year_project_engine.total_projects returns 0~~ **FIXED 2026-09-20** - removed dead field (no live consumers) | DONE |
 | 41 | student_suite_engine.assist_assignment / assist_research | Stubs |
 | 42 | na_module/vector_matcher.SKILL_EMBEDDINGS | Static dict |
 | 43 | advanced_assessment_engine._generate_versant_questions | Same as #35 |
-| 44 | exam_prep_engine icons | Emoji → ASCII |
+| 44 | ~~exam_prep_engine emoji icons -> ASCII~~ **[ALREADY RESOLVED 2026-09-20 - icons are already ASCII slugs]** | DONE |
 
 ---
 
@@ -148,7 +148,7 @@
 | 61 | Enterprise Option B — public engine pages |
 | 62 | Per-level curriculum quality verification |
 | 63 | International EMI via PayPal invoicing |
-| 64 | Verify /mock-test route |
+| 64 | ~~Verify /mock-test route~~ **[ALREADY RESOLVED 2026-09-20 - /mock-drive is canonical; /mock-test was never planned as a page]** | DONE |
 | 65 | whatsapp_bot.py AI JSON bug (when unblocked) |
 | 66 | indian_language_ai.py questions for 8 languages missing |
 | 67 | ai_question_generator.used_questions — implement dedup |
