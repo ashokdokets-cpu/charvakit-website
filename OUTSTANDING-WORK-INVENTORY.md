@@ -120,14 +120,14 @@
 
 | # | Item |
 |---|---|
-| 50 | Delete GitHub branches (verify merged) |
-| 51 | Delete local feat-micro-internship-escrow |
+| 50 | ~~Delete GitHub branches~~ **[ALREADY RESOLVED - no feat-* branches remain]** | DONE |
+| 51 | ~~Delete local feat-micro-internship-escrow~~ **[ALREADY RESOLVED - not present]** | DONE |
 | 52 | Rename old folder to charvakit-new-OLD |
 | 53 | Delete old location after a few days |
-| 54 | pip install sendgrid locally |
+| 54 | ~~pip install sendgrid locally~~ **[DONE 2026-09-19 - sendgrid 6.12.5 installed]** | DONE |
 | 55 | Document full charvak_* schema in MASTER-REFERENCE.md |
 | 56 | Root directory final reorg |
-| 57 | Delete wget.exe if reappeared |
+| 57 | ~~Delete wget.exe if reappeared~~ **[ALREADY RESOLVED - not present]** | DONE |
 | 58 | Add git status check to session start |
 
 ---
