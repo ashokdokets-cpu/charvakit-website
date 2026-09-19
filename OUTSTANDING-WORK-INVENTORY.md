@@ -122,8 +122,8 @@
 |---|---|
 | 50 | ~~Delete GitHub branches~~ **[ALREADY RESOLVED - no feat-* branches remain]** | DONE |
 | 51 | ~~Delete local feat-micro-internship-escrow~~ **[ALREADY RESOLVED - not present]** | DONE |
-| 52 | Rename old folder to charvakit-new-OLD |
-| 53 | Delete old location after a few days |
+| 52 | ~~Rename old folder to charvakit-new-OLD~~ **DONE 2026-09-19** - renamed from OneDrive/Desktop/charvakit-new | DONE |
+| 53 | Delete old location (charvakit-new-OLD) after 2026-09-22 verification | SCHEDULED |
 | 54 | ~~pip install sendgrid locally~~ **[DONE 2026-09-19 - sendgrid 6.12.5 installed]** | DONE |
 | 55 | ~~Document full charvak_* schema in MASTER-REFERENCE.md~~ **FIXED 2026-09-19** - SCHEMA.md (128 tables auto-generated) + generator script + MASTER-REFERENCE link | DONE |
 | 56 | Root directory final reorg |
