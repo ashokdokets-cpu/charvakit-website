@@ -176,7 +176,7 @@
 
 | # | New Item | Priority | Notes |
 |---|---|---|---|
-| 78 | notification_engine.py -- in-memory, 6 main.py refs | Medium | Persistence candidate missed in original audit |
+| 78 | notification_engine.py ~~in-memory, 6 main.py refs~~ **FIXED 2026-09-19 (B-3)** - persisted to charvak_notifications | DONE |
 | 79 | products_engine.py -- in-memory, 12 main.py refs, 18 KB | High | Heaviest-used in-memory engine |
 | 80 | tools_engine.py -- in-memory, scope unclear | Low | Audit needed |
 | 81 | job_service.py -- in-memory, 1 main.py ref | Low | Likely thin wrapper |
