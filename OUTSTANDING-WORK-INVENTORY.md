@@ -97,9 +97,9 @@
 | # | File | Issue |
 |---|---|---|
 | 40 | ~~final_year_project_engine.total_projects returns 0~~ **FIXED 2026-09-20** - removed dead field (no live consumers) | DONE |
-| 41 | student_suite_engine.assist_assignment / assist_research | Stubs |
+| 41 | ~~student_suite_engine.assist_assignment / assist_research~~ **FIXED 2026-09-20** - real AI integration via OpenAI JSON mode | DONE |
 | 42 | na_module/vector_matcher.SKILL_EMBEDDINGS | Static dict |
-| 43 | advanced_assessment_engine._generate_versant_questions | Same as #35 |
+| 43 | ~~advanced_assessment_engine._generate_versant_questions~~ **FIXED 2026-09-20** - AI-augmented prompts (static + AI); graceful fallback | DONE |
 | 44 | ~~exam_prep_engine emoji icons -> ASCII~~ **[ALREADY RESOLVED 2026-09-20 - icons are already ASCII slugs]** | DONE |
 
 ---
@@ -151,7 +151,7 @@
 | 64 | ~~Verify /mock-test route~~ **[ALREADY RESOLVED 2026-09-20 - /mock-drive is canonical; /mock-test was never planned as a page]** | DONE |
 | 65 | whatsapp_bot.py AI JSON bug (when unblocked) |
 | 66 | indian_language_ai.py questions for 8 languages missing |
-| 67 | ai_question_generator.used_questions — implement dedup |
+| 67 | ~~ai_question_generator.used_questions — implement dedup~~ **[RESOLVED 2026-09-20 - cache + variation already provides exam-level dedup; per-user tracking deferred as feature, not bug]** |
 
 ---
 
