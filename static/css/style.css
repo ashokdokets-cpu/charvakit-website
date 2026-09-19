@@ -428,3 +428,26 @@ p, h1, h2, h3, h4, h5, h6, li, span, a {
         font-size: 7px !important;
     }
 }
+
+/* ============================================================
+   Session A-1 (2026-09-19): Heading hierarchy preservation
+   ------------------------------------------------------------
+   Use these to fix a11y heading order WITHOUT changing visual size.
+   When you swap an <h4> to an <h2> for semantic correctness,
+   add class="as-h4" to preserve the original visual appearance.
+   ============================================================ */
+
+.as-h2 { font-size: 36px; font-weight: 700; color: #000; }
+.as-h3 { font-size: 22px; font-weight: 600; }
+.as-h4 { font-size: 24px; font-weight: 600; }
+.as-h5 { font-size: 20px; font-weight: 600; }
+.as-h6 { font-size: 16px; font-weight: 600; }
+
+@media (max-width: 768px) {
+    .as-h2 { font-size: 28px; }
+    .as-h3 { font-size: 22px; }
+    .as-h4 { font-size: 20px; }
+    .as-h5 { font-size: 18px; }
+    .as-h6 { font-size: 16px; }
+}
+
