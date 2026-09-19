@@ -127,6 +127,50 @@ class StudentSuiteEngine:
     # ASSISTANTS
     # ============================================================
 
+    def _call_openai_json(self, prompt: str) -> Optional[Dict]:
+        """Call OpenAI (JSON mode) via HTTP - mirrors advanced_assessment_engine pattern."""
+        try:
+            import os
+            import json as _json
+            import requests
+
+            api_key = os.getenv("OPENAI_API_KEY", "")
+            if not api_key:
+                return None
+
+            response = requests.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers={"Authorization": f"Bearer {api_key}"},
+                json={
+                    "model": "gpt-4o-mini",
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": 0.7,
+                    "response_format": {"type": "json_object"},
+                },
+                timeout=25,
+            )
+
+            data = response.json()
+            content = (data.get("choices", [{}])[0].get("message", {}).get("content") or "").strip()
+
+            # Defensive: strip markdown fences
+            if content.startswith("```"):
+                content = content.split("```", 2)[1]
+                if content.startswith("json"):
+                    content = content[4:]
+                content = content.strip()
+
+            try:
+                parsed = _json.loads(content)
+                if isinstance(parsed, dict):
+                    return parsed
+            except Exception:
+                pass
+            return None
+        except Exception as e:
+            logger.error(f"OpenAI call failed: {e}")
+            return None
+
     def assist_assignment(self, email: str = None, student_email: str = None, subject: str = "", topic: str = "", **kwargs) -> Dict:
         """Assignment assistance - accepts both email formats"""
         user_email = email or student_email
@@ -139,9 +183,37 @@ class StudentSuiteEngine:
 
         self._track_usage(user_email, "assignment")
 
+        # Try AI generation
+        prompt = (
+            f"You are a helpful academic assistant for students.\n"
+            f"Subject: {subject or 'General'}\n"
+            f"Topic: {topic or 'General'}\n\n"
+            f"Provide clear, actionable help with this assignment.\n"
+            f"Return a JSON object with these keys:\n"
+            f"  - outline: array of 5-7 bullet points forming an outline\n"
+            f"  - key_concepts: array of 4-6 important concepts to understand\n"
+            f"  - study_tips: array of 3 practical study tips\n"
+            f"  - examples: array of 2 illustrative examples"
+        )
+        ai_result = self._call_openai_json(prompt)
+
+        if ai_result:
+            return {
+                "status": "success",
+                "message": "Assignment assistance generated",
+                "subject": subject,
+                "topic": topic,
+                "email": user_email,
+                "outline": ai_result.get("outline", []),
+                "key_concepts": ai_result.get("key_concepts", []),
+                "study_tips": ai_result.get("study_tips", []),
+                "examples": ai_result.get("examples", []),
+            }
+
+        # Fallback when AI unavailable
         return {
             "status": "success",
-            "message": "Assignment assistance generated",
+            "message": "Assignment assistance generated (basic — AI temporarily unavailable)",
             "subject": subject,
             "topic": topic,
             "email": user_email,
@@ -159,9 +231,37 @@ class StudentSuiteEngine:
 
         self._track_usage(user_email, "research")
 
+        # Try AI generation
+        prompt = (
+            f"You are a helpful academic research assistant for students.\n"
+            f"Field: {field or 'General'}\n"
+            f"Research topic: {topic or 'General'}\n\n"
+            f"Provide clear research guidance.\n"
+            f"Return a JSON object with these keys:\n"
+            f"  - research_questions: array of 4-5 key research questions\n"
+            f"  - methodology: array of 3-4 suggested research methods\n"
+            f"  - key_sources: array of 4-5 types of sources to consult\n"
+            f"  - structure: array of 4-5 sections to include in the paper"
+        )
+        ai_result = self._call_openai_json(prompt)
+
+        if ai_result:
+            return {
+                "status": "success",
+                "message": "Research assistance generated",
+                "field": field,
+                "topic": topic,
+                "email": user_email,
+                "research_questions": ai_result.get("research_questions", []),
+                "methodology": ai_result.get("methodology", []),
+                "key_sources": ai_result.get("key_sources", []),
+                "structure": ai_result.get("structure", []),
+            }
+
+        # Fallback when AI unavailable
         return {
             "status": "success",
-            "message": "Research assistance generated",
+            "message": "Research assistance generated (basic — AI temporarily unavailable)",
             "field": field,
             "topic": topic,
             "email": user_email,

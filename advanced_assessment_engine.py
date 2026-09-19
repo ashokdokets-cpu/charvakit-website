@@ -310,19 +310,85 @@ class AdvancedAssessmentEngine:
             ],
         }
 
-        section_prompts = prompts.get(section["id"], ["Sample question"])
-        questions = []
+        section_prompts = list(prompts.get(section["id"], ["Sample question"]))
+        declared_count = section["questions"]
 
-        for i in range(min(section["questions"], len(section_prompts))):
+        # If AI available and we need more prompts than the static list, generate extras
+        if self.openai_api_key and len(section_prompts) < declared_count:
+            needed = declared_count - len(section_prompts)
+            try:
+                extra = self._generate_versant_prompts_with_openai(section["id"], needed)
+                section_prompts.extend(extra)
+            except Exception as e:
+                logger.error(f"Versant AI generation failed: {e}")
+
+        # Cap at declared count
+        section_prompts = section_prompts[:declared_count]
+
+        questions = []
+        for i, prompt in enumerate(section_prompts):
             questions.append({
                 "id": i + 1,
-                "question": section_prompts[i],
+                "question": prompt,
                 "type": section["id"],
                 "skill": section.get("skill", "general"),
                 "time_limit": section["time"],
             })
 
         return questions
+
+    def _generate_versant_prompts_with_openai(self, section_id, count):
+        """Generate additional Versant prompts via OpenAI (JSON mode)."""
+        try:
+            import requests
+
+            section_hints = {
+                "read_aloud": "short English sentences suitable for reading aloud practice (business/professional context)",
+                "repeats": "short English sentences suitable for listen-and-repeat practice",
+                "sentence_builds": "jumbled word sequences separated by ' / ' that form a complete English sentence when reordered",
+                "conversations": "open-ended conversational questions with realistic scenarios",
+                "story_retelling": "short 1-2 sentence narratives suitable for retelling practice",
+                "summary_opinion": "essay-style prompts requesting a summary and opinion",
+            }
+            hint = section_hints.get(section_id, "practice prompts")
+
+            prompt = (
+                f"Generate {count} unique prompts of type '{section_id}' for a Versant English test.\n"
+                f"Description: {hint}\n"
+                f"Return a JSON object: {{\"prompts\": [\"prompt 1\", \"prompt 2\", ...]}}"
+            )
+
+            response = requests.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers={"Authorization": f"Bearer {self.openai_api_key}"},
+                json={
+                    "model": "gpt-4o-mini",
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": 0.9,
+                    "response_format": {"type": "json_object"},
+                },
+                timeout=25,
+            )
+
+            data = response.json()
+            content = (data.get("choices", [{}])[0].get("message", {}).get("content") or "").strip()
+
+            if content.startswith("```"):
+                content = content.split("```", 2)[1]
+                if content.startswith("json"):
+                    content = content[4:]
+                content = content.strip()
+
+            try:
+                parsed = json.loads(content)
+                if isinstance(parsed, dict) and "prompts" in parsed:
+                    return list(parsed["prompts"])[:count]
+            except Exception:
+                pass
+            return []
+        except Exception as e:
+            logger.error(f"Versant prompt AI error: {e}")
+            return []
 
     # ============================================================
     # MCQ GENERATION
