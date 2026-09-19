@@ -134,7 +134,7 @@
 
 ## 🔵 OPTIONAL / FUTURE
 
-- **#88** `job_service.py` persistence — has `self.applications = []` used by `job_board` in main.py (line 42). Small (3.7 KB) but real in-memory store. `total_applications` currently returns `len(self.applications) + 45` (fake inflation). Needs persistence + fix the fake offset. Est ~30 min.
+- **#88** ~~job_service.py persistence~~ **[RESOLVED 2026-09-19 - verified dead code; file deleted + import removed]**
 
 
 - **#86** Product audit trail (deferred feature) — products_engine is stateless; if business wants an audit trail, needs: table `charvak_product_results`, INSERT in 11 methods, read endpoint `/api/products/results`, filter UI. Est ~3 hr.
