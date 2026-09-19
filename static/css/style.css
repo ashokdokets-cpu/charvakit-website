@@ -412,6 +412,13 @@ p, h1, h2, h3, h4, h5, h6, li, span, a {
     }
     .navbar {
         padding: 3px 0 !important;
+        min-height: 40px !important;   /* A-2 CLS fix: reserve height */
+    }
+    /* A-2 CLS fix: reserve space for logo so image load doesn't shift layout */
+    .navbar-brand img {
+        aspect-ratio: 1 / 1;
+        display: inline-block;
+        vertical-align: middle;
     }
 }
 
