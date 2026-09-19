@@ -15,10 +15,35 @@ class NotificationEngine:
     """Handles all email notifications for the Charvak platform."""
     
     def __init__(self):
-        self.notifications = []
+        self.notifications = []  # kept for backward compat; primary storage is DB
         self.email_enabled = os.getenv("SENDGRID_API_KEY") is not None
         self.from_email = "hr@charvakit.com"
+        self._ensure_tables()
         logger.info(f"Notification Engine ready (Email: {'enabled' if self.email_enabled else 'disabled'})")
+
+    def _ensure_tables(self):
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS charvak_notifications (
+                    notification_id  TEXT PRIMARY KEY,
+                    to_email         TEXT NOT NULL,
+                    subject          TEXT,
+                    html_content     TEXT,
+                    status           TEXT DEFAULT 'sent',
+                    error_message    TEXT,
+                    sent_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_notifications_to     ON charvak_notifications(to_email)")
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_notifications_sent   ON charvak_notifications(sent_at)")
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_notifications_status ON charvak_notifications(status)")
+            conn.commit()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"notification tables init failed: {e}")
     
     def send_email(self, to_email: str, subject: str, html_content: str) -> Dict:
         """Send email notification."""
@@ -31,8 +56,10 @@ class NotificationEngine:
             "sent_at": datetime.now().isoformat()
         }
         
-        self.notifications.append(notification)
-        
+        self.notifications.append(notification)  # kept for backward compat
+
+        error_message = None
+
         if self.email_enabled:
             try:
                 from sendgrid import SendGridAPIClient
@@ -50,10 +77,36 @@ class NotificationEngine:
             except Exception as e:
                 logger.error(f"SendGrid error: {e}")
                 notification["status"] = "failed"
-                return {"status": "error", "message": str(e)}
+                error_message = str(e)
         else:
             logger.info(f"Email logged (SendGrid not configured): {to_email} - {subject}")
-        
+
+        # B-3 fix: persist to DB (previously only in-memory)
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                INSERT INTO charvak_notifications
+                    (notification_id, to_email, subject, html_content, status, error_message)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                ON CONFLICT (notification_id) DO NOTHING
+            """, (
+                notification["notification_id"],
+                to_email,
+                subject,
+                html_content,
+                notification["status"],
+                error_message,
+            ))
+            conn.commit()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"notification persist failed: {e}")
+
+        if error_message:
+            return {"status": "error", "message": error_message}
+
         return {
             "status": "success",
             "notification_id": notification["notification_id"],
@@ -127,16 +180,90 @@ class NotificationEngine:
         return self.send_email(email, subject, html)
     
     def get_notification_history(self, email: str = None, limit: int = 50) -> Dict:
-        """Get notification history."""
-        filtered = self.notifications if not email else [n for n in self.notifications if n["to"] == email]
-        return {
-            "status": "success",
-            "notifications": filtered[-limit:],
-            "total": len(filtered)
-        }
+        """Get notification history (from DB)."""
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            # Fetch rows first
+            if email:
+                cur.execute("""
+                    SELECT notification_id, to_email, subject, status, sent_at
+                    FROM charvak_notifications
+                    WHERE to_email = %s
+                    ORDER BY sent_at DESC
+                    LIMIT %s
+                """, (email, limit))
+            else:
+                cur.execute("""
+                    SELECT notification_id, to_email, subject, status, sent_at
+                    FROM charvak_notifications
+                    ORDER BY sent_at DESC
+                    LIMIT %s
+                """, (limit,))
+
+            rows = cur.fetchall()
+
+            # Then fetch total count in a separate cursor
+            cur2 = conn.cursor()
+            if email:
+                cur2.execute("SELECT COUNT(*) FROM charvak_notifications WHERE to_email = %s", (email,))
+            else:
+                cur2.execute("SELECT COUNT(*) FROM charvak_notifications")
+            total = int(cur2.fetchone()[0] or 0)
+            cur2.close()
+
+            notifications = [{
+                "notification_id": r[0],
+                "to": r[1],
+                "subject": r[2],
+                "status": r[3],
+                "sent_at": r[4].isoformat() if hasattr(r[4], "isoformat") else str(r[4]),
+            } for r in rows]
+
+            cur.close(); conn.close()
+            return {
+                "status": "success",
+                "notifications": notifications,
+                "total": total,
+            }
+        except Exception as e:
+            logger.error(f"get_notification_history failed: {e}")
+            return {"status": "error", "message": "Could not load history"}
     
     def get_stats(self) -> Dict:
-        """Get notification statistics."""
+        """Get notification statistics (from DB)."""
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT
+                    COUNT(*) as total,
+                    COUNT(*) FILTER (WHERE status = 'sent')   as sent,
+                    COUNT(*) FILTER (WHERE status = 'logged') as logged,
+                    COUNT(*) FILTER (WHERE status = 'failed') as failed
+                FROM charvak_notifications
+            """)
+            row = cur.fetchone()
+            cur.close(); conn.close()
+            total, sent, logged, failed = (int(x or 0) for x in row)
+            return {
+                "status": "success",
+                "stats": {
+                    "total": total,
+                    "sent": sent,
+                    "logged": logged,
+                    "failed": failed,
+                    "email_enabled": self.email_enabled,
+                }
+            }
+        except Exception as e:
+            logger.error(f"get_stats failed: {e}")
+            return {"status": "error", "message": "Could not load stats"}
+
+    def _get_stats_legacy(self) -> Dict:
+        """LEGACY - unused (kept during migration)"""
         sent = [n for n in self.notifications if n["status"] == "sent"]
         logged = [n for n in self.notifications if n["status"] == "logged"]
         failed = [n for n in self.notifications if n["status"] == "failed"]
