@@ -1006,6 +1006,8 @@ Re-generate with: `python scripts/regenerate_schema.py`
 **Indexes:**
 
 - `charvak_enrollments_pkey`
+- `idx_charvak_enrollments_course`
+- `idx_charvak_enrollments_email`
 
 ---
 

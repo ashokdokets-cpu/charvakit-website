@@ -2,9 +2,9 @@
 
 **Purpose:** One-file resume pointer. Paste this file into a fresh chat to instantly orient.
 
-**Last updated:** 2026-09-19 (Session K fully complete - 30 items)
-**HEAD at time of writing:** `4b22acc docs: mark #37b kiosk as fixed`
-**Version:** `v3.2-session-K-complete-20260919`
+**Last updated:** 2026-09-19 (end of Session I capstone)
+**HEAD at time of writing:** `0536044 docs(I): consolidate doc sprawl`
+**Version:** `v3.0-tier3-complete-20260919`
 
 ---
 
