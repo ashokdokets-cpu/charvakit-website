@@ -57,7 +57,7 @@ async function submitReferral(e) {
         if (d.status === 'success') {
             result.innerHTML = `
                 <div class="alert alert-success">
-                    <h5>✅ Referral submitted!</h5>
+                    <h2 class="as-h5">✅ Referral submitted!</h2>
                     <p>Your referral link: <code>${d.referral_link || ''}</code></p>
                     <p>Share this link to earn rewards. Track your stats in your <a href="/referral-dashboard">referral dashboard</a>.</p>
                 </div>
