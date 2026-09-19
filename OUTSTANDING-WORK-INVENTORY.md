@@ -111,8 +111,8 @@
 | 45 | Fix heading order on remaining pages |
 | 46 | TBT ~1,900ms mobile |
 | 47 | Emoji icons in docstrings |
-| 48 | Mojibake in notification_engine.py subject |
-| 49 | Mojibake in products_engine.py log |
+| 48 | ~~Mojibake in notification_engine.py subject~~ **[ALREADY RESOLVED - emoji are real UTF-8]** | DONE |
+| 49 | ~~Mojibake in products_engine.py log~~ **[ALREADY RESOLVED - emoji are real UTF-8]** | DONE |
 
 ---
 
@@ -176,7 +176,10 @@
 
 ---
 
-## 🆕 SCAN FINDINGS (added 2026-09-19 post-reconciliation)
+## 🆕 SCAN FINDINGS
+
+- [x] **H-2** templates/base.html — mojibake fixed 2026-09-19
+ (added 2026-09-19 post-reconciliation)
 
 | # | New Item | Priority | Notes |
 |---|---|---|---|
