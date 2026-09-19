@@ -101,7 +101,7 @@ function renderAnswer(a, num) {
         <div class="card border-0 shadow-sm mb-3">
             <div class="card-body p-4">
                 <div class="d-flex justify-content-between align-items-start mb-2">
-                    <h5 class="mb-0">Q${num}. ${escapeHtml(a.question_text)}</h5>
+                    <h3 class="as-h5 mb-0">Q${num}. ${escapeHtml(a.question_text)}</h3>
                     <span class="badge bg-${scoreColor} fs-6">${a.ai_score || 0}/100</span>
                 </div>
                 <small class="text-muted">Category: ${escapeHtml(a.category || 'General')}</small>
