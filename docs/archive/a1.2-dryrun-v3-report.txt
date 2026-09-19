@@ -1,0 +1,594 @@
+Session A-1.2 Refined v3 Dry-Run Report (cascade fixed)
+======================================================================
+
+Templates scanned: 165
+Skipped: 76
+Needing fixes: 79
+Total fixes: 335
+
+=== SKIPPED FILES ===
+
+[already-fixed-in-A1] (20 files)
+  about.html
+  ai-courses.html
+  candidate-signup.html
+  careers.html
+  contact.html
+  enterprise.html
+  events.html
+  for-candidates.html
+  for-employers.html
+  interview-prep.html
+  job-board.html
+  login.html
+  micro-internship.html
+  pricing.html
+  products.html
+  register.html
+  reset-password.html
+  services.html
+  track-application.html
+  versant.html
+
+[has-js-template-literals] (26 files)
+  ai-bridge.html
+  ai-generate-stack.html
+  ai-internship.html
+  ai_credits_pricing.html
+  application-dashboard.html
+  bridge.html
+  client-dashboard.html
+  company-detail.html
+  credit_dashboard.html
+  doketsrb.html
+  exam-prep.html
+  inbox.html
+  indian-language-ai.html
+  interview-dashboard.html
+  interview-results.html
+  marketing-ai.html
+  my-courses.html
+  na-bench-staffing.html
+  napkin-challenge.html
+  referral-dashboard.html
+  skill-check.html
+  staff-augmentation-proposal.html
+  student-suite.html
+  submit-referral.html
+  testimonials.html
+  web-design-proposal.html
+
+[pattern:admin-] (7 files)
+  admin-cleanup-users.html
+  admin-dashboard.html
+  admin-invoices.html
+  admin-login.html
+  admin-roles.html
+  admin-testimonials.html
+  admin-unified.html
+
+[pattern:blog/] (2 files)
+  blog/index.html
+  blog/post.html
+
+[pattern:includes/] (7 files)
+  includes/beta_badge.html
+  includes/cookie-banner.html
+  includes/currency-updater.html
+  includes/doketsrb-banner.html
+  includes/global-header.html
+  includes/payment-scripts.html
+  includes/premium-upsell.html
+
+[pattern:tools/] (13 files)
+  tools/bounty-swap.html
+  tools/counter-offer.html
+  tools/ghost-bounty.html
+  tools/ghost-job-shield.html
+  tools/ghost-tracker.html
+  tools/index.html
+  tools/micro-trial.html
+  tools/offer-matcher.html
+  tools/pitch-roast.html
+  tools/ref-check.html
+  tools/ref-swap.html
+  tools/resume-roast.html
+  tools/role-mirror.html
+
+[shared-layout-skip] (1 files)
+  base.html
+
+=== FILES WITH FIXES ===
+
+### accessibility.html (3 fixes)
+  [h4->h2] Our Commitment
+  [h4->h2] Accessibility Features
+  [h4->h2] Feedback
+
+### advanced-assessment.html (3 fixes)
+  [h4->h2] 🗣️ Versant
+  [h4->h2] 📝 MCQ
+  [h4->h2] 🏢 Companies
+
+### agency-twin.html (6 fixes)
+  [h4->h3] What Agency-Twin Does
+  [h5->h4] Email Integration
+  [h5->h4] Auto-Tasking
+  [h5->h4] Talent Provisioning
+  [h5->h4] Auto-Invoicing
+  [h4->h3] ⭐ Pro
+
+### agent-ready.html (5 fixes)
+  [h4->h3] What It Injects
+  [h5->h4] AI-Agent Ready
+  [h5->h4] 1 Script Tag
+  [h5->h4] Auto-Sync
+  [h4->h3] ⚡ Wrapper Install
+
+### ai-commerce-scorecard.html (1 fixes)
+  [h4->h2] 🤖 Check AI Readiness
+
+### ai-contamination-detector.html (1 fixes)
+  [h4->h2] Test Your Site
+
+### ai-slop-quarantine.html (5 fixes)
+  [h4->h3] What It Fixes
+  [h5->h4] De-Bloat
+  [h5->h4] Fix Layouts
+  [h5->h4] WCAG Fix
+  [h4->h3] Full Cleanup
+
+### assessments.html (4 fixes)
+  [h4->h2] Versant English
+  [h4->h2] MCQ Assessment
+  [h4->h2] Company Patterns
+  [h4->h2] Skill Gap Analysis
+
+### ats.html (5 fixes)
+  [h5->h2] Connect External ATS
+  [h5->h2] ATS Integration Plans
+  [h6->h3] Basic
+  [h6->h4] Enterprise
+  [h5->h4] Why Connect Your ATS?
+
+### auditbot.html (3 fixes)
+  [h4->h3] What AuditBot Scans
+  [h4->h3] ⚡ One-Time Fix
+  [h4->h3] 🛡️ Continuous
+
+### background-verification.html (1 fixes)
+  [h4->h2] Identity Verification
+
+### brand-drift-inspector.html (1 fixes)
+  [h4->h2] 🔍 Scan Website Branding
+
+### burnout-calculator.html (1 fixes)
+  [h4->h2] ⏱️ Calculate Your Lost Time
+
+### capabilities.html (27 fixes)
+  [h6->h4] Free Skill Check
+  [h6->h4] Micro-Internship
+  [h6->h4] Verified Badge
+  [h6->h4] Get Matched
+  [h6->h4] Get Hired — 48 Hours
+  [h6->h4] Post Your Role
+  [h6->h4] Receive Pre-Verified Candidates
+  [h6->h4] Interview &amp; Hire
+  [h6->h4] Pay Only on Success
+  [h6->h4] Stop Getting Lost in the Resume Pile
+  [h6->h4] Get Seen by Global Companies
+  [h6->h4] Pay Nothing — Ever
+  [h6->h4] Build Real Proof, Not Claims
+  [h6->h4] Fill Roles in 48 Hours, Not 48 Days
+  [h6->h4] Pay Only When You Win
+  [h6->h4] Fire the Resume Guesswork
+  [h6->h4] Scale From One Hire to a Team
+  [h6->h3] ⚡ 48-Hour Placement
+  [h6->h3] 🛡 Pay-on-Success Escrow
+  [h6->h3] 🎯 AI-Verified Talent Only
+  [h6->h3] 💰 Free for Candidates
+  [h6->h3] 🌍 Borderless by Design
+  [h6->h3] 🔗 One Ecosystem, Not Many Apps
+  [h6->h3] Platform Built
+  [h6->h3] Global from Day One
+  [h6->h3] Built for Real Businesses
+  [h6->h3] The Next Chapter
+
+### career-engine.html (1 fixes)
+  [h5->h2] Two Platforms, One Journey
+
+### career-v2.html (6 fixes)
+  [h5->h2] 🔔 Create Job Alert
+  [h5->h2] 💾 Save Job
+  [h5->h2] 🏢 Follow Company
+  [h5->h2] 💰 Salary Insights
+  [h5->h2] 📅 Schedule Interview
+  [h5->h2] 📄 Track Offer
+
+### case-studies.html (1 fixes)
+  [h4->h2] Reduced Time-to-Hire by 60%
+
+### certificate.html (1 fixes)
+  [h3->h2] Certificate not found
+
+### cloud-waste-calculator.html (1 fixes)
+  [h3->h2] 📊 Calculate Your Cloud Waste
+
+### code-quality-checker.html (1 fixes)
+  [h4->h2] Paste Your Code
+
+### companies.html (21 fixes)
+  [h6->h2] TCS
+  [h6->h2] Infosys
+  [h6->h2] Cognizant
+  [h6->h2] Wipro
+  [h6->h2] Accenture
+  [h6->h2] Capgemini
+  [h6->h2] IBM
+  [h6->h2] HCLTech
+  [h6->h2] Tech Mahindra
+  [h6->h2] LTI
+  [h6->h2] Mindtree
+  [h6->h2] Deloitte
+  [h6->h2] KPMG
+  [h6->h2] EY
+  [h6->h2] PwC
+  [h6->h2] Amazon
+  [h6->h2] Google
+  [h6->h2] Microsoft
+  [h4->h3] Select a company to see available patterns
+  [h4->h3] ' + esc(result.company) + ' &mdash; Available Patterns
+  [h5->h4] ' + esc(section.name) + ' <small class="text-muted">(' + section.questions.lengt
+
+### contract-risk-radar.html (1 fixes)
+  [h4->h2] 🔍 Scan Your Contract
+
+### cookie-policy.html (5 fixes)
+  [h4->h2] 1. What Are Cookies
+  [h4->h2] 2. Types of Cookies We Use
+  [h4->h2] 3. Your Choices
+  [h4->h2] 4. Third-Party Cookies
+  [h4->h2] 5. Contact
+
+### course-detail.html (2 fixes)
+  [h3->h2] Course not found
+  [h3->h2] 📚 About This Course
+
+### custom-assessment.html (2 fixes)
+  [h4->h2] Choose Your Assessment
+  [h5->h3] Question 1/5
+
+### dead-link-auditor.html (1 fixes)
+  [h4->h2] 🔍 Scan Your Website
+
+### demos.html (3 fixes)
+  [h5->h2] AI Tools Suite
+  [h5->h2] NA Module Walkthrough
+  [h5->h2] Career Engine
+
+### design-token-sentinel.html (7 fixes)
+  [h4->h3] What It Monitors
+  [h5->h4] Figma Sync
+  [h5->h4] GitHub Integration
+  [h5->h4] Multi-Domain Scan
+  [h5->h4] WCAG Checker
+  [h4->h3] ⭐ Pro
+  [h4->h3] 🏢 Enterprise
+
+### developer-entropy.html (3 fixes)
+  [h4->h3] What It Tracks
+  [h4->h3] Free Assessment
+  [h4->h3] Continuous
+
+### developer-signup.html (1 fixes)
+  [h3->h2] Developer Registration
+
+### digital-health-checker.html (1 fixes)
+  [h4->h2] 🔍 Scan Your Website
+
+### final-year-project.html (7 fixes)
+  [h5->h2] Free
+  [h5->h3] Pro
+  [h5->h3] Premium
+  [h5->h3] 📝 Get Project Topics
+  [h5->h3] 📄 Generate Proposal
+  [h5->h3] 📚 Generate Documentation
+  [h5->h3] 🎤 Viva Preparation
+
+### forgot-password.html (1 fixes)
+  [h3->h2] 🔐 Forgot Password
+
+### geo-compliance.html (6 fixes)
+  [h4->h3] What It Covers
+  [h5->h4] 50+ Countries
+  [h5->h4] Auto-Contracts
+  [h5->h4] Escrow Protected
+  [h5->h4] 13 Currencies
+  [h4->h3] 🔄 Managed Payroll
+
+### globalize.html (7 fixes)
+  [h4->h3] What Globalize.ai Does
+  [h5->h4] 34 Languages
+  [h5->h4] Cultural Adaptation
+  [h5->h4] Auto-Compliance
+  [h5->h4] 1 Script Tag
+  [h4->h3] Growth
+  [h4->h3] Enterprise
+
+### help.html (4 fixes)
+  [h5->h2] 📧 Email Support
+  [h5->h2] 📞 Phone
+  [h5->h2] 💬 Live Chat
+  [h4->h3] Frequently Asked Questions
+
+### hire-talent.html (1 fixes)
+  [h3->h2] Tell Us Your Requirements
+
+### how-it-works.html (8 fixes)
+  [h5->h2] 1. POST
+  [h5->h2] 2. AI MATCH
+  [h5->h2] 3. TEST
+  [h5->h2] 4. HIRE
+  [h5->h2] 1. JOIN
+  [h5->h2] 2. VERIFY
+  [h5->h2] 3. EXPERIENCE
+  [h5->h2] 4. GET HIRED
+
+### interview-session.html (5 fixes)
+  [h3->h2] Session not found
+  [h3->h2] Loading question...
+  [h5->h3] ✅ AI Feedback
+  [h6->h4] 💪 Strengths
+  [h6->h4] 📈 Improvements
+
+### invoice.html (4 fixes)
+  [h4->h2] 📄 Invoice Generated
+  [h4->h2] Charvak IT Consulting Pvt Ltd
+  [h5->h3] Bill To:
+  [h6->h4] Payment Instructions:
+
+### legacy-shift.html (6 fixes)
+  [h4->h3] What It Does
+  [h5->h4] Old → New
+  [h5->h4] Secure by Default
+  [h5->h4] 10x Faster
+  [h5->h4] Auto-Tested
+  [h4->h3] ⚡ Full Migration
+
+### lms.html (9 fixes)
+  [h5->h2] ⭐ Rate a Course
+  [h5->h2] 📝 Take a Quiz
+  [h5->h2] 📜 Get Certificate
+  [h5->h2] 💬 Discussion Forum
+  [h5->h2] 📊 Check Progress
+  [h5->h2] 🤖 AI Recommendations
+  [h5->h2] 🎬 Add Video Lesson
+  [h5->h2] 💰 Request Payout
+  [h5->h2] 🔍 Search Courses
+
+### lock-in-breaker-pricing.html (3 fixes)
+  [h4->h2] 🔍 Free Cloud Audit
+  [h4->h3] ⚡ One-Time Migration
+  [h4->h3] 🛡️ Continuous Protection
+
+### lock-in-breaker.html (1 fixes)
+  [h4->h3] How It Works
+
+### mcq.html (5 fixes)
+  [h5->h2] 🧮 Aptitude
+  [h5->h2] 💻 Technical CS
+  [h5->h2] 🔍 Pseudocode
+  [h5->h2] 🌐 Domain
+  [h4->h3] Loading questions...
+
+### micro-squads.html (5 fixes)
+  [h5->h3] Define Your Sprint
+  [h5->h3] Squad Assembles
+  [h5->h3] 14-Day Delivery
+  [h4->h3] ⚡ Growth Squad
+  [h4->h3] 🏢 Enterprise
+
+### my-course.html (9 fixes)
+  [h3->h2] Loading topic...
+  [h4->h3] Unlock this week
+  [h5->h4] 📖 Explanation
+  [h5->h4] 💡 Code Examples
+  [h5->h4] 🏋️ Practice Exercises
+  [h5->h4] 🎯 Key Takeaways
+  [h5->h4] 🎓 Certificate Name
+  [h5->h4] 🎉 Complete Course?
+  [h5->h4] 📊 Course Stats
+
+### na-client-signup.html (1 fixes)
+  [h4->h2] Client Registration
+
+### neural-wireframe.html (4 fixes)
+  [h5->h3] Upload Your Sketch
+  [h5->h3] AI Parses the Layout
+  [h5->h3] Production Code Generated
+  [h5->h3] Go Live with One Click
+
+### online-classroom.html (4 fixes)
+  [h4->h2] Live Video Session
+  [h4->h2] Course Materials
+  [h4->h2] Progress Tracker
+  [h4->h2] Certificate of Completion
+
+### outreach.html (4 fixes)
+  [h5->h2] 🔍 Cold Email Finder
+  [h5->h2] 📬 Gmail Sync
+  [h5->h2] 📋 Auto-Track Application
+  [h5->h2] 🔓 Unlock All Outreach Tools
+
+### partner-verification.html (1 fixes)
+  [h4->h2] Partner Registration
+
+### payments.html (2 fixes)
+  [h5->h2] Payment Status
+  [h5->h2] Payment Methods
+
+### post-course.html (1 fixes)
+  [h4->h2] Course Details
+
+### post-job.html (5 fixes)
+  [h4->h2] Job Details
+  [h6->h3] 🆓 Free
+  [h6->h5] 🚀 Starter
+  [h6->h5] ⭐ Growth
+  [h6->h5] 💼 Pro
+
+### post-micro-project.html (1 fixes)
+  [h4->h2] Project Details
+
+### privacy.html (3 fixes)
+  [h4->h2] 1. Information We Collect
+  [h5->h3] 1.1 Personal Information
+  [h5->h3] 1.2 Automatically Collected Information
+
+### profile-network.html (3 fixes)
+  [h5->h2] 📋 Master Profile
+  [h5->h2] 🎓 Alumni Network
+  [h5->h2] 🤝 Referral Matchmaking
+
+### refund.html (5 fixes)
+  [h4->h2] 1. Overview
+  [h4->h2] 2. Dokets VouchAI - Escrow Transactions
+  [h5->h3] 2.1 Transaction Cancellation
+  [h5->h3] 2.2 Refund Process
+  [h5->h3] 2.3 Service Fee (1%)
+
+### reports.html (3 fixes)
+  [h5->h2] 📝 Generate Report
+  [h5->h2] 🔍 Verify Report
+  [h5->h2] 📂 My Reports
+
+### request-content.html (2 fixes)
+  [h4->h2] Content Request Form
+  [h5->h3] 📧 Contact Admin
+
+### request-training.html (1 fixes)
+  [h4->h2] What Do You Want to Learn?
+
+### revenue-leak-detector.html (1 fixes)
+  [h4->h2] 🔍 Check Your Global Reach
+
+### reverse-staffing.html (4 fixes)
+  [h4->h3] How It Works
+  [h4->h3] 👨‍💻 For Developers
+  [h4->h3] 🏢 For Companies
+  [h4->h3] 🔄 Subscription
+
+### roles.html (17 fixes)
+  [h5->h2] Software Developer
+  [h5->h2] Full Stack Developer
+  [h5->h2] Frontend Developer
+  [h5->h2] Backend Developer
+  [h5->h2] Data Scientist
+  [h5->h2] Data Analyst
+  [h5->h2] ML Engineer
+  [h5->h2] DevOps Engineer
+  [h5->h2] Cloud Architect
+  [h5->h2] Cybersecurity Analyst
+  [h5->h2] QA Engineer
+  [h5->h2] Mobile Developer
+  [h4->h3] 🔍 Complete Skill Analysis
+  [h5->h4] ✅ AI Analysis Complete!
+  [h6->h5] 🎯 Recommended Roles:
+  [h6->h5] 💡 Learning Recommendations:
+  [h6->h5] 📈 Career Advice:
+
+### scope-simulator.html (1 fixes)
+  [h4->h2] 📋 Describe Your Project
+
+### silent-killer.html (6 fixes)
+  [h4->h3] What It Monitors 24/7
+  [h5->h4] Every 5 Minutes
+  [h5->h4] Instant Alerts
+  [h5->h4] Auto-Hotfix
+  [h5->h4] Zero False Alarms
+  [h4->h3] 🛡️ Continuous
+
+### skill-twin.html (5 fixes)
+  [h5->h3] Choose Your Stack
+  [h5->h3] Face the AI Simulator
+  [h5->h3] Get Your Scorecard
+  [h4->h3] ⭐ Verified Badge
+  [h4->h3] 🏢 Enterprise
+
+### staff-augmentation.html (5 fixes)
+  [h3->h2] Our IT Staffing Solutions and Services
+  [h5->h3] Direct Hire
+  [h5->h3] Contract or Temporary Hiring
+  [h5->h3] Contract-to-Hire
+  [h5->h3] Hybrid Staffing Model
+
+### team-dashboard.html (5 fixes)
+  [h5->h2] Team Plans
+  [h6->h3] Small Team
+  [h6->h4] Growing Team
+  [h5->h4] Create Team
+  [h5->h4] Invite Member
+
+### team-entropy-scorecard.html (1 fixes)
+  [h4->h2] Assess Your Team
+
+### team.html (11 fixes)
+  [h6->h3] Innovative
+  [h6->h3] Collaborative
+  [h6->h3] Transparent
+  [h6->h3] Accountable
+  [h6->h3] Quality
+  [h6->h3] Client-Centric
+  [h6->h3] Analyze
+  [h6->h3] Strategy
+  [h6->h3] Feasibility
+  [h6->h3] Teams
+  [h6->h3] Cost-Effective
+
+### terms.html (12 fixes)
+  [h4->h2] 1. Introduction
+  [h4->h2] 2. Company Information
+  [h4->h2] 3. Services Description
+  [h4->h2] 4. Escrow Services (Dokets VouchAI)
+  [h4->h2] 5. User Obligations
+  [h4->h2] 6. Limitation of Liability
+  [h4->h2] 7. Intellectual Property
+  [h4->h2] 8. Privacy
+  [h4->h2] 9. Termination
+  [h4->h2] 10. Changes to Terms
+  [h4->h2] 11. Governing Law
+  [h4->h2] 12. Contact
+
+### time-machine-checker.html (3 fixes)
+  [h4->h2] 🏺 Enter Your Legacy Site
+  [h5->h4] Before
+  [h5->h4] After (Estimated)
+
+### training-engine.html (4 fixes)
+  [h3->h2] Interview Cleared - Upgrade
+  [h3->h2] Interview Not Cleared - Reskill
+  [h3->h2] Course Marketplace
+  [h5->h3] Advanced FastAPI Development
+
+### training.html (2 fixes)
+  [h4->h2] Phase 1
+  [h5->h3] 🔍 AI Diagnostic
+
+### university.html (6 fixes)
+  [h6->h2] Starter
+  [h6->h4] Growth
+  [h6->h4] Enterprise
+  [h5->h4] Register Your University
+  [h5->h4] Register Your University
+  [h5->h4] What You Get
+
+### voice-to-web.html (3 fixes)
+  [h5->h3] Record a 60-Second Voice Note
+  [h5->h3] AI Builds Your Website
+  [h5->h3] Go Live Instantly
+
+### web-design.html (4 fixes)
+  [h3->h2] Web and Mobile App Development Services
+  [h4->h3] Our CMS Expertise
+  [h4->h3] Our Technology Stack
+  [h5->h4] Programming Languages
