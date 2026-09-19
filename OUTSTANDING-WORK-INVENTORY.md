@@ -108,7 +108,7 @@
 
 | # | Item |
 |---|---|
-| 45 | Fix heading order on remaining pages |
+| 45 | ~~Fix heading order on remaining pages~~ **[DEFERRED - scope reevaluated: 142 templates, ~250 violations, needs dedicated a11y session + CSS audit]** | DEFERRED |
 | 46 | TBT ~1,900ms mobile |
 | 47 | ~~Emoji icons in docstrings~~ **[ALREADY RESOLVED - na_module files 100% ASCII; remaining emoji are user-facing/logger/icon-data]** | DONE |
 | 48 | ~~Mojibake in notification_engine.py subject~~ **[ALREADY RESOLVED - emoji are real UTF-8]** | DONE |
