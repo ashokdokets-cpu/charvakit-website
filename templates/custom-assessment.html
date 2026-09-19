@@ -21,7 +21,7 @@
         <div class="tab-pane fade show active" id="takeAssessment">
             <div class="row"><div class="col-lg-7 mx-auto">
                 <div class="card border-0 shadow-sm p-4 mb-3">
-                    <h4>Choose Your Assessment</h4>
+                    <h2 class="as-h4">Choose Your Assessment</h2>
                     <div class="mb-3"><label class="form-label">Select Stack</label>
                         <select class="form-select" id="assessmentStack" onchange="loadCustomStacks()">
                             <option value="">Loading stacks...</option>
@@ -30,7 +30,7 @@
                     <button class="btn btn-primary btn-lg w-100" onclick="startCustomAssessment()">Start Assessment</button>
                 </div>
                 <div class="card border-0 shadow-sm p-4 d-none" id="customQuestionCard">
-                    <h5 id="customQNum">Question 1/5</h5>
+                    <h3 class="as-h5" id="customQNum">Question 1/5</h3>
                     <p class="lead mb-3" id="customQuestion"></p>
                     <div id="customOptions"></div>
                     <button class="btn btn-primary mt-3" onclick="nextCustomQuestion()">Next</button>
