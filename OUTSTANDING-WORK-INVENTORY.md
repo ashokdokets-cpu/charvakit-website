@@ -128,7 +128,7 @@
 | 55 | ~~Document full charvak_* schema in MASTER-REFERENCE.md~~ **FIXED 2026-09-19** - SCHEMA.md (128 tables auto-generated) + generator script + MASTER-REFERENCE link | DONE |
 | 56 | Root directory final reorg |
 | 57 | ~~Delete wget.exe if reappeared~~ **[ALREADY RESOLVED - not present]** | DONE |
-| 58 | Add git status check to session start |
+| 58 | ~~Add git status check to session start~~ **FIXED 2026-09-19** - added to DEV-SETUP.md | DONE |
 
 ---
 
@@ -157,7 +157,7 @@
 | # | Item |
 |---|---|
 | 68 | ~~Update STATUS.md at end of every session~~ **FIXED 2026-09-19** - refreshed to Session K status | DONE |
-| 69 | Keep TIER3-PERSISTENCE-PROJECT.md in sync |
+| 69 | ~~Keep TIER3-PERSISTENCE-PROJECT.md in sync~~ **FIXED 2026-09-19** - updated with B-3/B-4 status | DONE |
 | 70 | Add markdown-emoji hygiene rule to DEV-SETUP.md |
 | 71 | Add smoke-test safety gate to DEV-SETUP.md |
 | 72 | Consolidate doc sprawl |
