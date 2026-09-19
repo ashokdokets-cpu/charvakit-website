@@ -138,7 +138,7 @@
 
 
 - **#86** Product audit trail (deferred feature) — products_engine is stateless; if business wants an audit trail, needs: table `charvak_product_results`, INSERT in 11 methods, read endpoint `/api/products/results`, filter UI. Est ~3 hr.
-- **#87** Notification retention policy — charvak_notifications grows unbounded; add nightly archive/delete job (e.g., >90 days). Est ~1 hr.
+- **#87** ~~Notification retention policy~~ **[FIXED 2026-09-20 - scripts/cleanup_notifications.py; Render cron pending]**
 
 
 | # | Item |
