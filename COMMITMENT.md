@@ -3,7 +3,7 @@
 **Purpose:** Track every planned-but-not-completed item. Nothing gets lost again.
 **Created:** 2026-09-20
 **Last updated:** 2026-09-21
-**HEAD:** `c3dc68a`
+**HEAD:** `8951c9b`
 
 ---
 
@@ -40,13 +40,21 @@
 - **Target:** Session B-2
 - **Status:** SKIPPED on 2026-09-21 in favor of C1. Re-schedule per priority.
 
-### C3 — RTL UI support
+### C3 — RTL UI support — DEFERRED 2026-09-21
 
-- **Discovered:** 2026-09-20 (base.html has `<html lang="en">` hardcoded)
-- **Issue:** Arabic users see LTR layout despite `dir="rtl"` in language config
-- **Action:** Add dynamic `dir` attribute + RTL CSS
-- **Est:** ~1.5 hr
-- **Target:** Session G4  ← NEXT
+- **Discovered:** 2026-09-20 (`base.html` has `<html lang="en">` hardcoded)
+- **Original issue:** Arabic users see LTR layout despite `dir="rtl"` in config
+- **Why deferred:** Only 1 of 34 languages is RTL (`ar`). No evidence of an
+  Arabic-speaking user base in any project doc. RTL-layout-with-English-text
+  is worse UX than clean LTR — the right sequence is C6 (content i18n) FIRST,
+  then C3.
+- **Escalation trigger (any of):**
+  1. A real Arabic-speaking user or customer appears
+  2. Sales/marketing targets MENA region
+  3. C6 (assessment UI translations) ships — then C3 makes sense as follow-up
+- **When triggered:** ~2 hr (dynamic `lang`/`dir`, bootstrap RTL swap,
+  cookie picker, ~2 CSS overrides in `static/css/style.css`)
+- **Verdict:** DEFERRED (product decision — no current user base)
 
 ### C4 — Adaptive difficulty
 
@@ -130,15 +138,19 @@
 
 ## 📋 EXECUTION ORDER (revised 2026-09-21)
 
-1. ~~**Session B-2**~~ — voice_to_web persistence (C2) ~1 hr  [SKIPPED — user chose G1 first]
-2. ~~**Session G1**~~ — Assessment AI for 34 languages (C1) ~1.5 hr  ✅ DONE 2026-09-21
-3. **Session G4** — RTL UI (C3) ~1.5 hr  ← START HERE
-4. **Session G2** — Adaptive difficulty (C4) ~2 hr
+1. ~~**Session B-2**~~ — voice_to_web persistence (C2)  [SKIPPED, re-schedule later]
+2. ~~**Session G1**~~ — Assessment AI for 34 languages (C1)  ✅ DONE 2026-09-21
+3. ~~**Session G4**~~ — RTL UI (C3)  [DEFERRED 2026-09-21 — no Arabic user base]
+4. **Session G2** — Adaptive difficulty (C4) ~2.5-3 hr  ← START HERE
 5. **Session G3** — Question banks (C5) ~2-3 hr
 6. **Session G5** — Assessment i18n (C6) ~1.5 hr
 
-**Remaining: ~8.5-9 hr across 5 sessions** (C2 still pending, not in this sequence)
+**Remaining: ~6-7.5 hr across 3 sessions** (C2, C3 parked)
 
+**Dead code cleanup completed 2026-09-21 (Session G2-pre):**
+- Deleted `assessment_complete.py` (in-memory stub, zero frontend callers)
+- Removed 5 orphaned `/api/assessment/*` routes from `main.py`
+- Commits: `bdf32fa`, `8951c9b`
 ---
 
 ## 🧠 PROCESS LESSONS LEARNED
@@ -174,6 +186,16 @@ Session G1 deleted all `.bak` backups before the final commit.
 Nothing was lost because git tracked the change, but the safety margin was thin.
 **Rule: delete `.bak` files only after `git push` succeeds.**
 
+### L4 — `git rm <file>` does not stage other working-tree changes
+
+`git rm assessment_complete.py` stages only that file's deletion. Any other
+modified files (`main.py` in this case) need explicit `git add`. Always check
+`git status --short` before committing — files marked ` M` in the second
+column are modified but NOT staged.
+
+`git commit` without `-a` only commits staged changes. Verify with
+`git show --stat HEAD` after each commit that the expected files landed.
+
 ---
 
 ## PROCESS COMMITMENT
@@ -189,4 +211,4 @@ Nothing was lost because git tracked the change, but the safety margin was thin.
 ---
 
 **Last updated:** 2026-09-21
-**Next update:** after Session G4
+**Next update:** after Session G2
