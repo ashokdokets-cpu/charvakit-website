@@ -3,7 +3,7 @@
 **Purpose:** Track every planned-but-not-completed item. Nothing gets lost again.
 **Created:** 2026-09-20
 **Last updated:** 2026-09-21
-**HEAD:** `8951c9b`
+**HEAD:** `15193f9`
 
 ---
 
@@ -26,6 +26,29 @@
   returned native-script questions (5 each)
 - **Note:** `_generate_questions_static` deliberately still covers only 12 Indian
   languages. Non-Indian + AI failure returns `[]`, so caller falls back explicitly.
+
+---
+
+### C4 — Adaptive difficulty
+
+- **Completed:** 2026-09-21 (Session G2) — commit `15193f9`
+- **What shipped:**
+  - New `charvak_user_ability` table (migration + engine self-init)
+  - New `ability_engine.py` — Elo math, `get_ability`,
+    `update_from_assessment`, `get_recommended_difficulty`, `recommend_difficulty`
+  - `results_system.record_assessment_result` accepts optional `skill=`;
+    when set, updates ability post-insert (non-fatal on failure)
+  - `complete_mock_drive.complete_mock` passes `skill=mock_{company_id}`
+  - `enhanced_assessment_engine.create_custom_assessment` and
+    `generate_topic_questions` accept `email=` and use ability-recommended
+    difficulty when caller omits it
+  - `main.py` routes `/api/enhanced/*` forward `difficulty` + `email`
+- **Verified:**
+  - Local Elo math (8/10 → +7.2, 2/10 → −7.45)
+  - Prod table exists with all columns + PK `(email, skill)` + 2 indexes
+- **Not in scope (Phase 2):** mock drives still generate at fixed difficulty.
+  Ability only read by `/api/enhanced/*` today.
+- **Backwards compatible:** existing callers see no behavior change.
 
 ---
 
@@ -56,13 +79,6 @@
   cookie picker, ~2 CSS overrides in `static/css/style.css`)
 - **Verdict:** DEFERRED (product decision — no current user base)
 
-### C4 — Adaptive difficulty
-
-- **Discovered:** 2026-09-20 (no `user_ability` table)
-- **Issue:** Marketing claims "adaptive learning" but every user gets same difficulty
-- **Action:** Add `charvak_user_ability` table + Elo-style logic
-- **Est:** ~2 hr
-- **Target:** Session G2
 
 ### C5 — Curated question banks
 
@@ -141,11 +157,11 @@
 1. ~~**Session B-2**~~ — voice_to_web persistence (C2)  [SKIPPED, re-schedule later]
 2. ~~**Session G1**~~ — Assessment AI for 34 languages (C1)  ✅ DONE 2026-09-21
 3. ~~**Session G4**~~ — RTL UI (C3)  [DEFERRED 2026-09-21 — no Arabic user base]
-4. **Session G2** — Adaptive difficulty (C4) ~2.5-3 hr  ← START HERE
-5. **Session G3** — Question banks (C5) ~2-3 hr
+4. ~~**Session G2**~~ — Adaptive difficulty (C4)  ✅ DONE 2026-09-21 (commit `15193f9`)
+5. **Session G3** — Question banks (C5) ~2-3 hr  ← START HERE
 6. **Session G5** — Assessment i18n (C6) ~1.5 hr
 
-**Remaining: ~6-7.5 hr across 3 sessions** (C2, C3 parked)
+**Remaining: ~4-5 hr across 2 sessions** (C2, C3 parked)
 
 **Dead code cleanup completed 2026-09-21 (Session G2-pre):**
 - Deleted `assessment_complete.py` (in-memory stub, zero frontend callers)
@@ -196,6 +212,35 @@ column are modified but NOT staged.
 `git commit` without `-a` only commits staged changes. Verify with
 `git show --stat HEAD` after each commit that the expected files landed.
 
+### L5 — `ast.parse()` is stricter than Python's real import
+
+`ast.parse(open(path).read())` fails on files with UTF-8 BOM (`EF BB BF`),
+raising `SyntaxError: invalid non-printable character U+FEFF`. But
+`import module_name` succeeds — Python accepts BOM at start of source files.
+
+**Rule:** use `python -c "import X"` for syntax validation. Reserve
+`ast.parse` for cases where the string doesn't have a BOM, or strip the
+BOM first.
+
+**Note:** `results_system.py` has a pre-existing BOM (unrelated to G2).
+No action taken; if a future housekeeping session wants a repo-wide BOM
+sweep, grep files whose first 3 bytes are `EF BB BF`.
+
+### L6 — Multi-insert patchers must go strictly bottom-up
+
+When a patch inserts lines at multiple positions in the same file, apply
+edits in **strictly descending index order** (highest first). An insert at
+index 49 shifts every subsequent index — so an "insert at 48" that follows
+it lands 2 lines off and can break the file.
+
+**Session G2 evidence:** the first Batch-3 patcher for
+`enhanced_assessment_engine.py` failed exactly this way (`'{' was never
+closed`). Rolled back cleanly with `git checkout --`. The corrected patcher
+applied ops in reverse index order and worked first try.
+
+**Rule:** for multi-edit patchers, iterate indices in descending order,
+or operate on string matches rather than line indices.
+
 ---
 
 ## PROCESS COMMITMENT
@@ -211,4 +256,4 @@ column are modified but NOT staged.
 ---
 
 **Last updated:** 2026-09-21
-**Next update:** after Session G2
+**Next update:** after Session G3
