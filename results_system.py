@@ -46,7 +46,7 @@ class ResultsReportingSystem:
             logger.error(f"results tables init failed: {e}")
 
 
-    def record_assessment_result(self, email, assessment_type, assessment_name, score, total_questions, correct_answers, details=None):
+    def record_assessment_result(self, email, assessment_type, assessment_name, score, total_questions, correct_answers, details=None, skill=None):
         """Record any assessment result. Persists to Postgres."""
         result_id = "RES-" + secrets.token_hex(6).upper()
         percentage = round((correct_answers / total_questions * 100) if total_questions > 0 else 0, 1)
@@ -78,6 +78,20 @@ class ResultsReportingSystem:
                 "details": details or {},
                 "completed_at": datetime.now().isoformat(),
             }
+
+            # Session G2 (C4): adaptive ability update (optional, non-fatal)
+            if skill and email:
+                try:
+                    from ability_engine import ability_engine
+                    ability_engine.update_from_assessment(
+                        email=email,
+                        skill=skill,
+                        correct=int(correct_answers or 0),
+                        total=int(total_questions or 0),
+                        difficulty="medium",
+                    )
+                except Exception as e:
+                    logger.warning(f"ability update failed: {e}")
             return {"status": "success", "result": result}
         except Exception as e:
             logger.error(f"record_assessment_result failed: {e}")

@@ -109,3 +109,10 @@ audits/
 *.py.bak-*
 *.py.bak2_*
 *.py.bak3_*
+
+# Session patcher scripts (throwaway)
+_g1_patch*.py
+_g1_patcher*.py
+_g2_patch*.py
+_g2_batch*.py
+_delete_dead.py

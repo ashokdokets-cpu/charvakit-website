@@ -46,7 +46,20 @@ class EnhancedAssessmentEngine:
             })
         return {"status": "success", "total": len(companies), "companies": companies}
     
-    def create_custom_assessment(self, company_name, topics, difficulty="medium", count=10):
+    def _recommend_difficulty(self, email, topics):
+        """Session G2 (C4): prefer ability-based difficulty when caller does not specify."""
+        if not email:
+            return "medium"
+        try:
+            from ability_engine import ability_engine
+            skill_key = topics[0] if isinstance(topics, list) and topics else "general"
+            return ability_engine.get_recommended_difficulty(email, skill_key)
+        except Exception:
+            return "medium"
+
+    def create_custom_assessment(self, company_name, topics, difficulty=None, count=10, email=None):
+        if difficulty is None:
+            difficulty = self._recommend_difficulty(email, topics)
         assessment_id = f"ASSESS-{datetime.now().strftime('%Y%m%d%H%M%S')}"
         return {
             "status": "success",
@@ -58,7 +71,9 @@ class EnhancedAssessmentEngine:
             "ai_generated": True
         }
     
-    def generate_topic_questions(self, topic, count=10, difficulty="medium"):
+    def generate_topic_questions(self, topic, count=10, difficulty=None, email=None):
+        if difficulty is None:
+            difficulty = self._recommend_difficulty(email, [topic] if topic else None)
         questions = self._generate_ai_questions(topic, count, difficulty)
         return {
             "status": "success",
