@@ -430,6 +430,28 @@ class ProductsEngine:
             "created_at": datetime.now().isoformat()
         }
 
+        # #60 Level 1: AI-enhanced agency automation analysis
+        ai_analysis = self._ai_agency_twin_analysis(
+            data.get("agency_name", "Agency"), clients, revenue
+        )
+        if ai_analysis:
+            if ai_analysis.get("automation_opportunities"):
+                result["automation_opportunities"] = ai_analysis["automation_opportunities"]
+                result["total_time_saved_monthly"] = sum(
+                    o.get("time_saved_hrs", 0) for o in ai_analysis["automation_opportunities"]
+                )
+            if ai_analysis.get("projected_revenue_increase") is not None:
+                result["projected_revenue_increase"] = ai_analysis["projected_revenue_increase"]
+            if ai_analysis.get("verdict"):
+                result["verdict"] = ai_analysis["verdict"]
+            if ai_analysis.get("priority_actions"):
+                result["priority_actions"] = ai_analysis["priority_actions"]
+            if ai_analysis.get("implementation_roadmap"):
+                result["implementation_roadmap"] = ai_analysis["implementation_roadmap"]
+            result["analysis_mode"] = "ai_enhanced"
+        else:
+            result["analysis_mode"] = "heuristic_only"
+
         self._log_result("agency_twin", data, result)
         return {"status": "success", **result}
     
@@ -647,8 +669,144 @@ class ProductsEngine:
             "created_at": datetime.now().isoformat()
         }
 
+        # #60 Level 1: AI-enhanced team entropy analysis
+        ai_analysis = self._ai_developer_entropy_analysis(team_size, tenure, tech_age, entropy_score)
+        if ai_analysis:
+            if ai_analysis.get("upskilling_plan"):
+                result["upskilling_plan"] = ai_analysis["upskilling_plan"]
+            if ai_analysis.get("verdict"):
+                result["verdict"] = ai_analysis["verdict"]
+            if ai_analysis.get("risk_factors"):
+                result["risk_factors"] = ai_analysis["risk_factors"]
+            if ai_analysis.get("priority_actions"):
+                result["priority_actions"] = ai_analysis["priority_actions"]
+            if ai_analysis.get("estimated_recovery_time_months") is not None:
+                result["estimated_recovery_time_months"] = ai_analysis["estimated_recovery_time_months"]
+            result["analysis_mode"] = "ai_enhanced"
+        else:
+            result["analysis_mode"] = "heuristic_only"
+
         self._log_result("developer_entropy", data, result)
         return {"status": "success", **result}
+
+    def _ai_agency_twin_analysis(self, agency_name: str, clients: int, revenue: float) -> Optional[Dict]:
+        """#60 Level 1: AI-powered agency automation analysis. Returns None on failure."""
+        api_key = os.getenv("OPENAI_API_KEY", "")
+        if not api_key:
+            return None
+        try:
+            import requests
+            import json as _json
+
+            prompt = (
+                f"You are an operations automation consultant for recruitment/staffing agencies.\n\n"
+                f"Agency: {agency_name}\n"
+                f"Clients: {clients}\n"
+                f"Monthly revenue: ${revenue:,.0f}\n\n"
+                f"Analyze which workflows should be automated for THIS specific agency scale. Reason about:\n"
+                f"- The agency's size (small <10 clients, mid 10-50, large 50+)\n"
+                f"- The revenue-per-client ratio to identify high-value automations first\n"
+                f"- Which workflows save the most time and money given the current scale\n\n"
+                f"Return JSON: {{\n"
+                f"  \"automation_opportunities\": [\n"
+                f"    {{\"area\": \"specific workflow\", \"time_saved_hrs\": realistic_hours_monthly, "
+                f"\"automation_level\": \"FULL|PARTIAL|AI-POWERED\", \"priority\": \"HIGH|MEDIUM|LOW\", "
+                f"\"tooling\": [\"specific tools like Zapier, Make, n8n\"], "
+                f"\"rationale\": \"why this for this agency scale\"}},\n"
+                f"    ... (4-6 opportunities sorted by priority)\n"
+                f"  ],\n"
+                f"  \"projected_revenue_increase\": realistic_monthly_dollar_increase,\n"
+                f"  \"verdict\": \"1-2 sentence overview\",\n"
+                f"  \"priority_actions\": [\"3-4 actions to take first\", ...],\n"
+                f"  \"implementation_roadmap\": [\n"
+                f"    {{\"phase\": \"Phase 1: ...\", \"duration_weeks\": N, "
+                f"\"actions\": [\"specific actions\"], \"expected_outcome\": \"measurable result\"}},\n"
+                f"    ... (2-3 phases)\n"
+                f"  ]\n"
+                f"}}"
+            )
+            response = requests.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers={"Authorization": f"Bearer {api_key}"},
+                json={
+                    "model": "gpt-4o-mini",
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": 0.5,
+                    "response_format": {"type": "json_object"},
+                },
+                timeout=30,
+            )
+            data_resp = response.json()
+            content = (data_resp.get("choices", [{}])[0].get("message", {}).get("content") or "").strip()
+            if content.startswith("```"):
+                content = content.split("```", 2)[1]
+                if content.startswith("json"):
+                    content = content[4:]
+                content = content.strip()
+            parsed = _json.loads(content)
+            if isinstance(parsed, dict) and "automation_opportunities" in parsed:
+                return parsed
+            return None
+        except Exception as e:
+            logger.error(f"AI agency twin analysis failed: {e}")
+            return None
+
+    def _ai_developer_entropy_analysis(self, team_size: int, tenure: float, tech_age: int, entropy_score: int) -> Optional[Dict]:
+        """#60 Level 1: AI-powered team entropy / skill decay analysis. Returns None on failure."""
+        api_key = os.getenv("OPENAI_API_KEY", "")
+        if not api_key:
+            return None
+        try:
+            import requests
+            import json as _json
+
+            # Classify team size
+            size_label = "small team" if team_size < 10 else "mid-size team" if team_size < 50 else "large team"
+
+            prompt = (
+                f"You are an engineering org health consultant.\n\n"
+                f"Team: {team_size} people ({size_label})\n"
+                f"Avg tenure: {tenure} years\n"
+                f"Tech stack age: {tech_age} years\n"
+                f"Entropy score: {entropy_score}/100 (higher = more skill decay risk)\n\n"
+                f"Analyze THIS specific team's situation. Key risk factors to consider:\n"
+                f"- Long tenure can mean stuck knowledge / lack of fresh blood\n"
+                f"- Short tenure + old stack = onboarding friction and skill gap\n"
+                f"- Old tech stack (>{tech_age} yrs) = obsolescence risk if not actively updated\n"
+                f"- Compare against {size_label} best practices\n\n"
+                f"Return JSON: {{\n"
+                f"  \"upskilling_plan\": [\"4-6 specific actions tailored to this team's actual situation\", ...],\n"
+                f"  \"verdict\": \"1-2 sentence honest assessment\",\n"
+                f"  \"risk_factors\": [\"3-5 specific risk factors based on the given numbers\", ...],\n"
+                f"  \"priority_actions\": [\"3-4 immediate priorities\", ...],\n"
+                f"  \"estimated_recovery_time_months\": integer (months to stabilize if plan is followed)\n"
+                f"}}"
+            )
+            response = requests.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers={"Authorization": f"Bearer {api_key}"},
+                json={
+                    "model": "gpt-4o-mini",
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": 0.5,
+                    "response_format": {"type": "json_object"},
+                },
+                timeout=30,
+            )
+            data_resp = response.json()
+            content = (data_resp.get("choices", [{}])[0].get("message", {}).get("content") or "").strip()
+            if content.startswith("```"):
+                content = content.split("```", 2)[1]
+                if content.startswith("json"):
+                    content = content[4:]
+                content = content.strip()
+            parsed = _json.loads(content)
+            if isinstance(parsed, dict) and "upskilling_plan" in parsed:
+                return parsed
+            return None
+        except Exception as e:
+            logger.error(f"AI developer entropy analysis failed: {e}")
+            return None
 
     def _ai_geo_compliance_analysis(self, countries: List[str], service_type: str, payment_method: str) -> Optional[Dict]:
         """#60 Level 1: AI-powered geo compliance analysis. Returns None on failure."""
