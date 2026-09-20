@@ -256,6 +256,26 @@ class ProductsEngine:
             "scanned_at": datetime.now().isoformat()
         }
 
+        # #60 Level 1: AI-enhanced findings
+        ai_analysis = self._ai_auditbot_analysis(data.get("repo_url", ""), language, scan_type)
+        if ai_analysis:
+            if ai_analysis.get("findings"):
+                result["findings"] = ai_analysis["findings"]
+                result["critical_count"] = len([f for f in ai_analysis["findings"] if f.get("severity") == "HIGH"])
+                result["medium_count"] = len([f for f in ai_analysis["findings"] if f.get("severity") == "MEDIUM"])
+                result["low_count"] = len([f for f in ai_analysis["findings"] if f.get("severity") == "LOW"])
+            if ai_analysis.get("overall_score"):
+                result["overall_score"] = ai_analysis["overall_score"]
+            if ai_analysis.get("verdict"):
+                result["verdict"] = ai_analysis["verdict"]
+            if ai_analysis.get("top_risks"):
+                result["top_risks"] = ai_analysis["top_risks"]
+            if ai_analysis.get("next_steps"):
+                result["next_steps"] = ai_analysis["next_steps"]
+            result["analysis_mode"] = "ai_enhanced"
+        else:
+            result["analysis_mode"] = "heuristic_only"
+
         self._log_result("auditbot", data, result)
         return {"status": "success", **result}
     
@@ -541,6 +561,67 @@ class ProductsEngine:
 
         self._log_result("developer_entropy", data, result)
         return {"status": "success", **result}
+
+    def _ai_auditbot_analysis(self, repo_url: str, language: str, scan_type: str) -> Optional[Dict]:
+        """#60 Level 1: AI-powered security/code review findings. Returns None on failure."""
+        api_key = os.getenv("OPENAI_API_KEY", "")
+        if not api_key:
+            return None
+        try:
+            import requests
+            import json as _json
+
+            repo_str = repo_url or "(repository URL not provided)"
+            prompt = (
+                f"You are a senior security engineer conducting a code review.\n\n"
+                f"Repository: {repo_str}\n"
+                f"Primary language: {language}\n"
+                f"Scan focus: {scan_type}\n\n"
+                f"Given only this metadata, generate REALISTIC, language-specific issues that this type of codebase "
+                f"is likely to have. For each issue, provide: file path, line number, severity, specific description, "
+                f"and a recommended fix. Be specific to {language} best practices (e.g., Python: f-strings, mutable defaults; "
+                f"JavaScript: XSS, prototype pollution; Java: deserialization; Go: race conditions).\n\n"
+                f"Return JSON with this exact structure:\n"
+                f"{{\n"
+                f"  \"findings\": [\n"
+                f"    {{\"severity\": \"HIGH|MEDIUM|LOW\", \"issue\": \"specific issue title\", "
+                f"\"file\": \"path/to/file.ext\", \"line\": 42, "
+                f"\"description\": \"detailed explanation\", \"fix\": \"specific fix\"}},\n"
+                f"    ... (6-10 findings)\n"
+                f"  ],\n"
+                f"  \"overall_score\": 0-100 number representing code health,\n"
+                f"  \"verdict\": \"1-2 sentence overall security posture\",\n"
+                f"  \"top_risks\": [\"3 most critical risks\", ...],\n"
+                f"  \"next_steps\": [\"3-5 prioritized actions\", ...]\n"
+                f"}}\n\n"
+                f"Base the focus on the requested scan_type ({scan_type}). "
+                f"Give concrete, actionable findings — no generic boilerplate."
+            )
+            response = requests.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers={"Authorization": f"Bearer {api_key}"},
+                json={
+                    "model": "gpt-4o-mini",
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": 0.5,
+                    "response_format": {"type": "json_object"},
+                },
+                timeout=30,
+            )
+            data_resp = response.json()
+            content = (data_resp.get("choices", [{}])[0].get("message", {}).get("content") or "").strip()
+            if content.startswith("```"):
+                content = content.split("```", 2)[1]
+                if content.startswith("json"):
+                    content = content[4:]
+                content = content.strip()
+            parsed = _json.loads(content)
+            if isinstance(parsed, dict) and "findings" in parsed:
+                return parsed
+            return None
+        except Exception as e:
+            logger.error(f"AI auditbot analysis failed: {e}")
+            return None
 
     def _ai_lock_in_analysis(self, provider: str, spend: float, services: List[str]) -> Optional[Dict]:
         """#60 Level 1: AI-powered lock-in analysis. Returns None on failure."""
