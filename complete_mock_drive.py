@@ -395,14 +395,14 @@ class CompleteMockDrive:
             conn = db.get_connection()
             cur = conn.cursor()
             cur.execute("""
-                SELECT email, company_name, pattern, sections_json, total_questions
+                SELECT email, company_id, company_name, pattern, sections_json, total_questions
                 FROM charvak_mock_sessions WHERE session_id = %s
             """, (session_id,))
             row = cur.fetchone()
             if not row:
                 cur.close(); conn.close()
                 return {"status": "error", "message": "Session not found"}
-            email, company_name, pattern, sections_json, total_questions = row
+            email, company_id, company_name, pattern, sections_json, total_questions = row
             sections = sections_json if isinstance(sections_json, list) else json.loads(sections_json or "[]")
 
             cur.execute("""
@@ -457,7 +457,8 @@ class CompleteMockDrive:
                     score,
                     total_questions,
                     correct,
-                    {"pattern": pattern}
+                    {"pattern": pattern},
+                    skill=f"mock_{company_id}"
                 )
             except Exception as e:
                 logger.warning(f"results_system call failed: {e}")

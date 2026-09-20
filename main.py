@@ -5593,8 +5593,9 @@ async def create_custom(request: Request):
     return enhanced_assessment_engine.create_custom_assessment(
         data.get("company_name"),
         data.get("topics"),
-        data.get("difficulty", "medium"),
-        data.get("count", 10)
+        data.get("difficulty"),
+        data.get("count", 10),
+        data.get("email")
     )
 
 @app.post("/api/enhanced/topic-questions")
@@ -5603,7 +5604,8 @@ async def topic_questions(request: Request):
     return enhanced_assessment_engine.generate_topic_questions(
         data.get("topic"),
         data.get("count", 10),
-        data.get("difficulty", "medium")
+        data.get("difficulty"),
+        data.get("email")
     )
 
 @app.get("/api/enhanced/topics/{field}")
