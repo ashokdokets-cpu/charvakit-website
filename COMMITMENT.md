@@ -8,13 +8,14 @@
 
 ## 🔴 CRITICAL — Must Fix
 
-### C1 — `global_config.LANGUAGES` inconsistency
+### C1 — Assessment AI for global languages
 
-- **Discovered:** 2026-09-20 (audit)
-- **Issue:** Site claims 34 languages; `global_config.LANGUAGES` has 1 key (`en`)
-- **Possibility:** There's a separate larger dict (`SUPPORTED_LANGUAGES`, `GLOBAL_LANGUAGES`) that the regex missed
-- **Action:** Verify actual language support; reconcile claim vs reality
-- **Est:** ~2 hr (either add languages or fix copy)
+- **Discovered:** 2026-09-20 (audit was wrong; corrected 2026-09-20)
+- **Reality:** `global_config.LANGUAGES` has **34 languages** ✅ (config is complete)
+- **Real gap:** `indian_language_ai._generate_questions` only handles 12 Indian languages
+  - Spanish, French, German, Japanese, etc. users get English assessment questions
+- **Action:** Extend `_generate_questions` to handle all 34 languages via AI
+- **Est:** ~1.5 hr
 - **Target:** Session G1
 
 ### C2 — `voice_to_web_engine.py` persistence
@@ -66,10 +67,13 @@
 - **Concern:** Duplicates may exist (KNOWN-ISSUES vs FINAL-STATUS, etc.)
 - **Action:** Verify next audit
 
-### V2 — whatsapp_bot.py JSON mode inconsistency
-- **Discovered:** Line 60 uses `response_format="text"`, line 89 uses JSON
-- **Concern:** Line 60's response may be JSON-parsed → bug
-- **Action:** Inspect line 60 context
+### V2 — whatsapp_bot.py JSON mode — FALSE ALARM
+
+- **Discovered:** Line 60 uses `response_format="text"` — but this is
+  `audio.transcriptions.create` (Whisper), NOT chat completions.
+  Text format is correct for Whisper.
+- **Line 89** (the only LLM call) uses JSON mode correctly.
+- **Verdict:** ✅ No bug. No action needed.
 
 ### V3 — 34-language claim vs delivered
 - **Check:** Count actual supported languages
@@ -106,16 +110,16 @@
 
 ---
 
-## 📋 EXECUTION ORDER
+## 📋 EXECUTION ORDER (revised 2026-09-20)
 
-1. **Session G1** — Global languages (C1) ~2 hr
-2. **Session B-2** — voice_to_web persistence (C2) ~1 hr
+1. **Session B-2** — voice_to_web persistence (C2) ~1 hr  ← START HERE (closes persistence)
+2. **Session G1** — Assessment AI for 34 languages (C1) ~1.5 hr
 3. **Session G4** — RTL UI (C3) ~1.5 hr
 4. **Session G2** — Adaptive difficulty (C4) ~2 hr
 5. **Session G3** — Question banks (C5) ~2-3 hr
 6. **Session G5** — Assessment i18n (C6) ~1.5 hr
 
-**Total: ~11-12 hr across 6 sessions**
+**Total: ~9.5-10.5 hr across 6 sessions**
 
 ---
 
