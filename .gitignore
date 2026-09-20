@@ -102,3 +102,10 @@ audits/
 
 *.bak-*
 
+
+# Session backups (do not commit)
+*.py.bak
+*.py.bak_*
+*.py.bak-*
+*.py.bak2_*
+*.py.bak3_*

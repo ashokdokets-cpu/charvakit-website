@@ -12,6 +12,14 @@ import secrets
 from datetime import datetime
 from typing import Dict, List, Optional
 
+# Global language catalog (34+ languages). Used for AI prompt naming and
+# metadata fallback. Wrapped in try/except so a global_config import failure
+# never takes down the language engine.
+try:
+    from global_config import LANGUAGES as _GLOBAL_LANGUAGES
+except Exception:
+    _GLOBAL_LANGUAGES = {}
+
 logger = logging.getLogger("charvakit.indianlang")
 
 # Supported Indian Languages
@@ -30,6 +38,39 @@ INDIAN_LANGUAGES = {
     "en": {"name": "English (Hinglish)", "native": "Hinglish", "speakers": "125M+"},
 }
 
+# English names used in AI prompts. Covers all INDIAN_LANGUAGES keys
+# PLUS every key in global_config.LANGUAGES (Session G1).
+LANG_NAME_FOR_PROMPT = {
+    # Indian
+    "hi": "Hindi", "te": "Telugu", "ta": "Tamil", "bn": "Bengali",
+    "mr": "Marathi", "gu": "Gujarati", "kn": "Kannada", "ml": "Malayalam",
+    "pa": "Punjabi", "or": "Odia", "ur": "Urdu", "en": "English",
+    # Global (from global_config.LANGUAGES)
+    "es": "Spanish", "fr": "French", "de": "German", "zh": "Mandarin Chinese",
+    "ja": "Japanese", "ko": "Korean", "ar": "Arabic", "pt": "Portuguese",
+    "ru": "Russian", "it": "Italian", "nl": "Dutch", "tr": "Turkish",
+    "vi": "Vietnamese", "th": "Thai", "id": "Indonesian", "ms": "Malay",
+    "fil": "Filipino", "sw": "Swahili", "am": "Amharic", "ha": "Hausa",
+    "yo": "Yoruba", "ig": "Igbo", "zu": "Zulu", "so": "Somali",
+}
+
+
+def LANG_META(lang_code: str) -> Dict:
+    """Resolve language metadata for DB storage.
+
+    Priority: INDIAN_LANGUAGES -> global_config.LANGUAGES -> generic fallback.
+    Returns {name: English, native: <native script>, speakers: str}.
+    """
+    if lang_code in INDIAN_LANGUAGES:
+        return INDIAN_LANGUAGES[lang_code]
+    if lang_code in _GLOBAL_LANGUAGES:
+        meta = _GLOBAL_LANGUAGES[lang_code]
+        return {
+            "name": LANG_NAME_FOR_PROMPT.get(lang_code, meta.get("name", lang_code)),
+            "native": meta.get("name", lang_code),
+            "speakers": "",
+        }
+    return {"name": lang_code, "native": lang_code, "speakers": ""}
 
 class IndianLanguageAI:
     """AI-powered assessments in Indian languages (DB-backed)."""
@@ -160,8 +201,12 @@ class IndianLanguageAI:
         if ai_questions:
             return ai_questions
 
-        # Path 2: Static fallback (expanded to cover all 12 languages)
-        return self._generate_questions_static(lang_code, skill)
+        # Path 2: Static fallback only for languages we have catalogs for.
+        # Non-Indian languages return [] so the caller falls back explicitly
+        # rather than receiving mismatched questions.
+        if lang_code in INDIAN_LANGUAGES:
+            return self._generate_questions_static(lang_code, skill)
+        return []
 
     def _generate_questions_via_ai(self, lang_code: str, skill: str, difficulty: str) -> List[Dict]:
         """Use OpenAI to generate 5 questions in the target language."""
@@ -169,7 +214,7 @@ class IndianLanguageAI:
         if not api_key:
             return []
 
-        lang_name = INDIAN_LANGUAGES.get(lang_code, {}).get("name", "English")
+        lang_name = LANG_NAME_FOR_PROMPT.get(lang_code, "English")
         try:
             import requests
             prompt = (
@@ -331,7 +376,7 @@ class IndianLanguageAI:
         data = {language: str, job_title: str, company: str, location: str}
         """
         lang_code = data.get("language", "hi")
-        language = INDIAN_LANGUAGES.get(lang_code, INDIAN_LANGUAGES["hi"])
+        language = LANG_META(lang_code)
 
         translations = {
             "hi": {"hiring": "भर्ती", "location": "स्थान", "salary": "वेतन", "apply": "आवेदन करें"},
