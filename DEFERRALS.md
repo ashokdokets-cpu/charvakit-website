@@ -168,7 +168,7 @@ code bug** — the fix requires either:
 If product requires full question counts (e.g., 16 per section), assign content
 writer to expand prompts. No code change needed.
 
-**Verdict:** DEFERRED (content gap, not code bug)
+**Verdict:** ✅ RESOLVED 2026-09-20 (#43) — AI generation added for missing question counts.
 
 ---
 
