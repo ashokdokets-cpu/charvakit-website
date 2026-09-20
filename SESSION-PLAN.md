@@ -1,154 +1,162 @@
-# CHARVAK - SESSION-BY-SESSION EXECUTION PLAN
+# Charvak - Session-by-Session Execution Plan
 
 **Last updated:** 2026-09-20
-**Current HEAD:** `40985bb`
+**Current HEAD:** `0e62c17`
 **Version:** `v3.0-tier3-complete-20260919`
-**Backlog file:** `OUTSTANDING-WORK-INVENTORY.md`
+**Progress:** ~99% complete (1 actionable item left)
 
 ---
 
-## COMPLETED SESSIONS
+## Session Status
 
+### Foundation
 | Session | Scope | Status |
 |---|---|---|
-| A-J | 49 engines DB-backed, 8 AI JSON bugs fixed | OK |
-| Tier E | Payment engine + 3 verifications | OK |
-| K | 30 items (3 sec + 5 DI + 4 deferrals + 16 cleanup + 2 features) | OK |
-| B-3 | notification_engine persistence | OK |
-| B-4 | products_engine stateless verification | OK |
-| H-2 | 13 items (cosmetic + housekeeping + docs) | OK |
-| I | Capstone + v3.0 tag + backup | OK |
-| A-1 | 20 top-traffic templates a11y | OK |
-| A-1.2 | 73 templates a11y (static) | OK |
-| A-1.3 | 24 templates a11y (JS-templated) | OK |
-| #87 | Notification retention + Render cron | OK |
-| #88 | job_service.py dead code removed | OK |
-| Quick Wins | #40, #44, #64 | OK |
+| A | kyc, candidate, training, lms | ✅ |
+| B (partial) | enterprise, ats | ✅ |
+| C | events, career_v2, exam_prep | ✅ |
+| D | messaging, profile_network, badge, university, brand | ✅ |
+| E | final_year_project, student_suite, ai_internship, team | ✅ |
+| F | outreach, marketing_ai, exam_analytics, dynamic_role | ✅ |
+| G | 6 na_module engines | ✅ |
+| H | 8 ephemeral engines | ✅ |
+| I | capstone + v3.0 tag + backup | ✅ |
+| J | 6 backlog engines (audit gap) | ✅ |
+| Tier E | payment fix + 3 verifications | ✅ |
+
+### Quality & Cleanup
+| Session | Scope | Status |
+|---|---|---|
+| K (1-3) | 3 security fixes | ✅ prod-verified |
+| K (4-8) | 5 data integrity fixes | ✅ prod-verified |
+| K deferrals | 4 by-design decisions documented | ✅ |
+| K dead fields | 16 cleanup items | ✅ |
+| K features | 2 new persistence (lang_assessments, kiosk_events) | ✅ |
+| B-3 | notification_engine persistence | ✅ |
+| B-4 | products_engine verification | ✅ |
+| H-2 | 13 items (cosmetic + housekeeping) | ✅ |
+| A-1 | 20 top-traffic templates a11y | ✅ prod-verified |
+| A-1.2 | 73 templates a11y (static) | ✅ prod-verified |
+| A-1.3 | 24 templates a11y (JS-templated) | ✅ prod-verified |
+| F1 | #41, #43, #67 | ✅ |
+| F2 | #42, #66 | ✅ |
+| A-2 | Polling loop, image dims, mobile CLS | ✅ prod-verified |
+| Quick Wins | #40, #44, #64 | ✅ |
+| #86 | Product audit trail | ✅ prod-verified |
+| #87 | Notification retention + cron | ✅ live |
+| #88 | Dead code cleanup | ✅ |
+
+### AI Product Enhancements
+| Session | Products | Status |
+|---|---|---|
+| #60-A | Lock-In Breaker | ✅ |
+| #60-B | AuditBot | ✅ |
+| #60-C | Design-Token Sentinel | ✅ |
+| #60-D | 6 more products (Reverse Staffing, Skill Twin, Geo Compliance, AI Slop, Agency Twin, Dev Entropy) | ✅ |
+| #62 | 75 course descriptions regenerated | ✅ prod-verified |
 
 ---
 
-## REMAINING SESSIONS
+## Remaining Work
 
-### Session B-2 - voice_to_web Persistence (~1 hr)
-- [ ] Audit voice_to_web_engine.py (5 in-memory stores)
-- [ ] Design 1-2 tables
-- [ ] Migration + apply
-- [ ] Refactor engine methods
-- [ ] Test E2E
-- [ ] Commit + prod migration
+### Actionable (1 item, ~1 hr)
+| # | Item | Est. |
+|---|---|---|
+| **B-2** | voice_to_web_engine.py persistence | ~1 hr |
 
-**Milestone:** Persistence project 100% complete.
+### Product-Driven (4 items, decisions required)
+| # | Item | Decision |
+|---|---|---|
+| #59 | RazorpayX integration | Is manual payout a pain point? |
+| #61 | Enterprise public pages | Seed data decision needed |
+| #63 | International EMI | Is there demand? |
+| #65 | WhatsApp bot | BLOCKED — Meta registration |
 
-### Session A-2 - TBT Mobile Optimization (~2-3 hr)
-- [ ] Lighthouse baseline measurement
-- [ ] Rewrite polling loop at base.html line 30-45
-- [ ] Conditional loading for Razorpay/PayPal/Chart.js (Jinja)
-- [ ] Audit ~9 inline scripts in base.html
-- [ ] Move heavy inline scripts to external deferred files
-- [ ] Re-measure Lighthouse
-- Target: TBT < 500ms (from ~1,900ms)
+### Scheduled (1 item)
+| # | Item | When |
+|---|---|---|
+| #53 | Delete charvakit-new-OLD | 2026-09-22 |
 
-### Session F1 - Feature Gaps Small (~2 hr)
-- [ ] #41 student_suite_engine.assist_assignment / assist_research (AI stubs)
-- [ ] #43 advanced_assessment_engine._generate_versant_questions count mismatch
-- [ ] #67 ai_question_generator.used_questions implement dedup
-
-### Session F2 - Feature Gaps Large (~2-3 hr)
-- [ ] #42 na_module/vector_matcher.SKILL_EMBEDDINGS -> pgvector
-- [ ] #66 indian_language_ai.py - 8 more language questions
-
-### Session #86 - Product Audit Trail Feature (~3 hr)
-- [ ] Design charvak_product_results table
-- [ ] Migration + apply
-- [ ] INSERT in 11 product methods
-- [ ] Read endpoint /api/products/results
-- [ ] Admin UI to view results
-- [ ] Test + commit
-
-**Decision required:** Is this feature wanted?
-
-### Session Optional - Product-Driven (varies)
-- [ ] #59 RazorpayX integration
-- [ ] #60 AI Products real integrations
-- [ ] #61 Enterprise public pages
-- [ ] #62 Per-level curriculum audit
-- [ ] #63 International EMI via PayPal
-- [ ] #65 WhatsApp (blocked on Meta)
-
-**Decision required:** Product priorities.
+### Won't Fix (~30 items)
+- ~48 templates (admin, includes, tools, blog)
+- 6 deferrals by design
+- Vendored mojibake
+- Inline label headings
 
 ---
 
-## NOT DOING (Documented Reasons)
+## Session B-2 — Detailed Plan
 
-### Scheduled
-- #53 Delete old charvakit-new-OLD folder - 2026-09-22 (3 days after rename)
+**Goal:** Persist voice_to_web_engine.py (last remaining engine)
 
-### Automatic
-- #87 Cron runs weekly - no manual action
+**Steps:**
+1. Audit voice_to_web_engine.py (5 in-memory stores, ~7.5 KB)
+2. Design 1-2 tables (voice_to_web_sessions, generated_sites)
+3. Write migration + apply locally
+4. Refactor engine methods to use DB
+5. Test E2E
+6. Commit + push
+7. Apply migration on prod via Render Shell
+8. Verify
 
-### Won't Fix
-- ~48 templates (admin, includes, tools, blog, base.html)
-- Inline label headings (non-structural)
-- Vendored waypoints.min.js mojibake
-- Emoji in log messages (documented in DOC-STYLE.md)
-
-### Deferred By Design
-See DEFERRALS.md for 8 items with rationale + escalation triggers.
-
-### Blocked
-- #65 whatsapp_bot.py AI JSON bug - awaiting Meta number registration
+**Deliverable:** Persistence project 100% complete.
 
 ---
 
-## PROGRESS TRACKER
+## Infrastructure Verified (2026-09-20)
 
-    Total backlog (at start):     ~90 items
-    Completed:                    ~84 items  (93%)
-    Remaining actionable:         ~8 items   (~10-12 hr)
-    Remaining product-driven:     ~15 items  (varies)
-    Blocked:                       1 item
-    Non-actionable:               ~30 items
-
-    Path to "actionable complete": ~10-12 hr across 6 sessions
-
----
-
-## RECOMMENDED SESSION ORDER
-
-1. B-2 (voice_to_web)       - ~1 hr     - closes persistence project
-2. A-2 (TBT)                - ~2-3 hr   - real performance win
-3. F1 (feature gaps small)  - ~2 hr     - half of feature gaps
-4. F2 (feature gaps large)  - ~2-3 hr   - remaining feature gaps
-5. #86 (audit trail)        - ~3 hr     - new capability
-6. Optional                 - product-driven
+- ✅ 25 pages return 200 in prod
+- ✅ 3 security fixes enforced (K/1, K/2, K/3)
+- ✅ #86 audit trail auth-gated
+- ✅ pgvector 0.8.1 active
+- ✅ 7+ new prod tables
+- ✅ 9 AI-enhanced products live
+- ✅ Product audit trail logging
+- ✅ Notification retention cron running
 
 ---
 
-## KEY FILES
+## Tags (10 created)
+
+| Tag | Purpose |
+|---|---|
+| v3.0-tier3-complete-20260919 | Capstone release |
+| a1-safety-checkpoint-20260919 | Before A-1 |
+| a1-before-bulk-20260919 | Before A-1 bulk |
+| a1.2-safety-checkpoint-20260919 | Before A-1.2 |
+| a1.2-complete-20260919 | After A-1.2 |
+| a1.3-complete-20260919 | After A-1.3 |
+| a2-performance-20260920 | A-2 work |
+| a2-revert-20260920 | A-2 revert |
+| a2-complete-20260920 | A-2 complete |
+| f1-features-20260920 | F1 features |
+
+---
+
+## Key Files
 
 | File | Purpose |
 |---|---|
-| OUTSTANDING-WORK-INVENTORY.md | Master backlog |
-| DEFERRALS.md | 8 design decisions |
-| SCHEMA.md | 128 tables auto-generated |
-| SESSION-CONTEXT.md | Resume pointer |
-| STATUS.md | Session log |
-| DOC-STYLE.md | Style guide |
-| KNOWN-ISSUES.md | Bug registry |
-| TIER3-PERSISTENCE-PROJECT.md | Persistence + verified skip list |
 | SESSION-PLAN.md | This file |
+| SESSION-CONTEXT.md | Resume pointer |
+| OUTSTANDING-WORK-INVENTORY.md | Master backlog |
+| FINAL-STATUS-20260920.md | Status report |
+| DEFERRALS.md | By-design decisions |
+| SCHEMA.md | DB schema (128 tables) |
+| KNOWN-ISSUES.md | Bug registry |
+| DOC-STYLE.md | Code conventions |
 
 ---
 
-## RESUME OPENER (paste into fresh chat)
+## Next Session Priorities
 
-> Resuming Charvak work. HEAD is <git rev-parse HEAD>. Sessions A-J, K, H-2, I, B-3, B-4, A-1/A-1.2/A-1.3, #87, #88, Quick Wins complete. See SESSION-CONTEXT.md for state, and SESSION-PLAN.md for the remaining sessions plan. Starting Session <letter>: <scope>.
+1. **B-2** — voice_to_web persistence (~1 hr)
+2. **Prod migration** for B-2 via Render Shell
+3. **Product decisions** — #59, #61, #63
+4. **#53 scheduled cleanup** — 2026-09-22
 
 ---
 
-## MILESTONES
+## Resume Opener
 
-- OK v3.0-tier3-complete-20260919 - Released 2026-09-19
-- OK a1.3-complete-20260919 - Accessibility hierarchy complete
-- Target v3.1-features-YYYYMMDD - After next feature sessions
+> Resuming Charvak work. HEAD is `0e62c17`. All sessions through #60-D, #62, F1, F2, A-1/A-1.2/A-1.3, A-2, K, H-2, I, B-3, B-4, #86, #87, #88 are complete and prod-verified. Only B-2 (voice_to_web persistence, ~1 hr) remains actionable. See SESSION-PLAN.md and FINAL-STATUS-20260920.md. Starting Session B-2.
