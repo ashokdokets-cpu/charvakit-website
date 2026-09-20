@@ -7,6 +7,7 @@ Kannada, Malayalam, Punjabi, Odia, Urdu + English (Hinglish)
 """
 import json
 import logging
+import os
 import secrets
 from datetime import datetime
 from typing import Dict, List, Optional
@@ -151,7 +152,68 @@ class IndianLanguageAI:
         }
 
     def _generate_questions(self, lang_code: str, skill: str, difficulty: str) -> List[Dict]:
-        """Generate language-specific questions (static catalog)."""
+        """Generate language-specific questions.
+        Tries AI generation first (multilingual via OpenAI), falls back to static catalog.
+        """
+        # Path 1: AI generation (preferred)
+        ai_questions = self._generate_questions_via_ai(lang_code, skill, difficulty)
+        if ai_questions:
+            return ai_questions
+
+        # Path 2: Static fallback (expanded to cover all 12 languages)
+        return self._generate_questions_static(lang_code, skill)
+
+    def _generate_questions_via_ai(self, lang_code: str, skill: str, difficulty: str) -> List[Dict]:
+        """Use OpenAI to generate 5 questions in the target language."""
+        api_key = os.getenv("OPENAI_API_KEY", "")
+        if not api_key:
+            return []
+
+        lang_name = INDIAN_LANGUAGES.get(lang_code, {}).get("name", "English")
+        try:
+            import requests
+            prompt = (
+                f"Generate 5 assessment questions in {lang_name} language "
+                f"(lang code: {lang_code}) for the skill: {skill}, "
+                f"difficulty: {difficulty}.\n"
+                f"Each question should be open-ended (text answer).\n"
+                f"Return JSON: {{\"questions\": [{{\"q\": \"...\", \"type\": \"text\"}}]}}\n"
+                f"IMPORTANT: All 'q' values must be written in the {lang_name} script, "
+                f"not English. Keep it professional and job-interview appropriate."
+            )
+            response = requests.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers={"Authorization": f"Bearer {api_key}"},
+                json={
+                    "model": "gpt-4o-mini",
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": 0.7,
+                    "response_format": {"type": "json_object"},
+                },
+                timeout=25,
+            )
+            data = response.json()
+            content = (data.get("choices", [{}])[0].get("message", {}).get("content") or "").strip()
+            if content.startswith("```"):
+                content = content.split("```", 2)[1]
+                if content.startswith("json"):
+                    content = content[4:]
+                content = content.strip()
+            parsed = json.loads(content)
+            questions = parsed.get("questions", [])
+            if questions and isinstance(questions, list):
+                # Normalize
+                return [
+                    {"q": q.get("q", ""), "type": q.get("type", "text")}
+                    for q in questions if q.get("q")
+                ]
+            return []
+        except Exception as e:
+            logger.error(f"AI question generation failed for {lang_code}: {e}")
+            return []
+
+    def _generate_questions_static(self, lang_code: str, skill: str) -> List[Dict]:
+        """Static fallback covering all 12 supported languages."""
         questions_map = {
             "hi": [
                 {"q": f"क्या आप {skill} में experienced हैं? अपना अनुभव बताइए।", "type": "text"},
@@ -177,6 +239,36 @@ class IndianLanguageAI:
                 {"q": f"तुम्ही {skill} मध्ये अनुभवी आहात का? तुमचा अनुभव सांगा.", "type": "text"},
                 {"q": f"{skill} मध्ये तुमची सर्वात मोठी ताकद काय आहे?", "type": "text"},
                 {"q": f"एक project उदाहरण द्या जिथे तुम्ही {skill} वापरले.", "type": "text"},
+            ],
+            "gu": [
+                {"q": f"તમે {skill} માં અનુભવી છો? તમારો અનુભવ જણાવો.", "type": "text"},
+                {"q": f"{skill} માં તમારી સૌથી મોટી શક્તિ શું છે?", "type": "text"},
+                {"q": f"એક project નું ઉદાહરણ આપો જ્યાં તમે {skill} નો ઉપયોગ કર્યો.", "type": "text"},
+            ],
+            "kn": [
+                {"q": f"ನೀವು {skill} ನಲ್ಲಿ ಅನುಭವಿ ಇದ್ದೀರಾ? ನಿಮ್ಮ ಅನುಭವವನ್ನು ತಿಳಿಸಿ.", "type": "text"},
+                {"q": f"{skill} ನಲ್ಲಿ ನಿಮ್ಮ ಅತಿದೊಡ್ಡ ಶಕ್ತಿ ಯಾವುದು?", "type": "text"},
+                {"q": f"ನೀವು {skill} ಬಳಸಿದ ಒಂದು project ನ ಉದಾಹರಣೆ ನೀಡಿ.", "type": "text"},
+            ],
+            "ml": [
+                {"q": f"നിങ്ങൾ {skill} ൽ പരിചയമുള്ളവരാണോ? നിങ്ങളുടെ അനുഭവം പറയുക.", "type": "text"},
+                {"q": f"{skill} ൽ നിങ്ങളുടെ ഏറ്റവും വലിയ ശക്തി എന്താണ്?", "type": "text"},
+                {"q": f"നിങ്ങൾ {skill} ഉപയോഗിച്ച ഒരു project ഉദാഹരണം നൽകുക.", "type": "text"},
+            ],
+            "pa": [
+                {"q": f"ਕੀ ਤੁਸੀਂ {skill} ਵਿੱਚ ਤਜਰਬੇਕਾਰ ਹੋ? ਆਪਣਾ ਤਜਰਬਾ ਦੱਸੋ।", "type": "text"},
+                {"q": f"{skill} ਵਿੱਚ ਤੁਹਾਡੀ ਸਭ ਤੋਂ ਵੱਡੀ ਤਾਕਤ ਕੀ ਹੈ?", "type": "text"},
+                {"q": f"ਇੱਕ project ਦੀ ਉਦਾਹਰਨ ਦਿਓ ਜਿੱਥੇ ਤੁਸੀਂ {skill} ਵਰਤਿਆ।", "type": "text"},
+            ],
+            "or": [
+                {"q": f"ଆପଣ {skill} ରେ ଅଭିଜ୍ଞ କି? ଆପଣଙ୍କ ଅଭିଜ୍ଞତା କୁହନ୍ତୁ।", "type": "text"},
+                {"q": f"{skill} ରେ ଆପଣଙ୍କ ସର୍ବାଧିକ ଶକ୍ତି କଣ?", "type": "text"},
+                {"q": f"ଗୋଟିଏ project ର ଉଦାହରଣ ଦିଅନ୍ତୁ ଯେଉଁଠାରେ ଆପଣ {skill} ବ୍ୟବହାର କରିଛନ୍ତି।", "type": "text"},
+            ],
+            "ur": [
+                {"q": f"کیا آپ {skill} میں تجربہ کار ہیں؟ اپنا تجربہ بتائیں۔", "type": "text"},
+                {"q": f"{skill} میں آپ کی سب سے بڑی طاقت کیا ہے؟", "type": "text"},
+                {"q": f"ایک project کی مثال دیں جہاں آپ نے {skill} استعمال کیا۔", "type": "text"},
             ],
             "en": [
                 {"q": f"Aap {skill} mein experienced ho? Apna experience batao. (Hinglish)", "type": "text"},
