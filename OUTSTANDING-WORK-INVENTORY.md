@@ -150,7 +150,7 @@
 | 63 | International EMI via PayPal invoicing |
 | 64 | ~~Verify /mock-test route~~ **[ALREADY RESOLVED 2026-09-20 - /mock-drive is canonical; /mock-test was never planned as a page]** | DONE |
 | 65 | whatsapp_bot.py AI JSON bug (when unblocked) |
-| 66 | indian_language_ai.py questions for 8 languages missing |
+| 66 | ~~indian_language_ai.py questions for missing languages~~ **FIXED 2026-09-20** - AI-first generation for all 12 languages (5 questions each) | DONE |
 | 67 | ~~ai_question_generator.used_questions — implement dedup~~ **[RESOLVED 2026-09-20 - cache + variation already provides exam-level dedup; per-user tracking deferred as feature, not bug]** |
 
 ---
