@@ -211,6 +211,22 @@ class ProductsEngine:
             "created_at": datetime.now().isoformat()
         }
 
+        # #60 Level 1: AI-enhanced candidate-company matching
+        ai_analysis = self._ai_reverse_staffing_analysis(skills, experience)
+        if ai_analysis:
+            if ai_analysis.get("matches"):
+                result["matches"] = ai_analysis["matches"]
+                result["top_match"] = ai_analysis["matches"][0] if ai_analysis["matches"] else result["top_match"]
+            if ai_analysis.get("verdict"):
+                result["verdict"] = ai_analysis["verdict"]
+            if ai_analysis.get("best_fit_reasoning"):
+                result["best_fit_reasoning"] = ai_analysis["best_fit_reasoning"]
+            if ai_analysis.get("skill_gaps"):
+                result["skill_gaps"] = ai_analysis["skill_gaps"]
+            result["analysis_mode"] = "ai_enhanced"
+        else:
+            result["analysis_mode"] = "heuristic_only"
+
         self._log_result("reverse_staffing", data, result)
         return {"status": "success", **result}
     
@@ -308,6 +324,23 @@ class ProductsEngine:
             "badge_eligible": verified_score >= 70,
             "created_at": datetime.now().isoformat()
         }
+
+        # #60 Level 1: AI-enhanced skill assessment + learning path
+        ai_analysis = self._ai_skill_twin_analysis(skills, experience, self_rating, verified_score)
+        if ai_analysis:
+            if ai_analysis.get("recommendations"):
+                result["recommendations"] = ai_analysis["recommendations"]
+            if ai_analysis.get("skill_gaps"):
+                result["skill_gaps"] = ai_analysis["skill_gaps"]
+            if ai_analysis.get("learning_path"):
+                result["learning_path"] = ai_analysis["learning_path"]
+            if ai_analysis.get("verdict"):
+                result["verdict"] = ai_analysis["verdict"]
+            if ai_analysis.get("next_steps"):
+                result["next_steps"] = ai_analysis["next_steps"]
+            result["analysis_mode"] = "ai_enhanced"
+        else:
+            result["analysis_mode"] = "heuristic_only"
 
         self._log_result("skill_twin", data, result)
         return {"status": "success", **result}
@@ -582,6 +615,116 @@ class ProductsEngine:
 
         self._log_result("developer_entropy", data, result)
         return {"status": "success", **result}
+
+    def _ai_reverse_staffing_analysis(self, skills: List[str], experience: int) -> Optional[Dict]:
+        """#60 Level 1: AI candidate-to-company matching. Returns None on failure."""
+        api_key = os.getenv("OPENAI_API_KEY", "")
+        if not api_key:
+            return None
+        try:
+            import requests
+            import json as _json
+
+            skills_str = ", ".join(skills) if skills else "(none specified)"
+            prompt = (
+                f"You are a technical recruiter matching a candidate to companies.\n\n"
+                f"Candidate skills: {skills_str}\n"
+                f"Experience: {experience} years\n\n"
+                f"Match this candidate to 4-5 REALISTIC, well-known companies (use real company names "
+                f"like Google, Amazon, TCS, Infosys, Stripe, etc. - not placeholders like 'TechCorp') "
+                f"where their skills would actually be valued. For each company, provide the SPECIFIC roles "
+                f"they should target, an HONEST match score (0-100) based on skill-role fit, and reasoning.\n\n"
+                f"Be honest: if the candidate is a Python+AWS engineer, don't match them to a React role at 85% "
+                f"- match them to backend/cloud/data roles with high scores and frontend roles with low scores.\n\n"
+                f"Return JSON: {{\n"
+                f"  \"matches\": [\n"
+                f"    {{\"name\": \"Real Company Name\", \"match\": 0-100, "
+                f"\"roles\": [\"specific roles\"], \"reasoning\": \"why this match\"}},\n"
+                f"    ... (4-5 companies sorted by match DESC)\n"
+                f"  ],\n"
+                f"  \"verdict\": \"1-2 sentence summary of best fit\",\n"
+                f"  \"best_fit_reasoning\": \"detailed paragraph on the #1 match\",\n"
+                f"  \"skill_gaps\": [\"2-3 skills that would unlock more roles\", ...]\n"
+                f"}}"
+            )
+            response = requests.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers={"Authorization": f"Bearer {api_key}"},
+                json={
+                    "model": "gpt-4o-mini",
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": 0.5,
+                    "response_format": {"type": "json_object"},
+                },
+                timeout=30,
+            )
+            data_resp = response.json()
+            content = (data_resp.get("choices", [{}])[0].get("message", {}).get("content") or "").strip()
+            if content.startswith("```"):
+                content = content.split("```", 2)[1]
+                if content.startswith("json"):
+                    content = content[4:]
+                content = content.strip()
+            parsed = _json.loads(content)
+            if isinstance(parsed, dict) and "matches" in parsed:
+                return parsed
+            return None
+        except Exception as e:
+            logger.error(f"AI reverse staffing analysis failed: {e}")
+            return None
+
+    def _ai_skill_twin_analysis(self, skills: List[str], experience: int, self_rating: float, verified_score: int) -> Optional[Dict]:
+        """#60 Level 1: AI personalized skill gap + learning path. Returns None on failure."""
+        api_key = os.getenv("OPENAI_API_KEY", "")
+        if not api_key:
+            return None
+        try:
+            import requests
+            import json as _json
+
+            skills_str = ", ".join(skills) if skills else "(none specified)"
+            prompt = (
+                f"You are a career coach and technical mentor.\n\n"
+                f"Candidate skills: {skills_str}\n"
+                f"Experience: {experience} years\n"
+                f"Self-rating: {self_rating}/5\n"
+                f"Verified score: {verified_score}/100\n\n"
+                f"Provide personalized skill assessment and learning path. Reference the candidate's ACTUAL skills "
+                f"(Python, SQL, React, etc.) - do NOT give generic advice like 'take courses'.\n\n"
+                f"Return JSON: {{\n"
+                f"  \"recommendations\": [\"4-5 specific, actionable recommendations mentioning actual skills\", ...],\n"
+                f"  \"skill_gaps\": [\"3-4 specific skill gaps to close\", ...],\n"
+                f"  \"learning_path\": [{{\"phase\": \"Phase 1: X\", \"duration_weeks\": N, "
+                f"\"focus\": [\"specific topics\"], \"project\": \"specific project idea\"}}],\n"
+                f"  \"verdict\": \"1-2 sentence honest assessment of where they are\",\n"
+                f"  \"next_steps\": [\"3-4 concrete next actions\", ...]\n"
+                f"}}"
+            )
+            response = requests.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers={"Authorization": f"Bearer {api_key}"},
+                json={
+                    "model": "gpt-4o-mini",
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": 0.6,
+                    "response_format": {"type": "json_object"},
+                },
+                timeout=30,
+            )
+            data_resp = response.json()
+            content = (data_resp.get("choices", [{}])[0].get("message", {}).get("content") or "").strip()
+            if content.startswith("```"):
+                content = content.split("```", 2)[1]
+                if content.startswith("json"):
+                    content = content[4:]
+                content = content.strip()
+            parsed = _json.loads(content)
+            if isinstance(parsed, dict) and "recommendations" in parsed:
+                return parsed
+            return None
+        except Exception as e:
+            logger.error(f"AI skill twin analysis failed: {e}")
+            return None
 
     def _ai_design_token_analysis(self, design_system: str, platforms: List[str]) -> Optional[Dict]:
         """#60 Level 1: AI-powered design token consistency analysis. Returns None on failure."""
