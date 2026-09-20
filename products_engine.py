@@ -143,6 +143,22 @@ class ProductsEngine:
             "created_at": datetime.now().isoformat()
         }
         
+        # #60 Level 1: AI-enhanced analysis (adds recommendations, verdict, quick_wins)
+        ai_analysis = self._ai_lock_in_analysis(provider, spend, services)
+        if ai_analysis:
+            result["ai_analysis"] = ai_analysis
+            if ai_analysis.get("recommendations"):
+                result["recommendations"] = ai_analysis["recommendations"]
+            if ai_analysis.get("verdict"):
+                result["verdict"] = ai_analysis["verdict"]
+            if ai_analysis.get("quick_wins"):
+                result["quick_wins"] = ai_analysis["quick_wins"]
+            if ai_analysis.get("estimated_migration_risk"):
+                result["estimated_migration_risk"] = ai_analysis["estimated_migration_risk"]
+            result["analysis_mode"] = "ai_enhanced"
+        else:
+            result["analysis_mode"] = "heuristic_only"
+
         # B-4: removed self.results.append - no read path existed
         # #86: log result to audit trail
         self._log_result("lock_in_breaker", data, result)
@@ -525,6 +541,60 @@ class ProductsEngine:
 
         self._log_result("developer_entropy", data, result)
         return {"status": "success", **result}
+
+    def _ai_lock_in_analysis(self, provider: str, spend: float, services: List[str]) -> Optional[Dict]:
+        """#60 Level 1: AI-powered lock-in analysis. Returns None on failure."""
+        api_key = os.getenv("OPENAI_API_KEY", "")
+        if not api_key:
+            return None
+        try:
+            import requests
+            import json as _json
+
+            services_str = ", ".join(services) if services else "(none specified)"
+            prompt = (
+                f"You are a cloud cost optimization expert. Analyze vendor lock-in for this company.\n\n"
+                f"Provider: {provider}\n"
+                f"Monthly cloud spend: ${spend:,.0f}\n"
+                f"Services in use: {services_str}\n\n"
+                f"Provide specific, actionable analysis. For EACH service, reason about the actual migration path "
+                f"and whether migration is worth it vs. optimizing in place. Be honest - some services are NOT worth "
+                f"migrating. Give concrete dollar estimates where possible.\n\n"
+                f"Return JSON with this exact structure:\n"
+                f"{{\n"
+                f"  \"recommendations\": [\"specific rec mentioning service + reasoning + dollar estimate\", ...],\n"
+                f"  \"verdict\": \"1-2 sentence overall verdict (migrate or optimize in place?)\",\n"
+                f"  \"quick_wins\": [\"2-4 actions for this week\", ...],\n"
+                f"  \"estimated_migration_risk\": \"1 sentence about tightest coupling/biggest risk\"\n"
+                f"}}\n\n"
+                f"Keep recommendations specific to the listed services - no generic advice. "
+                f"Aim for 4-6 recommendations, 2-4 quick_wins."
+            )
+            response = requests.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers={"Authorization": f"Bearer {api_key}"},
+                json={
+                    "model": "gpt-4o-mini",
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": 0.5,
+                    "response_format": {"type": "json_object"},
+                },
+                timeout=30,
+            )
+            data_resp = response.json()
+            content = (data_resp.get("choices", [{}])[0].get("message", {}).get("content") or "").strip()
+            if content.startswith("```"):
+                content = content.split("```", 2)[1]
+                if content.startswith("json"):
+                    content = content[4:]
+                content = content.strip()
+            parsed = _json.loads(content)
+            if isinstance(parsed, dict) and "recommendations" in parsed:
+                return parsed
+            return None
+        except Exception as e:
+            logger.error(f"AI lock-in analysis failed: {e}")
+            return None
 
 
 products_engine = ProductsEngine()
