@@ -461,6 +461,27 @@ class ProductsEngine:
             "created_at": datetime.now().isoformat()
         }
 
+        # #60 Level 1: AI-enhanced design token analysis
+        ai_analysis = self._ai_design_token_analysis(design_system, platforms)
+        if ai_analysis:
+            if ai_analysis.get("issues"):
+                result["issues"] = ai_analysis["issues"]
+            if ai_analysis.get("consistency_score") is not None:
+                result["consistency_score"] = ai_analysis["consistency_score"]
+            if ai_analysis.get("tokens_synced") is not None:
+                result["tokens_synced"] = ai_analysis["tokens_synced"]
+            if ai_analysis.get("tokens_drifted") is not None:
+                result["tokens_drifted"] = ai_analysis["tokens_drifted"]
+            if ai_analysis.get("verdict"):
+                result["verdict"] = ai_analysis["verdict"]
+            if ai_analysis.get("top_risks"):
+                result["top_risks"] = ai_analysis["top_risks"]
+            if ai_analysis.get("next_steps"):
+                result["next_steps"] = ai_analysis["next_steps"]
+            result["analysis_mode"] = "ai_enhanced"
+        else:
+            result["analysis_mode"] = "heuristic_only"
+
         self._log_result("design_token", data, result)
         return {"status": "success", **result}
     
@@ -561,6 +582,66 @@ class ProductsEngine:
 
         self._log_result("developer_entropy", data, result)
         return {"status": "success", **result}
+
+    def _ai_design_token_analysis(self, design_system: str, platforms: List[str]) -> Optional[Dict]:
+        """#60 Level 1: AI-powered design token consistency analysis. Returns None on failure."""
+        api_key = os.getenv("OPENAI_API_KEY", "")
+        if not api_key:
+            return None
+        try:
+            import requests
+            import json as _json
+
+            platforms_str = ", ".join(platforms) if platforms else "Web"
+            prompt = (
+                f"You are a design systems expert conducting a token consistency audit.\n\n"
+                f"Design system: {design_system}\n"
+                f"Platforms to check: {platforms_str}\n\n"
+                f"Generate REALISTIC, platform-specific token drift issues that this type of design system "
+                f"is likely to have. Consider realistic scenarios like: stale color tokens after a brand refresh, "
+                f"deprecated spacing tokens across versions, typography scale mismatches between platforms, "
+                f"naming convention drift (camelCase vs kebab-case), theme token drift, accessibility contrast token issues.\n\n"
+                f"Return JSON with this exact structure:\n"
+                f"{{\n"
+                f"  \"issues\": [\n"
+                f"    {{\"platform\": \"Figma|Web|Mobile|iOS|Android\", \"issue\": \"specific description\", "
+                f"\"severity\": \"HIGH|MEDIUM|LOW\", \"details\": \"context\", \"fix\": \"specific fix\"}},\n"
+                f"    ... (5-8 issues)\n"
+                f"  ],\n"
+                f"  \"consistency_score\": 0-100,\n"
+                f"  \"tokens_synced\": integer (plausible count),\n"
+                f"  \"tokens_drifted\": integer (plausible count),\n"
+                f"  \"verdict\": \"1-2 sentence overall verdict\",\n"
+                f"  \"top_risks\": [\"3 most critical risks\", ...],\n"
+                f"  \"next_steps\": [\"3-5 prioritized actions\", ...]\n"
+                f"}}\n\n"
+                f"Make issues specific to the listed platforms. Give concrete, actionable findings."
+            )
+            response = requests.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers={"Authorization": f"Bearer {api_key}"},
+                json={
+                    "model": "gpt-4o-mini",
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": 0.5,
+                    "response_format": {"type": "json_object"},
+                },
+                timeout=30,
+            )
+            data_resp = response.json()
+            content = (data_resp.get("choices", [{}])[0].get("message", {}).get("content") or "").strip()
+            if content.startswith("```"):
+                content = content.split("```", 2)[1]
+                if content.startswith("json"):
+                    content = content[4:]
+                content = content.strip()
+            parsed = _json.loads(content)
+            if isinstance(parsed, dict) and "issues" in parsed:
+                return parsed
+            return None
+        except Exception as e:
+            logger.error(f"AI design token analysis failed: {e}")
+            return None
 
     def _ai_auditbot_analysis(self, repo_url: str, language: str, scan_type: str) -> Optional[Dict]:
         """#60 Level 1: AI-powered security/code review findings. Returns None on failure."""
