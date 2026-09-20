@@ -5,6 +5,7 @@ AI-powered matching beyond basic keyword search
 """
 import json
 import logging
+import os
 import re
 import secrets
 from typing import Dict, List, Tuple
@@ -38,8 +39,16 @@ class VectorMatcher:
     }
 
     def __init__(self):
+        self._openai_api_key = os.getenv("OPENAI_API_KEY", "")
+        self._pgvector_enabled = False  # set after tables init
         self._ensure_tables()
-        logger.info("Vector Matching Engine ready (DB-backed) | %d skill categories", len(self.SKILL_EMBEDDINGS))
+        self._pgvector_enabled = self._check_pgvector()
+        logger.info(
+            "Vector Matching Engine ready (DB-backed) | %d skill categories | pgvector: %s | AI: %s",
+            len(self.SKILL_EMBEDDINGS),
+            "ON" if self._pgvector_enabled else "OFF (static fallback)",
+            "ON" if self._openai_api_key else "OFF",
+        )
 
     def _ensure_tables(self):
         try:
@@ -66,8 +75,125 @@ class VectorMatcher:
     # PURE / STATIC
     # ============================================================
 
+    def _check_pgvector(self) -> bool:
+        """Check if pgvector extension + skill_embeddings table are available."""
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("SELECT 1 FROM pg_extension WHERE extname = 'vector'")
+            has_ext = cur.fetchone() is not None
+            cur.execute("""
+                SELECT 1 FROM information_schema.tables
+                WHERE table_name = 'charvak_skill_embeddings'
+            """)
+            has_table = cur.fetchone() is not None
+            cur.close(); conn.close()
+            return has_ext and has_table
+        except Exception:
+            return False
+
+    def _get_embedding(self, text: str):
+        """Get a 1536-dim embedding from OpenAI (text-embedding-3-small)."""
+        if not self._openai_api_key:
+            return None
+        try:
+            import requests
+            response = requests.post(
+                "https://api.openai.com/v1/embeddings",
+                headers={"Authorization": f"Bearer {self._openai_api_key}"},
+                json={"model": "text-embedding-3-small", "input": text},
+                timeout=15,
+            )
+            data = response.json()
+            return data["data"][0]["embedding"]
+        except Exception as e:
+            logger.error(f"Embedding fetch failed: {e}")
+            return None
+
+    def _ensure_skill_embedding(self, skill: str):
+        """Ensure a skill has a stored embedding; generate if missing. Returns embedding string or None."""
+        if not self._pgvector_enabled:
+            return None
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT embedding::text FROM charvak_skill_embeddings WHERE skill = %s",
+                (skill.lower(),)
+            )
+            row = cur.fetchone()
+            if row:
+                cur.close(); conn.close()
+                return row[0]
+
+            # Generate new embedding
+            emb = self._get_embedding(skill)
+            if emb:
+                emb_str = "[" + ",".join(str(x) for x in emb) + "]"
+                cur.execute("""
+                    INSERT INTO charvak_skill_embeddings (skill, embedding)
+                    VALUES (%s, %s::vector)
+                    ON CONFLICT (skill) DO NOTHING
+                """, (skill.lower(), emb_str))
+                conn.commit()
+                cur.close(); conn.close()
+                return emb_str
+            cur.close(); conn.close()
+            return None
+        except Exception as e:
+            logger.error(f"Skill embedding failed: {e}")
+            return None
+
     def expand_skills(self, skills: List[str]) -> List[str]:
-        """Expand skills with related technologies"""
+        """Expand skills with related technologies.
+        Uses pgvector semantic similarity when available, falls back to static dict.
+        """
+        if not skills:
+            return []
+
+        # Vector path: pgvector enabled + OpenAI key set
+        if self._pgvector_enabled and self._openai_api_key:
+            return self._expand_skills_via_vectors(skills)
+
+        # Fallback: static dict
+        return self._expand_skills_static(skills)
+
+    def _expand_skills_via_vectors(self, skills: List[str]) -> List[str]:
+        """Expand skills via pgvector cosine similarity (top 10 above 0.5)."""
+        try:
+            from database import db
+            expanded = set()
+            for skill in skills:
+                skill_lower = skill.lower().strip()
+                expanded.add(skill_lower)
+
+                emb = self._ensure_skill_embedding(skill_lower)
+                if not emb:
+                    continue
+
+                conn = db.get_connection()
+                cur = conn.cursor()
+                cur.execute("""
+                    SELECT skill, 1 - (embedding <=> %s::vector) AS similarity
+                    FROM charvak_skill_embeddings
+                    WHERE skill != %s AND embedding IS NOT NULL
+                    ORDER BY embedding <=> %s::vector
+                    LIMIT 10
+                """, (emb, skill_lower, emb))
+                for row in cur.fetchall():
+                    if row[1] and row[1] > 0.5:
+                        expanded.add(row[0])
+                cur.close(); conn.close()
+
+            return list(expanded)
+        except Exception as e:
+            logger.error(f"Vector expansion failed, falling back to static: {e}")
+            return self._expand_skills_static(skills)
+
+    def _expand_skills_static(self, skills: List[str]) -> List[str]:
+        """Static dict fallback (original behavior)."""
         expanded = set()
         for skill in skills:
             skill_lower = skill.lower().strip()
