@@ -17,9 +17,100 @@ class ProductsEngine:
     
     def __init__(self):
         # B-4: self.results removed - all 11 product methods are stateless
-        # (results are computed and returned directly to the HTTP response;
-        # no read path existed for the old in-memory store)
-        logger.info("✅ Products Engine ready")
+        # #86: added audit trail logging (see _log_result below)
+        self._ensure_tables()
+        logger.info("✅ Products Engine ready (audit trail enabled)")
+
+    def _ensure_tables(self):
+        """Create audit trail table if it doesn't exist."""
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS charvak_product_results (
+                    result_id     TEXT PRIMARY KEY,
+                    product_type  TEXT NOT NULL,
+                    email         TEXT,
+                    input_data    JSONB NOT NULL DEFAULT '{}'::jsonb,
+                    result_data   JSONB NOT NULL DEFAULT '{}'::jsonb,
+                    created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_product_results_type    ON charvak_product_results(product_type)")
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_product_results_email   ON charvak_product_results(email)")
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_product_results_created ON charvak_product_results(created_at)")
+            conn.commit()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"products_engine table init failed: {e}")
+
+    def _log_result(self, product_type: str, input_data: Dict, result_data: Dict, email: str = None) -> None:
+        """Log a product result to charvak_product_results. Non-fatal on error."""
+        try:
+            import json as _json
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            result_id = f"PR-{secrets.token_hex(6).upper()}"
+            cur.execute("""
+                INSERT INTO charvak_product_results
+                    (result_id, product_type, email, input_data, result_data)
+                VALUES (%s, %s, %s, %s::jsonb, %s::jsonb)
+                ON CONFLICT (result_id) DO NOTHING
+            """, (
+                result_id,
+                product_type,
+                email,
+                _json.dumps(input_data, default=str),
+                _json.dumps(result_data, default=str),
+            ))
+            conn.commit()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"_log_result failed for {product_type}: {e}")
+
+    def get_recent_results(self, product_type: str = None, email: str = None,
+                           limit: int = 100, days: int = 30) -> Dict:
+        """Read recent product results (for admin dashboard)."""
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            where = ["created_at > NOW() - INTERVAL '%s days'" % int(days)]
+            params = []
+            if product_type:
+                where.append("product_type = %s")
+                params.append(product_type)
+            if email:
+                where.append("email = %s")
+                params.append(email)
+            sql = f"""
+                SELECT result_id, product_type, email, input_data, result_data, created_at
+                FROM charvak_product_results
+                WHERE {' AND '.join(where)}
+                ORDER BY created_at DESC
+                LIMIT %s
+            """
+            params.append(limit)
+            cur.execute(sql, params)
+            rows = cur.fetchall()
+            cur.close(); conn.close()
+            return {
+                "status": "success",
+                "count": len(rows),
+                "results": [{
+                    "result_id": r[0],
+                    "product_type": r[1],
+                    "email": r[2],
+                    "input_data": r[3] if isinstance(r[3], dict) else {},
+                    "result_data": r[4] if isinstance(r[4], dict) else {},
+                    "created_at": r[5].isoformat() if hasattr(r[5], "isoformat") else str(r[5]),
+                } for r in rows],
+            }
+        except Exception as e:
+            logger.error(f"get_recent_results failed: {e}")
+            return {"status": "error", "message": "Could not load results"}
     
     # ============================================================
     # LOCK-IN BREAKER
@@ -53,6 +144,8 @@ class ProductsEngine:
         }
         
         # B-4: removed self.results.append - no read path existed
+        # #86: log result to audit trail
+        self._log_result("lock_in_breaker", data, result)
         return {"status": "success", **result}
     
     def _assess_complexity(self, services: List[str]) -> str:
@@ -101,7 +194,8 @@ class ProductsEngine:
             "top_match": max(companies, key=lambda c: c["match"]),
             "created_at": datetime.now().isoformat()
         }
-        
+
+        self._log_result("reverse_staffing", data, result)
         return {"status": "success", **result}
     
     # ============================================================
@@ -145,7 +239,8 @@ class ProductsEngine:
             "overall_score": 72,
             "scanned_at": datetime.now().isoformat()
         }
-        
+
+        self._log_result("auditbot", data, result)
         return {"status": "success", **result}
     
     # ============================================================
@@ -177,7 +272,8 @@ class ProductsEngine:
             "badge_eligible": verified_score >= 70,
             "created_at": datetime.now().isoformat()
         }
-        
+
+        self._log_result("skill_twin", data, result)
         return {"status": "success", **result}
     
     def _get_skill_level(self, score: int) -> str:
@@ -225,7 +321,8 @@ class ProductsEngine:
             "sprint_plan": self._generate_sprint_plan(duration),
             "created_at": datetime.now().isoformat()
         }
-        
+
+        self._log_result("micro_squads", data, result)
         return {"status": "success", **result}
     
     def _generate_sprint_plan(self, duration: int) -> List[str]:
@@ -263,7 +360,8 @@ class ProductsEngine:
             "projected_revenue_increase": round(revenue * 0.15, 2),
             "created_at": datetime.now().isoformat()
         }
-        
+
+        self._log_result("agency_twin", data, result)
         return {"status": "success", **result}
     
     # ============================================================
@@ -296,7 +394,8 @@ class ProductsEngine:
             "requires_legal_review": len(countries) > 2,
             "created_at": datetime.now().isoformat()
         }
-        
+
+        self._log_result("geo_compliance", data, result)
         return {"status": "success", **result}
     
     # ============================================================
@@ -325,7 +424,8 @@ class ProductsEngine:
             "tokens_drifted": 5,
             "created_at": datetime.now().isoformat()
         }
-        
+
+        self._log_result("design_token", data, result)
         return {"status": "success", **result}
     
     # ============================================================
@@ -352,7 +452,8 @@ class ProductsEngine:
             "auto_fix_enabled": True,
             "created_at": datetime.now().isoformat()
         }
-        
+
+        self._log_result("silent_killer", data, result)
         return {"status": "success", **result}
     
     # ============================================================
@@ -387,7 +488,8 @@ class ProductsEngine:
             "clean_code_ready": len(issues) == 0,
             "created_at": datetime.now().isoformat()
         }
-        
+
+        self._log_result("ai_slop", data, result)
         return {"status": "success", **result}
     
     # ============================================================
@@ -420,7 +522,8 @@ class ProductsEngine:
             ],
             "created_at": datetime.now().isoformat()
         }
-        
+
+        self._log_result("developer_entropy", data, result)
         return {"status": "success", **result}
 
 

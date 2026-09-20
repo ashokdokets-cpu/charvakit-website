@@ -3442,6 +3442,30 @@ async def api_developer_entropy(request: Request):
     data = await request.json()
     return products_engine.developer_entropy_score(data)
 
+# ============================================================
+# PRODUCT AUDIT TRAIL (#86) - admin only
+# ============================================================
+@app.get("/api/products/results")
+async def product_results(request: Request,
+                         product_type: str = None,
+                         email: str = None,
+                         limit: int = 100,
+                         days: int = 30):
+    """Get recent product audit results (admin only)."""
+    require_admin(request)
+    return products_engine.get_recent_results(
+        product_type=product_type,
+        email=email,
+        limit=min(limit, 500),
+        days=min(days, 365),
+    )
+
+@app.get("/admin-product-audit", response_class=HTMLResponse)
+async def admin_product_audit_page(request: Request):
+    """Admin page: view product audit trail."""
+    require_admin(request)
+    return template_response("admin-product-audit.html", request, "Product Audit Trail")
+
 @app.post("/api/calculator/hiring-savings")
 @limiter.limit("20/minute")
 async def hiring_savings_calculator(request: Request):
