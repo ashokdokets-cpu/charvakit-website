@@ -464,6 +464,21 @@ class ProductsEngine:
             "created_at": datetime.now().isoformat()
         }
 
+        # #60 Level 1: AI-enhanced compliance analysis
+        ai_analysis = self._ai_geo_compliance_analysis(countries, service_type, data.get("payment_method", ""))
+        if ai_analysis:
+            if ai_analysis.get("compliance"):
+                result["compliance"] = ai_analysis["compliance"]
+            if ai_analysis.get("overall_risk"):
+                result["risk_level"] = ai_analysis["overall_risk"]
+            if ai_analysis.get("verdict"):
+                result["verdict"] = ai_analysis["verdict"]
+            if ai_analysis.get("critical_actions"):
+                result["critical_actions"] = ai_analysis["critical_actions"]
+            result["analysis_mode"] = "ai_enhanced"
+        else:
+            result["analysis_mode"] = "heuristic_only"
+
         self._log_result("geo_compliance", data, result)
         return {"status": "success", **result}
     
@@ -579,6 +594,25 @@ class ProductsEngine:
             "created_at": datetime.now().isoformat()
         }
 
+        # #60 Level 1: AI-enhanced code analysis
+        ai_analysis = self._ai_slop_scan_analysis(code, language)
+        if ai_analysis:
+            if ai_analysis.get("issues_found"):
+                result["issues_found"] = ai_analysis["issues_found"]
+                result["issue_count"] = len(ai_analysis["issues_found"])
+            if ai_analysis.get("cleanliness_score") is not None:
+                result["cleanliness_score"] = ai_analysis["cleanliness_score"]
+            if ai_analysis.get("verdict"):
+                result["verdict"] = ai_analysis["verdict"]
+            if ai_analysis.get("top_issues"):
+                result["top_issues"] = ai_analysis["top_issues"]
+            if ai_analysis.get("refactored_suggestions"):
+                result["refactored_suggestions"] = ai_analysis["refactored_suggestions"]
+            result["clean_code_ready"] = result.get("issue_count", 0) == 0
+            result["analysis_mode"] = "ai_enhanced"
+        else:
+            result["analysis_mode"] = "heuristic_only"
+
         self._log_result("ai_slop", data, result)
         return {"status": "success", **result}
     
@@ -615,6 +649,128 @@ class ProductsEngine:
 
         self._log_result("developer_entropy", data, result)
         return {"status": "success", **result}
+
+    def _ai_geo_compliance_analysis(self, countries: List[str], service_type: str, payment_method: str) -> Optional[Dict]:
+        """#60 Level 1: AI-powered geo compliance analysis. Returns None on failure."""
+        api_key = os.getenv("OPENAI_API_KEY", "")
+        if not api_key:
+            return None
+        try:
+            import requests
+            import json as _json
+
+            countries_str = ", ".join(countries) if countries else "India"
+            prompt = (
+                f"You are an international business compliance expert.\n\n"
+                f"Countries: {countries_str}\n"
+                f"Service type: {service_type}\n"
+                f"Payment method: {payment_method or '(not specified)'}\n\n"
+                f"For EACH country, provide REAL, CURRENT (2024-2026) compliance info. Do NOT say 'Unknown' - "
+                f"these regulatory regimes are well-documented:\n"
+                f"- India: GST 18% on SaaS, DPDP Act 2023, Indian Contract Act 1872\n"
+                f"- USA: state-by-state sales tax (varies), CCPA/CPRA, UCC\n"
+                f"- UK: VAT 20%, UK GDPR, English common law\n"
+                f"- EU: VAT varies by country (17-27%), GDPR, EU directives\n"
+                f"- Singapore: GST 9%, PDPA, Singapore common law\n"
+                f"- UAE: VAT 5%, UAE PDPL, UAE Civil Code\n\n"
+                f"Return JSON: {{\n"
+                f"  \"compliance\": [\n"
+                f"    {{\"country\": \"XX\", \"tax\": \"specific tax regime + rate\", "
+                f"\"data_protection\": \"specific law name + year\", "
+                f"\"contract_law\": \"specific law\", "
+                f"\"key_requirements\": [\"3-4 specific requirements for a SaaS business\"], "
+                f"\"risk_level\": \"LOW|MEDIUM|HIGH\"}},\n"
+                f"    ... per country\n"
+                f"  ],\n"
+                f"  \"overall_risk\": \"LOW|MEDIUM|HIGH\",\n"
+                f"  \"verdict\": \"1-2 sentence compliance overview\",\n"
+                f"  \"critical_actions\": [\"3-5 concrete actions to take before operating\", ...]\n"
+                f"}}"
+            )
+            response = requests.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers={"Authorization": f"Bearer {api_key}"},
+                json={
+                    "model": "gpt-4o-mini",
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": 0.3,
+                    "response_format": {"type": "json_object"},
+                },
+                timeout=30,
+            )
+            data_resp = response.json()
+            content = (data_resp.get("choices", [{}])[0].get("message", {}).get("content") or "").strip()
+            if content.startswith("```"):
+                content = content.split("```", 2)[1]
+                if content.startswith("json"):
+                    content = content[4:]
+                content = content.strip()
+            parsed = _json.loads(content)
+            if isinstance(parsed, dict) and "compliance" in parsed:
+                return parsed
+            return None
+        except Exception as e:
+            logger.error(f"AI geo compliance analysis failed: {e}")
+            return None
+
+    def _ai_slop_scan_analysis(self, code: str, language: str) -> Optional[Dict]:
+        """#60 Level 1: AI-powered code quality analysis. Returns None on failure."""
+        api_key = os.getenv("OPENAI_API_KEY", "")
+        if not api_key or not code:
+            return None
+        try:
+            import requests
+            import json as _json
+
+            # Cap code at ~8000 chars to avoid huge prompts
+            code_preview = code[:8000]
+
+            prompt = (
+                f"You are a senior {language} code reviewer. Analyze this code for AI-generated bloat, "
+                f"anti-patterns, and code quality issues:\n\n"
+                f"```{language}\n{code_preview}\n```\n\n"
+                f"Find REAL issues in the actual code. Look for: dead code, unused imports/variables, "
+                f"excessive comments (TODOs, redundant docs), over-engineering, redundant wrappers, "
+                f"missing error handling, magic numbers, poor naming, duplicate logic.\n\n"
+                f"Return JSON: {{\n"
+                f"  \"issues_found\": [\n"
+                f"    {{\"pattern\": \"issue category\", \"line\": line_number, "
+                f"\"issue\": \"specific description\", \"severity\": \"HIGH|MEDIUM|LOW\", "
+                f"\"fix\": \"specific fix\"}},\n"
+                f"    ... (as many as actually exist)\n"
+                f"  ],\n"
+                f"  \"cleanliness_score\": 0-100 (based on actual code quality),\n"
+                f"  \"verdict\": \"1-2 sentence honest assessment\",\n"
+                f"  \"top_issues\": [\"3 most important issues\", ...],\n"
+                f"  \"refactored_suggestions\": [\"3-4 code improvement suggestions\", ...]\n"
+                f"}}\n\n"
+                f"Be specific with line numbers where possible. Base findings on the ACTUAL code shown."
+            )
+            response = requests.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers={"Authorization": f"Bearer {api_key}"},
+                json={
+                    "model": "gpt-4o-mini",
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": 0.3,
+                    "response_format": {"type": "json_object"},
+                },
+                timeout=30,
+            )
+            data_resp = response.json()
+            content = (data_resp.get("choices", [{}])[0].get("message", {}).get("content") or "").strip()
+            if content.startswith("```"):
+                content = content.split("```", 2)[1]
+                if content.startswith("json"):
+                    content = content[4:]
+                content = content.strip()
+            parsed = _json.loads(content)
+            if isinstance(parsed, dict) and "issues_found" in parsed:
+                return parsed
+            return None
+        except Exception as e:
+            logger.error(f"AI slop scan analysis failed: {e}")
+            return None
 
     def _ai_reverse_staffing_analysis(self, skills: List[str], experience: int) -> Optional[Dict]:
         """#60 Level 1: AI candidate-to-company matching. Returns None on failure."""
