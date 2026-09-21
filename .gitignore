@@ -117,3 +117,7 @@ _g1_patcher*.py
 _g2_patch*.py
 _g2_batch*.py
 _delete_dead.py
+
+# HTML backups (do not commit)
+templates/*.html.bak*
+*.html.bak*
