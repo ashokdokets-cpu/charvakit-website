@@ -175,6 +175,12 @@ class AICreditEngine:
         "lms_discussion": 2,
         "lms_lesson_add": 15,
         "lms_language_add": 10,
+        # Session G6 batch 5 (final): last 5 revenue routes
+        "background_verification": 100,
+        "roles_analyze": 10,
+        "roles_training_plan": 15,
+        "company_content_request": 20,
+        "internship_enroll": 100,
     }
 
     def __init__(self):
