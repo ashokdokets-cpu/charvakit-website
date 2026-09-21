@@ -3,7 +3,7 @@
 **Purpose:** Track every planned-but-not-completed item. Nothing gets lost again.
 **Created:** 2026-09-20
 **Last updated:** 2026-09-21
-**HEAD:** `1da969e`
+**HEAD:** `43bc281`
 
 ---
 
@@ -304,6 +304,42 @@
   - AI generation confirmed for new exams
 - **Coverage:** all major Indian states across PCS / Police / TET
 
+
+### M-3.5 — Prompt hardening + difficulty calibration
+
+- **Completed:** 2026-09-22 — commit `43bc281` (merge of `43c20d2`)
+- **What shipped:**
+  - AI prompt rewritten with STRICT RULES:
+    - Enforce EXACTLY 4 options per question
+    - Require unique questions (no duplicates)
+    - Verify correct answer appears in options
+    - Self-regenerate on invalid output
+  - `difficulty` field added to all 136 exams
+  - `_get_exam_difficulty()` helper added
+  - Prompt passes `Difficulty: {level}` context
+- **Distribution:** Easy 49, Medium 68, Hard 19
+- **Verified:**
+  - ssc_cgl/Reasoning (Medium): 5 unique, 4-opts-each
+  - up_police/GK (Easy): basic state GK
+  - cat/VARC (Hard): complex reasoning
+- **Discovered but NOT fixed:** see C13.
+
+### C13 — Curated question banks (Session M-4)
+
+- **Discovered:** 2026-09-22 (content quality audit on SSC CGL Reasoning)
+- **Issue:** Prompt hardening reduces but does not eliminate logical
+  errors in AI questions (missing correct answer in options, subtle
+  math errors). Content quality is user-visible.
+- **Solution:** Pre-generate questions once, manually review, seed
+  into `charvak_exam_question_bank`. Cache-first, live-AI fallback.
+- **Scope:**
+  - Top 20 exams x 5 topics x 30 questions = 3,000 curated questions
+  - Manual review process
+  - Seed script (reuse Session G3 pattern)
+  - Extend `_load_from_bank` to prefer seeded questions
+- **Est:** 2-3 hr per batch
+- **Priority:** Medium-High
+
 ## 🔴 CRITICAL — Must Fix
 
 ### C2 — `voice_to_web_engine.py` persistence
@@ -584,4 +620,4 @@ character are `C3 A0` instead of `E0 A4`, it's double-encoded.
 
 ---
 **Last updated:** 2026-09-22
-**Next update:** after Session C2 or #53
+**Next update:** after C13 or Session C2
