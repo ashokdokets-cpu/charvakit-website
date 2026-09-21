@@ -4100,8 +4100,12 @@ async def get_indian_languages():
 @app.post("/api/indian-languages/assessment")
 @limiter.limit("60/minute")
 async def create_language_assessment(request: Request):
-    """Create assessment in Indian language."""
+    """Create assessment in Indian language (Session G6: credit-gated)."""
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "indian_language_assessment")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return indian_language_ai.create_assessment(data)
 
 @app.post("/api/indian-languages/submit")
@@ -4114,8 +4118,12 @@ async def submit_language_assessment(request: Request):
 @app.post("/api/indian-languages/translate")
 @limiter.limit("20/minute")
 async def translate_job_ad(request: Request):
-    """Translate job ad to Indian language."""
+    """Translate job ad to Indian language (Session G6: credit-gated)."""
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "indian_language_translation")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return indian_language_ai.translate_job_ad(data)
 
 @app.get("/api/indian-languages/stats")

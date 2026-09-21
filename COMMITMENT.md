@@ -100,6 +100,40 @@
   template literals) deferred to a follow-up session.
 - **Backwards compatible:** pages render English by default.
 
+### C7 — Build 13 Category-B feature backends (post-G6)
+
+- **Discovered:** 2026-09-21 (Session G6 revenue audit)
+- **Issue:** 13 templates have `processCharvakPayment` UI + callback
+  but NO backend endpoint. Currently take payment intent but deliver
+  no actual feature.
+- **Affected templates:**
+  1. `agency-twin.html` — ₹2,999 Agency-Twin Pro
+  2. `agent-ready.html` — ₹399 Agent-Ready Wrapper
+  3. `ai-internship.html` — variable (weeks × program)
+  4. `ai-slop-quarantine.html` — ₹149 AI-Slop Clean
+  5. `auditbot.html` — ₹299 Fix + ₹999 Subscription (2 features)
+  6. `design-token-sentinel.html` — ₹299 Design-Token Pro
+  7. `developer-entropy.html` — ₹299 Monitoring
+  8. `geo-compliance.html` — ₹199 Contract Gen + ₹999 Global Hiring (2)
+  9. `legacy-shift.html` — ₹4,999 Migration
+  10. `lock-in-breaker.html` — ₹4,999 + ₹4,999 (2)
+  11. `marketing-ai.html` — ₹299
+  12. `micro-squads.html` — ₹49,999 Assembly
+  13. `reports.html` — ₹299 Premium Report
+  14. `skill-twin.html` — ₹499 Verification
+  15. `team-dashboard.html` — ₹1,999 Pro
+  16. `skill-twin` variants
+- **Temporary handling (G6):** replace payment button with
+  "Notify Me" CTA. Captures intent, no fraud risk.
+- **Future work per feature:**
+  - Build backend engine + endpoint
+  - Add `FEATURE_CREDITS` key
+  - Guard with `require_credits_from_data`
+  - Wire frontend to credit purchase flow
+- **Est:** 3-5 hr per feature × 15 features = **~45-75 hr total**
+- **Priority:** Medium — tackle top 3 by market demand first
+- **Verdict:** DEFERRED (post-G6, iterative)**
+
 ## 🔴 CRITICAL — Must Fix
 
 ### C2 — `voice_to_web_engine.py` persistence

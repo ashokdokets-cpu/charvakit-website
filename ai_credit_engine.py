@@ -98,6 +98,7 @@ class AICreditEngine:
         "assessment_mcq": 5,
         "assessment_skill_gap": 12,
         "assessment_custom": 8,
+        "indian_language_translation": 10,
         "topic_questions": 2,
     }
 
