@@ -24,34 +24,34 @@
 </head>
 <body>
     <div class="hero text-center">
-        <h1>📝 MCQ Assessment</h1>
-        <p>210 Questions | 21 Topics | Market Standard</p>
+        <h1 data-i18n="mcq.title">📝 MCQ Assessment</h1>
+        <p data-i18n="mcq.subtitle">210 Questions | 21 Topics | Market Standard</p>
     </div>
 
     <div class="container py-4">
         <div class="row g-3">
             <div class="col-md-3">
                 <div class="category-card active" data-category="aptitude" onclick="showCategory('aptitude')">
-                    <h2 class="as-h5">🧮 Aptitude</h2>
-                    <small>7 Topics | 70 Questions</small>
+                    <h2 class="as-h5" data-i18n="mcq.category_aptitude">🧮 Aptitude</h2>
+                    <small data-i18n="mcq.aptitude_count">7 Topics | 70 Questions</small>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="category-card" data-category="technical" onclick="showCategory('technical')">
-                    <h2 class="as-h5">💻 Technical CS</h2>
-                    <small>6 Topics | 60 Questions</small>
+                    <h2 class="as-h5" data-i18n="mcq.category_technical">💻 Technical CS</h2>
+                    <small data-i18n="mcq.technical_count">6 Topics | 60 Questions</small>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="category-card" data-category="pseudocode" onclick="showCategory('pseudocode')">
-                    <h2 class="as-h5">🔍 Pseudocode</h2>
-                    <small>4 Topics | 40 Questions</small>
+                    <h2 class="as-h5" data-i18n="mcq.category_pseudocode">🔍 Pseudocode</h2>
+                    <small data-i18n="mcq.pseudocode_count">4 Topics | 40 Questions</small>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="category-card" data-category="domain" onclick="showCategory('domain')">
-                    <h2 class="as-h5">🌐 Domain</h2>
-                    <small>4 Topics | 40 Questions</small>
+                    <h2 class="as-h5" data-i18n="mcq.category_domain">🌐 Domain</h2>
+                    <small data-i18n="mcq.domain_count">4 Topics | 40 Questions</small>
                 </div>
             </div>
         </div>
@@ -59,7 +59,7 @@
         <div id="topicTabs" class="mt-3"></div>
 
         <div class="question-box">
-            <h3 class="as-h4" id="topicTitle">Loading questions...</h3>
+            <h3 class="as-h4" id="topicTitle" data-i18n="mcq.loading_questions">Loading questions...</h3>
             <div id="questionsList"></div>
         </div>
     </div>
@@ -142,5 +142,7 @@
         // Load first category on page load
         showCategory('aptitude');
     </script>
+<script>window.CHARVAK_LANG = localStorage.getItem('charvak_lang') || 'en';</script>
+<script src="/static/js/i18n.js" defer></script>
 </body>
 </html>
