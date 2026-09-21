@@ -3,7 +3,7 @@
 **Purpose:** Track every planned-but-not-completed item. Nothing gets lost again.
 **Created:** 2026-09-20
 **Last updated:** 2026-09-21
-**HEAD:** `15193f9`
+**HEAD:** `f4a3fd3`
 
 ---
 
@@ -50,6 +50,30 @@
   Ability only read by `/api/enhanced/*` today.
 - **Backwards compatible:** existing callers see no behavior change.
 
+
+### C5 — Curated question banks
+
+- **Completed:** 2026-09-21 (Session G3) — commit `f4a3fd3` + local seed run
+- **What shipped:**
+  - New `scripts/seed_exam_question_bank.py` — idempotent, resumable,
+    throttled batch generator for `charvak_exam_question_bank`
+  - Phases: `--phase 1` (top 10 exams, ~35 pairs), `--phase 2`
+    (all 67 Indian exams, 207 pairs)
+  - `--resume` skips pairs already at target count
+  - Runs through `exam_prep_engine.generate_questions` — same path
+    users hit, no parallel write paths
+- **Verified (local):**
+  - Phase 2: **207/207 pairs succeeded** in 5281s (88 min)
+  - Bank now: **12,892 rows** across 67 exams, 43 distinct topics
+  - **207/207 pairs cache-eligible** (≥30 questions)
+  - Average 62 questions/pair (target 50; OpenAI variance + top-up)
+- **Known limitations:**
+  - `jssc/Math` had 30 stub rows from OpenAI timeout during batch;
+    re-generated to 42 real questions.
+  - `global_exams_engine` excluded (no `generate_questions` method yet)
+  - Runtime 88 min vs 33 min estimate — OpenAI averaged ~25s/call
+- **Backwards compatible:** no user-facing code changes.
+
 ---
 
 ## 🔴 CRITICAL — Must Fix
@@ -79,14 +103,6 @@
   cookie picker, ~2 CSS overrides in `static/css/style.css`)
 - **Verdict:** DEFERRED (product decision — no current user base)
 
-
-### C5 — Curated question banks
-
-- **Discovered:** 2026-09-20 (`charvak_aiqg_question_cache` has 0 rows)
-- **Issue:** Assessments depend entirely on live OpenAI calls
-- **Action:** Pre-generate 200 questions per top 5 exams
-- **Est:** ~2-3 hr
-- **Target:** Session G3
 
 ### C6 — Assessment UI translations
 
@@ -158,10 +174,10 @@
 2. ~~**Session G1**~~ — Assessment AI for 34 languages (C1)  ✅ DONE 2026-09-21
 3. ~~**Session G4**~~ — RTL UI (C3)  [DEFERRED 2026-09-21 — no Arabic user base]
 4. ~~**Session G2**~~ — Adaptive difficulty (C4)  ✅ DONE 2026-09-21 (commit `15193f9`)
-5. **Session G3** — Question banks (C5) ~2-3 hr  ← START HERE
-6. **Session G5** — Assessment i18n (C6) ~1.5 hr
+5. ~~**Session G3**~~ — Question banks (C5)  ✅ DONE 2026-09-21 (commit `f4a3fd3`)
+6. **Session G5** — Assessment i18n (C6) ~1.5 hr  ← START HERE
 
-**Remaining: ~4-5 hr across 2 sessions** (C2, C3 parked)
+**Remaining: ~1.5 hr** (C6 only; C2/C3 parked)
 
 **Dead code cleanup completed 2026-09-21 (Session G2-pre):**
 - Deleted `assessment_complete.py` (in-memory stub, zero frontend callers)
@@ -238,6 +254,31 @@ it lands 2 lines off and can break the file.
 closed`). Rolled back cleanly with `git checkout --`. The corrected patcher
 applied ops in reverse index order and worked first try.
 
+
+### L7 — Real OpenAI latency is 3-4x the nominal estimate
+
+Session G3: batch seeding 207 pairs took 88 min, not the estimated
+33 min. Root cause: OpenAI chat completions averaged ~25s per call in
+practice, not the ~7.5s assumed from single-call timings.
+
+**Rule:** for batch OpenAI work, estimate at **25-30s per call** unless
+you have measured recent latency. Add 2-3s throttle on top.
+
+### L8 — Engine fallback masks OpenAI failures as success
+
+`exam_prep_engine._generate_via_ai` catches exceptions and returns
+`_stub_questions()` on failure, but the outer `generate_questions`
+still returns `status: success`. The seed script therefore reports OK
+on fallback content.
+
+**G3 evidence:** `jssc/Math` (pair 198) — OpenAI timed out at 45s, stub
+content (30 trivial arithmetic questions) was written to the bank.
+Fixed by deleting stub rows (LENGTH heuristic) and re-generating.
+
+**Rule:** for content-quality-sensitive batches, verify question content
+sample, not just count. Consider adding a `source` column to the bank
+to distinguish AI-generated from stub.
+
 **Rule:** for multi-edit patchers, iterate indices in descending order,
 or operate on string matches rather than line indices.
 
@@ -256,4 +297,4 @@ or operate on string matches rather than line indices.
 ---
 
 **Last updated:** 2026-09-21
-**Next update:** after Session G3
+**Next update:** after Session G5
