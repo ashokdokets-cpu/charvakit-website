@@ -4114,18 +4114,30 @@ async def enterprise_stats():
 @limiter.limit("60/minute")
 async def generate_job_ad(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "marketing_job_ad")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return await marketing_ai_engine.generate_job_ad(data)
 
 @app.post("/api/marketing/social-post")
 @limiter.limit("20/minute")
 async def generate_social_post(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "marketing_social_post")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return await marketing_ai_engine.generate_social_post(data)
 
 @app.post("/api/marketing/lead-drip")
 @limiter.limit("60/minute")
 async def create_lead_drip(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "marketing_lead_drip")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return await marketing_ai_engine.create_lead_drip(data)
 
 @app.get("/api/marketing/stats")
@@ -4650,18 +4662,30 @@ async def payments_page(request: Request):
 @limiter.limit("60/minute")
 async def find_cold_email(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "outreach_cold_email")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return outreach_engine.find_hiring_manager_email(data)
 
 @app.post("/api/outreach/gmail-sync")
 @limiter.limit("30/minute")
 async def connect_gmail_sync(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "outreach_gmail_sync")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return outreach_engine.connect_gmail(data)
 
 @app.post("/api/outreach/auto-track")
 @limiter.limit("20/minute")
 async def auto_track_application(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "outreach_auto_track")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return outreach_engine.auto_track_application(data)
 
 @app.get("/api/outreach/tracked/{email}")
@@ -4672,6 +4696,10 @@ async def get_tracked_applications(email: str):
 @limiter.limit("30/minute")
 async def subscribe_outreach_premium(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "outreach_premium")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return outreach_engine.subscribe_premium(data)
 
 @app.get("/api/outreach/stats")
