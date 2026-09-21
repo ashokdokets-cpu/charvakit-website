@@ -110,7 +110,7 @@ class ExamPrepEngine:
             logger.error(f"exam_prep tables init failed: {e}")
 
     def _initialize_exams(self) -> Dict:
-        """Static catalog - 67 exams, 8 categories. Reference data, versioned with code."""
+        """Static catalog - 79 exams, 9 categories. Reference data, versioned with code."""
         return {
             "central_govt": {"name": "Central Government & Staff Recruitment", "icon": "central_govt", "exams": [
                 {"id": "ssc_cgl", "name": "SSC CGL", "full_name": "Combined Graduate Level", "tier": "Tier 1 & 2", "sections": ["Reasoning", "Quant", "English", "GK"], "questions": 100, "duration": "60 min"},
@@ -149,7 +149,11 @@ class ExamPrepEngine:
                 {"id": "gate", "name": "GATE", "full_name": "Graduate Aptitude Test", "tier": "CBT", "sections": ["Technical", "Aptitude", "Math"], "questions": 65, "duration": "180 min"},
                 {"id": "isro", "name": "ISRO", "full_name": "Scientist/Engineer", "tier": "CBT", "sections": ["Technical", "Aptitude"], "questions": 80, "duration": "90 min"},
                 {"id": "barc", "name": "BARC", "full_name": "OCES/DGFS", "tier": "CBT", "sections": ["Technical", "Math"], "questions": 100, "duration": "120 min"},
-                {"id": "drdo", "name": "DRDO CEPTAM", "full_name": "Tier 1 & 2", "tier": "CBT", "sections": ["Technical", "Reasoning", "Quant"], "questions": 150, "duration": "120 min"}
+                {"id": "drdo", "name": "DRDO CEPTAM", "full_name": "Tier 1 & 2", "tier": "CBT", "sections": ["Technical", "Reasoning", "Quant"], "questions": 150, "duration": "120 min"},
+                {"id": "jee_advanced", "name": "JEE Advanced", "full_name": "Joint Entrance Examination Advanced", "tier": "Paper 1 & 2", "sections": ["Physics", "Chemistry", "Math"], "questions": 54, "duration": "180 min"},
+                {"id": "srmjeee", "name": "SRMJEEE", "full_name": "SRM Joint Engineering Entrance Examination", "tier": "CBT", "sections": ["Physics", "Chemistry", "Math", "English", "Aptitude"], "questions": 125, "duration": "150 min"},
+                {"id": "met_manipal", "name": "MET (Manipal)", "full_name": "Manipal Entrance Test", "tier": "CBT", "sections": ["Physics", "Chemistry", "Math", "English", "General Aptitude"], "questions": 100, "duration": "120 min"},
+                {"id": "comedk_uget", "name": "COMEDK UGET", "full_name": "Consortium of Medical, Engineering and Dental Colleges of Karnataka", "tier": "CBT", "sections": ["Physics", "Chemistry", "Math"], "questions": 180, "duration": "180 min"}
             ]},
             "defense": {"name": "Defense & Security", "icon": "defense", "exams": [
                 {"id": "afcat", "name": "AFCAT", "full_name": "Air Force Common Admission Test", "tier": "CBT", "sections": ["Verbal", "Numerical", "Reasoning", "GK"], "questions": 100, "duration": "120 min"},
@@ -171,7 +175,9 @@ class ExamPrepEngine:
                 {"id": "cuet_pg", "name": "CUET PG", "full_name": "Postgraduate", "tier": "CBT", "sections": ["Domain Subject", "General"], "questions": 100, "duration": "120 min"},
                 {"id": "ugc_net", "name": "UGC NET", "full_name": "Assistant Professor/JRF", "tier": "CBT", "sections": ["Teaching Aptitude", "Research Aptitude", "Subject"], "questions": 150, "duration": "180 min"},
                 {"id": "csir_net", "name": "CSIR NET", "full_name": "Science JRF", "tier": "CBT", "sections": ["Physical Sciences", "Chemical Sciences", "Life Sciences"], "questions": 150, "duration": "180 min"},
-                {"id": "ctet", "name": "CTET", "full_name": "Teacher Eligibility", "tier": "CBT", "sections": ["Child Development", "Math", "Language"], "questions": 150, "duration": "150 min"}
+                {"id": "ctet", "name": "CTET", "full_name": "Teacher Eligibility", "tier": "CBT", "sections": ["Child Development", "Math", "Language"], "questions": 150, "duration": "150 min"},
+                {"id": "iit_jam", "name": "IIT JAM", "full_name": "Joint Admission Test for Masters", "tier": "CBT", "sections": ["Biological Sciences", "Chemistry", "Geology", "Mathematics", "Mathematical Statistics", "Physics"], "questions": 60, "duration": "180 min"},
+                {"id": "nimcet", "name": "NIMCET", "full_name": "NIT MCA Common Entrance Test", "tier": "CBT", "sections": ["Mathematics", "Analytical Ability & Logical Reasoning", "Computer Awareness", "General English"], "questions": 120, "duration": "120 min"}
             ]},
             "management": {"name": "Management & Law", "icon": "management", "exams": [
                 {"id": "cat", "name": "CAT", "full_name": "IIM Admission", "tier": "CBT", "sections": ["VARC", "DILR", "Quant"], "questions": 66, "duration": "120 min"},
@@ -180,7 +186,10 @@ class ExamPrepEngine:
                 {"id": "snap", "name": "SNAP", "full_name": "Symbiosis Admission", "tier": "CBT", "sections": ["General English", "Quant", "Reasoning"], "questions": 60, "duration": "60 min"},
                 {"id": "cmat", "name": "CMAT", "full_name": "Management Admission", "tier": "CBT", "sections": ["Quant", "Reasoning", "Language"], "questions": 100, "duration": "180 min"},
                 {"id": "clat", "name": "CLAT PG", "full_name": "Law Admission", "tier": "CBT", "sections": ["Legal Reasoning", "English", "GK"], "questions": 120, "duration": "120 min"},
-                {"id": "ceed", "name": "CEED/UCEED", "full_name": "Design Admissions", "tier": "CBT", "sections": ["Design Aptitude", "Visualization", "Creativity"], "questions": 100, "duration": "180 min"}
+                {"id": "ceed", "name": "CEED/UCEED", "full_name": "Design Admissions", "tier": "CBT", "sections": ["Design Aptitude", "Visualization", "Creativity"], "questions": 100, "duration": "180 min"},
+                {"id": "mat", "name": "MAT", "full_name": "Management Aptitude Test (AIMA)", "tier": "CBT + PBT", "sections": ["Language Comprehension", "Mathematical Skills", "Data Analysis", "Intelligence & Critical Reasoning", "Indian & Global Environment"], "questions": 150, "duration": "150 min"},
+                {"id": "atma", "name": "ATMA", "full_name": "AIMS Test for Management Admissions", "tier": "CBT", "sections": ["Analytical Reasoning", "Quantitative Skills", "Verbal Skills"], "questions": 180, "duration": "180 min"},
+                {"id": "mah_mba_cet", "name": "MAH MBA CET", "full_name": "Maharashtra MBA Common Entrance Test", "tier": "CBT", "sections": ["Logical Reasoning", "Abstract Reasoning", "Quantitative Aptitude", "Verbal Ability & Reading Comprehension"], "questions": 200, "duration": "150 min"}
             ]},
             "state_exams": {"name": "State Level Exams", "icon": "state_exams", "exams": [
                 {"id": "mht_cet", "name": "MHT-CET", "full_name": "Maharashtra", "tier": "CBT", "sections": ["Physics", "Chemistry", "Math"], "questions": 150, "duration": "180 min"},
@@ -194,6 +203,11 @@ class ExamPrepEngine:
                 {"id": "bpsc", "name": "BPSC", "full_name": "Bihar", "tier": "CBT", "sections": ["Reasoning", "GK", "Math"], "questions": 100, "duration": "120 min"},
                 {"id": "appsc", "name": "APPSC", "full_name": "Andhra Pradesh PSC", "tier": "CBT", "sections": ["Reasoning", "GK", "Math"], "questions": 100, "duration": "120 min"},
                 {"id": "tspsc", "name": "TSPSC", "full_name": "Telangana PSC", "tier": "CBT", "sections": ["Reasoning", "GK", "Math"], "questions": 100, "duration": "120 min"}
+            ]},
+            "international": {"name": "International Exams", "icon": "international", "exams": [
+                {"id": "gmat_focus", "name": "GMAT Focus Edition", "full_name": "Graduate Management Admission Test", "tier": "Section-Adaptive CAT", "sections": ["Quantitative Reasoning", "Verbal Reasoning", "Data Insights"], "questions": 64, "duration": "135 min"},
+                {"id": "gre_general", "name": "GRE General Test", "full_name": "Graduate Record Examination", "tier": "Section-Adaptive", "sections": ["Verbal Reasoning", "Quantitative Reasoning", "Analytical Writing"], "questions": 82, "duration": "118 min"},
+                {"id": "toefl_ibt", "name": "TOEFL iBT", "full_name": "Test of English as a Foreign Language - Internet Based Test", "tier": "CBT", "sections": ["Reading", "Listening", "Speaking", "Writing"], "questions": 40, "duration": "116 min"}
             ]}
         }
 
