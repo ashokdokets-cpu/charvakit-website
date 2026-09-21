@@ -45,6 +45,7 @@
 | #86 | Product audit trail | ✅ prod-verified |
 | #87 | Notification retention + cron | ✅ live |
 | #88 | Dead code cleanup | ✅ |
+| **L** | Catalog expansion: 12 exams (+4 eng, +3 mgmt, +2 uni, +3 intl) | ✅ prod-verified |
 
 ### AI Product Enhancements
 | Session | Products | Status |
