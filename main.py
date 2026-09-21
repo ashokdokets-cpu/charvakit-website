@@ -7077,6 +7077,7 @@ async def get_project_guidance(request: Request):
 
 
 from interactive_tutor import interactive_tutor
+from ielts_engine import ielts_engine
 
 @app.post("/api/tutor/start")
 async def start_tutoring(request: Request):
@@ -7118,6 +7119,49 @@ async def evaluate_answer(request: Request):
     return interactive_tutor.evaluate_answer(
         data.get("session_id"),
         data.get("user_answer")
+    )
+
+
+# ============================================================
+# Session M-1 - IELTS Academic routes
+# ============================================================
+
+@app.get("/api/ielts/sections")
+async def ielts_sections():
+    """List IELTS Academic sections available for practice (Speaking deferred)."""
+    return ielts_engine.get_sections()
+
+
+@app.post("/api/ielts/writing/generate")
+async def ielts_writing_generate(request: Request):
+    """Generate an IELTS Writing Task 1 or Task 2 prompt."""
+    data = await request.json()
+    # Credit guard (only charged if email provided - allows anonymous preview)
+    email = (data.get("email") or "").strip()
+    if email:
+        from credit_guard import require_credits_from_data
+        guard = require_credits_from_data(data, "ielts_writing_prompt")
+        if guard.get("status") != "success":
+            return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+    return ielts_engine.generate_writing_prompt(
+        task=int(data.get("task", 2)),
+        topic=data.get("topic"),
+    )
+
+
+@app.post("/api/ielts/writing/evaluate")
+async def ielts_writing_evaluate(request: Request):
+    """Score an IELTS Writing essay on the 4 official criteria."""
+    data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "ielts_writing_eval")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+    return ielts_engine.evaluate_writing(
+        essay=data.get("essay", ""),
+        task=int(data.get("task", 2)),
+        prompt_text=data.get("prompt_text", ""),
+        email=data.get("email") or None,
     )
 
 

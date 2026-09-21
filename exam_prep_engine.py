@@ -110,7 +110,7 @@ class ExamPrepEngine:
             logger.error(f"exam_prep tables init failed: {e}")
 
     def _initialize_exams(self) -> Dict:
-        """Static catalog - 79 exams, 9 categories. Reference data, versioned with code."""
+        """Static catalog - 80 exams, 9 categories. Reference data, versioned with code."""
         return {
             "central_govt": {"name": "Central Government & Staff Recruitment", "icon": "central_govt", "exams": [
                 {"id": "ssc_cgl", "name": "SSC CGL", "full_name": "Combined Graduate Level", "tier": "Tier 1 & 2", "sections": ["Reasoning", "Quant", "English", "GK"], "questions": 100, "duration": "60 min"},
@@ -207,7 +207,8 @@ class ExamPrepEngine:
             "international": {"name": "International Exams", "icon": "international", "exams": [
                 {"id": "gmat_focus", "name": "GMAT Focus Edition", "full_name": "Graduate Management Admission Test", "tier": "Section-Adaptive CAT", "sections": ["Quantitative Reasoning", "Verbal Reasoning", "Data Insights"], "questions": 64, "duration": "135 min"},
                 {"id": "gre_general", "name": "GRE General Test", "full_name": "Graduate Record Examination", "tier": "Section-Adaptive", "sections": ["Verbal Reasoning", "Quantitative Reasoning", "Analytical Writing"], "questions": 82, "duration": "118 min"},
-                {"id": "toefl_ibt", "name": "TOEFL iBT", "full_name": "Test of English as a Foreign Language - Internet Based Test", "tier": "CBT", "sections": ["Reading", "Listening", "Speaking", "Writing"], "questions": 40, "duration": "116 min"}
+                {"id": "toefl_ibt", "name": "TOEFL iBT", "full_name": "Test of English as a Foreign Language - Internet Based Test", "tier": "CBT", "sections": ["Reading", "Listening", "Speaking", "Writing"], "questions": 40, "duration": "116 min"},
+                {"id": "ielts_academic", "name": "IELTS Academic", "full_name": "International English Language Testing System (Academic)", "tier": "CBT", "sections": ["Listening", "Reading", "Writing"], "questions": 80, "duration": "150 min"}
             ]}
         }
 
