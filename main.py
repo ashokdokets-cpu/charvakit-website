@@ -4915,35 +4915,39 @@ async def exam_details(exam_id: str):
 
 @app.post("/api/exam/questions")
 async def exam_questions(request: Request):
-    """Generate practice questions."""
+    """Generate practice questions (Session G6: credit-gated)."""
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "exam_practice")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return exam_prep_engine.generate_questions(
         exam_id=data.get("exam_id"),
         topic=data.get("topic"),
         count=data.get("count", 10)
     )
 
+
 @app.post("/api/exam/mock-test")
 async def start_mock_test(request: Request):
-    """Start mock test with credit deduction."""
+    """Start mock test (Session G6: credit-gated)."""
     data = await request.json()
-    email = data.get("email", "demo@charvakit.com")
-    
-    # Deduct credits for mock test
-    credit_result = ai_credit_engine.check_and_deduct(email, "mock_test")
-    if credit_result["status"] == "error":
-        return credit_result
-    
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "mock_test")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+
     result = exam_prep_engine.start_mock_test(
         exam_id=data.get("exam_id"),
-        email=email,
+        email=guard["email"],
         topic=data.get("topic"),
         count=data.get("count", 10)
     )
-    
-    result["credits_deducted"] = 20
-    result["credits_remaining"] = credit_result.get("credits_remaining", 0)
+
+    result["credits_deducted"] = 15
+    result["credits_remaining"] = guard.get("credits_remaining", 0)
     return result
+
 
 @app.post("/api/exam/mock-test-submit-answer")
 async def mock_test_submit_answer(request: Request):
@@ -4963,11 +4967,16 @@ async def mock_test_complete(request: Request):
 
 @app.post("/api/exam/study-plan")
 async def create_study_plan_route(request: Request):
-    """Create a new study plan."""
+    """Create a new study plan (Session G6: credit-gated)."""
     caller = require_auth(request)
     data = await request.json()
     require_self_or_admin(caller, data.get("email", ""))
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "exam_practice")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return exam_prep_engine.create_study_plan(data)
+
 
 @app.get("/api/global-exam/categories")
 async def global_exam_categories():
@@ -4981,29 +4990,30 @@ async def global_exam_by_category(category_id: str):
 
 @app.post("/api/exam/ai-questions")
 async def ai_questions(request: Request):
-    """Generate AI questions with credit deduction."""
+    """Generate AI questions (Session G6: credit-gated)."""
     data = await request.json()
-    email = data.get("user_email") or data.get("email") or "demo@charvakit.com"
-    
-    # Deduct credits
-    credit_result = ai_credit_engine.check_and_deduct(email, "ai_questions")
-    if credit_result["status"] == "error":
-        return credit_result
-    
-    # Generate questions
+    from credit_guard import require_credits_from_data
+    # Support legacy 'user_email' param
+    if not data.get("email") and data.get("user_email"):
+        data["email"] = data["user_email"]
+    guard = require_credits_from_data(data, "exam_ai_questions")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+
     questions = ai_question_generator.generate_questions(
         exam_id=data.get("exam_id"),
         topic=data.get("topic"),
         count=data.get("count", 10),
-        user_email=email
+        user_email=guard["email"]
     )
-    
+
     return {
         "status": "success",
         "questions": questions,
-        "credits_deducted": credit_result.get("credits_deducted", 5),
-        "credits_remaining": credit_result.get("credits_remaining", 0)
+        "credits_deducted": guard.get("credits_deducted", 3),
+        "credits_remaining": guard.get("credits_remaining", 0)
     }
+
 
 @app.post("/api/exam/record-answer")
 async def record_answer(request: Request):
