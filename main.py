@@ -1428,6 +1428,10 @@ async def ai_health_check():
 async def api_generate_questions(request: Request):
     try:
         data = await request.json()
+        from credit_guard import require_credits_from_data
+        guard = require_credits_from_data(data, "ai_generate_questions")
+        if guard.get("status") != "success":
+            return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
         validated = GenerateQuestionsRequest(**data)
         questions = await generate_assessment_questions(
             validated.stack,
@@ -1443,6 +1447,10 @@ async def api_generate_questions(request: Request):
 async def api_voice_to_web(request: Request):
     try:
         data = await request.json()
+        from credit_guard import require_credits_from_data
+        guard = require_credits_from_data(data, "ai_voice_to_web")
+        if guard.get("status") != "success":
+            return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
         validated = VoiceToWebRequest(**data)
         result = await voice_to_website(validated.transcript, validated.language)
         return result
@@ -1457,6 +1465,10 @@ async def api_voice_to_web(request: Request):
 async def v2w_create(request: Request):
     """Create website from voice data."""
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "ai_voice_to_web")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return voice_to_web_engine.create_website(
         email=data.get("email"),
         business_name=data.get("business_name"),
@@ -1469,6 +1481,10 @@ async def v2w_create(request: Request):
 async def v2w_domain(request: Request):
     """Setup custom domain."""
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "voice_to_web_domain")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return voice_to_web_engine.setup_custom_domain(
         website_id=data.get("website_id"),
         domain=data.get("domain")
@@ -1479,6 +1495,10 @@ async def v2w_domain(request: Request):
 async def v2w_seo(request: Request):
     """Enable AI SEO."""
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "voice_to_web_seo")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return voice_to_web_engine.enable_ai_seo(
         website_id=data.get("website_id"),
         business_name=data.get("business_name"),
@@ -1490,6 +1510,10 @@ async def v2w_seo(request: Request):
 async def v2w_update(request: Request):
     """Request on-demand update."""
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "voice_to_web_update")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return voice_to_web_engine.request_update(
         website_id=data.get("website_id"),
         update_type=data.get("update_type"),
@@ -1502,6 +1526,10 @@ async def v2w_update(request: Request):
 async def v2w_support(request: Request):
     """Create support ticket."""
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "voice_to_web_support")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return voice_to_web_engine.create_support_ticket(
         email=data.get("email"),
         issue=data.get("issue"),
@@ -1523,6 +1551,10 @@ async def v2w_stats():
 async def api_neural_wireframe(request: Request):
     try:
         data = await request.json()
+        from credit_guard import require_credits_from_data
+        guard = require_credits_from_data(data, "ai_neural_wireframe")
+        if guard.get("status") != "success":
+            return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
         validated = NeuralWireframeRequest(**data)
         code = await neural_wireframe_to_code(validated.sketch)
         return {"code": code}
@@ -1534,6 +1566,10 @@ async def api_neural_wireframe(request: Request):
 async def api_localize(request: Request):
     try:
         data = await request.json()
+        from credit_guard import require_credits_from_data
+        guard = require_credits_from_data(data, "ai_localize")
+        if guard.get("status") != "success":
+            return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
         validated = LocalizeRequest(**data)
         result = await localize_website(validated.url, validated.language)
         return result
@@ -1545,6 +1581,10 @@ async def api_localize(request: Request):
 async def api_generate_contract(request: Request):
     try:
         data = await request.json()
+        from credit_guard import require_credits_from_data
+        guard = require_credits_from_data(data, "ai_generate_contract")
+        if guard.get("status") != "success":
+            return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
         validated = GenerateContractRequest(**data)
         contract = await generate_legal_contract(
             validated.company,
@@ -1560,6 +1600,10 @@ async def api_generate_contract(request: Request):
 async def api_analyze_legacy(request: Request):
     try:
         data = await request.json()
+        from credit_guard import require_credits_from_data
+        guard = require_credits_from_data(data, "ai_analyze_legacy")
+        if guard.get("status") != "success":
+            return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
         validated = AnalyzeLegacyRequest(**data)
         result = await analyze_legacy_code(validated.code)
         return result
@@ -1571,6 +1615,10 @@ async def api_analyze_legacy(request: Request):
 async def api_generate_schema(request: Request):
     try:
         data = await request.json()
+        from credit_guard import require_credits_from_data
+        guard = require_credits_from_data(data, "ai_generate_schema")
+        if guard.get("status") != "success":
+            return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
         validated = GenerateSchemaRequest(**data)
         result = await generate_agent_schema(validated.url)
         return result
@@ -6927,6 +6975,10 @@ from elevenlabs_voice import elevenlabs_voice
 @app.post("/api/voice/tts")
 async def text_to_speech(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "voice_tts")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return elevenlabs_voice.text_to_speech(
         data.get("text"),
         data.get("voice_id")
@@ -6935,6 +6987,10 @@ async def text_to_speech(request: Request):
 @app.post("/api/voice/generate-audio")
 async def generate_audio(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "voice_generate_audio")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return elevenlabs_voice.generate_audio_for_questions(
         data.get("questions")
     )
