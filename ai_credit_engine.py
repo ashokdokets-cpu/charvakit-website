@@ -100,6 +100,20 @@ class AICreditEngine:
         "assessment_custom": 8,
         "indian_language_translation": 10,
         "topic_questions": 2,
+        # Session G6 batch 1: voice + AI tools
+        "voice_tts": 5,
+        "voice_generate_audio": 8,
+        "ai_generate_questions": 5,
+        "ai_voice_to_web": 30,
+        "voice_to_web_domain": 5,
+        "voice_to_web_seo": 8,
+        "voice_to_web_update": 5,
+        "voice_to_web_support": 3,
+        "ai_neural_wireframe": 25,
+        "ai_localize": 15,
+        "ai_generate_contract": 20,
+        "ai_analyze_legacy": 25,
+        "ai_generate_schema": 15,
     }
 
     def __init__(self):
