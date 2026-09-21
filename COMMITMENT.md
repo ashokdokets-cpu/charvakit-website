@@ -159,6 +159,34 @@
 - **Est (updated):** ~60-90 hr total, iterative by priority
 
 
+### C9 — Catalog expansion: 12 missing exams
+
+- **Completed:** 2026-09-22 (Session L) — commit `f15464f`, merged on main
+- **Discovered:** 2026-09-21 (CBT/CAT audit against the master exam list)
+- **Issue:** Catalog held 67 exams / 8 categories — missing key Indian CBT exams
+  (JEE Advanced, SRMJEEE, MET, COMEDK UGET, MAT, ATMA, MAH MBA CET, IIT JAM, NIMCET)
+  and had zero global exams.
+- **What shipped:**
+  - `engineering` +4: `jee_advanced`, `srmjeee`, `met_manipal`, `comedk_uget`
+  - `management` +3: `mat`, `atma`, `mah_mba_cet`
+  - `university` +2: `iit_jam`, `nimcet`
+  - **NEW category `international`** +3: `gmat_focus` (Section-Adaptive CAT),
+    `gre_general` (Section-Adaptive), `toefl_ibt` (CBT)
+  - Single-file change: `exam_prep_engine.py`
+  - Docstring updated: `67 exams, 8 categories` → `79 exams, 9 categories`
+- **Verified:**
+  - Local + prod: `total_categories: 9`, `total_exams: 79`
+  - All 12 new exam IDs resolve via `get_exam_details`
+  - Question generation works end-to-end (real AI)
+  - Non-ASCII = 0
+- **Follow-ups:**
+  - IELTS Academic deferred — needs AI writing/speaking scoring path
+  - RRB ALP CBAT (Computer-Based Aptitude Test) module — different question type
+  - Adaptive engine (IRT) for GMAT/GRE/NMAT/BITSAT — longer roadmap
+  - Re-seed `charvak_exam_question_bank` for the 12 new exams (currently on-demand)
+
+---
+
 ### C8 — Revenue enablement (G6)
 
 - **Completed:** 2026-09-21 (Session G6) — commits `0dcf2a8` through `92ce054`
