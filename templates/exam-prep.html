@@ -319,6 +319,33 @@ async function loadPracticeQuestions(examId, topic, count = 10) {
             body: JSON.stringify({exam_id: examId, topic: topic, count: count, user_email: localStorage.getItem('userEmail') || ''})
         });
         const data = await response.json();
+
+        // Session Fix: handle non-MCQ sections (essay, cbat)
+        if (data.status === 'redirect') {
+            const msg = data.message || 'This section uses a different format.';
+            const endpoint = data.endpoint || '';
+            const format = data.format || '';
+            if (format === 'essay') {
+                container.innerHTML = '<div class="alert alert-info">' +
+                    '<i class="bi bi-pencil-square me-2"></i>' +
+                    '<strong>' + msg + '</strong>' +
+                    '<p class="mt-2 mb-2 small">This section requires writing an essay, not answering MCQs.</p>' +
+                    '<a href="/ielts" class="btn btn-primary btn-sm">Go to IELTS Practice</a>' +
+                    '</div>';
+            } else if (format === 'cbat') {
+                container.innerHTML = '<div class="alert alert-info">' +
+                    '<i class="bi bi-stopwatch me-2"></i>' +
+                    '<strong>' + msg + '</strong>' +
+                    '<p class="mt-2 mb-2 small">This section uses per-question timing. Use the CBAT module.</p>' +
+                    '<a href="/cbat" class="btn btn-primary btn-sm">Go to CBAT Practice</a>' +
+                    '</div>';
+            } else {
+                container.innerHTML = '<div class="alert alert-info">' + msg +
+                    ' <a href="' + endpoint + '" class="btn btn-primary btn-sm ms-2">Continue</a></div>';
+            }
+            return;
+        }
+
         displayQuestions(data.questions, examId, topic);
     } catch (error) {
         console.error('Error:', error);
