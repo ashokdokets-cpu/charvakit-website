@@ -3,7 +3,7 @@
 **Purpose:** Track every planned-but-not-completed item. Nothing gets lost again.
 **Created:** 2026-09-20
 **Last updated:** 2026-09-21
-**HEAD:** `c3da022`
+- **Completed:** 2026-09-22 — commit `c3da022`
 
 ---
 
