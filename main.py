@@ -6558,8 +6558,14 @@ from complete_mock_drive import complete_mock
 
 @app.post("/api/mock/start-complete")
 async def start_complete_mock(request: Request):
+    """Start complete mock drive (Session G6: credit-gated)."""
     data = await request.json()
-    return complete_mock.start_mock_drive(data.get("email"), data.get("company_id"))
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "company_mock_drive")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+    return complete_mock.start_mock_drive(guard["email"], data.get("company_id"))
+
 
 @app.post("/api/mock/submit-complete")
 async def submit_complete_answer(request: Request):
