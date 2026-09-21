@@ -123,7 +123,7 @@ class ExamPrepEngine:
                 {"id": "rrb_ntpc", "name": "RRB NTPC", "full_name": "Non-Technical Popular Categories", "tier": "CBT 1 & 2", "sections": ["Reasoning", "Quant", "GK"], "questions": 100, "duration": "90 min"},
                 {"id": "rrb_group_d", "name": "RRB Group D", "full_name": "Level-1 Posts", "tier": "CBT", "sections": ["Math", "Reasoning", "Science", "GK"], "questions": 100, "duration": "90 min"},
                 {"id": "rrb_alp", "name": "RRB ALP", "full_name": "Assistant Loco Pilot", "tier": "CBT 1 & 2", "sections": ["Math", "Reasoning", "Technical"], "questions": 75, "duration": "60 min"},
-                {"id": "rrb_alp_cbat", "name": "RRB ALP CBAT", "full_name": "Computer-Based Aptitude Test (Stage 3)", "tier": "CBAT", "sections": ["Analogies", "Decision Making", "Numerical Ability", "Memory", "Following Directions"], "questions": 100, "duration": "35 min"},
+                {"id": "rrb_alp_cbat", "name": "RRB ALP CBAT", "full_name": "Computer-Based Aptitude Test (Stage 3)", "tier": "CBAT", "sections": ["Analogies", "Decision Making", "Numerical Ability", "Memory", "Following Directions"], "formats": {"Analogies": "cbat", "Decision Making": "cbat", "Numerical Ability": "cbat", "Memory": "cbat", "Following Directions": "cbat"}, "questions": 100, "duration": "35 min"},
                 {"id": "rrb_je", "name": "RRB JE", "full_name": "Junior Engineer", "tier": "CBT 1 & 2", "sections": ["Technical", "Reasoning", "Quant"], "questions": 150, "duration": "120 min"},
                 {"id": "upsc_epfo", "name": "UPSC EPFO", "full_name": "Enforcement Officer", "tier": "CBT", "sections": ["Reasoning", "Quant", "English", "GK"], "questions": 120, "duration": "120 min"}
             ]},
@@ -209,7 +209,7 @@ class ExamPrepEngine:
                 {"id": "gmat_focus", "name": "GMAT Focus Edition", "full_name": "Graduate Management Admission Test", "tier": "Section-Adaptive CAT", "sections": ["Quantitative Reasoning", "Verbal Reasoning", "Data Insights"], "questions": 64, "duration": "135 min"},
                 {"id": "gre_general", "name": "GRE General Test", "full_name": "Graduate Record Examination", "tier": "Section-Adaptive", "sections": ["Verbal Reasoning", "Quantitative Reasoning", "Analytical Writing"], "questions": 82, "duration": "118 min"},
                 {"id": "toefl_ibt", "name": "TOEFL iBT", "full_name": "Test of English as a Foreign Language - Internet Based Test", "tier": "CBT", "sections": ["Reading", "Listening", "Speaking", "Writing"], "questions": 40, "duration": "116 min"},
-                {"id": "ielts_academic", "name": "IELTS Academic", "full_name": "International English Language Testing System (Academic)", "tier": "CBT", "sections": ["Listening", "Reading", "Writing"], "questions": 80, "duration": "150 min"}
+                {"id": "ielts_academic", "name": "IELTS Academic", "full_name": "International English Language Testing System (Academic)", "tier": "CBT", "sections": ["Listening", "Reading", "Writing"], "formats": {"Listening": "mcq", "Reading": "mcq", "Writing": "essay"}, "questions": 80, "duration": "150 min"}
             ]},
             "state_pcs": {"name": "State Civil Services", "icon": "state_pcs", "exams": [
                 {"id": "uppsc_pcs", "name": "UPPSC PCS", "full_name": "UP Combined State / Upper Subordinate Services", "tier": "Prelims & Mains", "sections": ["General Studies", "CSAT", "UP Special"], "questions": 150, "duration": "120 min"},
