@@ -3,7 +3,7 @@
 **Purpose:** Track every planned-but-not-completed item. Nothing gets lost again.
 **Created:** 2026-09-20
 **Last updated:** 2026-09-21
-**HEAD:** `92ce054`
+**HEAD:** `3c7e664`
 
 ---
 
@@ -230,6 +230,26 @@
   - **Audit result:** only auth / payment-flow / credits meta / admin /
     mid-session routes remain free (by design).
   - **Nothing AI-powered or feature-unlocking is free.**
+
+
+### M-1 — IELTS Academic (Listening/Reading/Writing)
+
+- **Completed:** 2026-09-22 — commit `3c7e664` (merge of `15482f6`)
+- **What shipped:**
+  - `ielts_academic` added to `exam_prep_engine` catalog (80 exams, 9 categories)
+  - NEW `ielts_engine.py` (~311 lines) — stateless orchestration:
+    - AI prompt generation (Task 1 + Task 2, JSON-mode)
+    - AI band scoring on 4 official IELTS criteria
+    - Persists to `charvak_assessment_results` (assessment_type='ielts_writing')
+  - 3 new routes in `main.py`:
+    - `GET  /api/ielts/sections`
+    - `POST /api/ielts/writing/generate`
+    - `POST /api/ielts/writing/evaluate`
+  - 2 new credit keys: `ielts_writing_eval` (15cr), `ielts_writing_prompt` (3cr)
+- **Verified E2E:** 117-word Task 2 essay scored 5.5 overall with correct
+  Task Response cap (5.0) for word-count violation; persisted with all
+  4 sub-bands in details_json.
+- **Deferred to M-2:** IELTS Speaking (needs audio recording + Whisper).
 
 ## 🔴 CRITICAL — Must Fix
 
@@ -495,5 +515,5 @@ character are `C3 A0` instead of `E0 A4`, it's double-encoded.
 5. **Session-CONTEXT.md** links here for fresh chats
 
 ---
-**Last updated:** 2026-09-21
-**Next update:** after Session C2 or C7 (on-demand)
+**Last updated:** 2026-09-22
+**Next update:** after Session M-2 (RRB ALP CBAT) or C2
