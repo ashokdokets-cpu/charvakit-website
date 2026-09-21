@@ -12,39 +12,53 @@ function processCharvakPayment(email, amount, featureName, callback) {
 }
 
 function showPaymentMethodSelection(email, amount, featureName, callback) {
-    const modal = document.createElement('div');
+    // Session G6: fetch region to recommend gateway
+    var fallback = function () {
+        renderPaymentModal(email, amount, featureName, callback, true);
+    };
+    if (typeof fetch !== 'function') { fallback(); return; }
+    fetch('/api/region')
+        .then(function (r) { return r.json(); })
+        .then(function (region) {
+            var country = (region && region.country ? String(region.country) : '').toUpperCase();
+            var isIndia = (country === 'IN');
+            renderPaymentModal(email, amount, featureName, callback, isIndia);
+        })
+        .catch(fallback);
+}
+
+function renderPaymentModal(email, amount, featureName, callback, isIndia) {
+    var modal = document.createElement('div');
     modal.id = 'payment-method-modal';
     modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:99999;display:flex;align-items:center;justify-content:center;';
 
-    const emailJs = JSON.stringify(email);
-    const featureJs = JSON.stringify(featureName);
-    const hasCallback = callback ? 'true' : 'false';
+    var emailJs = JSON.stringify(email);
+    var featureJs = JSON.stringify(featureName);
+    var hasCallback = callback ? 'true' : 'false';
 
-    modal.innerHTML = `
-        <div class="bg-white p-4 rounded" style="max-width:420px;width:90%;background:white;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
-            <h4 class="mb-3" style="margin-bottom:15px;font-weight:bold;">Choose Payment Method</h4>
-            <p class="mb-3" style="margin-bottom:15px;color:#666;">
-                Feature: <strong>${featureName}</strong><br>
-                Amount: <strong>₹${amount.toLocaleString()}</strong>
-            </p>
-            <div style="display:grid;gap:10px;">
-                <button class="btn btn-primary btn-lg"
-                    onclick='closePaymentModal(); payWithRazorpay(${emailJs}, ${amount}, ${featureJs}, "${hasCallback}");'
-                    style="padding:15px;border-radius:8px;border:none;background:#3ba591;color:white;font-size:16px;font-weight:bold;cursor:pointer;">
-                    🇮🇳 Pay with Razorpay (UPI/Cards/Netbanking)
-                </button>
-                <button class="btn btn-warning btn-lg"
-                    onclick='closePaymentModal(); payWithPayPal(${emailJs}, ${amount}, ${featureJs}, "${hasCallback}");'
-                    style="padding:15px;border-radius:8px;border:none;background:#ffc439;color:#111;font-size:16px;font-weight:bold;cursor:pointer;">
-                    🌍 Pay with PayPal (International Cards)
-                </button>
-                <button class="btn btn-secondary" onclick="closePaymentModal();"
-                    style="padding:10px;border-radius:8px;border:1px solid #ddd;background:#f5f5f5;color:#333;cursor:pointer;">
-                    Cancel
-                </button>
-            </div>
-        </div>
-    `;
+    var razorpayStyle = 'padding:15px;border-radius:8px;border:none;background:#3ba591;color:white;font-size:16px;font-weight:bold;cursor:pointer;';
+    var paypalStyle = 'padding:15px;border-radius:8px;border:none;background:#ffc439;color:#111;font-size:16px;font-weight:bold;cursor:pointer;';
+    var razorpayBadge = isIndia ? '<span style="background:#fff;color:#3ba591;padding:2px 8px;border-radius:12px;font-size:11px;margin-left:8px;">RECOMMENDED</span>' : '';
+    var paypalBadge = !isIndia ? '<span style="background:#fff;color:#333;padding:2px 8px;border-radius:12px;font-size:11px;margin-left:8px;">RECOMMENDED</span>' : '';
+
+    var razorpayBtn = '<button class="btn btn-primary btn-lg" onclick=\'closePaymentModal(); payWithRazorpay(' + emailJs + ', ' + amount + ', ' + featureJs + ', "' + hasCallback + '");\' style="' + razorpayStyle + '">🇮🇳 Pay with Razorpay (UPI/Cards/Netbanking)' + razorpayBadge + '</button>';
+
+    var paypalBtn = '<button class="btn btn-warning btn-lg" onclick=\'closePaymentModal(); payWithPayPal(' + emailJs + ', ' + amount + ', ' + featureJs + ', "' + hasCallback + '");\' style="' + paypalStyle + '">🌍 Pay with PayPal (International Cards)' + paypalBadge + '</button>';
+
+    // Order: recommended first
+    var orderedButtons = isIndia ? (razorpayBtn + paypalBtn) : (paypalBtn + razorpayBtn);
+
+    modal.innerHTML = '<div class="bg-white p-4 rounded" style="max-width:420px;width:90%;background:white;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,0.3);">' +
+        '<h4 class="mb-3" style="margin-bottom:15px;font-weight:bold;">Choose Payment Method</h4>' +
+        '<p class="mb-3" style="margin-bottom:15px;color:#666;">' +
+        'Feature: <strong>' + featureName + '</strong><br>' +
+        'Amount: <strong>₹' + amount.toLocaleString() + '</strong>' +
+        '</p>' +
+        '<div style="display:grid;gap:10px;">' +
+        orderedButtons +
+        '<button class="btn btn-secondary" onclick="closePaymentModal();" style="padding:10px;border-radius:8px;border:1px solid #ddd;background:#f5f5f5;color:#333;cursor:pointer;">Cancel</button>' +
+        '</div></div>';
+
     document.body.appendChild(modal);
 }
 
