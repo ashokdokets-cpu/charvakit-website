@@ -236,3 +236,31 @@ window.addEventListener('load', function() {
 // Base.html listens for this event to safely call checkLoginState
 // (replaces a polling loop)
 window.dispatchEvent(new Event('charvak:mainready'));
+
+// ============================================================
+// Session G6 — global 401/402 handler for credit-gated requests
+// ============================================================
+// When any fetch receives 401 or 402, dispatch a custom event so
+// templates can react (show login prompt, paywall modal, etc.).
+// Non-blocking: the original response is always returned.
+(function () {
+    var _originalFetch = window.fetch.bind(window);
+    window.fetch = function (url, options) {
+        options = options || {};
+        return _originalFetch(url, options).then(function (res) {
+            if (res.status === 401) {
+                window.dispatchEvent(new CustomEvent('charvak:401', {
+                    detail: { url: String(url) }
+                }));
+            } else if (res.status === 402) {
+                // Clone to read body without consuming the original stream
+                res.clone().json().then(function (d) {
+                    window.dispatchEvent(new CustomEvent('charvak:402', { detail: d }));
+                }).catch(function () {
+                    window.dispatchEvent(new CustomEvent('charvak:402', { detail: {} }));
+                });
+            }
+            return res;
+        });
+    };
+})();
