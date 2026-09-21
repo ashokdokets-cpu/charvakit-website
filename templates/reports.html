@@ -108,11 +108,8 @@ async function getMyReports(e) {
 <script>
 function generateReport(event) {
     event.preventDefault();
-    const email = prompt('Enter your email:');
-    if (!email) return;
-    processCharvakPayment(email, 299, 'Premium Report', function(response) {
-        alert('✅ Report generated!');
-    });
+    // Session G6: feature under development — capture interest instead
+    window.notifyMe('Premium Report');
 }
 </script>
 {% endblock %}

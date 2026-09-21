@@ -63,11 +63,8 @@ function show(m){document.getElementById('teamOutput').innerHTML='<div class="al
 <script>
 function upgradeTeam(event) {
     event.preventDefault();
-    const email = prompt('Enter your email:');
-    if (!email) return;
-    processCharvakPayment(email, 1999, 'Team Dashboard Pro', function(response) {
-        alert('✅ Team Pro activated!');
-    });
+    // Session G6: feature under development — capture interest instead
+    window.notifyMe('Team Dashboard Pro');
 }
 </script>
 {% endblock %}

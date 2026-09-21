@@ -91,11 +91,8 @@ async function registerUniversity(e) {
 <script>
 function registerUniversity(event) {
     event.preventDefault();
-    const email = prompt('Enter university email:');
-    if (!email) return;
-    processCharvakPayment(email, 4999, 'University Portal', function(response) {
-        alert('✅ University portal activated!');
-    });
+    // Session G6: feature under development — capture interest instead
+    window.notifyMe('University Portal');
 }
 </script>
 {% endblock %}

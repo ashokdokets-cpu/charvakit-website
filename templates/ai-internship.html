@@ -273,7 +273,7 @@ function enrollInternship(programId, programName, price) {
     
     const selected = durationMap[durationChoice] || durationMap['2'];
     
-    processCharvakPayment(email, selected.price, 'AI Internship: ' + programName + ' (' + selected.name + ' ' + selected.weeks + ' weeks)', function(response) {
+    /* removed */(email, selected.price, 'AI Internship: ' + programName + ' (' + selected.name + ' ' + selected.weeks + ' weeks)', function(response) {
         fetch('/api/internship/enroll', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},

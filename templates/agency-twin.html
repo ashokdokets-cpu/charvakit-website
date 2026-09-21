@@ -38,10 +38,8 @@
 <script>
 function agencyGoPro(event) {
     event.preventDefault();
-    const email = prompt('Enter your email:');
-    processCharvakPayment(email, 2999, 'Agency-Twin Pro', function() {
-        alert('✅ Agency-Twin Pro activated!');
-    });
+    // Session G6: feature under development — capture interest instead
+    window.notifyMe('Agency-Twin Pro');
 }
 </script>
 {% include 'includes/premium-upsell.html' %}

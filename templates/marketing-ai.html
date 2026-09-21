@@ -93,11 +93,8 @@ async function generateSocialPost(e) {
 <script>
 function generateMarketing(event) {
     event.preventDefault();
-    const email = prompt('Enter your email:');
-    if (!email) return;
-    processCharvakPayment(email, 299, 'Marketing AI', function(response) {
-        alert('✅ Marketing content generated!');
-    });
+    // Session G6: feature under development — capture interest instead
+    window.notifyMe('Marketing AI');
 }
 </script>
 {% endblock %}

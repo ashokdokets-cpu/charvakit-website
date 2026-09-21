@@ -54,12 +54,8 @@
 <script>
 function assembleSquad(event) {
     event.preventDefault();
-    const email = prompt('Enter your email:');
-    if (!email) return;
-    
-    processCharvakPayment(email, 49999, 'Micro-Squad Assembly', function() {
-        alert(String.fromCodePoint(0x2705) + ' Squad assembly started!');
-    });
+    // Session G6: feature under development — capture interest instead
+    window.notifyMe('Micro-Squad Assembly');
 }
 </script>
 {% endblock %}

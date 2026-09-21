@@ -30,10 +30,8 @@
 <script>
 function entropyStart(event) {
     event.preventDefault();
-    const email = prompt('Enter your email:');
-    processCharvakPayment(email, 299, 'Developer Entropy Monitoring', function() {
-        alert('✅ Monitoring started!');
-    });
+    // Session G6: feature under development — capture interest instead
+    window.notifyMe('Developer Entropy Monitoring');
 }
 </script>
 {% include 'includes/premium-upsell.html' %}

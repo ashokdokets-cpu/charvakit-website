@@ -110,13 +110,8 @@ function loadDynamicProjects(){
 
 function postCompanyProject(event) {
     event.preventDefault();
-    const email = prompt('Enter your business email:');
-    if (!email) return;
-    
-    processCharvakPayment(email, 2000, 'Micro-Internship Project Posting', function(response) {
-        alert(String.fromCodePoint(0x2705) + ' Payment successful! Redirecting to project form...');
-        window.location.href = '/post-micro-project?payment_id=' + (response.razorpay_payment_id || response.payment_id || 'demo');
-    });
+    // Session G6: feature under development — capture interest instead
+    window.notifyMe('Micro-Internship Project Posting');
 }
 
 document.addEventListener('DOMContentLoaded', loadDynamicProjects);
