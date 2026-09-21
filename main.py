@@ -2657,6 +2657,10 @@ async def initiate_background_verification(request: Request):
     """Initiate background verification from career engine."""
     try:
         data = await request.json()
+        from credit_guard import require_credits_from_data
+        guard = require_credits_from_data(data, "background_verification")
+        if guard.get("status") != "success":
+            return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
         # Route through KYC engine
         result = kyc_engine.initiate_verification({
             "name": data.get("name"),
@@ -5295,6 +5299,10 @@ async def internship_programs():
 async def internship_enroll(request: Request):
     """Enroll in internship."""
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "internship_enroll")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     email = data.get("email")
     program_id = data.get("program_id")
     duration = data.get("duration", "standard")
@@ -5938,6 +5946,10 @@ async def get_all_roles():
 @app.post("/api/roles/analyze")
 async def analyze_skills(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "roles_analyze")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return dynamic_role_engine.analyze_skills_and_recommend(
         data.get("email"),
         data.get("skills"),
@@ -5948,6 +5960,10 @@ async def analyze_skills(request: Request):
 @app.post("/api/roles/training-plan")
 async def create_role_plan(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "roles_training_plan")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return dynamic_role_engine.create_dynamic_training_plan(
         data.get("email"),
         data.get("role_id"),
@@ -6649,6 +6665,10 @@ async def add_custom_company(request: Request):
 @app.post("/api/company/content-request")
 async def request_content(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "company_content_request")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return universal_company.request_content(
         data.get("email"),
         data.get("company_name"),
