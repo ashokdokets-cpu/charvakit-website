@@ -162,13 +162,34 @@
         }
     }
 
-    async function loadPlans() {
+    async function hideFreePlanIfExisting(plans) {
+    // Session G6: hide Free card if user already has credits
+    var email = localStorage.getItem('userEmail') || '';
+    if (!email) return plans;
+    try {
+        var r = await fetch('/api/credits/' + encodeURIComponent(email));
+        var j = await r.json();
+        var plan = (j.plan || '').toLowerCase();
+        var remaining = j.credits_remaining || 0;
+        if (plan !== 'free' || remaining > 50) {
+            // User has purchased or has more than trial credits -> hide free card
+            var filtered = Object.assign({}, plans);
+            delete filtered['free'];
+            return filtered;
+        }
+    } catch (e) { /* ignore */ }
+    return plans;
+}
+
+async function loadPlans() {
         try {
             const response = await fetch('/api/credits/plans');
             const data = await response.json();
             if (data.status === 'success') {
                 allPlans = data.plans;
-                displayPlans(data.plans);
+                var filtered = await hideFreePlanIfExisting(data.plans);
+            allPlans = filtered;
+            displayPlans(filtered);
             }
         } catch (error) {
             console.error('Error loading plans:', error);
