@@ -5248,6 +5248,37 @@ async def ai_questions(request: Request):
     if guard.get("status") != "success":
         return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
 
+    # Session format-guard: reject MCQ for essay/cbat sections
+    try:
+        _exam_id = data.get("exam_id")
+        _topic = data.get("topic")
+        _details = exam_prep_engine.get_exam_details(_exam_id)
+        if _details.get("status") == "success":
+            _formats = _details["exam"].get("formats", {})
+            _fmt = _formats.get(_topic, "mcq")
+            if _fmt == "essay":
+                return JSONResponse(
+                    status_code=200,
+                    content={
+                        "status": "redirect",
+                        "message": "This section uses essay format. Please use the writing endpoint.",
+                        "format": "essay",
+                        "endpoint": "/api/ielts/writing/generate",
+                    }
+                )
+            if _fmt == "cbat":
+                return JSONResponse(
+                    status_code=200,
+                    content={
+                        "status": "redirect",
+                        "message": "This section uses timed CBAT format.",
+                        "format": "cbat",
+                        "endpoint": "/api/cbat/start",
+                    }
+                )
+    except Exception:
+        pass  # fail-open on lookup failure
+
     questions = ai_question_generator.generate_questions(
         exam_id=data.get("exam_id"),
         topic=data.get("topic"),
