@@ -3,7 +3,7 @@
 **Purpose:** Track every planned-but-not-completed item. Nothing gets lost again.
 **Created:** 2026-09-20
 **Last updated:** 2026-09-21
-- **Completed:** 2026-09-22 — commit `c3da022`
+**HEAD:** `1da969e`
 
 ---
 
@@ -278,6 +278,31 @@
   (currently AI-generated per session)
   - Delivery: image-based (SVG inline), strict per-question timing,
     no back-navigation (UNIQUE constraint on answers table)
+
+
+### M-3 — State Government Exam Coverage
+
+- **Completed:** 2026-09-22 — commits `f471b67`, `1c0d161` (merged via `2a91239`, `1da969e`)
+- **What shipped:**
+  - **3 new categories** in `exam_prep_engine`:
+    - `state_pcs` (20 exams): UPPSC, MPSC Rajyaseva, RPSC RAS, WBCS,
+      TNPSC Group 1 & 2, KPSC KAS, MPPSC SSE, GPSC, OPSC, APSC,
+      CGPSC, JPSC, UKPSC, HPSC, PPSC, Kerala PSC, Manipur PSC,
+      JKPSC, TPSC
+    - `state_police` (18 exams): UP, Bihar, Rajasthan, Delhi, Haryana,
+      MP, Maharashtra, Punjab, Kerala, Karnataka, TN, Telangana, AP,
+      Gujarat, WB, Odisha, Jharkhand, Chhattisgarh
+    - `state_tet` (17 exams): UPTET, REET, MAHA TET, TNTET, KARTET,
+      UTET, WBTET, MPTET, JTET, OTET, PSTET, HPTET, APTET, TSTET,
+      KTET, Assam TET, Bihar TET
+  - **Catalog: 81 → 136 exams, 9 → 12 categories**
+  - Zero new engines, tables, routes, or templates — all reuse
+    existing infrastructure
+  - AI question generation works for every new exam
+- **Verified:**
+  - Prod shows 136 exams / 12 categories
+  - AI generation confirmed for new exams
+- **Coverage:** all major Indian states across PCS / Police / TET
 
 ## 🔴 CRITICAL — Must Fix
 
