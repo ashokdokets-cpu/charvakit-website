@@ -4131,6 +4131,46 @@ async def indian_language_stats():
     """Get Indian Language AI statistics."""
     return indian_language_ai.get_stats()
 
+# ============================================================
+# Session G6: Feature interest (Notify Me) endpoint
+# ============================================================
+@app.post("/api/features/notify")
+@limiter.limit("20/minute")
+async def notify_feature_interest(request: Request):
+    """Record user interest in an upcoming feature."""
+    try:
+        data = await request.json()
+        email = (data.get("email") or "").strip().lower()
+        feature = (data.get("feature") or "").strip()
+        if not email or "@" not in email:
+            return JSONResponse(status_code=400, content={"status": "error", "message": "Valid email required"})
+        if not feature:
+            return JSONResponse(status_code=400, content={"status": "error", "message": "Feature name required"})
+
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS charvak_feature_interest (
+                id SERIAL PRIMARY KEY,
+                email TEXT NOT NULL,
+                feature TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(email, feature)
+            )
+        """)
+        cur.execute("""
+            INSERT INTO charvak_feature_interest (email, feature)
+            VALUES (%s, %s)
+            ON CONFLICT (email, feature) DO NOTHING
+        """, (email, feature))
+        conn.commit()
+        cur.close(); conn.close()
+
+        return {"status": "success", "message": "Thanks! We'll notify you when " + feature + " launches."}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
+
 @app.get("/indian-language-ai", response_class=HTMLResponse)
 async def indian_language_ai_page(request: Request):
     return template_response("indian-language-ai.html", request, "Indian Language AI - Charvak IT Consulting")

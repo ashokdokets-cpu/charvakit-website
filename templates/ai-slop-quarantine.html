@@ -36,10 +36,8 @@
 <script>
 function aiSlopClean(event) {
     event.preventDefault();
-    const email = prompt('Enter your email:');
-    processCharvakPayment(email, 149, 'AI-Slop Clean', function() {
-        alert('✅ Site cleaning started!');
-    });
+    // Session G6: feature under development — capture interest instead
+    window.notifyMe('AI-Slop Clean');
 }
 </script>
 {% include 'includes/premium-upsell.html' %}

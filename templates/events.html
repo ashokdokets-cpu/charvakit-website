@@ -106,11 +106,8 @@ async function createEvent(e) {
 <script>
 function registerForEvent(event) {
     event.preventDefault();
-    const email = prompt('Enter your email:');
-    if (!email) return;
-    processCharvakPayment(email, 499, 'Event Registration', function(response) {
-        alert('✅ Event registration confirmed!');
-    });
+    // Session G6: feature under development — capture interest instead
+    window.notifyMe('Event Registration');
 }
 </script>
 {% endblock %}

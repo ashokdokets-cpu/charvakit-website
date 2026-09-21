@@ -38,10 +38,8 @@
 <script>
 function legacyMigrate(event) {
     event.preventDefault();
-    const email = prompt('Enter your email:');
-    processCharvakPayment(email, 4999, 'Legacy Migration', function() {
-        alert('✅ Migration started!');
-    });
+    // Session G6: feature under development — capture interest instead
+    window.notifyMe('Legacy Migration');
 }
 </script>
 {% include 'includes/premium-upsell.html' %}

@@ -45,10 +45,8 @@
 <script>
 function getVerified(event) {
     event.preventDefault();
-    const email = prompt('Enter your email:');
-    processCharvakPayment(email, 499, 'Skill-Twin Verification', function() {
-        alert('✅ Verification initiated!');
-    });
+    // Session G6: feature under development — capture interest instead
+    window.notifyMe('Skill-Twin Verification');
 }
 </script>
 {% include 'includes/premium-upsell.html' %}

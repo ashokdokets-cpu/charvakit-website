@@ -38,18 +38,14 @@
 <script>
 function generateContract(event) {
     event.preventDefault();
-    const email = prompt('Enter your email:');
-    processCharvakPayment(email, 199, 'Contract Generation', function() {
-        alert('✅ Contract generated!');
-    });
+    // Session G6: feature under development — capture interest instead
+    window.notifyMe('Contract Generation');
 }
 
 function startHiring(event) {
     event.preventDefault();
-    const email = prompt('Enter your email:');
-    processCharvakPayment(email, 999, 'Global Hiring', function() {
-        alert('✅ Global hiring activated!');
-    });
+    // Session G6: feature under development — capture interest instead
+    window.notifyMe('Global Hiring');
 }
 </script>
 {% include 'includes/premium-upsell.html' %}

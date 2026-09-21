@@ -56,25 +56,15 @@ function runDemo(){
 // Add payment for actual migration service
 function startMigration(event) {
     event.preventDefault();
-    const email = prompt('Enter your business email:');
-    if (!email) return;
-    
-    processCharvakPayment(email, 4999, 'Lock-In Breaker Migration', function(response) {
-        alert('✅ Payment successful! Migration started. Our team will contact you.');
-        localStorage.setItem('lock_breaker_migration', 'active');
-    });
+    // Session G6: feature under development — capture interest instead
+    window.notifyMe('Lock-In Breaker Migration');
 }
 
 // Add payment for continuous protection
 function subscribeProtection(event) {
     event.preventDefault();
-    const email = prompt('Enter your business email:');
-    if (!email) return;
-    
-    processCharvakPayment(email, 4999, 'Lock-In Breaker Continuous Protection', function(response) {
-        alert('✅ Subscription activated! Continuous protection is now live.');
-        localStorage.setItem('lock_breaker_protection', 'active');
-    });
+    // Session G6: feature under development — capture interest instead
+    window.notifyMe('Lock-In Breaker Continuous Protection');
 }
 
 // Add event listeners to CTA buttons when DOM loads

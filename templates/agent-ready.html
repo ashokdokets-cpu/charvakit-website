@@ -37,10 +37,8 @@
 <script>
 function agentReadySignup(event) {
     event.preventDefault();
-    const email = prompt('Enter your email:');
-    processCharvakPayment(email, 399, 'Agent-Ready Wrapper', function() {
-        alert('✅ Agent-Ready activated!');
-    });
+    // Session G6: feature under development — capture interest instead
+    window.notifyMe('Agent-Ready Wrapper');
 }
 </script>
 {% include 'includes/premium-upsell.html' %}

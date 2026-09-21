@@ -264,3 +264,23 @@ window.dispatchEvent(new Event('charvak:mainready'));
         });
     };
 })();
+
+// ============================================================
+// Session G6 — feature interest capture ("Notify Me")
+// ============================================================
+window.notifyMe = function (featureName) {
+    var email = localStorage.getItem('userEmail') || prompt('Enter your email to be notified:');
+    if (!email) return;
+    fetch('/api/features/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email, feature: featureName })
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+        alert(d.message || "Thanks! We'll notify you.");
+    })
+    .catch(function () {
+        alert("Sorry, couldn't save your request. Please try again.");
+    });
+};
