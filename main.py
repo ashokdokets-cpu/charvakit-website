@@ -3399,6 +3399,10 @@ async def start_interview_prep(request: Request):
     """Start an interview prep session."""
     try:
         data = await request.json()
+        from credit_guard import require_credits_from_data
+        guard = require_credits_from_data(data, "interview_prep_start")
+        if guard.get("status") != "success":
+            return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
         result = interview_prep_engine.start_session(data)
         return result
     except Exception as e:
@@ -3410,6 +3414,10 @@ async def submit_answer(request: Request):
     """Submit an answer for scoring."""
     try:
         data = await request.json()
+        from credit_guard import require_credits_from_data
+        guard = require_credits_from_data(data, "interview_prep_submit")
+        if guard.get("status") != "success":
+            return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
         result = interview_prep_engine.submit_answer(data)
         return result
     except Exception as e:
@@ -4523,18 +4531,30 @@ async def bridge_stats():
 @limiter.limit("60/minute")
 async def start_ai_bridge(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "ai_bridge_start")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return ai_bridge_engine.start_ai_assessment(data)
 
 @app.post("/api/ai-bridge/answer")
 @limiter.limit("20/minute")
 async def submit_ai_answer(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "ai_bridge_answer")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return ai_bridge_engine.submit_ai_answer(data)
 
 @app.post("/api/ai-bridge/premium")
 @limiter.limit("30/minute")
 async def get_premium_report(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "ai_bridge_premium")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return ai_bridge_engine.get_premium_report(data.get("session_id"))
 
 @app.get("/api/ai-bridge/stats")
@@ -4568,6 +4588,10 @@ async def get_student_plan(email: str):
 @limiter.limit("20/minute")
 async def assist_assignment(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "student_assignment")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     email = data.get("email") or data.get("student_email")
     subject = data.get("subject", "")
     topic = data.get("topic", "")
@@ -4577,6 +4601,10 @@ async def assist_assignment(request: Request):
 @limiter.limit("20/minute")
 async def assist_research(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "student_research")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     email = data.get("email") or data.get("student_email")
     field = data.get("field", "")
     topic = data.get("topic", "")
@@ -4768,24 +4796,40 @@ async def lifecycle_stats():
 @limiter.limit("60/minute")
 async def suggest_fyp_topics(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "fyp_suggest_topics")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return final_year_project_engine.suggest_topics_ai(data)
 
 @app.post("/api/fyp/generate-proposal")
 @limiter.limit("60/minute")
 async def generate_fyp_proposal(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "fyp_generate_proposal")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return final_year_project_engine.generate_proposal_ai(data)
 
 @app.post("/api/fyp/generate-documentation")
 @limiter.limit("30/minute")
 async def generate_fyp_documentation(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "fyp_generate_documentation")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return final_year_project_engine.generate_documentation_ai(data)
 
 @app.post("/api/fyp/viva-questions")
 @limiter.limit("60/minute")
 async def fyp_viva_questions(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "fyp_viva_questions")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return final_year_project_engine.generate_viva_ai(data)
 
 @app.post("/api/fyp/subscribe")
@@ -6873,6 +6917,10 @@ from interactive_tutor import interactive_tutor
 @app.post("/api/tutor/start")
 async def start_tutoring(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "ai_tutor_start")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return interactive_tutor.start_tutoring_session(
         data.get("email"),
         data.get("course_name"),
@@ -6883,6 +6931,10 @@ async def start_tutoring(request: Request):
 @app.post("/api/tutor/chat")
 async def chat_with_tutor(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "ai_tutor_chat")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return interactive_tutor.chat_with_tutor(
         data.get("session_id"),
         data.get("user_message")
@@ -6895,6 +6947,10 @@ async def get_scenario(session_id: str):
 @app.post("/api/tutor/evaluate")
 async def evaluate_answer(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "ai_tutor_evaluate")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return interactive_tutor.evaluate_answer(
         data.get("session_id"),
         data.get("user_answer")

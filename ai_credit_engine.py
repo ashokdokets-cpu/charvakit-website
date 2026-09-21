@@ -121,6 +121,21 @@ class AICreditEngine:
         "outreach_gmail_sync": 5,
         "outreach_auto_track": 5,
         "outreach_premium": 25,
+        # Session G6 batch 3: student + fyp + interview + bridge + tutor
+        "student_assignment": 10,
+        "student_research": 15,
+        "fyp_suggest_topics": 5,
+        "fyp_generate_proposal": 15,
+        "fyp_generate_documentation": 30,
+        "fyp_viva_questions": 10,
+        "interview_prep_start": 8,
+        "interview_prep_submit": 5,
+        "ai_bridge_start": 10,
+        "ai_bridge_answer": 3,
+        "ai_bridge_premium": 25,
+        "ai_tutor_start": 5,
+        "ai_tutor_chat": 3,
+        "ai_tutor_evaluate": 8,
     }
 
     def __init__(self):
