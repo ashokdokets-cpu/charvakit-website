@@ -140,6 +140,44 @@
 
 ---
 
+
+### V4 — Dev and prod share one Render Postgres
+
+- **Discovered:** 2026-09-21 (Session G3)
+- **Reality:** `.env` `DATABASE_URL` connects to
+  `dpg-d9m92j0ae00c73blvoq0-a.singapore-postgres.render.com/vouchai`.
+  Every local script run writes to prod. No dev/staging isolation.
+- **Evidence:**
+  - Local `charvak_exam_question_bank` count (12,892) exactly matches
+    prod count verified via Render Shell
+  - `charvak_user_ability` table appeared in prod immediately after
+    local `ability_engine._ensure_tables()` ran during G2
+  - No log file at `/tmp/g3_seed.log` in Render Shell despite local
+    seed script having run — because the script never ran in Render's
+    container; it ran on the local machine talking to the shared DB
+- **Implication:**
+  - All local experiments are prod operations
+  - Any destructive query (`DROP`, `DELETE` without `WHERE`, bulk
+    `UPDATE`) affects real users immediately
+  - No safe sandbox for testing
+  - Backups capture prod state, not a dev clone
+- **Action (deferred):** Set up local Postgres 15 for dev (Postgres 15
+  is already installed per `MASTER-REFERENCE.md` at
+  `C:\Program Files\PostgreSQL\15`) OR provision a separate Render
+  staging database.
+  - **Option A (local):** Point `.env.local` at
+    `postgresql://postgres:dev@localhost:5432/charvak_dev`, run
+    migrations + seed scripts against it.
+  - **Option B (Render staging):** New Render Postgres resource;
+    copy prod → staging periodically for realistic tests.
+- **Escalation trigger:** Any of the following:
+  1. Any destructive operation planned (DROP, DELETE without WHERE,
+     bulk UPDATE)
+  2. Onboarding a second developer
+  3. Adding a feature that requires iterative testing against scratch
+     data
+- **Verdict:** DEFERRED (works today; revisit when risk grows)
+
 ## ✅ CONFIRMED BY DESIGN (no action)
 
 | # | Item | Verified |
