@@ -61,6 +61,7 @@ rebuild_*.py
 # Dev-only scripts folder
 scripts/*
 !scripts/seed_exam_question_bank.py
+!scripts/translate_ui.py
 !scripts/regenerate_schema.py
 !scripts/cleanup_notifications.py
 !scripts/migrate_cert_name.py
