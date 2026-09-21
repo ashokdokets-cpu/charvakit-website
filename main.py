@@ -7078,6 +7078,7 @@ async def get_project_guidance(request: Request):
 
 from interactive_tutor import interactive_tutor
 from ielts_engine import ielts_engine
+from cbat_engine import cbat_engine
 
 @app.post("/api/tutor/start")
 async def start_tutoring(request: Request):
@@ -7163,6 +7164,55 @@ async def ielts_writing_evaluate(request: Request):
         prompt_text=data.get("prompt_text", ""),
         email=data.get("email") or None,
     )
+
+
+# ============================================================
+# Session M-2 - RRB ALP CBAT routes
+# ============================================================
+
+@app.get("/api/cbat/sub-tests")
+async def cbat_sub_tests():
+    """List the 6 CBAT sub-tests with metadata."""
+    return cbat_engine.get_sub_tests()
+
+
+@app.post("/api/cbat/start")
+async def cbat_start(request: Request):
+    """Start a CBAT session. Charges 25 credits."""
+    data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "cbat_session")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+    return cbat_engine.start_cbat_session(
+        email=guard["email"],
+        sub_test=data.get("sub_test", ""),
+    )
+
+
+@app.post("/api/cbat/submit-answer")
+async def cbat_submit_answer(request: Request):
+    """Record one CBAT answer (idempotent, no back-nav). Mid-session is free."""
+    data = await request.json()
+    return cbat_engine.submit_cbat_answer(
+        session_id=data.get("session_id", ""),
+        question_index=int(data.get("question_index", 0)),
+        selected=(int(data["selected"]) if data.get("selected") is not None else None),
+        time_taken_ms=int(data.get("time_taken_ms", 0)),
+    )
+
+
+@app.post("/api/cbat/complete")
+async def cbat_complete(request: Request):
+    """Finalize CBAT session. Mid-session is free."""
+    data = await request.json()
+    return cbat_engine.complete_cbat_session(data.get("session_id", ""))
+
+
+@app.get("/api/cbat/status/{session_id}")
+async def cbat_status(session_id: str):
+    """Check CBAT session state (resume support)."""
+    return cbat_engine.get_cbat_status(session_id)
 
 
 
