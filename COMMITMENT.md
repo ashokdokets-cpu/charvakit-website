@@ -133,10 +133,7 @@
 - **Est:** 3-5 hr per feature × 15 features = **~45-75 hr total**
 - **Priority:** Medium — tackle top 3 by market demand first
 - **Verdict:** DEFERRED (post-G6, iterative)**
-- **Expanded (2026-09-21, Session G6):** 5 additional templates
-  (events, ats, lms, micro-internship, university) confirmed to have
-  same problem — dead processCharvakPayment + working free path with
-  no gate. Total in C7: **~23 features across 18 templates**.
+
 - **Expanded (2026-09-21, Session G6 revenue audit):** 5 additional
   templates confirmed to have the same problem — dead
   `processCharvakPayment` callbacks + working free paths with no gate:
