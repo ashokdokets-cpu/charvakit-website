@@ -160,6 +160,25 @@ class AICreditEngine:
                 ON charvak_credit_purchases(email)
             """)
 
+            # Session G6: feature interest table for "Notify Me"
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS charvak_feature_interest (
+                    id SERIAL PRIMARY KEY,
+                    email TEXT NOT NULL,
+                    feature TEXT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(email, feature)
+                )
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_feature_interest_email
+                ON charvak_feature_interest(email)
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_feature_interest_feature
+                ON charvak_feature_interest(feature)
+            """)
+
             conn.commit()
             cursor.close()
             conn.close()
@@ -389,6 +408,26 @@ class AICreditEngine:
         plan_data = self.PLANS.get(plan)
         if not plan_data:
             return {"status": "error", "message": "Invalid plan"}
+
+        # Session G6: prevent repeat free-plan farming
+        if plan == CreditPlan.FREE:
+            try:
+                from database import db as _db
+                _conn = _db.get_connection()
+                _cur = _conn.cursor()
+                _cur.execute("""
+                    SELECT COUNT(*) FROM charvak_credit_purchases
+                    WHERE email = %s AND plan = 'free'
+                """, (email,))
+                _existing = _cur.fetchone()[0]
+                _cur.close(); _conn.close()
+                if _existing > 0:
+                    return {
+                        "status": "error",
+                        "message": "Free trial already claimed. Please purchase a plan to continue."
+                    }
+            except Exception as _e:
+                logger.warning(f"free-plan guard check failed: {_e}")
 
         try:
             from database import db
