@@ -244,7 +244,12 @@
     "category_technical": "💻 Technical CS",
     "category_pseudocode": "🔍 Pseudocode",
     "category_domain": "🌐 Domain",
-    "topics_label": "Topics:"
+    "topics_label": "Topics:",
+    "aptitude_count": "7 Topics | 70 Questions",
+    "technical_count": "6 Topics | 60 Questions",
+    "pseudocode_count": "4 Topics | 40 Questions",
+    "domain_count": "4 Topics | 40 Questions",
+    "loading_questions": "Loading questions..."
   },
   "exam_prep": {
     "title": "Global Exam Preparation Center",
