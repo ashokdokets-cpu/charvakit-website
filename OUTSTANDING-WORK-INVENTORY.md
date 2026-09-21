@@ -9,6 +9,15 @@
 
 ---
 
+## ✅ Recently Completed
+
+### Session L - Catalog expansion (2026-09-22, commit `f15464f`, PR #24)
+- 12 exams added; catalog 67/8 -> 79/9
+- New `international` category: GMAT Focus, GRE General, TOEFL iBT
+- Prod-verified: `total_categories: 9`, `total_exams: 79`
+
+---
+
 ## 🟡 PERSISTENCE — remaining engines
 
 | # | Engine | Session | Est. | Notes |
