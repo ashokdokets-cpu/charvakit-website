@@ -110,7 +110,7 @@ class ExamPrepEngine:
             logger.error(f"exam_prep tables init failed: {e}")
 
     def _initialize_exams(self) -> Dict:
-        """Static catalog - 80 exams, 9 categories. Reference data, versioned with code."""
+        """Static catalog - 81 exams, 9 categories. Reference data, versioned with code."""
         return {
             "central_govt": {"name": "Central Government & Staff Recruitment", "icon": "central_govt", "exams": [
                 {"id": "ssc_cgl", "name": "SSC CGL", "full_name": "Combined Graduate Level", "tier": "Tier 1 & 2", "sections": ["Reasoning", "Quant", "English", "GK"], "questions": 100, "duration": "60 min"},
@@ -123,6 +123,7 @@ class ExamPrepEngine:
                 {"id": "rrb_ntpc", "name": "RRB NTPC", "full_name": "Non-Technical Popular Categories", "tier": "CBT 1 & 2", "sections": ["Reasoning", "Quant", "GK"], "questions": 100, "duration": "90 min"},
                 {"id": "rrb_group_d", "name": "RRB Group D", "full_name": "Level-1 Posts", "tier": "CBT", "sections": ["Math", "Reasoning", "Science", "GK"], "questions": 100, "duration": "90 min"},
                 {"id": "rrb_alp", "name": "RRB ALP", "full_name": "Assistant Loco Pilot", "tier": "CBT 1 & 2", "sections": ["Math", "Reasoning", "Technical"], "questions": 75, "duration": "60 min"},
+                {"id": "rrb_alp_cbat", "name": "RRB ALP CBAT", "full_name": "Computer-Based Aptitude Test (Stage 3)", "tier": "CBAT", "sections": ["Analogies", "Decision Making", "Numerical Ability", "Memory", "Following Directions"], "questions": 100, "duration": "35 min"},
                 {"id": "rrb_je", "name": "RRB JE", "full_name": "Junior Engineer", "tier": "CBT 1 & 2", "sections": ["Technical", "Reasoning", "Quant"], "questions": 150, "duration": "120 min"},
                 {"id": "upsc_epfo", "name": "UPSC EPFO", "full_name": "Enforcement Officer", "tier": "CBT", "sections": ["Reasoning", "Quant", "English", "GK"], "questions": 120, "duration": "120 min"}
             ]},
