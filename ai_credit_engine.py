@@ -110,6 +110,9 @@ class AICreditEngine:
         "voice_to_web_update": 5,
         "voice_to_web_support": 3,
         "ai_neural_wireframe": 25,
+        # Session M-1: IELTS Academic
+        "ielts_writing_eval": 15,
+        "ielts_writing_prompt": 3,
         "ai_localize": 15,
         "ai_generate_contract": 20,
         "ai_analyze_legacy": 25,
