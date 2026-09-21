@@ -110,7 +110,7 @@ class ExamPrepEngine:
             logger.error(f"exam_prep tables init failed: {e}")
 
     def _initialize_exams(self) -> Dict:
-        """Static catalog - 101 exams, 12 categories. Reference data, versioned with code."""
+        """Static catalog - 136 exams, 12 categories. Reference data, versioned with code."""
         return {
             "central_govt": {"name": "Central Government & Staff Recruitment", "icon": "central_govt", "exams": [
                 {"id": "ssc_cgl", "name": "SSC CGL", "full_name": "Combined Graduate Level", "tier": "Tier 1 & 2", "sections": ["Reasoning", "Quant", "English", "GK"], "questions": 100, "duration": "60 min"},
@@ -219,7 +219,19 @@ class ExamPrepEngine:
                 {"id": "tnpsc_group1", "name": "TNPSC Group 1", "full_name": "Tamil Nadu Public Service Commission Group 1", "tier": "Prelims & Mains", "sections": ["General Studies", "Aptitude", "TN Special"], "questions": 200, "duration": "180 min"},
                 {"id": "kpsc_kas", "name": "KPSC KAS", "full_name": "Karnataka Administrative Service", "tier": "Prelims & Mains", "sections": ["General Studies", "CSAT", "KA Special"], "questions": 150, "duration": "120 min"},
                 {"id": "mppsc_sse", "name": "MPPSC SSE", "full_name": "MP State Service Examination", "tier": "Prelims & Mains", "sections": ["General Studies", "CSAT", "MP Special"], "questions": 150, "duration": "120 min"},
-                {"id": "gpsc_class12", "name": "GPSC Class 1 & 2", "full_name": "Gujarat Public Service Commission", "tier": "Prelims & Mains", "sections": ["General Studies", "GK", "Gujarat Special"], "questions": 200, "duration": "180 min"}
+                {"id": "gpsc_class12", "name": "GPSC Class 1 & 2", "full_name": "Gujarat Public Service Commission", "tier": "Prelims & Mains", "sections": ["General Studies", "GK", "Gujarat Special"], "questions": 200, "duration": "180 min"},
+                {"id": "opsc_ocs", "name": "OPSC OCS", "full_name": "Odisha Civil Services", "tier": "Prelims & Mains", "sections": ["General Studies", "CSAT", "Odisha Special"], "questions": 150, "duration": "120 min"},
+                {"id": "apsc_cce", "name": "APSC CCE", "full_name": "Assam Combined Competitive Exam", "tier": "Prelims & Mains", "sections": ["General Studies", "CSAT", "Assam Special"], "questions": 150, "duration": "120 min"},
+                {"id": "cgpsc_sse", "name": "CGPSC SSE", "full_name": "Chhattisgarh State Service Examination", "tier": "Prelims & Mains", "sections": ["General Studies", "Aptitude", "CG Special"], "questions": 150, "duration": "120 min"},
+                {"id": "jpsc_ccs", "name": "JPSC CCS", "full_name": "Jharkhand Combined Civil Services", "tier": "Prelims & Mains", "sections": ["General Studies", "Aptitude", "Jharkhand Special"], "questions": 150, "duration": "120 min"},
+                {"id": "ukpsc_pcs", "name": "UKPSC PCS", "full_name": "Uttarakhand Public Service Commission", "tier": "Prelims & Mains", "sections": ["General Studies", "CSAT", "UK Special"], "questions": 150, "duration": "120 min"},
+                {"id": "hpsc_hcs", "name": "HPSC HCS", "full_name": "Haryana Civil Services", "tier": "Prelims & Mains", "sections": ["General Studies", "CSAT", "Haryana Special"], "questions": 100, "duration": "120 min"},
+                {"id": "ppsc_pcs", "name": "PPSC PCS", "full_name": "Punjab Civil Services", "tier": "Prelims & Mains", "sections": ["General Studies", "CSAT", "Punjab Special"], "questions": 120, "duration": "120 min"},
+                {"id": "kpsc_kerala", "name": "Kerala PSC KAS", "full_name": "Kerala Administrative Service", "tier": "Prelims & Mains", "sections": ["General Studies", "Aptitude", "Kerala Special"], "questions": 100, "duration": "75 min"},
+                {"id": "mpsc_manipur", "name": "Manipur PSC", "full_name": "Manipur Civil Services", "tier": "Prelims & Mains", "sections": ["General Studies", "Aptitude", "Manipur Special"], "questions": 120, "duration": "120 min"},
+                {"id": "jkpsc_kas", "name": "JKPSC KAS", "full_name": "J&K Combined Competitive Services", "tier": "Prelims & Mains", "sections": ["General Studies", "CSAT", "J&K Special"], "questions": 120, "duration": "120 min"},
+                {"id": "tnpsc_group2", "name": "TNPSC Group 2", "full_name": "Tamil Nadu Public Service Commission Group 2", "tier": "Prelims & Mains", "sections": ["General Studies", "Aptitude", "TN Special"], "questions": 200, "duration": "180 min"},
+                {"id": "tpsc_tcs", "name": "TPSC TCS", "full_name": "Tripura Civil Services", "tier": "Prelims & Mains", "sections": ["General Studies", "Aptitude", "Tripura Special"], "questions": 100, "duration": "120 min"}
             ]},
             "state_police": {"name": "State Police", "icon": "state_police", "exams": [
                 {"id": "up_police", "name": "UP Police", "full_name": "UP Police Constable & SI", "tier": "CBT", "sections": ["General Knowledge", "Reasoning", "Numerical"], "questions": 160, "duration": "120 min"},
@@ -228,14 +240,37 @@ class ExamPrepEngine:
                 {"id": "delhi_police", "name": "Delhi Police", "full_name": "Delhi Police Constable", "tier": "CBT", "sections": ["General Knowledge", "Reasoning", "Numerical"], "questions": 100, "duration": "90 min"},
                 {"id": "haryana_police", "name": "Haryana Police", "full_name": "Haryana Police Constable & SI", "tier": "CBT", "sections": ["General Knowledge", "Reasoning", "Numerical"], "questions": 100, "duration": "90 min"},
                 {"id": "mp_police", "name": "MP Police", "full_name": "MP Police Constable", "tier": "CBT", "sections": ["General Knowledge", "Reasoning", "Numerical"], "questions": 100, "duration": "120 min"},
-                {"id": "maharashtra_police", "name": "Maharashtra Police", "full_name": "Maharashtra Police Constable", "tier": "CBT", "sections": ["General Knowledge", "Reasoning", "Numerical", "Marathi"], "questions": 100, "duration": "90 min"}
+                {"id": "maharashtra_police", "name": "Maharashtra Police", "full_name": "Maharashtra Police Constable", "tier": "CBT", "sections": ["General Knowledge", "Reasoning", "Numerical", "Marathi"], "questions": 100, "duration": "90 min"},
+                {"id": "punjab_police", "name": "Punjab Police", "full_name": "Punjab Police Constable & SI", "tier": "CBT", "sections": ["General Knowledge", "Reasoning", "Numerical", "Punjabi"], "questions": 100, "duration": "120 min"},
+                {"id": "kerala_police", "name": "Kerala Police", "full_name": "Kerala Police Constable", "tier": "CBT", "sections": ["General Knowledge", "Reasoning", "Numerical", "Malayalam"], "questions": 100, "duration": "75 min"},
+                {"id": "karnataka_police", "name": "Karnataka Police", "full_name": "Karnataka Police Constable & SI", "tier": "CBT", "sections": ["General Knowledge", "Reasoning", "Numerical", "Kannada"], "questions": 100, "duration": "90 min"},
+                {"id": "tn_police", "name": "Tamil Nadu Police", "full_name": "TN Police Constable & SI", "tier": "CBT", "sections": ["General Knowledge", "Reasoning", "Numerical", "Tamil"], "questions": 100, "duration": "90 min"},
+                {"id": "telangana_police", "name": "Telangana Police", "full_name": "Telangana Police Constable & SI", "tier": "CBT", "sections": ["General Knowledge", "Reasoning", "Numerical", "Telugu"], "questions": 100, "duration": "90 min"},
+                {"id": "ap_police", "name": "Andhra Pradesh Police", "full_name": "AP Police Constable & SI", "tier": "CBT", "sections": ["General Knowledge", "Reasoning", "Numerical", "Telugu"], "questions": 100, "duration": "90 min"},
+                {"id": "gujarat_police", "name": "Gujarat Police", "full_name": "Gujarat Police Constable", "tier": "CBT", "sections": ["General Knowledge", "Reasoning", "Numerical", "Gujarati"], "questions": 100, "duration": "90 min"},
+                {"id": "wb_police", "name": "West Bengal Police", "full_name": "WB Police Constable & SI", "tier": "CBT", "sections": ["General Knowledge", "Reasoning", "Numerical", "Bengali"], "questions": 100, "duration": "90 min"},
+                {"id": "odisha_police", "name": "Odisha Police", "full_name": "Odisha Police Constable & SI", "tier": "CBT", "sections": ["General Knowledge", "Reasoning", "Numerical", "Odia"], "questions": 100, "duration": "90 min"},
+                {"id": "jharkhand_police", "name": "Jharkhand Police", "full_name": "Jharkhand Police Constable", "tier": "CBT", "sections": ["General Knowledge", "Reasoning", "Numerical", "Hindi"], "questions": 100, "duration": "90 min"},
+                {"id": "chhattisgarh_police", "name": "Chhattisgarh Police", "full_name": "CG Police Constable", "tier": "CBT", "sections": ["General Knowledge", "Reasoning", "Numerical", "Hindi"], "questions": 100, "duration": "90 min"}
             ]},
             "state_tet": {"name": "State Teacher Eligibility", "icon": "state_tet", "exams": [
                 {"id": "uptet", "name": "UPTET", "full_name": "Uttar Pradesh Teacher Eligibility Test", "tier": "CBT", "sections": ["Child Development", "Math", "EVS", "Language"], "questions": 150, "duration": "150 min"},
                 {"id": "reet", "name": "REET", "full_name": "Rajasthan Eligibility Examination for Teachers", "tier": "CBT", "sections": ["Child Development", "Math", "EVS", "Language"], "questions": 150, "duration": "150 min"},
                 {"id": "maha_tet", "name": "MAHA TET", "full_name": "Maharashtra Teacher Eligibility Test", "tier": "CBT", "sections": ["Child Development", "Math", "EVS", "Language"], "questions": 150, "duration": "150 min"},
                 {"id": "tntet", "name": "TNTET", "full_name": "Tamil Nadu Teacher Eligibility Test", "tier": "CBT", "sections": ["Child Development", "Math", "EVS", "Tamil"], "questions": 150, "duration": "150 min"},
-                {"id": "kartet", "name": "KARTET", "full_name": "Karnataka Teacher Eligibility Test", "tier": "CBT", "sections": ["Child Development", "Math", "EVS", "Kannada"], "questions": 150, "duration": "150 min"}
+                {"id": "kartet", "name": "KARTET", "full_name": "Karnataka Teacher Eligibility Test", "tier": "CBT", "sections": ["Child Development", "Math", "EVS", "Kannada"], "questions": 150, "duration": "150 min"},
+                {"id": "utet", "name": "UTET", "full_name": "Uttarakhand Teacher Eligibility Test", "tier": "CBT", "sections": ["Child Development", "Math", "EVS", "Language"], "questions": 150, "duration": "150 min"},
+                {"id": "wbtet", "name": "WB TET", "full_name": "West Bengal Teacher Eligibility Test", "tier": "CBT", "sections": ["Child Development", "Math", "EVS", "Bengali"], "questions": 150, "duration": "150 min"},
+                {"id": "mptet", "name": "MP TET", "full_name": "Madhya Pradesh Teacher Eligibility Test", "tier": "CBT", "sections": ["Child Development", "Math", "EVS", "Hindi"], "questions": 150, "duration": "150 min"},
+                {"id": "jtet", "name": "JTET", "full_name": "Jharkhand Teacher Eligibility Test", "tier": "CBT", "sections": ["Child Development", "Math", "EVS", "Language"], "questions": 150, "duration": "150 min"},
+                {"id": "otet", "name": "OTET", "full_name": "Odisha Teacher Eligibility Test", "tier": "CBT", "sections": ["Child Development", "Math", "EVS", "Odia"], "questions": 150, "duration": "150 min"},
+                {"id": "pstet", "name": "PSTET", "full_name": "Punjab State Teacher Eligibility Test", "tier": "CBT", "sections": ["Child Development", "Math", "EVS", "Punjabi"], "questions": 150, "duration": "150 min"},
+                {"id": "hptet", "name": "HP TET", "full_name": "Himachal Pradesh Teacher Eligibility Test", "tier": "CBT", "sections": ["Child Development", "Math", "EVS", "Language"], "questions": 150, "duration": "150 min"},
+                {"id": "aptet", "name": "AP TET", "full_name": "Andhra Pradesh Teacher Eligibility Test", "tier": "CBT", "sections": ["Child Development", "Math", "EVS", "Telugu"], "questions": 150, "duration": "150 min"},
+                {"id": "tstet", "name": "TS TET", "full_name": "Telangana State Teacher Eligibility Test", "tier": "CBT", "sections": ["Child Development", "Math", "EVS", "Telugu"], "questions": 150, "duration": "150 min"},
+                {"id": "ktet", "name": "KTET", "full_name": "Kerala Teacher Eligibility Test", "tier": "CBT", "sections": ["Child Development", "Math", "EVS", "Malayalam"], "questions": 150, "duration": "150 min"},
+                {"id": "assam_tet", "name": "Assam TET", "full_name": "Assam Teacher Eligibility Test", "tier": "CBT", "sections": ["Child Development", "Math", "EVS", "Assamese"], "questions": 150, "duration": "150 min"},
+                {"id": "bihar_tet", "name": "Bihar TET", "full_name": "Bihar Teacher Eligibility Test", "tier": "CBT", "sections": ["Child Development", "Math", "EVS", "Hindi"], "questions": 150, "duration": "150 min"}
             ]}
         }
 
