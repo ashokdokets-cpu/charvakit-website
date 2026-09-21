@@ -3,7 +3,7 @@
 **Purpose:** Track every planned-but-not-completed item. Nothing gets lost again.
 **Created:** 2026-09-20
 **Last updated:** 2026-09-21
-**HEAD:** `3c7e664`
+**HEAD:** `c3da022`
 
 ---
 
@@ -250,6 +250,34 @@
   Task Response cap (5.0) for word-count violation; persisted with all
   4 sub-bands in details_json.
 - **Deferred to M-2:** IELTS Speaking (needs audio recording + Whisper).
+
+
+### M-2 — RRB ALP CBAT
+
+- **Completed:** 2026-09-22 — commit `<hash>`
+- **What shipped:**
+  - NEW `cbat_engine.py` (~594 lines) — DB-backed engine
+    for 6 sub-tests: Analogies, Decision Making, Numerical Ability,
+    Memory (Short/Long), Following Directions
+  - NEW migration `20260922_cbat.sql` — 2 tables
+    (`charvak_cbat_sessions`, `charvak_cbat_answers`)
+  - NEW `templates/cbat.html` — timed question delivery, SVG rendering,
+    no back-navigation, per-question countdown
+  - 5 new routes: `/api/cbat/sub-tests`, `/start`, `/submit-answer`,
+    `/complete`, `/status/{id}`
+  - `cbat_session` credit key (25cr)
+  - `rrb_alp_cbat` catalog entry (81 exams total)
+- **Verified E2E:**
+  - 6 sub-tests with per-question timing metadata
+  - AI-generated 20 unique Analogies questions
+  - Idempotent answer submission (UNIQUE constraint)
+  - Session score 5.0% for 1/20 correct
+  - All data persisted across 3 tables
+  - 25 credits deducted correctly
+- **Future (M-3):** Seed curated CBAT questions into a cache
+  (currently AI-generated per session)
+  - Delivery: image-based (SVG inline), strict per-question timing,
+    no back-navigation (UNIQUE constraint on answers table)
 
 ## 🔴 CRITICAL — Must Fix
 
@@ -516,4 +544,4 @@ character are `C3 A0` instead of `E0 A4`, it's double-encoded.
 
 ---
 **Last updated:** 2026-09-22
-**Next update:** after Session M-2 (RRB ALP CBAT) or C2
+**Next update:** after Session C2 or #53
