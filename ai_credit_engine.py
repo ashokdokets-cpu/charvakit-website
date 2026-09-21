@@ -37,35 +37,35 @@ class AICreditEngine:
         },
         CreditPlan.STARTER: {
             "name": "Starter",
-            "price": 99,
-            "credits": 500,
+            "price": 199,
+            "credits": 300,
             "validity_days": 30,
             "daily_bonus": 10,
-            "features": ["All AI tools", "500 credits", "Daily bonus"]
+            "features": ["All AI tools", "300 credits", "Daily bonus"]
         },
         CreditPlan.PRO: {
             "name": "Pro",
-            "price": 299,
-            "credits": 2000,
+            "price": 499,
+            "credits": 1000,
             "validity_days": 30,
             "daily_bonus": 25,
-            "features": ["All AI tools", "2000 credits", "Priority processing"]
+            "features": ["All AI tools", "1000 credits", "Priority processing", "Daily bonus"]
         },
         CreditPlan.PREMIUM: {
             "name": "Premium",
             "price": 999,
-            "credits": 10000,
+            "credits": 2500,
             "validity_days": 90,
             "daily_bonus": 50,
-            "features": ["All AI tools", "10000 credits", "Premium support"]
+            "features": ["All AI tools", "2500 credits", "Premium support", "Daily bonus"]
         },
         CreditPlan.ENTERPRISE: {
             "name": "Enterprise",
             "price": 4999,
-            "credits": 50000,
+            "credits": 15000,
             "validity_days": 365,
             "daily_bonus": 100,
-            "features": ["Unlimited AI", "Custom limits", "Dedicated support"]
+            "features": ["All AI tools", "15000 credits", "Custom limits", "Dedicated support", "Daily bonus"]
         }
     }
 
@@ -88,8 +88,17 @@ class AICreditEngine:
         "chatbot_query": 2,
         "ai_questions": 5,
         "practice_test": 5,
-        "mock_test": 20,
-        "default": 10
+        "mock_test": 15,
+        "default": 10,
+        # Session G6 — revenue enablement additions
+        "exam_practice": 3,
+        "exam_ai_questions": 3,
+        "company_mock_drive": 25,
+        "assessment_versant": 20,
+        "assessment_mcq": 5,
+        "assessment_skill_gap": 12,
+        "assessment_custom": 8,
+        "topic_questions": 2,
     }
 
     def __init__(self):
