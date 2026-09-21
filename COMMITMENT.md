@@ -137,6 +137,29 @@
   (events, ats, lms, micro-internship, university) confirmed to have
   same problem — dead processCharvakPayment + working free path with
   no gate. Total in C7: **~23 features across 18 templates**.
+- **Expanded (2026-09-21, Session G6 revenue audit):** 5 additional
+  templates confirmed to have the same problem — dead
+  `processCharvakPayment` callbacks + working free paths with no gate:
+  1. `events.html` — RSVP works free; ₹499 button was dead
+  2. `ats.html` — no form exists; ₹999 button was dead
+  3. `lms.html` — no real enroll endpoint; ₹999 button was dead
+  4. `micro-internship.html` — form on `/post-micro-project` ignores
+     the `?payment_id=` redirect; ₹2,000 bypassed
+  5. `university.html` — no form exists; ₹4,999 button was dead
+
+  **G6 handling:** All 5 buttons replaced with `notifyMe()` (matches
+  the pattern used across 13 other templates). No working flow was
+  removed — the free paths remain intact for now.
+
+  **Future work per template:**
+  - Build proper form (events needs RSVP confirmation page; ats
+    needs provider/api_key inputs; university needs registration form)
+  - Add backend endpoint guard where one exists
+  - Wire frontend to `notifyMe()` → real "Buy Credits" flow when
+    the feature ships
+
+- **Total C7 scope:** **18 templates** (~25 features across them)
+- **Est (updated):** ~60-90 hr total, iterative by priority
 
 
 ### C8 — Revenue enablement (G6)
