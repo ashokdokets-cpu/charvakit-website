@@ -3,7 +3,7 @@
 **Purpose:** Track every planned-but-not-completed item. Nothing gets lost again.
 **Created:** 2026-09-20
 **Last updated:** 2026-09-21
-**HEAD:** `acd450e`
+**HEAD:** `92ce054`
 
 ---
 
@@ -133,6 +133,44 @@
 - **Est:** 3-5 hr per feature × 15 features = **~45-75 hr total**
 - **Priority:** Medium — tackle top 3 by market demand first
 - **Verdict:** DEFERRED (post-G6, iterative)**
+- **Expanded (2026-09-21, Session G6):** 5 additional templates
+  (events, ats, lms, micro-internship, university) confirmed to have
+  same problem — dead processCharvakPayment + working free path with
+  no gate. Total in C7: **~23 features across 18 templates**.
+
+
+### C8 — Revenue enablement (G6)
+
+- **Completed:** 2026-09-21 (Session G6) — commits `0dcf2a8` through `92ce054`
+- **What shipped:**
+  - **`credit_guard.py`** — reusable `require_credits_from_data(data, feature)`
+    + `require_credits_dep` dependency factory; 401 for missing email,
+    402 for insufficient credits
+  - **Pricing (repriced):** Starter ₹199/300cr, Pro ₹499/1000cr,
+    Premium ₹999/2500cr, Enterprise ₹4999/15000cr
+  - **8 new feature keys** in `FEATURE_CREDITS` (mock_test repriced 20→15)
+  - **10 routes guarded** across exam / assessment / mock drive
+  - **`exam-prep.html` rewritten** — 4 credit packages + balance banner;
+    fake subscription system (subscribeExam, planLimits, canPractice,
+    showUpgradeModal) removed; demo@ fallback removed
+  - **`main.js` 401/402 handler** — global fetch wrapper dispatches
+    `charvak:401` / `charvak:402` events
+  - **`indian-language-ai.html`** — migrated to credits (2 routes guarded)
+  - **18 dead payment buttons** replaced with `notifyMe()` (interest capture);
+    `/api/features/notify` + `charvak_feature_interest` table added
+  - **`payment-helper.js`** — region-aware modal (India → Razorpay first,
+    Intl → PayPal first) with "RECOMMENDED" badge
+- **Bugs found in Phase 9 testing & fixed:**
+  - Free-plan credit farming (click "Start Free" repeatedly → +50 each):
+    `purchase_credits` now rejects repeat free claims; UI hides Free
+    card for users with credits
+  - `charvak_feature_interest` table creation moved to `_ensure_tables`
+- **Not in scope (deferred to C7):**
+  - 13 Category-B templates still need real feature backends
+  - 5 more templates (events, ats, lms, micro-internship, university)
+    have working endpoints but need proper form UX
+- **Backwards compatible:** pages render English by default; existing
+  users unaffected
 
 ## 🔴 CRITICAL — Must Fix
 
@@ -398,6 +436,5 @@ character are `C3 A0` instead of `E0 A4`, it's double-encoded.
 5. **Session-CONTEXT.md** links here for fresh chats
 
 ---
-
 **Last updated:** 2026-09-21
-**Next update:** after Session C2 or on-demand
+**Next update:** after Session C2 or C7 (on-demand)
