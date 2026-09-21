@@ -14,48 +14,70 @@
 </div>
 
 <div class="container py-5">
-    <!-- Subscription Plans -->
+    <!-- Session G6: Credit balance banner -->
+    <div class="alert alert-info d-flex justify-content-between align-items-center mb-4">
+        <span>
+            <i class="bi bi-coin"></i>
+            <strong>Your credit balance:</strong>
+            <span id="creditBalance">—</span>
+        </span>
+        <a href="/ai-credits-pricing" class="btn btn-primary btn-sm">Buy More Credits</a>
+    </div>
+
+    <!-- Session G6: Credit Packages (was: subscription plans) -->
     <div class="row mb-5">
         <div class="col-md-3">
-    <div class="card h-100 text-center border-0 shadow-sm">
-        <div class="card-body">
-            <h2 class="as-h5" data-i18n="exam_prep.plan_free_title">🆓 Free</h2>
-            <h2><span data-inr="0">₹0</span></h2>
-            <p class="text-muted small">10 questions/day<br>1 mock test/week</p>
-            <button class="btn btn-outline-primary btn-sm" onclick="subscribeExam('free')" data-i18n="exam_prep.start_free">Start Free</button>
+            <div class="card h-100 text-center border-0 shadow-sm">
+                <div class="card-body">
+                    <h3 class="as-h5">⭐ Starter</h3>
+                    <h2><span data-inr="199">₹199</span></h2>
+                    <p class="text-muted small">
+                        <strong>300 credits</strong><br>
+                        ~100 practices<br>or ~20 mock tests
+                    </p>
+                    <button class="btn btn-outline-primary btn-sm" onclick="buyCredits('starter')">Buy Now</button>
+                </div>
+            </div>
         </div>
-    </div>
-</div>
-<div class="col-md-3">
-    <div class="card h-100 text-center border-0 shadow-sm">
-        <div class="card-body">
-            <h3 class="as-h5" data-i18n="exam_prep.plan_starter_title">⭐ Starter</h3>
-            <h2><span data-inr="99">₹99</span>/mo</h2>
-            <p class="text-muted small">50 questions/day<br>2 mock tests/week</p>
-            <button class="btn btn-outline-primary btn-sm" onclick="subscribeExam('starter')" data-i18n="exam_prep.subscribe_starter">Subscribe Starter</button>
+        <div class="col-md-3">
+            <div class="card h-100 text-center border-0 shadow-sm">
+                <div class="card-body">
+                    <h3 class="as-h5">🚀 Pro</h3>
+                    <h2><span data-inr="499">₹499</span></h2>
+                    <p class="text-muted small">
+                        <strong>1000 credits</strong><br>
+                        ~333 practices<br>or ~66 mock tests
+                    </p>
+                    <button class="btn btn-outline-primary btn-sm" onclick="buyCredits('pro')">Buy Now</button>
+                </div>
+            </div>
         </div>
-    </div>
-</div>
-<div class="col-md-3">
-    <div class="card h-100 text-center border-primary bg-primary text-white shadow">
-        <div class="card-body">
-            <h3 class="as-h5" data-i18n="exam_prep.plan_pro_title">🚀 Student Pro</h3>
-            <h2><span data-inr="199">₹199</span>/mo</h2>
-            <p class="small">Unlimited practice<br>5 mock tests/week<br>Detailed analytics</p>
-            <button class="btn btn-light btn-sm" onclick="subscribeExam('pro')" data-i18n="exam_prep.subscribe_pro">Subscribe Pro</button>
+        <div class="col-md-3">
+            <div class="card h-100 text-center border-primary bg-primary text-white shadow">
+                <div class="card-body">
+                    <h3 class="as-h5">👑 Premium</h3>
+                    <h2><span data-inr="999">₹999</span></h2>
+                    <p class="small">
+                        <strong>2500 credits</strong><br>
+                        ~833 practices<br>or ~166 mock tests
+                    </p>
+                    <button class="btn btn-light btn-sm" onclick="buyCredits('premium')">Buy Now</button>
+                </div>
+            </div>
         </div>
-    </div>
-</div>
-<div class="col-md-3">
-    <div class="card h-100 text-center border-0 shadow-sm">
-        <div class="card-body">
-            <h3 class="as-h5" data-i18n="exam_prep.plan_premium_title">👑 Premium</h3>
-            <h2><span data-inr="999">₹999</span>/mo</h2>
-            <p class="text-muted small">AI-personalized<br>Unlimited mock tests<br>Interview prep + GD</p>
-            <button class="btn btn-outline-primary btn-sm" onclick="subscribeExam('premium')" data-i18n="exam_prep.subscribe_premium">Subscribe Premium</button>
+        <div class="col-md-3">
+            <div class="card h-100 text-center border-0 shadow-sm">
+                <div class="card-body">
+                    <h3 class="as-h5">🏢 Enterprise</h3>
+                    <h2><span data-inr="4999">₹4,999</span></h2>
+                    <p class="text-muted small">
+                        <strong>15,000 credits</strong><br>
+                        ~5,000 practices<br>or ~1,000 mock tests
+                    </p>
+                    <button class="btn btn-outline-primary btn-sm" onclick="buyCredits('enterprise')">Buy Now</button>
+                </div>
+            </div>
         </div>
-    </div>
-</div>
     </div>
 
     <!-- Categories -->
@@ -86,40 +108,8 @@ function isAdminUser() {
     return ADMIN_EMAILS.includes(email);
 }
 
-const planLimits = {
-    'free': {'daily_questions': 10, 'weekly_mock_tests': 1, 'practice_modes': ['quick'], 'analytics': false, 'price': 0},
-    'starter': {'daily_questions': 50, 'weekly_mock_tests': 2, 'practice_modes': ['quick', 'full'], 'analytics': false, 'price': 99},
-    'pro': {'daily_questions': -1, 'weekly_mock_tests': 5, 'practice_modes': ['quick', 'full'], 'analytics': true, 'price': 199},
-    'premium': {'daily_questions': -1, 'weekly_mock_tests': -1, 'practice_modes': ['quick', 'full', 'mock'], 'analytics': true, 'price': 999}
-};
-
-let dailyQuestionsUsed = parseInt(localStorage.getItem('daily_questions_used') || '0');
-let weeklyMockTestsUsed = parseInt(localStorage.getItem('weekly_mock_tests_used') || '0');
-
-function canPractice(mode) {
-    // Admin bypass ? full access for testing
-    if (isAdminUser()) return true;
-
-    const plan = localStorage.getItem('exam_plan') || 'free';
-    const limits = planLimits[plan];
-    if (!limits) return false;
-    if (!limits.practice_modes.includes(mode)) {
-        alert('Your ' + plan + ' plan does not include this mode. Upgrade!');
-        return false;
-    }
-    if (dailyQuestionsUsed >= limits.daily_questions) {
-        alert('Daily limit reached. Upgrade for more!');
-        return false;
-    }
-    return true;
-}
-
-function showUpgradeModal() {
-    const modal = document.createElement('div');
-    modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:99999;display:flex;align-items:center;justify-content:center;';
-    modal.innerHTML = '<div class="bg-white p-4 rounded" style="max-width:400px;width:90%;"><h3 class="as-h5 mb-3">Upgrade Your Plan</h3><button class="btn btn-outline-primary w-100 mb-2" onclick="subscribeExam(\'starter\')">Starter - ₹99/mo</button><button class="btn btn-primary w-100 mb-2" onclick="subscribeExam(\'pro\')">Pro - ₹199/mo</button><button class="btn btn-success w-100 mb-2" onclick="subscribeExam(\'premium\')">Premium - ₹999/mo</button><button class="btn btn-secondary w-100" onclick="this.closest(\'div[style]\').parentElement.remove()">Cancel</button></div>';
-    document.body.appendChild(modal);
-}
+// Session G6: planLimits, canPractice, showUpgradeModal removed
+// Credit enforcement is now at the API layer via require_credits_from_data
 
 function resetDailyCounters() {
     const today = new Date().toDateString();
@@ -133,48 +123,52 @@ function resetDailyCounters() {
     }
 }
 
-let userEmail = localStorage.getItem('userEmail') || 'demo@charvakit.com';
+let userEmail = localStorage.getItem('userEmail') || '';
 let currentExam = null;
-let currentPlan = localStorage.getItem('exam_plan') || 'free';
 
 // ============================================================
 // SUBSCRIPTION
 // ============================================================
-function subscribeExam(plan) {
-    // Admin bypass ? activate any plan without payment
-    if (isAdminUser()) {
-        localStorage.setItem('exam_plan', plan);
-        alert('? Admin bypass: ' + plan + ' plan activated');
-        if (typeof loadCategories === 'function') loadCategories();
-        return;
-    }
-
-    // Use logged-in email if available, else prompt
-    const email = localStorage.getItem('userEmail') || prompt('Enter your email:');
-    if (!email) return;
-    
-    if (plan === 'free') {
-        localStorage.setItem('exam_plan', 'free');
-        localStorage.setItem('userEmail', email);
-        alert('✅ Free plan activated!');
-        loadCategories();
-        return;
-    }
-    
-    const planDetails = {
-    'starter': {name: 'Starter', price: 99},
-    'pro': {name: 'Student Pro', price: 199},
-    'premium': {name: 'Premium', price: 999}
-};
-    
-    const selected = planDetails[plan];
-    processCharvakPayment(email, selected.price, 'Exam Prep ' + selected.name, function(response) {
-        localStorage.setItem('exam_plan', plan);
-        localStorage.setItem('userEmail', email);
-        alert('✅ ' + selected.name + ' activated!');
-        loadCategories();
-    });
+function buyCredits(plan) {
+    // Session G6: redirect to credits purchase page with plan preselected
+    window.location.href = '/ai-credits-pricing?plan=' + plan;
 }
+
+async function loadCreditBalance() {
+    const email = localStorage.getItem('userEmail') || '';
+    const el = document.getElementById('creditBalance');
+    if (!el) return;
+    if (!email) {
+        el.textContent = 'Login to see';
+        return;
+    }
+    try {
+        const r = await fetch('/api/credits/' + encodeURIComponent(email));
+        const j = await r.json();
+        const bal = (j.user && j.user.credits_remaining) || j.credits_remaining;
+        el.textContent = (bal != null ? bal : '—') + ' credits';
+    } catch (e) {
+        el.textContent = '—';
+    }
+}
+
+// Session G6: handle 402 (insufficient credits) globally
+window.addEventListener('charvak:402', function(e) {
+    const d = e.detail || {};
+    const msg = d.message || 'Insufficient credits. Redirecting to buy more...';
+    alert(msg);
+    window.location.href = d.buy_url || '/ai-credits-pricing';
+});
+
+// Session G6: handle 401 (login required)
+window.addEventListener('charvak:401', function() {
+    if (confirm('Please log in to continue. Go to login page?')) {
+        window.location.href = '/login';
+    }
+});
+
+// Load balance on page load
+document.addEventListener('DOMContentLoaded', loadCreditBalance);
 
 // ============================================================
 // LOAD CATEGORIES
@@ -270,10 +264,7 @@ function displayExams(data) {
 async function startPractice(examId) {
     currentExam = examId;
     
-    if (!canPractice('quick')) {
-        showUpgradeModal();
-        return;
-    }
+    // Session G6: backend enforces credits; no frontend gate needed
     
     // Get exam details to show topics
     try {
@@ -445,44 +436,8 @@ function startFullPractice(examId) {
 // MOCK TEST
 // ============================================================
 async function startMockTest(examId) {
-    const plan = localStorage.getItem('exam_plan') || 'free';
-    const limits = planLimits[plan];
-    
-    // Admin bypass ? full access for testing
-
-    
-    if (typeof isAdminUser === 'function' && isAdminUser()) {
-
-    
-        console.log('[Admin] Mock test bypass ? full access');
-
-    
-    } else if (!limits.practice_modes.includes('mock')) {
-
-    
-        alert('Mock tests require Premium plan. Upgrade now!');
-
-    
-        showUpgradeModal();
-
-    
-        return;
-
-    
-    }
-    
-    // Admin bypass ? skip weekly mock limit
-    const _isAdminUser = (typeof isAdminUser === 'function' && isAdminUser());
-
-    if (!_isAdminUser && limits.weekly_mock_tests !== -1 && weeklyMockTestsUsed >= limits.weekly_mock_tests) {
-        alert('Weekly mock test limit reached. Upgrade!');
-        showUpgradeModal();
-        return;
-    }
-
-    if (!_isAdminUser) {
-        weeklyMockTestsUsed++;
-        localStorage.setItem('weekly_mock_tests_used', weeklyMockTestsUsed);
+    // Session G6: plan/limits gate removed — backend enforces credits
+    // Admin bypass is handled server-side; no frontend gate needed
     }
     
     const container = document.getElementById('mockTestArea');
