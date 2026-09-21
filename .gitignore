@@ -122,3 +122,7 @@ _delete_dead.py
 # HTML backups (do not commit)
 templates/*.html.bak*
 *.html.bak*
+
+# Template/JSON backups (do not commit)
+templates/*.html.bak*
+static/locales/*.json.bak*
