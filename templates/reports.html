@@ -3,8 +3,8 @@
 {% block content %}
 <div class="page-hero bg-gradient-primary text-white py-5">
     <div class="container py-4 text-center">
-        <h1 class="display-4 fw-bold">📊 Assessment Reports</h1>
-        <p class="lead">Generate, verify, and track assessment reports</p>
+        <h1 class="display-4 fw-bold" data-i18n="reports.title">📊 Assessment Reports</h1>
+        <p class="lead" data-i18n="reports.subtitle">Generate, verify, and track assessment reports</p>
     </div>
 </div>
 
@@ -14,21 +14,21 @@
         <div class="col-md-6">
             <div class="card h-100 border-0 shadow-sm">
                 <div class="card-body p-4">
-                    <h2 class="as-h5">📝 Generate Report</h2>
+                    <h2 class="as-h5" data-i18n="reports.generate_title">📝 Generate Report</h2>
                     <form onsubmit="generateReport(event)">
                         <div class="mb-2">
                             <select class="form-select" id="reportType">
-                                <option value="skill_twin">Skill-Twin Assessment</option>
-                                <option value="interview_prep">Interview Prep</option>
-                                <option value="quiz">LMS Quiz</option>
-                                <option value="indian_language">Indian Language Assessment</option>
+                                <option value="skill_twin" data-i18n="reports.type_skill_twin">Skill-Twin Assessment</option>
+                                <option value="interview_prep" data-i18n="reports.type_interview_prep">Interview Prep</option>
+                                <option value="quiz" data-i18n="reports.type_quiz">LMS Quiz</option>
+                                <option value="indian_language" data-i18n="reports.type_indian_language">Indian Language Assessment</option>
                             </select>
                         </div>
-                        <input type="text" class="form-control mb-2" id="candidateName" placeholder="Candidate Name" required>
-                        <input type="email" class="form-control mb-2" id="candidateEmail" placeholder="Candidate Email" required>
-                        <input type="email" class="form-control mb-2" id="employerEmail" placeholder="Employer Email (optional)">
-                        <input type="number" class="form-control mb-3" id="reportScore" placeholder="Score (0-100)" required>
-                        <button class="btn btn-primary w-100" type="submit">Generate & Deliver Report</button>
+                        <input type="text" class="form-control mb-2" id="candidateName" placeholder="Candidate Name" data-i18n-placeholder="reports.candidate_name" required>
+                        <input type="email" class="form-control mb-2" id="candidateEmail" placeholder="Candidate Email" data-i18n-placeholder="reports.candidate_email" required>
+                        <input type="email" class="form-control mb-2" id="employerEmail" placeholder="Employer Email (optional)" data-i18n-placeholder="reports.employer_email">
+                        <input type="number" class="form-control mb-3" id="reportScore" placeholder="Score (0-100)" data-i18n-placeholder="reports.score_placeholder" required>
+                        <button class="btn btn-primary w-100" type="submit" data-i18n="reports.generate_button">Generate & Deliver Report</button>
                     </form>
                     <p class="text-success mt-2 text-center" id="reportMsg" style="display:none;"></p>
                 </div>
@@ -39,10 +39,10 @@
         <div class="col-md-6">
             <div class="card h-100 border-0 shadow-sm">
                 <div class="card-body p-4">
-                    <h2 class="as-h5">🔍 Verify Report</h2>
+                    <h2 class="as-h5" data-i18n="reports.verify_title">🔍 Verify Report</h2>
                     <form onsubmit="verifyReport(event)">
-                        <input type="text" class="form-control mb-3" id="verificationId" placeholder="Verification ID (e.g. VERIFY-XXXX)" required>
-                        <button class="btn btn-outline-primary w-100" type="submit">Verify</button>
+                        <input type="text" class="form-control mb-3" id="verificationId" placeholder="Verification ID (e.g. VERIFY-XXXX)" data-i18n-placeholder="reports.verification_id" required>
+                        <button class="btn btn-outline-primary w-100" type="submit" data-i18n="common.verify">Verify</button>
                     </form>
                     <div class="mt-3" id="verifyResult"></div>
                 </div>
@@ -53,11 +53,11 @@
         <div class="col-md-12">
             <div class="card border-0 shadow-sm">
                 <div class="card-body">
-                    <h2 class="as-h5">📂 My Reports</h2>
+                    <h2 class="as-h5" data-i18n="reports.my_reports_title">📂 My Reports</h2>
                     <form onsubmit="getMyReports(event)" class="mb-3">
                         <div class="row g-2">
-                            <div class="col-md-8"><input type="email" class="form-control" id="myEmail" placeholder="Your Email" required></div>
-                            <div class="col-md-4"><button class="btn btn-outline-primary w-100" type="submit">Get My Reports</button></div>
+                            <div class="col-md-8"><input type="email" class="form-control" id="myEmail" placeholder="Your Email" data-i18n-placeholder="reports.your_email" required></div>
+                            <div class="col-md-4"><button class="btn btn-outline-primary w-100" type="submit" data-i18n="reports.get_my_reports">Get My Reports</button></div>
                         </div>
                     </form>
                     <div id="myReportsList"></div>
