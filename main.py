@@ -3436,66 +3436,110 @@ async def get_prep_session(session_id: str):
 @limiter.limit("60/minute")
 async def api_lock_in_breaker(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "product_lock_in_breaker")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return products_engine.lock_in_breaker_audit(data)
 
 @app.post("/api/products/reverse-staffing/match")
 @limiter.limit("60/minute")
 async def api_reverse_staffing(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "product_reverse_staffing")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return products_engine.reverse_staffing_match(data)
 
 @app.post("/api/products/auditbot/scan")
 @limiter.limit("60/minute")
 async def api_auditbot(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "product_auditbot_scan")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return products_engine.auditbot_scan(data)
 
 @app.post("/api/products/skill-twin/assess")
 @limiter.limit("60/minute")
 async def api_skill_twin(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "product_skill_twin")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return products_engine.skill_twin_assess(data)
 
 @app.post("/api/products/micro-squads/assemble")
 @limiter.limit("60/minute")
 async def api_micro_squads(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "product_micro_squads")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return products_engine.micro_squads_assemble(data)
 
 @app.post("/api/products/agency-twin/automate")
 @limiter.limit("60/minute")
 async def api_agency_twin(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "product_agency_twin")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return products_engine.agency_twin_automate(data)
 
 @app.post("/api/products/geo-compliance/check")
 @limiter.limit("60/minute")
 async def api_geo_compliance(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "product_geo_compliance")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return products_engine.geo_compliance_check(data)
 
 @app.post("/api/products/design-token/check")
 @limiter.limit("60/minute")
 async def api_design_token(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "product_design_token")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return products_engine.design_token_check(data)
 
 @app.post("/api/products/silent-killer/monitor")
 @limiter.limit("60/minute")
 async def api_silent_killer(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "product_silent_killer")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return products_engine.silent_killer_monitor(data)
 
 @app.post("/api/products/ai-slop/scan")
 @limiter.limit("60/minute")
 async def api_ai_slop(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "product_ai_slop")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return products_engine.ai_slop_scan(data)
 
 @app.post("/api/products/developer-entropy/score")
 @limiter.limit("60/minute")
 async def api_developer_entropy(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "product_developer_entropy")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return products_engine.developer_entropy_score(data)
 
 # ============================================================
@@ -4251,6 +4295,10 @@ async def indian_language_ai_page(request: Request):
 @limiter.limit("20/minute")
 async def rate_course(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "lms_rate")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return lms_engine.rate_course(data)
 
 @app.get("/api/lms/ratings/{course_id}")
@@ -4261,18 +4309,30 @@ async def get_course_ratings(course_id: str):
 @limiter.limit("60/minute")
 async def create_quiz(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "lms_quiz")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return lms_engine.create_quiz(data)
 
 @app.post("/api/lms/quiz/submit")
 @limiter.limit("20/minute")
 async def submit_quiz(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "lms_quiz_submit")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return lms_engine.submit_quiz(data)
 
 @app.post("/api/lms/certificate/issue")
 @limiter.limit("60/minute")
 async def issue_certificate(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "lms_certificate")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return lms_engine.issue_certificate(data)
 
 @app.get("/api/lms/certificate/verify/{cert_id}")
@@ -4293,12 +4353,20 @@ async def get_progress(enrollment_id: str):
 @limiter.limit("20/minute")
 async def post_discussion(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "lms_discussion")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return lms_engine.post_discussion(data)
 
 @app.post("/api/lms/discussion/reply")
 @limiter.limit("20/minute")
 async def reply_discussion(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "lms_discussion")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return lms_engine.reply_discussion(data)
 
 @app.get("/api/lms/recommendations/{student_email}")
@@ -4318,6 +4386,10 @@ async def lms_page(request: Request):
 @limiter.limit("20/minute")
 async def add_lesson(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "lms_lesson_add")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return lms_engine.add_lesson(data)
 
 @app.get("/api/lms/lessons/{course_id}")
@@ -4338,6 +4410,10 @@ async def get_payouts(trainer_email: str):
 @limiter.limit("60/minute")
 async def add_course_language(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "lms_language_add")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return lms_engine.add_course_language(data)
 
 @app.post("/api/lms/gamification/points")
@@ -6397,11 +6473,19 @@ async def get_versant_section(section_id: str):
 @app.post("/api/versant/start-cbt")
 async def start_cbt(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "versant_start_cbt")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return cbt_versant.start_cbt_session(data.get("email"))
 
 @app.post("/api/versant/record-audio")
 async def record_audio(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "versant_record_audio")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return cbt_versant.save_audio_recording(
         data.get("session_id"),
         data.get("section_id"),
@@ -6412,6 +6496,10 @@ async def record_audio(request: Request):
 @app.post("/api/versant/submit-text")
 async def submit_text(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "versant_submit_text")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return cbt_versant.submit_text_answer(
         data.get("session_id"),
         data.get("section_id"),
@@ -6462,6 +6550,10 @@ async def get_company_details(company_id: str):
 @app.post("/api/company/start-mock")
 async def start_company_mock(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "company_start_mock")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return company_assessment.start_company_mock(
         data.get("email"),
         data.get("company_id"),
@@ -6475,6 +6567,10 @@ async def get_company_questions(company_id: str, section: str):
 @app.post("/api/company/submit-answer")
 async def submit_company_answer(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "company_submit_answer")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return company_assessment.submit_company_answer(
         data.get("session_id"),
         data.get("question_id"),
@@ -6484,6 +6580,10 @@ async def submit_company_answer(request: Request):
 @app.post("/api/company/complete-mock")
 async def complete_company_mock(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "company_complete_mock")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return company_assessment.complete_company_mock(data.get("session_id"))
 
 @app.get("/api/company/results/{session_id}")
@@ -6513,6 +6613,10 @@ async def get_placement_roadmap(company_id: str):
 @app.post("/api/company-pattern/track-progress")
 async def track_progress(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "company_pattern_track")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return company_content_engine.track_user_progress(
         data.get("email"),
         data.get("company_id"),
@@ -6530,6 +6634,10 @@ from universal_company import universal_company
 @app.post("/api/company/custom/add")
 async def add_custom_company(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "company_custom_add")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return universal_company.add_custom_company(
         data.get("company_name"),
         data.get("pattern_name"),
@@ -6578,6 +6686,10 @@ async def get_custom_companies():
 @app.post("/api/company/generate-content")
 async def generate_content(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "company_generate_content")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return universal_company.generate_content_for_any_company(
         data.get("company_name"),
         data.get("topic"),
@@ -6617,6 +6729,10 @@ async def get_versant_questions(section_id: str):
 @app.post("/api/market/mcq-questions")
 async def generate_mcq(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "market_mcq_questions")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return market_standard.generate_mcq_questions(
         data.get("category"),
         data.get("topic"),
@@ -6626,6 +6742,10 @@ async def generate_mcq(request: Request):
 @app.post("/api/market/generate-results")
 async def generate_results(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "market_generate_results")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return market_standard.generate_results(
         data.get("email"),
         data.get("assessment_type"),
@@ -6640,6 +6760,10 @@ from ai_versant import ai_versant
 @app.post("/api/versant/start-session")
 async def start_versant_session(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "versant_start_session")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return ai_versant.start_user_session(data.get("email"))
 
 @app.get("/api/versant/session/{session_id}/{section_id}")
@@ -6669,6 +6793,10 @@ async def get_ai_company_questions(company_id: str):
 @app.post("/api/ai-company/generate-topic")
 async def generate_topic_questions(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "ai_company_generate_topic")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return {
         "status": "success",
         "questions": ai_company_questions.generate_topic_questions(
@@ -6774,6 +6902,10 @@ from ai_pattern_questions import ai_pattern_questions
 @app.post("/api/ai-pattern/generate-questions")
 async def generate_pattern_questions(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "ai_pattern_generate")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return {
         "status": "success",
         "sections": ai_pattern_questions.generate_pattern_questions(
@@ -6790,6 +6922,10 @@ from complete_analysis import complete_analysis
 @app.post("/api/analysis/complete")
 async def analyze_complete(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "analysis_complete")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return complete_analysis.analyze_complete_profile(
         data.get("email"),
         data
@@ -6810,6 +6946,10 @@ from ai_analysis import ai_analysis
 @app.post("/api/ai-analysis/analyze")
 async def ai_analyze_profile(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "ai_analysis_analyze")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return ai_analysis.analyze_user_profile(
         data.get("email"),
         data
@@ -6853,6 +6993,10 @@ async def get_weekly_content(enrollment_id: str, week_num: int):
 @app.post("/api/ai-course/project-help")
 async def project_help(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "ai_course_project_help")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return ai_courses.assist_project(
         data.get("enrollment_id"),
         data.get("project_question")
@@ -7025,12 +7169,20 @@ async def ai_course_enrollment(enrollment_id: str):
 async def ai_course_set_recipient_name(request: Request):
     """Save the name to print on the certificate."""
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "ai_course_set_recipient")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return ai_courses.set_recipient_name(data.get("enrollment_id"), data.get("name", ""))
 
 @app.post("/api/ai-course/complete-week")
 async def ai_course_complete_week(request: Request):
     """Mark a week as completed."""
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "ai_course_complete_week")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return ai_courses.complete_week(data.get("enrollment_id"), data.get("week_num"))
 
 
@@ -7042,6 +7194,10 @@ async def ai_course_get_certificate(certificate_id: str):
 @app.post("/api/ai-course/start-chat")
 async def start_course_chat(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "ai_course_start_chat")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return ai_courses.start_course_chat(
         data.get("email"),
         data.get("course_name"),
