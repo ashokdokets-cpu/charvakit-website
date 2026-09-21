@@ -372,6 +372,21 @@
      data
 - **Verdict:** DEFERRED (works today; revisit when risk grows)
 
+
+### V5 — Local shell env var overrides .env DATABASE_URL
+
+- **Discovered:** 2026-09-22 (Session M-2 verification)
+- **Reality:** `.env` points to Render prod DB. But setting
+  `$env:DATABASE_URL` in PowerShell to a local Postgres URL makes
+  Python's `load_dotenv()` a no-op — the shell value wins.
+- **Consequence:** During a single session, browser tests hit PROD
+  (`charvakit.com`) while shell curl/cleanup scripts hit LOCAL.
+- **Rule:** Never override `DATABASE_URL` in the shell unless
+  working with local. `.env` = prod source of truth.
+- **Fix for cleanup scripts:** read from `.env`:
+  ```powershell
+  $env:DATABASE_URL = ((Get-Content .env | Where-Object { $_ -match '^DATABASE_URL=' }) -replace '^DATABASE_URL=', '').Trim()
+
 ## ✅ CONFIRMED BY DESIGN (no action)
 
 | # | Item | Verified |
