@@ -3,7 +3,7 @@
 **Purpose:** Track every planned-but-not-completed item. Nothing gets lost again.
 **Created:** 2026-09-20
 **Last updated:** 2026-09-21
-**HEAD:** `f4a3fd3`
+**HEAD:** `acd450e`
 
 ---
 
@@ -76,6 +76,30 @@
 
 ---
 
+
+### C6 — Assessment UI translations
+
+- **Completed:** 2026-09-21 (Session G5) — commits `fa83917` through `acd450e`
+- **What shipped:**
+  - **`static/js/i18n.js`** — client-side loader (~5.5 KB)
+    - Language priority: localStorage → `window.CHARVAK_LANG` → Accept-Language → `en`
+    - Replaces `[data-i18n]`, `[data-i18n-placeholder]`, `[data-i18n-title]`
+    - Exposes `window.changeLanguage()` + `window.t()` for programmatic use
+    - Graceful fallback: missing keys render English
+  - **`static/locales/en.json`** — 278 source strings across 16 groups
+  - **17 language files** — hi, te, ta, kn, ml, mr, bn, gu, pa (Indian);
+    es, fr, ar, zh, de, pt, ru, ja (Global)
+  - **`scripts/translate_ui.py`** — batch translator (OpenAI gpt-4o-mini, temp 0.2)
+  - **~197 data-i18n attributes** across 7 templates:
+    - `base.html` — 90 (nav, footer, topbar, user menu)
+    - 6 assessment templates — ~107 (reports, advanced-assessment,
+      assessments, custom-assessment, mcq, exam-prep)
+- **Fixed as part of G5:** base.html had double-encoded UTF-8 in 17
+  language <option> values. Replaced from `global_config.LANGUAGES`.
+- **Scope boundary:** static HTML only. JS-injected strings (innerHTML,
+  template literals) deferred to a follow-up session.
+- **Backwards compatible:** pages render English by default.
+
 ## 🔴 CRITICAL — Must Fix
 
 ### C2 — `voice_to_web_engine.py` persistence
@@ -102,15 +126,6 @@
 - **When triggered:** ~2 hr (dynamic `lang`/`dir`, bootstrap RTL swap,
   cookie picker, ~2 CSS overrides in `static/css/style.css`)
 - **Verdict:** DEFERRED (product decision — no current user base)
-
-
-### C6 — Assessment UI translations
-
-- **Discovered:** 2026-09-20 (no i18n framework)
-- **Issue:** Assessment pages show English regardless of user language
-- **Action:** Add i18n framework + translate assessment UI
-- **Est:** ~1.5 hr
-- **Target:** Session G5
 
 ---
 
@@ -213,10 +228,9 @@
 3. ~~**Session G4**~~ — RTL UI (C3)  [DEFERRED 2026-09-21 — no Arabic user base]
 4. ~~**Session G2**~~ — Adaptive difficulty (C4)  ✅ DONE 2026-09-21 (commit `15193f9`)
 5. ~~**Session G3**~~ — Question banks (C5)  ✅ DONE 2026-09-21 (commit `f4a3fd3`)
-6. **Session G5** — Assessment i18n (C6) ~1.5 hr  ← START HERE
+6. ~~**Session G5**~~ — Assessment i18n (C6)  ✅ DONE 2026-09-21
 
-**Remaining: ~1.5 hr** (C6 only; C2/C3 parked)
-
+**All CRITICAL items resolved.** Remaining: C2 (parked), C3 (deferred).
 **Dead code cleanup completed 2026-09-21 (Session G2-pre):**
 - Deleted `assessment_complete.py` (in-memory stub, zero frontend callers)
 - Removed 5 orphaned `/api/assessment/*` routes from `main.py`
@@ -320,6 +334,23 @@ to distinguish AI-generated from stub.
 **Rule:** for multi-edit patchers, iterate indices in descending order,
 or operate on string matches rather than line indices.
 
+
+### L9 — Double-encoded UTF-8 in template dropdown values
+
+Session G5 found `base.html`'s language dropdown had 17 `<option>`
+values that were double-encoded (UTF-8 bytes reinterpreted as Latin-1,
+then re-encoded). `हिन्दी` was stored as `à¤¹à¤¿à¤¨à¥à¤¦à¥€`.
+
+**Fix:** rewrite `<option value="XX">ANYTHING</option>` from
+`global_config.LANGUAGES` (which was clean).
+
+**Rule:** when pasting non-ASCII into files, verify bytes with
+`[System.IO.File]::ReadAllBytes()`. If the first bytes of a Devanagari
+character are `C3 A0` instead of `E0 A4`, it's double-encoded.
+
+**Search for hidden instances:** grep for `à¤`, `à®`, `à²`, `Ø§`, `ä¸`,
+`Ð `, etc. across all templates.
+
 ---
 
 ## PROCESS COMMITMENT
@@ -335,4 +366,4 @@ or operate on string matches rather than line indices.
 ---
 
 **Last updated:** 2026-09-21
-**Next update:** after Session G5
+**Next update:** after Session C2 or on-demand
