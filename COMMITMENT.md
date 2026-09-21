@@ -172,6 +172,17 @@
 - **Backwards compatible:** pages render English by default; existing
   users unaffected
 
+- **Batches 1-5 (final audit):** All revenue-generating routes now guarded:
+  - Batch 1: Voice + AI tools (14 routes)
+  - Batch 2: Marketing + Outreach (7 routes)
+  - Batch 3: Student + FYP + Interview + Bridge + Tutor (14 routes)
+  - Batch 4: Products + Company + AI-Course + Versant + LMS (39 routes)
+  - Batch 5: Background verification + Roles + Content + Internship (5 routes)
+  - **System total: 92 routes guarded**
+  - **Audit result:** only auth / payment-flow / credits meta / admin /
+    mid-session routes remain free (by design).
+  - **Nothing AI-powered or feature-unlocking is free.**
+
 ## 🔴 CRITICAL — Must Fix
 
 ### C2 — `voice_to_web_engine.py` persistence
