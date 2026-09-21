@@ -3,17 +3,17 @@
 {% block content %}
 <div class="page-hero bg-gradient-primary text-white py-5">
     <div class="container py-4">
-        <span class="badge bg-success mb-2 px-3 py-2">New</span>
-        <h1 class="display-4 fw-bold">Custom Assessment Engine</h1>
-        <p class="lead">Companies can upload their own skill stacks. Candidates get assessed on exactly what matters.</p>
+        <span class="badge bg-success mb-2 px-3 py-2" data-i18n="custom_assessment.badge_new">New</span>
+        <h1 class="display-4 fw-bold" data-i18n="custom_assessment.title">Custom Assessment Engine</h1>
+        <p class="lead" data-i18n="custom_assessment.subtitle">Companies can upload their own skill stacks. Candidates get assessed on exactly what matters.</p>
     </div>
 </div>
 
 <div class="container py-5">
     <!-- Two Tabs -->
     <ul class="nav nav-tabs mb-4" id="assessmentTab">
-        <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#takeAssessment">Take Assessment</a></li>
-        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#uploadStack">Upload Custom Stack (For Companies)</a></li>
+        <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#takeAssessment" data-i18n="custom_assessment.tab_take">Take Assessment</a></li>
+        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#uploadStack" data-i18n="custom_assessment.tab_upload">Upload Custom Stack (For Companies)</a></li>
     </ul>
 
     <div class="tab-content">
@@ -21,27 +21,27 @@
         <div class="tab-pane fade show active" id="takeAssessment">
             <div class="row"><div class="col-lg-7 mx-auto">
                 <div class="card border-0 shadow-sm p-4 mb-3">
-                    <h2 class="as-h4">Choose Your Assessment</h2>
-                    <div class="mb-3"><label class="form-label">Select Stack</label>
+                    <h2 class="as-h4" data-i18n="custom_assessment.choose_assessment">Choose Your Assessment</h2>
+                    <div class="mb-3"><label class="form-label" data-i18n="custom_assessment.select_stack">Select Stack</label>
                         <select class="form-select" id="assessmentStack" onchange="loadCustomStacks()">
-                            <option value="">Loading stacks...</option>
+                            <option value="" data-i18n="custom_assessment.loading_stacks">Loading stacks...</option>
                         </select>
                     </div>
-                    <button class="btn btn-primary btn-lg w-100" onclick="startCustomAssessment()">Start Assessment</button>
+                    <button class="btn btn-primary btn-lg w-100" onclick="startCustomAssessment()" data-i18n="common.start_assessment">Start Assessment</button>
                 </div>
                 <div class="card border-0 shadow-sm p-4 d-none" id="customQuestionCard">
                     <h3 class="as-h5" id="customQNum">Question 1/5</h3>
                     <p class="lead mb-3" id="customQuestion"></p>
                     <div id="customOptions"></div>
-                    <button class="btn btn-primary mt-3" onclick="nextCustomQuestion()">Next</button>
+                    <button class="btn btn-primary mt-3" onclick="nextCustomQuestion()" data-i18n="common.next">Next</button>
                 </div>
                 <div class="card border-0 shadow-sm p-4 d-none" id="customResultCard" style="border-left:5px solid #8b5cf6;">
                     <div class="text-center">
-                        <h3>Verified Assessment Complete</h3>
+                        <h3 data-i18n="custom_assessment.verified_complete">Verified Assessment Complete</h3>
                         <div class="display-1 fw-bold text-primary" id="customScore">--</div><p>/100</p>
                         <div class="alert alert-success">Badge: <strong id="customBadge"></strong></div>
-                        <a href="/skill-twin" class="btn btn-primary btn-lg">Get Verified Badge</a>
-                        <button class="btn btn-outline-secondary btn-lg ms-2" onclick="shareCustomScore()">Share Score</button>
+                        <a href="/skill-twin" class="btn btn-primary btn-lg" data-i18n="common.get_badge">Get Verified Badge</a>
+                        <button class="btn btn-outline-secondary btn-lg ms-2" onclick="shareCustomScore()" data-i18n="common.share_score">Share Score</button>
                     </div>
                 </div>
             </div></div>
@@ -51,17 +51,17 @@
         <div class="tab-pane fade" id="uploadStack">
             <div class="row"><div class="col-lg-7 mx-auto">
                 <div class="card border-0 shadow-sm p-4">
-                    <h4>Upload Your Custom Skill Stack</h4>
-                    <p class="text-muted">Companies can define their own assessment questions for candidates.</p>
+                    <h4 data-i18n="custom_assessment.upload_title">Upload Your Custom Skill Stack</h4>
+                    <p class="text-muted" data-i18n="custom_assessment.upload_desc">Companies can define their own assessment questions for candidates.</p>
                     <form onsubmit="uploadStack(event)">
-                        <div class="mb-3"><label class="form-label">Stack Name</label><input type="text" class="form-control" id="stackName" placeholder="e.g. React Native, DevOps, Data Science" required></div>
-                        <div class="mb-3"><label class="form-label">Company Name</label><input type="text" class="form-control" id="stackCompany" placeholder="Your company name" required></div>
-                        <div class="mb-3"><label class="form-label">Question 1</label><input type="text" class="form-control" id="q1" placeholder="Question" required>
-                            <input type="text" class="form-control mt-1" placeholder="Option A"><input type="text" class="form-control mt-1" placeholder="Option B"><input type="text" class="form-control mt-1" placeholder="Option C"><input type="text" class="form-control mt-1" placeholder="Option D">
-                            <select class="form-select mt-1"><option>Correct Answer</option><option>A</option><option>B</option><option>C</option><option>D</option></select>
+                        <div class="mb-3"><label class="form-label">Stack Name</label><input type="text" class="form-control" id="stackName" placeholder="e.g. React Native, DevOps, Data Science" data-i18n-placeholder="custom_assessment.stack_name_placeholder" required></div>
+                        <div class="mb-3"><label class="form-label">Company Name</label><input type="text" class="form-control" id="stackCompany" placeholder="Your company name" data-i18n-placeholder="custom_assessment.company_name_placeholder" required></div>
+                        <div class="mb-3"><label class="form-label">Question 1</label><input type="text" class="form-control" id="q1" placeholder="Question" data-i18n-placeholder="custom_assessment.question_placeholder" required>
+                            <input type="text" class="form-control mt-1" placeholder="Option A" data-i18n-placeholder="custom_assessment.option_a_placeholder"><input type="text" class="form-control mt-1" placeholder="Option B" data-i18n-placeholder="custom_assessment.option_b_placeholder"><input type="text" class="form-control mt-1" placeholder="Option C" data-i18n-placeholder="custom_assessment.option_c_placeholder"><input type="text" class="form-control mt-1" placeholder="Option D" data-i18n-placeholder="custom_assessment.option_d_placeholder">
+                            <select class="form-select mt-1"><option data-i18n="custom_assessment.correct_answer">Correct Answer</option><option>A</option><option>B</option><option>C</option><option>D</option></select>
                         </div>
-                        <p class="text-muted">Add more questions after upload from the admin panel.</p>
-                        <button type="submit" class="btn btn-primary btn-lg w-100">Upload Stack</button>
+                        <p class="text-muted" data-i18n="custom_assessment.add_more_hint">Add more questions after upload from the admin panel.</p>
+                        <button type="submit" class="btn btn-primary btn-lg w-100" data-i18n="custom_assessment.upload_stack">Upload Stack</button>
                         <p class="text-success mt-2 text-center" id="uploadMsg" style="display:none;"></p>
                     </form>
                 </div>
