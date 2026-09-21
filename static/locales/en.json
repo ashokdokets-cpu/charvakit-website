@@ -173,7 +173,8 @@
     "share_score": "Share Score",
     "get_badge": "Get Verified Badge",
     "no_questions": "No questions available right now.",
-    "upgrade_plan": "Upgrade Your Plan"
+    "upgrade_plan": "Upgrade Your Plan",
+    "verify": "Verify"
   },
   "assessments_landing": {
     "title": "🎯 AI-Powered Assessments",
@@ -285,8 +286,24 @@
     "question_prefix": "Question"
   },
   "reports": {
-    "title": "Assessment Reports",
-    "no_reports": "No reports available yet.",
+    "title": "📊 Assessment Reports",
+    "subtitle": "Generate, verify, and track assessment reports",
+    "generate_title": "📝 Generate Report",
+    "verify_title": "🔍 Verify Report",
+    "my_reports_title": "📂 My Reports",
+    "generate_button": "Generate & Deliver Report",
+    "get_my_reports": "Get My Reports",
+    "type_skill_twin": "Skill-Twin Assessment",
+    "type_interview_prep": "Interview Prep",
+    "type_quiz": "LMS Quiz",
+    "type_indian_language": "Indian Language Assessment",
+    "candidate_name": "Candidate Name",
+    "candidate_email": "Candidate Email",
+    "employer_email": "Employer Email (optional)",
+    "score_placeholder": "Score (0-100)",
+    "verification_id": "Verification ID (e.g. VERIFY-XXXX)",
+    "your_email": "Your Email",
+    "no_reports": "No reports found",
     "score_label": "Score",
     "date_label": "Date",
     "type_label": "Type"
