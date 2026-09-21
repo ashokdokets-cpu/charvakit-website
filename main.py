@@ -5542,9 +5542,13 @@ async def versant_details():
 
 @app.post("/api/assessment/versant/start")
 async def start_versant(request: Request):
-    """Start Versant assessment."""
+    """Start Versant assessment (Session G6: credit-gated)."""
     data = await request.json()
-    return advanced_assessment_engine.start_versant_assessment(data.get("email"))
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "assessment_versant")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+    return advanced_assessment_engine.start_versant_assessment(guard["email"])
 
 @app.get("/api/assessment/versant/section/{session_id}/{section_index}")
 async def versant_section(session_id: str, section_index: int):
@@ -5553,13 +5557,17 @@ async def versant_section(session_id: str, section_index: int):
 
 @app.post("/api/assessment/mcq/generate")
 async def generate_mcq(request: Request):
-    """Generate MCQ questions."""
+    """Generate MCQ questions (Session G6: credit-gated)."""
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "assessment_mcq")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return advanced_assessment_engine.generate_mcq_questions(
         data.get("category"),
         data.get("topic"),
         data.get("count", 10),
-        data.get("email")
+        guard["email"]
     )
 
 @app.get("/api/assessment/companies")
@@ -5569,15 +5577,23 @@ async def company_patterns():
 
 @app.post("/api/assessment/mock-drive")
 async def start_mock_drive(request: Request):
-    """Start mock drive."""
+    """Start mock drive (Session G6: credit-gated)."""
     data = await request.json()
-    return advanced_assessment_engine.start_mock_drive(data.get("company_id"), data.get("email"))
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "company_mock_drive")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+    return advanced_assessment_engine.start_mock_drive(data.get("company_id"), guard["email"])
 
 @app.post("/api/assessment/skill-gap")
 async def analyze_skill_gap(request: Request):
-    """Analyze skill gap."""
+    """Analyze skill gap (Session G6: credit-gated)."""
     data = await request.json()
-    return advanced_assessment_engine.analyze_skill_gap(data.get("email"), data.get("scores"))
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "assessment_skill_gap")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+    return advanced_assessment_engine.analyze_skill_gap(guard["email"], data.get("scores"))
 
 @app.get("/api/training/phases")
 async def training_phases():
@@ -5599,23 +5615,33 @@ async def get_all_companies():
 
 @app.post("/api/enhanced/custom-assessment")
 async def create_custom(request: Request):
+    """Create custom assessment (Session G6: credit-gated)."""
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "assessment_custom")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return enhanced_assessment_engine.create_custom_assessment(
         data.get("company_name"),
         data.get("topics"),
         data.get("difficulty"),
         data.get("count", 10),
-        data.get("email")
+        guard["email"]
     )
 
 @app.post("/api/enhanced/topic-questions")
 async def topic_questions(request: Request):
+    """Generate topic questions (Session G6: credit-gated)."""
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "topic_questions")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return enhanced_assessment_engine.generate_topic_questions(
         data.get("topic"),
         data.get("count", 10),
         data.get("difficulty"),
-        data.get("email")
+        guard["email"]
     )
 
 @app.get("/api/enhanced/topics/{field}")
