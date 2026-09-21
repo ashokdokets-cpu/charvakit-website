@@ -288,7 +288,9 @@
     "choose_topic": "Choose Topic for",
     "preparing_mock": "Preparing mock test...",
     "error_starting_mock": "Error starting mock test",
-    "question_prefix": "Question"
+    "question_prefix": "Question",
+    "start_free": "Start Free",
+    "loading_categories": "Loading categories..."
   },
   "reports": {
     "title": "📊 Assessment Reports",
