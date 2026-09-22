@@ -1,4 +1,4 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 {% block title %}IELTS Speaking Practice{% endblock %}
 {% block content %}
 <div class="container py-4" style="max-width:900px">
@@ -120,14 +120,14 @@ async function startSession() {
     });
     const j = await r.json();
     if (j.status !== 'success') {
-      return showError(j.message || 'Could not generate prompts.');
+      return speakErr(j.message || 'Could not generate prompts.');
     }
     SPEAKING_STATE.session = j.session;
     buildFlatQuestions(j.session);
     SPEAKING_STATE.currentIdx = 0;
     renderQuestion();
   } catch (e) {
-    showError('Network error: ' + e.message);
+    speakErr('Network error: ' + e.message);
   }
 }
 
@@ -218,7 +218,7 @@ async function toggleRecording() {
       document.getElementById('timer').textContent = `${m}:${s}`;
     }, 1000);
   } catch (e) {
-    showError('Microphone access failed: ' + e.message);
+    speakErr('Microphone access failed: ' + e.message);
   }
 }
 
@@ -257,7 +257,7 @@ async function uploadAndTranscribe(blob) {
     document.getElementById('recordBtn').className = 'btn btn-success';
     document.getElementById('recordBtn').disabled = false;
   } catch (e) {
-    showError('Transcription failed: ' + e.message);
+    speakErr('Transcription failed: ' + e.message);
     document.getElementById('recordBtn').disabled = false;
     document.getElementById('recordBtn').innerHTML = '<i class="bi bi-mic-fill me-2"></i>Try Again';
     document.getElementById('recordBtn').className = 'btn btn-danger';
@@ -282,7 +282,7 @@ async function finishSession() {
 
   const responses = SPEAKING_STATE.responses.filter(Boolean);
   if (!responses.length) {
-    return showError('No answers recorded.');
+    return speakErr('No answers recorded.');
   }
 
   try {
@@ -297,7 +297,7 @@ async function finishSession() {
     });
     const j = await r.json();
     if (j.status !== 'success') {
-      return showError(j.message || 'Evaluation failed.');
+      return speakErr(j.message || 'Evaluation failed.');
     }
     const ev = j.evaluation || {};
     document.getElementById('overallBand').textContent = (ev.overall_band || '—').toFixed ? ev.overall_band : ev.overall_band;
@@ -314,7 +314,7 @@ async function finishSession() {
        </div></div></div>`).join('');
     document.getElementById('feedbackText').textContent = ev.feedback || 'No feedback available.';
   } catch (e) {
-    showError('Evaluation network error: ' + e.message);
+    speakErr('Evaluation network error: ' + e.message);
   }
 }
 
@@ -325,7 +325,7 @@ function setProgress(pct, label) {
   document.getElementById('progressBar').style.width = pct + '%';
   document.getElementById('progressLabel').textContent = label || '';
 }
-function showError(msg) {
+function speakErr(msg) {
   const el = document.getElementById('errorBox');
   el.textContent = msg;
   el.style.display = 'block';
