@@ -480,11 +480,11 @@ class IELTSEngine:
         except Exception:
             pass
 
-        # Persist (non-fatal)
+        # Persist (non-fatal — email may be None for anonymous sessions)
         try:
             from results_system import results_system
             results_system.record_assessment_result(
-                email=None,
+                email="anon@charvak.local",
                 assessment_type="ielts_speaking",
                 assessment_name=f"IELTS Speaking ({topic or 'General'})",
                 score=parsed.get("overall_band", 0),
