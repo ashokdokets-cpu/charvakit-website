@@ -1,0 +1,84 @@
+﻿{% extends "base.html" %}
+{% block title %}Welcome to Charvak{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+
+      <div class="text-center mb-5">
+        <div class="display-1 mb-3">🎉</div>
+        <h1 class="display-5 fw-bold">Welcome, <span id="welcome-name">friend</span>!</h1>
+        <p class="lead text-muted">
+          Your account is ready. Pick where to start.
+        </p>
+      </div>
+
+      <div class="alert alert-success d-flex align-items-center mb-4" role="alert">
+        <i class="bi bi-gift-fill me-3 fs-3"></i>
+        <div>
+          <strong>50 free credits added!</strong>
+          <div class="small">Try any AI tool, practice test, or assessment.</div>
+        </div>
+      </div>
+
+      <div class="row g-4">
+
+        <div class="col-md-4">
+          <a href="/exam-prep" class="text-decoration-none">
+            <div class="card h-100 shadow-sm">
+              <div class="card-body text-center p-4">
+                <div class="display-6 mb-3">📝</div>
+                <h5 class="card-title">Practice Tests</h5>
+                <p class="small text-muted mb-0">138 exams. Instant AI feedback. Track progress.</p>
+              </div>
+            </div>
+          </a>
+        </div>
+
+        <div class="col-md-4">
+          <a href="/advanced-assessment" class="text-decoration-none">
+            <div class="card h-100 shadow-sm">
+              <div class="card-body text-center p-4">
+                <div class="display-6 mb-3">🎯</div>
+                <h5 class="card-title">Skill Assessment</h5>
+                <p class="small text-muted mb-0">See your strengths. Get matched to roles.</p>
+              </div>
+            </div>
+          </a>
+        </div>
+
+        <div class="col-md-4">
+          <a href="/tools" class="text-decoration-none">
+            <div class="card h-100 shadow-sm">
+              <div class="card-body text-center p-4">
+                <div class="display-6 mb-3">🛠️</div>
+                <h5 class="card-title">AI Tools</h5>
+                <p class="small text-muted mb-0">Resume, interview prep, code review, and more.</p>
+              </div>
+            </div>
+          </a>
+        </div>
+
+      </div>
+
+      <div class="text-center mt-5">
+        <a href="/" class="btn btn-outline-secondary btn-sm">Skip to homepage</a>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  // Show user's name if available
+  var userName = localStorage.getItem('userName');
+  if (userName) {
+    document.getElementById('welcome-name').textContent = userName.split(' ')[0];
+  }
+
+  // GA4: onboarding page viewed
+  if (typeof charvakTrack === 'function') {
+    charvakTrack('onboarding_viewed');
+  }
+</script>
+{% endblock %}

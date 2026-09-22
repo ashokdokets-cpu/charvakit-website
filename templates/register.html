@@ -114,10 +114,14 @@ async function registerUser(e) {
         const msg = document.getElementById('regMsg');
         
         if (j.status === 'success') {
-            msg.textContent = '✅ Account created! Redirecting to login...';
+            msg.textContent = '✅ Account created! Redirecting...';
             msg.style.display = 'block';
             localStorage.setItem('charvak_token', j.token);
-            setTimeout(() => window.location.href = data.role === 'admin' ? '/admin-control' : '/login', 1000);
+            // N3.1b — fire GA4 sign_up event
+            if (typeof charvakTrack === 'function') {
+                charvakTrack('sign_up', { method: 'email', role: data.role || 'candidate' });
+            }
+            setTimeout(() => window.location.href = data.role === 'admin' ? '/admin-control' : '/welcome', 800);
         } else {
             msg.textContent = '❌ ' + (j.message || 'Registration failed');
             msg.style.color = '#ef4444';

@@ -171,6 +171,14 @@ window.addEventListener('charvak:mainready', function() {
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
     gtag('config', 'G-HVHHD3KJ9G');
+
+    // N3.1 — Charvak funnel event helper
+    window.charvakTrack = function(eventName, params) {
+      if (typeof gtag === 'function') {
+        gtag('event', eventName, params || {});
+        console.log('[GA4]', eventName, params || {});
+      }
+    };
     </script>
 </head>
 <body>

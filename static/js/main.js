@@ -269,6 +269,10 @@ window.dispatchEvent(new Event('charvak:mainready'));
 // Session G6 — feature interest capture ("Notify Me")
 // ============================================================
 window.notifyMe = function (featureName) {
+    // N3.1d — fire GA4 event on click
+    if (typeof charvakTrack === 'function') {
+        charvakTrack('notify_me_click', { feature: featureName });
+    }
     var email = localStorage.getItem('userEmail') || prompt('Enter your email to be notified:');
     if (!email) return;
     fetch('/api/features/notify', {
