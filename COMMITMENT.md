@@ -2,12 +2,34 @@
 
 **Purpose:** Track every planned-but-not-completed item. Nothing gets lost again.
 **Created:** 2026-09-20
-**Last updated:** 2026-09-21
-**HEAD:** `43bc281`
+**Last updated:** 2026-09-22
+**HEAD:** `00aec90`
 
 ---
 
 ## ✅ COMPLETED
+
+### N1 — State exam smoke test + content quality fixes
+
+- **Completed:** 2026-09-22 (Session N1) — commits `9a8ce83` through `00aec90`
+- **Catalog:** `upsc_cse` + `neet_ug` added (136 → 138 exams)
+- **Question bank:** 5 state PCS exams topped to 40+ per topic; ~13,600+ rows total
+- **Mock test performance:** batched bank query (3 DB calls → 1); 2-4s → 0.4s
+- **Connection pool:** `get_pooled_connection()` + `release_pooled_connection()` in `database.py`; `exam_prep_engine` hot paths migrated; startup warmup in `main.py`
+- **Language hints:** AI prompt forces correct script for 10 language sections (Bengali, Hindi, Tamil, Telugu, Marathi, Kannada, Malayalam, Gujarati, Punjabi, Urdu)
+- **Practice route fix:** `/api/exam/ai-questions` redirected from legacy `ai_question_generator` to `exam_prep_engine` — was serving wrong content for state-specific topics
+- **Verified in prod (Render logs):**
+  - `[startup] DB connection pool warmed` ✅
+  - `bank lookup: X/Topic -> 10 rows (wanted 10)` for all 5 state PCS exams ✅
+  - Bengali content serves correctly ✅
+  - Credit deduction: 3 cr practice / 15 cr mock ✅
+- **N1.5 Legal audit:** PASSED — all 4 pages render on `www.charvakit.com` (terms, privacy, refund, cookie-policy), plus `accessibility`
+- **Follow-ups:**
+  - Semantic duplicate questions (near-identical wording across topics) → C13
+  - Two engines to consolidate (`exam_prep_engine` vs `ai_question_generator`)
+  - Apex domain `charvakit.com` returns 404; optional Cloudflare redirect to `www`
+
+---
 
 ### C1 — Assessment AI for global languages
 
