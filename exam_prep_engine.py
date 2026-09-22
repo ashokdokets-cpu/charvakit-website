@@ -336,6 +336,7 @@ class ExamPrepEngine:
             ''', (exam_id, topic, count))
             rows = cur.fetchall()
             cur.close(); conn.close()
+            logger.info(f"bank lookup: {exam_id}/{topic} -> {len(rows)} rows (wanted {count})")
         except Exception as e:
             logger.error(f"_load_from_bank failed: {e}")
             return []
@@ -348,6 +349,75 @@ class ExamPrepEngine:
             "explanation": r[4] or "",
             "difficulty": r[5] or "Medium",
         } for r in rows]
+
+    def _fetch_bank_questions(self, exam_id: str, topic: str, count: int) -> List[Dict]:
+        """Fetch N bank questions for a single topic. Returns [] on miss/error."""
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute('''
+                SELECT question_id, question_text, options, correct_index,
+                       explanation, difficulty
+                FROM charvak_exam_question_bank
+                WHERE exam_id = %s AND topic = %s
+                ORDER BY RANDOM()
+                LIMIT %s
+            ''', (exam_id, topic, count))
+            rows = cur.fetchall()
+            cur.close(); conn.close()
+            logger.info(f"bank lookup: {exam_id}/{topic} -> {len(rows)} rows (wanted {count})")
+        except Exception as e:
+            logger.error(f"_fetch_bank_questions failed: {e}")
+            return []
+        return [{
+            "question_id": r[0],
+            "question": r[1],
+            "options": r[2] if isinstance(r[2], list) else json.loads(r[2] or "[]"),
+            "correct": r[3],
+            "explanation": r[4] or "",
+            "difficulty": r[5] or "Medium",
+        } for r in rows]
+
+    def _fetch_bank_multi(self, exam_id: str, topics: List[str], per_topic: int) -> Dict[str, List[Dict]]:
+        """Fetch per_topic questions for EACH topic in ONE DB round trip."""
+        if not topics:
+            return {}
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute('''
+                SELECT topic, question_id, question_text, options, correct_index,
+                       explanation, difficulty
+                FROM (
+                    SELECT topic, question_id, question_text, options, correct_index,
+                           explanation, difficulty,
+                           ROW_NUMBER() OVER (PARTITION BY topic ORDER BY RANDOM()) AS rn
+                    FROM charvak_exam_question_bank
+                    WHERE exam_id = %s AND topic = ANY(%s)
+                ) sub
+                WHERE rn <= %s
+            ''', (exam_id, topics, per_topic))
+            rows = cur.fetchall()
+            cur.close(); conn.close()
+            logger.info(f"bank multi-lookup: {exam_id} topics={topics} -> {len(rows)} rows")
+        except Exception as e:
+            logger.error(f"_fetch_bank_multi failed: {e}")
+            return {}
+
+        grouped = {}
+        for r in rows:
+            t = r[0]
+            grouped.setdefault(t, []).append({
+                "question_id": r[1],
+                "question": r[2],
+                "options": r[3] if isinstance(r[3], list) else json.loads(r[3] or "[]"),
+                "correct": r[4],
+                "explanation": r[5] or "",
+                "difficulty": r[6] or "Medium",
+            })
+        return grouped
 
     def _get_exam_difficulty(self, exam_id: str) -> str:
         """Look up difficulty for an exam. Default: Medium."""
@@ -474,20 +544,75 @@ class ExamPrepEngine:
                 "questions": combined[:count], "source": "bank+ai" if bank else "ai"}
 
     def start_mock_test(self, exam_id: str, email: str, topic: str = None, count: int = 10) -> Dict:
-        """Start a mock test - generates questions, persists attempt."""
-        topic = topic or "General"
+        """Start a mock test - batched bank fetch, correct distribution."""
+        import time as _t
+        _t0 = _t.time()
+
         try:
             count = max(1, min(int(count), 50))
         except Exception:
             count = 10
 
-        gen = self.generate_questions(exam_id, topic, count)
-        if gen.get("status") != "success":
-            return gen
-        questions = gen["questions"]
+        # Resolve sections from catalog
+        exam_sections = []
+        for cat in self.exams.values():
+            for e in cat.get("exams", []):
+                if e.get("id") == exam_id:
+                    exam_sections = e.get("sections", [])
+                    break
+            if exam_sections:
+                break
+
+        questions = []
+        resolved_topic = topic or "Mixed"
+
+        if topic:
+            # Caller gave us a topic
+            questions = self._fetch_bank_questions(exam_id, topic, count)
+            if len(questions) < count:
+                needed = count - len(questions)
+                fresh = self._generate_via_ai(exam_id, topic, needed)
+                questions = (questions + fresh)[:count]
+            resolved_topic = topic
+
+        elif exam_sections:
+            # Mixed mock - batched query, even distribution
+            n = len(exam_sections)
+            base = count // n
+            remainder = count % n
+            per_section = base + (1 if remainder else 0)  # over-fetch for safety
+
+            all_rows = self._fetch_bank_multi(exam_id, exam_sections, per_section)
+
+            for i, sec in enumerate(exam_sections):
+                take = base + (1 if i < remainder else 0)
+                sec_rows = all_rows.get(sec, [])[:take]
+                questions.extend(sec_rows)
+
+            # Top up if bank was short
+            if len(questions) < count:
+                needed = count - len(questions)
+                fresh = self._generate_via_ai(exam_id, exam_sections[0], needed)
+                questions = (questions + fresh)[:count]
+            resolved_topic = "Mixed"
+
+        else:
+            # No sections - fallback
+            questions = self._fetch_bank_questions(exam_id, "General", count)
+            if len(questions) < count:
+                needed = count - len(questions)
+                fresh = self._generate_via_ai(exam_id, "General", needed)
+                questions = (questions + fresh)[:count]
+            resolved_topic = "General"
+
+        questions = questions[:count]
+        build_time = _t.time() - _t0
+        logger.info(f"start_mock_test: exam={exam_id} topic={resolved_topic} "
+                    f"questions={len(questions)} build_time={build_time:.2f}s")
 
         test_id = f"TEST-{secrets.token_hex(6).upper()}"
 
+        _t1 = _t.time()
         try:
             from database import db
             conn = db.get_connection()
@@ -496,24 +621,25 @@ class ExamPrepEngine:
                 INSERT INTO charvak_exam_mock_tests
                     (test_id, email, exam_id, topic, status, total_questions)
                 VALUES (%s, %s, %s, %s, 'in_progress', %s)
-            ''', (test_id, email, exam_id, topic, len(questions)))
+            ''', (test_id, email, exam_id, resolved_topic, len(questions)))
             conn.commit()
             cur.close(); conn.close()
         except Exception as e:
             logger.error(f"start_mock_test failed: {e}")
             return {"status": "error", "message": "Could not start mock test"}
+        db_time = _t.time() - _t1
+        logger.info(f"start_mock_test: DB insert took {db_time:.2f}s")
 
         return {
             "status": "success",
             "test_id": test_id,
             "exam_id": exam_id,
             "email": email,
-            "topic": topic,
+            "topic": resolved_topic,
             "total_questions": len(questions),
             "questions": questions,
             "started_at": datetime.now().isoformat(),
         }
-
     def submit_answer(self, test_id: str, question_id: str, selected_index: int) -> Dict:
         """Record an answer for a question in a mock test."""
         try:
