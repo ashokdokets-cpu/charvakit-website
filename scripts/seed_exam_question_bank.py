@@ -71,6 +71,38 @@ def already_seeded(exam_id, topic):
         return 0
 
 
+def dedup_bank(exam_id, topic, threshold=0.15):
+    """Delete near-duplicate questions for one (exam, topic).
+
+    Uses pgvector cosine distance on the embedding column. Keeps the
+    lowest question_id per semantic cluster. Idempotent.
+    """
+    try:
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            DELETE FROM charvak_exam_question_bank t
+            WHERE t.exam_id = %s AND t.topic = %s
+              AND t.embedding IS NOT NULL
+              AND EXISTS (
+                  SELECT 1 FROM charvak_exam_question_bank k
+                  WHERE k.exam_id = t.exam_id
+                    AND k.topic = t.topic
+                    AND k.embedding IS NOT NULL
+                    AND k.question_id < t.question_id
+                    AND k.embedding <=> t.embedding < %s
+              )
+        """, (exam_id, topic, threshold))
+        deleted = cur.rowcount
+        conn.commit()
+        cur.close(); conn.close()
+        return deleted
+    except Exception as e:
+        print(f"  WARN: dedup failed: {e}")
+        return 0
+
+
 def seed_one(exam_id, topic, count, resume):
     """Seed one (exam, topic). Returns (status, message)."""
     if resume:
@@ -80,9 +112,13 @@ def seed_one(exam_id, topic, count, resume):
 
     try:
         result = exam_prep_engine.generate_questions(exam_id, topic, count=count)
-        if result.get("status") == "success":
-            return "ok", f"generated {len(result.get('questions', []))}"
-        return "fail", f"error: {result.get('message', 'unknown')}"
+        if result.get("status") != "success":
+            return "fail", f"error: {result.get('message', 'unknown')}"
+        generated = len(result.get("questions", []))
+        deleted = dedup_bank(exam_id, topic)
+        if deleted:
+            return "ok", f"generated {generated}, deduped {deleted}"
+        return "ok", f"generated {generated}"
     except Exception as e:
         return "fail", f"exception: {e}"
 
