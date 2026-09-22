@@ -5452,21 +5452,26 @@ async def robots_txt():
 
 @app.get("/api/region")
 async def detect_region(request: Request):
-    """Detect user region (W1b: IP + Accept-Language)."""
+    """Region detection (W2b): CF-IPCountry > GeoLite2 > default."""
     try:
         accept_lang = request.headers.get("accept-language", "en")
-        ip = None
-        xff = request.headers.get("x-forwarded-for", "")
-        if xff:
-            ip = xff.split(",")[0].strip()
-        elif request.client and request.client.host:
-            ip = request.client.host
-        region = detect_user_region(ip_address=ip, accept_language=accept_lang)
+        # Two-layer detector (CF header + GeoLite2)
+        from ip_detection import ip_detector
+        loc = ip_detector.detect_from_request(request)
+        country = loc.get("country_code") or "IN"
+
+        # Resolve language + currency via global_config
+        region = detect_user_region(ip_address=None, accept_language=accept_lang)
+        # Country from IP detector overrides language-based guess
+        region["country"] = country
+        region["currency"] = loc.get("currency") or region.get("currency", "INR")
+        if loc.get("timezone"):
+            region["timezone"] = loc["timezone"]
+        region["source"] = loc.get("source", "unknown")
         return JSONResponse(region)
     except Exception:
-        # W1b: fall back to India (was US — caused USD for Indian users)
         return JSONResponse({"country": "IN", "currency": "INR", "language": "en",
-                             "timezone": "Asia/Kolkata"})
+                             "timezone": "Asia/Kolkata", "source": "error_fallback"})
 
 @app.get("/api/pricing/{service}")
 async def get_service_pricing(service: str, request: Request, currency: str = "INR", country: str = "IN"):
