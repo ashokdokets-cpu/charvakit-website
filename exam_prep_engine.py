@@ -479,11 +479,28 @@ class ExamPrepEngine:
                 "(reading, grammar, vocabulary, sentence correction).\n"
             )
 
+        # N2.1 — diversity requirements to prevent semantic near-dupes
+        diversity_rules = (
+            "\nDIVERSITY REQUIREMENTS (CRITICAL):\n"
+            "- Each question MUST test a DIFFERENT specific fact, concept, or skill.\n"
+            "- Do NOT generate multiple questions testing the same idea with "
+            "slightly different wording (e.g., 5 arithmetic series with different numbers).\n"
+            "- Aim for coverage of AT LEAST 8 distinct subtopics within the topic.\n"
+            "- If the topic is narrow (e.g., 'Bengali Literature'), focus on "
+            "different authors, eras, genres, or works.\n"
+            "- If you cannot produce all requested questions with true diversity, "
+            "produce fewer instead of duplicating.\n"
+            "- BAD example: 5 questions all asking 'find next in series X, Y, Z'.\n"
+            "- GOOD example: one series, one analogy, one odd-one-out, "
+            "one coding, one blood relation, one direction sense.\n"
+        )
+
         prompt = (
             f"You are creating {count} practice questions for the {exam_name} exam.\n"
             f"Topic: {topic}\n"
             f"Difficulty: {difficulty}\n"
             f"{lang_note}"
+            f"{diversity_rules}"
             "\nSTRICT RULES:\n"
             "- Return EXACTLY 4 options per question. Never 3. Never 5.\n"
             "- Every question must be UNIQUE - no repeats of the same prompt.\n"
