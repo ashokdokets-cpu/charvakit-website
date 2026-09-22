@@ -695,6 +695,24 @@ async def refund(request: Request):
 async def welcome(request: Request):
     return template_response("welcome.html", request, "Welcome to Charvak")
 
+
+# N3.4 — Cron endpoint: send due queued emails
+@app.post("/api/cron/send-queued-emails")
+async def cron_send_queued_emails(request: Request):
+    """Cron: process pending emails. Requires X-Cron-Secret header."""
+    import os as _os
+    expected = _os.getenv("CRON_SECRET", "")
+    provided = request.headers.get("X-Cron-Secret", "")
+    if not expected or provided != expected:
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    try:
+        from email_queue import email_queue
+        result = email_queue.process_pending(batch=50)
+        return {"status": "success", **result}
+    except Exception as e:
+        logger.error(f"cron send queued failed: {e}")
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
 @app.get("/register", response_class=HTMLResponse)
 async def register_page(request: Request):
     return template_response("register.html", request, "Register - Charvak IT Consulting")
@@ -1125,6 +1143,17 @@ async def api_register(request: Request, data: RegisterRequest):
             except Exception as e:
                 logger.error(f"Verification email failed: {e}")
                 result["message"] = "Account created! Email verification pending."
+
+            # N3.3 — Welcome email + queue follow-ups
+            try:
+                from enhanced_email import enhanced_email
+                enhanced_email.send_welcome(data.email, data.name)
+                from email_queue import email_queue
+                email_queue.enqueue(data.email, "nudge_first_assessment", when_hours=24)
+                email_queue.enqueue(data.email, "cta_credits_expire", when_hours=72)
+                logger.info(f"Welcome + queue scheduled for {data.email}")
+            except Exception as e:
+                logger.error(f"Welcome/queue failed: {e}")
 
             # Capture referral code if present
             try:
