@@ -3,7 +3,7 @@
 **Purpose:** Track every planned-but-not-completed item. Nothing gets lost again.
 **Created:** 2026-09-20
 **Last updated:** 2026-09-22
-**HEAD:** `0830b97`
+**HEAD:** `3ff3586`
 
 ---
 
@@ -50,6 +50,30 @@
   - Optional: curate top 5 exams manually for extra polish
 - **HEAD after:** *(pending commit)*
 - **Next:** Session N3 (IELTS Speaking or Onboarding)
+
+### W4 — Cross-test results dashboard (2026-09-23)
+
+- **Commits:** `a79555b` `3ff3586`
+- **What shipped:**
+  - **New page** `templates/my-results.html` (208 lines):
+    - Teal gradient hero
+    - 4 stat cards: Tests Taken, Average Score, Passed, Needs Practice
+    - Filter buttons by assessment_type (dynamic)
+    - Result cards: name, score, pass/fail badge, date, "View Details"
+    - Details modal with recursive flattening of `details_json`
+    - Empty state ("No results yet")
+    - Loading + error states
+  - **Route:** `GET /my-results` (page)
+  - **Nav:** "My Results" button added to logged-in user dropdown
+  - **Backend:** No changes — reused existing `/api/results/user/{email}`
+- **Verified:**
+  - Page loads with 4 stat cards
+  - Cards render for `versant` results
+  - View Details modal shows sub-bands + feedback
+  - Filter buttons work
+  - Nav link visible + works
+- **HEAD after:** `3ff3586`
+- **Notes:** Ready for ielts_speaking + ielts_writing results (already persisted via N4 fixes)
 
 ### W1-W2 — Currency detection: two-layer country resolution (2026-09-23)
 
