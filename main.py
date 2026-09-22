@@ -6572,14 +6572,7 @@ from cbt_versant import cbt_versant
 async def get_versant_section(section_id: str):
     return cbt_versant.get_section_questions(section_id)
 
-@app.post("/api/versant/start-cbt")
-async def start_cbt(request: Request):
-    data = await request.json()
-    from credit_guard import require_credits_from_data
-    guard = require_credits_from_data(data, "versant_start_cbt")
-    if guard.get("status") != "success":
-        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
-    return cbt_versant.start_cbt_session(data.get("email"))
+# (V6) /api/versant/start-cbt removed — superseded by /api/versant/start-session
 
 @app.post("/api/versant/record-audio")
 async def record_audio(request: Request):
