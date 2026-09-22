@@ -5295,12 +5295,15 @@ async def ai_questions(request: Request):
     except Exception:
         pass  # fail-open on lookup failure
 
-    questions = ai_question_generator.generate_questions(
+    # N1.4.7 — Route to exam_prep_engine (bank-first, topic-aware,
+    # language hints). Previously used ai_question_generator which has
+    # its own cache without state-specific content.
+    _gen = exam_prep_engine.generate_questions(
         exam_id=data.get("exam_id"),
-        topic=data.get("topic"),
-        count=data.get("count", 10),
-        user_email=guard["email"]
+        topic=data.get("topic") or "General",
+        count=data.get("count", 10)
     )
+    questions = _gen.get("questions", [])
 
     return {
         "status": "success",
