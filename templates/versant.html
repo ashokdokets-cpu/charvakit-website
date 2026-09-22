@@ -1,174 +1,463 @@
 {% extends "base.html" %}
-{% block title %}Versant English Assessment - Charvak{% endblock %}
+{% block title %}Versant English Assessment{% endblock %}
 {% block content %}
 <style>
-    .versant-hero { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px 0; }
-    .section-tab { cursor: pointer; border: 2px solid #e0e0e0; border-radius: 10px; padding: 10px; text-align: center; background: white; margin-bottom: 10px; }
-    .section-tab.active { border-color: #3ba591; background: #f0faf8; }
-    .question-item { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; margin-bottom: 10px; }
-    .btn-record { background: #e94d65; color: white; border: none; border-radius: 50px; padding: 8px 15px; cursor: pointer; font-size: 12px; }
-    .btn-play { background: #3ba591; color: white; border: none; border-radius: 50px; padding: 8px 15px; cursor: pointer; font-size: 12px; }
+  .vs-hero { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; padding: 40px 0; }
+  .vs-hero h1 { font-weight: 700; }
+  .vs-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+  .vs-section-chip { display: inline-block; background: #f0faf8; color: #3ba591; border: 1px solid #d3efe9; border-radius: 999px; padding: 4px 12px; font-size: 0.85rem; font-weight: 600; }
+  .vs-btn-record { background: #e94d65; color: #fff; border: none; border-radius: 999px; padding: 14px 32px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+  .vs-btn-record:hover { background: #d63a52; }
+  .vs-btn-record:disabled { opacity: 0.55; cursor: not-allowed; }
+  .vs-btn-stop { background: #111827; }
+  .vs-btn-stop:hover { background: #000; }
+  .vs-timer { font-family: 'SF Mono', Menlo, monospace; font-size: 1.1rem; color: #6b7280; }
+  .vs-transcript { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; font-size: 0.9rem; color: #374151; margin-top: 12px; max-height: 160px; overflow-y: auto; }
+  .vs-progress { height: 6px; background: #e5e7eb; border-radius: 999px; overflow: hidden; }
+  .vs-progress-bar { height: 100%; background: #3ba591; transition: width 0.3s; }
+  .vs-score-big { font-size: 4rem; font-weight: 800; color: #3ba591; line-height: 1; }
+  .vs-criteria-row { padding: 12px 0; border-bottom: 1px solid #f3f4f6; display: flex; justify-content: space-between; align-items: center; }
+  .vs-criteria-row:last-child { border-bottom: none; }
 </style>
 
-<div class="versant-hero text-center">
-    <h1>🗣️ Versant English Assessment</h1>
-    <p>AI-Generated Unique Questions | 48 Questions | 50 Minutes</p>
-    <button class="btn btn-light mt-2" onclick="startAIAssessment()">🤖 Start AI Assessment</button>
+<div class="vs-hero text-center">
+  <div class="container">
+    <h1 class="mb-2">Versant English Assessment</h1>
+    <p class="mb-4" style="opacity: 0.9;">48 questions | 6 sections | AI band scoring</p>
+    <button class="btn btn-light fw-semibold px-4" id="startBtn" onclick="startTest()">
+      Start Test &mdash; 20 credits
+    </button>
+  </div>
 </div>
 
-<div class="container py-4">
-    <div class="row g-2">
-        <div class="col-6 col-md-2"><div class="section-tab active" onclick="showSection('read_aloud')">📖 Read Aloud<br><small>8 Q</small></div></div>
-        <div class="col-6 col-md-2"><div class="section-tab" onclick="showSection('repeats')">🎧 Repeats<br><small>16 Q</small></div></div>
-        <div class="col-6 col-md-2"><div class="section-tab" onclick="showSection('sentence_builds')">✏️ Sentence Builds<br><small>10 Q</small></div></div>
-        <div class="col-6 col-md-2"><div class="section-tab" onclick="showSection('conversations')">💬 Conversations<br><small>10 Q</small></div></div>
-        <div class="col-6 col-md-2"><div class="section-tab" onclick="showSection('story_retelling')">📝 Story Retelling<br><small>3 Q</small></div></div>
-        <div class="col-6 col-md-2"><div class="section-tab" onclick="showSection('summary_opinion')">📄 Summary<br><small>1 Q</small></div></div>
+<div class="container py-5" style="max-width: 900px;">
+
+  <!-- ============ INTRO ============ -->
+  <div id="introCard" class="vs-card mb-4">
+    <h5 class="fw-bold mb-3">How Versant Works</h5>
+    <p class="text-muted">Versant assesses spoken and written English across 6 sections. All answers except Summary are spoken.</p>
+    <div class="row g-2 mt-3" id="sectionList"></div>
+    <div class="alert alert-info small mt-4 mb-0">
+      <strong>Tips:</strong> Use a quiet room. Speak clearly into your microphone. Your browser will ask for permission.
+    </div>
+  </div>
+
+  <!-- ============ QUESTION FLOW ============ -->
+  <div id="flowCard" style="display:none;">
+    <div class="vs-progress mb-2"><div class="vs-progress-bar" id="progressBar" style="width:0%"></div></div>
+    <div class="d-flex justify-content-between small text-muted mb-4">
+      <span id="progressLabel">Question 1 of 48</span>
+      <span id="sectionLabel">Read Aloud</span>
     </div>
 
-    <div class="mt-4">
-        <h2 id="sectionTitle" class="as-h4">📖 Read Aloud (8 Questions)</h2>
-        <p class="text-muted" id="sectionInstruction">Click "Start AI Assessment" to generate your unique questions.</p>
-        <div id="questionsList">
-            <p class="text-muted">🤖 AI will generate unique questions for you.</p>
+    <div class="vs-card">
+      <div class="mb-3">
+        <span class="vs-section-chip" id="sectionChip">Read Aloud</span>
+      </div>
+
+      <p class="text-muted small mb-2" id="instructionText"></p>
+      <h4 class="fw-bold mb-3" id="questionText">&nbsp;</h4>
+
+      <div id="playAudioWrap" style="display:none; margin-bottom:16px;">
+        <button class="btn btn-outline-primary btn-sm" onclick="playCurrentAudio()">
+          Play Audio
+        </button>
+      </div>
+
+      <!-- Audio recording -->
+      <div id="recordWrap" style="display:none;">
+        <button id="recordBtn" class="vs-btn-record" onclick="toggleRecording()">Start Recording</button>
+        <span class="vs-timer ms-3" id="timer">00:00</span>
+        <div id="transcriptWrap" style="display:none;">
+          <div class="small text-muted mt-3 mb-1">Transcript (auto-generated)</div>
+          <div class="vs-transcript" id="transcriptText"></div>
         </div>
+      </div>
+
+      <!-- Text input (Summary only) -->
+      <div id="textWrap" style="display:none;">
+        <textarea id="textAnswer" class="form-control" rows="10" placeholder="Type your response here..."></textarea>
+        <div class="d-flex justify-content-between mt-2">
+          <span class="small text-muted" id="wordCount">0 words</span>
+          <button class="btn btn-primary" id="saveTextBtn" onclick="saveTextAnswer()">Save &amp; Continue</button>
+        </div>
+      </div>
+
+      <div id="nextWrap" class="mt-4 text-end" style="display:none;">
+        <button class="btn btn-primary" onclick="nextQuestion()">Next Question</button>
+      </div>
     </div>
+
+    <div class="text-center mt-3">
+      <button class="btn btn-link btn-sm text-muted" onclick="skipQuestion()">Skip this question</button>
+    </div>
+  </div>
+
+  <!-- ============ COMPLETE ============ -->
+  <div id="completeCard" style="display:none;">
+    <div class="vs-card text-center">
+      <h3 class="fw-bold mb-2">All sections complete</h3>
+      <p class="text-muted mb-4">Submit your test for AI band scoring.</p>
+      <button class="btn btn-primary btn-lg" id="submitTestBtn" onclick="submitTest()">
+        Submit Test &mdash; 15 credits
+      </button>
+      <div id="submitError" class="text-danger small mt-3" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- ============ SCORECARD ============ -->
+  <div id="scoreCard" style="display:none;">
+    <div class="vs-card text-center mb-4">
+      <div class="text-uppercase small text-muted mb-2">Overall Score</div>
+      <div class="vs-score-big" id="scoreBig">&mdash;</div>
+      <div class="text-muted mt-2" id="scoreLabel">out of 80</div>
+    </div>
+    <div class="vs-card mb-4">
+      <h5 class="fw-bold mb-3">Criteria Breakdown</h5>
+      <div id="criteriaList"></div>
+    </div>
+    <div class="vs-card mb-4">
+      <h5 class="fw-bold mb-3">Feedback</h5>
+      <p class="text-muted mb-0" id="feedbackText"></p>
+    </div>
+    <div class="text-center">
+      <a href="/versant" class="btn btn-outline-primary">Retake</a>
+      <a href="/" class="btn btn-outline-secondary">Home</a>
+    </div>
+  </div>
+
 </div>
 
 <script>
-var questionsData = {read_aloud: [], repeats: [], sentence_builds: [], conversations: [], story_retelling: [], summary_opinion: []};
-var currentSection = 'read_aloud';
-var sessionId = null;
+// =============================================================
+// V5 — Versant page logic (DB-backed)
+// =============================================================
+var VS = {
+  sessionId: null,
+  email: localStorage.getItem('userEmail') || '',
+  sections: [],       // ordered section ids
+  sectionDesign: {},
+  questions: {},      // {section_id: [strings...]}
+  flatQuestions: [],  // [{section, qIdx, text}]
+  currentIdx: 0,
+  answers: {},
+  recording: false,
+  mediaRecorder: null,
+  chunks: [],
+  timerInterval: null,
+  timerSeconds: 0,
+};
 
-function startAIAssessment() {
-    var email = prompt('Enter your email for AI-generated unique questions:');
-    if (!email) return;
-    
-    var btn = document.querySelector('.btn-light');
-    btn.textContent = '🤖 AI Generating...';
-    btn.disabled = true;
-    
-    fetch('/api/versant/start-session', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({email: email})
-    })
-    .then(function(r) { return r.json(); })
-    .then(function(result) {
-        if (result.status === 'success' && result.session) {
-            sessionId = result.session.session_id;
-            var q = result.session.questions;
-            
-            questionsData.read_aloud = q.read_aloud || [];
-            questionsData.repeats = q.repeats || [];
-            questionsData.sentence_builds = q.sentence_builds || [];
-            questionsData.conversations = q.conversations || [];
-            questionsData.story_retelling = q.story_retelling || [];
-            questionsData.summary_opinion = q.summary_opinion || [];
-            
-            var total = 0;
-            for (var key in questionsData) { total += questionsData[key].length; }
-            document.getElementById('sectionInstruction').textContent = '✅ AI generated ' + total + ' unique questions across all 6 sections. Click any tab to view.';
-            btn.textContent = '✅ ' + total + ' Questions Generated!';
-            renderQuestions();
-        }
-    })
-    .catch(function(e) {
-        btn.textContent = '❌ Error. Try again.';
-        btn.disabled = false;
+// ---------- START ----------
+async function startTest() {
+  if (!VS.email) {
+    alert('Please log in first.');
+    return;
+  }
+  var btn = document.getElementById('startBtn');
+  btn.disabled = true;
+  btn.textContent = 'Generating questions...';
+
+  try {
+    var r = await fetch('/api/versant/start-session', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({email: VS.email})
     });
+    var j = await r.json();
+    if (j.status !== 'success') {
+      vsErr(j.message || 'Could not start session');
+      btn.disabled = false;
+      btn.textContent = 'Start Test';
+      return;
+    }
+    VS.sessionId = j.session_id;
+    VS.sections = j.sections || [];
+    VS.sectionDesign = j.section_design || {};
+    VS.questions = j.questions || {};
+
+    buildFlatQuestions();
+    if (!VS.flatQuestions.length) {
+      vsErr('No questions received');
+      btn.disabled = false;
+      return;
+    }
+    document.getElementById('introCard').style.display = 'none';
+    document.getElementById('flowCard').style.display = 'block';
+    VS.currentIdx = 0;
+    renderQuestion();
+  } catch (e) {
+    vsErr('Network error: ' + e.message);
+    btn.disabled = false;
+  }
 }
 
-function showSection(sectionId) {
-    currentSection = sectionId;
-    var tabs = document.querySelectorAll('.section-tab');
-    for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
-    event.target.closest('.section-tab').classList.add('active');
-    
-    var titles = {
-        read_aloud: '📖 Read Aloud (8 Questions)',
-        repeats: '🎧 Repeats (16 Questions)',
-        sentence_builds: '✏️ Sentence Builds (10 Questions)',
-        conversations: '💬 Conversations (10 Questions)',
-        story_retelling: '📝 Story Retelling (3 Questions)',
-        summary_opinion: '📄 Summary (1 Question)'
+function buildFlatQuestions() {
+  var flat = [];
+  VS.sections.forEach(function(sec) {
+    var qs = VS.questions[sec] || [];
+    qs.forEach(function(q, i) {
+      var text = (typeof q === 'string') ? q : (q.sentence || q.question || q.words || JSON.stringify(q));
+      flat.push({section: sec, idx: i, text: text});
+    });
+  });
+  VS.flatQuestions = flat;
+}
+
+// ---------- RENDER ----------
+function renderQuestion() {
+  var total = VS.flatQuestions.length;
+  if (VS.currentIdx >= total) return showComplete();
+
+  var item = VS.flatQuestions[VS.currentIdx];
+  var sec = VS.sectionDesign[item.section] || {};
+
+  // Progress
+  document.getElementById('progressBar').style.width = ((VS.currentIdx / total) * 100).toFixed(1) + '%';
+  document.getElementById('progressLabel').textContent = 'Question ' + (VS.currentIdx + 1) + ' of ' + total;
+  document.getElementById('sectionLabel').textContent = sec.name || item.section;
+  document.getElementById('sectionChip').textContent = sec.name || item.section;
+  document.getElementById('instructionText').textContent = sec.instruction || '';
+  document.getElementById('questionText').textContent = item.text;
+
+  // Reset all sub-panels
+  document.getElementById('transcriptWrap').style.display = 'none';
+  document.getElementById('transcriptText').textContent = '';
+  document.getElementById('recordWrap').style.display = 'none';
+  document.getElementById('textWrap').style.display = 'none';
+  document.getElementById('nextWrap').style.display = 'none';
+  document.getElementById('playAudioWrap').style.display = 'none';
+
+  if (sec.input === 'typed_response') {
+    // Summary & Opinion
+    document.getElementById('textWrap').style.display = 'block';
+    document.getElementById('textAnswer').value = '';
+    updateWordCount();
+    document.getElementById('textAnswer').oninput = updateWordCount;
+  } else {
+    // Audio-driven sections
+    document.getElementById('recordWrap').style.display = 'block';
+    if (sec.audio_prompt) {
+      document.getElementById('playAudioWrap').style.display = 'block';
+    }
+    var rb = document.getElementById('recordBtn');
+    rb.disabled = false;
+    rb.textContent = 'Start Recording';
+    rb.className = 'vs-btn-record';
+    document.getElementById('timer').textContent = '00:00';
+  }
+}
+
+// ---------- RECORD ----------
+async function toggleRecording() {
+  if (VS.recording) return stopRecording();
+  try {
+    var stream = await navigator.mediaDevices.getUserMedia({audio: true});
+    var mr = new MediaRecorder(stream);
+    VS.mediaRecorder = mr;
+    VS.chunks = [];
+    mr.ondataavailable = function(e) { if (e.data && e.data.size) VS.chunks.push(e.data); };
+    mr.onstop = async function() {
+      stream.getTracks().forEach(function(t) { t.stop(); });
+      var blob = new Blob(VS.chunks, {type: 'audio/webm'});
+      await uploadAudio(blob);
     };
-    document.getElementById('sectionTitle').textContent = titles[sectionId];
-    renderQuestions();
+    mr.start();
+    VS.recording = true;
+    VS.timerSeconds = 0;
+    var rb = document.getElementById('recordBtn');
+    rb.textContent = 'Stop Recording';
+    rb.className = 'vs-btn-record vs-btn-stop';
+    VS.timerInterval = setInterval(function() {
+      VS.timerSeconds++;
+      var m = String(Math.floor(VS.timerSeconds / 60)).padStart(2, '0');
+      var s = String(VS.timerSeconds % 60).padStart(2, '0');
+      document.getElementById('timer').textContent = m + ':' + s;
+    }, 1000);
+  } catch (e) {
+    vsErr('Microphone access failed: ' + e.message);
+  }
 }
 
-function renderQuestions() {
-    var container = document.getElementById('questionsList');
-    var questions = questionsData[currentSection] || [];
-    
-    if (questions.length === 0) {
-        container.innerHTML = '<p class="text-muted">🤖 Click "Start AI Assessment" to generate questions.</p>';
-        return;
-    }
-    
-    var html = '';
-    for (var i = 0; i < questions.length; i++) {
-        html += '<div class="question-item">';
-        html += '<strong>Question ' + (i + 1) + ':</strong> ' + questions[i];
-        html += '<br>';
-        if (currentSection === 'repeats') {
-            html += '<button class="btn-play mt-2 me-2" onclick="playAudio(' + i + ')">🔊 Play Audio</button>';
-        }
-        html += '<button class="btn-record mt-2" onclick="recordAudio(' + i + ')">🎤 Record</button>';
-        html += '<audio id="playback-' + i + '" controls style="display:none; margin-top:10px; width:100%;"></audio>';
-        html += '</div>';
-    }
-    container.innerHTML = html;
+function stopRecording() {
+  if (VS.mediaRecorder) VS.mediaRecorder.stop();
+  VS.recording = false;
+  clearInterval(VS.timerInterval);
+  var rb = document.getElementById('recordBtn');
+  rb.textContent = 'Transcribing...';
+  rb.disabled = true;
 }
 
-function playAudio(index) {
-    var text = questionsData[currentSection][index];
-    fetch('/api/voice/tts', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-            text: text,
-            email: localStorage.getItem('userEmail') || ''
-        })
+async function uploadAudio(blob) {
+  var item = VS.flatQuestions[VS.currentIdx];
+  var fd = new FormData();
+  fd.append('audio', blob, 'answer.webm');
+  fd.append('session_id', VS.sessionId);
+  fd.append('section_id', item.section);
+  fd.append('question_id', String(item.idx));
+  fd.append('question_text', item.text);
+  fd.append('email', VS.email);
+  try {
+    var r = await fetch('/api/versant/record-audio', { method: 'POST', body: fd });
+    var j = await r.json();
+    if (j.status !== 'success') {
+      throw new Error(j.message || 'Upload failed');
+    }
+    VS.answers[item.section + '_' + item.idx] = j.transcript || '';
+    document.getElementById('transcriptText').textContent = j.transcript || '(empty)';
+    document.getElementById('transcriptWrap').style.display = 'block';
+    var rb = document.getElementById('recordBtn');
+    rb.textContent = 'Recorded';
+    rb.className = 'vs-btn-record';
+    rb.style.background = '#10b981';
+    document.getElementById('nextWrap').style.display = 'block';
+  } catch (e) {
+    vsErr('Transcription failed: ' + e.message);
+    var rb = document.getElementById('recordBtn');
+    rb.textContent = 'Try Again';
+    rb.disabled = false;
+  }
+}
+
+// ---------- TEXT ----------
+function updateWordCount() {
+  var v = document.getElementById('textAnswer').value || '';
+  var wc = v.trim() ? v.trim().split(/\s+/).length : 0;
+  document.getElementById('wordCount').textContent = wc + ' words';
+}
+
+async function saveTextAnswer() {
+  var item = VS.flatQuestions[VS.currentIdx];
+  var answer = document.getElementById('textAnswer').value.trim();
+  if (!answer) { vsErr('Please type your answer.'); return; }
+  document.getElementById('saveTextBtn').disabled = true;
+  try {
+    var r = await fetch('/api/versant/submit-text', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        email: VS.email,
+        session_id: VS.sessionId,
+        section_id: item.section,
+        question_id: String(item.idx),
+        question_text: item.text,
+        answer: answer
+      })
+    });
+    var j = await r.json();
+    if (j.status !== 'success') {
+      throw new Error(j.message || 'Save failed');
+    }
+    nextQuestion();
+  } catch (e) {
+    vsErr('Save failed: ' + e.message);
+    document.getElementById('saveTextBtn').disabled = false;
+  }
+}
+
+// ---------- NAVIGATION ----------
+function nextQuestion() {
+  VS.currentIdx++;
+  renderQuestion();
+}
+
+function skipQuestion() {
+  nextQuestion();
+}
+
+// ---------- AUDIO PLAYBACK ----------
+function playCurrentAudio() {
+  var item = VS.flatQuestions[VS.currentIdx];
+  fetch('/api/voice/tts', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({text: item.text, email: VS.email})
+  }).then(function(r) { return r.json(); })
+    .then(function(j) {
+      if (j.status === 'success' && j.audio_base64) {
+        new Audio('data:audio/mpeg;base64,' + j.audio_base64).play();
+      } else {
+        var u = new SpeechSynthesisUtterance(item.text);
+        u.lang = 'en-US';
+        speechSynthesis.speak(u);
+      }
     })
-    .then(function(r) { return r.json(); })
-    .then(function(result) {
-        if (result.status === 'success' && result.audio_base64) {
-            var audio = new Audio('data:audio/mpeg;base64,' + result.audio_base64);
-            audio.play();
-        } else {
-            var utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'en-US';
-            speechSynthesis.speak(utterance);
-        }
+    .catch(function() {
+      var u = new SpeechSynthesisUtterance(item.text);
+      u.lang = 'en-US';
+      speechSynthesis.speak(u);
     });
 }
 
-var mediaRecorder = null;
-var recordedChunks = [];
-var isRecording = false;
-
-function recordAudio(index) {
-    if (isRecording) {
-        if (mediaRecorder) mediaRecorder.stop();
-        isRecording = false;
-        return;
-    }
-    navigator.mediaDevices.getUserMedia({audio: true})
-    .then(function(stream) {
-        mediaRecorder = new MediaRecorder(stream);
-        recordedChunks = [];
-        mediaRecorder.ondataavailable = function(e) { if (e.data.size > 0) recordedChunks.push(e.data); };
-        mediaRecorder.onstop = function() {
-            var blob = new Blob(recordedChunks, {type: 'audio/webm'});
-            var url = URL.createObjectURL(blob);
-            var playback = document.getElementById('playback-' + index);
-            if (playback) { playback.src = url; playback.style.display = 'block'; }
-        };
-        mediaRecorder.start();
-        isRecording = true;
-    })
-    .catch(function(err) { alert('Microphone access denied.'); });
+// ---------- COMPLETE ----------
+function showComplete() {
+  document.getElementById('flowCard').style.display = 'none';
+  document.getElementById('completeCard').style.display = 'block';
 }
+
+async function submitTest() {
+  var btn = document.getElementById('submitTestBtn');
+  btn.disabled = true;
+  btn.textContent = 'Scoring...';
+  document.getElementById('submitError').style.display = 'none';
+  try {
+    var r = await fetch('/api/versant/complete', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({email: VS.email, session_id: VS.sessionId})
+    });
+    var j = await r.json();
+    if (j.status !== 'success') {
+      throw new Error(j.message || 'Scoring failed');
+    }
+    showScorecard(j.scoring);
+  } catch (e) {
+    document.getElementById('submitError').textContent = e.message;
+    document.getElementById('submitError').style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Submit Test - 15 credits';
+  }
+}
+
+function showScorecard(scoring) {
+  document.getElementById('completeCard').style.display = 'none';
+  document.getElementById('scoreCard').style.display = 'block';
+  document.getElementById('scoreBig').textContent = scoring.overall_score || '-';
+  var criteria = [
+    ['Pronunciation', scoring.pronunciation],
+    ['Fluency', scoring.fluency],
+    ['Vocabulary', scoring.vocabulary],
+    ['Sentence Mastery', scoring.sentence_mastery],
+    ['Coherence', scoring.coherence]
+  ];
+  document.getElementById('criteriaList').innerHTML = criteria.map(function(c) {
+    return '<div class="vs-criteria-row"><span class="fw-semibold">' + c[0] + '</span><span class="fw-bold">' + (c[1] != null ? c[1] : '-') + '</span></div>';
+  }).join('');
+  document.getElementById('feedbackText').textContent = scoring.feedback || 'No feedback available.';
+}
+
+// ---------- HELPERS ----------
+function vsErr(msg) {
+  var el = document.getElementById('submitError') || document.createElement('div');
+  alert(msg);
+}
+
+function renderSectionList() {
+  var html = '';
+  VS.sections.forEach(function(sec) {
+    var s = VS.sectionDesign[sec] || {};
+    html += '<div class="col-6 col-md-4"><div class="border rounded p-2 small"><strong>' + (s.name || sec) + '</strong><br><span class="text-muted">' + (s.questions || '?') + ' questions</span></div></div>';
+  });
+  document.getElementById('sectionList').innerHTML = html;
+}
+
+// Init section list on load
+fetch('/api/versant/sections').then(function(r){return r.json();}).then(function(j){
+  if (j.status === 'success' && j.sections) {
+    VS.sections = j.sections.map(function(s){return s.id;});
+    j.sections.forEach(function(s){ VS.sectionDesign[s.id] = s; });
+    renderSectionList();
+  }
+});
 </script>
 {% endblock %}
