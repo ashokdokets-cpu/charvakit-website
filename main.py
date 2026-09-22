@@ -228,6 +228,22 @@ app.add_middleware(
 # Protects every /admin* and /api/admin* route.
 # ============================================================
 
+@app.on_event("startup")
+async def _warm_db_pool():
+    """Warm the DB connection pool so first user request is fast."""
+    try:
+        from database import db
+        conn = db.get_pooled_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT 1")
+        cur.fetchone()
+        cur.close()
+        db.release_pooled_connection(conn)
+        print("[startup] DB connection pool warmed")
+    except Exception as e:
+        print(f"[startup] DB pool warmup failed (non-fatal): {e}")
+
+
 _ADMIN_PUBLIC_PATHS = {
     "/admin-login",
     "/api/auth/login",
