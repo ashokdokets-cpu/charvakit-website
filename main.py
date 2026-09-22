@@ -7314,15 +7314,34 @@ async def ielts_speaking_transcribe(request: Request):
 
 @app.post("/api/ielts/speaking/evaluate")
 async def ielts_speaking_evaluate(request: Request):
-    """Score a full Speaking session."""
-    data = await request.json()
-    from credit_guard import require_credits_from_data
-    guard = require_credits_from_data(data, "ielts_speaking_eval")
-    if guard.get("status") != "success":
-        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+    """Score a full Speaking session (N4.6 hardened)."""
+    try:
+        data = await request.json()
+    except Exception as e:
+        return JSONResponse({"status": "error", "message": f"invalid JSON: {e}"}, status_code=400)
 
-    responses = data.get("responses", [])
-    result = ielts_engine.evaluate_speaking(responses, topic=data.get("topic", ""))
+    responses = data.get("responses", []) or []
+    if not responses:
+        return JSONResponse({"status": "error", "message": "no responses provided"}, status_code=400)
+
+    try:
+        from credit_guard import require_credits_from_data
+        guard = require_credits_from_data(data, "ielts_speaking_eval")
+        if guard.get("status") != "success":
+            return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+    except Exception as e:
+        logger.exception(f"ielts_speaking_evaluate credit guard failed: {e}")
+        return JSONResponse({"status": "error", "message": "credit check failed"}, status_code=500)
+
+    try:
+        result = ielts_engine.evaluate_speaking(responses, topic=data.get("topic", ""))
+    except Exception as e:
+        logger.exception(f"ielts_speaking_evaluate engine failed: {e}")
+        return JSONResponse({"status": "error", "message": f"evaluation failed: {e}"}, status_code=500)
+
+    if not isinstance(result, dict):
+        return JSONResponse({"status": "error", "message": "unexpected engine response"}, status_code=500)
+
     result["credits_deducted"] = 15
     result["credits_remaining"] = guard.get("credits_remaining", 0)
     return result@app.get("/api/cbat/sub-tests")

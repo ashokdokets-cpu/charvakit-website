@@ -126,7 +126,10 @@ function playAudio(index) {
     fetch('/api/voice/tts', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({text: text})
+        body: JSON.stringify({
+            text: text,
+            email: localStorage.getItem('userEmail') || ''
+        })
     })
     .then(function(r) { return r.json(); })
     .then(function(result) {
