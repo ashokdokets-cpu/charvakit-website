@@ -346,6 +346,9 @@ async function loadPracticeQuestions(examId, topic, count = 10) {
             return;
         }
 
+        if (typeof charvakTrack === 'function') {
+            charvakTrack('first_assessment_start', { exam_id: examId, topic: topic });
+        }
         displayQuestions(data.questions, examId, topic);
     } catch (error) {
         console.error('Error:', error);

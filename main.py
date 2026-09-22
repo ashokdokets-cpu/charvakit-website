@@ -689,6 +689,12 @@ async def privacy(request: Request):
 async def refund(request: Request):
     return template_response("refund.html", request, "Refund & Cancellation Policy")
 
+
+# N3.2 — Post-signup onboarding page
+@app.get("/welcome", response_class=HTMLResponse)
+async def welcome(request: Request):
+    return template_response("welcome.html", request, "Welcome to Charvak")
+
 @app.get("/register", response_class=HTMLResponse)
 async def register_page(request: Request):
     return template_response("register.html", request, "Register - Charvak IT Consulting")
