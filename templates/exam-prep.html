@@ -377,7 +377,10 @@ function displayQuestions(questions, examId, topic) {
         <div class="list-group">
             ${questions.map((q, i) => `
                 <div class="list-group-item">
-                    <p class="mb-2"><strong>Q${i+1}.</strong> ${q.question}</p>
+                    <p class="mb-2">
+                        <strong>Q${i+1}.</strong> ${q.question}
+                        ${q.question_id ? `<button class="btn btn-sm btn-link text-muted p-0 ms-2" onclick="reportQuestion('${q.question_id}')" title="Report a problem with this question">⚠ Report</button>` : ''}
+                    </p>
                     ${(q.options || []).map((opt, j) => `
                         <label class="d-block">
                             <input type="radio" name="q${i}" value="${j}"> ${opt}
@@ -390,6 +393,33 @@ function displayQuestions(questions, examId, topic) {
         </div>
         <button class="btn btn-primary mt-3" onclick="submitPractice('${examId}', '${topic}', ${questions.length})">Submit Practice</button>
     `;
+}
+
+// C13.5 — Report a broken question
+function reportQuestion(questionId) {
+    var reason = prompt('What is wrong with this question?\n(Optional — press OK to submit)');
+    if (reason === null) return;  // user cancelled
+
+    fetch('/api/questions/report', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            question_id: questionId,
+            reason: reason || 'no reason given',
+            email: localStorage.getItem('userEmail') || ''
+        })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+        if (d.status === 'success') {
+            alert('Thanks! We\'ll review this question.');
+        } else {
+            alert('Could not record report: ' + (d.message || 'unknown error'));
+        }
+    })
+    .catch(function(e) {
+        alert('Network error: ' + e.message);
+    });
 }
 
 function checkAnswer(questionIndex, correctAnswer) {
