@@ -259,7 +259,19 @@ window.addEventListener('charvak:mainready', function() {
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav me-auto ms-3">
                 <li class="nav-item"><a class="nav-link" href="/" data-i18n="nav.home">Home</a></li>
-                <li class="nav-item"><a class="nav-link" href="/assessments" data-i18n="nav.assessments">🎯 Assessments</a></li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="/assessments" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        🎯 Assessments
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/assessments">All Assessments</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="/ielts">IELTS (Writing)</a></li>
+                        <li><a class="dropdown-item" href="/ielts-speaking">IELTS Speaking</a></li>
+                        <li><a class="dropdown-item" href="/versant">Versant English</a></li>
+                        <li><a class="dropdown-item" href="/advanced-assessment">Advanced Assessment</a></li>
+                    </ul>
+                </li>
                 <li class="nav-item"><a class="nav-link" href="/mock-drive" data-i18n="nav.mock_drives">Mock Drives</a></li>
                 <li class="nav-item"><a class="nav-link" href="/training" data-i18n="nav.training">📚 Training</a></li>
                 <li class="nav-item"><a class="nav-link" href="/ai-courses" data-i18n="nav.ai_courses">🤖 AI Courses</a></li>
