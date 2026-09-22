@@ -464,6 +464,7 @@ class IELTSEngine:
         )
 
         parsed = self._ai_json(prompt, max_tokens=600, temperature=0.3)
+        print(f"[IELTS-SPEAKING-DIAG] AI returned: type={type(parsed).__name__} value={parsed!r}"[:500], flush=True)
         if not parsed:
             return {"status": "error", "message": "AI scoring unavailable"}
 
