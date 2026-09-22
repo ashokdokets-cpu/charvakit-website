@@ -51,6 +51,30 @@
 - **HEAD after:** *(pending commit)*
 - **Next:** Session N3 (IELTS Speaking or Onboarding)
 
+### N3 — Onboarding + GA4 + welcome email sequence (2026-09-22)
+
+- **Commits:** `9dc76c4`, `bad2ad9`
+- **What shipped:**
+  - **GA4 funnel events:** `charvakTrack` helper + `sign_up`, `first_assessment_start`, `notify_me_click`, `onboarding_viewed`
+  - **`/welcome` onboarding page:** 3 CTA cards + 50-credit banner; new users land here after register
+  - **Register redirect:** `/login` → `/welcome`
+  - **Welcome email:** `enhanced_email.send_welcome()` called on register
+  - **Email queue:** `charvak_email_queue` table + `email_queue.py` module
+  - **Delayed emails:** `nudge_first_assessment` (24h) + `cta_credits_expire` (72h)
+  - **Cron endpoint:** `/api/cron/send-queued-emails` (X-Cron-Secret auth)
+  - **Render cron:** every 15 min
+- **Verified:**
+  - Signup → welcome email delivered
+  - 2 queue rows per signup (24h + 72h)
+  - Cron endpoint returns `sent:4, failed:0` on due emails
+  - DB confirms `sent_at` + `status='sent'`
+  - GA4 events fire (console shows `[GA4] sign_up`, `[GA4] onboarding_viewed`)
+- **Follow-ups:**
+  - localStorage `userEmail`/`userName` not set on register (minor UX)
+  - Currency auto-detected as USD for some users (region detection issue)
+  - Mojibake in register.html (`âœ…` vs `✅`, `â€”` vs `—`) — cosmetic
+- **HEAD after:** `bad2ad9`
+
 ### C1 â€” Assessment AI for global languages
 
 - **Completed:** 2026-09-21 (Session G1) â€” commit `c3dc68a`
