@@ -7255,7 +7255,77 @@ async def ielts_writing_evaluate(request: Request):
 # Session M-2 - RRB ALP CBAT routes
 # ============================================================
 
-@app.get("/api/cbat/sub-tests")
+
+# ============================================================
+# N4.4 — IELTS Speaking routes (Session N4)
+# ============================================================
+
+@app.get("/ielts-speaking", response_class=HTMLResponse)
+async def ielts_speaking_page(request: Request):
+    return template_response("ielts-speaking.html", request, "IELTS Speaking Practice")
+
+
+@app.post("/api/ielts/speaking/generate")
+async def ielts_speaking_generate(request: Request):
+    """Generate a full 3-part Speaking session (prompts only)."""
+    data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "ielts_speaking_prompt")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+
+    result = ielts_engine.generate_speaking_prompt(topic=data.get("topic"))
+    result["credits_deducted"] = 3
+    result["credits_remaining"] = guard.get("credits_remaining", 0)
+    return result
+
+
+@app.post("/api/ielts/speaking/transcribe")
+async def ielts_speaking_transcribe(request: Request):
+    """Upload audio for one response; returns transcript via Whisper."""
+    content_type = request.headers.get("content-type", "")
+    if "multipart/form-data" not in content_type:
+        return JSONResponse({"error": "multipart/form-data required"}, status_code=400)
+
+    form = await request.form()
+    audio_file = form.get("audio")
+    email = form.get("email")
+    if not email:
+        return JSONResponse({"error": "email required"}, status_code=400)
+    if audio_file is None:
+        return JSONResponse({"error": "audio required"}, status_code=400)
+
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data({"email": email}, "ielts_speaking_transcribe")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+
+    try:
+        audio_bytes = await audio_file.read()
+        filename = getattr(audio_file, "filename", "audio.webm") or "audio.webm"
+    except Exception as e:
+        return JSONResponse({"error": f"could not read audio: {e}"}, status_code=400)
+
+    result = ielts_engine.transcribe_audio(audio_bytes, filename=filename)
+    result["credits_deducted"] = 5
+    result["credits_remaining"] = guard.get("credits_remaining", 0)
+    return result
+
+
+@app.post("/api/ielts/speaking/evaluate")
+async def ielts_speaking_evaluate(request: Request):
+    """Score a full Speaking session."""
+    data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "ielts_speaking_eval")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+
+    responses = data.get("responses", [])
+    result = ielts_engine.evaluate_speaking(responses, topic=data.get("topic", ""))
+    result["credits_deducted"] = 15
+    result["credits_remaining"] = guard.get("credits_remaining", 0)
+    return result@app.get("/api/cbat/sub-tests")
 async def cbat_sub_tests():
     """List the 6 CBAT sub-tests with metadata."""
     return cbat_engine.get_sub_tests()

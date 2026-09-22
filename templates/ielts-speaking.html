@@ -1,0 +1,340 @@
+﻿{% extends "base.html" %}
+{% block title %}IELTS Speaking Practice{% endblock %}
+{% block content %}
+<div class="container py-4" style="max-width:900px">
+
+  <div class="text-center mb-4">
+    <h1 class="display-6 fw-bold">IELTS Speaking Practice</h1>
+    <p class="text-muted">3 parts, AI band scoring on 4 official criteria</p>
+  </div>
+
+  <!-- Intro / Start -->
+  <div id="intro" class="card shadow-sm mb-4">
+    <div class="card-body p-4">
+      <h5>How this works</h5>
+      <ul class="mb-3">
+        <li><strong>Part 1</strong> — 3 general questions. Record a 30-45s answer for each.</li>
+        <li><strong>Part 2</strong> — 1 cue card. You get 1 min prep + up to 2 min speaking.</li>
+        <li><strong>Part 3</strong> — 3 discussion questions. Record 45-60s each.</li>
+        <li>Your audio is transcribed via Whisper and scored by AI.</li>
+      </ul>
+      <div class="alert alert-info small mb-3">
+        <strong>Tips:</strong> Speak clearly into your mic. Find a quiet room.
+        Your browser will ask for microphone permission.
+      </div>
+      <div class="d-flex gap-2">
+        <button class="btn btn-primary" onclick="startSession()">
+          <i class="bi bi-mic-fill me-2"></i>Start Speaking Test
+        </button>
+        <span class="align-self-center text-muted small" id="costNote">Cost: 3 credits to generate prompts</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Question flow -->
+  <div id="flow" style="display:none">
+
+    <div class="mb-3">
+      <div class="progress" style="height:6px">
+        <div class="progress-bar" id="progressBar" style="width:0%"></div>
+      </div>
+      <div class="small text-muted mt-1" id="progressLabel">Getting ready…</div>
+    </div>
+
+    <div id="questionCard" class="card shadow-sm mb-3">
+      <div class="card-body p-4">
+        <div class="small text-uppercase text-muted mb-1" id="partLabel">Part 1</div>
+        <h5 class="mb-3" id="questionText">…</h5>
+        <div id="cueCardExtras"></div>
+
+        <div class="d-flex align-items-center gap-2 mt-3">
+          <button id="recordBtn" class="btn btn-danger" onclick="toggleRecording()">
+            <i class="bi bi-mic-fill me-2"></i>Start Recording
+          </button>
+          <span class="badge bg-secondary" id="timer">00:00</span>
+          <span class="text-muted small" id="recordHint">Aim for 30–45 seconds</span>
+        </div>
+
+        <div id="transcriptBox" class="mt-3" style="display:none">
+          <div class="small text-muted mb-1">Transcript</div>
+          <div class="border rounded p-2 bg-light" id="transcriptText" style="font-size:0.9rem"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-between">
+      <button class="btn btn-outline-secondary" id="skipBtn" onclick="skipQuestion()">Skip</button>
+      <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" disabled>Next</button>
+    </div>
+  </div>
+
+  <!-- Result -->
+  <div id="result" class="card shadow-sm" style="display:none">
+    <div class="card-body p-4">
+      <h4 class="mb-3">Your Speaking Band Score</h4>
+      <div class="text-center mb-4">
+        <div class="display-1 fw-bold text-primary" id="overallBand">—</div>
+        <div class="text-muted">Overall Band</div>
+      </div>
+      <div class="row g-3 mb-4" id="subBands"></div>
+      <h6>Feedback</h6>
+      <p id="feedbackText" class="text-muted"></p>
+      <div class="mt-3 d-flex gap-2">
+        <a href="/ielts-speaking" class="btn btn-outline-primary">Retake</a>
+        <a href="/ielts" class="btn btn-outline-secondary">Back to IELTS</a>
+      </div>
+    </div>
+  </div>
+
+  <div id="errorBox" class="alert alert-danger mt-3" style="display:none"></div>
+
+</div>
+
+<script>
+// =========================================================
+// N4.5 — IELTS Speaking page logic
+// =========================================================
+const SPEAKING_STATE = {
+  session: null,
+  responses: [],       // [{part, question, transcript}]
+  currentIdx: 0,
+  flatQuestions: [],   // [ {part, question, hint} ... ]
+  recording: false,
+  mediaRecorder: null,
+  audioChunks: [],
+  timerInterval: null,
+  timerSeconds: 0,
+  email: localStorage.getItem('userEmail') || ''
+};
+
+// ---------- Start session ----------
+async function startSession() {
+  hide('intro'); hide('errorBox');
+  show('flow');
+  setProgress(0, 'Generating prompts…');
+  try {
+    const r = await fetch('/api/ielts/speaking/generate', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ email: SPEAKING_STATE.email })
+    });
+    const j = await r.json();
+    if (j.status !== 'success') {
+      return showError(j.message || 'Could not generate prompts.');
+    }
+    SPEAKING_STATE.session = j.session;
+    buildFlatQuestions(j.session);
+    SPEAKING_STATE.currentIdx = 0;
+    renderQuestion();
+  } catch (e) {
+    showError('Network error: ' + e.message);
+  }
+}
+
+function buildFlatQuestions(session) {
+  const flat = [];
+  // Part 1
+  (session.part1_questions || []).forEach(q => {
+    flat.push({ part: 1, question: q, hint: 'Aim for 30–45 seconds' });
+  });
+  // Part 2
+  if (session.part2) {
+    flat.push({
+      part: 2,
+      question: session.part2.cue_card,
+      bulletPoints: session.part2.bullet_points || [],
+      hint: 'You get 1 min to prepare, then speak for up to 2 min'
+    });
+  }
+  // Part 3
+  (session.part3_questions || []).forEach(q => {
+    flat.push({ part: 3, question: q, hint: 'Aim for 45–60 seconds' });
+  });
+  SPEAKING_STATE.flatQuestions = flat;
+}
+
+// ---------- Render current question ----------
+function renderQuestion() {
+  const idx = SPEAKING_STATE.currentIdx;
+  const total = SPEAKING_STATE.flatQuestions.length;
+  if (idx >= total) return finishSession();
+
+  const q = SPEAKING_STATE.flatQuestions[idx];
+  document.getElementById('partLabel').textContent = 'Part ' + q.part;
+  document.getElementById('questionText').textContent = q.question;
+  document.getElementById('recordHint').textContent = q.hint || '';
+  document.getElementById('nextBtn').disabled = true;
+  document.getElementById('nextBtn').textContent = (idx === total - 1) ? 'Finish' : 'Next';
+  document.getElementById('skipBtn').style.display = 'inline-block';
+
+  // Bullet points for Part 2
+  const extras = document.getElementById('cueCardExtras');
+  if (q.bulletPoints && q.bulletPoints.length) {
+    extras.innerHTML = '<ul class="small text-muted">' +
+      q.bulletPoints.map(b => '<li>' + escapeHtml(b) + '</li>').join('') + '</ul>';
+  } else {
+    extras.innerHTML = '';
+  }
+
+  // Reset record UI
+  document.getElementById('transcriptBox').style.display = 'none';
+  document.getElementById('transcriptText').textContent = '';
+  document.getElementById('recordBtn').innerHTML = '<i class="bi bi-mic-fill me-2"></i>Start Recording';
+  document.getElementById('recordBtn').className = 'btn btn-danger';
+  document.getElementById('timer').textContent = '00:00';
+
+  setProgress(idx / total * 100, `Question ${idx+1} of ${total}`);
+}
+
+// ---------- Record ----------
+async function toggleRecording() {
+  if (SPEAKING_STATE.recording) {
+    return stopRecording();
+  }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const mr = new MediaRecorder(stream);
+    SPEAKING_STATE.mediaRecorder = mr;
+    SPEAKING_STATE.audioChunks = [];
+
+    mr.ondataavailable = (e) => {
+      if (e.data && e.data.size) SPEAKING_STATE.audioChunks.push(e.data);
+    };
+    mr.onstop = async () => {
+      stream.getTracks().forEach(t => t.stop());
+      const blob = new Blob(SPEAKING_STATE.audioChunks, { type: 'audio/webm' });
+      await uploadAndTranscribe(blob);
+    };
+
+    mr.start();
+    SPEAKING_STATE.recording = true;
+    SPEAKING_STATE.timerSeconds = 0;
+    document.getElementById('recordBtn').innerHTML = '<i class="bi bi-stop-fill me-2"></i>Stop Recording';
+    document.getElementById('recordBtn').className = 'btn btn-dark';
+    SPEAKING_STATE.timerInterval = setInterval(() => {
+      SPEAKING_STATE.timerSeconds++;
+      const m = String(Math.floor(SPEAKING_STATE.timerSeconds / 60)).padStart(2, '0');
+      const s = String(SPEAKING_STATE.timerSeconds % 60).padStart(2, '0');
+      document.getElementById('timer').textContent = `${m}:${s}`;
+    }, 1000);
+  } catch (e) {
+    showError('Microphone access failed: ' + e.message);
+  }
+}
+
+function stopRecording() {
+  if (SPEAKING_STATE.mediaRecorder) {
+    SPEAKING_STATE.mediaRecorder.stop();
+  }
+  SPEAKING_STATE.recording = false;
+  clearInterval(SPEAKING_STATE.timerInterval);
+  document.getElementById('recordBtn').innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Transcribing…';
+  document.getElementById('recordBtn').disabled = true;
+}
+
+async function uploadAndTranscribe(blob) {
+  try {
+    const fd = new FormData();
+    fd.append('audio', blob, 'answer.webm');
+    fd.append('email', SPEAKING_STATE.email);
+    const r = await fetch('/api/ielts/speaking/transcribe', { method: 'POST', body: fd });
+    const j = await r.json();
+    if (j.status !== 'success') {
+      throw new Error(j.message || 'Transcription failed');
+    }
+    // Save transcript on current question
+    const q = SPEAKING_STATE.flatQuestions[SPEAKING_STATE.currentIdx];
+    SPEAKING_STATE.responses[SPEAKING_STATE.currentIdx] = {
+      part: q.part,
+      question: q.question,
+      transcript: j.transcript || ''
+    };
+    // Show transcript
+    document.getElementById('transcriptBox').style.display = 'block';
+    document.getElementById('transcriptText').textContent = j.transcript || '(empty)';
+    document.getElementById('nextBtn').disabled = false;
+    document.getElementById('recordBtn').innerHTML = '<i class="bi bi-check2-circle me-2"></i>Recorded';
+    document.getElementById('recordBtn').className = 'btn btn-success';
+    document.getElementById('recordBtn').disabled = false;
+  } catch (e) {
+    showError('Transcription failed: ' + e.message);
+    document.getElementById('recordBtn').disabled = false;
+    document.getElementById('recordBtn').innerHTML = '<i class="bi bi-mic-fill me-2"></i>Try Again';
+    document.getElementById('recordBtn').className = 'btn btn-danger';
+  }
+}
+
+function nextQuestion() {
+  SPEAKING_STATE.currentIdx++;
+  renderQuestion();
+}
+
+function skipQuestion() {
+  SPEAKING_STATE.currentIdx++;
+  renderQuestion();
+}
+
+// ---------- Finish + evaluate ----------
+async function finishSession() {
+  hide('flow');
+  show('result');
+  document.getElementById('overallBand').textContent = '…';
+
+  const responses = SPEAKING_STATE.responses.filter(Boolean);
+  if (!responses.length) {
+    return showError('No answers recorded.');
+  }
+
+  try {
+    const r = await fetch('/api/ielts/speaking/evaluate', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        email: SPEAKING_STATE.email,
+        topic: SPEAKING_STATE.session?.topic || '',
+        responses: responses
+      })
+    });
+    const j = await r.json();
+    if (j.status !== 'success') {
+      return showError(j.message || 'Evaluation failed.');
+    }
+    const ev = j.evaluation || {};
+    document.getElementById('overallBand').textContent = (ev.overall_band || '—').toFixed ? ev.overall_band : ev.overall_band;
+    const subs = [
+      ['Fluency & Coherence', ev.fluency_coherence],
+      ['Lexical Resource', ev.lexical_resource],
+      ['Grammatical Range', ev.grammatical_range],
+      ['Pronunciation', ev.pronunciation]
+    ];
+    document.getElementById('subBands').innerHTML = subs.map(([k, v]) =>
+      `<div class="col-6 col-md-3"><div class="card text-center h-100"><div class="card-body">
+        <div class="fw-bold fs-4">${v ?? '—'}</div>
+        <div class="small text-muted">${k}</div>
+       </div></div></div>`).join('');
+    document.getElementById('feedbackText').textContent = ev.feedback || 'No feedback available.';
+  } catch (e) {
+    showError('Evaluation network error: ' + e.message);
+  }
+}
+
+// ---------- Helpers ----------
+function show(id) { document.getElementById(id).style.display = 'block'; }
+function hide(id) { document.getElementById(id).style.display = 'none'; }
+function setProgress(pct, label) {
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = label || '';
+}
+function showError(msg) {
+  const el = document.getElementById('errorBox');
+  el.textContent = msg;
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 8000);
+}
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[c]);
+}
+</script>
+{% endblock %}
