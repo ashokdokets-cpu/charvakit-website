@@ -3,7 +3,7 @@
 **Purpose:** Track every planned-but-not-completed item. Nothing gets lost again.
 **Created:** 2026-09-20
 **Last updated:** 2026-09-22
-**HEAD:** `00aec90`
+**HEAD:** `05be96e`
 
 ---
 
@@ -30,6 +30,26 @@
   - Apex domain `charvakit.com` returns 404; optional Cloudflare redirect to `www`
 
 ---
+
+### N2 — System-wide semantic dedup (2026-09-22)
+
+- **Commits:** `0ed1110` `b1f6a0d` *(plus N2.5 pending)*
+- **What shipped:**
+  - **Prompt diversity rules:** `_generate_via_ai` now requires 8+ distinct subtopics per batch
+  - **Embeddings:** `embedding vector(1536)` column + `ivfflat` index on `charvak_exam_question_bank`
+  - **Backfill:** 13,720 questions embedded via OpenAI `text-embedding-3-small` (~11 min, ~$0.02)
+  - **Read-time filter:** `_fetch_bank_questions` + `_fetch_bank_multi` filter by cosine distance < 0.15
+  - **Write-time dedup:** seed script's `seed_one` runs `dedup_bank()` after each generation
+  - **One-time cleanup:** deleted 1,069 semantic near-dupes (7.8% of bank)
+- **Verified:**
+  - Bank: 13,720 → 12,651
+  - All 10 sampled questions unique per topic
+  - Mixed mock serves diverse content
+- **Follow-ups:**
+  - Consider embeddings for live-AI assessment flows (mock drives, company assessments)
+  - Optional: curate top 5 exams manually for extra polish
+- **HEAD after:** *(pending commit)*
+- **Next:** Session N3 (IELTS Speaking or Onboarding)
 
 ### C1 — Assessment AI for global languages
 
