@@ -3,7 +3,7 @@
 **Purpose:** Track every planned-but-not-completed item. Nothing gets lost again.
 **Created:** 2026-09-20
 **Last updated:** 2026-09-22
-**HEAD:** `05be96e`
+**HEAD:** `56715e0`
 
 ---
 
@@ -51,6 +51,32 @@
 - **HEAD after:** *(pending commit)*
 - **Next:** Session N3 (IELTS Speaking or Onboarding)
 
+### V — Full Versant rebuild (2026-09-23)
+
+- **Commits:** `62a8d7e` `75386ee` `5038332` `96066c4` `56715e0`
+- **What shipped:**
+  - **DB schema:** `charvak_versant_sessions` + `charvak_versant_answers`
+  - **Engine:** `cbt_versant.py` fully DB-backed (in-memory → Postgres)
+    - Kept: 6 section designs (Read Aloud, Repeats, Sentence Builds, Conversations, Story Retelling, Summary & Opinion)
+    - New: `create_session`, `get_session`, `save_text_answer`, `save_audio_answer`, `complete_session`
+    - Whisper transcription + AI scoring on 5 Versant criteria (20-80 scale)
+  - **Routes:** `/api/versant/{start-session, record-audio, submit-text, complete, session/{id}, sections}`
+  - **Frontend:** full rewrite of `versant.html` (425 lines)
+    - Landing → one-question flow → section transitions → complete → scorecard
+    - Progress bar, timer, transcript display
+  - **Nav:** Assessments dropdown now links to IELTS Speaking, Versant, Advanced
+  - **Whisper hardening:** hallucination filter, language=en, tiny-audio skip
+- **Verified:**
+  - Session with 30 real answers → score 50.0
+  - Transcripts are real English (no hallucination)
+  - Cross-persisted to `charvak_assessment_results`
+- **Bugs fixed during build:**
+  - `get_session` duplicate `status` key → `complete_session` short-circuited
+  - Whisper hallucinating Japanese/spam captions on short/silent audio
+  - Frontend swallowing real error messages
+  - Broken `/ielts` nav link (route doesn't exist)
+- **HEAD after:** `56715e0`
+- **Next:** IELTS Writing/Listening/Reading landing page (currently API-only)
 ### N3 — Onboarding + GA4 + welcome email sequence (2026-09-22)
 
 - **Commits:** `9dc76c4`, `bad2ad9`
@@ -685,5 +711,5 @@ character are `C3 A0` instead of `E0 A4`, it's double-encoded.
 5. **Session-CONTEXT.md** links here for fresh chats
 
 ---
-**Last updated:** 2026-09-22
+**Last updated:** 2026-09-23
 **Next update:** after C13 or Session C2
