@@ -342,10 +342,27 @@ class ExamPrepEngine:
             conn = db.get_connection()
             cur = conn.cursor()
             cur.execute('''
+                WITH candidates AS (
+                    SELECT question_id, question_text, options, correct_index,
+                           explanation, difficulty, embedding,
+                           ROW_NUMBER() OVER (ORDER BY RANDOM()) AS rn
+                    FROM charvak_exam_question_bank
+                    WHERE exam_id = %s AND topic = %s
+                ),
+                deduped AS (
+                    SELECT c1.*
+                    FROM candidates c1
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM candidates c2
+                        WHERE c2.rn < c1.rn
+                          AND c1.embedding IS NOT NULL
+                          AND c2.embedding IS NOT NULL
+                          AND c1.embedding <=> c2.embedding < 0.15
+                    )
+                )
                 SELECT question_id, question_text, options, correct_index,
                        explanation, difficulty
-                FROM charvak_exam_question_bank
-                WHERE exam_id = %s AND topic = %s
+                FROM deduped
                 ORDER BY RANDOM()
                 LIMIT %s
             ''', (exam_id, topic, count))
@@ -373,10 +390,27 @@ class ExamPrepEngine:
             conn = db.get_pooled_connection()
             cur = conn.cursor()
             cur.execute('''
+                WITH candidates AS (
+                    SELECT question_id, question_text, options, correct_index,
+                           explanation, difficulty, embedding,
+                           ROW_NUMBER() OVER (ORDER BY RANDOM()) AS rn
+                    FROM charvak_exam_question_bank
+                    WHERE exam_id = %s AND topic = %s
+                ),
+                deduped AS (
+                    SELECT c1.*
+                    FROM candidates c1
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM candidates c2
+                        WHERE c2.rn < c1.rn
+                          AND c1.embedding IS NOT NULL
+                          AND c2.embedding IS NOT NULL
+                          AND c1.embedding <=> c2.embedding < 0.15
+                    )
+                )
                 SELECT question_id, question_text, options, correct_index,
                        explanation, difficulty
-                FROM charvak_exam_question_bank
-                WHERE exam_id = %s AND topic = %s
+                FROM deduped
                 ORDER BY RANDOM()
                 LIMIT %s
             ''', (exam_id, topic, count))
@@ -408,16 +442,33 @@ class ExamPrepEngine:
             conn = db.get_pooled_connection()
             cur = conn.cursor()
             cur.execute('''
-                SELECT topic, question_id, question_text, options, correct_index,
-                       explanation, difficulty
-                FROM (
+                WITH candidates AS (
                     SELECT topic, question_id, question_text, options, correct_index,
-                           explanation, difficulty,
+                           explanation, difficulty, embedding,
                            ROW_NUMBER() OVER (PARTITION BY topic ORDER BY RANDOM()) AS rn
                     FROM charvak_exam_question_bank
                     WHERE exam_id = %s AND topic = ANY(%s)
-                ) sub
-                WHERE rn <= %s
+                ),
+                deduped AS (
+                    SELECT c1.*
+                    FROM candidates c1
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM candidates c2
+                        WHERE c2.topic = c1.topic
+                          AND c2.rn < c1.rn
+                          AND c1.embedding IS NOT NULL
+                          AND c2.embedding IS NOT NULL
+                          AND c1.embedding <=> c2.embedding < 0.15
+                    )
+                ),
+                final AS (
+                    SELECT *, ROW_NUMBER() OVER (PARTITION BY topic ORDER BY RANDOM()) AS rn2
+                    FROM deduped
+                )
+                SELECT topic, question_id, question_text, options, correct_index,
+                       explanation, difficulty
+                FROM final
+                WHERE rn2 <= %s
             ''', (exam_id, topics, per_topic))
             rows = cur.fetchall()
             cur.close()
