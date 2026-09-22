@@ -60,6 +60,19 @@ rebuild_*.py
 
 # Dev-only scripts folder
 scripts/*
+!scripts/backfill_question_embeddings.py
+!scripts/cleanup_notifications.py
+!scripts/migrate_cert_name.py
+!scripts/migrate_tier3_courses.py
+!scripts/migrate_tier3_interview.py
+!scripts/migrate_tier3_jobboard.py
+!scripts/migrate_tier3_referral.py
+!scripts/regenerate_schema.py
+!scripts/seed_exam_question_bank.py
+!scripts/send_emi_reminders.py
+!scripts/system_audit.py
+!scripts/translate_ui.py
+!scripts/update_geoip.py
 !scripts/seed_exam_question_bank.py
 !scripts/translate_ui.py
 !scripts/regenerate_schema.py
