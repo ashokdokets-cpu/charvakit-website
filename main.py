@@ -6583,31 +6583,100 @@ async def start_cbt(request: Request):
 
 @app.post("/api/versant/record-audio")
 async def record_audio(request: Request):
-    data = await request.json()
+    """Upload audio for one Versant question; Whisper transcribes it. Charges 3 credits."""
+    content_type = request.headers.get("content-type", "")
+    if "multipart/form-data" not in content_type:
+        return JSONResponse({"status": "error", "message": "multipart/form-data required"}, status_code=400)
+
+    form = await request.form()
+    audio_file = form.get("audio")
+    session_id = form.get("session_id")
+    section_id = form.get("section_id")
+    question_id = form.get("question_id")
+    question_text = form.get("question_text") or ""
+    email = form.get("email")
+
+    if not session_id or not section_id or not question_id:
+        return JSONResponse({"status": "error", "message": "session_id, section_id, question_id required"}, status_code=400)
+    if audio_file is None:
+        return JSONResponse({"status": "error", "message": "audio required"}, status_code=400)
+
     from credit_guard import require_credits_from_data
-    guard = require_credits_from_data(data, "versant_record_audio")
+    if not email:
+        # Try to fetch from session
+        s = cbt_versant.get_session(session_id)
+        email = s.get("email") if s.get("status") == "success" else None
+    guard = require_credits_from_data({"email": email}, "versant_record_audio")
     if guard.get("status") != "success":
         return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
-    return cbt_versant.save_audio_recording(
-        data.get("session_id"),
-        data.get("section_id"),
-        data.get("question_id"),
-        data.get("audio_blob")
+
+    try:
+        audio_bytes = await audio_file.read()
+        filename = getattr(audio_file, "filename", "answer.webm") or "answer.webm"
+    except Exception as e:
+        return JSONResponse({"status": "error", "message": f"could not read audio: {e}"}, status_code=400)
+
+    result = cbt_versant.save_audio_answer(
+        session_id, section_id, question_id, question_text,
+        audio_bytes=audio_bytes, filename=filename,
     )
+    if result.get("status") == "success":
+        result["credits_deducted"] = 3
+        result["credits_remaining"] = guard.get("credits_remaining", 0)
+    return result
 
 @app.post("/api/versant/submit-text")
 async def submit_text(request: Request):
+    """Save a typed answer (used for Summary & Opinion). Charges 5 credits."""
     data = await request.json()
     from credit_guard import require_credits_from_data
     guard = require_credits_from_data(data, "versant_submit_text")
     if guard.get("status") != "success":
         return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
-    return cbt_versant.submit_text_answer(
+
+    result = cbt_versant.save_text_answer(
         data.get("session_id"),
         data.get("section_id"),
         data.get("question_id"),
-        data.get("answer")
+        data.get("question_text") or "",
+        data.get("answer") or data.get("answer_text") or "",
     )
+    if result.get("status") == "success":
+        result["credits_deducted"] = 5
+        result["credits_remaining"] = guard.get("credits_remaining", 0)
+    return result
+
+
+@app.post("/api/versant/complete")
+async def versant_complete(request: Request):
+    """Complete the test: score all answers + return band score. Charges 15 credits."""
+    data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "versant_complete")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+
+    session_id = data.get("session_id")
+    if not session_id:
+        return JSONResponse({"status": "error", "message": "session_id required"}, status_code=400)
+
+    result = cbt_versant.complete_session(session_id)
+    if result.get("status") == "success":
+        result["credits_deducted"] = 15
+        result["credits_remaining"] = guard.get("credits_remaining", 0)
+    return result
+
+
+@app.get("/api/versant/session/{session_id}")
+async def versant_session_get(session_id: str):
+    """Load session state (in_progress or completed with score)."""
+    return cbt_versant.get_session(session_id)
+
+
+@app.get("/api/versant/sections")
+async def versant_sections_list():
+    """List all Versant sections with metadata."""
+    return cbt_versant.get_all_sections()
 
 
 
@@ -6865,12 +6934,18 @@ from ai_versant import ai_versant
 
 @app.post("/api/versant/start-session")
 async def start_versant_session(request: Request):
+    """Create a new Versant session (DB-backed). Charges 20 credits."""
     data = await request.json()
     from credit_guard import require_credits_from_data
     guard = require_credits_from_data(data, "versant_start_session")
     if guard.get("status") != "success":
         return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
-    return ai_versant.start_user_session(data.get("email"))
+
+    result = cbt_versant.create_session(guard["email"])
+    if result.get("status") == "success":
+        result["credits_deducted"] = 20
+        result["credits_remaining"] = guard.get("credits_remaining", 0)
+    return result
 
 @app.get("/api/versant/session/{session_id}/{section_id}")
 async def get_session_questions(session_id: str, section_id: str):

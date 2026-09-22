@@ -171,6 +171,7 @@ class AICreditEngine:
         "versant_start_cbt": 20,
         "versant_submit_text": 5,
         "versant_record_audio": 3,
+        "versant_complete": 15,
         "ai_company_generate_topic": 5,
         "ai_pattern_generate": 5,
         "analysis_complete": 10,
