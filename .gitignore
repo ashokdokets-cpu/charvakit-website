@@ -73,6 +73,7 @@ scripts/*
 !scripts/system_audit.py
 !scripts/translate_ui.py
 !scripts/update_geoip.py
+!scripts/validate_questions.py
 !scripts/seed_exam_question_bank.py
 !scripts/translate_ui.py
 !scripts/regenerate_schema.py
