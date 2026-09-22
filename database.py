@@ -5,6 +5,7 @@ PostgreSQL database connection and operations
 import os
 import secrets
 import psycopg2
+from psycopg2 import pool as pg_pool
 from datetime import datetime
 from dotenv import load_dotenv
 
@@ -16,15 +17,44 @@ DATABASE_URL = os.getenv("DATABASE_URL", "")
 class Database:
     def __init__(self):
         self.db_url = DATABASE_URL
+        self._pool = None  # lazy-init connection pool
         if not self.db_url or self.db_url.startswith("sqlite"):
             print(f"Warning: Using fallback database URL")
         self.init_db()
 
     def get_connection(self):
-        """Get PostgreSQL connection."""
+        """Get PostgreSQL connection (legacy: fresh connection per call).
+
+        Kept for backward compatibility with all existing callers.
+        For hot paths, prefer get_pooled_connection() + release_pooled_connection().
+        """
         if not self.db_url or self.db_url.startswith("sqlite"):
             raise Exception("PostgreSQL DATABASE_URL not configured properly")
         return psycopg2.connect(self.db_url)
+
+    def _ensure_pool(self):
+        """Lazily create the connection pool on first use."""
+        if self._pool is None:
+            self._pool = pg_pool.ThreadedConnectionPool(
+                minconn=2, maxconn=20, dsn=self.db_url
+            )
+        return self._pool
+
+    def get_pooled_connection(self):
+        """Fast path: return a pooled connection.
+
+        Callers MUST return it via release_pooled_connection(conn) in a
+        finally block. Do NOT call conn.close() on a pooled connection.
+        """
+        return self._ensure_pool().getconn()
+
+    def release_pooled_connection(self, conn):
+        """Return a pooled connection to the pool. Never raises."""
+        if self._pool and conn:
+            try:
+                self._pool.putconn(conn)
+            except Exception:
+                pass
 
     def init_db(self):
         """Initialize database tables."""

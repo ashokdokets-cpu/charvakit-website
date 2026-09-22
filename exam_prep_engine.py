@@ -352,9 +352,10 @@ class ExamPrepEngine:
 
     def _fetch_bank_questions(self, exam_id: str, topic: str, count: int) -> List[Dict]:
         """Fetch N bank questions for a single topic. Returns [] on miss/error."""
+        conn = None
         try:
             from database import db
-            conn = db.get_connection()
+            conn = db.get_pooled_connection()
             cur = conn.cursor()
             cur.execute('''
                 SELECT question_id, question_text, options, correct_index,
@@ -365,11 +366,14 @@ class ExamPrepEngine:
                 LIMIT %s
             ''', (exam_id, topic, count))
             rows = cur.fetchall()
-            cur.close(); conn.close()
+            cur.close()
             logger.info(f"bank lookup: {exam_id}/{topic} -> {len(rows)} rows (wanted {count})")
         except Exception as e:
             logger.error(f"_fetch_bank_questions failed: {e}")
             return []
+        finally:
+            if conn:
+                db.release_pooled_connection(conn)
         return [{
             "question_id": r[0],
             "question": r[1],
@@ -383,9 +387,10 @@ class ExamPrepEngine:
         """Fetch per_topic questions for EACH topic in ONE DB round trip."""
         if not topics:
             return {}
+        conn = None
         try:
             from database import db
-            conn = db.get_connection()
+            conn = db.get_pooled_connection()
             cur = conn.cursor()
             cur.execute('''
                 SELECT topic, question_id, question_text, options, correct_index,
@@ -400,11 +405,14 @@ class ExamPrepEngine:
                 WHERE rn <= %s
             ''', (exam_id, topics, per_topic))
             rows = cur.fetchall()
-            cur.close(); conn.close()
+            cur.close()
             logger.info(f"bank multi-lookup: {exam_id} topics={topics} -> {len(rows)} rows")
         except Exception as e:
             logger.error(f"_fetch_bank_multi failed: {e}")
             return {}
+        finally:
+            if conn:
+                db.release_pooled_connection(conn)
 
         grouped = {}
         for r in rows:
@@ -613,9 +621,10 @@ class ExamPrepEngine:
         test_id = f"TEST-{secrets.token_hex(6).upper()}"
 
         _t1 = _t.time()
+        conn = None
         try:
             from database import db
-            conn = db.get_connection()
+            conn = db.get_pooled_connection()
             cur = conn.cursor()
             cur.execute('''
                 INSERT INTO charvak_exam_mock_tests
@@ -623,10 +632,15 @@ class ExamPrepEngine:
                 VALUES (%s, %s, %s, %s, 'in_progress', %s)
             ''', (test_id, email, exam_id, resolved_topic, len(questions)))
             conn.commit()
-            cur.close(); conn.close()
+            cur.close()
         except Exception as e:
             logger.error(f"start_mock_test failed: {e}")
+            if conn:
+                db.release_pooled_connection(conn)
             return {"status": "error", "message": "Could not start mock test"}
+        finally:
+            if conn:
+                db.release_pooled_connection(conn)
         db_time = _t.time() - _t1
         logger.info(f"start_mock_test: DB insert took {db_time:.2f}s")
 
