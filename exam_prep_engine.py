@@ -344,7 +344,7 @@ class ExamPrepEngine:
             cur.execute('''
                 WITH candidates AS (
                     SELECT question_id, question_text, options, correct_index,
-                           explanation, difficulty, embedding,
+                           explanation, difficulty, embedding, reviewed,
                            ROW_NUMBER() OVER (ORDER BY RANDOM()) AS rn
                     FROM charvak_exam_question_bank
                     WHERE exam_id = %s AND topic = %s
@@ -361,9 +361,9 @@ class ExamPrepEngine:
                     )
                 )
                 SELECT question_id, question_text, options, correct_index,
-                       explanation, difficulty
+                       explanation, difficulty, reviewed
                 FROM deduped
-                ORDER BY RANDOM()
+                ORDER BY reviewed DESC NULLS LAST, RANDOM()
                 LIMIT %s
             ''', (exam_id, topic, count))
             rows = cur.fetchall()
@@ -392,7 +392,7 @@ class ExamPrepEngine:
             cur.execute('''
                 WITH candidates AS (
                     SELECT question_id, question_text, options, correct_index,
-                           explanation, difficulty, embedding,
+                           explanation, difficulty, embedding, reviewed,
                            ROW_NUMBER() OVER (ORDER BY RANDOM()) AS rn
                     FROM charvak_exam_question_bank
                     WHERE exam_id = %s AND topic = %s
@@ -409,9 +409,9 @@ class ExamPrepEngine:
                     )
                 )
                 SELECT question_id, question_text, options, correct_index,
-                       explanation, difficulty
+                       explanation, difficulty, reviewed
                 FROM deduped
-                ORDER BY RANDOM()
+                ORDER BY reviewed DESC NULLS LAST, RANDOM()
                 LIMIT %s
             ''', (exam_id, topic, count))
             rows = cur.fetchall()
@@ -444,7 +444,7 @@ class ExamPrepEngine:
             cur.execute('''
                 WITH candidates AS (
                     SELECT topic, question_id, question_text, options, correct_index,
-                           explanation, difficulty, embedding,
+                           explanation, difficulty, embedding, reviewed,
                            ROW_NUMBER() OVER (PARTITION BY topic ORDER BY RANDOM()) AS rn
                     FROM charvak_exam_question_bank
                     WHERE exam_id = %s AND topic = ANY(%s)
