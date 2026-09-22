@@ -464,7 +464,7 @@ class IELTSEngine:
         )
 
         parsed = self._ai_json(prompt, max_tokens=600, temperature=0.3)
-        print(f"[IELTS-SPEAKING-DIAG] AI returned: type={type(parsed).__name__} value={parsed!r}"[:500], flush=True)
+
         if not parsed:
             return {"status": "error", "message": "AI scoring unavailable"}
 
@@ -491,7 +491,7 @@ class IELTSEngine:
                 score=parsed.get("overall_band", 0),
                 total_questions=len(responses),
                 correct_answers=0,
-                passed=parsed.get("overall_band", 0) >= 6.0,
+
                 details={"sub_bands": {
                     "fluency_coherence": parsed.get("fluency_coherence"),
                     "lexical_resource": parsed.get("lexical_resource"),
