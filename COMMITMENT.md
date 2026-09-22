@@ -3,7 +3,7 @@
 **Purpose:** Track every planned-but-not-completed item. Nothing gets lost again.
 **Created:** 2026-09-20
 **Last updated:** 2026-09-22
-**HEAD:** `56715e0`
+**HEAD:** `0830b97`
 
 ---
 
@@ -50,6 +50,31 @@
   - Optional: curate top 5 exams manually for extra polish
 - **HEAD after:** *(pending commit)*
 - **Next:** Session N3 (IELTS Speaking or Onboarding)
+
+### W1-W2 — Currency detection: two-layer country resolution (2026-09-23)
+
+- **Commits:** `692a0f1` `8b28468` `325cf86` `0830b97`
+- **What shipped:**
+  - **Root cause fixed:** `detect_user_region` had language→currency map with `"en": "USD"` — every English browser got USD, including Indian users.
+  - **Two-layer detection in `ip_detection.py`:**
+    - Layer 1: Cloudflare `CF-IPCountry` header (primary — auto-updated weekly by CF)
+    - Layer 2: Self-hosted GeoLite2 City MMDB (fallback — lazy refresh if >7 days old)
+    - Layer 3: Default `IN` (last resort)
+    - Rejects CF invalid codes: `XX` (unknown), `T1` (Tor)
+  - **GeoLite2 integration:**
+    - `scripts/update_geoip.py` downloads from jsDelivr (no MaxMind license key needed)
+    - Build command: `pip install -r requirements.txt && python scripts/update_geoip.py`
+    - DB path: `data/GeoLite2-City.mmdb` (~63 MB, gitignored)
+    - `data/.gitkeep` committed to preserve the directory
+  - **Lazy in-process refresh:** if DB age >7 days, triggers a background re-download + hot-swap on next lookup
+  - **Route update:** `/api/region` now uses `ip_detector.detect_from_request(request)` which handles CF header + IP + default in one call
+  - **Scripts tracked:** added explicit `.gitignore` exceptions for all production scripts
+- **Verified in prod:**
+  - Browser console: `{country: 'IN', currency: 'INR', source: 'cf_header'}`
+  - Render logs: `GeoLite2 loaded: data/GeoLite2-City.mmdb`
+  - Render logs: `IP Location Detector ready (GeoLite2: ENABLED, CF header: enabled)`
+- **Why no cron:** Render cron jobs are ephemeral containers with no access to the web service's filesystem. They cannot update the running service's DB. Lazy refresh handles it in-process instead.
+- **HEAD after:** `0830b97`
 
 ### V — Full Versant rebuild (2026-09-23)
 
