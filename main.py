@@ -5452,12 +5452,21 @@ async def robots_txt():
 
 @app.get("/api/region")
 async def detect_region(request: Request):
+    """Detect user region (W1b: IP + Accept-Language)."""
     try:
         accept_lang = request.headers.get("accept-language", "en")
-        region = detect_user_region(accept_language=accept_lang)
+        ip = None
+        xff = request.headers.get("x-forwarded-for", "")
+        if xff:
+            ip = xff.split(",")[0].strip()
+        elif request.client and request.client.host:
+            ip = request.client.host
+        region = detect_user_region(ip_address=ip, accept_language=accept_lang)
         return JSONResponse(region)
     except Exception:
-        return JSONResponse({"country": "US", "currency": "USD", "language": "en"})
+        # W1b: fall back to India (was US — caused USD for Indian users)
+        return JSONResponse({"country": "IN", "currency": "INR", "language": "en",
+                             "timezone": "Asia/Kolkata"})
 
 @app.get("/api/pricing/{service}")
 async def get_service_pricing(service: str, request: Request, currency: str = "INR", country: str = "IN"):

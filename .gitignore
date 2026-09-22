@@ -126,3 +126,9 @@ templates/*.html.bak*
 # Template/JSON backups (do not commit)
 templates/*.html.bak*
 static/locales/*.json.bak*
+
+# GeoLite2 (downloaded at runtime, not committed)
+data/GeoLite2-City.mmdb
+data/*.gz
+data/*.tmp
+!data/.gitkeep

@@ -147,23 +147,61 @@ def get_pricing(service: str, currency: str = "INR", country: str = "IN") -> Dic
     }
 
 def detect_user_region(ip_address: str = None, accept_language: str = None) -> Dict:
-    """Detect user's region, language, and currency preferences"""
-    # Default to India
+    """Detect user region, language, currency (W1a: country over language)."""
     region = {"country": "IN", "language": "en", "currency": "INR", "timezone": "Asia/Kolkata"}
-    
+
+    # W1a: prefer IP geolocation for country
+    if ip_address:
+        try:
+            from ip_detection import ip_detector
+            _ip_result = ip_detector.detect_country_from_ip(ip_address)
+            # Result may be a dict or a string; extract country code safely
+            if isinstance(_ip_result, dict):
+                # Prefer the 2-letter ISO code ('country_code'='US'),
+                # not the display name ('country'='United States')
+                _ip_country = _ip_result.get("country_code") or _ip_result.get("country")
+            elif isinstance(_ip_result, str):
+                _ip_country = _ip_result
+            else:
+                _ip_country = None
+            if _ip_country and isinstance(_ip_country, str):
+                region["country"] = _ip_country
+        except Exception:
+            pass
+
     if accept_language:
         lang = accept_language.split(",")[0].split("-")[0]
         if lang in LANGUAGES:
             region["language"] = lang
-    
-    # Map language to likely currency
-    lang_currency_map = {
-        "en": "USD", "hi": "INR", "te": "INR", "es": "EUR", "fr": "EUR",
-        "de": "EUR", "ja": "JPY", "zh": "CNY", "ar": "AED", "pt": "BRL",
-        "bn": "INR", "ta": "INR", "mr": "INR", "gu": "INR"
+
+    # W1a: country -> currency (authoritative)
+    country_currency_map = {
+        "IN": "INR", "US": "USD", "GB": "GBP", "AE": "AED", "SG": "SGD",
+        "AU": "AUD", "CA": "CAD", "JP": "JPY", "CN": "CNY", "BR": "BRL",
+        "NG": "NGN", "ZA": "ZAR",
+        "DE": "EUR", "FR": "EUR", "ES": "EUR", "IT": "EUR", "NL": "EUR",
+        "IE": "EUR", "PT": "EUR", "AT": "EUR", "BE": "EUR", "FI": "EUR", "GR": "EUR",
     }
-    
-    if region["language"] in lang_currency_map:
-        region["currency"] = lang_currency_map[region["language"]]
-    
+    if region["country"] in country_currency_map:
+        region["currency"] = country_currency_map[region["country"]]
+    else:
+        lang_currency_fallback = {
+            "hi": "INR", "te": "INR", "ta": "INR", "bn": "INR",
+            "mr": "INR", "gu": "INR",
+            "es": "EUR", "fr": "EUR", "de": "EUR",
+            "ja": "JPY", "zh": "CNY", "ar": "AED", "pt": "BRL",
+        }
+        if region["language"] in lang_currency_fallback:
+            region["currency"] = lang_currency_fallback[region["language"]]
+
+    _tz_map = {
+        "IN": "Asia/Kolkata", "US": "America/New_York", "GB": "Europe/London",
+        "AE": "Asia/Dubai", "SG": "Asia/Singapore", "AU": "Australia/Sydney",
+        "JP": "Asia/Tokyo", "CN": "Asia/Shanghai",
+    }
+    if region["country"] in _tz_map:
+        region["timezone"] = _tz_map[region["country"]]
+
+    return region
+
     return region
