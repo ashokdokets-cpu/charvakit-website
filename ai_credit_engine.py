@@ -113,6 +113,9 @@ class AICreditEngine:
         # Session M-1: IELTS Academic
         "ielts_writing_eval": 15,
         "ielts_writing_prompt": 3,
+        "ielts_speaking_prompt": 3,
+        "ielts_speaking_transcribe": 5,
+        "ielts_speaking_eval": 15,
         "ai_localize": 15,
         "ai_generate_contract": 20,
         "ai_analyze_legacy": 25,

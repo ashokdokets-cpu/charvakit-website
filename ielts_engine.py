@@ -22,6 +22,8 @@ class IELTSEngine:
          "note": "3 passages, 40 questions"},
         {"id": "writing", "name": "Writing", "questions": 2, "duration_min": 60,
          "note": "Task 1 (150 words) + Task 2 (250 words); AI band scoring"},
+        {"id": "speaking", "name": "Speaking", "questions": 3, "duration_min": 14,
+         "note": "3 parts: Interview, Long Turn, Discussion; audio + AI band scoring"},
     ]
 
     WRITING_TASK_1_MIN_WORDS = 150
@@ -42,8 +44,8 @@ class IELTSEngine:
             "status": "success",
             "exam": "IELTS Academic",
             "sections": self.SECTIONS,
-            "speaking_available": False,
-            "speaking_note": "Speaking practice (audio recording + scoring) coming in a later release.",
+            "speaking_available": True,
+            "speaking_note": "3-part test: interview, long turn, discussion. AI band scoring on 4 criteria.",
         }
 
     # ============================================================
@@ -308,4 +310,196 @@ class IELTSEngine:
         return scored
 
 
+    # ============================================================
+    # SPEAKING (Session N4)
+    # ============================================================
+
+    SPEAKING_PARTS = {
+        1: {
+            "name": "Introduction & Interview",
+            "duration_min": 4,
+            "description": "The examiner asks general questions about yourself, your home, work, studies, and interests.",
+        },
+        2: {
+            "name": "Long Turn",
+            "duration_min": 4,
+            "description": "You receive a cue card with a topic. You get 1 minute to prepare, then speak for 1-2 minutes.",
+        },
+        3: {
+            "name": "Discussion",
+            "duration_min": 5,
+            "description": "The examiner asks more abstract questions related to the Part 2 topic.",
+        },
+    }
+
+    def generate_speaking_prompt(self, topic: Optional[str] = None) -> Dict:
+        """Generate a full 3-part Speaking session.
+
+        Returns a dict with prompts for Part 1, 2, and 3.
+        """
+        topic_line = f"Overall theme: {topic}." if topic else "Choose a fresh, general IELTS-appropriate theme."
+        prompt = (
+            f"You are a certified IELTS Speaking examiner creating a full 3-part speaking test.\n"
+            f"{topic_line}\n\n"
+            "Produce ONLY valid JSON in this exact shape:\n"
+            "{\n"
+            '  "topic": "...",\n'
+            '  "part1_questions": ["...", "...", "..."],\n'
+            '  "part2": {\n'
+            '    "cue_card": "Describe ...",\n'
+            '    "bullet_points": ["...", "...", "...", "..."]\n'
+            "  },\n"
+            '  "part3_questions": ["...", "...", "..."]\n'
+            "}\n\n"
+            "Requirements:\n"
+            "- Part 1: 3 general, personal questions (home, work, hobbies, daily life).\n"
+            "- Part 2: 1 cue card with exactly 4 bullet points.\n"
+            "- Part 3: 3 abstract questions related to the Part 2 topic.\n"
+            "- Everything must be appropriate for an IELTS Academic candidate.\n"
+            "- NO markdown, NO prose outside JSON."
+        )
+
+        parsed = self._ai_json(prompt, max_tokens=800, temperature=0.7)
+        if not parsed:
+            # Fallback if AI fails
+            parsed = {
+                "topic": topic or "Daily Life",
+                "part1_questions": [
+                    "Where are you from?",
+                    "Do you work or are you a student?",
+                    "What do you like to do in your free time?",
+                ],
+                "part2": {
+                    "cue_card": "Describe a memorable journey you have taken.",
+                    "bullet_points": [
+                        "Where you went",
+                        "Who you went with",
+                        "What you did there",
+                        "Why it was memorable",
+                    ],
+                },
+                "part3_questions": [
+                    "Why do people enjoy travelling to new places?",
+                    "How has travel changed in your country over the past 20 years?",
+                    "Do you think travel will become more or less common in the future?",
+                ],
+            }
+
+        parsed["prompt_id"] = f"IELTS-SPK-{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        parsed["parts"] = self.SPEAKING_PARTS
+        return {"status": "success", "session": parsed}
+
+    def transcribe_audio(self, audio_bytes: bytes, filename: str = "audio.webm") -> Dict:
+        """Transcribe audio via OpenAI Whisper.
+
+        audio_bytes: raw bytes from the browser's MediaRecorder.
+        filename: original filename (extension matters — .webm, .m4a, .ogg).
+        """
+        if not self.openai_api_key:
+            return {"status": "error", "message": "OpenAI key not configured"}
+
+        try:
+            import openai as _openai
+            import tempfile
+            client = _openai.OpenAI(api_key=self.openai_api_key)
+            with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(filename)[1] or ".webm") as tmp:
+                tmp.write(audio_bytes)
+                tmp_path = tmp.name
+            try:
+                with open(tmp_path, "rb") as audio_file:
+                    transcript = client.audio.transcriptions.create(
+                        model="whisper-1",
+                        file=audio_file,
+                        response_format="text",
+                    )
+                return {"status": "success", "transcript": str(transcript).strip()}
+            finally:
+                try:
+                    os.remove(tmp_path)
+                except Exception:
+                    pass
+        except Exception as e:
+            logger.error(f"Whisper transcription failed: {e}")
+            return {"status": "error", "message": f"transcription failed: {e}"}
+
+    def evaluate_speaking(self, responses: List[Dict], topic: str = "") -> Dict:
+        """Score a full Speaking session on the 4 official IELTS criteria.
+
+        responses: [
+            {"part": 1, "question": "...", "transcript": "..."},
+            {"part": 2, "question": "<cue card>", "transcript": "..."},
+            {"part": 3, "question": "...", "transcript": "..."},
+            ...
+        ]
+        """
+        if not responses:
+            return {"status": "error", "message": "No responses to evaluate"}
+
+        # Build transcript summary
+        summary_lines = []
+        for r in responses:
+            part = r.get("part", "?")
+            q = r.get("question", "")[:120]
+            t = r.get("transcript", "")
+            summary_lines.append(f"[Part {part}] Q: {q}\nAnswer: {t}")
+        summary = "\n\n".join(summary_lines)
+
+        prompt = (
+            "You are a certified IELTS Speaking examiner. Score the candidate's "
+            "performance on the 4 official IELTS Speaking criteria.\n\n"
+            f"Overall topic: {topic or 'not specified'}\n\n"
+            f"Transcribed responses:\n{summary}\n\n"
+            "Return ONLY valid JSON:\n"
+            "{\n"
+            '  "fluency_coherence": 0.0,\n'
+            '  "lexical_resource": 0.0,\n'
+            '  "grammatical_range": 0.0,\n'
+            '  "pronunciation": 0.0,\n'
+            '  "overall_band": 0.0,\n'
+            '  "feedback": "3-5 sentences of specific, constructive feedback."\n'
+            "}\n\n"
+            "Bands are 0-9 in 0.5 increments. Pronunciation is estimated from "
+            "transcription confidence signals (may be less reliable than a "
+            "live examiner). Be honest — most candidates land 5.0-7.0."
+        )
+
+        parsed = self._ai_json(prompt, max_tokens=600, temperature=0.3)
+        if not parsed:
+            return {"status": "error", "message": "AI scoring unavailable"}
+
+        # Compute overall if AI didn't
+        try:
+            subs = [
+                float(parsed.get("fluency_coherence", 0)),
+                float(parsed.get("lexical_resource", 0)),
+                float(parsed.get("grammatical_range", 0)),
+                float(parsed.get("pronunciation", 0)),
+            ]
+            avg = sum(subs) / 4
+            parsed["overall_band"] = round(avg * 2) / 2  # round to nearest 0.5
+        except Exception:
+            pass
+
+        # Persist (non-fatal)
+        try:
+            from results_system import results_system
+            results_system.record_assessment_result(
+                email=None,
+                assessment_type="ielts_speaking",
+                assessment_name=f"IELTS Speaking ({topic or 'General'})",
+                score=parsed.get("overall_band", 0),
+                total_questions=len(responses),
+                correct_answers=0,
+                passed=parsed.get("overall_band", 0) >= 6.0,
+                details={"sub_bands": {
+                    "fluency_coherence": parsed.get("fluency_coherence"),
+                    "lexical_resource": parsed.get("lexical_resource"),
+                    "grammatical_range": parsed.get("grammatical_range"),
+                    "pronunciation": parsed.get("pronunciation"),
+                }, "feedback": parsed.get("feedback", "")},
+            )
+        except Exception as e:
+            logger.warning(f"IELTS speaking persist failed: {e}")
+
+        return {"status": "success", "evaluation": parsed, "response_count": len(responses)}
 ielts_engine = IELTSEngine()
