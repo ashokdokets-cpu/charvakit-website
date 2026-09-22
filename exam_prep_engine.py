@@ -125,7 +125,8 @@ class ExamPrepEngine:
                 {"id": "rrb_alp", "name": "RRB ALP", "difficulty": "Medium", "full_name": "Assistant Loco Pilot", "tier": "CBT 1 & 2", "sections": ["Math", "Reasoning", "Technical"], "questions": 75, "duration": "60 min"},
                 {"id": "rrb_alp_cbat", "name": "RRB ALP CBAT", "difficulty": "Hard", "full_name": "Computer-Based Aptitude Test (Stage 3)", "tier": "CBAT", "sections": ["Analogies", "Decision Making", "Numerical Ability", "Memory", "Following Directions"], "formats": {"Analogies": "cbat", "Decision Making": "cbat", "Numerical Ability": "cbat", "Memory": "cbat", "Following Directions": "cbat"}, "questions": 100, "duration": "35 min"},
                 {"id": "rrb_je", "name": "RRB JE", "difficulty": "Medium", "full_name": "Junior Engineer", "tier": "CBT 1 & 2", "sections": ["Technical", "Reasoning", "Quant"], "questions": 150, "duration": "120 min"},
-                {"id": "upsc_epfo", "name": "UPSC EPFO", "difficulty": "Hard", "full_name": "Enforcement Officer", "tier": "CBT", "sections": ["Reasoning", "Quant", "English", "GK"], "questions": 120, "duration": "120 min"}
+                {"id": "upsc_epfo", "name": "UPSC EPFO", "difficulty": "Hard", "full_name": "Enforcement Officer", "tier": "CBT", "sections": ["Reasoning", "Quant", "English", "GK"], "questions": 120, "duration": "120 min"},
+                {"id": "upsc_cse", "name": "UPSC CSE", "difficulty": "Hard", "full_name": "Civil Services Examination (Prelims)", "tier": "Prelims", "sections": ["General Studies", "CSAT"], "questions": 200, "duration": "120 min"}
             ]},
             "banking": {"name": "Banking & Financial", "icon": "banking", "exams": [
                 {"id": "ibps_po", "name": "IBPS PO", "difficulty": "Medium", "full_name": "Probationary Officer", "tier": "Prelims & Mains", "sections": ["Reasoning", "Quant", "English"], "questions": 100, "duration": "60 min"},
@@ -166,6 +167,7 @@ class ExamPrepEngine:
             ]},
             "medical": {"name": "Medical & Healthcare", "icon": "medical", "exams": [
                 {"id": "neet_pg", "name": "NEET PG", "difficulty": "Hard", "full_name": "Postgraduate Medical", "tier": "CBT", "sections": ["Medicine", "Surgery", "Pediatrics", "OBG"], "questions": 200, "duration": "210 min"},
+                {"id": "neet_ug", "name": "NEET UG", "difficulty": "Hard", "full_name": "National Eligibility cum Entrance Test (Undergraduate)", "tier": "CBT", "sections": ["Physics", "Chemistry", "Biology"], "questions": 180, "duration": "200 min"},
                 {"id": "ini_cet", "name": "INI-CET", "difficulty": "Hard", "full_name": "AIIMS/JIPMER/PGI", "tier": "CBT", "sections": ["Medicine", "Surgery", "Pediatrics"], "questions": 200, "duration": "180 min"},
                 {"id": "fmge", "name": "FMGE", "difficulty": "Hard", "full_name": "Foreign Medical Graduate", "tier": "CBT", "sections": ["Medicine", "Surgery", "OBG"], "questions": 300, "duration": "300 min"},
                 {"id": "neet_mds", "name": "NEET MDS", "difficulty": "Hard", "full_name": "Dental Master's", "tier": "CBT", "sections": ["Dental Anatomy", "Pathology", "Pharmacology"], "questions": 240, "duration": "180 min"},
