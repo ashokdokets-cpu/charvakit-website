@@ -179,7 +179,7 @@ class CBTVersantSystem:
             "status": "success",
             "session_id": row[0],
             "email": row[1],
-            "status": row[2],
+            "session_status": row[2],   # renamed: was duplicated 'status' key
             "started_at": row[3].isoformat() if row[3] else None,
             "completed_at": row[4].isoformat() if row[4] else None,
             "overall_score": float(row[5]) if row[5] is not None else None,
@@ -216,11 +216,51 @@ class CBTVersantSystem:
         return self._upsert_answer(session_id, section_id, question_id,
                                    question_text, transcript=transcript)
 
+    # V7b — Known Whisper hallucination patterns (Youtube spam, silence)
+    _HALLUCINATION_PATTERNS = [
+        "チャンネル登録をお願いいたします",
+        "ご視聴ありがとうございました",
+        "チャンネル登録",
+        "おやすみなさい",
+        "Please subscribe",
+        "Share this video",
+        "Subscribe to my channel",
+        "Thanks for watching",
+        "Thank you for watching",
+        "字幕",
+        "Amara.org",
+    ]
+
+    def _clean_transcript(self, text: str) -> str:
+        """Filter Whisper hallucinations. Returns cleaned text."""
+        if not text:
+            return ""
+        t = text.strip()
+        # Empty or punctuation-only
+        if not any(c.isalnum() for c in t):
+            return ""
+        # Known hallucination patterns
+        for pat in self._HALLUCINATION_PATTERNS:
+            if pat.lower() in t.lower():
+                logger.info(f"Filtered hallucination: {t[:80]}")
+                return ""
+        # Too short to be a real answer (< 2 real chars)
+        if len(t) < 2:
+            return ""
+        return t
+
     def _transcribe(self, audio_bytes: bytes, filename: str) -> Optional[str]:
-        """Call Whisper. Returns transcript or None on error."""
+        """Call Whisper. Returns transcript or None on error.
+
+        Enforces English language, filters hallucinated captions.
+        """
         if not self.openai_api_key:
             logger.warning("OpenAI key missing — cannot transcribe")
             return None
+        # Skip tiny audio (likely empty recording)
+        if len(audio_bytes) < 2000:  # < ~2KB, likely silence
+            logger.info(f"Skipping tiny audio: {len(audio_bytes)} bytes")
+            return ""
         try:
             import openai as _openai
             import tempfile
@@ -235,8 +275,10 @@ class CBTVersantSystem:
                         model="whisper-1",
                         file=audio_file,
                         response_format="text",
+                        language="en",
                     )
-                return str(result).strip()
+                cleaned = self._clean_transcript(str(result))
+                return cleaned
             finally:
                 try:
                     os.remove(tmp_path)
@@ -284,6 +326,8 @@ class CBTVersantSystem:
         """Aggregate all answers, score via AI, mark session completed."""
         # Load session + answers
         session = self.get_session(session_id)
+        # V7a: get_session returns "status":"success" for the API; the
+        # session's own state is now in "session_status".
         if session.get("status") != "success":
             return session
 

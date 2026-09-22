@@ -408,7 +408,9 @@ async function submitTest() {
     });
     var j = await r.json();
     if (j.status !== 'success') {
-      throw new Error(j.message || 'Scoring failed');
+      // Show real backend error instead of generic message
+      var detail = j.message || j.detail || JSON.stringify(j);
+      throw new Error('Scoring failed: ' + detail);
     }
     showScorecard(j.scoring);
   } catch (e) {
