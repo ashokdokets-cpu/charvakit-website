@@ -5245,6 +5245,7 @@ async def start_mock_test(request: Request):
 
     result["credits_deducted"] = 15
     result["credits_remaining"] = guard.get("credits_remaining", 0)
+    print(f"[IELTS-ROUTE-DIAG] returning: {result!r}"[:1000], flush=True)
     return result
 
 
@@ -7344,7 +7345,11 @@ async def ielts_speaking_evaluate(request: Request):
 
     result["credits_deducted"] = 15
     result["credits_remaining"] = guard.get("credits_remaining", 0)
-    return result@app.get("/api/cbat/sub-tests")
+    print(f"[IELTS-ROUTE-DIAG] returning: {result!r}"[:1000], flush=True)
+    return result
+
+
+@app.get("/api/cbat/sub-tests")
 async def cbat_sub_tests():
     """List the 6 CBAT sub-tests with metadata."""
     return cbat_engine.get_sub_tests()
