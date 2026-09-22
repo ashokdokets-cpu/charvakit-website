@@ -696,6 +696,12 @@ async def welcome(request: Request):
     return template_response("welcome.html", request, "Welcome to Charvak")
 
 
+# W4 - My Results dashboard
+@app.get("/my-results", response_class=HTMLResponse)
+async def my_results_page(request: Request):
+    return template_response("my-results.html", request, "My Results")
+
+
 # N3.4 — Cron endpoint: send due queued emails
 @app.post("/api/cron/send-queued-emails")
 async def cron_send_queued_emails(request: Request):
