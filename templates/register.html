@@ -117,6 +117,9 @@ async function registerUser(e) {
             msg.textContent = '✅ Account created! Redirecting...';
             msg.style.display = 'block';
             localStorage.setItem('charvak_token', j.token);
+            // N3.7 — set user identity so welcome page + nav show the user
+            localStorage.setItem('userEmail', data.email);
+            localStorage.setItem('userName', data.name);
             // N3.1b — fire GA4 sign_up event
             if (typeof charvakTrack === 'function') {
                 charvakTrack('sign_up', { method: 'email', role: data.role || 'candidate' });
