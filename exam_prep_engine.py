@@ -12,6 +12,21 @@ from typing import Dict, List, Optional
 
 logger = logging.getLogger("charvakit.exam_prep")
 
+# Language section hints — used by _generate_via_ai to force correct
+# script when topic matches a language name (e.g., WBPSC 'Bengali' section).
+LANGUAGE_HINTS = {
+    "Bengali":   ("Bengali",   "বাংলা (Bengali script)"),
+    "Hindi":     ("Hindi",     "हिन्दी (Devanagari script)"),
+    "Tamil":     ("Tamil",     "தமிழ் (Tamil script)"),
+    "Telugu":    ("Telugu",    "తెలుగు (Telugu script)"),
+    "Marathi":   ("Marathi",   "मराठी (Devanagari script)"),
+    "Kannada":   ("Kannada",   "ಕನ್ನಡ (Kannada script)"),
+    "Malayalam": ("Malayalam", "മലയാളം (Malayalam script)"),
+    "Gujarati":  ("Gujarati",  "ગુજરાતી (Gujarati script)"),
+    "Punjabi":   ("Punjabi",   "ਪੰਜਾਬੀ (Gurmukhi script)"),
+    "Urdu":      ("Urdu",      "اردو (Urdu script)"),
+}
+
 
 class ExamPrepEngine:
     def __init__(self):
@@ -444,11 +459,32 @@ class ExamPrepEngine:
 
         exam_name = self._get_exam_name(exam_id)
         difficulty = self._get_exam_difficulty(exam_id)
+
+        # Language-specific hint if topic name is a language
+        lang_note = ""
+        if topic in LANGUAGE_HINTS:
+            lang_name, lang_script = LANGUAGE_HINTS[topic]
+            lang_note = (
+                f"\nLANGUAGE REQUIREMENT:\n"
+                f"- Write ALL questions and ALL 4 options in {lang_script}.\n"
+                f"- Do NOT use English text.\n"
+                f"- Questions should test {lang_name} literature, grammar, "
+                f"vocabulary, and comprehension.\n"
+            )
+        elif topic == "English":
+            lang_note = (
+                "\nLANGUAGE REQUIREMENT:\n"
+                "- This is an English comprehension/grammar/vocabulary section.\n"
+                "- Write questions in English that test English language skills "
+                "(reading, grammar, vocabulary, sentence correction).\n"
+            )
+
         prompt = (
             f"You are creating {count} practice questions for the {exam_name} exam.\n"
             f"Topic: {topic}\n"
-            f"Difficulty: {difficulty}\n\n"
-            "STRICT RULES:\n"
+            f"Difficulty: {difficulty}\n"
+            f"{lang_note}"
+            "\nSTRICT RULES:\n"
             "- Return EXACTLY 4 options per question. Never 3. Never 5.\n"
             "- Every question must be UNIQUE - no repeats of the same prompt.\n"
             "- VERIFY that the correct answer appears in the 4 options. If the "
