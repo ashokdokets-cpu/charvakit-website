@@ -702,6 +702,51 @@ async def my_results_page(request: Request):
     return template_response("my-results.html", request, "My Results")
 
 
+# C13.5 - Question report endpoint
+@app.post("/api/questions/report")
+async def report_question(request: Request):
+    """User reports a broken/wrong question in the exam bank."""
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse({"status": "error", "message": "invalid JSON"}, status_code=400)
+
+    qid = (data.get("question_id") or "").strip()
+    reason = (data.get("reason") or "").strip()[:500]
+    email = (data.get("email") or "").strip()[:200]
+
+    if not qid:
+        return JSONResponse({"status": "error", "message": "question_id required"}, status_code=400)
+
+    try:
+        from database import db
+        conn = db.get_pooled_connection()
+        cur = conn.cursor()
+        # Confirm the question exists (avoid bogus reports)
+        cur.execute("SELECT 1 FROM charvak_exam_question_bank WHERE question_id = %s", (qid,))
+        if not cur.fetchone():
+            cur.close()
+            db.release_pooled_connection(conn)
+            return JSONResponse({"status": "error", "message": "question not found"}, status_code=404)
+
+        cur.execute("""
+            UPDATE charvak_exam_question_bank
+            SET reported = TRUE,
+                reported_at = NOW(),
+                reported_by = %s,
+                report_reason = %s
+            WHERE question_id = %s
+        """, (email or "anonymous", reason or "no reason given", qid))
+        conn.commit()
+        cur.close()
+        db.release_pooled_connection(conn)
+        logger.info(f"Question reported: {qid} by {email or 'anonymous'}: {reason[:80]}")
+        return {"status": "success", "message": "Thanks! We'll review this question."}
+    except Exception as e:
+        logger.exception(f"report_question failed: {e}")
+        return JSONResponse({"status": "error", "message": "could not record report"}, status_code=500)
+
+
 # N3.4 — Cron endpoint: send due queued emails
 @app.post("/api/cron/send-queued-emails")
 async def cron_send_queued_emails(request: Request):
