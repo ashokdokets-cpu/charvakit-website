@@ -7404,6 +7404,45 @@ async def ielts_writing_page(request: Request):
     return template_response("ielts-writing.html", request, "IELTS Writing Practice")
 
 
+@app.get("/ielts-listening", response_class=HTMLResponse)
+async def ielts_listening_page(request: Request):
+    return template_response("ielts-listening.html", request, "IELTS Listening Practice")
+
+
+@app.post("/api/ielts/listening/section")
+async def ielts_listening_section(request: Request):
+    """Fetch a random Section-4 lecture + questions (charges 5 credits)."""
+    data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "ielts_listening_section")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+    result = ielts_engine.get_listening_section(section_num=int(data.get("section_num", 4)))
+    if result.get("status") == "success":
+        result["credits_deducted"] = 5
+        result["credits_remaining"] = guard.get("credits_remaining", 0)
+    return result
+
+
+@app.post("/api/ielts/listening/score")
+async def ielts_listening_score(request: Request):
+    """Score listening MCQs (charges 10 credits)."""
+    data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "ielts_listening_score")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+    result = ielts_engine.evaluate_listening(
+        section_id=data.get("section_id"),
+        answers=data.get("answers", []),
+        email=guard["email"],
+    )
+    if result.get("status") == "success":
+        result["credits_deducted"] = 10
+        result["credits_remaining"] = guard.get("credits_remaining", 0)
+    return result
+
+
 @app.get("/ielts-speaking", response_class=HTMLResponse)
 async def ielts_speaking_page(request: Request):
     return template_response("ielts-speaking.html", request, "IELTS Speaking Practice")

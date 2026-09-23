@@ -1,0 +1,415 @@
+{% extends "base.html" %}
+{% block title %}IELTS Listening Practice{% endblock %}
+{% block content %}
+<style>
+  .il-hero { background: linear-gradient(135deg, #1e40af 0%, #3730a3 100%); color: #fff; padding: 48px 0 32px; }
+  .il-hero h1 { font-weight: 800; margin-bottom: 6px; }
+  .il-hero p { opacity: 0.9; margin: 0; }
+  .il-wrap { max-width: 900px; margin: 0 auto; padding: 32px 16px; }
+  .il-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 24px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+  .il-section-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+  .il-section-tab { background: #fff; border: 1px solid #d1d5db; border-radius: 10px; padding: 12px 18px; font-size: 0.9rem; cursor: pointer; flex: 1; min-width: 140px; text-align: center; transition: all 0.15s; }
+  .il-section-tab:hover { border-color: #1e40af; }
+  .il-section-tab.active { background: #1e40af; color: #fff; border-color: #1e40af; }
+  .il-section-tab.disabled { opacity: 0.45; cursor: not-allowed; }
+  .il-audio-box { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; margin: 16px 0; text-align: center; }
+  .il-audio-meta { font-size: 0.85rem; color: #6b7280; margin-bottom: 12px; }
+  .il-play-btn { background: #1e40af; color: #fff; border: none; border-radius: 999px; padding: 12px 32px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+  .il-play-btn:hover { background: #1e3a8a; }
+  .il-play-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+  .il-play-btn.playing { background: #dc2626; }
+  .il-timer { font-family: 'SF Mono', Menlo, monospace; font-size: 0.95rem; color: #6b7280; margin-left: 12px; }
+  .il-q-block { padding: 16px 0; border-bottom: 1px solid #f3f4f6; }
+  .il-q-block:last-child { border-bottom: none; }
+  .il-q-text { font-weight: 600; margin-bottom: 10px; color: #111827; }
+  .il-opt { display: block; padding: 10px 14px; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 6px; cursor: pointer; transition: all 0.1s; }
+  .il-opt:hover { background: #f9fafb; border-color: #93c5fd; }
+  .il-opt input { margin-right: 10px; }
+  .il-opt.selected { background: #eff6ff; border-color: #1e40af; }
+  .il-opt.correct { background: #d1fae5; border-color: #10b981; }
+  .il-opt.wrong { background: #fee2e2; border-color: #dc2626; }
+  .il-band-big { font-size: 4rem; font-weight: 800; color: #1e40af; line-height: 1; }
+  .il-tip { background: #fefce8; border-left: 3px solid #eab308; padding: 12px 16px; border-radius: 6px; font-size: 0.85rem; color: #713f12; margin-top: 12px; }
+  .il-loading { text-align: center; padding: 30px 20px; color: #6b7280; }
+  .il-transcript { background: #f9fafb; border-radius: 8px; padding: 16px; margin-top: 12px; font-size: 0.9rem; line-height: 1.6; color: #374151; max-height: 300px; overflow-y: auto; white-space: pre-wrap; }
+</style>
+
+<div class="il-hero">
+  <div class="container text-center">
+    <h1>IELTS Listening Practice</h1>
+    <p>Section 4 &middot; Academic Lecture &middot; 10 MCQ questions &middot; AI band scoring</p>
+  </div>
+</div>
+
+<div class="il-wrap">
+
+  <div id="introCard" class="il-card">
+    <h5 class="fw-bold mb-3">How this works</h5>
+    <ul class="mb-3">
+      <li>You'll hear a <strong>3-4 minute academic lecture</strong> (Section 4)</li>
+      <li>Answer <strong>10 multiple-choice questions</strong> based on what you hear</li>
+      <li>AI scores your accuracy on the 0-9 IELTS band scale</li>
+    </ul>
+    <div class="il-tip">
+      <strong>Tip:</strong> The lecture plays once. Take notes on key facts, numbers, and names as you listen — same as the real exam.
+    </div>
+    <div class="mt-3">
+      <span class="text-muted small">Cost: 5 credits to load a lecture, 10 to score</span>
+    </div>
+  </div>
+
+  <div id="startCard" class="il-card">
+    <h5 class="fw-bold mb-3">Start a lecture</h5>
+    <button class="btn btn-primary" id="startBtn" onclick="startLecture()">
+      Load Lecture &mdash; 5 credits
+    </button>
+    <span class="text-muted small ms-3" id="startStatus"></span>
+  </div>
+
+  <div id="sessionCard" style="display:none;">
+
+    <div class="il-card">
+      <div class="d-flex justify-content-between align-items-start mb-2 flex-wrap">
+        <div>
+          <div class="text-muted small text-uppercase">Section 4 &middot; Academic Lecture</div>
+          <h4 class="fw-bold mb-0" id="lectureTitle">&mdash;</h4>
+          <div class="text-muted small">Topic: <span id="lectureTopic"></span> &middot; Est. length: <span id="lectureDuration"></span></div>
+        </div>
+      </div>
+
+      <div class="il-audio-box">
+        <div class="il-audio-meta" id="audioMeta">Click Play to hear the lecture</div>
+        <button class="il-play-btn" id="playBtn" onclick="togglePlay()">▶ Play Lecture</button>
+        <span class="il-timer" id="playTimer">00:00</span>
+      </div>
+    </div>
+
+    <div class="il-card">
+      <h5 class="fw-bold mb-3">Questions</h5>
+      <div id="questionsList"></div>
+    </div>
+
+    <div class="il-card text-center">
+      <button class="btn btn-success btn-lg" id="submitBtn" onclick="submitAnswers()">
+        Submit Answers &mdash; 10 credits
+      </button>
+      <div class="small text-muted mt-2" id="answeredCount">0 / 10 answered</div>
+    </div>
+
+  </div>
+
+  <div id="scoreCard" class="il-card" style="display:none;">
+    <div class="text-center mb-4">
+      <div class="text-uppercase small text-muted mb-1">Band Score</div>
+      <div class="il-band-big" id="bandValue">&mdash;</div>
+      <div class="text-muted mt-2"><span id="correctCount">0</span> / <span id="totalCount">10</span> correct</div>
+    </div>
+
+    <h6 class="fw-bold mb-3">Question Review</h6>
+    <div id="reviewList"></div>
+
+    <div class="mt-4">
+      <h6 class="fw-bold mb-2">Transcript</h6>
+      <div class="il-transcript" id="transcriptText"></div>
+    </div>
+
+    <div class="text-center mt-4">
+      <button class="btn btn-outline-primary me-2" onclick="resetPage()">New Lecture</button>
+      <a href="/ielts" class="btn btn-outline-secondary">Back to IELTS Hub</a>
+    </div>
+  </div>
+
+  <div id="errorBox" class="alert alert-danger mt-3" style="display:none;"></div>
+
+</div>
+
+<script>
+// =============================================================
+// X4e — IELTS Listening page logic
+// =============================================================
+var IL = {
+  email: localStorage.getItem('userEmail') || '',
+  section: null,
+  answers: {},       // {q_index: option_idx}
+  audio: null,
+  playing: false,
+  playInterval: null,
+  playSeconds: 0,
+  totalSeconds: 0,
+  loadingAudio: false
+};
+
+async function startLecture() {
+  var btn = document.getElementById('startBtn');
+  btn.disabled = true;
+  btn.textContent = 'Loading...';
+  document.getElementById('startStatus').textContent = 'Fetching lecture...';
+  document.getElementById('errorBox').style.display = 'none';
+
+  try {
+    var r = await fetch('/api/ielts/listening/section', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({email: IL.email, section_num: 4})
+    });
+    var j = await r.json();
+    if (j.status !== 'success') {
+      return ilErr(j.message || 'Could not load a lecture.');
+    }
+    IL.section = j;
+    IL.answers = {};
+    renderSession(j);
+  } catch (e) {
+    ilErr('Network error: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Load Lecture — 5 credits';
+    document.getElementById('startStatus').textContent = '';
+  }
+}
+
+function renderSession(j) {
+  document.getElementById('introCard').style.display = 'none';
+  document.getElementById('startCard').style.display = 'none';
+  document.getElementById('sessionCard').style.display = 'block';
+  document.getElementById('scoreCard').style.display = 'none';
+
+  document.getElementById('lectureTitle').textContent = j.title || 'Academic Lecture';
+  document.getElementById('lectureTopic').textContent = j.topic || '-';
+  document.getElementById('lectureDuration').textContent = formatDuration(j.duration_sec || 180);
+  document.getElementById('audioMeta').textContent = 'Click Play to hear the lecture (' + formatDuration(j.duration_sec || 180) + ')';
+  document.getElementById('totalCount').textContent = j.total_questions || 10;
+
+  // Build questions
+  var list = document.getElementById('questionsList');
+  list.innerHTML = (j.questions || []).map(function(q, i) {
+    return '<div class="il-q-block">' +
+      '<div class="il-q-text">Q' + (i + 1) + '. ' + escapeHtml(q.q) + '</div>' +
+      (q.options || []).map(function(o, oi) {
+        var letter = String.fromCharCode(65 + oi);  // A, B, C, D
+        return '<label class="il-opt" data-q="' + i + '" data-oi="' + oi + '" onclick="selectAnswer(' + i + ',' + oi + ', this)">' +
+          '<input type="radio" name="q' + i + '" value="' + oi + '"> ' +
+          '<strong>' + letter + ')</strong> ' + escapeHtml(o) +
+          '</label>';
+      }).join('') +
+      '</div>';
+  }).join('');
+
+  updateAnsweredCount();
+}
+
+function selectAnswer(qIdx, optIdx, el) {
+  IL.answers[qIdx] = optIdx;
+  // Unselect siblings
+  var siblings = document.querySelectorAll('[data-q="' + qIdx + '"]');
+  siblings.forEach(function(s) { s.classList.remove('selected'); });
+  el.classList.add('selected');
+  updateAnsweredCount();
+}
+
+function updateAnsweredCount() {
+  var total = (IL.section && IL.section.total_questions) || 10;
+  var done = Object.keys(IL.answers).length;
+  document.getElementById('answeredCount').textContent = done + ' / ' + total + ' answered';
+}
+
+async function togglePlay() {
+  var btn = document.getElementById('playBtn');
+  if (IL.playing) {
+    // Stop
+    if (IL.audio) { IL.audio.pause(); IL.audio.currentTime = 0; }
+    if (window.speechSynthesis) speechSynthesis.cancel();
+    IL.playing = false;
+    clearInterval(IL.playInterval);
+    btn.textContent = '▶ Play Lecture';
+    btn.classList.remove('playing');
+    return;
+  }
+
+  if (IL.loadingAudio) return;
+  IL.loadingAudio = true;
+  btn.disabled = true;
+  btn.textContent = 'Loading audio...';
+
+  try {
+    var r = await fetch('/api/voice/tts', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        email: IL.email,
+        text: IL.section.transcript
+      })
+    });
+    var j = await r.json();
+
+    if (j.status === 'success' && j.audio_base64) {
+      playBase64(j.audio_base64, btn);
+    } else {
+      // Fallback to browser TTS
+      playBrowserTTS(btn);
+    }
+  } catch (e) {
+    playBrowserTTS(btn);
+  } finally {
+    IL.loadingAudio = false;
+    btn.disabled = false;
+  }
+}
+
+function playBase64(b64, btn) {
+  IL.audio = new Audio('data:audio/mpeg;base64,' + b64);
+  IL.audio.onended = function() { resetPlayButton(btn); };
+  IL.audio.onerror = function() { playBrowserTTS(btn); };
+  IL.audio.play().then(function() {
+    IL.playing = true;
+    btn.textContent = '⏸ Stop Lecture';
+    btn.classList.add('playing');
+    startTimer();
+  }).catch(function() { playBrowserTTS(btn); });
+}
+
+function playBrowserTTS(btn) {
+  if (!window.speechSynthesis) {
+    return ilErr('Audio unavailable in this browser.');
+  }
+  var u = new SpeechSynthesisUtterance(IL.section.transcript);
+  u.lang = 'en-US';
+  u.rate = 0.95;
+  u.onend = function() { resetPlayButton(btn); };
+  u.onerror = function() { resetPlayButton(btn); };
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
+  IL.playing = true;
+  btn.textContent = '⏸ Stop Lecture';
+  btn.classList.add('playing');
+  startTimer();
+}
+
+function startTimer() {
+  IL.playSeconds = 0;
+  IL.totalSeconds = IL.section.duration_sec || 180;
+  clearInterval(IL.playInterval);
+  IL.playInterval = setInterval(function() {
+    IL.playSeconds++;
+    if (IL.playSeconds > IL.totalSeconds + 60) { IL.playSeconds = IL.totalSeconds + 60; }
+    document.getElementById('playTimer').textContent = formatSeconds(IL.playSeconds);
+  }, 1000);
+}
+
+function resetPlayButton(btn) {
+  IL.playing = false;
+  clearInterval(IL.playInterval);
+  btn.textContent = '▶ Play Again';
+  btn.classList.remove('playing');
+  document.getElementById('playTimer').textContent = '00:00';
+}
+
+async function submitAnswers() {
+  if (!IL.section) return;
+  var btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Scoring...';
+  document.getElementById('errorBox').style.display = 'none';
+
+  // Build answers array (index → selected, or -1)
+  var total = IL.section.total_questions || 10;
+  var arr = [];
+  for (var i = 0; i < total; i++) {
+    arr.push(IL.answers[i] !== undefined ? IL.answers[i] : -1);
+  }
+
+  try {
+    var r = await fetch('/api/ielts/listening/score', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        email: IL.email,
+        section_id: IL.section.section_id,
+        answers: arr
+      })
+    });
+    var j = await r.json();
+    if (j.status !== 'success') {
+      return ilErr(j.message || 'Scoring failed.');
+    }
+    renderScorecard(j);
+  } catch (e) {
+    ilErr('Network error: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Submit Answers — 10 credits';
+  }
+}
+
+function renderScorecard(j) {
+  document.getElementById('bandValue').textContent = (j.band_score || 0).toFixed(1);
+  document.getElementById('correctCount').textContent = j.correct_count;
+  document.getElementById('totalCount').textContent = j.total_questions;
+  document.getElementById('transcriptText').textContent = IL.section.transcript || '';
+
+  // Build review
+  var html = '';
+  (j.results || []).forEach(function(r, i) {
+    var q = IL.section.questions[i];
+    var selected = r.selected;
+    var correct = r.correct_idx;
+    html += '<div class="il-q-block">';
+    html += '<div class="il-q-text">Q' + (i + 1) + '. ' + escapeHtml(q.q) + '</div>';
+    (q.options || []).forEach(function(o, oi) {
+      var cls = 'il-opt';
+      var mark = '';
+      if (oi === correct) { cls += ' correct'; mark = ' ✓ correct'; }
+      else if (oi === selected) { cls += ' wrong'; mark = ' ✗ your answer'; }
+      html += '<div class="' + cls + '"><strong>' + String.fromCharCode(65 + oi) + ')</strong> ' + escapeHtml(o) + mark + '</div>';
+    });
+    if (r.explanation) {
+      html += '<div class="small text-muted mt-2"><strong>Explanation:</strong> ' + escapeHtml(r.explanation) + '</div>';
+    }
+    html += '</div>';
+  });
+  document.getElementById('reviewList').innerHTML = html;
+
+  document.getElementById('sessionCard').style.display = 'none';
+  document.getElementById('scoreCard').style.display = 'block';
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function resetPage() {
+  IL.section = null;
+  IL.answers = {};
+  if (IL.audio) { IL.audio.pause(); IL.audio = null; }
+  if (window.speechSynthesis) speechSynthesis.cancel();
+  clearInterval(IL.playInterval);
+  document.getElementById('introCard').style.display = 'block';
+  document.getElementById('startCard').style.display = 'block';
+  document.getElementById('sessionCard').style.display = 'none';
+  document.getElementById('scoreCard').style.display = 'none';
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function ilErr(msg) {
+  var el = document.getElementById('errorBox');
+  el.textContent = msg;
+  el.style.display = 'block';
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function formatDuration(sec) {
+  var m = Math.floor(sec / 60);
+  var s = sec % 60;
+  return m + 'm ' + (s < 10 ? '0' + s : s) + 's';
+}
+
+function formatSeconds(sec) {
+  var m = String(Math.floor(sec / 60)).padStart(2, '0');
+  var s = String(sec % 60).padStart(2, '0');
+  return m + ':' + s;
+}
+
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+</script>
+{% endblock %}
