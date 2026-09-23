@@ -13,7 +13,7 @@
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-body">
             <h2 class="as-h5">Create an Event</h2>
-            <form onsubmit="createEvent(event)">
+            <form onsubmit="charvakCreateEvent(event)">
                 <div class="row g-3">
                     <div class="col-md-6"><input type="text" class="form-control" id="eventTitle" placeholder="Event Title" required></div>
                     <div class="col-md-6">
@@ -41,7 +41,7 @@
         <p class="text-muted text-center">No upcoming events. Check back soon!</p>
     </div>
 </div>
-﻿<script>
+<script>
 function escapeHtml(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){
         return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
@@ -149,7 +149,7 @@ async function rsvpPaid(eventId, priceInr) {
         rzp.open();
     } catch (e) { alert("Payment initiation failed: " + e.message); }
 }
-function createEvent(evt) {
+function charvakCreateEvent(evt) {
     evt.preventDefault();
     var payload = {
         title: document.getElementById("eventTitle").value,
@@ -168,35 +168,5 @@ function createEvent(evt) {
     .then(function(d){ alert(d.message || "Event created"); if (d.status === "success") loadEvents(); });
 }
 document.addEventListener("DOMContentLoaded", loadEvents);
-</script>
-<script>
-async function createEvent(e) {
-    e.preventDefault();
-    const data = {
-        title: document.getElementById('eventTitle').value,
-        event_type: document.getElementById('eventType').value,
-        date: document.getElementById('eventDate').value,
-        duration_minutes: parseInt(document.getElementById('eventDuration').value),
-        platform: document.getElementById('eventPlatform').value || 'zoom',
-        max_attendees: parseInt(document.getElementById('eventMaxAttendees').value),
-        description: document.getElementById('eventDescription').value,
-        organizer_name: 'Charvak'
-    };
-    const resp = await fetch('/api/events/create', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(data)
-    });
-    const result = await resp.json();
-    alert(result.message || 'Event created!');
-    location.reload();
-}
-</script>
-<script>
-function registerForEvent(event) {
-    event.preventDefault();
-    // Session G6: feature under development — capture interest instead
-    window.notifyMe('Event Registration');
-}
 </script>
 {% endblock %}
