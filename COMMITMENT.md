@@ -3,7 +3,7 @@
 **Purpose:** Track every planned-but-not-completed item. Nothing gets lost again.
 **Created:** 2026-09-20
 **Last updated:** 2026-09-22
-**HEAD:** `3ff3586`
+**HEAD:** `eadfb4f`
 
 ---
 
@@ -50,6 +50,38 @@
   - Optional: curate top 5 exams manually for extra polish
 - **HEAD after:** *(pending commit)*
 - **Next:** Session N3 (IELTS Speaking or Onboarding)
+
+### C13 — Curated question banks (pragmatic automated approach)
+
+- **Completed:** 2026-09-23 (partial-complete, pragmatic scope)
+- **Commits:** `02a21a4` `92390d4` `eadfb4f`
+- **What shipped:**
+  - **Layer 1 — `scripts/validate_questions.py`:** deterministic structural validator
+    - Checks: option count == 4, correct_index in range, no dup options, no empty options, question text length ≥ 15, explanation present, prefix consistency
+    - Deleted **126 truly-broken questions** (69 option_count_8, 33 truncated, 21 dup-options, 3 malformed)
+    - **31 false positives eliminated** — smarter `has_prefix` avoids flagging Indian names like "B. R. Ambedkar"
+    - Bank: **12,647 → 12,521 valid** (99.86% structurally clean)
+    - **Cost: $0, time: 10 seconds**
+  - **Layer 2 — `scripts/ai_verify_questions.py` (built but NOT USED):**
+    - Batch AI verification via gpt-4o-mini
+    - **Test sample:** 2 flags raised, both false positives (100% error rate)
+    - Decision: **skip AI content verification** — LLMs unreliable for factual MCQ correctness
+  - **Layer 3 — User report system:**
+    - Schema: `reported`, `reported_at`, `reported_by`, `report_reason` columns
+    - Endpoint: `POST /api/questions/report`
+    - UI: "⚠ Report" link next to each question in `exam-prep.html`
+    - Verified end-to-end (report → DB row confirmed)
+  - **CLI extension — `scripts/review_questions.py`:**
+    - Interactive approve/reject/edit/skip/back/quit workflow
+    - `--reported` flag for triaging user-reported questions
+    - `--exam`, `--topic`, `--limit`, `--random` filters
+  - **`.gitignore` housekeeping:** whitelisted C13 scripts (`validate_questions.py`, `review_questions.py`, `ai_verify_questions.py`)
+- **Not in scope (deferred):**
+  - Full manual review of all 138 exams (diminishing returns; user reports drive ongoing curation)
+  - Layer 2 AI verification (unreliable at `gpt-4o-mini`; `gpt-4o` cost-benefit unclear)
+  - Admin review UI page (CLI is sufficient for current volume)
+- **Verdict:** DEFERRED completion; infrastructure shipped; curation is ongoing via user reports
+- **HEAD after:** `eadfb4f`
 
 ### W4 — Cross-test results dashboard (2026-09-23)
 
