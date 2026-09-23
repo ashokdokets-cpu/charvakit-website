@@ -3,6 +3,25 @@
 {% block description %}{{ post.seo_description }}{% endblock %}
 {% block og_title %}{{ post.title }} | Charvak Blog{% endblock %}
 {% block content %}
+<style>
+  .blog-content { font-size: 1.05rem; line-height: 1.75; color: #1f2937; }
+  .blog-content h1 { display: none; }
+  .blog-content h2 { font-weight: 800; font-size: 1.5rem; margin-top: 36px; margin-bottom: 14px; color: #111827; }
+  .blog-content h3 { font-weight: 700; font-size: 1.2rem; margin-top: 28px; margin-bottom: 12px; color: #1e40af; }
+  .blog-content p { margin-bottom: 18px; }
+  .blog-content ul, .blog-content ol { margin-bottom: 18px; padding-left: 28px; }
+  .blog-content li { margin-bottom: 8px; }
+  .blog-content strong { color: #111827; }
+  .blog-content a { color: #1e40af; text-decoration: underline; }
+  .blog-content a:hover { color: #3730a3; }
+  .blog-content blockquote { border-left: 4px solid #93c5fd; background: #eff6ff; padding: 16px 20px; margin: 22px 0; color: #1e40af; border-radius: 6px; }
+  .blog-content code { background: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-size: 0.92rem; }
+  .blog-content pre { background: #0f172a; color: #e5e7eb; padding: 20px; border-radius: 10px; overflow-x: auto; }
+  .blog-content pre code { background: transparent; color: inherit; padding: 0; }
+  .blog-content table { width: 100%; border-collapse: collapse; margin: 22px 0; }
+  .blog-content th, .blog-content td { padding: 10px 12px; border-bottom: 1px solid #e5e7eb; text-align: left; }
+  .blog-content th { background: #f9fafb; font-weight: 600; }
+</style>
 <div class="container py-5">
     <div class="row"><div class="col-lg-8 mx-auto">
         <span class="badge bg-primary">{{ post.category }}</span>
@@ -11,9 +30,7 @@
         <div class="mb-3">{% for tag in post.tags %}<span class="badge bg-light text-dark me-1">{{ tag }}</span>{% endfor %}</div>
         <hr>
         <div class="blog-content">
-            {% for paragraph in post.content.split('\n\n') %}
-                <p>{{ paragraph }}</p>
-            {% endfor %}
+            {{ post.content | safe }}
         </div>
         <hr>
         <div class="text-center"><a href="/blog" class="btn btn-outline-primary">← Back to Blog</a></div>
