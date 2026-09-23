@@ -75,7 +75,7 @@ async function loadEvents() {
                 if (isPaid) {
                     buttonsHtml = '<div class="d-grid gap-2">' +
                         '<button class="btn btn-primary btn-sm" onclick="rsvpFree(&quot;' + e.event_id + '&quot;)">RSVP Free</button>' +
-                        '<button class="btn btn-warning btn-sm" onclick="rsvpPaid(&quot;' + e.event_id + '&quot;, ' + price + ')">Upgrade to Pro</button>' +
+                        '<button class="btn btn-warning btn-sm" onclick="rsvpPaid(&quot;' + e.event_id + '&quot;, ' + priceInr + ')">Upgrade to Pro</button>' +
                         '</div>';
                 } else {
                     buttonsHtml = '<button class="btn btn-primary btn-sm w-100" onclick="rsvpFree(&quot;' + e.event_id + '&quot;)">RSVP Now</button>';
