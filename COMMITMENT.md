@@ -3,7 +3,7 @@
 **Purpose:** Track every planned-but-not-completed item. Nothing gets lost again.
 **Created:** 2026-09-20
 **Last updated:** 2026-09-22
-**HEAD:** d9ff133
+**HEAD:** `32da091`
 
 
 ### X5 — IELTS Reading + all-4 sections Listening (2026-09-23)
