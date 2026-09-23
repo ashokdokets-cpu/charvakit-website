@@ -18,38 +18,48 @@ class IELTSEngine:
     SECTIONS = [
         {
             "id": "listening", "name": "Listening",
-            "questions": 10, "duration_min": 25,
+            "questions": 10,          # per session (10 MCQs)
+            "total_questions_available": 140,   # 14 sections × 10
+            "duration_min": 25,
             "available": True,
             "practice_url": "/ielts-listening",
-            "content_count": 14,
+            "content_count": 14,      # pre-seeded sections
+            "content_type": "pre_seeded",
             "subsections": ["Section 1 — Conversation", "Section 2 — Monologue",
                             "Section 3 — Academic Discussion", "Section 4 — Lecture"],
             "note": "14 pre-generated sections with TTS audio. 10 MCQs per section. AI band scoring.",
         },
         {
             "id": "reading", "name": "Reading",
-            "questions": 10, "duration_min": 20,
+            "questions": 10,          # per session (10 MCQs)
+            "total_questions_available": 90,    # 9 passages × 10
+            "duration_min": 20,
             "available": True,
             "practice_url": "/ielts-reading",
-            "content_count": 9,
+            "content_count": 9,       # pre-seeded passages
+            "content_type": "pre_seeded",
             "subsections": ["Passage 1 — Easiest", "Passage 2 — Medium", "Passage 3 — Hardest"],
             "note": "9 passages across 3 difficulty tiers. 10 MCQs per passage. AI band scoring.",
         },
         {
             "id": "writing", "name": "Writing",
-            "questions": 2, "duration_min": 60,
+            "questions": 2,           # 1 Task 1 + 1 Task 2
+            "duration_min": 60,
             "available": True,
             "practice_url": "/ielts-writing",
-            "content_count": 0,
+            "content_count": -1,      # -1 = unlimited (AI-generated per session)
+            "content_type": "ai_generated",
             "subsections": ["Task 1 — 150 words", "Task 2 — 250 words"],
             "note": "Fresh AI-generated prompts per session. Band scoring on 4 official criteria.",
         },
         {
             "id": "speaking", "name": "Speaking",
-            "questions": 3, "duration_min": 14,
+            "questions": 3,           # 3 parts
+            "duration_min": 14,
             "available": True,
             "practice_url": "/ielts-speaking",
-            "content_count": 0,
+            "content_count": -1,      # -1 = unlimited (AI-generated per session)
+            "content_type": "ai_generated",
             "subsections": ["Part 1 — Interview", "Part 2 — Long Turn", "Part 3 — Discussion"],
             "note": "Full 3-part test. Whisper transcription + AI band scoring on 4 criteria.",
         },
