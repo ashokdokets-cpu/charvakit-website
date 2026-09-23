@@ -37,7 +37,7 @@
 <div class="il-hero">
   <div class="container text-center">
     <h1>IELTS Listening Practice</h1>
-    <p>4 sections &middot; 40 questions &middot; AI band scoring</p>
+    <p>Real IELTS format &middot; 4 section types &middot; TTS audio &middot; AI band scoring</p>
   </div>
 </div>
 
@@ -63,20 +63,28 @@
     <div class="il-section-tabs" id="sectionTabs">
       <div class="il-section-tab" data-sec="1" onclick="selectSection(1)">
         <strong>Section 1</strong><br>
-        <small class="text-muted">Conversation</small>
+        <small class="text-muted">Conversation</small><br>
+        <small class="text-muted">10 Qs</small>
       </div>
       <div class="il-section-tab" data-sec="2" onclick="selectSection(2)">
         <strong>Section 2</strong><br>
-        <small class="text-muted">Monologue</small>
+        <small class="text-muted">Monologue</small><br>
+        <small class="text-muted">10 Qs</small>
       </div>
       <div class="il-section-tab" data-sec="3" onclick="selectSection(3)">
         <strong>Section 3</strong><br>
-        <small class="text-muted">Discussion</small>
+        <small class="text-muted">Discussion</small><br>
+        <small class="text-muted">10 Qs</small>
       </div>
       <div class="il-section-tab active" data-sec="4" onclick="selectSection(4)">
         <strong>Section 4</strong><br>
-        <small class="text-muted">Lecture</small>
+        <small class="text-muted">Lecture</small><br>
+        <small class="text-muted">10 Qs</small>
       </div>
+    </div>
+    <div id="sectionDescription" class="alert alert-light border small mt-3 mb-0">
+      <strong id="sectionDescTitle">Section 4 &middot; Academic Lecture</strong>
+      <div id="sectionDescBody" class="text-muted mt-1">A 3-4 minute academic lecture. Listen once, take notes, then answer 10 comprehension questions.</div>
     </div>
     <button class="btn btn-primary mt-3" id="startBtn" onclick="startLecture()">
       Load Section &mdash; 5 credits
@@ -163,6 +171,13 @@ var SECTION_LABELS = {
   2: 'Section 2 — Monologue',
   3: 'Section 3 — Academic Discussion',
   4: 'Section 4 — Academic Lecture'
+};
+
+var SECTION_DESCRIPTIONS = {
+  1: { title: "Section 1 - Conversation", body: "A conversation between two speakers. Listen for names, numbers, prices, and times." },
+  2: { title: "Section 2 - Monologue", body: "A single speaker on a general topic. Listen for specific facts and directions." },
+  3: { title: "Section 3 - Academic Discussion", body: "A discussion between students and a tutor. Listen for opinions and reasoning." },
+  4: { title: "Section 4 - Academic Lecture", body: "A 3-4 minute academic lecture. Listen once, take notes, answer 10 comprehension questions." }
 };
 
 function selectSection(n) {
