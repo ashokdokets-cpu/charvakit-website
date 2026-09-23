@@ -364,6 +364,21 @@
   template literals) deferred to a follow-up session.
 - **Backwards compatible:** pages render English by default.
 
+
+### C7-AA4a — Events paid tier (2026-09-24)
+
+- **Commits:** `3de2d13` `96177f7` `2684720` `fc46ac7` `5e19057` `d9c197f`
+- **What shipped:**
+  - **Schema:** `charvak_events.price_inr`; `charvak_event_rsvps.tier`, `paid`, `payment_id`
+  - **Engine:** `events_engine.rsvp_paid()` (idempotent, verifies `price_inr > 0`, writes RSVP with payment_id)
+  - **Route:** `POST /api/events/rsvp-paid`
+  - **Frontend:** tier selector (Free / ₹499 Pro), Razorpay modal integration, real user data from localStorage
+  - **Currency:** local conversion using `CharvakCurrency` helper (INR → USD/EUR/GBP/...)
+  - **Symbols:** fixed mojibake in `currency-utils.js`
+- **Verified:** India shows ₹499, USD shows $5.99, upgrade opens Razorpay modal
+- **C7 progress:** 1 of 18 templates complete (events.html)
+- **Next:** AA4b (ats.html), AA4c (reports.html)
+
 ### C7 â€” Build 13 Category-B feature backends (post-G6)
 
 - **Discovered:** 2026-09-21 (Session G6 revenue audit)
