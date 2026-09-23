@@ -3,7 +3,33 @@
 **Purpose:** Track every planned-but-not-completed item. Nothing gets lost again.
 **Created:** 2026-09-20
 **Last updated:** 2026-09-22
-**HEAD:** `eadfb4f`
+**HEAD:** d9ff133
+
+
+### X4 — IELTS Listening Section 4 (2026-09-23)
+
+- **Commits:** `62d9f0d` `d9ff133`
+- **What shipped:**
+  - **DB tables:** `charvak_ielts_listening_sections` (10 cols) + `charvak_ielts_listening_attempts` (8 cols)
+  - **Seed script:** `scripts/seed_ielts_listening.py` — generates 5 lectures via AI
+    - 5 Section-4 lectures seeded (Bioacoustics, Microbiomes ×2, Microplastics ×2)
+    - Each: 420-550 words, 10 MCQs, topic + title
+  - **Engine methods:** `get_listening_section()`, `evaluate_listening()`, `_listening_band()`
+  - **Routes:** `/ielts-listening` page + `/api/ielts/listening/{section,score}`
+  - **Credit keys:** `ielts_listening_section` (5), `ielts_listening_score` (10)
+  - **Frontend:** `templates/ielts-listening.html` (371 lines)
+    - Audio player + timer
+    - 10 MCQ questions with radio options
+    - Scorecard: band + review (✓/✗ per option) + explanations
+    - Transcript shown after scoring
+- **Verified in prod:**
+  - Full flow: Load Lecture → Play → Answer → Submit → Band score
+  - Band 5.5 for 5/10 correct (scoring works)
+  - TTS audio plays (ElevenLabs primary, browser fallback)
+- **Notes:**
+  - Sections 1-3 not yet seeded (Section 4 only, per scope decision)
+  - ElevenLabs TTS handles ~3.7K chars per lecture
+- **HEAD after:** `d9ff133`
 
 ---
 
