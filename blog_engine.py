@@ -94,8 +94,8 @@ def list_posts() -> List[Dict]:
     return posts
 
 
-def get_post(slug: str) -> Optional[Dict]:
-    """Return a single post with rendered HTML body, or None."""
+def _get_post_raw(slug: str) -> Optional[Dict]:
+    """Internal: load post dict (no wrapping). Returns None if not found."""
     if not BLOG_DIR.exists():
         return None
     if "/" in slug or "\\" in slug or ".." in slug:
@@ -109,9 +109,11 @@ def get_post(slug: str) -> Optional[Dict]:
         raw = path.read_text(encoding="utf-8")
         fm, body = _parse_frontmatter(raw)
         rendered = _render_markdown(body)
+        title = fm.get("title", slug.replace("-", " ").title())
         return {
             "slug": slug,
-            "title": fm.get("title", slug.replace("-", " ").title()),
+            "title": title,
+            "seo_title": title + " — Charvak Blog",
             "description": fm.get("description", ""),
             "date": fm.get("date", ""),
             "author": fm.get("author", "Charvak Team"),
@@ -123,7 +125,84 @@ def get_post(slug: str) -> Optional[Dict]:
         return None
 
 
-blog_engine = type("BlogEngine", (), {
-    "list_posts": staticmethod(list_posts),
-    "get_post": staticmethod(get_post),
-})()
+def get_post(slug: str) -> Dict:
+    """Return {status, post, related} — legacy contract used by /blog/{slug} route."""
+    post = _get_post_raw(slug)
+    if not post:
+        return {"status": "error", "message": "Post not found"}
+
+    enriched = _enrich_post(post)
+    enriched["content"] = post.get("content_html", "")
+
+    # Related: 3 other posts, prefer same category/tag
+    all_posts = [_enrich_post(p) for p in list_posts()]
+    related = []
+    cat = enriched.get("category", "")
+    for p in all_posts:
+        if p["slug"] == slug:
+            continue
+        if cat and cat in (p.get("tags") or []):
+            related.insert(0, p)
+        else:
+            related.append(p)
+    related = related[:3]
+
+    return {"status": "success", "post": enriched, "related": related}
+
+
+def get_post_simple(slug: str) -> Optional[Dict]:
+    """Return the raw post dict (no wrapping). Used internally."""
+    return _get_post_raw(slug)
+
+
+def _enrich_post(p: Dict) -> Dict:
+    """Add fields expected by existing blog templates/routes."""
+    enriched = dict(p)
+    # Alias description -> excerpt
+    enriched.setdefault("excerpt", p.get("description", ""))
+    # Alias date -> published_at (ISO with time)
+    d = p.get("date") or ""
+    enriched.setdefault("published_at", (d + "T00:00:00") if d else "")
+    # Category — first tag as category, or 'general'
+    tags = p.get("tags") or []
+    enriched.setdefault("category", tags[0] if tags else "general")
+    # Estimated reading time from word count
+    try:
+        raw = (BLOG_DIR / f"{p['slug']}.md").read_text(encoding="utf-8")
+        _, body = _parse_frontmatter(raw)
+        words = len(body.split())
+        enriched.setdefault("read_time", f"{max(1, words // 200)} min")
+    except Exception:
+        enriched.setdefault("read_time", "5 min")
+    return enriched
+
+
+def get_all_posts(category=None, tag=None):
+    """Return {count, posts} — legacy API with enriched fields."""
+    posts = [_enrich_post(p) for p in list_posts()]
+    filter_val = category or tag
+    if filter_val:
+        posts = [p for p in posts if filter_val in (p.get("tags") or []) or filter_val == p.get("category")]
+    return {"count": len(posts), "posts": posts}
+
+
+def get_post_legacy(slug):
+    """Return {status, post, related} — matches existing /blog/{slug} contract."""
+    return get_post(slug)
+
+
+def get_post_by_slug(slug):
+    """Legacy alias — returns post dict directly (unwrapped)."""
+    return _get_post_raw(slug)
+
+
+class BlogEngine:
+    list_posts = staticmethod(list_posts)
+    get_post = staticmethod(get_post)
+    get_post_simple = staticmethod(get_post_simple)
+    get_post_legacy = staticmethod(get_post_legacy)
+    get_all_posts = staticmethod(get_all_posts)
+    get_post_by_slug = staticmethod(get_post_by_slug)
+
+
+blog_engine = BlogEngine()
