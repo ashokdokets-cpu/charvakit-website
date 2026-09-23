@@ -311,6 +311,172 @@ class IELTSEngine:
 
 
     # ============================================================
+    # LISTENING (Session X4)
+    # ============================================================
+
+    def get_listening_section(self, section_num: int = 4) -> Dict:
+        """Return a random under-used section from the bank.
+
+        The client side must request TTS audio separately via /api/voice/tts.
+        """
+        if section_num not in (1, 2, 3, 4):
+            return {"status": "error", "message": "section_num must be 1-4"}
+
+        try:
+            from database import db
+            conn = db.get_pooled_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT section_id, section_num, title, topic, transcript,
+                       duration_sec, questions_json, use_count
+                FROM charvak_ielts_listening_sections
+                WHERE section_num = %s
+                ORDER BY use_count ASC, RANDOM()
+                LIMIT 1
+            """, (section_num,))
+            row = cur.fetchone()
+            if not row:
+                cur.close()
+                db.release_pooled_connection(conn)
+                return {"status": "error", "message": f"No Section {section_num} lectures available"}
+
+            # Bump usage counter
+            cur.execute("""
+                UPDATE charvak_ielts_listening_sections
+                SET use_count = use_count + 1, last_used_at = NOW()
+                WHERE section_id = %s
+            """, (row[0],))
+            conn.commit()
+            cur.close()
+            db.release_pooled_connection(conn)
+        except Exception as e:
+            logger.error(f"get_listening_section failed: {e}")
+            return {"status": "error", "message": str(e)}
+
+        qs = row[6] if isinstance(row[6], list) else json.loads(row[6] or "[]")
+        # Return questions WITHOUT correct_idx (don't leak answers to client)
+        safe_qs = []
+        for i, q in enumerate(qs):
+            safe_qs.append({
+                "index": i,
+                "q": q.get("q", ""),
+                "options": q.get("options", []),
+            })
+
+        return {
+            "status": "success",
+            "section_id": row[0],
+            "section_num": row[1],
+            "title": row[2],
+            "topic": row[3],
+            "transcript": row[4],
+            "duration_sec": row[5] or 180,
+            "questions": safe_qs,
+            "total_questions": len(safe_qs),
+        }
+
+    def evaluate_listening(self, section_id: str, answers: List[int],
+                           email: Optional[str] = None) -> Dict:
+        """Score MCQ answers for a listening section.
+
+        answers: list of selected indices (0-3), ordered by question index.
+                 -1 means unanswered.
+        """
+        if not section_id:
+            return {"status": "error", "message": "section_id required"}
+        if not isinstance(answers, list):
+            return {"status": "error", "message": "answers must be a list"}
+
+        try:
+            from database import db
+            conn = db.get_pooled_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT section_num, title, topic, questions_json
+                FROM charvak_ielts_listening_sections
+                WHERE section_id = %s
+            """, (section_id,))
+            row = cur.fetchone()
+            cur.close()
+            db.release_pooled_connection(conn)
+        except Exception as e:
+            logger.error(f"evaluate_listening fetch failed: {e}")
+            return {"status": "error", "message": str(e)}
+
+        if not row:
+            return {"status": "error", "message": "section not found"}
+
+        qs = row[3] if isinstance(row[3], list) else json.loads(row[3] or "[]")
+        total = len(qs)
+        correct = 0
+        results = []
+        for i, q in enumerate(qs):
+            try:
+                sel = int(answers[i]) if i < len(answers) else -1
+            except Exception:
+                sel = -1
+            is_correct = (sel == q.get("correct_idx", -1))
+            if is_correct:
+                correct += 1
+            results.append({
+                "index": i,
+                "selected": sel,
+                "correct_idx": q.get("correct_idx", -1),
+                "is_correct": is_correct,
+                "explanation": q.get("explanation", ""),
+            })
+
+        # Band conversion (approximate — IELTS listening 40 Qs = band 9)
+        band = self._listening_band(correct, total)
+
+        # Persist attempt
+        if email:
+            try:
+                conn = db.get_pooled_connection()
+                cur = conn.cursor()
+                cur.execute("""
+                    INSERT INTO charvak_ielts_listening_attempts
+                        (section_id, email, answers_json, correct_count,
+                         total_questions, band_score)
+                    VALUES (%s, %s, %s::jsonb, %s, %s, %s)
+                """, (section_id, email, json.dumps(answers), correct, total, band))
+                conn.commit()
+                cur.close()
+                db.release_pooled_connection(conn)
+            except Exception as e:
+                logger.warning(f"listening attempt persist failed: {e}")
+
+        return {
+            "status": "success",
+            "section_id": section_id,
+            "section_num": row[0],
+            "title": row[1],
+            "topic": row[2],
+            "correct_count": correct,
+            "total_questions": total,
+            "band_score": band,
+            "results": results,
+        }
+
+    @staticmethod
+    def _listening_band(correct: int, total: int) -> float:
+        """Approximate IELTS band from accuracy on this section."""
+        if total == 0:
+            return 0.0
+        pct = correct / total
+        # Simple IELTS-like mapping
+        table = [
+            (0.95, 9.0), (0.90, 8.5), (0.85, 8.0), (0.80, 7.5),
+            (0.72, 7.0), (0.65, 6.5), (0.58, 6.0), (0.50, 5.5),
+            (0.42, 5.0), (0.35, 4.5), (0.28, 4.0), (0.20, 3.5),
+            (0.12, 3.0), (0.05, 2.5),
+        ]
+        for threshold, band in table:
+            if pct >= threshold:
+                return band
+        return 2.0
+
+    # ============================================================
     # SPEAKING (Session N4)
     # ============================================================
 
