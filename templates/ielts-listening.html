@@ -37,7 +37,7 @@
 <div class="il-hero">
   <div class="container text-center">
     <h1>IELTS Listening Practice</h1>
-    <p>Section 4 &middot; Academic Lecture &middot; 10 MCQ questions &middot; AI band scoring</p>
+    <p>4 sections &middot; 40 questions &middot; AI band scoring</p>
   </div>
 </div>
 
@@ -59,9 +59,27 @@
   </div>
 
   <div id="startCard" class="il-card">
-    <h5 class="fw-bold mb-3">Start a lecture</h5>
-    <button class="btn btn-primary" id="startBtn" onclick="startLecture()">
-      Load Lecture &mdash; 5 credits
+    <h5 class="fw-bold mb-3">Choose a section</h5>
+    <div class="il-section-tabs" id="sectionTabs">
+      <div class="il-section-tab" data-sec="1" onclick="selectSection(1)">
+        <strong>Section 1</strong><br>
+        <small class="text-muted">Conversation</small>
+      </div>
+      <div class="il-section-tab" data-sec="2" onclick="selectSection(2)">
+        <strong>Section 2</strong><br>
+        <small class="text-muted">Monologue</small>
+      </div>
+      <div class="il-section-tab" data-sec="3" onclick="selectSection(3)">
+        <strong>Section 3</strong><br>
+        <small class="text-muted">Discussion</small>
+      </div>
+      <div class="il-section-tab active" data-sec="4" onclick="selectSection(4)">
+        <strong>Section 4</strong><br>
+        <small class="text-muted">Lecture</small>
+      </div>
+    </div>
+    <button class="btn btn-primary mt-3" id="startBtn" onclick="startLecture()">
+      Load Section &mdash; 5 credits
     </button>
     <span class="text-muted small ms-3" id="startStatus"></span>
   </div>
@@ -71,7 +89,7 @@
     <div class="il-card">
       <div class="d-flex justify-content-between align-items-start mb-2 flex-wrap">
         <div>
-          <div class="text-muted small text-uppercase">Section 4 &middot; Academic Lecture</div>
+          <div class="text-muted small text-uppercase" id="sectionHeaderLabel">Section 4 &middot; Academic Lecture</div>
           <h4 class="fw-bold mb-0" id="lectureTitle">&mdash;</h4>
           <div class="text-muted small">Topic: <span id="lectureTopic"></span> &middot; Est. length: <span id="lectureDuration"></span></div>
         </div>
@@ -129,6 +147,7 @@
 // =============================================================
 var IL = {
   email: localStorage.getItem('userEmail') || '',
+  sectionNum: 4,     // currently selected IELTS section (1-4)
   section: null,
   answers: {},       // {q_index: option_idx}
   audio: null,
@@ -138,6 +157,20 @@ var IL = {
   totalSeconds: 0,
   loadingAudio: false
 };
+
+var SECTION_LABELS = {
+  1: 'Section 1 — Conversation',
+  2: 'Section 2 — Monologue',
+  3: 'Section 3 — Academic Discussion',
+  4: 'Section 4 — Academic Lecture'
+};
+
+function selectSection(n) {
+  IL.sectionNum = n;
+  document.querySelectorAll('.il-section-tab').forEach(function(el) {
+    el.classList.toggle('active', parseInt(el.dataset.sec, 10) === n);
+  });
+}
 
 async function startLecture() {
   var btn = document.getElementById('startBtn');
@@ -150,7 +183,7 @@ async function startLecture() {
     var r = await fetch('/api/ielts/listening/section', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({email: IL.email, section_num: 4})
+      body: JSON.stringify({email: IL.email, section_num: IL.sectionNum})
     });
     var j = await r.json();
     if (j.status !== 'success') {
@@ -174,6 +207,10 @@ function renderSession(j) {
   document.getElementById('sessionCard').style.display = 'block';
   document.getElementById('scoreCard').style.display = 'none';
 
+  var label = document.getElementById('sectionHeaderLabel');
+  if (label) {
+    label.textContent = SECTION_LABELS[j.section_num] || ('Section ' + j.section_num);
+  }
   document.getElementById('lectureTitle').textContent = j.title || 'Academic Lecture';
   document.getElementById('lectureTopic').textContent = j.topic || '-';
   document.getElementById('lectureDuration').textContent = formatDuration(j.duration_sec || 180);

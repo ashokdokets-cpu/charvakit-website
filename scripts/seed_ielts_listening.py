@@ -52,31 +52,67 @@ def existing_count(section_num=4):
     return n
 
 
-def generate_lecture(topic_hint=None):
-    """Ask OpenAI for one transcript + 10 MCQs. Returns dict or None."""
-    hint = f"Focus on the topic: {topic_hint}." if topic_hint else "Choose a fresh academic topic."
+SECTION_SPECS = {
+    1: {
+        "name": "Section 1 — Conversation",
+        "desc": ("Section 1 is a conversation between two speakers on a practical, everyday topic "
+                 "(e.g., booking accommodation, enquiring about a course, planning a trip). "
+                 "The transcript should be about 400-500 words with clear speaker turns. "
+                 "Format speaker turns as 'SPEAKER A:' and 'SPEAKER B:' on separate lines."),
+        "qtypes": "specific details (names, numbers, dates, prices), and simple inference.",
+    },
+    2: {
+        "name": "Section 2 — Monologue",
+        "desc": ("Section 2 is a single-speaker monologue on a general/non-academic topic "
+                 "(e.g., a tour guide describing a facility, an announcement about an event). "
+                 "The transcript should be about 400-500 words."),
+        "qtypes": "specific facts, directions, times, and details from the announcement.",
+    },
+    3: {
+        "name": "Section 3 — Academic Discussion",
+        "desc": ("Section 3 is a discussion between two or three students and possibly a tutor, "
+                 "on an academic topic (e.g., planning a research project, discussing an assignment). "
+                 "Format speaker turns as 'STUDENT 1:', 'STUDENT 2:', 'TUTOR:' etc. "
+                 "The transcript should be about 450-550 words."),
+        "qtypes": "opinions, agreements/disagreements, reasoning, and specific details.",
+    },
+    4: {
+        "name": "Section 4 — Academic Lecture",
+        "desc": ("Section 4 is a single academic lecture (monologue) of about 3-4 minutes spoken "
+                 "(roughly 500-650 words written) on a scientific or academic topic."),
+        "qtypes": "main idea, specific facts, and inference from the lecture.",
+    },
+}
+
+
+def generate_section(section_num, topic_hint=None):
+    """Ask OpenAI for one transcript + 10 MCQs for the given section. Returns dict or None."""
+    spec = SECTION_SPECS.get(section_num)
+    if not spec:
+        return None
+
+    hint = f"Focus on the topic: {topic_hint}." if topic_hint else "Choose a fresh topic suitable for this section."
+
     prompt = (
-        "You are an IELTS Academic Listening Section 4 generator. "
-        "Section 4 is a single academic lecture (monologue) of about 3-4 minutes spoken "
-        "(roughly 500-650 words written) on a scientific or academic topic. "
+        f"You are an IELTS Academic Listening {spec['name']} generator. "
+        f"{spec['desc']} "
         f"{hint}\n\n"
         "Return ONLY valid JSON:\n"
         "{\n"
         '  "title": "short descriptive title",\n'
         '  "topic": "1-3 word topic label",\n'
-        '  "transcript": "full lecture text (500-650 words)",\n'
+        '  "transcript": "full transcript text",\n'
         '  "questions": [\n'
         '    {"q": "question text", "options": ["A text","B text","C text","D text"], "correct_idx": 0, "explanation": "why"},\n'
         "    ... exactly 10 questions ...\n"
         "  ]\n"
         "}\n\n"
         "Rules:\n"
-        "- 10 questions total.\n"
+        f"- 10 questions total, testing {spec['qtypes']}\n"
         "- Each question MUST have exactly 4 options.\n"
         "- correct_idx is 0-3 (index into options).\n"
-        "- Questions should test comprehension of the lecture (main idea, specific facts, inference).\n"
         "- Do NOT include the answers in the transcript.\n"
-        "- The transcript must be suitable for reading aloud (no markdown, no bullet points).\n"
+        "- The transcript must be suitable for reading aloud (no markdown, no bullet points, no stage directions).\n"
     )
 
     r = requests.post(
@@ -136,7 +172,7 @@ def generate_lecture(topic_hint=None):
 
 
 def insert_section(section_num, lecture):
-    sid = f"IELTS-L4-{secrets.token_hex(4).upper()}"
+    sid = f"IELTS-L{section_num}-{secrets.token_hex(4).upper()}"
     conn = db()
     conn.autocommit = True
     cur = conn.cursor()
@@ -157,6 +193,7 @@ def insert_section(section_num, lecture):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--count", type=int, default=5)
+    ap.add_argument("--section", type=int, default=4, choices=[1, 2, 3, 4])
     ap.add_argument("--force", action="store_true")
     args = ap.parse_args()
 
@@ -164,27 +201,28 @@ def main():
         print("ERROR: OPENAI_API_KEY not set")
         return
 
-    have = existing_count(4)
-    print(f"Section-4 lectures in DB: {have}")
+    sec = args.section
+    have = existing_count(sec)
+    print(f"Section-{sec} sections in DB: {have}")
     if have >= args.count and not args.force:
         print(f"Already have {have} >= {args.count}. Use --force to add more.")
         return
 
     to_add = args.count if args.force else (args.count - have)
-    print(f"Generating {to_add} new Section-4 lectures...\n")
+    print(f"Generating {to_add} new Section-{sec} sections...\n")
 
     for i in range(1, to_add + 1):
         try:
-            lec = generate_lecture()
+            lec = generate_section(sec)
             if not lec:
-                print(f"  [{i}/{to_add}] FAILED validation — skipping")
+                print(f"  [{i}/{to_add}] FAILED validation - skipping")
                 continue
-            sid = insert_section(4, lec)
-            print(f"  [{i}/{to_add}] ✅ {sid}  topic={lec['topic']}  words={len(lec['transcript'].split())}  qs={len(lec['questions'])}")
+            sid = insert_section(sec, lec)
+            print(f"  [{i}/{to_add}] OK {sid}  topic={lec['topic']}  words={len(lec['transcript'].split())}  qs={len(lec['questions'])}")
         except Exception as e:
             print(f"  [{i}/{to_add}] ERROR: {e}")
 
-    print(f"\nDone. Section-4 total now: {existing_count(4)}")
+    print(f"\nDone. Section-{sec} total now: {existing_count(sec)}")
 
 
 if __name__ == "__main__":
