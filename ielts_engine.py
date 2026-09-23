@@ -311,6 +311,150 @@ class IELTSEngine:
 
 
     # ============================================================
+    # READING (Session X5)
+    # ============================================================
+
+    def get_reading_passage(self, passage_num: int = 1) -> Dict:
+        """Return a random under-used reading passage.
+
+        Questions are returned WITHOUT correct_idx (answers stay server-side).
+        """
+        if passage_num not in (1, 2, 3):
+            return {"status": "error", "message": "passage_num must be 1-3"}
+
+        try:
+            from database import db
+            conn = db.get_pooled_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT passage_id, passage_num, title, topic, content,
+                       word_count, questions_json, use_count
+                FROM charvak_ielts_reading_passages
+                WHERE passage_num = %s
+                ORDER BY use_count ASC, RANDOM()
+                LIMIT 1
+            """, (passage_num,))
+            row = cur.fetchone()
+            if not row:
+                cur.close()
+                db.release_pooled_connection(conn)
+                return {"status": "error", "message": f"No Passage {passage_num} available"}
+
+            cur.execute("""
+                UPDATE charvak_ielts_reading_passages
+                SET use_count = use_count + 1, last_used_at = NOW()
+                WHERE passage_id = %s
+            """, (row[0],))
+            conn.commit()
+            cur.close()
+            db.release_pooled_connection(conn)
+        except Exception as e:
+            logger.error(f"get_reading_passage failed: {e}")
+            return {"status": "error", "message": str(e)}
+
+        qs = row[6] if isinstance(row[6], list) else json.loads(row[6] or "[]")
+        # Strip correct_idx before returning to client
+        safe_qs = []
+        for i, q in enumerate(qs):
+            safe_qs.append({
+                "index": i,
+                "q": q.get("q", ""),
+                "options": q.get("options", []),
+            })
+
+        return {
+            "status": "success",
+            "passage_id": row[0],
+            "passage_num": row[1],
+            "title": row[2],
+            "topic": row[3],
+            "content": row[4],
+            "word_count": row[5],
+            "questions": safe_qs,
+            "total_questions": len(safe_qs),
+        }
+
+    def evaluate_reading(self, passage_id: str, answers: List[int],
+                         email: Optional[str] = None) -> Dict:
+        """Score MCQ answers for a reading passage.
+
+        answers: list of selected indices (0-3), -1 for unanswered.
+        """
+        if not passage_id:
+            return {"status": "error", "message": "passage_id required"}
+        if not isinstance(answers, list):
+            return {"status": "error", "message": "answers must be a list"}
+
+        try:
+            from database import db
+            conn = db.get_pooled_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT passage_num, title, topic, questions_json
+                FROM charvak_ielts_reading_passages
+                WHERE passage_id = %s
+            """, (passage_id,))
+            row = cur.fetchone()
+            cur.close()
+            db.release_pooled_connection(conn)
+        except Exception as e:
+            logger.error(f"evaluate_reading fetch failed: {e}")
+            return {"status": "error", "message": str(e)}
+
+        if not row:
+            return {"status": "error", "message": "passage not found"}
+
+        qs = row[3] if isinstance(row[3], list) else json.loads(row[3] or "[]")
+        total = len(qs)
+        correct = 0
+        results = []
+        for i, q in enumerate(qs):
+            try:
+                sel = int(answers[i]) if i < len(answers) else -1
+            except Exception:
+                sel = -1
+            is_correct = (sel == q.get("correct_idx", -1))
+            if is_correct:
+                correct += 1
+            results.append({
+                "index": i,
+                "selected": sel,
+                "correct_idx": q.get("correct_idx", -1),
+                "is_correct": is_correct,
+                "explanation": q.get("explanation", ""),
+            })
+
+        band = self._listening_band(correct, total)  # same accuracy mapping
+
+        if email:
+            try:
+                conn = db.get_pooled_connection()
+                cur = conn.cursor()
+                cur.execute("""
+                    INSERT INTO charvak_ielts_reading_attempts
+                        (passage_id, email, answers_json, correct_count,
+                         total_questions, band_score)
+                    VALUES (%s, %s, %s::jsonb, %s, %s, %s)
+                """, (passage_id, email, json.dumps(answers), correct, total, band))
+                conn.commit()
+                cur.close()
+                db.release_pooled_connection(conn)
+            except Exception as e:
+                logger.warning(f"reading attempt persist failed: {e}")
+
+        return {
+            "status": "success",
+            "passage_id": passage_id,
+            "passage_num": row[0],
+            "title": row[1],
+            "topic": row[2],
+            "correct_count": correct,
+            "total_questions": total,
+            "band_score": band,
+            "results": results,
+        }
+
+    # ============================================================
     # LISTENING (Session X4)
     # ============================================================
 

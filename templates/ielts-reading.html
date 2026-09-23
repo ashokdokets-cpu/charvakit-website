@@ -1,0 +1,309 @@
+{% extends "base.html" %}
+{% block title %}IELTS Reading Practice{% endblock %}
+{% block content %}
+<style>
+  .ir-hero { background: linear-gradient(135deg, #1e40af 0%, #3730a3 100%); color: #fff; padding: 48px 0 32px; }
+  .ir-hero h1 { font-weight: 800; margin-bottom: 6px; }
+  .ir-hero p { opacity: 0.9; margin: 0; }
+  .ir-wrap { max-width: 1000px; margin: 0 auto; padding: 32px 16px; }
+  .ir-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 24px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+  .ir-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .ir-tab { background: #fff; border: 1px solid #d1d5db; border-radius: 10px; padding: 12px 18px; font-size: 0.9rem; cursor: pointer; flex: 1; min-width: 140px; text-align: center; transition: all 0.15s; }
+  .ir-tab:hover { border-color: #1e40af; }
+  .ir-tab.active { background: #1e40af; color: #fff; border-color: #1e40af; }
+  .ir-passage { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 24px; font-size: 1.02rem; line-height: 1.75; color: #1f2937; max-height: 520px; overflow-y: auto; white-space: pre-wrap; }
+  .ir-passage-meta { font-size: 0.85rem; color: #6b7280; margin-bottom: 12px; }
+  .ir-q-block { padding: 16px 0; border-bottom: 1px solid #f3f4f6; }
+  .ir-q-block:last-child { border-bottom: none; }
+  .ir-q-text { font-weight: 600; margin-bottom: 10px; color: #111827; }
+  .ir-opt { display: block; padding: 10px 14px; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 6px; cursor: pointer; transition: all 0.1s; }
+  .ir-opt:hover { background: #f9fafb; border-color: #93c5fd; }
+  .ir-opt input { margin-right: 10px; }
+  .ir-opt.selected { background: #eff6ff; border-color: #1e40af; }
+  .ir-opt.correct { background: #d1fae5; border-color: #10b981; }
+  .ir-opt.wrong { background: #fee2e2; border-color: #dc2626; }
+  .ir-band-big { font-size: 4rem; font-weight: 800; color: #1e40af; line-height: 1; }
+  .ir-tip { background: #fefce8; border-left: 3px solid #eab308; padding: 12px 16px; border-radius: 6px; font-size: 0.85rem; color: #713f12; margin-top: 12px; }
+  .ir-sticky-meta { position: sticky; top: 8px; background: #fff; padding: 8px 0; z-index: 5; border-bottom: 1px solid #e5e7eb; margin-bottom: 12px; font-size: 0.85rem; color: #6b7280; display: flex; justify-content: space-between; }
+</style>
+
+<div class="ir-hero">
+  <div class="container text-center">
+    <h1>IELTS Reading Practice</h1>
+    <p>3 passages &middot; 10 questions each &middot; AI band scoring</p>
+  </div>
+</div>
+
+<div class="ir-wrap">
+
+  <div id="introCard" class="ir-card">
+    <h5 class="fw-bold mb-3">How this works</h5>
+    <ul class="mb-3">
+      <li><strong>Passage 1</strong> &mdash; easiest (~700 words, factual)</li>
+      <li><strong>Passage 2</strong> &mdash; medium (~800 words, analysis)</li>
+      <li><strong>Passage 3</strong> &mdash; hardest (~900 words, argument)</li>
+      <li>Each passage has 10 multiple-choice questions, AI-scored on the 0-9 IELTS band scale</li>
+    </ul>
+    <div class="ir-tip">
+      <strong>Tip:</strong> Read the questions first, then skim the passage for keywords. You don't need to understand every word — focus on the specific information each question asks about.
+    </div>
+    <div class="mt-3">
+      <span class="text-muted small">Cost: 5 credits to load a passage, 10 to score</span>
+    </div>
+  </div>
+
+  <div id="startCard" class="ir-card">
+    <h5 class="fw-bold mb-3">Choose a passage</h5>
+    <div class="ir-tabs" id="passageTabs">
+      <div class="ir-tab active" data-pn="1" onclick="selectPassage(1)">
+        <strong>Passage 1</strong><br>
+        <small class="text-muted">Easiest</small>
+      </div>
+      <div class="ir-tab" data-pn="2" onclick="selectPassage(2)">
+        <strong>Passage 2</strong><br>
+        <small class="text-muted">Medium</small>
+      </div>
+      <div class="ir-tab" data-pn="3" onclick="selectPassage(3)">
+        <strong>Passage 3</strong><br>
+        <small class="text-muted">Hardest</small>
+      </div>
+    </div>
+    <button class="btn btn-primary mt-3" id="startBtn" onclick="startReading()">
+      Load Passage &mdash; 5 credits
+    </button>
+    <span class="text-muted small ms-3" id="startStatus"></span>
+  </div>
+
+  <div id="sessionCard" style="display:none;">
+    <div class="ir-card">
+      <div class="d-flex justify-content-between align-items-start mb-2 flex-wrap">
+        <div>
+          <div class="text-muted small text-uppercase" id="passageHeaderLabel">Passage 1</div>
+          <h4 class="fw-bold mb-0" id="passageTitle">&mdash;</h4>
+          <div class="text-muted small">Topic: <span id="passageTopic"></span> &middot; Words: <span id="passageWords"></span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ir-card">
+      <h5 class="fw-bold mb-3">Passage</h5>
+      <div class="ir-passage" id="passageContent"></div>
+    </div>
+
+    <div class="ir-card">
+      <div class="ir-sticky-meta">
+        <span>Questions</span>
+        <span><span id="answeredCount">0</span> / <span id="totalCount">10</span> answered</span>
+      </div>
+      <div id="questionsList"></div>
+    </div>
+
+    <div class="ir-card text-center">
+      <button class="btn btn-success btn-lg" id="submitBtn" onclick="submitAnswers()">
+        Submit Answers &mdash; 10 credits
+      </button>
+    </div>
+  </div>
+
+  <div id="scoreCard" class="ir-card" style="display:none;">
+    <div class="text-center mb-4">
+      <div class="text-uppercase small text-muted mb-1">Band Score</div>
+      <div class="ir-band-big" id="bandValue">&mdash;</div>
+      <div class="text-muted mt-2"><span id="correctCount">0</span> / <span id="totalQuestions">10</span> correct</div>
+    </div>
+
+    <h6 class="fw-bold mb-3">Question Review</h6>
+    <div id="reviewList"></div>
+
+    <div class="text-center mt-4">
+      <button class="btn btn-outline-primary me-2" onclick="resetPage()">New Passage</button>
+      <a href="/ielts" class="btn btn-outline-secondary">Back to IELTS Hub</a>
+    </div>
+  </div>
+
+  <div id="errorBox" class="alert alert-danger mt-3" style="display:none;"></div>
+
+</div>
+
+<script>
+var IR = {
+  email: localStorage.getItem('userEmail') || '',
+  passageNum: 1,
+  passage: null,
+  answers: {}
+};
+
+var PASSAGE_LABELS = {
+  1: 'Passage 1 — Easiest',
+  2: 'Passage 2 — Medium',
+  3: 'Passage 3 — Hardest'
+};
+
+function selectPassage(n) {
+  IR.passageNum = n;
+  document.querySelectorAll('.ir-tab').forEach(function(el) {
+    el.classList.toggle('active', parseInt(el.dataset.pn, 10) === n);
+  });
+}
+
+async function startReading() {
+  var btn = document.getElementById('startBtn');
+  btn.disabled = true;
+  btn.textContent = 'Loading...';
+  document.getElementById('startStatus').textContent = 'Fetching passage...';
+  document.getElementById('errorBox').style.display = 'none';
+
+  try {
+    var r = await fetch('/api/ielts/reading/passage', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({email: IR.email, passage_num: IR.passageNum})
+    });
+    var j = await r.json();
+    if (j.status !== 'success') {
+      return irErr(j.message || 'Could not load a passage.');
+    }
+    IR.passage = j;
+    IR.answers = {};
+    renderSession(j);
+  } catch (e) {
+    irErr('Network error: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Load Passage — 5 credits';
+    document.getElementById('startStatus').textContent = '';
+  }
+}
+
+function renderSession(j) {
+  document.getElementById('introCard').style.display = 'none';
+  document.getElementById('startCard').style.display = 'none';
+  document.getElementById('sessionCard').style.display = 'block';
+  document.getElementById('scoreCard').style.display = 'none';
+
+  document.getElementById('passageHeaderLabel').textContent = PASSAGE_LABELS[j.passage_num] || ('Passage ' + j.passage_num);
+  document.getElementById('passageTitle').textContent = j.title || 'Reading Passage';
+  document.getElementById('passageTopic').textContent = j.topic || '-';
+  document.getElementById('passageWords').textContent = j.word_count || '-';
+  document.getElementById('passageContent').textContent = j.content || '';
+  document.getElementById('totalCount').textContent = j.total_questions || 10;
+  document.getElementById('totalQuestions').textContent = j.total_questions || 10;
+
+  var list = document.getElementById('questionsList');
+  list.innerHTML = (j.questions || []).map(function(q, i) {
+    return '<div class="ir-q-block">' +
+      '<div class="ir-q-text">Q' + (i + 1) + '. ' + escapeHtml(q.q) + '</div>' +
+      (q.options || []).map(function(o, oi) {
+        var letter = String.fromCharCode(65 + oi);
+        return '<label class="ir-opt" data-q="' + i + '" data-oi="' + oi + '" onclick="selectAnswer(' + i + ',' + oi + ', this)">' +
+          '<input type="radio" name="q' + i + '" value="' + oi + '"> ' +
+          '<strong>' + letter + ')</strong> ' + escapeHtml(o) +
+          '</label>';
+      }).join('') +
+      '</div>';
+  }).join('');
+
+  updateAnsweredCount();
+}
+
+function selectAnswer(qIdx, optIdx, el) {
+  IR.answers[qIdx] = optIdx;
+  document.querySelectorAll('[data-q="' + qIdx + '"]').forEach(function(s) { s.classList.remove('selected'); });
+  el.classList.add('selected');
+  updateAnsweredCount();
+}
+
+function updateAnsweredCount() {
+  var total = (IR.passage && IR.passage.total_questions) || 10;
+  document.getElementById('answeredCount').textContent = Object.keys(IR.answers).length;
+}
+
+async function submitAnswers() {
+  if (!IR.passage) return;
+  var btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Scoring...';
+  document.getElementById('errorBox').style.display = 'none';
+
+  var total = IR.passage.total_questions || 10;
+  var arr = [];
+  for (var i = 0; i < total; i++) {
+    arr.push(IR.answers[i] !== undefined ? IR.answers[i] : -1);
+  }
+
+  try {
+    var r = await fetch('/api/ielts/reading/score', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        email: IR.email,
+        passage_id: IR.passage.passage_id,
+        answers: arr
+      })
+    });
+    var j = await r.json();
+    if (j.status !== 'success') {
+      return irErr(j.message || 'Scoring failed.');
+    }
+    renderScorecard(j);
+  } catch (e) {
+    irErr('Network error: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Submit Answers — 10 credits';
+  }
+}
+
+function renderScorecard(j) {
+  document.getElementById('bandValue').textContent = (j.band_score || 0).toFixed(1);
+  document.getElementById('correctCount').textContent = j.correct_count;
+  document.getElementById('totalQuestions').textContent = j.total_questions;
+
+  var html = '';
+  (j.results || []).forEach(function(r, i) {
+    var q = IR.passage.questions[i];
+    html += '<div class="ir-q-block">';
+    html += '<div class="ir-q-text">Q' + (i + 1) + '. ' + escapeHtml(q.q) + '</div>';
+    (q.options || []).forEach(function(o, oi) {
+      var cls = 'ir-opt';
+      var mark = '';
+      if (oi === r.correct_idx) { cls += ' correct'; mark = ' ✓ correct'; }
+      else if (oi === r.selected) { cls += ' wrong'; mark = ' ✗ your answer'; }
+      html += '<div class="' + cls + '"><strong>' + String.fromCharCode(65 + oi) + ')</strong> ' + escapeHtml(o) + mark + '</div>';
+    });
+    if (r.explanation) {
+      html += '<div class="small text-muted mt-2"><strong>Explanation:</strong> ' + escapeHtml(r.explanation) + '</div>';
+    }
+    html += '</div>';
+  });
+  document.getElementById('reviewList').innerHTML = html;
+
+  document.getElementById('sessionCard').style.display = 'none';
+  document.getElementById('scoreCard').style.display = 'block';
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function resetPage() {
+  IR.passage = null;
+  IR.answers = {};
+  document.getElementById('introCard').style.display = 'block';
+  document.getElementById('startCard').style.display = 'block';
+  document.getElementById('sessionCard').style.display = 'none';
+  document.getElementById('scoreCard').style.display = 'none';
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function irErr(msg) {
+  var el = document.getElementById('errorBox');
+  el.textContent = msg;
+  el.style.display = 'block';
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+</script>
+{% endblock %}
