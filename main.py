@@ -7394,6 +7394,11 @@ async def ielts_writing_evaluate(request: Request):
 # N4.4 — IELTS Speaking routes (Session N4)
 # ============================================================
 
+@app.get("/ielts", response_class=HTMLResponse)
+async def ielts_hub(request: Request):
+    return template_response("ielts.html", request, "IELTS Academic Practice")
+
+
 @app.get("/ielts-speaking", response_class=HTMLResponse)
 async def ielts_speaking_page(request: Request):
     return template_response("ielts-speaking.html", request, "IELTS Speaking Practice")
