@@ -76,6 +76,7 @@ scripts/*
 !scripts/validate_questions.py
 !scripts/review_questions.py
 !scripts/seed_ielts_listening.py
+!scripts/seed_ielts_reading.py
 !scripts/validate_questions.py
 !scripts/ai_verify_questions.py
 !scripts/update_geoip.py
