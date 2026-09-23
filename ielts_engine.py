@@ -16,14 +16,43 @@ class IELTSEngine:
     """IELTS Academic practice engine (stateless orchestration)."""
 
     SECTIONS = [
-        {"id": "listening", "name": "Listening", "questions": 40, "duration_min": 30,
-         "note": "AI-generated MCQ practice; real IELTS uses recorded audio"},
-        {"id": "reading", "name": "Reading", "questions": 40, "duration_min": 60,
-         "note": "3 passages, 40 questions"},
-        {"id": "writing", "name": "Writing", "questions": 2, "duration_min": 60,
-         "note": "Task 1 (150 words) + Task 2 (250 words); AI band scoring"},
-        {"id": "speaking", "name": "Speaking", "questions": 3, "duration_min": 14,
-         "note": "3 parts: Interview, Long Turn, Discussion; audio + AI band scoring"},
+        {
+            "id": "listening", "name": "Listening",
+            "questions": 10, "duration_min": 25,
+            "available": True,
+            "practice_url": "/ielts-listening",
+            "content_count": 14,
+            "subsections": ["Section 1 — Conversation", "Section 2 — Monologue",
+                            "Section 3 — Academic Discussion", "Section 4 — Lecture"],
+            "note": "14 pre-generated sections with TTS audio. 10 MCQs per section. AI band scoring.",
+        },
+        {
+            "id": "reading", "name": "Reading",
+            "questions": 10, "duration_min": 20,
+            "available": True,
+            "practice_url": "/ielts-reading",
+            "content_count": 9,
+            "subsections": ["Passage 1 — Easiest", "Passage 2 — Medium", "Passage 3 — Hardest"],
+            "note": "9 passages across 3 difficulty tiers. 10 MCQs per passage. AI band scoring.",
+        },
+        {
+            "id": "writing", "name": "Writing",
+            "questions": 2, "duration_min": 60,
+            "available": True,
+            "practice_url": "/ielts-writing",
+            "content_count": 0,
+            "subsections": ["Task 1 — 150 words", "Task 2 — 250 words"],
+            "note": "Fresh AI-generated prompts per session. Band scoring on 4 official criteria.",
+        },
+        {
+            "id": "speaking", "name": "Speaking",
+            "questions": 3, "duration_min": 14,
+            "available": True,
+            "practice_url": "/ielts-speaking",
+            "content_count": 0,
+            "subsections": ["Part 1 — Interview", "Part 2 — Long Turn", "Part 3 — Discussion"],
+            "note": "Full 3-part test. Whisper transcription + AI band scoring on 4 criteria.",
+        },
     ]
 
     WRITING_TASK_1_MIN_WORDS = 150
@@ -43,9 +72,8 @@ class IELTSEngine:
         return {
             "status": "success",
             "exam": "IELTS Academic",
+            "hub_url": "/ielts",
             "sections": self.SECTIONS,
-            "speaking_available": True,
-            "speaking_note": "3-part test: interview, long turn, discussion. AI band scoring on 4 criteria.",
         }
 
     # ============================================================
