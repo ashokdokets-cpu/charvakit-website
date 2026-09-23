@@ -25,12 +25,19 @@
   .iw-feedback-detail { color: #6b7280; font-size: 0.9rem; margin-top: 6px; line-height: 1.5; }
   .iw-tips { background: #fefce8; border-left: 3px solid #eab308; padding: 12px 16px; border-radius: 6px; font-size: 0.85rem; color: #713f12; margin-top: 12px; }
   .iw-loading { text-align: center; padding: 40px 20px; color: #6b7280; }
+  .iw-wordbar { height: 6px; background: #e5e7eb; border-radius: 999px; overflow: hidden; margin-top: 8px; }
+  .iw-wordbar-fill { height: 100%; transition: width 0.3s, background 0.3s; background: #d97706; }
+  .iw-wordbar-fill.ok { background: #10b981; }
+  .iw-idea-chip { display: inline-block; background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; border-radius: 999px; padding: 6px 14px; margin: 4px 4px 4px 0; font-size: 0.85rem; }
+  .iw-criteria-block { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px; margin-top: 8px; }
+  .iw-strength-list { background: #f0fdf4; border-left: 4px solid #10b981; padding: 12px 16px; border-radius: 6px; margin-top: 12px; }
+  .iw-improve-list { background: #fef2f2; border-left: 4px solid #dc2626; padding: 12px 16px; border-radius: 6px; margin-top: 12px; }
 </style>
 
 <div class="iw-hero">
   <div class="container text-center">
     <h1>IELTS Writing Practice</h1>
-    <p>Task 1 & Task 2 &middot; AI band scoring on 4 official criteria</p>
+    <p>Task 1 and Task 2 &middot; Instant AI band scoring on the 4 official IELTS criteria</p>
   </div>
 </div>
 
@@ -39,24 +46,44 @@
   <!-- Intro -->
   <div id="introCard" class="iw-card">
     <h5 class="fw-bold mb-3">How this works</h5>
-    <ul class="mb-3">
-      <li><strong>Task 1</strong> &mdash; describe a chart, graph, table, or process (150 words min)</li>
-      <li><strong>Task 2</strong> &mdash; write an essay responding to a point of view (250 words min)</li>
-      <li>AI scores your essay on the 4 official IELTS criteria</li>
-    </ul>
+    <div class="row g-3 mb-3">
+      <div class="col-md-6">
+        <div class="border rounded p-3 h-100">
+          <div class="fw-bold text-primary mb-1">Task 1 &middot; 150 words</div>
+          <div class="small text-muted">Describe a chart, graph, table, or process objectively. Focus on key features and comparisons.</div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="border rounded p-3 h-100">
+          <div class="fw-bold text-primary mb-1">Task 2 &middot; 250 words</div>
+          <div class="small text-muted">Write an essay responding to a point of view. Argue a clear position with supporting examples.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="border-top pt-3">
+      <div class="small text-muted text-uppercase fw-bold mb-2" style="letter-spacing: 0.5px;">Scoring criteria (0-9 band scale)</div>
+      <div class="row g-2 small">
+        <div class="col-md-3"><strong>Task Response</strong><br><span class="text-muted">Did you answer the question fully?</span></div>
+        <div class="col-md-3"><strong>Coherence</strong><br><span class="text-muted">How well your ideas connect.</span></div>
+        <div class="col-md-3"><strong>Lexical Resource</strong><br><span class="text-muted">Range + precision of vocabulary.</span></div>
+        <div class="col-md-3"><strong>Grammar</strong><br><span class="text-muted">Sentence variety + accuracy.</span></div>
+      </div>
+    </div>
+
     <div class="iw-tips">
-      <strong>Tip:</strong> Structure matters. For Task 2, aim for 4-5 paragraphs: introduction, 2-3 body paragraphs, conclusion.
+      <strong>Tip:</strong> Structure matters. For Task 2, aim for 4-5 paragraphs: introduction, 2-3 body paragraphs, conclusion. Every body paragraph needs a concrete example.
     </div>
     <div class="mt-3">
-      <span class="text-muted small">Cost: 3 credits to generate prompt, 15 to score</span>
+      <span class="text-muted small">Cost: 3 credits to generate a prompt, 15 to score</span>
     </div>
   </div>
 
   <!-- Task selection + prompt -->
   <div id="taskCard" class="iw-card">
     <div class="iw-toggle">
-      <button id="task1Btn" onclick="selectTask(1)">Task 1 (150 words)</button>
-      <button id="task2Btn" class="active" onclick="selectTask(2)">Task 2 (250 words)</button>
+      <button id="task1Btn" onclick="selectTask(1)">Task 1 &middot; Report</button>
+      <button id="task2Btn" class="active" onclick="selectTask(2)">Task 2 &middot; Essay</button>
     </div>
 
     <div class="d-flex gap-2 align-items-center">
