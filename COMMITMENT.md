@@ -1,4 +1,4 @@
-﻿# Charvak â€” Commitment Tracker
+# Charvak â€” Commitment Tracker
 
 **Purpose:** Track every planned-but-not-completed item. Nothing gets lost again.
 **Created:** 2026-09-20
@@ -6,6 +6,33 @@
 **HEAD:** d9ff133
 
 
+### X5 — IELTS Reading + all-4 sections Listening (2026-09-23)
+
+- **Commits:** `d070c8f` `60b3e81` `32da091`
+- **Tag:** `v3.3-ielts-complete-20260923`
+- **What shipped:**
+  - **Listening expansion:** All 4 sections now seeded (14 total)
+    - Section 1: 3 conversations (travel, camping, language course)
+    - Section 2: 3 monologues (Riverside Park, City Library, Community Center)
+    - Section 3: 3 discussions (Climate Change, Education Tech, Urban Design)
+    - Section 4: 5 lectures (Bioacoustics, Microbiomes x2, Microplastics x2)
+    - Section selector UI added to `/ielts-listening`
+    - Section IDs renamed from `IELTS-L4-*` to `IELTS-L{num}-*` (cosmetic fix)
+  - **Reading section (new):**
+    - DB tables: `charvak_ielts_reading_passages` + `charvak_ielts_reading_attempts`
+    - Seed script: `scripts/seed_ielts_reading.py` (3 difficulty tiers)
+    - 9 passages seeded: Coral Reefs, Monarch Butterfly, Honeybees / Urban Health, Urban Ecology / Technology, Tech Ethics, AI
+    - Engine methods: `get_reading_passage()`, `evaluate_reading()`
+    - Routes: `/ielts-reading` + `/api/ielts/reading/{passage,score}`
+    - Credit keys: `ielts_reading_passage` (5), `ielts_reading_score` (10)
+    - Frontend: `templates/ielts-reading.html` (276 lines)
+- **Verified in prod:**
+  - All 4 listening sections load and play
+  - All 3 reading passages load with questions + score
+  - Band scoring: 10/10 -> 9.0, 0/10 -> 2.0
+- **IELTS Suite: COMPLETE** (Listening + Reading + Writing + Speaking)
+- **Notes:** Listening/Reading results persist to their own attempt tables but not yet to `charvak_assessment_results` (cross-test dashboard gap)
+- **HEAD after:** `32da091`
 ### X4 — IELTS Listening Section 4 (2026-09-23)
 
 - **Commits:** `62d9f0d` `d9ff133`
