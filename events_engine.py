@@ -301,7 +301,7 @@ class EventsEngine:
                     SELECT event_id, title, description, event_type, organizer_id,
                            organizer_name, date, duration_minutes, platform,
                            location, link, max_attendees, target_audience,
-                           rsvp_count, status, created_at
+                           rsvp_count, status, created_at, COALESCE(price_inr, 0)
                     FROM charvak_events
                     WHERE status = %s AND event_type = %s
                     ORDER BY date ASC
@@ -311,7 +311,7 @@ class EventsEngine:
                     SELECT event_id, title, description, event_type, organizer_id,
                            organizer_name, date, duration_minutes, platform,
                            location, link, max_attendees, target_audience,
-                           rsvp_count, status, created_at
+                           rsvp_count, status, created_at, COALESCE(price_inr, 0)
                     FROM charvak_events
                     WHERE status = %s
                     ORDER BY date ASC
@@ -459,7 +459,7 @@ class EventsEngine:
                 SELECT event_id, title, description, event_type, organizer_id,
                        organizer_name, date, duration_minutes, platform,
                        location, link, max_attendees, target_audience,
-                       rsvp_count, status, created_at
+                       rsvp_count, status, created_at, COALESCE(price_inr, 0)
                 FROM charvak_events WHERE event_id = %s
             ''', (event_id,))
             row = cur.fetchone()
@@ -477,9 +477,16 @@ class EventsEngine:
     def _row_to_event(row) -> Dict:
         if not row:
             return {}
-        (event_id, title, description, event_type, organizer_id, organizer_name,
-         date, duration_minutes, platform, location, link, max_attendees,
-         target_audience, rsvp_count, status, created_at) = row
+        # Handle both 16-col (old) and 17-col (with price_inr) rows
+        if len(row) == 17:
+            (event_id, title, description, event_type, organizer_id, organizer_name,
+             date, duration_minutes, platform, location, link, max_attendees,
+             target_audience, rsvp_count, status, created_at, price_inr) = row
+        else:
+            (event_id, title, description, event_type, organizer_id, organizer_name,
+             date, duration_minutes, platform, location, link, max_attendees,
+             target_audience, rsvp_count, status, created_at) = row
+            price_inr = 0
         return {
             "event_id": event_id,
             "title": title,
@@ -497,6 +504,7 @@ class EventsEngine:
             "rsvp_count": rsvp_count,
             "status": status,
             "created_at": created_at.isoformat() if hasattr(created_at, "isoformat") else str(created_at),
+            "price_inr": int(price_inr or 0),
         }
 
     @staticmethod
