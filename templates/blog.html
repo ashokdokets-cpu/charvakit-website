@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Blog — Charvak{% endblock %}
+{% block content %}
+<style>
+  .bl-hero { background: linear-gradient(135deg, #1e40af 0%, #3730a3 100%); color: #fff; padding: 64px 0 48px; }
+  .bl-hero h1 { font-weight: 800; margin-bottom: 8px; }
+  .bl-hero p { opacity: 0.9; margin: 0; }
+  .bl-wrap { max-width: 900px; margin: 0 auto; padding: 40px 16px; }
+  .bl-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 28px; margin-bottom: 16px; transition: all 0.15s; text-decoration: none; color: inherit; display: block; }
+  .bl-card:hover { box-shadow: 0 6px 20px rgba(30,64,175,0.10); transform: translateY(-2px); border-color: #93c5fd; }
+  .bl-card h2 { font-weight: 700; font-size: 1.4rem; margin-bottom: 8px; color: #111827; }
+  .bl-card p { color: #6b7280; margin-bottom: 12px; }
+  .bl-card-meta { font-size: 0.8rem; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; }
+  .bl-tag { display: inline-block; background: #eff6ff; color: #1e40af; border-radius: 999px; padding: 3px 10px; font-size: 0.75rem; margin-right: 4px; margin-bottom: 4px; font-weight: 500; }
+</style>
+
+<div class="bl-hero">
+  <div class="container text-center">
+    <h1>Charvak Blog</h1>
+    <p>Guides, tips, and deep dives on IELTS, exams, and AI-powered learning.</p>
+  </div>
+</div>
+
+<div class="bl-wrap">
+  {% if posts %}
+    {% for post in posts %}
+      <a href="/blog/{{ post.slug }}" class="bl-card">
+        <div class="bl-card-meta">{{ post.date }} · {{ post.author }}</div>
+        <h2>{{ post.title }}</h2>
+        <p>{{ post.description }}</p>
+        {% if post.tags %}
+          <div>
+            {% for tag in post.tags %}
+              <span class="bl-tag">{{ tag }}</span>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </a>
+    {% endfor %}
+  {% else %}
+    <div class="text-center text-muted py-5">
+      <h3>No posts yet</h3>
+      <p>Check back soon.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

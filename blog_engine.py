@@ -1,230 +1,129 @@
 """
-Charvak Blog Engine
-Simple markdown-based blog with SEO optimization
+Charvak Blog Engine (Y5)
+Reads markdown posts from blog/posts/, parses frontmatter, renders HTML.
 """
-import os
-import json
 import logging
+import re
+from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Optional
-import secrets
 
 logger = logging.getLogger("charvakit.blog")
 
-class BlogEngine:
-    """Simple blog system for SEO and content marketing."""
-    
-    def __init__(self):
-        self.posts = self._seed_posts()
-        logger.info(f"✅ Blog Engine ready with {len(self.posts)} posts")
-    
-    def _seed_posts(self) -> List[Dict]:
-        """Seed with initial blog posts for SEO."""
-        return [
-            {
-                "id": "ai-staffing-2026",
-                "slug": "ai-staffing-trends-2026",
-                "title": "How AI is Transforming IT Staffing in 2026",
-                "excerpt": "Discover how artificial intelligence is reshaping the IT recruitment landscape with 19 AI models powering the future of hiring.",
-                "content": """The IT staffing industry is undergoing its biggest transformation since the rise of job boards. Artificial intelligence is no longer a buzzword — it's the engine driving every stage of talent acquisition.
+BLOG_DIR = Path("blog/posts")
 
-At Charvak, we've built 19 AI models that handle everything from skill verification to visa compliance. Here's what's changing:
+try:
+    import markdown as md_lib
+    _MD_AVAILABLE = True
+except ImportError:
+    _MD_AVAILABLE = False
+    logger.warning("markdown library missing — blog posts will render as plain text")
 
-**AI-Powered Screening**
-Traditional resume screening is dead. Our Skill-Twin engine assesses candidates on actual abilities — not keywords. This eliminates human bias and cuts screening time from days to minutes.
 
-**Vector-Based Matching**
-Semantic matching goes beyond keyword matching. "Spring Boot + Kafka" correctly matches "Senior Java Backend Developer" because the AI understands context.
+def _parse_frontmatter(raw: str) -> tuple:
+    """Return (frontmatter: dict, body: str)."""
+    # Normalize: strip UTF-8 BOM, normalize newlines, strip leading whitespace
+    raw = raw.lstrip("\ufeff").replace("\r\n", "\n").replace("\r", "\n").lstrip()
+    if not raw.startswith("---"):
+        return {}, raw
+    parts = raw.split("---", 2)
+    if len(parts) < 3:
+        return {}, raw
+    fm_text = parts[1].strip()
+    body = parts[2].strip()
 
-**Escrow-Protected Payments**
-Dokets VouchAI ensures freelancers get paid and companies get work — 1% fee. No disputes, no delays.
+    fm = {}
+    for line in fm_text.split("\n"):
+        line = line.rstrip()
+        if not line:
+            continue
+        m = re.match(r"^([a-zA-Z_]+):\s*(.*)$", line)
+        if m:
+            key, val = m.group(1), m.group(2).strip()
+            if val.startswith('"') and val.endswith('"'):
+                val = val[1:-1]
+            elif val.startswith("'") and val.endswith("'"):
+                val = val[1:-1]
+            if val.startswith("[") and val.endswith("]"):
+                inner = val[1:-1]
+                fm[key] = [x.strip().strip('"').strip("'") for x in inner.split(",") if x.strip()]
+            else:
+                fm[key] = val
+    return fm, body
 
-**Global Reach**
-34 languages and 13 currencies mean talent knows no borders.
 
-The future of staffing is AI-first, and Charvak is leading it.""",
-                "author": "Charvak Team",
-                "category": "AI & Technology",
-                "tags": ["AI", "Staffing", "HR Tech", "Future of Work"],
-                "image": "/static/images/blog/ai-staffing.jpg",
-                "read_time": "5 min",
-                "published_at": datetime.now().isoformat(),
-                "seo_title": "AI in IT Staffing 2026 | Charvak IT Consulting",
-                "seo_description": "Explore how AI-powered staffing solutions are reducing time-to-hire by 60% and cutting costs by 40%."
-            },
-            {
-                "id": "us-visa-guide",
-                "slug": "us-work-visa-guide-indian-developers",
-                "title": "Complete Guide to US Work Visas for Indian Developers",
-                "excerpt": "Navigate H-1B, OPT, CPT, L-1 and 13 other visa types with our comprehensive guide.",
-                "content": """Getting a US work visa as an Indian developer is complex — but it doesn't have to be confusing. Charvak's North America module handles 17 visa types automatically.
+def _render_markdown(body: str) -> str:
+    """Render markdown to HTML with sane extensions."""
+    if not _MD_AVAILABLE:
+        return "<pre>" + body.replace("<", "&lt;").replace(">", "&gt;") + "</pre>"
+    return md_lib.markdown(
+        body,
+        extensions=["fenced_code", "tables", "toc", "sane_lists"],
+        output_format="html5",
+    )
 
-**H-1B (Specialty Occupation)**
-The most common visa for IT professionals. Requires a bachelor's degree and employer sponsorship. 85,000 visas annually (65,000 regular + 20,000 master's cap).
 
-**OPT / STEM OPT**
-Students on F-1 visas can work for 12 months (36 months for STEM) after graduation. No employer sponsorship needed initially.
+def list_posts() -> List[Dict]:
+    """Return metadata for all posts, newest first."""
+    if not BLOG_DIR.exists():
+        return []
 
-**L-1 (Intracompany Transfer)**
-For employees transferring to a US office. Requires 1 year of prior employment with the company.
+    posts = []
+    for path in sorted(BLOG_DIR.glob("*.md"), key=lambda p: p.stat().st_mtime, reverse=True):
+        try:
+            raw = path.read_text(encoding="utf-8")
+            fm, body = _parse_frontmatter(raw)
+            slug = path.stem
+            posts.append({
+                "slug": slug,
+                "title": fm.get("title", slug.replace("-", " ").title()),
+                "description": fm.get("description", ""),
+                "date": fm.get("date", ""),
+                "author": fm.get("author", "Charvak Team"),
+                "tags": fm.get("tags", []),
+            })
+        except Exception as e:
+            logger.warning(f"Failed to load {path.name}: {e}")
 
-**TN (USMCA)**
-For Canadian and Mexican citizens in specific professions including computer systems analysts.
+    def sort_key(p):
+        try:
+            return datetime.strptime(p.get("date", ""), "%Y-%m-%d")
+        except Exception:
+            return datetime.min
+    posts.sort(key=sort_key, reverse=True)
+    return posts
 
-**EAD (All Categories)**
-Employment Authorization Document — work permit for spouses, asylum seekers, and other eligible categories.
 
-Charvak's Work Authorization Engine auto-classifies your visa status and checks compliance instantly.""",
-                "author": "Charvak NA Team",
-                "category": "North America",
-                "tags": ["Visa", "H-1B", "US Jobs", "Immigration"],
-                "image": "/static/images/blog/us-visa.jpg",
-                "read_time": "8 min",
-                "published_at": datetime.now().isoformat(),
-                "seo_title": "US Work Visa Guide for Indian Developers 2026 | Charvak",
-                "seo_description": "Complete guide to 17 US work visa types for Indian IT professionals. H-1B, OPT, CPT, L-1 explained."
-            },
-            {
-                "id": "remote-hiring",
-                "slug": "remote-hiring-best-practices-2026",
-                "title": "Remote Hiring Best Practices for 2026",
-                "excerpt": "Learn how to build world-class remote teams across 34 languages and 13 currencies.",
-                "content": """Remote hiring has evolved far beyond posting a job and hoping for the best. In 2026, the best companies use AI-powered platforms to find, verify, and hire global talent.
+def get_post(slug: str) -> Optional[Dict]:
+    """Return a single post with rendered HTML body, or None."""
+    if not BLOG_DIR.exists():
+        return None
+    if "/" in slug or "\\" in slug or ".." in slug:
+        return None
 
-**Write Clear Role Descriptions**
-Vague job posts attract vague candidates. Specify skills, tools, and success metrics.
+    path = BLOG_DIR / f"{slug}.md"
+    if not path.exists():
+        return None
 
-**Use AI Skill Assessments**
-Resumes lie. Skills don't. Use Skill-Twin to verify what candidates can actually do.
-
-**Test Before You Hire**
-Micro-internships let candidates prove themselves on real projects before you commit.
-
-**Pay Through Escrow**
-Dokets VouchAI protects both parties. Release payment only when work is approved.
-
-**Support Multiple Languages**
-With Charvak's 34-language support, you can hire from any country without communication barriers.
-
-**Measure Everything**
-Track time-to-hire, candidate quality, and retention. Data beats intuition.""",
-                "author": "Charvak Team",
-                "category": "Hiring",
-                "tags": ["Remote Work", "Global Teams", "Hiring"],
-                "image": "/static/images/blog/remote.jpg",
-                "read_time": "6 min",
-                "published_at": datetime.now().isoformat(),
-                "seo_title": "Remote Hiring Best Practices 2026 | Charvak IT Consulting",
-                "seo_description": "Master remote hiring across time zones. Best practices for sourcing, interviewing, and onboarding global talent."
-            },
-            {
-                "id": "skill-gap",
-                "slug": "bridge-skill-gap-ai-assessment",
-                "title": "How to Bridge the Skill Gap with AI-Powered Assessments",
-                "excerpt": "Use Skill-Twin and AI assessment tools to identify and close skill gaps in your team.",
-                "content": """The global IT skills gap costs companies billions annually. By 2026, an estimated 85 million jobs may go unfilled due to skills shortages.
-
-**Identify Your Gaps**
-Start with a team skills audit. What technologies do you lack? What's coming in the next 12 months?
-
-**Use AI Assessments**
-Skill-Twin evaluates candidates on 20+ technology stacks with verified scores — not self-claimed expertise.
-
-**Create Micro-Learning Paths**
-Don't wait for formal training. Assign 2-week micro-internships that build specific skills through real work.
-
-**Verify Progress**
-Earn verified badges that prove competency. Share them on LinkedIn for credibility.
-
-**Hire for Adjacent Skills**
-A React developer can learn Vue quickly. AI matching finds candidates with transferable skills.
-
-Charvak's Training Engine plus Badge Engine creates a complete upskilling loop.""",
-                "author": "Charvak Team",
-                "category": "Skills & Training",
-                "tags": ["Skills", "AI Assessment", "Upskilling"],
-                "image": "/static/images/blog/skills.jpg",
-                "read_time": "4 min",
-                "published_at": datetime.now().isoformat(),
-                "seo_title": "Bridge the IT Skill Gap with AI | Charvak Skill-Twin",
-                "seo_description": "Close your team's skill gaps with AI-powered assessments. Identify, measure, and upskill your workforce."
-            },
-            {
-                "id": "escrow-payments",
-                "slug": "escrow-payments-freelance-safe",
-                "title": "Why Escrow Payments Are Essential for Freelance Projects",
-                "excerpt": "Protect both clients and freelancers with Dokets VouchAI escrow — just 1% fee.",
-                "content": """Payment disputes are the #1 problem in freelancing. 58% of freelancers report being paid late or not at all. Escrow fixes this.
-
-**What is Escrow?**
-A neutral third party holds funds until both parties fulfill their obligations. No trust required.
-
-**How Dokets VouchAI Works**
-1. Client deposits funds
-2. Freelancer delivers work
-3. Client reviews and approves
-4. Funds released automatically
-
-**1% Fee**
-Traditional escrow services charge 5-15%. Dokets VouchAI charges just 1%.
-
-**AI Dispute Resolution**
-If there's a disagreement, AI analyzes the work against the original requirements and recommends a fair resolution.
-
-**Global Support**
-34 currencies supported. Works in 50+ countries.
-
-Escrow isn't just for freelancers — it's for any transaction where trust matters.""",
-                "author": "Charvak Team",
-                "category": "Business",
-                "tags": ["Escrow", "Payments", "Freelance", "Security"],
-                "image": "/static/images/blog/escrow.jpg",
-                "read_time": "5 min",
-                "published_at": datetime.now().isoformat(),
-                "seo_title": "Escrow Payments for Safe Freelancing | Dokets VouchAI",
-                "seo_description": "Secure your freelance projects with escrow payments. Only 1% fee via Dokets VouchAI. Protect both parties."
-            }
-        ]
-    
-    def get_all_posts(self, category: str = None, tag: str = None) -> Dict:
-        """Get all blog posts, optionally filtered."""
-        posts = self.posts
-        if category:
-            posts = [p for p in posts if p["category"].lower() == category.lower()]
-        if tag:
-            posts = [p for p in posts if tag.lower() in [t.lower() for t in p.get("tags", [])]]
-        
+    try:
+        raw = path.read_text(encoding="utf-8")
+        fm, body = _parse_frontmatter(raw)
+        rendered = _render_markdown(body)
         return {
-            "status": "success",
-            "posts": posts,
-            "count": len(posts),
-            "categories": list(set(p["category"] for p in self.posts)),
-            "tags": list(set(t for p in self.posts for t in p.get("tags", [])))
+            "slug": slug,
+            "title": fm.get("title", slug.replace("-", " ").title()),
+            "description": fm.get("description", ""),
+            "date": fm.get("date", ""),
+            "author": fm.get("author", "Charvak Team"),
+            "tags": fm.get("tags", []),
+            "content_html": rendered,
         }
-    
-    def get_post(self, slug: str) -> Dict:
-        """Get a single post by slug."""
-        for post in self.posts:
-            if post["slug"] == slug:
-                # Get related posts
-                related = [p for p in self.posts if p["id"] != post["id"] and (
-                    p["category"] == post["category"] or 
-                    any(t in post["tags"] for t in p["tags"])
-                )][:3]
-                
-                return {
-                    "status": "success",
-                    "post": post,
-                    "related": related
-                }
-        return {"status": "error", "message": "Post not found"}
-    
-    def get_sitemap_posts(self) -> List[Dict]:
-        """Get posts for sitemap generation."""
-        return [
-            {"slug": p["slug"], "published_at": p["published_at"], "title": p["seo_title"]}
-            for p in self.posts
-        ]
+    except Exception as e:
+        logger.error(f"Failed to load post {slug}: {e}")
+        return None
 
 
-blog_engine = BlogEngine()
+blog_engine = type("BlogEngine", (), {
+    "list_posts": staticmethod(list_posts),
+    "get_post": staticmethod(get_post),
+})()
