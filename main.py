@@ -7147,6 +7147,60 @@ async def admin_delete_reported_question(question_id: str, request: Request):
         return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
 
 
+
+# ============================================================
+# Z3 - Admin analytics dashboard (DB-backed)
+# ============================================================
+
+@app.get("/admin/analytics", response_class=HTMLResponse)
+async def admin_analytics_page(request: Request):
+    return template_response("admin-analytics.html", request, "Analytics - Admin")
+
+
+@app.get("/api/admin/metrics")
+async def api_admin_metrics(request: Request):
+    require_admin(request)
+    try:
+        from admin_metrics_engine import admin_metrics
+        return admin_metrics.get_full_dashboard()
+    except Exception as e:
+        logger.exception(f"api_admin_metrics failed: {e}")
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+
+@app.get("/api/admin/metrics/users")
+async def api_admin_metrics_users(request: Request):
+    require_admin(request)
+    from admin_metrics_engine import admin_metrics
+    return admin_metrics.get_user_stats()
+
+
+@app.get("/api/admin/metrics/revenue")
+async def api_admin_metrics_revenue(request: Request):
+    require_admin(request)
+    from admin_metrics_engine import admin_metrics
+    return admin_metrics.get_revenue_stats()
+
+
+@app.get("/api/admin/metrics/funnel")
+async def api_admin_metrics_funnel(request: Request):
+    require_admin(request)
+    from admin_metrics_engine import admin_metrics
+    return admin_metrics.get_funnel_stats()
+
+
+@app.get("/api/admin/metrics/ielts")
+async def api_admin_metrics_ielts(request: Request):
+    require_admin(request)
+    from admin_metrics_engine import admin_metrics
+    return admin_metrics.get_ielts_usage()
+
+
+@app.get("/api/admin/metrics/bank")
+async def api_admin_metrics_bank(request: Request):
+    require_admin(request)
+    from admin_metrics_engine import admin_metrics
+    return admin_metrics.get_question_bank_health()
 @app.get("/admin/reported-questions", response_class=HTMLResponse)
 async def admin_reported_questions_page(request: Request):
     return template_response("admin-reported-questions.html", request, "Reported Questions")
