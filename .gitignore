@@ -75,6 +75,10 @@ scripts/*
 !scripts/update_geoip.py
 !scripts/validate_questions.py
 !scripts/review_questions.py
+!scripts/seed_ielts_listening.py
+!scripts/validate_questions.py
+!scripts/ai_verify_questions.py
+!scripts/update_geoip.py
 !scripts/ai_verify_questions.py
 !scripts/seed_exam_question_bank.py
 !scripts/translate_ui.py
