@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}IELTS Academic Practice{% endblock %}
+{% block content %}
+<style>
+  .ie-hero { background: linear-gradient(135deg, #1e40af 0%, #3730a3 100%); color: #fff; padding: 56px 0 40px; }
+  .ie-hero h1 { font-weight: 800; margin-bottom: 8px; }
+  .ie-hero p { opacity: 0.9; margin: 0; }
+  .ie-wrap { max-width: 1000px; margin: 0 auto; padding: 40px 16px; }
+  .ie-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; margin-bottom: 40px; }
+  .ie-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); transition: all 0.15s; display: flex; flex-direction: column; }
+  .ie-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.08); transform: translateY(-2px); }
+  .ie-card-icon { font-size: 2.2rem; margin-bottom: 12px; }
+  .ie-card-title { font-weight: 700; font-size: 1.15rem; margin-bottom: 8px; color: #111827; }
+  .ie-card-desc { color: #6b7280; font-size: 0.9rem; margin-bottom: 16px; flex: 1; }
+  .ie-card-meta { font-size: 0.8rem; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; }
+  .ie-card-btn { align-self: flex-start; }
+  .ie-info { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 20px; color: #1e40af; }
+  .ie-info strong { color: #1e3a8a; }
+</style>
+
+<div class="ie-hero">
+  <div class="container text-center">
+    <h1>IELTS Academic Practice</h1>
+    <p>4 sections · AI-powered feedback · Band scoring on 4 criteria</p>
+  </div>
+</div>
+
+<div class="ie-wrap">
+
+  <div class="ie-grid">
+    <div class="ie-card">
+      <div class="ie-card-icon">🎧</div>
+      <div class="ie-card-title">Listening</div>
+      <div class="ie-card-desc">4 sections, 40 questions. AI-generated MCQ practice covering academic conversations, monologues, and lectures.</div>
+      <div class="ie-card-meta">40 questions · 30 min</div>
+      <a href="/ielts-listening" class="btn btn-primary btn-sm ie-card-btn">Practice</a>
+    </div>
+
+    <div class="ie-card">
+      <div class="ie-card-icon">📖</div>
+      <div class="ie-card-title">Reading</div>
+      <div class="ie-card-desc">3 passages, 40 questions. Multiple question types including True/False/Not Given, matching, and MCQ.</div>
+      <div class="ie-card-meta">40 questions · 60 min</div>
+      <a href="/ielts-reading" class="btn btn-primary btn-sm ie-card-btn">Practice</a>
+    </div>
+
+    <div class="ie-card">
+      <div class="ie-card-icon">✍️</div>
+      <div class="ie-card-title">Writing</div>
+      <div class="ie-card-desc">Task 1 (150 words) + Task 2 (250 words). AI band scoring on the 4 official IELTS criteria.</div>
+      <div class="ie-card-meta">2 tasks · 60 min</div>
+      <a href="/ielts-writing" class="btn btn-primary btn-sm ie-card-btn">Practice</a>
+    </div>
+
+    <div class="ie-card">
+      <div class="ie-card-icon">🎤</div>
+      <div class="ie-card-title">Speaking</div>
+      <div class="ie-card-desc">3-part interview, long turn, and discussion. Record your answers, get AI band scoring.</div>
+      <div class="ie-card-meta">3 parts · 14 min</div>
+      <a href="/ielts-speaking" class="btn btn-primary btn-sm ie-card-btn">Practice</a>
+    </div>
+  </div>
+
+  <div class="ie-info">
+    <strong>About IELTS Academic practice</strong><br>
+    Charvak's IELTS practice uses AI to generate unique questions and score your responses against the four official IELTS criteria: Task Achievement/Response, Coherence & Cohesion, Lexical Resource, and Grammatical Range & Accuracy.
+    <div class="mt-2 small">Not a substitute for a real IELTS test. For official certification, register with the British Council or IDP.</div>
+  </div>
+
+</div>
+{% endblock %}
