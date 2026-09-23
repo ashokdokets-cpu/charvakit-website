@@ -118,6 +118,8 @@ class AICreditEngine:
         "ielts_speaking_eval": 15,
         "ielts_listening_section": 5,
         "ielts_listening_score": 10,
+        "ielts_reading_passage": 5,
+        "ielts_reading_score": 10,
         "ai_localize": 15,
         "ai_generate_contract": 20,
         "ai_analyze_legacy": 25,

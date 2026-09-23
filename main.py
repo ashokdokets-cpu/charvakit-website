@@ -7409,6 +7409,45 @@ async def ielts_listening_page(request: Request):
     return template_response("ielts-listening.html", request, "IELTS Listening Practice")
 
 
+@app.get("/ielts-reading", response_class=HTMLResponse)
+async def ielts_reading_page(request: Request):
+    return template_response("ielts-reading.html", request, "IELTS Reading Practice")
+
+
+@app.post("/api/ielts/reading/passage")
+async def ielts_reading_passage(request: Request):
+    """Fetch a random reading passage + questions (charges 5 credits)."""
+    data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "ielts_reading_passage")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+    result = ielts_engine.get_reading_passage(passage_num=int(data.get("passage_num", 1)))
+    if result.get("status") == "success":
+        result["credits_deducted"] = 5
+        result["credits_remaining"] = guard.get("credits_remaining", 0)
+    return result
+
+
+@app.post("/api/ielts/reading/score")
+async def ielts_reading_score(request: Request):
+    """Score reading MCQs (charges 10 credits)."""
+    data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "ielts_reading_score")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+    result = ielts_engine.evaluate_reading(
+        passage_id=data.get("passage_id"),
+        answers=data.get("answers", []),
+        email=guard["email"],
+    )
+    if result.get("status") == "success":
+        result["credits_deducted"] = 10
+        result["credits_remaining"] = guard.get("credits_remaining", 0)
+    return result
+
+
 @app.post("/api/ielts/listening/section")
 async def ielts_listening_section(request: Request):
     """Fetch a random Section-4 lecture + questions (charges 5 credits)."""
