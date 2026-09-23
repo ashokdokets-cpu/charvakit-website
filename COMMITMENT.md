@@ -3,7 +3,25 @@
 **Purpose:** Track every planned-but-not-completed item. Nothing gets lost again.
 **Created:** 2026-09-20
 **Last updated:** 2026-09-22
-**HEAD:** f1ec086
+**HEAD:** f99c42b
+
+### Z — Analytics + IELTS polish (2026-09-23)
+
+- **Commits:** `8537db3` `a4565fe` `fe53e3a` `a4dad63` `22a8da8` `311662d` `4d26e36` `f99c42b` + release-notes tag
+- **What shipped:**
+  - **Z1** — Refined IELTS section metadata (`content_type`, `total_questions_available`)
+  - **Z2a** — `/ielts-writing` polish (criteria cards, toggle labels, richer intro)
+  - **Z2b** — `/ielts-listening` polish (tab counts, section descriptions, JS-driven)
+  - **Z2c** — `/ielts-reading` polish (3 tier cards, exam strategy, tab counts)
+  - **Z3a-d** — Real, DB-backed analytics dashboard
+    - `admin_metrics_engine.py` (6 metrics)
+    - `/admin/analytics` + 5 API endpoints
+    - 209-line dashboard page with KPIs, funnel, IELTS bars, tables
+    - Analytics link on admin-dashboard
+  - **Z4** — Release notes v3.4
+- **Verified:** All pages render, live data flows, no console errors
+- **Release tag:** `v3.4-polish-and-analytics-20260923`
+- **HEAD after:** `f99c42b`
 
 ### Y — Marketing polish + Admin + Blog (2026-09-23)
 
