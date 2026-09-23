@@ -696,6 +696,11 @@ async def welcome(request: Request):
     return template_response("welcome.html", request, "Welcome to Charvak")
 
 
+@app.get("/consulting", response_class=HTMLResponse)
+async def consulting_page(request: Request):
+    return template_response("consulting.html", request, "Charvak IT Consulting")
+
+
 # W4 - My Results dashboard
 @app.get("/my-results", response_class=HTMLResponse)
 async def my_results_page(request: Request):

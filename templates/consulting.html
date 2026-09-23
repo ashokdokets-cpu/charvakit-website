@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}IT Consulting — Charvak{% endblock %}
+{% block content %}
+<style>
+  .cs-hero { background: linear-gradient(135deg, #0f172a 0%, #1e40af 100%); color: #fff; padding: 80px 0 64px; }
+  .cs-hero h1 { font-size: 2.8rem; font-weight: 800; margin-bottom: 16px; }
+  .cs-hero p.lead { font-size: 1.2rem; opacity: 0.9; max-width: 720px; margin: 0 auto 32px; }
+  .cs-section { padding: 64px 0; }
+  .cs-section h2 { font-size: 1.9rem; font-weight: 800; margin-bottom: 20px; }
+  .cs-service { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 28px; height: 100%; }
+  .cs-service .icon { font-size: 2rem; margin-bottom: 12px; }
+  .cs-service h3 { font-weight: 700; font-size: 1.15rem; margin-bottom: 10px; }
+  .cs-service p { color: #6b7280; font-size: 0.95rem; margin: 0; }
+  .cs-cta { background: #f8fafc; padding: 56px 0; text-align: center; }
+</style>
+
+<div class="cs-hero">
+  <div class="container text-center">
+    <h1>Charvak IT Consulting</h1>
+    <p class="lead">
+      Technology staffing, AI integration, and digital transformation for growing companies.
+    </p>
+    <a href="/for-employers" class="btn btn-light btn-lg fw-semibold">Hire Talent</a>
+    <a href="/contact" class="btn btn-outline-light btn-lg ms-2">Get in Touch</a>
+  </div>
+</div>
+
+<div class="cs-section">
+  <div class="container">
+    <h2 class="text-center mb-5">What we do</h2>
+    <div class="row g-4">
+      <div class="col-md-6 col-lg-4">
+        <div class="cs-service">
+          <div class="icon">👥</div>
+          <h3>Technology Staffing</h3>
+          <p>Pre-vetted engineers, designers, and data specialists. Short-term or long-term engagement. Global and India-based talent.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4">
+        <div class="cs-service">
+          <div class="icon">🤖</div>
+          <h3>AI Integration</h3>
+          <p>Add AI to your existing product or workflow. OpenAI, RAG pipelines, agentic systems, and custom model deployment.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4">
+        <div class="cs-service">
+          <div class="icon">🌐</div>
+          <h3>Web & Mobile</h3>
+          <p>Full-stack product builds — FastAPI, Node.js, React, mobile. From MVP to production scale.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4">
+        <div class="cs-service">
+          <div class="icon">📊</div>
+          <h3>Data & Analytics</h3>
+          <p>Data pipelines, dashboards, and BI. Turn your operational data into decisions.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4">
+        <div class="cs-service">
+          <div class="icon">🛡️</div>
+          <h3>DevOps & Security</h3>
+          <p>CI/CD, container orchestration, cloud migrations, and security hardening on AWS, GCP, or Azure.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4">
+        <div class="cs-service">
+          <div class="icon">🧭</div>
+          <h3>Digital Transformation</h3>
+          <p>Advisory and hands-on delivery for teams modernizing legacy systems or entering new markets.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="cs-cta">
+  <div class="container">
+    <h2 class="fw-bold mb-3">Let's talk</h2>
+    <p class="text-muted mb-4" style="max-width: 640px; margin: 0 auto 24px;">
+      Tell us about your project, your timeline, and your stack. We'll respond within 1 business day.
+    </p>
+    <a href="/contact" class="btn btn-primary btn-lg">Contact Us</a>
+    <a href="/for-employers" class="btn btn-outline-primary btn-lg ms-2">For Employers</a>
+  </div>
+</div>
+{% endblock %}
