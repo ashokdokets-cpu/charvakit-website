@@ -61,9 +61,16 @@ async function loadEvents() {
         const container = document.getElementById("eventList");
         if (data.status === "success" && data.events && data.events.length > 0) {
             container.innerHTML = data.events.map(function(e) {
-                var price = parseInt(e.price_inr || 0);
-                var isPaid = price > 0;
-                var priceLabel = isPaid ? ("Rs " + price) : "Free";
+                var priceInr = parseInt(e.price_inr || 0);
+                var isPaid = priceInr > 0;
+                var priceLabel = "Free";
+                if (isPaid) {
+                    var cc = window.CharvakCurrency;
+                    var rate = (cc && cc.getRate) ? cc.getRate() : 1;
+                    var sym = (cc && cc.getSymbol) ? cc.getSymbol() : "\u20b9";
+                    var converted = Math.round(priceInr * rate * 100) / 100;
+                    priceLabel = sym + converted;
+                }
                 var buttonsHtml;
                 if (isPaid) {
                     buttonsHtml = '<div class="d-grid gap-2">' +
