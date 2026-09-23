@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+{% block title %}Analytics - Admin{% endblock %}
+{% block content %}
+<style>
+  .an-hero { background: linear-gradient(135deg, #0f172a 0%, #1e40af 100%); color: #fff; padding: 48px 0 32px; }
+  .an-hero h1 { font-weight: 800; margin-bottom: 6px; }
+  .an-hero p { opacity: 0.85; margin: 0; }
+  .an-wrap { max-width: 1200px; margin: 0 auto; padding: 32px 16px 60px; }
+  .an-kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 32px; }
+  .an-kpi { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 20px; }
+  .an-kpi-value { font-size: 2.2rem; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+  .an-kpi-label { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280; }
+  .an-kpi-sub { font-size: 0.85rem; color: #9ca3af; margin-top: 6px; }
+  .an-section { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 24px; margin-bottom: 20px; }
+  .an-section h3 { font-weight: 700; margin-bottom: 16px; font-size: 1.15rem; }
+  .an-funnel { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+  .an-funnel-step { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 12px 20px; text-align: center; flex: 1; min-width: 110px; }
+  .an-funnel-step-value { font-size: 1.75rem; font-weight: 800; color: #1e40af; line-height: 1; }
+  .an-funnel-step-label { font-size: 0.75rem; text-transform: uppercase; color: #6b7280; letter-spacing: 0.5px; margin-top: 4px; }
+  .an-funnel-arrow { font-size: 1.5rem; color: #93c5fd; }
+  .an-ielts-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f3f4f6; }
+  .an-ielts-row:last-child { border-bottom: none; }
+  .an-ielts-name { font-weight: 600; min-width: 100px; color: #374151; }
+  .an-ielts-bar { flex: 1; height: 20px; background: #f3f4f6; border-radius: 6px; overflow: hidden; position: relative; }
+  .an-ielts-fill { height: 100%; background: linear-gradient(90deg, #1e40af, #3b82f6); border-radius: 6px; transition: width 0.4s; }
+  .an-ielts-count { font-weight: 700; min-width: 40px; text-align: right; color: #1e40af; }
+  .an-table { width: 100%; font-size: 0.9rem; }
+  .an-table th { text-align: left; padding: 8px 12px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280; border-bottom: 1px solid #e5e7eb; }
+  .an-table td { padding: 10px 12px; border-bottom: 1px solid #f3f4f6; }
+  .an-table tr:last-child td { border-bottom: none; }
+  .an-empty { text-align: center; padding: 40px 20px; color: #9ca3af; }
+  .an-updated { font-size: 0.8rem; color: #9ca3af; text-align: right; margin-bottom: 12px; }
+  .an-btn-refresh { background: #1e40af; color: #fff; border: none; border-radius: 8px; padding: 6px 16px; font-size: 0.85rem; cursor: pointer; }
+  .an-btn-refresh:hover { background: #1e3a8a; }
+</style>
+
+<div class="an-hero">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-start flex-wrap">
+      <div>
+        <h1>Analytics</h1>
+        <p>Real, DB-backed metrics for Charvak</p>
+      </div>
+      <button class="an-btn-refresh mt-2" onclick="loadMetrics()">↻ Refresh</button>
+    </div>
+  </div>
+</div>
+
+<div class="an-wrap">
+
+  <div class="an-updated" id="lastUpdated">Loading…</div>
+
+  <div id="errorBox" class="alert alert-danger" style="display:none;"></div>
+
+  <!-- KPI cards -->
+  <div class="an-kpi-grid" id="kpiRow"></div>
+
+  <!-- Funnel -->
+  <div class="an-section">
+    <h3>User Funnel</h3>
+    <div class="an-funnel" id="funnelRow"></div>
+    <div class="small text-muted mt-2" id="funnelRates"></div>
+  </div>
+
+  <!-- IELTS usage + Top exams -->
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="an-section h-100">
+        <h3>IELTS Usage by Section</h3>
+        <div id="ieltsBreakdown"></div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="an-section h-100">
+        <h3>Top Assessments by Usage</h3>
+        <div id="examsTable"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bank health -->
+  <div class="an-section">
+    <h3>Question Bank Health</h3>
+    <div class="row g-3">
+      <div class="col-md-4">
+        <div class="border rounded p-3 text-center">
+          <div class="an-kpi-value" id="bankTotal">—</div>
+          <div class="an-kpi-label">Total Questions</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="border rounded p-3 text-center">
+          <div class="an-kpi-value text-success" id="bankReviewed">—</div>
+          <div class="an-kpi-label">Reviewed</div>
+          <div class="an-kpi-sub" id="bankReviewRate">—</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="border rounded p-3 text-center">
+          <div class="an-kpi-value text-danger" id="bankReported">—</div>
+          <div class="an-kpi-label">Reported by Users</div>
+          <div class="an-kpi-sub"><a href="/admin/reported-questions">Review →</a></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// =============================================================
+// Z3c — Analytics dashboard
+// =============================================================
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+
+async function loadMetrics() {
+  document.getElementById('errorBox').style.display = 'none';
+  try {
+    var r = await fetch('/api/admin/metrics');
+    if (r.status === 401 || r.status === 403) {
+      document.getElementById('errorBox').style.display = 'block';
+      document.getElementById('errorBox').textContent = 'Admin access required. Please log in at /admin-login.';
+      return;
+    }
+    var j = await r.json();
+    if (j.status !== 'success') {
+      document.getElementById('errorBox').style.display = 'block';
+      document.getElementById('errorBox').textContent = j.message || 'Could not load metrics.';
+      return;
+    }
+    render(j);
+  } catch (e) {
+    document.getElementById('errorBox').style.display = 'block';
+    document.getElementById('errorBox').textContent = 'Network error: ' + e.message;
+  }
+}
+
+function render(d) {
+  document.getElementById('lastUpdated').textContent = 'Updated: ' + (d.generated_at || '').replace('T', ' ').substring(0, 19);
+
+  var u = d.users || {};
+  var rev = d.revenue || {};
+  var f = d.funnel || {};
+
+  // KPI cards
+  var kpiHtml = '';
+  kpiHtml += kpi('Total Users', u.total || 0, (u.new_7d || 0) + ' new this week');
+  kpiHtml += kpi('Verified', u.verified || 0, (u.verification_rate || 0) + '% of total', 'text-success');
+  kpiHtml += kpi('Active (7d)', u.active_7d || 0, 'Users who tested recently');
+  kpiHtml += kpi('Revenue', '₹' + (rev.revenue_inr || 0).toLocaleString(), (rev.purchases || 0) + ' purchases', 'text-primary');
+  kpiHtml += kpi('Credits Sold', (rev.credits_sold || 0).toLocaleString(), (rev.credits_used || 0).toLocaleString() + ' used');
+  kpiHtml += kpi('Tests Taken', f.took_test || 0, 'Distinct users');
+  document.getElementById('kpiRow').innerHTML = kpiHtml;
+
+  // Funnel
+  var steps = [
+    { label: 'Registered', value: f.registered || 0 },
+    { label: 'Verified', value: f.verified || 0 },
+    { label: 'Took Test', value: f.took_test || 0 },
+    { label: 'Purchased', value: f.purchased || 0 }
+  ];
+  var funnelHtml = steps.map(function(s, i) {
+    var arrow = i < steps.length - 1 ? '<div class="an-funnel-arrow">→</div>' : '';
+    return '<div class="an-funnel-step"><div class="an-funnel-step-value">' + s.value + '</div><div class="an-funnel-step-label">' + s.label + '</div></div>' + arrow;
+  }).join('');
+  document.getElementById('funnelRow').innerHTML = funnelHtml;
+  document.getElementById('funnelRates').innerHTML =
+    'Verify: <strong>' + (f.verify_rate || 0) + '%</strong> · ' +
+    'Verify → Test: <strong>' + (f.test_rate || 0) + '%</strong> · ' +
+    'Test → Purchase: <strong>' + (f.purchase_rate || 0) + '%</strong> · ' +
+    'Overall: <strong>' + (f.overall_conversion || 0) + '%</strong>';
+
+  // IELTS
+  var il = d.ielts || {};
+  var ieltsData = [
+    { name: 'Listening', count: il.listening || 0 },
+    { name: 'Reading', count: il.reading || 0 },
+    { name: 'Writing', count: il.writing || 0 },
+    { name: 'Speaking', count: il.speaking || 0 }
+  ];
+  var maxCount = Math.max(1, Math.max.apply(null, ieltsData.map(function(x){ return x.count; })));
+  var ieltsHtml = ieltsData.map(function(x) {
+    var pct = (x.count / maxCount) * 100;
+    return '<div class="an-ielts-row">' +
+      '<div class="an-ielts-name">' + x.name + '</div>' +
+      '<div class="an-ielts-bar"><div class="an-ielts-fill" style="width:' + pct + '%;"></div></div>' +
+      '<div class="an-ielts-count">' + x.count + '</div>' +
+      '</div>';
+  }).join('');
+  if (il.total === 0) {
+    ieltsHtml += '<div class="an-empty">No IELTS tests taken yet. <a href="/ielts">Try it yourself →</a></div>';
+  }
+  document.getElementById('ieltsBreakdown').innerHTML = ieltsHtml;
+
+  // Top exams table
+  var exams = d.exams || [];
+  var exHtml = '';
+  if (!exams.length) {
+    exHtml = '<div class="an-empty">No assessments yet</div>';
+  } else {
+    exHtml = '<table class="an-table"><thead><tr><th>Assessment</th><th style="text-align:right;">Count</th></tr></thead><tbody>';
+    exams.forEach(function(e) {
+      exHtml += '<tr><td>' + esc(e.assessment_name || '—') + '</td><td style="text-align:right;font-weight:600;">' + e.n + '</td></tr>';
+    });
+    exHtml += '</tbody></table>';
+  }
+  document.getElementById('examsTable').innerHTML = exHtml;
+
+  // Bank health
+  var b = d.bank || {};
+  document.getElementById('bankTotal').textContent = (b.total || 0).toLocaleString();
+  document.getElementById('bankReviewed').textContent = (b.reviewed || 0).toLocaleString();
+  document.getElementById('bankReviewRate').textContent = (b.review_rate || 0) + '% reviewed';
+  document.getElementById('bankReported').textContent = (b.reported || 0).toLocaleString();
+}
+
+function kpi(label, value, sub, cls) {
+  cls = cls || '';
+  var subHtml = sub ? '<div class="an-kpi-sub">' + esc(sub) + '</div>' : '';
+  return '<div class="an-kpi"><div class="an-kpi-value ' + cls + '">' + esc(value) + '</div><div class="an-kpi-label">' + esc(label) + '</div>' + subHtml + '</div>';
+}
+
+document.addEventListener('DOMContentLoaded', loadMetrics);
+</script>
+{% endblock %}
