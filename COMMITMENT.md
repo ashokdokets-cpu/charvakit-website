@@ -3,8 +3,28 @@
 **Purpose:** Track every planned-but-not-completed item. Nothing gets lost again.
 **Created:** 2026-09-20
 **Last updated:** 2026-09-22
-**HEAD:** `7ebed95`
+**HEAD:** f1ec086
 
+### Y — Marketing polish + Admin + Blog (2026-09-23)
+
+- **Commits:** `f427531` `4ad2219` `64649ac` `9505785` `26b8d63` `f538c08` `57df7a4` `097e429` `f1ec086`
+- **What shipped:**
+  - **Y1:** Enriched IELTS section metadata (`practice_url`, `content_count`, `subsections`, `available`)
+  - **Y2:** Edtech-first homepage (hero + 4 feature cards + value props + business strip), new `/consulting` page, IELTS hub copy enhancements
+  - **Y3:** Admin reported-questions page (list + dismiss + delete), tested end-to-end
+  - **Y4:** Release notes for v3.3
+  - **Y5:** Blog infrastructure
+    - `blog_engine.py` — markdown loader with frontmatter parser, contract-compliant with existing routes
+    - 8 posts in `blog/posts/` — 3 new IELTS + 5 recovered from git history (AI staffing, US visas, remote hiring, skill gap, escrow)
+    - Fixed template rendering (safe filter + `.blog-content` styles)
+    - Removed duplicate nav link + 2 orphan templates
+- **Verified:**
+  - Homepage shows new hero + 4 cards
+  - Consulting page loads
+  - Admin review page works (dismiss tested)
+  - Blog loads with 8 posts across 6 categories
+  - Single posts render clean HTML
+- **HEAD after:** `f1ec086`
 
 ### X5 — IELTS Reading + all-4 sections Listening (2026-09-23)
 
