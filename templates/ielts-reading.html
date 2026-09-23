@@ -30,7 +30,7 @@
 <div class="ir-hero">
   <div class="container text-center">
     <h1>IELTS Reading Practice</h1>
-    <p>3 passages &middot; 10 questions each &middot; AI band scoring</p>
+    <p>3 difficulty tiers &middot; 10 questions per passage &middot; AI band scoring</p>
   </div>
 </div>
 
@@ -38,7 +38,12 @@
 
   <div id="introCard" class="ir-card">
     <h5 class="fw-bold mb-3">How this works</h5>
-    <ul class="mb-3">
+    <div class="row g-3 mb-3">
+      <div class="col-md-4"><div class="border rounded p-3 h-100"><div class="fw-bold text-primary mb-1">Passage 1 &middot; Easiest</div><div class="small text-muted">~700 words, factual. Straightforward detail questions.</div></div></div>
+      <div class="col-md-4"><div class="border rounded p-3 h-100"><div class="fw-bold text-primary mb-1">Passage 2 &middot; Medium</div><div class="small text-muted">~800 words, analytical. Cause/effect, comparisons, inference.</div></div></div>
+      <div class="col-md-4"><div class="border rounded p-3 h-100"><div class="fw-bold text-primary mb-1">Passage 3 &middot; Hardest</div><div class="small text-muted">~900 words, argumentative. Author opinions, abstract inference.</div></div></div>
+    </div>
+    <div class="border-top pt-3 small"><div class="text-uppercase fw-bold text-muted mb-2" style="letter-spacing:0.5px;">Exam strategy</div><ul class="mb-0"><li>Skim the passage once, then read each question carefully</li><li>Scan for keywords from the question</li><li>You do NOT need to understand every word</li><li>If unsure, eliminate wrong options then guess</li></ul></div><ul style="display:none" class="mb-3">
       <li><strong>Passage 1</strong> &mdash; easiest (~700 words, factual)</li>
       <li><strong>Passage 2</strong> &mdash; medium (~800 words, analysis)</li>
       <li><strong>Passage 3</strong> &mdash; hardest (~900 words, argument)</li>
@@ -57,18 +62,25 @@
     <div class="ir-tabs" id="passageTabs">
       <div class="ir-tab active" data-pn="1" onclick="selectPassage(1)">
         <strong>Passage 1</strong><br>
-        <small class="text-muted">Easiest</small>
+        <small class="text-muted">Easiest</small><br>
+        <small class="text-muted">10 Qs</small>
       </div>
       <div class="ir-tab" data-pn="2" onclick="selectPassage(2)">
         <strong>Passage 2</strong><br>
-        <small class="text-muted">Medium</small>
+        <small class="text-muted">Medium</small><br>
+        <small class="text-muted">10 Qs</small>
       </div>
       <div class="ir-tab" data-pn="3" onclick="selectPassage(3)">
         <strong>Passage 3</strong><br>
-        <small class="text-muted">Hardest</small>
+        <small class="text-muted">Hardest</small><br>
+        <small class="text-muted">10 Qs</small>
       </div>
     </div>
-    <button class="btn btn-primary mt-3" id="startBtn" onclick="startReading()">
+        <div id="passageDescription" class="alert alert-light border small mt-3 mb-0">
+      <strong id="passageDescTitle">Passage 1 &middot; Easiest</strong>
+      <div id="passageDescBody" class="text-muted mt-1">~700 words, factual. Straightforward detail questions.</div>
+    </div>
+<button class="btn btn-primary mt-3" id="startBtn" onclick="startReading()">
       Load Passage &mdash; 5 credits
     </button>
     <span class="text-muted small ms-3" id="startStatus"></span>
@@ -137,6 +149,12 @@ var PASSAGE_LABELS = {
   1: 'Passage 1 — Easiest',
   2: 'Passage 2 — Medium',
   3: 'Passage 3 — Hardest'
+};
+
+var PASSAGE_DESCRIPTIONS = {
+  1: { title: "Passage 1 - Easiest", body: "~700 words, factual. Straightforward detail questions." },
+  2: { title: "Passage 2 - Medium", body: "~800 words, analytical. Cause/effect and inference." },
+  3: { title: "Passage 3 - Hardest", body: "~900 words, argumentative. Author opinions and abstract inference." }
 };
 
 function selectPassage(n) {
