@@ -78,6 +78,23 @@
     </div>
   </div>
 
+  <!-- Trends (Chart.js) -->
+  <div class="row g-4 mt-2">
+    <div class="col-lg-6">
+      <div class="an-section h-100">
+        <h3>Revenue Trend (Last 30 Days)</h3>
+        <canvas id="revenueChart" height="200"></canvas>
+        <div id="revenueChartEmpty" class="an-empty" style="display:none;">No revenue yet</div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="an-section h-100">
+        <h3>Daily Signups (Last 30 Days)</h3>
+        <canvas id="signupChart" height="200"></canvas>
+        <div id="signupChartEmpty" class="an-empty" style="display:none;">No signups in last 30 days</div>
+      </div>
+    </div>
+  </div>
   <!-- Bank health -->
   <div class="an-section">
     <h3>Question Bank Health</h3>
@@ -216,6 +233,8 @@ function render(d) {
   document.getElementById('bankReviewed').textContent = (b.reviewed || 0).toLocaleString();
   document.getElementById('bankReviewRate').textContent = (b.review_rate || 0) + '% reviewed';
   document.getElementById('bankReported').textContent = (b.reported || 0).toLocaleString();
+
+  loadCharts();
 }
 
 function kpi(label, value, sub, cls) {
@@ -224,6 +243,88 @@ function kpi(label, value, sub, cls) {
   return '<div class="an-kpi"><div class="an-kpi-value ' + cls + '">' + esc(value) + '</div><div class="an-kpi-label">' + esc(label) + '</div>' + subHtml + '</div>';
 }
 
+// =============================================================
+// Charts (Chart.js)
+// =============================================================
+let revenueChart = null;
+let signupChart = null;
+
+async function loadCharts() {
+    try {
+        const [revRes, sigRes] = await Promise.all([
+            fetch('/api/admin/metrics/revenue-trend').then(r => r.json()).catch(() => null),
+            fetch('/api/admin/metrics/user-trend').then(r => r.json()).catch(() => null)
+        ]);
+
+        // Revenue line chart
+        if (revRes && revRes.status === 'success' && revRes.data) {
+            const revCtx = document.getElementById('revenueChart');
+            const hasData = revRes.data.some(d => d.revenue > 0);
+            if (hasData && revCtx) {
+                if (revenueChart) revenueChart.destroy();
+                revenueChart = new Chart(revCtx, {
+                    type: 'line',
+                    data: {
+                        labels: revRes.data.map(d => d.date.substring(5)),
+                        datasets: [{
+                            label: 'Revenue (Rs)',
+                            data: revRes.data.map(d => d.revenue),
+                            borderColor: '#1e40af',
+                            backgroundColor: 'rgba(30, 64, 175, 0.1)',
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 3,
+                            pointBackgroundColor: '#1e40af'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true } }
+                    }
+                });
+            } else if (revCtx) {
+                revCtx.style.display = 'none';
+                const el = document.getElementById('revenueChartEmpty');
+                if (el) el.style.display = 'block';
+            }
+        }
+
+        // Signup bar chart
+        if (sigRes && sigRes.status === 'success' && sigRes.data) {
+            const sigCtx = document.getElementById('signupChart');
+            const hasData = sigRes.data.some(d => d.signups > 0);
+            if (hasData && sigCtx) {
+                if (signupChart) signupChart.destroy();
+                signupChart = new Chart(sigCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: sigRes.data.map(d => d.date.substring(5)),
+                        datasets: [{
+                            label: 'Signups',
+                            data: sigRes.data.map(d => d.signups),
+                            backgroundColor: '#3ba591',
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                    }
+                });
+            } else if (sigCtx) {
+                sigCtx.style.display = 'none';
+                const el = document.getElementById('signupChartEmpty');
+                if (el) el.style.display = 'block';
+            }
+        }
+    } catch (e) {
+        console.error('Chart load failed:', e);
+    }
+}
 document.addEventListener('DOMContentLoaded', loadMetrics);
 </script>
 {% endblock %}

@@ -7196,6 +7196,19 @@ async def api_admin_metrics_ielts(request: Request):
     return admin_metrics.get_ielts_usage()
 
 
+
+@app.get("/api/admin/metrics/revenue-trend")
+async def api_admin_metrics_revenue_trend(request: Request, days: int = 30):
+    require_admin(request)
+    from admin_metrics_engine import admin_metrics
+    return {"status": "success", "days": days, "data": admin_metrics.get_revenue_trend(days)}
+
+
+@app.get("/api/admin/metrics/user-trend")
+async def api_admin_metrics_user_trend(request: Request, days: int = 30):
+    require_admin(request)
+    from admin_metrics_engine import admin_metrics
+    return {"status": "success", "days": days, "data": admin_metrics.get_user_trend(days)}
 @app.get("/api/admin/metrics/bank")
 async def api_admin_metrics_bank(request: Request):
     require_admin(request)
