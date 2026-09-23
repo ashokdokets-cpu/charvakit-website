@@ -7399,6 +7399,11 @@ async def ielts_hub(request: Request):
     return template_response("ielts.html", request, "IELTS Academic Practice")
 
 
+@app.get("/ielts-writing", response_class=HTMLResponse)
+async def ielts_writing_page(request: Request):
+    return template_response("ielts-writing.html", request, "IELTS Writing Practice")
+
+
 @app.get("/ielts-speaking", response_class=HTMLResponse)
 async def ielts_speaking_page(request: Request):
     return template_response("ielts-speaking.html", request, "IELTS Speaking Practice")
