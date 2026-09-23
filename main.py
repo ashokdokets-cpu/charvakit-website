@@ -7055,6 +7055,102 @@ async def generate_topic_questions(request: Request):
 
 from results_system import results_system
 
+# ============================================================
+# Y3 — Admin: reported questions review
+# ============================================================
+
+@app.get("/api/admin/reported-questions")
+async def admin_reported_questions(request: Request):
+    """List questions reported by users. Admin-only."""
+    require_admin(request)
+    try:
+        from database import db
+        conn = db.get_pooled_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT question_id, exam_id, topic, question_text, options,
+                   correct_index, explanation, reported_at, reported_by, report_reason
+            FROM charvak_exam_question_bank
+            WHERE reported = TRUE
+            ORDER BY reported_at DESC NULLS LAST
+            LIMIT 200
+        """)
+        rows = cur.fetchall()
+        cur.close()
+        db.release_pooled_connection(conn)
+    except Exception as e:
+        logger.exception(f"admin_reported_questions failed: {e}")
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+    questions = []
+    for r in rows:
+        opts = r[4] if isinstance(r[4], list) else json.loads(r[4] or "[]")
+        questions.append({
+            "question_id": r[0],
+            "exam_id": r[1],
+            "topic": r[2],
+            "question_text": r[3],
+            "options": opts,
+            "correct_index": r[5],
+            "explanation": r[6] or "",
+            "reported_at": r[7].isoformat() if r[7] else None,
+            "reported_by": r[8] or "anonymous",
+            "report_reason": r[9] or "(no reason given)",
+        })
+
+    return {"status": "success", "count": len(questions), "questions": questions}
+
+
+@app.post("/api/admin/reported-questions/{question_id}/dismiss")
+async def admin_dismiss_report(question_id: str, request: Request):
+    """Clear the reported flag without changing the question."""
+    require_admin(request)
+    try:
+        from database import db
+        conn = db.get_pooled_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            UPDATE charvak_exam_question_bank
+            SET reported = FALSE, reported_at = NULL,
+                reported_by = NULL, report_reason = NULL
+            WHERE question_id = %s
+        """, (question_id,))
+        conn.commit()
+        n = cur.rowcount
+        cur.close()
+        db.release_pooled_connection(conn)
+        return {"status": "success", "dismissed": n}
+    except Exception as e:
+        logger.exception(f"admin_dismiss_report failed: {e}")
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+
+@app.post("/api/admin/reported-questions/{question_id}/delete")
+async def admin_delete_reported_question(question_id: str, request: Request):
+    """Delete a reported question from the bank."""
+    require_admin(request)
+    try:
+        from database import db
+        conn = db.get_pooled_connection()
+        cur = conn.cursor()
+        cur.execute(
+            "DELETE FROM charvak_exam_question_bank WHERE question_id = %s",
+            (question_id,)
+        )
+        conn.commit()
+        n = cur.rowcount
+        cur.close()
+        db.release_pooled_connection(conn)
+        return {"status": "success", "deleted": n}
+    except Exception as e:
+        logger.exception(f"admin_delete_reported_question failed: {e}")
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+
+@app.get("/admin/reported-questions", response_class=HTMLResponse)
+async def admin_reported_questions_page(request: Request):
+    return template_response("admin-reported-questions.html", request, "Reported Questions")
+
 @app.post("/api/results/record")
 async def record_result(request: Request):
     data = await request.json()
