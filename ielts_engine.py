@@ -442,6 +442,28 @@ class IELTSEngine:
             except Exception as e:
                 logger.warning(f"reading attempt persist failed: {e}")
 
+        # X5.6 - Also persist to charvak_assessment_results
+        if email:
+            try:
+                from results_system import results_system
+                score_pct = round((band / 9.0) * 100, 1) if band else 0
+                results_system.record_assessment_result(
+                    email=email,
+                    assessment_type="ielts_reading",
+                    assessment_name=f"IELTS Reading Passage {row[0]}",
+                    score=score_pct,
+                    total_questions=total,
+                    correct_answers=correct,
+                    details={
+                        "overall_band": float(band),
+                        "passage_num": row[0],
+                        "title": row[1],
+                        "topic": row[2],
+                    },
+                )
+            except Exception as e:
+                logger.warning(f"IELTS reading persist to assessment_results failed: {e}")
+
         return {
             "status": "success",
             "passage_id": passage_id,
@@ -589,6 +611,28 @@ class IELTSEngine:
                 db.release_pooled_connection(conn)
             except Exception as e:
                 logger.warning(f"listening attempt persist failed: {e}")
+
+        # X5.6 - Also persist to charvak_assessment_results for cross-test dashboard
+        if email:
+            try:
+                from results_system import results_system
+                score_pct = round((band / 9.0) * 100, 1) if band else 0
+                results_system.record_assessment_result(
+                    email=email,
+                    assessment_type="ielts_listening",
+                    assessment_name=f"IELTS Listening Section {row[0]}",
+                    score=score_pct,
+                    total_questions=total,
+                    correct_answers=correct,
+                    details={
+                        "overall_band": float(band),
+                        "section_num": row[0],
+                        "title": row[1],
+                        "topic": row[2],
+                    },
+                )
+            except Exception as e:
+                logger.warning(f"IELTS listening persist to assessment_results failed: {e}")
 
         return {
             "status": "success",
