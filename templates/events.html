@@ -41,44 +41,133 @@
         <p class="text-muted text-center">No upcoming events. Check back soon!</p>
     </div>
 </div>
-<script>
-fetch('/api/events')
-    .then(res => res.json())
-    .then(data => {
-        if (data.status === 'success' && data.events.length > 0) {
-            document.getElementById('eventList').innerHTML = data.events.map(e => `
-                <div class="col-md-6 mb-4">
-                    <div class="card h-100 border-0 shadow-sm">
-                        <div class="card-body">
-                            <span class="badge bg-primary mb-2">${e.event_type}</span>
-                            <h2 class="as-h5">${e.title}</h2>
-                            <p class="text-muted small">${e.description}</p>
-                            <hr>
-                            <p class="mb-2"><i class="bi bi-calendar me-2"></i>${e.date}</p>
-                            <p class="mb-2"><i class="bi bi-people me-2"></i>${e.rsvp_count}/${e.max_attendees} registered</p>
-                            <button class="btn btn-primary btn-sm w-100" onclick="rsvpEvent('${e.event_id}')">RSVP Now</button>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
+﻿<script>
+function escapeHtml(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){
+        return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
     });
-
-function rsvpEvent(eventId) {
-    fetch('/api/events/rsvp', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-            event_id: eventId,
-            user_id: localStorage.getItem('charvak_user_id') || 'USER-001',
-            user_name: 'User',
-            user_email: 'user@email.com',
-            user_type: 'student'
-        })
-    })
-    .then(res => res.json())
-    .then(data => alert(data.message || 'RSVP confirmed!'));
 }
+function getCurrentUser() {
+    return {
+        id: localStorage.getItem("userId") || localStorage.getItem("charvak_user_id") || "",
+        email: localStorage.getItem("userEmail") || "",
+        name: localStorage.getItem("userName") || "Guest"
+    };
+}
+async function loadEvents() {
+    try {
+        const r = await fetch("/api/events");
+        const data = await r.json();
+        const container = document.getElementById("eventList");
+        if (data.status === "success" && data.events && data.events.length > 0) {
+            container.innerHTML = data.events.map(function(e) {
+                var price = parseInt(e.price_inr || 0);
+                var isPaid = price > 0;
+                var priceLabel = isPaid ? ("Rs " + price) : "Free";
+                var buttonsHtml;
+                if (isPaid) {
+                    buttonsHtml = '<div class="d-grid gap-2">' +
+                        '<button class="btn btn-primary btn-sm" onclick="rsvpFree(&quot;' + e.event_id + '&quot;)">RSVP Free</button>' +
+                        '<button class="btn btn-warning btn-sm" onclick="rsvpPaid(&quot;' + e.event_id + '&quot;, ' + price + ')">Upgrade to Pro</button>' +
+                        '</div>';
+                } else {
+                    buttonsHtml = '<button class="btn btn-primary btn-sm w-100" onclick="rsvpFree(&quot;' + e.event_id + '&quot;)">RSVP Now</button>';
+                }
+                return '<div class="col-md-6 mb-4"><div class="card h-100 border-0 shadow-sm"><div class="card-body">' +
+                    '<div class="d-flex justify-content-between align-items-start mb-2">' +
+                    '<span class="badge bg-primary">' + escapeHtml(e.event_type || "event") + '</span>' +
+                    '<span class="badge ' + (isPaid ? 'bg-warning text-dark' : 'bg-secondary') + '">' + priceLabel + '</span>' +
+                    '</div>' +
+                    '<h2 class="as-h5">' + escapeHtml(e.title) + '</h2>' +
+                    '<p class="text-muted small">' + escapeHtml(e.description || "") + '</p><hr>' +
+                    '<p class="mb-2"><i class="bi bi-calendar me-2"></i>' + escapeHtml(e.date || "") + '</p>' +
+                    '<p class="mb-3"><i class="bi bi-people me-2"></i>' + (e.rsvp_count || 0) + '/' + (e.max_attendees || "inf") + ' registered</p>' +
+                    buttonsHtml +
+                    '</div></div></div>';
+            }).join("");
+        } else {
+            container.innerHTML = '<p class="text-muted text-center">No upcoming events. Check back soon!</p>';
+        }
+    } catch (e) {
+        console.error("loadEvents failed:", e);
+    }
+}
+async function rsvpFree(eventId) {
+    var u = getCurrentUser();
+    if (!u.email) { alert("Please log in to RSVP."); return; }
+    try {
+        var r = await fetch("/api/events/rsvp", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                event_id: eventId, user_id: u.id, user_name: u.name,
+                user_email: u.email, user_type: "student"
+            })
+        });
+        var data = await r.json();
+        alert(data.message || "RSVP confirmed!");
+        if (data.status === "success") loadEvents();
+    } catch (e) { alert("Network error: " + e.message); }
+}
+async function rsvpPaid(eventId, priceInr) {
+    var u = getCurrentUser();
+    if (!u.email) { alert("Please log in to RSVP."); return; }
+    if (typeof Razorpay === "undefined") { alert("Payment system not ready."); return; }
+    try {
+        var orderRes = await fetch("/api/payment/create-order", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({ amount: priceInr, plan: "event_pro", email: u.email, name: u.name, tool: "event_rsvp" })
+        });
+        var order = await orderRes.json();
+        if (order.status !== "success" || !order.order_id) {
+            alert("Could not create payment order: " + (order.message || "unknown"));
+            return;
+        }
+        var options = {
+            key: order.key_id, amount: order.amount, currency: order.currency || "INR",
+            name: "Charvak Events", description: "Pro RSVP", order_id: order.order_id,
+            prefill: { email: u.email, name: u.name },
+            handler: async function (response) {
+                try {
+                    var r = await fetch("/api/events/rsvp-paid", {
+                        method: "POST",
+                        headers: {"Content-Type": "application/json"},
+                        body: JSON.stringify({
+                            event_id: eventId, payment_id: response.razorpay_payment_id,
+                            user_id: u.id, user_name: u.name, user_email: u.email
+                        })
+                    });
+                    var data = await r.json();
+                    if (data.status === "success") { alert("Paid RSVP confirmed!"); loadEvents(); }
+                    else { alert("RSVP failed: " + (data.message || "unknown")); }
+                } catch (e) { alert("Network error: " + e.message); }
+            },
+            theme: { color: "#1e40af" }
+        };
+        var rzp = new Razorpay(options);
+        rzp.open();
+    } catch (e) { alert("Payment initiation failed: " + e.message); }
+}
+function createEvent(evt) {
+    evt.preventDefault();
+    var payload = {
+        title: document.getElementById("eventTitle").value,
+        event_type: document.getElementById("eventType").value,
+        date: document.getElementById("eventDate").value,
+        duration_minutes: parseInt(document.getElementById("eventDuration").value || 60),
+        platform: document.getElementById("eventPlatform").value,
+        max_attendees: parseInt(document.getElementById("eventMaxAttendees").value || 100),
+        description: document.getElementById("eventDescription").value,
+        price_inr: 0
+    };
+    fetch("/api/events/create", {
+        method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(payload)
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){ alert(d.message || "Event created"); if (d.status === "success") loadEvents(); });
+}
+document.addEventListener("DOMContentLoaded", loadEvents);
 </script>
 <script>
 async function createEvent(e) {
