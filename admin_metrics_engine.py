@@ -160,6 +160,61 @@ class AdminMetricsEngine:
             logger.error(f"get_question_bank_health failed: {e}")
             return {"status": "error", "message": str(e)}
 
+    def get_revenue_trend(self, days: int = 30) -> List[Dict]:
+        """Daily revenue for the last N days (zero-filled)."""
+        try:
+            from datetime import timedelta
+            raw = self._query_all(f"""
+                SELECT DATE(created_at) as day,
+                       COALESCE(SUM(price), 0) as revenue,
+                       COUNT(*) as purchases
+                FROM charvak_credit_purchases
+                WHERE status = 'completed'
+                  AND created_at > NOW() - INTERVAL '{int(days)} days'
+                GROUP BY DATE(created_at)
+                ORDER BY day
+            """)
+            # Zero-fill missing days
+            from datetime import date as _date
+            today = _date.today()
+            by_day = {str(r["day"]): r for r in raw}
+            out = []
+            for i in range(days - 1, -1, -1):
+                d = today - timedelta(days=i)
+                ds = str(d)
+                r = by_day.get(ds)
+                out.append({
+                    "date": ds,
+                    "revenue": float(r["revenue"]) if r else 0,
+                    "purchases": int(r["purchases"]) if r else 0,
+                })
+            return out
+        except Exception as e:
+            logger.error(f"get_revenue_trend failed: {e}")
+            return []
+
+    def get_user_trend(self, days: int = 30) -> List[Dict]:
+        """Daily signups for the last N days (zero-filled)."""
+        try:
+            from datetime import timedelta, date as _date
+            raw = self._query_all(f"""
+                SELECT DATE(created_at) as day, COUNT(*) as n
+                FROM users
+                WHERE created_at > NOW() - INTERVAL '{int(days)} days'
+                GROUP BY DATE(created_at)
+                ORDER BY day
+            """)
+            today = _date.today()
+            by_day = {str(r["day"]): r["n"] for r in raw}
+            out = []
+            for i in range(days - 1, -1, -1):
+                d = today - timedelta(days=i)
+                ds = str(d)
+                out.append({"date": ds, "signups": int(by_day.get(ds, 0))})
+            return out
+        except Exception as e:
+            logger.error(f"get_user_trend failed: {e}")
+            return []
     def get_full_dashboard(self) -> Dict:
         return {
             "status": "success",
