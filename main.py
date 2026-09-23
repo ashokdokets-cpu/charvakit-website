@@ -3973,6 +3973,14 @@ async def rsvp_event(request: Request):
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
+
+@app.post("/api/events/rsvp-paid")
+async def rsvp_paid_event(request: Request):
+    """Paid RSVP - requires verified Razorpay payment_id."""
+    data = await request.json()
+    # Require payment_id + event_id + user_email
+    result = events_engine.rsvp_paid(data)
+    return result
 @app.post("/api/events/check-in")
 async def check_in_event(request: Request):
     """Check in to an event."""

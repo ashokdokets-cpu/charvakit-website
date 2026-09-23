@@ -223,6 +223,72 @@ class EventsEngine:
     # READS
     # ============================================================
 
+    def rsvp_paid(self, data: Dict) -> Dict:
+        """Paid RSVP - requires verified payment_id from Razorpay."""
+        try:
+            event_id = (data.get("event_id") or "").strip()
+            user_email = (data.get("user_email") or "").strip().lower()
+            user_name = (data.get("user_name") or "Guest").strip()
+            user_id = (data.get("user_id") or "").strip()
+            payment_id = (data.get("payment_id") or "").strip()
+
+            if not event_id or not user_email:
+                return {"status": "error", "message": "event_id and user_email required"}
+            if not payment_id:
+                return {"status": "error", "message": "payment_id required for paid RSVP"}
+
+            # Verify the event exists and is a paid event
+            event = self.get_event(event_id)
+            if event.get("status") != "success":
+                return {"status": "error", "message": "Event not found"}
+
+            ev = event.get("event") or {}
+            price_inr = int(ev.get("price_inr") or 0)
+            if price_inr <= 0:
+                return {"status": "error", "message": "This event has no paid tier"}
+
+            from database import db
+            conn = db.get_pooled_connection()
+            cur = conn.cursor()
+
+            # Idempotency: if this payment_id was already used for this event, return success
+            cur.execute("""
+                SELECT rsvp_id FROM charvak_event_rsvps
+                WHERE event_id = %s AND payment_id = %s
+            """, (event_id, payment_id))
+            existing = cur.fetchone()
+            if existing:
+                cur.close()
+                db.release_pooled_connection(conn)
+                return {"status": "success", "message": "RSVP already recorded",
+                        "rsvp_id": existing[0], "already_recorded": True}
+
+            # Upsert RSVP
+            rsvp_id = "RSVP-" + secrets.token_hex(6).upper()
+            cur.execute("""
+                INSERT INTO charvak_event_rsvps
+                    (rsvp_id, event_id, user_id, user_name, user_email,
+                     user_type, tier, paid, payment_id)
+                VALUES (%s, %s, %s, %s, %s, 'student', 'pro', TRUE, %s)
+                ON CONFLICT DO NOTHING
+            """, (rsvp_id, event_id, user_id, user_name, user_email, payment_id))
+
+            # Increment event rsvp_count
+            cur.execute("""
+                UPDATE charvak_events
+                SET rsvp_count = COALESCE(rsvp_count, 0) + 1
+                WHERE event_id = %s
+            """, (event_id,))
+
+            conn.commit()
+            cur.close()
+            db.release_pooled_connection(conn)
+
+            logger.info(f"Paid RSVP: {user_email} for {event_id} payment={payment_id}")
+            return {"status": "success", "message": "Paid RSVP confirmed", "rsvp_id": rsvp_id}
+        except Exception as e:
+            logger.error(f"rsvp_paid failed: {e}")
+            return {"status": "error", "message": str(e)}
     def get_events(self, event_type: str = None) -> Dict:
         """Get all upcoming events."""
         try:
