@@ -81,6 +81,8 @@ def list_posts() -> List[Dict]:
                 "date": fm.get("date", ""),
                 "author": fm.get("author", "Charvak Team"),
                 "tags": fm.get("tags", []),
+                "category": fm.get("category", ""),  # optional explicit category
+                "read_time": fm.get("read_time", ""),  # optional explicit read_time
             })
         except Exception as e:
             logger.warning(f"Failed to load {path.name}: {e}")
@@ -163,17 +165,19 @@ def _enrich_post(p: Dict) -> Dict:
     # Alias date -> published_at (ISO with time)
     d = p.get("date") or ""
     enriched.setdefault("published_at", (d + "T00:00:00") if d else "")
-    # Category — first tag as category, or 'general'
-    tags = p.get("tags") or []
-    enriched.setdefault("category", tags[0] if tags else "general")
-    # Estimated reading time from word count
-    try:
-        raw = (BLOG_DIR / f"{p['slug']}.md").read_text(encoding="utf-8")
-        _, body = _parse_frontmatter(raw)
-        words = len(body.split())
-        enriched.setdefault("read_time", f"{max(1, words // 200)} min")
-    except Exception:
-        enriched.setdefault("read_time", "5 min")
+    # Category: prefer explicit category, fall back to first tag
+    if not enriched.get("category"):
+        tags = p.get("tags") or []
+        enriched["category"] = tags[0] if tags else "general"
+    # Read time: prefer explicit, fall back to word-count estimate
+    if not enriched.get("read_time"):
+        try:
+            raw = (BLOG_DIR / f"{p['slug']}.md").read_text(encoding="utf-8")
+            _, body = _parse_frontmatter(raw)
+            words = len(body.split())
+            enriched["read_time"] = f"{max(1, words // 200)} min"
+        except Exception:
+            enriched["read_time"] = "5 min"
     return enriched
 
 
