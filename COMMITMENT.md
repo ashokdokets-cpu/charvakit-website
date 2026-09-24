@@ -5,6 +5,29 @@
 **Last updated:** 2026-09-24
 **HEAD:** b786802
 
+### AA4d — skill-twin.html / skill-check.html — REAL SCOPE (2026-09-24)
+
+- **Discovery finding:** `skill-twin.html` and `skill-check.html` are **not** a quick unblock like
+  `reports.html`. The engines exist (`products_engine.skill_twin_assess` is real, returns
+  `twin_id`, `verified_score`, `badge_eligible`, etc.), but two things are missing:
+
+  1. **No persistence.** `skill_twin_assess` writes nothing to the DB. No `charvak_skill_twin*`
+     table exists. Every scorecard is ephemeral.
+  2. **Fake payment on `skill-check.html`.** `buyBadge()` calls `alert('Payment successful!')` with
+     no Razorpay integration. Badge IDs are generated client-side (`Math.random()`), stored in
+     `localStorage`, never sent to the server. `/badge?name=...` is a phantom route.
+
+- **Scope to ship properly:**
+  - Phase A — server-side persistence for free check (`charvak_skill_check_results` table,
+    `POST /api/skill-check/submit`, rewrite `buyBadge()` to use real Razorpay)
+  - Phase B — wire `skill-twin.html`'s ₹499 to the backend
+  - Phase C — public verify URL `/badge/{badge_id}` reading from DB
+  - Est: ~2.5 hours
+
+- **Verdict:** DEFERRED — dedicated session required. Not a quick unblock.
+- **C7 progress:** 3 of 18 templates complete (events, ats, reports)
+- **Next candidate:** `agent-ready.html` (₹399, likely single-feature unblock)
+
 ### fix(credits) — get_user_credits only auto-creates for registered users (2026-09-24)
 
 - **Commit:** <hash>
