@@ -1,9 +1,32 @@
-# Charvak â€” Commitment Tracker
+# Charvak — Commitment Tracker
 
 **Purpose:** Track every planned-but-not-completed item. Nothing gets lost again.
 **Created:** 2026-09-20
-**Last updated:** 2026-09-22
-**HEAD:** 721a89c
+**Last updated:** 2026-09-24
+**HEAD:** 3f28c1d
+
+### AA4c — reports.html unblocked (2026-09-24)
+
+- **Commit:** <hash>
+- **Discovery:** `assessment_report_engine.py` was already fully built (12 methods, DB-backed,
+  `charvak_assessment_reports` with 3 indexes). Session G6 had added a second `<script>` block
+  to `reports.html` that hijacked `generateReport()` → `notifyMe()`. That was the only blocker.
+- **What shipped:**
+  - Removed G6 hijack script block from `reports.html`; rebuilt layout in clean UTF-8
+  - Added `premium_report` credit key (25 cr)
+  - Guarded `POST /api/report/generate` with `require_credits_from_data`
+  - Fixed `_http_status` key in 2 routes (report generate + ATS score-link)
+- **Verified:**
+  - Admin bypass: 0 credits used
+  - Candidate with credits: 25 deducted, audit row in `charvak_credit_usage_history`
+  - Candidate without credits: 402 + upgrade modal ✅
+  - Verify endpoint: returns candidate/score/PASS
+  - My Reports: returns list
+- **C7 progress:** 3 of 18 templates complete (events, ats, reports)
+- **Follow-ups:**
+  - `main.js:250` renders 401 and 402 identically — split to /login vs upgrade modal
+  - `/api/report/candidate/{email}` has no auth — security note for a future session
+- **Next:** AA4d — `skill-twin` (check if guard `product_skill_twin` already wired — likely another quick unblock)
 
 ### ATS-1 + ATS-2 — Charvak ATS + DoketsRB bridge (2026-09-24)
 
