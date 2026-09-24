@@ -575,7 +575,7 @@ function socialLogin(provider) {
     window.location.href = urls[provider];
 }
 </script>
-</body>
+
     <!-- Cookie Banner -->
     <div id="cookieBanner" class="fixed-bottom bg-dark text-white p-3" style="z-index:9999; display:none;">
         <div class="container">
@@ -839,6 +839,24 @@ if (document.readyState === 'loading') {
 } else {
     loadNavCredits();
 }
+</script>
+<!-- Global credit-gate handlers (moved from exam-prep.html, 2026-09-24) -->
+<script>
+window.addEventListener('charvak:402', function(e) {
+    var d = e.detail || {};
+    var msg = d.message || 'Insufficient credits. Redirecting to buy more...';
+    alert(msg);
+    window.location.href = d.buy_url || '/ai-credits-pricing';
+});
+
+window.addEventListener('charvak:401', function(e) {
+    var d = e.detail || {};
+    var next = encodeURIComponent(window.location.pathname + window.location.search);
+    var loginUrl = d.login_url ? d.login_url : ('/login?next=' + next);
+    if (confirm('Please log in to continue. Go to login page?')) {
+        window.location.href = loginUrl;
+    }
+});
 </script>
 </body>
 </html>

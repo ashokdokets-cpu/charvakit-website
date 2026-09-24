@@ -152,20 +152,6 @@ async function loadCreditBalance() {
     }
 }
 
-// Session G6: handle 402 (insufficient credits) globally
-window.addEventListener('charvak:402', function(e) {
-    const d = e.detail || {};
-    const msg = d.message || 'Insufficient credits. Redirecting to buy more...';
-    alert(msg);
-    window.location.href = d.buy_url || '/ai-credits-pricing';
-});
-
-// Session G6: handle 401 (login required)
-window.addEventListener('charvak:401', function() {
-    if (confirm('Please log in to continue. Go to login page?')) {
-        window.location.href = '/login';
-    }
-});
 
 // Load balance on page load
 document.addEventListener('DOMContentLoaded', loadCreditBalance);
