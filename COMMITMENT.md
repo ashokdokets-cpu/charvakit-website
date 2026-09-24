@@ -2,8 +2,66 @@
 
 **Purpose:** Track every planned-but-not-completed item. Nothing gets lost again.
 **Created:** 2026-09-20
-**Last updated:** 2026-09-24
-**HEAD:** 7b0b1ef
+**Last updated:** 2026-09-25
+**HEAD:** 2c2651d
+
+### security(idor) — IDOR sweep + admin hardening (2026-09-25)
+
+- **Commits:** `0abd746` (IDOR) → `2c2651d` (admin)
+- **What shipped:**
+  - **IDOR fix:** `require_auth_for_email(request, email)` helper in main.py
+    - Applied to 34 `GET /api/*/{email}` routes (was: no auth, full user-data leak)
+    - Delegates to `require_auth` then checks email match
+    - Admins bypass via `ADMIN_EMAILS` set
+    - 19 routes had docstrings reordered (auth call must come after docstring, not before)
+  - **Frontend:** 12 fetch call sites across 10 templates now send
+    `Authorization: Bearer <token>` header
+    - base.html, ai_credits_pricing.html, credit_dashboard.html, exam-prep.html,
+      interview-dashboard.html, interview-prep.html, my-courses.html,
+      my-results.html, referral-dashboard.html, reports.html
+  - **Login loop fix:** 401 handler in base.html guards against redirect when already
+    on an auth page (login/register/forgot-password/reset-password/verify-email)
+  - **Credits nav fetch:** skips request when no auth token in localStorage
+  - **Admin hardening:** `role == "admin"` no longer grants admin in 3 places
+    - middleware `admin_auth_guard` (line 280)
+    - `require_self_or_admin` helper (line 562)
+    - `api_login` cookie setter (line 1288)
+    - Only `ADMIN_EMAILS = {"charvakit@gmail.com", "hr@charvakit.com"}` grants admin
+- **Verified:**
+  - `hr@charvakit.com` / `charvakit@gmail.com` are the only 2 admin rows in prod
+  - No other code path sets `users.role = 'admin'`
+  - Login endpoint works (`POST /api/auth/login` → 200)
+- **Follow-ups:**
+  - `email_verification.is_verified()` blocks non-admin test accounts. Dev users must be
+    verified before login. Consider adding a dev-only bypass flag.
+- **C7 progress:** unchanged (3/18)
+
+### FLAGGED — Anti-bot for /contact (2026-09-25)
+
+- **Trigger:** Two bot spam submissions found in prod `contacts` table
+  - `Vxjoojou Oohmz` / `m.ogz.vp.h.n.5.87@gmail.com` (deleted)
+  - `Zfgit Wmevm` / `yar.ivic.id.i9.6@gmail.com` (pending delete)
+- **Pattern:** Random consonant-cluster names, dot-separated email local parts,
+  10-digit numeric message bodies, "Business / Employer" dropdown
+- **Not a breach:** verified admin users (only charvakit@gmail.com + hr@charvakit.com),
+  no unauthorized signups, no suspicious credit purchases
+- **Fix (do immediately after current work):**
+  - Option 1: Honeypot field on `/contact` form (~5 min)
+  - Option 2: Cloudflare Turnstile (~15 min) — visible/invisible CAPTCHA
+  - Combined: ~20 min
+- **Optional stopgap:** message-only-numeric + consonant-cluster regex filters on
+  the `/api/contact` POST handler
+
+### N1 follow-up — apex domain 404 (2026-09-24 RESOLVED)
+
+- **Reality:** `charvakit.com` forwards to `https://www.charvakit.com` via GoDaddy
+  domain forwarding (Permanent 301). Verified in browser — the redirect works.
+- **Why the tracker said "404":** `curl.exe` on Windows fails the TLS handshake
+  with GoDaddy's forwarding server (`SEC_E_ILLEGAL_MESSAGE` / schannel error).
+  Browsers work fine. This is a local curl issue, not a site issue.
+- **Action:** none required. Delete the "apex redirect" follow-up from the tracker.
+- **Lesson:** never trust `curl.exe` alone on Windows for TLS verification;
+  cross-check in a browser.
 
 ### AA4d — skill-twin.html / skill-check.html — REAL SCOPE (2026-09-24)
 
