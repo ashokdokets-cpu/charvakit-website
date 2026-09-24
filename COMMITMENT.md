@@ -5,6 +5,23 @@
 **Last updated:** 2026-09-25
 **HEAD:** 2c2651d
 
+### fix(ielts) — Speaking results persist under caller email (2026-09-25)
+
+- **Commit:** <hash>
+- **Bug:** `evaluate_speaking()` in `ielts_engine.py` persisted to
+  `charvak_assessment_results` with a hardcoded `email="anon@charvak.local"`.
+  Every user's Speaking result went into one shared bucket — nobody saw their
+  own Speaking results in `/my-results`.
+- **Fix:**
+  - Added `email: str = None` parameter to `evaluate_speaking()`
+  - Route `/api/ielts/speaking/evaluate` now passes `data.get("email")`
+  - Persist uses `email or "anon@charvak.local"` as fallback
+- **Verified:** Dev admin's Speaking eval persists under `hr@charvakit.com`
+- **Also corrected:** X5 tracker note claiming Listening/Reading weren't persisted
+  was stale — both `evaluate_listening()` and `evaluate_reading()` already call
+  `record_assessment_result()` (lines 488 and 658)
+- **Status:** RESOLVED
+
 ### security(idor) — IDOR sweep + admin hardening (2026-09-25)
 
 - **Commits:** `0abd746` (IDOR) → `2c2651d` (admin)
