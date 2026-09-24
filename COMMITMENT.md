@@ -3,7 +3,34 @@
 **Purpose:** Track every planned-but-not-completed item. Nothing gets lost again.
 **Created:** 2026-09-20
 **Last updated:** 2026-09-25
-**HEAD:** d10a0ab
+**HEAD:** 1675359
+
+### C2 — voice_to_web_engine persistence (2026-09-25)
+
+- **Commit:** `1675359`
+- **What shipped:**
+  - **5 new tables:** `charvak_voice_to_web_sites`, `_domains`, `_updates`, `_tickets`, `_seo`
+  - **Migration:** `migrations/20260925_voice_to_web.sql` (~3 KB, idempotent)
+  - **Engine refactor:** `voice_to_web_engine.py` fully DB-backed — 8 methods, no in-memory state
+  - **`_ensure_tables()`** at init — tables created on import even without the migration
+  - **Cascade deletes:** child tables use `ON DELETE CASCADE` (domains, seo, updates);
+    tickets use `ON DELETE SET NULL` so historical tickets survive site removal
+  - **No public signature changes** — `main.py` routes untouched
+- **Verified:**
+  - All 5 tables populated after E2E test (create → domain → seo → update → ticket)
+  - **Cross-restart persistence confirmed:** `get_website_status('V2W-...')` returned
+    `success` from a fresh Python process (previously returned `Website not found` —
+    data was in RAM only)
+  - `get_stats()` returns correct counts
+  - Cascade deletes verified (all tables back to 0 rows after cleanup)
+- **No WhatsApp dependency** — the engine is a storage layer. `whatsapp_bot.py` is the
+  separate input channel (still external-blocked on Meta). Confirmed zero code coupling
+  between the two engines.
+- **C2 closes the persistence project at 100%:**
+  - 62 engines total: 51 DB-backed, 10 stateless (verified skip), 1 external-blocked
+  - No remaining in-memory engines
+- **HEAD after:** `1675359`
+- **Next:** `marketing-ai.html` (last Tier 1 item)
 
 ### AA4b — micro-internship.html unblocked + real escrow payment (2026-09-25)
 
