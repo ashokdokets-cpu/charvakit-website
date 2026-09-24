@@ -36,7 +36,9 @@ async function loadMyCourses() {
         return;
     }
     try {
-        const r = await fetch('/api/ai-course/my-enrollments/' + encodeURIComponent(myEmail));
+        const r = await fetch('/api/ai-course/my-enrollments/' + encodeURIComponent(myEmail), {
+            headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '') }
+        });
         const d = await r.json();
         document.getElementById('loading').style.display = 'none';
 

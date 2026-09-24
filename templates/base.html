@@ -814,9 +814,18 @@ checkLoginState(); // Also run immediately
 <!-- AI Credits Navigation Script -->
 <script>
 async function loadNavCredits() {
-    const email = localStorage.getItem('userEmail') || 'demo@charvakit.com';
+    const token = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    if (!token) {
+        const el = document.getElementById('nav-credits-display');
+        if (el) el.textContent = 'Credits';
+        return;
+    }
+    const email = localStorage.getItem('userEmail') || '';
+    if (!email) return;
     try {
-        const response = await fetch('/api/credits/' + email);
+        const response = await fetch('/api/credits/' + email, {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
         const data = await response.json();
         if (data.status === 'success') {
             const creditDisplay = document.getElementById('nav-credits-display');
@@ -832,7 +841,6 @@ async function loadNavCredits() {
         }
     }
 }
-
 // Load credits when page loads
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', loadNavCredits);
@@ -851,6 +859,9 @@ window.addEventListener('charvak:402', function(e) {
 
 window.addEventListener('charvak:401', function(e) {
     var d = e.detail || {};
+    var p = window.location.pathname;
+    if (p === '/login' || p === '/register' || p === '/forgot-password'
+        || p === '/reset-password' || p === '/verify-email') return;
     var next = encodeURIComponent(window.location.pathname + window.location.search);
     window.location.href = d.login_url ? d.login_url : ('/login?next=' + next);
 });

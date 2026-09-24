@@ -158,7 +158,9 @@ async function getMyReports(e) {
   const box = document.getElementById('myReportsList');
   box.innerHTML = '<div class="rp-empty">Loading…</div>';
   try {
-    const r = await fetch('/api/report/candidate/' + encodeURIComponent(email));
+    const r = await fetch('/api/report/candidate/' + encodeURIComponent(email), {
+            headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '') }
+        });
     const j = await r.json();
     const list = j.reports || [];
     if (!list.length) {

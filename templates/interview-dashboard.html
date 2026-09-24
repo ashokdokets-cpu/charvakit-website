@@ -50,7 +50,9 @@ async function loadDashboard() {
     }
 
     try {
-        const r = await fetch('/api/interview-prep/dashboard/' + encodeURIComponent(dashEmail));
+        const r = await fetch('/api/interview-prep/dashboard/' + encodeURIComponent(dashEmail), {
+            headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '') }
+        });
         const d = await r.json();
         document.getElementById('loading').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';

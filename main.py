@@ -526,6 +526,17 @@ def require_auth(request: Request) -> Dict:
     return user
 
 
+def require_auth_for_email(request: Request, email: str) -> Dict:
+    """Authenticate and verify the caller owns this email. Raises 401/403."""
+    user = require_auth(request)
+    caller_email = (user.get("email") or "").lower()
+    if caller_email != (email or "").lower():
+        if caller_email in ADMIN_EMAILS:
+            return user
+        raise HTTPException(status_code=403, detail="You can only access your own data")
+    return user
+
+
 ADMIN_EMAIL = "charvakit@gmail.com"
 
 # Admin emails ? both can access admin routes
@@ -2675,8 +2686,9 @@ async def get_verification(verification_id: str):
     return kyc_engine.get_verification_status(verification_id)
 
 @app.get("/api/kyc/user/{email}")
-async def get_user_verifications(email: str):
+async def get_user_verifications(request: Request, email: str):
     """Get all verifications for a user."""
+    require_auth_for_email(request, email)
     return kyc_engine.get_user_verifications(email)
 
 @app.get("/api/kyc/is-verified")
@@ -2685,8 +2697,9 @@ async def check_verified(email: str):
     return kyc_engine.is_user_verified(email)
 
 @app.get("/api/kyc/badge/{email}")
-async def get_badge(email: str):
+async def get_badge(request: Request, email: str):
     """Get verified badge for user."""
+    require_auth_for_email(request, email)
     return kyc_engine.get_verified_badge(email)
 
 @app.post("/api/kyc/submit-documents")
@@ -2874,8 +2887,9 @@ async def get_escrow(escrow_id: str):
     return escrow_engine.get_escrow(escrow_id)
 
 @app.get("/api/escrow/user/{email}")
-async def get_user_escrows(email: str):
+async def get_user_escrows(request: Request, email: str):
     """Get user's escrow transactions."""
+    require_auth_for_email(request, email)
     return escrow_engine.get_user_escrows(email)
 
 # ============================================================
@@ -2883,8 +2897,9 @@ async def get_user_escrows(email: str):
 # ============================================================
 
 @app.get("/api/referral/stats/{email}")
-async def referral_stats_for_user(email: str):
+async def referral_stats_for_user(request: Request, email: str):
     """Get referral stats for a specific user."""
+    require_auth_for_email(request, email)
     return referral_engine.get_referrer_stats(email)
 
 
@@ -2995,8 +3010,9 @@ async def pay_bounty(request: Request):
         return {"status": "error", "message": str(e)}
 
 @app.get("/api/referral/user/{email}")
-async def referrer_stats(email: str):
+async def referrer_stats(request: Request, email: str):
     """Get referrer stats."""
+    require_auth_for_email(request, email)
     return referral_engine.get_referrer_stats(email)
 
 @app.get("/api/referral/leaderboard")
@@ -3147,8 +3163,9 @@ async def verify_badge(badge_id: str):
     return badge_engine.verify_badge(badge_id)
 
 @app.get("/api/badge/user/{email}")
-async def user_badges(email: str):
+async def user_badges(request: Request, email: str):
     """Get user badges."""
+    require_auth_for_email(request, email)
     return badge_engine.get_user_badges(email)
 
 @app.post("/api/badge/revoke")
@@ -3485,13 +3502,15 @@ async def enroll_student(request: Request):
         return {"status": "error", "message": str(e)}
 
 @app.get("/api/training/trainer/{email}")
-async def trainer_dashboard(email: str):
+async def trainer_dashboard(request: Request, email: str):
     """Get trainer dashboard."""
+    require_auth_for_email(request, email)
     return training_engine.get_trainer_dashboard(email)
 
 @app.get("/api/training/student/{email}")
-async def student_dashboard(email: str):
+async def student_dashboard(request: Request, email: str):
     """Get student dashboard."""
+    require_auth_for_email(request, email)
     return training_engine.get_student_dashboard(email)
 
 # ============================================================
@@ -3499,8 +3518,9 @@ async def student_dashboard(email: str):
 # ============================================================
 
 @app.get("/api/interview-prep/dashboard/{email}")
-async def interview_prep_dashboard(email: str):
+async def interview_prep_dashboard(request: Request, email: str):
     """Get user's interview prep history."""
+    require_auth_for_email(request, email)
     return interview_prep_engine.get_dashboard(email)
 
 
@@ -3755,8 +3775,9 @@ async def platform_stats():
 # ============================================================
 
 @app.get("/api/career/progress/{email}")
-async def career_progress(email: str):
+async def career_progress(request: Request, email: str):
     """Track candidate's progress through the career engine."""
+    require_auth_for_email(request, email)
     try:
         progress = {
             "email": email,
@@ -4668,7 +4689,8 @@ async def create_job_alert(request: Request):
     return career_v2_engine.create_job_alert(data)
 
 @app.get("/api/career/alerts/{email}")
-async def get_alerts(email: str):
+async def get_alerts(request: Request, email: str):
+    require_auth_for_email(request, email)
     return career_v2_engine.get_alerts(email)
 
 @app.post("/api/career/save-job")
@@ -4706,7 +4728,8 @@ async def add_offer(request: Request):
     return career_v2_engine.add_offer(data)
 
 @app.get("/api/career/recommendations/{email}")
-async def get_job_recommendations(email: str):
+async def get_job_recommendations(request: Request, email: str):
+    require_auth_for_email(request, email)
     return career_v2_engine.get_job_recommendations(email)
 
 @app.get("/api/career-v2/stats")
@@ -4771,7 +4794,8 @@ async def verify_report(verification_id: str):
     return assessment_report_engine.verify_report(verification_id)
 
 @app.get("/api/report/candidate/{email}")
-async def get_candidate_reports(email: str):
+async def get_candidate_reports(request: Request, email: str):
+    require_auth_for_email(request, email)
     return assessment_report_engine.get_candidate_reports(email)
 
 @app.get("/reports", response_class=HTMLResponse)
@@ -4889,7 +4913,8 @@ async def student_subscribe(request: Request):
     return student_suite_engine.subscribe(email=email, plan=plan)
 
 @app.get("/api/student/plan/{email}")
-async def get_student_plan(email: str):
+async def get_student_plan(request: Request, email: str):
+    require_auth_for_email(request, email)
     return student_suite_engine.get_plan(email)
 
 @app.post("/api/student/assignment")
@@ -4933,7 +4958,8 @@ async def create_master_profile(request: Request):
     return profile_network_engine.create_master_profile(data)
 
 @app.get("/api/profile/{email}")
-async def get_master_profile(email: str):
+async def get_master_profile(request: Request, email: str):
+    require_auth_for_email(request, email)
     return profile_network_engine.get_master_profile(email)
 
 @app.post("/api/alumni/add")
@@ -5025,7 +5051,8 @@ async def auto_track_application(request: Request):
     return outreach_engine.auto_track_application(data)
 
 @app.get("/api/outreach/tracked/{email}")
-async def get_tracked_applications(email: str):
+async def get_tracked_applications(request: Request, email: str):
+    require_auth_for_email(request, email)
     return outreach_engine.get_tracked_applications(email)
 
 @app.post("/api/outreach/premium")
@@ -5090,8 +5117,9 @@ async def send_reminders():
     return data_lifecycle.send_renewal_reminders()
 
 @app.get("/api/lifecycle/export/{email}")
-async def export_user(email: str):
+async def export_user(request: Request, email: str):
     """GDPR: Export user data."""
+    require_auth_for_email(request, email)
     return data_lifecycle.export_user_data(email)
 
 @app.get("/api/lifecycle/stats")
@@ -5175,18 +5203,21 @@ async def credit_admin_stats():
     return ai_credit_engine.get_admin_stats()
 
 @app.get("/api/credits/expiry/{email}")
-async def check_expiry(email: str):
+async def check_expiry(request: Request, email: str):
     """Check credit expiry."""
+    require_auth_for_email(request, email)
     return ai_credit_engine.check_expiry(email)
 
 @app.get("/api/credits/usage/{email}")
-async def usage_history(email: str):
+async def usage_history(request: Request, email: str):
     """Get usage history."""
+    require_auth_for_email(request, email)
     return ai_credit_engine.get_user_usage_history(email)
 
 @app.get("/api/credits/{email}")
-async def get_user_credits(email: str):
+async def get_user_credits(request: Request, email: str):
     """Get user's credit balance."""
+    require_auth_for_email(request, email)
     return ai_credit_engine.get_user_credits(email)
 
 @app.post("/api/credits/check")
@@ -5325,8 +5356,9 @@ async def check_notifications(request: Request):
     }
 
 @app.get("/api/notifications/history/{email}")
-async def notification_history(email: str):
+async def notification_history(request: Request, email: str):
     """Get notification history for user."""
+    require_auth_for_email(request, email)
     return notification_engine.get_notification_history(email)
 
 @app.get("/api/notifications/stats")
@@ -5540,13 +5572,15 @@ async def record_answer(request: Request):
     )
 
 @app.get("/api/exam/analytics/{email}")
-async def get_analytics(email: str):
+async def get_analytics(request: Request, email: str):
     """Get user analytics with AI advice."""
+    require_auth_for_email(request, email)
     return exam_analytics_engine.get_analytics(email)
 
 @app.get("/api/exam/improvement/{email}")
-async def get_improvement(email: str):
+async def get_improvement(request: Request, email: str):
     """Get improvement over time."""
+    require_auth_for_email(request, email)
     return exam_analytics_engine.get_improvement(email)
 @app.get("/ai-internship", response_class=HTMLResponse)
 async def ai_internship_page(request: Request):
@@ -6130,8 +6164,9 @@ async def training_phases():
     return advanced_assessment_engine.get_training_phases()
 
 @app.get("/api/assessment/scorecard/{email}")
-async def get_scorecard(email: str):
+async def get_scorecard(request: Request, email: str):
     """Get scorecard."""
+    require_auth_for_email(request, email)
     return advanced_assessment_engine.get_scorecard(email)
 
 
@@ -6196,7 +6231,8 @@ async def create_training_plan(request: Request):
     )
 
 @app.get("/api/training/plan/{email}")
-async def get_training_plan(email: str):
+async def get_training_plan(request: Request, email: str):
+    require_auth_for_email(request, email)
     return training_mapping_engine.get_training_plan(email)
 
 @app.post("/api/training/update-progress")
@@ -6319,7 +6355,8 @@ async def get_trainer_dashboard(trainer_id: str):
     return monetized_training.get_trainer_dashboard(trainer_id)
 
 @app.get("/api/monetized/student/{email}")
-async def get_student_dashboard(email: str):
+async def get_student_dashboard(request: Request, email: str):
+    require_auth_for_email(request, email)
     return monetized_training.get_student_dashboard(email)
 
 @app.get("/api/monetized/courses")
@@ -6331,7 +6368,8 @@ async def get_all_trainers():
     return monetized_training.get_all_trainers()
 
 @app.get("/api/monetized/payments/{email}")
-async def get_payment_history(email: str):
+async def get_payment_history(request: Request, email: str):
+    require_auth_for_email(request, email)
     return monetized_training.get_payment_history(email)
 
 
@@ -7353,7 +7391,8 @@ async def record_result(request: Request):
     )
 
 @app.get("/api/results/user/{email}")
-async def get_user_report(email: str):
+async def get_user_report(request: Request, email: str):
+    require_auth_for_email(request, email)
     return results_system.get_user_report(email)
 
 @app.get("/api/results/assessment/{result_id}")
@@ -7365,15 +7404,18 @@ async def get_type_report(assessment_type: str):
     return results_system.get_type_report(assessment_type)
 
 @app.get("/api/results/progress/{email}")
-async def get_user_progress(email: str):
+async def get_user_progress(request: Request, email: str):
+    require_auth_for_email(request, email)
     return results_system.get_user_progress(email)
 
 @app.get("/api/results/readiness/{email}")
-async def get_placement_readiness(email: str):
+async def get_placement_readiness(request: Request, email: str):
+    require_auth_for_email(request, email)
     return results_system.get_placement_readiness(email)
 
 @app.get("/api/results/detailed/{email}")
-async def get_detailed_report(email: str):
+async def get_detailed_report(request: Request, email: str):
+    require_auth_for_email(request, email)
     return results_system.generate_detailed_report(email)
 
 
@@ -7460,7 +7502,8 @@ async def analyze_complete(request: Request):
     )
 
 @app.get("/api/analysis/report/{email}")
-async def get_analysis_report(email: str):
+async def get_analysis_report(request: Request, email: str):
+    require_auth_for_email(request, email)
     return complete_analysis.get_user_report(email)
 
 @app.get("/api/analysis/gap/{email}/{target_role}")
@@ -7484,7 +7527,8 @@ async def ai_analyze_profile(request: Request):
     )
 
 @app.get("/api/ai-analysis/report/{email}")
-async def get_ai_report(email: str):
+async def get_ai_report(request: Request, email: str):
+    require_auth_for_email(request, email)
     return ai_analysis.get_analysis_report(email)
 
 
@@ -7958,8 +8002,9 @@ async def ai_course_detail(course_name: str):
 
 
 @app.get("/api/ai-course/my-enrollments/{email}")
-async def ai_course_my_enrollments(email: str):
+async def ai_course_my_enrollments(request: Request, email: str):
     """Get user's enrollments."""
+    require_auth_for_email(request, email)
     return ai_courses.get_user_enrollments(email)
 
 

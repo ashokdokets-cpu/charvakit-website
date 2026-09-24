@@ -148,7 +148,9 @@
 
     async function loadBalance() {
         try {
-            const response = await fetch(`/api/credits/${userEmail}`);
+            const response = await fetch(`/api/credits/${userEmail}`, {
+            headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '') }
+        });
             const data = await response.json();
             if (data.status === 'success') {
                 document.getElementById('balance-loading').style.display = 'none';
@@ -167,7 +169,9 @@
     var email = localStorage.getItem('userEmail') || '';
     if (!email) return plans;
     try {
-        var r = await fetch('/api/credits/' + encodeURIComponent(email));
+        var r = await fetch('/api/credits/' + encodeURIComponent(email), {
+            headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '') }
+        });
         var j = await r.json();
         var plan = (j.plan || '').toLowerCase();
         var remaining = j.credits_remaining || 0;
