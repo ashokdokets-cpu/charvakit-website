@@ -3,7 +3,35 @@
 **Purpose:** Track every planned-but-not-completed item. Nothing gets lost again.
 **Created:** 2026-09-20
 **Last updated:** 2026-09-22
-**HEAD:** f99c42b
+**HEAD:** 721a89c
+
+### ATS-1 + ATS-2 — Charvak ATS + DoketsRB bridge (2026-09-24)
+
+- **Commits:** `f421303` (ATS-1 bridge) → `a338380` (URL fix) → `721a89c` (ATS-2 dashboard)
+- **What shipped:**
+  - **ATS-1:** `doketsrb_integration` scoring bridge
+    - `request_score_link`, `record_external_score`, `consume_score_callback`
+    - Tables: `charvak_doketsrb_score_tokens`, `charvak_doketsrb_score_events`
+    - Routes: `GET /api/ats/candidates`, `POST /api/ats/candidates/{id}/score-link`,
+      `GET /api/ats/score-callback`, `POST /api/ats/candidates/{id}/score-manual`
+    - Credit key: `ats_jd_score` (5 cr, gated when `target_role` is set)
+    - Env: `DOKETSRB_SCORE_SECRET`
+  - **ATS-2:** `templates/ats.html` full rewrite
+    - 4 tabs: Candidates / Integrations / Sync Log / DoketsRB Bundles
+    - Filter row (skill / location / min score / min years)
+    - Per-row "Get Score Link" → opens `doketsrb.com/#ats-scanner` → prompts for score → writes back
+    - Mojibake fixed throughout
+- **Verified in prod:** `CAND-FA310E2E` scored 82 → 65, status moves with threshold (`badge_earned` ≥ 70)
+- **Bugs fixed during build:**
+  - Missing `import time`
+  - `request_score_link` line-238 indent (16 → 8)
+  - Naive-datetime `.timestamp()` IST shift in expiry → moved to DB-side `AT TIME ZONE 'UTC'`
+  - HMAC payload instability — dropped timestamp from signature, now `token:candidate_id`
+- **Follow-ups:**
+  - Razorpay wiring for ATS bundle purchases (currently "Notify Me")
+  - DoketsRB: build `/ats-check` route with `return_url` support to replace manual paste
+  - C7 tracker correction: `ats.html` is ATS-integration, not "₹999 resume score"
+- **C7 progress:** 2 of 18 templates complete (events + ats)
 
 ### Z — Analytics + IELTS polish (2026-09-23)
 
@@ -898,5 +926,5 @@ character are `C3 A0` instead of `E0 A4`, it's double-encoded.
 5. **Session-CONTEXT.md** links here for fresh chats
 
 ---
-**Last updated:** 2026-09-23
+**Last updated:** 2026-09-24
 **Next update:** after C13 or Session C2
