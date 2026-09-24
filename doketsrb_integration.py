@@ -235,9 +235,7 @@ class DoketsRBIntegration:
             logger.error(f"request_score_link insert failed: {e}")
             return {"status": "error", "message": "Could not create score request"}
 
-        return_url = f"https://www.charvakit.com/api/ats/score-callback?token={token}&sig={signed}"
-        params = urlencode({"return_url": return_url, "role": target_role, "source": "charvak"})
-        url = f"{self.DOKETSRB_URL}/ats-check?{params}"
+        url = f"{self.DOKETSRB_URL}/#ats-scanner"
 
         return {
             "status": "success",

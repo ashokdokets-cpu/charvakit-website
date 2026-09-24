@@ -4141,6 +4141,10 @@ async def ats_webhook(integration_id: str, request: Request):
 async def ats_stats():
     return ats_engine.get_stats()
 
+@app.get("/api/ats/sync-log")
+async def api_ats_sync_log(limit: int = 50):
+    return ats_engine.get_sync_log()
+
 # ============================================================
 # ATS RESUME SCORING (Session ATS-1)
 # ============================================================
@@ -4193,6 +4197,31 @@ async def api_ats_score_link(candidate_id: str, request: Request):
 
     return doketsrb_integration.request_score_link(candidate_id, target_role)
 
+@app.post("/api/ats/candidates/{candidate_id}/score-manual")
+async def api_ats_score_manual(candidate_id: str, request: Request):
+    """Record an ATS score the user pasted back from DoketsRB."""
+    try:
+        data = await request.json()
+    except Exception:
+        data = {}
+    score = data.get("score")
+    if score is None:
+        return JSONResponse({"status": "error", "message": "Missing score"}, status_code=400)
+    try:
+        score = int(score)
+    except (ValueError, TypeError):
+        return JSONResponse({"status": "error", "message": "Score must be a number"}, status_code=400)
+    if score < 0 or score > 100:
+        return JSONResponse({"status": "error", "message": "Score must be 0-100"}, status_code=400)
+
+    from candidate_engine import candidate_engine
+    check = candidate_engine.get_candidate(candidate_id)
+    if check.get("status") != "success":
+        return JSONResponse({"status": "error", "message": "Candidate not found"}, status_code=404)
+
+    return doketsrb_integration.record_external_score(
+        candidate_id, score, source="manual", target_role=data.get("target_role", "") or ""
+    )
 
 @app.get("/api/ats/score-callback")
 async def api_ats_score_callback(token: str, sig: str, score: int, source: str = "doketsrb"):

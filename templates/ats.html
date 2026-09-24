@@ -1,89 +1,355 @@
 {% extends "base.html" %}
-{% block title %}ATS Integration - Charvak IT Consulting{% endblock %}
+{% block title %}Charvak ATS — Candidates & Integrations{% endblock %}
 {% block content %}
-<div class="page-hero bg-gradient-primary text-white py-5">
-    <div class="container py-4 text-center">
-        <h1 class="display-4 fw-bold">🔄 ATS Integration</h1>
-        <p class="lead">Connect Charvak with Greenhouse, Lever, Workday & more</p>
-    </div>
+
+<style>
+  .ats-hero { background: linear-gradient(135deg, #3ba591 0%, #2a8070 100%); color: #fff; padding: 44px 0 36px; margin-bottom: 28px; }
+  .ats-hero h1 { font-weight: 800; margin: 0 0 6px; font-size: 2.2rem; }
+  .ats-hero p { opacity: .92; margin: 0; }
+
+  .ats-tabs { display: flex; gap: 6px; border-bottom: 2px solid #e5e7eb; margin-bottom: 24px; flex-wrap: wrap; }
+  .ats-tab { padding: 10px 18px; font-weight: 600; font-size: .92rem; color: #6b7280; cursor: pointer; border: none; background: none; border-bottom: 3px solid transparent; margin-bottom: -2px; }
+  .ats-tab:hover { color: #3ba591; }
+  .ats-tab.active { color: #2a8070; border-bottom-color: #3ba591; }
+
+  .ats-panel { display: none; }
+  .ats-panel.active { display: block; }
+
+  .ats-filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; align-items: center; }
+  .ats-filters input, .ats-filters select { padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: .88rem; }
+  .ats-filters input:focus, .ats-filters select:focus { outline: none; border-color: #3ba591; }
+
+  .ats-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+  .ats-table th { background: #f9fafb; text-align: left; padding: 12px 14px; font-size: .78rem; text-transform: uppercase; letter-spacing: .5px; color: #6b7280; font-weight: 700; border-bottom: 1px solid #e5e7eb; }
+  .ats-table td { padding: 12px 14px; border-bottom: 1px solid #f3f4f6; font-size: .9rem; vertical-align: middle; }
+  .ats-table tr:last-child td { border-bottom: none; }
+  .ats-table tr:hover { background: #fafafa; }
+
+  .ats-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .74rem; font-weight: 700; }
+  .ats-badge.good  { background: #d1fae5; color: #065f46; }
+  .ats-badge.mid   { background: #fef3c7; color: #92400e; }
+  .ats-badge.low   { background: #fee2e2; color: #991b1b; }
+  .ats-badge.none  { background: #e5e7eb; color: #6b7280; }
+
+  .ats-btn { padding: 6px 14px; font-size: .84rem; font-weight: 600; border-radius: 8px; border: none; cursor: pointer; transition: all .15s; }
+  .ats-btn.primary { background: #3ba591; color: #fff; }
+  .ats-btn.primary:hover { background: #2a8070; }
+  .ats-btn.secondary { background: #f3f4f6; color: #374151; }
+  .ats-btn.secondary:hover { background: #e5e7eb; }
+  .ats-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+  .ats-empty { text-align: center; padding: 48px 20px; color: #9ca3af; }
+  .ats-empty h4 { color: #6b7280; font-size: 1.1rem; }
+
+  .ats-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; margin-bottom: 14px; }
+  .ats-stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .ats-stat { background: #f9fafb; border-radius: 10px; padding: 16px; text-align: center; border: 1px solid #f3f4f6; }
+  .ats-stat-value { font-size: 1.8rem; font-weight: 800; color: #111827; line-height: 1; }
+  .ats-stat-label { font-size: .74rem; color: #6b7280; text-transform: uppercase; letter-spacing: .5px; margin-top: 6px; }
+
+  .ats-toast { position: fixed; bottom: 24px; right: 24px; background: #111827; color: #fff; padding: 12px 20px; border-radius: 10px; font-size: .9rem; box-shadow: 0 8px 24px rgba(0,0,0,.2); opacity: 0; transform: translateY(10px); transition: all .25s; z-index: 9999; }
+  .ats-toast.show { opacity: 1; transform: translateY(0); }
+  .ats-toast.error { background: #991b1b; }
+  .ats-toast.success { background: #065f46; }
+</style>
+
+<div class="ats-hero">
+  <div class="container">
+    <h1>Charvak ATS</h1>
+    <p>Track candidates, sync jobs with external ATS providers, and score resumes via DoketsRB — free.</p>
+  </div>
 </div>
-<div class="container py-5">
-    <div class="row">
-        <div class="col-lg-7 mx-auto">
-            <div class="card border-0 shadow-sm p-4 mb-4">
-                <h5>Connect External ATS</h5>
-                <form onsubmit="connectATS(event)">
-                    <div class="mb-3">
-                        <label class="form-label">Provider</label>
-                        <select class="form-select" id="provider">
-                            <option value="greenhouse">Greenhouse</option>
-                            <option value="lever">Lever</option>
-                            <option value="workday">Workday</option>
-                            <option value="custom">Custom</option>
-                        </select>
-                    </div>
-                    <div class="mb-3"><label class="form-label">API Key</label><input type="password" class="form-control" id="apiKey" required></div>
-                    <div class="mb-3"><label class="form-label">Base URL</label><input type="url" class="form-control" id="baseUrl" placeholder="https://api.greenhouse.io"></div>
-                    <div class="mb-3"><label class="form-label">Company Name</label><input type="text" class="form-control" id="companyName" required></div>
-                    <button class="btn btn-primary w-100" type="submit">Connect ATS</button>
-                </form>
-                <p class="text-success mt-2 text-center" id="atsMsg" style="display:none;"></p>
-            </div>
-            <div class="card border-0 shadow-sm p-4">
-<!-- Pricing -->
-<div class="card border-0 shadow-sm p-4 mb-4">
-    <h5>ATS Integration Plans</h5>
-    <div class="row g-3">
-        <div class="col-md-6">
-            <div class="p-3 bg-light rounded">
-                <h6>Basic</h6>
-                <h3><span data-inr="4999">₹4,999</span>/mo</h3>
-                <small class="text-muted">1 connection, bidirectional sync</small>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="p-3 bg-light rounded">
-                <h6>Enterprise</h6>
-                <h3><span data-inr="14999">₹14,999</span>/mo</h3>
-                <small class="text-muted">Unlimited connections, priority support</small>
-            </div>
-        </div>
+
+<div class="container pb-5">
+
+  <div class="ats-tabs" role="tablist">
+    <button class="ats-tab active" data-tab="candidates"    onclick="atsShow('candidates')">Candidates</button>
+    <button class="ats-tab"        data-tab="integrations"  onclick="atsShow('integrations')">Integrations</button>
+    <button class="ats-tab"        data-tab="sync"          onclick="atsShow('sync')">Sync Log</button>
+    <button class="ats-tab"        data-tab="bundles"       onclick="atsShow('bundles')">DoketsRB Bundles</button>
+  </div>
+
+  <!-- CANDIDATES -->
+  <section id="ats-panel-candidates" class="ats-panel active">
+    <div class="ats-filters">
+      <input type="text" id="f-skill"      placeholder="Skill (e.g. Python)" oninput="atsDebouncedLoad()">
+      <input type="text" id="f-location"   placeholder="Location"           oninput="atsDebouncedLoad()">
+      <input type="number" id="f-score"    placeholder="Min score"          min="0" max="100" oninput="atsDebouncedLoad()">
+      <input type="number" id="f-exp"      placeholder="Min years"          min="0"          oninput="atsDebouncedLoad()">
+      <button class="ats-btn secondary" onclick="atsClearFilters()">Clear</button>
+      <span style="margin-left:auto; color:#6b7280; font-size:.85rem;" id="candidates-count"></span>
     </div>
-</div>
-                <h5>Why Connect Your ATS?</h5>
-                <ul class="list-unstyled">
-                    <li>✅ Bidirectional job sync</li>
-                    <li>✅ Charvak ATS is primary — external ATS syncs automatically</li>
-                    <li>✅ No manual data entry</li>
-                    <li>✅ Real-time candidate updates</li>
-                </ul>
-            </div>
-        </div>
+
+    <div id="candidates-body">
+      <div class="ats-empty"><div class="spinner-border text-success" role="status"></div><p class="mt-3">Loading candidates…</p></div>
     </div>
+  </section>
+
+  <!-- INTEGRATIONS -->
+  <section id="ats-panel-integrations" class="ats-panel">
+    <div id="integrations-body">
+      <div class="ats-empty"><p>Loading integrations…</p></div>
+    </div>
+  </section>
+
+  <!-- SYNC LOG -->
+  <section id="ats-panel-sync" class="ats-panel">
+    <div id="sync-body">
+      <div class="ats-empty"><p>Loading sync stats…</p></div>
+    </div>
+  </section>
+
+  <!-- BUNDLES -->
+  <section id="ats-panel-bundles" class="ats-panel">
+    <div id="bundles-body">
+      <div class="ats-empty"><p>Loading bundles…</p></div>
+    </div>
+  </section>
+
 </div>
+
+<div class="ats-toast" id="ats-toast"></div>
+
 <script>
-async function connectATS(e) {
-    e.preventDefault();
-    const data = {
-        provider: document.getElementById('provider').value,
-        api_key: document.getElementById('apiKey').value,
-        base_url: document.getElementById('baseUrl').value,
-        company_name: document.getElementById('companyName').value
-    };
-    const resp = await fetch('/api/ats/connect', {
-        method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)
+function atsShow(name) {
+  document.querySelectorAll('.ats-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  document.querySelectorAll('.ats-panel').forEach(p => p.classList.remove('active'));
+  const panel = document.getElementById('ats-panel-' + name);
+  if (panel) panel.classList.add('active');
+  if (name === 'integrations') atsLoadIntegrations();
+  if (name === 'sync')         atsLoadSync();
+  if (name === 'bundles')      atsLoadBundles();
+  if (name === 'candidates')   atsLoadCandidates();
+}
+
+function atsToast(msg, kind) {
+  const el = document.getElementById('ats-toast');
+  el.textContent = msg;
+  el.className = 'ats-toast show ' + (kind || '');
+  setTimeout(() => { el.className = 'ats-toast'; }, 3000);
+}
+
+let atsDebTimer = null;
+function atsDebouncedLoad() {
+  clearTimeout(atsDebTimer);
+  atsDebTimer = setTimeout(atsLoadCandidates, 300);
+}
+
+function atsClearFilters() {
+  document.getElementById('f-skill').value = '';
+  document.getElementById('f-location').value = '';
+  document.getElementById('f-score').value = '';
+  document.getElementById('f-exp').value = '';
+  atsLoadCandidates();
+}
+
+function scoreBadge(score) {
+  if (score === null || score === undefined || score === '') {
+    return '<span class="ats-badge none">—</span>';
+  }
+  const cls = score >= 70 ? 'good' : score >= 50 ? 'mid' : 'low';
+  return '<span class="ats-badge ' + cls + '">' + score + '</span>';
+}
+
+function escapeHtml(s) {
+  if (s === null || s === undefined) return '';
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function atsLoadCandidates() {
+  const params = new URLSearchParams();
+  const skill = document.getElementById('f-skill').value.trim();
+  const loc   = document.getElementById('f-location').value.trim();
+  const minS  = document.getElementById('f-score').value.trim();
+  const minE  = document.getElementById('f-exp').value.trim();
+  if (skill) params.set('skill', skill);
+  if (loc)   params.set('location', loc);
+  if (minS)  params.set('skill_score_min', minS);
+  if (minE)  params.set('experience_min', minE);
+
+  const body = document.getElementById('candidates-body');
+  try {
+    const r = await fetch('/api/ats/candidates?' + params.toString());
+    const data = await r.json();
+    const list = data.candidates || [];
+    document.getElementById('candidates-count').textContent = list.length + ' candidate' + (list.length === 1 ? '' : 's');
+
+    if (!list.length) {
+      body.innerHTML = '<div class="ats-empty"><h4>No candidates found</h4><p>Adjust filters or register a candidate to see them here.</p></div>';
+      return;
+    }
+
+    let html = '<table class="ats-table"><thead><tr>'
+             + '<th>Name</th><th>Role</th><th>Location</th><th>Skills</th><th>Exp</th><th>Score</th><th>Status</th><th style="text-align:right;">Action</th>'
+             + '</tr></thead><tbody>';
+
+    list.forEach(c => {
+      const skills = (c.skills || []).slice(0, 4).map(s => escapeHtml(s)).join(', ') || '—';
+      html += '<tr>'
+            + '<td><strong>' + escapeHtml(c.name) + '</strong><br><span style="color:#6b7280; font-size:.8rem;">' + escapeHtml(c.email) + '</span></td>'
+            + '<td>' + escapeHtml(c.current_role || '—') + '</td>'
+            + '<td>' + escapeHtml(c.location || '—') + '</td>'
+            + '<td style="max-width:220px; color:#4b5563; font-size:.85rem;">' + skills + '</td>'
+            + '<td>' + (c.experience_years || 0) + 'y</td>'
+            + '<td>' + scoreBadge(c.skill_score) + '</td>'
+            + '<td><span style="font-size:.8rem; color:#6b7280;">' + escapeHtml(c.status) + '</span></td>'
+            + '<td style="text-align:right;"><button class="ats-btn primary" onclick="atsGetScoreLink(\'' + c.candidate_id + '\', this)">Get Score Link</button></td>'
+            + '</tr>';
     });
-    const result = await resp.json();
-    const msg = document.getElementById('atsMsg');
-    msg.textContent = result.message || 'ATS connected!';
-    msg.style.display = 'block';
+
+    html += '</tbody></table>';
+    body.innerHTML = html;
+  } catch (err) {
+    body.innerHTML = '<div class="ats-empty"><h4>Could not load candidates</h4><p>' + escapeHtml(err.message) + '</p></div>';
+  }
 }
-</script>
-<script>
-function connectATS(event) {
-    event.preventDefault();
-    // Session G6: feature under development — capture interest instead
-    window.notifyMe('ATS Integration');
+
+async function atsGetScoreLink(candidateId, btn) {
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Generating…';
+  try {
+    const r = await fetch('/api/ats/candidates/' + candidateId + '/score-link', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({})
+    });
+    const data = await r.json();
+    if (data.status === 'success' && data.url) {
+      window.open(data.url, '_blank', 'noopener');
+      // Prompt for the score after a moment
+      setTimeout(() => atsPromptScore(candidateId, btn), 800);
+    } else {
+      atsToast(data.message || 'Could not generate score link', 'error');
+      btn.disabled = false;
+      btn.textContent = originalText;
+    }
+  } catch (err) {
+    atsToast('Error: ' + err.message, 'error');
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
 }
+
+function atsPromptScore(candidateId, btn) {
+  const raw = window.prompt('Run the free ATS check on DoketsRB (opens in a new tab).\n\nPaste your score (0–100) here when done:');
+  if (raw === null) {
+    btn.disabled = false;
+    btn.textContent = 'Get Score Link';
+    return;
+  }
+  const score = parseInt(raw, 10);
+  if (isNaN(score) || score < 0 || score > 100) {
+    atsToast('Score must be a number 0–100', 'error');
+    btn.disabled = false;
+    btn.textContent = 'Get Score Link';
+    return;
+  }
+  fetch('/api/ats/candidates/' + candidateId + '/score-manual', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({score: score})
+  })
+    .then(r => r.json())
+    .then(data => {
+      if (data.status === 'success') {
+        atsToast('Score recorded: ' + data.score, 'success');
+        atsLoadCandidates();
+      } else {
+        atsToast(data.message || 'Could not save score', 'error');
+      }
+    })
+    .catch(err => atsToast('Error: ' + err.message, 'error'))
+    .finally(() => {
+      btn.disabled = false;
+      btn.textContent = 'Get Score Link';
+    });
+}
+
+async function atsLoadIntegrations() {
+  const body = document.getElementById('integrations-body');
+  try {
+    const r = await fetch('/api/ats/integrations');
+    const data = await r.json();
+    const list = data.integrations || [];
+    if (!list.length) {
+      body.innerHTML = '<div class="ats-empty"><h4>No integrations yet</h4><p>Connect Greenhouse, Lever, or Workday to sync jobs bidirectionally.</p></div>';
+      return;
+    }
+    let html = '<table class="ats-table"><thead><tr><th>Provider</th><th>Company</th><th>API Key</th><th>Direction</th><th>Status</th><th>Connected</th></tr></thead><tbody>';
+    list.forEach(i => {
+      const badge = i.status === 'connected' ? 'good' : 'low';
+      html += '<tr>'
+            + '<td><strong>' + escapeHtml(i.provider) + '</strong></td>'
+            + '<td>' + escapeHtml(i.company_name || '—') + '</td>'
+            + '<td><code>' + escapeHtml(i.api_key_prefix || '—') + '</code></td>'
+            + '<td>' + escapeHtml(i.direction || '—') + '</td>'
+            + '<td><span class="ats-badge ' + badge + '">' + escapeHtml(i.status) + '</span></td>'
+            + '<td style="color:#6b7280; font-size:.85rem;">' + escapeHtml(i.connected_at || '') + '</td>'
+            + '</tr>';
+    });
+    html += '</tbody></table>';
+    body.innerHTML = html;
+  } catch (err) {
+    body.innerHTML = '<div class="ats-empty"><h4>Could not load integrations</h4><p>' + escapeHtml(err.message) + '</p></div>';
+  }
+}
+
+async function atsLoadSync() {
+  const body = document.getElementById('sync-body');
+  try {
+    const r = await fetch('/api/ats/stats');
+    const data = await r.json();
+    const s = (data && data.stats) || {};
+    const statRow = '<div class="ats-stat-row">'
+      + '<div class="ats-stat"><div class="ats-stat-value">' + (s.total_integrations || 0) + '</div><div class="ats-stat-label">Integrations</div></div>'
+      + '<div class="ats-stat"><div class="ats-stat-value">' + (s.total_syncs || 0) + '</div><div class="ats-stat-label">Sync Events</div></div>'
+      + '<div class="ats-stat"><div class="ats-stat-value">' + (s.inbound_jobs || 0) + '</div><div class="ats-stat-label">Inbound Jobs</div></div>'
+      + '<div class="ats-stat"><div class="ats-stat-value">' + (s.outbound_jobs || 0) + '</div><div class="ats-stat-label">Outbound Jobs</div></div>'
+      + '</div>';
+    const providers = (s.providers || []).length
+      ? '<p style="color:#6b7280; font-size:.9rem;">Connected providers: <strong>' + s.providers.map(escapeHtml).join(', ') + '</strong></p>'
+      : '<p style="color:#6b7280; font-size:.9rem;">No providers connected yet.</p>';
+    body.innerHTML = statRow + providers;
+  } catch (err) {
+    body.innerHTML = '<div class="ats-empty"><h4>Could not load sync stats</h4><p>' + escapeHtml(err.message) + '</p></div>';
+  }
+}
+
+async function atsLoadBundles() {
+  const body = document.getElementById('bundles-body');
+  try {
+    const r = await fetch('/api/doketsrb/bundles');
+    const data = await r.json();
+    const bundles = (data && data.bundles) || {};
+    const keys = Object.keys(bundles);
+    if (!keys.length) {
+      body.innerHTML = '<div class="ats-empty"><p>No bundles available.</p></div>';
+      return;
+    }
+    let html = '<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px;">';
+    keys.forEach(k => {
+      const b = bundles[k];
+      html += '<div class="ats-card">'
+            + '<h5 style="margin:0 0 4px; font-weight:700;">' + escapeHtml(b.name) + '</h5>'
+            + '<div style="font-size:1.6rem; font-weight:800; color:#3ba591; margin-bottom:12px;">₹' + escapeHtml(String(b.price)) + '</div>'
+            + '<ul style="padding-left:18px; color:#4b5563; font-size:.9rem; line-height:1.7;">'
+            + (b.includes || []).map(x => '<li>' + escapeHtml(x) + '</li>').join('')
+            + '</ul>'
+            + '<button class="ats-btn secondary" style="width:100%; margin-top:8px;" onclick="atsToast(\'Notify-Me signup coming soon\')">Notify Me</button>'
+            + '</div>';
+    });
+    html += '</div>';
+    html += '<p style="color:#6b7280; font-size:.85rem; margin-top:8px;">Bundled with DoketsRB Premium. See <a href="/doketsrb" style="color:#3ba591;">DoketsRB Suite</a> for details.</p>';
+    body.innerHTML = html;
+  } catch (err) {
+    body.innerHTML = '<div class="ats-empty"><h4>Could not load bundles</h4><p>' + escapeHtml(err.message) + '</p></div>';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  atsLoadCandidates();
+});
 </script>
+
 {% endblock %}
