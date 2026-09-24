@@ -4141,6 +4141,83 @@ async def ats_webhook(integration_id: str, request: Request):
 async def ats_stats():
     return ats_engine.get_stats()
 
+# ============================================================
+# ATS RESUME SCORING (Session ATS-1)
+# ============================================================
+
+@app.get("/api/ats/candidates")
+async def api_ats_candidates(
+    skill: str = None,
+    location: str = None,
+    skill_score_min: int = None,
+    experience_min: int = None,
+    limit: int = 100,
+):
+    """Read-only candidate list for the recruiter view."""
+    from candidate_engine import candidate_engine
+    filters = {}
+    if skill: filters["skill"] = skill
+    if location: filters["location"] = location
+    if skill_score_min is not None: filters["skill_score_min"] = skill_score_min
+    if experience_min is not None: filters["experience_min"] = experience_min
+    result = candidate_engine.search_candidates(filters)
+    if result.get("status") == "success":
+        result["candidates"] = result.get("candidates", [])[:limit]
+        result["count"] = len(result["candidates"])
+    return result
+
+
+@app.post("/api/ats/candidates/{candidate_id}/score-link")
+async def api_ats_score_link(candidate_id: str, request: Request):
+    """Generate a signed deep-link to run the free ATS check on DoketsRB."""
+    try:
+        data = await request.json()
+    except Exception:
+        data = {}
+    target_role = data.get("target_role", "") or ""
+
+    from candidate_engine import candidate_engine
+    check = candidate_engine.get_candidate(candidate_id)
+    if check.get("status") != "success":
+        return JSONResponse({"status": "error", "message": "Candidate not found"}, status_code=404)
+
+    # Monetization: JD-tailored score costs credits, generic score is free
+    if target_role:
+        from credit_guard import require_credits_from_data
+        guard = require_credits_from_data(
+            {"email": check["candidate"].get("email"), "feature": "ats_jd_score"},
+            "ats_jd_score",
+        )
+        if guard and guard.get("status") == "error":
+            return JSONResponse(guard, status_code=guard.get("http_status", 402))
+
+    return doketsrb_integration.request_score_link(candidate_id, target_role)
+
+
+@app.get("/api/ats/score-callback")
+async def api_ats_score_callback(token: str, sig: str, score: int, source: str = "doketsrb"):
+    """DoketsRB redirects the user back here after the ATS check."""
+    result = doketsrb_integration.consume_score_callback(token, sig, score, source=source)
+    ok = result.get("status") == "success"
+    msg = result.get("message", "Score recorded" if ok else "Could not record score")
+    color = "#10b981" if ok else "#ef4444"
+    html = f"""<!doctype html><html><head><meta charset="utf-8">
+    <title>ATS Score</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+      body {{ font-family: system-ui, sans-serif; background:#0f172a; color:#e2e8f0;
+             display:flex; align-items:center; justify-content:center; min-height:100vh; margin:0; }}
+      .card {{ background:#1e293b; padding:2rem 2.5rem; border-radius:12px; text-align:center; max-width:420px; }}
+      h1 {{ color:{color}; margin:0 0 .5rem; }}
+      a {{ color:#60a5fa; }}
+    </style></head><body>
+      <div class="card">
+        <h1>{'Score Recorded' if ok else 'Something went wrong'}</h1>
+        <p>{msg}</p>
+        <p><a href="/ats">Back to ATS Dashboard</a></p>
+      </div>
+    </body></html>"""
+    return HTMLResponse(html)
 
 # ============================================================
 # UNIVERSITY API ENDPOINTS
