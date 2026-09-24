@@ -8,8 +8,10 @@ import psycopg2
 from psycopg2 import pool as pg_pool
 from datetime import datetime
 from dotenv import load_dotenv
-
-# Load environment variables from .env file
+...
+# Dev override: .env.local wins if present (never committed — see .gitignore)
+load_dotenv(".env.local", override=True)
+# Base config: .env fills any keys not set by .env.local
 load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL", "")
