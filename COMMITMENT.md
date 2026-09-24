@@ -3,8 +3,22 @@
 **Purpose:** Track every planned-but-not-completed item. Nothing gets lost again.
 **Created:** 2026-09-20
 **Last updated:** 2026-09-24
-**HEAD:** c248f31
+**HEAD:** b786802
 
+### fix(credits) — get_user_credits only auto-creates for registered users (2026-09-24)
+
+- **Commit:** <hash>
+- **Bug (Change 2):** `ai_credit_engine.get_user_credits` called `initialize_user` for any email,
+  creating a phantom `charvak_user_credits` row (50 free credits) for emails that had never
+  registered. Hitting `/api/credits/<random@example.com>` created an account.
+- **Fix:** `get_user_credits` now checks `db.get_user_by_email(email)` first. If no `users` row
+  exists, return `{'status': 'error', 'message': 'No account found for this email.'}`.
+  `check_and_deduct` was already fixed earlier today; this closes the sibling hole.
+- **Verified:**
+  - Unknown email → error, no DB row created ✅
+  - Fresh registered user → 50 free credits ✅
+  - Existing user (admin) → unchanged ✅
+- **Status:** RESOLVED — credits system now fails closed on both read and write paths
 
 ### fix — global 401/402 handlers in base.html (2026-09-24)
 
