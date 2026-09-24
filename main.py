@@ -7888,7 +7888,11 @@ async def ielts_speaking_evaluate(request: Request):
         return JSONResponse({"status": "error", "message": "credit check failed"}, status_code=500)
 
     try:
-        result = ielts_engine.evaluate_speaking(responses, topic=data.get("topic", ""))
+        result = ielts_engine.evaluate_speaking(
+            responses,
+            topic=data.get("topic", ""),
+            email=data.get("email"),
+        )
     except Exception as e:
         logger.exception(f"ielts_speaking_evaluate engine failed: {e}")
         return JSONResponse({"status": "error", "message": f"evaluation failed: {e}"}, status_code=500)
