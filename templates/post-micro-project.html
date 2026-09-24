@@ -1,112 +1,313 @@
 {% extends "base.html" %}
 {% block title %}Post a Micro-Project - Charvak{% endblock %}
 {% block content %}
-<div class="page-hero bg-gradient-primary text-white py-5">
-    <div class="container py-4">
-        <span class="badge bg-success mb-2 px-3 py-2">For Companies</span>
-        <h1 class="display-4 fw-bold">Post a Micro-Project</h1>
-        <p class="lead">Get work done by pre-vetted GenZ talent. 2 weeks. Fixed price. Quality guaranteed.</p>
+
+<style>
+  .pmp-hero { background: linear-gradient(135deg, #3ba591 0%, #2a8070 100%); color: #fff; padding: 44px 0 36px; margin-bottom: 28px; }
+  .pmp-hero h1 { font-weight: 800; margin: 0 0 6px; font-size: 2.2rem; }
+  .pmp-hero p { opacity: .92; margin: 0; }
+  .pmp-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 24px; }
+  .pmp-card h2 { font-size: 1.2rem; font-weight: 700; margin: 0 0 16px; color: #111827; }
+  .pmp-input, .pmp-select, .pmp-textarea { width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: .92rem; margin-bottom: 12px; }
+  .pmp-input:focus, .pmp-select:focus, .pmp-textarea:focus { outline: none; border-color: #3ba591; }
+  .pmp-label { display: block; font-size: .85rem; font-weight: 600; color: #374151; margin-bottom: 6px; }
+  .pmp-btn { padding: 12px 20px; border-radius: 8px; border: none; font-weight: 700; font-size: 1rem; cursor: pointer; width: 100%; transition: all .15s; }
+  .pmp-btn.primary { background: #3ba591; color: #fff; }
+  .pmp-btn.primary:hover { background: #2a8070; }
+  .pmp-btn.primary:disabled { opacity: .6; cursor: not-allowed; }
+  .pmp-msg { margin-top: 12px; padding: 12px; border-radius: 8px; font-size: .9rem; display: none; }
+  .pmp-msg.success { background: #d1fae5; color: #065f46; display: block; }
+  .pmp-msg.error { background: #fee2e2; color: #991b1b; display: block; }
+  .pmp-msg.info { background: #dbeafe; color: #1e40af; display: block; }
+  .pmp-summary { background: #f0faf8; border: 1px solid #a7f3d0; border-radius: 8px; padding: 14px 16px; margin-bottom: 16px; font-size: .9rem; }
+  .pmp-summary strong { color: #065f46; }
+</style>
+
+<div class="pmp-hero">
+  <div class="container">
+    <h1>Post a Micro-Project</h1>
+    <p>Fund the escrow. Get work done in 2 weeks. Pay only for delivery.</p>
+  </div>
+</div>
+
+<div class="container pb-5">
+  <div class="row"><div class="col-lg-7 mx-auto">
+
+    <div class="pmp-card">
+      <h2>Project Details</h2>
+
+      <div class="pmp-summary">
+        <strong>How it works:</strong> You fund the full project budget into escrow via Razorpay.
+        When you approve the delivered work, 90% is paid to the intern and 10% is Charvak's platform fee.
+        Minimum budget is ₹500.
+      </div>
+
+      <form onsubmit="postMicroProject(event)">
+        <label class="pmp-label">Project Title</label>
+        <input type="text" class="pmp-input" id="projTitle" placeholder="e.g. Build a Landing Page" required>
+
+        <div class="row g-2">
+          <div class="col-md-6">
+            <label class="pmp-label">Category</label>
+            <select class="pmp-select" id="projCategory">
+              <option>AI / Machine Learning</option>
+              <option>Data Science</option>
+              <option>Data Engineering</option>
+              <option>Generative AI (GenAI)</option>
+              <option>Deep Learning</option>
+              <option>NLP / Text Analysis</option>
+              <option>Computer Vision</option>
+              <option>Python Development</option>
+              <option>Web Development</option>
+              <option>Design</option>
+              <option>Content Writing</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="pmp-label">Difficulty</label>
+            <select class="pmp-select" id="projLevel">
+              <option>Beginner</option>
+              <option selected>Intermediate</option>
+              <option>Advanced</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row g-2">
+          <div class="col-md-6">
+            <label class="pmp-label">Duration</label>
+            <select class="pmp-select" id="projDuration">
+              <option value="1">1 week</option>
+              <option value="2" selected>2 weeks</option>
+              <option value="3">3 weeks</option>
+              <option value="4">4 weeks</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="pmp-label">Budget (₹) — minimum ₹500</label>
+            <input type="number" class="pmp-input" id="projBudget" placeholder="e.g. 5000" min="500" required>
+          </div>
+        </div>
+
+        <label class="pmp-label">Skills Required</label>
+        <input type="text" class="pmp-input" id="projSkills" placeholder="e.g. HTML, CSS, JavaScript">
+
+        <label class="pmp-label">Company Name</label>
+        <input type="text" class="pmp-input" id="projCompany" placeholder="Your company name" required>
+
+        <label class="pmp-label">Your Email (must match your logged-in account)</label>
+        <input type="email" class="pmp-input" id="projEmail" placeholder="you@company.com" required>
+
+        <label class="pmp-label">Project Description</label>
+        <textarea class="pmp-textarea" id="projDesc" rows="4" placeholder="What needs to be done? What are the deliverables?"></textarea>
+
+        <button type="submit" class="pmp-btn primary" id="postBtn">Fund Escrow &amp; Post Project</button>
+      </form>
+
+      <p class="pmp-msg" id="projMsg"></p>
     </div>
+
+  </div></div>
 </div>
 
-<div class="container py-5"><div class="row"><div class="col-lg-7 mx-auto">
-    <div class="card border-0 shadow-lg p-4"><div class="card-body">
-        <h2 class="as-h4 mb-3">Project Details</h2>
-<div class="alert alert-warning mb-3">
-    <i class="bi bi-file-text me-2"></i>
-    <strong>Agreement Required:</strong> Please sign our 
-    <a href="/agreement?type=MSA&client=Company&redirect=/post-micro-project&service=Micro-Project+Services&payment=Payment+per+project" class="alert-link">Service Agreement</a> before posting.
-</div>
-        <form onsubmit="postMicroProject(event)">
-            <div class="mb-3"><label class="form-label">Project Title</label><input type="text" class="form-control" id="projTitle" placeholder="e.g. Build a Landing Page" required></div>
-            <div class="row g-2 mb-3">
-                <div class="col-md-6"><label class="form-label">Category</label><select class="form-select" id="projCategory">
-    <option>AI / Machine Learning</option>
-    <option>Data Science</option>
-    <option>Data Engineering</option>
-    <option>Generative AI (GenAI)</option>
-    <option>Deep Learning</option>
-    <option>NLP / Text Analysis</option>
-    <option>Computer Vision</option>
-    <option>Python Development</option>
-    <option>Web Development</option>
-    <option>Design</option>
-    <option>Content Writing</option>
-    <option>Other</option>
-</select></div>
-                <div class="col-md-6"><label class="form-label">Difficulty</label><select class="form-select" id="projLevel"><option>Beginner</option><option>Intermediate</option><option>Advanced</option></select></div>
-            </div>
-            <div class="row g-2 mb-3">
-                <div class="col-md-6"><label class="form-label">Duration</label><select class="form-select" id="projDuration"><option>1 week</option><option selected>2 weeks</option><option>3 weeks</option><option>4 weeks</option></select></div>
-                <div class="col-md-6"><label class="form-label">Budget (₹)</label><input type="number" class="form-control" id="projBudget" placeholder="e.g. 2000" required></div>
-            </div>
-            <div class="mb-3"><label class="form-label">Skills Required</label><input type="text" class="form-control" id="projSkills" placeholder="e.g. HTML, CSS, JavaScript"></div>
-            <div class="mb-3"><label class="form-label">Company Name</label><input type="text" class="form-control" id="projCompany" placeholder="Your company name" required></div>
-            <div class="mb-3"><label class="form-label">Your Email</label><input type="email" class="form-control" id="projEmail" placeholder="you@company.com" required></div>
-            <div class="mb-3"><label class="form-label">Project Description</label><textarea class="form-control" id="projDesc" rows="3" placeholder="What needs to be done? What are the deliverables?"></textarea></div>
-            <div class="alert alert-info">
-                <i class="bi bi-info-circle me-2"></i>
-                <strong>What happens next?</strong><br>
-                1. Your project goes live on the Micro-Internship board<br>
-                2. Pre-vetted GenZ talent applies<br>
-                3. You pick the best candidate<br>
-                4. They deliver in 2 weeks<br>
-                5. You can hire them as intern or full-time
-            </div>
-            <button type="submit" class="btn btn-primary btn-lg w-100">Post Micro-Project</button>
-        </form>
-        <p class="text-success mt-2 text-center" id="projMsg" style="display:none;"></p>
-    </div></div>
-</div></div></div>
-
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
-function postMicroProject(e){
+function showMsg(text, kind) {
+    const el = document.getElementById('projMsg');
+    el.textContent = text;
+    el.className = 'pmp-msg ' + kind;
+}
+
+function getToken() {
+    return localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+}
+
+function getLoggedInEmail() {
+    return (localStorage.getItem('userEmail') || '').trim().toLowerCase();
+}
+
+// Pre-fill email from session on load
+document.addEventListener('DOMContentLoaded', () => {
+    const email = getLoggedInEmail();
+    if (email) {
+        document.getElementById('projEmail').value = email;
+        document.getElementById('projEmail').setAttribute('readonly', 'readonly');
+    }
+});
+
+async function postMicroProject(e) {
     e.preventDefault();
-    
-    const projectData = {
+
+    const btn = document.getElementById('postBtn');
+    const token = getToken();
+    const loggedInEmail = getLoggedInEmail();
+    const formEmail = (document.getElementById('projEmail').value || '').trim().toLowerCase();
+    const budget = parseFloat(document.getElementById('projBudget').value || '0');
+
+    if (!token) {
+        showMsg('Please log in to post a project.', 'error');
+        return;
+    }
+    if (!loggedInEmail) {
+        showMsg('Your session is missing an email. Please log in again.', 'error');
+        return;
+    }
+    if (formEmail !== loggedInEmail) {
+        showMsg('Email must match your logged-in account (' + loggedInEmail + ').', 'error');
+        return;
+    }
+        if (isNaN(budget) || budget < 500) {
+        showMsg('Minimum budget is ₹500.', 'error');
+        return;
+    }
+
+    // Snapshot form values before Razorpay modal opens — the DOM can change while the modal is up
+    window._microProjectSnapshot = {
         title: document.getElementById('projTitle').value,
         category: document.getElementById('projCategory').value,
         difficulty: document.getElementById('projLevel').value,
-        duration_weeks: parseInt(document.getElementById('projDuration').value),
-        budget_inr: parseFloat(document.getElementById('projBudget').value),
+        duration_weeks: parseInt(document.getElementById('projDuration').value, 10),
+        budget_inr: budget,
         skills_required: document.getElementById('projSkills').value.split(',').map(s => s.trim()).filter(Boolean),
         description: document.getElementById('projDesc').value,
-        client_id: 'CLIENT-DEMO',
-        company_name: document.getElementById('projCompany').value,
-        contact_email: document.getElementById('projEmail').value,
-        escrow_required: true
+        company_name: document.getElementById('projCompany').value
     };
-    
-    fetch('/api/micro-internship/project/post', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(projectData)
-    })
-    .then(res => res.json())
-    .then(data => {
-        const msg = document.getElementById('projMsg');
-        if (data.status === 'success') {
-            msg.textContent = '✅ Project posted! Project ID: ' + data.project_id;
-            msg.style.color = '#10b981';
-            msg.style.display = 'block';
-            document.querySelector('form').reset();
-        } else {
-            msg.textContent = '❌ ' + (data.message || 'Failed to post project');
-            msg.style.color = '#ef4444';
-            msg.style.display = 'block';
+
+    btn.disabled = true;
+    btn.textContent = 'Creating payment order…';;
+
+    let orderResp;
+    try {
+        const r = await fetch('/api/payment/create-order', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({
+                amount: Math.round(budget),
+                plan: 'micro_project_escrow',
+                email: loggedInEmail,
+                name: document.getElementById('projCompany').value || 'Client'
+            })
+        });
+        orderResp = await r.json();
+    } catch (err) {
+        showMsg('Could not create payment order: ' + err.message, 'error');
+        btn.disabled = false;
+        btn.textContent = 'Fund Escrow & Post Project';
+        return;
+    }
+
+    if (!orderResp || orderResp.status !== 'success' || !orderResp.order_id) {
+        showMsg((orderResp && orderResp.message) || 'Payment order creation failed.', 'error');
+        btn.disabled = false;
+        btn.textContent = 'Fund Escrow & Post Project';
+        return;
+    }
+
+    btn.textContent = 'Opening payment…';
+
+    const rzp = new Razorpay({
+        key: orderResp.key_id,
+        amount: orderResp.amount,
+        currency: orderResp.currency || 'INR',
+        name: 'Charvak',
+        description: 'Micro-Project Escrow — ₹' + budget,
+        order_id: orderResp.order_id,
+        prefill: {
+            email: loggedInEmail,
+            name: document.getElementById('projCompany').value || ''
+        },
+        theme: { color: '#3ba591' },
+        handler: async function (response) {
+            await finalizeProject(response.razorpay_payment_id, response.razorpay_order_id, response.razorpay_signature);
+        },
+        modal: {
+            ondismiss: function () {
+                btn.disabled = false;
+                btn.textContent = 'Fund Escrow & Post Project';
+                showMsg('Payment cancelled.', 'info');
+            }
         }
-    })
-    .catch(err => {
-        // Fallback to localStorage
-        const projects = JSON.parse(localStorage.getItem('micro_projects')||'[]');
-        projects.push({...projectData, date: new Date().toISOString()});
-        localStorage.setItem('micro_projects', JSON.stringify(projects));
-        const msg = document.getElementById('projMsg');
-        msg.textContent = '✅ Project saved locally!';
-        msg.style.color = '#10b981';
-        msg.style.display = 'block';
-        document.querySelector('form').reset();
     });
+
+    rzp.open();
+}
+
+async function finalizeProject(paymentId, orderId, signature) {
+    const btn = document.getElementById('postBtn');
+    const emailInput = document.getElementById('projEmail');
+    let email = (emailInput.value || '').trim().toLowerCase();
+    if (!email) {
+        email = (localStorage.getItem('userEmail') || '').trim().toLowerCase();
+    }
+    if (!email) {
+        showMsg('❌ Your session is missing an email. Please log out and log back in, then try again.', 'error');
+        btn.disabled = false;
+        btn.textContent = 'Fund Escrow & Post Project';
+        return;
+    }
+    emailInput.value = email;
+
+    btn.textContent = 'Verifying payment…';
+
+    const token = getToken();
+    const snap = window._microProjectSnapshot || {};
+    if (!snap.budget_inr || isNaN(snap.budget_inr) || snap.budget_inr < 500) {
+        showMsg('❌ Project details were lost. Please re-fill the form and try again.', 'error');
+        btn.disabled = false;
+        btn.textContent = 'Fund Escrow & Post Project';
+        return;
+    }
+
+    const payload = {
+        title: snap.title,
+        category: snap.category,
+        difficulty: snap.difficulty,
+        duration_weeks: snap.duration_weeks,
+        budget_inr: snap.budget_inr,
+        skills_required: snap.skills_required,
+        description: snap.description,
+        company_name: snap.company_name,
+        contact_email: email,
+        escrow_required: true,
+        payment_id: paymentId,
+        razorpay_order_id: orderId,
+        razorpay_signature: signature
+    };
+
+    try {
+        const r = await fetch('/api/micro-internship/project/post', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify(payload)
+        });
+        const data = await r.json();
+
+        if (data.status === 'success') {
+            showMsg('✅ Project posted! Project ID: ' + data.project_id +
+                     ' · Escrow: ' + (data.escrow_id || '—') +
+                     ' · You paid ₹' + payload.budget_inr +
+                     ' · Intern will receive ₹' + (data.intern_receives || '—'), 'success');
+            document.querySelector('form').reset();
+            window._microProjectSnapshot = null;
+            const email = getLoggedInEmail();
+            if (email) document.getElementById('projEmail').value = email;
+        } else {
+            showMsg('❌ ' + (data.message || 'Failed to post project'), 'error');
+        }
+    } catch (err) {
+        showMsg('❌ ' + err.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Fund Escrow & Post Project';
+    }
 }
 </script>
+
 {% endblock %}

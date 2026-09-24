@@ -3058,12 +3058,105 @@ async def client_dashboard(client_id: str):
 @app.post("/api/micro-internship/project/post")
 @limiter.limit("20/minute")
 async def post_micro_project(request: Request):
-    """Post a micro-internship project."""
+    """Post a micro-internship project. Requires a verified Razorpay payment."""
     try:
         data = await request.json()
+    except Exception as e:
+        return JSONResponse({"status": "error", "message": f"Invalid JSON: {e}"}, status_code=400)
+
+    contact_email = (data.get("contact_email") or "").strip().lower()
+    if not contact_email:
+        return JSONResponse({"status": "error", "message": "Email required"}, status_code=400)
+
+    # Auth: the caller must be the contact_email owner (admins bypass)
+    require_auth_for_email(request, contact_email)
+
+    # Validate budget
+    try:
+        budget_inr = float(data.get("budget_inr", 0))
+    except (ValueError, TypeError):
+        return JSONResponse({"status": "error", "message": "Invalid budget"}, status_code=400)
+    if budget_inr < 500:
+        return JSONResponse({"status": "error", "message": "Minimum budget is Rs.500"}, status_code=400)
+
+    # Require payment_id
+    payment_id = (data.get("payment_id") or "").strip()
+    if not payment_id:
+        return JSONResponse({
+            "status": "error",
+            "message": "Payment required. Fund the escrow to post this project.",
+            "_http_status": 402,
+        }, status_code=402)
+
+    # Verify payment with Razorpay
+    from payment_engine import payment_engine
+    try:
+        p = payment_engine.fetch_razorpay_payment(payment_id)
+    except Exception as e:
+        logger.exception(f"razorpay fetch failed: {e}")
+        return JSONResponse({"status": "error", "message": "Payment verification failed"}, status_code=500)
+
+    if p.get("status") != "success":
+        return JSONResponse({"status": "error", "message": p.get("message", "Payment not found")}, status_code=402)
+    if p.get("status_field") != "captured":
+        return JSONResponse({"status": "error", "message": "Payment not captured"}, status_code=402)
+
+    amount_paise = int(p.get("amount", 0))
+    expected_paise = int(round(budget_inr * 100))
+    if amount_paise < expected_paise:
+        return JSONResponse({
+            "status": "error",
+            "message": f"Payment amount insufficient. Expected Rs.{budget_inr}, got Rs.{amount_paise/100}.",
+        }, status_code=402)
+
+    payment_email = (p.get("email") or "").lower()
+    if payment_email and payment_email != contact_email:
+        return JSONResponse({"status": "error", "message": "Payment email does not match"}, status_code=403)
+
+    # Create escrow with the 10% micro-internship fee (fee comes out of intern payout)
+    from escrow_engine import escrow_engine
+    escrow_resp = escrow_engine.create_escrow({
+        "client_name": data.get("company_name"),
+        "client_email": contact_email,
+        "vendor_name": "Pending assignment",
+        "vendor_email": "",
+        "amount": budget_inr,
+        "currency": "INR",
+        "description": f"Micro-internship: {data.get('title')}",
+        "milestones": data.get("milestones", []),
+        "duration_days": int(data.get("duration_weeks", 2)) * 7,
+        "platform_fee_percent": 10.0,
+    })
+    if escrow_resp.get("status") != "success":
+        return JSONResponse({"status": "error", "message": "Escrow creation failed"}, status_code=500)
+
+    escrow_id = escrow_resp["escrow_id"]
+
+    # Mark escrow as funded (Razorpay already captured the money)
+    deposit_resp = escrow_engine.deposit_funds(
+        escrow_id=escrow_id,
+        payment_details={
+            "gateway": "razorpay",
+            "payment_id": payment_id,
+            "amount": budget_inr,
+            "currency": "INR",
+        },
+    )
+    if deposit_resp.get("status") != "success":
+        return JSONResponse({"status": "error", "message": "Escrow deposit failed"}, status_code=500)
+
+    # Pass escrow_id to the engine; it links it to the project row
+    data["escrow_id"] = escrow_id
+
+    try:
         result = micro_internship_engine.post_project(data)
+        if result.get("status") == "success":
+            result["escrow_id"] = escrow_id
+            result["platform_fee"] = escrow_resp.get("platform_fee")
+            result["intern_receives"] = escrow_resp.get("vendor_receives")
         return result
     except Exception as e:
+        logger.exception(f"post_micro_project failed: {e}")
         return {"status": "error", "message": str(e)}
 
 @app.get("/api/micro-internship/projects")
