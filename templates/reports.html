@@ -1,115 +1,183 @@
 {% extends "base.html" %}
-{% block title %}Assessment Reports - Charvak IT Consulting{% endblock %}
+{% block title %}Assessment Reports — Charvak{% endblock %}
 {% block content %}
-<div class="page-hero bg-gradient-primary text-white py-5">
-    <div class="container py-4 text-center">
-        <h1 class="display-4 fw-bold" data-i18n="reports.title">📊 Assessment Reports</h1>
-        <p class="lead" data-i18n="reports.subtitle">Generate, verify, and track assessment reports</p>
-    </div>
+
+<style>
+  .rp-hero { background: linear-gradient(135deg, #3ba591 0%, #2a8070 100%); color: #fff; padding: 44px 0 36px; margin-bottom: 28px; }
+  .rp-hero h1 { font-weight: 800; margin: 0 0 6px; font-size: 2.2rem; }
+  .rp-hero p { opacity: .92; margin: 0; }
+  .rp-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 22px; height: 100%; }
+  .rp-card h2 { font-size: 1.1rem; font-weight: 700; margin: 0 0 14px; color: #111827; }
+  .rp-input, .rp-select { width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: .92rem; margin-bottom: 10px; }
+  .rp-input:focus, .rp-select:focus { outline: none; border-color: #3ba591; }
+  .rp-btn { padding: 10px 16px; border-radius: 8px; border: none; font-weight: 600; font-size: .92rem; cursor: pointer; width: 100%; transition: all .15s; }
+  .rp-btn.primary { background: #3ba591; color: #fff; }
+  .rp-btn.primary:hover { background: #2a8070; }
+  .rp-btn.outline { background: #fff; color: #3ba591; border: 1px solid #3ba591; }
+  .rp-btn.outline:hover { background: #f0faf8; }
+  .rp-msg { margin-top: 12px; padding: 10px 12px; border-radius: 8px; font-size: .88rem; display: none; }
+  .rp-msg.success { background: #d1fae5; color: #065f46; display: block; }
+  .rp-msg.error { background: #fee2e2; color: #991b1b; display: block; }
+  .rp-report-row { padding: 12px 0; border-bottom: 1px solid #f3f4f6; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .rp-report-row:last-child { border-bottom: none; }
+  .rp-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .74rem; font-weight: 700; }
+  .rp-badge.pass { background: #d1fae5; color: #065f46; }
+  .rp-badge.fail { background: #fee2e2; color: #991b1b; }
+  .rp-code { font-family: ui-monospace, monospace; font-size: .8rem; color: #6b7280; }
+  .rp-empty { text-align: center; color: #9ca3af; padding: 24px; font-size: .9rem; }
+</style>
+
+<div class="rp-hero">
+  <div class="container">
+    <h1>Assessment Reports</h1>
+    <p>Generate, verify, and track candidate assessment reports.</p>
+  </div>
 </div>
 
-<div class="container py-5">
-    <div class="row g-4">
-        <!-- Generate Report -->
-        <div class="col-md-6">
-            <div class="card h-100 border-0 shadow-sm">
-                <div class="card-body p-4">
-                    <h2 class="as-h5" data-i18n="reports.generate_title">📝 Generate Report</h2>
-                    <form onsubmit="generateReport(event)">
-                        <div class="mb-2">
-                            <select class="form-select" id="reportType">
-                                <option value="skill_twin" data-i18n="reports.type_skill_twin">Skill-Twin Assessment</option>
-                                <option value="interview_prep" data-i18n="reports.type_interview_prep">Interview Prep</option>
-                                <option value="quiz" data-i18n="reports.type_quiz">LMS Quiz</option>
-                                <option value="indian_language" data-i18n="reports.type_indian_language">Indian Language Assessment</option>
-                            </select>
-                        </div>
-                        <input type="text" class="form-control mb-2" id="candidateName" placeholder="Candidate Name" data-i18n-placeholder="reports.candidate_name" required>
-                        <input type="email" class="form-control mb-2" id="candidateEmail" placeholder="Candidate Email" data-i18n-placeholder="reports.candidate_email" required>
-                        <input type="email" class="form-control mb-2" id="employerEmail" placeholder="Employer Email (optional)" data-i18n-placeholder="reports.employer_email">
-                        <input type="number" class="form-control mb-3" id="reportScore" placeholder="Score (0-100)" data-i18n-placeholder="reports.score_placeholder" required>
-                        <button class="btn btn-primary w-100" type="submit" data-i18n="reports.generate_button">Generate & Deliver Report</button>
-                    </form>
-                    <p class="text-success mt-2 text-center" id="reportMsg" style="display:none;"></p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Verify Report -->
-        <div class="col-md-6">
-            <div class="card h-100 border-0 shadow-sm">
-                <div class="card-body p-4">
-                    <h2 class="as-h5" data-i18n="reports.verify_title">🔍 Verify Report</h2>
-                    <form onsubmit="verifyReport(event)">
-                        <input type="text" class="form-control mb-3" id="verificationId" placeholder="Verification ID (e.g. VERIFY-XXXX)" data-i18n-placeholder="reports.verification_id" required>
-                        <button class="btn btn-outline-primary w-100" type="submit" data-i18n="common.verify">Verify</button>
-                    </form>
-                    <div class="mt-3" id="verifyResult"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- My Reports -->
-        <div class="col-md-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <h2 class="as-h5" data-i18n="reports.my_reports_title">📂 My Reports</h2>
-                    <form onsubmit="getMyReports(event)" class="mb-3">
-                        <div class="row g-2">
-                            <div class="col-md-8"><input type="email" class="form-control" id="myEmail" placeholder="Your Email" data-i18n-placeholder="reports.your_email" required></div>
-                            <div class="col-md-4"><button class="btn btn-outline-primary w-100" type="submit" data-i18n="reports.get_my_reports">Get My Reports</button></div>
-                        </div>
-                    </form>
-                    <div id="myReportsList"></div>
-                </div>
-            </div>
-        </div>
+<div class="container pb-5">
+  <div class="row g-4">
+    <!-- Generate -->
+    <div class="col-md-6">
+      <div class="rp-card">
+        <h2>Generate Report</h2>
+        <form onsubmit="generateReport(event)">
+          <select class="rp-select" id="reportType">
+            <option value="skill_twin">Skill-Twin Assessment</option>
+            <option value="interview_prep">Interview Prep</option>
+            <option value="quiz">LMS Quiz</option>
+            <option value="indian_language">Indian Language Assessment</option>
+          </select>
+          <input type="text" class="rp-input" id="candidateName" placeholder="Candidate Name" required>
+          <input type="email" class="rp-input" id="candidateEmail" placeholder="Candidate Email" required>
+          <input type="email" class="rp-input" id="employerEmail" placeholder="Employer Email (optional)">
+          <input type="number" class="rp-input" id="reportScore" placeholder="Score (0–100)" min="0" max="100" required>
+          <button class="rp-btn primary" type="submit">Generate &amp; Deliver Report</button>
+        </form>
+        <p class="rp-msg" id="reportMsg"></p>
+      </div>
     </div>
+
+    <!-- Verify -->
+    <div class="col-md-6">
+      <div class="rp-card">
+        <h2>Verify Report</h2>
+        <form onsubmit="verifyReport(event)">
+          <input type="text" class="rp-input" id="verificationId" placeholder="Verification ID (e.g. VERIFY-XXXX)" required>
+          <button class="rp-btn outline" type="submit">Verify</button>
+        </form>
+        <div class="mt-3" id="verifyResult"></div>
+      </div>
+    </div>
+
+    <!-- My Reports -->
+    <div class="col-md-12">
+      <div class="rp-card">
+        <h2>My Reports</h2>
+        <form onsubmit="getMyReports(event)" class="mb-3">
+          <div class="row g-2">
+            <div class="col-md-8">
+              <input type="email" class="rp-input" id="myEmail" placeholder="Your Email" required style="margin-bottom:0;">
+            </div>
+            <div class="col-md-4">
+              <button class="rp-btn outline" type="submit">Get My Reports</button>
+            </div>
+          </div>
+        </form>
+        <div id="myReportsList"><div class="rp-empty">Enter your email to see your reports.</div></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
+function escapeHtml(s) {
+  if (s === null || s === undefined) return '';
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function showMsg(text, kind) {
+  const el = document.getElementById('reportMsg');
+  el.textContent = text;
+  el.className = 'rp-msg ' + kind;
+}
+
 async function generateReport(e) {
-    e.preventDefault();
-    const data = {
-        assessment_type: document.getElementById('reportType').value,
-        candidate_name: document.getElementById('candidateName').value,
-        candidate_email: document.getElementById('candidateEmail').value,
-        employer_email: document.getElementById('employerEmail').value,
-        score: parseFloat(document.getElementById('reportScore').value),
-        passed: parseFloat(document.getElementById('reportScore').value) >= 70
-    };
-    const r = await fetch('/api/report/generate', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  e.preventDefault();
+  const score = parseFloat(document.getElementById('reportScore').value);
+  const data = {
+    assessment_type: document.getElementById('reportType').value,
+    candidate_name:  document.getElementById('candidateName').value,
+    candidate_email: document.getElementById('candidateEmail').value,
+    employer_email:  document.getElementById('employerEmail').value,
+    score: score,
+    passed: score >= 70
+  };
+  try {
+    const r = await fetch('/api/report/generate', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(data)
+    });
     const j = await r.json();
-    const msg = document.getElementById('reportMsg');
-    msg.textContent = j.message + ' (ID: ' + j.report_id + ')';
-    msg.style.display = 'block';
+    if (j.status === 'success') {
+      showMsg('Report generated. ID: ' + j.report_id + ' · Verification: ' + (j.report && j.report.verification_id ? j.report.verification_id : '—'), 'success');
+    } else {
+      showMsg(j.message || 'Could not generate report', 'error');
+    }
+  } catch (err) {
+    showMsg('Error: ' + err.message, 'error');
+  }
 }
 
 async function verifyReport(e) {
-    e.preventDefault();
-    const id = document.getElementById('verificationId').value;
-    const r = await fetch('/api/report/verify/' + id);
+  e.preventDefault();
+  const id = document.getElementById('verificationId').value.trim();
+  const box = document.getElementById('verifyResult');
+  try {
+    const r = await fetch('/api/report/verify/' + encodeURIComponent(id));
     const j = await r.json();
-    document.getElementById('verifyResult').innerHTML = j.verified 
-        ? '<div class="alert alert-success">✅ Verified! Score: ' + j.report.score + '%</div>'
-        : '<div class="alert alert-danger">❌ Report not found</div>';
+    if (j.verified && j.report) {
+      const passedCls = j.report.passed ? 'pass' : 'fail';
+      box.innerHTML = '<div class="rp-msg success" style="display:block;">'
+        + '<strong>Verified.</strong> Candidate: ' + escapeHtml(j.report.candidate_name || '—')
+        + ' · Score: ' + escapeHtml(String(j.report.score)) + '%'
+        + ' <span class="rp-badge ' + passedCls + '">' + (j.report.passed ? 'PASS' : 'FAIL') + '</span>'
+        + '<div class="rp-code" style="margin-top:6px;">' + escapeHtml(j.report.report_id || '') + '</div>'
+        + '</div>';
+    } else {
+      box.innerHTML = '<div class="rp-msg error" style="display:block;">Report not found.</div>';
+    }
+  } catch (err) {
+    box.innerHTML = '<div class="rp-msg error" style="display:block;">Error: ' + escapeHtml(err.message) + '</div>';
+  }
 }
 
 async function getMyReports(e) {
-    e.preventDefault();
-    const email = document.getElementById('myEmail').value;
-    const r = await fetch('/api/report/candidate/' + email);
+  e.preventDefault();
+  const email = document.getElementById('myEmail').value.trim();
+  const box = document.getElementById('myReportsList');
+  box.innerHTML = '<div class="rp-empty">Loading…</div>';
+  try {
+    const r = await fetch('/api/report/candidate/' + encodeURIComponent(email));
     const j = await r.json();
-    document.getElementById('myReportsList').innerHTML = j.count > 0
-        ? j.reports.map(x => '<div class="p-2 border-bottom">'+x.assessment_type+' — '+x.score+'% ('+x.report_id+')</div>').join('')
-        : '<p class="text-muted">No reports found</p>';
+    const list = j.reports || [];
+    if (!list.length) {
+      box.innerHTML = '<div class="rp-empty">No reports found for this email.</div>';
+      return;
+    }
+    box.innerHTML = list.map(x => {
+      const cls = x.passed ? 'pass' : 'fail';
+      return '<div class="rp-report-row">'
+        + '<div><strong>' + escapeHtml(x.assessment_type) + '</strong>'
+        + ' <span class="rp-badge ' + cls + '">' + escapeHtml(String(x.score)) + '%</span>'
+        + '<div class="rp-code">' + escapeHtml(x.report_id) + '</div></div>'
+        + '<div class="rp-code">' + escapeHtml(x.generated_at || '') + '</div>'
+        + '</div>';
+    }).join('');
+  } catch (err) {
+    box.innerHTML = '<div class="rp-msg error" style="display:block;">Error: ' + escapeHtml(err.message) + '</div>';
+  }
 }
 </script>
-<script>
-function generateReport(event) {
-    event.preventDefault();
-    // Session G6: feature under development — capture interest instead
-    window.notifyMe('Premium Report');
-}
-</script>
+
 {% endblock %}

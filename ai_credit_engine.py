@@ -74,6 +74,7 @@ class AICreditEngine:
         "resume_roast": 5,
         "skill_assessment": 10,
         "ai_premium_report": 20,
+        "premium_report": 25,
         "voice_to_web": 30,
         "neural_wireframe": 25,
         "assignment_assistant": 10,
