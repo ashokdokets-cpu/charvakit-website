@@ -852,10 +852,7 @@ window.addEventListener('charvak:402', function(e) {
 window.addEventListener('charvak:401', function(e) {
     var d = e.detail || {};
     var next = encodeURIComponent(window.location.pathname + window.location.search);
-    var loginUrl = d.login_url ? d.login_url : ('/login?next=' + next);
-    if (confirm('Please log in to continue. Go to login page?')) {
-        window.location.href = loginUrl;
-    }
+    window.location.href = d.login_url ? d.login_url : ('/login?next=' + next);
 });
 </script>
 </body>
