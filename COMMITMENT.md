@@ -3,7 +3,44 @@
 **Purpose:** Track every planned-but-not-completed item. Nothing gets lost again.
 **Created:** 2026-09-20
 **Last updated:** 2026-09-24
-**HEAD:** 3f28c1d
+**HEAD:** c248f31
+
+
+### fix — global 401/402 handlers in base.html (2026-09-24)
+
+- **Commit:** <hash>
+- **Bug:** `main.js` dispatched `charvak:401` and `charvak:402` events site-wide, but the only
+  listeners lived inside `exam-prep.html`. Every other gated route (reports, ats, etc.) got
+  dispatched events into the void. Root cause: `base.html` had a stray `</body>` at line 578,
+  pushing the cookie banner and credits-nav script outside `<body>` — nobody noticed the layout
+  issue, so nobody added the handlers to `base.html`.
+- **What shipped:**
+  - Moved both handlers to `base.html` (site-wide)
+  - Removed the stray `</body>` — `base.html` now has exactly one closing body tag
+  - Deleted duplicate handlers from `exam-prep.html`
+  - 401 handler now uses `login_url` from event detail when present, else `/login?next=<path>`
+- **Verified:**
+  - 402 → alert + redirect to `/ai-credits-pricing` ✅
+  - 401 → confirm + redirect to `/login?next=...` ✅
+  - `base.html` has exactly 2 handler registrations and 1 `</body>`
+- **Status:** RESOLVED
+
+### fix(credits) — check_and_deduct no longer auto-grants free trial (2026-09-24)
+
+- **Commit:** <hash>
+- **Bug:** `ai_credit_engine.check_and_deduct` called `initialize_user` for any unknown email,
+  silently creating a `charvak_user_credits` row with 50 free credits. Affected all 92
+  credit-gated routes. Admin bypass in tests masked the problem.
+- **Evidence:** `never-registered-xyz@example.com` received 2 × 25-credit deductions
+  with a final balance of 0, generating 2 reports without ever registering.
+- **Fix:** `check_and_deduct` now returns 402 (`No account found...`) instead of auto-creating.
+  `get_user_credits` still auto-creates for the registered-user flow (navbar call on welcome page),
+  so the free-trial grant is unchanged for real users.
+- **Verified:**
+  - Unknown email on gated route → 402 + alert + redirect ✅
+  - Registered user with credits → 200, 25 deducted ✅
+  - Admin bypass → still works, 0 deduction ✅
+- **Status:** RESOLVED
 
 ### V4 — Dev/prod DB isolation (2026-09-24)
 
