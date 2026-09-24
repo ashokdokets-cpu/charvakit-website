@@ -5,6 +5,24 @@
 **Last updated:** 2026-09-24
 **HEAD:** 3f28c1d
 
+### V4 — Dev/prod DB isolation (2026-09-24)
+
+- **Commit:** <hash>
+- **What shipped:**
+  - `database.py` now loads `.env.local` first (with `override=True`), then `.env`
+  - `.env.local` (gitignored) points at local Postgres: `charvak_dev` on `localhost:5432`
+  - Local Postgres 15 password reset via `pg_hba.conf` trust flip → `ALTER USER` → revert
+- **Verified:**
+  - With `.env.local`: `SELECT current_database()` → `charvak_dev`
+  - Without: → `vouchai` (prod, 144 tables)
+- **Rules:**
+  - To test against prod data locally: rename `.env.local` → `.env.local.off`, run, rename back
+  - Never set `$env:DATABASE_URL` in the shell (V5 trap — shell wins over everything)
+  - `.env.local` is gitignored; never commit it
+- **Closes:** V4 escalation trigger #2 (safe to onboard a second developer)
+- **Verdict:** ✅ RESOLVED 2026-09-24
+
+
 ### AA4c — reports.html unblocked (2026-09-24)
 
 - **Commit:** <hash>
