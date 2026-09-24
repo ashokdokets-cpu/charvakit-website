@@ -6,6 +6,12 @@ Deep links, cross-promotion, bundle pricing
 import json
 import logging
 import secrets
+import hmac
+import hashlib
+import os
+import base64
+import time
+from urllib.parse import urlencode
 from datetime import datetime
 from typing import Dict, List, Optional
 
@@ -53,6 +59,32 @@ class DoketsRBIntegration:
             ''')
             cur.execute('''CREATE INDEX IF NOT EXISTS idx_doketsrb_subs_email  ON charvak_doketsrb_bundle_subs(email)''')
             cur.execute('''CREATE INDEX IF NOT EXISTS idx_doketsrb_subs_bundle ON charvak_doketsrb_bundle_subs(bundle)''')
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS charvak_doketsrb_score_tokens (
+                    token            TEXT PRIMARY KEY,
+                    candidate_id     TEXT NOT NULL,
+                    email            TEXT,
+                    target_role      TEXT DEFAULT '',
+                    created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    expires_at       TIMESTAMP NOT NULL,
+                    used_at          TIMESTAMP,
+                    status           TEXT DEFAULT 'pending'
+                )
+            """)
+            cur.execute("""CREATE INDEX IF NOT EXISTS idx_doketsrb_score_tokens_cand ON charvak_doketsrb_score_tokens(candidate_id)""")
+            cur.execute("""CREATE INDEX IF NOT EXISTS idx_doketsrb_score_tokens_status ON charvak_doketsrb_score_tokens(status)""")
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS charvak_doketsrb_score_events (
+                    event_id         TEXT PRIMARY KEY,
+                    candidate_id     TEXT NOT NULL,
+                    score            INTEGER,
+                    source           TEXT DEFAULT 'doketsrb',
+                    target_role      TEXT DEFAULT '',
+                    metadata         JSONB DEFAULT '{}'::jsonb,
+                    created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            cur.execute("""CREATE INDEX IF NOT EXISTS idx_doketsrb_score_events_cand ON charvak_doketsrb_score_events(candidate_id)""")
             conn.commit()
             cur.close(); conn.close()
         except Exception as e:
@@ -167,6 +199,146 @@ class DoketsRBIntegration:
                 "features_available": len(self.FEATURES),
             },
         }
+
+
+    # ============================================================
+    # ATS RESUME SCORING BRIDGE (Session ATS-1)
+    # ============================================================
+
+    SCORE_TOKEN_TTL_SECONDS = 3600
+
+    def _score_secret(self):
+        secret = os.getenv("DOKETSRB_SCORE_SECRET") or os.getenv("SECRET_KEY") or "charvak-dev-secret"
+        return secret.encode("utf-8")
+
+    def _sign_token(self, payload):
+        sig = hmac.new(self._score_secret(), payload.encode("utf-8"), hashlib.sha256).digest()
+        return base64.urlsafe_b64encode(sig).decode("ascii").rstrip("=")
+
+    def request_score_link(self, candidate_id, target_role=""):
+        token = secrets.token_urlsafe(24)
+        expires_at = time.time() + self.SCORE_TOKEN_TTL_SECONDS
+        signed = self._sign_token(f"{token}:{candidate_id}")
+
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute('''
+                INSERT INTO charvak_doketsrb_score_tokens
+                    (token, candidate_id, target_role, expires_at, status)
+                VALUES (%s, %s, %s, to_timestamp(%s) AT TIME ZONE 'UTC', 'pending')
+            ''', (token, candidate_id, target_role, expires_at))
+            conn.commit()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"request_score_link insert failed: {e}")
+            return {"status": "error", "message": "Could not create score request"}
+
+        return_url = f"https://charvakit.com/api/ats/score-callback?token={token}&sig={signed}"
+        params = urlencode({"return_url": return_url, "role": target_role, "source": "charvak"})
+        url = f"{self.DOKETSRB_URL}/ats-check?{params}"
+
+        return {
+            "status": "success",
+            "token": token,
+            "url": url,
+            "expires_in": self.SCORE_TOKEN_TTL_SECONDS,
+            "message": "Open the link to run a free ATS check on DoketsRB",
+        }
+
+    def record_external_score(self, candidate_id, score, source="doketsrb", target_role="", metadata=None):
+        if score is None or not isinstance(score, (int, float)):
+            return {"status": "error", "message": "Invalid score"}
+        score_int = int(round(float(score)))
+        if score_int < 0 or score_int > 100:
+            return {"status": "error", "message": "Score out of range (0-100)"}
+
+        event_id = f"ATSSCORE-{secrets.token_hex(4).upper()}"
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute('''
+                INSERT INTO charvak_doketsrb_score_events
+                    (event_id, candidate_id, score, source, target_role, metadata)
+                VALUES (%s, %s, %s, %s, %s, %s::jsonb)
+            ''', (event_id, candidate_id, score_int, source, target_role,
+                  json.dumps(metadata or {})))
+            conn.commit()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"record_external_score event log failed: {e}")
+
+        from candidate_engine import candidate_engine
+        result = candidate_engine.update_skill_score(candidate_id, score_int)
+        if result.get("status") != "success":
+            return {"status": "error", "message": result.get("message", "Could not update candidate")}
+
+        return {
+            "status": "success",
+            "candidate_id": candidate_id,
+            "score": score_int,
+            "event_id": event_id,
+            "badge_earned": score_int >= 70,
+            "message": "ATS score recorded",
+        }
+
+    def consume_score_callback(self, token, sig, score, source="doketsrb"):
+        if not token or not sig:
+            return {"status": "error", "message": "Missing token or signature"}
+
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute('''
+                SELECT candidate_id, target_role, expires_at, used_at, status,
+                       (expires_at AT TIME ZONE 'UTC') > (now() AT TIME ZONE 'UTC') AS not_expired
+                FROM charvak_doketsrb_score_tokens WHERE token = %s
+            ''', (token,))
+            row = cur.fetchone()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"consume_score_callback lookup failed: {e}")
+            return {"status": "error", "message": "Could not verify token"}
+
+        if not row:
+            return {"status": "error", "message": "Unknown token"}
+        candidate_id, target_role, expires_at, used_at, status, not_expired = row
+
+        if used_at or status == "used":
+            return {"status": "error", "message": "Token already used"}
+        if not not_expired:
+            return {"status": "error", "message": "Token expired"}
+
+        expected = self._sign_token(f"{token}:{candidate_id}")
+        if not hmac.compare_digest(expected, sig):
+            return {"status": "error", "message": "Bad signature"}
+
+        result = self.record_external_score(candidate_id, score, source=source, target_role=target_role)
+        if result.get("status") != "success":
+            return result
+
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute('''
+                UPDATE charvak_doketsrb_score_tokens
+                SET used_at = CURRENT_TIMESTAMP, status = 'used'
+                WHERE token = %s
+            ''', (token,))
+            conn.commit()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"consume_score_callback mark-used failed: {e}")
+
+        return result
+
+    def _call_doketsrb_score(self, resume_text, target_role):
+        return {"status": "not_implemented",
+                "message": "DoketsRB scoring API not configured; use deep-link flow"}
 
 
 doketsrb_integration = DoketsRBIntegration()

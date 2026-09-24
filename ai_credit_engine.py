@@ -70,6 +70,7 @@ class AICreditEngine:
     }
 
     FEATURE_CREDITS = {
+        "ats_jd_score": 5,
         "resume_roast": 5,
         "skill_assessment": 10,
         "ai_premium_report": 20,
