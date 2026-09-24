@@ -3,7 +3,76 @@
 **Purpose:** Track every planned-but-not-completed item. Nothing gets lost again.
 **Created:** 2026-09-20
 **Last updated:** 2026-09-25
-**HEAD:** 1675359
+**HEAD:** c2c67d7
+
+### FLAGGED — Voice-to-Web Option 2 — auto-deploy infrastructure (2026-09-25)
+
+- **Trigger:** Model A shipped as concierge beta. Website drafts are generated and stored,
+  but the returned URL (`https://{business-name}.charvakit.com`) is computed-only and does
+  not serve anything. Delivery is currently manual (team emails the draft).
+- **What Option 2 needs to build:**
+  - Add `html_content TEXT` column to `charvak_voice_to_web_sites`
+  - Wire `voice_to_website()` output into `create_website()` — store the generated HTML
+  - Public route `GET /sites/{slug}` that serves the stored HTML with proper caching
+  - Change returned URL from fake subdomain to `/sites/{slug}` — no DNS needed
+  - Optional: wildcard DNS `*.charvakit.com` → Render with Host-header routing
+  - Update copy back to "Live in 3 minutes" once it's real
+- **Effort:** 2–4 hours (real product work — deserves its own session)
+- **Verdict:** SCHEDULED — separate session
+
+### Voice-to-Web — Model A shipped as concierge beta (2026-09-25)
+
+- **Commit:** <hash>
+- **What shipped:**
+  - **Frontend rewrite of `voice-to-web.html`:** removed the ₹499/mo Pro card and the broken
+    Razorpay flow. Replaced with a single "Start Free" CTA that runs the correct two-call
+    sequence:
+    1. `POST /api/ai/voice-to-web` → generate HTML content (free)
+    2. `POST /api/voice-to-web/create` → create DB record (30 credits)
+  - **Engine:** removed `plan != 'pro'` gate from `setup_custom_domain`, `enable_ai_seo`,
+    and `request_update`. Credits (enforced by route guards) are now the sole gate.
+  - **Add-ons documented on-page:** Custom domain (5cr), AI SEO (8cr), Update (5cr),
+    Support (3cr)
+  - **Copy repositioned as "Concierge Beta"** — honest about the current delivery model:
+    AI generates a draft, team emails it within 24 hours, then deploys on approval.
+  - **Beta form** now posts to `/api/features/notify`
+- **What was broken (audited):**
+  - Free path called `/api/ai/voice-to-web` with `{email, plan}` → Pydantic 422. No site created.
+  - Pro path called the same route after Razorpay capture → 422. **Users who paid ₹499 got
+    nothing.**
+  - `plan != 'pro'` gate meant even a successful payment wouldn't unlock features.
+- **Model decision:** Voice-to-Web is **credits-only**. No subscription.
+- **Verified:**
+  - Two-call sequence works in test script
+  - All 5 credit-gated features reachable after 30-credit site creation
+  - Support at 2 remaining credits → **402** — proves credit gate is the gate
+- **HEAD after:** <hash>
+
+### Voice-to-Web monetization — Model A decision (2026-09-25)
+
+- **Current state (audited):**
+  - 5 credit keys defined and enforced: `ai_voice_to_web` (30), `voice_to_web_domain` (5),
+    `voice_to_web_seo` (8), `voice_to_web_update` (5), `voice_to_web_support` (3)
+  - `voice-to-web.html` has both a "Free" card and a "Pro ₹499/mo" card
+  - Frontend's Free path calls `/api/ai/voice-to-web` (the AI generation route) instead of
+    `/api/voice-to-web/create` (the record creation route) — so the call doesn't create a
+    website record
+  - Frontend's Pro path: Razorpay → verify → calls `/api/ai/voice-to-web` with
+    `{plan:'pro', payment_id}` — wrong endpoint again, and the AI route doesn't read those
+    fields. **Pro users pay ₹499 and get nothing.**
+  - The engine's `plan != 'pro'` gate on domain/SEO/update/support means Pro features are
+    unreachable even for users who paid
+  - **Effectively: monetization is broken in both directions.** Free doesn't create sites.
+    Pro charges but doesn't deliver.
+- **Product decision (made):** **Model A — Credits only.**
+  - Remove the ₹499/mo Pro plan
+  - All Voice-to-Web actions cost credits (existing costs stand)
+  - Remove the `plan != 'pro'` gate from the engine
+  - Fix the Free flow to call `/api/voice-to-web/create`
+  - If a "Pro plan" is ever wanted, layer it as a monthly credit bundle via the existing
+    credits system — no new billing path
+- **Status:** IN PROGRESS — awaiting discovery of `voice_to_website()` return shape
+- **Commits:** (pending)
 
 ### C2 — voice_to_web_engine persistence (2026-09-25)
 
