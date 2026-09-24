@@ -1,7 +1,7 @@
 # Charvak Architecture
 
-**Last updated:** 2026-09-17
-**Version:** v2.2-mock-drives-20260917
+**Last updated:** 2026-09-24
+**Version:** v3.5-ats-20260924
 
 ---
 
@@ -64,6 +64,17 @@ text
 5. Admin auth guard - protects `/admin*` and `/api/admin*`
 
 ---
+
+### DoketsRB Integration (v3.5, 2026-09-24)
+
+- **Deep-link bridge** — `doketsrb_integration.request_score_link(candidate_id)` returns a signed
+  URL pointing at `https://www.doketsrb.com/#ats-scanner`
+- **Manual score entry** — after the user runs the free ATS check, Charvak prompts for the score
+  and writes via `record_external_score()` → `charvak_candidates.skill_score`
+- **Callback flow scaffolded** — `consume_score_callback()` and `/api/ats/score-callback` are in place
+  for when DoketsRB adds a server-side `/ats-check` route that supports `return_url`
+- **Tables:** `charvak_doketsrb_score_tokens`, `charvak_doketsrb_score_events`
+- **Credit key:** `ats_jd_score` (5 cr, only when `target_role` is provided)
 
 ## Authentication Flow
 
