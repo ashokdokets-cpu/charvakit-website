@@ -163,9 +163,7 @@ class VoiceToWebEngine:
             if not row:
                 cur.close(); conn.close()
                 return {"status": "error", "message": "Website not found"}
-            if row[0] != "pro":
-                cur.close(); conn.close()
-                return {"status": "error", "message": "Custom domain requires Pro plan"}
+            # Credits charged by the route. No plan gate.
 
             cur.execute('''
                 INSERT INTO charvak_voice_to_web_domains
@@ -221,9 +219,7 @@ class VoiceToWebEngine:
             if not row:
                 cur.close(); conn.close()
                 return {"status": "error", "message": "Website not found"}
-            if row[0] != "pro":
-                cur.close(); conn.close()
-                return {"status": "error", "message": "AI SEO requires Pro plan"}
+            # Credits charged by the route. No plan gate.
 
             meta_title = f"{business_name} - Professional Services"
             meta_description = (
@@ -298,9 +294,7 @@ class VoiceToWebEngine:
             if not row:
                 cur.close(); conn.close()
                 return {"status": "error", "message": "Website not found"}
-            if row[0] != "pro":
-                cur.close(); conn.close()
-                return {"status": "error", "message": "On-demand updates require Pro plan"}
+            # Credits charged by the route. No plan gate.
 
             update_id = f"UPD-{datetime.now().strftime('%Y%m%d%H%M%S%f')}"
 
