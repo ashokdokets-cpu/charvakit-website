@@ -4193,7 +4193,7 @@ async def api_ats_score_link(candidate_id: str, request: Request):
             "ats_jd_score",
         )
         if guard and guard.get("status") == "error":
-            return JSONResponse(guard, status_code=guard.get("http_status", 402))
+            return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
 
     return doketsrb_integration.request_score_link(candidate_id, target_role)
 
@@ -4749,6 +4749,13 @@ async def global_micro_stats():
 @limiter.limit("20/minute")
 async def generate_report(request: Request):
     data = await request.json()
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(
+        {"email": data.get("candidate_email") or data.get("email")},
+        "premium_report"
+    )
+    if guard and guard.get("status") == "error":
+        return JSONResponse(guard, status_code=guard.get("_http_status", 402))
     return assessment_report_engine.generate_report(data)
 
 @app.get("/api/report/stats")
