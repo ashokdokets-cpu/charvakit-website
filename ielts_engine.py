@@ -814,7 +814,7 @@ class IELTSEngine:
             logger.error(f"Whisper transcription failed: {e}")
             return {"status": "error", "message": f"transcription failed: {e}"}
 
-    def evaluate_speaking(self, responses: List[Dict], topic: str = "") -> Dict:
+    def evaluate_speaking(self, responses: List[Dict], topic: str = "", email: str = None) -> Dict:
         """Score a full Speaking session on the 4 official IELTS criteria.
 
         responses: [
@@ -873,11 +873,11 @@ class IELTSEngine:
         except Exception:
             pass
 
-        # Persist (non-fatal — email may be None for anonymous sessions)
+        # Persist to cross-test dashboard (falls back to anon if no email)
         try:
             from results_system import results_system
             results_system.record_assessment_result(
-                email="anon@charvak.local",
+                email=email or "anon@charvak.local",
                 assessment_type="ielts_speaking",
                 assessment_name=f"IELTS Speaking ({topic or 'General'})",
                 score=parsed.get("overall_band", 0),
