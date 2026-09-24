@@ -107,7 +107,9 @@ async function loadResults() {
     return;
   }
   try {
-    var r = await fetch('/api/results/user/' + encodeURIComponent(MR.email));
+    var r = await fetch('/api/results/user/' + encodeURIComponent(MR.email), {
+            headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '') }
+        });
     var j = await r.json();
     if (j.status !== 'success') {
       document.getElementById('loading').innerHTML = '<p>Could not load results.</p>';

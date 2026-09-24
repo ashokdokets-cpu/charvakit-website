@@ -79,7 +79,9 @@ async function loadDashboard() {
     }
 
     try {
-        const r = await fetch('/api/referral/stats/' + encodeURIComponent(userEmail));
+        const r = await fetch('/api/referral/stats/' + encodeURIComponent(userEmail), {
+            headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '') }
+        });
         const d = await r.json();
 
         document.getElementById('loadingMsg').style.display = 'none';

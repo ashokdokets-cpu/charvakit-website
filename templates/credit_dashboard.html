@@ -155,7 +155,9 @@
         try {
             document.getElementById('user-email').textContent = userEmail;
             
-            const creditsResponse = await fetch(`/api/credits/${userEmail}`);
+            const creditsResponse = await fetch(`/api/credits/${userEmail}`, {
+            headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '') }
+        });
             const creditsData = await creditsResponse.json();
             
             if (creditsData.status === 'success') {
@@ -165,7 +167,9 @@
                 document.getElementById('member-since').textContent = new Date(creditsData.expires_at).toLocaleDateString();
             }
             
-            const usageResponse = await fetch(`/api/credits/usage/${userEmail}`);
+            const usageResponse = await fetch(`/api/credits/usage/${userEmail}`, {
+            headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '') }
+        });
             const usageData = await usageResponse.json();
             
             document.getElementById('total-calls').textContent = usageData.count;

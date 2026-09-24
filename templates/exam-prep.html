@@ -143,7 +143,9 @@ async function loadCreditBalance() {
         return;
     }
     try {
-        const r = await fetch('/api/credits/' + encodeURIComponent(email));
+        const r = await fetch('/api/credits/' + encodeURIComponent(email), {
+            headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '') }
+        });
         const j = await r.json();
         const bal = (j.user && j.user.credits_remaining) || j.credits_remaining;
         el.textContent = (bal != null ? bal : '—') + ' credits';

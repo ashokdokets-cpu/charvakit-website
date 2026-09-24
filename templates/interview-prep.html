@@ -95,7 +95,9 @@ async function loadCredits() {
         return;
     }
     try {
-        const r = await fetch('/api/credits/' + encodeURIComponent(ipEmail));
+        const r = await fetch('/api/credits/' + encodeURIComponent(ipEmail), {
+            headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '') }
+        });
         const d = await r.json();
         if (d.status === 'success') {
             document.getElementById('userCredits').textContent = d.credits_remaining + ' credits';
