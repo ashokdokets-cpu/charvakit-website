@@ -277,9 +277,8 @@ async def admin_auth_guard(request: Request, call_next):
             return JSONResponse({"detail": "Invalid or expired token"}, status_code=401)
         return RedirectResponse(url="/admin-login?next=" + path, status_code=302)
 
-    role_ok = user.get("role") == "admin"
-    email_ok = user.get("email") in ("charvakit@gmail.com", "hr@charvakit.com")
-    if not (role_ok or email_ok):
+    email_ok = (user.get("email") or "").lower() in ADMIN_EMAILS
+    if not email_ok:
         if is_api:
             return JSONResponse({"detail": "Admin access required"}, status_code=403)
         return RedirectResponse(url="/admin-login?error=forbidden", status_code=302)
@@ -563,7 +562,7 @@ def require_self_or_admin(caller: Dict, email: str) -> None:
         raise HTTPException(status_code=401, detail="Authentication required")
     caller_email = (caller.get("email") or "").lower()
     target_email = (email or "").lower()
-    is_admin = caller.get("role") == "admin" or caller_email in ADMIN_EMAILS
+    is_admin = caller_email in ADMIN_EMAILS
     if caller_email != target_email and not is_admin:
         raise HTTPException(status_code=403, detail="Forbidden")
 
@@ -1289,7 +1288,7 @@ async def api_login(request: Request, data: LoginRequest):
         if result.get("status") == "success":
             email = (data.email or "").lower()
             role = (result.get("user") or {}).get("role", "")
-            is_admin = email in ("charvakit@gmail.com", "hr@charvakit.com") or role == "admin"
+            is_admin = email in ("charvakit@gmail.com", "hr@charvakit.com")
             if is_admin and result.get("token"):
                 resp = JSONResponse(result)
                 resp.set_cookie(
