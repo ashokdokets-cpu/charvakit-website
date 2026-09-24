@@ -10,6 +10,11 @@ import logging
 from datetime import datetime
 from typing import Dict, Optional
 import secrets
+from dotenv import load_dotenv
+
+# Dev override: .env.local wins if present, then .env fills gaps
+load_dotenv(".env.local", override=True)
+load_dotenv()
 
 logger = logging.getLogger("charvakit.payments")
 
