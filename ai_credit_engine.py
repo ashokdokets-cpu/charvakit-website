@@ -434,12 +434,12 @@ class AICreditEngine:
             if not user:
                 cursor.close()
                 conn.close()
-                init_result = self.initialize_user(email)
-                if init_result["status"] != "success":
-                    return {"status": "error", "message": "Failed to initialize user"}
-                user = init_result["user"]
-                conn = db.get_connection()
-                cursor = conn.cursor()
+                return {
+                    "status": "error",
+                    "message": "No account found for this email. Please register or purchase credits first.",
+                    "credits_needed": self.FEATURE_CREDITS.get(feature, self.FEATURE_CREDITS["default"]),
+                    "credits_remaining": 0,
+                }
 
             credits_needed = self.FEATURE_CREDITS.get(feature, self.FEATURE_CREDITS["default"])
 
