@@ -3,7 +3,54 @@
 **Purpose:** Track every planned-but-not-completed item. Nothing gets lost again.
 **Created:** 2026-09-20
 **Last updated:** 2026-09-25
-**HEAD:** 3a7e7b7
+**HEAD:** d10a0ab
+
+### AA4b — micro-internship.html unblocked + real escrow payment (2026-09-25)
+
+- **Commits:** <hash1> (payments) → <hash2> (micro-internship)
+- **What shipped:**
+  - **Real payment gate:** `/api/micro-internship/project/post` now requires a verified
+    Razorpay `payment_id`. Verifies `status_field == "captured"` and `amount >= budget_inr`
+    via `payment_engine.fetch_razorpay_payment()`.
+  - **Escrow integration:** backend creates a `charvak_escrow_transactions` row with
+    `platform_fee_percent=10.0`, then immediately calls `deposit_funds()` to flip
+    status to `funds_held` (payment already captured).
+  - **10% intern-side fee:** client pays listed budget, intern receives 90% on release.
+    VouchAI's 1% default is preserved.
+  - **`escrow_engine.create_escrow` accepts per-call `platform_fee_percent`** — defaults
+    to `PLATFORM_FEE_PERCENT` (1.0) when not provided.
+  - **`micro_internship_engine.post_project` no longer creates its own escrow** — it
+    receives `escrow_id` in `data` from the route and links it to the project row.
+  - **Frontend rewrite of `post-micro-project.html`:**
+    - Snapshot form values before Razorpay modal opens (DOM is unreliable while modal is up)
+    - Email falls back to `localStorage.userEmail` if the field is empty
+    - Removed `client_id: 'CLIENT-DEMO'` hardcode
+    - Removed localStorage fake-success fallback
+    - Budget validated client-side and server-side (minimum ₹500)
+  - **`micro-internship.html`:** "Post a Micro-Project" button now links to
+    `/post-micro-project` (was `notifyMe()`)
+- **Also fixed:** `payment_engine.py` now calls `load_dotenv(".env.local", override=True)`
+  + `load_dotenv()` so `RAZORPAY_KEY_ID` resolves even when `payment_engine` is
+  imported without `database` first.
+- **Verified end-to-end with real Razorpay test keys:**
+  - Project `PROJ-20260925-A9BD3138` created, budget ₹500, escrow `ESC-20260925-171DE03D`
+    linked, status `open`
+  - Escrow `ESC-20260925-171DE03D`: amount ₹500, `platform_fee` ₹50,
+    `vendor_payout` ₹450, status `funds_held`
+- **Discovered & fixed during E2E testing (five separate bugs that would each have hit prod):**
+  1. Form email not pre-filled from localStorage when Razorpay modal opens
+  2. `PAYMENT_MODE=test` in `.env` fabricated fake `order_test_*` order ids — Razorpay
+     rejected them. Correct value with test keys is `PAYMENT_MODE=live` (Razorpay's own
+     test env is selected by the `rzp_test_` key prefix, not by this flag).
+  3. Form state invalidated by the Razorpay modal → `finalizeProject` saw empty fields
+  4. Budget `parseFloat("")` → `NaN` → `JSON.stringify` → `null` → server 400
+  5. Snapshot-based fix for (3) and (4)
+- **C7 progress:** 4 of 18 templates complete (events, ats, reports, micro-internship)
+- **Follow-ups:**
+  - `PAYMENT_MODE` flag semantics are a footgun — either remove the fake-order branch
+    entirely or rename to `PAYMENT_MOCK`. Flagged for a future cleanup session.
+  - Intern-side release UI (`/api/escrow/release`) still uses admin manual payout path.
+- **Next:** C2 — `voice_to_web_engine` persistence (last Tier 1 item)
 
 ### fix(ielts) — Speaking results persist under caller email (2026-09-25)
 
