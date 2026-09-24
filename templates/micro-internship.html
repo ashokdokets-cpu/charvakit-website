@@ -110,8 +110,7 @@ function loadDynamicProjects(){
 
 function postCompanyProject(event) {
     event.preventDefault();
-    // Session G6: feature under development — capture interest instead
-    window.notifyMe('Micro-Internship Project Posting');
+    window.location.href = '/post-micro-project';
 }
 
 document.addEventListener('DOMContentLoaded', loadDynamicProjects);

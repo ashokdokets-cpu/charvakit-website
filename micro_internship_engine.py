@@ -289,31 +289,15 @@ class MicroInternshipEngine:
                   data.get("client_id"), data.get("company_name"),
                   data.get("contact_email"), data.get("escrow_required", True),
                   json.dumps(milestones), deadline))
-            # Create escrow if required
-            escrow_id = None
-            if data.get("escrow_required", True):
-                try:
-                    from escrow_engine import escrow_engine
-                    escrow_resp = escrow_engine.create_escrow({
-                        "client_name": data.get("company_name"),
-                        "client_email": data.get("contact_email"),
-                        "vendor_name": "Pending assignment",
-                        "vendor_email": "",
-                        "amount": budget_inr,
-                        "currency": "INR",
-                        "description": f"Micro-internship: {data.get('title')}",
-                        "milestones": milestones,
-                        "duration_days": duration_weeks * 7,
-                    })
-                    if escrow_resp.get("status") == "success":
-                        escrow_id = escrow_resp["escrow_id"]
-                        cur.execute("""
-                            UPDATE charvak_micro_projects
-                            SET escrow_id = %s WHERE project_id = %s
-                        """, (escrow_id, project_id))
-                        logger.info(f"Escrow created for project {project_id}: {escrow_id}")
-                except Exception as ee:
-                    logger.warning(f"escrow creation failed (non-fatal): {ee}")
+            # Escrow is created and funded by the caller (main.py route) when
+            # the client has paid via Razorpay. Just link the escrow_id here.
+            escrow_id = data.get("escrow_id")
+            if escrow_id:
+                cur.execute("""
+                    UPDATE charvak_micro_projects
+                    SET escrow_id = %s WHERE project_id = %s
+                """, (escrow_id, project_id))
+                logger.info(f"Linked escrow {escrow_id} to project {project_id}")
 
             # Increment client's total_projects
             if data.get("client_id"):

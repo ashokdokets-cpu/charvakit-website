@@ -86,7 +86,8 @@ class EscrowEngine:
         """Create a new escrow transaction."""
         escrow_id = f"ESC-{datetime.now().strftime('%Y%m%d')}-{secrets.token_hex(4).upper()}"
         amount = float(data.get("amount", 0))
-        platform_fee = round(amount * PLATFORM_FEE_PERCENT / 100, 2)
+        fee_percent = float(data.get("platform_fee_percent", PLATFORM_FEE_PERCENT))
+        platform_fee = round(amount * fee_percent / 100, 2)
         vendor_payout = round(amount - platform_fee, 2)
         currency = data.get("currency", "INR")
         duration_days = int(data.get("duration_days", 30))
