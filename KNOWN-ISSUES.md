@@ -7,6 +7,21 @@
 
 ---
 
+### V4-adjacent gap — scripts with `load_dotenv()` silently target prod (2026-09-26)
+
+- **Discovered during:** Voice-to-Web Option 2 E2E testing.
+- **Reality:** `.env.local` gets renamed `.env.local.off` when testing against prod.
+  Any dev script run during that window that calls plain `load_dotenv()` (no args)
+  will load `.env` → **prod**. Not dev.
+- **Consequence:** the dev user's verification row was inserted into prod while the
+  server was pointed at dev — leading to a 30-minute 403 debugging rabbit hole that
+  looked like a code bug but was a state mismatch.
+- **Rule:** any script that intends dev MUST call
+  `load_dotenv(".env.local", override=True)` explicitly, not `load_dotenv()`.
+  Add to `DEV-SETUP.md` as a hard rule.
+- **Alternative:** rename `.env.local` less often; use script-local env override
+  instead of the rename dance.
+
 ## Fixed (this project)
 
 | Date | Session | File | Issue | Fix |
