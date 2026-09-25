@@ -4,33 +4,37 @@ Powers all 8 AI-dependent models using GPT-4o-mini
 """
 import os
 import json
-import requests
+import httpx
 from typing import Optional, Dict, List
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_BASE = "https://api.openai.com/v1"
 
-async def call_openai(prompt: str, model: str = "gpt-4o-mini", max_tokens: int = 2000, temperature: float = 0.7) -> Optional[str]:
-    """Generic OpenAI API call"""
+async def call_openai(prompt: str, model: str = "gpt-4o-mini", max_tokens: int = 2000, temperature: float = 0.7, json_mode: bool = False) -> Optional[str]:
+    """Generic OpenAI API call. Set json_mode=True to force valid JSON output."""
     if not OPENAI_API_KEY:
         return None
-    
+
+    payload = {
+        "model": model,
+        "messages": [{"role": "user", "content": prompt}],
+        "max_tokens": max_tokens,
+        "temperature": temperature,
+    }
+    if json_mode:
+        payload["response_format"] = {"type": "json_object"}
+
     try:
-        async with requests.Session(timeout=30) as client:
+        async with httpx.AsyncClient(timeout=60.0) as client:
             response = await client.post(
                 f"{OPENAI_BASE}/chat/completions",
                 headers={"Authorization": f"Bearer {OPENAI_API_KEY}", "Content-Type": "application/json"},
-                json={
-                    "model": model,
-                    "messages": [{"role": "user", "content": prompt}],
-                    "max_tokens": max_tokens,
-                    "temperature": temperature
-                }
+                json=payload,
             )
             data = response.json()
             return data["choices"][0]["message"]["content"]
     except Exception as e:
-        print(f"OpenAI API error: {e}")
+        print(f"OpenAI API error: {type(e).__name__}: {e}")
         return None
 
 # --- Model-Specific Functions ---
@@ -51,22 +55,36 @@ async def generate_assessment_questions(stack: str, difficulty: str, count: int)
 
 async def voice_to_website(transcript: str, language: str) -> Dict:
     """Voice-to-Web - Generate website from voice transcript"""
-    prompt = f"""Parse this business description and generate a complete HTML website:
-    Description ({language}): {transcript}
-    
-    Return JSON with:
-    - business_name, category, description
-    - services (list of {{name, price}})
-    - contact (phone, email, address)
-    - html (complete mobile-optimized HTML with Tailwind CSS)
-    """
-    result = await call_openai(prompt, temperature=0.5, max_tokens=4000)
-    if result:
-        try:
-            return json.loads(result)
-        except:
-            pass
-    return {}
+    prompt = f"""Parse this business description and generate a complete HTML website.
+Description ({language}): {transcript}
+
+Return ONLY a JSON object (no prose, no markdown, no code fences) with:
+- business_name: string
+- category: string
+- description: string
+- services: list of objects with keys "name" and "price"
+- contact: object with keys "phone", "email", "address"
+- html: a complete, valid, mobile-optimized HTML document (including <!DOCTYPE html>, <html>, <head>, <body>) with inline Tailwind CSS via CDN
+"""
+    result = await call_openai(prompt, temperature=0.5, max_tokens=4000, json_mode=True)
+    if not result:
+        return {}
+    # Defensive: strip code fences if present
+    cleaned = result.strip()
+    if cleaned.startswith("```"):
+        # Remove leading ```json or ``` and trailing ```
+        lines = cleaned.split("\n")
+        if lines[0].startswith("```"):
+            lines = lines[1:]
+        if lines and lines[-1].strip() == "```":
+            lines = lines[:-1]
+        cleaned = "\n".join(lines)
+    try:
+        return json.loads(cleaned)
+    except Exception as e:
+        print(f"voice_to_website parse error: {type(e).__name__}: {e}")
+        print(f"  first 200 chars: {cleaned[:200]!r}")
+        return {}
 
 async def neural_wireframe_to_code(sketch_description: str) -> str:
     """Neural Wireframe - Convert sketch description to code"""
