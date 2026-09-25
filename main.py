@@ -1585,13 +1585,17 @@ async def api_generate_questions(request: Request):
 async def api_voice_to_web(request: Request):
     try:
         data = await request.json()
-        from credit_guard import require_credits_from_data
-        guard = require_credits_from_data(data, "ai_voice_to_web")
-        if guard.get("status") != "success":
-            return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+        # Auth-only route: this is the free generation step.
+        # Credits are charged once, on /api/voice-to-web/create.
+        email = data.get("email")
+        if not email:
+            return JSONResponse(status_code=401, content={"status": "error", "message": "Email required"})
+        require_auth_for_email(request, email)  # raises 401/403 as needed
         validated = VoiceToWebRequest(**data)
         result = await voice_to_website(validated.transcript, validated.language)
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return handle_error(e, "voice-to-web", {"status": "error", "message": "Voice processing failed"})
 # ============================================================
