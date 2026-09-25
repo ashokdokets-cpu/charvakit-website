@@ -22,11 +22,21 @@
 <script>
 async function startChallenge(){
     const challenge = document.getElementById('challenge').value;
+    const authToken = localStorage.getItem('auth_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    if (!authToken || !email) {
+        alert('Please log in to use this tool.');
+        window.location.href = '/login?next=' + window.location.pathname;
+        return;
+    }
     try {
         const response = await fetch('/api/tools/ghost-bounty', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({challenge: challenge})
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authToken
+            },
+            body: JSON.stringify({email: email, challenge: challenge})
         });
         const data = await response.json();
         document.getElementById('challengeScore').textContent = data.passing_score || 85;

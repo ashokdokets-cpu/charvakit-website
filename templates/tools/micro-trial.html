@@ -7,11 +7,21 @@
     <div class="card border-0 shadow-lg p-4 d-none" id="trialResult"><div class="card-body text-center"><h3>✅ Trial Complete!</h3><div class="display-1 fw-bold text-primary" id="trialScore">--</div><p>/100</p><p class="text-success">You earned $15 for completing this trial!</p><p class="small text-muted">By proceeding, you accept our <a href="/agreement?type=MOU&client=User&redirect=/tools/micro-trial&service=Micro-Trial+Engine&payment=One-time+fee">Terms of Use</a></p><button class="btn btn-primary btn-lg" onclick="claimPayment()">Claim Payment via Escrow</button></div></div>
 </div></div></div>
 <script>async function startTrial(){
+    const authToken = localStorage.getItem('auth_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    if (!authToken || !email) {
+        alert('Please log in to use this tool.');
+        window.location.href = '/login?next=' + window.location.pathname;
+        return;
+    }
     try {
         const response = await fetch('/api/tools/ghost-bounty', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({challenge: document.getElementById('trialType').value})
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authToken
+            },
+            body: JSON.stringify({email: email, challenge: document.getElementById('trialType').value})
         });
         const data = await response.json();
         setTimeout(() => {

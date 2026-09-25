@@ -15,11 +15,21 @@
 </div></div></div>
 <script>async function startRefCheck(){
     const refs = [document.querySelectorAll('input')[0].value, document.querySelectorAll('input')[1].value, document.querySelectorAll('input')[2].value].filter(r => r);
+    const authToken = localStorage.getItem('auth_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    if (!authToken || !email) {
+        alert('Please log in to use this tool.');
+        window.location.href = '/login?next=' + window.location.pathname;
+        return;
+    }
     try {
         const response = await fetch('/api/tools/ref-check', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ref_names: refs})
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authToken
+            },
+            body: JSON.stringify({email: email, ref_names: refs})
         });
         const data = await response.json();
         document.getElementById('trustScore').textContent = data.trust_score_estimate || 85;

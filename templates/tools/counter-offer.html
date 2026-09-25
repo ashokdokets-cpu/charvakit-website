@@ -11,11 +11,21 @@
 <script>async function analyzeRisk(){
     const newSal = parseInt(document.querySelectorAll('input')[0].value) || 0;
     const counterSal = parseInt(document.querySelectorAll('input')[1].value) || 0;
+    const authToken = localStorage.getItem('auth_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    if (!authToken || !email) {
+        alert('Please log in to use this tool.');
+        window.location.href = '/login?next=' + window.location.pathname;
+        return;
+    }
     try {
         const response = await fetch('/api/tools/counter-offer', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({new_salary: newSal, counter_salary: counterSal})
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authToken
+            },
+            body: JSON.stringify({email: email, new_salary: newSal, counter_salary: counterSal})
         });
         const data = await response.json();
         document.getElementById('riskScore').textContent = data.risk_score || 65;

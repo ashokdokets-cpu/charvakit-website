@@ -9,11 +9,21 @@
 <script>async function roastPitch(){
     const inmail = document.getElementById('inmailText').value;
     if(!inmail) return alert('Paste a recruiter message!');
+    const authToken = localStorage.getItem('auth_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    if (!authToken || !email) {
+        alert('Please log in to use this tool.');
+        window.location.href = '/login?next=' + window.location.pathname;
+        return;
+    }
     try {
         const response = await fetch('/api/tools/pitch-roast', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({inmail: inmail})
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authToken
+            },
+            body: JSON.stringify({email: email, inmail: inmail})
         });
         const data = await response.json();
         document.getElementById('spamScore').textContent = data.spam_score || 45;

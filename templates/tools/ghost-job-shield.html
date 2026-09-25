@@ -9,11 +9,21 @@
 <script>async function auditJob(){
     const url = document.getElementById('jobUrl').value;
     if(!url) return alert('Enter a job URL!');
+    const authToken = localStorage.getItem('auth_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    if (!authToken || !email) {
+        alert('Please log in to use this tool.');
+        window.location.href = '/login?next=' + window.location.pathname;
+        return;
+    }
     try {
         const response = await fetch('/api/tools/ghost-job', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({url: url})
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authToken
+            },
+            body: JSON.stringify({email: email, url: url})
         });
         const data = await response.json();
         document.getElementById('ghostScore').textContent = data.ghost_score || 45;
