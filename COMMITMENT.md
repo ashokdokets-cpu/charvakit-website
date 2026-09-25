@@ -5,6 +5,43 @@
 **Last updated:** 2026-09-25
 **HEAD:** c2c67d7
 
+### FLAGGED — Voice-to-Web hardcodes USD in generated prices (2026-09-26)
+
+- **Symptom:** A user describing an Indian business (Bangalore yoga studio, +91 phone,
+  Indian address) received a generated site with prices shown as `$15` instead of `₹15`.
+- **Cause:** `ai_service.voice_to_website()` prompt says `services: list of objects with
+  keys "name" and "price"` — no currency anchor. `gpt-4o-mini` defaults to `$` for
+  unmarked "price" fields.
+- **Quick fix (Option A):** one-line prompt change in `ai_service.py`:
+    `- services: list of objects with keys "name" and "price" (prices in Indian Rupees, format as "₹1,500")`
+  Ships in 5 minutes, no new code paths. Honest short-term patch.
+- **Proper fix (Option C — region-aware):** anchor currency to the caller's region.
+  - Frontend already detects region via `/api/region` (returns `{country, currency}`)
+  - Pass `country_code` (or currency symbol) through the API call
+  - Prompt becomes `(prices in {currency_name}, format as "{symbol}1,500")`
+  - Requires: frontend change (voice-to-web.html sends `country_code`), route change
+    (`/api/ai/voice-to-web` forwards it to `voice_to_website()`), prompt change.
+  - Est: ~30-45 min once you sit down to it.
+- **Verdict:** DEFERRED — quick fix Option A to ship in a follow-up session;
+  full Option C to land as a dedicated follow-up. Same pattern as the `PAYMENT_MODE`
+  footgun: flag, fix minimally, do the full version when there's appetite.
+
+### FLAGGED — `email_verification.is_verified()` bare except (2026-09-26)
+
+- **File:** `email_verification.py` line ~134
+- **Original code:** `except:` with no exception class, no logging.
+- **Consequence:** any error inside `is_verified()` (DB connection issue, pool
+  exhaustion, etc.) silently returns `False`. Users see "verify your email" even
+  when their verification row exists. This wasted ~30 minutes during Option 2 E2E
+  debugging — the exception was hidden and we assumed the row was missing.
+- **Status:** FIXED this session (`refactor(email_verification): log exception in
+  is_verified instead of swallowing it`). `except Exception as e:` now logs the
+  exception type and message before returning `False`.
+- **Not fixed (adjacent):** other bare/blanket `except` blocks may exist in the
+  codebase. Worth a repo-wide grep for `except:` and `except Exception:` followed
+  by `return` with no logging. Same class of bug as the AI JSON parsing issues in
+  `ai_service.py` (silent swallow on parse failure).
+
 ### FLAGGED — Voice-to-Web Option 2 — auto-deploy infrastructure (2026-09-25)
 
 - **Trigger:** Model A shipped as concierge beta. Website drafts are generated and stored,
