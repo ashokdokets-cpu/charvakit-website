@@ -12,11 +12,21 @@
     const offerA = document.querySelectorAll('textarea')[0].value;
     const offerB = document.querySelectorAll('textarea')[1].value;
     if(!offerA || !offerB) return alert('Paste both offers!');
+    const authToken = localStorage.getItem('auth_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    if (!authToken || !email) {
+        alert('Please log in to use this tool.');
+        window.location.href = '/login?next=' + window.location.pathname;
+        return;
+    }
     try {
         const response = await fetch('/api/tools/offer-matcher', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({offer_a: offerA, offer_b: offerB})
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authToken
+            },
+            body: JSON.stringify({email: email, offer_a: offerA, offer_b: offerB})
         });
         const data = await response.json();
         document.querySelector('#compareResult h2.text-primary').textContent = data.true_value_a || '$108K';

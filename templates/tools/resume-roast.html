@@ -50,11 +50,21 @@ async function roastResume(){
     if(!resume) return alert('Paste your resume!');
     
     // Call real AI API
+    const authToken = localStorage.getItem('auth_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    if (!authToken || !email) {
+        alert('Please log in to use this tool.');
+        window.location.href = '/login?next=' + window.location.pathname;
+        return;
+    }
     try {
         const response = await fetch('/api/tools/resume-roast', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({resume: resume, job_title: job || 'General'})
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authToken
+            },
+            body: JSON.stringify({email: email, resume: resume, job_title: job || 'General'})
         });
         const data = await response.json();
         
