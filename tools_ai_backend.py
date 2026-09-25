@@ -4,25 +4,36 @@ Real GPT-4o-mini integration for all 12 viral tools
 """
 import os
 import json
-import requests
+import httpx
 from typing import Optional, Dict
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_BASE = "https://api.openai.com/v1"
 
-async def call_ai(prompt: str, max_tokens: int = 800) -> Optional[str]:
-    """Call GPT-4o-mini for any tool"""
+async def call_ai(prompt: str, max_tokens: int = 800, json_mode: bool = False) -> Optional[str]:
+    """Call GPT-4o-mini for any tool. Set json_mode=True to force valid JSON output."""
     if not OPENAI_API_KEY:
         return None
+
+    payload = {
+        "model": "gpt-4o-mini",
+        "messages": [{"role": "user", "content": prompt}],
+        "max_tokens": max_tokens,
+        "temperature": 0.7,
+    }
+    if json_mode:
+        payload["response_format"] = {"type": "json_object"}
+
     try:
-        async with requests.Session(timeout=20) as client:
+        async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(
                 f"{OPENAI_BASE}/chat/completions",
                 headers={"Authorization": f"Bearer {OPENAI_API_KEY}", "Content-Type": "application/json"},
-                json={"model": "gpt-4o-mini", "messages": [{"role": "user", "content": prompt}], "max_tokens": max_tokens, "temperature": 0.7}
+                json=payload,
             )
             return response.json()["choices"][0]["message"]["content"]
-    except:
+    except Exception as e:
+        print(f"tools call_ai failed: {type(e).__name__}: {e}")
         return None
 
 # ============ TOOL-SPECIFIC AI FUNCTIONS ============
@@ -41,7 +52,7 @@ async def resume_roast_ai(resume_text: str, job_title: str) -> Dict:
         "ats_tips": "2-sentence ATS optimization advice"
     }}"""
     
-    result = await call_ai(prompt, 500)
+    result = await call_ai(prompt, 500, json_mode=True)
     if result:
         try: return json.loads(result)
         except: pass
@@ -51,7 +62,7 @@ async def ghost_bounty_ai(challenge_type: str) -> Dict:
     """GhostBounty AI - Generate real challenge questions"""
     prompt = f"""Generate a 60-second assessment challenge for {challenge_type}.
     Return JSON: {{"question": "scenario question", "evaluation_criteria": ["criterion1", "criterion2"], "passing_score": 80}}"""
-    result = await call_ai(prompt, 400)
+    result = await call_ai(prompt, 400, json_mode=True)
     if result:
         try: return json.loads(result)
         except: pass
@@ -61,7 +72,7 @@ async def role_mirror_ai(rejected_role: str, candidate_skills: str) -> Dict:
     """Role-Mirror AI - Real gap analysis"""
     prompt = f"""Candidate applied for {rejected_role} with skills: {candidate_skills}.
     Return JSON: {{"match_percentage": 0-100, "missing_skills": ["skill1"], "bridge_plan": "3-day plan text", "salary_potential": "range"}}"""
-    result = await call_ai(prompt, 500)
+    result = await call_ai(prompt, 500, json_mode=True)
     if result:
         try: return json.loads(result)
         except: pass
@@ -73,7 +84,7 @@ async def offer_matcher_ai(offer_a: str, offer_b: str) -> Dict:
     Offer A: {offer_a[:500]}
     Offer B: {offer_b[:500]}
     Return JSON: {{"winner": "A or B", "true_value_a": "$XXX", "true_value_b": "$XXX", "key_differences": ["diff1"], "recommendation": "text"}}"""
-    result = await call_ai(prompt, 500)
+    result = await call_ai(prompt, 500, json_mode=True)
     if result:
         try: return json.loads(result)
         except: pass
@@ -83,7 +94,7 @@ async def ghost_job_ai(job_url: str) -> Dict:
     """Ghost-Job Shield - Real ghost detection"""
     prompt = f"""Analyze if this job posting is likely a ghost job: {job_url}
     Return JSON: {{"ghost_score": 0-100, "red_flags": ["flag1"], "confidence": "high/medium/low", "advice": "text"}}"""
-    result = await call_ai(prompt, 400)
+    result = await call_ai(prompt, 400, json_mode=True)
     if result:
         try: return json.loads(result)
         except: pass
@@ -93,7 +104,7 @@ async def counter_offer_ai(new_salary: int, counter_salary: int) -> Dict:
     """Counter-Offer Shield - Real risk analysis"""
     prompt = f"""New offer: ${new_salary}. Counter-offer: ${counter_salary}.
     Return JSON: {{"risk_score": 0-100, "retention_probability": "X%", "advice": "text", "script": "decline script"}}"""
-    result = await call_ai(prompt, 400)
+    result = await call_ai(prompt, 400, json_mode=True)
     if result:
         try: return json.loads(result)
         except: pass
@@ -103,7 +114,7 @@ async def pitch_roast_ai(inmail_text: str) -> Dict:
     """Recruiter Pitch Roast - Real decode"""
     prompt = f"""Decode this recruiter message: {inmail_text[:500]}
     Return JSON: {{"spam_score": 0-100, "translation": "what they really mean", "missing_info": ["salary"], "smart_reply": "reply text"}}"""
-    result = await call_ai(prompt, 400)
+    result = await call_ai(prompt, 400, json_mode=True)
     if result:
         try: return json.loads(result)
         except: pass
@@ -113,7 +124,7 @@ async def ref_check_ai(ref_names: list) -> Dict:
     """Ref-Check Roulette - Generate verification questions"""
     prompt = f"""Generate 3 reference check questions for: {', '.join(ref_names[:3])}
     Return JSON: {{"questions": ["q1", "q2", "q3"], "trust_score_estimate": 0-100}}"""
-    result = await call_ai(prompt, 300)
+    result = await call_ai(prompt, 300, json_mode=True)
     if result:
         try: return json.loads(result)
         except: pass
