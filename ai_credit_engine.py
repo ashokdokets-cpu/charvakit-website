@@ -92,6 +92,17 @@ class AICreditEngine:
         "practice_test": 5,
         "mock_test": 15,
         "default": 10,
+        "ghost_bounty": 10,
+        "ref_check": 10,
+        "role_mirror": 5,
+        "offer_matcher": 5,
+        "counter_offer": 5,
+        "pitch_roast": 5,
+        "ghost_job_shield": 10,
+        "micro_trial": 10,
+        "bounty_swap": 10,
+        "ref_swap": 10,
+        "ghost_tracker": 5,  # Phase 2 tools
         # Session G6 — revenue enablement additions
         "exam_practice": 3,
         "exam_ai_questions": 3,
