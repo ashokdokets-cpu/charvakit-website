@@ -131,7 +131,8 @@ class EmailVerification:
             cursor.close()
             conn.close()
             return row is not None
-        except:
+        except Exception as e:
+            print(f"is_verified({email}) failed: {type(e).__name__}: {e}")
             return False
 
 email_verification = EmailVerification()
