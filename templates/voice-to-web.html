@@ -101,14 +101,23 @@ async function startFree(event) {
     if (!email) return;
     const businessName = prompt('Enter your business name:');
     if (!businessName) return;
+    const authToken = localStorage.getItem('auth_token') || '';
+    if (!authToken) {
+        alert('Please log in to build your website.');
+        window.location.href = '/login?next=/voice-to-web';
+        return;
+    }
     const transcript = prompt('Describe your business in a sentence or two:', businessName) || businessName;
 
     try {
         // Call 1: generate site content via AI (free, no credits)
         const genRes = await fetch('/api/ai/voice-to-web', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({transcript: transcript, language: 'en'})
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authToken
+            },
+            body: JSON.stringify({transcript: transcript, language: 'en', email: email})
         });
         const gen = await genRes.json();
         const businessNameFinal = (gen && gen.business_name) ? gen.business_name : businessName;
@@ -117,7 +126,10 @@ async function startFree(event) {
         // Call 2: create the DB record (charges 30 credits)
         const createRes = await fetch('/api/voice-to-web/create', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authToken
+            },
             body: JSON.stringify({
                 email: email,
                 business_name: businessNameFinal,
