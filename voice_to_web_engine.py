@@ -89,7 +89,8 @@ class VoiceToWebEngine:
 
             cur.execute('''
                 CREATE TABLE IF NOT EXISTS charvak_voice_to_web_seo (
-                    website_id       TEXT PRIMARY KEY REFERENCES charvak_voice_to_web_sites(website_id) ON DELETE CASCADE,
+                    website_id       TEXT PRIMARY KEY REFERENCES
+charvak_voice_to_web_sites(website_id) ON DELETE CASCADE,
                     meta_title       TEXT,
                     meta_description TEXT,
                     keywords         JSONB DEFAULT '[]'::jsonb,
@@ -102,6 +103,14 @@ class VoiceToWebEngine:
                 )
             ''')
 
+            # Option 2: store generated HTML + slug (idempotent)
+            cur.execute('''ALTER TABLE charvak_voice_to_web_sites
+                ADD COLUMN IF NOT EXISTS html_content TEXT''')
+            cur.execute('''ALTER TABLE charvak_voice_to_web_sites
+                ADD COLUMN IF NOT EXISTS slug TEXT''')
+            cur.execute('''CREATE UNIQUE INDEX IF NOT EXISTS idx_v2w_sites_slug
+                ON charvak_voice_to_web_sites(slug) WHERE slug IS NOT NULL''')
+
             conn.commit()
             cur.close(); conn.close()
         except Exception as e:
@@ -111,26 +120,47 @@ class VoiceToWebEngine:
     # WEBSITES
     # ============================================================
 
-    def create_website(self, email: str, business_name: str, plan: str = "free", transcript: str = "") -> Dict:
-        """Create website from voice data."""
+
+    def create_website(self, email: str, business_name: str, plan: str = "free",
+                       transcript: str = "", html_content: str = "") -> Dict:
+        """Create website from voice data. Stores generated HTML + slug."""
+        import re
         website_id = f"V2W-{datetime.now().strftime('%Y%m%d%H%M%S%f')}"
         is_pro = plan == "pro"
-        url = f"https://{business_name.lower().replace(' ', '-')}.charvakit.com"
+
+        # Build a human-readable, collision-safe slug from business_name.
+        base = re.sub(r'[^a-z0-9]+', '-', (business_name or '').lower()).strip('-') or 'site'
+        base = base[:60]
 
         try:
             from database import db
             conn = db.get_connection()
             cur = conn.cursor()
+
+            slug = base
+            n = 1
+            while True:
+                cur.execute(
+                    "SELECT 1 FROM charvak_voice_to_web_sites WHERE slug = %s",
+                    (slug,),
+                )
+                if not cur.fetchone():
+                    break
+                n += 1
+                slug = f"{base}-{n}"
+
+            url = f"/sites/{slug}"
+
             cur.execute('''
                 INSERT INTO charvak_voice_to_web_sites
                     (website_id, email, business_name, plan, transcript,
                      custom_domain, branding, seo_enabled, updates_enabled,
-                     priority_support, status, url)
-                VALUES (%s, %s, %s, %s, %s, NULL, %s, %s, %s, %s, 'live', %s)
+                     priority_support, status, url, html_content, slug)
+                VALUES (%s, %s, %s, %s, %s, NULL, %s, %s, %s, %s, 'live', %s, %s, %s)
             ''', (
                 website_id, email, business_name, plan, transcript,
                 "none" if is_pro else "charvak",
-                is_pro, is_pro, is_pro, url,
+                is_pro, is_pro, is_pro, url, html_content, slug,
             ))
             conn.commit()
             cur.close(); conn.close()
@@ -141,6 +171,7 @@ class VoiceToWebEngine:
         return {
             "status": "success",
             "website_id": website_id,
+            "slug": slug,
             "url": url,
             "message": f"Website created for {business_name}",
         }
