@@ -112,6 +112,7 @@ async function startFree(event) {
         });
         const gen = await genRes.json();
         const businessNameFinal = (gen && gen.business_name) ? gen.business_name : businessName;
+        const htmlContent = (gen && gen.html) ? gen.html : '';
 
         // Call 2: create the DB record (charges 30 credits)
         const createRes = await fetch('/api/voice-to-web/create', {
@@ -121,7 +122,8 @@ async function startFree(event) {
                 email: email,
                 business_name: businessNameFinal,
                 plan: 'free',
-                transcript: transcript
+                transcript: transcript,
+                html_content: htmlContent
             })
         });
         const created = await createRes.json();
@@ -131,7 +133,8 @@ async function startFree(event) {
             return;
         }
         if (created && created.status === 'success') {
-           alert('Website request received!\n\nWe will email your AI-generated site draft within 24 hours to ' + email + '.\n\nYou can add a custom domain, enable AI SEO, or request changes from your dashboard in the meantime.');
+            const siteUrl = (created.url) ? created.url : ('/sites/' + created.slug);
+            alert('Your website is live!\n\nVisit: ' + siteUrl + '\n\nYou can add a custom domain, enable AI SEO, or request changes from your dashboard.');
         } else {
             alert((created && created.message) || 'Could not create website');
         }

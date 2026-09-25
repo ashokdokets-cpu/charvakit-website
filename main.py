@@ -1134,14 +1134,35 @@ async def receive_whatsapp(request: Request):
 
 @app.get("/sites/{site_id}")
 async def view_site(site_id: str):
-    # Validate site_id to prevent path traversal
+    # Path-traversal guard (kept from earlier version)
     if ".." in site_id or "/" in site_id or "\\" in site_id:
         raise HTTPException(status_code=400, detail="Invalid site ID")
-    
-    site_path = f"static/sites/{site_id}.html"
-    if os.path.exists(site_path):
-        return FileResponse(site_path)
-    return HTMLResponse("<h1>Site not found</h1>", status_code=404)
+
+    try:
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT html_content, status FROM charvak_voice_to_web_sites WHERE slug = %s",
+            (site_id,),
+        )
+        row = cur.fetchone()
+        cur.close(); conn.close()
+    except Exception as e:
+        logger.error(f"view_site lookup failed: {e}")
+        return HTMLResponse("<h1>Site not found</h1>", status_code=404)
+
+    if not row or not row[0]:
+        return HTMLResponse("<h1>Site not found</h1>", status_code=404)
+
+    html_content, status = row
+    if status != "live":
+        return HTMLResponse("<h1>Site not available</h1>", status_code=404)
+
+    return HTMLResponse(
+        html_content,
+        headers={"Cache-Control": "public, max-age=3600"},
+    )
 
 
 # ============================================================
@@ -1590,7 +1611,8 @@ async def v2w_create(request: Request):
         email=data.get("email"),
         business_name=data.get("business_name"),
         plan=data.get("plan", "free"),
-        transcript=data.get("transcript", "")
+        transcript=data.get("transcript", ""),
+        html_content=data.get("html_content", ""),
     )
 
 @app.post("/api/voice-to-web/domain")
