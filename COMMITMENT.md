@@ -5,6 +5,36 @@
 **Last updated:** 2026-09-25
 **HEAD:** c2c67d7
 
+### FLAGGED — Post-ai_service-fix verification sweep (2026-09-26)
+
+- **Trigger:** Fixed `ai_service.call_openai()` tonight. It had been silently
+  failing on every call since the file was written. Six functions route through it.
+  We only E2E-verified `voice_to_website()`. The other five are unknown.
+
+- **Scope:**
+  1. `neural_wireframe_to_code` — call it, confirm non-empty output
+  2. `localize_website` — call it, confirm non-empty output
+  3. `generate_legal_contract` — call it, confirm non-empty output
+  4. `analyze_legacy_code` — call it, confirm non-empty output
+  5. `generate_assessment_questions` — call it, confirm non-empty output
+
+- **Extended scope (same class of bug, never verified):**
+  1. `tools_engine.py` — scope audit (never done per inventory #80)
+  2. All 12 AI Tools (`/tools/*`) — backend route exists? AI call works? credits charge?
+  3. `student_suite_engine.assist_assignment` / `assist_research` — real AI or stub?
+  4. `enhanced_assessment_engine.py` — active or legacy? (inventory #83)
+  5. `chatbot_engine.py` — AI JSON mode present? (inventory #84)
+  6. Repo-wide grep for `requests.Session(timeout=` — find every copy of tonight's bug
+  7. Repo-wide grep for `openai.chat.completions` (or `.chat.completions`) — every
+     direct OpenAI call site needs `response_format={"type":"json_object"}` if it
+     expects JSON
+
+- **Est:** 2-3 hours for a thorough pass.
+- **Priority:** Medium-High. The AI Service fix proves that "code-reviewed" is not
+  the same as "verified working." We don't know what else is silently failing.
+
+- **Verdict:** SCHEDULED — own session
+
 ### FLAGGED — Voice-to-Web hardcodes USD in generated prices (2026-09-26)
 
 - **Symptom:** A user describing an Indian business (Bangalore yoga studio, +91 phone,
