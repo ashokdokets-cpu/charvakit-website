@@ -2111,6 +2111,14 @@ async def pitch_roast_page(request: Request):
 async def api_resume_roast(request: Request):
     try:
         data = await request.json()
+        email = (data.get("email") or "").strip().lower()
+        if not email:
+            return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+        require_auth_for_email(request, email)
+        from credit_guard import require_credits_from_data
+        guard = require_credits_from_data(data, "resume_roast")
+        if guard.get("status") != "success":
+            return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
         validated = ResumeRoastRequest(**data)
         result = await resume_roast_ai(validated.resume, validated.job_title)
         return result
@@ -2122,6 +2130,14 @@ async def api_resume_roast(request: Request):
 async def api_ghost_bounty(request: Request):
     try:
         data = await request.json()
+        email = (data.get("email") or "").strip().lower()
+        if not email:
+            return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+        require_auth_for_email(request, email)
+        from credit_guard import require_credits_from_data
+        guard = require_credits_from_data(data, "ghost_bounty")
+        if guard.get("status") != "success":
+            return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
         validated = GhostBountyRequest(**data)
         result = await ghost_bounty_ai(validated.challenge)
         return result
@@ -2133,6 +2149,14 @@ async def api_ghost_bounty(request: Request):
 async def api_role_mirror(request: Request):
     try:
         data = await request.json()
+        email = (data.get("email") or "").strip().lower()
+        if not email:
+            return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+        require_auth_for_email(request, email)
+        from credit_guard import require_credits_from_data
+        guard = require_credits_from_data(data, "role_mirror")
+        if guard.get("status") != "success":
+            return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
         validated = RoleMirrorRequest(**data)
         result = await role_mirror_ai(validated.role, validated.skills)
         return result
@@ -2144,6 +2168,14 @@ async def api_role_mirror(request: Request):
 async def api_offer_matcher(request: Request):
     try:
         data = await request.json()
+        email = (data.get("email") or "").strip().lower()
+        if not email:
+            return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+        require_auth_for_email(request, email)
+        from credit_guard import require_credits_from_data
+        guard = require_credits_from_data(data, "offer_matcher")
+        if guard.get("status") != "success":
+            return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
         validated = OfferMatcherRequest(**data)
         result = await offer_matcher_ai(validated.offer_a, validated.offer_b)
         return result
@@ -2155,6 +2187,14 @@ async def api_offer_matcher(request: Request):
 async def api_ghost_job(request: Request):
     try:
         data = await request.json()
+        email = (data.get("email") or "").strip().lower()
+        if not email:
+            return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+        require_auth_for_email(request, email)
+        from credit_guard import require_credits_from_data
+        guard = require_credits_from_data(data, "ghost_job_shield")
+        if guard.get("status") != "success":
+            return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
         validated = GhostJobRequest(**data)
         result = await ghost_job_ai(validated.url)
         return result
@@ -2166,6 +2206,14 @@ async def api_ghost_job(request: Request):
 async def api_counter_offer(request: Request):
     try:
         data = await request.json()
+        email = (data.get("email") or "").strip().lower()
+        if not email:
+            return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+        require_auth_for_email(request, email)
+        from credit_guard import require_credits_from_data
+        guard = require_credits_from_data(data, "counter_offer")
+        if guard.get("status") != "success":
+            return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
         validated = CounterOfferRequest(**data)
         result = await counter_offer_ai(validated.new_salary, validated.counter_salary)
         return result
@@ -2177,6 +2225,14 @@ async def api_counter_offer(request: Request):
 async def api_pitch_roast(request: Request):
     try:
         data = await request.json()
+        email = (data.get("email") or "").strip().lower()
+        if not email:
+            return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+        require_auth_for_email(request, email)
+        from credit_guard import require_credits_from_data
+        guard = require_credits_from_data(data, "pitch_roast")
+        if guard.get("status") != "success":
+            return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
         validated = PitchRoastRequest(**data)
         result = await pitch_roast_ai(validated.inmail)
         return result
@@ -2188,6 +2244,14 @@ async def api_pitch_roast(request: Request):
 async def api_ref_check(request: Request):
     try:
         data = await request.json()
+        email = (data.get("email") or "").strip().lower()
+        if not email:
+            return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+        require_auth_for_email(request, email)
+        from credit_guard import require_credits_from_data
+        guard = require_credits_from_data(data, "ref_check")
+        if guard.get("status") != "success":
+            return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
         validated = RefCheckRequest(**data)
         result = await ref_check_ai(validated.ref_names)
         return result
@@ -2198,6 +2262,14 @@ async def api_ref_check(request: Request):
 @limiter.limit("60/minute")
 async def api_bounty_swap(request: Request):
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "bounty_swap")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     result = await bounty_swap_ai(data.get("bounty_amount", 500), data.get("referrer_name", ""))
     return result
 
@@ -2205,6 +2277,14 @@ async def api_bounty_swap(request: Request):
 @limiter.limit("60/minute")
 async def api_micro_trial(request: Request):
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "micro_trial")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     result = await micro_trial_ai(data.get("trial_type", "Frontend"), data.get("skills", ""))
     return result
 
@@ -2212,6 +2292,14 @@ async def api_micro_trial(request: Request):
 @limiter.limit("60/minute")
 async def api_ghost_job_shield(request: Request):
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "ghost_job_shield")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     result = await ghost_job_ai(data.get("url", ""))
     return result
 
@@ -2219,6 +2307,14 @@ async def api_ghost_job_shield(request: Request):
 @limiter.limit("60/minute")
 async def api_ref_swap(request: Request):
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "ref_swap")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     result = await ref_swap_ai(data.get("ref_type", "Professional"), data.get("industry", ""))
     return result
 
@@ -2226,6 +2322,14 @@ async def api_ref_swap(request: Request):
 @limiter.limit("60/minute")
 async def api_ghosted_tracker(request: Request):
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "ghost_tracker")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     result = await ghosted_tracker_ai(data.get("applications", []))
     return result
 
