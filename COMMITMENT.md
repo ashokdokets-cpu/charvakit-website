@@ -5,6 +5,44 @@
 **Last updated:** 2026-09-25
 **HEAD:** c2c67d7
 
+### FLAGGED — 11 AI Products need same audit as tools (2026-09-26)
+
+- **Trigger:** Tonight we audited and fixed the 12-tool AI Tools Suite
+  (`/api/tools/*`). The same class of bug exists in the 11 AI Products
+  (`/api/products/*`) but has never been verified.
+
+- **Products in scope:**
+  1. product_lock_in_breaker — /api/products/lock-in-breaker
+  2. product_reverse_staffing
+  3. product_auditbot_scan
+  4. product_skill_twin
+  5. product_micro_squads
+  6. product_agency_twin
+  7. product_geo_compliance
+  8. product_design_token
+  9. product_silent_killer
+  10. product_ai_slop
+  11. product_developer_entropy
+
+- **Suspected issues (same as tools had):**
+  - No `require_auth_for_email` — anyone with a valid token can charge anyone
+  - Unknown whether the AI calls go through `ai_service.call_openai` (was broken
+    until commit bd41ab9) or `tools_ai_backend.call_ai` (broken until 3d1fb36)
+    or their own client — each needs a live test
+  - Frontend templates at `/products/*.html` may not send auth headers
+  - Fallback dicts may be hiding broken AI calls (same pattern as tools)
+
+- **Verification checklist per product:**
+  - [ ] Route has `require_auth_for_email`
+  - [ ] Route has `require_credits_from_data` (already present per grep)
+  - [ ] AI function returns real output, not canned fallback
+  - [ ] Frontend sends `Authorization` + `email`
+  - [ ] E2E via browser: real output, one credit deduction
+
+- **Est:** 1-2 hours for full audit + patch + verify.
+- **Priority:** Medium-High — same revenue leak + trust issue as tools.
+- **Verdict:** SCHEDULED — own session
+
 ### FLAGGED — Post-ai_service-fix verification sweep (2026-09-26)
 
 - **Trigger:** Fixed `ai_service.call_openai()` tonight. It had been silently
