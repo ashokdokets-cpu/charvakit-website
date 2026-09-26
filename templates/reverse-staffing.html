@@ -8,39 +8,42 @@
         <p class="lead">Get hired based on real project proof, not resumes. AI-verified portfolios that companies trust.</p>
     </div>
 {% include "includes/beta_badge.html" %}
-
 </div>
 
 <div class="container py-5">
-    <!-- How It Works -->
     <div class="row align-items-center mb-5">
         <div class="col-lg-6">
             <h2 class="fw-bold mb-4">The Problem We Solve</h2>
-            <div class="card bg-danger text-white p-4 mb-4"><strong>❌ The Chicken-Egg Trap:</strong> Companies won't hire without experience. Can't get experience without a job.</div>
-            <div class="card bg-success text-white p-4"><strong>✅ Our Solution:</strong> Build real projects for real clients. Get AI-verified proof. Get hired.</div>
+            <div class="card bg-danger text-white p-4 mb-4"><strong>The Chicken-Egg Trap:</strong> Companies won't hire without experience. Can't get experience without a job.</div>
+            <div class="card bg-success text-white p-4"><strong>Our Solution:</strong> Build real projects for real clients. Get AI-verified proof. Get hired.</div>
         </div>
         <div class="col-lg-6">
             <div class="bg-dark text-white p-4 rounded">
-                <h3 class="as-h4 mb-3">How It Works</h3>
-                <div class="d-flex mb-3"><span class="step-number me-3">1</span><div><strong>Non-profits submit projects</strong><p class="text-white-50 mb-0">Real web design needs from verified organizations</p></div></div>
-                <div class="d-flex mb-3"><span class="step-number me-3">2</span><div><strong>AI breaks down tasks</strong><p class="text-white-50 mb-0">Micro-tasks assigned to developers in Charvak pool</p></div></div>
-                <div class="d-flex mb-3"><span class="step-number me-3">3</span><div><strong>AI reviews every commit</strong><p class="text-white-50 mb-0">Code quality, security, and UI standards verified</p></div></div>
-                <div class="d-flex"><span class="step-number me-3">4</span><div><strong>Verified portfolio generated</strong><p class="text-white-50 mb-0">Shareable proof-of-work card on LinkedIn</p></div></div>
-            <div class="text-center mt-3">
-                    <a href="/developer-signup" class="btn btn-outline-light btn-sm">Start Building Your Portfolio</a>
-                </div>
+                <h3 class="as-h4 mb-3">Find Your Match</h3>
+                <form onsubmit="runMatch(event)" id="reverseMatchForm">
+                    <div class="mb-3">
+                        <label class="form-label text-white-50">Your Skills (comma-separated)</label>
+                        <input type="text" class="form-control" id="rsSkills" placeholder="React, TypeScript, Node.js" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-white-50">Years of Experience</label>
+                        <input type="number" class="form-control" id="rsExp" min="0" max="50" value="3" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100" id="rsSubmitBtn">
+                        Get Matched &mdash; 15 credits
+                    </button>
+                </form>
+                <div id="rsOutput" class="mt-4"></div>
             </div>
         </div>
     </div>
 
-    <!-- Pricing -->
-<div class="row g-4 mb-5">
-    <div class="col-md-4"><div class="card h-100 p-4 text-center"><h3 class="as-h4">👨‍💻 For Developers</h3><h2 class="display-4 fw-bold"><span data-inr="0">₹0</span></h2><p>Free to join</p><ul class="list-unstyled text-start"><li class="mb-2">✅ Build real projects</li><li class="mb-2">✅ AI-verified portfolio</li><li class="mb-2">✅ Shareable badge</li></ul><a href="/developer-signup" class="btn btn-outline-primary">Join Pool</a></div></div>
-    <div class="col-md-4"><div class="card h-100 p-4 text-center border-primary" style="border-width:2px;"><span class="badge bg-primary mb-2">Popular</span><h3 class="as-h4">🏢 For Companies</h3><h2 class="display-4 fw-bold"><span data-inr="14999">₹14,999</span></h2><p>Per successful hire</p><ul class="list-unstyled text-start"><li class="mb-2">✅ 48-hr placement</li><li class="mb-2">✅ AI-verified candidates</li><li class="mb-2">✅ 90-day guarantee</li></ul><a href="/hire-talent" class="btn btn-primary">Hire Talent</a></div></div>
-    <div class="col-md-4"><div class="card h-100 p-4 text-center"><h3 class="as-h4">🔄 Subscription</h3><h2 class="display-4 fw-bold"><span data-inr="4999">₹4,999</span></h2><p>/month</p><ul class="list-unstyled text-start"><li class="mb-2">✅ Unlimited job posts</li><li class="mb-2">✅ Priority candidate access</li><li class="mb-2">✅ Dedicated account manager</li></ul><a href="#" class="btn btn-outline-primary" onclick="subscribePlan(event)">Subscribe</a></div></div>
-</div>
+    <div class="row g-4 mb-5">
+        <div class="col-md-4"><div class="card h-100 p-4 text-center"><h3 class="as-h4">For Developers</h3><h2 class="display-4 fw-bold"><span data-inr="0">₹0</span></h2><p>Free to join</p><ul class="list-unstyled text-start"><li class="mb-2">✅ Build real projects</li><li class="mb-2">✅ AI-verified portfolio</li><li class="mb-2">✅ Shareable badge</li></ul><a href="/developer-signup" class="btn btn-outline-primary">Join Pool</a></div></div>
+        <div class="col-md-4"><div class="card h-100 p-4 text-center border-primary" style="border-width:2px;"><span class="badge bg-primary mb-2">Popular</span><h3 class="as-h4">For Companies</h3><h2 class="display-4 fw-bold"><span data-inr="14999">₹14,999</span></h2><p>Per successful hire</p><ul class="list-unstyled text-start"><li class="mb-2">✅ 48-hr placement</li><li class="mb-2">✅ AI-verified candidates</li><li class="mb-2">✅ 90-day guarantee</li></ul><a href="/hire-talent" class="btn btn-primary">Hire Talent</a></div></div>
+        <div class="col-md-4"><div class="card h-100 p-4 text-center"><h3 class="as-h4">Subscription</h3><h2 class="display-4 fw-bold"><span data-inr="4999">₹4,999</span></h2><p>/month</p><ul class="list-unstyled text-start"><li class="mb-2">✅ Unlimited job posts</li><li class="mb-2">✅ Priority candidate access</li><li class="mb-2">✅ Dedicated account manager</li></ul><a href="#" class="btn btn-outline-primary" onclick="subscribePlan(event)">Notify Me</a></div></div>
+    </div>
 
-    <!-- Stats -->
     <div class="row g-3 text-center mb-5">
         <div class="col-6 col-md-3"><div class="bg-light p-3 rounded"><h3 class="text-primary">10,000+</h3><p class="mb-0">Developer pool</p></div></div>
         <div class="col-6 col-md-3"><div class="bg-light p-3 rounded"><h3 class="text-primary">48 hrs</h3><p class="mb-0">Avg placement time</p></div></div>
@@ -55,85 +58,108 @@
         <a href="/hire-talent" class="btn btn-outline-light btn-lg">Hire Talent</a>
     </div>
 </div>
+
 <script>
-function subscribePlan(e){
-    e.preventDefault();
-    const email = prompt('Enter your business email:');
-    if (!email) return;
-    
-    const amount = 4999; // ₹4,999/month
-    
-    if (!confirm('Subscribe to Reverse Staffing?\n\n₹4,999/month\n\nProceed to payment?')) {
+async function runMatch(event) {
+    event.preventDefault();
+    const skillsRaw = document.getElementById('rsSkills').value || '';
+    const skills = skillsRaw.split(',').map(function(s) { return s.trim(); }).filter(Boolean);
+    const experience = parseInt(document.getElementById('rsExp').value) || 0;
+
+    if (skills.length === 0) {
+        alert('Please enter at least one skill.');
         return;
     }
-    
-    fetch('/api/payment/create-order', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-            amount: amount,
-            name: 'Reverse Staffing Subscription',
-            method: 'razorpay'
-        })
-    })
-    .then(res => res.json())
-    .then(orderData => {
-        if (orderData.status === 'success' || orderData.order_id) {
-            const options = {
-                key: orderData.key_id || orderData.key || window.charvak_razorpay_key || 'rzp_live_TSniXv6CyEnZ9B',
-                amount: amount * 100,
-                currency: 'INR',
-                name: 'Charvak IT Consulting',
-                description: 'Reverse Staffing Subscription (Monthly)',
-                order_id: orderData.order_id,
-                handler: function(response) {
-                    fetch('/api/payment/verify', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({
-                            method: 'razorpay',
-                            payment_id: response.razorpay_payment_id,
-                            order_id: response.razorpay_order_id,
-                            signature: response.razorpay_signature
-                        })
-                    })
-                    .then(r => r.json())
-                    .then(v => {
-                        if (v.verified) {
-                            fetch('/api/products/reverse-staffing/match', {
-                                method: 'POST',
-                                headers: {'Content-Type': 'application/json'},
-                                body: JSON.stringify({
-                                    email: email,
-                                    payment_id: response.razorpay_payment_id
-                                })
-                            })
-                            .then(r => r.json())
-                            .then(j => {
-                                alert('✅ ' + (j.message || 'Reverse Staffing activated!'));
-                                localStorage.setItem('reverse_staffing', 'active');
-                            });
-                        } else {
-                            alert('Payment verification failed');
-                        }
-                    });
-                },
-                prefill: {email: email},
-                theme: {color: '#3ba591'},
-                modal: {
-                    ondismiss: function() {
-                        alert('Payment cancelled');
-                    }
-                }
-            };
-            const rzp = new Razorpay(options);
-            rzp.open();
+
+    const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    if (!authToken || !email) {
+        alert('Please log in to get matched.');
+        window.location.href = '/login?next=/reverse-staffing';
+        return;
+    }
+
+    const btn = document.getElementById('rsSubmitBtn');
+    const out = document.getElementById('rsOutput');
+    btn.disabled = true;
+    btn.textContent = 'Matching... this takes 15-30 seconds';
+    out.innerHTML = '<div class="text-white-50 text-center py-3"><div class="spinner-border spinner-border-sm text-light"></div><p class="mt-2 mb-0">Analyzing ' + skills.length + ' skills at ' + experience + ' years experience...</p></div>';
+
+    try {
+        const res = await fetch('/api/products/reverse-staffing/match', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authToken
+            },
+            body: JSON.stringify({email: email, skills: skills, experience_years: experience})
+        });
+
+        if (res.status === 401) {
+            out.innerHTML = '<div class="alert alert-danger">Please log in.</div>';
+            window.location.href = '/login?next=/reverse-staffing';
+            return;
         }
-    })
-    .catch(error => {
-        console.error('Payment error:', error);
-        alert('Payment gateway error');
-    });
+        if (res.status === 402) {
+            out.innerHTML = '<div class="alert alert-warning">Not enough credits. <a href="/ai-credits-pricing" class="alert-link">Top up</a>.</div>';
+            return;
+        }
+
+        const data = await res.json();
+        renderMatchResult(out, data);
+    } catch (e) {
+        out.innerHTML = '<div class="alert alert-danger">Error: ' + e.message + '</div>';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Get Matched — 15 credits';
+    }
+}
+
+function renderMatchResult(out, data) {
+    if (data.status !== 'success') {
+        out.innerHTML = '<div class="alert alert-danger">' + (data.message || 'Match failed') + '</div>';
+        return;
+    }
+    let html = '<div class="card bg-light text-dark mb-2"><div class="card-body">';
+    html += '<div class="d-flex justify-content-between align-items-start mb-2">';
+    html += '<div><strong>Match ' + (data.match_id || '') + '</strong><br><small class="text-muted">' + (data.analysis_mode || '') + '</small></div>';
+    if (data.top_match) {
+        html += '<div class="text-end"><span class="badge bg-success fs-6">' + (data.top_match.match || 0) + '% top match</span></div>';
+    }
+    html += '</div>';
+    if (data.verdict) {
+        html += '<hr class="my-2"><p class="mb-0"><strong>Verdict:</strong> ' + data.verdict + '</p>';
+    }
+    if (data.best_fit_reasoning) {
+        html += '<p class="mb-0 mt-2"><strong>Why:</strong> ' + data.best_fit_reasoning + '</p>';
+    }
+    html += '</div></div>';
+
+    if (data.matches && data.matches.length) {
+        html += '<h6 class="text-white mt-3">Company Matches</h6>';
+        data.matches.forEach(function(m) {
+            html += '<div class="border-bottom border-secondary py-2">';
+            html += '<div class="d-flex justify-content-between"><strong class="text-white">' + (m.name || '') + '</strong><span class="badge bg-info">' + (m.match || 0) + '%</span></div>';
+            if (m.roles && m.roles.length) {
+                html += '<div class="text-white-50 small">' + m.roles.join(' · ') + '</div>';
+            }
+            html += '</div>';
+        });
+    }
+
+    if (data.skill_gaps && data.skill_gaps.length) {
+        html += '<div class="alert alert-warning py-2 mt-3 mb-2"><strong>Skill Gaps</strong><ul class="mb-0 mt-1">';
+        data.skill_gaps.forEach(function(g) { html += '<li>' + g + '</li>'; });
+        html += '</ul></div>';
+    }
+    out.innerHTML = html;
+}
+
+// Subscription button — kept as interest capture. The subscription backend
+// was never built. Free-form matching is the shipped feature.
+function subscribePlan(event) {
+    event.preventDefault();
+    window.notifyMe('Reverse Staffing Subscription');
 }
 </script>
 {% endblock %}
