@@ -5,6 +5,46 @@
 **Last updated:** 2026-09-27
 **HEAD:** 82ec76f
 
+### RESOLVED — three-file verification pass (2026-09-27)
+
+Audited the three "unknown state" files flagged by earlier sessions:
+
+| File | Verdict | Notes |
+|---|---|---|
+| `tools_engine.py` | ❌ Doesn't exist | Stale tracker entry; file was never committed or was removed in a prior cleanup |
+| `enhanced_assessment_engine.py` | ✅ Healthy | Active (main.py:6603+, universal_company.py:167). OpenAI call uses `requests.post(timeout=20)` — valid sync call, not the Session bug. Has `response_format={"type":"json_object"}`, fence stripping, regex fallback, and real logging. No changes needed. |
+| `chatbot_engine.py` | ✅ Healthy | Active (main.py:61, 3611-3633). Uses official `openai.OpenAI` SDK. Returns plain text (chat prose), not JSON — so "AI JSON mode missing" was a false positive. Real logging. No changes needed. |
+
+**Commit:** `<hash>` (docs only — no code changes)
+
+**Verdict:** ✅ All three closed 2026-09-27
+
+### FLAGGED — three-file verification pass (2026-09-27)
+
+Three engines flagged in earlier sessions, never verified. Each needs a
+15-30 min audit. Do as one session.
+
+| File | Question | Likely answer |
+|---|---|---|
+| `tools_engine.py` | Scope unclear — legacy of `tools_ai_backend.py`? Dead code? | Read + grep for imports |
+| `enhanced_assessment_engine.py` | Active or legacy? Not referenced by `/api/assessment/*` (those use `advanced_assessment_engine`) | Grep for imports |
+| `chatbot_engine.py` | AI JSON mode present? | Read every OpenAI call |
+
+**Why they're flagged:** all three are the same class of risk as the 4
+`ai_service` functions found tonight — code that looks fine but may be
+silently returning empty on structured responses.
+
+**Approach per file:**
+1. Grep for imports to determine active/legacy
+2. If active: test the function with a live call (same pattern as tonight's
+   verification sweep)
+3. If dead: flag for deletion in a cleanup session
+4. If JSON mode missing: apply the same 3-part fix (json_mode=True + fence
+   strip + print on error)
+
+**Est:** 45-90 min depending on findings.
+**Verdict:** SCHEDULED — one focused session
+
 ### Session 2026-09-27 (evening) — small-items sweep + ai_service verification
 
 **Commits:**
