@@ -5,6 +5,47 @@
 **Last updated:** 2026-09-25
 **HEAD:** c2c67d7
 
+### FLAGGED — 11 product templates: frontend wiring required (2026-09-26)
+
+**Backend status: DONE** (commit `abbcabe`). All 11 `/api/products/*` routes have
+`require_auth_for_email` + `require_credits_from_data`. Verified E2E for auditbot:
+real AI output, single credit deduction, 401 without auth.
+
+**Frontend status: 10 of 11 are notify-me stubs.**
+
+| # | Product | Route | Frontend state |
+|---|---|---|---|
+| 1 | Lock-In Breaker | /api/products/lock-in-breaker/audit | notify-me |
+| 2 | Reverse Staffing | /api/products/reverse-staffing/match | real fetch (no auth) |
+| 3 | AuditBot | /api/products/auditbot/scan | notify-me |
+| 4 | Skill Twin | /api/products/skill-twin/assess | notify-me |
+| 5 | Micro Squads | /api/products/micro-squads/assemble | notify-me |
+| 6 | Agency Twin | /api/products/agency-twin/automate | notify-me |
+| 7 | Geo Compliance | /api/products/geo-compliance/check | notify-me |
+| 8 | Design Token | /api/products/design-token/check | notify-me |
+| 9 | Silent Killer | /api/products/silent-killer/monitor | notify-me |
+| 10 | AI Slop | /api/products/ai-slop/scan | notify-me |
+| 11 | Developer Entropy | /api/products/developer-entropy/score | notify-me |
+
+**This is a product decision, not a bug.** The templates were deliberately left
+as interest-capture during Session G6. To ship each product, decide per-product:
+
+- **(a) Ship real form** — replace demo UI with real inputs, wire fetch with
+  auth header + email, render return shape. ~30-60 min per product.
+- **(b) Keep notify-me** — no code change. Backend route stays dormant until
+  product is prioritized.
+
+**Recommended order (highest commercial value first):**
+1. AuditBot — security scan, clear value prop, engine output tested
+2. Lock-In Breaker — cloud cost savings, enterprise buyer
+3. Reverse Staffing — has partial UI already
+
+**Est (if shipping all 10):** 5-8 hours, multi-session. Do as a focused
+product sprint, not bolt-on fixes.
+
+**Verdict:** SCHEDULED — product sprint session(s). Backend is ready; frontend
+is the only work.
+
 ### FYP ROADMAP — planned enhancements (logged 2026-09-26)
 
 Current FYP has 4 features working: topics, proposal, documentation outline,
