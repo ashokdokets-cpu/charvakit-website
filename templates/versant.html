@@ -161,7 +161,7 @@ async function startTest() {
   try {
     var r = await fetch('/api/versant/start-session', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '')},
       body: JSON.stringify({email: VS.email})
     });
     var j = await r.json();
@@ -298,7 +298,7 @@ async function uploadAudio(blob) {
   fd.append('question_text', item.text);
   fd.append('email', VS.email);
   try {
-    var r = await fetch('/api/versant/record-audio', { method: 'POST', body: fd });
+    var r = await fetch('/api/versant/record-audio', { method: 'POST', headers: {'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '')}, body: fd });
     var j = await r.json();
     if (j.status !== 'success') {
       throw new Error(j.message || 'Upload failed');
@@ -334,7 +334,7 @@ async function saveTextAnswer() {
   try {
     var r = await fetch('/api/versant/submit-text', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '')},
       body: JSON.stringify({
         email: VS.email,
         session_id: VS.sessionId,
@@ -403,7 +403,7 @@ async function submitTest() {
   try {
     var r = await fetch('/api/versant/complete', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '')},
       body: JSON.stringify({email: VS.email, session_id: VS.sessionId})
     });
     var j = await r.json();
@@ -454,7 +454,7 @@ function renderSectionList() {
 }
 
 // Init section list on load
-fetch('/api/versant/sections').then(function(r){return r.json();}).then(function(j){
+fetch('/api/versant/sections', {headers: {'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '')}}).then(function(r){return r.json();}).then(function(j){
   if (j.status === 'success' && j.sections) {
     VS.sections = j.sections.map(function(s){return s.id;});
     j.sections.forEach(function(s){ VS.sectionDesign[s.id] = s; });

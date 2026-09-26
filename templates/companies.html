@@ -85,7 +85,7 @@
         content.innerHTML = '<div class="card-body p-4 text-center"><div class="spinner-border text-primary"></div><p class="mt-3 text-muted">Loading patterns...</p></div>';
 
         try {
-            var response = await fetch("/api/company-patterns/" + encodeURIComponent(companyId));
+            var response = await fetch("/api/company-patterns/" + encodeURIComponent(companyId), {headers: {"Authorization": "Bearer " + (localStorage.getItem("auth_token") || localStorage.getItem("charvak_token") || "")}});
             var result = await response.json();
 
             if (result.status === "success" && result.patterns) {
@@ -127,7 +127,7 @@
         try {
             var response = await fetch("/api/mock/start-complete", {
                 method: "POST",
-                headers: {"Content-Type": "application/json"},
+                headers: {"Content-Type": "application/json", "Authorization": "Bearer " + (localStorage.getItem("auth_token") || localStorage.getItem("charvak_token") || "")},
                 body: JSON.stringify({email: email, company_id: companyId})
             });
             var result = await response.json();
@@ -194,8 +194,9 @@
         try {
             fetch("/api/mock/submit-complete", {
                 method: "POST",
-                headers: {"Content-Type": "application/json"},
+                headers: {"Content-Type": "application/json", "Authorization": "Bearer " + (localStorage.getItem("auth_token") || localStorage.getItem("charvak_token") || "")},
                 body: JSON.stringify({
+                    email: getUserEmail() || "",
                     session_id: currentSessionId,
                     section_name: sectionName,
                     question_id: questionId,
@@ -222,8 +223,8 @@
         try {
             var response = await fetch("/api/mock/complete-full", {
                 method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({session_id: currentSessionId})
+                headers: {"Content-Type": "application/json", "Authorization": "Bearer " + (localStorage.getItem("auth_token") || localStorage.getItem("charvak_token") || "")},
+                body: JSON.stringify({email: getUserEmail() || "", session_id: currentSessionId})
             });
             var data = await response.json();
 
