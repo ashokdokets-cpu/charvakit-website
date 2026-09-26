@@ -5,6 +5,67 @@
 **Last updated:** 2026-09-27
 **HEAD:** 82ec76f
 
+### Session 2026-09-27 (evening) — small-items sweep + ai_service verification
+
+**Commits:**
+- `3cee5c4` feat(lms): auth header + email in all 9 fetches
+- `d116dc6` fix(bridge): replace broken premium flow with notifyMe
+- `80e5b74` feat(contact): honeypot + backend bot heuristics
+- `3eccc8b` fix(database): add module logger — silent save_contact failure
+- `f893747` docs: session summary
+- `dcc6a63` fix(currency): Voice-to-Web prompt + micro-trial USD → INR
+- `1e4a0ba` docs(main): legacy banner on /api/assessment/* routes
+- `<ai_service hash>` fix(ai_service): json_mode + fence-stripping on 4 JSON functions
+
+**Real bugs found and fixed this evening:**
+1. `database.save_contact()` — `logger` was never defined in `database.py`. Every
+   contact submission was silently failing to save to DB.
+2. `ai_service` — 4 more functions had the missing-json_mode pattern.
+3. `lms.html` — 9 fetches unauthenticated against now-auth-gated routes.
+4. `bridge.html` — premium flow posted to a 404 route.
+
+**Resolved flags:** post-ai_service verification sweep, currency hardcode,
+contact anti-bot, lms.html auth wiring, bridge.html premium 404.
+
+**Remaining major work:** C7 (14 templates), 11 product frontends, dead
+`/api/assessment/*` routes (legacy-marked, cleanup candidate).
+
+
+### RESOLVED — post-ai_service-fix verification sweep (2026-09-27)
+
+Ran the sweep. Found and fixed **4 more functions** with the same
+"missing json_mode + bare except + no fence-strip" pattern:
+
+- `generate_assessment_questions` → was returning `[]`
+- `localize_website` → was returning `{}`
+- `analyze_legacy_code` → was returning `{}`
+- `generate_agent_schema` → was returning `{}` (not in original scope — found during fix)
+
+**All 6 tested functions now return real output:**
+- neural_wireframe_to_code ✅
+- generate_legal_contract ✅
+- generate_assessment_questions ✅ (fixed this session)
+- localize_website ✅ (fixed this session)
+- analyze_legacy_code ✅ (fixed this session)
+- generate_agent_schema ✅ (fixed this session)
+
+**Also fixed during the sweep:**
+- `_strip_fences` helper added to `ai_service.py`
+- micro_trial currency hardcode USD → INR
+- Voice-to-Web prompt anchored to INR
+
+**Not verified in this sweep (kept as separate flags):**
+- `tools_engine.py` — scope audit (inventory #80)
+- `enhanced_assessment_engine.py` — active or legacy? (inventory #83)
+- `chatbot_engine.py` — AI JSON mode present? (inventory #84)
+
+**Also found and resolved during the sweep:**
+- Repo-wide grep for `requests.Session(timeout=` → zero remaining matches (all fixed tonight)
+- AI Tools Suite and 11 AI Products backend auth/credits verified earlier
+- student_suite_engine.assist_* verified working earlier this session
+
+**Verdict:** ✅ DONE 2026-09-27
+
 
 ## Session 2026-09-26 / 2026-09-27 — Auth sweep + feature audit
 
