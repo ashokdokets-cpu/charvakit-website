@@ -5,6 +5,48 @@
 **Last updated:** 2026-09-25
 **HEAD:** c2c67d7
 
+
+### FLAGGED — student_suite auth gap (2026-09-26)
+
+`/api/student/assignment` and `/api/student/research` now call
+`require_auth_for_email` (fixed in Phase 3 of tonight's session).
+
+Still missing: `/api/student/subscribe` has NO auth check. Anyone can create a
+subscription row for any email. Same IDOR pattern.
+
+Also `/api/student/stats` has NO auth — leaks global subscription/usage counts.
+
+Fix: add `require_auth_for_email(request, email)` to subscribe, and
+`require_admin(request)` to stats. ~5 min.
+
+Verdict: FLAGGED — small follow-up
+
+### FLAGGED — uvicorn reload invalidates browser tokens (2026-09-26)
+
+`auth.active_tokens` is in-memory. Every `uvicorn --reload` restart wipes it.
+Browser localStorage keeps the stale token, causing 401/403 on every API call
+until the user clears localStorage and logs in again. Confusing during dev.
+In production (long-running process) this only happens on deploy.
+
+Possible fixes (future):
+- Persist tokens to DB with expiry
+- Add a frontend handler that auto-clears localStorage on repeated 401
+- Dev-only: warn on reload that tokens are invalidated
+
+Verdict: DEFERRED — low priority for prod, annoying for dev.
+
+### FLAGGED — ai_service/generate_* functions still unverified (2026-09-26)
+
+Already in tracker from earlier tonight. 5 functions routed through
+ai_service.call_openai() have not been E2E-tested since the fix:
+- neural_wireframe_to_code
+- localize_website
+- generate_legal_contract
+- analyze_legacy_code
+- generate_assessment_questions
+
+Verdict: SCHEDULED — own session
+
 ### FLAGGED — 11 AI Products need same audit as tools (2026-09-26)
 
 - **Trigger:** Tonight we audited and fixed the 12-tool AI Tools Suite
