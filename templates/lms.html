@@ -151,15 +151,116 @@
 </div>
 
 <script>
-async function rateCourse(e){e.preventDefault();const d={course_id:document.getElementById('rateCourseId').value,student_email:document.getElementById('rateStudentEmail').value,rating:parseInt(document.getElementById('rateValue').value),review:document.getElementById('rateReview').value};const r=await fetch('/api/lms/rate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});const j=await r.json();showOutput(j.message);}
-async function submitQuiz(e){e.preventDefault();const d={quiz_id:document.getElementById('quizId').value,student_email:document.getElementById('quizEmail').value,answers:[]};const r=await fetch('/api/lms/quiz/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});const j=await r.json();showOutput(j.message);}
-async function issueCert(e){e.preventDefault();const d={course_name:document.getElementById('certCourseName').value,student_email:document.getElementById('certEmail').value,student_name:document.getElementById('certName').value};const r=await fetch('/api/lms/certificate/issue',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});const j=await r.json();showOutput(j.message);}
-async function postDiscussion(e){e.preventDefault();const d={course_id:document.getElementById('discCourseId').value,author:document.getElementById('discAuthor').value,title:document.getElementById('discTitle').value,content:document.getElementById('discContent').value};const r=await fetch('/api/lms/discussion/post',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});const j=await r.json();showOutput(j.message);}
-async function checkProgress(e){e.preventDefault();const id=document.getElementById('progressEnrollment').value;const r=await fetch('/api/lms/progress/'+id);const j=await r.json();showOutput('Progress: '+j.progress_percent+'%');}
-async function getRecommendations(e){e.preventDefault();const email=document.getElementById('recoEmail').value;const r=await fetch('/api/lms/recommendations/'+email);const j=await r.json();showOutput(j.recommendations.map(x=>x.course+' ('+x.match+'%)').join(', '));}
-async function addLesson(e){e.preventDefault();const d={course_id:document.getElementById('lessonCourseId').value,title:document.getElementById('lessonTitle').value,video_url:document.getElementById('lessonVideoUrl').value};const r=await fetch('/api/lms/lesson/add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});const j=await r.json();showOutput(j.message);}
-async function requestPayout(e){e.preventDefault();const d={trainer_email:document.getElementById('payoutEmail').value,amount:parseFloat(document.getElementById('payoutAmount').value)};const r=await fetch('/api/lms/payout/request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});const j=await r.json();showOutput(j.message);}
-async function searchCourses(e){e.preventDefault();const q=document.getElementById('searchQuery').value;const r=await fetch('/api/lms/search?query='+q);const j=await r.json();showOutput(j.count+' courses found');}
+function _lmsTok(){return localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';}
+function _lmsEmail(){return localStorage.getItem('userEmail') || '';}
+async function rateCourse(e){
+  e.preventDefault();
+  const d={
+  course_id:document.getElementById('rateCourseId').value,student_email:document.getElementById('rateStudentEmail').value,rating:parseInt(document.getElementById('rateValue').value),review:document.getElementById('rateReview').value
+};
+  const r=await fetch('/api/lms/rate',{
+  method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+_lmsTok()},body:JSON.stringify({...d, email: _lmsEmail()})
+});
+  const j=await r.json();
+  showOutput(j.message);
+  
+}
+async function submitQuiz(e){
+  e.preventDefault();
+  const d={
+  quiz_id:document.getElementById('quizId').value,student_email:document.getElementById('quizEmail').value,answers:[]
+};
+  const r=await fetch('/api/lms/quiz/submit',{
+  method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+_lmsTok()},body:JSON.stringify({...d, email: _lmsEmail()})
+});
+  const j=await r.json();
+  showOutput(j.message);
+  
+}
+async function issueCert(e){
+  e.preventDefault();
+  const d={
+  course_name:document.getElementById('certCourseName').value,student_email:document.getElementById('certEmail').value,student_name:document.getElementById('certName').value
+};
+  const r=await fetch('/api/lms/certificate/issue',{
+  method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+_lmsTok()},body:JSON.stringify({...d, email: _lmsEmail()})
+});
+  const j=await r.json();
+  showOutput(j.message);
+  
+}
+async function postDiscussion(e){
+  e.preventDefault();
+  const d={
+  course_id:document.getElementById('discCourseId').value,author:document.getElementById('discAuthor').value,title:document.getElementById('discTitle').value,content:document.getElementById('discContent').value
+};
+  const r=await fetch('/api/lms/discussion/post',{
+  method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+_lmsTok()},body:JSON.stringify({...d, email: _lmsEmail()})
+});
+  const j=await r.json();
+  showOutput(j.message);
+  
+}
+async function checkProgress(e){
+  e.preventDefault();
+  const id=document.getElementById('progressEnrollment').value;
+  const r=await fetch('/api/lms/progress/'+id, {
+  headers:{
+  'Authorization':'Bearer '+_lmsTok()
+}
+});
+  const j=await r.json();
+  showOutput('Progress: '+j.progress_percent+'%');
+  
+}
+async function getRecommendations(e){
+  e.preventDefault();
+  const email=document.getElementById('recoEmail').value;
+  const r=await fetch('/api/lms/recommendations/'+email, {
+  headers:{
+  'Authorization':'Bearer '+_lmsTok()
+}
+});
+  const j=await r.json();
+  showOutput(j.recommendations.map(x=>x.course+' ('+x.match+'%)').join(', '));
+  
+}
+async function addLesson(e){
+  e.preventDefault();
+  const d={
+  course_id:document.getElementById('lessonCourseId').value,title:document.getElementById('lessonTitle').value,video_url:document.getElementById('lessonVideoUrl').value
+};
+  const r=await fetch('/api/lms/lesson/add',{
+  method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+_lmsTok()},body:JSON.stringify({...d, email: _lmsEmail()})
+});
+  const j=await r.json();
+  showOutput(j.message);
+  
+}
+async function requestPayout(e){
+  e.preventDefault();
+  const d={
+  trainer_email:document.getElementById('payoutEmail').value,amount:parseFloat(document.getElementById('payoutAmount').value)
+};
+  const r=await fetch('/api/lms/payout/request',{
+  method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+_lmsTok()},body:JSON.stringify({...d, email: _lmsEmail()})
+});
+  const j=await r.json();
+  showOutput(j.message);
+  
+}
+async function searchCourses(e){
+  e.preventDefault();
+  const q=document.getElementById('searchQuery').value;
+  const r=await fetch('/api/lms/search?query='+q, {
+  headers:{
+  'Authorization':'Bearer '+_lmsTok()
+}
+});
+  const j=await r.json();
+  showOutput(j.count+' courses found');
+  
+}
 function showOutput(msg){document.getElementById('lmsOutput').innerHTML='<div class="alert alert-success">'+msg+'</div>';}
 </script>
 <script>
