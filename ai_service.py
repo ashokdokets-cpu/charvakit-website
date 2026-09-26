@@ -10,6 +10,34 @@ from typing import Optional, Dict, List
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_BASE = "https://api.openai.com/v1"
 
+def _strip_fences(s: str) -> str:
+    """Remove markdown code fences from an AI JSON response."""
+    if not s:
+        return s
+    cleaned = s.strip()
+    if cleaned.startswith("```"):
+        lines = cleaned.split("\n")
+        if lines[0].startswith("```"):
+            lines = lines[1:]
+        if lines and lines[-1].strip() == "```":
+            lines = lines[:-1]
+        cleaned = "\n".join(lines)
+    # Fallback: find first { or [ and last matching close
+    start_curly = cleaned.find("{")
+    start_bracket = cleaned.find("[")
+    if start_curly == -1 and start_bracket == -1:
+        return cleaned
+    if start_curly == -1 or (start_bracket != -1 and start_bracket < start_curly):
+        start = start_bracket
+        end = cleaned.rfind("]")
+    else:
+        start = start_curly
+        end = cleaned.rfind("}")
+    if start != -1 and end != -1 and end > start:
+        return cleaned[start:end+1]
+    return cleaned
+
+
 async def call_openai(prompt: str, model: str = "gpt-4o-mini", max_tokens: int = 2000, temperature: float = 0.7, json_mode: bool = False) -> Optional[str]:
     """Generic OpenAI API call. Set json_mode=True to force valid JSON output."""
     if not OPENAI_API_KEY:
@@ -45,12 +73,12 @@ async def generate_assessment_questions(stack: str, difficulty: str, count: int)
     Return ONLY valid JSON array: [{{"q":"question","o":["A","B","C","D"],"a":0}}]
     Correct answer index (a) must be 0-3. Make questions practical and test real understanding of {stack}."""
     
-    result = await call_openai(prompt, temperature=0.7, max_tokens=2000)
+    result = await call_openai(prompt, temperature=0.7, max_tokens=2000, json_mode=True)
     if result:
         try:
-            return json.loads(result)
-        except:
-            pass
+            return json.loads(_strip_fences(result))
+        except Exception as e:
+            print(f"generate_assessment_questions parse error: {type(e).__name__}: {e}")
     return []
 
 async def voice_to_website(transcript: str, language: str) -> Dict:
@@ -98,12 +126,12 @@ async def localize_website(url: str, target_language: str) -> Dict:
     prompt = f"""Generate localization recommendations for {url} in {target_language}.
     Include: translated content, cultural adaptations, compliance notes.
     Return JSON."""
-    result = await call_openai(prompt, temperature=0.5, max_tokens=2000)
+    result = await call_openai(prompt, temperature=0.5, max_tokens=2000, json_mode=True)
     if result:
         try:
-            return json.loads(result)
-        except:
-            pass
+            return json.loads(_strip_fences(result))
+        except Exception as e:
+            print(f"localize_website parse error: {type(e).__name__}: {e}")
     return {}
 
 async def generate_legal_contract(company: str, contractor_country: str, service: str) -> str:
@@ -121,24 +149,24 @@ async def analyze_legacy_code(code: str) -> Dict:
     prompt = f"""Analyze this legacy code and provide modernization plan:
     {code[:3000]}
     Return JSON with: vulnerabilities, dependencies, recommended_stack, migration_steps"""
-    result = await call_openai(prompt, temperature=0.3, max_tokens=2000)
+    result = await call_openai(prompt, temperature=0.3, max_tokens=2000, json_mode=True)
     if result:
         try:
-            return json.loads(result)
-        except:
-            pass
+            return json.loads(_strip_fences(result))
+        except Exception as e:
+            print(f"analyze_legacy_code parse error: {type(e).__name__}: {e}")
     return {}
 
 async def generate_agent_schema(url: str) -> Dict:
     """Agent-Ready - Generate JSON-LD and micro-APIs"""
     prompt = f"""Analyze {url} and generate AI-agent-ready schema.
     Return JSON with: json_ld_schema, micro_apis, product_catalog_structure"""
-    result = await call_openai(prompt, temperature=0.3, max_tokens=2000)
+    result = await call_openai(prompt, temperature=0.3, max_tokens=2000, json_mode=True)
     if result:
         try:
-            return json.loads(result)
-        except:
-            pass
+            return json.loads(_strip_fences(result))
+        except Exception as e:
+            print(f"analyze_legacy_code parse error: {type(e).__name__}: {e}")
     return {}
 
 # Health check
