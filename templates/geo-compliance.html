@@ -3,18 +3,54 @@
 {% block content %}
 <div class="page-hero bg-gradient-primary text-white py-5">
     <div class="container py-4">
-        <span class="badge bg-info text-dark mb-2 px-3 py-2">💡 Concept</span>
+        <span class="badge bg-info text-dark mb-2 px-3 py-2">Concept</span>
         <h1 class="display-4 fw-bold">Geo-Compliance Shield</h1>
         <p class="lead">Hire globally without legal nightmares. AI-drafted compliant contracts. Cross-border payouts. Zero regulatory friction.</p>
     </div>
 {% include "includes/beta_badge.html" %}
-
 </div>
 
 <div class="container py-5">
     <div class="row mb-5">
-        <div class="col-lg-6"><h2 class="fw-bold">Global Hiring Is a Legal Minefield</h2><p class="lead">Every country has different labor laws, tax codes, IP assignment rules, and payment regulations. One wrong clause can cost you thousands in penalties.</p><p>Geo-Compliance Shield analyzes the legal requirements of both the hiring company's country and the contractor's jurisdiction, then generates bulletproof contracts, handles compliant milestone-based escrow payments, and manages cross-border payouts.</p></div>
-        <div class="col-lg-6"><div class="bg-dark text-white p-4 rounded"><h3 class="as-h4">What It Covers</h3><ul><li>📜 Jurisdiction-aware contracts</li><li>🔒 IP assignment clauses</li><li>💰 Compliant milestone escrow (via Dokets VouchAI)</li><li>🏦 Cross-border payouts in 13 currencies</li><li>📊 Tax withholding & reporting</li><li>⚖️ Labor law compliance in 50+ countries</li></ul></div></div>
+        <div class="col-lg-6">
+            <h2 class="fw-bold">Global Hiring Is a Legal Minefield</h2>
+            <p class="lead">Every country has different labor laws, tax codes, IP assignment rules, and payment regulations. One wrong clause can cost you thousands in penalties.</p>
+            <p>Geo-Compliance Shield analyzes the legal requirements of both the hiring company's country and the contractor's jurisdiction, then gives you compliance guidance per country.</p>
+        </div>
+        <div class="col-lg-6">
+            <div class="bg-dark text-white p-4 rounded">
+                <h3 class="as-h4 mb-3">Run a Compliance Check</h3>
+                <form onsubmit="runGeoCheck(event)" id="geoForm">
+                    <div class="mb-3">
+                        <label class="form-label text-white-50">Countries involved (comma-separated)</label>
+                        <input type="text" class="form-control" id="geoCountries" placeholder="India, USA, UK" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-white-50">Service Type</label>
+                        <select class="form-select" id="geoService">
+                            <option>IT Services</option>
+                            <option>Design Services</option>
+                            <option>Consulting</option>
+                            <option>Content Writing</option>
+                            <option>Data Analysis</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-white-50">Payment Method</label>
+                        <select class="form-select" id="geoPayment">
+                            <option>Bank Transfer</option>
+                            <option>Escrow (Dokets VouchAI)</option>
+                            <option>PayPal</option>
+                            <option>Razorpay</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100" id="geoSubmitBtn">
+                        Check Compliance &mdash; 15 credits
+                    </button>
+                </form>
+                <div id="geoOutput" class="mt-4"></div>
+            </div>
+        </div>
     </div>
 
     <div class="row g-4 mb-5 text-center">
@@ -24,27 +60,118 @@
         <div class="col-md-3"><div class="card h-100 p-4"><i class="bi bi-cash-coin display-4 text-primary mb-3"></i><h4 class="as-h5">13 Currencies</h4><p class="text-muted">Cross-border payouts</p></div></div>
     </div>
 
-    <div class="row g-4 mb-5">
-        <div class="col-md-6"><div class="card h-100 p-4 text-center"><h4>📋 Per Contract</h4><h2 class="display-4 fw-bold"><span data-inr="999">₹999</span></h2><p>One contract + compliance check</p><a href="#" class="btn btn-outline-primary" onclick="generateContract(event)">Generate Contract</a></div></div>
-        <div class="col-md-6"><div class="card h-100 p-4 text-center bg-light"><h3 class="as-h4">🔄 Managed Payroll</h3><h2 class="display-4 fw-bold">3%</h2><p>Of contractor payments</p><a href="#" class="btn btn-primary" onclick="startHiring(event)">Start Hiring Globally</a></div></div>
-    </div>
-
     <div class="text-center p-5 bg-light rounded">
         <h3>Are Your Contractor Agreements Safe?</h3>
         <p class="mb-4">Upload your existing contract. Our AI scans for hidden risks.</p>
         <a href="/contract-risk-radar" class="btn btn-primary btn-lg">Free Contract Risk Radar</a>
     </div>
 </div>
+
 <script>
-function generateContract(event) {
+async function runGeoCheck(event) {
     event.preventDefault();
-    // Session G6: feature under development — capture interest instead
-    window.notifyMe('Contract Generation');
+    const countriesRaw = document.getElementById('geoCountries').value || '';
+    const countries = countriesRaw.split(',').map(function(s) { return s.trim(); }).filter(Boolean);
+    const serviceType = document.getElementById('geoService').value;
+    const paymentMethod = document.getElementById('geoPayment').value;
+
+    if (countries.length === 0) {
+        alert('Please enter at least one country.');
+        return;
+    }
+
+    const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    if (!authToken || !email) {
+        alert('Please log in to run a compliance check.');
+        window.location.href = '/login?next=/geo-compliance';
+        return;
+    }
+
+    const btn = document.getElementById('geoSubmitBtn');
+    const out = document.getElementById('geoOutput');
+    btn.disabled = true;
+    btn.textContent = 'Checking... this takes 15-30 seconds';
+    out.innerHTML = '<div class="text-white-50 text-center py-3"><div class="spinner-border spinner-border-sm text-light"></div><p class="mt-2 mb-0">Analyzing compliance for ' + countries.join(', ') + '...</p></div>';
+
+    try {
+        const res = await fetch('/api/products/geo-compliance/check', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authToken
+            },
+            body: JSON.stringify({email: email, countries: countries, service_type: serviceType, payment_method: paymentMethod})
+        });
+
+        if (res.status === 401) {
+            out.innerHTML = '<div class="alert alert-danger">Please log in.</div>';
+            window.location.href = '/login?next=/geo-compliance';
+            return;
+        }
+        if (res.status === 402) {
+            out.innerHTML = '<div class="alert alert-warning">Not enough credits. <a href="/ai-credits-pricing" class="alert-link">Top up</a>.</div>';
+            return;
+        }
+
+        const data = await res.json();
+        renderGeoResult(out, data);
+    } catch (e) {
+        out.innerHTML = '<div class="alert alert-danger">Error: ' + e.message + '</div>';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Check Compliance — 15 credits';
+    }
 }
 
+function renderGeoResult(out, data) {
+    if (data.status !== 'success') {
+        out.innerHTML = '<div class="alert alert-danger">' + (data.message || 'Compliance check failed') + '</div>';
+        return;
+    }
+    const risk = (data.risk_level || 'MEDIUM').toUpperCase();
+    const riskColor = risk === 'LOW' ? 'success' : (risk === 'MEDIUM' ? 'warning' : 'danger');
+    let html = '<div class="card bg-light text-dark mb-2"><div class="card-body">';
+    html += '<div class="d-flex justify-content-between align-items-start mb-2">';
+    html += '<div><strong>Check ' + (data.check_id || '') + '</strong><br><small class="text-muted">' + (data.analysis_mode || '') + '</small></div>';
+    html += '<div class="text-end"><span class="badge bg-' + riskColor + '">' + risk + ' risk</span></div>';
+    html += '</div>';
+    if (data.requires_legal_review) {
+        html += '<p class="mb-2"><span class="badge bg-warning text-dark">Requires legal review</span></p>';
+    }
+    if (data.verdict) {
+        html += '<p class="mb-0"><strong>Verdict:</strong> ' + data.verdict + '</p>';
+    }
+    html += '</div></div>';
+
+    if (data.compliance && data.compliance.length) {
+        html += '<h6 class="text-white mt-3">Per-Country Compliance</h6>';
+        data.compliance.forEach(function(c) {
+            html += '<div class="border-bottom border-secondary py-2">';
+            html += '<div class="text-white"><strong>' + (c.country || '') + '</strong></div>';
+            const keys = Object.keys(c).filter(function(k) { return k !== 'country'; });
+            keys.forEach(function(k) {
+                html += '<div class="text-white-50 small">' + k.replace(/_/g, ' ') + ': ' + (c[k] || '') + '</div>';
+            });
+            html += '</div>';
+        });
+    }
+
+    if (data.critical_actions && data.critical_actions.length) {
+        html += '<div class="alert alert-warning py-2 mt-3 mb-0"><strong>Critical Actions</strong><ul class="mb-0 mt-1">';
+        data.critical_actions.forEach(function(a) { html += '<li>' + a + '</li>'; });
+        html += '</ul></div>';
+    }
+    out.innerHTML = html;
+}
+
+// Paid tiers — kept as interest capture.
+function generateContract(event) {
+    event.preventDefault();
+    window.notifyMe('Contract Generation');
+}
 function startHiring(event) {
     event.preventDefault();
-    // Session G6: feature under development — capture interest instead
     window.notifyMe('Global Hiring');
 }
 </script>
