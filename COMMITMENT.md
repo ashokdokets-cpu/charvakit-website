@@ -3,7 +3,36 @@
 **Purpose:** Track every planned-but-not-completed item. Nothing gets lost again.
 **Created:** 2026-09-20
 **Last updated:** 2026-09-25
-**HEAD:** c2c67d7
+**HEAD:** 0faabd1
+
+
+### RESOLVED — Mock Drives + Versant routes auth (2026-09-26)
+
+**Commits:** `2b972a0` (backend) → `<frontend commit>` (frontend)
+
+**Backend:** 10 routes now require `require_auth_for_email`:
+- POST /api/versant/start-session
+- POST /api/versant/record-audio (multipart — auth email read from form)
+- POST /api/versant/submit-text
+- POST /api/versant/complete
+- GET  /api/versant/sections (auth-only)
+- POST /api/mock/start-complete
+- POST /api/mock/submit-complete
+- POST /api/mock/complete-full
+- GET  /api/company-patterns/{id} (auth-only)
+- POST /api/voice/tts
+
+**Frontend:** 
+- `templates/versant.html` — 5 fetches now send `Authorization` header
+- `templates/companies.html` — 4 fetches now send `Authorization` header + email in body
+
+**Verified:** mismatch email → 403, missing email → 401, valid request → route runs.
+
+**Note:** Two routes (`submit-complete`, `complete-full`) previously sent no email in the body. Frontend updated.
+
+**Follow-up:** `/api/voice/tts` is called from `versant.html` (TTS playback). Needs manual verification of the auth header patch — wasn't in the frontend batch because the call is generated dynamically. Flag for spot-check.
+
+**Verdict:** DONE 2026-09-26
 
 ### FLAGGED — /api/assessment/* routes appear to be dead code (2026-09-26)
 

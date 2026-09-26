@@ -370,7 +370,7 @@ function playCurrentAudio() {
   var item = VS.flatQuestions[VS.currentIdx];
   fetch('/api/voice/tts', {
     method: 'POST',
-    headers: {'Content-Type': 'application/json'},
+    headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '')},
     body: JSON.stringify({text: item.text, email: VS.email})
   }).then(function(r) { return r.json(); })
     .then(function(j) {
