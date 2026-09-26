@@ -30,7 +30,7 @@
                         <input type="number" class="form-control" id="rsExp" min="0" max="50" placeholder="e.g. 3" required>
                     </div>
                     <button type="submit" class="btn btn-primary w-100" id="rsSubmitBtn">
-                        Get Matched &mdash; 15 credits
+                        Get Matched &mdash; 20 credits
                     </button>
                 </form>
                 <div id="rsOutput" class="mt-4"></div>
@@ -111,7 +111,7 @@ async function runMatch(event) {
         out.innerHTML = '<div class="alert alert-danger">Error: ' + e.message + '</div>';
     } finally {
         btn.disabled = false;
-        btn.textContent = 'Get Matched — 15 credits';
+        btn.textContent = 'Get Matched — 20 credits';
     }
 }
 

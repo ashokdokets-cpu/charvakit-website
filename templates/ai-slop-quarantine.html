@@ -38,7 +38,7 @@
                         <textarea class="form-control" id="slopCode" rows="8" placeholder="// TODO: fix this&#10;import { useState } from 'react';&#10;console.log('debug');&#10;function function foo() { }" required></textarea>
                     </div>
                     <button type="submit" class="btn btn-primary w-100" id="slopSubmitBtn">
-                        Scan for AI Slop &mdash; 15 credits
+                        Scan for AI Slop &mdash; 10 credits
                     </button>
                 </form>
                 <div id="slopOutput" class="mt-4"></div>
@@ -110,7 +110,7 @@ async function runSlopScan(event) {
         out.innerHTML = '<div class="alert alert-danger">Error: ' + e.message + '</div>';
     } finally {
         btn.disabled = false;
-        btn.textContent = 'Scan for AI Slop — 15 credits';
+        btn.textContent = 'Scan for AI Slop — 10 credits';
     }
 }
 
