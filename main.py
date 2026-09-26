@@ -7202,6 +7202,13 @@ async def get_versant_section(section_id: str):
 @app.post("/api/versant/record-audio")
 async def record_audio(request: Request):
     """Upload audio for one Versant question; Whisper transcribes it. Charges 3 credits."""
+    # Extract auth from form field `email` and require a valid token
+    _form_for_auth = await request.form()
+    _auth_email = (_form_for_auth.get("email") or "").strip().lower()
+    if not _auth_email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, _auth_email)
+
     content_type = request.headers.get("content-type", "")
     if "multipart/form-data" not in content_type:
         return JSONResponse({"status": "error", "message": "multipart/form-data required"}, status_code=400)
@@ -7251,6 +7258,7 @@ async def submit_text(request: Request):
     guard = require_credits_from_data(data, "versant_submit_text")
     if guard.get("status") != "success":
         return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+    require_auth_for_email(request, guard["email"])
 
     result = cbt_versant.save_text_answer(
         data.get("session_id"),
@@ -7273,6 +7281,7 @@ async def versant_complete(request: Request):
     guard = require_credits_from_data(data, "versant_complete")
     if guard.get("status") != "success":
         return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+    require_auth_for_email(request, guard["email"])
 
     session_id = data.get("session_id")
     if not session_id:
@@ -7292,8 +7301,9 @@ async def versant_session_get(session_id: str):
 
 
 @app.get("/api/versant/sections")
-async def versant_sections_list():
+async def versant_sections_list(request: Request):
     """List all Versant sections with metadata."""
+    require_auth(request)
     return cbt_versant.get_all_sections()
 
 
@@ -7558,6 +7568,7 @@ async def start_versant_session(request: Request):
     guard = require_credits_from_data(data, "versant_start_session")
     if guard.get("status") != "success":
         return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+    require_auth_for_email(request, guard["email"])
 
     result = cbt_versant.create_session(guard["email"])
     if result.get("status") == "success":
@@ -7826,12 +7837,17 @@ async def start_complete_mock(request: Request):
     guard = require_credits_from_data(data, "company_mock_drive")
     if guard.get("status") != "success":
         return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+    require_auth_for_email(request, guard["email"])
     return complete_mock.start_mock_drive(guard["email"], data.get("company_id"))
 
 
 @app.post("/api/mock/submit-complete")
 async def submit_complete_answer(request: Request):
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     return complete_mock.submit_answer(
         data.get("session_id"),
         data.get("section_name"),
@@ -7842,6 +7858,10 @@ async def submit_complete_answer(request: Request):
 @app.post("/api/mock/complete-full")
 async def complete_full_mock(request: Request):
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     return complete_mock.complete_mock(data.get("session_id"))
 
 
@@ -7849,7 +7869,8 @@ async def complete_full_mock(request: Request):
 from multi_pattern_company import multi_pattern
 
 @app.get("/api/company-patterns/{company_id}")
-async def get_company_patterns(company_id: str):
+async def get_company_patterns(request: Request, company_id: str):
+    require_auth(request)
     return multi_pattern.get_company_patterns(company_id)
 
 @app.post("/api/company-patterns/start")
@@ -8463,6 +8484,10 @@ from elevenlabs_voice import elevenlabs_voice
 @app.post("/api/voice/tts")
 async def text_to_speech(request: Request):
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     from credit_guard import require_credits_from_data
     guard = require_credits_from_data(data, "voice_tts")
     if guard.get("status") != "success":
