@@ -1366,6 +1366,32 @@ async def api_me(request: Request):
 
 @app.post("/api/contact")
 async def submit_contact(data: ContactRequest):
+    # Bot heuristics (see tracker 2026-09-25). Silently accept if matched.
+    import re as _re
+    def _is_bot_like(name: str, email: str, message: str) -> bool:
+        if not message or len(message.strip()) < 3:
+            return True
+        if message.strip().replace(" ", "").isdigit():
+            return True
+        for w in (name or "").lower().split():
+            run = 0; mx = 0
+            for ch in w:
+                if ch in "bcdfghjklmnpqrstvwxyz":
+                    run += 1; mx = max(mx, run)
+                else:
+                    run = 0
+            if mx >= 4:
+                return True
+        local = (email or "").split("@")[0]
+        parts = [p for p in local.split(".") if p]
+        if len(parts) >= 4 and sum(1 for p in parts if len(p) == 1) >= len(parts) - 1:
+            return True
+        return False
+
+    if _is_bot_like(data.name or "", data.email or "", data.message or ""):
+        logger.warning(f"Contact form rejected as bot: {data.email}")
+        return JSONResponse({"status": "success", "message": "Thank you for your message."})
+
     # 1) Save to DB (best-effort)
     db_saved = False
     try:

@@ -30,6 +30,10 @@
             <div class="card border-0 shadow-sm">
                 <div class="card-body p-4">
                     <form onsubmit="submitContact(event)">
+                        <div style="position:absolute; left:-9999px;" aria-hidden="true">
+                            <label>Website (leave blank)</label>
+                            <input type="text" id="websiteUrl" name="website" tabindex="-1" autocomplete="off">
+                        </div>
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label">Name *</label>
@@ -121,6 +125,13 @@
 <script>
 async function submitContact(e) {
     e.preventDefault();
+    // Honeypot check: real users leave this blank; bots fill it
+    const _hp = document.getElementById('websiteUrl');
+    if (_hp && _hp.value) {
+        const msg = document.getElementById('contactMsg');
+        if (msg) { msg.textContent = 'Thank you! We will be in touch.'; msg.style.display = 'block'; }
+        return;
+    }
     const data = {
         name: document.getElementById('name').value,
         email: document.getElementById('email').value,
