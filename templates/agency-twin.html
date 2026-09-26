@@ -3,18 +3,43 @@
 {% block content %}
 <div class="page-hero bg-gradient-primary text-white py-5">
     <div class="container py-4">
-        <span class="badge bg-info text-dark mb-2 px-3 py-2">💡 Concept</span>
+        <span class="badge bg-info text-dark mb-2 px-3 py-2">Concept</span>
         <h1 class="display-4 fw-bold">Agency-Twin</h1>
         <p class="lead">Your AI-powered virtual COO. Stop doing admin. Start building. We handle the rest.</p>
     </div>
 {% include "includes/beta_badge.html" %}
-
 </div>
 
 <div class="container py-5">
     <div class="row mb-5">
-        <div class="col-lg-6"><h2 class="fw-bold">Freelancers Lose 20+ Hours/Week on Admin</h2><p class="lead">Scoping projects, writing proposals, managing client emails, invoicing — all uncompensated work that burns you out.</p><p>Agency-Twin connects to your communication channels (email, Slack, WhatsApp) and automatically drafts project scopes, estimates timelines, creates tasks, and provisions vetted talent from Charvak's pool when you're over capacity.</p></div>
-        <div class="col-lg-6"><div class="bg-dark text-white p-4 rounded"><h3 class="as-h4">What Agency-Twin Does</h3><ul><li>📧 Auto-drafts proposals from client emails</li><li>⏱️ Estimates timelines & costs</li><li>📋 Creates granular task breakdowns</li><li>👥 Provisions freelancers from Charvak pool</li><li>💰 Handles invoicing & payments</li></ul></div></div>
+        <div class="col-lg-6">
+            <h2 class="fw-bold">Freelancers Lose 20+ Hours/Week on Admin</h2>
+            <p class="lead">Scoping projects, writing proposals, managing client emails, invoicing — all uncompensated work that burns you out.</p>
+            <p>Agency-Twin analyzes your agency footprint and identifies automation opportunities that save you hours every month.</p>
+        </div>
+        <div class="col-lg-6">
+            <div class="bg-dark text-white p-4 rounded">
+                <h3 class="as-h4 mb-3">Analyze Your Agency</h3>
+                <form onsubmit="runAgencyAnalysis(event)" id="agencyForm">
+                    <div class="mb-3">
+                        <label class="form-label text-white-50">Agency Name</label>
+                        <input type="text" class="form-control" id="agencyName" placeholder="Your agency name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-white-50">Current Clients</label>
+                        <input type="number" class="form-control" id="agencyClients" placeholder="e.g. 5" min="1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-white-50">Monthly Revenue (INR)</label>
+                        <input type="number" class="form-control" id="agencyRevenue" placeholder="e.g. 100000" min="1000" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100" id="agencySubmitBtn">
+                        Analyze Agency &mdash; 20 credits
+                    </button>
+                </form>
+                <div id="agencyOutput" class="mt-4"></div>
+            </div>
+        </div>
     </div>
 
     <div class="row g-4 mb-5 text-center">
@@ -24,21 +49,135 @@
         <div class="col-md-3"><div class="card h-100 p-4"><i class="bi bi-cash display-4 text-primary mb-3"></i><h4 class="as-h5">Auto-Invoicing</h4><p class="text-muted">Never chase payments again</p></div></div>
     </div>
 
-    <div class="row g-4 mb-5">
-        <div class="col-md-6"><div class="card h-100 p-4 text-center"><h4>🆓 Solo</h4><h2 class="display-4 fw-bold"><span data-inr="0">₹0</span></h2><p>5 projects/month</p><a href="/burnout-calculator" class="btn btn-outline-primary">Start Free</a></div></div>
-        <div class="col-md-6"><div class="card h-100 p-4 text-center bg-light"><h3 class="as-h4">⭐ Pro</h3><h2 class="display-4 fw-bold"><span data-inr="999">₹999</span></h2><p>/month · Unlimited projects</p><a href="#" class="btn btn-primary" onclick="agencyGoPro(event)">Go Pro</a></div></div>
-    </div>
-
     <div class="text-center p-5 bg-light rounded">
         <h3>How Much Time Are You Losing?</h3>
         <p class="mb-4">Calculate your annual uncompensated admin hours.</p>
         <a href="/burnout-calculator" class="btn btn-primary btn-lg">Free Burnout Calculator</a>
     </div>
 </div>
+
 <script>
+async function runAgencyAnalysis(event) {
+    event.preventDefault();
+    const agencyName = document.getElementById('agencyName').value.trim();
+    const clients = parseInt(document.getElementById('agencyClients').value) || 0;
+    const revenue = parseFloat(document.getElementById('agencyRevenue').value) || 0;
+
+    if (!agencyName) {
+        alert('Please enter your agency name.');
+        return;
+    }
+    if (clients < 1) {
+        alert('Please enter at least 1 client.');
+        return;
+    }
+
+    const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    if (!authToken || !email) {
+        alert('Please log in to run an analysis.');
+        window.location.href = '/login?next=/agency-twin';
+        return;
+    }
+
+    const btn = document.getElementById('agencySubmitBtn');
+    const out = document.getElementById('agencyOutput');
+    btn.disabled = true;
+    btn.textContent = 'Analyzing... this takes 15-30 seconds';
+    out.innerHTML = '<div class="text-white-50 text-center py-3"><div class="spinner-border spinner-border-sm text-light"></div><p class="mt-2 mb-0">Analyzing ' + agencyName + ' (' + clients + ' clients)...</p></div>';
+
+    try {
+        const res = await fetch('/api/products/agency-twin/automate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authToken
+            },
+            body: JSON.stringify({email: email, agency_name: agencyName, current_clients: clients, monthly_revenue: revenue})
+        });
+
+        if (res.status === 401) {
+            out.innerHTML = '<div class="alert alert-danger">Please log in.</div>';
+            window.location.href = '/login?next=/agency-twin';
+            return;
+        }
+        if (res.status === 402) {
+            out.innerHTML = '<div class="alert alert-warning">Not enough credits. <a href="/ai-credits-pricing" class="alert-link">Top up</a>.</div>';
+            return;
+        }
+
+        const data = await res.json();
+        renderAgencyResult(out, data);
+    } catch (e) {
+        out.innerHTML = '<div class="alert alert-danger">Error: ' + e.message + '</div>';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Analyze Agency — 20 credits';
+    }
+}
+
+function renderAgencyResult(out, data) {
+    if (data.status !== 'success') {
+        out.innerHTML = '<div class="alert alert-danger">' + (data.message || 'Analysis failed') + '</div>';
+        return;
+    }
+    let html = '<div class="card bg-light text-dark mb-2"><div class="card-body">';
+    html += '<div class="d-flex justify-content-between align-items-start mb-2">';
+    html += '<div><strong>Twin ' + (data.twin_id || '') + '</strong><br><small class="text-muted">' + (data.analysis_mode || '') + '</small></div>';
+    html += '</div>';
+    html += '<div class="row text-center">';
+    html += '<div class="col-6"><div class="text-muted small">Time Saved / Month</div><h5 class="mb-0 text-success">' + (data.total_time_saved_monthly || 0) + ' hrs</h5></div>';
+    html += '<div class="col-6"><div class="text-muted small">Revenue Uplift</div><h5 class="mb-0 text-success">₹' + (data.projected_revenue_increase || 0).toLocaleString('en-IN') + '</h5></div>';
+    html += '</div>';
+    if (data.verdict) {
+        html += '<hr class="my-2"><p class="mb-0"><strong>Verdict:</strong> ' + data.verdict + '</p>';
+    }
+    html += '</div></div>';
+
+    if (data.automation_opportunities && data.automation_opportunities.length) {
+        html += '<h6 class="text-white mt-3">Automation Opportunities</h6>';
+        data.automation_opportunities.forEach(function(o) {
+            const lvl = (o.automation_level || '').toUpperCase();
+            const badge = lvl === 'FULL' ? 'success' : (lvl === 'AI-POWERED' ? 'info' : 'warning');
+            html += '<div class="border-bottom border-secondary py-2">';
+            html += '<div class="d-flex justify-content-between">';
+            html += '<span class="text-white">' + (o.area || '') + '</span>';
+            html += '<span class="badge bg-' + badge + '">' + (o.automation_level || 'PARTIAL') + '</span>';
+            html += '</div>';
+            if (o.time_saved_hrs) html += '<div class="text-white-50 small">' + o.time_saved_hrs + ' hrs/month saved</div>';
+            if (o.description) html += '<div class="text-white-50 small">' + o.description + '</div>';
+            html += '</div>';
+        });
+    }
+
+    if (data.priority_actions && data.priority_actions.length) {
+        html += '<div class="alert alert-warning py-2 mt-3 mb-2"><strong>Priority Actions</strong><ul class="mb-0 mt-1">';
+        data.priority_actions.forEach(function(a) { html += '<li>' + a + '</li>'; });
+        html += '</ul></div>';
+    }
+    if (data.implementation_roadmap && data.implementation_roadmap.length) {
+        html += '<h6 class="text-white mt-3">Roadmap</h6><ul class="text-white-50 small">';
+        data.implementation_roadmap.forEach(function(item) {
+            if (typeof item === 'string') {
+                html += '<li>' + item + '</li>';
+            } else if (item && typeof item === 'object') {
+                // Render each key: value pair of the object
+                var parts = [];
+                Object.keys(item).forEach(function(k) {
+                    var label = k.replace(/_/g, ' ');
+                    parts.push('<strong>' + label + ':</strong> ' + item[k]);
+                });
+                html += '<li>' + parts.join(' · ') + '</li>';
+            }
+        });
+        html += '</ul>';
+    }
+    out.innerHTML = html;
+}
+
+// Paid tiers — kept as interest capture.
 function agencyGoPro(event) {
     event.preventDefault();
-    // Session G6: feature under development — capture interest instead
     window.notifyMe('Agency-Twin Pro');
 }
 </script>
