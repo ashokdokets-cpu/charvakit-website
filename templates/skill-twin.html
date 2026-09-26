@@ -3,49 +3,180 @@
 {% block content %}
 <div class="page-hero bg-gradient-primary text-white py-5">
     <div class="container py-4">
-        <span class="badge bg-info text-dark mb-2 px-3 py-2">💡 Concept</span>
+        <span class="badge bg-info text-dark mb-2 px-3 py-2">Concept</span>
         <h1 class="display-4 fw-bold">Skill-Twin Engine</h1>
         <p class="lead">Take an AI-powered coding simulation. Get a verified Skill-Twin Scorecard. Share it. Get hired.</p>
     </div>
 {% include "includes/beta_badge.html" %}
-
 </div>
 
 <div class="container py-5">
     <div class="row align-items-center mb-5">
         <div class="col-lg-6">
             <h2 class="fw-bold mb-4">Your Resume Doesn't Prove Skill. This Does.</h2>
-            <p class="lead">Companies are tired of fake resumes and interview roulette. Skill-Twin puts you through an adversarial AI simulation that tests real coding ability — and produces a tamper-proof scorecard.</p>
-            <div class="d-flex mb-3"><span class="step-number me-3">1</span><div><h3 class="as-h5">Choose Your Stack</h3><p class="text-muted">Python, JavaScript, React, Java, or 20+ technologies.</p></div></div>
-            <div class="d-flex mb-3"><span class="step-number me-3">2</span><div><h3 class="as-h5">Face the AI Simulator</h3><p class="text-muted">Real-time coding challenges, debugging, and system design.</p></div></div>
-            <div class="d-flex"><span class="step-number me-3">3</span><div><h3 class="as-h5">Get Your Scorecard</h3><p class="text-muted">Share your verified Skill-Twin Badge on LinkedIn & GitHub.</p></div></div>
+            <p class="lead">Companies are tired of fake resumes and interview roulette. Skill-Twin runs an AI assessment of your real skills and produces a shareable scorecard.</p>
+            <div class="d-flex mb-3"><span class="step-number me-3">1</span><div><h3 class="as-h5">List Your Skills</h3><p class="text-muted">Python, JavaScript, React, Java, or any technology.</p></div></div>
+            <div class="d-flex mb-3"><span class="step-number me-3">2</span><div><h3 class="as-h5">AI Analyzes</h3><p class="text-muted">Real skill-gap analysis, learning path, and recommendations.</p></div></div>
+            <div class="d-flex"><span class="step-number me-3">3</span><div><h3 class="as-h5">Get Your Scorecard</h3><p class="text-muted">Share your verified Skill-Twin result on LinkedIn & GitHub.</p></div></div>
         </div>
-        <div class="col-lg-6 text-center">
-            <div class="bg-dark text-white p-5 rounded-4">
-                <i class="bi bi-robot display-1 mb-3"></i>
-                <h4>Ready to Prove Yourself?</h4>
-                <p class="text-white-50">Take a free 10-min assessment and see your score.</p>
-                <a href="/skill-check" class="btn btn-primary btn-lg mt-3">Take Free Skill Check</a>
+        <div class="col-lg-6">
+            <div class="bg-dark text-white p-4 rounded">
+                <h3 class="as-h4 mb-3">Run Your Skill Assessment</h3>
+                <form onsubmit="runSkillTwin(event)" id="skillTwinForm">
+                    <div class="mb-3">
+                        <label class="form-label text-white-50">Your Skills (comma-separated)</label>
+                        <input type="text" class="form-control" id="stSkills" placeholder="Python, React, SQL" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-white-50">Years of Experience</label>
+                        <input type="number" class="form-control" id="stExp" min="0" max="50" placeholder="e.g. 3" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-white-50">Self-Rating (1-10)</label>
+                        <input type="number" class="form-control" id="stSelfRating" min="1" max="10" step="0.5" placeholder="e.g. 7" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100" id="stSubmitBtn">
+                        Run Assessment &mdash; 15 credits
+                    </button>
+                </form>
+                <div id="stOutput" class="mt-4"></div>
             </div>
         </div>
     </div>
 
     <div class="row g-4 mb-5 text-center">
-        <div class="col-md-4"><div class="card h-100 p-4"><i class="bi bi-shield-lock display-4 text-primary mb-3"></i><h5>Tamper-Proof</h5><p class="text-muted">AI-proctored, impossible to fake</p></div></div>
+        <div class="col-md-4"><div class="card h-100 p-4"><i class="bi bi-shield-lock display-4 text-primary mb-3"></i><h5>Tamper-Proof</h5><p class="text-muted">AI-analyzed, consistent methodology</p></div></div>
         <div class="col-md-4"><div class="card h-100 p-4"><i class="bi bi-linkedin display-4 text-primary mb-3"></i><h5>Share Anywhere</h5><p class="text-muted">LinkedIn, GitHub, portfolio</p></div></div>
         <div class="col-md-4"><div class="card h-100 p-4"><i class="bi bi-graph-up display-4 text-primary mb-3"></i><h5>Benchmarked</h5><p class="text-muted">See how you rank against peers</p></div></div>
     </div>
 
-    <div class="row g-4 mb-5">
-        <div class="col-md-4"><div class="card h-100 p-4 text-center"><h4>🆓 Free Check</h4><h2 class="display-4 fw-bold"><span data-inr="0">₹0</span></h2><p>Basic assessment</p><a href="/skill-check" class="btn btn-outline-primary">Try Free</a></div></div>
-        <div class="col-md-4"><div class="card h-100 p-4 text-center border-primary" style="border-width:2px;"><span class="badge bg-primary mb-2">Popular</span><h3 class="as-h4">⭐ Verified Badge</h3><h2 class="display-4 fw-bold"><span data-inr="499">₹499</span></h2><p>Full simulation + badge</p><a href="#" class="btn btn-primary" onclick="getVerified(event)">Get Verified</a></div></div>
-        <div class="col-md-4"><div class="card h-100 p-4 text-center"><h3 class="as-h4">🏢 Enterprise</h3><h2 class="display-4 fw-bold">Custom</h2><p>Bulk assessments</p><a href="/contact" class="btn btn-outline-primary">Contact Us</a><br><a href="/custom-assessment" class="btn btn-outline-primary btn-sm mt-2">Upload Custom Stack</a><br><a href="/ai-generate-stack" class="btn btn-outline-primary btn-sm mt-2">🤖 AI Generate Stack</a></div></div>
+    <div class="text-center p-5 bg-light rounded">
+        <h3>Take a Free Skill Check</h3>
+        <p class="mb-4">Try the basic assessment first, upgrade to the full simulation.</p>
+        <a href="/skill-check" class="btn btn-primary btn-lg">Take Free Skill Check</a>
     </div>
 </div>
+
 <script>
+async function runSkillTwin(event) {
+    event.preventDefault();
+    const skillsRaw = document.getElementById('stSkills').value || '';
+    const skills = skillsRaw.split(',').map(function(s) { return s.trim(); }).filter(Boolean);
+    const experience = parseInt(document.getElementById('stExp').value) || 0;
+    const selfRating = parseFloat(document.getElementById('stSelfRating').value) || 5;
+
+    if (skills.length === 0) {
+        alert('Please enter at least one skill.');
+        return;
+    }
+
+    const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    if (!authToken || !email) {
+        alert('Please log in to run the assessment.');
+        window.location.href = '/login?next=/skill-twin';
+        return;
+    }
+
+    const btn = document.getElementById('stSubmitBtn');
+    const out = document.getElementById('stOutput');
+    btn.disabled = true;
+    btn.textContent = 'Assessing... this takes 15-30 seconds';
+    out.innerHTML = '<div class="text-white-50 text-center py-3"><div class="spinner-border spinner-border-sm text-light"></div><p class="mt-2 mb-0">Analyzing ' + skills.length + ' skills...</p></div>';
+
+    try {
+        const res = await fetch('/api/products/skill-twin/assess', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authToken
+            },
+            body: JSON.stringify({email: email, skills: skills, experience_years: experience, self_rating: selfRating})
+        });
+
+        if (res.status === 401) {
+            out.innerHTML = '<div class="alert alert-danger">Please log in.</div>';
+            window.location.href = '/login?next=/skill-twin';
+            return;
+        }
+        if (res.status === 402) {
+            out.innerHTML = '<div class="alert alert-warning">Not enough credits. <a href="/ai-credits-pricing" class="alert-link">Top up</a>.</div>';
+            return;
+        }
+
+        const data = await res.json();
+        renderSkillTwinResult(out, data);
+    } catch (e) {
+        out.innerHTML = '<div class="alert alert-danger">Error: ' + e.message + '</div>';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Run Assessment — 15 credits';
+    }
+}
+
+function _renderList(items) {
+    var html = '<ul class="mb-0 small">';
+    items.forEach(function(item) {
+        if (typeof item === 'string') {
+            html += '<li>' + item + '</li>';
+        } else if (item && typeof item === 'object') {
+            var parts = [];
+            Object.keys(item).forEach(function(k) {
+                var label = k.replace(/_/g, ' ');
+                parts.push('<strong>' + label + ':</strong> ' + item[k]);
+            });
+            html += '<li>' + parts.join(' · ') + '</li>';
+        }
+    });
+    html += '</ul>';
+    return html;
+}
+
+function renderSkillTwinResult(out, data) {
+    if (data.status !== 'success') {
+        out.innerHTML = '<div class="alert alert-danger">' + (data.message || 'Assessment failed') + '</div>';
+        return;
+    }
+    const score = data.verified_score || 0;
+    const scoreColor = score >= 80 ? 'success' : (score >= 60 ? 'warning' : 'danger');
+    let html = '<div class="card bg-light text-dark mb-2"><div class="card-body">';
+    html += '<div class="d-flex justify-content-between align-items-start mb-2">';
+    html += '<div><strong>Twin ' + (data.twin_id || '') + '</strong><br><small class="text-muted">' + (data.analysis_mode || '') + '</small></div>';
+    if (data.badge_eligible) html += '<span class="badge bg-success">Badge Eligible</span>';
+    html += '</div>';
+    html += '<div class="row text-center">';
+    html += '<div class="col-4"><div class="text-muted small">Verified Score</div><h4 class="mb-0 text-' + scoreColor + '">' + score + '</h4></div>';
+    html += '<div class="col-4"><div class="text-muted small">Self-Rating</div><h4 class="mb-0">' + (data.self_rating || 0) + '</h4></div>';
+    html += '<div class="col-4"><div class="text-muted small">Gap</div><h4 class="mb-0">' + (data.gap || 0) + '</h4></div>';
+    html += '</div>';
+    html += '<p class="mb-0 mt-2"><strong>Level:</strong> ' + (data.skill_level || '') + '</p>';
+    if (data.verdict) {
+        html += '<hr class="my-2"><p class="mb-0"><strong>Verdict:</strong> ' + data.verdict + '</p>';
+    }
+    html += '</div></div>';
+
+    if (data.skill_gaps && data.skill_gaps.length) {
+        html += '<h6 class="text-white mt-3">Skill Gaps</h6>';
+        html += '<div class="text-white-50">' + _renderList(data.skill_gaps) + '</div>';
+    }
+    if (data.learning_path && data.learning_path.length) {
+        html += '<h6 class="text-white mt-3">Learning Path</h6>';
+        html += '<div class="text-white-50">' + _renderList(data.learning_path) + '</div>';
+    }
+    if (data.recommendations && data.recommendations.length) {
+        html += '<h6 class="text-white mt-3">Recommendations</h6>';
+        html += '<div class="text-white-50">' + _renderList(data.recommendations) + '</div>';
+    }
+    if (data.next_steps && data.next_steps.length) {
+        html += '<h6 class="text-white mt-3">Next Steps</h6>';
+        html += '<div class="text-white-50">' + _renderList(data.next_steps) + '</div>';
+    }
+    out.innerHTML = html;
+}
+
+// Paid tier — kept as interest capture.
 function getVerified(event) {
     event.preventDefault();
-    // Session G6: feature under development — capture interest instead
     window.notifyMe('Skill-Twin Verification');
 }
 </script>
