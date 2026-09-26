@@ -70,7 +70,7 @@ async function generateJobAd(e) {
         salary_range: document.getElementById('salaryRange').value
     };
     const resp = await fetch('/api/marketing/job-ad', {
-        method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)
+        method: 'POST', headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken}, body: JSON.stringify({...data, email: email})
     });
     const result = await resp.json();
     document.getElementById('jobAdOutput').innerHTML = `<div class="p-3 bg-light rounded"><pre style="white-space:pre-wrap;font-size:14px;">${result.ad_text}</pre></div>`;
@@ -84,7 +84,7 @@ async function generateSocialPost(e) {
         audience: document.getElementById('postAudience').value
     };
     const resp = await fetch('/api/marketing/social-post', {
-        method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)
+        method: 'POST', headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken}, body: JSON.stringify({...data, email: email})
     });
     const result = await resp.json();
     document.getElementById('socialPostOutput').innerHTML = `<div class="p-3 bg-light rounded"><pre style="white-space:pre-wrap;font-size:14px;">${result.post_text}</pre></div>`;

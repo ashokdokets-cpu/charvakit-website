@@ -161,8 +161,8 @@ async function submitAnswer() {
     try {
         const r = await fetch('/api/interview-prep/submit', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
+            headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '')},
+            body: JSON.stringify({email: (localStorage.getItem('userEmail') || ''), 
                 session_id: sessionId,
                 answer_id: currentAnswerId,
                 answer: answer
