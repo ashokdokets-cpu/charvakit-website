@@ -17,6 +17,48 @@
         <div class="col-lg-6"><div class="bg-dark text-white p-4 rounded"><h3 class="as-h4">What AuditBot Scans</h3><ul><li>🔒 Security vulnerabilities (OWASP Top 10)</li><li>📦 Outdated dependencies</li><li>🐛 Bug patterns & code smells</li><li>⚡ Performance bottlenecks</li><li>♿ Accessibility (WCAG) issues</li><li>🔑 Exposed API keys & secrets</li></ul></div></div>
     </div>
 
+    <!-- ============ REAL AUDITBOT SCAN ============ -->
+    <div class="card border-0 shadow-lg mb-5">
+        <div class="card-body p-4">
+            <h3 class="mb-3">Run a Scan</h3>
+            <p class="text-muted">Paste a GitHub repo URL or website URL. We scan for security, performance, and accessibility issues.</p>
+            <form onsubmit="runAudit(event)">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Repo / Website URL</label>
+                        <input type="text" class="form-control" id="auditRepo" placeholder="https://github.com/user/repo" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Language</label>
+                        <select class="form-select" id="auditLang">
+                            <option>Python</option>
+                            <option>JavaScript</option>
+                            <option>TypeScript</option>
+                            <option>Go</option>
+                            <option>Java</option>
+                            <option>PHP</option>
+                            <option>Ruby</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Scan Type</label>
+                        <select class="form-select" id="auditType">
+                            <option value="security">Security</option>
+                            <option value="performance">Performance</option>
+                            <option value="w3c">Accessibility (W3C)</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary btn-lg w-100" id="auditSubmitBtn">
+                            Run Audit Scan &mdash; 25 credits
+                        </button>
+                    </div>
+                </div>
+            </form>
+            <div id="auditOutput" class="mt-4"></div>
+        </div>
+    </div>
+
     <div class="row g-4 mb-5 text-center">
         <div class="col-md-3"><div class="card h-100 p-4"><h3 class="text-danger">10 min</h3><p>Scan time</p></div></div>
         <div class="col-md-3"><div class="card h-100 p-4"><h3 class="text-danger">100+</h3><p>Checks run</p></div></div>
@@ -36,15 +78,118 @@
 </div>
 </div>
 <script>
-function auditGetFixed(event) {
+async function runAudit(event) {
     event.preventDefault();
-    // Session G6: feature under development — capture interest instead
-    window.notifyMe('AuditBot Fix');
+    const repoUrl = document.getElementById('auditRepo').value.trim();
+    const language = document.getElementById('auditLang').value;
+    const scanType = document.getElementById('auditType').value;
+
+    if (!repoUrl) { alert('Please enter a repo or website URL.'); return; }
+
+    const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    if (!authToken || !email) {
+        alert('Please log in to run a scan.');
+        window.location.href = '/login?next=/auditbot';
+        return;
+    }
+
+    const btn = document.getElementById('auditSubmitBtn');
+    const out = document.getElementById('auditOutput');
+    btn.disabled = true;
+    btn.textContent = 'Scanning... this takes 15-30 seconds';
+    out.innerHTML = '<div class="text-muted text-center py-4"><div class="spinner-border text-primary"></div><p class="mt-3">Running ' + scanType + ' scan on ' + language + '...</p></div>';
+
+    try {
+        const res = await fetch('/api/products/auditbot/scan', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authToken
+            },
+            body: JSON.stringify({email: email, repo_url: repoUrl, language: language, scan_type: scanType})
+        });
+
+        if (res.status === 401) {
+            out.innerHTML = '<div class="alert alert-danger">Please log in.</div>';
+            window.location.href = '/login?next=/auditbot';
+            return;
+        }
+        if (res.status === 402) {
+            out.innerHTML = '<div class="alert alert-warning">Not enough credits. <a href="/ai-credits-pricing">Top up</a>.</div>';
+            return;
+        }
+
+        const data = await res.json();
+        renderAuditResult(out, data);
+    } catch (e) {
+        out.innerHTML = '<div class="alert alert-danger">Error: ' + e.message + '</div>';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Run Audit Scan — 25 credits';
+    }
 }
 
+function renderAuditResult(out, data) {
+    if (data.status !== 'success') {
+        out.innerHTML = '<div class="alert alert-danger">' + (data.message || 'Scan failed') + '</div>';
+        return;
+    }
+    const score = data.overall_score || 0;
+    const scoreColor = score >= 80 ? 'success' : (score >= 60 ? 'warning' : 'danger');
+    let html = '';
+    html += '<div class="card bg-light mb-3"><div class="card-body">';
+    html += '<div class="d-flex justify-content-between align-items-center mb-3">';
+    html += '<div><strong>Scan ' + (data.scan_id || '') + '</strong><br><small class="text-muted">' + (data.analysis_mode || '') + '</small></div>';
+    html += '<div class="text-end"><span class="badge bg-' + scoreColor + ' fs-5">' + score + '/100</span></div>';
+    html += '</div>';
+    html += '<div class="row text-center">';
+    html += '<div class="col-4"><h4 class="text-danger mb-0">' + (data.critical_count || 0) + '</h4><small>Critical</small></div>';
+    html += '<div class="col-4"><h4 class="text-warning mb-0">' + (data.medium_count || 0) + '</h4><small>Medium</small></div>';
+    html += '<div class="col-4"><h4 class="text-info mb-0">' + (data.low_count || 0) + '</h4><small>Low</small></div>';
+    html += '</div>';
+    if (data.verdict) {
+        html += '<hr><p class="mb-0"><strong>Verdict:</strong> ' + data.verdict + '</p>';
+    }
+    html += '</div></div>';
+
+    if (data.findings && data.findings.length) {
+        html += '<h5 class="mt-3">Findings (' + data.findings.length + ')</h5>';
+        data.findings.forEach(function(f) {
+            const sev = (f.severity || 'LOW').toLowerCase();
+            const sevColor = sev === 'high' ? 'danger' : (sev === 'medium' ? 'warning' : 'info');
+            html += '<div class="card mb-2"><div class="card-body">';
+            html += '<div class="d-flex justify-content-between"><strong>' + (f.issue || 'Issue') + '</strong><span class="badge bg-' + sevColor + '">' + (f.severity || 'LOW') + '</span></div>';
+            html += '<div class="small text-muted mt-1">' + (f.file || '') + (f.line ? ':' + f.line : '') + '</div>';
+            if (f.description) html += '<p class="mt-2 mb-1">' + f.description + '</p>';
+            if (f.fix) html += '<p class="small mb-0"><strong>Fix:</strong> ' + f.fix + '</p>';
+            html += '</div></div>';
+        });
+    } else {
+        html += '<div class="alert alert-success">No findings. Clean scan.</div>';
+    }
+
+    if (data.top_risks && data.top_risks.length) {
+        html += '<h5 class="mt-4">Top Risks</h5><ul>';
+        data.top_risks.forEach(function(r) { html += '<li>' + r + '</li>'; });
+        html += '</ul>';
+    }
+    if (data.next_steps && data.next_steps.length) {
+        html += '<h5 class="mt-4">Next Steps</h5><ul>';
+        data.next_steps.forEach(function(s) { html += '<li>' + s + '</li>'; });
+        html += '</ul>';
+    }
+    out.innerHTML = html;
+}
+
+// Paid tiers — kept as interest capture (Session G6 pattern).
+// The auto-fix patch service and continuous monitoring are not yet shipped.
+function auditGetFixed(event) {
+    event.preventDefault();
+    window.notifyMe('AuditBot Fix');
+}
 function auditSubscribe(event) {
     event.preventDefault();
-    // Session G6: feature under development — capture interest instead
     window.notifyMe('AuditBot Subscription');
 }
 </script>
