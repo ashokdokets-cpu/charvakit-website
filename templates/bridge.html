@@ -158,71 +158,7 @@ async function calcRevenue(e) {
 }
 
 function premiumCalculator() {
-    const email = prompt('Enter your email:');
-    if (!email) return;
-    
-    const amount = 4999;
-    
-    if (!confirm('Unlock Advanced Calculator Features?\n\n₹4,999/month\n\n✅ Multiple cohort comparison\n✅ PDF export reports\n✅ White-label dashboard\n✅ API access\n\nProceed to payment?')) {
-        return;
-    }
-    
-    fetch('/api/payment/create-order', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-            amount: amount,
-            name: 'Bridge Premium Calculator',
-            method: 'razorpay'
-        })
-    })
-    .then(res => res.json())
-    .then(orderData => {
-        if (orderData.status === 'success' || orderData.order_id) {
-            const options = {
-                key: orderData.key_id || orderData.key || window.charvak_razorpay_key || 'rzp_live_TSniXv6CyEnZ9B',
-                amount: amount * 100,
-                currency: 'INR',
-                name: 'Charvak IT Consulting',
-                description: 'Bridge Premium Calculator (Monthly)',
-                order_id: orderData.order_id,
-                handler: function(response) {
-                    fetch('/api/payment/verify', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({
-                            method: 'razorpay',
-                            payment_id: response.razorpay_payment_id,
-                            order_id: response.razorpay_order_id,
-                            signature: response.razorpay_signature
-                        })
-                    })
-                    .then(r => r.json())
-                    .then(v => {
-                        if (v.verified) {
-                            fetch('/api/bridge/premium', {
-                                method: 'POST',
-                                headers: {'Content-Type': 'application/json'},
-                                body: JSON.stringify({
-                                    email: email,
-                                    payment_id: response.razorpay_payment_id
-                                })
-                            })
-                            .then(r => r.json())
-                            .then(j => {
-                                alert('✅ ' + (j.message || 'Premium Calculator unlocked!'));
-                                localStorage.setItem('bridge_premium', 'active');
-                            });
-                        }
-                    });
-                },
-                prefill: {email: email},
-                theme: {color: '#3ba591'}
-            };
-            const rzp = new Razorpay(options);
-            rzp.open();
-        }
-    });
+    window.notifyMe('Bridge Premium Calculator');
 }
 </script>
 {% endblock %}
