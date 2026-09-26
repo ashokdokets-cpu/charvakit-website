@@ -3789,6 +3789,10 @@ async def get_prep_session(session_id: str):
 @limiter.limit("60/minute")
 async def api_lock_in_breaker(request: Request):
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     from credit_guard import require_credits_from_data
     guard = require_credits_from_data(data, "product_lock_in_breaker")
     if guard.get("status") != "success":
@@ -3799,6 +3803,10 @@ async def api_lock_in_breaker(request: Request):
 @limiter.limit("60/minute")
 async def api_reverse_staffing(request: Request):
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     from credit_guard import require_credits_from_data
     guard = require_credits_from_data(data, "product_reverse_staffing")
     if guard.get("status") != "success":
@@ -3809,6 +3817,10 @@ async def api_reverse_staffing(request: Request):
 @limiter.limit("60/minute")
 async def api_auditbot(request: Request):
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     from credit_guard import require_credits_from_data
     guard = require_credits_from_data(data, "product_auditbot_scan")
     if guard.get("status") != "success":
@@ -3819,6 +3831,10 @@ async def api_auditbot(request: Request):
 @limiter.limit("60/minute")
 async def api_skill_twin(request: Request):
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     from credit_guard import require_credits_from_data
     guard = require_credits_from_data(data, "product_skill_twin")
     if guard.get("status") != "success":
@@ -3829,6 +3845,10 @@ async def api_skill_twin(request: Request):
 @limiter.limit("60/minute")
 async def api_micro_squads(request: Request):
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     from credit_guard import require_credits_from_data
     guard = require_credits_from_data(data, "product_micro_squads")
     if guard.get("status") != "success":
@@ -3839,6 +3859,10 @@ async def api_micro_squads(request: Request):
 @limiter.limit("60/minute")
 async def api_agency_twin(request: Request):
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     from credit_guard import require_credits_from_data
     guard = require_credits_from_data(data, "product_agency_twin")
     if guard.get("status") != "success":
@@ -3849,6 +3873,10 @@ async def api_agency_twin(request: Request):
 @limiter.limit("60/minute")
 async def api_geo_compliance(request: Request):
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     from credit_guard import require_credits_from_data
     guard = require_credits_from_data(data, "product_geo_compliance")
     if guard.get("status") != "success":
@@ -3859,6 +3887,10 @@ async def api_geo_compliance(request: Request):
 @limiter.limit("60/minute")
 async def api_design_token(request: Request):
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     from credit_guard import require_credits_from_data
     guard = require_credits_from_data(data, "product_design_token")
     if guard.get("status") != "success":
@@ -3869,6 +3901,10 @@ async def api_design_token(request: Request):
 @limiter.limit("60/minute")
 async def api_silent_killer(request: Request):
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     from credit_guard import require_credits_from_data
     guard = require_credits_from_data(data, "product_silent_killer")
     if guard.get("status") != "success":
@@ -3879,6 +3915,10 @@ async def api_silent_killer(request: Request):
 @limiter.limit("60/minute")
 async def api_ai_slop(request: Request):
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     from credit_guard import require_credits_from_data
     guard = require_credits_from_data(data, "product_ai_slop")
     if guard.get("status") != "success":
@@ -3889,6 +3929,10 @@ async def api_ai_slop(request: Request):
 @limiter.limit("60/minute")
 async def api_developer_entropy(request: Request):
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     from credit_guard import require_credits_from_data
     guard = require_credits_from_data(data, "product_developer_entropy")
     if guard.get("status") != "success":
