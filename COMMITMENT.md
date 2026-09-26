@@ -3,7 +3,7 @@
 **Purpose:** Track every planned-but-not-completed item. Nothing gets lost again.
 **Created:** 2026-09-20
 **Last updated:** 2026-09-27
-**HEAD:** bbb9291
+**HEAD:** 82ec76f
 
 
 ## Session 2026-09-26 / 2026-09-27 — Auth sweep + feature audit
