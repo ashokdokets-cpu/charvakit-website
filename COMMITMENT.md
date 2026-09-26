@@ -5,6 +5,63 @@
 **Last updated:** 2026-09-27
 **HEAD:** 82ec76f
 
+### FLAGGED — processToolPayment referenced but never defined (2026-09-27)
+
+`processToolPayment(amount, description, callback)` is called from at least
+4 templates (background-verification.html, bounty-swap.html, ref-swap.html,
+ghost-tracker.html) but is not defined anywhere in the codebase.
+
+Every call site throws ReferenceError — user clicks and nothing happens.
+
+Fixed tonight: premium-upsell.html (replaced with notifyMe fallback).
+
+Still broken:
+- background-verification.html:43
+- bounty-swap.html
+- ref-swap.html
+- ghost-tracker.html
+
+Fix: replace each with a real payment flow OR notifyMe interest capture.
+
+Verdict: FLAGGED — needs its own cleanup pass
+
+### FLAGGED — reverse-staffing experience field clears after submit (2026-09-27)
+
+The "Years of Experience" input on /reverse-staffing doesn't reliably
+send the typed value. After submit, `document.getElementById('rsExp').value`
+returns ''.
+
+Likely cause: `type="number"` blur/commit quirk in Chrome, or the
+`parseInt(value) || 0` fallback masking an empty value.
+
+Workaround options:
+- Server-side default: `experience = int(data.get("experience_years", 0) or 3)`
+- Frontend: read `getAttribute('value')` as fallback
+
+Verdict: FLAGGED — cosmetic, doesn't block the feature
+
+### FLAGGED — "AI-Slop Report Card" teaser shows hardcoded numbers (2026-09-27)
+
+The AI-Slop Quarantine page shows a second card labeled "AI-Slop Report
+Card" with sample stats like "45% AI Slop Detected", "7 WCAG Fails",
+"Code Bloat 34%". These are static demo numbers, not tied to the user's
+actual scan.
+
+Source: rendered from `includes/premium-upsell.html` or a similar shared
+partial (the strings aren't in the ai-slop-quarantine.html template).
+
+Concern: a user who just ran a real scan (e.g. 40/100 cleanliness, 5 issues)
+might be confused when a card below shows "45% AI Slop Detected" — the
+numbers don't match their result.
+
+Two options for a future session:
+- (a) Wire the teaser to the actual scan result (cleanliness_score,
+  issue_count) — pass them into the include.
+- (b) Remove the teaser card and let the real scan output stand alone.
+
+Verdict: FLAGGED — cosmetic, low priority
+
+
 ### RESOLVED — three-file verification pass (2026-09-27)
 
 Audited the three "unknown state" files flagged by earlier sessions:
