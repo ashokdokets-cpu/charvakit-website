@@ -8,13 +8,42 @@
         <p class="lead">AI-generated code flooding the web? We clean it up. Fix bloat, broken layouts, and accessibility errors.</p>
     </div>
 {% include "includes/beta_badge.html" %}
-
 </div>
 
 <div class="container py-5">
     <div class="row mb-5">
-        <div class="col-lg-6"><h2 class="fw-bold">The Internet Is Drowning in AI Slop</h2><p class="lead">Millions of sites are built with unrefined generative code — broken responsive layouts, plugin bloat, accessibility failures. Search engines penalize them. Users bounce.</p><p>AI-Slop Quarantine scans your site, strips plugin bloat, fixes broken component hierarchies, enforces WCAG accessibility, and injects authentic design textures that restore brand trust.</p></div>
-        <div class="col-lg-6"><div class="bg-dark text-white p-4 rounded"><h3 class="as-h4">What It Fixes</h3><ul><li>Strips plugin & code bloat</li><li>Fixes broken responsive layouts</li><li>Enforces WCAG 2.1 accessibility</li><li>Restores authentic design textures</li><li>Optimizes Core Web Vitals</li></ul></div></div>
+        <div class="col-lg-6">
+            <h2 class="fw-bold">The Internet Is Drowning in AI Slop</h2>
+            <p class="lead">Millions of sites are built with unrefined generative code — broken responsive layouts, plugin bloat, accessibility failures. Search engines penalize them. Users bounce.</p>
+            <p>AI-Slop Quarantine scans your code for slop patterns: dead code, redundant wrappers, unused imports, and structural issues.</p>
+        </div>
+        <div class="col-lg-6">
+            <div class="bg-dark text-white p-4 rounded">
+                <h3 class="as-h4 mb-3">Scan Your Code</h3>
+                <form onsubmit="runSlopScan(event)" id="slopScanForm">
+                    <div class="mb-3">
+                        <label class="form-label text-white-50">Language</label>
+                        <select class="form-select" id="slopLang">
+                            <option>JavaScript</option>
+                            <option>TypeScript</option>
+                            <option>Python</option>
+                            <option>Java</option>
+                            <option>Go</option>
+                            <option>PHP</option>
+                            <option>Ruby</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-white-50">Paste your code</label>
+                        <textarea class="form-control" id="slopCode" rows="8" placeholder="// TODO: fix this&#10;import { useState } from 'react';&#10;console.log('debug');&#10;function function foo() { }" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100" id="slopSubmitBtn">
+                        Scan for AI Slop &mdash; 15 credits
+                    </button>
+                </form>
+                <div id="slopOutput" class="mt-4"></div>
+            </div>
+        </div>
     </div>
 
     <div class="row g-4 mb-5 text-center">
@@ -23,20 +52,118 @@
         <div class="col-md-4"><div class="card h-100 p-4"><i class="bi bi-universal-access display-4 text-primary mb-3"></i><h4 class="as-h5">WCAG Fix</h4><p class="text-muted">Accessibility compliance</p></div></div>
     </div>
 
-    <div class="row g-4 mb-5">
-        <div class="col-md-6"><div class="card h-100 p-4 text-center"><h4>Free Scan</h4><h2 class="display-4 fw-bold"><span data-inr="0">₹0</span></h2><p>AI-slop detection</p><a href="/ai-contamination-detector" class="btn btn-outline-primary">Scan My Site</a></div></div>
-        <div class="col-md-6"><div class="card h-100 p-4 text-center bg-light"><h3 class="as-h4">Full Cleanup</h3><h2 class="display-4 fw-bold"><span data-inr="5999">₹5,999</span></h2><p>Complete sanitation</p><a href="#" class="btn btn-primary" onclick="aiSlopClean(event)">Clean My Site</a></div></div>
-    </div>
-
     <div class="text-center p-5 bg-light rounded">
         <h3>How Much AI Slop Is on Your Site?</h3>
+        <p class="text-muted mb-3">Scan above, or run a broader site check.</p>
         <a href="/ai-contamination-detector" class="btn btn-primary btn-lg">AI-Contamination Detector</a>
     </div>
 </div>
+
 <script>
+async function runSlopScan(event) {
+    event.preventDefault();
+    const language = document.getElementById('slopLang').value;
+    const code = document.getElementById('slopCode').value;
+
+    if (!code || code.trim().length < 10) {
+        alert('Please paste some code to scan (at least 10 characters).');
+        return;
+    }
+
+    const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    if (!authToken || !email) {
+        alert('Please log in to run a scan.');
+        window.location.href = '/login?next=/ai-slop-quarantine';
+        return;
+    }
+
+    const btn = document.getElementById('slopSubmitBtn');
+    const out = document.getElementById('slopOutput');
+    btn.disabled = true;
+    btn.textContent = 'Scanning... this takes 15-30 seconds';
+    out.innerHTML = '<div class="text-white-50 text-center py-3"><div class="spinner-border spinner-border-sm text-light"></div><p class="mt-2 mb-0">Analyzing ' + code.length + ' chars of ' + language + '...</p></div>';
+
+    try {
+        const res = await fetch('/api/products/ai-slop/scan', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authToken
+            },
+            body: JSON.stringify({email: email, code: code, language: language})
+        });
+
+        if (res.status === 401) {
+            out.innerHTML = '<div class="alert alert-danger">Please log in.</div>';
+            window.location.href = '/login?next=/ai-slop-quarantine';
+            return;
+        }
+        if (res.status === 402) {
+            out.innerHTML = '<div class="alert alert-warning">Not enough credits. <a href="/ai-credits-pricing" class="alert-link">Top up</a>.</div>';
+            return;
+        }
+
+        const data = await res.json();
+        renderSlopResult(out, data);
+    } catch (e) {
+        out.innerHTML = '<div class="alert alert-danger">Error: ' + e.message + '</div>';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Scan for AI Slop — 15 credits';
+    }
+}
+
+function renderSlopResult(out, data) {
+    if (data.status !== 'success') {
+        out.innerHTML = '<div class="alert alert-danger">' + (data.message || 'Scan failed') + '</div>';
+        return;
+    }
+    const score = data.cleanliness_score || 0;
+    const scoreColor = score >= 80 ? 'success' : (score >= 50 ? 'warning' : 'danger');
+    let html = '<div class="card bg-light text-dark mb-2"><div class="card-body">';
+    html += '<div class="d-flex justify-content-between align-items-start mb-2">';
+    html += '<div><strong>Scan ' + (data.scan_id || '') + '</strong><br><small class="text-muted">' + (data.analysis_mode || '') + '</small></div>';
+    html += '<div class="text-end"><span class="badge bg-' + scoreColor + ' fs-6">' + score + '/100 clean</span></div>';
+    html += '</div>';
+    html += '<p class="mb-0"><strong>' + (data.issue_count || 0) + '</strong> issues found' + (data.clean_code_ready ? ' <span class="badge bg-success">Clean code ready</span>' : '') + '</p>';
+    if (data.verdict) {
+        html += '<hr class="my-2"><p class="mb-0"><strong>Verdict:</strong> ' + data.verdict + '</p>';
+    }
+    html += '</div></div>';
+
+    if (data.top_issues && data.top_issues.length) {
+        html += '<div class="alert alert-warning py-2 mt-3 mb-2"><strong>Top Issues</strong><ul class="mb-0 mt-1">';
+        data.top_issues.forEach(function(i) { html += '<li>' + i + '</li>'; });
+        html += '</ul></div>';
+    }
+
+    if (data.issues_found && data.issues_found.length) {
+        html += '<h6 class="text-white mt-3">All Findings</h6>';
+        data.issues_found.forEach(function(item) {
+            if (typeof item === 'string') {
+                html += '<div class="border-bottom border-secondary py-2 text-white-50">' + item + '</div>';
+            } else {
+                html += '<div class="border-bottom border-secondary py-2">';
+                html += '<div class="text-white"><strong>' + (item.pattern || item.issue || 'Issue') + '</strong></div>';
+                if (item.description) html += '<div class="text-white-50 small">' + item.description + '</div>';
+                if (item.detected !== undefined) html += '<div class="text-white-50 small">Detected: ' + item.detected + '</div>';
+                html += '</div>';
+            }
+        });
+    }
+
+    if (data.refactored_suggestions && data.refactored_suggestions.length) {
+        html += '<h6 class="text-white mt-3">Refactoring Suggestions</h6><ul class="text-white-50 small">';
+        data.refactored_suggestions.forEach(function(s) { html += '<li>' + s + '</li>'; });
+        html += '</ul>';
+    }
+    out.innerHTML = html;
+}
+
+// Paid cleanup tier — kept as interest capture.
 function aiSlopClean(event) {
     event.preventDefault();
-    // Session G6: feature under development — capture interest instead
     window.notifyMe('AI-Slop Clean');
 }
 </script>
