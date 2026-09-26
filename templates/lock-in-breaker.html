@@ -38,7 +38,7 @@
                         <input type="text" class="form-control" id="lockInServices" placeholder="EC2, RDS, S3, Lambda">
                     </div>
                     <button type="submit" class="btn btn-primary w-100" id="lockInSubmitBtn">
-                        Run Audit &mdash; 15 credits
+                        Run Audit &mdash; 20 credits
                     </button>
                 </form>
                 <div id="lockInOutput" class="mt-4"></div>
@@ -114,7 +114,7 @@ async function runAudit(event) {
         out.innerHTML = '<div class="alert alert-danger">Error: ' + e.message + '</div>';
     } finally {
         btn.disabled = false;
-        btn.textContent = 'Run Audit — 15 credits';
+        btn.textContent = 'Run Audit — 20 credits';
     }
 }
 
