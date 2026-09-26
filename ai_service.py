@@ -62,7 +62,7 @@ Return ONLY a JSON object (no prose, no markdown, no code fences) with:
 - business_name: string
 - category: string
 - description: string
-- services: list of objects with keys "name" and "price"
+- services: list of objects with keys "name" and "price" (prices in Indian Rupees, format as "₹1,500")
 - contact: object with keys "phone", "email", "address"
 - html: a complete, valid, mobile-optimized HTML document (including <!DOCTYPE html>, <html>, <head>, <body>) with inline Tailwind CSS via CDN
 """

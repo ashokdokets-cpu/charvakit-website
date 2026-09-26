@@ -161,9 +161,9 @@ async def micro_trial_ai(trial_type: str, candidate_skills: str) -> Dict:
         "task": trial["task"],
         "duration": trial["duration"],
         "score_card": trial["score_card"],
-        "payment": 15,
-        "currency": "USD",
-        "message": "Trial generated! Earn $15 on completion."
+        "payment_inr": 1500,
+        "currency": "INR",
+        "message": "Trial generated! Earn ₹1,500 on completion."
     }
 
 async def ref_swap_ai(ref_type: str, industry: str = "") -> Dict:
