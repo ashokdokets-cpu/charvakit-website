@@ -8,7 +8,10 @@ import psycopg2
 from psycopg2 import pool as pg_pool
 from datetime import datetime
 from dotenv import load_dotenv
+import logging
 ...
+logger = logging.getLogger("charvakit.database")
+
 # Dev override: .env.local wins if present (never committed — see .gitignore)
 load_dotenv(".env.local", override=True)
 # Base config: .env fills any keys not set by .env.local
@@ -203,7 +206,7 @@ class Database:
             conn.commit()
             cursor.close()
             conn.close()
-            logger.info(f"Contact saved: {email} ? {subject}")
+            logger.info(f"Contact saved: {email} -> {subject}")
             return {"status": "success"}
         except Exception as e:
             logger.error(f"save_contact failed: {e}")
