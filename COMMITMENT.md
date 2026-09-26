@@ -5,6 +5,138 @@
 **Last updated:** 2026-09-25
 **HEAD:** c2c67d7
 
+### FLAGGED — /api/assessment/* routes appear to be dead code (2026-09-26)
+
+The 6 `/api/assessment/*` routes we auth-gated on 2026-09-26 have no
+frontend callers. Grep of all templates + static/js confirms zero usage:
+- POST /api/assessment/versant/start
+- POST /api/assessment/mcq/generate
+- POST /api/assessment/mock-drive
+- POST /api/assessment/skill-gap
+- GET  /api/assessment/companies
+- GET  /api/assessment/scorecard/{email}
+
+Real usage is via different prefixes:
+- `/api/versant/*` (5 routes) — versant.html
+- `/api/mock/*` (3 routes) — companies.html
+- `/api/mcq/questions/*` — mcq.html
+- `/api/company-patterns/*` — companies.html
+
+The auth gate we added is harmless (no callers to break), but these routes
+are likely legacy from an earlier assessment system. Candidate for deletion
+in a future cleanup session.
+
+**Verdict:** FLAGGED — cleanup candidate.
+
+
+
+### FLAGGED — Mock Drives + Versant routes lack auth (2026-09-26)
+
+**Discovered during:** frontend audit for the assessment cluster.
+
+**The problem:** 9 routes with real frontend callers have no
+`require_auth_for_email`. Same IDOR pattern we've fixed across 7 other
+clusters today. An authenticated user can charge credits on another user's
+email by sending `{"email": "victim@example.com", ...}` with their own token.
+
+| Route | Credits | Frontend caller |
+|---|---|---|
+| POST /api/versant/start-session | 20 | versant.html:162 |
+| POST /api/versant/record-audio | 3 (multipart) | versant.html:301 |
+| POST /api/versant/submit-text | 5 | versant.html:335 |
+| POST /api/versant/complete | 15 | versant.html:404 |
+| GET  /api/versant/sections | — | versant.html:457 |
+| POST /api/mock/start-complete | 25 | companies.html:128 |
+| POST /api/mock/submit-complete | — | companies.html:195 |
+| POST /api/mock/complete-full | — | companies.html:223 |
+| GET  /api/company-patterns/{id} | — | companies.html:88 |
+
+**The fix:** same pattern as the 7 clusters fixed on 2026-09-26.
+- Backend: add `require_auth_for_email(request, email)` to all 9
+- Frontend:
+  - `versant.html` — 5 fetches need `Authorization` header; multipart
+    (`/record-audio`) needs `headers: {'Authorization': 'Bearer '+authToken}` only
+  - `companies.html` — 4 fetches need `Authorization` header + `email` in body
+
+**Must do together.** Adding backend auth without frontend wiring breaks both
+features for real users.
+
+**Est:** 45-60 min. Requires careful edits for multipart form data
+(versant.html:301) and session-state flow (companies.html).
+
+**Verdict:** SCHEDULED — next session, first task.
+
+### FLAGGED — lms.html minified JS needs manual auth wiring (2026-09-27)
+
+`templates/lms.html` has 8 single-line minified JS functions, each fetching
+a different `/api/lms/*` endpoint. Backend routes are now auth-gated (commit
+4d234b5). The frontend still sends no `Authorization` header and no `email`.
+
+The functions are (lines 154–162):
+- rateCourse → POST /api/lms/rate
+- submitQuiz → POST /api/lms/quiz/submit
+- issueCert → POST /api/lms/certificate/issue
+- postDiscussion → POST /api/lms/discussion/post
+- checkProgress → GET /api/lms/progress/{id}
+- getRecommendations → GET /api/lms/recommendations/{email}
+- addLesson → POST /api/lms/lesson/add
+- requestPayout → POST /api/lms/payout/request
+- searchCourses → GET /api/lms/search?query=
+
+Each needs:
+- `Authorization: Bearer <token>` header (POST and GET)
+- `email:` field added to the JSON body (POST) or used for auth validation (GET)
+
+**Approach:** Manual edit in Notepad, one function at a time. Minified JS is
+not safe to batch-patch with regex. Estimated 30-45 min.
+
+**Verdict:** SCHEDULED — manual cleanup session.
+
+---
+
+### FLAGGED — bridge.html premium flow broken (2026-09-27)
+
+`templates/bridge.html:200` posts to `/api/bridge/premium` after Razorpay
+verification. **That route does not exist in main.py.** The fetch will 404.
+
+Options:
+- (a) Delete the premium flow from bridge.html if the feature is abandoned
+- (b) Add the `/api/bridge/premium` route if the feature should ship
+- (c) Redirect to `/api/ai-bridge/premium` (which does exist)
+
+**Note:** `bridge.html` and `ai-bridge.html` are two different products. The
+premium flow on bridge.html was likely copy-pasted from ai-bridge without
+updating the endpoint. Decide intent, then fix.
+
+**Verdict:** FLAGGED — product decision required.
+
+---
+
+### FLAGGED — auth wiring status by cluster (2026-09-27)
+
+After this session:
+
+| Cluster | Backend | Frontend |
+|---|---|---|
+| AI Tools Suite (13) | ✅ | ✅ |
+| Voice-to-Web | ✅ | ✅ |
+| Student Suite | ✅ | ✅ |
+| FYP | ✅ | ✅ |
+| 11 AI Products | ✅ | ❌ (10 need forms — separate project) |
+| AI Bridge | ✅ | ✅ |
+| Bridge | ✅ | ✅ (except premium flow) |
+| Marketing AI | ✅ | ✅ |
+| Indian Language AI | ✅ | ✅ |
+| Interview Prep | ✅ | ✅ |
+| LMS AI | ✅ | ❌ (lms.html — see above) |
+| Assessment | ✅ | Unknown — needs audit |
+
+**Remaining unverified cluster:** Assessment engines (6 routes: start_versant,
+generate_mcq, start_mock_drive, analyze_skill_gap — auth-gated backend, but
+frontend templates not yet audited).
+
+**Verdict:** Assessment frontend audit → SCHEDULED.
+
 ### FLAGGED — 11 product templates: frontend wiring required (2026-09-26)
 
 **Backend status: DONE** (commit `abbcabe`). All 11 `/api/products/*` routes have
