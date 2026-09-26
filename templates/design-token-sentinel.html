@@ -3,18 +3,39 @@
 {% block content %}
 <div class="page-hero bg-gradient-primary text-white py-5">
     <div class="container py-4">
-        <span class="badge bg-info text-dark mb-2 px-3 py-2">💡 Concept</span>
+        <span class="badge bg-info text-dark mb-2 px-3 py-2">Concept</span>
         <h1 class="display-4 fw-bold">Design-Token Sentinel</h1>
         <p class="lead">Connect Figma + GitHub. Never let brand drift destroy your UI consistency again.</p>
     </div>
 {% include "includes/beta_badge.html" %}
-
 </div>
 
 <div class="container py-5">
     <div class="row mb-5">
-        <div class="col-lg-6"><h2 class="fw-bold">Your Brand Is Drifting Right Now</h2><p class="lead">Every time a developer hardcodes a color or a designer updates Figma without syncing code, your brand fragments. One page uses #3ba591, another uses #3ba590. Customers notice.</p><p>Design-Token Sentinel connects your Figma design system to your GitHub repositories. When a font, color, or spacing token changes, it scans ALL your web apps, flags inconsistencies, and pushes automated pull requests to fix them.</p></div>
-        <div class="col-lg-6"><div class="bg-dark text-white p-4 rounded"><h4>What It Monitors</h4><ul><li>🎨 Color tokens & palettes</li><li>📝 Font families, weights, sizes</li><li>📐 Spacing & layout grids</li><li>🔘 Component variants & states</li><li>♿ Accessibility (WCAG contrast)</li><li>🖼️ Logo & asset versions</li></ul></div></div>
+        <div class="col-lg-6">
+            <h2 class="fw-bold">Your Brand Is Drifting Right Now</h2>
+            <p class="lead">Every time a developer hardcodes a color or a designer updates Figma without syncing code, your brand fragments. One page uses #3ba591, another uses #3ba590. Customers notice.</p>
+            <p>Design-Token Sentinel analyzes your design system across platforms, flags drift, and gives concrete fixes.</p>
+        </div>
+        <div class="col-lg-6">
+            <div class="bg-dark text-white p-4 rounded">
+                <h3 class="as-h4 mb-3">Check Token Consistency</h3>
+                <form onsubmit="runDesignCheck(event)" id="designForm">
+                    <div class="mb-3">
+                        <label class="form-label text-white-50">Design System</label>
+                        <input type="text" class="form-control" id="designSystem" placeholder="Custom, Material, Tailwind..." required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-white-50">Platforms (comma-separated)</label>
+                        <input type="text" class="form-control" id="designPlatforms" placeholder="Figma, Web, iOS, Android">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100" id="designSubmitBtn">
+                        Check Tokens &mdash; 15 credits
+                    </button>
+                </form>
+                <div id="designOutput" class="mt-4"></div>
+            </div>
+        </div>
     </div>
 
     <div class="row g-4 mb-5 text-center">
@@ -24,22 +45,123 @@
         <div class="col-md-3"><div class="card h-100 p-4"><i class="bi bi-shield display-4 text-primary mb-3"></i><h5>WCAG Checker</h5><p class="text-muted">Auto accessibility compliance</p></div></div>
     </div>
 
-    <div class="row g-4 mb-5">
-        <div class="col-md-4"><div class="card h-100 p-4 text-center"><h4>🆓 Starter</h4><h2 class="display-4 fw-bold"><span data-inr="0">₹0</span></h2><p>1 domain · Weekly scan</p><a href="/brand-drift-inspector" class="btn btn-outline-primary">Scan Free</a></div></div>
-        <div class="col-md-4"><div class="card h-100 p-4 text-center border-primary" style="border-width:2px;"><span class="badge bg-primary mb-2">Popular</span><h4>⭐ Pro</h4><h2 class="display-4 fw-bold"><span data-inr="2499">₹2,499</span></h2><p>/month · 5 domains</p><a href="#" class="btn btn-primary" onclick="dtGetPro(event)">Get Pro</a></div></div>
-        <div class="col-md-4"><div class="card h-100 p-4 text-center"><h4>🏢 Enterprise</h4><h2 class="display-4 fw-bold"><span data-inr="7999">₹7,999</span></h2><p>/month · Unlimited</p><a href="/contact" class="btn btn-outline-primary">Contact Sales</a></div></div>
-    </div>
-
     <div class="text-center p-5 bg-light rounded">
         <h3>See Your Brand Drift Score</h3>
         <p class="mb-4">Free scan checks any website for visual inconsistencies.</p>
         <a href="/brand-drift-inspector" class="btn btn-primary btn-lg">Free Brand Drift Inspector</a>
     </div>
 </div>
+
 <script>
+async function runDesignCheck(event) {
+    event.preventDefault();
+    const designSystem = document.getElementById('designSystem').value.trim();
+    const platformsRaw = document.getElementById('designPlatforms').value || '';
+    const platforms = platformsRaw.split(',').map(function(s) { return s.trim(); }).filter(Boolean);
+
+    if (!designSystem) {
+        alert('Please enter your design system name.');
+        return;
+    }
+    if (platforms.length === 0) {
+        alert('Please enter at least one platform.');
+        return;
+    }
+
+    const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    if (!authToken || !email) {
+        alert('Please log in to run a check.');
+        window.location.href = '/login?next=/design-token-sentinel';
+        return;
+    }
+
+    const btn = document.getElementById('designSubmitBtn');
+    const out = document.getElementById('designOutput');
+    btn.disabled = true;
+    btn.textContent = 'Checking... this takes 15-30 seconds';
+    out.innerHTML = '<div class="text-white-50 text-center py-3"><div class="spinner-border spinner-border-sm text-light"></div><p class="mt-2 mb-0">Analyzing ' + designSystem + ' across ' + platforms.join(', ') + '...</p></div>';
+
+    try {
+        const res = await fetch('/api/products/design-token/check', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authToken
+            },
+            body: JSON.stringify({email: email, design_system: designSystem, platforms: platforms})
+        });
+
+        if (res.status === 401) {
+            out.innerHTML = '<div class="alert alert-danger">Please log in.</div>';
+            window.location.href = '/login?next=/design-token-sentinel';
+            return;
+        }
+        if (res.status === 402) {
+            out.innerHTML = '<div class="alert alert-warning">Not enough credits. <a href="/ai-credits-pricing" class="alert-link">Top up</a>.</div>';
+            return;
+        }
+
+        const data = await res.json();
+        renderDesignResult(out, data);
+    } catch (e) {
+        out.innerHTML = '<div class="alert alert-danger">Error: ' + e.message + '</div>';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Check Tokens — 15 credits';
+    }
+}
+
+function renderDesignResult(out, data) {
+    if (data.status !== 'success') {
+        out.innerHTML = '<div class="alert alert-danger">' + (data.message || 'Check failed') + '</div>';
+        return;
+    }
+    const score = data.consistency_score || 0;
+    const scoreColor = score >= 80 ? 'success' : (score >= 60 ? 'warning' : 'danger');
+    let html = '<div class="card bg-light text-dark mb-2"><div class="card-body">';
+    html += '<div class="d-flex justify-content-between align-items-start mb-2">';
+    html += '<div><strong>Check ' + (data.check_id || '') + '</strong><br><small class="text-muted">' + (data.analysis_mode || '') + '</small></div>';
+    html += '<div class="text-end"><span class="badge bg-' + scoreColor + ' fs-6">' + score + '/100</span></div>';
+    html += '</div>';
+    html += '<div class="row text-center">';
+    html += '<div class="col-6"><div class="text-muted small">Synced</div><h5 class="mb-0 text-success">' + (data.tokens_synced || 0) + '</h5></div>';
+    html += '<div class="col-6"><div class="text-muted small">Drifted</div><h5 class="mb-0 text-danger">' + (data.tokens_drifted || 0) + '</h5></div>';
+    html += '</div>';
+    if (data.verdict) {
+        html += '<hr class="my-2"><p class="mb-0"><strong>Verdict:</strong> ' + data.verdict + '</p>';
+    }
+    html += '</div></div>';
+
+    if (data.issues && data.issues.length) {
+        html += '<h6 class="text-white mt-3">Issues</h6>';
+        data.issues.forEach(function(i) {
+            const sev = (i.severity || 'LOW').toLowerCase();
+            const sevColor = sev === 'high' ? 'danger' : (sev === 'medium' ? 'warning' : 'info');
+            html += '<div class="border-bottom border-secondary py-2">';
+            html += '<div class="d-flex justify-content-between"><span class="text-white">' + (i.platform || '') + ' — ' + (i.issue || '') + '</span><span class="badge bg-' + sevColor + '">' + (i.severity || 'LOW') + '</span></div>';
+            if (i.description) html += '<div class="text-white-50 small">' + i.description + '</div>';
+            if (i.fix) html += '<div class="text-white-50 small"><strong>Fix:</strong> ' + i.fix + '</div>';
+            html += '</div>';
+        });
+    }
+
+    if (data.top_risks && data.top_risks.length) {
+        html += '<div class="alert alert-warning py-2 mt-3 mb-2"><strong>Top Risks</strong><ul class="mb-0 mt-1">';
+        data.top_risks.forEach(function(r) { html += '<li>' + r + '</li>'; });
+        html += '</ul></div>';
+    }
+    if (data.next_steps && data.next_steps.length) {
+        html += '<h6 class="text-white mt-3">Next Steps</h6><ul class="text-white-50 small">';
+        data.next_steps.forEach(function(s) { html += '<li>' + s + '</li>'; });
+        html += '</ul>';
+    }
+    out.innerHTML = html;
+}
+
+// Paid tiers — kept as interest capture.
 function dtGetPro(event) {
     event.preventDefault();
-    // Session G6: feature under development — capture interest instead
     window.notifyMe('Design-Token Pro');
 }
 </script>
