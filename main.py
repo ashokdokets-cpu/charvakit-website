@@ -5360,6 +5360,10 @@ async def lifecycle_stats():
 @limiter.limit("60/minute")
 async def suggest_fyp_topics(request: Request):
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     from credit_guard import require_credits_from_data
     guard = require_credits_from_data(data, "fyp_suggest_topics")
     if guard.get("status") != "success":
@@ -5370,6 +5374,10 @@ async def suggest_fyp_topics(request: Request):
 @limiter.limit("60/minute")
 async def generate_fyp_proposal(request: Request):
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     from credit_guard import require_credits_from_data
     guard = require_credits_from_data(data, "fyp_generate_proposal")
     if guard.get("status") != "success":
@@ -5380,6 +5388,10 @@ async def generate_fyp_proposal(request: Request):
 @limiter.limit("30/minute")
 async def generate_fyp_documentation(request: Request):
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     from credit_guard import require_credits_from_data
     guard = require_credits_from_data(data, "fyp_generate_documentation")
     if guard.get("status") != "success":
@@ -5390,6 +5402,10 @@ async def generate_fyp_documentation(request: Request):
 @limiter.limit("60/minute")
 async def fyp_viva_questions(request: Request):
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     from credit_guard import require_credits_from_data
     guard = require_credits_from_data(data, "fyp_viva_questions")
     if guard.get("status") != "success":
@@ -5400,6 +5416,10 @@ async def fyp_viva_questions(request: Request):
 @limiter.limit("60/minute")
 async def fyp_subscribe(request: Request):
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     return final_year_project_engine.subscribe(data)
 
 @app.get("/api/fyp/plans")
@@ -5407,7 +5427,8 @@ async def fyp_plans():
     return final_year_project_engine.get_plans()
 
 @app.get("/api/fyp/stats")
-async def fyp_stats():
+async def fyp_stats(request: Request):
+    require_admin(request)
     return final_year_project_engine.get_stats()
 
 @app.get("/final-year-project", response_class=HTMLResponse)
