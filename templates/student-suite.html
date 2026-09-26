@@ -300,6 +300,133 @@ async function activateSubscription(email, plan, paymentId = null, paymentMethod
     }
 }
 
+
+// ============================================================
+// Assignment Assistant + Research Helper (added 2026-09-26)
+// These functions were referenced by the forms but never defined.
+// ============================================================
+
+function _renderStudentResult(outEl, data, kind) {
+    if (!data) {
+        outEl.innerHTML = '<div class="text-muted">No response.</div>';
+        return;
+    }
+    if (data.status === "error") {
+        outEl.innerHTML = '<div class="text-danger">' + (data.message || "Error") + '</div>';
+        return;
+    }
+        const arrays = [
+        ["Outline", "outline"],
+        ["Key Concepts", "key_concepts"],
+        ["Study Tips", "study_tips"],
+        ["Examples", "examples"],
+        ["Research Questions", "research_questions"],
+        ["Methodology", "methodology"],
+        ["Key Sources", "key_sources"],
+        ["Structure", "structure"]
+    ];
+    let html = '';
+    for (const [label, key] of arrays) {
+        const items = data[key] || [];
+        if (items.length) {
+            html += '<h6 class="mt-3">' + label + '</h6><ul>';
+            for (const item of items) {
+                html += '<li>' + String(item).replace(/</g, '&lt;') + '</li>';
+            }
+            html += '</ul>';
+        }
+    }
+    if (!html) {
+        html = '<div class="text-muted">' + (data.message || "No content returned.") + '</div>';
+    }
+    outEl.innerHTML = '<div class="card bg-light p-3">' + html + '</div>';
+}
+
+async function assistAssignment(event) {
+    event.preventDefault();
+    const email = document.getElementById("assignEmail").value.trim();
+    const subject = document.getElementById("assignSubject").value.trim();
+    const topic = document.getElementById("assignTopic").value.trim();
+    if (!email || !subject || !topic) {
+        alert("Please fill in all fields.");
+        return;
+    }
+    const authToken = localStorage.getItem("auth_token") || "";
+    if (!authToken) {
+        alert("Please log in to use this tool.");
+        window.location.href = "/login?next=/student-suite";
+        return;
+    }
+    const out = document.getElementById("assignmentOutput");
+    out.innerHTML = '<div class="text-muted">Generating assignment help...</div>';
+    try {
+        const res = await fetch("/api/student/assignment", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + authToken
+            },
+            body: JSON.stringify({email: email, subject: subject, topic: topic})
+        });
+        if (res.status === 401) {
+            out.innerHTML = '<div class="text-danger">Please log in.</div>';
+            window.location.href = "/login?next=/student-suite";
+            return;
+        }
+        if (res.status === 402) {
+            out.innerHTML = '<div class="text-danger">Not enough credits. <a href="/ai-credits-pricing">Top up</a>.</div>';
+            return;
+        }
+        const data = await res.json();
+        _renderStudentResult(out, data, "assignment");
+    } catch (e) {
+        out.innerHTML = '<div class="text-danger">Error: ' + e.message + '</div>';
+    }
+}
+
+async function assistResearch(event) {
+    event.preventDefault();
+    const email = document.getElementById("researchEmail").value.trim();
+    const field = document.getElementById("researchField").value.trim();
+    const topic = document.getElementById("researchTopic").value.trim();
+    if (!email || !field || !topic) {
+        alert("Please fill in all fields.");
+        return;
+    }
+    const authToken = localStorage.getItem("auth_token") || "";
+    if (!authToken) {
+        alert("Please log in to use this tool.");
+        window.location.href = "/login?next=/student-suite";
+        return;
+    }
+    const out = document.getElementById("researchOutput");
+    out.innerHTML = '<div class="text-muted">Generating research help...</div>';
+    try {
+        const res = await fetch("/api/student/research", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + authToken
+            },
+            body: JSON.stringify({email: email, field: field, topic: topic})
+        });
+        if (res.status === 401) {
+            out.innerHTML = '<div class="text-danger">Please log in.</div>';
+            window.location.href = "/login?next=/student-suite";
+            return;
+        }
+        if (res.status === 402) {
+            out.innerHTML = '<div class="text-danger">Not enough credits. <a href="/ai-credits-pricing">Top up</a>.</div>';
+            return;
+        }
+        const data = await res.json();
+        // Research helper returns similar arrays; may differ slightly
+        _renderStudentResult(out, data, "research");
+    } catch (e) {
+        out.innerHTML = '<div class="text-danger">Error: ' + e.message + '</div>';
+    }
+}
+
 // Rest of functions (sendPurchaseNotification, updateUIAfterSubscription, 
 // assistAssignment, assistResearch, checkExistingSubscription) remain the same
 </script>
