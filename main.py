@@ -5143,11 +5143,14 @@ async def get_student_plan(request: Request, email: str):
 @limiter.limit("20/minute")
 async def assist_assignment(request: Request):
     data = await request.json()
+    email = (data.get("email") or data.get("student_email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     from credit_guard import require_credits_from_data
     guard = require_credits_from_data(data, "student_assignment")
     if guard.get("status") != "success":
         return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
-    email = data.get("email") or data.get("student_email")
     subject = data.get("subject", "")
     topic = data.get("topic", "")
     return student_suite_engine.assist_assignment(email=email, subject=subject, topic=topic)
@@ -5156,11 +5159,14 @@ async def assist_assignment(request: Request):
 @limiter.limit("20/minute")
 async def assist_research(request: Request):
     data = await request.json()
+    email = (data.get("email") or data.get("student_email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     from credit_guard import require_credits_from_data
     guard = require_credits_from_data(data, "student_research")
     if guard.get("status") != "success":
         return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
-    email = data.get("email") or data.get("student_email")
     field = data.get("field", "")
     topic = data.get("topic", "")
     return student_suite_engine.assist_research(email=email, field=field, topic=topic)
