@@ -234,12 +234,19 @@ function updateFYPUI(plan) {
 
 async function suggestTopics(e) {
     e.preventDefault();
+    const authToken = localStorage.getItem('auth_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    if (!authToken || !email) {
+        alert('Please log in to use this tool.');
+        window.location.href = '/login?next=/final-year-project';
+        return;
+    }
     const data = {
         branch: document.getElementById('fypBranch').value,
         domain: document.getElementById('fypDomain').value,
         skills: document.getElementById('fypSkills').value.split(',').map(s=>s.trim()).filter(Boolean)
     };
-    const r = await fetch('/api/fyp/suggest-topics', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+    const r = await fetch('/api/fyp/suggest-topics', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({...data, email: email})});
     const j = await r.json();
     document.getElementById('topicOutput').innerHTML = j.topics 
         ? j.topics.map(t=>'<div class="p-2 border-bottom"><strong>'+t.title+'</strong><br><small>'+t.domain+' • '+t.difficulty+'</small></div>').join('')
@@ -248,12 +255,19 @@ async function suggestTopics(e) {
 
 async function generateProposal(e) {
     e.preventDefault();
+    const authToken = localStorage.getItem('auth_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    if (!authToken || !email) {
+        alert('Please log in to use this tool.');
+        window.location.href = '/login?next=/final-year-project';
+        return;
+    }
     const data = {
         topic: document.getElementById('fypTopic').value,
         student_name: document.getElementById('fypName').value,
         college: document.getElementById('fypCollege').value
     };
-    const r = await fetch('/api/fyp/generate-proposal', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+    const r = await fetch('/api/fyp/generate-proposal', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({...data, email: email})});
     const j = await r.json();
     const p = j.proposal || {};
     document.getElementById('proposalOutput').innerHTML = '<div class="alert alert-success"><strong>Title:</strong> '+(p.title||data.topic)+'<br><strong>Abstract:</strong> '+(p.abstract||'')+'</div>';
@@ -261,8 +275,15 @@ async function generateProposal(e) {
 
 async function generateDocs(e) {
     e.preventDefault();
+    const authToken = localStorage.getItem('auth_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    if (!authToken || !email) {
+        alert('Please log in to use this tool.');
+        window.location.href = '/login?next=/final-year-project';
+        return;
+    }
     const topic = document.getElementById('fypDocTopic').value;
-    const r = await fetch('/api/fyp/generate-documentation', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic:topic})});
+    const r = await fetch('/api/fyp/generate-documentation', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({topic:topic, email: email})});
     const j = await r.json();
     const d = j.documentation || {};
     document.getElementById('docsOutput').innerHTML = d.chapters 
@@ -272,8 +293,15 @@ async function generateDocs(e) {
 
 async function vivaPrep(e) {
     e.preventDefault();
+    const authToken = localStorage.getItem('auth_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    if (!authToken || !email) {
+        alert('Please log in to use this tool.');
+        window.location.href = '/login?next=/final-year-project';
+        return;
+    }
     const topic = document.getElementById('fypVivaTopic').value;
-    const r = await fetch('/api/fyp/viva-questions', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic:topic})});
+    const r = await fetch('/api/fyp/viva-questions', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({topic:topic, email: email})});
     const j = await r.json();
     document.getElementById('vivaOutput').innerHTML = j.questions 
         ? j.questions.map((q,i)=>'<div class="p-2 border-bottom"><strong>Q'+(i+1)+':</strong> '+q+'</div>').join('')
