@@ -5,6 +5,47 @@
 **Last updated:** 2026-09-27
 **HEAD:** 82ec76f
 
+### FLAGGED — Premium Report product (₹199 PDF unlock) (2026-09-27)
+
+The `premium-upsell.html` include appears on every product page with a
+"Unlock Full Report — ₹199" button. Currently wired to `notifyMe()` (interest
+capture only) — no actual purchase flow, no PDF generation.
+
+**To ship as a real product:**
+
+1. **Product feature**
+   - PDF generator: takes the free scan result + adds extra AI analysis
+     (deeper recommendations, competitor comparisons, action roadmap)
+   - Uses a templating library (WeasyPrint, ReportLab) or headless browser
+     (Playwright) to render the free result into a formatted PDF
+   - Est: 2-3 hours
+
+2. **Payment flow**
+   - Razorpay order creation for ₹199 (using existing `payment_engine`)
+   - Server-side signature verification (existing pattern)
+   - Idempotent webhook (existing pattern)
+   - Est: 1-2 hours
+
+3. **Delivery**
+   - Store generated PDF in S3/R2/DB (currently no file storage layer)
+   - Email PDF as attachment via SendGrid (currently only text HTML)
+   - Provide a re-download link in user dashboard
+   - Est: 2-3 hours
+
+4. **Admin dashboard**
+   - List purchases: who, when, which product, revenue
+   - Manual re-send option
+   - Est: 1-2 hours
+
+**Total estimate: 8-12 hours.** This is a real product feature — its own
+session (or two). Do NOT tack it onto a cleanup pass.
+
+**Design consideration:** Should the premium report be per-product (different
+reports for AuditBot vs Lock-In Breaker) or generic (a "fuller analysis" of
+any product result)? Per-product is more valuable but 5-6× the work.
+
+**Verdict:** SCHEDULED — dedicated product session
+
 ### FLAGGED — processToolPayment referenced but never defined (2026-09-27)
 
 `processToolPayment(amount, description, callback)` is called from at least
