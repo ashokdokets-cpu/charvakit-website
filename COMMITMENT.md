@@ -2,9 +2,43 @@
 
 **Purpose:** Track every planned-but-not-completed item. Nothing gets lost again.
 **Created:** 2026-09-20
-**Last updated:** 2026-09-25
-**HEAD:** 0faabd1
+**Last updated:** 2026-09-27
+**HEAD:** bbb9291
 
+
+## Session 2026-09-26 / 2026-09-27 — Auth sweep + feature audit
+
+**Shipped:** ~30 commits over 2 days.
+
+**Feature completed:**
+- Voice-to-Web Option 2 (auto-deploy, `/sites/{slug}`)
+- AI Tools Suite auth + credits + frontend wiring
+- Student Suite assist flows
+- FYP backend + frontend + roadmap (7 features logged)
+- Mock Drives + Versant auth
+
+**Bugs fixed:**
+1. `ai_service.call_openai()` — invalid `requests.Session(timeout=30)`, blocked 6 AI functions
+2. `tools_ai_backend.call_ai()` — same bug, blocked 8 tools
+3. `/api/ai/voice-to-web` — double credit charge
+4. Student Suite — `assistAssignment`/`assistResearch` undefined functions
+5. Missing `require_auth_for_email` on **~60 routes** across 10 clusters (IDOR pattern)
+6. `email_verification.is_verified()` — bare except (hygiene)
+
+**Flagged (deferred, well-scoped):**
+- 10 product templates need real forms (product decision)
+- `lms.html` minified JS needs manual auth wiring
+- `bridge.html` premium flow → `/api/bridge/premium` (nonexistent route)
+- 5 unverified `ai_service` functions
+- Voice-to-Web currency hardcode (USD → INR fix)
+- Anti-bot for `/contact`
+- C7: 14 templates with dead payment buttons
+- Dead `/api/assessment/*` routes (candidates for deletion)
+
+**Next session:** Mock/Versant done. Next natural step is either:
+- Product sprint for 11 AI Products frontend (5-8 hrs)
+- C7 template sweep (14 remaining)
+- `lms.html` manual patch (30-45 min)
 
 ### RESOLVED — Mock Drives + Versant routes auth (2026-09-26)
 
@@ -1825,5 +1859,5 @@ character are `C3 A0` instead of `E0 A4`, it's double-encoded.
 5. **Session-CONTEXT.md** links here for fresh chats
 
 ---
-**Last updated:** 2026-09-24
-**Next update:** after C13 or Session C2
+**Last updated:** 2026-09-27
+
