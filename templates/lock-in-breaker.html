@@ -7,83 +7,43 @@
         <p class="lead">Break free from bloated cloud bills. AI-powered cloud cost optimization.</p>
     </div>
 {% include "includes/beta_badge.html" %}
-
 </div>
 
 <div class="container py-5">
     <div class="row mb-5">
-        <div class="col-lg-6"><h2>Stop Overpaying for Cloud</h2><p class="lead">The average company wastes 32% of its cloud spend on idle resources, over-provisioning, and unnecessary services.</p><p>Charvak Lock-In Breaker connects to your cloud account (read-only), scans every resource, and identifies exact savings opportunities — then generates migration scripts to cut costs.</p></div>
-        <div class="bg-dark text-white p-4 rounded">
-    <h3 class="as-h4">How It Works</h3>
-    <div id="demoSteps">
-        <ol>
-            <li id="step1">Connect cloud account (read-only) <button class="btn btn-outline-light btn-sm ms-2" onclick="runDemo()">Run Demo</button></li>
-            <li id="step2" style="display:none;">✅ AI scans resources in 10 minutes <span class="badge bg-success ms-2">Complete</span></li>
-            <li id="step3" style="display:none;">✅ Get detailed waste report <span class="badge bg-success ms-2">Complete</span></li>
-            <li id="step4" style="display:none;">✅ One-click migration scripts generated <span class="badge bg-success ms-2">Ready</span></li>
-            <li id="step5" style="display:none;">✅ Save 30-50% on cloud bills <strong class="text-success">Estimated: 35% savings</strong></li>
-        </ol>
-    </div>
-    <p class="text-white-50 mt-2" id="demoResult" style="display:none;">Demo complete! Your estimated savings: <strong class="text-success">$17,500/year</strong></p>
-    <a href="/cloud-waste-calculator" class="btn btn-primary mt-2" id="demoCTA" style="display:none;">Calculate Your Actual Savings</a>
-</div>
-
-<script>
-function runDemo(){
-    document.getElementById('step1').innerHTML = '🔍 Connecting to cloud account...';
-    setTimeout(() => {
-        document.getElementById('step1').innerHTML = '✅ Cloud account connected (read-only) <span class="badge bg-success ms-2">Done</span>';
-        document.getElementById('step2').style.display = 'list-item';
-    }, 1000);
-    setTimeout(() => {
-        document.getElementById('step2').innerHTML = '✅ AI scans resources - 47 resources found <span class="badge bg-success ms-2">Complete</span>';
-        document.getElementById('step3').style.display = 'list-item';
-    }, 2000);
-    setTimeout(() => {
-        document.getElementById('step3').innerHTML = '✅ Waste report: 32% idle, 18% over-provisioned <span class="badge bg-success ms-2">Complete</span>';
-        document.getElementById('step4').style.display = 'list-item';
-    }, 3000);
-    setTimeout(() => {
-        document.getElementById('step4').innerHTML = '✅ Migration scripts ready: 12 resources to optimize <span class="badge bg-success ms-2">Ready</span>';
-        document.getElementById('step5').style.display = 'list-item';
-    }, 4000);
-    setTimeout(() => {
-        document.getElementById('demoResult').style.display = 'block';
-        document.getElementById('demoCTA').style.display = 'inline-block';
-    }, 5000);
-}
-
-// Add payment for actual migration service
-function startMigration(event) {
-    event.preventDefault();
-    // Session G6: feature under development — capture interest instead
-    window.notifyMe('Lock-In Breaker Migration');
-}
-
-// Add payment for continuous protection
-function subscribeProtection(event) {
-    event.preventDefault();
-    // Session G6: feature under development — capture interest instead
-    window.notifyMe('Lock-In Breaker Continuous Protection');
-}
-
-// Add event listeners to CTA buttons when DOM loads
-document.addEventListener('DOMContentLoaded', function() {
-    // Find the demo CTA button and attach payment
-    const demoCTA = document.getElementById('demoCTA');
-    if (demoCTA) {
-        demoCTA.addEventListener('click', startMigration);
-    }
-    
-    // Find any subscribe/pricing buttons and attach payment
-    const subscribeButtons = document.querySelectorAll('[onclick*="subscribe"], .btn-primary');
-    subscribeButtons.forEach(btn => {
-        if (btn.textContent.includes('Subscribe') || btn.textContent.includes('Get Started') || btn.textContent.includes('Start')) {
-            btn.onclick = subscribeProtection;
-        }
-    });
-});
-</script>
+        <div class="col-lg-6">
+            <h2>Stop Overpaying for Cloud</h2>
+            <p class="lead">The average company wastes 32% of its cloud spend on idle resources, over-provisioning, and unnecessary services.</p>
+            <p>Charvak Lock-In Breaker analyzes your cloud footprint (read-only) and identifies exact savings opportunities, migration complexity, and recommended alternatives.</p>
+        </div>
+        <div class="col-lg-6">
+            <div class="bg-dark text-white p-4 rounded">
+                <h3 class="as-h4 mb-3">Run a Cloud Audit</h3>
+                <form onsubmit="runAudit(event)" id="lockInForm">
+                    <div class="mb-3">
+                        <label class="form-label text-white-50">Cloud Provider</label>
+                        <select class="form-select" id="lockInProvider">
+                            <option>AWS</option>
+                            <option>Azure</option>
+                            <option>GCP</option>
+                            <option>Other</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-white-50">Monthly Spend (USD)</label>
+                        <input type="number" class="form-control" id="lockInSpend" placeholder="10000" min="100" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-white-50">Services (comma-separated)</label>
+                        <input type="text" class="form-control" id="lockInServices" placeholder="EC2, RDS, S3, Lambda">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100" id="lockInSubmitBtn">
+                        Run Audit &mdash; 15 credits
+                    </button>
+                </form>
+                <div id="lockInOutput" class="mt-4"></div>
+            </div>
+        </div>
     </div>
 
     <div class="row g-4 mb-5">
@@ -92,11 +52,120 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="col-md-4"><div class="card h-100 p-4 text-center"><h3>10 min</h3><p>Scan time</p></div></div>
     </div>
 
-<div class="text-center p-5 bg-light rounded">
-    <h3>Start Saving Today</h3>
-    <p class="mb-4">No upfront cost. Pay only from verified savings.</p>
-    <a href="/cloud-waste-calculator" class="btn btn-primary btn-lg me-2">Free Cloud Waste Calculator</a>
-    <a href="/lock-in-breaker-pricing" class="btn btn-outline-primary btn-lg">View Plans</a>
-</div>
+    <div class="text-center p-5 bg-light rounded">
+        <h3>Start Saving Today</h3>
+        <p class="mb-4">No upfront cost. Pay only from verified savings.</p>
+        <a href="/cloud-waste-calculator" class="btn btn-primary btn-lg me-2">Free Cloud Waste Calculator</a>
+        <a href="#" class="btn btn-outline-primary btn-lg" onclick="subscribeProtection(event)">Get Continuous Protection</a>
+    </div>
 {% include 'includes/premium-upsell.html' %}
+</div>
+
+<script>
+async function runAudit(event) {
+    event.preventDefault();
+    const provider = document.getElementById('lockInProvider').value;
+    const spend = parseFloat(document.getElementById('lockInSpend').value) || 0;
+    const servicesRaw = document.getElementById('lockInServices').value || '';
+    const services = servicesRaw.split(',').map(function(s) { return s.trim(); }).filter(Boolean);
+
+    if (spend < 100) {
+        alert('Please enter a monthly spend of at least $100.');
+        return;
+    }
+
+    const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    if (!authToken || !email) {
+        alert('Please log in to run an audit.');
+        window.location.href = '/login?next=/lock-in-breaker';
+        return;
+    }
+
+    const btn = document.getElementById('lockInSubmitBtn');
+    const out = document.getElementById('lockInOutput');
+    btn.disabled = true;
+    btn.textContent = 'Analyzing... this takes 15-30 seconds';
+    out.innerHTML = '<div class="text-white-50 text-center py-3"><div class="spinner-border spinner-border-sm text-light"></div><p class="mt-2 mb-0">Auditing ' + provider + ' spend of $' + spend.toLocaleString() + '...</p></div>';
+
+    try {
+        const res = await fetch('/api/products/lock-in-breaker/audit', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authToken
+            },
+            body: JSON.stringify({email: email, cloud_provider: provider, monthly_spend: spend, services: services})
+        });
+
+        if (res.status === 401) {
+            out.innerHTML = '<div class="alert alert-danger">Please log in.</div>';
+            window.location.href = '/login?next=/lock-in-breaker';
+            return;
+        }
+        if (res.status === 402) {
+            out.innerHTML = '<div class="alert alert-warning">Not enough credits. <a href="/ai-credits-pricing" class="alert-link">Top up</a>.</div>';
+            return;
+        }
+
+        const data = await res.json();
+        renderAuditResult(out, data);
+    } catch (e) {
+        out.innerHTML = '<div class="alert alert-danger">Error: ' + e.message + '</div>';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Run Audit — 15 credits';
+    }
+}
+
+function renderAuditResult(out, data) {
+    if (data.status !== 'success') {
+        out.innerHTML = '<div class="alert alert-danger">' + (data.message || 'Audit failed') + '</div>';
+        return;
+    }
+    let html = '<div class="card bg-light text-dark mb-2"><div class="card-body">';
+    html += '<div class="d-flex justify-content-between align-items-start mb-2">';
+    html += '<div><strong>Audit ' + (data.audit_id || '') + '</strong><br><small class="text-muted">' + (data.analysis_mode || '') + '</small></div>';
+    html += '<div class="text-end"><span class="badge bg-danger">' + (data.risk_level || 'MEDIUM') + ' risk</span></div>';
+    html += '</div>';
+    html += '<hr class="my-2">';
+    html += '<div class="row text-center">';
+    html += '<div class="col-6"><div class="text-muted small">Current Monthly</div><h5 class="mb-0">$' + (data.current_monthly_spend || 0).toLocaleString() + '</h5></div>';
+    html += '<div class="col-6"><div class="text-muted small">Potential Savings</div><h5 class="mb-0 text-success">$' + (data.potential_savings || 0).toLocaleString() + '</h5></div>';
+    html += '</div>';
+    html += '<p class="mt-3 mb-0 small"><strong>' + (data.savings_percent || 0) + '%</strong> of spend recoverable &middot; Migration complexity: <strong>' + (data.migration_complexity || 'MEDIUM') + '</strong></p>';
+    if (data.verdict) {
+        html += '<hr class="my-2"><p class="mb-0"><strong>Verdict:</strong> ' + data.verdict + '</p>';
+    }
+    html += '</div></div>';
+
+    if (data.quick_wins && data.quick_wins.length) {
+        html += '<div class="alert alert-success py-2 mt-3 mb-2"><strong>Quick Wins</strong><ul class="mb-0 mt-1">';
+        data.quick_wins.forEach(function(w) { html += '<li>' + w + '</li>'; });
+        html += '</ul></div>';
+    }
+    if (data.recommendations && data.recommendations.length) {
+        html += '<h6 class="text-white mt-3">Recommendations</h6><ul class="text-white-50 small">';
+        data.recommendations.forEach(function(r) { html += '<li>' + r + '</li>'; });
+        html += '</ul>';
+    }
+    if (data.locked_services && data.locked_services.length) {
+        html += '<p class="text-white-50 small mb-0"><strong>Analyzed services:</strong> ' + data.locked_services.join(', ') + '</p>';
+    }
+    if (data.estimated_migration_risk) {
+        html += '<p class="text-white-50 small mb-0"><strong>Migration risk:</strong> ' + data.estimated_migration_risk + '</p>';
+    }
+    out.innerHTML = html;
+}
+
+// Paid-tier buttons — kept as interest capture (Session G6 pattern).
+function startMigration(event) {
+    event.preventDefault();
+    window.notifyMe('Lock-In Breaker Migration');
+}
+function subscribeProtection(event) {
+    event.preventDefault();
+    window.notifyMe('Lock-In Breaker Continuous Protection');
+}
+</script>
 {% endblock %}
