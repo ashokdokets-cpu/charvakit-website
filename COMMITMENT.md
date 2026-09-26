@@ -5,6 +5,191 @@
 **Last updated:** 2026-09-25
 **HEAD:** c2c67d7
 
+### FYP ROADMAP — planned enhancements (logged 2026-09-26)
+
+Current FYP has 4 features working: topics, proposal, documentation outline,
+viva questions. The audit/fix on 2026-09-26 made them auth-gated + credit-charged
+and verified E2E.
+
+The following are **product enhancements**, not bugs. Sized and prioritized.
+
+---
+
+#### 1. Viva Answers (30 min) — RECOMMENDED FIRST
+
+**What:** Viva questions currently return only question text. Extend to return
+question + model answer per item, rendered as collapsible cards.
+
+**Why:** Students preparing for viva don't just want questions — they want
+model answers to compare against. This is the single highest-value
+per-credit-improvement feature.
+
+**Backend:**
+- Modify `final_year_project_engine.generate_viva_ai()` prompt:
+  - OLD: `{"questions": [...], "tips": [...]}`
+  - NEW: `{"questions": [{"q": "...", "a": "..."}], "tips": [...]}`
+- Handle legacy shape in frontend (backward compat)
+
+**Frontend:**
+- Each question renders as a card with "Show answer" toggle
+- Answer text uses the same safe-escape pattern as student-suite
+
+**Credit cost:** unchanged (10 credits) OR bump to 20 to reflect added value.
+Recommend bump to 20 — it's a genuinely deeper deliverable.
+
+---
+
+#### 2. Per-Chapter Content Expand (1.5 hrs) — RECOMMENDED SECOND
+
+**What:** `generate-documentation` returns a chapter outline. Each chapter
+becomes clickable → fetches full chapter content via a new lazy endpoint.
+
+**Why:** Documentation outline is useful as an index; students need actual
+content per chapter. Option B (lazy) keeps cost linear with depth used.
+
+**Backend:**
+- New engine method: `expand_chapter_ai(topic, chapter_title, chapter_outline)`
+- New route: `POST /api/fyp/expand-chapter` with `require_auth_for_email` +
+  `require_credits_from_data(data, "fyp_expand_chapter")`
+- New credit key: `fyp_expand_chapter` (10 credits)
+
+**Frontend:**
+- Each chapter row gets an "Expand" button
+- On click → fetch → replace outline with full content
+- Cache expanded content in DOM (don't re-fetch on re-render)
+
+**Schema:** none — no new tables needed.
+
+---
+
+#### 3. Milestone / Timeline Roadmap (45 min)
+
+**What:** New tab "Project Roadmap" returns week-by-week plan for the entire FYP.
+
+**Why:** Students don't know how to sequence work. A 6-8 week plan with
+weekly deliverables is high-value and cheap to generate.
+
+**Backend:**
+- New engine method: `roadmap_ai(topic, duration_weeks)`
+- New route: `POST /api/fyp/roadmap`
+- Credit key: `fyp_roadmap` (15 credits)
+
+**Frontend:**
+- New tab/panel in the FYP page
+- Simple form: topic + duration
+- Render week cards with milestones
+
+---
+
+#### 4. Refine Section — interactive rewrite (2 hrs)
+
+**What:** After a chapter is expanded, user types an instruction ("make formal",
+"add examples", "shorten") and AI returns the revised text.
+
+**Why:** Turns one-shot generation into collaborative editing. This is where
+FYP becomes a *workflow* product, not a *generator*.
+
+**Backend:**
+- New engine method: `refine_section_ai(current_text, instruction)`
+- New route: `POST /api/fyp/refine-section`
+- Credit key: `fyp_refine_section` (5 credits per instruction)
+
+**Frontend:**
+- Text area + chat-style UI in each expanded chapter
+- History of refinements preserved in DOM
+- "Revert to previous" button
+
+---
+
+#### 5. Plagiarism-Safe Rewriter (1 hr)
+
+**What:** Rewrites AI-generated content in the student's own voice to avoid
+AI-detection tools.
+
+**Why:** Biggest anxiety for students. Natural paid add-on.
+
+**Backend:**
+- New engine method: `humanize_text_ai(text)`
+- New route: `POST /api/fyp/humanize`
+- Credit key: `fyp_humanize` (15 credits)
+
+**Frontend:**
+- "Humanize this chapter" button on each expanded chapter
+
+---
+
+#### 6. Citation Helper (30 min)
+
+**What:** Extracts key concepts from a chapter and generates IEEE/APA/MLA
+references for each.
+
+**Why:** Citations are the #1 formatting headache for students.
+
+**Backend:**
+- New engine method: `citations_ai(topic, chapter_content)`
+- New route: `POST /api/fyp/citations`
+- Credit key: `fyp_citations` (8 credits)
+
+---
+
+#### 7. Viva Simulator — chat mode (3 hrs)
+
+**What:** Chat-style viva practice. AI asks questions, evaluates answers,
+gives a mock score, escalates based on performance.
+
+**Why:** Premium tier feature. Requires session state (DB table for progress).
+
+**Backend:**
+- New table: `charvak_fyp_viva_sessions`
+- New engine methods: `start_viva_session()`, `answer_viva_question()`, `end_viva_session()`
+- New routes: `POST /api/fyp/viva-session/{start,answer,end}`
+- Credit key: `fyp_viva_simulation` (20 credits per session)
+
+**Frontend:**
+- Chat UI page
+
+**Deferred:** larger scope, better as its own session.
+
+---
+
+### Monetization recommendation (logged for discussion)
+
+Shift FYP from subscription-only to credits + optional subscription:
+
+| Feature | Credits |
+|---|---|
+| Suggest topics | 5 |
+| Generate proposal | 15 |
+| Documentation outline | 30 |
+| Expand chapter | 10 (new) |
+| Viva Q&A | 20 (bumped from 10) |
+| Roadmap | 15 (new) |
+| Refine section | 5 (new) |
+| Humanize | 15 (new) |
+| Citations | 8 (new) |
+| Viva simulation | 20/session (new) |
+
+Keep subscription tiers as "power user" bundles:
+- Starter top-up: 100 credits / ₹99
+- Student pack: 500 credits / ₹399
+- Pro pack: 1500 credits / ₹999
+
+Rationale: typical student journey ≈ 135 credits (~₹80-100 in credits).
+Subscription at ₹299 is overkill for most. Credits capture more spend across
+price-sensitive students.
+
+### Recommended sequence
+1. Viva Answers (30 min)
+2. Per-Chapter Expand (1.5 hrs)
+3. Milestone Roadmap (45 min)
+4. Everything else by user demand
+
+### Verdict
+- Viva Answers + Per-Chapter Expand: **SCHEDULED** — next FYP session
+- Roadmap: **SCHEDULED** — follow-up
+- Rest: **FLAGGED** — pick by user feedback
+- Monetization shift: **DISCUSSION** — no code change until you decide
+
 ### FLAGGED — AI feature verification sweep — full list (2026-09-26)
 
 Tonight we audited + fixed:
