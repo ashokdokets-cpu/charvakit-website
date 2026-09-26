@@ -6493,6 +6493,13 @@ async def global_exception_handler(request: Request, exc: Exception):
 # ============================================================
 
 
+
+# ============================================================
+# LEGACY — /api/assessment/* routes have no frontend callers
+# Verified 2026-09-27. Kept for API compatibility / external integrations.
+# Dead-code candidates for a future cleanup session. Do not add new callers.
+# ============================================================
+
 from advanced_assessment_engine import advanced_assessment_engine
 
 @app.get("/advanced-assessment", response_class=HTMLResponse)
