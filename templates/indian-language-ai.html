@@ -111,8 +111,8 @@ async function createAssessment(e) {
     // Session G6: backend enforces credits via /api/indian-languages/assessment
     fetch('/api/indian-languages/assessment', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
+        headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken},
+        body: JSON.stringify({email: email, 
             language: language,
             skill: skill,
             difficulty: difficulty,
@@ -160,8 +160,8 @@ async function translateJobAd(e) {
     // Session G6: backend enforces credits via /api/indian-languages/translate
     fetch('/api/indian-languages/translate', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
+        headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken},
+        body: JSON.stringify({email: email, 
             language: language,
             job_title: job_title,
             company: company,

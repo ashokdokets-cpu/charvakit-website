@@ -134,8 +134,8 @@ async function startSession(e) {
     try {
         const r = await fetch('/api/interview-prep/start', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
+            headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '')},
+            body: JSON.stringify({email: (localStorage.getItem('userEmail') || ''), 
                 candidate_email: ipEmail,
                 role: role,
                 difficulty: difficulty,

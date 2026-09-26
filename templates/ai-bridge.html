@@ -82,7 +82,7 @@ async function startAIAssessment(e) {
         industry: document.getElementById('industry').value,
         experience_level: document.getElementById('level').value
     };
-    const r = await fetch('/api/ai-bridge/start', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+    const r = await fetch('/api/ai-bridge/start', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({...data, email: email})});
     const j = await r.json();
     aiSessionId = j.session_id;
     aiQuestions = j.first_question ? [j.first_question] : [];
@@ -111,7 +111,7 @@ async function submitAIAnswer(questionId) {
         question_id: questionId,
         answer_text: answerText
     };
-    const r = await fetch('/api/ai-bridge/answer', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+    const r = await fetch('/api/ai-bridge/answer', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({...data, email: email})});
     const j = await r.json();
     currentQIndex++;
     
@@ -141,7 +141,7 @@ function showReport(report) {
 }
 
 async function getPremium() {
-    const r = await fetch('/api/ai-bridge/premium', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id: aiSessionId})});
+    const r = await fetch('/api/ai-bridge/premium', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({session_id: aiSessionId, email: email})});
     const j = await r.json();
     alert(j.message || 'Premium report unlocked!');
 }
