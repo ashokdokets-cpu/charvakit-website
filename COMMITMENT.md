@@ -5,6 +5,38 @@
 **Last updated:** 2026-09-25
 **HEAD:** c2c67d7
 
+### FLAGGED — AI feature verification sweep — full list (2026-09-26)
+
+Tonight we audited + fixed:
+- Voice-to-Web (auto-deploy) ✅
+- AI Tools Suite (13 routes + 9 templates) ✅
+- Student Suite (2 assist routes + template) ✅
+
+Still uninspected — same class of bug risk:
+
+| Area | Routes | Engine | Frontend |
+|---|---|---|---|
+| Final Year Project | 4 | final_year_project_engine.py | final-year-project.html |
+| 11 AI Products | 11 | products_engine.py | 11 templates |
+| AI Bridge | 3 | ai_bridge_engine.py | ai-bridge.html, bridge.html |
+| Marketing AI | 3 | marketing_ai_engine.py | marketing-ai.html |
+| Indian Language AI | 2 | indian_language_ai.py | indian-language-ai.html |
+| Interview Prep | 2+ | interview_prep_engine.py | interview-*.html |
+| LMS AI | 8+ | lms_engine.py | lms.html |
+| Assessment engines | 8+ | multiple | several templates |
+
+For each:
+- [ ] Route has require_auth_for_email
+- [ ] AI wrapper (which one?) uses httpx, not requests.Session(timeout=)
+- [ ] AI wrapper uses response_format={"type":"json_object"} where JSON expected
+- [ ] Frontend sends Authorization + email
+- [ ] Frontend function definitions exist (not just referenced)
+- [ ] E2E: browser test passes, real AI output, one credit deduction
+
+Est: 4-6 hours for full sweep. Schedule as multi-session work.
+
+Verdict: SCHEDULED — highest-value cleanup remaining.
+
 
 ### FLAGGED — student_suite auth gap (2026-09-26)
 
