@@ -3752,6 +3752,10 @@ async def start_interview_prep(request: Request):
     """Start an interview prep session."""
     try:
         data = await request.json()
+        email = (data.get("email") or "").strip().lower()
+        if not email:
+            return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+        require_auth_for_email(request, email)
         from credit_guard import require_credits_from_data
         guard = require_credits_from_data(data, "interview_prep_start")
         if guard.get("status") != "success":
@@ -3767,6 +3771,10 @@ async def submit_answer(request: Request):
     """Submit an answer for scoring."""
     try:
         data = await request.json()
+        email = (data.get("email") or "").strip().lower()
+        if not email:
+            return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+        require_auth_for_email(request, email)
         from credit_guard import require_credits_from_data
         guard = require_credits_from_data(data, "interview_prep_submit")
         if guard.get("status") != "success":
@@ -4678,6 +4686,10 @@ async def enterprise_stats():
 @limiter.limit("60/minute")
 async def generate_job_ad(request: Request):
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     from credit_guard import require_credits_from_data
     guard = require_credits_from_data(data, "marketing_job_ad")
     if guard.get("status") != "success":
@@ -4688,6 +4700,10 @@ async def generate_job_ad(request: Request):
 @limiter.limit("20/minute")
 async def generate_social_post(request: Request):
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     from credit_guard import require_credits_from_data
     guard = require_credits_from_data(data, "marketing_social_post")
     if guard.get("status") != "success":
@@ -4698,6 +4714,10 @@ async def generate_social_post(request: Request):
 @limiter.limit("60/minute")
 async def create_lead_drip(request: Request):
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     from credit_guard import require_credits_from_data
     guard = require_credits_from_data(data, "marketing_lead_drip")
     if guard.get("status") != "success":
@@ -4726,6 +4746,10 @@ async def get_indian_languages():
 async def create_language_assessment(request: Request):
     """Create assessment in Indian language (Session G6: credit-gated)."""
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     from credit_guard import require_credits_from_data
     guard = require_credits_from_data(data, "indian_language_assessment")
     if guard.get("status") != "success":
@@ -4744,6 +4768,10 @@ async def submit_language_assessment(request: Request):
 async def translate_job_ad(request: Request):
     """Translate job ad to Indian language (Session G6: credit-gated)."""
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     from credit_guard import require_credits_from_data
     guard = require_credits_from_data(data, "indian_language_translation")
     if guard.get("status") != "success":
@@ -4807,6 +4835,10 @@ async def indian_language_ai_page(request: Request):
 @limiter.limit("20/minute")
 async def rate_course(request: Request):
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     from credit_guard import require_credits_from_data
     guard = require_credits_from_data(data, "lms_rate")
     if guard.get("status") != "success":
@@ -4821,6 +4853,10 @@ async def get_course_ratings(course_id: str):
 @limiter.limit("60/minute")
 async def create_quiz(request: Request):
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     from credit_guard import require_credits_from_data
     guard = require_credits_from_data(data, "lms_quiz")
     if guard.get("status") != "success":
@@ -4831,6 +4867,10 @@ async def create_quiz(request: Request):
 @limiter.limit("20/minute")
 async def submit_quiz(request: Request):
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     from credit_guard import require_credits_from_data
     guard = require_credits_from_data(data, "lms_quiz_submit")
     if guard.get("status") != "success":
@@ -4841,6 +4881,10 @@ async def submit_quiz(request: Request):
 @limiter.limit("60/minute")
 async def issue_certificate(request: Request):
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     from credit_guard import require_credits_from_data
     guard = require_credits_from_data(data, "lms_certificate")
     if guard.get("status") != "success":
@@ -4865,6 +4909,10 @@ async def get_progress(enrollment_id: str):
 @limiter.limit("20/minute")
 async def post_discussion(request: Request):
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     from credit_guard import require_credits_from_data
     guard = require_credits_from_data(data, "lms_discussion")
     if guard.get("status") != "success":
@@ -4875,6 +4923,10 @@ async def post_discussion(request: Request):
 @limiter.limit("20/minute")
 async def reply_discussion(request: Request):
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     from credit_guard import require_credits_from_data
     guard = require_credits_from_data(data, "lms_discussion")
     if guard.get("status") != "success":
@@ -4898,6 +4950,10 @@ async def lms_page(request: Request):
 @limiter.limit("20/minute")
 async def add_lesson(request: Request):
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     from credit_guard import require_credits_from_data
     guard = require_credits_from_data(data, "lms_lesson_add")
     if guard.get("status") != "success":
@@ -4922,6 +4978,10 @@ async def get_payouts(trainer_email: str):
 @limiter.limit("60/minute")
 async def add_course_language(request: Request):
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     from credit_guard import require_credits_from_data
     guard = require_credits_from_data(data, "lms_language_add")
     if guard.get("status") != "success":
@@ -5101,19 +5161,34 @@ async def blacklist_ip(request: Request):
 @app.post("/api/bridge/start")
 @limiter.limit("60/minute")
 async def start_bridge(request: Request):
-    data = await request.json() if request.body() else {}
+    try:
+        data = await request.json()
+    except Exception:
+        data = {}
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     return bridge_engine.start_journey(data)
 
 @app.post("/api/bridge/answer")
 @limiter.limit("20/minute")
 async def submit_bridge_answer(request: Request):
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     return bridge_engine.submit_answer(data)
 
 @app.post("/api/bridge/revenue")
 @limiter.limit("60/minute")
 async def calculate_bridge_revenue(request: Request):
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     return bridge_engine.calculate_revenue(data)
 
 @app.get("/api/bridge/stats")
@@ -5129,6 +5204,10 @@ async def bridge_stats():
 @limiter.limit("60/minute")
 async def start_ai_bridge(request: Request):
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     from credit_guard import require_credits_from_data
     guard = require_credits_from_data(data, "ai_bridge_start")
     if guard.get("status") != "success":
@@ -5139,6 +5218,10 @@ async def start_ai_bridge(request: Request):
 @limiter.limit("20/minute")
 async def submit_ai_answer(request: Request):
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     from credit_guard import require_credits_from_data
     guard = require_credits_from_data(data, "ai_bridge_answer")
     if guard.get("status") != "success":
@@ -5149,6 +5232,10 @@ async def submit_ai_answer(request: Request):
 @limiter.limit("30/minute")
 async def get_premium_report(request: Request):
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     from credit_guard import require_credits_from_data
     guard = require_credits_from_data(data, "ai_bridge_premium")
     if guard.get("status") != "success":
@@ -6400,6 +6487,10 @@ async def versant_details():
 async def start_versant(request: Request):
     """Start Versant assessment (Session G6: credit-gated)."""
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     from credit_guard import require_credits_from_data
     guard = require_credits_from_data(data, "assessment_versant")
     if guard.get("status") != "success":
@@ -6415,6 +6506,10 @@ async def versant_section(session_id: str, section_index: int):
 async def generate_mcq(request: Request):
     """Generate MCQ questions (Session G6: credit-gated)."""
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     from credit_guard import require_credits_from_data
     guard = require_credits_from_data(data, "assessment_mcq")
     if guard.get("status") != "success":
@@ -6435,6 +6530,10 @@ async def company_patterns():
 async def start_mock_drive(request: Request):
     """Start mock drive (Session G6: credit-gated)."""
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     from credit_guard import require_credits_from_data
     guard = require_credits_from_data(data, "company_mock_drive")
     if guard.get("status") != "success":
@@ -6445,6 +6544,10 @@ async def start_mock_drive(request: Request):
 async def analyze_skill_gap(request: Request):
     """Analyze skill gap (Session G6: credit-gated)."""
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     from credit_guard import require_credits_from_data
     guard = require_credits_from_data(data, "assessment_skill_gap")
     if guard.get("status") != "success":
