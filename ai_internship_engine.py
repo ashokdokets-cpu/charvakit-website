@@ -555,6 +555,34 @@ Rules:
             logger.error(f"record_day_viewed failed: {e}")
             return False
 
+    def abandon_enrollment(self, enrollment_id, email=None):
+        """Mark an enrollment as abandoned. If email is provided, checks ownership."""
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            if email:
+                cur.execute('''
+                    UPDATE charvak_ai_internship_enrollments
+                    SET status = 'abandoned'
+                    WHERE enrollment_id = %s AND email = %s AND status = 'active'
+                ''', (enrollment_id, email))
+            else:
+                cur.execute('''
+                    UPDATE charvak_ai_internship_enrollments
+                    SET status = 'abandoned'
+                    WHERE enrollment_id = %s AND status = 'active'
+                ''', (enrollment_id,))
+            rows = cur.rowcount
+            conn.commit()
+            cur.close(); conn.close()
+            if rows == 0:
+                return {"status": "error", "message": "Enrollment not found or already inactive"}
+            return {"status": "success", "enrollment_id": enrollment_id}
+        except Exception as e:
+            logger.error(f"abandon_enrollment failed: {e}")
+            return {"status": "error", "message": "Could not abandon enrollment"}
+
     def get_programs(self):
         """Get all internship programs."""
         programs = []
@@ -586,6 +614,14 @@ Rules:
             from database import db
             conn = db.get_connection()
             cur = conn.cursor()
+            # Auto-abandon any prior active enrollment for the same (email, program_id).
+            # Rationale: a user re-enrolling in the same program is almost always a restart.
+            # Different programs remain active so users can pursue more than one at a time.
+            cur.execute('''
+                UPDATE charvak_ai_internship_enrollments
+                SET status = 'abandoned'
+                WHERE email = %s AND program_id = %s AND status = 'active'
+            ''', (email, program_id))
             cur.execute('''
                 INSERT INTO charvak_ai_internship_enrollments
                     (enrollment_id, email, program_id, duration, total_days, current_day, status)
