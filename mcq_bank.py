@@ -283,37 +283,25 @@ class MCQQuestionBank:
         }
     
     def get_topic_questions(self, category, topic, count=10):
-        """Get questions for a specific topic."""
+        """Get questions from the curated library for a specific topic.
+
+        IMPORTANT: this is the FREE library path. It must never call
+        OpenAI -- that would leak AI credits for free. Users who want
+        AI-generated questions use the paid /api/assessment/mcq/generate
+        route (5 credits per call) instead.
+
+        Returns whatever the curated bank holds for this (category, topic),
+        up to `count`. If the bank has fewer than `count`, returns fewer --
+        the frontend handles "No questions available" and the paid AI tier
+        is the documented way to get more.
+
+        (Removed 2026-09-28: silent AI-generation fallback that bypassed
+        credits. See COMMITMENT.md for the flag.)
+        """
         bank = self.question_bank.get(category, {})
         questions = bank.get(topic, [])
-        
-        if self.openai_api_key and len(questions) < count:
-            ai_questions = self._generate_ai_questions(category, topic, count - len(questions))
-            questions.extend(ai_questions)
-        
         return {"status": "success", "category": category, "topic": topic, "questions": questions[:count]}
-    
-    def _generate_ai_questions(self, category, topic, count):
-        """Generate AI questions for a topic."""
-        try:
-            import requests
-            prompt = f"Generate {count} MCQ on {topic} ({category}). 4 options each. Return JSON array with q, options, correct."
-            response = requests.post(
-                "https://api.openai.com/v1/chat/completions",
-                headers={"Authorization": f"Bearer {self.openai_api_key}"},
-                json={"model": "gpt-4o-mini", "messages": [{"role": "user", "content": prompt}], "temperature": 0.9},
-                timeout=10
-            )
-            data = response.json()
-            content = data["choices"][0]["message"]["content"]
-            import re
-            match = re.search(r'\[.*\]', content, re.DOTALL)
-            if match:
-                return json.loads(match.group())
-        except:
-            pass
-        return []
-    
+
     def get_all_topics(self):
         """Get all topics organized by category."""
         return {
