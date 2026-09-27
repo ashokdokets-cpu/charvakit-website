@@ -2,7 +2,7 @@
 
 **Purpose:** Track every planned-but-not-completed item. Nothing gets lost again.
 **Created:** 2026-09-20
-**Last updated:** 2026-09-27 (evening, part 2)
+**Last updated:** 2026-09-28 (PayPal credits — backend verified)
 **HEAD:** 82ec76f
 
 ### FLAGGED — Premium Report product (₹199 PDF unlock) (2026-09-27)
@@ -2299,3 +2299,70 @@ Adding a topic today requires editing (1) and (2) by hand. Silent drift is possi
 - **devtest orphan enrollments** — ~8 active rows from testing. Delete + refund or leave. Do at end of internship work.
 
 **Last updated:** 2026-09-27 (evening, part 2)
+
+
+---
+
+## Session 2026-09-28 — PayPal credits for non-INR (backend verified)
+
+**HEAD before block:** `8c96e68` + follow-up commits
+
+### Completed this session
+
+- **PayPal credits purchase for non-INR users** — full flow
+  - `payment_engine.create_paypal_order()` now calls `POST https://api-m.paypal.com/v2/checkout/orders` and returns the real PayPal order ID (17-char alphanumeric, e.g. `7JU25615UU6203421`). Previously it returned an invented `PAYPAL_xxx` id that PayPal rejected with `INVALID_RESOURCE_ID`.
+  - `payment_engine.fetch_paypal_order(paypal_order_id)` — new method. Fetches order from PayPal's API, returns `{status, status_field, amount, currency, email, paypal_order_id}`.
+  - `payment_engine.verify_paypal_payment()` — test-mode bypass removed. Previous behavior returned `{"verified": True}` unconditionally when `PAYMENT_MODE=test`, which would have granted credits for any fabricated order id. Now returns `{"verified": False, "message": "refused in test mode"}`.
+  - `/api/credits/purchase` — now branches on `payment_id` prefix:
+    - `pay_xxxxx` (Razorpay, INR, paise): unchanged
+    - `paypal:<CURRENCY>:<PAY-xxx>`: fetch from PayPal, check `status == COMPLETED`, verify currency matches, verify amount matches `INR_RATES[currency] * plan.price` within 2% FX tolerance, then grant credits.
+  - `templates/ai_credits_pricing.html` — `processSubscription()` refactored. INR → Razorpay (unchanged). Non-INR → provider picker with **Pay with PayPal (USD)** and **Pay with Razorpay (INR)** buttons. Provider picker shows the approximate local-currency amount.
+  - `static/js/payment-helper.js` — added `ensurePayPalLoaded()` helper that fetches the client_id from `/api/payment/status` and injects the SDK on demand. Fixed a syntax bug (`await` inside non-async `.then()` callback). Replaced the `YOUR_PAYPAL_CLIENT_ID` placeholder that would have loaded a broken SDK.
+  - `payment_engine.is_ready()` — now returns `razorpay_key_id` and `paypal_client_id` (public-safe halves only; secrets never exposed). Required for the lazy SDK load.
+  - `templates/base.html` — removed the unconditional PayPal SDK load on every page (saves ~1 MB per page load on non-payment pages).
+
+### Verified
+
+- **Backend verified against live PayPal API, no charge.** Test script created real order `7JU25615UU6203421`, fetched it, parsed status `CREATED`, amount `2.39 USD` matching `round(199 * INR_RATES["USD"], 2)`. `verify_paypal_payment` correctly returned `{verified: False}` for the uncaptured order.
+- Order `7JU25615UU6203421` was never captured; it auto-expires ~3 hours from creation. No money moved.
+- INR path unchanged — Razorpay modal still opens with correct amount.
+- `/api/credits/purchase` correctly rejects fake PayPal order ids with a 404 from the PayPal API.
+
+### FLAGGED — PayPal credits: browser capture step not yet tested end-to-end
+
+The `paypal.Buttons({ createOrder, onApprove })` chain — specifically `actions.order.capture()` returning to `/api/credits/purchase` — has not been exercised with a live capture. Every other piece of the chain is verified:
+- `create_paypal_order` reaches PayPal and returns a real ID ✅
+- `fetch_paypal_order` retrieves and parses it ✅
+- amount math matches within tolerance ✅
+- `/api/credits/purchase` correctly branches on the `paypal:` prefix and validates server-side ✅
+- `paypal.Buttons` is standard SDK usage ✅
+
+**Test:** make one real $2.39 payment via the picker, verify credits granted, then refund in the PayPal dashboard. ~5 min, $0 net cost.
+
+**Verdict:** FLAGGED — needs one live capture to close.
+
+### FLAGGED — `CachedStaticFiles` + hardcoded `?v=` query strings
+
+`main.py` sets `Cache-Control: public, max-age=31536000, immutable` on all `/static/*` files. Templates reference them with a fixed `?v=2.1`/`?v=2.2`/`?v=2.3` query string. Any code change to a cached JS/CSS file requires manually bumping the `?v=` reference in every template that includes it.
+
+This caused today's PayPal debugging: `payment-helper.js` was updated in `8c96e68`, but the browser ran a stale cached copy for ~10 minutes because the URL was unchanged. Diagnosed by comparing `document.querySelectorAll('script[src*="payment-helper"]')` output to the on-disk file.
+
+**Fix:** inject a build hash (`RENDER_GIT_COMMIT`, or a startup timestamp) into templates as `STATIC_VERSION` and reference assets as `/static/js/payment-helper.js?v={{ STATIC_VERSION }}`. ~30 min. Medium priority — every future JS/CSS edit will hit this footgun until fixed.
+
+### FLAGGED — `ai_courses_payments` PayPal path may have the same stub
+
+`payment_engine.create_paypal_order` was a stub until today. If `ai_courses_payments.py` (or any other engine) has its own PayPal order-creation path, it may share the same bug. Worth a quick audit: `grep -rn "create_paypal_order\|PAYPAL_" --include="*.py" | grep -v "payment_engine.py"`. ~15 min.
+
+### FLAGGED — PayPal credits has no webhook safety net
+
+If the browser closes after the PayPal SDK captures the payment but before the frontend POSTs to `/api/credits/purchase`, the user's money is taken but credits are never granted. `/webhook/paypal` exists but only handles AI course payments.
+
+**Fix:** extend the webhook to detect credits purchases (via `purchase_units[0].custom_id` starting with `credits|`) and call `purchase_credits` idempotently. ~30 min. Real user-impact risk — a browser crash between capture and callback = lost payment.
+
+### Not changed (deliberately)
+
+- Razorpay flow on `/ai-credits-pricing` — unchanged, still INR-only.
+- INR users still see only Razorpay.
+- `PAYMENT_MODE=test` behavior for Razorpay `order_test_*` fake orders — untouched. (Separate flag; not PayPal-related.)
+
+**Last updated:** 2026-09-28 (PayPal credits — backend verified)
