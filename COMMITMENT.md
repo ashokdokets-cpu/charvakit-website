@@ -2,7 +2,7 @@
 
 **Purpose:** Track every planned-but-not-completed item. Nothing gets lost again.
 **Created:** 2026-09-20
-**Last updated:** 2026-09-28 (MCQ bypass fixed, internship AI eval + UI shipped)
+**Last updated:** 2026-09-28 (MCQ bypass + internship AI eval + FYP viva answers + internship custom programs shipped)
 **HEAD:** 82ec76f
 
 ### FLAGGED — Premium Report product (₹199 PDF unlock) (2026-09-27)
@@ -1583,6 +1583,7 @@ Verdict: SCHEDULED — own session
 - **Future work per feature:**
   - Build backend engine + endpoint
   - Add `FEATURE_CREDITS` key
+- Added 2026-09-28: `internship_custom_program: 50` (AI curriculum design)
   - Guard with `require_credits_from_data`
   - Wire frontend to credit purchase flow
 - **Est:** 3-5 hr per feature Ã— 15 features = **~45-75 hr total**
@@ -2312,7 +2313,24 @@ Adding a topic today requires editing (1) and (2) by hand. Silent drift is possi
 ### Still SCHEDULED (unchanged)
 
 - **Internship enrollment cleanup** (~45 min) — auto-abandon prior active per `(email, program_id)` on new enroll; banner dropdown when user has >1 active across programs; `POST /api/internship/abandon/{enrollment_id}` + Dismiss button
-- **Internship Phase 3 — custom programs** (~45 min) — `create_custom_program()`, `POST /api/internship/custom-program` (50 cr), frontend search bar
+### RESOLVED — Internship Phase 3: AI-designed custom programs (2026-09-28, commit f57af58)
+
+**Shipped 2026-09-28 (commit `f57af58`).** AI-designed custom internship programs.
+Users type any role (e.g. "Underwater Robotics Engineer") and OpenAI generates a full
+curriculum: name, category, 4-6 skills, 3-4 deliverables, week-by-week outline.
+
+- Backend: `ai_internship_engine.create_custom_program()` + `_resolve_program()` helper;
+  `get_programs(email)` merges user's custom programs into the grid; `enroll()` now
+  resolves custom program IDs (previously only static `self.programs` dict)
+- Route: `POST /api/internship/custom-program` — auth-gated + credits-gated
+- Frontend: search-bar card above the program grid; custom programs render with a blue
+  "Custom" badge; `loadPrograms()` sends `?email=` so users see their own
+- Storage: `charvak_ai_internship_custom_programs` table (schema existed, was dormant)
+- Per-user scoping via `requested_by` column; `is_public=0` for now
+
+**Verified E2E:** created "Underwater Robotics Engineer" → real AI curriculum (5 skills,
+4 deliverables, category Engineering) → persisted to DB → re-fetched via API with
+`is_custom: true`. 50 credits deducted correctly.
 - **Internship Phase 4 — tier UI + top-up-then-enroll** (~60 min) — tier selector, credits-needed computation, Razorpay top-up modal, switch `internship_enroll` from flat 100 cr to tier-based
 - ~~**`ai_internship_engine.submit_work` real AI eval** (KNOWN-ISSUES #9)~~ — **RESOLVED 2026-09-28, commit `16c5d97`.** Real OpenAI mentor eval now live; random stub only used as fallback if the AI call fails. Submit Work UI added to `templates/ai-internship.html`. Verified E2E: scored 8/10 with contextual strengths/improvements.
 
