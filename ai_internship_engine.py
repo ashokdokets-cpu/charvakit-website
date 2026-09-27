@@ -740,24 +740,116 @@ Rules:
     # SUBMISSIONS
     # ============================================================
 
-    def submit_work(self, enrollment_id, day, submission_text):
-        """Submit daily work for AI review."""
-        if not self._get_enrollment(enrollment_id):
-            return {"status": "error", "message": "Enrollment not found"}
+    def _call_openai_json(self, prompt):
+        """Call OpenAI in JSON mode. Mirrors student_suite_engine pattern."""
+        try:
+            import os
+            import requests as _requests
+            api_key = os.getenv("OPENAI_API_KEY", "")
+            if not api_key:
+                logger.warning("OPENAI_API_KEY not set - cannot call OpenAI")
+                return None
+            response = _requests.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers={"Authorization": f"Bearer {api_key}"},
+                json={
+                    "model": "gpt-4o-mini",
+                    "messages": [
+                        {"role": "system", "content": "You are an experienced technical mentor. Always respond with valid JSON only."},
+                        {"role": "user", "content": prompt},
+                    ],
+                    "temperature": 0.4,
+                    "response_format": {"type": "json_object"},
+                },
+                timeout=25,
+            )
+            if response.status_code != 200:
+                logger.error(f"OpenAI HTTP {response.status_code}: {response.text[:200]}")
+                return None
+            body = response.json()
+            content = (body.get("choices", [{}])[0].get("message", {}).get("content") or "").strip()
+            if content.startswith("```"):
+                content = content.strip("`")
+                if content.startswith("json"):
+                    content = content[4:].strip()
+            try:
+                parsed = json.loads(content)
+                if isinstance(parsed, dict):
+                    return parsed
+            except Exception as e:
+                logger.error(f"OpenAI JSON parse failed: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"OpenAI call failed: {e}")
+            return None
 
-        feedback = {
+    def _stub_feedback(self):
+        """Fallback feedback if AI fails so the page never breaks."""
+        return {
             "score": random.randint(7, 10),
-            "strengths": ["Good understanding", "Clear implementation"],
-            "improvements": ["Add more documentation", "Consider edge cases"],
+            "strengths": ["Submission received", "Task attempted"],
+            "improvements": ["AI feedback unavailable - try again later"],
             "next_steps": "Proceed to next day's task",
         }
+
+    def _evaluate_submission_ai(self, day, program_name, role_title, submission_text):
+        """Evaluate a student submission with OpenAI. Returns structured feedback."""
+        prompt = (
+            f"You are a senior {role_title} mentoring a student in a {program_name} internship.\n\n"
+            f"Today is Day {day}. The student submitted their work for today's task. "
+            "Evaluate it as a mentor would:\n"
+            "- Be encouraging but honest\n"
+            "- Point out concrete strengths in what they did\n"
+            "- Identify specific, actionable improvements\n"
+            "- Give a clear next step\n\n"
+            "Student submission:\n---\n"
+            f"{submission_text[:4000]}\n---\n\n"
+            "Return STRICT JSON only with keys: score (int 1-10), strengths (list of 3 short sentences), "
+            "improvements (list of 3 short actionable sentences), next_steps (one sentence)."
+        )
+
+        result = self._call_openai_json(prompt)
+        if not result or "score" not in result:
+            logger.warning(f"AI eval failed for day {day} - using stub")
+            return self._stub_feedback()
+
+        try:
+            score = int(result.get("score", 7))
+        except Exception:
+            score = 7
+        score = max(1, min(10, score))
+
+        def _clean_list(val):
+            if not isinstance(val, list):
+                return []
+            return [str(x)[:200] for x in val[:5] if x]
+
+        return {
+            "score": score,
+            "strengths": _clean_list(result.get("strengths")) or ["Submission received"],
+            "improvements": _clean_list(result.get("improvements")) or ["Keep iterating"],
+            "next_steps": str(result.get("next_steps") or "Proceed to next day's task")[:300],
+        }
+
+    def submit_work(self, enrollment_id, day, submission_text):
+        """Submit daily work for AI review."""
+        enrollment = self._get_enrollment(enrollment_id)
+        if not enrollment:
+            return {"status": "error", "message": "Enrollment not found"}
+
+        program = self.programs.get(enrollment.get("program_id"))
+        program_name = program["name"] if program else "Internship"
+        role_title = program_name.replace(" Internship", "").strip() if program else "intern"
+
+        feedback = self._evaluate_submission_ai(day, program_name, role_title, submission_text)
 
         try:
             from database import db
             conn = db.get_connection()
             cur = conn.cursor()
             submission_id = f"SUB-{secrets.token_hex(4).upper()}"
-            cur.execute('''
+            sql = (
+                '''
                 INSERT INTO charvak_ai_internship_submissions
                     (submission_id, enrollment_id, day, submission, ai_feedback)
                 VALUES (%s, %s, %s, %s, %s::jsonb)
@@ -765,7 +857,9 @@ Rules:
                     SET submission = EXCLUDED.submission,
                         ai_feedback = EXCLUDED.ai_feedback,
                         submitted_at = CURRENT_TIMESTAMP
-            ''', (submission_id, enrollment_id, day, submission_text, json.dumps(feedback)))
+                '''
+            )
+            cur.execute(sql, (submission_id, enrollment_id, day, submission_text, json.dumps(feedback)))
             conn.commit()
             cur.close(); conn.close()
         except Exception as e:
@@ -773,6 +867,7 @@ Rules:
             return {"status": "error", "message": "Could not submit work"}
 
         return {"status": "success", "feedback": feedback}
+
 
     # ============================================================
     # PROGRESS
