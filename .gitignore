@@ -153,3 +153,6 @@ data/GeoLite2-City.mmdb
 data/*.gz
 data/*.tmp
 !data/.gitkeep
+
+# Dev patcher scripts (transient - created by patching sessions)
+_*.py
