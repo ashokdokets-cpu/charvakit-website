@@ -2163,3 +2163,38 @@ never calls the AI route. Needs replacement with credits-based form.
 **Verdict:** SCHEDULED — next session
 
 **Last updated:** 2026-09-27 06:10
+
+
+---
+
+## Next session scope (2026-09-27)
+
+Queue of remaining work, roughly in priority order.
+
+| # | Item | Effort | Type |
+|---|---|---|---|
+| 1 | **4 unlisted AI tools** — Neural Wireframe, Globalize.ai, Legacy-Shift, Agent-Ready | ~1.5 hrs | Same pattern as 11-product sprint |
+| 2 | **MCQ** — /mcq page: keep free library, add AI-generate button → /api/assessment/mcq/generate (already auth+credit, 5cr) | ~30-45 min | Frontend add + verify |
+| 3 | **AI Internship** — add require_auth_for_email to 5 routes (enroll has credits but no auth; scenario/complete/submit/progress have neither); engine submit_work uses random score (KNOWN-ISSUES #9) | ~45-60 min | IDOR fix + optional AI eval |
+| 4 | **C7 — 14 templates with dead payment buttons** | 4-6 hrs | Per-template product decisions |
+| 5 | **4 templates with processToolPayment** (background-verification, bounty-swap, ref-swap, ghost-tracker) | 45 min | Same fix as premium-upsell.html |
+| 6 | **FYP feature roadmap** (7 logged features) | 1 hr each | Product decisions |
+| 7 | **Dead /api/assessment/* routes** | 20 min | Hygiene — legacy-marked, cleanup candidate |
+
+### Notes
+
+- Item 1 is mechanical (same pattern used 11x tonight) — highest confidence of clean success.
+- Items 2-3 need discovery greps first: does the backend exist? Is it auth+credit gated? Does the frontend call it?
+- Item 4 requires product decisions per template (ship real feature vs keep notify-me).
+- Item 5 is quick and formulaic.
+- Item 6 is the FYP roadmap already logged: Viva Answers, Per-Chapter Expand, Milestone Roadmap, Refine Section, Humanize, Citations, Viva Simulator.
+- Item 7 can be either deleted or left with the legacy banner we added.
+
+**Suggested session structure:**
+- Session A (~2 hrs): Items 1 + 5 (mechanical fixes, quick wins)
+- Session B (~30 min): Items 2 + 3 (MCQ + AI Internship audit)
+- Session C (~4-6 hrs): Item 4 (C7 template sweep)
+- Session D (open): Item 6 (FYP features by user demand)
+- Optional: Item 7 whenever there is appetite
+
+**Last updated:** 2026-09-27 06:14
