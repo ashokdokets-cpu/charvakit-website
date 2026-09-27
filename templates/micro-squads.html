@@ -3,12 +3,11 @@
 {% block content %}
 <div class="page-hero bg-gradient-primary text-white py-5">
     <div class="container py-4">
-        <span class="badge bg-info text-dark mb-2 px-3 py-2">💡 Concept</span>
+        <span class="badge bg-info text-dark mb-2 px-3 py-2">Concept</span>
         <h1 class="display-4 fw-bold">On-Demand Micro-Squads</h1>
         <p class="lead">AI-orchestrated human teams. 14-day sprints. Pay only for delivered milestones.</p>
     </div>
 {% include "includes/beta_badge.html" %}
-
 </div>
 
 <div class="container py-5">
@@ -21,12 +20,32 @@
             <div class="d-flex mb-3"><span class="step-number me-3">2</span><div><h3 class="as-h5">Squad Assembles</h3><p class="text-muted">AI matches the perfect team from Charvak's vetted pool.</p></div></div>
             <div class="d-flex"><span class="step-number me-3">3</span><div><h3 class="as-h5">14-Day Delivery</h3><p class="text-muted">Milestone delivered. You pay only on success.</p></div></div>
         </div>
-        <div class="col-lg-6 text-center">
-            <div class="bg-dark text-white p-5 rounded-4">
-                <i class="bi bi-people display-1 mb-3"></i>
-                <h4>Project Scope Simulator</h4>
-                <p class="text-white-50">Describe your project. Get an instant blueprint and cost estimate.</p>
-                <a href="/scope-simulator" class="btn btn-primary btn-lg mt-3">Try Scope Simulator</a>
+        <div class="col-lg-6">
+            <div class="bg-dark text-white p-4 rounded">
+                <h3 class="as-h4 mb-3">Assemble a Squad</h3>
+                <form onsubmit="runSquadAssembly(event)" id="squadForm">
+                    <div class="mb-3">
+                        <label class="form-label text-white-50">Project Type</label>
+                        <select class="form-select" id="sqProjectType">
+                            <option>Web App</option>
+                            <option>AI/ML</option>
+                            <option>Mobile</option>
+                            <option>DevOps</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-white-50">Duration (days)</label>
+                        <input type="number" class="form-control" id="sqDuration" min="3" max="90" placeholder="e.g. 14" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-white-50">Budget (INR)</label>
+                        <input type="number" class="form-control" id="sqBudget" min="10000" step="1000" placeholder="e.g. 50000" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100" id="sqSubmitBtn">
+                        Assemble Squad &mdash; 25 credits
+                    </button>
+                </form>
+                <div id="sqOutput" class="mt-4"></div>
             </div>
         </div>
     </div>
@@ -38,24 +57,129 @@
         <div class="col-md-3"><div class="card h-100 p-4"><i class="bi bi-lightning display-4 text-primary mb-3"></i><h5>72-Hour Assembly</h5><p class="text-muted">Squad ready in 3 days</p></div></div>
     </div>
 
-    <div class="row g-4 mb-5">
-        <div class="col-md-4"><div class="card h-100 p-4 text-center"><h4>🚀 Starter Sprint</h4><h2 class="display-4 fw-bold"><span data-inr="49999">₹49,999</span></h2><p>2 devs + 1 QA · 14 days</p><a href="#" class="btn btn-outline-primary" onclick="assembleSquad(event)">Start Starter Sprint</a></div></div>
-        <div class="col-md-4"><div class="card h-100 p-4 text-center border-primary" style="border-width:2px;"><span class="badge bg-primary mb-2">Popular</span><h3 class="as-h4">⚡ Growth Squad</h3><h2 class="display-4 fw-bold"><span data-inr="99999">₹99,999</span></h2><p>4 devs + 1 PM + 1 QA · 14 days</p><a href="#" class="btn btn-primary" onclick="assembleSquad(event)">Start Growth Squad</a></div></div>
-        <div class="col-md-4"><div class="card h-100 p-4 text-center"><h3 class="as-h4">🏢 Enterprise</h3><h2 class="display-4 fw-bold">Custom</h2><p>Dedicated squad · Flexible timeline</p><a href="/contact" class="btn btn-outline-primary">Contact Us</a></div></div>
-    </div>
-
     <div class="text-center p-5 bg-dark text-white rounded">
         <h3>What Can a Micro-Squad Build in 14 Days?</h3>
-        <div class="row mt-3"><div class="col-4">🔌 API Integration</div><div class="col-4">📊 Dashboard MVP</div><div class="col-4">🔄 Database Migration</div></div>
-        <a href="#" class="btn btn-primary btn-lg mt-4" onclick="assembleSquad(event)">Start Your Sprint Now</a>
+        <div class="row mt-3"><div class="col-4">API Integration</div><div class="col-4">Dashboard MVP</div><div class="col-4">Database Migration</div></div>
+        <p class="mt-4 mb-0 text-white-50">Use the form above to scope and assemble your squad.</p>
     </div>
 </div>
-{% include 'includes/premium-upsell.html' %}
+
 <script>
+async function runSquadAssembly(event) {
+    event.preventDefault();
+    const projectType = document.getElementById('sqProjectType').value;
+    const duration = parseInt(document.getElementById('sqDuration').value) || 14;
+    const budget = parseFloat(document.getElementById('sqBudget').value) || 0;
+
+    if (duration < 3) {
+        alert('Please enter a duration of at least 3 days.');
+        return;
+    }
+    if (budget < 10000) {
+        alert('Please enter a budget of at least ₹10,000.');
+        return;
+    }
+
+    const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    if (!authToken || !email) {
+        alert('Please log in to assemble a squad.');
+        window.location.href = '/login?next=/micro-squads';
+        return;
+    }
+
+    const btn = document.getElementById('sqSubmitBtn');
+    const out = document.getElementById('sqOutput');
+    btn.disabled = true;
+    btn.textContent = 'Assembling... this takes 15-30 seconds';
+    out.innerHTML = '<div class="text-white-50 text-center py-3"><div class="spinner-border spinner-border-sm text-light"></div><p class="mt-2 mb-0">Assembling a ' + projectType + ' squad for ' + duration + ' days...</p></div>';
+
+    try {
+        const res = await fetch('/api/products/micro-squads/assemble', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authToken
+            },
+            body: JSON.stringify({email: email, project_type: projectType, duration_days: duration, budget: budget})
+        });
+
+        if (res.status === 401) {
+            out.innerHTML = '<div class="alert alert-danger">Please log in.</div>';
+            window.location.href = '/login?next=/micro-squads';
+            return;
+        }
+        if (res.status === 402) {
+            out.innerHTML = '<div class="alert alert-warning">Not enough credits. <a href="/ai-credits-pricing" class="alert-link">Top up</a>.</div>';
+            return;
+        }
+
+        const data = await res.json();
+        renderSquadResult(out, data);
+    } catch (e) {
+        out.innerHTML = '<div class="alert alert-danger">Error: ' + e.message + '</div>';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Assemble Squad — 25 credits';
+    }
+}
+
+function _renderList(items) {
+    var html = '<ul class="mb-0 small">';
+    items.forEach(function(item) {
+        if (typeof item === 'string') {
+            html += '<li>' + item + '</li>';
+        } else if (item && typeof item === 'object') {
+            var parts = [];
+            Object.keys(item).forEach(function(k) {
+                var label = k.replace(/_/g, ' ');
+                parts.push('<strong>' + label + ':</strong> ' + item[k]);
+            });
+            html += '<li>' + parts.join(' · ') + '</li>';
+        }
+    });
+    html += '</ul>';
+    return html;
+}
+
+function renderSquadResult(out, data) {
+    if (data.status !== 'success') {
+        out.innerHTML = '<div class="alert alert-danger">' + (data.message || 'Assembly failed') + '</div>';
+        return;
+    }
+    let html = '<div class="card bg-light text-dark mb-2"><div class="card-body">';
+    html += '<div class="d-flex justify-content-between align-items-start mb-2">';
+    html += '<div><strong>Squad ' + (data.squad_id || '') + '</strong><br><small class="text-muted">' + (data.project_type || '') + '</small></div>';
+    html += '<span class="badge bg-info">Ready in ' + (data.assembly_time || '72 hours') + '</span>';
+    html += '</div>';
+    html += '<div class="row text-center">';
+    html += '<div class="col-4"><div class="text-muted small">Members</div><h5 class="mb-0">' + (data.member_count || 0) + '</h5></div>';
+    html += '<div class="col-4"><div class="text-muted small">Duration</div><h5 class="mb-0">' + (data.duration_days || 0) + ' days</h5></div>';
+    html += '<div class="col-4"><div class="text-muted small">Cost/Day</div><h5 class="mb-0">₹' + (data.cost_per_day || 0).toLocaleString('en-IN') + '</h5></div>';
+    html += '</div>';
+    html += '<p class="mt-2 mb-0 small"><strong>Budget:</strong> ₹' + (data.budget || 0).toLocaleString('en-IN') + '</p>';
+    html += '</div></div>';
+
+    if (data.members && data.members.length) {
+        html += '<h6 class="text-white mt-3">Squad Composition</h6><ul class="text-white-50 small mb-0">';
+        data.members.forEach(function(m) { html += '<li>' + m + '</li>'; });
+        html += '</ul>';
+    }
+    if (data.sprint_plan && data.sprint_plan.length) {
+        html += '<h6 class="text-white mt-3">Sprint Plan</h6>';
+        html += '<div class="text-white-50">' + _renderList(data.sprint_plan) + '</div>';
+    }
+    if (data.verdict) {
+        html += '<div class="alert alert-info py-2 mt-3 mb-0">' + data.verdict + '</div>';
+    }
+    out.innerHTML = html;
+}
+
+// Pricing-tier CTA — kept as interest capture.
 function assembleSquad(event) {
     event.preventDefault();
-    // Session G6: feature under development — capture interest instead
     window.notifyMe('Micro-Squad Assembly');
 }
 </script>
+{% include 'includes/premium-upsell.html' %}
 {% endblock %}
