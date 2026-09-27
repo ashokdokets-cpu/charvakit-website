@@ -573,7 +573,7 @@ class ProductsEngine:
             "url": url,
             "name": name,
             "interval_minutes": interval,
-            "status": "active",
+            "monitor_status": "active",
             "checks_per_day": 24 * 60 // interval,
             "alert_channels": ["Email", "WhatsApp", "Webhook"],
             "auto_fix_enabled": True,
