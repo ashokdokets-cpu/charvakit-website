@@ -368,7 +368,11 @@ class PaymentEngine:
         if not self.paypal_client_id or not self.paypal_client_secret:
             return {"status": "error", "message": "PayPal not configured"}
 
-        if not paypal_order_id or not paypal_order_id.startswith("PAY-"):
+        # PayPal's API returns order IDs like "4W597217DK354982T" (17-char
+        # alphanumeric, no PAY- prefix). The PAY- prefix seen in the UI is a
+        # legacy display convention, not what the API returns. Just require a
+        # non-empty string here; the PayPal API call below is the real validator.
+        if not paypal_order_id or len(paypal_order_id) < 8:
             return {"status": "error", "message": "Invalid PayPal order_id format"}
 
         try:
