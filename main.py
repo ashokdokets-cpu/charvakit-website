@@ -5689,40 +5689,110 @@ async def purchase_credits(request: Request):
             "message": "Payment verification required. Complete checkout to receive credits."
         }, status_code=402)
 
-    # Fetch the payment from Razorpay and verify it matches this plan
-    try:
-        fetch = payment_engine.fetch_razorpay_payment(payment_id)
-    except Exception as e:
-        logger.error(f"Razorpay fetch error for {payment_id}: {e}")
-        return JSONResponse({
-            "status": "error",
-            "message": "Could not verify payment with gateway"
-        }, status_code=502)
+    # Payment gateway branch:
+    #   Razorpay:  payment_id = "pay_xxxxxxxx"          (amount in paise)
+    #   PayPal:    payment_id = "paypal:USD:PAY-xxxx"   (amount in native currency)
+    is_paypal = payment_id.startswith("paypal:")
 
-    if fetch.get("status") != "success":
-        return JSONResponse({
-            "status": "error",
-            "message": fetch.get("message") or "Payment not found"
-        }, status_code=402)
+    if is_paypal:
+        parts = payment_id.split(":", 2)
+        if len(parts) != 3 or not parts[1] or not parts[2]:
+            return JSONResponse({
+                "status": "error",
+                "message": "Invalid PayPal payment_id format"
+            }, status_code=400)
+        pp_currency = parts[1].upper()
+        pp_order_id = parts[2]
 
-    # Check capture status
-    if fetch.get("status_field") != "captured" and not fetch.get("captured"):
-        return JSONResponse({
-            "status": "error",
-            "message": f"Payment not captured (status: {fetch.get('status_field')})"
-        }, status_code=402)
+        try:
+            fetch = payment_engine.fetch_paypal_order(pp_order_id)
+        except Exception as e:
+            logger.error(f"PayPal fetch error for {pp_order_id}: {e}")
+            return JSONResponse({
+                "status": "error",
+                "message": "Could not verify payment with PayPal"
+            }, status_code=502)
 
-    # Check amount matches plan price (Razorpay returns paise)
-    expected_paise = int(plan_data["price"]) * 100
-    if int(fetch.get("amount") or 0) != expected_paise:
-        logger.warning(
-            f"Payment amount mismatch: {payment_id} expected {expected_paise} paise, "
-            f"got {fetch.get('amount')} for plan {plan}"
-        )
-        return JSONResponse({
-            "status": "error",
-            "message": "Payment amount does not match plan price"
-        }, status_code=402)
+        if fetch.get("status") != "success":
+            return JSONResponse({
+                "status": "error",
+                "message": fetch.get("message") or "PayPal order not found"
+            }, status_code=402)
+
+        if fetch.get("status_field") != "COMPLETED":
+            return JSONResponse({
+                "status": "error",
+                "message": f"PayPal order not completed (status: {fetch.get('status_field')})"
+            }, status_code=402)
+
+        paypal_currency = (fetch.get("currency") or "").upper()
+        if paypal_currency != pp_currency:
+            logger.warning(
+                f"PayPal currency mismatch: client said {pp_currency}, "
+                f"PayPal returned {paypal_currency} for {pp_order_id}"
+            )
+            return JSONResponse({
+                "status": "error",
+                "message": "Payment currency mismatch"
+            }, status_code=402)
+
+        rate = payment_engine.INR_RATES.get(paypal_currency)
+        if not rate:
+            return JSONResponse({
+                "status": "error",
+                "message": f"Unsupported currency: {paypal_currency}"
+            }, status_code=402)
+        expected_amount = round(int(plan_data["price"]) * rate, 2)
+        actual_amount = round(float(fetch.get("amount") or 0), 2)
+
+        if abs(actual_amount - expected_amount) > max(0.02, expected_amount * 0.02):
+            logger.warning(
+                f"PayPal amount mismatch: {pp_order_id} expected ~{expected_amount} "
+                f"{paypal_currency}, got {actual_amount} for plan {plan}"
+            )
+            return JSONResponse({
+                "status": "error",
+                "message": "Payment amount does not match plan price"
+            }, status_code=402)
+
+        payer_email = (fetch.get("email") or "").lower()
+        if payer_email and payer_email != email:
+            logger.warning(
+                f"PayPal payer email {payer_email} differs from purchaser {email} for {pp_order_id}"
+            )
+
+    else:
+        try:
+            fetch = payment_engine.fetch_razorpay_payment(payment_id)
+        except Exception as e:
+            logger.error(f"Razorpay fetch error for {payment_id}: {e}")
+            return JSONResponse({
+                "status": "error",
+                "message": "Could not verify payment with gateway"
+            }, status_code=502)
+
+        if fetch.get("status") != "success":
+            return JSONResponse({
+                "status": "error",
+                "message": fetch.get("message") or "Payment not found"
+            }, status_code=402)
+
+        if fetch.get("status_field") != "captured" and not fetch.get("captured"):
+            return JSONResponse({
+                "status": "error",
+                "message": f"Payment not captured (status: {fetch.get('status_field')})"
+            }, status_code=402)
+
+        expected_paise = int(plan_data["price"]) * 100
+        if int(fetch.get("amount") or 0) != expected_paise:
+            logger.warning(
+                f"Payment amount mismatch: {payment_id} expected {expected_paise} paise, "
+                f"got {fetch.get('amount')} for plan {plan}"
+            )
+            return JSONResponse({
+                "status": "error",
+                "message": "Payment amount does not match plan price"
+            }, status_code=402)
 
     # All checks passed â€” grant credits (idempotent on payment_id)
     result = ai_credit_engine.purchase_credits(email, plan, payment_id=payment_id)

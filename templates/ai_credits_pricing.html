@@ -271,122 +271,265 @@ async function loadPlans() {
     }
 
     async function processSubscription() {
-    const plan = allPlans[selectedPlan];
-    if (!plan) {
-        console.warn('processSubscription: no plan selected');
-        return;
-    }
+        const plan = allPlans[selectedPlan];
+        if (!plan) {
+            console.warn('processSubscription: no plan selected');
+            return;
+        }
 
-            const payBtn = document.getElementById('confirm-pay-btn');
-    if (payBtn) {
-        payBtn.disabled = true;
-        payBtn.textContent = 'Opening checkout...';
-    }
-
-    // Free plan: no Razorpay needed
-    if (plan.price === 0) {
-        activateFreePlan();
+        const payBtn = document.getElementById('confirm-pay-btn');
         if (payBtn) {
-            payBtn.disabled = false;
-            payBtn.textContent = 'Confirm & Pay';
+            payBtn.disabled = true;
+            payBtn.textContent = 'Opening checkout...';
         }
-        return;
+
+        // Free plan: no payment needed
+        if (plan.price === 0) {
+            activateFreePlan();
+            if (payBtn) {
+                payBtn.disabled = false;
+                payBtn.textContent = 'Confirm & Pay';
+            }
+            return;
+        }
+
+        // Currency branch:
+        //   INR  -> open Razorpay directly (existing flow, unchanged)
+        //   else -> show a provider picker (PayPal primary, Razorpay fallback)
+        const displayCurrency = (localStorage.getItem('charvak_currency') || 'INR').toUpperCase();
+        if (displayCurrency !== 'INR') {
+            showProviderPicker(plan, displayCurrency);
+            if (payBtn) {
+                payBtn.disabled = false;
+                payBtn.textContent = 'Confirm & Pay';
+            }
+            return;
+        }
+
+        await payWithRazorpayFlow(plan);
     }
 
-    try {
-        const orderResponse = await fetch('/api/payment/create-order', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                amount: plan.price,
-                name: plan.name + ' Credits',
-                method: 'razorpay',
-                currency: 'INR'
-            })
-        });
-
-        const orderData = await orderResponse.json();
-        console.log('Order response:', orderData);
-
-        if (!orderData.order_id && !orderData.id) {
-            throw new Error(orderData.message || 'Order creation failed');
+    // -----------------------------------------------------------------
+    // Razorpay path — extracted from processSubscription, otherwise identical
+    // -----------------------------------------------------------------
+    async function payWithRazorpayFlow(plan) {
+        const payBtn = document.getElementById('confirm-pay-btn');
+        if (payBtn) {
+            payBtn.disabled = true;
+            payBtn.textContent = 'Opening checkout...';
         }
 
-        const options = {
-            key: orderData.key_id || orderData.key || '',
-            amount: plan.price * 100,
-            currency: 'INR',
-            name: 'Charvak IT',
-            description: plan.name + ' - ' + plan.credits + ' credits',
-            order_id: orderData.order_id || orderData.id,
-            handler: async function(response) {
-                try {
-                    const verifyResponse = await fetch('/api/payment/verify', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            method: 'razorpay',
-                            payment_id: response.razorpay_payment_id,
-                            order_id: response.razorpay_order_id,
-                            signature: response.razorpay_signature
-                        })
-                    });
+        try {
+            const orderResponse = await fetch('/api/payment/create-order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    amount: plan.price,
+                    name: plan.name + ' Credits',
+                    method: 'razorpay',
+                    currency: 'INR'
+                })
+            });
 
-                    const verifyData = await verifyResponse.json();
+            const orderData = await orderResponse.json();
+            console.log('Order response:', orderData);
 
-                    if (verifyData.verified) {
-                        const purchaseResponse = await fetch('/api/credits/purchase', {
+            if (!orderData.order_id && !orderData.id) {
+                throw new Error(orderData.message || 'Order creation failed');
+            }
+
+            const options = {
+                key: orderData.key_id || orderData.key || '',
+                amount: plan.price * 100,
+                currency: 'INR',
+                name: 'Charvak IT',
+                description: plan.name + ' - ' + plan.credits + ' credits',
+                order_id: orderData.order_id || orderData.id,
+                handler: async function(response) {
+                    try {
+                        const verifyResponse = await fetch('/api/payment/verify', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
-                                email: userEmail,
-                                plan: selectedPlan,
-                                payment_id: response.razorpay_payment_id
+                                method: 'razorpay',
+                                payment_id: response.razorpay_payment_id,
+                                order_id: response.razorpay_order_id,
+                                signature: response.razorpay_signature
                             })
                         });
 
-                        const data = await purchaseResponse.json();
-                        alert(data.message || 'Credits purchased!');
-                        closePaymentModal();
-                        loadBalance();
-                    } else {
-                        alert('Payment verification failed. Please contact support.');
+                        const verifyData = await verifyResponse.json();
+
+                        if (verifyData.verified) {
+                            const purchaseResponse = await fetch('/api/credits/purchase', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    email: userEmail,
+                                    plan: selectedPlan,
+                                    payment_id: response.razorpay_payment_id
+                                })
+                            });
+
+                            const data = await purchaseResponse.json();
+                            alert(data.message || 'Credits purchased!');
+                            closePaymentModal();
+                            loadBalance();
+                        } else {
+                            alert('Payment verification failed. Please contact support.');
+                        }
+                    } catch (err) {
+                        console.error('Post-payment error:', err);
+                        alert('Payment received but crediting failed. Contact support with payment ID: ' + response.razorpay_payment_id);
                     }
-                } catch (err) {
-                    console.error('Post-payment error:', err);
-                    alert('Payment received but crediting failed. Contact support with payment ID: ' + response.razorpay_payment_id);
-                }
-            },
-            prefill: {email: userEmail},
-            theme: {color: '#3ba591'},
-            modal: {
-                ondismiss: function() {
-                    // User closed Razorpay without paying — restore the button
-                    if (payBtn) {
-                        payBtn.disabled = false;
-                        payBtn.textContent = 'Confirm & Pay';
+                },
+                prefill: {email: userEmail},
+                theme: {color: '#3ba591'},
+                modal: {
+                    ondismiss: function() {
+                        if (payBtn) {
+                            payBtn.disabled = false;
+                            payBtn.textContent = 'Confirm & Pay';
+                        }
                     }
                 }
+            };
+
+            const rzp = new Razorpay(options);
+            closePaymentModal();
+            setTimeout(function() {
+                rzp.open();
+            }, 200);
+
+        } catch (error) {
+            console.error('Payment error:', error);
+            alert('Payment failed: ' + error.message);
+            if (payBtn) {
+                payBtn.disabled = false;
+                payBtn.textContent = 'Confirm & Pay';
             }
-        };
-
-        const rzp = new Razorpay(options);
-
-                // Close our modal, then open Razorpay
-        closePaymentModal();
-        setTimeout(function() {
-            rzp.open();
-        }, 200);
-
-    } catch (error) {
-        console.error('Payment error:', error);
-        alert('Payment failed: ' + error.message);
-        if (payBtn) {
-            payBtn.disabled = false;
-            payBtn.textContent = 'Confirm & Pay';
         }
     }
-}
+
+    // -----------------------------------------------------------------
+    // Provider picker (shown for non-INR display currency)
+    // -----------------------------------------------------------------
+    function showProviderPicker(plan, currency) {
+        const rate = (typeof CharvakCurrency !== 'undefined' && CharvakCurrency.rates && CharvakCurrency.rates[currency])
+            ? CharvakCurrency.rates[currency] : null;
+        const symbol = (typeof CharvakCurrency !== 'undefined' && CharvakCurrency.symbols && CharvakCurrency.symbols[currency])
+            ? CharvakCurrency.symbols[currency] : '';
+        const approxLocal = rate ? (plan.price * rate) : null;
+        const approxText = approxLocal !== null
+            ? (symbol + approxLocal.toFixed(2) + ' ' + currency)
+            : (currency + ' price unavailable');
+
+        document.getElementById('payment-details').innerHTML = `
+            <div class="p-3 bg-light rounded mb-3">
+                <p class="mb-2"><strong>${plan.name}</strong> — ${plan.credits.toLocaleString()} credits, ${plan.validity_days} days</p>
+                <p class="mb-0 text-muted small">You'll be charged approximately <strong>${approxText}</strong>.</p>
+            </div>
+            <p class="mb-2"><strong>Choose your payment method</strong></p>
+            <div class="d-grid gap-2">
+                <button class="btn btn-warning" onclick="payWithPayPalFlow(allPlans[selectedPlan], '${currency}')">
+                    Pay with PayPal (${currency})
+                </button>
+                <button class="btn btn-outline-primary" onclick="payWithRazorpayFlow(allPlans[selectedPlan])">
+                    Pay with Razorpay (INR Rs.${plan.price})
+                </button>
+                <button class="btn btn-link btn-sm text-muted" onclick="closePaymentModal()">Cancel</button>
+            </div>
+            <p class="text-muted small mt-2 mb-0">International cards that work with Razorpay will still be accepted. PayPal is usually the faster path.</p>
+        `;
+    }
+
+    // -----------------------------------------------------------------
+    // PayPal path
+    // -----------------------------------------------------------------
+    async function payWithPayPalFlow(plan, currency) {
+        const statusDiv = document.getElementById('payment-details');
+        statusDiv.innerHTML = '<p class="text-muted">Loading PayPal...</p>';
+
+        if (typeof ensurePayPalLoaded === 'function') {
+            await ensurePayPalLoaded();
+        }
+        if (typeof paypal === 'undefined') {
+            statusDiv.innerHTML = '<p class="text-danger">PayPal SDK failed to load. Please refresh and try again.</p>';
+            return;
+        }
+
+        let order;
+        try {
+            const res = await fetch('/api/payment/create-order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    amount: plan.price,
+                    name: plan.name + ' Credits',
+                    method: 'paypal',
+                    currency: currency,
+                    plan: selectedPlan,
+                    email: userEmail
+                })
+            });
+            order = await res.json();
+        } catch (e) {
+            console.error('PayPal order creation failed:', e);
+            statusDiv.innerHTML = '<p class="text-danger">Could not create PayPal order.</p>';
+            return;
+        }
+
+        if (!order || (!order.order_id && !order.id)) {
+            statusDiv.innerHTML = '<p class="text-danger">' + ((order && order.message) ? order.message : 'PayPal order failed.') + '</p>';
+            return;
+        }
+
+        const paypalOrderId = order.order_id || order.id;
+
+        statusDiv.innerHTML = '<p class="text-muted mb-2">Complete your payment below:</p><div id="paypal-inline-container"></div>';
+
+        paypal.Buttons({
+            createOrder: function() { return paypalOrderId; },
+            onApprove: async function(data, actions) {
+                try {
+                    const capture = await actions.order.capture();
+                    const payment_id = 'paypal:' + currency.toUpperCase() + ':' + capture.id;
+
+                    const purchaseRes = await fetch('/api/credits/purchase', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '')
+                        },
+                        body: JSON.stringify({
+                            email: userEmail,
+                            plan: selectedPlan,
+                            payment_id: payment_id
+                        })
+                    });
+
+                    const purchaseData = await purchaseRes.json();
+                    if (purchaseData.status === 'success' || purchaseData.already_credited) {
+                        alert(purchaseData.message || 'Credits purchased!');
+                        closePaymentModal();
+                        if (typeof loadBalance === 'function') loadBalance();
+                    } else {
+                        alert('Payment captured but crediting failed: ' + (purchaseData.message || 'unknown'));
+                    }
+                } catch (err) {
+                    console.error('PayPal capture/crediting error:', err);
+                    alert('PayPal payment encountered an error. Please contact support.');
+                }
+            },
+            onCancel: function() {
+                statusDiv.innerHTML = '<p class="text-muted">Payment cancelled. You can try again or choose Razorpay.</p>';
+            },
+            onError: function(err) {
+                console.error('PayPal error:', err);
+                statusDiv.innerHTML = '<p class="text-danger">PayPal error. Please try again.</p>';
+            }
+        }).render('#paypal-inline-container');
+    }
 
         function closePaymentModal() {
         const modalEl = document.getElementById('payment-modal');
