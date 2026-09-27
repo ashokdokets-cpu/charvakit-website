@@ -2060,3 +2060,71 @@ character are `C3 A0` instead of `E0 A4`, it's double-encoded.
 ---
 **Last updated:** 2026-09-27
 
+
+
+---
+
+## Session 2026-09-27 — 11-Product Frontend Sprint
+
+**Time:** single session, ~3 hours
+**Commits:** `1fc5b06` through `37df5b1` (13 commits)
+
+### Completed
+
+All 11 AI Products now have real forms wired to their auth-gated,
+credit-gated backend routes. Every one verified E2E: form → auth → credits
+→ AI → render.
+
+| # | Product | Credits | Commit |
+|---|---|---|---|
+| 1 | AuditBot | 25 | 7f178b9 |
+| 2 | Lock-In Breaker | 20 | d07a8ba |
+| 3 | Reverse Staffing | 20 | 6505695 |
+| 4 | AI Slop Quarantine | 10 | 1fc5b06 |
+| 5 | Geo Compliance | 15 | 31e4080 |
+| 6 | Design Token Sentinel | 15 | 372f810 |
+| 7 | Agency Twin | 20 | 88756b2 |
+| 8 | Skill Twin | 15 | e1d138e |
+| 9 | Silent Killer | 15 | 91463bf |
+| 10 | Developer Entropy | 15 | f39b71f |
+| 11 | Micro Squads | 25 | 37df5b1 |
+
+### Bugs found & fixed during the sprint
+
+1. **Silent Killer `status` field collision** — engine set `status: "active"`,
+   overwriting the route wrapper's `status: "success"`. Frontend showed
+   "Setup failed" despite the API working. Fixed by renaming to
+   `monitor_status`.
+2. **Agency Twin roadmap** — AI returned roadmap as objects; frontend
+   rendered `[object Object]`. Fixed with defensive `_renderList` helper.
+3. **Credit text mismatches** — 3 templates (`lock-in-breaker`,
+   `reverse-staffing`, `ai-slop-quarantine`) displayed "15 credits" while
+   backend charged 20/20/10. Fixed by reading actual `FEATURE_CREDITS`.
+4. **Reverse Staffing field reset** — `value="3"` on the experience input
+   reset the field after submit. Fixed with `placeholder="e.g. 3"`.
+5. **`premium-upsell.html`** — every product's "Unlock Full Report" button
+   called undefined `processToolPayment`. Fixed with `notifyMe` fallback.
+
+### Credit verification
+
+DB log confirmed every product charged the correct amount per call.
+Final balance after all E2E tests: 385 credits remaining.
+
+### Process lesson
+
+WatchFiles on Windows can hold a file lock during uvicorn reload, silently
+reverting a Python write. **Fix:** stop uvicorn → write → verify with grep
+→ restart. Hit this twice (`products_engine.py`, `developer-entropy.html`).
+
+### Newly identified — not in original sprint scope
+
+- **`agent-ready.html`** — C7 template (₹399 dead payment button)
+- **`ai_service.py` tools without frontends:**
+  - Neural Wireframe (`neural_wireframe_to_code`)
+  - Globalize.ai (`localize_website`)
+  - Legacy-Shift (`analyze_legacy_code`)
+  - Agent-Ready (`generate_agent_schema`)
+  - These were verified to return real AI output tonight, but no page
+    calls them. Backend is ready; frontend wiring needed.
+
+**Last updated:** 2026-09-27 06:05
