@@ -1,8 +1,14 @@
 # Charvak - SESSION CONTEXT
 
+
+
+**HEAD:** `61ad294`
+**Last session shipped:** MCQ paid AI tier + XSS hardening, DBMS & SQL rename, cross-device internship resume, dev-script cleanup.
+**Next up:** Internship enrollment cleanup — auto-abandon prior active per `(email, program_id)`, banner dropdown, Dismiss button.
+
 **Purpose:** One-file resume pointer. Paste this file into a fresh chat to instantly orient.
 
-**Last updated:** 2026-09-19 (end of Session I capstone)
+**Last updated:** 2026-09-27 (evening, part 2)
 **HEAD at time of writing:** `0536044 docs(I): consolidate doc sprawl`
 **Version:** `v3.0-tier3-complete-20260919`
 

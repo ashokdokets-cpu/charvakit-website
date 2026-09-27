@@ -2,7 +2,7 @@
 
 **Purpose:** Track every planned-but-not-completed item. Nothing gets lost again.
 **Created:** 2026-09-20
-**Last updated:** 2026-09-27
+**Last updated:** 2026-09-27 (evening, part 2)
 **HEAD:** 82ec76f
 
 ### FLAGGED — Premium Report product (₹199 PDF unlock) (2026-09-27)
@@ -2224,3 +2224,78 @@ used across the rest of the product suite.
 **Verdict:** Decided, scope locked, awaiting implementation in next session
 
 **Last updated:** 2026-09-27 16:00
+
+
+---
+
+## Session 2026-09-27 (evening, part 2) — MCQ + internship resume + cleanup
+
+**HEAD after:** `61ad294`
+
+### Completed this session
+
+- **MCQ (Item 2)** — paid AI generate tier
+  - `templates/mcq.html` — "AI Generate" button + inline form (topic / category / count), wired to `POST /api/assessment/mcq/generate` (existing route, 5 credits, auth+credit-gated)
+  - XSS hardening — added `esc()` helper and wrapped all `innerHTML` interpolations in `renderQuestions`
+  - Commits: `0a0ee21` (feature), `61ad294` (DBMS rename)
+- **MCQ DBMS/SQL -> DBMS & SQL rename** — 4 files updated
+  - `mcq_bank.py:158`, `advanced_assessment_engine.py:99`, `market_standard.py:102`, `templates/mcq.html:110`
+  - Fixes `GET /api/mcq/questions/technical/DBMS%2FSQL` -> 404 (FastAPI decodes `%2F` before route matching)
+- **CharvakCurrency utility** — added `detectLocation`, `format`, `getName` to `static/js/currency-utils.js`
+  - Fixed 3 pre-existing JS errors that were blocking `/ai-internship` from rendering at all
+- **Cross-device internship resume**
+  - `ai_internship_engine.get_my_enrollments(email)` + `record_day_viewed(enrollment_id, day)`
+  - `GET /api/internship/my-enrollments?email=` (auth-gated)
+  - Resume banner in `ai-internship.html` with "Resume" button
+  - `get_daily_scenario` now bumps `charvak_ai_internship_enrollments.current_day` on every load
+  - Commit: `8c53cc4`
+- **Repo cleanup** — deleted 6 stale `_*.py` dev scripts from 2026-09-19/21
+
+### Verified
+
+- Library free path — no deduction
+- `DBMS & SQL` tab loads (200 OK)
+- AI Generate — 5 credits deducted (`assessment_mcq`), 10 questions returned in ~5-10s
+- 402 redirects to `/ai-credits-pricing` on insufficient credits
+- XSS — `<img src=x onerror=alert(1)>` in topic does not fire (escaped)
+- Resume banner renders for users with active enrollments; if localStorage is cleared, banner recovers
+
+---
+
+### FLAGGED — `mcq_bank.get_topic_questions` silently calls OpenAI when the local bank underruns `count`, bypassing credits (2026-09-27)
+
+The library endpoint `GET /api/mcq/questions/{category}/{topic}` accepts `count` (default 10). When `len(questions) < count`, it calls `_generate_ai_questions()` — an **ungated OpenAI call**. Users clicking a topic tab can trigger a free AI call.
+
+**Fix (recommended):** remove the AI fallback from the library endpoint — return only what the bank has. The paid AI tier at `/api/assessment/mcq/generate` now covers on-demand generation.
+
+**Est:** ~10 min. **Verdict:** SCHEDULED — small correctness fix.
+
+---
+
+### FLAGGED — MCQ sections/topics are hardcoded in 3 places with no single source of truth (2026-09-27)
+
+Topics live in:
+1. `mcq_bank._initialize_question_bank()` — actual bank (source of truth for lookups)
+2. `templates/mcq.html` `topics` dict — hardcoded tab list
+3. `mcq_bank.get_all_topics()` — derived, not consumed by the frontend
+
+Adding a topic today requires editing (1) and (2) by hand. Silent drift is possible.
+
+**Fix:** fetch `/api/mcq/topics` at page load, build tabs dynamically, remove the hardcoded dict.
+
+**Est:** ~45 min. **Verdict:** SCHEDULED — architectural cleanup, not urgent.
+
+---
+
+### Still SCHEDULED (unchanged)
+
+- **Internship enrollment cleanup** (~45 min) — auto-abandon prior active per `(email, program_id)` on new enroll; banner dropdown when user has >1 active across programs; `POST /api/internship/abandon/{enrollment_id}` + Dismiss button
+- **Internship Phase 3 — custom programs** (~45 min) — `create_custom_program()`, `POST /api/internship/custom-program` (50 cr), frontend search bar
+- **Internship Phase 4 — tier UI + top-up-then-enroll** (~60 min) — tier selector, credits-needed computation, Razorpay top-up modal, switch `internship_enroll` from flat 100 cr to tier-based
+- **`ai_internship_engine.submit_work` real AI eval** (KNOWN-ISSUES #9) — currently returns `random.randint(7, 10)`
+
+### Cleanup pending
+
+- **devtest orphan enrollments** — ~8 active rows from testing. Delete + refund or leave. Do at end of internship work.
+
+**Last updated:** 2026-09-27 (evening, part 2)
