@@ -6,6 +6,7 @@ Multi-duration AI-powered internship with real-world scenarios
 import json
 import logging
 import random
+import re
 import secrets
 from datetime import datetime, timedelta
 from typing import Dict, List
@@ -53,6 +54,86 @@ class AIInternshipEngine:
                 )
             ''')
             cur.execute('''CREATE INDEX IF NOT EXISTS idx_ai_intern_sub_enroll ON charvak_ai_internship_submissions(enrollment_id)''')
+
+            # --- Phase 1: tiers + custom programs + scenario cache ---
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS charvak_ai_internship_tiers (
+                    tier_key        TEXT PRIMARY KEY,
+                    tier_name       TEXT NOT NULL,
+                    weeks           INTEGER NOT NULL,
+                    business_days   INTEGER NOT NULL,
+                    price_inr       INTEGER NOT NULL,
+                    price_usd       INTEGER NOT NULL,
+                    display_order   INTEGER NOT NULL,
+                    is_active       INTEGER DEFAULT 1,
+                    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS charvak_ai_internship_custom_programs (
+                    program_id      TEXT PRIMARY KEY,
+                    name            TEXT NOT NULL,
+                    role_title      TEXT NOT NULL,
+                    category        TEXT DEFAULT 'Custom',
+                    skills          JSONB DEFAULT '[]'::jsonb,
+                    deliverables    JSONB DEFAULT '[]'::jsonb,
+                    outline         JSONB DEFAULT '[]'::jsonb,
+                    max_days        INTEGER DEFAULT 80,
+                    requested_by    TEXT,
+                    is_public       INTEGER DEFAULT 1,
+                    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS charvak_ai_internship_scenarios (
+                    scenario_id         TEXT PRIMARY KEY,
+                    program_id          TEXT NOT NULL,
+                    tier_key            TEXT NOT NULL,
+                    day                 INTEGER NOT NULL,
+                    role_title          TEXT NOT NULL,
+                    title               TEXT NOT NULL,
+                    overview            TEXT NOT NULL,
+                    learning_objectives JSONB DEFAULT '[]'::jsonb,
+                    step_by_step        JSONB DEFAULT '[]'::jsonb,
+                    deliverable         TEXT,
+                    acceptance_criteria JSONB DEFAULT '[]'::jsonb,
+                    resources           JSONB DEFAULT '[]'::jsonb,
+                    mentor_note         TEXT,
+                    estimated_time      TEXT,
+                    difficulty          TEXT,
+                    raw_json            JSONB,
+                    created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(program_id, tier_key, day)
+                )
+            ''')
+            cur.execute('''CREATE INDEX IF NOT EXISTS idx_ai_intern_scen_lookup
+                ON charvak_ai_internship_scenarios(program_id, tier_key, day)''')
+
+            cur.execute('''
+                ALTER TABLE charvak_ai_internship_enrollments
+                ADD COLUMN IF NOT EXISTS tier_key TEXT DEFAULT 'standard'
+            ''')
+
+            # Seed tiers (idempotent)
+            tiers_seed = [
+                ("sprint",          "Sprint (2 weeks)",       2,  10, 999,  12, 1),
+                ("standard",        "Standard (4 weeks)",     4,  20, 1999, 24, 2),
+                ("extended",        "Extended (6 weeks)",     6,  30, 2999, 36, 3),
+                ("immersive",       "Immersive (8 weeks)",    8,  40, 3999, 48, 4),
+                ("semester_lite",   "Semester Lite (10 wk)", 10,  50, 4999, 60, 5),
+                ("semester",        "Semester (12 weeks)",   12,  60, 5999, 72, 6),
+                ("semester_plus",   "Semester Plus (14 wk)", 14,  70, 6999, 84, 7),
+                ("capstone",        "Capstone (16 weeks)",   16,  80, 7999, 96, 8),
+            ]
+            for tk, tn, wk, bd, inr, usd, order in tiers_seed:
+                cur.execute('''
+                    INSERT INTO charvak_ai_internship_tiers
+                        (tier_key, tier_name, weeks, business_days, price_inr, price_usd, display_order)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    ON CONFLICT (tier_key) DO NOTHING
+                ''', (tk, tn, wk, bd, inr, usd, order))
 
             conn.commit()
             cur.close(); conn.close()
@@ -134,6 +215,346 @@ class AIInternshipEngine:
     # CATALOG
     # ============================================================
 
+    def get_tiers(self):
+        """Return the duration tiers sorted by display order."""
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT tier_key, tier_name, weeks, business_days, price_inr, price_usd, display_order
+                FROM charvak_ai_internship_tiers
+                WHERE is_active = 1
+                ORDER BY display_order ASC
+            """)
+            rows = cur.fetchall()
+            cur.close(); conn.close()
+            tiers = [
+                {
+                    "tier_key": r[0], "tier_name": r[1], "weeks": r[2],
+                    "business_days": r[3], "price_inr": r[4],
+                    "price_usd": r[5], "display_order": r[6],
+                }
+                for r in rows
+            ]
+            return {"status": "success", "tiers": tiers}
+        except Exception as e:
+            logger.error(f"get_tiers failed: {e}")
+            return {"status": "error", "message": "Could not load tiers", "tiers": []}
+
+    # ============================================================
+    # RICH SCENARIO GENERATION (Phase 2)
+    # ============================================================
+
+    def _call_openai_json(self, prompt):
+        """Call OpenAI in JSON mode. Mirrors student_suite_engine pattern."""
+        try:
+            import os
+            import requests as _requests
+            api_key = os.getenv("OPENAI_API_KEY", "")
+            if not api_key:
+                logger.warning("OPENAI_API_KEY not set — cannot generate scenario")
+                return None
+            response = _requests.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers={"Authorization": f"Bearer {api_key}"},
+                json={
+                    "model": "gpt-4o-mini",
+                    "messages": [
+                        {"role": "system", "content": "You are a curriculum designer. Always respond with valid JSON only."},
+                        {"role": "user", "content": prompt},
+                    ],
+                    "temperature": 0.6,
+                    "response_format": {"type": "json_object"},
+                },
+                timeout=25,
+            )
+            if response.status_code != 200:
+                logger.error(f"OpenAI HTTP {response.status_code}: {response.text[:200]}")
+                return None
+            body = response.json()
+            content = body["choices"][0]["message"]["content"]
+            # Defensive fence strip
+            content = content.strip()
+            if content.startswith("```"):
+                content = re.sub(r"^```(?:json)?\s*", "", content)
+                content = re.sub(r"\s*```$", "", content)
+            return json.loads(content)
+        except Exception as e:
+            logger.error(f"OpenAI call failed: {e}")
+            return None
+
+    def _stub_scenario(self, role_title, day, program):
+        """Fallback shape so the page never breaks."""
+        total = program.get("_total_days", 14)
+        return {
+            "title": f"Day {day} with {role_title}",
+            "overview": f"You are working as a {role_title} intern. Focus today on practicing the core skills of the role and applying them to a real task.",
+            "learning_objectives": [
+                f"Apply {role_title} fundamentals to a real task",
+                "Document your approach and reasoning",
+                "Identify one area to improve next",
+            ],
+            "step_by_step": [
+                {"step": 1, "title": "Review the goal", "detail": "Read the task carefully and note what success looks like.", "time": "10 min"},
+                {"step": 2, "title": "Plan your approach", "detail": "Sketch 2-3 approaches and pick the cleanest one.", "time": "15 min"},
+                {"step": 3, "title": "Execute", "detail": f"Carry out the task as a {role_title} would.", "time": "30 min"},
+                {"step": 4, "title": "Reflect", "detail": "Write 2-3 sentences on what you learned and what was hard.", "time": "10 min"},
+            ],
+            "deliverable": "A short writeup of what you did and what you learned.",
+            "acceptance_criteria": [
+                "You finished the core task",
+                "You documented your approach",
+                "You identified one improvement for tomorrow",
+            ],
+            "resources": [],
+            "mentor_note": "Every day is a small step. Consistency beats intensity.",
+            "estimated_time": "60-90 min",
+            "difficulty": "beginner" if day <= total // 3 else ("intermediate" if day <= 2 * total // 3 else "advanced"),
+        }
+
+    def _generate_rich_scenario(self, program, program_id, tier_key, day):
+        """Generate a full structured scenario for one day."""
+        role_title = program.get("_role_title") or program["name"].replace(" Internship", "").strip()
+        skills = program.get("skills", [])
+        total_days = program.get("_total_days", 14)
+        program_name = program["name"]
+
+        first_third = max(1, total_days // 3)
+        second_third = max(first_third + 1, (2 * total_days) // 3)
+
+        prompt = f"""You are a senior {role_title} designing Day {day} of a {total_days}-day internship curriculum.
+
+Program: {program_name}
+Core skills being developed: {", ".join(skills)}
+Student level: beginner on Day 1, advancing to strong intermediate by the final day.
+This is Day {day} of {total_days}. Difficulty should scale accordingly:
+- Days 1-{first_third}: beginner (foundations, setup, orientation)
+- Days {first_third + 1}-{second_third}: intermediate (real work, iteration)
+- Days {second_third + 1}-{total_days}: advanced (deep work, polish, presentation)
+
+Return STRICT JSON only. No prose, no markdown fences.
+
+{{
+  "title": "short title, max 8 words, no 'Day N:' prefix",
+  "overview": "2-3 sentences: what this day covers and why it matters for a {role_title}",
+  "learning_objectives": [
+    "verb-first objective, 1 sentence",
+    "3-5 items total"
+  ],
+  "step_by_step": [
+    {{
+      "step": 1,
+      "title": "short step name",
+      "detail": "actionable instructions — include exact tools, filenames, commands, URLs where relevant. 2-4 sentences.",
+      "time": "15 min"
+    }}
+  ],
+  "deliverable": "one sentence: the concrete artifact the student produces and hands in today",
+  "acceptance_criteria": [
+    "checkable item the student can self-verify",
+    "3-4 items total"
+  ],
+  "resources": [
+    {{"title": "resource name", "url": "https://..."}}
+  ],
+  "mentor_note": "one short sentence of voice-of-mentor guidance — warm, specific to today",
+  "estimated_time": "45 min",
+  "difficulty": "beginner"
+}}
+
+Rules:
+- Be specific to {role_title}, not generic advice.
+- Onboarding/setup days: real commands and file paths.
+- Mid-program days: real deliverables (code, docs, models, reports).
+- Final days: presentation, portfolio, packaging.
+- Resources: 2-3 real, working URLs (docs, tutorials, GitHub repos). If none fit, use an empty array.
+- step_by_step: 4-6 steps.
+- Do NOT include any text outside the JSON object."""
+
+        result = self._call_openai_json(prompt)
+        if not result or not isinstance(result, dict):
+            logger.warning(f"AI generation failed for {program_id}/{tier_key}/day{day} — using stub")
+            return self._stub_scenario(role_title, day, program)
+
+        # Normalize + guard mandatory keys
+        required = ["title", "overview", "learning_objectives", "step_by_step",
+                    "deliverable", "acceptance_criteria", "resources",
+                    "mentor_note", "estimated_time", "difficulty"]
+        for key in required:
+            if key not in result:
+                result[key] = self._stub_scenario(role_title, day, program).get(key)
+        if not isinstance(result.get("learning_objectives"), list):
+            result["learning_objectives"] = [str(result.get("learning_objectives", ""))]
+        if not isinstance(result.get("step_by_step"), list):
+            result["step_by_step"] = []
+        if not isinstance(result.get("acceptance_criteria"), list):
+            result["acceptance_criteria"] = []
+        if not isinstance(result.get("resources"), list):
+            result["resources"] = []
+        return result
+
+    def get_or_create_scenario(self, program_id, tier_key, day):
+        """Cache-first: return scenario from DB, or generate + cache."""
+        # 1. Cache lookup
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT scenario_id, title, overview, learning_objectives, step_by_step,
+                       deliverable, acceptance_criteria, resources, mentor_note,
+                       estimated_time, difficulty
+                FROM charvak_ai_internship_scenarios
+                WHERE program_id = %s AND tier_key = %s AND day = %s
+            """, (program_id, tier_key, day))
+            row = cur.fetchone()
+            cur.close(); conn.close()
+            if row:
+                return {
+                    "status": "success",
+                    "day": day,
+                    "title": row[1],
+                    "overview": row[2],
+                    "learning_objectives": row[3] or [],
+                    "step_by_step": row[4] or [],
+                    "deliverable": row[5],
+                    "acceptance_criteria": row[6] or [],
+                    "resources": row[7] or [],
+                    "mentor_note": row[8],
+                    "estimated_time": row[9],
+                    "difficulty": row[10],
+                    "cached": True,
+                }
+        except Exception as e:
+            logger.error(f"scenario cache lookup failed: {e}")
+
+        # 2. Look up the program
+        program = self.programs.get(program_id)
+        if not program:
+            return {"status": "error", "message": "Program not found"}
+
+        # 3. Resolve total_days from tier
+        total_days = 14
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("SELECT business_days FROM charvak_ai_internship_tiers WHERE tier_key = %s", (tier_key,))
+            row = cur.fetchone()
+            cur.close(); conn.close()
+            if row:
+                total_days = row[0]
+        except Exception:
+            pass
+        program["_total_days"] = total_days
+        program["_role_title"] = program["name"].replace(" Internship", "").strip()
+
+        # 4. Generate
+        generated = self._generate_rich_scenario(program, program_id, tier_key, day)
+
+        # 5. Cache
+        try:
+            from database import db
+            scenario_id = f"SCN-{secrets.token_hex(6).upper()}"
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                INSERT INTO charvak_ai_internship_scenarios
+                    (scenario_id, program_id, tier_key, day, role_title, title, overview,
+                     learning_objectives, step_by_step, deliverable, acceptance_criteria,
+                     resources, mentor_note, estimated_time, difficulty, raw_json)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s::jsonb, %s, %s::jsonb,
+                        %s::jsonb, %s, %s, %s, %s::jsonb)
+                ON CONFLICT (program_id, tier_key, day) DO NOTHING
+            """, (
+                scenario_id, program_id, tier_key, day,
+                program.get("_role_title", ""), generated["title"], generated["overview"],
+                json.dumps(generated["learning_objectives"]),
+                json.dumps(generated["step_by_step"]),
+                generated["deliverable"],
+                json.dumps(generated["acceptance_criteria"]),
+                json.dumps(generated["resources"]),
+                generated.get("mentor_note", ""),
+                generated["estimated_time"], generated["difficulty"],
+                json.dumps(generated),
+            ))
+            conn.commit()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"scenario cache insert failed: {e}")
+
+        return {
+            "status": "success",
+            "day": day,
+            "title": generated["title"],
+            "overview": generated["overview"],
+            "learning_objectives": generated["learning_objectives"],
+            "step_by_step": generated["step_by_step"],
+            "deliverable": generated["deliverable"],
+            "acceptance_criteria": generated["acceptance_criteria"],
+            "resources": generated["resources"],
+            "mentor_note": generated.get("mentor_note", ""),
+            "estimated_time": generated["estimated_time"],
+            "difficulty": generated["difficulty"],
+            "cached": False,
+        }
+
+    def get_my_enrollments(self, email):
+        """Return all active enrollments for an email — powers the Resume banner."""
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT enrollment_id, program_id, duration, total_days,
+                       current_day, status, start_date, tier_key
+                FROM charvak_ai_internship_enrollments
+                WHERE email = %s AND status = 'active'
+                ORDER BY start_date DESC
+            """, (email,))
+            rows = cur.fetchall()
+            cur.close(); conn.close()
+            enrollments = []
+            for r in rows:
+                program = self.programs.get(r[1])
+                program_name = program["name"] if program else r[1]
+                role_title = program_name.replace(" Internship", "").strip() if program else r[1]
+                enrollments.append({
+                    "enrollment_id": r[0],
+                    "program_id": r[1],
+                    "program_name": program_name,
+                    "role_title": role_title,
+                    "duration": r[2],
+                    "total_days": r[3],
+                    "current_day": r[4] or 1,
+                    "status": r[5],
+                    "start_date": r[6].isoformat() if hasattr(r[6], "isoformat") else str(r[6]),
+                    "tier_key": r[7] or "standard",
+                })
+            return {"status": "success", "enrollments": enrollments}
+        except Exception as e:
+            logger.error(f"get_my_enrollments failed: {e}")
+            return {"status": "error", "message": "Could not load enrollments", "enrollments": []}
+
+    def record_day_viewed(self, enrollment_id, day):
+        """Bump current_day forward (never backward) when a day loads."""
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                UPDATE charvak_ai_internship_enrollments
+                SET current_day = GREATEST(COALESCE(current_day, 1), %s)
+                WHERE enrollment_id = %s
+            """, (day, enrollment_id))
+            conn.commit()
+            cur.close(); conn.close()
+            return True
+        except Exception as e:
+            logger.error(f"record_day_viewed failed: {e}")
+            return False
+
     def get_programs(self):
         """Get all internship programs."""
         programs = []
@@ -207,18 +628,23 @@ class AIInternshipEngine:
             return None
 
     def get_daily_scenario(self, enrollment_id, day):
-        """Get daily scenario for intern."""
+        """Get daily scenario for intern — rich, AI-generated, cached."""
         enrollment = self._get_enrollment(enrollment_id)
         if not enrollment:
             return {"status": "error", "message": "Enrollment not found"}
-        program = self.programs.get(enrollment["program_id"])
-        if not program:
-            return {"status": "error", "message": "Program not found"}
-        total_days = enrollment.get("total_days", len(program["scenarios"]))
+        program_id = enrollment["program_id"]
+        tier_key = enrollment.get("tier_key") or "standard"
+        total_days = enrollment.get("total_days", 14)
         if day > total_days:
             return {"status": "error", "message": "Internship completed"}
-        scenario = program["scenarios"][day - 1] if day - 1 < len(program["scenarios"]) else program["scenarios"][-1]
-        return {"status": "success", "day": day, "scenario": scenario}
+        result = self.get_or_create_scenario(program_id, tier_key, day)
+        if result.get("status") == "success":
+            result["program_id"] = program_id
+            result["tier_key"] = tier_key
+            result["total_days"] = total_days
+            # Remember progress so the user can resume from any device
+            self.record_day_viewed(enrollment_id, day)
+        return result
 
     # ============================================================
     # COMPLETION

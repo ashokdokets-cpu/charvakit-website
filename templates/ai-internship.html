@@ -109,6 +109,17 @@
 </div>
 
     <!-- Programs -->
+    <!-- Resume banner: shown when the user has an active enrollment -->
+    <div id="resumeBanner" style="display:none;">
+        <div class="alert alert-info d-flex justify-content-between align-items-center">
+            <div>
+                <strong>You have an active internship:</strong>
+                <span id="resumeBannerText"></span>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="resumeInternship()">Resume →</button>
+        </div>
+    </div>
+
     <h3 class="text-center mb-4">Choose Your Internship</h3>
     <div class="row g-4" id="internshipPrograms">
         <div class="col-12 text-center text-muted">Loading programs...</div>
@@ -327,32 +338,83 @@ async function loadDailyScenario(day) {
     }
 }
 
+function esc(s) {
+    if (s === null || s === undefined) return '';
+    return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 function displayScenario(data, day) {
     const container = document.getElementById('scenarioArea');
-    const scenario = data.scenario;
-    
+    const totalDays = data.total_days || 14;
+    window.currentTotalDays = totalDays;
+
+    const objectives = (data.learning_objectives || []).map(o => `<li>${esc(o)}</li>`).join('');
+    const steps = (data.step_by_step || []).map(s => `
+        <div class="d-flex mb-3">
+            <div class="me-3">
+                <span class="badge bg-primary rounded-pill" style="width:28px;">${esc(s.step)}</span>
+            </div>
+            <div class="flex-grow-1">
+                <div class="d-flex justify-content-between">
+                    <strong>${esc(s.title)}</strong>
+                    <span class="badge bg-light text-dark">${esc(s.time)}</span>
+                </div>
+                <div class="text-muted small mt-1">${esc(s.detail)}</div>
+            </div>
+        </div>`).join('');
+    const criteria = (data.acceptance_criteria || []).map(c => `<li>☐ ${esc(c)}</li>`).join('');
+    const resources = (data.resources || []).map(r => `<li><a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.title)}</a></li>`).join('');
+    const mentor = data.mentor_note ? `
+        <div class="alert alert-warning d-flex align-items-start">
+            <div class="me-2" style="font-size:20px;">💡</div>
+            <div><strong>Mentor's note:</strong> ${esc(data.mentor_note)}</div>
+        </div>` : '';
+
     container.innerHTML = `
         <div class="card shadow-sm">
             <div class="card-header bg-primary text-white">
-                <h4 class="as-h5 mb-0">Day ${day} - ${scenario.task}</h4>
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4 class="as-h5 mb-0">Day ${day} of ${totalDays} · ${esc(data.title)}</h4>
+                    <div>
+                        <span class="badge bg-light text-dark me-1">${esc(data.difficulty || '')}</span>
+                        <span class="badge bg-info text-dark">~${esc(data.estimated_time || '')}</span>
+                    </div>
+                </div>
             </div>
             <div class="card-body">
-                <h6>Real-World Scenario:</h6>
-                <p class="text-muted">${scenario.scenario}</p>
+                ${mentor}
+                <p class="text-muted">${esc(data.overview)}</p>
+
+                ${objectives ? `<h6 class="mt-3">What you'll learn</h6><ul>${objectives}</ul>` : ''}
+
+                ${steps ? `<h6 class="mt-3">Steps</h6>${steps}` : ''}
+
+                ${data.deliverable ? `
+                    <div class="alert alert-success mt-3">
+                        <strong>Deliverable:</strong> ${esc(data.deliverable)}
+                    </div>` : ''}
+
+                ${criteria ? `<h6 class="mt-3">Acceptance checklist</h6><ul class="list-unstyled">${criteria}</ul>` : ''}
+
+                ${resources ? `<h6 class="mt-3">Resources</h6><ul>${resources}</ul>` : ''}
+
                 <hr>
-                <div class="alert alert-info">
-                    <strong>Your Task:</strong> ${scenario.task}
-                </div>
                 <button class="btn btn-success" onclick="markComplete(${day})">Mark as Complete</button>
-                ${day < 14 ? `<button class="btn btn-outline-primary ms-2" onclick="loadDailyScenario(${day + 1})">Next Day →</button>` : ''}
+                ${day < totalDays ? `<button class="btn btn-outline-primary ms-2" onclick="loadDailyScenario(${day + 1})">Next Day →</button>` : ''}
             </div>
         </div>
     `;
 }
 
 function markComplete(day) {
-    alert('✅ Day ' + day + ' completed!');
-    if (day === 14) {
+    alert('Day ' + day + ' completed!');
+    const total = window.currentTotalDays || 14;
+    if (day >= total) {
         completeInternship();
     } else {
         loadDailyScenario(day + 1);
@@ -388,11 +450,70 @@ async function completeInternship() {
     }
 }
 
+// ---- Resume banner --------------------------------------------------
+let resumeEnrollment = null;
+
+async function checkActiveEnrollment() {
+    const email = localStorage.getItem('userEmail');
+    const token = _authToken();
+    if (!email || !token) return;
+
+    try {
+        const res = await fetch(`/api/internship/my-enrollments?email=${encodeURIComponent(email)}`, {
+            headers: {'Authorization': 'Bearer ' + token}
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        const list = data.enrollments || [];
+        if (list.length === 0) return;
+
+        // Pick the most recent active enrollment
+        const e = list[0];
+        resumeEnrollment = e;
+        const banner = document.getElementById('resumeBanner');
+        const text = document.getElementById('resumeBannerText');
+        if (banner && text) {
+            text.textContent = `${e.program_name} — Day ${e.current_day} of ${e.total_days}`;
+            banner.style.display = '';
+        }
+    } catch (err) {
+        console.error('checkActiveEnrollment failed:', err);
+    }
+}
+
+function resumeInternship() {
+    if (!resumeEnrollment) return;
+    currentEnrollment = resumeEnrollment.enrollment_id;
+    localStorage.setItem('internship_enrollment', currentEnrollment);
+    // Hide the banner now that we've resumed
+    const banner = document.getElementById('resumeBanner');
+    if (banner) banner.style.display = 'none';
+    // Load the exact day they left off
+    loadDailyScenario(resumeEnrollment.current_day || 1);
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', async function() {
     // Auto-detect user location for currency
     if (typeof CharvakCurrency !== 'undefined') {
         await CharvakCurrency.detectLocation();
+    }
+    // If we already have an enrollment in localStorage, jump straight in
+    const saved = localStorage.getItem('internship_enrollment');
+    if (saved) {
+        currentEnrollment = saved;
+        // We do not know the day yet — fetch the enrollment list to find it
+        checkActiveEnrollment().then(() => {
+            if (resumeEnrollment && resumeEnrollment.enrollment_id === saved) {
+                loadDailyScenario(resumeEnrollment.current_day || 1);
+            } else {
+                // Stale localStorage — clear it
+                localStorage.removeItem('internship_enrollment');
+                currentEnrollment = null;
+            }
+        });
+    } else {
+        checkActiveEnrollment();
     }
     loadPrograms();
 });
