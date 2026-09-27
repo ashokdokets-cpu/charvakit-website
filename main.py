@@ -6014,6 +6014,15 @@ async def internship_programs():
     """Get all internship programs."""
     return ai_internship_engine.get_programs()
 
+@app.get("/api/internship/my-enrollments")
+async def internship_my_enrollments(request: Request, email: str = ""):
+    """Return all active enrollments for the authenticated email."""
+    email = (email or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+    require_auth_for_email(request, email)
+    return ai_internship_engine.get_my_enrollments(email)
+
 @app.post("/api/internship/enroll")
 async def internship_enroll(request: Request):
     """Enroll in internship."""
