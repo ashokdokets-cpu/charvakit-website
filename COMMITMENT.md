@@ -2,7 +2,7 @@
 
 **Purpose:** Track every planned-but-not-completed item. Nothing gets lost again.
 **Created:** 2026-09-20
-**Last updated:** 2026-09-28 (PayPal credits — backend verified)
+**Last updated:** 2026-09-28 (MCQ bypass fixed, internship AI eval + UI shipped)
 **HEAD:** 82ec76f
 
 ### FLAGGED — Premium Report product (₹199 PDF unlock) (2026-09-27)
@@ -355,6 +355,22 @@ not safe to batch-patch with regex. Estimated 30-45 min.
 **Verdict:** SCHEDULED — manual cleanup session.
 
 ---
+
+### FLAGGED — duplicate `_call_openai_json` in ai_internship_engine.py (2026-09-28)
+
+Two definitions of `_call_openai_json` now exist in `ai_internship_engine.py`:
+- Line 249 — original, used by `_generate_rich_scenario` (curriculum designer prompt, temp 0.6, regex fence strip)
+- Line 743 — new, used by `_evaluate_submission_ai` (mentor prompt, temp 0.4)
+
+Python keeps the last definition, so the line 249 version is **shadowed**. Both
+work in practice because the shadowed one is never called — but it is dead code
+and a maintenance hazard (edit the wrong one, changes silently ignored).
+
+**Fix:** consolidate into a single helper that takes a `temperature` and
+`system_prompt` argument, then delete both originals. ~15 min. Low priority.
+
+**Verdict:** FLAGGED — cleanup candidate
+
 
 ### FLAGGED — bridge.html premium flow broken (2026-09-27)
 
@@ -1892,7 +1908,7 @@ Verdict: SCHEDULED — own session
 | # | Item | Verified |
 |---|---|---|
 | D1 | `dynamic_role_engine.create_dynamic_training_plan` stateless | 2026-09-20 |
-| D2 | `ai_internship_engine.submit_work` random score placeholder | 2026-09-20 |
+| D2 | ~~`ai_internship_engine.submit_work` random score placeholder~~ **RESOLVED 2026-09-28** | 2026-09-20 |
 | D3 | `role_manager` + `dynamic_role_engine` parallel by design | 2026-09-20 |
 | D4 | `record_survey_response` counter-only | 2026-09-20 |
 | D5 | `admin_role_manager` used in main.py:6131 | 2026-09-20 |
@@ -2262,7 +2278,13 @@ used across the rest of the product suite.
 
 ---
 
-### FLAGGED — `mcq_bank.get_topic_questions` silently calls OpenAI when the local bank underruns `count`, bypassing credits (2026-09-27)
+### RESOLVED — `mcq_bank.get_topic_questions` no longer calls OpenAI (2026-09-28, commit 819cb3f)
+
+**Resolved 2026-09-28.** Removed the `_generate_ai_questions` fallback from
+the free library path entirely. `get_topic_questions` now returns only what
+the curated bank holds — the paid `/api/assessment/mcq/generate` route
+(5 credits) is the only path that calls OpenAI. Verified: library click shows
+no OpenAI activity in uvicorn log; paid AI generate still charges correctly.
 
 The library endpoint `GET /api/mcq/questions/{category}/{topic}` accepts `count` (default 10). When `len(questions) < count`, it calls `_generate_ai_questions()` — an **ungated OpenAI call**. Users clicking a topic tab can trigger a free AI call.
 
@@ -2292,7 +2314,7 @@ Adding a topic today requires editing (1) and (2) by hand. Silent drift is possi
 - **Internship enrollment cleanup** (~45 min) — auto-abandon prior active per `(email, program_id)` on new enroll; banner dropdown when user has >1 active across programs; `POST /api/internship/abandon/{enrollment_id}` + Dismiss button
 - **Internship Phase 3 — custom programs** (~45 min) — `create_custom_program()`, `POST /api/internship/custom-program` (50 cr), frontend search bar
 - **Internship Phase 4 — tier UI + top-up-then-enroll** (~60 min) — tier selector, credits-needed computation, Razorpay top-up modal, switch `internship_enroll` from flat 100 cr to tier-based
-- **`ai_internship_engine.submit_work` real AI eval** (KNOWN-ISSUES #9) — currently returns `random.randint(7, 10)`
+- ~~**`ai_internship_engine.submit_work` real AI eval** (KNOWN-ISSUES #9)~~ — **RESOLVED 2026-09-28, commit `16c5d97`.** Real OpenAI mentor eval now live; random stub only used as fallback if the AI call fails. Submit Work UI added to `templates/ai-internship.html`. Verified E2E: scored 8/10 with contextual strengths/improvements.
 
 ### Cleanup pending
 
