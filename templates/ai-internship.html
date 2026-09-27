@@ -413,10 +413,92 @@ function displayScenario(data, day) {
 
                 <hr>
                 <button class="btn btn-success" onclick="markComplete(${day})">Mark as Complete</button>
+
+                <hr class="mt-4">
+                <h6 class="mt-3">Submit your work for AI feedback</h6>
+                <p class="text-muted small">Describe what you did for today. Your AI mentor will review it and give you a score, strengths, and concrete next steps.</p>
+                <textarea id="submissionText" class="form-control mb-2" rows="5" placeholder="I set up my Python environment and installed TensorFlow..."></textarea>
+                <button class="btn btn-primary btn-sm" id="submitWorkBtn" onclick="submitWorkForFeedback(${day})">Get AI Feedback</button>
+                <div id="feedbackArea" class="mt-3"></div>
                 ${day < totalDays ? `<button class="btn btn-outline-primary ms-2" onclick="loadDailyScenario(${day + 1})">Next Day →</button>` : ''}
             </div>
         </div>
     `;
+}
+
+async function submitWorkForFeedback(day) {
+    const t = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    const eid = currentEnrollment || localStorage.getItem('internship_enrollment');
+    const textarea = document.getElementById('submissionText');
+    const btn = document.getElementById('submitWorkBtn');
+    const area = document.getElementById('feedbackArea');
+
+    if (!eid) {
+        area.innerHTML = '<div class="alert alert-warning">No active enrollment found. Reload the page.</div>';
+        return;
+    }
+    if (!textarea || !textarea.value.trim()) {
+        area.innerHTML = '<div class="alert alert-warning">Please describe your work before submitting.</div>';
+        return;
+    }
+
+    btn.disabled = true;
+    const originalLabel = btn.textContent;
+    btn.textContent = 'Getting AI feedback...';
+    area.innerHTML = '<p class="text-muted">Your AI mentor is reviewing your submission...</p>';
+
+    try {
+        const res = await fetch('/api/internship/submit/' + eid + '/' + day, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + t
+            },
+            body: JSON.stringify({submission: textarea.value.trim()})
+        });
+
+        if (res.status === 401) {
+            area.innerHTML = '<div class="alert alert-danger">Session expired. Please log in again.</div>';
+            return;
+        }
+        if (res.status === 403) {
+            area.innerHTML = '<div class="alert alert-danger">You do not have access to this enrollment.</div>';
+            return;
+        }
+
+        const data = await res.json();
+        if (data.status !== 'success' || !data.feedback) {
+            area.innerHTML = '<div class="alert alert-danger">' + (data.message || 'Submission failed.') + '</div>';
+            return;
+        }
+
+        const f = data.feedback;
+        const esc = (s) => String(s == null ? '' : s).replace(/[&<>"'\x27]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\x27':'&#39;'}[c]));
+        const strengths = (f.strengths || []).map(x => '<li>' + esc(x) + '</li>').join('');
+        const improvements = (f.improvements || []).map(x => '<li>' + esc(x) + '</li>').join('');
+        const score = Number(f.score) || 0;
+        const scoreColor = score >= 8 ? 'success' : (score >= 6 ? 'warning' : 'danger');
+
+        area.innerHTML = (
+            '<div class="card border-' + scoreColor + '">' +
+                '<div class="card-header bg-' + scoreColor + ' text-white d-flex justify-content-between">' +
+                    '<strong>AI Mentor Feedback</strong>' +
+                    '<span>Score: ' + score + ' / 10</span>' +
+                '</div>' +
+                '<div class="card-body">' +
+                    (strengths ? '<h6 class="text-success">What you did well</h6><ul>' + strengths + '</ul>' : '') +
+                    (improvements ? '<h6 class="text-warning">What to improve</h6><ul>' + improvements + '</ul>' : '') +
+                    (f.next_steps ? '<div class="alert alert-info mb-0 mt-3"><strong>Next step:</strong> ' + esc(f.next_steps) + '</div>' : '') +
+                '</div>' +
+            '</div>'
+        );
+    } catch (err) {
+        console.error('Submission failed:', err);
+        area.innerHTML = '<div class="alert alert-danger">Network error. Please try again.</div>';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = originalLabel;
+    }
 }
 
 function markComplete(day) {
