@@ -58,6 +58,46 @@
 
         <div id="topicTabs" class="mt-3"></div>
 
+        <!-- AI Generate: paid tier (5 credits/call). Library above stays free. -->
+        <div id="aiGeneratePanel" class="mt-3 p-3 border rounded bg-white">
+            <div class="d-flex justify-content-between align-items-start flex-wrap">
+                <div>
+                    <strong>Need more questions?</strong>
+                    <span class="text-muted small d-block">AI can generate fresh MCQs on any topic &mdash; 5 credits per call.</span>
+                </div>
+                <button class="btn btn-outline-primary btn-sm" onclick="toggleAiForm()">&#10024; AI Generate</button>
+            </div>
+            <div id="aiForm" class="mt-3" style="display:none;">
+                <div class="row g-2">
+                    <div class="col-md-5">
+                        <label class="small text-muted">Topic (any text)</label>
+                        <input type="text" id="aiTopic" class="form-control form-control-sm" placeholder="e.g. Normalization in DBMS" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="small text-muted">Category</label>
+                        <select id="aiCategory" class="form-select form-select-sm">
+                            <option value="aptitude">Aptitude</option>
+                            <option value="technical">Technical CS</option>
+                            <option value="pseudocode">Pseudocode</option>
+                            <option value="domain">Domain</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="small text-muted">Count</label>
+                        <select id="aiCount" class="form-select form-select-sm">
+                            <option>5</option>
+                            <option selected>10</option>
+                            <option>15</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button class="btn btn-primary btn-sm w-100" id="aiGenerateBtn" onclick="generateAiMcq()">Generate &mdash; 5 cr</button>
+                    </div>
+                </div>
+                <div id="aiStatus" class="small mt-2"></div>
+            </div>
+        </div>
+
         <div class="question-box">
             <h3 class="as-h4" id="topicTitle" data-i18n="mcq.loading_questions">Loading questions...</h3>
             <div id="questionsList"></div>
@@ -67,7 +107,7 @@
     <script>
         var topics = {
             aptitude: ['Quant', 'Probability', 'Data Interpretation', 'Logical Reasoning', 'Syllogisms', 'Coding-Decoding', 'Pattern Recognition'],
-            technical: ['Data Structures', 'Algorithms', 'OOPs', 'Operating Systems', 'DBMS/SQL', 'Computer Networks'],
+            technical: ['Data Structures', 'Algorithms', 'OOPs', 'Operating Systems', 'DBMS & SQL', 'Computer Networks'],
             pseudocode: ['C', 'C++', 'Java', 'Python'],
             domain: ['Cloud', 'Web Development', 'Cybersecurity', 'Agile']
         };
@@ -120,10 +160,10 @@
             for (var i = 0; i < questions.length; i++) {
                 var q = questions[i];
                 html += '<div class="question-item">';
-                html += '<strong>Q' + (i + 1) + '. ' + q.q + '</strong>';
+                html += '<strong>Q' + (i + 1) + '. ' + esc(q.q) + '</strong>';
                 var options = q.options || [];
                 for (var j = 0; j < options.length; j++) {
-                    html += '<div class="option-item" onclick="checkAnswer(this, ' + j + ', ' + (q.correct || 0) + ')">' + String.fromCharCode(65 + j) + ') ' + options[j] + '</div>';
+                    html += '<div class="option-item" onclick="checkAnswer(this, ' + j + ', ' + (q.correct || 0) + ')">' + String.fromCharCode(65 + j) + ') ' + esc(options[j]) + '</div>';
                 }
                 html += '</div>';
             }
@@ -140,6 +180,102 @@
         }
 
         // Load first category on page load
+        // ---- XSS-safe escaping ----
+        function esc(s) {
+            if (s === null || s === undefined) return '';
+            return String(s)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        // ---- AI Generate (paid tier) ----
+        function _authToken() {
+            return localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+        }
+
+        function toggleAiForm() {
+            var f = document.getElementById('aiForm');
+            f.style.display = (f.style.display === 'none' || !f.style.display) ? '' : 'none';
+            var topicInput = document.getElementById('aiTopic');
+            if (topicInput && !topicInput.value) topicInput.value = currentTopic || '';
+            var catSelect = document.getElementById('aiCategory');
+            if (catSelect && currentCategory) catSelect.value = currentCategory;
+        }
+
+        async function generateAiMcq() {
+            var email = localStorage.getItem('userEmail');
+            var token = _authToken();
+            var status = document.getElementById('aiStatus');
+            var btn = document.getElementById('aiGenerateBtn');
+
+            if (!email || !token) {
+                status.innerHTML = '<span class="text-danger">Please log in to use AI Generate.</span>';
+                window.location.href = '/login?next=/mcq';
+                return;
+            }
+
+            var topic = (document.getElementById('aiTopic').value || '').trim();
+            var category = document.getElementById('aiCategory').value || 'aptitude';
+            var count = parseInt(document.getElementById('aiCount').value, 10) || 10;
+
+            if (!topic) {
+                status.innerHTML = '<span class="text-danger">Enter a topic first.</span>';
+                return;
+            }
+
+            btn.disabled = true;
+            status.innerHTML = '<span class="text-muted">Generating ' + count + ' questions&hellip; this may take a few seconds.</span>';
+
+            try {
+                var res = await fetch('/api/assessment/mcq/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({email: email, category: category, topic: topic, count: count})
+                });
+
+                if (res.status === 401) {
+                    status.innerHTML = '<span class="text-danger">Session expired. Redirecting to login&hellip;</span>';
+                    window.location.href = '/login?next=/mcq';
+                    return;
+                }
+                if (res.status === 402) {
+                    status.innerHTML = '<span class="text-danger">Not enough credits. Redirecting to pricing&hellip;</span>';
+                    window.location.href = '/ai-credits-pricing';
+                    return;
+                }
+
+                var data = await res.json();
+                if (data.status !== 'success' || !data.questions || !data.questions.length) {
+                    status.innerHTML = '<span class="text-danger">' + esc(data.message || 'Generation failed. Try again.') + '</span>';
+                    return;
+                }
+
+                var adapted = data.questions.map(function(q) {
+                    return {
+                        q: q.question || q.q || '',
+                        options: q.options || [],
+                        correct: (typeof q.correct_index === 'number') ? q.correct_index : (q.correct || 0),
+                        explanation: q.explanation || ''
+                    };
+                });
+
+                document.getElementById('topicTitle').textContent = '✨ AI: ' + topic + ' (' + adapted.length + ' questions)';
+                renderQuestions(adapted);
+                status.innerHTML = '<span class="text-success">Generated ' + adapted.length + ' questions &middot; 5 credits used.</span>';
+            } catch (err) {
+                status.innerHTML = '<span class="text-danger">Network error. Try again.</span>';
+                console.error('AI MCQ generation failed:', err);
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
         showCategory('aptitude');
     </script>
 <script>window.CHARVAK_LANG = localStorage.getItem('charvak_lang') || 'en';</script>
