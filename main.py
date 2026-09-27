@@ -536,6 +536,22 @@ def require_auth_for_email(request: Request, email: str) -> Dict:
     return user
 
 
+def require_enrollment_owner(request: Request, enrollment_id: str) -> Dict:
+    """Verify the caller owns the internship enrollment. Raises 401/403/404."""
+    from database import db
+    conn = db.get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT email FROM charvak_ai_internship_enrollments WHERE enrollment_id = %s",
+        (enrollment_id,),
+    )
+    row = cur.fetchone()
+    cur.close(); conn.close()
+    if not row:
+        raise HTTPException(status_code=404, detail="Enrollment not found")
+    return require_auth_for_email(request, row[0])
+
+
 ADMIN_EMAIL = "charvakit@gmail.com"
 
 # Admin emails ? both can access admin routes
@@ -6002,34 +6018,41 @@ async def internship_programs():
 async def internship_enroll(request: Request):
     """Enroll in internship."""
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     from credit_guard import require_credits_from_data
     guard = require_credits_from_data(data, "internship_enroll")
     if guard.get("status") != "success":
         return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
-    email = data.get("email")
     program_id = data.get("program_id")
     duration = data.get("duration", "standard")
     return ai_internship_engine.enroll(email, program_id, duration)
 
 @app.get("/api/internship/scenario/{enrollment_id}/{day}")
-async def internship_scenario(enrollment_id: str, day: int):
+async def internship_scenario(request: Request, enrollment_id: str, day: int):
     """Get daily scenario."""
+    require_enrollment_owner(request, enrollment_id)
     return ai_internship_engine.get_daily_scenario(enrollment_id, day)
 
 @app.post("/api/internship/complete/{enrollment_id}")
-async def internship_complete(enrollment_id: str):
+async def internship_complete(request: Request, enrollment_id: str):
     """Complete internship."""
+    require_enrollment_owner(request, enrollment_id)
     return ai_internship_engine.complete_internship(enrollment_id)
 
 @app.post("/api/internship/submit/{enrollment_id}/{day}")
-async def submit_work(enrollment_id: str, day: int, request: Request):
+async def submit_work(request: Request, enrollment_id: str, day: int):
     """Submit work for AI review."""
+    require_enrollment_owner(request, enrollment_id)
     data = await request.json()
     return ai_internship_engine.submit_work(enrollment_id, day, data.get("submission", ""))
 
 @app.get("/api/internship/progress/{enrollment_id}")
-async def internship_progress(enrollment_id: str):
+async def internship_progress(request: Request, enrollment_id: str):
     """Get internship progress."""
+    require_enrollment_owner(request, enrollment_id)
     return ai_internship_engine.get_progress(enrollment_id)
 
 # ============================================================

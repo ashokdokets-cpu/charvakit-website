@@ -194,8 +194,9 @@
 </div>
 
 <script>
-let userEmail = localStorage.getItem('userEmail') || 'demo@charvakit.com';
+let userEmail = localStorage.getItem('userEmail') || '';
 let currentEnrollment = null;
+const _authToken = () => localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
 
 // Load programs
 async function loadPrograms() {
@@ -253,7 +254,12 @@ function displayPrograms(programs) {
 }
 
 function enrollInternship(programId, programName, price) {
-    const email = prompt('Enter your email:');
+    const email = localStorage.getItem('userEmail');
+    if (!email || !_authToken()) {
+        alert('Please log in to enroll.');
+        window.location.href = '/login?next=/ai-internship';
+        return;
+    }
     if (!email) return;
     
     // Show duration selection
@@ -273,21 +279,29 @@ function enrollInternship(programId, programName, price) {
     
     const selected = durationMap[durationChoice] || durationMap['2'];
     
-    /* removed */(email, selected.price, 'AI Internship: ' + programName + ' (' + selected.name + ' ' + selected.weeks + ' weeks)', function(response) {
-        fetch('/api/internship/enroll', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({email: email, program_id: programId, duration: selected.id})
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (data.status === 'success') {
-                currentEnrollment = data.enrollment_id;
-                localStorage.setItem('internship_enrollment', currentEnrollment);
-                alert('✅ Enrolled! ' + selected.name + ' internship (' + selected.weeks + ' weeks) starts now!');
-                loadDailyScenario(1);
-            }
-        });
+    // Real enroll fetch — no processToolPayment wrapper
+    fetch('/api/internship/enroll', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + _authToken()
+        },
+        body: JSON.stringify({email: email, program_id: programId, duration: selected.id})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'success') {
+            currentEnrollment = data.enrollment_id;
+            localStorage.setItem('internship_enrollment', currentEnrollment);
+            alert('Enrolled! ' + selected.name + ' internship (' + selected.weeks + ' weeks) starts now!');
+            loadDailyScenario(1);
+        } else {
+            alert('Enrollment failed: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(err => {
+        console.error('Enroll error:', err);
+        alert('Enrollment failed. Check console for details.');
     });
 }
 
@@ -302,7 +316,7 @@ async function loadDailyScenario(day) {
     container.innerHTML = '<p class="text-center">Loading Day ' + day + ' scenario...</p>';
     
     try {
-        const response = await fetch(`/api/internship/scenario/${currentEnrollment}/${day}`);
+        const response = await fetch(`/api/internship/scenario/${currentEnrollment}/${day}`, {headers: {'Authorization': 'Bearer ' + _authToken()}});
         const data = await response.json();
         
         if (data.status === 'success') {
@@ -350,7 +364,8 @@ async function completeInternship() {
     
     try {
         const response = await fetch(`/api/internship/complete/${currentEnrollment}`, {
-            method: 'POST'
+            method: 'POST',
+            headers: {'Authorization': 'Bearer ' + _authToken()}
         });
         const data = await response.json();
         

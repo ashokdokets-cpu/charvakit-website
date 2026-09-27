@@ -32,6 +32,55 @@ var CharvakCurrency = {
         return this.rates[this.current] || 1;
     },
     
+
+    getName: function(code) {
+        var names = {
+            INR: 'Indian Rupee', USD: 'US Dollar', EUR: 'Euro',
+            GBP: 'British Pound', AED: 'UAE Dirham', SGD: 'Singapore Dollar',
+            AUD: 'Australian Dollar', CAD: 'Canadian Dollar', JPY: 'Japanese Yen',
+            CNY: 'Chinese Yuan', BRL: 'Brazilian Real', NGN: 'Nigerian Naira',
+            ZAR: 'South African Rand'
+        };
+        return names[code || this.current] || code || this.current;
+    },
+
+    format: function(inrAmount) {
+        var rate = this.getRate();
+        var symbol = this.getSymbol();
+        var converted = (parseFloat(inrAmount) || 0) * rate;
+        // Round appropriately: for high-rate currencies show integer, else keep
+        if (rate >= 1) {
+            return symbol + Math.round(converted).toLocaleString('en-IN');
+        }
+        return symbol + converted.toFixed(2);
+    },
+
+    detectLocation: async function() {
+        // Try saved preference first
+        var saved = localStorage.getItem('charvak_currency');
+        if (saved && this.rates[saved]) {
+            this.current = saved;
+            this.updateSelector();
+            this.updateAllPrices();
+            return saved;
+        }
+        // Fetch region from server
+        try {
+            var res = await fetch('/api/region');
+            var data = await res.json();
+            if (data && data.currency && this.rates[data.currency]) {
+                this.current = data.currency;
+                localStorage.setItem('charvak_currency', data.currency);
+                this.updateSelector();
+                this.updateAllPrices();
+                return data.currency;
+            }
+        } catch (e) {
+            console.warn('detectLocation failed:', e);
+        }
+        return this.current;
+    },
+
     updateSelector: function() {
         var selector = document.getElementById('currencySelector');
         if (selector) {
