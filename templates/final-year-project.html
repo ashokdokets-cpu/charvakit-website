@@ -291,6 +291,35 @@ async function generateDocs(e) {
         : '<p class="text-muted">Documentation generated</p>';
 }
 
+function renderVivaQuestions(questions, tips) {
+    const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    if (!Array.isArray(questions) || !questions.length) {
+        return '<p class="text-muted">No questions available.</p>';
+    }
+    const qCards = questions.map((item, i) => {
+        const q = typeof item === 'string' ? item : (item.q || item.question || '');
+        const a = typeof item === 'string' ? '' : (item.a || item.answer || '');
+        const answerBlock = a
+            ? '<div class="mt-2">' +
+                  '<button type="button" class="btn btn-sm btn-outline-secondary" ' +
+                  'onclick="var p=this.parentElement.querySelector(\'.viva-answer\'); p.classList.toggle(\'d-none\'); this.textContent = p.classList.contains(\'d-none\') ? \'Show answer\' : \'Hide answer\';">Show answer</button>' +
+                  '<div class="viva-answer d-none mt-2 p-3 bg-light border rounded"><strong>Model answer:</strong> ' + esc(a) + '</div>' +
+              '</div>'
+            : '<div class="mt-2 text-muted small"><em>No model answer provided.</em></div>';
+        return '<div class="card mb-2"><div class="card-body">' +
+            '<div class="mb-1"><span class="badge bg-primary me-2">Q' + (i+1) + '</span><strong>' + esc(q) + '</strong></div>' +
+            answerBlock +
+            '</div></div>';
+    }).join('');
+    let tipsBlock = '';
+    if (Array.isArray(tips) && tips.length) {
+        tipsBlock = '<div class="alert alert-info mt-3"><strong>Examiner tips:</strong><ul class="mb-0 mt-2">' +
+            tips.map(t => '<li>' + esc(t) + '</li>').join('') +
+            '</ul></div>';
+    }
+    return qCards + tipsBlock;
+}
+
 async function vivaPrep(e) {
     e.preventDefault();
     const authToken = localStorage.getItem('auth_token') || '';
@@ -301,11 +330,33 @@ async function vivaPrep(e) {
         return;
     }
     const topic = document.getElementById('fypVivaTopic').value;
-    const r = await fetch('/api/fyp/viva-questions', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({topic:topic, email: email})});
-    const j = await r.json();
-    document.getElementById('vivaOutput').innerHTML = j.questions 
-        ? j.questions.map((q,i)=>'<div class="p-2 border-bottom"><strong>Q'+(i+1)+':</strong> '+q+'</div>').join('')
-        : '<p class="text-muted">Questions generated</p>';
+    const out = document.getElementById('vivaOutput');
+    out.innerHTML = '<p class="text-muted">Generating questions...</p>';
+    try {
+        const r = await fetch('/api/fyp/viva-questions', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken},
+            body: JSON.stringify({topic: topic, email: email})
+        });
+        if (r.status === 401) {
+            out.innerHTML = '<div class="alert alert-danger">Session expired. Please log in again.</div>';
+            return;
+        }
+        if (r.status === 402) {
+            out.innerHTML = '<div class="alert alert-warning">Not enough credits. ' +
+                '<a href="/ai-credits-pricing" class="alert-link">Buy credits</a> to continue.</div>';
+            return;
+        }
+        const j = await r.json();
+        if (j.status !== 'success') {
+            out.innerHTML = '<div class="alert alert-danger">' + (j.message || 'Generation failed.') + '</div>';
+            return;
+        }
+        out.innerHTML = renderVivaQuestions(j.questions, j.tips);
+    } catch (err) {
+        console.error('vivaPrep failed:', err);
+        out.innerHTML = '<div class="alert alert-danger">Network error. Please try again.</div>';
+    }
 }
 </script>
 {% endblock %}
