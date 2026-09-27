@@ -111,12 +111,20 @@
     <!-- Programs -->
     <!-- Resume banner: shown when the user has an active enrollment -->
     <div id="resumeBanner" style="display:none;">
-        <div class="alert alert-info d-flex justify-content-between align-items-center">
-            <div>
-                <strong>You have an active internship:</strong>
-                <span id="resumeBannerText"></span>
+        <div class="alert alert-info">
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+                <div class="d-flex align-items-center flex-wrap">
+                    <strong class="me-2">You have an active internship:</strong>
+                    <select id="resumeBannerSelect" class="form-select form-select-sm"
+                            style="max-width: 360px; display:none;"
+                            onchange="onResumeSelectionChange()"></select>
+                    <span id="resumeBannerText" class="me-2"></span>
+                </div>
+                <div>
+                    <button class="btn btn-primary btn-sm me-1" onclick="resumeInternship()">Resume &rarr;</button>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="dismissCurrentEnrollment()">Dismiss</button>
+                </div>
             </div>
-            <button class="btn btn-primary btn-sm" onclick="resumeInternship()">Resume →</button>
         </div>
     </div>
 
@@ -453,6 +461,8 @@ async function completeInternship() {
 // ---- Resume banner --------------------------------------------------
 let resumeEnrollment = null;
 
+let allActiveEnrollments = [];
+
 async function checkActiveEnrollment() {
     const email = localStorage.getItem('userEmail');
     const token = _authToken();
@@ -465,31 +475,100 @@ async function checkActiveEnrollment() {
         if (!res.ok) return;
         const data = await res.json();
         const list = data.enrollments || [];
+        allActiveEnrollments = list;
         if (list.length === 0) return;
 
-        // Pick the most recent active enrollment
         const e = list[0];
         resumeEnrollment = e;
-        const banner = document.getElementById('resumeBanner');
-        const text = document.getElementById('resumeBannerText');
-        if (banner && text) {
-            text.textContent = `${e.program_name} — Day ${e.current_day} of ${e.total_days}`;
-            banner.style.display = '';
-        }
+        renderResumeBanner(list);
     } catch (err) {
         console.error('checkActiveEnrollment failed:', err);
     }
+}
+
+function renderResumeBanner(list) {
+    const banner = document.getElementById('resumeBanner');
+    const text = document.getElementById('resumeBannerText');
+    const select = document.getElementById('resumeBannerSelect');
+    if (!banner || !text) return;
+
+    if (list.length === 0) {
+        banner.style.display = 'none';
+        return;
+    }
+
+    const top = list[0];
+    if (list.length === 1) {
+        // Single enrollment: plain text, no dropdown
+        if (select) select.style.display = 'none';
+        text.textContent = `${top.program_name} — Day ${top.current_day} of ${top.total_days}`;
+    } else {
+        // Multiple enrollments: show dropdown, hide plain text
+        text.textContent = '';
+        if (select) {
+            select.style.display = '';
+            select.innerHTML = list.map((e, i) => {
+                const lbl = `${e.program_name} — Day ${e.current_day} of ${e.total_days}`;
+                return `<option value="${e.enrollment_id}"${i === 0 ? ' selected' : ''}>${lbl}</option>`;
+            }).join('');
+        }
+    }
+    banner.style.display = '';
+}
+
+function onResumeSelectionChange() {
+    const select = document.getElementById('resumeBannerSelect');
+    if (!select) return;
+    const eid = select.value;
+    const chosen = allActiveEnrollments.find(x => x.enrollment_id === eid);
+    if (chosen) resumeEnrollment = chosen;
 }
 
 function resumeInternship() {
     if (!resumeEnrollment) return;
     currentEnrollment = resumeEnrollment.enrollment_id;
     localStorage.setItem('internship_enrollment', currentEnrollment);
-    // Hide the banner now that we've resumed
     const banner = document.getElementById('resumeBanner');
     if (banner) banner.style.display = 'none';
-    // Load the exact day they left off
     loadDailyScenario(resumeEnrollment.current_day || 1);
+}
+
+async function dismissCurrentEnrollment() {
+    if (!resumeEnrollment) return;
+    const email = localStorage.getItem('userEmail');
+    const token = _authToken();
+    if (!email || !token) return;
+
+    const eid = resumeEnrollment.enrollment_id;
+    if (!confirm('Abandon this internship? You will not see it in the banner again. Your progress is saved if you re-enroll later.')) return;
+
+    try {
+        const res = await fetch(`/api/internship/abandon/${eid}`, {
+            method: 'POST',
+            headers: {'Authorization': 'Bearer ' + token}
+        });
+        const data = await res.json();
+        if (data.status !== 'success') {
+            alert('Could not abandon: ' + (data.message || 'unknown error'));
+            return;
+        }
+        // Remove from local list
+        allActiveEnrollments = allActiveEnrollments.filter(x => x.enrollment_id !== eid);
+        // If this was the current enrollment, clear it
+        if (currentEnrollment === eid) {
+            currentEnrollment = null;
+            localStorage.removeItem('internship_enrollment');
+        }
+        if (allActiveEnrollments.length === 0) {
+            document.getElementById('resumeBanner').style.display = 'none';
+        } else {
+            resumeEnrollment = allActiveEnrollments[0];
+            renderResumeBanner(allActiveEnrollments);
+        }
+    } catch (err) {
+        console.error('dismissCurrentEnrollment failed:', err);
+        alert('Network error abandoning enrollment.');
+    }
 }
 
 // Initialize

@@ -6023,6 +6023,12 @@ async def internship_my_enrollments(request: Request, email: str = ""):
     require_auth_for_email(request, email)
     return ai_internship_engine.get_my_enrollments(email)
 
+@app.post("/api/internship/abandon/{enrollment_id}")
+async def internship_abandon(request: Request, enrollment_id: str):
+    """Abandon an active enrollment. Caller must own it."""
+    require_enrollment_owner(request, enrollment_id)
+    return ai_internship_engine.abandon_enrollment(enrollment_id)
+
 @app.post("/api/internship/enroll")
 async def internship_enroll(request: Request):
     """Enroll in internship."""
