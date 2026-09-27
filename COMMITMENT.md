@@ -2128,3 +2128,38 @@ reverting a Python write. **Fix:** stop uvicorn → write → verify with grep
     calls them. Backend is ready; frontend wiring needed.
 
 **Last updated:** 2026-09-27 06:05
+
+
+---
+
+### FLAGGED — 4 unlisted AI tools need frontend wiring + auth (2026-09-27)
+
+Discovered after the 11-product sprint. These 4 tools have:
+- ✅ Page route registered
+- ✅ Template file exists
+- ✅ Backend API route
+- ✅ Credit-gating via require_credits_from_data
+- ❌ No require_auth_for_email
+- ❌ Frontend never calls the AI route
+
+| Tool | Page | API route | Credit key |
+|---|---|---|---|
+| Neural Wireframe | /neural-wireframe | /api/ai/neural-wireframe | ai_neural_wireframe |
+| Globalize.ai | /globalize | /api/ai/localize | ai_localize |
+| Legacy-Shift | /legacy-shift | /api/ai/analyze-legacy | ai_analyze_legacy |
+| Agent-Ready | /agent-ready | /api/ai/generate-schema | ai_generate_schema |
+
+**Special case:** neural-wireframe.html has a Razorpay flow that charges but
+never calls the AI route. Needs replacement with credits-based form.
+
+**Also without backend routes (marketing-only pages):**
+- /napkin-challenge
+- /revenue-leak-detector
+- /time-machine-checker
+- /ai-commerce-scorecard
+
+**Est:** ~1.5 hrs total for the 4 tools.
+
+**Verdict:** SCHEDULED — next session
+
+**Last updated:** 2026-09-27 06:10
