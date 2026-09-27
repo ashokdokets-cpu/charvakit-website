@@ -2198,3 +2198,29 @@ Queue of remaining work, roughly in priority order.
 - Optional: Item 7 whenever there is appetite
 
 **Last updated:** 2026-09-27 06:14
+
+
+---
+
+**MCQ strategy decision (2026-09-27): Option A — Free library + paid AI generate**
+
+**Rationale:** The curated `mcq_bank` remains free as a lead magnet (SEO, user
+acquisition). The existing AI-generation route (`/api/assessment/mcq/generate`)
+becomes the paid tier at 5 credits per call. This matches the freemium pattern
+used across the rest of the product suite.
+
+**Implementation for next session:**
+- `/mcq` page keeps the current "From Library" browse as-is (free)
+- Add "AI Generate" button on the same page -> POST /api/assessment/mcq/generate
+  with JSON body containing email, category, topic, count + Authorization header
+- Display "5 credits" on the button
+- Handle 401 (redirect to login) and 402 (redirect to pricing)
+- Response shape: status + questions array -- render like the library view
+
+**Not doing (rejected alternatives):**
+- Option B: charging for library access too -- removes the free lead magnet
+- Option C: deprecating the library, everything via AI -- slower + always costs
+
+**Verdict:** Decided, scope locked, awaiting implementation in next session
+
+**Last updated:** 2026-09-27 16:00
