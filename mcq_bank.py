@@ -155,7 +155,7 @@ class MCQQuestionBank:
                     {"q": "Which is a memory management technique?", "options": ["Paging", "Sorting", "Searching", "None"], "correct": 0},
                     {"q": "What is a semaphore?", "options": ["Synchronization tool", "File", "Process", "None"], "correct": 0}
                 ],
-                "DBMS/SQL": [
+                "DBMS & SQL": [
                     {"q": "What does SQL stand for?", "options": ["Structured Query Language", "Simple Query Language", "Standard Query Language", "None"], "correct": 0},
                     {"q": "Which SQL command retrieves data?", "options": ["INSERT", "UPDATE", "SELECT", "DELETE"], "correct": 2},
                     {"q": "What is a primary key?", "options": ["Unique identifier", "Foreign key", "Index", "None"], "correct": 0},

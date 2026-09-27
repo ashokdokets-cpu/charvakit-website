@@ -99,7 +99,7 @@ class MarketStandardGenerator:
                     "topics": 6,
                     "questions_per_topic": 10,
                     "total_questions": 60,
-                    "topics_list": ["Data Structures", "Algorithms", "OOPs", "Operating Systems", "DBMS/SQL", "Computer Networks"]
+                    "topics_list": ["Data Structures", "Algorithms", "OOPs", "Operating Systems", "DBMS & SQL", "Computer Networks"]
                 },
                 {
                     "category": "Pseudocode",

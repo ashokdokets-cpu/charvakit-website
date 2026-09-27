@@ -96,7 +96,7 @@ class AdvancedAssessmentEngine:
                     },
                     "technical_cs": {
                         "name": "Technical CS Fundamentals",
-                        "topics": ["Data Structures", "Algorithms", "OOPs", "Operating Systems", "DBMS/SQL", "Computer Networks"],
+                        "topics": ["Data Structures", "Algorithms", "OOPs", "Operating Systems", "DBMS & SQL", "Computer Networks"],
                     },
                     "pseudocode": {
                         "name": "Pseudocode & Code Output",
