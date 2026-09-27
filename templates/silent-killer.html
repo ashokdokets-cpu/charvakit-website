@@ -3,18 +3,49 @@
 {% block content %}
 <div class="page-hero bg-gradient-primary text-white py-5">
     <div class="container py-4">
-        <span class="badge bg-info text-dark mb-2 px-3 py-2">💡 Concept</span>
+        <span class="badge bg-info text-dark mb-2 px-3 py-2">Concept</span>
         <h1 class="display-4 fw-bold">Silent-Killer Web Hook Sentinel</h1>
         <p class="lead">Your checkout form broke 3 hours ago. You're losing money right now. We fix it before you notice.</p>
     </div>
 {% include "includes/beta_badge.html" %}
-
 </div>
 
 <div class="container py-5">
     <div class="row mb-5">
-        <div class="col-lg-6"><h2 class="fw-bold">Broken Funnels Kill Revenue Silently</h2><p class="lead">A third-party API updates. Your payment gateway breaks. A webhook fails. You don't know until a customer complains — or worse, they just leave.</p><p>Silent-Killer Sentinel continuously simulates user interactions across your website — form submissions, checkout flows, calendar bookings, API webhooks — and auto-generates hotfix patches the moment something breaks.</p></div>
-        <div class="col-lg-6"><div class="bg-dark text-white p-4 rounded"><h3 class="as-h4">What It Monitors 24/7</h3><ul><li>💳 Payment gateways & checkout</li><li>📧 Contact forms & lead capture</li><li>📅 Booking & scheduling systems</li><li>🔗 API webhooks & integrations</li><li>📊 Analytics & tracking scripts</li></ul></div></div>
+        <div class="col-lg-6">
+            <h2 class="fw-bold">Broken Funnels Kill Revenue Silently</h2>
+            <p class="lead">A third-party API updates. Your payment gateway breaks. A webhook fails. You don't know until a customer complains — or worse, they just leave.</p>
+            <p>Silent-Killer Sentinel sets up continuous monitoring of your critical endpoints and webhooks, with alerts across email, WhatsApp, and webhook channels.</p>
+        </div>
+        <div class="col-lg-6">
+            <div class="bg-dark text-white p-4 rounded">
+                <h3 class="as-h4 mb-3">Set Up Monitoring</h3>
+                <form onsubmit="runSilentKiller(event)" id="skForm">
+                    <div class="mb-3">
+                        <label class="form-label text-white-50">URL to Monitor</label>
+                        <input type="url" class="form-control" id="skUrl" placeholder="https://yoursite.com/checkout" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-white-50">Monitor Name</label>
+                        <input type="text" class="form-control" id="skName" placeholder="e.g. Checkout Form" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-white-50">Check Interval (minutes)</label>
+                        <select class="form-select" id="skInterval">
+                            <option value="1">Every 1 minute</option>
+                            <option value="5" selected>Every 5 minutes</option>
+                            <option value="15">Every 15 minutes</option>
+                            <option value="30">Every 30 minutes</option>
+                            <option value="60">Every 60 minutes</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100" id="skSubmitBtn">
+                        Set Up Monitor &mdash; 15 credits
+                    </button>
+                </form>
+                <div id="skOutput" class="mt-4"></div>
+            </div>
+        </div>
     </div>
 
     <div class="row g-4 mb-5 text-center">
@@ -24,27 +55,104 @@
         <div class="col-md-3"><div class="card h-100 p-4"><i class="bi bi-shield display-4 text-primary mb-3"></i><h4 class="as-h5">Zero False Alarms</h4><p class="text-muted">AI-verified incidents</p></div></div>
     </div>
 
-    <div class="row g-4 mb-5">
-        <div class="col-md-6"><div class="card h-100 p-4 text-center"><h4>🔍 Free Scan</h4><h2 class="display-4 fw-bold"><span data-inr="0">₹0</span></h2><p>Find broken funnels</p><a href="/dead-link-auditor" class="btn btn-outline-primary">Scan My Site</a></div></div>
-        <div class="col-md-6"><div class="card h-100 p-4 text-center bg-light"><h3 class="as-h4">🛡️ Continuous</h3><h2 class="display-4 fw-bold"><span data-inr="3499">₹3,499</span></h2><p>/month · 24/7 monitoring</p><a href="#" class="btn btn-primary" onclick="silentKillerProtect(event)">Protect My Site</a></div></div>
-    </div>
-
     <div class="text-center p-5 bg-light rounded">
         <h3>Find Your Broken Funnels Now</h3>
         <p class="mb-4">Free scan checks all your critical touchpoints in 60 seconds.</p>
-        <a href="/dead-link-auditor" class="btn btn-primary btn-lg">Dead Link & Broken Funnel Auditor</a>
+        <a href="/dead-link-auditor" class="btn btn-primary btn-lg">Dead Link &amp; Broken Funnel Auditor</a>
     </div>
 </div>
+
 <script>
-function silentKillerProtect(e){
-    e.preventDefault();
-    const url = prompt('Enter your website URL:');
-    if(url){
-        const subs = JSON.parse(localStorage.getItem('silent_killer_subs')||'[]');
-        subs.push({url, plan: 'Continuous (<span data-inr="3499">₹3,499</span>/mo)', date: new Date().toISOString()});
-        localStorage.setItem('silent_killer_subs', JSON.stringify(subs));
-        alert('24/7 monitoring activated for ' + url + '! We will set up your Sentinel and contact you shortly.');
+async function runSilentKiller(event) {
+    event.preventDefault();
+    const url = document.getElementById('skUrl').value.trim();
+    const name = document.getElementById('skName').value.trim();
+    const interval = parseInt(document.getElementById('skInterval').value) || 5;
+
+    if (!url || !url.startsWith('http')) {
+        alert('Please enter a valid URL starting with http:// or https://');
+        return;
     }
+    if (!name) {
+        alert('Please enter a name for this monitor.');
+        return;
+    }
+
+    const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    if (!authToken || !email) {
+        alert('Please log in to set up monitoring.');
+        window.location.href = '/login?next=/silent-killer';
+        return;
+    }
+
+    const btn = document.getElementById('skSubmitBtn');
+    const out = document.getElementById('skOutput');
+    btn.disabled = true;
+    btn.textContent = 'Setting up... this takes 15-30 seconds';
+    out.innerHTML = '<div class="text-white-50 text-center py-3"><div class="spinner-border spinner-border-sm text-light"></div><p class="mt-2 mb-0">Setting up monitor for ' + name + '...</p></div>';
+
+    try {
+        const res = await fetch('/api/products/silent-killer/monitor', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authToken
+            },
+            body: JSON.stringify({email: email, url: url, name: name, interval_minutes: interval})
+        });
+
+        if (res.status === 401) {
+            out.innerHTML = '<div class="alert alert-danger">Please log in.</div>';
+            window.location.href = '/login?next=/silent-killer';
+            return;
+        }
+        if (res.status === 402) {
+            out.innerHTML = '<div class="alert alert-warning">Not enough credits. <a href="/ai-credits-pricing" class="alert-link">Top up</a>.</div>';
+            return;
+        }
+
+        const data = await res.json();
+        renderSilentKillerResult(out, data);
+    } catch (e) {
+        out.innerHTML = '<div class="alert alert-danger">Error: ' + e.message + '</div>';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Set Up Monitor — 15 credits';
+    }
+}
+
+function renderSilentKillerResult(out, data) {
+    if (data.status !== 'success') {
+        out.innerHTML = '<div class="alert alert-danger">' + (data.message || 'Setup failed') + '</div>';
+        return;
+    }
+    let html = '<div class="card bg-light text-dark mb-2"><div class="card-body">';
+    html += '<div class="d-flex justify-content-between align-items-start mb-2">';
+    html += '<div><strong>Monitor ' + (data.monitor_id || '') + '</strong><br><small class="text-muted">' + (data.analysis_mode || 'heuristic_only') + '</small></div>';
+    html += '<span class="badge bg-success">' + (data.monitor_status || 'active') + '</span>';
+    html += '</div>';
+    html += '<hr class="my-2">';
+    html += '<p class="mb-1"><strong>Name:</strong> ' + (data.name || '') + '</p>';
+    html += '<p class="mb-1"><strong>URL:</strong> ' + (data.url || '') + '</p>';
+    html += '<p class="mb-1"><strong>Interval:</strong> every ' + (data.interval_minutes || 0) + ' minutes (' + (data.checks_per_day || 0) + ' checks/day)</p>';
+    html += '<p class="mb-0"><strong>Alert channels:</strong> ' + ((data.alert_channels || []).join(', ')) + '</p>';
+    if (data.auto_fix_enabled) {
+        html += '<p class="mb-0"><span class="badge bg-info">Auto-fix enabled</span></p>';
+    }
+    html += '</div></div>';
+
+    if (data.verdict) {
+        html += '<div class="alert alert-info py-2 mt-3 mb-0">' + data.verdict + '</div>';
+    }
+    out.innerHTML = html;
+}
+
+// Paid continuous plan — kept as interest capture. The continuous monitoring
+// backend (recurring checks + alerting infrastructure) is not yet shipped.
+function silentKillerProtect(event) {
+    event.preventDefault();
+    window.notifyMe('Silent-Killer Continuous Plan');
 }
 </script>
 {% include 'includes/premium-upsell.html' %}
