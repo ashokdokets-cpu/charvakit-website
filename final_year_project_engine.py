@@ -175,24 +175,56 @@ class FinalYearProjectEngine:
     # ============================================================
 
     def generate_viva_ai(self, data: Dict) -> Dict:
+        """Generate viva questions with model answers.
+
+        Returns questions as list of {"q": ..., "a": ...} objects so the
+        frontend can show a "Show answer" toggle per question. Legacy
+        string-only questions are normalized to this shape for compat.
+        """
         topic = data.get("topic", "Project")
         if OPENAI_API_KEY:
-            prompt = f"""Generate 15 viva questions specific to final year project: {topic}
-            Include technical, architectural, and general questions.
-            Return JSON: {{"questions": [...], "tips": [...]}}"""
-            viva = self._ai_json(prompt, max_tokens=600, temperature=0.6)
-            if viva is not None:
-                return {"status": "success", "ai_generated": True, **viva}
-        return {"status": "success", "ai_generated": False, "questions": self._fallback_questions(topic)}
-
-    def _fallback_questions(self, topic: str) -> List[str]:
-        return [
-            f"Why did you choose {topic}?",
-            "What technologies did you use?",
-            "What challenges did you face?",
-            "How does your project differ from existing solutions?",
-            "What future enhancements would you suggest?",
-        ]
+            prompt = (
+                f"Generate 15 viva questions with model answers for a final year project on: {topic}\n\n"
+                "Include technical, architectural, and general questions a real examiner would ask.\n\n"
+                "Return STRICT JSON only with this exact shape:\n"
+                "{\n"
+                '  "questions": [\n'
+                '    {"q": "<question text>", "a": "<2-4 sentence model answer a strong student would give>"},\n'
+                "    ...\n"
+                "  ],\n"
+                '  "tips": ["<tip 1>", "<tip 2>", "<tip 3>"]\n'
+                "}"
+            )
+            viva = self._ai_json(prompt, max_tokens=1800, temperature=0.6)
+            if viva is not None and isinstance(viva.get("questions"), list):
+                normalized = []
+                for item in viva["questions"]:
+                    if isinstance(item, str):
+                        normalized.append({"q": item, "a": ""})
+                    elif isinstance(item, dict):
+                        q_text = str(item.get("q") or item.get("question") or "").strip()
+                        a_text = str(item.get("a") or item.get("answer") or "").strip()
+                        if q_text:
+                            normalized.append({"q": q_text, "a": a_text})
+                if normalized:
+                    viva["questions"] = normalized
+                    return {"status": "success", "ai_generated": True, **viva}
+        return {
+            "status": "success",
+            "ai_generated": False,
+            "questions": [
+                {"q": f"Why did you choose {topic}?", "a": ""},
+                {"q": "What technologies did you use?", "a": ""},
+                {"q": "What challenges did you face?", "a": ""},
+                {"q": "How does your project differ from existing solutions?", "a": ""},
+                {"q": "What future enhancements would you suggest?", "a": ""},
+            ],
+            "tips": [
+                "Be specific with numbers and examples",
+                "Know your architecture diagram cold",
+                "Prepare a 30-second demo pitch",
+            ],
+        }
 
     # ============================================================
     # MONETIZATION (DB-backed)
