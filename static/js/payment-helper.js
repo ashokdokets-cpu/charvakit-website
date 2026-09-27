@@ -139,7 +139,33 @@ function payWithRazorpay(email, amount, featureName, hasCallback) {
         });
 }
 
-function payWithPayPal(email, amount, featureName, hasCallback) {
+async function ensurePayPalLoaded() {
+    if (typeof paypal !== 'undefined') return;
+    // Fetch real client ID and current currency
+    var clientId = '';
+    try {
+        const r = await fetch('/api/payment/status');
+        const s = await r.json();
+        clientId = s.paypal_client_id || '';
+    } catch (e) {
+        console.warn('Could not fetch PayPal client ID:', e);
+    }
+    if (!clientId) {
+        console.error('PayPal client ID missing from /api/payment/status');
+        return;
+    }
+    const curr = (window.__paypalCurrency || 'USD').toUpperCase();
+    await new Promise(function(resolve) {
+        const s = document.createElement('script');
+        s.src = 'https://www.paypal.com/sdk/js?client-id=' + encodeURIComponent(clientId) + '&currency=' + curr;
+        s.async = true;
+        s.onload = resolve;
+        s.onerror = resolve;
+        document.head.appendChild(s);
+    });
+}
+
+async function payWithPayPal(email, amount, featureName, hasCallback) {
     console.log('Starting PayPal payment...');
     const usdAmount = (amount / 83).toFixed(2);
 
@@ -149,7 +175,7 @@ function payWithPayPal(email, amount, featureName, hasCallback) {
         body: JSON.stringify({amount, name: featureName, method: 'paypal'})
     })
     .then(res => res.json())
-    .then(orderData => {
+    .then(async orderData => {
         console.log('PayPal order:', orderData);
         const paypalOrderId = orderData.order_id || orderData.id;
 
@@ -177,13 +203,13 @@ function payWithPayPal(email, amount, featureName, hasCallback) {
         document.body.appendChild(paypalModal);
 
         if (typeof paypal === 'undefined') {
-            alert('PayPal SDK not loaded. Loading...');
-            const script = document.createElement('script');
-            script.src = 'https://www.paypal.com/sdk/js?client-id=YOUR_PAYPAL_CLIENT_ID&currency=USD';
-            script.onload = function() {
-                renderPayPalButtons(usdAmount, featureName, paypalOrderId, hasCallback);
-            };
-            document.head.appendChild(script);
+            // Lazily load the SDK with the real client ID and current currency.
+            await ensurePayPalLoaded();
+            if (typeof paypal === 'undefined') {
+                alert('PayPal SDK failed to load. Please refresh and try again.');
+                return;
+            }
+            renderPayPalButtons(usdAmount, featureName, paypalOrderId, hasCallback);
         } else {
             renderPayPalButtons(usdAmount, featureName, paypalOrderId, hasCallback);
         }

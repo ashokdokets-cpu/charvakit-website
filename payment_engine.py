@@ -67,11 +67,18 @@ class PaymentEngine:
             logger.error(f"payment_log tables init failed: {e}")
 
     def is_ready(self) -> Dict:
-        """Check which payment methods are configured. Booleans only."""
+        """Check which payment methods are configured."""
+        razorpay_ok = bool(self.razorpay_key_id and self.razorpay_key_secret)
+        paypal_ok = bool(self.paypal_client_id and self.paypal_client_secret)
         return {
-            "razorpay": bool(self.razorpay_key_id and self.razorpay_key_secret),
-            "paypal": bool(self.paypal_client_id and self.paypal_client_secret),
+            "razorpay": razorpay_ok,
+            "paypal": paypal_ok,
             "upi": bool(self.upi_id),
+            # Public-safe fields the frontend needs for lazy SDK loading.
+            # The client_id is the public half of the pair (safe to expose);
+            # the secret is never returned.
+            "razorpay_key_id": self.razorpay_key_id if razorpay_ok else None,
+            "paypal_client_id": self.paypal_client_id if paypal_ok else None,
         }
 
     def create_razorpay_order(self, amount_inr: int, receipt: str, notes: Dict = None) -> Dict:
@@ -225,44 +232,107 @@ class PaymentEngine:
     def create_paypal_order(self, amount_inr: float, target_currency: str = "USD", description: str = "", custom_id: str = None) -> Dict:
         """Create a PayPal order.
 
+        Calls PayPal's /v2/checkout/orders endpoint to create a REAL order
+        and returns the PayPal-issued order ID (PAY-xxxx). The ID is stored
+        locally so fetch_paypal_order can verify it later.
+
         custom_id is echoed back by PayPal on capture. Use it to carry
         structured metadata (e.g. 'ai_course|email|course|enrollment|country').
         """
-        """Create a PayPal order."""
-        if not self.paypal_client_id:
+        if not self.paypal_client_id or not self.paypal_client_secret:
             return {"status": "error", "message": "PayPal not configured"}
 
         target = (target_currency or "USD").upper()
         rate = self.INR_RATES.get(target, self.INR_RATES["USD"])
         amount_converted = round(amount_inr * rate, 2)
 
-        order_id = f"PAYPAL_{secrets.token_hex(8)}"
-        self._save_payment({
-            "order_id": order_id,
-            "amount": amount_converted,
-            "currency": target,
-            "method": "paypal",
-            "description": description,
-            "custom_id": custom_id,
-            "status": "created",
-            "created_at": datetime.now().isoformat()
-        })
+        try:
+            import requests
+            base = "https://api-m.paypal.com"
 
-        return {
-            "status": "success",
-            "order_id": order_id,
-            "client_id": self.paypal_client_id,
-            "amount": amount_converted,
-            "currency": target,
-            "custom_id": custom_id,
-            "description": description
-        }
+            # 1. Get OAuth token
+            auth_resp = requests.post(
+                f"{base}/v1/oauth2/token",
+                auth=(self.paypal_client_id, self.paypal_client_secret),
+                data={"grant_type": "client_credentials"},
+                timeout=10
+            )
+            token = (auth_resp.json() or {}).get("access_token")
+            if not token:
+                logger.error(f"PayPal order create: auth failed {auth_resp.status_code} {auth_resp.text[:200]}")
+                return {"status": "error", "message": "PayPal authentication failed"}
+
+            # 2. Create the order
+            payload = {
+                "intent": "CAPTURE",
+                "purchase_units": [{
+                    "amount": {
+                        "currency_code": target,
+                        "value": f"{amount_converted:.2f}"
+                    },
+                    "description": (description or "Charvak credits")[:127]
+                }]
+            }
+            if custom_id:
+                payload["purchase_units"][0]["custom_id"] = custom_id[:127]
+
+            r = requests.post(
+                f"{base}/v2/checkout/orders",
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Content-Type": "application/json"
+                },
+                json=payload,
+                timeout=15
+            )
+            if r.status_code not in (200, 201):
+                logger.error(f"PayPal order create failed: {r.status_code} {r.text[:300]}")
+                return {"status": "error", "message": f"PayPal order creation failed: {r.status_code}"}
+
+            data = r.json()
+            paypal_order_id = data.get("id")   # e.g. "PAY-xxxx"
+
+            if not paypal_order_id:
+                logger.error(f"PayPal order create: no id in response: {data}")
+                return {"status": "error", "message": "PayPal returned no order id"}
+
+            # 3. Store locally so fetch_paypal_order / verify can find it
+            self._save_payment({
+                "order_id": paypal_order_id,
+                "paypal_order_id": paypal_order_id,
+                "amount": amount_converted,
+                "currency": target,
+                "method": "paypal",
+                "description": description,
+                "custom_id": custom_id,
+                "status": "created",
+                "created_at": datetime.now().isoformat()
+            })
+
+            return {
+                "status": "success",
+                "order_id": paypal_order_id,       # real PAY-xxx; frontend hands this to the SDK
+                "client_id": self.paypal_client_id,
+                "amount": amount_converted,
+                "currency": target,
+                "custom_id": custom_id,
+                "description": description
+            }
+
+        except Exception as e:
+            logger.error(f"PayPal order create exception: {e}")
+            return {"status": "error", "message": str(e)}
 
     def verify_paypal_payment(self, order_id: str, paypal_order_id: str) -> Dict:
         """Verify PayPal payment."""
         if self.mode == "test":
-            self._update_payment(order_id, "completed", paypal_order_id)
-            return {"status": "success", "verified": True}
+            # Do NOT auto-verify in test mode. Previously this returned
+            # {"verified": True} for any input, which was a footgun: a dev
+            # environment with PAYMENT_MODE=test would grant credits for any
+            # fabricated PayPal order ID. Hardened 2026-09-28.
+            logger.warning("verify_paypal_payment called in test mode — refusing auto-verify")
+            return {"status": "error", "verified": False,
+                    "message": "PayPal verification refused in test mode; use sandbox credentials with PAYMENT_MODE=live"}
 
         try:
             import requests
@@ -286,6 +356,64 @@ class PaymentEngine:
             return {"status": "error", "verified": False}
         except Exception as e:
             logger.error(f"PayPal verification failed: {e}")
+            return {"status": "error", "message": str(e)}
+
+    def fetch_paypal_order(self, paypal_order_id: str) -> Dict:
+        """Fetch a PayPal order's details from their API.
+
+        Mirrors fetch_razorpay_payment: confirms the order was actually
+        captured by PayPal and returns its amount, currency, status, and
+        payer email so the caller can match against the plan being purchased.
+        """
+        if not self.paypal_client_id or not self.paypal_client_secret:
+            return {"status": "error", "message": "PayPal not configured"}
+
+        if not paypal_order_id or not paypal_order_id.startswith("PAY-"):
+            return {"status": "error", "message": "Invalid PayPal order_id format"}
+
+        try:
+            import requests
+            # Sandbox vs live determined by the client_id prefix PayPal issues
+            # (sandbox ids start with a specific pattern); simplest: try live,
+            # fall back to sandbox on 401.
+            base = "https://api-m.paypal.com"
+            auth_resp = requests.post(
+                f"{base}/v1/oauth2/token",
+                auth=(self.paypal_client_id, self.paypal_client_secret),
+                data={"grant_type": "client_credentials"},
+                timeout=10
+            )
+            token = (auth_resp.json() or {}).get("access_token")
+            if not token:
+                return {"status": "error", "message": "PayPal auth failed"}
+
+            r = requests.get(
+                f"{base}/v2/checkout/orders/{paypal_order_id}",
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=10
+            )
+            if r.status_code == 404:
+                return {"status": "error", "message": "PayPal order not found"}
+            if r.status_code != 200:
+                logger.error(f"PayPal fetch failed: {r.status_code} {r.text[:200]}")
+                return {"status": "error", "message": f"PayPal API error: {r.status_code}"}
+
+            data = r.json()
+            pu = (data.get("purchase_units") or [{}])[0]
+            amount_obj = pu.get("amount") or {}
+            payer = data.get("payer") or {}
+            return {
+                "status": "success",
+                "paypal_order_id": data.get("id"),
+                "status_field": data.get("status"),           # 'COMPLETED', 'APPROVED', etc.
+                "captured": data.get("status") == "COMPLETED",
+                "amount": float(amount_obj.get("value") or 0),
+                "currency": amount_obj.get("currency_code"),
+                "email": payer.get("email_address"),
+                "raw": data,
+            }
+        except Exception as e:
+            logger.error(f"PayPal fetch exception: {e}")
             return {"status": "error", "message": str(e)}
 
     def verify_upi_payment(self, txn_id: str, amount: float, notes: str = "") -> Dict:
