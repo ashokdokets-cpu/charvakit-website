@@ -6080,9 +6080,10 @@ async def ai_internship_page(request: Request):
     return template_response("ai-internship.html", request, "AI Internship Program - Charvak")
 
 @app.get("/api/internship/programs")
-async def internship_programs():
-    """Get all internship programs."""
-    return ai_internship_engine.get_programs()
+async def internship_programs(email: str = ""):
+    """Get all internship programs. If email provided, includes that user's custom programs."""
+    email = (email or "").strip().lower()
+    return ai_internship_engine.get_programs(email or None)
 
 @app.get("/api/internship/my-enrollments")
 async def internship_my_enrollments(request: Request, email: str = ""):
@@ -6114,6 +6115,32 @@ async def internship_enroll(request: Request):
     program_id = data.get("program_id")
     duration = data.get("duration", "standard")
     return ai_internship_engine.enroll(email, program_id, duration)
+
+@app.post("/api/internship/custom-program")
+async def internship_custom_program(request: Request):
+    """Design a custom internship program via AI (50 credits)."""
+    data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "internship_custom_program")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+    role_title = (data.get("role_title") or "").strip()
+    if not role_title:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "Role title is required"})
+    try:
+        duration_weeks = int(data.get("duration_weeks", 4) or 4)
+    except (TypeError, ValueError):
+        duration_weeks = 4
+    duration_weeks = max(1, min(12, duration_weeks))
+    return ai_internship_engine.create_custom_program(
+        email=email,
+        role_title=role_title,
+        duration_weeks=duration_weeks,
+    )
 
 @app.get("/api/internship/scenario/{enrollment_id}/{day}")
 async def internship_scenario(request: Request, enrollment_id: str, day: int):

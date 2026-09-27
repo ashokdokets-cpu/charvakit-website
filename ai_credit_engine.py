@@ -207,6 +207,7 @@ class AICreditEngine:
         "roles_training_plan": 15,
         "company_content_request": 20,
         "internship_enroll": 100,
+        "internship_custom_program": 50,
     }
 
     def __init__(self):

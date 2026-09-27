@@ -128,6 +128,24 @@
         </div>
     </div>
 
+    <!-- Custom Program Builder -->
+    <div class="card mb-4 border-primary border-2" id="customProgramCard" style="max-width: 900px; margin: 0 auto;">
+        <div class="card-body">
+            <h3 class="as-h5 mb-2">Can't find your role?</h3>
+            <p class="text-muted small mb-3">Describe the internship you want. AI designs a custom curriculum tailored to that role &mdash; <strong>50 credits</strong>.</p>
+            <div class="input-group">
+                <input type="text" class="form-control" id="customRoleInput" placeholder="e.g. Robotics Engineer, Sports Analyst, Marine Biologist..." maxlength="80">
+                <select class="form-select" id="customWeeks" style="max-width: 130px;">
+                    <option value="2">2 weeks</option>
+                    <option value="4" selected>4 weeks</option>
+                    <option value="8">8 weeks</option>
+                </select>
+                <button class="btn btn-primary" id="customProgramBtn" onclick="createCustomProgram()">Design It</button>
+            </div>
+            <div id="customProgramStatus" class="mt-2 small"></div>
+        </div>
+    </div>
+
     <h3 class="text-center mb-4">Choose Your Internship</h3>
     <div class="row g-4" id="internshipPrograms">
         <div class="col-12 text-center text-muted">Loading programs...</div>
@@ -220,9 +238,11 @@ const _authToken = () => localStorage.getItem('auth_token') || localStorage.getI
 // Load programs
 async function loadPrograms() {
     try {
-        const response = await fetch('/api/internship/programs');
+        const email = localStorage.getItem('userEmail') || '';
+        const url = '/api/internship/programs' + (email ? '?email=' + encodeURIComponent(email) : '');
+        const response = await fetch(url);
         const data = await response.json();
-        displayPrograms(data.programs);
+        displayPrograms(data.programs || []);
     } catch (error) {
         console.error('Error:', error);
     }
@@ -251,15 +271,19 @@ function displayPrograms(programs) {
                 priceDisplay = CharvakCurrency.format(program.price);
             }
             
+            const customBadge = program.is_custom ? '<span class="badge bg-info text-dark ms-2">Custom</span>' : '';
+            const durationText = program.is_custom ? (program.duration || '') : '2/4/6 weeks available';
+            const safeName = String(program.name || '').replace(/[<>"'&]/g, c => ({'<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','&':'&amp;'}[c]));
+            const safeId = String(program.id || '').replace(/[^A-Za-z0-9_\-]/g, '');
             row.innerHTML += `
                 <div class="col-md-3 col-sm-6">
                     <div class="card h-100 shadow-sm">
                         <div class="card-body text-center">
-                            <h3 class="as-h6">${program.name}</h3>
-                            <p class="text-muted small">2/4/6 weeks available</p>
+                            <h3 class="as-h6">${safeName}${customBadge}</h3>
+                            <p class="text-muted small">${durationText}</p>
                             <h4 class="text-primary"><span data-inr="${program.price}">${priceDisplay}</span></h4>
-                            <p class="small"><strong>Skills:</strong> ${program.skills.join(', ')}</p>
-                            <button class="btn btn-primary btn-sm w-100" onclick="enrollInternship('${program.id}', '${program.name}', ${program.price})">
+                            <p class="small"><strong>Skills:</strong> ${(program.skills || []).join(', ')}</p>
+                            <button class="btn btn-primary btn-sm w-100" onclick="enrollInternship('${safeId}', '${safeName}', ${program.price || 0})">
                                 Enroll Now
                             </button>
                         </div>
@@ -270,6 +294,70 @@ function displayPrograms(programs) {
         
         container.appendChild(row);
     });
+}
+
+async function createCustomProgram() {
+    const email = localStorage.getItem('userEmail') || '';
+    const token = _authToken();
+    if (!email || !token) {
+        alert('Please log in to design a custom program.');
+        window.location.href = '/login?next=/ai-internship';
+        return;
+    }
+
+    const input = document.getElementById('customRoleInput');
+    const weeks = document.getElementById('customWeeks');
+    const btn = document.getElementById('customProgramBtn');
+    const status = document.getElementById('customProgramStatus');
+    const role = (input.value || '').trim();
+
+    if (role.length < 3) {
+        status.innerHTML = '<span class="text-danger">Please describe your role (at least 3 characters).</span>';
+        return;
+    }
+
+    btn.disabled = true;
+    const originalLabel = btn.textContent;
+    btn.textContent = 'Designing...';
+    status.innerHTML = '<span class="text-muted">Your AI curriculum designer is building the program. This takes ~10-15 seconds...</span>';
+
+    try {
+        const res = await fetch('/api/internship/custom-program', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
+            body: JSON.stringify({email: email, role_title: role, duration_weeks: parseInt(weeks.value, 10) || 4})
+        });
+
+        if (res.status === 401) {
+            status.innerHTML = '<span class="text-danger">Session expired. Please log in again.</span>';
+            return;
+        }
+        if (res.status === 402) {
+            status.innerHTML = '<span class="text-danger">Not enough credits (50 needed). <a href="/ai-credits-pricing">Buy credits</a>.</span>';
+            return;
+        }
+
+        const data = await res.json();
+        if (data.status !== 'success' || !data.program) {
+            status.innerHTML = '<span class="text-danger">' + (data.message || 'Could not create program.') + '</span>';
+            return;
+        }
+
+        status.innerHTML = '<span class="text-success">Program created: <strong>' + data.program.name + '</strong> — scroll down to enroll.</span>';
+        input.value = '';
+        // Reload the grid so the new custom program appears at the top of its category
+        await loadPrograms();
+        // Refresh the credits display (50 credits just got deducted)
+        if (typeof window.refreshCredits === 'function') {
+            window.refreshCredits();
+        }
+    } catch (err) {
+        console.error('createCustomProgram failed:', err);
+        status.innerHTML = '<span class="text-danger">Network error. Please try again.</span>';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = originalLabel;
+    }
 }
 
 function enrollInternship(programId, programName, price) {

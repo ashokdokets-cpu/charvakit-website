@@ -211,6 +211,129 @@ class AIInternshipEngine:
             })
         return scenarios
 
+    def create_custom_program(self, email, role_title, duration_weeks=4, tier_key="standard"):
+        """Design a custom internship program via AI. Returns a program dict compatible with get_programs()."""
+        role_title = (role_title or "").strip()[:80]
+        if not role_title:
+            return {"status": "error", "message": "Role title is required"}
+
+        prompt = (
+            f"Design a {duration_weeks}-week internship curriculum for the role: {role_title}.\n\n"
+            "Return STRICT JSON only with this exact shape:\n"
+            "{\n"
+            '  "name": "<Internship program name>",\n'
+            '  "category": "<one of: Engineering, Science, Management, Masters, Design, Custom>",\n'
+            '  "skills": ["<4-6 core skills>"],\n'
+            '  "deliverables": ["<3-4 concrete deliverables>"],\n'
+            '  "outline": [{"week": 1, "focus": "<theme>", "deliverable": "<what they ship>"}, ...]\n'
+            "}"
+        )
+        outline = self._call_openai_json(prompt)
+
+        if not outline or not isinstance(outline, dict):
+            logger.warning(f"AI custom program failed for '{role_title}' - using stub")
+            outline = {
+                "name": f"{role_title} Internship",
+                "category": "Custom",
+                "skills": [role_title, "Communication", "Problem Solving"],
+                "deliverables": ["Project", "Report", "Presentation"],
+                "outline": [
+                    {"week": i + 1, "focus": f"Week {i + 1} - {role_title} practice", "deliverable": "Weekly task"}
+                    for i in range(duration_weeks)
+                ],
+            }
+
+        def _clean_list(v, n=6):
+            if not isinstance(v, list):
+                return []
+            return [str(x)[:120] for x in v[:n] if x]
+
+        name = str(outline.get("name") or f"{role_title} Internship")[:120]
+        category = str(outline.get("category") or "Custom")[:40]
+        skills = _clean_list(outline.get("skills")) or [role_title]
+        deliverables = _clean_list(outline.get("deliverables")) or ["Project"]
+        raw_outline = outline.get("outline") if isinstance(outline.get("outline"), list) else []
+        outline_weeks = [w for w in raw_outline if isinstance(w, dict)][:12]
+
+        program_id = f"CUSTOM-{secrets.token_hex(4).upper()}"
+        max_days = max(1, int(duration_weeks) * 5)
+
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute('''
+                INSERT INTO charvak_ai_internship_custom_programs
+                    (program_id, name, role_title, category, skills, deliverables, outline, max_days, requested_by, is_public)
+                VALUES (%s, %s, %s, %s, %s::jsonb, %s::jsonb, %s::jsonb, %s, %s, 0)
+            ''', (
+                program_id, name, role_title, category,
+                json.dumps(skills), json.dumps(deliverables), json.dumps(outline_weeks),
+                max_days, email,
+            ))
+            conn.commit()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"create_custom_program insert failed: {e}")
+            return {"status": "error", "message": "Could not save custom program"}
+
+        return {
+            "status": "success",
+            "program": {
+                "id": program_id,
+                "name": name,
+                "duration": f"{duration_weeks} weeks",
+                "price": 0,
+                "category": category,
+                "skills": skills,
+                "deliverables": deliverables,
+                "is_custom": True,
+            },
+        }
+
+    def _resolve_program(self, program_id, email=None):
+        """Look up a program_id in static first, then custom. Returns a dict or None."""
+        if program_id in self.programs:
+            p = self.programs[program_id]
+            return {
+                "id": program_id,
+                "name": p["name"],
+                "duration": p["duration"],
+                "price": p["price"],
+                "category": p.get("category", "General"),
+                "skills": p["skills"],
+                "deliverables": p["deliverables"],
+                "is_custom": False,
+            }
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT program_id, name, role_title, category, skills, deliverables, max_days, requested_by "
+                "FROM charvak_ai_internship_custom_programs WHERE program_id = %s",
+                (program_id,),
+            )
+            row = cur.fetchone()
+            cur.close(); conn.close()
+            if not row:
+                return None
+            weeks = max(1, (row[6] or 20) // 5)
+            return {
+                "id": row[0],
+                "name": row[1],
+                "duration": f"{weeks} weeks",
+                "price": 0,
+                "category": row[3] or "Custom",
+                "skills": row[4] if isinstance(row[4], list) else [],
+                "deliverables": row[5] if isinstance(row[5], list) else [],
+                "is_custom": True,
+                "requested_by": row[7],
+            }
+        except Exception as e:
+            logger.error(f"_resolve_program custom lookup failed: {e}")
+            return None
+
     # ============================================================
     # CATALOG
     # ============================================================
@@ -583,8 +706,8 @@ Rules:
             logger.error(f"abandon_enrollment failed: {e}")
             return {"status": "error", "message": "Could not abandon enrollment"}
 
-    def get_programs(self):
-        """Get all internship programs."""
+    def get_programs(self, email=None):
+        """Get all internship programs. If email provided, also includes that user's custom programs."""
         programs = []
         for key, prog in self.programs.items():
             programs.append({
@@ -595,7 +718,34 @@ Rules:
                 "category": prog.get("category", "General"),
                 "skills": prog["skills"],
                 "deliverables": prog["deliverables"],
+                "is_custom": False,
             })
+        if email:
+            try:
+                from database import db
+                conn = db.get_connection()
+                cur = conn.cursor()
+                cur.execute(
+                    "SELECT program_id, name, category, skills, deliverables, max_days "
+                    "FROM charvak_ai_internship_custom_programs "
+                    "WHERE requested_by = %s ORDER BY created_at DESC",
+                    (email,),
+                )
+                for row in cur.fetchall():
+                    weeks = max(1, (row[5] or 20) // 5)
+                    programs.append({
+                        "id": row[0],
+                        "name": row[1],
+                        "duration": f"{weeks} weeks",
+                        "price": 0,
+                        "category": row[2] or "Custom",
+                        "skills": row[3] if isinstance(row[3], list) else [],
+                        "deliverables": row[4] if isinstance(row[4], list) else [],
+                        "is_custom": True,
+                    })
+                cur.close(); conn.close()
+            except Exception as e:
+                logger.error(f"get_programs custom merge failed: {e}")
         return {"status": "success", "programs": programs}
 
     # ============================================================
@@ -604,7 +754,8 @@ Rules:
 
     def enroll(self, email, program_id, duration="standard"):
         """Enroll student with duration option."""
-        if program_id not in self.programs:
+        resolved = self._resolve_program(program_id, email)
+        if not resolved:
             return {"status": "error", "message": "Program not found"}
         duration_days = {"quick": 14, "standard": 28, "professional": 42}
         total_days = duration_days.get(duration, 28)
