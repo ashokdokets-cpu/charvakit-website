@@ -1,7 +1,7 @@
 # Charvak Architecture
 
-**Last updated:** 2026-09-24
-**Version:** v3.5-ats-20260924
+**Last updated:** 2026-09-28
+**Version:** v3.5-session-C-20260928
 
 ---
 
@@ -75,6 +75,39 @@ text
   for when DoketsRB adds a server-side `/ats-check` route that supports `return_url`
 - **Tables:** `charvak_doketsrb_score_tokens`, `charvak_doketsrb_score_events`
 - **Credit key:** `ats_jd_score` (5 cr, only when `target_role` is provided)
+
+
+### HTTPException re-raise pattern (2026-09-28)
+
+Every guarded route in main.py wraps its body in a try/except Exception block
+that returns a friendly JSON error via handle_error(). If a guard
+(require_auth_for_email, require_admin, require_credits_from_data) raises
+HTTPException(401/403/402), that broad except catches it and returns HTTP 200
+with an error payload - the guard never fires.
+
+**Fix (applied to 147 routes on 2026-09-28, commit a8e1275):**
+
+    try:
+        ...
+        require_auth_for_email(request, email)   # raises HTTPException
+        ...
+    except HTTPException:
+        raise                                    # <-- propagate to FastAPI
+    except Exception as e:
+        return handle_error(e, ...)
+
+FastAPI built-in handler converts the re-raised exception into the correct
+status code (401/403/402).
+
+**Rule for new routes:** any route that calls a guard inside a try/except with
+a broad except Exception MUST include "except HTTPException: raise" as the
+first except clause.
+
+**Test-tooling caveat:** curl.exe on PowerShell strips backslash-escaped
+quotes inside -d payloads. Use --data-binary @file with a JSON file to
+avoid malformed-JSON artifacts that look like guard failures. Details in
+DEV-SETUP.md.
+
 
 ## Authentication Flow
 

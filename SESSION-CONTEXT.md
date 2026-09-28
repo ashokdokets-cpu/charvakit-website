@@ -1,127 +1,67 @@
-# Charvak - SESSION CONTEXT
+# Session Context - Charvak
 
-
-
-**HEAD:** `61ad294`
-**Last session shipped:** MCQ paid AI tier + XSS hardening, DBMS & SQL rename, cross-device internship resume, dev-script cleanup.
-**Next up:** Internship enrollment cleanup — auto-abandon prior active per `(email, program_id)`, banner dropdown, Dismiss button.
-
-**Purpose:** One-file resume pointer. Paste this file into a fresh chat to instantly orient.
-
-**Last updated:** 2026-09-27 (evening, part 2)
-**HEAD at time of writing:** `0536044 docs(I): consolidate doc sprawl`
-**Version:** `v3.0-tier3-complete-20260919`
+**HEAD:** `da15ef6`
+**Last updated:** 2026-09-28 (Session C - 4 AI tools + 24 routes secured)
+**Version:** `v3.5-session-C-20260928`
 
 ---
 
 ## Where we are
 
-**Persistence project: 49 of 62 engines DB-backed (~79%). 9 verified skip. ~4 remaining.**
+Today's session closed the audit findings from the morning plus four
+shipped products.
 
-| Session | Engines | Status |
-|---|---|---|
-| A | kyc, candidate, training, lms | [OK] |
-| B (partial) | enterprise, ats | [OK] |
-| C | events, career_v2, exam_prep | [OK] |
-| D | messaging, profile_network, badge, university, brand | [OK] |
-| E | final_year_project, student_suite, ai_internship, team | [OK] |
-| F | outreach, marketing_ai, exam_analytics, dynamic_role | [OK] |
-| G | 6 na_module engines | [OK] |
-| H | 8 ephemeral engines | [OK] |
-| J | 6 backlog engines (audit gap) | [OK] |
-| Tier E | payment fix + 3 verify | [OK] |
-| **B-2** | **voice_to_web_engine** | [WAIT] |
-| **K** | **bug cleanup (~15 KNOWN-ISSUES items)** | [WAIT] |
-| **I** | **capstone + tag + final backup** | [WAIT] |
-
-**Real bugs fixed across project:** ~18 (all 8 known AI JSON bugs resolved; only whatsapp_bot.py remains, external-blocked)
+**Today (17 commits):**
+- 4 AI tool frontends rebuilt: Neural Wireframe, Globalize.ai, Legacy-Shift, Agent-Ready
+- 20 unguarded /api routes secured + 4 AI tool routes
+- 147 HTTPException re-raise clauses (made the guards actually fire)
+- FYP Per-Chapter Expand shipped + verified
+- Internship admin dashboard shipped + verified
+- Dead fetch removed, dup route removed, lazy-import sweep clean
+- Full system audit produced
 
 ---
 
-## What's in flight
+## Recommended next session
 
-**Nothing.** Working tree clean, all branches merged, prod verified.
-
----
-
-## Next session recommendations
-
-### Option 1 - Session B-2 (~1 hr)
-Persist `voice_to_web_engine.py` (last Tier A engine, 7.5 KB).
-- Currently: has in-memory state
-- Pattern: same as Sessions A-J
-- After B-2: all Tier A engines DB-backed
-
-### Option 2 - Session K (~2-3 hr)
-Bug cleanup pass on KNOWN-ISSUES.md. 3 security + 5 data integrity + ~7 misc items.
-
-### Option 3 - Session I (~1 hr)
-Capstone: backfill missing migration, doc consolidation, final audit, tag `v3.0-tier3-complete-YYYYMMDD`, final backup.
+**Session B - PayPal hardening (~1 hr)** closes 4 of the 7 open flags:
+1. Live PayPal capture test ($2.39 + refund)
+2. Grep-audit ai_courses_payments for the same stub pattern
+3. Extend /webhook/paypal for credits purchases (idempotent)
+4. CachedStaticFiles ?v= fix - inject STATIC_VERSION from RENDER_GIT_COMMIT
 
 ---
 
-## Reference docs (all in repo root)
+## Remaining open items
 
-| File | Purpose |
-|---|---|
-| `SESSION-CONTEXT.md` | **this file** - resume pointer |
-| `TIER3-PERSISTENCE-PROJECT.md` | sessions A-K + I plan |
-| `TODO-MASTER.md` | master backlog, sessions + housekeeping |
-| `KNOWN-ISSUES.md` | bug registry (fixed + open, categorized) |
-| `MASTER-REFERENCE.md` | system-wide reference |
-| `DEV-SETUP.md` | local dev workflow + PowerShell gotchas |
-
----
-
-## Opener to paste into a fresh chat
-
-Hello - resuming Charvak persistence work. Current HEAD is 056d321, 49/62 engines persisted. See SESSION-CONTEXT.md in the repo for full state. Let's continue with Session [B-2 / K / I].
-
-Or paste this file's content directly.
+1. Premium Report product - product decision
+2. AI-Slop Report Card teaser hardcoded numbers - cosmetic
+3. uvicorn reload invalidates browser tokens - dev-only defer
+4. Voice-to-Web Option 2 auto-deploy - feature
+5. PayPal credits capture test - Session B
+6. CachedStaticFiles ?v= - Session B
+7. ai_courses_payments PayPal stub audit - Session B
+8. PayPal credits webhook safety net - Session B
+9. /api/na/* auth review
 
 ---
 
-## Prereqs to verify before starting
+## Key files
 
-    Set-Location "C:\projects\charvakit-new"
-    .\venv\Scripts\Activate.ps1
-    Get-Service postgresql-x64-15     # expect Running
-    git status --short                 # expect clean
-    git log --oneline -3               # expect HEAD at 056d321
-    git fetch origin --prune
-
-If Postgres isn't running: `Start-Service postgresql-x64-15`
+1. SESSION-CONTEXT.md (this file)
+2. COMMITMENT.md - full tracker
+3. SYSTEM-AUDIT-2026-09-28.md - audit findings
+4. ARCHITECTURE.md - system structure
+5. MASTER-REFERENCE.md - infra + API reference
+6. KNOWN-ISSUES.md - bug registry
 
 ---
 
-## Key operational facts
+## Environment
 
-- **Local DB:** `postgresql://postgres:dev@localhost:5432/vouchai`
-- **Always set `$env:DATABASE_URL` explicitly** before running smoke tests (`.env` points at prod)
-- **Safety gate pattern** in all smoke tests: refuse prod unless `CHARVAK_ALLOW_PROD=1`
-- **PowerShell gotchas** (documented in DEV-SETUP.md):
-  - `Out-File -Encoding utf8` writes a BOM -> strip bytes 0-2
-  - `python -c "..."` with nested quotes -> use temp `.py` files
-  - `curl.exe` + JSON -> use `--data-binary @file.json`
-- **Non-ASCII:** most engines must have non-ASCII = 0. Exception: `indian_language_ai.py` legitimately has ~1,750 bytes of Hindi/Tamil/etc. script.
-
----
-
-## Useful commands
-
-    # Apply migration to local
-    python -c "import psycopg2, io; conn = psycopg2.connect('postgresql://postgres:dev@localhost:5432/vouchai'); cur = conn.cursor(); cur.execute(io.open('migrations/YYYYMMDD_name.sql','r',encoding='utf-8-sig').read().lstrip('\ufeff')); conn.commit(); cur.close(); conn.close(); print('done')"
-
-    # Wipe a test table locally
-    # (see KNOWN-ISSUES.md or any recent session summary for cleanup snippets)
-
-    # Check what tables exist locally
-    psql -U postgres -d vouchai -c "\dt charvak_*"
-
----
-
-## Recent session summaries (in git log)
-
-    git log --oneline -30
-
-Look for commits starting with "Session X/N:" to see per-engine history.
+- HEAD: da15ef6
+- Local Python: 3.11.9 venv (matches prod)
+- Local DB: Postgres 15 at localhost:5432
+- Dev server: uvicorn main:app --reload --port 8000
+- Prod: https://www.charvakit.com (Render, auto-deploy on push to main)
+- Backup: C:\projects\Charvak_Complete_Backup_20260928_230130.zip
