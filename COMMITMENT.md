@@ -871,7 +871,7 @@ Verdict: SCHEDULED — own session
   by `return` with no logging. Same class of bug as the AI JSON parsing issues in
   `ai_service.py` (silent swallow on parse failure).
 
-### RESOLVED — Voice-to-Web Option 2 — auto-deploy infrastructure ((2026-09-28))
+### RESOLVED — Voice-to-Web Option 2 — auto-deploy infrastructure (2026-09-28)
 
 **Resolved 2026-09-28.** Infrastructure shipped 2026-09-26 — html_content + slug columns, /sites/{slug} route, real URL, two-call frontend. Flag never updated. Session 2026-09-28 (commit 45ec344) added My Websites dashboard + GET /api/voice-to-web/my-sites/{email} + copy cleanup + data cleanup. Verified: goa-surf-shop, bangalore-yoga-studio, cozy-cafe all render.
 
@@ -2739,7 +2739,6 @@ C:\\projects\\Charvak_Complete_Backup_20260928_230130.zip (50.56 MB)
 1. Premium Report product - product decision, 8-12 hrs
 2. AI-Slop Report Card teaser hardcoded numbers - cosmetic
 3. uvicorn reload invalidates browser tokens - dev-only defer
-4. Voice-to-Web Option 2 auto-deploy - feature
 5. PayPal credits capture test - 5 min (Session B)
 6. CachedStaticFiles ?v= - 30 min (Session B)
 7. ai_courses_payments PayPal stub audit - 15 min (Session B)
