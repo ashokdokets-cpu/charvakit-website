@@ -2,8 +2,8 @@
 
 **Purpose:** Track every planned-but-not-completed item. Nothing gets lost again.
 **Created:** 2026-09-20
-**Last updated:** 2026-09-28 (Session C close-out - 4 AI tools shipped, 24 routes secured, 147 re-raise clauses, full docs sync, backup at C:\projects\Charvak_Complete_Backup_20260928_230130.zip)
-**HEAD:** 7a40e95 (docs sync) / da15ef6 (code)
+**Last updated:** 2026-09-29 (Session B - auth persistence + cache revalidation). HEAD: `e28c781`
+**HEAD:** e28c781 (ai-slop) / f58e63f (auth + cache)
 
 ### FLAGGED — Premium Report product (₹199 PDF unlock) (2026-09-27)
 
@@ -727,7 +727,9 @@ Fix: add `require_auth_for_email(request, email)` to subscribe, and
 
 Verdict: FLAGGED — small follow-up
 
-### FLAGGED — uvicorn reload invalidates browser tokens (2026-09-26)
+### RESOLVED — uvicorn reload invalidates browser tokens (2026-09-26)
+
+**Resolved 2026-09-29 (commit f58e63f).** Persisted to `charvak_auth_tokens`. Verified: log in -> restart uvicorn -> same cookie returns 200.
 
 `auth.active_tokens` is in-memory. Every `uvicorn --reload` restart wipes it.
 Browser localStorage keeps the stale token, causing 401/403 on every API call
@@ -2135,7 +2137,7 @@ character are `C3 A0` instead of `E0 A4`, it's double-encoded.
 5. **Session-CONTEXT.md** links here for fresh chats
 
 ---
-**Last updated:** 2026-09-27
+**Last updated:** 2026-09-29 (Session B - auth persistence + cache revalidation). HEAD: `e28c781`
 
 
 
@@ -2204,7 +2206,7 @@ reverting a Python write. **Fix:** stop uvicorn → write → verify with grep
   - These were verified to return real AI output tonight, but no page
     calls them. Backend is ready; frontend wiring needed.
 
-**Last updated:** 2026-09-27 06:05
+**Last updated:** 2026-09-29 (Session B - auth persistence + cache revalidation). HEAD: `e28c781`
 
 
 ---
@@ -2241,7 +2243,7 @@ never calls the AI route. Needs replacement with credits-based form.
 
 **Verdict:** SCHEDULED — next session
 
-**Last updated:** 2026-09-27 06:10
+**Last updated:** 2026-09-29 (Session B - auth persistence + cache revalidation). HEAD: `e28c781`
 
 
 ---
@@ -2276,7 +2278,7 @@ Queue of remaining work, roughly in priority order.
 - Session D (open): Item 6 (FYP features by user demand)
 - Optional: Item 7 whenever there is appetite
 
-**Last updated:** 2026-09-27 06:14
+**Last updated:** 2026-09-29 (Session B - auth persistence + cache revalidation). HEAD: `e28c781`
 
 
 ---
@@ -2302,7 +2304,7 @@ used across the rest of the product suite.
 
 **Verdict:** Decided, scope locked, awaiting implementation in next session
 
-**Last updated:** 2026-09-27 16:00
+**Last updated:** 2026-09-29 (Session B - auth persistence + cache revalidation). HEAD: `e28c781`
 
 
 ---
@@ -2454,7 +2456,7 @@ Grep of `templates/*.html` for `class="modal fade"` returned exactly **one** mat
 
 - **devtest orphan enrollments** — ~8 active rows from testing. Delete + refund or leave. Do at end of internship work.
 
-**Last updated:** 2026-09-27 (evening, part 2)
+**Last updated:** 2026-09-29 (Session B - auth persistence + cache revalidation). HEAD: `e28c781`
 
 
 ---
@@ -2497,7 +2499,7 @@ The `paypal.Buttons({ createOrder, onApprove })` chain — specifically `actions
 
 **Verdict:** FLAGGED — needs one live capture to close.
 
-### FLAGGED — `CachedStaticFiles` + hardcoded `?v=` query strings
+### RESOLVED — `CachedStaticFiles` + hardcoded `?v=` query strings
 
 `main.py` sets `Cache-Control: public, max-age=31536000, immutable` on all `/static/*` files. Templates reference them with a fixed `?v=2.1`/`?v=2.2`/`?v=2.3` query string. Any code change to a cached JS/CSS file requires manually bumping the `?v=` reference in every template that includes it.
 
@@ -2521,7 +2523,7 @@ If the browser closes after the PayPal SDK captures the payment but before the f
 - INR users still see only Razorpay.
 - `PAYMENT_MODE=test` behavior for Razorpay `order_test_*` fake orders — untouched. (Separate flag; not PayPal-related.)
 
-**Last updated:** 2026-09-28 (PayPal credits — backend verified)
+**Last updated:** 2026-09-29 (Session B - auth persistence + cache revalidation). HEAD: `e28c781`
 
 ---
 
@@ -2671,7 +2673,7 @@ broad except. Verified live: /api/ai/neural-wireframe without auth
 
 ## Session 2026-09-28 close-out (Session C + full docs sync)
 
-**HEAD:** `7a40e95` (docs) / `da15ef6` (code)
+**HEAD:** e28c781 (ai-slop) / f58e63f (auth + cache)
 
 ### Final state
 

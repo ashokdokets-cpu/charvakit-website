@@ -1,10 +1,33 @@
 # Charvak IT Consulting - Project Status
 
-**Last updated:** 2026-09-28 (Session C - 4 AI tools + 24 routes secured)
-**Version:** v3.5-session-C-20260928
+**Last updated:** 2026-09-29 (Session B - auth persistence + cache revalidation)
+**Version:** v3.5-session-B-20260929
 **Live:** https://www.charvakit.com
 **Status:** Tier 1 + Tier 2 complete. Tier 3 in progress (6 of 10 features shipped). Session K closed: 3 security + 5 data integrity + 4 deferrals + 16 dead-field/easy-bug fixes + 2 migration features. B-3 notification persistence done. B-4 products verified stateless.
 
+## Session 2026-09-29 - Auth persistence + cache revalidation
+
+### Shipped
+- Token persistence to Postgres (`charvak_auth_tokens`). `verify_token`
+  falls back to the DB on cache miss. Survives uvicorn reload and Render
+  redeploy. Verified: log in -> restart uvicorn -> same token returns 200.
+- Cache-Control revalidation: `CachedStaticFiles` now `max-age=3600,
+  must-revalidate`. The `?v=2.x` bump footgun is retired.
+- AI-Slop Report Card (ai-contamination-detector.html) now calls the real
+  `/api/products/ai-slop/scan` route instead of `Math.random()`.
+
+### Flags closed
+- #2 uvicorn reload invalidates tokens
+- #4 CachedStaticFiles ?v=
+
+### Pending
+- #5 ai_courses_payments PayPal stub audit (audit done, no code change needed)
+- #6 PayPal credits webhook safety net
+- #3 PayPal credits capture test
+
+**HEAD:** e28c781
+
+---
 ---
 
 ---
