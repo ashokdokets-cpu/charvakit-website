@@ -40,11 +40,13 @@ function startVerification(e, type, amount){
     e.preventDefault();
     const name = prompt('Enter your name for ' + type + ':');
     if(name){
-        processToolPayment(amount, 'Background Verification - ' + type, function(success){
-            if(success){
-                alert('Verification initiated for ' + name + '! Our team will contact you within 24 hours to collect documents.');
-            }
-        });
+        // Interest capture until real payment flow ships (C7 pattern).
+        // Was: processToolPayment(...) — function never defined, silent ReferenceError.
+        if (typeof window.notifyMe === 'function') {
+            window.notifyMe('Background Verification - ' + type);
+        } else {
+            alert('Thanks, ' + name + '! Our team will contact you within 24 hours.');
+        }
     }
 }
 </script>

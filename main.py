@@ -5346,7 +5346,10 @@ async def bridge_page(request: Request):
 @limiter.limit("60/minute")
 async def student_subscribe(request: Request):
     data = await request.json()
-    email = data.get("email") or data.get("student_email")
+    email = (data.get("email") or data.get("student_email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+    require_auth_for_email(request, email)
     plan = data.get("plan", "free")
     return student_suite_engine.subscribe(email=email, plan=plan)
 
@@ -5388,7 +5391,8 @@ async def assist_research(request: Request):
     return student_suite_engine.assist_research(email=email, field=field, topic=topic)
 
 @app.get("/api/student/stats")
-async def student_suite_stats():
+async def student_suite_stats(request: Request):
+    require_admin(request)
     return student_suite_engine.get_stats()
 
 @app.get("/student-suite", response_class=HTMLResponse)
