@@ -8,7 +8,9 @@ class CachedStaticFiles(StarletteStaticFiles):
     async def get_response(self, path, scope):
         response = await super().get_response(path, scope)
         if response.status_code == 200:
-            response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+            # Short max-age + must-revalidate = browser always revalidates.
+            # Fixes the "?v=2.x footgun" — no more manual version bumps.
+            response.headers["Cache-Control"] = "public, max-age=3600, must-revalidate"
         return response
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
