@@ -151,19 +151,10 @@ function subscribeNow(e){
                             
                             alert('✅ Payment successful! Your continuous protection plan is now active.');
                             
-                            // Send notification
-                            fetch('/api/notifications/send', {
-                                method: 'POST',
-                                headers: {'Content-Type': 'application/json'},
-                                body: JSON.stringify({
-                                    email: email,
-                                    template: 'purchase_confirmation',
-                                    params: {
-                                        plan_name: 'Lock-In Breaker Continuous Protection',
-                                        credits: 0
-                                    }
-                                })
-                            });
+                            // Note: no explicit fetch here. The Razorpay webhook
+                            // (/webhook/razorpay) records the payment server-side and
+                            // triggers any downstream notification. The client-side
+                            // alert above is the user-visible confirmation.
                         } else {
                             alert('Payment verification failed. Please contact support.');
                         }

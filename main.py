@@ -2879,11 +2879,6 @@ async def payment_history():
     """Get all payment records."""
     return payment_engine.get_all_payments()
 
-@app.get("/api/payment/history")
-async def payment_history():
-    """Get all payment records."""
-    return payment_engine.get_all_payments()
-
 # ============================================================
 # KYC & VERIFICATION API ENDPOINTS
 # ============================================================
