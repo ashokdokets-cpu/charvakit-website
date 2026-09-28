@@ -27,7 +27,9 @@
 
 | Date | Session | File | Issue | Fix |
 |---|---|---|---|---|
-| 2026-09-28 | Sec | main.py | 20 unguarded /api routes (escrow, kyc, enterprise, referral, lifecycle, messaging, career, training, enroll) | require_admin or require_auth_for_email added - 3f71788 |
+| 2026-09-29 | Auth | `auth.py` + `main.py` | In-memory `active_tokens` wiped on every uvicorn reload / Render restart -> every browser 401 | DB-backed `charvak_auth_tokens` table; verify_token falls back to DB - `f58e63f` |
+| 2026-09-29 | Perf | `main.py` | `CachedStaticFiles` set `immutable, max-age=1y` -> every JS/CSS edit required manual `?v=` bump | Changed to `max-age=3600, must-revalidate` - `f58e63f` |
+| 2026-09-29 | Fix | `templates/ai-contamination-detector.html` | Fabricated numbers via `Math.random()` | Real fetch to `/api/products/ai-slop/scan` - `e28c781` || 2026-09-28 | Sec | main.py | 20 unguarded /api routes (escrow, kyc, enterprise, referral, lifecycle, messaging, career, training, enroll) | require_admin or require_auth_for_email added - 3f71788 |
 | 2026-09-28 | Sec | main.py | 4 AI tool routes missing email-match auth | require_auth_for_email added - 6b22d61 |
 | 2026-09-28 | Sec | main.py | 147 routes swallowed HTTPException via broad except Exception (guards never fired) | except HTTPException: raise inserted - a8e1275 |
 | 2026-09-28 | Fix | templates/lock-in-breaker-pricing.html | Dead fetch to /api/notifications/send | Removed - 03903a2 |
