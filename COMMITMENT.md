@@ -2613,3 +2613,42 @@ direct psycopg2 connection per call, so holding one during an import does NOT
 block the pool. Only get_pooled_connection() shares state and can deadlock.
 
 **Verdict:** zero remaining real deadlock sites. Sweep closed.
+
+---
+
+## Session 2026-09-28 (evening, part 6) — Session C: 4 unlisted AI tools shipped
+
+**HEAD after:** (next commit)
+
+### RESOLVED — 4 unlisted AI tools frontend wiring (4 commits)
+All 4 tools had working backends (credit-gated) but the frontends were
+marketing pages that either called notifyMe() or linked elsewhere.
+
+- Neural Wireframe: rebuilt as real form (sketch description textarea
+  + Generate button, 25 cr). Removed broken Razorpay Pro-flow that
+  posted to /api/payment/create-order with wrong schema.
+- Globalize.ai: rebuilt as URL + language form (15 cr). Removed
+  localStorage-only 'Growth plan' flow.
+- Legacy-Shift: rebuilt as code textarea (20 cr). Replaced notifyMe()
+  placeholder.
+- Agent-Ready: rebuilt as URL form (15 cr). Replaced notifyMe()
+  placeholder.
+
+All 4 use the same pattern as the 11-product sprint (2026-09-27):
+form + auth header + 401/402 handling + recursive JSON renderer for
+the AI's arbitrary nested response.
+
+**Backend auth:** all 4 routes had require_credits_from_data already;
+added require_auth_for_email in 6b22d61. Re-raise fix (a8e1275) made
+the guards actually fire by re-raising HTTPException through the
+broad except. Verified live: /api/ai/neural-wireframe without auth
+-> 401.
+
+**Verified E2E:**
+- Neural Wireframe: pricing-page description -> real React+Tailwind JSX
+- Globalize.ai: example.com -> Spanish translations + cultural adaptations
+  + LOPDGDD compliance notes
+- Legacy-Shift: legacy PHP snippet -> SQL injection + XSS + deprecated
+  MySQL flagged; migration steps returned
+- Agent-Ready: example.com -> JSON-LD schema + 2 micro-API definitions
+  + product catalog structure
