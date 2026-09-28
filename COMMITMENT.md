@@ -2,7 +2,7 @@
 
 **Purpose:** Track every planned-but-not-completed item. Nothing gets lost again.
 **Created:** 2026-09-20
-**Last updated:** 2026-09-28 (MCQ bypass + internship AI eval + FYP viva + Phase 3 custom programs + Phase 4 tier enrollment)
+**Last updated:** 2026-09-28 (Session A cleanup — 17 flags resolved, tracker synced)
 **HEAD:** 82ec76f
 
 ### FLAGGED — Premium Report product (₹199 PDF unlock) (2026-09-27)
@@ -46,7 +46,10 @@ any product result)? Per-product is more valuable but 5-6× the work.
 
 **Verdict:** SCHEDULED — dedicated product session
 
-### FLAGGED — processToolPayment referenced but never defined (2026-09-27)
+### RESOLVED — processToolPayment referenced but never defined (2026-09-27)
+
+**Resolved 2026-09-28.** Fixed 2026-09-27 (`335b755`) for `premium-upsell.html`; remaining `background-verification.html` fixed 2026-09-28 (`657d1ce`). Replaced with `notifyMe()` interest capture. All 4 originally-flagged templates now clean.
+
 
 `processToolPayment(amount, description, callback)` is called from at least
 4 templates (background-verification.html, bounty-swap.html, ref-swap.html,
@@ -66,7 +69,10 @@ Fix: replace each with a real payment flow OR notifyMe interest capture.
 
 Verdict: FLAGGED — needs its own cleanup pass
 
-### FLAGGED — reverse-staffing experience field clears after submit (2026-09-27)
+### RESOLVED — reverse-staffing experience field clears after submit (2026-09-27)
+
+**Resolved 2026-09-28.** Fixed 2026-09-27 (`6505695`). Removed `value="3"` default that was resetting the field.
+
 
 The "Years of Experience" input on /reverse-staffing doesn't reliably
 send the typed value. After submit, `document.getElementById('rsExp').value`
@@ -117,7 +123,10 @@ Audited the three "unknown state" files flagged by earlier sessions:
 
 **Verdict:** ✅ All three closed 2026-09-27
 
-### FLAGGED — three-file verification pass (2026-09-27)
+### RESOLVED — three-file verification pass (2026-09-27)
+
+**Resolved 2026-09-28.** Resolved 2026-09-27 (`d5592b9`). All three files audited: `tools_engine.py` doesn't exist; `enhanced_assessment_engine.py` + `chatbot_engine.py` both healthy.
+
 
 Three engines flagged in earlier sessions, never verified. Each needs a
 15-30 min audit. Do as one session.
@@ -267,7 +276,10 @@ Ran the sweep. Found and fixed **4 more functions** with the same
 
 **Verdict:** DONE 2026-09-26
 
-### FLAGGED — /api/assessment/* routes appear to be dead code (2026-09-26)
+### RESOLVED — /api/assessment/* routes appear to be dead code (2026-09-26)
+
+**Resolved 2026-09-28.** Marked legacy 2026-09-27 (`1e4a0ba`) with banner comment in `main.py`. Decision: leave in place (harmless, no callers); no deletion needed.
+
 
 The 6 `/api/assessment/*` routes we auth-gated on 2026-09-26 have no
 frontend callers. Grep of all templates + static/js confirms zero usage:
@@ -292,7 +304,10 @@ in a future cleanup session.
 
 
 
-### FLAGGED — Mock Drives + Versant routes lack auth (2026-09-26)
+### RESOLVED — Mock Drives + Versant routes lack auth (2026-09-26)
+
+**Resolved 2026-09-28.** Fixed 2026-09-26 (`2b972a0`). Added `require_auth_for_email` to 10 routes; frontend `versant.html` + `companies.html` updated to send Authorization header.
+
 
 **Discovered during:** frontend audit for the assessment cluster.
 
@@ -328,7 +343,10 @@ features for real users.
 
 **Verdict:** SCHEDULED — next session, first task.
 
-### FLAGGED — lms.html minified JS needs manual auth wiring (2026-09-27)
+### RESOLVED — lms.html minified JS needs manual auth wiring (2026-09-27)
+
+**Resolved 2026-09-28.** Fixed 2026-09-27 (`3cee5c4`). All 9 fetches now send `Authorization: Bearer <token>` + email. Verified by grep 2026-09-28: 10 auth references present.
+
 
 `templates/lms.html` has 8 single-line minified JS functions, each fetching
 a different `/api/lms/*` endpoint. Backend routes are now auth-gated (commit
@@ -356,7 +374,10 @@ not safe to batch-patch with regex. Estimated 30-45 min.
 
 ---
 
-### FLAGGED — duplicate `_call_openai_json` in ai_internship_engine.py (2026-09-28)
+### RESOLVED — duplicate `_call_openai_json` in ai_internship_engine.py (2026-09-28)
+
+**Resolved 2026-09-28.** Fixed 2026-09-28 (`69ce767`). Wasn't just shadowing — the curriculum-designer prompt was being replaced by the mentor prompt at 3 call sites. Renamed mentor version to `_call_openai_json_mentor`; restored correct behavior.
+
 
 Two definitions of `_call_openai_json` now exist in `ai_internship_engine.py`:
 - Line 249 — original, used by `_generate_rich_scenario` (curriculum designer prompt, temp 0.6, regex fence strip)
@@ -372,7 +393,10 @@ and a maintenance hazard (edit the wrong one, changes silently ignored).
 **Verdict:** FLAGGED — cleanup candidate
 
 
-### FLAGGED — bridge.html premium flow broken (2026-09-27)
+### RESOLVED — bridge.html premium flow broken (2026-09-27)
+
+**Resolved 2026-09-28.** Fixed 2026-09-27 (`d116dc6`). Replaced POST to nonexistent `/api/bridge/premium` with `notifyMe()` interest capture.
+
 
 `templates/bridge.html:200` posts to `/api/bridge/premium` after Razorpay
 verification. **That route does not exist in main.py.** The fetch will 404.
@@ -390,7 +414,10 @@ updating the endpoint. Decide intent, then fix.
 
 ---
 
-### FLAGGED — auth wiring status by cluster (2026-09-27)
+### REFERENCE — auth wiring status by cluster (2026-09-27)
+
+**Reference 2026-09-28.** Status table — not an open item. All clusters verified by 2026-09-27.
+
 
 After this session:
 
@@ -415,7 +442,10 @@ frontend templates not yet audited).
 
 **Verdict:** Assessment frontend audit → SCHEDULED.
 
-### FLAGGED — 11 product templates: frontend wiring required (2026-09-26)
+### RESOLVED — 11 product templates: frontend wiring required (2026-09-26)
+
+**Resolved 2026-09-28.** Completed 2026-09-27 (sprint `7f178b9` through `37df5b1`). All 11 templates now have real forms + AI calls + results render. Verified by grep 2026-09-28: every template has both a `fetch('/api/products/...` call and a `notifyMe(` premium-tier upsell.
+
 
 **Backend status: DONE** (commit `abbcabe`). All 11 `/api/products/*` routes have
 `require_auth_for_email` + `require_credits_from_data`. Verified E2E for auditbot:
@@ -641,7 +671,10 @@ price-sensitive students.
 - Rest: **FLAGGED** — pick by user feedback
 - Monetization shift: **DISCUSSION** — no code change until you decide
 
-### FLAGGED — AI feature verification sweep — full list (2026-09-26)
+### REFERENCE — AI feature verification sweep — full list (2026-09-26)
+
+**Reference 2026-09-28.** Full-sweep checklist — superseded by the 2026-09-27 individual verifications. Kept as reference for what was checked.
+
 
 Tonight we audited + fixed:
 - Voice-to-Web (auto-deploy) ✅
@@ -674,7 +707,10 @@ Est: 4-6 hours for full sweep. Schedule as multi-session work.
 Verdict: SCHEDULED — highest-value cleanup remaining.
 
 
-### FLAGGED — student_suite auth gap (2026-09-26)
+### RESOLVED — student_suite auth gap (2026-09-26)
+
+**Resolved 2026-09-28.** Fixed 2026-09-28 (`657d1ce`). Added `require_auth_for_email` to `/api/student/subscribe` and `require_admin` to `/api/student/stats`.
+
 
 `/api/student/assignment` and `/api/student/research` now call
 `require_auth_for_email` (fixed in Phase 3 of tonight's session).
@@ -703,7 +739,10 @@ Possible fixes (future):
 
 Verdict: DEFERRED — low priority for prod, annoying for dev.
 
-### FLAGGED — ai_service/generate_* functions still unverified (2026-09-26)
+### RESOLVED — ai_service/generate_* functions still unverified (2026-09-26)
+
+**Resolved 2026-09-28.** Resolved 2026-09-27 (`55dd435` + `8592d19`). 4 more functions received `json_mode` + fence-stripping; all 6 verified E2E.
+
 
 Already in tracker from earlier tonight. 5 functions routed through
 ai_service.call_openai() have not been E2E-tested since the fix:
@@ -715,7 +754,10 @@ ai_service.call_openai() have not been E2E-tested since the fix:
 
 Verdict: SCHEDULED — own session
 
-### FLAGGED — 11 AI Products need same audit as tools (2026-09-26)
+### RESOLVED — 11 AI Products need same audit as tools (2026-09-26)
+
+**Resolved 2026-09-28.** Fixed 2026-09-26 (`abbcabe`). Added `require_auth_for_email` to 11 `/api/products/*` routes; verified E2E.
+
 
 - **Trigger:** Tonight we audited and fixed the 12-tool AI Tools Suite
   (`/api/tools/*`). The same class of bug exists in the 11 AI Products
@@ -753,7 +795,10 @@ Verdict: SCHEDULED — own session
 - **Priority:** Medium-High — same revenue leak + trust issue as tools.
 - **Verdict:** SCHEDULED — own session
 
-### FLAGGED — Post-ai_service-fix verification sweep (2026-09-26)
+### RESOLVED — Post-ai_service-fix verification sweep (2026-09-26)
+
+**Resolved 2026-09-28.** Resolved 2026-09-27 (`8592d19`). Full sweep complete — 6 functions verified.
+
 
 - **Trigger:** Fixed `ai_service.call_openai()` tonight. It had been silently
   failing on every call since the file was written. Six functions route through it.
@@ -783,7 +828,10 @@ Verdict: SCHEDULED — own session
 
 - **Verdict:** SCHEDULED — own session
 
-### FLAGGED — Voice-to-Web hardcodes USD in generated prices (2026-09-26)
+### RESOLVED — Voice-to-Web hardcodes USD in generated prices (2026-09-26)
+
+**Resolved 2026-09-28.** Fixed 2026-09-27 (`dcc6a63`). Prompt anchored to INR.
+
 
 - **Symptom:** A user describing an Indian business (Bangalore yoga studio, +91 phone,
   Indian address) received a generated site with prices shown as `$15` instead of `₹15`.
@@ -804,7 +852,10 @@ Verdict: SCHEDULED — own session
   full Option C to land as a dedicated follow-up. Same pattern as the `PAYMENT_MODE`
   footgun: flag, fix minimally, do the full version when there's appetite.
 
-### FLAGGED — `email_verification.is_verified()` bare except (2026-09-26)
+### RESOLVED — `email_verification.is_verified()` bare except (2026-09-26)
+
+**Resolved 2026-09-28.** Fixed 2026-09-26 (`63a7672`). Added exception logging before returning False.
+
 
 - **File:** `email_verification.py` line ~134
 - **Original code:** `except:` with no exception class, no logging.
@@ -1011,7 +1062,10 @@ Verdict: SCHEDULED — own session
     verified before login. Consider adding a dev-only bypass flag.
 - **C7 progress:** unchanged (3/18)
 
-### FLAGGED — Anti-bot for /contact (2026-09-25)
+### RESOLVED — Anti-bot for /contact (2026-09-25)
+
+**Resolved 2026-09-28.** Fixed 2026-09-27 (`80e5b74`). Honeypot field + backend heuristics.
+
 
 - **Trigger:** Two bot spam submissions found in prod `contacts` table
   - `Vxjoojou Oohmz` / `m.ogz.vp.h.n.5.87@gmail.com` (deleted)
@@ -2295,7 +2349,10 @@ The library endpoint `GET /api/mcq/questions/{category}/{topic}` accepts `count`
 
 ---
 
-### FLAGGED — MCQ sections/topics are hardcoded in 3 places with no single source of truth (2026-09-27)
+### RESOLVED — MCQ sections/topics are hardcoded in 3 places with no single source of truth (2026-09-27)
+
+**Resolved 2026-09-28.** Fixed 2026-09-28 (`54bd78a`). Template now fetches `/api/mcq/topics` on load; hardcoded dict becomes fallback only.
+
 
 Topics live in:
 1. `mcq_bank._initialize_question_bank()` — actual bank (source of truth for lookups)
