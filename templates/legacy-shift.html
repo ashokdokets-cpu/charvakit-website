@@ -25,21 +25,136 @@
     </div>
 
     <div class="row g-4 mb-5">
-        <div class="col-md-6"><div class="card h-100 p-4 text-center"><h4>🔍 Free Audit</h4><h2 class="display-4 fw-bold"><span data-inr="0">₹0</span></h2><p>Codebase analysis</p><a href="/time-machine-checker" class="btn btn-outline-primary">Audit My Site</a></div></div>
-        <div class="col-md-6"><div class="card h-100 p-4 text-center bg-light"><h3 class="as-h4">⚡ Full Migration</h3><h2 class="display-4 fw-bold"><span data-inr="19999">₹19,999</span></h2><p>Complete rebuild</p><a href="#" class="btn btn-primary" onclick="legacyMigrate(event)">Migrate Now</a></div></div>
+    <div class="col-lg-10 mx-auto">
+        <div class="card p-4 shadow-sm">
+            <h3 class="as-h4 mb-2">Analyze Your Legacy Code</h3>
+            <p class="text-muted mb-3">Paste legacy HTML, PHP, jQuery, WordPress snippets, or any old code. AI returns vulnerabilities, dependencies, a recommended modern stack, and step-by-step migration plan.</p>
+            <div class="mb-3">
+                <label class="form-label fw-semibold" for="lsCode">Legacy code</label>
+                <textarea id="lsCode" class="form-control font-monospace" rows="10" style="font-size:0.85rem;"
+                    placeholder="&lt;?php
+// Example legacy PHP snippet
+mysql_query('SELECT * FROM users WHERE id=' . $_GET['id']);
+echo '&lt;script&gt;var user = ' . json_encode($user) . ';&lt;/script&gt;';
+?&gt;"></textarea>
+                <div class="form-text">Max 50,000 characters. Truncated to 3,000 for analysis.</div>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="text-muted small">Cost: <strong>20 credits</strong> per analysis</div>
+                <button id="lsBtn" class="btn btn-primary" onclick="analyzeLegacy()">Analyze (20 cr)</button>
+            </div>
+            <div id="lsError" class="alert alert-danger mt-3 d-none"></div>
+        </div>
     </div>
-
-    <div class="text-center p-5 bg-light rounded">
-        <h3>See What Your Old Site Could Look Like</h3>
-        <p class="mb-4">Enter your URL. We'll show you a side-by-side transformation preview.</p>
-        <a href="/time-machine-checker" class="btn btn-primary btn-lg">Time Machine Checker</a>
+</div>
+<div id="lsResultWrap" class="d-none mb-5">
+    <div class="card p-4 shadow-sm">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="as-h4 mb-0">Modernization Report</h3>
+            <button class="btn btn-sm btn-outline-secondary" onclick="copyLsJson()">Copy JSON</button>
+        </div>
+        <div id="lsResult" style="max-height:700px; overflow:auto;"></div>
     </div>
 </div>
 <script>
-function legacyMigrate(event) {
-    event.preventDefault();
-    // Session G6: feature under development — capture interest instead
-    window.notifyMe('Legacy Migration');
+async function analyzeLegacy() {
+    const codeEl = document.getElementById('lsCode');
+    const btn = document.getElementById('lsBtn');
+    const errEl = document.getElementById('lsError');
+    errEl.classList.add('d-none');
+
+    const code = (codeEl.value || '').trim();
+    if (!code) {
+        errEl.textContent = 'Please paste some legacy code first.';
+        errEl.classList.remove('d-none');
+        return;
+    }
+
+    const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    if (!authToken || !email) {
+        alert('Please log in to use Legacy-Shift.');
+        window.location.href = '/login?next=/legacy-shift';
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Analyzing...';
+
+    try {
+        const r = await fetch('/api/ai/analyze-legacy', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authToken,
+            },
+            body: JSON.stringify({ email: email, code: code }),
+        });
+        const j = await r.json();
+        if (!r.ok) {
+            btn.disabled = false;
+            btn.textContent = 'Analyze (20 cr)';
+            if (r.status === 401) {
+                alert(j.message || 'Please log in again.');
+                window.location.href = '/login?next=/legacy-shift';
+            } else if (r.status === 402) {
+                alert(j.message || 'Insufficient credits.');
+                window.location.href = '/ai-credits-pricing';
+            } else {
+                errEl.textContent = j.message || 'Analysis failed.';
+                errEl.classList.remove('d-none');
+            }
+            return;
+        }
+
+        const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        function render(obj, depth) {
+            depth = depth || 0;
+            if (obj === null || obj === undefined) return '<span class="text-muted">—</span>';
+            if (typeof obj === 'string') {
+                return '<p class="mb-2">' + esc(obj).replace(/\n/g, '<br>') + '</p>';
+            }
+            if (typeof obj === 'number' || typeof obj === 'boolean') return '<strong>' + esc(obj) + '</strong>';
+            if (Array.isArray(obj)) {
+                if (!obj.length) return '<em class="text-muted">(empty)</em>';
+                return '<ul class="mb-2">' + obj.map(x => '<li>' + render(x, depth+1) + '</li>').join('') + '</ul>';
+            }
+            if (typeof obj === 'object') {
+                const keys = Object.keys(obj);
+                if (!keys.length) return '<em class="text-muted">(empty object)</em>';
+                const level = depth === 0 ? 'h5' : (depth === 1 ? 'h6' : 'div');
+                return '<div class="ms-' + (depth > 0 ? '3' : '0') + ' mb-3">' + keys.map(k => {
+                    const val = obj[k];
+                    const label = k.replace(/_/g, ' ').replace(/\b\w/g, ch => ch.toUpperCase());
+                    return '<div class="mb-2"><' + level + ' class="text-primary mb-1">' + esc(label) + '</' + level + '>' + render(val, depth+1) + '</div>';
+                }).join('') + '</div>';
+            }
+            return esc(String(obj));
+        }
+
+        document.getElementById('lsResult').innerHTML = render(j, 0);
+        document.getElementById('lsResultWrap').classList.remove('d-none');
+        document.getElementById('lsResultWrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        btn.disabled = false;
+        btn.textContent = 'Re-analyze (20 cr)';
+    } catch (e) {
+        console.error('analyzeLegacy failed', e);
+        errEl.textContent = 'Network error — please try again.';
+        errEl.classList.remove('d-none');
+        btn.disabled = false;
+        btn.textContent = 'Analyze (20 cr)';
+    }
+}
+
+function copyLsJson() {
+    const el = document.getElementById('lsResult');
+    if (!el) return;
+    const text = el.innerText || '';
+    navigator.clipboard.writeText(text).then(function() {
+        alert('Copied modernization report to clipboard.');
+    }).catch(function() {
+        alert('Copy failed — please select and copy manually.');
+    });
 }
 </script>
 {% include 'includes/premium-upsell.html' %}
