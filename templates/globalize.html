@@ -25,26 +25,154 @@
     </div>
 
 <div class="row g-4 mb-5">
-    <div class="col-md-4"><div class="card h-100 p-4 text-center"><h4>Starter</h4><h2 class="display-4 fw-bold"><span data-inr="0">₹0</span></h2><p class="text-muted">Forever free</p><ul class="list-unstyled text-start"><li class="mb-2">✅ 1 language</li><li class="mb-2">✅ Basic translation</li><li class="mb-2">❌ Cultural adaptation</li><li class="mb-2">❌ Compliance injection</li></ul><a href="/revenue-leak-detector" class="btn btn-outline-primary">Start Free</a></div></div>
-    <div class="col-md-4"><div class="card h-100 p-4 text-center border-primary" style="border-width:2px;"><span class="badge bg-primary mb-2">Popular</span><h4>Growth</h4><h2 class="display-4 fw-bold"><span data-inr="1499">₹1,499</span></h2><p class="text-muted">/month</p><ul class="list-unstyled text-start"><li class="mb-2">✅ 10 languages</li><li class="mb-2">✅ Cultural adaptation</li><li class="mb-2">✅ Compliance injection</li><li class="mb-2">✅ Image localization</li></ul><a href="#" class="btn btn-primary" onclick="growthSignup(event)">Get Growth</a></div></div>
-    <div class="col-md-4"><div class="card h-100 p-4 text-center"><h4>Enterprise</h4><h2 class="display-4 fw-bold"><span data-inr="4999">₹4,999</span></h2><p class="text-muted">/month</p><ul class="list-unstyled text-start"><li class="mb-2">✅ All 34 languages</li><li class="mb-2">✅ Full cultural adaptation</li><li class="mb-2">✅ Priority support</li><li class="mb-2">✅ Custom integrations</li></ul><a href="/contact" class="btn btn-success">Contact Sales</a></div></div>
+    <div class="col-lg-8 mx-auto">
+        <div class="card p-4 shadow-sm">
+            <h3 class="as-h4 mb-2">Localize Your Site</h3>
+            <p class="text-muted mb-3">Enter your website URL and pick a target language. AI returns translated content, cultural adaptations, and compliance notes.</p>
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <label class="form-label fw-semibold" for="gzUrl">Website URL</label>
+                    <input type="url" id="gzUrl" class="form-control" placeholder="https://your-site.com/pricing">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold" for="gzLang">Target language</label>
+                    <select id="gzLang" class="form-select">
+                        <option value="es">Spanish (es)</option>
+                        <option value="fr">French (fr)</option>
+                        <option value="de">German (de)</option>
+                        <option value="hi">Hindi (hi)</option>
+                        <option value="ar">Arabic (ar)</option>
+                        <option value="ja">Japanese (ja)</option>
+                        <option value="pt">Portuguese (pt)</option>
+                        <option value="ru">Russian (ru)</option>
+                        <option value="zh">Chinese (zh)</option>
+                        <option value="ta">Tamil (ta)</option>
+                        <option value="te">Telugu (te)</option>
+                        <option value="bn">Bengali (bn)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <div class="text-muted small">Cost: <strong>15 credits</strong> per analysis</div>
+                <button id="gzBtn" class="btn btn-primary" onclick="localizeSite()">Localize (15 cr)</button>
+            </div>
+            <div id="gzError" class="alert alert-danger mt-3 d-none"></div>
+        </div>
+    </div>
 </div>
-<div class="text-center p-5 bg-dark text-white rounded">
-    <h3>See Your Global Revenue Potential First</h3>
-    <p class="mb-4">Free scan. No signup. Instant results.</p>
-    <a href="/revenue-leak-detector" class="btn btn-primary btn-lg">Free Revenue Leak Detector</a>
-</div>
+<div id="gzResultWrap" class="d-none mb-5">
+    <div class="card p-4 shadow-sm">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="as-h4 mb-0">Localization Report</h3>
+            <button class="btn btn-sm btn-outline-secondary" onclick="copyGzJson()">Copy JSON</button>
+        </div>
+        <div id="gzResult" style="max-height:600px; overflow:auto;"></div>
+    </div>
 </div>
 <script>
-function growthSignup(e){
-    e.preventDefault();
-    const name = prompt('Enter your company name:');
-    if(name){
-        const subs = JSON.parse(localStorage.getItem('globalize_growth')||'[]');
-        subs.push({company: name, plan: 'Growth (<span data-inr="1499">₹1,499</span>/mo)', date: new Date().toISOString()});
-        localStorage.setItem('globalize_growth', JSON.stringify(subs));
-        alert('Welcome aboard, ' + name + '! Your Growth plan is activated.');
+async function localizeSite() {
+    const urlEl = document.getElementById('gzUrl');
+    const langEl = document.getElementById('gzLang');
+    const btn = document.getElementById('gzBtn');
+    const errEl = document.getElementById('gzError');
+    errEl.classList.add('d-none');
+
+    const url = (urlEl.value || '').trim();
+    const language = langEl.value || 'es';
+
+    if (!url) {
+        errEl.textContent = 'Please enter a website URL.';
+        errEl.classList.remove('d-none');
+        return;
     }
+
+    const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    if (!authToken || !email) {
+        alert('Please log in to use Globalize.ai.');
+        window.location.href = '/login?next=/globalize';
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Analyzing...';
+
+    try {
+        const r = await fetch('/api/ai/localize', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authToken,
+            },
+            body: JSON.stringify({ email: email, url: url, language: language }),
+        });
+        const j = await r.json();
+        if (!r.ok) {
+            btn.disabled = false;
+            btn.textContent = 'Localize (15 cr)';
+            if (r.status === 401) {
+                alert(j.message || 'Please log in again.');
+                window.location.href = '/login?next=/globalize';
+            } else if (r.status === 402) {
+                alert(j.message || 'Insufficient credits.');
+                window.location.href = '/ai-credits-pricing';
+            } else {
+                errEl.textContent = j.message || 'Localization failed.';
+                errEl.classList.remove('d-none');
+            }
+            return;
+        }
+
+        // Render recursively. The AI returns arbitrary nested JSON.
+        const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        function render(obj, depth) {
+            depth = depth || 0;
+            if (obj === null || obj === undefined) return '<span class="text-muted">—</span>';
+            if (typeof obj === 'string') {
+                // Render newlines as <br> inside <p>
+                return '<p class="mb-2">' + esc(obj).replace(/\n/g, '<br>') + '</p>';
+            }
+            if (typeof obj === 'number' || typeof obj === 'boolean') return '<strong>' + esc(obj) + '</strong>';
+            if (Array.isArray(obj)) {
+                if (!obj.length) return '<em class="text-muted">(empty)</em>';
+                return '<ul class="mb-2">' + obj.map(x => '<li>' + render(x, depth+1) + '</li>').join('') + '</ul>';
+            }
+            if (typeof obj === 'object') {
+                const keys = Object.keys(obj);
+                if (!keys.length) return '<em class="text-muted">(empty object)</em>';
+                const level = depth === 0 ? 'h5' : (depth === 1 ? 'h6' : 'div');
+                return '<div class="ms-' + (depth > 0 ? '3' : '0') + ' mb-3">' + keys.map(k => {
+                    const val = obj[k];
+                    const label = k.replace(/_/g, ' ').replace(/\b\w/g, ch => ch.toUpperCase());
+                    return '<div class="mb-2"><' + level + ' class="text-primary mb-1">' + esc(label) + '</' + level + '>' + render(val, depth+1) + '</div>';
+                }).join('') + '</div>';
+            }
+            return esc(String(obj));
+        }
+
+        document.getElementById('gzResult').innerHTML = render(j, 0);
+        document.getElementById('gzResultWrap').classList.remove('d-none');
+        document.getElementById('gzResultWrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        btn.disabled = false;
+        btn.textContent = 'Re-localize (15 cr)';
+    } catch (e) {
+        console.error('localizeSite failed', e);
+        errEl.textContent = 'Network error — please try again.';
+        errEl.classList.remove('d-none');
+        btn.disabled = false;
+        btn.textContent = 'Localize (15 cr)';
+    }
+}
+
+function copyGzJson() {
+    const el = document.getElementById('gzResult');
+    if (!el) return;
+    const text = el.innerText || '';
+    navigator.clipboard.writeText(text).then(function() {
+        alert('Copied localization report to clipboard.');
+    }).catch(function() {
+        alert('Copy failed — please select and copy manually.');
+    });
 }
 </script>
 {% include 'includes/premium-upsell.html' %}
