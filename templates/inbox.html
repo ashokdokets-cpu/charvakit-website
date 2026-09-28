@@ -23,7 +23,9 @@
 </div>
 <script>
 const userId = localStorage.getItem('charvak_user_id') || 'CAND-TEST';
-fetch('/api/messaging/inbox/' + userId)
+fetch('/api/messaging/inbox/' + userId, {
+        headers: {'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '')}
+    })
     .then(res => res.json())
     .then(data => {
         if (data.status === 'success' && data.conversations.length > 0) {
@@ -70,7 +72,10 @@ async function sendMessage(e) {
     };
     const resp = await fetch('/api/messaging/send', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '')
+        },
         body: JSON.stringify(data)
     });
     const result = await resp.json();
