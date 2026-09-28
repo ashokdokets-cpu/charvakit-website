@@ -285,10 +285,114 @@ async function generateDocs(e) {
     const topic = document.getElementById('fypDocTopic').value;
     const r = await fetch('/api/fyp/generate-documentation', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({topic:topic, email: email})});
     const j = await r.json();
-    const d = j.documentation || {};
-    document.getElementById('docsOutput').innerHTML = d.chapters 
-        ? d.chapters.map(c=>'<div class="p-2 border-bottom"><strong>Ch '+c.chapter+':</strong> '+c.title+'</div>').join('')
-        : '<p class="text-muted">Documentation generated</p>';
+        const d = j.documentation || {};
+    if (!Array.isArray(d.chapters) || !d.chapters.length) {
+        document.getElementById('docsOutput').innerHTML =
+            '<p class="text-muted">Documentation generated</p>';
+        return;
+    }
+    const escCh = (s) => String(s == null ? '' : s).replace(/[&<>"'`]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;'}[c]));
+    const topicEsc = escCh(topic);
+    document.getElementById('docsOutput').innerHTML = d.chapters.map(c => {
+        const num = c.chapter;
+        const title = c.title || ('Chapter ' + num);
+        const outline = c.content_outline || '';
+        return '<div class="p-2 border-bottom">'
+            + '<div class="d-flex justify-content-between align-items-center gap-2">'
+            +   '<div><strong>Ch ' + num + ':</strong> ' + escCh(title) + '</div>'
+            +   '<button type="button" class="btn btn-sm btn-outline-primary" '
+            +           'data-fyp-chapter="' + num + '" '
+            +           'onclick="expandFypChapter(this, ' + num + ', \'' + escCh(title).replace(/'/g, "\\'") + '\', \'' + escCh(outline).replace(/'/g, "\\'") + '\', \'' + topicEsc.replace(/'/g, "\\'") + '\')">'
+            +     '<span class="fyp-expand-label">Expand (10 cr)</span>'
+            +   '</button>'
+            + '</div>'
+            + '<div class="fyp-chapter-content mt-2" data-fyp-content="' + num + '" style="display:none;"></div>'
+            + '</div>';
+    }).join('');
+
+}
+
+
+// --- FYP per-chapter expand (Item 3) ---
+// Caches expanded content in DOM — re-clicking reuses the cached render,
+// only the very first click per chapter triggers an API call + credit charge.
+async function expandFypChapter(btn, chapterNum, title, outline, topic) {
+    const container = document.querySelector('.fyp-chapter-content[data-fyp-content="' + chapterNum + '"]');
+    if (!container) return;
+
+    // Toggle behavior: if already expanded, just hide/show without refetching
+    if (container.dataset.loaded === '1') {
+        const visible = container.style.display !== 'none';
+        container.style.display = visible ? 'none' : 'block';
+        btn.querySelector('.fyp-expand-label').textContent =
+            visible ? 'Show chapter' : 'Hide chapter';
+        return;
+    }
+
+    const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    if (!authToken || !email) {
+        alert('Please log in to expand a chapter.');
+        window.location.href = '/login?next=/final-year-project';
+        return;
+    }
+
+    const label = btn.querySelector('.fyp-expand-label');
+    label.textContent = 'Expanding...';
+    btn.disabled = true;
+
+    try {
+        const r = await fetch('/api/fyp/expand-chapter', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+            body: JSON.stringify({
+                email: email,
+                topic: topic,
+                chapter_number: chapterNum,
+                chapter_title: title,
+                chapter_outline: outline,
+            }),
+        });
+        const j = await r.json();
+        if (!r.ok || j.status !== 'success') {
+            label.textContent = 'Expand (10 cr)';
+            btn.disabled = false;
+            if (r.status === 401) {
+                alert(j.message || 'Please log in again.');
+                window.location.href = '/login?next=/final-year-project';
+            } else if (r.status === 402) {
+                alert(j.message || 'Insufficient credits.');
+                window.location.href = '/ai-credits-pricing';
+            } else {
+                alert(j.message || 'Could not expand chapter.');
+            }
+            return;
+        }
+        const ch = (j.chapter || {});
+        const content = ch.content || '<em>No content returned.</em>';
+        // Render as pre-wrapped prose — simple markdown-style header support
+        const html = content
+            .split('\n')
+            .map(line => {
+                const l = line.trim();
+                if (!l) return '';
+                if (l.startsWith('## ')) return '<h6 class="mt-3">' + l.slice(3) + '</h6>';
+                if (l.startsWith('# ')) return '<h5 class="mt-3">' + l.slice(2) + '</h5>';
+                if (l.startsWith('- ')) return '<div class="ms-3">• ' + l.slice(2) + '</div>';
+                return '<p class="mb-2">' + l + '</p>';
+            })
+            .join('');
+        container.innerHTML = '<div class="p-3 bg-light border rounded">' + html + '</div>';
+        container.dataset.loaded = '1';
+        container.style.display = 'block';
+        label.textContent = 'Hide chapter';
+        btn.disabled = false;
+    } catch (e) {
+        console.error('expandFypChapter failed', e);
+        label.textContent = 'Expand (10 cr)';
+        btn.disabled = false;
+        alert('Network error — please try again.');
+    }
 }
 
 function renderVivaQuestions(questions, tips) {

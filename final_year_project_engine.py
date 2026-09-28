@@ -170,6 +170,59 @@ class FinalYearProjectEngine:
             "documents": ["SRS", "SDD", "User Manual"],
         }
 
+    def expand_chapter_ai(self, data: Dict) -> Dict:
+        """Expand a documentation chapter outline into full prose. Stateless."""
+        topic = data.get("topic", "Project")
+        chapter_title = data.get("chapter_title", "").strip()
+        chapter_outline = data.get("chapter_outline", "").strip()
+        chapter_num = data.get("chapter_number", 0)
+
+        if not chapter_title:
+            return {"status": "error", "message": "chapter_title required."}
+
+        if OPENAI_API_KEY:
+            prompt = (
+                f"You are writing one chapter of a final year project report.\n"
+                f"Project topic: {topic}\n"
+                f"Chapter {chapter_num}: {chapter_title}\n"
+                f"Outline: {chapter_outline}\n\n"
+                "Write the full chapter content in academic prose (600-900 words). "
+                "Use 3-5 subsections with markdown-style headers (## Subsection). "
+                "Be specific to the project topic — no generic filler.\n"
+                "Return JSON: {\"chapter_content\": \"...\"}"
+            )
+            result = self._ai_json(prompt, max_tokens=2000, temperature=0.5)
+            if result is not None and result.get("chapter_content"):
+                return {
+                    "status": "success",
+                    "ai_generated": True,
+                    "chapter": {
+                        "chapter": chapter_num,
+                        "title": chapter_title,
+                        "content": result["chapter_content"],
+                    },
+                }
+
+        return {
+            "status": "success",
+            "ai_generated": False,
+            "chapter": self._fallback_expand(chapter_num, chapter_title, chapter_outline),
+        }
+
+    def _fallback_expand(self, chapter_num: int, chapter_title: str, chapter_outline: str) -> Dict:
+        """Offline fallback — structured prose derived from the outline."""
+        body = (
+            f"## Overview\n\n"
+            f"This chapter covers {chapter_title.lower()}. {chapter_outline or 'Details to be expanded.'}\n\n"
+            f"## Key Points\n\n"
+            f"- {chapter_outline or 'Chapter scope'}\n"
+            f"- Detailed discussion to be added\n\n"
+            f"## Summary\n\n"
+            f"The chapter establishes the foundation for {chapter_title.lower()} "
+            f"within the overall project structure."
+        )
+        return {"chapter": chapter_num, "title": chapter_title, "content": body}
+
     # ============================================================
     # AI-POWERED VIVA PREP (stateless)
     # ============================================================
