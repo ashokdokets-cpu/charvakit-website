@@ -87,7 +87,9 @@ Workaround options:
 
 Verdict: FLAGGED — cosmetic, doesn't block the feature
 
-### FLAGGED — "AI-Slop Report Card" teaser shows hardcoded numbers (2026-09-27)
+### RESOLVED — "AI-Slop Report Card" teaser shows hardcoded numbers (2026-09-28)
+
+**Resolved 2026-09-28.** The ai-contamination-detector.html page was fabricating all numbers via Math.random(). Replaced with a real fetch to /api/products/ai-slop/scan (25 cr, same backend as /ai-slop-quarantine). Badge: 25 credits per scan. Button: Scan Site (25 cr).
 
 The AI-Slop Quarantine page shows a second card labeled "AI-Slop Report
 Card" with sample stats like "45% AI Slop Detected", "7 WCAG Fails",
@@ -2205,7 +2207,9 @@ reverting a Python write. **Fix:** stop uvicorn → write → verify with grep
 
 ---
 
-### FLAGGED — 4 unlisted AI tools need frontend wiring + auth (2026-09-27)
+### RESOLVED — 4 unlisted AI tools need frontend wiring + auth (2026-09-28)
+
+**Resolved 2026-09-28.** All 4 tools (Neural Wireframe, Globalize.ai, Legacy-Shift, Agent-Ready) rebuilt with real forms + auth headers + credits + JSON renderers. Commits: da15ef6, 05bf57f, 6b18873, a7080cd. Backend auth in 6b22d61.
 
 Discovered after the 11-product sprint. These 4 tools have:
 - ✅ Page route registered
@@ -2531,7 +2535,9 @@ If the browser closes after the PayPal SDK captures the payment but before the f
 Prod likely worked because Render's build cache had it installed from
 an earlier state — worth confirming on next deploy.
 
-### FLAGGED — lazy-import-inside-pool deadlock class (2026-09-28)
+### RESOLVED — lazy-import-inside-pool deadlock class (2026-09-28)
+
+**Resolved 2026-09-28.** Swept all indented engine imports inside functions using DB connections. 16 candidates: 12 direct-connection (safe), 2 tests, 2 pooled but released before import. Zero remaining real deadlock sites.
 
 Any code that holds a `db.get_pooled_connection()` and then triggers an
 `from X import Y` where module X does DB work at import time will deadlock.
@@ -2582,10 +2588,14 @@ is covered by every other gated route in the app.
 Admin-only: delete-user, escrow/release, escrow/resolve, kyc/review, enterprise/resume/pending, enterprise/resume/review, referral/pay
 User-scoped: messaging/inbox, messaging/conversation, kyc/initiate, training/enroll, training/create-plan, training/update-progress, enroll/payment, enroll/check-access, career/alert, career/save-job, career/offer, career/salary
 
-### FLAGGED — dead fetch to /api/notifications/send
+### RESOLVED — dead fetch to /api/notifications/send
+
+**Resolved 2026-09-28.** Removed from templates/lock-in-breaker-pricing.html. Commit 03903a2.
 File: templates/lock-in-breaker-pricing.html:155. Est: 5 min.
 
-### FLAGGED — duplicate /api/payment/history route
+### RESOLVED — duplicate /api/payment/history route
+
+**Resolved 2026-09-28.** Duplicate registration removed in commit 03903a2.
 Registered twice in main.py. Est: 15 min.
 
 ### RESOLVED — /api/na/* auth review
@@ -2734,16 +2744,24 @@ C:\\projects\\Charvak_Complete_Backup_20260928_230130.zip (50.56 MB)
 - .env + .env.local included (secrets - do not share)
 - embedding column excluded from charvak_exam_question_bank (regenerate with scripts/backfill_question_embeddings.py)
 
-### Open flags (carried forward)
+### Open flags (carried forward) - updated 2026-09-28
+
+**Genuinely open (6):**
 
 1. Premium Report product - product decision, 8-12 hrs
-2. AI-Slop Report Card teaser hardcoded numbers - cosmetic
-3. uvicorn reload invalidates browser tokens - dev-only defer
-5. PayPal credits capture test - 5 min (Session B)
-6. CachedStaticFiles ?v= - 30 min (Session B)
-7. ai_courses_payments PayPal stub audit - 15 min (Session B)
-8. PayPal credits webhook safety net - 30 min (Session B)
-9. /api/na/* auth review - 30 min
+2. uvicorn reload invalidates browser tokens - dev-only defer
+3. PayPal credits capture test - 5 min (Session B)
+4. CachedStaticFiles ?v= - 30 min (Session B)
+5. ai_courses_payments PayPal stub audit - 15 min (Session B)
+6. PayPal credits webhook safety net - 30 min (Session B)
+
+**Resolved since this list was first written (2026-09-28):**
+- Voice-to-Web Option 2 (45ec344, a8c066e)
+- /api/na/* auth review (18 routes admin-gated)
+- AI-Slop Report Card detector (real fetch to products backend)
+- Dead /api/notifications/send fetch (03903a2)
+- Duplicate /api/payment/history route (03903a2)
+- 4 unlisted AI tools frontend wiring (4 commits)
 
 ### Recommended next session
 
