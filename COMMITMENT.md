@@ -2,8 +2,8 @@
 
 **Purpose:** Track every planned-but-not-completed item. Nothing gets lost again.
 **Created:** 2026-09-20
-**Last updated:** 2026-09-28 (Session A cleanup — 17 flags resolved, tracker synced)
-**HEAD:** 82ec76f
+**Last updated:** 2026-09-28 (Session C close-out - 4 AI tools shipped, 24 routes secured, 147 re-raise clauses, full docs sync, backup at C:\projects\Charvak_Complete_Backup_20260928_230130.zip)
+**HEAD:** 7a40e95 (docs sync) / da15ef6 (code)
 
 ### FLAGGED — Premium Report product (₹199 PDF unlock) (2026-09-27)
 
@@ -2652,3 +2652,98 @@ broad except. Verified live: /api/ai/neural-wireframe without auth
   MySQL flagged; migration steps returned
 - Agent-Ready: example.com -> JSON-LD schema + 2 micro-API definitions
   + product catalog structure
+
+---
+
+## Session 2026-09-28 close-out (Session C + full docs sync)
+
+**HEAD:** `7a40e95` (docs) / `da15ef6` (code)
+
+### Final state
+
+18 commits today. Two features shipped. Four AI tools rebuilt. Twenty-four security guards made live. Full docs sync. Complete backup.
+
+### Commit chain (today)
+
+```
+7a40e95  docs: full sync to da15ef6 after Session C
+da15ef6  feat(neural-wireframe): rebuild UI with real form + credits flow
+10358ad  docs: Session C complete - 4 unlisted AI tools shipped
+a7080cd  feat(agent-ready): rebuild UI with real URL form + credits flow
+6b18873  feat(legacy-shift): rebuild UI with real code textarea + credits flow
+05bf57f  feat(globalize): rebuild UI with real form + credits flow
+9158f27  docs(dev-setup): curl.exe + PowerShell JSON-body gotcha
+a8e1275  fix(security): re-raise HTTPException before broad except in 147 routes
+83dc08a  docs: close small-item sweep - 3 flags resolved
+03903a2  chore(cleanup): remove dead /api/notifications/send fetch + dup route
+2cdba0e  docs: system audit 2026-09-28 + tracker sync
+3f71788  fix(security): add auth guards to 20 unguarded /api routes
+6b22d61  fix(auth): require_auth_for_email on 4 AI tool routes
+ab6eba5  docs: FYP per-chapter expand verified E2E
+75ce15f  refactor(admin): compact tiers + paginated table
+1068809  docs: Item 4 tracker update
+c4fb2a5  feat(admin): internship enrollments dashboard
+a9a6a04  feat(fyp): per-chapter expand
+```
+
+### Shipped (features)
+
+- FYP Per-Chapter Expand - 10 cr per chapter, DOM-cached, browser-verified
+- Internship admin dashboard - /admin/internship-enrollments with KPIs, doughnut, CSV, filters, pagination
+
+### Shipped (products)
+
+- Neural Wireframe - sketch description -> React+Tailwind JSX (25 cr)
+- Globalize.ai - URL + language -> nested localization report (15 cr)
+- Legacy-Shift - code snippet -> vulnerabilities + migration plan (20 cr)
+- Agent-Ready - URL -> JSON-LD + micro-APIs + product schema (15 cr)
+
+All 4 replaced marketing stubs with real forms, auth headers, 401/402 handling, and recursive JSON renderers.
+
+### Security wins
+
+- 20 unguarded /api routes secured (3f71788)
+- 4 AI tool routes now require email-match auth (6b22d61)
+- **147 HTTPException re-raise clauses** (a8e1275) - the critical fix that made the 24 guards actually fire. Before this, the guards were dead code: broad except Exception swallowed HTTPException and returned HTTP 200.
+- Lazy-import-in-pool deadlock sweep - zero remaining sites
+
+### Cleanup
+
+- Dead /api/notifications/send fetch removed from lock-in-breaker-pricing.html
+- Duplicate /api/payment/history route removed
+
+### Docs shipped
+
+- SYSTEM-AUDIT-2026-09-28.md - full structural audit + Session C addendum
+- MASTER-REFERENCE.md - synced to HEAD + v3.5-session-C-20260928
+- ARCHITECTURE.md - added HTTPException re-raise pattern section
+- KNOWN-ISSUES.md - 5 new fix rows
+- OUTSTANDING-WORK-INVENTORY.md - Session C closures
+- SESSION-CONTEXT.md - fresh resume pointer
+- STATUS.md - Session 2026-09-28 summary
+- DEV-SETUP.md - curl.exe JSON-body gotcha
+
+### Backup
+
+C:\\projects\\Charvak_Complete_Backup_20260928_230130.zip (50.56 MB)
+- 562 source files
+- 1368 .git history files
+- 152 charvak_* tables (5.1 MB SQL dump)
+- .env + .env.local included (secrets - do not share)
+- embedding column excluded from charvak_exam_question_bank (regenerate with scripts/backfill_question_embeddings.py)
+
+### Open flags (carried forward)
+
+1. Premium Report product - product decision, 8-12 hrs
+2. AI-Slop Report Card teaser hardcoded numbers - cosmetic
+3. uvicorn reload invalidates browser tokens - dev-only defer
+4. Voice-to-Web Option 2 auto-deploy - feature
+5. PayPal credits capture test - 5 min (Session B)
+6. CachedStaticFiles ?v= - 30 min (Session B)
+7. ai_courses_payments PayPal stub audit - 15 min (Session B)
+8. PayPal credits webhook safety net - 30 min (Session B)
+9. /api/na/* auth review - 30 min
+
+### Recommended next session
+
+**Session B - PayPal hardening (~1 hr)** closes flags 5, 6, 7, 8.
