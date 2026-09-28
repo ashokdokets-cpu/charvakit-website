@@ -421,26 +421,26 @@ class GhostBountyRequest(BaseModel):
 
 
 class RoleMirrorRequest(BaseModel):
-    role: str = Field(default="", max_length=200)
+    role: str = Field(..., min_length=1, max_length=200)
     skills: str = Field(default="", max_length=2000)
 
 
 class OfferMatcherRequest(BaseModel):
-    offer_a: str = Field(default="", max_length=5000)
-    offer_b: str = Field(default="", max_length=5000)
+    offer_a: str = Field(..., min_length=1, max_length=5000)
+    offer_b: str = Field(..., min_length=1, max_length=5000)
 
 
 class GhostJobRequest(BaseModel):
-    url: str = Field(default="", max_length=500)
+    url: str = Field(..., min_length=1, max_length=500)
 
 
 class CounterOfferRequest(BaseModel):
-    new_salary: float = Field(default=0, ge=0)
-    counter_salary: float = Field(default=0, ge=0)
+    new_salary: float = Field(..., gt=0)
+    counter_salary: float = Field(..., gt=0)
 
 
 class PitchRoastRequest(BaseModel):
-    inmail: str = Field(default="", max_length=5000)
+    inmail: str = Field(..., min_length=1, max_length=5000)
 
 
 class RefCheckRequest(BaseModel):
@@ -1990,6 +1990,7 @@ async def na_client_signup(request: Request):
 @app.post("/api/na/verify-work-auth")
 @limiter.limit("20/minute")
 async def verify_work_auth(request: Request):
+    require_admin(request)
     try:
         data = await request.json()
         validated = VerifyWorkAuthRequest(**data)
@@ -2015,6 +2016,7 @@ async def get_visa_types():
 @app.post("/api/na/ingest-job")
 @limiter.limit("30/minute")
 async def ingest_job(request: Request):
+    require_admin(request)
     try:
         data = await request.json()
         validated = IngestJobRequest(**data)
@@ -2045,6 +2047,7 @@ async def get_na_jobs(skill: str = None, location: str = None, visa_type: str = 
 @app.post("/api/na/submit-candidate")
 @limiter.limit("60/minute")
 async def submit_candidate(request: Request):
+    require_admin(request)
     try:
         data = await request.json()
         validated = SubmitCandidateRequest(**data)
@@ -2077,6 +2080,7 @@ async def submit_candidate(request: Request):
 @app.post("/api/na/match-candidate")
 @limiter.limit("20/minute")
 async def match_candidate(request: Request):
+    require_admin(request)
     try:
         data = await request.json()
         validated = MatchCandidateRequest(**data)
@@ -2089,7 +2093,8 @@ async def match_candidate(request: Request):
         return handle_error(e, "candidate matching", {"matches": [], "count": 0})
 
 @app.get("/api/na/sla-check/{submission_id}")
-async def check_sla(submission_id: str):
+async def check_sla(request: Request, submission_id: str):
+    require_admin(request)
     try:
         return vms_connector.check_sla(submission_id)
     except HTTPException:
@@ -2100,6 +2105,7 @@ async def check_sla(submission_id: str):
 @app.post("/api/na/redact-resume")
 @limiter.limit("20/minute")
 async def redact_resume(request: Request):
+    require_admin(request)
     try:
         data = await request.json()
         text = data.get("text", "")
@@ -2114,6 +2120,7 @@ async def redact_resume(request: Request):
 @app.post("/api/na/blind-profile")
 @limiter.limit("20/minute")
 async def blind_profile(request: Request):
+    require_admin(request)
     try:
         data = await request.json()
         profile = pii_redactor.generate_blind_profile(data)
@@ -2126,6 +2133,7 @@ async def blind_profile(request: Request):
 @app.post("/api/na/compliance-check")
 @limiter.limit("30/minute")
 async def compliance_check(request: Request):
+    require_admin(request)
     try:
         data = await request.json()
         check_type = data.get("type", "job")
@@ -2141,6 +2149,7 @@ async def compliance_check(request: Request):
 
 @app.post("/api/na/register-vendor")
 async def register_vendor(request: Request):
+    require_admin(request)
     try:
         data = await request.json()
         validated = RegisterVendorRequest(**data)
@@ -2152,7 +2161,8 @@ async def register_vendor(request: Request):
         return handle_error(e, "vendor registration")
 
 @app.get("/api/na/vendor-stats/{vendor_id}")
-async def vendor_stats(vendor_id: str):
+async def vendor_stats(request: Request, vendor_id: str):
+    require_admin(request)
     try:
         return sub_vendor_manager.get_vendor_stats(vendor_id)
     except HTTPException:
@@ -2161,7 +2171,8 @@ async def vendor_stats(vendor_id: str):
         return handle_error(e, "vendor stats")
 
 @app.get("/api/na/vms/requisitions")
-async def get_requisitions(skill: str = None, visa_type: str = None):
+async def get_requisitions(request: Request, skill: str = None, visa_type: str = None):
+    require_admin(request)
     try:
         filters = {}
         if skill: filters["skill"] = skill
@@ -2175,6 +2186,7 @@ async def get_requisitions(skill: str = None, visa_type: str = None):
 
 @app.post("/api/na/vms/requisitions")
 async def create_requisition(request: Request):
+    require_admin(request)
     try:
         data = await request.json()
         validated = CreateRequisitionRequest(**data)
@@ -2190,6 +2202,7 @@ async def create_requisition(request: Request):
 
 @app.post("/api/na/vms/timecard")
 async def submit_timecard(request: Request):
+    require_admin(request)
     try:
         data = await request.json()
         validated = SubmitTimecardRequest(**data)
@@ -2208,6 +2221,7 @@ async def submit_timecard(request: Request):
 
 @app.post("/api/na/vms/timecard/approve")
 async def approve_timecard(request: Request):
+    require_admin(request)
     try:
         data = await request.json()
         validated = ApproveTimecardRequest(**data)
@@ -2219,7 +2233,8 @@ async def approve_timecard(request: Request):
         return handle_error(e, "timecard approval")
 
 @app.get("/api/na/vms/analytics/{client_id}")
-async def client_analytics(client_id: str):
+async def client_analytics(request: Request, client_id: str):
+    require_admin(request)
     try:
         return charvak_vms.get_client_analytics(client_id)
     except HTTPException:
@@ -2229,6 +2244,7 @@ async def client_analytics(client_id: str):
 
 @app.post("/api/na/revenue/subscribe")
 async def create_subscription(request: Request):
+    require_admin(request)
     try:
         data = await request.json()
         validated = CreateSubscriptionRequest(**data)
@@ -2241,7 +2257,8 @@ async def create_subscription(request: Request):
         return handle_error(e, "subscription creation")
 
 @app.get("/api/na/revenue/total")
-async def total_revenue():
+async def total_revenue(request: Request):
+    require_admin(request)
     try:
         return revenue_engine.get_total_revenue()
     except HTTPException:
@@ -2250,7 +2267,8 @@ async def total_revenue():
         return handle_error(e, "total revenue")
 
 @app.get("/api/na/revenue/firm/{firm_id}")
-async def firm_revenue(firm_id: str):
+async def firm_revenue(request: Request, firm_id: str):
+    require_admin(request)
     try:
         return revenue_engine.get_firm_revenue(firm_id)
     except HTTPException:
