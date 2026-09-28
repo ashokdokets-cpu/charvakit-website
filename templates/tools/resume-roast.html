@@ -84,12 +84,7 @@ async function roastResume(){
 }
 
 function unlockRewrite(){
-    processToolPayment(99, 'Resume Roast - ATS Rewrite', function(success){
-        if(success){
-            document.getElementById('paymentMsg').textContent = '✅ Payment successful! Downloading your optimized resume...';
-            document.getElementById('paymentMsg').style.color = '#10b981';
-        }
-    });
+    notifyMe('Resume Roast - ATS Rewrite');
 }
 </script>
 {% endblock %}

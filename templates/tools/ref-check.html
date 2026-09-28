@@ -38,8 +38,6 @@
     }
     document.getElementById('refResult').classList.remove('d-none');
 }function fastTrack(){
-    processToolPayment(599, 'Ref-Check Roulette - Fast Track', function(success){
-        if(success){ alert('Fast-Track activated! AI will verify within 5 minutes.'); }
-    });
+    notifyMe('Ref-Check Roulette - Fast Track');
 }</script>
 {% endblock %}

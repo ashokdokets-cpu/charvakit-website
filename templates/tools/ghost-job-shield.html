@@ -35,8 +35,6 @@
     }
     document.getElementById('ghostResult').classList.remove('d-none');
 }function unlockAlternatives(){
-    processToolPayment(149, 'Ghost-Job Shield - Verified Roles', function(success){
-        if(success){ alert('Verified active roles unlocked!'); }
-    });
+    notifyMe('Ghost-Job Shield - Verified Roles');
 }</script>
 {% endblock %}

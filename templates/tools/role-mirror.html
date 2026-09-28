@@ -42,8 +42,6 @@
     }
     document.getElementById('mirrorResult').classList.remove('d-none');
 }function unlockPlan(){
-    processToolPayment(299, 'Role-Mirror AI - Bridge Plan', function(success){
-        if(success){ alert('3-Day Bridge Plan unlocked! Start your micro-project now.'); }
-    });
+    notifyMe('Role-Mirror AI - Bridge Plan');
 }</script>
 {% endblock %}
