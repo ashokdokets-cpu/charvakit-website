@@ -47,9 +47,7 @@ async function startChallenge(){
     document.getElementById('resultCard').classList.remove('d-none');
 }
 function claimBounty(){
-    processToolPayment(199, 'GhostBounty AI - Claim Bounty', function(success){
-        if(success){ alert('Bounty claimed! $20 will be processed via Dokets VouchAI if employer fails to review within 48 hours.'); }
-    });
+    notifyMe('GhostBounty AI - Claim Bounty');
 }
 </script>
 {% endblock %}

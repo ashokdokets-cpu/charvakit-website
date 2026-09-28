@@ -7,8 +7,6 @@
     <div class="card border-0 shadow-lg p-4 d-none" id="swapResult"><div class="card-body text-center"><h4>✅ Partner Found!</h4><p>Swap with: <strong>Senior Developer, 8 yrs exp</strong></p><p class="small text-muted">By proceeding, you accept our <a href="/agreement?type=MOU&client=User&redirect=/tools/ref-swap&service=Reference+Check+Swap&payment=One-time+fee">Terms of Use</a></p><button class="btn btn-primary" onclick="startSwap()">Start Mutual Verification</button><p class="mt-2"><small>Express Swap: <span data-inr="199">₹199</span> for instant matching</small></p></div></div>
 </div></div></div>
 <script>function findSwap(){document.getElementById('swapResult').classList.remove('d-none');}function startSwap(){
-    processToolPayment(199, 'Reference Check Swap - Express', function(success){
-        if(success){ alert('Mutual verification started! Complete in 5 minutes.'); }
-    });
+    notifyMe('Reference Check Swap - Express');
 }</script>
 {% endblock %}

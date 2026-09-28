@@ -35,8 +35,6 @@
     } catch(e) {}
     document.getElementById('compareResult').classList.remove('d-none');
 }function unlockScript(){
-    processToolPayment(199, 'Offer Matcher - Counter Script', function(success){
-        if(success){ alert('Counter-offer script unlocked! Use this to negotiate with Company A.'); }
-    });
+    notifyMe('Offer Matcher - Counter Script');
 }</script>
 {% endblock %}

@@ -35,8 +35,6 @@
         }, 1500);
     }
 }function claimPayment(){
-    processToolPayment(199, 'Micro-Trial Engine - Claim Payment', function(success){
-        if(success){ alert('$15 payment processing via Dokets VouchAI Escrow!'); }
-    });
+    notifyMe('Micro-Trial Engine - Claim Payment');
 }</script>
 {% endblock %}

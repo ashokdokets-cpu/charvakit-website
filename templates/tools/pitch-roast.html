@@ -32,8 +32,6 @@
     }
     document.getElementById('pitchResult').classList.remove('d-none');
 }function unlockReply(){
-    processToolPayment(149, 'Recruiter Pitch Roast - Smart Reply', function(success){
-        if(success){ alert('Smart reply generated! Forces recruiter to reveal salary range.'); }
-    });
+    notifyMe('Recruiter Pitch Roast - Smart Reply');
 }</script>
 {% endblock %}

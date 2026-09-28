@@ -9,8 +9,6 @@
     <div class="card border-0 shadow-lg p-4 d-none" id="trackResult"><div class="card-body text-center"><h4>📊 Tracking Active</h4><p>Days since application: <strong id="daysGhosted">21</strong></p><p class="text-danger">Status: Ghosted</p><p class="small text-muted">By proceeding, you accept our <a href="/agreement?type=MOU&client=User&redirect=/tools/ghost-tracker&service=Ghosted+Tracker&payment=One-time+fee">Terms of Use</a></p><button class="btn btn-primary" onclick="unlockFollowUp()">Unlock AI Follow-Up Script — <span data-inr="149">₹149</span></button></div></div>
 </div></div></div>
 <script>function trackApp(){document.getElementById('trackResult').classList.remove('d-none');}function unlockFollowUp(){
-    processToolPayment(149, 'Ghosted Tracker - Follow-Up Script', function(success){
-        if(success){ alert('AI follow-up email generated! Sending to recruiter now.'); }
-    });
+    notifyMe('Ghosted Tracker - Follow-Up Script');
 }</script>
 {% endblock %}
