@@ -1756,6 +1756,10 @@ async def api_neural_wireframe(request: Request):
         guard = require_credits_from_data(data, "ai_neural_wireframe")
         if guard.get("status") != "success":
             return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+        _em = (data.get("email") or "").strip().lower()
+        if not _em:
+            return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+        require_auth_for_email(request, _em)
         validated = NeuralWireframeRequest(**data)
         code = await neural_wireframe_to_code(validated.sketch)
         return {"code": code}
@@ -1771,6 +1775,10 @@ async def api_localize(request: Request):
         guard = require_credits_from_data(data, "ai_localize")
         if guard.get("status") != "success":
             return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+        _em = (data.get("email") or "").strip().lower()
+        if not _em:
+            return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+        require_auth_for_email(request, _em)
         validated = LocalizeRequest(**data)
         result = await localize_website(validated.url, validated.language)
         return result
@@ -1805,6 +1813,10 @@ async def api_analyze_legacy(request: Request):
         guard = require_credits_from_data(data, "ai_analyze_legacy")
         if guard.get("status") != "success":
             return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+        _em = (data.get("email") or "").strip().lower()
+        if not _em:
+            return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+        require_auth_for_email(request, _em)
         validated = AnalyzeLegacyRequest(**data)
         result = await analyze_legacy_code(validated.code)
         return result
@@ -1820,6 +1832,10 @@ async def api_generate_schema(request: Request):
         guard = require_credits_from_data(data, "ai_generate_schema")
         if guard.get("status") != "success":
             return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+        _em = (data.get("email") or "").strip().lower()
+        if not _em:
+            return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+        require_auth_for_email(request, _em)
         validated = GenerateSchemaRequest(**data)
         result = await generate_agent_schema(validated.url)
         return result
