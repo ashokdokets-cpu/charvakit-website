@@ -15,7 +15,7 @@ class CachedStaticFiles(StarletteStaticFiles):
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, ValidationError
 from typing import Optional, List, Dict, Any
 import os
 import json
@@ -2358,6 +2358,8 @@ async def api_resume_roast(request: Request):
         return result
     except HTTPException:
         raise
+    except ValidationError as e:
+        raise e
     except Exception as e:
         return handle_error(e, "resume roast")
 
@@ -2379,6 +2381,8 @@ async def api_ghost_bounty(request: Request):
         return result
     except HTTPException:
         raise
+    except ValidationError as e:
+        raise e
     except Exception as e:
         return handle_error(e, "ghost bounty")
 
@@ -2400,6 +2404,8 @@ async def api_role_mirror(request: Request):
         return result
     except HTTPException:
         raise
+    except ValidationError as e:
+        raise e
     except Exception as e:
         return handle_error(e, "role mirror")
 
@@ -2421,6 +2427,8 @@ async def api_offer_matcher(request: Request):
         return result
     except HTTPException:
         raise
+    except ValidationError as e:
+        raise e
     except Exception as e:
         return handle_error(e, "offer matcher")
 
@@ -2442,6 +2450,8 @@ async def api_ghost_job(request: Request):
         return result
     except HTTPException:
         raise
+    except ValidationError as e:
+        raise e
     except Exception as e:
         return handle_error(e, "ghost job detection")
 
@@ -2463,6 +2473,8 @@ async def api_counter_offer(request: Request):
         return result
     except HTTPException:
         raise
+    except ValidationError as e:
+        raise e
     except Exception as e:
         return handle_error(e, "counter offer")
 
@@ -2484,6 +2496,8 @@ async def api_pitch_roast(request: Request):
         return result
     except HTTPException:
         raise
+    except ValidationError as e:
+        raise e
     except Exception as e:
         return handle_error(e, "pitch roast")
 
@@ -2505,6 +2519,8 @@ async def api_ref_check(request: Request):
         return result
     except HTTPException:
         raise
+    except ValidationError as e:
+        raise e
     except Exception as e:
         return handle_error(e, "reference check")
 
@@ -2583,6 +2599,33 @@ async def api_ghosted_tracker(request: Request):
     result = await ghosted_tracker_ai(data.get("applications", []))
     return result
 
+
+
+
+# ============================================================
+# Global pydantic ValidationError handler
+# ============================================================
+from fastapi.exceptions import RequestValidationError
+
+@app.exception_handler(ValidationError)
+async def _pydantic_validation_handler(request: Request, exc: ValidationError):
+    """Return a clean 422 with per-field error messages."""
+    try:
+        errors = exc.errors()
+        msg_parts = []
+        for err in errors:
+            loc = ".".join(str(p) for p in err.get("loc", []))
+            msg_parts.append(f"{loc}: {err.get('msg','invalid')}")
+        return JSONResponse(status_code=422, content={
+            "status": "error",
+            "message": "Invalid input: " + "; ".join(msg_parts),
+            "errors": errors,
+        })
+    except Exception as e:
+        return JSONResponse(status_code=422, content={
+            "status": "error",
+            "message": "Invalid input",
+        })
 
 # ============================================================
 # AGREEMENT SYSTEM
