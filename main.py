@@ -5618,6 +5618,20 @@ async def generate_fyp_documentation(request: Request):
         return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return final_year_project_engine.generate_documentation_ai(data)
 
+@app.post("/api/fyp/expand-chapter")
+@limiter.limit("30/minute")
+async def expand_fyp_chapter(request: Request):
+    data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "fyp_expand_chapter")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+    return final_year_project_engine.expand_chapter_ai(data)
+
 @app.post("/api/fyp/viva-questions")
 @limiter.limit("60/minute")
 async def fyp_viva_questions(request: Request):
