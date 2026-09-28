@@ -2514,3 +2514,38 @@ If the browser closes after the PayPal SDK captures the payment but before the f
 - `PAYMENT_MODE=test` behavior for Razorpay `order_test_*` fake orders — untouched. (Separate flag; not PayPal-related.)
 
 **Last updated:** 2026-09-28 (PayPal credits — backend verified)
+
+---
+
+## Session 2026-09-28 (evening, part 3) — Item 4 shipped
+
+### RESOLVED — requirements.txt missing razorpay (2026-09-28)
+
+`payment_engine.py` imports `razorpay` but it was never listed in
+`requirements.txt`. Local dev on a fresh venv failed at
+`python -c "import fastapi, psycopg2, openai, razorpay"`.
+
+**Resolved 2026-09-28.** Added `razorpay>=1.4.0` to requirements.txt.
+Prod likely worked because Render's build cache had it installed from
+an earlier state — worth confirming on next deploy.
+
+### FLAGGED — lazy-import-inside-pool deadlock class (2026-09-28)
+
+Any code that holds a `db.get_pooled_connection()` and then triggers an
+`from X import Y` where module X does DB work at import time will deadlock.
+`ai_internship_engine` is a known offender — it runs `_ensure_tables()` on
+import, so a lazy `from ai_internship_engine import ...` inside a function
+that already holds a pool connection blocks forever on pool reacquire.
+
+Fixed one instance 2026-09-28 in `admin_internship_metrics.py` (hoisted the
+import to module level).
+
+**Sweep candidates:** grep for lazy imports of DB-touching modules inside
+functions that hold pool connections:
+
+    Select-String -Path "*.py" -Pattern "^    from .*_engine import"
+    Select-String -Path "*.py" -Pattern "^        from .*_engine import"
+
+Each is a latent deadlock if the caller holds a pool connection.
+
+**Verdict:** FLAGGED — sweep on next cleanup session.
