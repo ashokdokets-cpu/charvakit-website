@@ -1038,7 +1038,7 @@ Rules:
     # SUBMISSIONS
     # ============================================================
 
-    def _call_openai_json(self, prompt):
+    def _call_openai_json_mentor(self, prompt):
         """Call OpenAI in JSON mode. Mirrors student_suite_engine pattern."""
         try:
             import os
@@ -1106,7 +1106,7 @@ Rules:
             "improvements (list of 3 short actionable sentences), next_steps (one sentence)."
         )
 
-        result = self._call_openai_json(prompt)
+        result = self._call_openai_json_mentor(prompt)
         if not result or "score" not in result:
             logger.warning(f"AI eval failed for day {day} - using stub")
             return self._stub_feedback()
