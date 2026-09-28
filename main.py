@@ -1781,6 +1781,48 @@ async def v2w_support(request: Request):
         website_id=data.get("website_id")
     )
 
+@app.get("/api/voice-to-web/my-sites/{email}")
+@limiter.limit("60/minute")
+async def v2w_my_sites(request: Request, email: str):
+    """List all websites created by the given email. Auth-gated."""
+    email = (email or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Email required"})
+    require_auth_for_email(request, email)
+    try:
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute(
+            """SELECT website_id, business_name, slug, url, status, created_at
+               FROM charvak_voice_to_web_sites
+               WHERE email = %s
+                 AND html_content IS NOT NULL
+                 AND LENGTH(html_content) > 0
+               ORDER BY created_at DESC
+               LIMIT 100""",
+            (email,),
+        )
+        rows = cur.fetchall()
+        cur.close(); conn.close()
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"v2w_my_sites failed: {e}")
+        return JSONResponse(status_code=500, content={"status": "error", "message": "Could not load sites"})
+    sites = [
+        {
+            "website_id": r[0],
+            "business_name": r[1],
+            "slug": r[2],
+            "url": r[3] or ("/sites/" + (r[2] or "")),
+            "status": r[4],
+            "created_at": r[5].isoformat() if r[5] else None,
+        }
+        for r in rows
+    ]
+    return {"status": "success", "sites": sites, "count": len(sites)}
+
 @app.get("/api/voice-to-web/status/{website_id}")
 async def v2w_status(website_id: str):
     """Get website status."""

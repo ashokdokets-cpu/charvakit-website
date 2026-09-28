@@ -52,7 +52,7 @@
                     <h3 class="text-success">Start Free</h3>
                     <h2 class="display-4 fw-bold">₹0</h2>
                     <p class="mb-3">Website generation · Basic template · Mobile-optimized</p>
-                    <p class="text-muted small">Costs 30 credits. Your site is live instantly at a shareable URL. Custom domain: 5 credits. AI SEO: 8 credits. Updates: 5 credits.</p>
+                    <p class="text-muted small">Costs 30 credits (free trial credits cover it). Your site is live instantly at <code>charvakit.com/sites/{your-slug}</code>. Custom domain: 5 credits. AI SEO: 8 credits. Updates: 5 credits.</p>
                     <a href="#" class="btn btn-success btn-lg mt-3" onclick="startFree(event)">Build My Website</a>
                 </div>
                 <hr class="my-4">
@@ -79,20 +79,19 @@
         </div>
     </div>
 
-    <div class="text-center p-5 bg-dark text-white rounded">
-        <h3>Be Among the First 100 Businesses</h3>
-        <p class="mb-4">Join our beta program and get 3 months of Pro free.</p>
-        <div class="row justify-content-center"><div class="col-md-6">
-            <form onsubmit="submitBeta(event)">
-                <input type="text" class="form-control mb-2" id="betaName" placeholder="Your Name" required>
-                <input type="email" class="form-control mb-2" id="betaEmail" placeholder="Your Email" required>
-                <input type="tel" class="form-control mb-2" id="betaPhone" placeholder="WhatsApp Number" required>
-                <button class="btn btn-primary btn-lg w-100" type="submit">Apply for Beta Access</button>
-            </form>
-            <p class="small mt-2 text-success" id="betaMsg" style="display:none;"></p>
-        </div></div>
+    <div class="row g-4 mb-5">
+        <div class="col-12">
+            <div class="card p-4 shadow-sm">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3 class="as-h4 mb-0">My Websites</h3>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="loadMySites()">Refresh</button>
+                </div>
+                <div id="mySitesList">
+                    <p class="text-muted mb-0">Log in to see your websites.</p>
+                </div>
+            </div>
+        </div>
     </div>
-</div>
 
 <script>
 async function startFree(event) {
@@ -146,7 +145,9 @@ async function startFree(event) {
         }
         if (created && created.status === 'success') {
             const siteUrl = (created.url) ? created.url : ('/sites/' + created.slug);
-            alert('Your website is live!\n\nVisit: ' + siteUrl + '\n\nYou can add a custom domain, enable AI SEO, or request changes from your dashboard.');
+            const fullUrl = siteUrl.startsWith('http') ? siteUrl : (window.location.origin + siteUrl);
+            alert('Your website is live!\n\nVisit: ' + fullUrl + '\n\nYou can add a custom domain, enable AI SEO, or request changes from your dashboard.');
+            if (typeof loadMySites === 'function') loadMySites();
         } else {
             alert((created && created.message) || 'Could not create website');
         }
@@ -180,5 +181,51 @@ async function submitBeta(event) {
         msg.style.color = '#ef4444';
     }
 }
+
+async function loadMySites() {
+    const container = document.getElementById('mySitesList');
+    if (!container) return;
+
+    const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    if (!authToken || !email) {
+        container.innerHTML = '<p class="text-muted mb-0">Log in to see your websites.</p>';
+        return;
+    }
+
+    container.innerHTML = '<p class="text-muted mb-0">Loading...</p>';
+    try {
+        const r = await fetch('/api/voice-to-web/my-sites/' + encodeURIComponent(email), {
+            headers: { 'Authorization': 'Bearer ' + authToken }
+        });
+        const j = await r.json();
+        if (!r.ok || j.status !== 'success') {
+            container.innerHTML = '<p class="text-muted mb-0">Could not load sites: ' + (j.message || r.status) + '</p>';
+            return;
+        }
+        const sites = j.sites || [];
+        if (!sites.length) {
+            container.innerHTML = '<p class="text-muted mb-0">You have not created any websites yet. Click "Build My Website" above to get started.</p>';
+            return;
+        }
+        const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        container.innerHTML = '<div class="table-responsive"><table class="table table-sm align-middle mb-0">'
+            + '<thead><tr><th>Business</th><th>URL</th><th>Status</th><th>Created</th><th></th></tr></thead>'
+            + '<tbody>' + sites.map(s => {
+                const url = s.url || ('/sites/' + s.slug);
+                return '<tr>'
+                    + '<td>' + esc(s.business_name || '(unnamed)') + '</td>'
+                    + '<td><code>' + esc(url) + '</code></td>'
+                    + '<td><span class="badge bg-' + (s.status === 'live' ? 'success' : 'secondary') + '">' + esc(s.status || 'unknown') + '</span></td>'
+                    + '<td class="text-muted small">' + esc((s.created_at || '').slice(0, 10)) + '</td>'
+                    + '<td><a href="' + esc(url) + '" target="_blank" class="btn btn-sm btn-outline-primary">Open</a></td>'
+                    + '</tr>';
+            }).join('') + '</tbody></table></div>';
+    } catch (e) {
+        container.innerHTML = '<p class="text-muted mb-0">Network error: ' + e.message + '</p>';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', loadMySites);
 </script>
 {% endblock %}
