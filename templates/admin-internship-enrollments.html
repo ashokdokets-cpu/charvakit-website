@@ -34,6 +34,15 @@
   .an-doughnut-legend li { padding: 4px 0; display: flex; align-items: center; gap: 8px; }
   .an-doughnut-legend .swatch { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
   .an-row-actions { text-align: right; white-space: nowrap; }
+  .an-tier-compact { padding: 4px 0; font-size: 0.95rem; color: #374151; }
+  .an-tier-compact .an-tier-item { display: inline-flex; align-items: center; gap: 8px; margin-right: 20px; }
+  .an-tier-compact .swatch { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+  .an-pager { display: flex; align-items: center; justify-content: space-between; padding-top: 12px; border-top: 1px solid #f3f4f6; margin-top: 12px; }
+  .an-pager-info { font-size: 0.85rem; color: #6b7280; }
+  .an-pager-controls { display: flex; gap: 8px; align-items: center; }
+  .an-pager button { border: 1px solid #d1d5db; background: #fff; border-radius: 6px; padding: 4px 12px; font-size: 0.85rem; cursor: pointer; }
+  .an-pager button:hover:not(:disabled) { background: #f3f4f6; }
+  .an-pager button:disabled { opacity: 0.4; cursor: not-allowed; }
 </style>
 
 <div class="an-hero">
@@ -78,10 +87,11 @@
     </div>
   </div>
 
-  <!-- Tier distribution doughnut -->
+  <!-- Tier distribution: compact legend when <=2 tiers, doughnut when 3+ -->
   <div class="an-section">
     <h3>Tier Distribution</h3>
     <div id="tierChartEmpty" class="an-empty" style="display:none;">No enrollments to chart yet.</div>
+    <div id="tierCompact" class="an-tier-compact" style="display:none;"></div>
     <div id="tierChartWrap" class="an-doughnut-wrap" style="display:none;">
       <canvas id="tierChart" height="220"></canvas>
       <ul class="an-doughnut-legend" id="tierLegend"></ul>
@@ -101,6 +111,9 @@
 (function() {
   var chartInstance = null;
   var CHART_COLORS = ['#1e40af', '#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe', '#dbeafe', '#1e3a8a', '#1d4ed8'];
+  var PAGE_SIZE = 25;
+  var currentPage = 1;
+  var allEnrollments = [];
 
   function fmtInr(n) {
     n = Number(n) || 0;
@@ -141,14 +154,42 @@
     }).join('');
   }
 
+  var COMPACT_TIER_THRESHOLD = 2;  // <= 2 tiers renders as compact legend, not doughnut
+
   function renderTierChart(dist) {
     var wrap = document.getElementById('tierChartWrap');
     var empty = document.getElementById('tierChartEmpty');
+    var compact = document.getElementById('tierCompact');
+
     if (!dist || !dist.length) {
       wrap.style.display = 'none';
       empty.style.display = 'block';
+      if (compact) compact.style.display = 'none';
       return;
     }
+
+    // Compact mode: 1-2 tiers -> single-line legend, no doughnut
+    if (dist.length <= COMPACT_TIER_THRESHOLD) {
+      wrap.style.display = 'none';
+      empty.style.display = 'none';
+      if (compact) {
+        compact.style.display = 'block';
+        compact.innerHTML = dist.map(function(d, i) {
+          var color = CHART_COLORS[i % CHART_COLORS.length];
+          return '<span class="an-tier-item">'
+            + '<span class="swatch" style="background:' + color + '"></span>'
+            + '<strong>' + esc(d.tier_name) + '</strong>'
+            + ' &mdash; ' + d.count + ' enrollment(s)'
+            + ' &mdash; ' + fmtInr(d.revenue_inr)
+            + '</span>';
+        }).join('');
+      }
+      if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+      return;
+    }
+
+    // Full doughnut mode: 3+ tiers
+    if (compact) compact.style.display = 'none';
     wrap.style.display = 'block';
     empty.style.display = 'none';
 
@@ -199,12 +240,17 @@
   }
 
   function renderTable(enrollments) {
+    allEnrollments = enrollments || [];
     var wrap = document.getElementById('enrollmentsTable');
-    if (!enrollments || !enrollments.length) {
+    if (!allEnrollments.length) {
       wrap.innerHTML = '<div class="an-empty">No enrollments match the current filters.</div>';
       return;
     }
-    var rows = enrollments.map(function(e) {
+    var totalPages = Math.max(1, Math.ceil(allEnrollments.length / PAGE_SIZE));
+    if (currentPage > totalPages) currentPage = totalPages;
+    var start = (currentPage - 1) * PAGE_SIZE;
+    var slice = allEnrollments.slice(start, start + PAGE_SIZE);
+    var rows = slice.map(function(e) {
       var paymentId = e.razorpay_payment_id
         ? '<code style="font-size:0.8rem;">' + esc(e.razorpay_payment_id) + '</code>'
         : '<span class="text-muted">&mdash;</span>';
@@ -226,6 +272,21 @@
         + '<td>' + esc((e.start_date || '').slice(0, 10)) + '</td>'
         + '</tr>';
     }).join('');
+    var pagerHtml = '';
+    if (totalPages > 1) {
+      pagerHtml = '<div class="an-pager">'
+        + '<div class="an-pager-info">Showing ' + (start + 1) + '&ndash;' + Math.min(start + PAGE_SIZE, allEnrollments.length) + ' of ' + allEnrollments.length + '</div>'
+        + '<div class="an-pager-controls">'
+        + '<button type="button" onclick="goToPage(' + (currentPage - 1) + ')"' + (currentPage === 1 ? ' disabled' : '') + '>&laquo; Prev</button>'
+        + '<span class="an-pager-info">Page ' + currentPage + ' of ' + totalPages + '</span>'
+        + '<button type="button" onclick="goToPage(' + (currentPage + 1) + ')"' + (currentPage === totalPages ? ' disabled' : '') + '>Next &raquo;</button>'
+        + '</div>'
+        + '</div>';
+    } else if (allEnrollments.length > 0) {
+      pagerHtml = '<div class="an-pager">'
+        + '<div class="an-pager-info">Showing all ' + allEnrollments.length + ' enrollment(s)</div>'
+        + '</div>';
+    }
     wrap.innerHTML = '<div style="overflow-x:auto;">'
       + '<table class="an-table">'
       + '<thead><tr>'
@@ -233,8 +294,17 @@
       + '<th>Amount</th><th>Payment ID</th><th>Status</th><th>Day</th><th>Started</th>'
       + '</tr></thead>'
       + '<tbody>' + rows + '</tbody>'
-      + '</table></div>';
+      + '</table></div>'
+      + pagerHtml;
   }
+
+  window.goToPage = function(n) {
+    var totalPages = Math.max(1, Math.ceil(allEnrollments.length / PAGE_SIZE));
+    if (n < 1 || n > totalPages) return;
+    currentPage = n;
+    renderTable(allEnrollments);
+    document.getElementById('enrollmentsTable').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   window.loadEnrollments = async function() {
     var box = document.getElementById('errorBox');
@@ -251,6 +321,7 @@
       if (d.status !== 'success') {
         throw new Error(d.message || 'API returned error');
       }
+      currentPage = 1;
       renderKpis(d.summary || {});
       renderTierChart(d.tier_distribution || []);
       renderTable(d.enrollments || []);
