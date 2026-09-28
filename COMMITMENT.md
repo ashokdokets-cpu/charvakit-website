@@ -2569,3 +2569,25 @@ correctly; the bypass just skips the actual decrement. Non-admin charge path
 is covered by every other gated route in the app.
 
 **Verdict:** ✅ DONE
+
+---
+
+## Session 2026-09-28 (evening, part 4) — System audit + security sweep
+
+**HEAD after:** 3f71788
+
+### RESOLVED — 20 unguarded /api routes (commit 3f71788)
+Admin-only: delete-user, escrow/release, escrow/resolve, kyc/review, enterprise/resume/pending, enterprise/resume/review, referral/pay
+User-scoped: messaging/inbox, messaging/conversation, kyc/initiate, training/enroll, training/create-plan, training/update-progress, enroll/payment, enroll/check-access, career/alert, career/save-job, career/offer, career/salary
+
+### FLAGGED — dead fetch to /api/notifications/send
+File: templates/lock-in-breaker-pricing.html:155. Est: 5 min.
+
+### FLAGGED — duplicate /api/payment/history route
+Registered twice in main.py. Est: 15 min.
+
+### FLAGGED — /api/na/* auth review
+20 routes with candidate PII. Est: 30 min.
+
+### Completed — System audit
+Produced SYSTEM-AUDIT-2026-09-28.md. 745 routes, 116 root Python files, 178 templates, 0 orphan engines, 20 routes fixed today.
