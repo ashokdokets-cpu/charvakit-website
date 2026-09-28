@@ -105,12 +105,41 @@
     </div>
 
     <script>
-        var topics = {
+        // Fallback topics — used if /api/mcq/topics fetch fails.
+        // Source of truth for live data is mcq_bank.get_all_topics().
+        var topicsFallback = {
             aptitude: ['Quant', 'Probability', 'Data Interpretation', 'Logical Reasoning', 'Syllogisms', 'Coding-Decoding', 'Pattern Recognition'],
             technical: ['Data Structures', 'Algorithms', 'OOPs', 'Operating Systems', 'DBMS & SQL', 'Computer Networks'],
             pseudocode: ['C', 'C++', 'Java', 'Python'],
             domain: ['Cloud', 'Web Development', 'Cybersecurity', 'Agile']
         };
+        var topics = Object.assign({}, topicsFallback);
+
+        async function loadTopics() {
+            try {
+                const r = await fetch('/api/mcq/topics');
+                const d = await r.json();
+                if (d.status === 'success' && d.categories) {
+                    // Convert {key: {name, topics}} -> {key: [topics]}
+                    const converted = {};
+                    Object.keys(d.categories).forEach(function(k) {
+                        const cat = d.categories[k];
+                        converted[k] = cat.topics || [];
+                        // Update the card subtitle with real counts
+                        const card = document.querySelector('[data-category="' + k + '"]');
+                        if (card) {
+                            const small = card.querySelector('small');
+                            if (small) {
+                                small.textContent = cat.topics.length + ' Topics | ' + (cat.topics.length * 10) + ' Questions';
+                            }
+                        }
+                    });
+                    topics = converted;
+                }
+            } catch (e) {
+                console.warn('MCQ: dynamic topics fetch failed, using fallback', e);
+            }
+        }
 
         var currentCategory = 'aptitude';
         var currentTopic = 'Quant';
@@ -277,6 +306,12 @@
         }
 
         showCategory('aptitude');
+
+        // Initialize from live bank on page load
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadTopics();
+            showCategory('aptitude');
+        });
     </script>
 <script>window.CHARVAK_LANG = localStorage.getItem('charvak_lang') || 'en';</script>
 <script src="/static/js/i18n.js" defer></script>
