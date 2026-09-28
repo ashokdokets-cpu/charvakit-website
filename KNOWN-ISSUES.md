@@ -1,6 +1,7 @@
 # Charvak — Known Issues Registry
 
 **Created:** 2026-09-18
+**Last updated:** 2026-09-28 (Session C)
 **Purpose:** Central registry for bugs, dead code, and design issues found during the persistence project. Every session appends to this file. Session I resolves what's still open.
 
 **Legend:** 🔴 data integrity | 🟠 feature gap | 🟡 cosmetic | 🟢 hygiene
@@ -26,6 +27,11 @@
 
 | Date | Session | File | Issue | Fix |
 |---|---|---|---|---|
+| 2026-09-28 | Sec | main.py | 20 unguarded /api routes (escrow, kyc, enterprise, referral, lifecycle, messaging, career, training, enroll) | require_admin or require_auth_for_email added - 3f71788 |
+| 2026-09-28 | Sec | main.py | 4 AI tool routes missing email-match auth | require_auth_for_email added - 6b22d61 |
+| 2026-09-28 | Sec | main.py | 147 routes swallowed HTTPException via broad except Exception (guards never fired) | except HTTPException: raise inserted - a8e1275 |
+| 2026-09-28 | Fix | templates/lock-in-breaker-pricing.html | Dead fetch to /api/notifications/send | Removed - 03903a2 |
+| 2026-09-28 | Fix | main.py | Duplicate /api/payment/history route | Removed duplicate - 03903a2 |
 | 2026-09-18 | G/4 | `na_module/resume_engine.py` | PII phone regex had a capture group → `re.findall` returned empty strings → `replace('', ...)` inserted redaction marker between every character (86 chars → 1529 chars) | Non-capturing group `(?:...)` |
 | 2026-09-18 | G/2 | `na_module/vms_connector.py` | `job_id = f"NA-JOB-{hash(str(raw_data))}"` — `hash()` randomized per process, IDs changed on every restart | `secrets.token_hex(4).upper()` |
 | 2026-09-18 | G/4 | `na_module/resume_engine.py` | `vendor_id = f"VEN-{hash(...)}"` — same bug | `secrets.token_hex(4).upper()` |

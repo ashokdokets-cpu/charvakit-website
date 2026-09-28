@@ -96,3 +96,79 @@ Re-run: after major security changes, every ~30 sessions, before any public laun
 4. Product decisions (open-ended)
 
 **End of audit.**
+
+---
+
+## Session C addendum (same day, ~4 hrs later)
+
+**HEAD after Session C:** ``da15ef6``
+
+### What shipped since the audit was written
+
+**4 unlisted AI tools - frontends rebuilt:**
+- Neural Wireframe - form + credits + JSX render
+- Globalize.ai - URL + language + nested JSON report
+- Legacy-Shift - code textarea + migration plan
+- Agent-Ready - URL + JSON-LD + micro-APIs
+
+**Security sweep continued:**
+- 20 unguarded routes guarded (``3f71788``)
+- 4 AI tool routes now have auth (``6b22d61``)
+- **147 HTTPException re-raise clauses** (``a8e1275``)
+
+### CRITICAL - why the 147-clause commit matters
+
+While smoke-testing the neural-wireframe guard, we discovered that the
+guards added in ``3f71788`` and ``6b22d61`` **were not firing**. Every
+route wraps its body in:
+
+    try:
+        require_auth_for_email(request, email)  # raises HTTPException(403)
+        ...
+    except Exception as e:
+        return handle_error(e, ...)             # catches it, returns HTTP 200
+
+FastAPI converts HTTPException to a 401/403/402 response **only if it
+propagates**. The route own broad ``except Exception`` swallowed it.
+
+**Impact:** for a short window, the 24 security guards were dead code.
+The 147-clause fix (``a8e1275``) made them live.
+
+**Verified:** curl with no cookie + proper JSON body returns 401 on all
+4 test routes (neural-wireframe, escrow/release, kyc/review, referral/pay).
+
+### Test-tooling discovery
+
+``curl.exe`` in PowerShell strips backslash-escaped quotes inside ``-d``
+payloads. A request like ``-d "{\"email\":\"a@b.com\"}"`` reaches the
+server as ``{email:a@b.com}`` - malformed JSON. The route broad except
+catches the JSONDecodeError and returns 200, making the auth guard look
+broken when it was working.
+
+Fix: use ``--data-binary @file`` with a JSON file. Documented in DEV-SETUP.md.
+
+### Numbers after Session C
+
+| Category | Count |
+|---|---|
+| Total routes | 745 (562 API, 183 page) |
+| Routes with guards | 24 (20 from 3f71788 + 4 from 6b22d61) |
+| HTTPException re-raise clauses | 147 |
+| AI tools with working frontends | 4 (new) |
+| Orphan engines | 0 |
+| Commits today | 17 |
+
+### Backup produced
+
+``C:\\projects\\Charvak_Complete_Backup_20260928_230130.zip``
+- 562 source files
+- 1368 .git history files
+- 152 charvak_* tables (5.1 MB SQL dump)
+- .env + .env.local included (secrets - do not share)
+- Embedding column excluded; regenerate with scripts/backfill_question_embeddings.py
+
+### Tracker state at end of Session C
+
+7 open flags in COMMITMENT.md (all bounded).
+
+**Next session:** Session B - PayPal hardening.

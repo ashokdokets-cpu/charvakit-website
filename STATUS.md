@@ -1,11 +1,43 @@
 # Charvak IT Consulting - Project Status
 
-**Last updated:** 2026-09-19 (end of Session K + B-3/B-4)
-**Version:** v3.2-session-K-complete-20260919
+**Last updated:** 2026-09-28 (Session C - 4 AI tools + 24 routes secured)
+**Version:** v3.5-session-C-20260928
 **Live:** https://www.charvakit.com
 **Status:** Tier 1 + Tier 2 complete. Tier 3 in progress (6 of 10 features shipped). Session K closed: 3 security + 5 data integrity + 4 deferrals + 16 dead-field/easy-bug fixes + 2 migration features. B-3 notification persistence done. B-4 products verified stateless.
 
 ---
+
+---
+
+## Session 2026-09-28 - Session C (AI tools + security sweep)
+
+### Shipped
+- 4 unlisted AI tools rebuilt with real forms + credits flows:
+  Neural Wireframe (25 cr), Globalize.ai (15 cr), Legacy-Shift (20 cr), Agent-Ready (15 cr)
+- FYP Per-Chapter Expand (10 cr per chapter, DOM-cached)
+- Internship admin dashboard (/admin/internship-enrollments)
+
+### Security
+- 20 unguarded /api routes secured (require_admin or require_auth_for_email)
+- 4 AI tool routes now require email-match auth
+- **147 HTTPException re-raise clauses** - the guards added today were
+  being swallowed by route-level except Exception blocks; this fix made them fire
+- Lazy-import-in-pool deadlock sweep: zero remaining sites
+
+### Docs
+- SYSTEM-AUDIT-2026-09-28.md produced
+- All reference docs synced to HEAD
+- Backup at C:\projects\Charvak_Complete_Backup_20260928_230130.zip (50.5 MB)
+
+### Verified E2E
+- Neural Wireframe: pricing-page description -> real React+Tailwind JSX
+- Globalize.ai: example.com -> Spanish translations + LOPDGDD compliance
+- Legacy-Shift: legacy PHP -> SQL injection + XSS + migration steps
+- Agent-Ready: example.com -> JSON-LD + micro-APIs + product schema
+- All 4 routes return 401 without auth (verified via curl)
+
+**HEAD:** da15ef6
+
 
 ## Session 2026-09-19 - Session K (Security + Data Integrity + Cleanup)
 

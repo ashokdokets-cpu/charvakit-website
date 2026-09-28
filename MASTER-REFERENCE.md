@@ -1,11 +1,12 @@
 # CHARVAKIT.COM - MASTER REFERENCE
 ## Charvak IT Consulting Pvt Ltd
-### Last updated: September 19, 2026 (after Session K + H-2 progress)
+### Last updated: September 28, 2026 (after Session C - 4 AI tools shipped + 24 routes secured)
 
+**HEAD:** `da15ef6`
 **Live:** https://www.charvakit.com
 **Resume here:** see `SESSION-CONTEXT.md` (one-file state snapshot for fresh chat windows)
 **Backlog:** see `OUTSTANDING-WORK-INVENTORY.md` (master list of remaining work)
-**Version:** v3.2-session-K-complete-20260919
+**Version:** v3.5-session-C-20260928
 
 ### Reference Documents
 

@@ -5,6 +5,7 @@
 **DB-backed:** ~46 confirmed via scan (49 claimed in docs, delta likely na_module + top-level modules)
 **Pulled from:** KNOWN-ISSUES.md, TODO-MASTER.md, TIER3-PERSISTENCE-PROJECT.md, master docs
 **Filed:** 2026-09-19
+**Last updated:** 2026-09-28 (Session C)
 **Total line items:** ~77
 
 ---
@@ -15,6 +16,22 @@
 - 12 exams added; catalog 67/8 -> 79/9
 - New `international` category: GMAT Focus, GRE General, TOEFL iBT
 - Prod-verified: `total_categories: 9`, `total_exams: 79`
+
+
+### Session C - 2026-09-28 closures
+
+- Unlisted AI tools frontend wiring - DONE (da15ef6, 05bf57f, 6b18873, a7080cd)
+- 20 unguarded /api routes - DONE (3f71788)
+- 4 AI tool routes auth - DONE (6b22d61)
+- 147 HTTPException re-raise clauses - DONE (a8e1275)
+- Dead /api/notifications/send fetch - DONE (03903a2)
+- Duplicate /api/payment/history - DONE (03903a2)
+- Lazy-import deadlock sweep - DONE (zero remaining sites)
+- FYP per-chapter expand - DONE (a9a6a04)
+- Internship admin dashboard - DONE (c4fb2a5)
+- System audit - DONE (SYSTEM-AUDIT-2026-09-28.md)
+
+**Remaining action items:** tracked in COMMITMENT.md (7 flags).
 
 ---
 
