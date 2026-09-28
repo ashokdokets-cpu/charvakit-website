@@ -2376,6 +2376,15 @@ Any template that needs a modal puts it in the modal block instead of the conten
 - Fake payment rejected with 402 (verified against real Razorpay API)
 - Legacy `/api/internship/enroll` route kept for backward compat (unused by new UI)
 
+### AUDITED — modal stacking-context sweep (2026-09-28)
+
+Grep of `templates/*.html` for `class="modal fade"` returned exactly **one** match:
+`templates/ai-internship.html` (the Phase 4 tier modal, already fixed by moving it to
+`{% block modal %}`). No other templates have modals trapped in `<main>`.
+
+**Going forward:** any new modal goes in `{% block modal %}` in `base.html`
+(declared right after `</main>`), never in `{% block content %}`.
+
 ### Cleanup pending
 
 - **devtest orphan enrollments** — ~8 active rows from testing. Delete + refund or leave. Do at end of internship work.
