@@ -871,7 +871,9 @@ Verdict: SCHEDULED — own session
   by `return` with no logging. Same class of bug as the AI JSON parsing issues in
   `ai_service.py` (silent swallow on parse failure).
 
-### FLAGGED — Voice-to-Web Option 2 — auto-deploy infrastructure (2026-09-25)
+### RESOLVED — Voice-to-Web Option 2 — auto-deploy infrastructure ((2026-09-28))
+
+**Resolved 2026-09-28.** Infrastructure shipped 2026-09-26 — html_content + slug columns, /sites/{slug} route, real URL, two-call frontend. Flag never updated. Session 2026-09-28 (commit 45ec344) added My Websites dashboard + GET /api/voice-to-web/my-sites/{email} + copy cleanup + data cleanup. Verified: goa-surf-shop, bangalore-yoga-studio, cozy-cafe all render.
 
 - **Trigger:** Model A shipped as concierge beta. Website drafts are generated and stored,
   but the returned URL (`https://{business-name}.charvakit.com`) is computed-only and does
