@@ -1,5 +1,44 @@
 {% extends "base.html" %}
 {% block title %}AI Internship Program - Charvak{% endblock %}
+{% block modal %}
+<!-- ============================================================ -->
+<!-- Internship Enrollment Modal (Phase 4)                       -->
+<!-- ============================================================ -->
+<div class="modal fade" id="tierModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable" style="margin: 0.5rem auto; max-height: calc(100vh - 1rem);">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Choose Your Internship Plan</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted small mb-3" id="tierModalSubtitle">Loading plans&hellip;</p>
+        <div class="row row-cols-1 row-cols-md-2 g-3" id="tierGrid"></div>
+        <div class="alert alert-light border mt-4 mb-0">
+          <strong>Every plan includes:</strong>
+          <ul class="mb-0 mt-2 small">
+            <li>AI-generated daily scenarios tailored to your role</li>
+            <li>Unlimited AI mentor feedback on submitted work</li>
+            <li>20 AI mentor questions during the program</li>
+            <li>Verified digital badge on completion</li>
+            <li>Resume-ready deliverables</li>
+          </ul>
+        </div>
+      </div>
+      <div class="modal-footer justify-content-between">
+        <span class="text-muted small" id="tierModalCredits"></span>
+        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Green success toast -->
+<div id="enrollToast" class="position-fixed start-50 translate-middle-x" style="top: 90px; z-index: 1080; display: none;">
+  <div class="alert alert-success shadow-sm mb-0" role="alert" id="enrollToastBody"></div>
+</div>
+{% endblock %}
+
 {% block content %}
 <div class="page-hero bg-gradient-primary text-white py-5">
     <div class="container py-4 text-center">
@@ -272,7 +311,7 @@ function displayPrograms(programs) {
             }
             
             const customBadge = program.is_custom ? '<span class="badge bg-info text-dark ms-2">Custom</span>' : '';
-            const durationText = program.is_custom ? (program.duration || '') : '2/4/6 weeks available';
+            const durationText = program.is_custom ? 'Choose your plan' : 'Multiple plans available';
             const safeName = String(program.name || '').replace(/[<>"'&]/g, c => ({'<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','&':'&amp;'}[c]));
             const safeId = String(program.id || '').replace(/[^A-Za-z0-9_\-]/g, '');
             row.innerHTML += `
@@ -281,7 +320,7 @@ function displayPrograms(programs) {
                         <div class="card-body text-center">
                             <h3 class="as-h6">${safeName}${customBadge}</h3>
                             <p class="text-muted small">${durationText}</p>
-                            <h4 class="text-primary"><span data-inr="${program.price}">${priceDisplay}</span></h4>
+                            <h4 class="text-primary"><span data-inr="${program.price}">${program.is_custom ? "From " + priceDisplay : priceDisplay}</span></h4>
                             <p class="small"><strong>Skills:</strong> ${(program.skills || []).join(', ')}</p>
                             <button class="btn btn-primary btn-sm w-100" onclick="enrollInternship('${safeId}', '${safeName}', ${program.price || 0})">
                                 Enroll Now
@@ -360,56 +399,279 @@ async function createCustomProgram() {
     }
 }
 
-function enrollInternship(programId, programName, price) {
-    const email = localStorage.getItem('userEmail');
-    if (!email || !_authToken()) {
+// ============================================================
+// Phase 4: tier-based enrollment (INR via Razorpay)
+// ============================================================
+
+window._internshipTiers = window._internshipTiers || null;
+window._enrollProgram = window._enrollProgram || null;
+
+async function openTierModal() {
+    const modalEl = document.getElementById('tierModal');
+    const subtitle = document.getElementById('tierModalSubtitle');
+    const grid = document.getElementById('tierGrid');
+    const creditsSpan = document.getElementById('tierModalCredits');
+
+    if (!modalEl || !subtitle || !grid) {
+        console.error('tierModal DOM not found');
+        return;
+    }
+
+    subtitle.textContent = 'Loading plans...';
+    grid.innerHTML = '<div class="col-12 text-center text-muted py-4">Loading...</div>';
+
+    let tiers = window._internshipTiers;
+    if (!tiers) {
+        try {
+            const r = await fetch('/api/internship/tiers');
+            const d = await r.json();
+            if (d.status === 'success' && Array.isArray(d.tiers)) {
+                tiers = d.tiers;
+                window._internshipTiers = tiers;
+            } else {
+                subtitle.textContent = 'Could not load plans.';
+                grid.innerHTML = '<div class="col-12 text-center text-danger">Failed to load plans. Please try again.</div>';
+                return;
+            }
+        } catch (err) {
+            console.error('tiers fetch error:', err);
+            subtitle.textContent = 'Could not load plans.';
+            grid.innerHTML = '<div class="col-12 text-center text-danger">Network error loading plans.</div>';
+            return;
+        }
+    }
+
+    const prog = window._enrollProgram || {};
+    subtitle.textContent = 'Enrolling in: ' + (prog.programName || 'program');
+
+    const email = localStorage.getItem('userEmail') || '';
+    if (email && creditsSpan) {
+        try {
+            const cr = await fetch('/api/credits/' + encodeURIComponent(email),
+                {headers: {'Authorization': 'Bearer ' + _authToken()}});
+            if (cr.ok) {
+                const cd = await cr.json();
+                const bal = (cd.credits_remaining != null ? cd.credits_remaining : (cd.credits || 0));
+                creditsSpan.textContent = 'Your credits: ' + bal + ' (unused for this program)';
+            }
+        } catch (e) {}
+    }
+
+    const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const fmtINR = (n) => {
+        if (typeof CharvakCurrency !== 'undefined' && CharvakCurrency.format) {
+            try { return CharvakCurrency.format(n); } catch (e) { return '\u20B9' + n; }
+        }
+        return '\u20B9' + n;
+    };
+
+    grid.innerHTML = tiers.map(tier => {
+        const isPopular = tier.tier_key === 'standard';
+        const badge = isPopular ? '<span class="badge bg-warning text-dark ms-2">Popular</span>' : '';
+        const perWeek = Math.round(tier.price_inr / (tier.weeks || 1));
+        return (
+            '<div class="col">' +
+              '<div class="card h-100' + (isPopular ? ' border-warning border-2' : '') + '">' +
+                '<div class="card-body d-flex flex-column">' +
+                  '<h6 class="mb-1">' + esc(tier.tier_name) + badge + '</h6>' +
+                  '<p class="text-muted small mb-2">' + esc(tier.weeks) + ' weeks &middot; ' + esc(tier.business_days) + ' business days</p>' +
+                  '<p class="mb-1"><strong class="fs-5">' + fmtINR(tier.price_inr) + '</strong></p>' +
+                  '<p class="text-muted small mb-3">' + fmtINR(perWeek) + ' / week</p>' +
+                  '<button class="btn btn-primary btn-sm mt-auto" onclick="pickTierByKey(\'' + esc(tier.tier_key) + '\')">Enroll</button>' +
+                '</div>' +
+              '</div>' +
+            '</div>'
+        );
+    }).join('');
+
+    const m = bootstrap.Modal.getOrCreateInstance(modalEl);
+    m.show();
+}
+
+function pickTierByKey(tierKey) {
+    const tiers = window._internshipTiers || [];
+    const tier = tiers.find(x => x.tier_key === tierKey);
+    if (!tier) { alert('Tier not found. Reload and try again.'); return; }
+    pickTier(tier);
+}
+
+async function ensureRazorpayLoaded() {
+    if (window.Razorpay) return true;
+    return new Promise((resolve) => {
+        try {
+            const r = document.createElement('script');
+            r.src = 'https://checkout.razorpay.com/v1/checkout.js';
+            r.async = true;
+            r.onload = () => resolve(true);
+            r.onerror = () => resolve(false);
+            document.head.appendChild(r);
+        } catch (e) {
+            resolve(false);
+        }
+    });
+}
+
+async function pickTier(tier) {
+    const email = localStorage.getItem('userEmail') || '';
+    const token = _authToken();
+    if (!email || !token) {
         alert('Please log in to enroll.');
         window.location.href = '/login?next=/ai-internship';
         return;
     }
-    if (!email) return;
-    
-    // Show duration selection
-    const durationChoice = prompt(
-        'Choose Duration:\n\n' +
-        '1. Quick (2 weeks) - ₹' + price + '\n' +
-        '2. Standard (4 weeks) - ₹' + price + ' (Best Value)\n' +
-        '3. Professional (6 weeks) - ₹' + Math.round(price * 1.5) + '\n\n' +
-        'Enter 1, 2, or 3:'
-    );
-    
-    const durationMap = {
-        '1': {id: 'quick', name: 'Quick', weeks: 2, price: price},
-        '2': {id: 'standard', name: 'Standard', weeks: 4, price: price},
-        '3': {id: 'professional', name: 'Professional', weeks: 6, price: Math.round(price * 1.5)}
-    };
-    
-    const selected = durationMap[durationChoice] || durationMap['2'];
-    
-    // Real enroll fetch — no processToolPayment wrapper
-    fetch('/api/internship/enroll', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + _authToken()
-        },
-        body: JSON.stringify({email: email, program_id: programId, duration: selected.id})
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.status === 'success') {
-            currentEnrollment = data.enrollment_id;
-            localStorage.setItem('internship_enrollment', currentEnrollment);
-            alert('Enrolled! ' + selected.name + ' internship (' + selected.weeks + ' weeks) starts now!');
-            loadDailyScenario(1);
-        } else {
-            alert('Enrollment failed: ' + (data.message || 'Unknown error'));
+    const prog = window._enrollProgram || {};
+    if (!prog.programId) { alert('No program selected. Reload the page.'); return; }
+
+    const rzpLoaded = await ensureRazorpayLoaded();
+    if (!rzpLoaded) {
+        alert('Could not load the payment SDK. Check your connection.');
+        return;
+    }
+
+    let orderData;
+    try {
+        const res = await fetch('/api/payment/create-order', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
+            body: JSON.stringify({
+                amount: tier.price_inr,
+                plan: 'internship_' + tier.tier_key,
+                email: email,
+                name: localStorage.getItem('userName') || '',
+                tool: 'internship_enroll',
+                program_id: prog.programId,
+                tier_key: tier.tier_key
+            })
+        });
+        orderData = await res.json();
+        if (orderData.status !== 'success' && !orderData.order_id) {
+            alert('Could not start payment: ' + (orderData.message || 'unknown'));
+            return;
         }
-    })
-    .catch(err => {
-        console.error('Enroll error:', err);
-        alert('Enrollment failed. Check console for details.');
-    });
+    } catch (err) {
+        console.error('create-order error:', err);
+        alert('Network error creating order.');
+        return;
+    }
+
+    const options = {
+        key: orderData.key_id,
+        amount: orderData.amount,
+        currency: orderData.currency || 'INR',
+        name: 'Charvak IT Consulting',
+        description: tier.tier_name + ' - ' + (prog.programName || 'Internship'),
+        order_id: orderData.order_id,
+        prefill: {
+            email: email,
+            name: localStorage.getItem('userName') || ''
+        },
+        theme: { color: '#0d6efd' },
+        handler: function (response) {
+            verifyAndEnroll(tier, response);
+        }
+    };
+
+    try {
+        const rzp = new window.Razorpay(options);
+        rzp.on('payment.failed', function (resp) {
+            const msg = (resp && resp.error && resp.error.description) || 'Payment failed';
+            alert('Payment failed: ' + msg);
+        });
+        rzp.open();
+    } catch (err) {
+        console.error('Razorpay open failed:', err);
+        alert('Could not open payment window.');
+    }
+}
+
+async function verifyAndEnroll(tier, response) {
+    const email = localStorage.getItem('userEmail') || '';
+    const token = _authToken();
+    const prog = window._enrollProgram || {};
+
+    try {
+        const vr = await fetch('/api/payment/verify', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
+            body: JSON.stringify({
+                payment_id: response.razorpay_payment_id,
+                order_id: response.razorpay_order_id,
+                signature: response.razorpay_signature
+            })
+        });
+        const vd = await vr.json();
+        if (vd.status !== 'success' && vd.verified !== true) {
+            alert('Payment verification failed: ' + (vd.message || 'signature mismatch'));
+            return;
+        }
+    } catch (err) {
+        console.error('verify error:', err);
+        alert('Network error during verification.');
+        return;
+    }
+
+    let enrollData;
+    try {
+        const er = await fetch('/api/internship/enroll-paid', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
+            body: JSON.stringify({
+                email: email,
+                program_id: prog.programId,
+                tier_key: tier.tier_key,
+                payment_id: response.razorpay_payment_id
+            })
+        });
+        enrollData = await er.json();
+
+        if (er.status === 401) {
+            alert('Session expired. Please log in again.');
+            window.location.href = '/login?next=/ai-internship';
+            return;
+        }
+        if (er.status === 402 || !enrollData.enrollment_id) {
+            alert('Enrollment failed: ' + (enrollData.message || 'Payment not verified'));
+            return;
+        }
+    } catch (err) {
+        console.error('enroll-paid error:', err);
+        alert('Network error creating enrollment.');
+        return;
+    }
+
+    try {
+        const modalEl = document.getElementById('tierModal');
+        const inst = bootstrap.Modal.getInstance(modalEl);
+        if (inst) inst.hide();
+    } catch (e) {}
+
+    currentEnrollment = enrollData.enrollment_id;
+    localStorage.setItem('internship_enrollment', currentEnrollment);
+
+    showEnrollToast('Enrolled! ' + tier.tier_name + ' - starting Day 1...');
+
+    const area = document.getElementById('enrollmentArea') || document.getElementById('scenarioArea');
+    if (area) area.scrollIntoView({behavior: 'smooth', block: 'start'});
+
+    setTimeout(() => {
+        if (typeof loadDailyScenario === 'function') {
+            loadDailyScenario(1);
+        }
+    }, 600);
+}
+
+function showEnrollToast(msg) {
+    const el = document.getElementById('enrollToast');
+    const body = document.getElementById('enrollToastBody');
+    if (!el || !body) return;
+    body.textContent = msg;
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 4500);
+}
+
+async function enrollInternship(programId, programName, price) {
+    window._enrollProgram = { programId: programId, programName: programName, price: price };
+    await openTierModal();
 }
 
 async function loadDailyScenario(day) {
@@ -767,4 +1029,5 @@ document.addEventListener('DOMContentLoaded', async function() {
     loadPrograms();
 });
 </script>
+
 {% endblock %}

@@ -115,17 +115,29 @@ class AIInternshipEngine:
                 ALTER TABLE charvak_ai_internship_enrollments
                 ADD COLUMN IF NOT EXISTS tier_key TEXT DEFAULT 'standard'
             ''')
+            cur.execute('''
+                ALTER TABLE charvak_ai_internship_enrollments
+                ADD COLUMN IF NOT EXISTS mentor_asks_used INTEGER DEFAULT 0
+            ''')
+            cur.execute('''
+                ALTER TABLE charvak_ai_internship_enrollments
+                ADD COLUMN IF NOT EXISTS amount_paid_inr INTEGER DEFAULT 0
+            ''')
+            cur.execute('''
+                ALTER TABLE charvak_ai_internship_enrollments
+                ADD COLUMN IF NOT EXISTS razorpay_payment_id TEXT
+            ''')
 
             # Seed tiers (idempotent)
             tiers_seed = [
-                ("sprint",          "Sprint (2 weeks)",       2,  10, 999,  12, 1),
-                ("standard",        "Standard (4 weeks)",     4,  20, 1999, 24, 2),
-                ("extended",        "Extended (6 weeks)",     6,  30, 2999, 36, 3),
-                ("immersive",       "Immersive (8 weeks)",    8,  40, 3999, 48, 4),
-                ("semester_lite",   "Semester Lite (10 wk)", 10,  50, 4999, 60, 5),
-                ("semester",        "Semester (12 weeks)",   12,  60, 5999, 72, 6),
-                ("semester_plus",   "Semester Plus (14 wk)", 14,  70, 6999, 84, 7),
-                ("capstone",        "Capstone (16 weeks)",   16,  80, 7999, 96, 8),
+                ("sprint",          "Sprint (2 weeks)",       2,  10, 1299,  16, 1),
+                ("standard",        "Standard (4 weeks)",     4,  20, 2499,  30, 2),
+                ("extended",        "Extended (6 weeks)",     6,  30, 3499,  42, 3),
+                ("immersive",       "Immersive (8 weeks)",    8,  40, 4499,  54, 4),
+                ("semester_lite",   "Semester Lite (10 wk)", 10,  50, 5499,  66, 5),
+                ("semester",        "Semester (12 weeks)",   12,  60, 6499,  78, 6),
+                ("semester_plus",   "Semester Plus (14 wk)", 14,  70, 7499,  90, 7),
+                ("capstone",        "Capstone (16 weeks)",   16,  80, 8499, 102, 8),
             ]
             for tk, tn, wk, bd, inr, usd, order in tiers_seed:
                 cur.execute('''
@@ -134,6 +146,24 @@ class AIInternshipEngine:
                     VALUES (%s, %s, %s, %s, %s, %s, %s)
                     ON CONFLICT (tier_key) DO NOTHING
                 ''', (tk, tn, wk, bd, inr, usd, order))
+
+            # Refresh prices for existing rows (idempotent, keeps in sync with seed)
+            cur.execute('''
+                UPDATE charvak_ai_internship_tiers SET
+                    price_inr = v.price_inr, price_usd = v.price_usd,
+                    tier_name = v.tier_name, weeks = v.weeks, business_days = v.business_days
+                FROM (VALUES
+                    ('sprint', 'Sprint (2 weeks)', 2, 10, 1299, 16),
+                    ('standard', 'Standard (4 weeks)', 4, 20, 2499, 30),
+                    ('extended', 'Extended (6 weeks)', 6, 30, 3499, 42),
+                    ('immersive', 'Immersive (8 weeks)', 8, 40, 4499, 54),
+                    ('semester_lite', 'Semester Lite (10 wk)', 10, 50, 5499, 66),
+                    ('semester', 'Semester (12 weeks)', 12, 60, 6499, 78),
+                    ('semester_plus', 'Semester Plus (14 wk)', 14, 70, 7499, 90),
+                    ('capstone', 'Capstone (16 weeks)', 16, 80, 8499, 102)
+                ) AS v(tier_key, tier_name, weeks, business_days, price_inr, price_usd)
+                WHERE charvak_ai_internship_tiers.tier_key = v.tier_key
+            ''')
 
             conn.commit()
             cur.close(); conn.close()
@@ -283,7 +313,7 @@ class AIInternshipEngine:
                 "id": program_id,
                 "name": name,
                 "duration": f"{duration_weeks} weeks",
-                "price": 0,
+                "price": 1299,  # minimum tier price (sprint)
                 "category": category,
                 "skills": skills,
                 "deliverables": deliverables,
@@ -337,6 +367,29 @@ class AIInternshipEngine:
     # ============================================================
     # CATALOG
     # ============================================================
+
+    def _get_tier_by_key(self, tier_key):
+        """Fetch a single tier row. Returns dict or None."""
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT tier_key, tier_name, weeks, business_days, price_inr, price_usd "
+                "FROM charvak_ai_internship_tiers WHERE tier_key = %s AND is_active = 1",
+                (tier_key,),
+            )
+            row = cur.fetchone()
+            cur.close(); conn.close()
+            if not row:
+                return None
+            return {
+                "tier_key": row[0], "tier_name": row[1], "weeks": row[2],
+                "business_days": row[3], "price_inr": row[4], "price_usd": row[5],
+            }
+        except Exception as e:
+            logger.error(f"_get_tier_by_key failed: {e}")
+            return None
 
     def get_tiers(self):
         """Return the duration tiers sorted by display order."""
@@ -737,7 +790,7 @@ Rules:
                         "id": row[0],
                         "name": row[1],
                         "duration": f"{weeks} weeks",
-                        "price": 0,
+                        "price": 1299,  # minimum tier price (sprint)
                         "category": row[2] or "Custom",
                         "skills": row[3] if isinstance(row[3], list) else [],
                         "deliverables": row[4] if isinstance(row[4], list) else [],
@@ -785,6 +838,100 @@ Rules:
             return {"status": "error", "message": "Could not enroll"}
 
         return {"status": "success", "enrollment_id": enrollment_id, "total_days": total_days}
+
+    def find_enrollment_by_payment(self, payment_id):
+        """Return enrollment_id if a payment_id already has an enrollment. Idempotency check."""
+        if not payment_id:
+            return None
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT enrollment_id FROM charvak_ai_internship_enrollments "
+                "WHERE razorpay_payment_id = %s LIMIT 1",
+                (payment_id,),
+            )
+            row = cur.fetchone()
+            cur.close(); conn.close()
+            return row[0] if row else None
+        except Exception as e:
+            logger.error(f"find_enrollment_by_payment failed: {e}")
+            return None
+
+    def enroll_paid(self, email, program_id, tier_key, payment_id, amount_paid_inr):
+        """Create a paid enrollment. Caller MUST have verified the Razorpay payment first."""
+        tier = self._get_tier_by_key(tier_key)
+        if not tier:
+            return {"status": "error", "message": "Invalid tier"}
+        resolved = self._resolve_program(program_id, email)
+        if not resolved:
+            return {"status": "error", "message": "Program not found"}
+
+        enrollment_id = f"INT-{datetime.now().strftime('%Y%m%d%H%M%S')}-{secrets.token_hex(2).upper()}"
+        total_days = tier["business_days"]
+        # duration string used by existing scenario-generator code paths
+        duration = tier_key
+
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute(
+                "UPDATE charvak_ai_internship_enrollments "
+                "SET status = 'abandoned' "
+                "WHERE email = %s AND program_id = %s AND status = 'active'",
+                (email, program_id),
+            )
+            cur.execute('''
+                INSERT INTO charvak_ai_internship_enrollments
+                    (enrollment_id, email, program_id, duration, total_days,
+                     current_day, status, tier_key, amount_paid_inr, razorpay_payment_id,
+                     mentor_asks_used)
+                VALUES (%s, %s, %s, %s, %s, 1, 'active', %s, %s, %s, 0)
+            ''', (
+                enrollment_id, email, program_id, duration, total_days,
+                tier_key, amount_paid_inr, payment_id,
+            ))
+            conn.commit()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"enroll_paid failed: {e}")
+            return {"status": "error", "message": "Could not create enrollment"}
+
+        # Send confirmation email (non-fatal: enrollment already created)
+        try:
+            from enhanced_email import enhanced_email
+            _name = ""
+            try:
+                from database import db as _db
+                _c = _db.get_connection(); _cur = _c.cursor()
+                _cur.execute("SELECT name FROM users WHERE email = %s LIMIT 1", (email,))
+                _row = _cur.fetchone()
+                _name = (_row[0] if _row and _row[0] else "")
+                _cur.close(); _c.close()
+            except Exception:
+                pass
+            enhanced_email.send_internship_enrollment(
+                email=email,
+                name=_name,
+                program_name=resolved.get("name") or program_id,
+                tier_name=tier.get("tier_name") or tier_key,
+                amount_inr=amount_paid_inr,
+                enrollment_id=enrollment_id,
+                duration_weeks=tier.get("weeks", 4),
+                total_days=total_days,
+            )
+        except Exception as mail_e:
+            logger.warning(f"enroll_paid confirmation email failed (non-fatal): {mail_e}")
+
+        return {
+            "status": "success",
+            "enrollment_id": enrollment_id,
+            "total_days": total_days,
+            "tier_key": tier_key,
+            "amount_paid_inr": amount_paid_inr,
+        }
 
     def _get_enrollment(self, enrollment_id):
         try:
