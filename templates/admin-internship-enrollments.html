@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+{% block title %}Internship Enrollments - Admin{% endblock %}
+{% block content %}
+<style>
+  .an-hero { background: linear-gradient(135deg, #0f172a 0%, #1e40af 100%); color: #fff; padding: 48px 0 32px; }
+  .an-hero h1 { font-weight: 800; margin-bottom: 6px; }
+  .an-hero p { opacity: 0.85; margin: 0; }
+  .an-wrap { max-width: 1200px; margin: 0 auto; padding: 32px 16px 60px; }
+  .an-kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 32px; }
+  .an-kpi { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 20px; }
+  .an-kpi-value { font-size: 2.2rem; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+  .an-kpi-label { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280; }
+  .an-kpi-sub { font-size: 0.85rem; color: #9ca3af; margin-top: 6px; }
+  .an-section { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 24px; margin-bottom: 20px; }
+  .an-section h3 { font-weight: 700; margin-bottom: 16px; font-size: 1.15rem; }
+  .an-table { width: 100%; font-size: 0.9rem; }
+  .an-table th { text-align: left; padding: 8px 12px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280; border-bottom: 1px solid #e5e7eb; }
+  .an-table td { padding: 10px 12px; border-bottom: 1px solid #f3f4f6; }
+  .an-table tr:last-child td { border-bottom: none; }
+  .an-empty { text-align: center; padding: 40px 20px; color: #9ca3af; }
+  .an-updated { font-size: 0.8rem; color: #9ca3af; text-align: right; margin-bottom: 12px; }
+  .an-btn { border: none; border-radius: 8px; padding: 6px 16px; font-size: 0.85rem; cursor: pointer; }
+  .an-btn-primary { background: #1e40af; color: #fff; }
+  .an-btn-primary:hover { background: #1e3a8a; }
+  .an-btn-outline { background: #fff; color: #1e40af; border: 1px solid #1e40af; }
+  .an-btn-outline:hover { background: #eff6ff; }
+  .an-filter-row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+  .an-filter { display: flex; flex-direction: column; gap: 4px; }
+  .an-filter label { font-size: 0.75rem; text-transform: uppercase; color: #6b7280; letter-spacing: 0.5px; }
+  .an-filter input[type=date] { padding: 6px 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.9rem; }
+  .an-checkbox { display: flex; align-items: center; gap: 6px; padding-bottom: 8px; }
+  .an-doughnut-wrap { max-width: 380px; margin: 0 auto; }
+  .an-doughnut-legend { list-style: none; padding: 0; margin: 16px 0 0; font-size: 0.9rem; }
+  .an-doughnut-legend li { padding: 4px 0; display: flex; align-items: center; gap: 8px; }
+  .an-doughnut-legend .swatch { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+  .an-row-actions { text-align: right; white-space: nowrap; }
+</style>
+
+<div class="an-hero">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-start flex-wrap">
+      <div>
+        <h1>Internship Enrollments</h1>
+        <p>Paid enrollment revenue, tier distribution, and per-student detail</p>
+      </div>
+      <button class="an-btn an-btn-primary mt-2" onclick="loadEnrollments()">&#8635; Refresh</button>
+    </div>
+  </div>
+</div>
+
+<div class="an-wrap">
+
+  <div class="an-updated" id="lastUpdated">Loading&hellip;</div>
+  <div id="errorBox" class="alert alert-danger" style="display:none;"></div>
+
+  <!-- KPI cards -->
+  <div class="an-kpi-grid" id="kpiRow"></div>
+
+  <!-- Filters -->
+  <div class="an-section">
+    <h3>Filters</h3>
+    <div class="an-filter-row">
+      <div class="an-filter">
+        <label for="filterFrom">From</label>
+        <input type="date" id="filterFrom">
+      </div>
+      <div class="an-filter">
+        <label for="filterTo">To</label>
+        <input type="date" id="filterTo">
+      </div>
+      <div class="an-checkbox">
+        <input type="checkbox" id="filterHideTest" checked>
+        <label for="filterHideTest" style="text-transform:none; font-size:0.9rem; color:#374151; letter-spacing:0;">Hide test emails (@charvak.local, @test.local, @example.com)</label>
+      </div>
+      <button class="an-btn an-btn-primary" onclick="loadEnrollments()">Apply</button>
+      <button class="an-btn an-btn-outline" onclick="resetFilters()">Reset</button>
+      <button class="an-btn an-btn-outline" onclick="exportCsv()">&#8681; Export CSV</button>
+    </div>
+  </div>
+
+  <!-- Tier distribution doughnut -->
+  <div class="an-section">
+    <h3>Tier Distribution</h3>
+    <div id="tierChartEmpty" class="an-empty" style="display:none;">No enrollments to chart yet.</div>
+    <div id="tierChartWrap" class="an-doughnut-wrap" style="display:none;">
+      <canvas id="tierChart" height="220"></canvas>
+      <ul class="an-doughnut-legend" id="tierLegend"></ul>
+    </div>
+  </div>
+
+  <!-- Enrollments table -->
+  <div class="an-section">
+    <h3>Enrollments</h3>
+    <div id="enrollmentsTable"></div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+<script>
+(function() {
+  var chartInstance = null;
+  var CHART_COLORS = ['#1e40af', '#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe', '#dbeafe', '#1e3a8a', '#1d4ed8'];
+
+  function fmtInr(n) {
+    n = Number(n) || 0;
+    return 'Rs.' + n.toLocaleString('en-IN');
+  }
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  function buildQuery() {
+    var from = document.getElementById('filterFrom').value;
+    var to = document.getElementById('filterTo').value;
+    var hideTest = document.getElementById('filterHideTest').checked ? '1' : '0';
+    var q = [];
+    if (from) q.push('from=' + encodeURIComponent(from));
+    if (to) q.push('to=' + encodeURIComponent(to));
+    q.push('hide_test=' + hideTest);
+    return q.join('&');
+  }
+
+  function renderKpis(summary) {
+    var row = document.getElementById('kpiRow');
+    var cards = [
+      { label: 'Total Revenue', value: fmtInr(summary.total_revenue_inr), sub: summary.paid_count + ' paid enrollment(s)' },
+      { label: 'Total Enrollments', value: summary.total_enrollments, sub: summary.active_count + ' active, ' + summary.abandoned_count + ' abandoned' },
+      { label: 'Active', value: summary.active_count, sub: summary.completed_count + ' completed' },
+      { label: 'Paid', value: summary.paid_count, sub: summary.total_enrollments - summary.paid_count + ' unpaid (legacy/free)' },
+    ];
+    row.innerHTML = cards.map(function(c) {
+      return '<div class="an-kpi">'
+        + '<div class="an-kpi-value">' + esc(c.value) + '</div>'
+        + '<div class="an-kpi-label">' + esc(c.label) + '</div>'
+        + '<div class="an-kpi-sub">' + esc(c.sub) + '</div>'
+        + '</div>';
+    }).join('');
+  }
+
+  function renderTierChart(dist) {
+    var wrap = document.getElementById('tierChartWrap');
+    var empty = document.getElementById('tierChartEmpty');
+    if (!dist || !dist.length) {
+      wrap.style.display = 'none';
+      empty.style.display = 'block';
+      return;
+    }
+    wrap.style.display = 'block';
+    empty.style.display = 'none';
+
+    var labels = dist.map(function(d) { return d.tier_name; });
+    var counts = dist.map(function(d) { return d.count; });
+    var colors = dist.map(function(_, i) { return CHART_COLORS[i % CHART_COLORS.length]; });
+
+    var canvas = document.getElementById('tierChart');
+    if (chartInstance) chartInstance.destroy();
+    chartInstance = new Chart(canvas, {
+      type: 'doughnut',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: counts,
+          backgroundColor: colors,
+          borderColor: '#fff',
+          borderWidth: 2,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function(ctx) {
+                var total = ctx.dataset.data.reduce(function(a, b) { return a + b; }, 0);
+                var pct = total ? Math.round((ctx.parsed / total) * 100) : 0;
+                return ctx.label + ': ' + ctx.parsed + ' (' + pct + '%)';
+              }
+            }
+          }
+        }
+      }
+    });
+
+    var legend = document.getElementById('tierLegend');
+    legend.innerHTML = dist.map(function(d, i) {
+      return '<li>'
+        + '<span class="swatch" style="background:' + colors[i] + '"></span>'
+        + '<strong>' + esc(d.tier_name) + '</strong>'
+        + ' &mdash; ' + d.count + ' enrollment(s)'
+        + ' &mdash; ' + fmtInr(d.revenue_inr)
+        + '</li>';
+    }).join('');
+  }
+
+  function renderTable(enrollments) {
+    var wrap = document.getElementById('enrollmentsTable');
+    if (!enrollments || !enrollments.length) {
+      wrap.innerHTML = '<div class="an-empty">No enrollments match the current filters.</div>';
+      return;
+    }
+    var rows = enrollments.map(function(e) {
+      var paymentId = e.razorpay_payment_id
+        ? '<code style="font-size:0.8rem;">' + esc(e.razorpay_payment_id) + '</code>'
+        : '<span class="text-muted">&mdash;</span>';
+      var amountClass = e.amount_paid_inr > 0 ? 'text-success fw-bold' : 'text-muted';
+      var statusBadge = e.status === 'active'
+        ? '<span class="badge bg-success">active</span>'
+        : e.status === 'completed'
+          ? '<span class="badge bg-primary">completed</span>'
+          : '<span class="badge bg-secondary">' + esc(e.status || 'unknown') + '</span>';
+      return '<tr>'
+        + '<td>' + esc(e.enrollment_id) + '</td>'
+        + '<td>' + esc(e.email) + '</td>'
+        + '<td>' + esc(e.program_name) + '</td>'
+        + '<td>' + esc(e.tier_name) + '</td>'
+        + '<td class="' + amountClass + '">' + fmtInr(e.amount_paid_inr) + '</td>'
+        + '<td>' + paymentId + '</td>'
+        + '<td>' + statusBadge + '</td>'
+        + '<td>' + (e.current_day || 0) + '/' + (e.total_days || 0) + '</td>'
+        + '<td>' + esc((e.start_date || '').slice(0, 10)) + '</td>'
+        + '</tr>';
+    }).join('');
+    wrap.innerHTML = '<div style="overflow-x:auto;">'
+      + '<table class="an-table">'
+      + '<thead><tr>'
+      + '<th>Enrollment</th><th>Email</th><th>Program</th><th>Tier</th>'
+      + '<th>Amount</th><th>Payment ID</th><th>Status</th><th>Day</th><th>Started</th>'
+      + '</tr></thead>'
+      + '<tbody>' + rows + '</tbody>'
+      + '</table></div>';
+  }
+
+  window.loadEnrollments = async function() {
+    var box = document.getElementById('errorBox');
+    box.style.display = 'none';
+    document.getElementById('lastUpdated').textContent = 'Loading...';
+    try {
+      var r = await fetch('/api/admin/internship-enrollments?' + buildQuery(), {
+        credentials: 'same-origin',
+      });
+      if (!r.ok) {
+        throw new Error('HTTP ' + r.status + ' — ' + (r.status === 403 ? 'admin required' : 'request failed'));
+      }
+      var d = await r.json();
+      if (d.status !== 'success') {
+        throw new Error(d.message || 'API returned error');
+      }
+      renderKpis(d.summary || {});
+      renderTierChart(d.tier_distribution || []);
+      renderTable(d.enrollments || []);
+      var gen = (d.generated_at || '').replace('T', ' ').replace('Z', ' UTC');
+      document.getElementById('lastUpdated').textContent = 'Last updated: ' + gen;
+    } catch (e) {
+      box.textContent = 'Failed to load: ' + e.message;
+      box.style.display = 'block';
+      document.getElementById('lastUpdated').textContent = '';
+    }
+  };
+
+  window.resetFilters = function() {
+    document.getElementById('filterFrom').value = '';
+    document.getElementById('filterTo').value = '';
+    document.getElementById('filterHideTest').checked = true;
+    loadEnrollments();
+  };
+
+  window.exportCsv = function() {
+    var url = '/api/admin/internship-enrollments.csv?' + buildQuery();
+    window.location.href = url;
+  };
+
+  document.addEventListener('DOMContentLoaded', function() {
+    loadEnrollments();
+  });
+})();
+</script>
+{% endblock %}
