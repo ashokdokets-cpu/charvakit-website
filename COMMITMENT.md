@@ -2591,3 +2591,25 @@ Registered twice in main.py. Est: 15 min.
 
 ### Completed — System audit
 Produced SYSTEM-AUDIT-2026-09-28.md. 745 routes, 116 root Python files, 178 templates, 0 orphan engines, 20 routes fixed today.
+
+---
+
+## Session 2026-09-28 (evening, part 5) — Small-item sweep + lazy-import audit
+
+**HEAD after:** 03903a2
+
+### RESOLVED — dead /api/notifications/send fetch (commit 03903a2)
+Removed from lock-in-breaker-pricing.html.
+
+### RESOLVED — duplicate /api/payment/history route (commit 03903a2)
+Two identical registrations at main.py:2877 and 2882. Removed the duplicate.
+
+### RESOLVED — lazy-import-in-pool deadlock sweep
+Swept all indented engine imports inside functions using DB connections.
+Found 16 candidates; 12 were direct-connection (not pooled) so no deadlock risk,
+2 were tests, and the 2 pooled candidates both release the connection before
+the import. Key insight in database.py:30-38 — get_connection() returns a fresh
+direct psycopg2 connection per call, so holding one during an import does NOT
+block the pool. Only get_pooled_connection() shares state and can deadlock.
+
+**Verdict:** zero remaining real deadlock sites. Sweep closed.
