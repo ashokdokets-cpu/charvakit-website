@@ -1,6 +1,6 @@
 # Session Context - Charvak
 
-**HEAD:** `7c679f1`
+**HEAD:** `8bb21a5`
 **Last updated:** 2026-09-29 (Session B - 4 of 5 payment flags closed; #3 deferred)
 **Version:** `v3.5-session-B-20260929`
 
@@ -92,3 +92,68 @@ Alternative (small, low-risk):
   old `immutable` Cache-Control)
 - Sweep `scripts/_*.py` files from root — there are 20+ one-off dev
   scripts left over from earlier work
+
+---
+
+## Session 2026-09-29 - AI Tools Suite E2E complete
+
+**Commit:** `8bb21a5`
+
+### Shipped
+
+All 12 AI Tools rebuilt as real, safe, working frontends.
+
+**Problems found:**
+- 3 templates (bounty-swap, ghost-tracker, ref-swap) were stubs:
+  clicking the button just revealed a pre-baked result card, no API
+  call, no credits deducted.
+- 1 template (micro-trial) called the wrong endpoint
+  (/api/tools/ghost-bounty instead of /api/tools/micro-trial).
+- The other 8 had:
+  * a fake Math.random() fallback that fabricated a result on
+    fetch failure
+  * innerHTML with AI output -> XSS hole
+  * no 401/402 handling
+
+**Fix:** Canonical template pattern applied to all 12:
+- Correct /api/tools/<name> endpoint
+- Real form inputs matching the backend's Pydantic model
+- No fake fallback - failures surface
+- esc() + recursive renderValue() - no innerHTML from AI
+- 401 -> /login, 402 -> /ai-credits-pricing
+- maxlength matching every Pydantic Field constraint
+- Credit cost badge in the hero
+
+**Also fixed:**
+- pydantic ValidationError was being swallowed by the routes' broad
+  except Exception, returned as HTTP 200 with a generic message.
+  Now: imported, re-raised in the 8 tool routes, global 422 handler.
+  422 responses carry the exact field name and actual constraint.
+
+### Verified
+
+All 12 tools smoke-tested end-to-end against a real test user:
+
+| Tool | Status | Credits |
+|---|---|---|
+| resume-roast | 200 | 5 |
+| ghost-bounty | 200 | 10 |
+| ref-check | 200 | 10 |
+| role-mirror | 200 | 5 |
+| bounty-swap | 200 | 10 |
+| micro-trial | 200 | 10 |
+| offer-matcher | 200 | 5 |
+| ghost-job-shield | 200 | 10 |
+| counter-offer | 200 | 5 |
+| ref-swap | 200 | 10 |
+| ghost-tracker | 200 | 5 |
+| pitch-roast | 200 | 5 |
+
+Total: 90 credits deducted (500 -> 410). 12 usage-history rows.
+Real AI output on every call. Elapsed: 39 seconds for all 12.
+
+### Still open (from this session)
+
+- Phase 4: persistence of tool results (charvak_tool_results table +
+  /my-tools history page) - next
+- #3 live PayPal capture test - deferred
