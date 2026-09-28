@@ -1613,7 +1613,9 @@ Verdict: SCHEDULED — own session
 - **C7 progress:** 1 of 18 templates complete (events.html)
 - **Next:** AA4b (ats.html), AA4c (reports.html)
 
-### C7 â€” Build 13 Category-B feature backends (post-G6)
+### RESOLVED — C7 — Build 13 Category-B feature backends (post-G6) (2026-09-28)
+
+**Resolved 2026-09-28.** All 13 backends verified working via batch API test. 12 tool frontends wired end-to-end. 12 paid add-ons converted to notifyMe (commits ab1901f, e5e3cca). Paid fulfillment pipeline deferred as separate track. background-verification.html already correct. 5 Pydantic models tightened.
 
 - **Discovered:** 2026-09-21 (Session G6 revenue audit)
 - **Issue:** 13 templates have `processCharvakPayment` UI + callback
