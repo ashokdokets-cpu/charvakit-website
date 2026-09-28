@@ -2549,3 +2549,23 @@ functions that hold pool connections:
 Each is a latent deadlock if the caller holds a pool connection.
 
 **Verdict:** FLAGGED — sweep on next cleanup session.
+
+### RESOLVED — FYP roadmap item #2 (Per-Chapter Expand) — browser verified (2026-09-28)
+
+Shipped in `a9a6a04`; browser-verified 2026-09-28 against the 3.11.9 venv.
+
+- `final_year_project_engine.expand_chapter_ai()` + `_fallback_expand()`
+- `POST /api/fyp/expand-chapter` (auth + 10 cr via `fyp_expand_chapter`)
+- Frontend: per-chapter Expand button + collapsible content div
+- DOM-cached — second click toggles visibility, no re-fetch, no re-charge
+
+**Server log evidence:** 4 expand clicks across 2 test runs → exactly 4 POST
+requests to /api/fyp/expand-chapter, each returning 200 and calling OpenAI.
+Zero extra requests on toggle clicks, proving the DOM cache works.
+
+**Credit note:** verified against admin (`hr@charvakit.com`), which bypasses
+deduction via `check_and_deduct()`. The route hits the credit guard
+correctly; the bypass just skips the actual decrement. Non-admin charge path
+is covered by every other gated route in the app.
+
+**Verdict:** ✅ DONE
