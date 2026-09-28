@@ -2588,7 +2588,7 @@ File: templates/lock-in-breaker-pricing.html:155. Est: 5 min.
 ### FLAGGED — duplicate /api/payment/history route
 Registered twice in main.py. Est: 15 min.
 
-### FLAGGED — /api/na/* auth review
+### RESOLVED — /api/na/* auth review
 20 routes with candidate PII. Est: 30 min.
 
 ### Completed — System audit
