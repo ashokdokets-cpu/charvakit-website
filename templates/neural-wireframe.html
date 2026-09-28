@@ -38,177 +38,123 @@
     </div>
 
     <div class="row g-4 mb-5">
-        <div class="col-md-6"><div class="card h-100 p-4 text-center"><h3>🆓 Free Generation</h3><h2 class="display-4 fw-bold"><span data-inr="0">₹0</span></h2><p>3 generations/month</p><a href="/napkin-challenge" class="btn btn-outline-primary mt-3">Try Free</a></div></div>
-        <div class="col-md-6"><div class="card h-100 p-4 text-center border-primary"><h3>⭐ Pro Launch</h3><h2 class="display-4 fw-bold"><span data-inr="5000">₹5,000</span></h2><p>Per site launch</p><p class="text-muted">Custom domain, no branding, priority support</p><button class="btn btn-primary mt-3" onclick="getProWireframe()">Get Pro</button></div></div>
+        <div class="col-lg-8 mx-auto">
+            <div class="card p-4 shadow-sm">
+                <h3 class="as-h4 mb-2">Try Neural Wireframe</h3>
+                <p class="text-muted mb-3">Describe the page or component you want. Be specific about layout, sections, and styling. AI returns production-ready React + Tailwind JSX.</p>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" for="nwSketch">Your sketch description</label>
+                    <textarea id="nwSketch" class="form-control" rows="6"
+                        placeholder="Example: A pricing page with 3 tier cards centered. Each card has a title, price in big text, 5 feature bullets with checkmarks, and a CTA button. Header says 'Simple, transparent pricing'. Footer with FAQ link."></textarea>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="text-muted small">Cost: <strong>25 credits</strong> per generation</div>
+                    <button id="nwGenerateBtn" class="btn btn-primary" onclick="generateWireframe()">Generate Code (25 cr)</button>
+                </div>
+                <div id="nwError" class="alert alert-danger mt-3 d-none"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="nwResultWrap" class="d-none">
+        <div class="card p-4 shadow-sm">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="as-h4 mb-0">Generated Code</h3>
+                <button class="btn btn-sm btn-outline-secondary" onclick="copyWireframe()">Copy</button>
+            </div>
+            <pre id="nwResult" class="bg-dark text-white p-3 rounded" style="max-height:600px; overflow:auto; font-size:0.85rem;"></pre>
+        </div>
     </div>
 </div>
-
 <script>
-function getProWireframe() {
-    const email = prompt('Enter your email:');
-    if (!email) return;
-    
-    const amountUSD = 250; // $250 per site launch
-    const amountINR = amountUSD * 83; // ≈ ₹20,750
-    
-    if (!confirm('Pro Launch - $250 per site\n\n✅ Custom domain\n✅ No branding\n✅ Priority support\n\nProceed to payment?')) {
-        return;
-    }
-    
-    // Trigger Razorpay payment
-    fetch('/api/payment/create-order', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-            amount: amountINR,
-            name: 'Neural Wireframe Pro Launch',
-            method: 'razorpay'
-        })
-    })
-    .then(res => res.json())
-    .then(orderData => {
-        if (orderData.status === 'success' || orderData.order_id) {
-            const options = {
-                key: orderData.key_id || orderData.key || window.charvak_razorpay_key || 'rzp_live_TSniXv6CyEnZ9B',
-                amount: amountINR * 100,
-                currency: 'INR',
-                name: 'Charvak IT Consulting',
-                description: 'Neural Wireframe Pro Launch',
-                order_id: orderData.order_id,
-                handler: function(response) {
-                    fetch('/api/payment/verify', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({
-                            method: 'razorpay',
-                            payment_id: response.razorpay_payment_id,
-                            order_id: response.razorpay_order_id,
-                            signature: response.razorpay_signature
-                        })
-                    })
-                    .then(r => r.json())
-                    .then(v => {
-                        if (v.verified) {
-                            alert('✅ Payment successful! Pro Launch activated!');
-                            localStorage.setItem('neural_pro_launch', 'active');
-                        } else {
-                            alert('Payment verification failed');
-                        }
-                    });
-                },
-                prefill: {email: email},
-                theme: {color: '#3ba591'},
-                modal: {
-                    ondismiss: function() {
-                        alert('Payment cancelled');
-                    }
-                }
-            };
-            const rzp = new Razorpay(options);
-            rzp.open();
-        }
-    })
-    .catch(error => {
-        console.error('Payment error:', error);
-        alert('Payment gateway error. Please try again.');
-    });
-}
-</script>
-<script>
-// Neural Wireframe - Payment Integration
-
-function startFreeGeneration(event) {
-    event.preventDefault();
-    const email = prompt('Enter your email:');
-    if (!email) return;
-    
-    alert('✅ Free generation activated! You have 3 generations this month.');
-    localStorage.setItem('neural_free_generations', '3');
-}
-
-function launchPro(event) {
-    event.preventDefault();
-    const email = prompt('Enter your email:');
-    if (!email) return;
-    
-    const amount = 250; // $250 per site launch
-    const amountINR = amount * 83; // Convert to INR
-    
-    if (!confirm('Pro Launch - $250 per site\n\nCustom domain\nNo branding\nPriority support\n\nProceed to payment?')) {
-        return;
-    }
-    
-    // Trigger Razorpay payment
-    fetch('/api/payment/create-order', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-            amount: amountINR,
-            name: 'Neural Wireframe Pro Launch',
-            method: 'razorpay'
-        })
-    })
-    .then(res => res.json())
-    .then(orderData => {
-        if (orderData.status === 'success' || orderData.order_id) {
-            const options = {
-                key: orderData.key_id || orderData.key || window.charvak_razorpay_key || 'rzp_live_TSniXv6CyEnZ9B',
-                amount: amountINR * 100,
-                currency: 'INR',
-                name: 'Charvak IT Consulting',
-                description: 'Neural Wireframe Pro Launch',
-                order_id: orderData.order_id,
-                handler: function(response) {
-                    // Verify payment
-                    fetch('/api/payment/verify', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({
-                            method: 'razorpay',
-                            payment_id: response.razorpay_payment_id,
-                            order_id: response.razorpay_order_id,
-                            signature: response.razorpay_signature
-                        })
-                    })
-                    .then(r => r.json())
-                    .then(v => {
-                        if (v.verified) {
-                            alert('✅ Payment successful! Pro Launch activated!');
-                            localStorage.setItem('neural_pro_launch', 'active');
-                        } else {
-                            alert('Payment verification failed');
-                        }
-                    });
-                },
-                prefill: {email: email},
-                theme: {color: '#3ba591'},
-                modal: {
-                    ondismiss: function() {
-                        alert('Payment cancelled');
-                    }
-                }
-            };
-            const rzp = new Razorpay(options);
-            rzp.open();
-        }
-    })
-    .catch(error => {
-        console.error('Payment error:', error);
-        alert('Payment gateway error. Please try again.');
+function _nwEsc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
     });
 }
 
-// Upload sketch handler
-document.addEventListener('DOMContentLoaded', function() {
-    const uploadInput = document.querySelector('input[type="file"]');
-    if (uploadInput) {
-        uploadInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                alert('✅ Sketch uploaded: ' + file.name);
-            }
+async function generateWireframe() {
+    const sketchEl = document.getElementById('nwSketch');
+    const btn = document.getElementById('nwGenerateBtn');
+    const errEl = document.getElementById('nwError');
+    const sketch = (sketchEl.value || '').trim();
+    errEl.classList.add('d-none');
+
+    if (!sketch) {
+        errEl.textContent = 'Please describe what you want first.';
+        errEl.classList.remove('d-none');
+        return;
+    }
+
+    const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    if (!authToken || !email) {
+        alert('Please log in to use Neural Wireframe.');
+        window.location.href = '/login?next=/neural-wireframe';
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Generating...';
+
+    try {
+        const r = await fetch('/api/ai/neural-wireframe', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authToken,
+            },
+            body: JSON.stringify({ email: email, sketch: sketch }),
         });
+        const j = await r.json();
+        if (!r.ok || (j.status && j.status !== 'success')) {
+            btn.disabled = false;
+            btn.textContent = 'Generate Code (25 cr)';
+            if (r.status === 401) {
+                alert(j.message || 'Please log in again.');
+                window.location.href = '/login?next=/neural-wireframe';
+            } else if (r.status === 402) {
+                alert(j.message || 'Insufficient credits.');
+                window.location.href = '/ai-credits-pricing';
+            } else {
+                errEl.textContent = j.message || j.error || 'Generation failed.';
+                errEl.classList.remove('d-none');
+            }
+            return;
+        }
+        const code = j.code || '';
+        if (!code) {
+            errEl.textContent = 'No code was returned. Please try again.';
+            errEl.classList.remove('d-none');
+            btn.disabled = false;
+            btn.textContent = 'Generate Code (25 cr)';
+            return;
+        }
+        document.getElementById('nwResult').textContent = code;
+        document.getElementById('nwResultWrap').classList.remove('d-none');
+        document.getElementById('nwResultWrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        btn.disabled = false;
+        btn.textContent = 'Regenerate (25 cr)';
+    } catch (e) {
+        console.error('generateWireframe failed', e);
+        errEl.textContent = 'Network error — please try again.';
+        errEl.classList.remove('d-none');
+        btn.disabled = false;
+        btn.textContent = 'Generate Code (25 cr)';
     }
-});
+}
+
+function copyWireframe() {
+    const text = document.getElementById('nwResult').textContent || '';
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(function() {
+        const btn = event.target;
+        const old = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(function() { btn.textContent = old; }, 1500);
+    }).catch(function() {
+        alert('Copy failed — please select and copy manually.');
+    });
+}
 </script>
 {% endblock %}
