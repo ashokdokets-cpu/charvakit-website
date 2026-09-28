@@ -1,12 +1,12 @@
 # CHARVAKIT.COM - MASTER REFERENCE
 ## Charvak IT Consulting Pvt Ltd
-### Last updated: September 29, 2026 (Session B - auth persistence + cache revalidation)
+### Last updated: September 29, 2026 (Session B - 4 of 5 payment flags closed)
 
-**HEAD:** `e28c781`
+**HEAD:** `7c679f1`
 **Live:** https://www.charvakit.com
 **Resume here:** see `SESSION-CONTEXT.md` (one-file state snapshot for fresh chat windows)
 **Backlog:** see `OUTSTANDING-WORK-INVENTORY.md` (master list of remaining work)
-**Version:** v3.5-session-B-20260929
+**Version:** v3.5-session-B2-20260929
 
 ### Reference Documents
 
@@ -37,6 +37,25 @@
 ### Flags closed
 - #2 uvicorn reload invalidates tokens
 - #4 CachedStaticFiles ?v=
+
+### Session B addendum - payment flags closed (2026-09-29)
+
+**Commits:** `9130b8f`, `7c679f1`
+
+- **PayPal credits webhook safety net** — if the browser closes after
+  PayPal captures but before the frontend POSTs, the webhook grants
+  credits idempotently. Custom_id format: `credits|<email>|<plan>`.
+- **Signature verification** — `/webhook/paypal` now forwards transmission
+  headers to PayPal's verify API and returns 401 on failure. Requires
+  `PAYPAL_WEBHOOK_ID` env var. Forged prod payload -> 401.
+- **`purchase_credits` import fix** — was importing an instance method as
+  a module-level function; every webhook delivery returned
+  "cannot import name". Now uses the `ai_credit_engine` singleton.
+
+**Still open:** #3 live PayPal capture test ($2.39 + refund). Code is
+ready, fake-payload tests pass in prod. Deferred to a dedicated session
+where the full flow can be watched.
+
 
 ### Still open (payment flags)
 - #5 ai_courses_payments PayPal stub audit
