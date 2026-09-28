@@ -1,37 +1,124 @@
 {% extends "base.html" %}
-{% block title %}Recruiter Pitch Roast - Charvak{% endblock %}
+{% block title %}Recruiter Pitch Roast - Charvak AI Tools{% endblock %}
 {% block content %}
-<div class="page-hero bg-gradient-primary text-white py-5"><div class="container py-4"><span class="badge bg-warning text-dark mb-2 px-3 py-2">🎤 Decoder</span><h1 class="display-4 fw-bold">Recruiter Pitch Roast</h1><p class="lead">Paste a recruiter InMail. AI decodes what they really mean and extracts hidden salary info.</p></div></div>
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4">
+        <span class="badge bg-primary text-white mb-2 px-3 py-2">5 credits per run</span>
+        <h1 class="display-4 fw-bold">Recruiter Pitch Roast</h1>
+        <p class="lead">Decode recruiter InMails. See what they really mean and get a smart reply.</p>
+    </div>
+</div>
+
 <div class="container py-5"><div class="row"><div class="col-lg-7 mx-auto">
-    <div class="card border-0 shadow-lg p-4 mb-4"><div class="card-body text-center"><h4>📧 Decode Recruiter Message</h4><textarea class="form-control mb-3" id="inmailText" rows="4" placeholder="Paste recruiter InMail or email here..."></textarea><button class="btn btn-primary btn-lg w-100" onclick="roastPitch()">Roast This Pitch</button></div></div>
-    <div class="card border-0 shadow-lg p-4 d-none" id="pitchResult"><div class="card-body text-center"><h4>🎤 Pitch Analysis</h4><p><strong>What they said:</strong> "Competitive salary based on experience"</p><p><strong>AI Translation:</strong> "No fixed budget, hoping you lowball yourself"</p><p><strong>Spam Score:</strong> <span id="spamScore">--</span>/100</p><p class="small text-muted">By proceeding, you accept our <a href="/agreement?type=MOU&client=User&redirect=/tools/pitch-roast&service=Recruiter+Pitch+Roast&payment=One-time+fee">Terms of Use</a></p><button class="btn btn-primary" onclick="unlockReply()">Unlock Smart Reply — <span data-inr="149">₹149</span></button></div></div>
+    <div class="card border-0 shadow-lg p-4 mb-4"><div class="card-body">
+        <h4>Paste the Recruiter Message</h4>
+        <div class="mb-3">
+            <textarea class="form-control" id="inmail" maxlength="5000" rows="6" placeholder="Paste the recruiter InMail here..."></textarea>
+        </div>
+        <button class="btn btn-primary btn-lg w-100 mt-3" id="runBtn" onclick="runTool()">
+            Run (5 credits)
+        </button>
+        <div id="toolError" class="alert alert-danger mt-3 d-none"></div>
+    </div></div>
+
+    <div class="card border-0 shadow-lg p-4 d-none" id="resultCard" style="border-left:5px solid #0ea5e9;">
+        <div class="card-body" id="resultBody"></div>
+    </div>
 </div></div></div>
-<script>async function roastPitch(){
-    const inmail = document.getElementById('inmailText').value;
-    if(!inmail) return alert('Paste a recruiter message!');
-    const authToken = localStorage.getItem('auth_token') || '';
+
+<script>
+const TOOL_NAME = 'Recruiter Pitch Roast';
+const TOOL_COST = 5;
+const TOOL_ENDPOINT = '/api/tools/pitch-roast';
+
+function esc(s) {
+    return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function renderValue(v, depth) {
+    depth = depth || 0;
+    if (v === null || v === undefined) return '<span class="text-muted">-</span>';
+    if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') return esc(v);
+    if (Array.isArray(v))
+        return '<ul class="mb-0">' + v.map(x => '<li>' + renderValue(x, depth+1) + '</li>').join('') + '</ul>';
+    if (typeof v === 'object') {
+        return '<ul class="mb-0">' + Object.keys(v).map(k =>
+            '<li><strong>' + esc(k) + ':</strong> ' + renderValue(v[k], depth+1) + '</li>'
+        ).join('') + '</ul>';
+    }
+    return esc(v);
+}
+
+function renderResult(data) {
+    const body = document.getElementById('resultBody');
+    let html = '<h3>' + esc(TOOL_NAME) + ' Result</h3>';
+    if (data.message) html += '<p class="text-muted">' + esc(data.message) + '</p>';
+    for (const key of Object.keys(data)) {
+        if (key === 'status' || key === 'message' || key === '_http_status') continue;
+        html += '<div class="mb-3"><strong>' + esc(key.replace(/_/g, ' ')) + ':</strong> '
+              + '<div>' + renderValue(data[key]) + '</div></div>';
+    }
+    body.innerHTML = html;
+}
+
+async function runTool() {
+    const btn = document.getElementById('runBtn');
+    const errEl = document.getElementById('toolError');
+    errEl.classList.add('d-none');
+
+    const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
     const email = localStorage.getItem('userEmail') || '';
     if (!authToken || !email) {
         alert('Please log in to use this tool.');
         window.location.href = '/login?next=' + window.location.pathname;
         return;
     }
+
+    // ---- INPUT COLLECTION ----
+    const inmail = document.getElementById('inmail').value.trim();
+    if (!inmail) { alert('Paste the recruiter message.'); return; }
+    const payload = { email: email, inmail: inmail };
+
+    btn.disabled = true;
+    const originalText = btn.textContent;
+    btn.textContent = 'Running...';
+
     try {
-        const response = await fetch('/api/tools/pitch-roast', {
+        const r = await fetch(TOOL_ENDPOINT, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': 'Bearer ' + authToken
             },
-            body: JSON.stringify({email: email, inmail: inmail})
+            body: JSON.stringify(payload)
         });
-        const data = await response.json();
-        document.getElementById('spamScore').textContent = data.spam_score || 45;
-    } catch(e) {
-        document.getElementById('spamScore').textContent = Math.floor(Math.random()*40)+30;
+        const j = await r.json();
+
+        if (!r.ok) {
+            btn.disabled = false;
+            btn.textContent = originalText;
+            if (r.status === 401) { alert(j.message || 'Please log in again.'); window.location.href = '/login?next=' + window.location.pathname; return; }
+            if (r.status === 402) { alert(j.message || 'Insufficient credits.'); window.location.href = '/ai-credits-pricing'; return; }
+            errEl.textContent = j.message || 'Request failed.';
+            errEl.classList.remove('d-none');
+            return;
+        }
+
+        renderResult(j);
+        document.getElementById('resultCard').classList.remove('d-none');
+        document.getElementById('resultCard').scrollIntoView({behavior:'smooth'});
+        btn.disabled = false;
+        btn.textContent = originalText;
+    } catch (e) {
+        console.error('tool failed', e);
+        errEl.textContent = 'Network error - please try again.';
+        errEl.classList.remove('d-none');
+        btn.disabled = false;
+        btn.textContent = originalText;
     }
-    document.getElementById('pitchResult').classList.remove('d-none');
-}function unlockReply(){
-    notifyMe('Recruiter Pitch Roast - Smart Reply');
-}</script>
+}
+
+</script>
 {% endblock %}
