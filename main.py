@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Depends, HTTPException
+from fastapi import FastAPI, Request, Depends, HTTPException, Response
 from fastapi.responses import HTMLResponse, PlainTextResponse, FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.staticfiles import StaticFiles as StarletteStaticFiles
@@ -8005,6 +8005,49 @@ async def admin_delete_reported_question(question_id: str, request: Request):
 @app.get("/admin/analytics", response_class=HTMLResponse)
 async def admin_analytics_page(request: Request):
     return template_response("admin-analytics.html", request, "Analytics - Admin")
+
+@app.get("/admin/internship-enrollments", response_class=HTMLResponse)
+async def admin_internship_enrollments_page(request: Request):
+    return template_response(
+        "admin-internship-enrollments.html",
+        request,
+        "Internship Enrollments - Admin"
+    )
+
+
+@app.get("/api/admin/internship-enrollments")
+async def api_admin_internship_enrollments(request: Request):
+    require_admin(request)
+    from admin_internship_metrics import get_enrollment_overview
+    date_from = request.query_params.get("from") or None
+    date_to = request.query_params.get("to") or None
+    hide_test = request.query_params.get("hide_test", "1") in ("1", "true", "yes")
+    try:
+        return get_enrollment_overview(date_from=date_from, date_to=date_to, hide_test=hide_test)
+    except Exception as e:
+        logger.exception(f"api_admin_internship_enrollments failed: {e}")
+        return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
+
+
+@app.get("/api/admin/internship-enrollments.csv")
+async def api_admin_internship_enrollments_csv(request: Request):
+    require_admin(request)
+    from admin_internship_metrics import get_enrollment_overview, to_csv
+    date_from = request.query_params.get("from") or None
+    date_to = request.query_params.get("to") or None
+    hide_test = request.query_params.get("hide_test", "1") in ("1", "true", "yes")
+    try:
+        overview = get_enrollment_overview(date_from=date_from, date_to=date_to, hide_test=hide_test)
+        csv_body = to_csv(overview)
+        filename = f"internship-enrollments-{date_from or 'all'}-{date_to or 'now'}.csv"
+        return Response(
+            content=csv_body,
+            media_type="text/csv",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+    except Exception as e:
+        logger.exception(f"api_admin_internship_enrollments_csv failed: {e}")
+        return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
 
 
 @app.get("/api/admin/metrics")
