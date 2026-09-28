@@ -3013,6 +3013,18 @@ async def paypal_webhook(request: Request):
     """
     try:
         raw_body = await request.body()
+
+        # ---------- Signature verification ----------
+        # PayPal signs every transmission with a rotating certificate. We
+        # forward the transmission headers + body back to PayPal's verify API.
+        # Any request without valid PayPal headers is rejected with 401 so
+        # forged payloads cannot grant credits or record payments.
+        _hdrs = dict(request.headers)
+        if not payment_engine.verify_paypal_webhook_signature(_hdrs, raw_body):
+            logger.warning("PayPal webhook: signature verification failed")
+            return JSONResponse({"status": "error", "message": "Invalid signature"}, status_code=401)
+        # ---------- end verification ----------
+
         try:
             payload = json.loads(raw_body.decode("utf-8"))
         except Exception as e:
@@ -3087,8 +3099,8 @@ async def paypal_webhook(request: Request):
             _dedupe_key = f"paypal:{_currency}:{_capture_id}"
 
             try:
-                from ai_credit_engine import purchase_credits
-                _result = purchase_credits(email, _plan, _dedupe_key)
+                from ai_credit_engine import ai_credit_engine
+                _result = ai_credit_engine.purchase_credits(email, _plan, payment_id=_dedupe_key)
                 logger.info(
                     f"PayPal webhook credits: email={email} plan={_plan} "
                     f"key={_dedupe_key} status={_result.get('status')} "

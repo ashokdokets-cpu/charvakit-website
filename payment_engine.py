@@ -229,6 +229,93 @@ class PaymentEngine:
             logger.error(f"Webhook signature verification failed: {e}")
             return False
 
+    def verify_paypal_webhook_signature(self, headers: dict, raw_body: bytes) -> bool:
+        """Verify a PayPal webhook transmission via PayPal's verify API.
+
+        PayPal signs each webhook delivery with a rotating certificate. Instead
+        of maintaining a local CA bundle, we forward the transmission headers +
+        body back to PayPal's /v1/notifications/verify-webhook-signature
+        endpoint. PayPal returns SUCCESS or FAILURE.
+
+        Required env: PAYPAL_WEBHOOK_ID (from PayPal dashboard).
+        Required headers (case-insensitive):
+            paypal-transmission-id
+            paypal-transmission-time
+            paypal-cert-url
+            paypal-auth-algo
+            paypal-transmission-sig
+        """
+        import os as _os, json as _json, requests as _requests
+
+        webhook_id = _os.getenv("PAYPAL_WEBHOOK_ID", "")
+        if not webhook_id:
+            logger.error("PAYPAL_WEBHOOK_ID not configured - refusing unverified PayPal webhook")
+            return False
+        if not self.paypal_client_id or not self.paypal_client_secret:
+            logger.error("PayPal credentials missing - cannot verify webhook")
+            return False
+
+        h = {k.lower(): v for k, v in (headers or {}).items()}
+        required = [
+            "paypal-transmission-id",
+            "paypal-transmission-time",
+            "paypal-cert-url",
+            "paypal-auth-algo",
+            "paypal-transmission-sig",
+        ]
+        missing = [r for r in required if not h.get(r)]
+        if missing:
+            logger.warning(f"PayPal webhook verify: missing headers {missing}")
+            return False
+
+        try:
+            # 1. OAuth token
+            auth = _requests.post(
+                "https://api-m.paypal.com/v1/oauth2/token",
+                auth=(self.paypal_client_id, self.paypal_client_secret),
+                data={"grant_type": "client_credentials"},
+                timeout=10,
+            )
+            token = (auth.json() or {}).get("access_token")
+            if not token:
+                logger.error(f"PayPal webhook verify: auth failed {auth.status_code}")
+                return False
+
+            # 2. Parse raw body so we can send it as webhook_event
+            try:
+                event_obj = _json.loads(raw_body.decode("utf-8"))
+            except Exception as e:
+                logger.warning(f"PayPal webhook verify: body not valid JSON - {e}")
+                return False
+
+            verify_body = {
+                "auth_algo":         h["paypal-auth-algo"],
+                "cert_url":          h["paypal-cert-url"],
+                "transmission_id":   h["paypal-transmission-id"],
+                "transmission_sig":  h["paypal-transmission-sig"],
+                "transmission_time": h["paypal-transmission-time"],
+                "webhook_id":        webhook_id,
+                "webhook_event":     event_obj,
+            }
+            resp = _requests.post(
+                "https://api-m.paypal.com/v1/notifications/verify-webhook-signature",
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Content-Type":  "application/json",
+                },
+                json=verify_body,
+                timeout=10,
+            )
+            data = resp.json() or {}
+            status = data.get("verification_status", "")
+            if status == "SUCCESS":
+                return True
+            logger.warning(f"PayPal webhook verify: {status} - {str(data)[:300]}")
+            return False
+        except Exception as e:
+            logger.exception(f"PayPal webhook verify: exception {e}")
+            return False
+
     def create_paypal_order(self, amount_inr: float, target_currency: str = "USD", description: str = "", custom_id: str = None) -> Dict:
         """Create a PayPal order.
 
