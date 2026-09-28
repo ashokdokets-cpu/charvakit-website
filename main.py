@@ -240,6 +240,8 @@ async def _warm_db_pool():
         cur.close()
         db.release_pooled_connection(conn)
         print("[startup] DB connection pool warmed")
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"[startup] DB pool warmup failed (non-fatal): {e}")
 
@@ -755,6 +757,8 @@ async def report_question(request: Request):
     """User reports a broken/wrong question in the exam bank."""
     try:
         data = await request.json()
+    except HTTPException:
+        raise
     except Exception:
         return JSONResponse({"status": "error", "message": "invalid JSON"}, status_code=400)
 
@@ -789,6 +793,8 @@ async def report_question(request: Request):
         db.release_pooled_connection(conn)
         logger.info(f"Question reported: {qid} by {email or 'anonymous'}: {reason[:80]}")
         return {"status": "success", "message": "Thanks! We'll review this question."}
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(f"report_question failed: {e}")
         return JSONResponse({"status": "error", "message": "could not record report"}, status_code=500)
@@ -807,6 +813,8 @@ async def cron_send_queued_emails(request: Request):
         from email_queue import email_queue
         result = email_queue.process_pending(batch=50)
         return {"status": "success", **result}
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"cron send queued failed: {e}")
         return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
@@ -1014,6 +1022,8 @@ async def referral_redirect(referral_code: str, request: Request):
             logger.warning(f"Invalid referral code: {referral_code}")
         # Redirect to register with the referral code
         return RedirectResponse(url=f"/register?ref={referral_code}", status_code=302)
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"referral_redirect failed: {e}")
         return RedirectResponse(url="/register", status_code=302)
@@ -1155,6 +1165,8 @@ async def receive_whatsapp(request: Request):
         data = await request.json()
         await whatsapp_handler(data)
         return {"status": "ok"}
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"WhatsApp webhook error: {str(e)}", exc_info=True)
         return {"status": "error", "message": "Failed to process WhatsApp message"}
@@ -1180,6 +1192,8 @@ async def view_site(site_id: str):
         )
         row = cur.fetchone()
         cur.close(); conn.close()
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"view_site lookup failed: {e}")
         return HTMLResponse("<h1>Site not found</h1>", status_code=404)
@@ -1300,6 +1314,8 @@ async def api_register(request: Request, data: RegisterRequest):
                 logger.warning(f"Referral signup tracking failed: {e}")
 
         return JSONResponse(result)
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Registration failed for {data.email}: {str(e)}")
         return JSONResponse(
@@ -1357,6 +1373,8 @@ async def api_login(request: Request, data: LoginRequest):
                 return resp
 
         return JSONResponse(result)
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Login failed for {data.email}: {str(e)}")
         return JSONResponse(
@@ -1369,6 +1387,8 @@ async def api_logout(data: LogoutRequest):
     try:
         result = logout_user(data.token)
         return JSONResponse(result)
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Logout failed: {str(e)}")
         return JSONResponse({"status": "success", "message": "Logged out"})
@@ -1437,6 +1457,8 @@ async def submit_contact(data: ContactRequest):
         db_saved = (result.get("status") == "success")
         if not db_saved:
             logger.warning(f"Contact DB save non-fatal error: {result.get('message')}")
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Contact DB save failed: {e}")
 
@@ -1451,6 +1473,8 @@ async def submit_contact(data: ContactRequest):
         email_sent = (result.get("status") == "success")
         if not email_sent:
             email_error = result.get("message", "Unknown email error")
+    except HTTPException:
+        raise
     except Exception as e:
         email_error = str(e)
         logger.error(f"Contact email exception: {e}")
@@ -1492,6 +1516,8 @@ async def api_post_job(data: JobPostRequest, request: Request):
             "posted_by": user["user_id"]
         })
         return JSONResponse(result)
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Job post failed: {str(e)}")
         return JSONResponse({"status": "error", "message": "Failed to post job"}, status_code=500)
@@ -1529,6 +1555,8 @@ async def api_add_application(data: ApplicationAddRequest, request: Request):
             "resume_url": data.job_url
         })
         return JSONResponse(result)
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Application add failed: {str(e)}")
         return JSONResponse({"status": "error", "message": "Failed to add application"}, status_code=500)
@@ -1544,6 +1572,8 @@ async def api_get_applications(request: Request):
         apps = job_board_engine.get_applications()
         user_apps = [a for a in apps if a.get("user_id") == user["user_id"]]
         return JSONResponse({"status": "success", "applications": user_apps, "count": len(user_apps)})
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Failed to get applications: {str(e)}")
         return JSONResponse({"status": "error", "applications": [], "count": 0})
@@ -1553,6 +1583,8 @@ async def api_get_jobs():
     try:
         jobs = job_board_engine.get_jobs()
         return JSONResponse({"status": "success", "jobs": jobs, "count": len(jobs)})
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Failed to get jobs: {str(e)}")
         return JSONResponse({"status": "error", "jobs": [], "count": 0})
@@ -1566,6 +1598,8 @@ async def api_search_jobs(type: str = None, location: str = None, keyword: str =
         if keyword: filters['keyword'] = keyword
         jobs = job_board_engine.get_jobs(filters)
         return {"jobs": jobs, "count": len(jobs)}
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Job search failed: {str(e)}")
         return {"jobs": [], "count": 0, "error": "Search failed"}
@@ -1586,6 +1620,8 @@ async def api_apply_job(request: Request):
             )
         
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Job apply failed: {str(e)}")
         return {"status": "error", "message": "Failed to save application"}
@@ -1594,6 +1630,8 @@ async def api_apply_job(request: Request):
 async def api_job_stats():
     try:
         return job_board_engine.get_stats()
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Failed to get job stats: {str(e)}")
         return {"active_jobs": 0, "total_applications": 0, "companies": 0, "locations": 0}
@@ -1603,6 +1641,8 @@ async def api_get_applications_list(job_id: str = None):
     try:
         apps = job_board_engine.get_applications(job_id)
         return {"applications": apps, "count": len(apps)}
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Failed to get applications list: {str(e)}")
         return {"applications": [], "count": 0}
@@ -1616,6 +1656,8 @@ async def api_get_applications_list(job_id: str = None):
 async def ai_health_check():
     try:
         return {"openai_configured": is_ai_ready(), "models_activated": 8 if is_ai_ready() else 0}
+    except HTTPException:
+        raise
     except Exception:
         return {"openai_configured": False, "models_activated": 0}
 
@@ -1635,6 +1677,8 @@ async def api_generate_questions(request: Request):
             validated.count
         )
         return {"questions": questions, "count": len(questions)}
+    except HTTPException:
+        raise
     except Exception as e:
         return handle_error(e, "generating questions", {"questions": [], "count": 0})
 
@@ -1763,6 +1807,8 @@ async def api_neural_wireframe(request: Request):
         validated = NeuralWireframeRequest(**data)
         code = await neural_wireframe_to_code(validated.sketch)
         return {"code": code}
+    except HTTPException:
+        raise
     except Exception as e:
         return handle_error(e, "neural wireframe", {"code": "", "error": "Wireframe generation failed"})
 
@@ -1782,6 +1828,8 @@ async def api_localize(request: Request):
         validated = LocalizeRequest(**data)
         result = await localize_website(validated.url, validated.language)
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return handle_error(e, "localization", {"status": "error", "message": "Localization failed"})
 
@@ -1801,6 +1849,8 @@ async def api_generate_contract(request: Request):
             validated.service
         )
         return {"contract": contract}
+    except HTTPException:
+        raise
     except Exception as e:
         return handle_error(e, "contract generation", {"contract": "", "error": "Contract generation failed"})
 
@@ -1820,6 +1870,8 @@ async def api_analyze_legacy(request: Request):
         validated = AnalyzeLegacyRequest(**data)
         result = await analyze_legacy_code(validated.code)
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return handle_error(e, "legacy analysis", {"status": "error", "message": "Legacy analysis failed"})
 
@@ -1839,6 +1891,8 @@ async def api_generate_schema(request: Request):
         validated = GenerateSchemaRequest(**data)
         result = await generate_agent_schema(validated.url)
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return handle_error(e, "schema generation", {"status": "error", "message": "Schema generation failed"})
 
@@ -1854,6 +1908,8 @@ async def api_add_monitor(request: Request):
         validated = AddMonitorRequest(**data)
         result = await add_monitor(validated.url, validated.name, validated.interval)
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return handle_error(e, "adding monitor", {"status": "error", "message": "Failed to add monitor"})
 
@@ -1861,6 +1917,8 @@ async def api_add_monitor(request: Request):
 async def api_monitor_status(url: str = None):
     try:
         return await get_monitor_status(url)
+    except HTTPException:
+        raise
     except Exception as e:
         return handle_error(e, "monitor status", {"status": "error", "monitors": []})
 
@@ -1869,6 +1927,8 @@ async def api_check_all():
     try:
         results = await check_all_sites()
         return {"checked": len(results), "results": results}
+    except HTTPException:
+        raise
     except Exception as e:
         return handle_error(e, "monitor check", {"checked": 0, "results": []})
 
@@ -1901,6 +1961,8 @@ async def verify_work_auth(request: Request):
             client_type=validated.client_type
         )
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return handle_error(e, "work auth verification")
 
@@ -1919,6 +1981,8 @@ async def ingest_job(request: Request):
             raw_data=data
         )
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return handle_error(e, "job ingestion")
 
@@ -1931,6 +1995,8 @@ async def get_na_jobs(skill: str = None, location: str = None, visa_type: str = 
         if visa_type: filters["visa_type"] = visa_type
         jobs = vms_connector.get_active_jobs(filters)
         return {"jobs": jobs, "count": len(jobs)}
+    except HTTPException:
+        raise
     except Exception as e:
         return handle_error(e, "NA jobs fetch", {"jobs": [], "count": 0})
 
@@ -1961,6 +2027,8 @@ async def submit_candidate(request: Request):
             work_auth_result=work_auth
         )
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return handle_error(e, "candidate submission")
 
@@ -1973,6 +2041,8 @@ async def match_candidate(request: Request):
         jobs = vms_connector.get_active_jobs()
         matches = vector_matcher.match_candidate_to_jobs(data, jobs)
         return {"candidate_id": validated.id, "matches": matches, "count": len(matches)}
+    except HTTPException:
+        raise
     except Exception as e:
         return handle_error(e, "candidate matching", {"matches": [], "count": 0})
 
@@ -1980,6 +2050,8 @@ async def match_candidate(request: Request):
 async def check_sla(submission_id: str):
     try:
         return vms_connector.check_sla(submission_id)
+    except HTTPException:
+        raise
     except Exception as e:
         return handle_error(e, "SLA check")
 
@@ -1992,6 +2064,8 @@ async def redact_resume(request: Request):
         candidate_id = data.get("candidate_id", "NA-UNKNOWN")
         redacted_text, log = pii_redactor.redact_text(text, candidate_id)
         return {"redacted_text": redacted_text, "log": log}
+    except HTTPException:
+        raise
     except Exception as e:
         return handle_error(e, "resume redaction")
 
@@ -2002,6 +2076,8 @@ async def blind_profile(request: Request):
         data = await request.json()
         profile = pii_redactor.generate_blind_profile(data)
         return profile
+    except HTTPException:
+        raise
     except Exception as e:
         return handle_error(e, "blind profile generation")
 
@@ -2016,6 +2092,8 @@ async def compliance_check(request: Request):
         else:
             result = compliance_checker.check_candidate_compliance(data)
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return handle_error(e, "compliance check")
 
@@ -2026,6 +2104,8 @@ async def register_vendor(request: Request):
         validated = RegisterVendorRequest(**data)
         result = sub_vendor_manager.register_vendor(data)
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return handle_error(e, "vendor registration")
 
@@ -2033,6 +2113,8 @@ async def register_vendor(request: Request):
 async def vendor_stats(vendor_id: str):
     try:
         return sub_vendor_manager.get_vendor_stats(vendor_id)
+    except HTTPException:
+        raise
     except Exception as e:
         return handle_error(e, "vendor stats")
 
@@ -2044,6 +2126,8 @@ async def get_requisitions(skill: str = None, visa_type: str = None):
         if visa_type: filters["visa_type"] = visa_type
         reqs = charvak_vms.get_open_requisitions(filters)
         return {"requisitions": reqs, "count": len(reqs)}
+    except HTTPException:
+        raise
     except Exception as e:
         return handle_error(e, "requisitions fetch", {"requisitions": [], "count": 0})
 
@@ -2057,6 +2141,8 @@ async def create_requisition(request: Request):
             job_data=data
         )
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return handle_error(e, "requisition creation")
 
@@ -2073,6 +2159,8 @@ async def submit_timecard(request: Request):
             rate=validated.rate
         )
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return handle_error(e, "timecard submission")
 
@@ -2083,6 +2171,8 @@ async def approve_timecard(request: Request):
         validated = ApproveTimecardRequest(**data)
         result = charvak_vms.approve_timecard(validated.timecard_id)
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return handle_error(e, "timecard approval")
 
@@ -2090,6 +2180,8 @@ async def approve_timecard(request: Request):
 async def client_analytics(client_id: str):
     try:
         return charvak_vms.get_client_analytics(client_id)
+    except HTTPException:
+        raise
     except Exception as e:
         return handle_error(e, "client analytics")
 
@@ -2101,6 +2193,8 @@ async def create_subscription(request: Request):
         tier = getattr(SubscriptionTier, validated.tier, SubscriptionTier.STARTER)
         result = revenue_engine.create_subscription(validated.firm_id, tier)
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return handle_error(e, "subscription creation")
 
@@ -2108,6 +2202,8 @@ async def create_subscription(request: Request):
 async def total_revenue():
     try:
         return revenue_engine.get_total_revenue()
+    except HTTPException:
+        raise
     except Exception as e:
         return handle_error(e, "total revenue")
 
@@ -2115,6 +2211,8 @@ async def total_revenue():
 async def firm_revenue(firm_id: str):
     try:
         return revenue_engine.get_firm_revenue(firm_id)
+    except HTTPException:
+        raise
     except Exception as e:
         return handle_error(e, "firm revenue")
 
@@ -2196,6 +2294,8 @@ async def api_resume_roast(request: Request):
         validated = ResumeRoastRequest(**data)
         result = await resume_roast_ai(validated.resume, validated.job_title)
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return handle_error(e, "resume roast")
 
@@ -2215,6 +2315,8 @@ async def api_ghost_bounty(request: Request):
         validated = GhostBountyRequest(**data)
         result = await ghost_bounty_ai(validated.challenge)
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return handle_error(e, "ghost bounty")
 
@@ -2234,6 +2336,8 @@ async def api_role_mirror(request: Request):
         validated = RoleMirrorRequest(**data)
         result = await role_mirror_ai(validated.role, validated.skills)
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return handle_error(e, "role mirror")
 
@@ -2253,6 +2357,8 @@ async def api_offer_matcher(request: Request):
         validated = OfferMatcherRequest(**data)
         result = await offer_matcher_ai(validated.offer_a, validated.offer_b)
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return handle_error(e, "offer matcher")
 
@@ -2272,6 +2378,8 @@ async def api_ghost_job(request: Request):
         validated = GhostJobRequest(**data)
         result = await ghost_job_ai(validated.url)
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return handle_error(e, "ghost job detection")
 
@@ -2291,6 +2399,8 @@ async def api_counter_offer(request: Request):
         validated = CounterOfferRequest(**data)
         result = await counter_offer_ai(validated.new_salary, validated.counter_salary)
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return handle_error(e, "counter offer")
 
@@ -2310,6 +2420,8 @@ async def api_pitch_roast(request: Request):
         validated = PitchRoastRequest(**data)
         result = await pitch_roast_ai(validated.inmail)
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return handle_error(e, "pitch roast")
 
@@ -2329,6 +2441,8 @@ async def api_ref_check(request: Request):
         validated = RefCheckRequest(**data)
         result = await ref_check_ai(validated.ref_names)
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return handle_error(e, "reference check")
 
@@ -2449,6 +2563,8 @@ async def sign_agreement(request: Request):
         db.save_agreement(data)
         logger.info(f"Agreement signed: type={validated.agreement_type}, client={validated.client_name}")
         return {"status": "success", "message": "Agreement saved successfully"}
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Agreement signing failed: {str(e)}", exc_info=True)
         return {"status": "error", "message": "Failed to save agreement. Please try again."}
@@ -2512,6 +2628,8 @@ async def api_create_invoice(request: Request):
             description=validated.description
         )
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return handle_error(e, "invoice creation")
 
@@ -2521,6 +2639,8 @@ async def api_list_invoices(status: str = None):
         invoices = invoice_manager.get_all_invoices(status)
         stats = invoice_manager.get_invoice_stats()
         return {"invoices": invoices, "stats": stats, "count": len(invoices)}
+    except HTTPException:
+        raise
     except Exception as e:
         return handle_error(e, "invoice listing", {"invoices": [], "stats": {}, "count": 0})
 
@@ -2538,6 +2658,8 @@ async def api_update_invoice(request: Request):
             return invoice_manager.cancel_invoice(validated.invoice_id, "admin", validated.reason)
         
         return {"error": "Invalid action. Use: send, paid, or cancel"}
+    except HTTPException:
+        raise
     except Exception as e:
         return handle_error(e, "invoice update")
 
@@ -2588,6 +2710,8 @@ async def create_payment_order(request: Request):
             result = {"status": "error", "message": f"Unknown payment method: {method}"}
 
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Payment order creation failed: {e}", exc_info=True)
         return {"status": "error", "message": "Payment setup failed"}
@@ -2624,6 +2748,8 @@ async def verify_payment(request: Request):
             logger.info(f"âœ… Payment verified: {method} - {data.get('order_id')}")
         
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Payment verification failed: {e}", exc_info=True)
         return {"status": "error", "verified": False, "message": "Verification failed"}
@@ -2801,6 +2927,8 @@ async def razorpay_webhook(request: Request):
 
         return JSONResponse({"status": "success", "payment_id": payment_id, "credited": result.get("status") == "success"})
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Razorpay webhook error: {e}", exc_info=True)
         return JSONResponse({"status": "error", "message": "Internal error"}, status_code=200)
@@ -2886,6 +3014,8 @@ async def paypal_webhook(request: Request):
         )
         logger.info(f"PayPal webhook: course recorded status={rec.get('status')} already={rec.get('already_recorded')}")
         return JSONResponse({"status": "success", "order_id": paypal_order_id, "recorded": rec.get("status") == "success"})
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"PayPal webhook error: {e}", exc_info=True)
         return JSONResponse({"status": "error", "message": "Internal error"}, status_code=200)
@@ -2920,6 +3050,8 @@ async def initiate_verification(request: Request):
             require_auth_for_email(request, user_email)
         result = kyc_engine.initiate_verification(data)
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Verification initiation failed: {e}", exc_info=True)
         return {"status": "error", "message": "Failed to initiate verification"}
@@ -2956,6 +3088,8 @@ async def submit_kyc_documents(request: Request):
         documents = data.get("documents", [])
         result = kyc_engine.submit_documents(verification_id, documents)
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Document submission failed: {e}", exc_info=True)
         return {"status": "error", "message": "Failed to submit documents"}
@@ -2971,6 +3105,8 @@ async def review_verification(request: Request):
             result=data
         )
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Verification review failed: {e}", exc_info=True)
         return {"status": "error", "message": "Review failed"}
@@ -2984,6 +3120,8 @@ async def register_partner(request: Request):
         data = await request.json()
         result = kyc_engine.register_partner(data)
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Partner registration failed: {e}", exc_info=True)
         return {"status": "error", "message": "Registration failed"}
@@ -3000,6 +3138,8 @@ async def approve_partner(request: Request):
         data = await request.json()
         result = kyc_engine.approve_partner(data.get("partner_id"))
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -3013,6 +3153,8 @@ async def assign_verification(request: Request):
             partner_id=data.get("partner_id")
         )
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -3036,6 +3178,8 @@ async def initiate_background_verification(request: Request):
             "notes": data.get("notes", "")
         })
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -3056,6 +3200,8 @@ async def create_escrow(request: Request):
         data = await request.json()
         result = escrow_engine.create_escrow(data)
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Escrow creation failed: {e}", exc_info=True)
         return {"status": "error", "message": "Failed to create escrow"}
@@ -3071,6 +3217,8 @@ async def deposit_escrow(request: Request):
             payment_details=data.get("payment_details", {})
         )
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -3085,6 +3233,8 @@ async def deliver_work(request: Request):
             delivery_data=data.get("delivery_data", {})
         )
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -3097,6 +3247,8 @@ async def release_escrow(request: Request):
         data = await request.json()
         result = escrow_engine.release_funds(data.get("escrow_id"))
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -3111,6 +3263,8 @@ async def dispute_escrow(request: Request):
             dispute_data=data
         )
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -3125,6 +3279,8 @@ async def resolve_dispute(request: Request):
             resolution=data.get("resolution", {})
         )
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -3201,6 +3357,8 @@ async def submit_referral_api(request: Request, data: ReferralSubmitRequest):
                 "message": "Referral submitted! Share your link to earn rewards."
             })
         return JSONResponse(result, status_code=500)
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"submit_referral_api failed: {e}")
         return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
@@ -3214,6 +3372,8 @@ async def create_referral_link(request: Request):
         data = await request.json()
         result = referral_engine.create_referral_link(data)
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Referral link creation failed: {e}")
         return {"status": "error", "message": "Failed to create referral link"}
@@ -3233,6 +3393,8 @@ async def track_signup(request: Request):
             new_user_email=data.get("email")
         )
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -3243,6 +3405,8 @@ async def convert_referral(request: Request):
         data = await request.json()
         result = referral_engine.mark_conversion(data.get("bounty_id"))
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -3254,6 +3418,8 @@ async def pay_bounty(request: Request):
         data = await request.json()
         result = referral_engine.pay_bounty(data.get("bounty_id"))
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -3276,6 +3442,8 @@ async def register_affiliate(request: Request):
         data = await request.json()
         result = referral_engine.register_affiliate(data)
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -3296,6 +3464,8 @@ async def register_micro_client(request: Request):
         data = await request.json()
         result = micro_internship_engine.register_client(data)
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -3310,6 +3480,8 @@ async def post_micro_project(request: Request):
     """Post a micro-internship project. Requires a verified Razorpay payment."""
     try:
         data = await request.json()
+    except HTTPException:
+        raise
     except Exception as e:
         return JSONResponse({"status": "error", "message": f"Invalid JSON: {e}"}, status_code=400)
 
@@ -3341,6 +3513,8 @@ async def post_micro_project(request: Request):
     from payment_engine import payment_engine
     try:
         p = payment_engine.fetch_razorpay_payment(payment_id)
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(f"razorpay fetch failed: {e}")
         return JSONResponse({"status": "error", "message": "Payment verification failed"}, status_code=500)
@@ -3404,6 +3578,8 @@ async def post_micro_project(request: Request):
             result["platform_fee"] = escrow_resp.get("platform_fee")
             result["intern_receives"] = escrow_resp.get("vendor_receives")
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(f"post_micro_project failed: {e}")
         return {"status": "error", "message": str(e)}
@@ -3431,6 +3607,8 @@ async def apply_to_project(request: Request):
         data = await request.json()
         result = micro_internship_engine.apply_to_project(data)
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -3449,6 +3627,8 @@ async def assign_intern(request: Request):
             application_id=data.get("application_id")
         )
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -3462,6 +3642,8 @@ async def submit_work(request: Request):
             submission_data=data
         )
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -3475,6 +3657,8 @@ async def approve_work(request: Request):
             approval_data=data
         )
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -3494,6 +3678,8 @@ async def issue_badge(request: Request):
         data = await request.json()
         result = badge_engine.issue_badge(data)
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Badge issuance failed: {e}")
         return {"status": "error", "message": "Failed to issue badge"}
@@ -3516,6 +3702,8 @@ async def revoke_badge(request: Request):
         data = await request.json()
         result = badge_engine.revoke_badge(data.get("badge_id"))
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -3571,6 +3759,8 @@ async def submit_testimonial(request: Request, data: TestimonialSubmission):
             "message": "Thank you! Your testimonial has been submitted for review.",
             "id": new_id
         })
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"submit_testimonial failed: {e}")
         return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
@@ -3615,6 +3805,8 @@ async def get_testimonials():
             "count": total,
             "average_rating": avg_rating
         })
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"get_testimonials failed: {e}")
         return JSONResponse({"status": "error", "testimonials": [], "count": 0, "average_rating": 0})
@@ -3717,6 +3909,8 @@ async def send_chat(request: Request):
             message=data.get("message", "")
         )
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return {"status": "error", "message": "Chat failed. Please email charvakit@gmail.com"}
 
@@ -3760,6 +3954,8 @@ async def sso_login(request: Request):
             relay_state=data.get("redirect", "/")
         )
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -3784,6 +3980,8 @@ async def saml_acs(request: Request):
             "SSO Login Failed - Charvak",
             error="Authentication failed"
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"SAML ACS error: {e}", exc_info=True)
         return template_response("sso-error.html", request,
@@ -3818,6 +4016,8 @@ async def post_course_api(request: Request):
         data = await request.json()
         result = training_engine.post_course(data)
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -3842,6 +4042,8 @@ async def enroll_student(request: Request):
             require_auth_for_email(request, email)
         result = training_engine.enroll_student(data)
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -3884,6 +4086,8 @@ async def start_interview_prep(request: Request):
             return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
         result = interview_prep_engine.start_session(data)
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -3903,6 +4107,8 @@ async def submit_answer(request: Request):
             return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
         result = interview_prep_engine.submit_answer(data)
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -4117,6 +4323,8 @@ async def hiring_savings_calculator(request: Request):
             "savings_percent": savings_percent,
             "message": f"You save â‚¹{savings:,} per year ({savings_percent}%)"
         }
+    except HTTPException:
+        raise
     except Exception as e:
         return {"status": "error", "message": "Calculation failed"}
 
@@ -4146,6 +4354,8 @@ async def book_demo(request: Request):
             "message": "Demo request received! We'll respond within 24 hours.",
             "confirmation": f"A confirmation email will be sent to {data.get('email')}"
         }
+    except HTTPException:
+        raise
     except Exception as e:
         return {"status": "error", "message": "Failed to book demo"}
 
@@ -4206,6 +4416,8 @@ async def career_progress(request: Request, email: str):
             "next_step": "Take your free Skill Check" if not badge_engine.get_user_badges(email).get("count") else "Apply to matched jobs"
         }
         return {"status": "success", "progress": progress}
+    except HTTPException:
+        raise
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -4226,6 +4438,8 @@ async def register_candidate(request: Request):
         data = await request.json()
         result = candidate_engine.register_candidate(data)
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -4285,6 +4499,8 @@ async def update_skill_score(candidate_id: str, request: Request):
         data = await request.json()
         result = candidate_engine.update_skill_score(candidate_id, data.get("score", 0), data.get("badge_id"))
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -4325,6 +4541,8 @@ async def send_message(request: Request):
             )
         
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -4363,6 +4581,8 @@ async def create_event(request: Request):
         data = await request.json()
         result = events_engine.create_event(data)
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -4389,6 +4609,8 @@ async def rsvp_event(request: Request):
         data = await request.json()
         result = events_engine.rsvp_to_event(data)
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -4407,6 +4629,8 @@ async def check_in_event(request: Request):
         data = await request.json()
         result = events_engine.check_in(data.get("rsvp_id"))
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -4422,6 +4646,8 @@ async def create_brand_page(request: Request):
         data = await request.json()
         result = brand_engine.create_brand_page(data)
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -4448,6 +4674,8 @@ async def post_review(request: Request):
         data = await request.json()
         result = brand_engine.post_review(data)
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -4459,6 +4687,8 @@ async def promote_job(request: Request):
         data = await request.json()
         result = brand_engine.promote_job(data.get("job_id"), data.get("company_id"))
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -4483,6 +4713,8 @@ async def test_email(request: Request):
             body="This is a test email from Charvak IT Consulting."
         )
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -4595,6 +4827,8 @@ async def api_ats_score_link(candidate_id: str, request: Request):
     """Generate a signed deep-link to run the free ATS check on DoketsRB."""
     try:
         data = await request.json()
+    except HTTPException:
+        raise
     except Exception:
         data = {}
     target_role = data.get("target_role", "") or ""
@@ -4621,6 +4855,8 @@ async def api_ats_score_manual(candidate_id: str, request: Request):
     """Record an ATS score the user pasted back from DoketsRB."""
     try:
         data = await request.json()
+    except HTTPException:
+        raise
     except Exception:
         data = {}
     score = data.get("score")
@@ -4946,6 +5182,8 @@ async def notify_feature_interest(request: Request):
         cur.close(); conn.close()
 
         return {"status": "success", "message": "Thanks! We'll notify you when " + feature + " launches."}
+    except HTTPException:
+        raise
     except Exception as e:
         return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
 
@@ -5288,6 +5526,8 @@ async def blacklist_ip(request: Request):
         reason = data.get("reason", "manual_blacklist")
         security_manager.blacklist_ip(ip, reason)
         return {"status": "success", "message": f"IP {ip} blacklisted"}
+    except HTTPException:
+        raise
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -5300,6 +5540,8 @@ async def blacklist_ip(request: Request):
 async def start_bridge(request: Request):
     try:
         data = await request.json()
+    except HTTPException:
+        raise
     except Exception:
         data = {}
     email = (data.get("email") or "").strip().lower()
@@ -6143,6 +6385,8 @@ async def ai_questions(request: Request):
                         "endpoint": "/api/cbat/start",
                     }
                 )
+    except HTTPException:
+        raise
     except Exception:
         pass  # fail-open on lookup failure
 
@@ -6390,6 +6634,8 @@ async def detect_region(request: Request):
             region["timezone"] = loc["timezone"]
         region["source"] = loc.get("source", "unknown")
         return JSONResponse(region)
+    except HTTPException:
+        raise
     except Exception:
         return JSONResponse({"country": "IN", "currency": "INR", "language": "en",
                              "timezone": "Asia/Kolkata", "source": "error_fallback"})
@@ -6399,6 +6645,8 @@ async def get_service_pricing(service: str, request: Request, currency: str = "I
     try:
         pricing = get_pricing(service, currency, country)
         return JSONResponse(pricing)
+    except HTTPException:
+        raise
     except Exception:
         return JSONResponse({"error": "Pricing not available"})
 
@@ -6464,6 +6712,8 @@ async def ai_course_price(course_name: str, request: Request):
             "schedule": schedule,
             "rails": rails,
         })
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"ai_course_price failed: {e}")
         return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
@@ -6550,6 +6800,8 @@ async def ai_course_create_order(request: Request):
         result["currency"] = currency
         result["amount_local"] = amount_local
         return JSONResponse(result)
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"ai_course_create_order failed: {e}", exc_info=True)
         return JSONResponse({"status": "error", "message": "Could not create order"}, status_code=500)
@@ -6627,6 +6879,8 @@ async def ai_course_confirm_payment(request: Request):
         )
         result["enrollment_id"] = enrollment_id
         return JSONResponse(result)
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"ai_course_confirm_payment failed: {e}", exc_info=True)
         return JSONResponse({"status": "error", "message": "Payment confirmation failed"}, status_code=500)
@@ -7282,6 +7536,8 @@ async def admin_list_users(request: Request):
             for r in rows
         ]
         return JSONResponse({"status": "success", "users": users, "count": len(users)})
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"admin_list_users failed: {e}")
         return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
@@ -7315,6 +7571,8 @@ async def admin_list_purchases(request: Request):
             for r in rows
         ]
         return JSONResponse({"status": "success", "purchases": purchases, "count": len(purchases)})
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"admin_list_purchases failed: {e}")
         return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
@@ -7358,6 +7616,8 @@ async def admin_list_testimonials(request: Request, status: str = "pending"):
             for r in rows
         ]
         return JSONResponse({"status": "success", "testimonials": items, "count": len(items)})
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"admin_list_testimonials failed: {e}")
         return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
@@ -7384,6 +7644,8 @@ async def admin_testimonial_stats(request: Request):
             "rejected": counts.get("rejected", 0),
             "total": sum(counts.values())
         })
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"admin_testimonial_stats failed: {e}")
         return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
@@ -7407,6 +7669,8 @@ async def admin_approve_testimonial(request: Request, testimonial_id: int):
         if not row:
             return JSONResponse({"status": "error", "message": "Testimonial not found"}, status_code=404)
         return JSONResponse({"status": "success", "id": row[0], "message": f"Approved testimonial from {row[1]}"})
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"admin_approve_testimonial failed: {e}")
         return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
@@ -7429,6 +7693,8 @@ async def admin_reject_testimonial(request: Request, testimonial_id: int):
         if not row:
             return JSONResponse({"status": "error", "message": "Testimonial not found"}, status_code=404)
         return JSONResponse({"status": "success", "id": row[0], "message": f"Rejected testimonial from {row[1]}"})
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"admin_reject_testimonial failed: {e}")
         return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
@@ -7449,6 +7715,8 @@ async def admin_delete_testimonial(request: Request, testimonial_id: int):
         if not row:
             return JSONResponse({"status": "error", "message": "Testimonial not found"}, status_code=404)
         return JSONResponse({"status": "success", "id": row[0], "message": "Testimonial deleted"})
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"admin_delete_testimonial failed: {e}")
         return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
@@ -7581,6 +7849,8 @@ async def record_audio(request: Request):
     try:
         audio_bytes = await audio_file.read()
         filename = getattr(audio_file, "filename", "answer.webm") or "answer.webm"
+    except HTTPException:
+        raise
     except Exception as e:
         return JSONResponse({"status": "error", "message": f"could not read audio: {e}"}, status_code=400)
 
@@ -7987,6 +8257,8 @@ async def admin_reported_questions(request: Request):
         rows = cur.fetchall()
         cur.close()
         db.release_pooled_connection(conn)
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(f"admin_reported_questions failed: {e}")
         return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
@@ -8029,6 +8301,8 @@ async def admin_dismiss_report(question_id: str, request: Request):
         cur.close()
         db.release_pooled_connection(conn)
         return {"status": "success", "dismissed": n}
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(f"admin_dismiss_report failed: {e}")
         return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
@@ -8051,6 +8325,8 @@ async def admin_delete_reported_question(question_id: str, request: Request):
         cur.close()
         db.release_pooled_connection(conn)
         return {"status": "success", "deleted": n}
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(f"admin_delete_reported_question failed: {e}")
         return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
@@ -8083,6 +8359,8 @@ async def api_admin_internship_enrollments(request: Request):
     hide_test = request.query_params.get("hide_test", "1") in ("1", "true", "yes")
     try:
         return get_enrollment_overview(date_from=date_from, date_to=date_to, hide_test=hide_test)
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(f"api_admin_internship_enrollments failed: {e}")
         return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
@@ -8104,6 +8382,8 @@ async def api_admin_internship_enrollments_csv(request: Request):
             media_type="text/csv",
             headers={"Content-Disposition": f'attachment; filename="{filename}"'},
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(f"api_admin_internship_enrollments_csv failed: {e}")
         return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
@@ -8115,6 +8395,8 @@ async def api_admin_metrics(request: Request):
     try:
         from admin_metrics_engine import admin_metrics
         return admin_metrics.get_full_dashboard()
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(f"api_admin_metrics failed: {e}")
         return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
@@ -8661,6 +8943,8 @@ async def ielts_speaking_transcribe(request: Request):
     try:
         audio_bytes = await audio_file.read()
         filename = getattr(audio_file, "filename", "audio.webm") or "audio.webm"
+    except HTTPException:
+        raise
     except Exception as e:
         return JSONResponse({"error": f"could not read audio: {e}"}, status_code=400)
 
@@ -8675,6 +8959,8 @@ async def ielts_speaking_evaluate(request: Request):
     """Score a full Speaking session (N4.6 hardened)."""
     try:
         data = await request.json()
+    except HTTPException:
+        raise
     except Exception as e:
         return JSONResponse({"status": "error", "message": f"invalid JSON: {e}"}, status_code=400)
 
@@ -8687,6 +8973,8 @@ async def ielts_speaking_evaluate(request: Request):
         guard = require_credits_from_data(data, "ielts_speaking_eval")
         if guard.get("status") != "success":
             return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(f"ielts_speaking_evaluate credit guard failed: {e}")
         return JSONResponse({"status": "error", "message": "credit check failed"}, status_code=500)
@@ -8697,6 +8985,8 @@ async def ielts_speaking_evaluate(request: Request):
             topic=data.get("topic", ""),
             email=data.get("email"),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(f"ielts_speaking_evaluate engine failed: {e}")
         return JSONResponse({"status": "error", "message": f"evaluation failed: {e}"}, status_code=500)
@@ -8991,6 +9281,8 @@ async def api_forgot_password(request: Request):
             token = password_reset.generate_reset_token(email)
             result = password_reset.send_reset_email(email, token)
             return {"status": "success", "message": "Reset link sent to your email"}
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Forgot password error: {e}")
     
@@ -9082,6 +9374,8 @@ async def api_reset_password(request: Request):
         logger.info(f"RESET: SUCCESS for {email}")
         return JSONResponse({"status": "success", "message": "Password reset successfully"})
         
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"RESET ERROR: {e}", exc_info=True)
         return JSONResponse(
