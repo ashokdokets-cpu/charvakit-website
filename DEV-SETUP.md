@@ -161,3 +161,25 @@ Every smoke test should include this at the top:
     $env:PGPASSWORD = "dev"
     psql -U postgres -d vouchai -c "\dt charvak_*"
     $env:PGPASSWORD = $null
+
+## curl.exe on PowerShell — JSON body gotcha
+
+curl.exe in PowerShell strips backslash-escaped quotes inside -d payloads.
+A request like:
+    curl.exe ... -d "{\"email\":\"a@b.com\"}"
+reaches the server as:  {email:a@b.com}   (no quotes around keys/values).
+The server request.json() then raises JSONDecodeError, the route outer
+except Exception catches it, and the response is HTTP 200 with a generic
+error payload — the auth guard never runs.
+
+Always use --data-binary @file:
+    Out-File -FilePath _body.json -Encoding ascii -NoNewline
+    (then pipe the JSON string into _body.json)
+    curl.exe ... --data-binary "@_body.json"
+    Remove-Item _body.json
+
+When debugging a route, always verify the request actually reached the
+guard. A 200 with a generic error payload can mean either "guard did not
+fire" OR "body was malformed before the guard". Check the uvicorn log —
+a JSONDecodeError traceback at "data = await request.json()" confirms
+the second case.
