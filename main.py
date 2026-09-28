@@ -552,6 +552,22 @@ def require_enrollment_owner(request: Request, enrollment_id: str) -> Dict:
     return require_auth_for_email(request, row[0])
 
 
+def require_course_enrollment_owner(request: Request, enrollment_id: str) -> Dict:
+    """Verify the caller owns the course enrollment. Raises 401/403/404."""
+    from database import db
+    conn = db.get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT email FROM charvak_enrollments WHERE enrollment_id = %s",
+        (enrollment_id,),
+    )
+    row = cur.fetchone()
+    cur.close(); conn.close()
+    if not row:
+        raise HTTPException(status_code=404, detail="Enrollment not found")
+    return require_auth_for_email(request, row[0])
+
+
 ADMIN_EMAIL = "charvakit@gmail.com"
 
 # Admin emails ? both can access admin routes
@@ -2885,9 +2901,12 @@ async def kyc_pricing():
 @app.post("/api/kyc/initiate")
 @limiter.limit("60/minute")
 async def initiate_verification(request: Request):
-    """Start a new background verification."""
+    """Start a new background verification. Requires auth matching user_email."""
     try:
         data = await request.json()
+        user_email = (data.get("user_email") or data.get("email") or "").strip().lower()
+        if user_email:
+            require_auth_for_email(request, user_email)
         result = kyc_engine.initiate_verification(data)
         return result
     except Exception as e:
@@ -2932,7 +2951,8 @@ async def submit_kyc_documents(request: Request):
 
 @app.post("/api/kyc/review")
 async def review_verification(request: Request):
-    """Admin/Partner reviews a verification."""
+    """Admin/Partner reviews a verification. Admin-only."""
+    require_admin(request)
     try:
         data = await request.json()
         result = kyc_engine.review_verification(
@@ -3060,7 +3080,8 @@ async def deliver_work(request: Request):
 @app.post("/api/escrow/release")
 @limiter.limit("60/minute")
 async def release_escrow(request: Request):
-    """Release funds to vendor."""
+    """Release funds to vendor. Admin-only."""
+    require_admin(request)
     try:
         data = await request.json()
         result = escrow_engine.release_funds(data.get("escrow_id"))
@@ -3084,7 +3105,8 @@ async def dispute_escrow(request: Request):
 
 @app.post("/api/escrow/resolve")
 async def resolve_dispute(request: Request):
-    """Admin resolves a dispute."""
+    """Admin resolves a dispute. Admin-only."""
+    require_admin(request)
     try:
         data = await request.json()
         result = escrow_engine.resolve_dispute(
@@ -3215,7 +3237,8 @@ async def convert_referral(request: Request):
 
 @app.post("/api/referral/pay")
 async def pay_bounty(request: Request):
-    """Pay a referral bounty."""
+    """Pay a referral bounty. Admin-only."""
+    require_admin(request)
     try:
         data = await request.json()
         result = referral_engine.pay_bounty(data.get("bounty_id"))
@@ -3800,9 +3823,12 @@ async def api_get_training_course(course_id: str):
 @app.post("/api/training/enroll")
 @limiter.limit("20/minute")
 async def enroll_student(request: Request):
-    """Enroll in a course."""
+    """Enroll in a course. Requires auth matching data['email']."""
     try:
         data = await request.json()
+        email = (data.get("email") or "").strip().lower()
+        if email:
+            require_auth_for_email(request, email)
         result = training_engine.enroll_student(data)
         return result
     except Exception as e:
@@ -4292,13 +4318,15 @@ async def send_message(request: Request):
         return {"status": "error", "message": str(e)}
 
 @app.get("/api/messaging/inbox/{user_id}")
-async def get_inbox(user_id: str):
-    """Get user's inbox."""
+async def get_inbox(request: Request, user_id: str):
+    """Get user's inbox. Requires auth matching user_id."""
+    require_auth_for_email(request, user_id)
     return messaging_engine.get_inbox(user_id)
 
 @app.get("/api/messaging/conversation/{user_id}/{other_user_id}")
-async def get_conversation(user_id: str, other_user_id: str):
-    """Get conversation between two users."""
+async def get_conversation(request: Request, user_id: str, other_user_id: str):
+    """Get conversation between two users. Requires auth matching user_id."""
+    require_auth_for_email(request, user_id)
     return messaging_engine.get_conversation(user_id, other_user_id)
 
 @app.get("/api/messaging/templates")
@@ -4709,11 +4737,13 @@ async def submit_resume(request: Request):
 @app.post("/api/enterprise/resume/review")
 @limiter.limit("20/minute")
 async def review_resume(request: Request):
+    require_admin(request)
     data = await request.json()
     return enterprise_engine.review_resume(data.get("review_id"), data.get("decision"), data.get("comments", ""))
 
 @app.get("/api/enterprise/resume/pending")
-async def pending_reviews():
+async def pending_reviews(request: Request):
+    require_admin(request)
     return enterprise_engine.get_pending_reviews()
 
 @app.post("/api/enterprise/appointment/book")
@@ -5097,6 +5127,9 @@ async def search_courses(query: str = None, category: str = None, max_price: flo
 @limiter.limit("60/minute")
 async def create_job_alert(request: Request):
     data = await request.json()
+    _em = (data.get("email") or "").strip().lower()
+    if _em:
+        require_auth_for_email(request, _em)
     return career_v2_engine.create_job_alert(data)
 
 @app.get("/api/career/alerts/{email}")
@@ -5108,6 +5141,9 @@ async def get_alerts(request: Request, email: str):
 @limiter.limit("20/minute")
 async def save_job(request: Request):
     data = await request.json()
+    _em = (data.get("email") or "").strip().lower()
+    if _em:
+        require_auth_for_email(request, _em)
     return career_v2_engine.save_job(data)
 
 @app.post("/api/career/follow-company")
@@ -5119,6 +5155,7 @@ async def follow_company(request: Request):
 @app.post("/api/career/salary")
 @limiter.limit("60/minute")
 async def add_salary(request: Request):
+    require_auth(request)
     data = await request.json()
     return career_v2_engine.add_salary(data)
 
@@ -5129,6 +5166,7 @@ async def get_salary_insights(role: str = None):
 @app.post("/api/career/interview")
 @limiter.limit("60/minute")
 async def schedule_interview(request: Request):
+    # NOTE: add auth check here when career/interview is fully wired
     data = await request.json()
     return career_v2_engine.schedule_interview(data)
 
@@ -5136,6 +5174,9 @@ async def schedule_interview(request: Request):
 @limiter.limit("60/minute")
 async def add_offer(request: Request):
     data = await request.json()
+    _em = (data.get("candidate_email") or data.get("email") or "").strip().lower()
+    if _em:
+        require_auth_for_email(request, _em)
     return career_v2_engine.add_offer(data)
 
 @app.get("/api/career/recommendations/{email}")
@@ -5555,7 +5596,8 @@ async def inactive_candidates():
 
 @app.delete("/api/lifecycle/delete-user")
 async def delete_user(request: Request):
-    """GDPR: Delete user data."""
+    """GDPR: Delete user data. Admin-only."""
+    require_admin(request)
     data = await request.json()
     return data_lifecycle.delete_user_data(data.get("email"))
 
@@ -6903,6 +6945,9 @@ async def get_skill_matrix():
 @app.post("/api/training/create-plan")
 async def create_training_plan(request: Request):
     data = await request.json()
+    _em = (data.get("email") or "").strip().lower()
+    if _em:
+        require_auth_for_email(request, _em)
     return training_mapping_engine.create_training_plan(
         data.get("email"),
         data.get("target_role"),
@@ -6918,6 +6963,9 @@ async def get_training_plan(request: Request, email: str):
 @app.post("/api/training/update-progress")
 async def update_progress(request: Request):
     data = await request.json()
+    _em = (data.get("email") or "").strip().lower()
+    if _em:
+        require_auth_for_email(request, _em)
     return training_mapping_engine.update_progress(
         data.get("email"),
         data.get("week"),
@@ -8702,6 +8750,9 @@ from payment_enrollment import payment_enrollment
 @app.post("/api/enroll/payment")
 async def enroll_with_payment(request: Request):
     data = await request.json()
+    _em = (data.get("email") or "").strip().lower()
+    if _em:
+        require_auth_for_email(request, _em)
     return payment_enrollment.enroll_with_payment(
         data.get("email"),
         data.get("course_name"),
@@ -8718,7 +8769,8 @@ async def pay_installment(request: Request):
     )
 
 @app.get("/api/enroll/check-access/{enrollment_id}")
-async def check_access(enrollment_id: str):
+async def check_access(request: Request, enrollment_id: str):
+    require_course_enrollment_owner(request, enrollment_id)
     return payment_enrollment.check_access(enrollment_id)
 
 @app.post("/api/enroll/request-extension")
