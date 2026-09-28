@@ -2,7 +2,7 @@
 
 **Purpose:** Track every planned-but-not-completed item. Nothing gets lost again.
 **Created:** 2026-09-20
-**Last updated:** 2026-09-28 (MCQ bypass + internship AI eval + FYP viva answers + internship custom programs shipped)
+**Last updated:** 2026-09-28 (MCQ bypass + internship AI eval + FYP viva + Phase 3 custom programs + Phase 4 tier enrollment)
 **HEAD:** 82ec76f
 
 ### FLAGGED — Premium Report product (₹199 PDF unlock) (2026-09-27)
@@ -2333,6 +2333,48 @@ curriculum: name, category, 4-6 skills, 3-4 deliverables, week-by-week outline.
 `is_custom: true`. 50 credits deducted correctly.
 - **Internship Phase 4 — tier UI + top-up-then-enroll** (~60 min) — tier selector, credits-needed computation, Razorpay top-up modal, switch `internship_enroll` from flat 100 cr to tier-based
 - ~~**`ai_internship_engine.submit_work` real AI eval** (KNOWN-ISSUES #9)~~ — **RESOLVED 2026-09-28, commit `16c5d97`.** Real OpenAI mentor eval now live; random stub only used as fallback if the AI call fails. Submit Work UI added to `templates/ai-internship.html`. Verified E2E: scored 8/10 with contextual strengths/improvements.
+
+
+### RESOLVED — Internship Phase 4: tier-based INR enrollment via Razorpay (2026-09-28)
+
+**Shipped 2026-09-28.** Replaces the flat 100-credit `internship_enroll` with 8 priced tiers
+(Sprint 2wk Rs1,299 → Capstone 16wk Rs8,499). Users pick a plan in a modal, pay via
+Razorpay, and get an enrollment record + confirmation email.
+
+**Pricing:** +25% raise from the old display prices. Sprint Rs1,299 / Standard Rs2,499 /
+Extended Rs3,499 / Immersive Rs4,499 / Semester Lite Rs5,499 / Semester Rs6,499 /
+Semester Plus Rs7,499 / Capstone Rs8,499. Bundled AI mentor (20 free questions, 5cr each
+after).
+
+**Backend:**
+- `ai_internship_engine.enroll_paid()` + `find_enrollment_by_payment()` idempotency check
+- `_get_tier_by_key()` helper reads from `charvak_ai_internship_tiers`
+- New columns on enrollments: `mentor_asks_used`, `amount_paid_inr`, `razorpay_payment_id`
+- New route `POST /api/internship/enroll-paid` — verifies Razorpay API capture + exact amount
+- Webhook `notes.tool == 'internship_enroll'` branch (idempotent, same pattern as courses)
+- `enhanced_email.send_internship_enrollment()` — confirmation with next steps
+
+**Frontend:**
+- Modal with 8 tier cards, populates from `/api/internship/tiers` (cached)
+- Razorpay SDK loaded lazily (`ensureRazorpayLoaded()`) — not on every page load
+- `verifyAndEnroll()` handles signature verification + calls the enroll route
+- Success toast + auto-scroll + auto-load Day 1 scenario
+
+**Critical fix — modal must escape `<main>` stacking context:**
+The modal was initially rendered inside `{% block content %}`, which `base.html`
+wraps in `<main>`. `<main>` has `position: relative; z-index: 1`, creating a stacking
+context that trapped the modal behind its own backdrop regardless of z-index.
+**Fix:** added `{% block modal %}{% endblock %}` in `base.html` right after `</main>`.
+Any template that needs a modal puts it in the modal block instead of the content block.
+**Reusable pattern** — all future modals must use `{% block modal %}`.
+
+**Verified E2E:**
+- Razorpay SDK loads, order created via API, checkout modal opens with card form
+- Enrolled 4-week Data Engineer program, all 8 tiers render in the picker
+- Order IDs recorded in log: `order_ThGLR1j0dKRjLP`, `order_ThGLw0ZLuAcn6w`,
+  `order_ThGOsbUDYQosVj`
+- Fake payment rejected with 402 (verified against real Razorpay API)
+- Legacy `/api/internship/enroll` route kept for backward compat (unused by new UI)
 
 ### Cleanup pending
 
