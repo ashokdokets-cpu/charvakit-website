@@ -2763,10 +2763,17 @@ async def create_payment_order(request: Request):
             result["key"] = os.getenv("RAZORPAY_KEY_ID", "")
         elif method == "paypal":
             target_currency = (data.get("currency") or "USD").upper()
+            # Encode purchase intent for the webhook safety net. The webhook
+            # fires even if the browser closes after PayPal captures. Format:
+            #   credits|<email>|<plan>
+            _cr_email = data.get("email") or ""
+            _cr_plan = data.get("plan") or ""
+            _cr_custom = f"credits|{_cr_email}|{_cr_plan}" if (_cr_email and _cr_plan) else ""
             result = payment_engine.create_paypal_order(
                 amount_inr=amount,
                 target_currency=target_currency,
-                description=name
+                description=name,
+                custom_id=_cr_custom
             )
         else:
             result = {"status": "error", "message": f"Unknown payment method: {method}"}
@@ -3036,6 +3043,66 @@ async def paypal_webhook(request: Request):
         course_name = _pick(notes.get("course_name"), custom_id.split("|")[2] if custom_id.count("|") >= 2 else "")
         enrollment_id = _pick(notes.get("enrollment_id"), custom_id.split("|")[3] if custom_id.count("|") >= 3 else "")
         country_code = _pick(notes.get("country_code"), pu.get("custom_id", "").split("|")[4] if custom_id.count("|") >= 4 else "") or "US"
+
+        # ---------- Credits purchase safety net ----------
+        # If the browser closes after capture() but before /api/credits/purchase,
+        # this branch grants credits idempotently. purchase_credits() dedupes on
+        # payment_id (UNIQUE on charvak_credit_purchases).
+        #
+        # The browser builds the dedupe key as:
+        #   paypal:<UPPERCASE_CURRENCY>:<capture.id>   (from actions.order.capture())
+        # We reconstruct it here so whichever path fires first wins.
+        if tool == "credits":
+            _plan = _pick(
+                notes.get("plan"),
+                pu.get("plan"),
+                custom_id.split("|")[2] if custom_id.count("|") >= 2 else ""
+            )
+            if not (email and _plan):
+                logger.warning("PayPal webhook: credits purchase missing email or plan")
+                return JSONResponse({"status": "ignored", "message": "credits: missing fields"})
+
+            # Capture id extraction:
+            #   PAYMENT.CAPTURE.COMPLETED -> resource.id IS the capture id
+            #   CHECKOUT.ORDER.APPROVED   -> resource.purchase_units[0].payments.captures[0].id
+            _capture_id = ""
+            if event_type == "PAYMENT.CAPTURE.COMPLETED":
+                _capture_id = resource.get("id") or ""
+            elif event_type == "CHECKOUT.ORDER.APPROVED":
+                try:
+                    _pu_list = resource.get("purchase_units") or []
+                    if _pu_list:
+                        _caps = (_pu_list[0].get("payments") or {}).get("captures") or []
+                        if _caps:
+                            _capture_id = _caps[0].get("id") or ""
+                except Exception:
+                    _capture_id = ""
+
+            if not _capture_id:
+                logger.warning(f"PayPal webhook credits: no capture id (event={event_type})")
+                return JSONResponse({"status": "ignored", "message": "credits: no capture id"})
+
+            _amt_obj_c = resource.get("amount") or pu.get("amount") or {}
+            _currency = (_amt_obj_c.get("currency_code") or "USD").upper()
+            _dedupe_key = f"paypal:{_currency}:{_capture_id}"
+
+            try:
+                from ai_credit_engine import purchase_credits
+                _result = purchase_credits(email, _plan, _dedupe_key)
+                logger.info(
+                    f"PayPal webhook credits: email={email} plan={_plan} "
+                    f"key={_dedupe_key} status={_result.get('status')} "
+                    f"already={_result.get('already_credited', False)}"
+                )
+                return JSONResponse({
+                    "status": "success",
+                    "granted": _result.get("status") == "success",
+                    "already_credited": _result.get("already_credited", False),
+                })
+            except Exception as _e:
+                logger.exception(f"PayPal webhook credits grant failed: {_e}")
+                return JSONResponse({"status": "error", "message": str(_e)}, status_code=200)
+        # ---------- end credits branch ----------
 
         if tool != "ai_course" or not (email and course_name and enrollment_id):
             logger.info("PayPal webhook: not an ai_course payment or missing fields")
