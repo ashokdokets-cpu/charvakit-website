@@ -2,7 +2,7 @@
 
 **Purpose:** Track every planned-but-not-completed item. Nothing gets lost again.
 **Created:** 2026-09-20
-**Last updated:** 2026-09-29 (Session B - auth persistence + cache revalidation). HEAD: `e28c781`
+**Last updated:** 2026-09-29 (Session B - flags #2, #4, #5, #6 closed; #3 deferred to dedicated test session). HEAD: `7c679f1`
 **HEAD:** e28c781 (ai-slop) / f58e63f (auth + cache)
 
 ### FLAGGED — Premium Report product (₹199 PDF unlock) (2026-09-27)
@@ -2137,7 +2137,7 @@ character are `C3 A0` instead of `E0 A4`, it's double-encoded.
 5. **Session-CONTEXT.md** links here for fresh chats
 
 ---
-**Last updated:** 2026-09-29 (Session B - auth persistence + cache revalidation). HEAD: `e28c781`
+**Last updated:** 2026-09-29 (Session B - flags #2, #4, #5, #6 closed; #3 deferred to dedicated test session). HEAD: `7c679f1`
 
 
 
@@ -2206,7 +2206,7 @@ reverting a Python write. **Fix:** stop uvicorn → write → verify with grep
   - These were verified to return real AI output tonight, but no page
     calls them. Backend is ready; frontend wiring needed.
 
-**Last updated:** 2026-09-29 (Session B - auth persistence + cache revalidation). HEAD: `e28c781`
+**Last updated:** 2026-09-29 (Session B - flags #2, #4, #5, #6 closed; #3 deferred to dedicated test session). HEAD: `7c679f1`
 
 
 ---
@@ -2243,7 +2243,7 @@ never calls the AI route. Needs replacement with credits-based form.
 
 **Verdict:** SCHEDULED — next session
 
-**Last updated:** 2026-09-29 (Session B - auth persistence + cache revalidation). HEAD: `e28c781`
+**Last updated:** 2026-09-29 (Session B - flags #2, #4, #5, #6 closed; #3 deferred to dedicated test session). HEAD: `7c679f1`
 
 
 ---
@@ -2278,7 +2278,7 @@ Queue of remaining work, roughly in priority order.
 - Session D (open): Item 6 (FYP features by user demand)
 - Optional: Item 7 whenever there is appetite
 
-**Last updated:** 2026-09-29 (Session B - auth persistence + cache revalidation). HEAD: `e28c781`
+**Last updated:** 2026-09-29 (Session B - flags #2, #4, #5, #6 closed; #3 deferred to dedicated test session). HEAD: `7c679f1`
 
 
 ---
@@ -2304,7 +2304,7 @@ used across the rest of the product suite.
 
 **Verdict:** Decided, scope locked, awaiting implementation in next session
 
-**Last updated:** 2026-09-29 (Session B - auth persistence + cache revalidation). HEAD: `e28c781`
+**Last updated:** 2026-09-29 (Session B - flags #2, #4, #5, #6 closed; #3 deferred to dedicated test session). HEAD: `7c679f1`
 
 
 ---
@@ -2456,7 +2456,7 @@ Grep of `templates/*.html` for `class="modal fade"` returned exactly **one** mat
 
 - **devtest orphan enrollments** — ~8 active rows from testing. Delete + refund or leave. Do at end of internship work.
 
-**Last updated:** 2026-09-29 (Session B - auth persistence + cache revalidation). HEAD: `e28c781`
+**Last updated:** 2026-09-29 (Session B - flags #2, #4, #5, #6 closed; #3 deferred to dedicated test session). HEAD: `7c679f1`
 
 
 ---
@@ -2523,7 +2523,7 @@ If the browser closes after the PayPal SDK captures the payment but before the f
 - INR users still see only Razorpay.
 - `PAYMENT_MODE=test` behavior for Razorpay `order_test_*` fake orders — untouched. (Separate flag; not PayPal-related.)
 
-**Last updated:** 2026-09-29 (Session B - auth persistence + cache revalidation). HEAD: `e28c781`
+**Last updated:** 2026-09-29 (Session B - flags #2, #4, #5, #6 closed; #3 deferred to dedicated test session). HEAD: `7c679f1`
 
 ---
 
