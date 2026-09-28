@@ -2,13 +2,14 @@
 {% block title %}AI-Contamination Detector - Charvak{% endblock %}
 {% block content %}
 <div class="page-hero bg-gradient-primary text-white py-5">
-    <div class="container py-4"><span class="badge bg-warning text-dark mb-2 px-3 py-2">Free Tool</span><h1 class="display-4 fw-bold">AI-Contamination Detector</h1><p class="lead">How much of your website is AI-generated slop? Get a humorous, shareable report card.</p></div>
+    <div class="container py-4"><span class="badge bg-primary text-white mb-2 px-3 py-2">25 credits per scan</span><h1 class="display-4 fw-bold">AI-Contamination Detector</h1><p class="lead">How much of your website is AI-generated slop? Get a humorous, shareable report card.</p></div>
 </div>
 <div class="container py-5"><div class="row"><div class="col-lg-7 mx-auto">
     <div class="card border-0 shadow-lg p-4 mb-4"><div class="card-body text-center">
         <h2 class="as-h4">Test Your Site</h2>
         <input type="url" class="form-control mb-3" id="siteUrl" placeholder="https://yoursite.com">
-        <button class="btn btn-primary btn-lg w-100" onclick="detectSlop()">Detect AI Slop</button>
+        <button class="btn btn-primary btn-lg w-100" id="slopBtn" onclick="detectSlop()">Scan Site (25 cr)</button>
+        <div id="slopError" class="alert alert-danger mt-3 d-none"></div>
     </div></div>
     <div class="card border-0 shadow-lg p-4 d-none" id="resultCard" style="border-left:5px solid #fb923c;"><div class="card-body text-center">
         <h3>AI-Slop Report Card</h3>
@@ -25,7 +26,67 @@
 </div></div></div>
 
 <script>
-function detectSlop(){const url=document.getElementById('siteUrl').value;if(!url)return alert('Enter a URL!');const score=Math.floor(Math.random()*60)+20;document.getElementById('slopScore').textContent=score+'%';document.getElementById('bloatScore').textContent=Math.floor(Math.random()*50)+30+'%';document.getElementById('layoutScore').textContent=Math.floor(Math.random()*8)+2;document.getElementById('wcagScore').textContent=Math.floor(Math.random()*15)+5;const alert=document.getElementById('slopAlert');if(score>60){alert.className='alert alert-danger';alert.textContent='Heavily contaminated! Your site needs urgent cleanup.';}else if(score>30){alert.className='alert alert-warning';alert.textContent='Moderate AI slop detected. Cleanup recommended.';}else{alert.className='alert alert-success';alert.textContent='Pretty clean! Minor improvements possible.';}document.getElementById('resultCard').classList.remove('d-none');document.getElementById('resultCard').scrollIntoView({behavior:'smooth'});}
+async function detectSlop(){
+    const url = document.getElementById('siteUrl').value.trim();
+    if (!url) return alert('Enter a URL!');
+    const btn = document.getElementById('slopBtn');
+    const errEl = document.getElementById('slopError');
+    errEl.classList.add('d-none');
+
+    const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    if (!authToken || !email) {
+        alert('Please log in to run a scan.');
+        window.location.href = '/login?next=/ai-contamination-detector';
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Scanning...';
+    try {
+        const r = await fetch('/api/products/ai-slop/scan', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authToken
+            },
+            body: JSON.stringify({ email: email, url: url, target: url })
+        });
+        const j = await r.json();
+        if (!r.ok) {
+            btn.disabled = false;
+            btn.textContent = 'Scan Site (25 cr)';
+            if (r.status === 401) { alert(j.message || 'Please log in again.'); window.location.href = '/login?next=/ai-contamination-detector'; return; }
+            if (r.status === 402) { alert(j.message || 'Insufficient credits.'); window.location.href = '/ai-credits-pricing'; return; }
+            errEl.textContent = j.message || 'Scan failed.';
+            errEl.classList.remove('d-none');
+            return;
+        }
+        const cleanliness = j.cleanliness_score != null ? j.cleanliness_score : (j.score != null ? j.score : null);
+        const slopPct = cleanliness != null ? Math.max(0, 100 - cleanliness) : (j.slop_percentage != null ? j.slop_percentage : null);
+        document.getElementById('slopScore').textContent = (slopPct != null ? slopPct : '--') + (slopPct != null ? '%' : '');
+        document.getElementById('bloatScore').textContent = (j.code_bloat != null ? j.code_bloat + '%' : (j.bloat != null ? j.bloat + '%' : '--'));
+        const layoutEl = document.getElementById('layoutScore');
+        if (layoutEl) layoutEl.textContent = (j.layout_issues != null ? j.layout_issues : '--');
+        document.getElementById('wcagScore').textContent = (j.wcag_fails != null ? j.wcag_fails : (j.issues_count != null ? j.issues_count : '--'));
+        const alertEl = document.getElementById('slopAlert');
+        const pct = (typeof slopPct === 'number') ? slopPct : 0;
+        if (pct > 60) { alertEl.className = 'alert alert-danger'; alertEl.textContent = 'Heavily contaminated! Your site needs urgent cleanup.'; }
+        else if (pct > 30) { alertEl.className = 'alert alert-warning'; alertEl.textContent = 'Moderate AI slop detected. Cleanup recommended.'; }
+        else { alertEl.className = 'alert alert-success'; alertEl.textContent = 'Pretty clean! Minor improvements possible.'; }
+        document.getElementById('resultCard').classList.remove('d-none');
+        document.getElementById('resultCard').scrollIntoView({behavior: 'smooth'});
+        btn.disabled = false;
+        btn.textContent = 'Scan Again (25 cr)';
+    } catch (e) {
+        console.error('detectSlop failed', e);
+        errEl.textContent = 'Network error — please try again.';
+        errEl.classList.remove('d-none');
+        btn.disabled = false;
+        btn.textContent = 'Scan Site (25 cr)';
+    }
+}
+
 function shareSlop(){window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('My website is '+document.getElementById('slopScore').textContent+' AI slop! Check yours: https://www.charvakit.com/ai-contamination-detector'));}
 </script>
 {% include 'includes/premium-upsell.html' %}
