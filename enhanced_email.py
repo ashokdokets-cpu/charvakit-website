@@ -1,4 +1,4 @@
-﻿"""
+"""
 Charvak Enhanced Email - Wraps existing email_engine
 Adds: Templates, Tracking, Bulk
 """
@@ -34,6 +34,35 @@ class EnhancedEmailSystem:
             f"Your payment of {amount} has been received."
         )
         self.sent_emails.append({"type": "payment", "email": email, "amount": amount})
+        return result
+
+    def send_internship_enrollment(self, email, name, program_name, tier_name,
+                                   amount_inr, enrollment_id, duration_weeks, total_days):
+        """Send internship enrollment confirmation with next steps."""
+        name = (name or "there").strip() or "there"
+        subject = f"You're enrolled: {program_name} ({tier_name})"
+        body = (
+            f"<h2>Welcome aboard, {name}!</h2>"
+            f"<p>Your enrollment is confirmed.</p>"
+            f"<table style='border-collapse:collapse'>"
+            f"<tr><td style='padding:4px 12px 4px 0'><strong>Program</strong></td><td>{program_name}</td></tr>"
+            f"<tr><td style='padding:4px 12px 4px 0'><strong>Plan</strong></td><td>{tier_name}</td></tr>"
+            f"<tr><td style='padding:4px 12px 4px 0'><strong>Duration</strong></td><td>{duration_weeks} weeks ({total_days} business days)</td></tr>"
+            f"<tr><td style='padding:4px 12px 4px 0'><strong>Amount paid</strong></td><td>Rs {amount_inr}</td></tr>"
+            f"<tr><td style='padding:4px 12px 4px 0'><strong>Enrollment ID</strong></td><td><code>{enrollment_id}</code></td></tr>"
+            f"</table>"
+            f"<h3>What happens next</h3>"
+            f"<ol>"
+            f"<li><strong>Day 1 unlocks immediately</strong> at <a href='https://www.charvakit.com/ai-internship'>charvakit.com/ai-internship</a></li>"
+            f"<li><strong>AI mentor available 24/7</strong> \u2014 ask questions, get feedback on submissions</li>"
+            f"<li><strong>Submit your work daily</strong> for structured AI feedback with strengths and improvements</li>"
+            f"<li><strong>Verified digital badge</strong> on completion, shareable to LinkedIn</li>"
+            f"</ol>"
+            f"<p>Questions? Reply to this email \u2014 we're here to help.</p>"
+            f"<p>\u2014 The Charvak Team</p>"
+        )
+        result = self.email_engine.send_email(email, subject, body)
+        self.sent_emails.append({"type": "internship_enrollment", "email": email, "enrollment_id": enrollment_id})
         return result
     
     def send_assessment_result(self, email, assessment, score):

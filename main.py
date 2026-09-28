@@ -2722,6 +2722,49 @@ async def razorpay_webhook(request: Request):
                 return JSONResponse({"status": "error", "message": "course processing failed"}, status_code=200)
 
         result = ai_credit_engine.purchase_credits(email, plan, payment_id=payment_id)
+
+        # --- internship_enroll_branch_marker ---
+        # If this payment was for an internship enrollment (paid tier),
+        # create the enrollment record here. Idempotent on razorpay_payment_id.
+        if tool == "internship_enroll":
+            try:
+                program_id = (notes.get("program_id") or "").strip()
+                tier_key = (notes.get("tier_key") or "").strip().lower()
+
+                if not (program_id and tier_key and email):
+                    logger.warning("Razorpay webhook: internship_enroll missing fields")
+                    return JSONResponse({"status": "ignored", "message": "missing internship fields"})
+
+                # Idempotency: if the client-callback already created it, skip
+                existing = ai_internship_engine.find_enrollment_by_payment(payment_id)
+                if existing:
+                    logger.info(f"Razorpay webhook: internship enrollment already exists: {existing}")
+                    return JSONResponse({"status": "success", "payment_id": payment_id, "enrollment_id": existing, "already_created": True})
+
+                # Verify tier + amount
+                tier = ai_internship_engine._get_tier_by_key(tier_key)
+                if not tier:
+                    logger.warning(f"Razorpay webhook: unknown tier {tier_key}")
+                    return JSONResponse({"status": "ignored", "message": "unknown tier"})
+
+                expected_paise = int(tier["price_inr"]) * 100
+                got_paise = int(payment_entity.get("amount") or 0)
+                if got_paise != expected_paise:
+                    logger.warning(f"webhook internship amount mismatch: got {got_paise}, expected {expected_paise}")
+                    return JSONResponse({"status": "ignored", "message": "amount mismatch"})
+
+                result = ai_internship_engine.enroll_paid(
+                    email=email,
+                    program_id=program_id,
+                    tier_key=tier_key,
+                    payment_id=payment_id,
+                    amount_paid_inr=tier["price_inr"],
+                )
+                logger.info(f"Razorpay webhook: internship enrollment created {result.get('enrollment_id')} for {email}")
+                return JSONResponse({"status": "success", "payment_id": payment_id, "enrollment_id": result.get("enrollment_id")})
+            except Exception as ie:
+                logger.error(f"Razorpay webhook: internship branch failed: {ie}", exc_info=True)
+                return JSONResponse({"status": "error", "message": "internship processing failed"}, status_code=200)
         logger.info(f"Razorpay webhook crediting result: {result.get('status')} for {email} plan={plan}")
 
         return JSONResponse({"status": "success", "payment_id": payment_id, "credited": result.get("status") == "success"})
@@ -6085,6 +6128,11 @@ async def internship_programs(email: str = ""):
     email = (email or "").strip().lower()
     return ai_internship_engine.get_programs(email or None)
 
+@app.get("/api/internship/tiers")
+async def internship_tiers():
+    """Return all active internship tiers with prices."""
+    return ai_internship_engine.get_tiers()
+
 @app.get("/api/internship/my-enrollments")
 async def internship_my_enrollments(request: Request, email: str = ""):
     """Return all active enrollments for the authenticated email."""
@@ -6115,6 +6163,56 @@ async def internship_enroll(request: Request):
     program_id = data.get("program_id")
     duration = data.get("duration", "standard")
     return ai_internship_engine.enroll(email, program_id, duration)
+
+@app.post("/api/internship/enroll-paid")
+async def internship_enroll_paid(request: Request):
+    """Create a paid enrollment after verifying a Razorpay payment."""
+    data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+    require_auth_for_email(request, email)
+
+    program_id = data.get("program_id")
+    tier_key = (data.get("tier_key") or "standard").strip().lower()
+    payment_id = (data.get("payment_id") or "").strip()
+    if not program_id:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "program_id required"})
+    if not payment_id:
+        return JSONResponse(status_code=402, content={"status": "error", "message": "payment_id required"})
+
+    # Idempotency: same payment_id cannot create two enrollments
+    existing = ai_internship_engine.find_enrollment_by_payment(payment_id)
+    if existing:
+        return {"status": "success", "enrollment_id": existing, "already_created": True}
+
+    # Validate tier
+    tier = ai_internship_engine._get_tier_by_key(tier_key)
+    if not tier:
+        return JSONResponse(status_code=400, content={"status": "error", "message": f"Unknown tier: {tier_key}"})
+
+    # Verify payment with Razorpay
+    from payment_engine import payment_engine
+    pay = payment_engine.fetch_razorpay_payment(payment_id)
+    if pay.get("status") != "success":
+        return JSONResponse(status_code=402, content={"status": "error", "message": pay.get("message", "Payment verification failed")})
+    if pay.get("status_field") != "captured":
+        return JSONResponse(status_code=402, content={"status": "error", "message": f"Payment status is {pay.get('status_field')}, expected captured"})
+
+    # Exact amount match (no tolerance)
+    paid_paise = int(pay.get("amount") or 0)
+    expected_paise = int(tier["price_inr"]) * 100
+    if paid_paise != expected_paise:
+        return JSONResponse(status_code=402, content={"status": "error", "message": f"Amount mismatch: paid Rs{paid_paise/100:.2f}, expected Rs{expected_paise/100:.2f}"})
+
+    # Create enrollment
+    return ai_internship_engine.enroll_paid(
+        email=email,
+        program_id=program_id,
+        tier_key=tier_key,
+        payment_id=payment_id,
+        amount_paid_inr=tier["price_inr"],
+    )
 
 @app.post("/api/internship/custom-program")
 async def internship_custom_program(request: Request):
