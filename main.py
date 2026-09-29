@@ -4401,6 +4401,20 @@ async def api_reverse_staffing(request: Request):
         return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return products_engine.reverse_staffing_match(data)
 
+@app.post("/api/products/reverse-staffing/subscribe")
+@limiter.limit("10/minute")
+async def api_reverse_staffing_subscribe(request: Request):
+    data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+    require_auth_for_email(request, email)
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "reverse_staffing_subscription")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+    return products_engine.reverse_staffing_subscribe(data)
+
 @app.post("/api/products/auditbot/scan")
 @limiter.limit("60/minute")
 async def api_auditbot(request: Request):
@@ -4624,6 +4638,34 @@ async def api_geo_compliance(request: Request):
     if guard.get("status") != "success":
         return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return products_engine.geo_compliance_check(data)
+
+@app.post("/api/products/geo-compliance/contract")
+@limiter.limit("20/minute")
+async def api_geo_contract(request: Request):
+    data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+    require_auth_for_email(request, email)
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "geo_contract")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+    return products_engine.geo_compliance_contract(data)
+
+@app.post("/api/products/geo-compliance/hiring")
+@limiter.limit("10/minute")
+async def api_geo_hiring(request: Request):
+    data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+    require_auth_for_email(request, email)
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "geo_hiring")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+    return products_engine.geo_compliance_hiring(data)
 
 @app.post("/api/products/design-token/check")
 @limiter.limit("60/minute")

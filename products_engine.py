@@ -924,6 +924,235 @@ Only return the JSON. No prose outside."""
     # DESIGN-TOKEN SENTINEL
     # ============================================================
     
+    def geo_compliance_contract(self, data: Dict) -> Dict:
+        """
+        Generate a cross-border contract draft.
+        data = {"email", "countries": [...], "service_type": str, "payment_method": str}
+        """
+        import json, secrets
+        from datetime import datetime
+
+        email = (data.get("email") or "").strip().lower()
+        countries = data.get("countries", [])
+        service_type = data.get("service_type", "Consulting")
+        payment_method = data.get("payment_method", "wire")
+
+        if not email:
+            return {"status": "error", "message": "email required"}
+
+        countries_text = ", ".join(countries) if countries else "the specified jurisdictions"
+        prompt = f"""You are a senior cross-border contracts lawyer. Draft a concise MSA + SOW framework for the following engagement.
+
+Countries: {countries_text}
+Service Type: {service_type}
+Payment Method: {payment_method}
+
+Return STRICT JSON:
+{{
+  "summary": "one sentence overview",
+  "governing_law": "which jurisdiction's law governs",
+  "contract_markdown": "a full markdown draft with sections: Parties, Scope, Payment Terms, IP, Confidentiality, Termination, Governing Law, Dispute Resolution",
+  "clauses": ["key clause 1", "key clause 2"],
+  "risk_flags": ["jurisdiction-specific risk 1", "risk 2"],
+  "next_steps": ["step 1", "step 2"]
+}}
+Only return the JSON."""
+
+        try:
+            from openai import OpenAI
+            import os
+            client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+            resp = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[{"role": "user", "content": prompt}],
+                response_format={"type": "json_object"},
+                temperature=0.2,
+                timeout=60,
+            )
+            raw = resp.choices[0].message.content or "{}"
+            if raw.startswith("```"):
+                raw = raw.strip("`")
+                if raw.startswith("json\n"):
+                    raw = raw[5:]
+            contract = json.loads(raw)
+        except Exception as e:
+            logger.warning(f"geo_compliance_contract AI call failed: {e}")
+            contract = {
+                "summary": f"Cross-border contract framework for {service_type} across {countries_text}.",
+                "governing_law": "Delaware, USA",
+                "contract_markdown": f"# Cross-Border Service Agreement\n\n**Parties:** Client and Charvak\n**Service:** {service_type}\n**Payment:** {payment_method}\n\n(AI draft unavailable - this is a fallback scaffold. Please consult counsel.)",
+                "clauses": ["Standard MSA", "SOW-specific SOW"],
+                "risk_flags": ["Consult local counsel in each jurisdiction"],
+                "next_steps": ["Review with legal", "Execute"],
+            }
+
+        contract_id = f"GC-{secrets.token_hex(6).upper()}"
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS charvak_geo_compliance_contracts (
+                    contract_id      TEXT PRIMARY KEY,
+                    email            TEXT NOT NULL,
+                    countries_json   JSONB,
+                    service_type     TEXT,
+                    contract_json    JSONB,
+                    credits_used     INTEGER NOT NULL DEFAULT 0,
+                    created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            cur.execute("""
+                INSERT INTO charvak_geo_compliance_contracts
+                    (contract_id, email, countries_json, service_type, contract_json, credits_used)
+                VALUES (%s, %s, %s, %s, %s, 400)
+            """, (contract_id, email, json.dumps(countries), service_type, json.dumps(contract)))
+            conn.commit()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.warning(f"geo_compliance_contract persist failed: {e}")
+
+        return {"status": "success", "contract_id": contract_id, **contract}
+
+    def geo_compliance_hiring(self, data: Dict) -> Dict:
+        """
+        Global hiring readiness setup.
+        data = {"email", "countries": [...]}
+        """
+        import json, secrets
+
+        email = (data.get("email") or "").strip().lower()
+        countries = data.get("countries", [])
+        if not email:
+            return {"status": "error", "message": "email required"}
+
+        countries_text = ", ".join(countries) if countries else "the specified jurisdictions"
+        prompt = f"""You are a global HR operations lead. Produce a hiring readiness setup for the following jurisdictions.
+
+Countries: {countries_text}
+
+Return STRICT JSON:
+{{
+  "summary": "one sentence overview",
+  "entity_requirements": [{{"country": "...", "entity_type": "EOR|subsidiary|contractor", "notes": "..."}}],
+  "steps": ["step 1", "step 2", "step 3"],
+  "compliance_checklist": ["item 1", "item 2"],
+  "estimated_timeline_weeks": 6,
+  "next_steps": ["action 1", "action 2"]
+}}
+Only return the JSON."""
+
+        try:
+            from openai import OpenAI
+            import os
+            client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+            resp = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[{"role": "user", "content": prompt}],
+                response_format={"type": "json_object"},
+                temperature=0.3,
+                timeout=60,
+            )
+            raw = resp.choices[0].message.content or "{}"
+            if raw.startswith("```"):
+                raw = raw.strip("`")
+                if raw.startswith("json\n"):
+                    raw = raw[5:]
+            setup = json.loads(raw)
+        except Exception as e:
+            logger.warning(f"geo_compliance_hiring AI call failed: {e}")
+            setup = {
+                "summary": f"Global hiring readiness for {countries_text}.",
+                "entity_requirements": [{"country": c, "entity_type": "EOR", "notes": "Recommended"} for c in countries] or [{"country": "US", "entity_type": "EOR", "notes": "Fast"}],
+                "steps": ["Choose EOR partner", "Set up local payroll", "Draft compliant contracts"],
+                "compliance_checklist": ["GDPR/CCPA review", "Local labor law review", "Tax registration"],
+                "estimated_timeline_weeks": 6,
+                "next_steps": ["Contact EOR partners", "Legal review"],
+            }
+
+        setup_id = f"GH-{secrets.token_hex(6).upper()}"
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS charvak_geo_compliance_hiring (
+                    setup_id         TEXT PRIMARY KEY,
+                    email            TEXT NOT NULL,
+                    countries_json   JSONB,
+                    setup_json       JSONB,
+                    credits_used     INTEGER NOT NULL DEFAULT 0,
+                    created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            cur.execute("""
+                INSERT INTO charvak_geo_compliance_hiring
+                    (setup_id, email, countries_json, setup_json, credits_used)
+                VALUES (%s, %s, %s, %s, 2000)
+            """, (setup_id, email, json.dumps(countries), json.dumps(setup)))
+            conn.commit()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.warning(f"geo_compliance_hiring persist failed: {e}")
+
+        return {"status": "success", "setup_id": setup_id, **setup}
+
+    def reverse_staffing_subscribe(self, data: Dict) -> Dict:
+        """
+        Create a 30-day Reverse Staffing subscription.
+        data = {"email"}
+        """
+        from datetime import datetime, timedelta
+        import secrets
+
+        email = (data.get("email") or "").strip().lower()
+        if not email:
+            return {"status": "error", "message": "email required"}
+
+        started_at = datetime.now()
+        expires_at = started_at + timedelta(days=30)
+
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS charvak_reverse_staffing_subscriptions (
+                    email            TEXT PRIMARY KEY,
+                    tier             TEXT NOT NULL DEFAULT 'subscription',
+                    started_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    expires_at       TIMESTAMP NOT NULL,
+                    matches_used     INTEGER NOT NULL DEFAULT 0,
+                    credits_used     INTEGER NOT NULL DEFAULT 0,
+                    created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            cur.execute("""
+                INSERT INTO charvak_reverse_staffing_subscriptions
+                    (email, tier, started_at, expires_at, matches_used, credits_used)
+                VALUES (%s, 'subscription', %s, %s, 0, 1000)
+                ON CONFLICT (email) DO UPDATE SET
+                    tier = 'subscription',
+                    started_at = EXCLUDED.started_at,
+                    expires_at = EXCLUDED.expires_at,
+                    matches_used = 0
+            """, (email, started_at, expires_at))
+            conn.commit()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"reverse_staffing_subscribe persist failed: {e}")
+            return {"status": "error", "message": "Subscription could not be created"}
+
+        return {
+            "status": "success",
+            "email": email,
+            "tier": "subscription",
+            "started_at": started_at.isoformat(),
+            "expires_at": expires_at.isoformat(),
+            "days_remaining": 30,
+            "message": "Reverse Staffing subscription active. Unlimited candidate matching for 30 days.",
+        }
+
     def design_token_check(self, data: Dict) -> Dict:
         """
         Check design token consistency.
