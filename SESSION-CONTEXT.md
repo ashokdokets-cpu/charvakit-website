@@ -1,6 +1,6 @@
 # Session Context - Charvak
 
-**HEAD:** `1deb4fa`
+**HEAD:** `d1d21df`
 **Last updated:** 2026-09-29 (Session B - 4 of 5 payment flags closed; #3 deferred)
 **Version:** `v3.5-session-B-20260929`
 
@@ -452,3 +452,52 @@ because Rs 49,999 is a sales conversation, not self-serve checkout.
   Medium: Design-Token, Geo-Compliance, Agency-Twin,
           Team Dashboard, Reverse Staffing, LMS, University
 - Session 7: Legacy-Shift + Skill-Twin (also needs persistence)
+
+---
+
+## Session 6 progress (2026-09-30) - Batch 1 + 2a + 2b-1 shipped
+
+### Batch 1 (`3e0cbb5`) - 6 templates wired to existing routes
+- developer-entropy.html
+- ai-slop-quarantine.html
+- design-token-sentinel.html
+- geo-compliance.html (2 tiers)
+- agency-twin.html
+- reverse-staffing.html
+
+Frontend-only. All had working backend, just dead notifyMe buttons.
+
+### Batch 2a (`b616466`) - 3 new routes for existing templates
+- POST /api/products/geo-compliance/contract (400 cr)
+- POST /api/products/geo-compliance/hiring   (2000 cr)
+- POST /api/products/reverse-staffing/subscribe (1000 cr)
+
+3 new tables, 3 new engine methods, 3 new credit keys.
+
+### Batch 2b-1 (`d1d21df`) - bridge.html full stack
+- POST /api/bridge/premium (1000 cr)
+- Engine: bridge_engine.bridge_premium_calculator()
+- Table: charvak_bridge_premium_reports
+- Real 5-year projection + sensitivity + board recs + white-label spec
+
+### Batch 2b remaining (3 templates)
+- marketing-ai.html (Rs 299)
+- team-dashboard.html (Rs 1,999)
+- background-verification.html (variable)
+
+Each needs full stack: migration + credit key + engine + route + frontend.
+
+### Progress: 10 of ~17 C7 templates shipped this session
+
+### Deferred to Session 7
+- lms.html
+- silent-killer.html
+- skill-twin.html (needs persistence - AA4d)
+- university.html
+- legacy-shift.html
+
+### External (deferred)
+- #3 PayPal live capture test
+- Rotate PayPal + SYNC keys
+- scripts/_*.py cleanup
+- ARCHITECTURE.md static section refresh
