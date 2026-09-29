@@ -1,6 +1,6 @@
 # Session Context - Charvak
 
-**HEAD:** `0f6c5c1`
+**HEAD:** `28fb6e2`
 **Last updated:** 2026-09-29 (Session B - 4 of 5 payment flags closed; #3 deferred)
 **Version:** `v3.5-session-B-20260929`
 
@@ -200,3 +200,113 @@ Verified E2E: 4 tool runs persisted and rendered on /my-tools
 - Premium Report product (~8-12 hrs, product decision)
 - C7 remaining templates (~10-12 with dead paid tiers)
 - Rotate PayPal secret / SYNC keys (external dashboards)
+
+---
+
+## NEXT SESSIONS - C7 paid-tier backlog (queued 2026-09-29)
+
+The AI Tools Suite is done. Next work is closing the C7 gap: every
+product page still has 1-3 dead paid-tier buttons wired to notifyMe()
+instead of a real purchase flow.
+
+### Session 3 (~3 hrs) - AuditBot paid tiers
+
+Highest-value per tracker. Product page: /auditbot
+Backend already exists: POST /api/products/auditbot/scan (25 cr).
+
+Two dead buttons to ship:
+1. "Fix" - Rs 299 - takes the scan result and generates an AI fix patch
+2. "Subscription" - Rs 999/mo - ongoing monitoring + alerts
+
+Design decision: credits-based, not separate Razorpay.
+- auditbot_fix: 50 credits (=~Rs 299 at current pricing)
+- auditbot_monthly: 150 credits
+
+Deliverables:
+- 2 new routes: POST /api/products/auditbot/fix, POST /api/products/auditbot/subscribe
+- New tables: charvak_auditbot_fixes, charvak_auditbot_subscriptions
+- Frontend: replace 2 notifyMe calls with real forms
+- Webhook for subscription renewals (or manual renew for now)
+
+### Session 4 (~4 hrs) - Lock-In Breaker paid tiers
+
+Product page: /lock-in-breaker (also /lock-in-breaker-pricing)
+Backend exists: POST /api/products/lock-in-breaker/audit (25 cr).
+
+Two dead buttons:
+1. "Migration" - Rs 4,999 - full migration plan
+2. "Continuous Protection" - Rs 4,999 - ongoing lock-in watch
+
+Deliverables:
+- 2 new routes: .../migration-plan, .../protection
+- New table: charvak_lock_in_engagements
+- Credit keys: lockin_migration (800 cr), lockin_protection (800 cr)
+- Frontend: replace notifyMe buttons
+
+Note: Rs 4,999 self-serve vs book-a-call is a product decision.
+Recommend: self-serve at these price points, since the engine already
+produces value at scan time.
+
+### Session 5 (~6 hrs) - Micro-Squads
+
+Product page: /micro-squads
+Backend exists: POST /api/products/micro-squads/assemble (25 cr).
+
+One dead button: "Assembly" - Rs 49,999.
+
+This is NOT a self-serve click-to-pay product. Rs 49,999 needs a
+sales conversation. Recommend: replace notifyMe with a calendar booking
+form (or a Calendly-style embed). Store the lead in
+charvak_micro_squad_leads.
+
+Deliverables:
+- POST /api/products/micro-squads/lead - captures booking request
+- New table: charvak_micro_squad_leads
+- Frontend: replace notifyMe with booking form + confirmation email
+
+### Session 6+ - Remaining C7 (batch by complexity)
+
+Small (< 1 hr each):
+- Marketing AI (Rs 299) - single tier
+- Background Verification (variable) - single tier
+- Bridge (Rs ~) - premium calc
+- Developer Entropy (Rs 299) - monitoring tier
+- AI-Slop Quarantine (Rs 149) - cleanup tier
+
+Medium (1-2 hrs each):
+- Design-Token (Rs 299 Pro)
+- Geo-Compliance (Rs 199 + Rs 999) - 2 tiers
+- Agency-Twin (Rs 2,999 Pro)
+- Team Dashboard (Rs 1,999 Pro)
+- Reverse Staffing (subscription)
+- LMS (Rs 999 enroll)
+- University (Rs 4,999)
+
+Large (2-4 hrs each):
+- Legacy-Shift (Rs 4,999 migration)
+- Skill-Twin (Rs 499 verify) - also needs persistence (AA4d deferred)
+
+### Design principle for all of the above
+
+Ship as CREDITS, not separate Razorpay charges.
+
+Rationale:
+- One-time credit purchase already works (Fix A/B/C from 2026-09-12)
+- Existing infra: FEATURE_CREDITS dict, check_and_deduct,
+  charvak_credit_usage_history
+- No new payment paths = no new webhook signature bugs
+- Users top up once, spend across products
+- Refunds/chargebacks handled centrally
+
+Only exception: Micro-Squads (Rs 49,999) which needs a sales-lead
+flow, not self-serve checkout.
+
+### Per-template checklist (for each C7 session)
+
+1. Add credit key to FEATURE_CREDITS in ai_credit_engine.py
+2. Add the backend route with require_auth_for_email + require_credits_from_data
+3. Add DB table if the result needs to persist
+4. Replace notifyMe() in the template with a real form + fetch
+5. Add 401/402/422 handling (copy from tools templates)
+6. Record the run (if it makes sense) - reuse tool_results.py pattern
+7. Test E2E: form -> credit deduction -> real output -> render
