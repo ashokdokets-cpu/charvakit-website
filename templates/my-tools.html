@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% block title %}My AI Tools History - Charvak{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4">
+        <h1 class="display-4 fw-bold">My AI Tools History</h1>
+        <p class="lead">Every run you've made across the 12 AI Tools Suite.</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="mb-0">Your Runs</h3>
+        <span class="badge bg-secondary" id="countBadge">Loading...</span>
+    </div>
+
+    <div id="loading" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="text-muted mt-3">Loading history...</p>
+    </div>
+
+    <div id="empty" class="text-center py-5 d-none">
+        <i class="bi bi-inbox display-1 text-muted"></i>
+        <p class="text-muted mt-3">No tool runs yet.</p>
+        <a href="/tools" class="btn btn-primary">Try the AI Tools Suite</a>
+    </div>
+
+    <div id="error" class="alert alert-danger d-none"></div>
+
+    <div id="results"></div>
+</div>
+
+<script>
+const TOOL_LABELS = {
+    resume_roast:     'Resume Roast',
+    ghost_bounty:     'GhostBounty AI',
+    ref_check:        'Ref-Check Roulette',
+    role_mirror:      'Role-Mirror AI',
+    bounty_swap:      'BountySwap AI',
+    micro_trial:      'Micro-Trial Engine',
+    offer_matcher:    'Offer Matcher',
+    ghost_job_shield: 'Ghost-Job Shield',
+    counter_offer:    'Counter-Offer Shield',
+    ref_swap:         'Reference Check Swap',
+    ghost_tracker:    'Ghosted Tracker',
+    pitch_roast:      'Recruiter Pitch Roast',
+};
+
+function esc(s) {
+    return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function renderValue(v, depth) {
+    depth = depth || 0;
+    if (v === null || v === undefined) return '<span class="text-muted">-</span>';
+    if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') return esc(v);
+    if (Array.isArray(v))
+        return '<ul class="mb-0">' + v.map(x => '<li>' + renderValue(x, depth+1) + '</li>').join('') + '</ul>';
+    if (typeof v === 'object') {
+        return '<ul class="mb-0">' + Object.keys(v).map(k =>
+            '<li><strong>' + esc(k) + ':</strong> ' + renderValue(v[k], depth+1) + '</li>'
+        ).join('') + '</ul>';
+    }
+    return esc(v);
+}
+
+function formatDate(iso) {
+    if (!iso) return '';
+    try {
+        const d = new Date(iso);
+        return d.toLocaleString('en-IN', {
+            year: 'numeric', month: 'short', day: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+        });
+    } catch(e) { return iso; }
+}
+
+function renderRun(run) {
+    const label = TOOL_LABELS[run.tool_name] || run.tool_name;
+    const inputs = run.inputs || {};
+    const result = run.result || {};
+    const resultId = run.result_id || '';
+    return `
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                        <h5 class="mb-0">${esc(label)}</h5>
+                        <small class="text-muted">
+                            ${esc(formatDate(run.created_at))}
+                            &middot;
+                            <span class="badge bg-light text-dark">${esc(run.credits_used)} credits</span>
+                            &middot;
+                            <code class="small">${esc(resultId)}</code>
+                        </small>
+                    </div>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="toggleDetails('${esc(resultId)}')">
+                        Details
+                    </button>
+                </div>
+                <div id="details-${esc(resultId)}" class="d-none">
+                    <hr>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <strong>Inputs:</strong>
+                            <div class="small">${renderValue(inputs)}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Result:</strong>
+                            <div class="small">${renderValue(result)}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function toggleDetails(id) {
+    const el = document.getElementById('details-' + id);
+    if (el) el.classList.toggle('d-none');
+}
+
+async function loadHistory() {
+    const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+
+    if (!authToken || !email) {
+        document.getElementById('loading').classList.add('d-none');
+        document.getElementById('error').textContent = 'Please log in to see your tool history.';
+        document.getElementById('error').classList.remove('d-none');
+        return;
+    }
+
+    try {
+        const r = await fetch('/api/tools/history/' + encodeURIComponent(email), {
+            headers: { 'Authorization': 'Bearer ' + authToken }
+        });
+        const j = await r.json();
+        document.getElementById('loading').classList.add('d-none');
+
+        if (!r.ok) {
+            if (r.status === 401) { window.location.href = '/login?next=/my-tools'; return; }
+            document.getElementById('error').textContent = j.message || 'Failed to load history.';
+            document.getElementById('error').classList.remove('d-none');
+            return;
+        }
+
+        const rows = j.results || [];
+        document.getElementById('countBadge').textContent = rows.length + ' run' + (rows.length === 1 ? '' : 's');
+
+        if (rows.length === 0) {
+            document.getElementById('empty').classList.remove('d-none');
+            return;
+        }
+
+        document.getElementById('results').innerHTML = rows.map(renderRun).join('');
+    } catch(e) {
+        console.error('loadHistory failed', e);
+        document.getElementById('loading').classList.add('d-none');
+        document.getElementById('error').textContent = 'Network error - please try again.';
+        document.getElementById('error').classList.remove('d-none');
+    }
+}
+
+loadHistory();
+</script>
+{% endblock %}

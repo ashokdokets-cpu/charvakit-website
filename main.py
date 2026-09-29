@@ -92,6 +92,7 @@ from outreach_engine import outreach_engine
 from data_lifecycle import data_lifecycle
 from final_year_project_engine import final_year_project_engine
 from ai_credit_engine import ai_credit_engine
+from tool_results import record_tool_result
 from notification_engine import notification_engine
 from voice_to_web_engine import voice_to_web_engine
 from exam_prep_engine import exam_prep_engine
@@ -2355,6 +2356,7 @@ async def api_resume_roast(request: Request):
             return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
         validated = ResumeRoastRequest(**data)
         result = await resume_roast_ai(validated.resume, validated.job_title)
+        record_tool_result(email, "resume_roast", data, result, credits_used=5)
         return result
     except HTTPException:
         raise
@@ -2378,6 +2380,7 @@ async def api_ghost_bounty(request: Request):
             return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
         validated = GhostBountyRequest(**data)
         result = await ghost_bounty_ai(validated.challenge)
+        record_tool_result(email, "ghost_bounty", data, result, credits_used=10)
         return result
     except HTTPException:
         raise
@@ -2401,6 +2404,7 @@ async def api_role_mirror(request: Request):
             return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
         validated = RoleMirrorRequest(**data)
         result = await role_mirror_ai(validated.role, validated.skills)
+        record_tool_result(email, "role_mirror", data, result, credits_used=5)
         return result
     except HTTPException:
         raise
@@ -2424,6 +2428,7 @@ async def api_offer_matcher(request: Request):
             return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
         validated = OfferMatcherRequest(**data)
         result = await offer_matcher_ai(validated.offer_a, validated.offer_b)
+        record_tool_result(email, "offer_matcher", data, result, credits_used=5)
         return result
     except HTTPException:
         raise
@@ -2447,6 +2452,7 @@ async def api_ghost_job(request: Request):
             return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
         validated = GhostJobRequest(**data)
         result = await ghost_job_ai(validated.url)
+        record_tool_result(email, "ghost_job_shield", data, result, credits_used=10)
         return result
     except HTTPException:
         raise
@@ -2470,6 +2476,7 @@ async def api_counter_offer(request: Request):
             return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
         validated = CounterOfferRequest(**data)
         result = await counter_offer_ai(validated.new_salary, validated.counter_salary)
+        record_tool_result(email, "counter_offer", data, result, credits_used=5)
         return result
     except HTTPException:
         raise
@@ -2493,6 +2500,7 @@ async def api_pitch_roast(request: Request):
             return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
         validated = PitchRoastRequest(**data)
         result = await pitch_roast_ai(validated.inmail)
+        record_tool_result(email, "pitch_roast", data, result, credits_used=5)
         return result
     except HTTPException:
         raise
@@ -2516,6 +2524,7 @@ async def api_ref_check(request: Request):
             return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
         validated = RefCheckRequest(**data)
         result = await ref_check_ai(validated.ref_names)
+        record_tool_result(email, "ref_check", data, result, credits_used=10)
         return result
     except HTTPException:
         raise
@@ -2537,6 +2546,7 @@ async def api_bounty_swap(request: Request):
     if guard.get("status") != "success":
         return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     result = await bounty_swap_ai(data.get("bounty_amount", 500), data.get("referrer_name", ""))
+    record_tool_result(email, "bounty_swap", data, result, credits_used=10)
     return result
 
 @app.post("/api/tools/micro-trial")
@@ -2552,6 +2562,7 @@ async def api_micro_trial(request: Request):
     if guard.get("status") != "success":
         return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     result = await micro_trial_ai(data.get("trial_type", "Frontend"), data.get("skills", ""))
+    record_tool_result(email, "micro_trial", data, result, credits_used=10)
     return result
 
 @app.post("/api/tools/ghost-job-shield")
@@ -2567,6 +2578,7 @@ async def api_ghost_job_shield(request: Request):
     if guard.get("status") != "success":
         return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     result = await ghost_job_ai(data.get("url", ""))
+    record_tool_result(email, "ghost_job_shield", data, result, credits_used=10)
     return result
 
 @app.post("/api/tools/ref-swap")
@@ -2582,6 +2594,7 @@ async def api_ref_swap(request: Request):
     if guard.get("status") != "success":
         return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     result = await ref_swap_ai(data.get("ref_type", "Professional"), data.get("industry", ""))
+    record_tool_result(email, "ref_swap", data, result, credits_used=10)
     return result
 
 @app.post("/api/tools/ghost-tracker")
@@ -2597,6 +2610,7 @@ async def api_ghosted_tracker(request: Request):
     if guard.get("status") != "success":
         return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     result = await ghosted_tracker_ai(data.get("applications", []))
+    record_tool_result(email, "ghost_tracker", data, result, credits_used=5)
     return result
 
 
@@ -2626,6 +2640,32 @@ async def _pydantic_validation_handler(request: Request, exc: ValidationError):
             "status": "error",
             "message": "Invalid input",
         })
+
+
+
+# ============================================================
+# MY TOOLS - history view
+# ============================================================
+
+@app.get("/my-tools", response_class=HTMLResponse)
+async def my_tools_page(request: Request):
+    return template_response("my-tools.html", request, "My AI Tools History - Charvak")
+
+
+@app.get("/api/tools/history/{email}")
+async def api_tools_history(email: str, request: Request):
+    try:
+        email = (email or "").strip().lower()
+        if not email:
+            return JSONResponse(status_code=400, content={"status": "error", "message": "email required"})
+        require_auth_for_email(request, email)
+        from tool_results import get_tool_history
+        rows = get_tool_history(email, limit=100)
+        return {"status": "success", "count": len(rows), "results": rows}
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "tools history")
 
 # ============================================================
 # AGREEMENT SYSTEM
