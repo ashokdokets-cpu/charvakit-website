@@ -1,8 +1,8 @@
 # CHARVAKIT.COM - MASTER REFERENCE
 ## Charvak IT Consulting Pvt Ltd
-### Last updated: September 29, 2026 (Session B - 4 of 5 payment flags closed)
+### Last updated: September 30, 2026 (Session 4 - C7 AuditBot + Lock-In Breaker paid tiers shipped)
 
-**HEAD:** `7c679f1`
+**HEAD:** `6fa14d1`
 **Live:** https://www.charvakit.com
 **Resume here:** see `SESSION-CONTEXT.md` (one-file state snapshot for fresh chat windows)
 **Backlog:** see `OUTSTANDING-WORK-INVENTORY.md` (master list of remaining work)
