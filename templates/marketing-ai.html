@@ -99,6 +99,8 @@
             </div>
         </div>
     </div>
+
+    <div id="requestsSection"></div>
 </div>
 
 <script>
@@ -186,6 +188,65 @@ function esc(s) {
         .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
+function copyBookingLink(elId) {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    const text = el.textContent;
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(function() {
+            alert('Link copied to clipboard:\n\n' + text);
+        }).catch(function() {
+            prompt('Copy this link:', text);
+        });
+    } else {
+        prompt('Copy this link:', text);
+    }
+}
+
+async function loadBookingRequests() {
+    const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    const wrap = document.getElementById('requestsSection');
+    if (!wrap || !authToken || !email) return;
+    try {
+        const r = await fetch('/api/booking/requests/' + encodeURIComponent(email), {
+            headers: {'Authorization': 'Bearer ' + authToken}
+        });
+        if (!r.ok) { wrap.innerHTML = ''; return; }
+        const j = await r.json();
+        if (j.status !== 'success' || !j.requests || j.requests.length === 0) {
+            wrap.innerHTML = '';
+            return;
+        }
+        let html = '<div class="card border-0 shadow-sm mt-4"><div class="card-body">';
+        html += '<h3 class="as-h5 mb-3">Your Booking Requests (' + j.requests.length + ')</h3>';
+        html += '<div class="table-responsive"><table class="table table-sm"><thead><tr>';
+        html += '<th>Prospect</th><th>Meeting</th><th>Preferred</th><th>Status</th><th>When</th>';
+        html += '</tr></thead><tbody>';
+        j.requests.forEach(function(req) {
+            const when = new Date(req.created_at).toLocaleDateString('en-IN', {month: 'short', day: 'numeric'});
+            html += '<tr>';
+            html += '<td><div>' + esc(req.prospect_name) + '</div><small class="text-muted">' + esc(req.prospect_email) + '</small></td>';
+            html += '<td><code class="small">' + esc(req.slug) + '</code></td>';
+            html += '<td>' + esc(req.preferred_time || '-') + '</td>';
+            html += '<td><span class="badge bg-secondary">' + esc(req.status) + '</span></td>';
+            html += '<td>' + esc(when) + '</td>';
+            html += '</tr>';
+        });
+        html += '</tbody></table></div>';
+        if (j.requests[0] && j.requests[0].notes) {
+            html += '<details class="mt-2"><summary class="text-muted small">Show latest request notes</summary>';
+            html += '<pre style="white-space:pre-wrap;background:#f5f5f5;padding:12px;border-radius:6px;font-size:13px;margin-top:8px;">' + esc(j.requests[0].notes) + '</pre></details>';
+        }
+        html += '</div></div>';
+        wrap.innerHTML = html;
+    } catch (e) {
+        // non-fatal
+    }
+}
+
+document.addEventListener('DOMContentLoaded', loadBookingRequests);
+
 async function generateBookingKit(e) {
     e.preventDefault();
     const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
@@ -236,7 +297,15 @@ function renderBookingKit(out, data) {
     html += '<h5>Outreach Kit (' + esc(data.kit_id || '') + ')</h5>';
     if (data.value_proposition) html += '<p class="lead">' + esc(data.value_proposition) + '</p>';
 
-    html += '<div class="alert alert-info"><strong>Your Booking Link:</strong><br><code>' + esc(data.booking_link || '') + '</code></div>';
+    var _link = data.booking_link || '';
+    var _linkId = 'bookLink_' + (data.kit_id || Date.now());
+    html += '<div class="alert alert-info"><strong>Your Booking Link:</strong><br>';
+    html += '<div class="d-flex align-items-center gap-2 mt-1">';
+    html += '<a href="' + esc(_link) + '" target="_blank" rel="noopener" class="text-truncate flex-grow-1"><code id="' + esc(_linkId) + '">' + esc(_link) + '</code></a>';
+    html += '<button type="button" class="btn btn-sm btn-primary flex-shrink-0" onclick="copyBookingLink(\'' + esc(_linkId) + '\')">Copy</button>';
+    html += '</div>';
+    html += '<small class="text-muted">Share this link with your prospect. They will be able to request a meeting time directly.</small>';
+    html += '</div>';
 
     if (data.email_draft) {
         html += '<h6 class="mt-3">Cold Email Draft</h6>';
