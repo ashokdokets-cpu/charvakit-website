@@ -24,10 +24,15 @@
                     <h4 class="as-h6">Growing Team</h4>
                     <h3><span data-inr="2999">₹2,999</span>/mo</h3>
                     <small class="text-muted">Up to 20 users</small>
+                    <div class="mt-2">
+                        <button class="btn btn-primary btn-sm w-100" onclick="subscribeTeam(event)">Subscribe &mdash; 500 credits</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <div class="mb-4" id="myTeams"></div>
 
     <div class="row g-4">
         <div class="col-lg-6">
@@ -35,7 +40,7 @@
                 <h4 class="as-h5">Create Team</h4>
                 <form onsubmit="createTeam(event)">
                     <input type="text" class="form-control mb-2" id="teamCompany" placeholder="Company Name" required>
-                    <input type="email" class="form-control mb-2" id="teamAdminEmail" placeholder="Admin Email" required>
+                    <input type="email" class="form-control mb-2" id="teamAdminEmail" placeholder="Admin Email (your account)" readonly>
                     <input type="text" class="form-control mb-3" id="teamAdminName" placeholder="Admin Name" required>
                     <button class="btn btn-primary w-100" type="submit">Create Team</button>
                 </form>
@@ -56,15 +61,128 @@
     <div class="mt-3" id="teamOutput"></div>
 </div>
 <script>
-async function createTeam(e){e.preventDefault();const d={company_name:document.getElementById('teamCompany').value,admin_email:document.getElementById('teamAdminEmail').value,admin_name:document.getElementById('teamAdminName').value};const r=await fetch('/api/team/create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});const j=await r.json();show(j.message+' Team ID: '+j.team_id);}
-async function inviteMember(e){e.preventDefault();const d={team_id:document.getElementById('memberTeamId').value,name:document.getElementById('memberName').value,email:document.getElementById('memberEmail').value,role:'recruiter'};const r=await fetch('/api/team/invite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});const j=await r.json();show(j.message);}
-function show(m){document.getElementById('teamOutput').innerHTML='<div class="alert alert-success">'+m+'</div>';}
-</script>
-<script>
-function upgradeTeam(event) {
-    event.preventDefault();
-    // Session G6: feature under development — capture interest instead
-    window.notifyMe('Team Dashboard Pro');
+function _auth() {
+    return {
+        token: localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '',
+        email: localStorage.getItem('userEmail') || ''
+    };
 }
+function esc(s) {
+    return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+function show(m, kind) {
+    const cls = kind === 'danger' ? 'alert-danger' : (kind === 'warning' ? 'alert-warning' : 'alert-success');
+    document.getElementById('teamOutput').innerHTML = '<div class="alert ' + cls + '">' + esc(m) + '</div>';
+}
+
+async function createTeam(e) {
+    e.preventDefault();
+    const { token, email } = _auth();
+    if (!token || !email) { alert('Please log in.'); window.location.href = '/login?next=/team-dashboard'; return; }
+    const d = {
+        email: email,
+        company_name: document.getElementById('teamCompany').value.trim(),
+        admin_name: document.getElementById('teamAdminName').value.trim()
+    };
+    try {
+        const r = await fetch('/api/team/create', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
+            body: JSON.stringify(d)
+        });
+        if (r.status === 401) { window.location.href = '/login?next=/team-dashboard'; return; }
+        const j = await r.json();
+        if (j.status !== 'success') { show(j.message || 'Failed', 'danger'); return; }
+        show((j.message || 'Team created') + ' Team ID: ' + (j.team_id || ''));
+        loadMyTeams();
+    } catch (err) {
+        show('Network error: ' + err.message, 'danger');
+    }
+}
+
+async function inviteMember(e) {
+    e.preventDefault();
+    const { token, email } = _auth();
+    if (!token || !email) { alert('Please log in.'); window.location.href = '/login?next=/team-dashboard'; return; }
+    const d = {
+        email: email,
+        team_id: document.getElementById('memberTeamId').value.trim(),
+        name: document.getElementById('memberName').value.trim(),
+        member_email: document.getElementById('memberEmail').value.trim(),
+        role: 'recruiter'
+    };
+    try {
+        const r = await fetch('/api/team/invite', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
+            body: JSON.stringify(d)
+        });
+        if (r.status === 401) { window.location.href = '/login?next=/team-dashboard'; return; }
+        if (r.status === 402) { show('Team is at free-tier limit. Upgrade to Growing Team Pro.', 'warning'); return; }
+        const j = await r.json();
+        if (j.status !== 'success') { show(j.message || 'Failed', 'warning'); return; }
+        show(j.message || 'Member invited');
+        loadMyTeams();
+    } catch (err) {
+        show('Network error: ' + err.message, 'danger');
+    }
+}
+
+async function subscribeTeam(event) {
+    event.preventDefault();
+    const { token, email } = _auth();
+    if (!token || !email) { alert('Please log in.'); window.location.href = '/login?next=/team-dashboard'; return; }
+    if (!confirm('Activate Growing Team Pro?\n\n500 credits\n\nUnlocks up to 20 members for 30 days.')) return;
+    try {
+        const r = await fetch('/api/team/subscribe', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
+            body: JSON.stringify({ email: email })
+        });
+        if (r.status === 401) { window.location.href = '/login?next=/team-dashboard'; return; }
+        if (r.status === 402) { show('Need 500 credits for Growing Team Pro. Top up at /ai-credits-pricing', 'warning'); return; }
+        const j = await r.json();
+        if (j.status !== 'success') { show(j.message || 'Failed', 'danger'); return; }
+        show('Growing Team Pro active until ' + new Date(j.expires_at).toLocaleDateString());
+        loadMyTeams();
+    } catch (err) {
+        show('Network error: ' + err.message, 'danger');
+    }
+}
+
+async function loadMyTeams() {
+    const { token, email } = _auth();
+    if (!token || !email) return;
+    const wrap = document.getElementById('myTeams');
+    if (!wrap) return;
+    try {
+        const r = await fetch('/api/team/my-teams/' + encodeURIComponent(email), {
+            headers: {'Authorization': 'Bearer ' + token}
+        });
+        if (!r.ok) { wrap.innerHTML = ''; return; }
+        const j = await r.json();
+        if (j.status !== 'success' || !j.teams || j.teams.length === 0) {
+            wrap.innerHTML = '<p class="text-muted">You are not on any team yet. Create one to get started.</p>';
+            return;
+        }
+        let html = '<h4 class="as-h5 mb-3">Your Teams (' + j.teams.length + ')' + (j.is_pro ? ' <span class="badge bg-success">Pro</span>' : '') + '</h4>';
+        html += '<div class="row g-3">';
+        j.teams.forEach(function(t) {
+            html += '<div class="col-md-6"><div class="card border shadow-sm"><div class="card-body">';
+            html += '<div class="d-flex justify-content-between"><h5 class="mb-1">' + esc(t.company_name) + '</h5><span class="badge bg-secondary">' + esc(t.your_role) + '</span></div>';
+            html += '<div class="small text-muted mb-2">Team ID: <code>' + esc(t.team_id) + '</code></div>';
+            html += '<div class="small">Members: ' + esc(t.member_count) + '</div>';
+            html += '</div></div></div>';
+        });
+        html += '</div>';
+        wrap.innerHTML = html;
+    } catch (err) {
+        // non-fatal
+    }
+}
+
+document.addEventListener('DOMContentLoaded', loadMyTeams);
 </script>
 {% endblock %}
