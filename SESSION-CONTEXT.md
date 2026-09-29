@@ -1,6 +1,6 @@
 # Session Context - Charvak
 
-**HEAD:** `e06ed30`
+**HEAD:** `7ae300a`
 **Last updated:** 2026-09-29 (Session B - 4 of 5 payment flags closed; #3 deferred)
 **Version:** `v3.5-session-B-20260929`
 
@@ -558,3 +558,75 @@ Complete the remaining C7 templates:
 - Rotate PayPal + SYNC keys
 - scripts/_*.py cleanup
 - ARCHITECTURE.md static-assets section refresh
+
+---
+
+## Session 6 COMPLETE (2026-09-30)
+
+Batch 2b-4 shipped (background-verification). Session 6 fully closed.
+
+### Total C7 progress: 13 of ~17 templates
+
+**Session 6 alone shipped 10 templates + 3 supporting backends:**
+
+Batch 1 (`3e0cbb5`):
+- developer-entropy, ai-slop, design-token, geo-compliance, agency-twin, reverse-staffing
+
+Batch 2a (`b616466`):
+- Backends: geo contract, geo hiring, reverse-staffing subscribe
+
+Batch 2b-1 (`d1d21df`): bridge
+Batch 2b-2 (`e06ed30`): marketing-ai
+Batch 2b-3 (`9330804`): team-dashboard
+Batch 2b-4 (pending): background-verification
+
+### New tables (9 total this session)
+
+- charvak_bridge_premium_reports
+- charvak_marketing_booking_kits
+- charvak_team_subscriptions
+- charvak_geo_compliance_contracts
+- charvak_geo_compliance_hiring
+- charvak_reverse_staffing_subscriptions
+- charvak_auditbot_fixes (session 3)
+- charvak_auditbot_subscriptions (session 3)
+- charvak_lock_in_engagements (session 4)
+
+### New credit keys (26+)
+
+bgv_identity, bgv_education, bgv_employment, bgv_credit, bgv_criminal,
+bgv_complete, bridge_premium, marketing_booking_kit, team_pro_subscription,
+geo_contract, geo_hiring, reverse_staffing_subscription, auditbot_fix,
+auditbot_continuous, lockin_migration, lockin_protection...
+
+### Security fixes
+
+- 3 team routes gated (create/invite/get)
+- 1 background-verification route gated
+- Bug fixed: /api/team/invite collision (email was auth + member email)
+
+### Frontend bugs fixed
+
+- marketing-ai: 2 broken free tools (undefined authToken/email)
+- team-dashboard: 2 broken free tools (undefined authToken)
+- team-dashboard: dead upgradeTeam() handler removed
+- background-verification: dead startVerification() replaced with real
+- All C7 templates now have XSS-safe esc() rendering
+
+### What's left (Session 7)
+
+**Headline:** hosted booking page (see Session 7 queue earlier)
+
+**Remaining C7 templates (~4-5):**
+- lms.html
+- silent-killer.html
+- skill-twin.html (needs persistence)
+- university.html
+- legacy-shift.html
+
+**External:**
+- #3 PayPal live test
+- rotate PayPal + SYNC keys
+- scripts/_*.py cleanup
+
+### Files touched this session: ~40
