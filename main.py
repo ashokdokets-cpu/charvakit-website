@@ -3385,19 +3385,49 @@ async def assign_verification(request: Request):
 @app.post("/api/background-verification/initiate")
 @limiter.limit("60/minute")
 async def initiate_background_verification(request: Request):
-    """Initiate background verification from career engine."""
+    """Initiate background verification from career engine.
+
+    Per-tier credit keys: bgv_identity (100), bgv_education (160),
+    bgv_employment (200), bgv_credit (260), bgv_criminal (300),
+    bgv_complete (800).
+    """
     try:
         data = await request.json()
+
+        # 1. Auth: caller must match the email they're charging
+        email = (data.get("email") or "").strip().lower()
+        if not email:
+            return JSONResponse(status_code=401, content={
+                "status": "error",
+                "message": "Login required.",
+                "login_url": "/login",
+            })
+        require_auth_for_email(request, email)
+
+        # 2. Map verification_type to the correct credit key
+        vtype = (data.get("verification_type") or "identity").strip().lower()
+        key_map = {
+            "identity":   "bgv_identity",
+            "education":  "bgv_education",
+            "employment": "bgv_employment",
+            "credit":     "bgv_credit",
+            "criminal":   "bgv_criminal",
+            "complete":   "bgv_complete",
+        }
+        credit_key = key_map.get(vtype, "bgv_identity")
+
+        # 3. Credits guard with the per-tier key
         from credit_guard import require_credits_from_data
-        guard = require_credits_from_data(data, "background_verification")
+        guard = require_credits_from_data(data, credit_key)
         if guard.get("status") != "success":
             return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
-        # Route through KYC engine
+
+        # 4. Route through KYC engine
         result = kyc_engine.initiate_verification({
             "name": data.get("name"),
-            "email": data.get("email"),
+            "email": email,
             "phone": data.get("phone", ""),
-            "verification_type": data.get("verification_type", "identity"),
+            "verification_type": vtype,
             "country": data.get("country", "India"),
             "notes": data.get("notes", "")
         })

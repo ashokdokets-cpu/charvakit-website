@@ -214,6 +214,12 @@ class AICreditEngine:
         "cbat_session": 25,
         # Session G6 batch 5 (final): last 5 revenue routes
         "background_verification": 100,
+        "bgv_identity": 100,
+        "bgv_education": 160,
+        "bgv_employment": 200,
+        "bgv_credit": 260,
+        "bgv_criminal": 300,
+        "bgv_complete": 800,
         "roles_analyze": 10,
         "roles_training_plan": 15,
         "company_content_request": 20,
