@@ -172,14 +172,162 @@ function renderSquadResult(out, data) {
     if (data.verdict) {
         html += '<div class="alert alert-info py-2 mt-3 mb-0">' + data.verdict + '</div>';
     }
+    // Save the last squad result for the paid-tier lead form
+    window.lastSquadResult = data;
+    // CTA for the Rs 49,999 sales tier
+    html += '<div class="card bg-white text-dark mt-3 border-primary"><div class="card-body text-center">';
+    html += '<h6 class="mb-2">Ready to execute this squad?</h6>';
+    html += '<p class="small text-muted mb-3">Micro-Squads start at &#8377;49,999 for a 14-day sprint. Talk to our team to scope and book.</p>';
+    html += '<button class="btn btn-primary" onclick="openLeadForm(event)">Request Squad Assembly &mdash; Talk to Sales</button>';
+    html += '</div></div>';
     out.innerHTML = html;
 }
 
-// Pricing-tier CTA — kept as interest capture.
-function assembleSquad(event) {
+// ============================================================
+// Rs 49,999 sales tier - lead capture form
+// ============================================================
+
+function openLeadForm(event) {
+    if (event) event.preventDefault();
+    const modal = new bootstrap.Modal(document.getElementById('squadLeadModal'));
+    const emailEl = document.getElementById('leadEmail');
+    const storedEmail = localStorage.getItem('userEmail') || '';
+    if (emailEl && !emailEl.value) emailEl.value = storedEmail;
+    const errEl = document.getElementById('leadError');
+    if (errEl) { errEl.classList.add('d-none'); errEl.textContent = ''; }
+    const okEl = document.getElementById('leadSuccess');
+    if (okEl) { okEl.classList.add('d-none'); okEl.innerHTML = ''; }
+    const squadIdEl = document.getElementById('leadSquadId');
+    if (squadIdEl && window.lastSquadResult) {
+        squadIdEl.value = window.lastSquadResult.squad_id || '';
+    }
+    modal.show();
+}
+
+async function submitLead(event) {
     event.preventDefault();
-    window.notifyMe('Micro-Squad Assembly');
+    const btn = document.getElementById('leadSubmitBtn');
+    const errEl = document.getElementById('leadError');
+    const okEl = document.getElementById('leadSuccess');
+    errEl.classList.add('d-none');
+    okEl.classList.add('d-none');
+
+    const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    if (!authToken || !email) {
+        errEl.textContent = 'Please log in again.';
+        errEl.classList.remove('d-none');
+        return;
+    }
+
+    const payload = {
+        email: email,
+        name: (document.getElementById('leadName').value || '').trim(),
+        phone: (document.getElementById('leadPhone').value || '').trim(),
+        company: (document.getElementById('leadCompany').value || '').trim(),
+        requirement: (document.getElementById('leadRequirement').value || '').trim(),
+        project_type: window.lastSquadResult ? (window.lastSquadResult.project_type || '') : '',
+        duration_days: window.lastSquadResult ? (window.lastSquadResult.duration_days || 0) : 0,
+        budget: window.lastSquadResult ? (window.lastSquadResult.budget || 0) : 0,
+        squad_id: (document.getElementById('leadSquadId').value || '').trim()
+    };
+
+    if (payload.name.length < 2) { errEl.textContent = 'Please enter your name.'; errEl.classList.remove('d-none'); return; }
+    if (payload.requirement.length < 20) { errEl.textContent = 'Please describe your requirement in at least 20 characters.'; errEl.classList.remove('d-none'); return; }
+
+    btn.disabled = true;
+    const origText = btn.textContent;
+    btn.textContent = 'Sending...';
+
+    try {
+        const res = await fetch('/api/products/micro-squads/lead', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authToken
+            },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            if (res.status === 401) { window.location.href = '/login?next=/micro-squads'; return; }
+            errEl.textContent = data.message || 'Submission failed. Please try again.';
+            errEl.classList.remove('d-none');
+            return;
+        }
+        okEl.innerHTML = '<strong>Thanks, ' + esc(payload.name) + '!</strong><br>' +
+                         'Your lead ID is <code>' + esc(data.lead_id) + '</code>. ' +
+                         'We\'ll reach out within 24 hours.';
+        okEl.classList.remove('d-none');
+        document.getElementById('leadRequirement').value = '';
+    } catch (e) {
+        errEl.textContent = 'Network error: ' + e.message;
+        errEl.classList.remove('d-none');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = origText;
+    }
+}
+
+function esc(s) {
+    return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 </script>
 {% include 'includes/premium-upsell.html' %}
+
+
+<!-- ============ MICRO-SQUAD LEAD MODAL ============ -->
+<div class="modal fade" id="squadLeadModal" tabindex="-1" aria-labelledby="squadLeadModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="squadLeadModalLabel">Request Squad Assembly &mdash; Talk to Sales</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small">
+                    Micro-Squads start at <strong>&#8377;49,999</strong>. We'll review your requirement
+                    and schedule a 30-minute discovery call within 24 hours.
+                </p>
+                <form onsubmit="submitLead(event)" id="squadLeadForm">
+                    <input type="hidden" id="leadSquadId" value="">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Your Name *</label>
+                            <input type="text" class="form-control" id="leadName" maxlength="100" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Company</label>
+                            <input type="text" class="form-control" id="leadCompany" maxlength="200">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Email *</label>
+                            <input type="email" class="form-control" id="leadEmail" readonly>
+                            <small class="text-muted">Your account email</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Phone</label>
+                            <input type="tel" class="form-control" id="leadPhone" maxlength="30">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">What do you need built? *</label>
+                            <textarea class="form-control" id="leadRequirement" rows="5" maxlength="5000" minlength="20"
+                                placeholder="Describe your project, timeline, and any specific requirements..."></textarea>
+                            <small class="text-muted">Minimum 20 characters. Max 5000.</small>
+                        </div>
+                    </div>
+                    <div id="leadError" class="alert alert-danger mt-3 d-none"></div>
+                    <div id="leadSuccess" class="alert alert-success mt-3 d-none"></div>
+                    <div class="d-flex justify-content-end gap-2 mt-3">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="leadSubmitBtn">Send Request</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
