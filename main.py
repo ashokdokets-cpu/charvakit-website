@@ -5538,6 +5538,20 @@ async def create_lead_drip(request: Request):
 async def marketing_ai_stats():
     return marketing_ai_engine.get_stats()
 
+@app.post("/api/marketing/booking-kit")
+@limiter.limit("20/minute")
+async def generate_booking_kit(request: Request):
+    data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+    require_auth_for_email(request, email)
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "marketing_booking_kit")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+    return await marketing_ai_engine.generate_booking_kit(data)
+
 @app.get("/marketing-ai", response_class=HTMLResponse)
 async def marketing_ai_page(request: Request):
     return template_response("marketing-ai.html", request, "Marketing AI - Charvak IT Consulting")

@@ -259,6 +259,149 @@ class MarketingAIEngine:
     # 4. CALENDAR BOOKING (stateless)
     # ============================================================
 
+    async def generate_booking_kit(self, data: Dict) -> Dict:
+        """
+        AI-generated outreach kit for a demo/meeting.
+
+        Replaces the previous stub generate_booking_link which returned
+        a random ID and a static URL with no real value.
+
+        data = {email, host_name, business_name, meeting_type,
+                duration_min, context}
+        """
+        import json, secrets
+        from datetime import datetime
+
+        email = (data.get("email") or "").strip().lower()
+        host_name = (data.get("host_name") or "").strip()
+        business_name = (data.get("business_name") or "").strip()
+        meeting_type = data.get("meeting_type", "Demo")
+        duration_min = int(data.get("duration_min") or 30)
+        context = (data.get("context") or "").strip()
+
+        if not email:
+            return {"status": "error", "message": "email required"}
+        if not host_name or not business_name:
+            return {"status": "error", "message": "host_name and business_name required"}
+
+        # Generate the slug from business name + random suffix
+        slug_base = "".join(c if c.isalnum() else "-" for c in business_name.lower())[:30].strip("-")
+        slug = f"{slug_base}-{secrets.token_hex(3)}" if slug_base else secrets.token_hex(6)
+        booking_link = f"https://www.charvakit.com/contact?ref={slug}"
+
+        prompt = f"""You are a B2B sales copywriter. Build a personalized outreach kit for a meeting.
+
+Host: {host_name}
+Business: {business_name}
+Meeting Type: {meeting_type}
+Duration: {duration_min} minutes
+Context: {context or '(general demo)'}
+
+Return STRICT JSON:
+{{
+  "value_proposition": "one sentence pitch tailored to this meeting",
+  "email_draft": "short cold outreach email (under 120 words), ends with a call to book",
+  "linkedin_message": "LinkedIn connection message (under 300 chars)",
+  "whatsapp_message": "WhatsApp message (under 200 chars, more casual)",
+  "meeting_agenda": [
+    {{"minute": 0, "topic": "Welcome + context"}},
+    {{"minute": 5, "topic": "..."}}
+  ],
+  "follow_up_sequence": [
+    {{"timing": "Day -1", "channel": "email", "subject": "...", "body": "..."}},
+    {{"timing": "Day 0", "channel": "whatsapp", "message": "..."}},
+    {{"timing": "Day +1", "channel": "email", "subject": "...", "body": "..."}}
+  ],
+  "objection_handlers": [
+    {{"objection": "...", "response": "..."}}
+  ]
+}}
+Only return the JSON."""
+
+        try:
+            from openai import OpenAI
+            import os
+            client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+            resp = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[{"role": "user", "content": prompt}],
+                response_format={"type": "json_object"},
+                temperature=0.4,
+                timeout=45,
+            )
+            raw = resp.choices[0].message.content or "{}"
+            if raw.startswith("```"):
+                raw = raw.strip("`")
+                if raw.startswith("json\n"):
+                    raw = raw[5:]
+            kit = json.loads(raw)
+        except Exception as e:
+            logger.warning(f"generate_booking_kit AI call failed: {e}")
+            kit = {
+                "value_proposition": f"Personalized {meeting_type} for {business_name}.",
+                "email_draft": f"Hi,\n\n{host_name} here from {business_name}. I'd love to show you how we can help. Would a {duration_min}-minute {meeting_type} work?\n\nBook: {booking_link}",
+                "linkedin_message": f"Hi! {host_name} from {business_name}. Would love to share something that might help. Open to a quick {meeting_type}?",
+                "whatsapp_message": f"Hi! {host_name} here from {business_name}. Free for a quick {duration_min}-min {meeting_type}? {booking_link}",
+                "meeting_agenda": [
+                    {"minute": 0, "topic": "Welcome + context setting"},
+                    {"minute": 5, "topic": "Problem exploration"},
+                    {"minute": 15, "topic": "Solution walkthrough"},
+                    {"minute": 25, "topic": "Q&A + next steps"}
+                ],
+                "follow_up_sequence": [
+                    {"timing": "Day -1", "channel": "email", "subject": f"Reminder: our {meeting_type} tomorrow", "body": "Looking forward to speaking. Join link in the original invite."},
+                    {"timing": "Day 0", "channel": "whatsapp", "message": "Ready when you are!"},
+                    {"timing": "Day +1", "channel": "email", "subject": "Thanks for the chat", "body": "Great speaking. Here's a quick summary + next steps."}
+                ],
+                "objection_handlers": [
+                    {"objection": "No time right now", "response": "Totally understand. Would 3 weeks out work better?"},
+                    {"objection": "We already have a solution", "response": "Great — happy to compare notes. Many teams use us alongside existing tools."}
+                ]
+            }
+
+        kit_id = f"KIT-{secrets.token_hex(6).upper()}"
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS charvak_marketing_booking_kits (
+                    kit_id         TEXT PRIMARY KEY,
+                    email          TEXT NOT NULL,
+                    host_name      TEXT,
+                    business_name  TEXT,
+                    meeting_type   TEXT,
+                    duration_min   INTEGER,
+                    context        TEXT,
+                    kit_json       JSONB,
+                    credits_used   INTEGER NOT NULL DEFAULT 0,
+                    created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            cur.execute("""
+                INSERT INTO charvak_marketing_booking_kits
+                    (kit_id, email, host_name, business_name, meeting_type,
+                     duration_min, context, kit_json, credits_used)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 60)
+            """, (kit_id, email, host_name, business_name, meeting_type,
+                  duration_min, context, json.dumps(kit)))
+            conn.commit()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.warning(f"generate_booking_kit persist failed: {e}")
+
+        return {
+            "status": "success",
+            "kit_id": kit_id,
+            "booking_link": booking_link,
+            "booking_slug": slug,
+            "host_name": host_name,
+            "business_name": business_name,
+            "meeting_type": meeting_type,
+            "duration_min": duration_min,
+            **kit,
+        }
+
     async def generate_booking_link(self, data: Dict) -> Dict:
         """
         Generate calendar booking link for demo/meeting.
