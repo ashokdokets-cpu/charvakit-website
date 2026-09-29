@@ -6018,6 +6018,20 @@ async def calculate_bridge_revenue(request: Request):
     require_auth_for_email(request, email)
     return bridge_engine.calculate_revenue(data)
 
+@app.post("/api/bridge/premium")
+@limiter.limit("20/minute")
+async def api_bridge_premium(request: Request):
+    data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+    require_auth_for_email(request, email)
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "bridge_premium")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+    return bridge_engine.bridge_premium_calculator(data)
+
 @app.get("/api/bridge/stats")
 async def bridge_stats():
     return bridge_engine.get_stats()

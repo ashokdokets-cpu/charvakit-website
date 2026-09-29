@@ -290,6 +290,162 @@ class BridgeEngine:
         }
 
     # ============================================================
+    # PREMIUM CALCULATOR (paid tier)
+    # ============================================================
+
+    def bridge_premium_calculator(self, data: Dict) -> Dict:
+        """
+        Generate a premium multi-year revenue projection + sensitivity analysis
+        for a university. Consumes the free revenue calculator's output as baseline.
+
+        data = {"email", "students", "placement_rate", "avg_salary",
+                "isa_percent", "isa_months"}
+        """
+        import json, secrets
+
+        email = (data.get("email") or "").strip().lower()
+        if not email:
+            return {"status": "error", "message": "email required"}
+
+        # Run the free calculator for the baseline
+        baseline = self.calculate_revenue(data)
+
+        students = int(data.get("students", 1000))
+        placement_rate = float(data.get("placement_rate", 45))
+        avg_salary = float(data.get("avg_salary", 600000))
+        isa_percent = float(data.get("isa_percent", 12))
+        isa_months = int(data.get("isa_months", 24))
+
+        baseline_total = baseline.get("total", 0)
+        baseline_isa = baseline.get("revenue_streams", {}).get("isa", {}).get("amount", 0)
+
+        prompt = f"""You are a university revenue strategist. Build a board-ready multi-year projection for a university adopting an ISA-backed placement program.
+
+Baseline (single-year):
+- Students: {students}
+- Placement Rate: {placement_rate}%
+- Avg Salary: Rs {avg_salary:,.0f}
+- ISA: {isa_percent}% for {isa_months} months
+- Total Year 1 Revenue: Rs {baseline_total:,.0f}
+- ISA Revenue Year 1: Rs {baseline_isa:,.0f}
+
+Return STRICT JSON:
+{{
+  "summary": "2-3 sentence executive overview for the board",
+  "five_year_projection": [
+    {{"year": 1, "students": {students}, "isa_revenue": 0, "corporate": 0, "licensing": 0, "premium": 0, "total": 0}},
+    {{"year": 2, "students": 0, "isa_revenue": 0, "corporate": 0, "licensing": 0, "premium": 0, "total": 0}},
+    {{"year": 3, "students": 0, "isa_revenue": 0, "corporate": 0, "licensing": 0, "premium": 0, "total": 0}},
+    {{"year": 4, "students": 0, "isa_revenue": 0, "corporate": 0, "licensing": 0, "premium": 0, "total": 0}},
+    {{"year": 5, "students": 0, "isa_revenue": 0, "corporate": 0, "licensing": 0, "premium": 0, "total": 0}}
+  ],
+  "cumulative_5yr": 0,
+  "sensitivity_analysis": {{
+    "best_case": {{"assumption": "placement +10%, salary +5%", "year_1_total": 0, "five_year_total": 0}},
+    "expected_case": {{"assumption": "as modeled", "year_1_total": {baseline_total}, "five_year_total": 0}},
+    "worst_case": {{"assumption": "placement -10%, salary -5%", "year_1_total": 0, "five_year_total": 0}}
+  }},
+  "cohort_model_notes": ["note 1", "note 2"],
+  "board_recommendations": ["recommendation 1", "recommendation 2"],
+  "white_label_deliverable_spec": {{
+    "dashboard": "what the branded dashboard should contain",
+    "reports": ["report type 1", "report type 2"],
+    "training": "onboarding/training recommended for staff"
+  }},
+  "risk_factors": ["risk 1", "risk 2"]
+}}
+Only return the JSON."""
+
+        try:
+            from openai import OpenAI
+            import os
+            client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+            resp = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[{"role": "user", "content": prompt}],
+                response_format={"type": "json_object"},
+                temperature=0.3,
+                timeout=60,
+            )
+            raw = resp.choices[0].message.content or "{}"
+            if raw.startswith("```"):
+                raw = raw.strip("`")
+                if raw.startswith("json\n"):
+                    raw = raw[5:]
+            report = json.loads(raw)
+        except Exception as e:
+            logger.warning(f"bridge_premium_calculator AI call failed: {e}")
+            # Heuristic fallback - conservative 5-year projection
+            report = {
+                "summary": f"Five-year projection for {students} students at {placement_rate}% placement.",
+                "five_year_projection": [
+                    {"year": i, "students": round(students * (1.1 ** (i-1))),
+                     "isa_revenue": round(baseline_isa * (1.15 ** (i-1))),
+                     "corporate": 0, "licensing": 0, "premium": 0,
+                     "total": round(baseline_total * (1.15 ** (i-1)))}
+                    for i in range(1, 6)
+                ],
+                "cumulative_5yr": round(baseline_total * 6.74),  # sum of 1.15^n
+                "sensitivity_analysis": {
+                    "best_case": {"assumption": "placement +10%, salary +5%", "year_1_total": round(baseline_total * 1.15), "five_year_total": round(baseline_total * 7.75)},
+                    "expected_case": {"assumption": "as modeled", "year_1_total": baseline_total, "five_year_total": round(baseline_total * 6.74)},
+                    "worst_case": {"assumption": "placement -10%, salary -5%", "year_1_total": round(baseline_total * 0.85), "five_year_total": round(baseline_total * 5.73)},
+                },
+                "cohort_model_notes": [
+                    "Assume 10% YoY cohort growth",
+                    "ISA revenue lags 12 months behind placement"
+                ],
+                "board_recommendations": [
+                    "Pilot with 200 students in Year 1",
+                    "Sign 3 corporate partners before launch"
+                ],
+                "white_label_deliverable_spec": {
+                    "dashboard": "Real-time ISA revenue tracking with university branding",
+                    "reports": ["Monthly revenue report", "Quarterly board deck"],
+                    "training": "2-hour onboarding for the placement office"
+                },
+                "risk_factors": ["ISA regulatory risk", "Placement rate volatility"]
+            }
+
+        report_id = f"BP-{secrets.token_hex(6).upper()}"
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS charvak_bridge_premium_reports (
+                    report_id        TEXT PRIMARY KEY,
+                    email            TEXT NOT NULL,
+                    students         INTEGER,
+                    placement_rate   NUMERIC,
+                    avg_salary       NUMERIC,
+                    isa_percent      NUMERIC,
+                    isa_months       INTEGER,
+                    report_json      JSONB,
+                    credits_used     INTEGER NOT NULL DEFAULT 0,
+                    created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            cur.execute("""
+                INSERT INTO charvak_bridge_premium_reports
+                    (report_id, email, students, placement_rate, avg_salary,
+                     isa_percent, isa_months, report_json, credits_used)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 1000)
+            """, (report_id, email, students, placement_rate, avg_salary,
+                  isa_percent, isa_months, json.dumps(report)))
+            conn.commit()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.warning(f"bridge_premium persist failed: {e}")
+
+        return {
+            "status": "success",
+            "report_id": report_id,
+            "baseline": baseline,
+            **report,
+        }
+
+    # ============================================================
     # STATS
     # ============================================================
 
