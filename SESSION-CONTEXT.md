@@ -1,6 +1,6 @@
 # Session Context - Charvak
 
-**HEAD:** `24c9955`
+**HEAD:** `1deb4fa`
 **Last updated:** 2026-09-29 (Session B - 4 of 5 payment flags closed; #3 deferred)
 **Version:** `v3.5-session-B-20260929`
 
@@ -409,3 +409,46 @@ Developer Entropy, AI-Slop
 Medium (1-2 hrs): Design-Token, Geo-Compliance, Agency-Twin,
 Team Dashboard, Reverse Staffing, LMS, University
 Large (2-4 hrs): Legacy-Shift, Skill-Twin (also needs persistence)
+
+---
+
+## Session 5 (2026-09-30) - Micro-Squads lead capture shipped
+
+**Micro-Squads Rs 49,999 tier is now a real sales-lead flow, not a
+notifyMe placeholder.** Different shape from AuditBot / Lock-In Breaker
+because Rs 49,999 is a sales conversation, not self-serve checkout.
+
+### Backend
+- Route: POST /api/products/micro-squads/lead
+- No credit deduction (lead, not paid feature)
+- Auth-gated (require_auth_for_email) so leads tie to real accounts
+- Validates name (>=2), email, requirement (20-5000 chars)
+- Persists to charvak_micro_squad_leads with status='new' + squad_id
+- Sends HR notification to HR_EMAIL
+- Sends confirmation email to the user
+- Returns lead_id
+
+### Frontend
+- templates/micro-squads.html: dead assembleSquad() removed
+- Added openLeadForm() + submitLead()
+- Added squadLeadModal with form fields + XSS-safe esc()
+- renderSquadResult saves window.lastSquadResult and appends
+  "Request Squad Assembly - Talk to Sales" CTA after the free scan
+
+### Verified E2E
+- Free scan: 25 cr, SQUAD-6ADC4107
+- Lead: 0 cr, LEAD-2356D884840F, 200
+- Balance 980 -> 955 (only the scan deducted)
+- Lead row correct in charvak_micro_squad_leads
+- HR email received at hr@charvakit.com
+
+### C7 progress
+- Session 3: AuditBot (2 tiers) ✅
+- Session 4: Lock-In Breaker (2 tiers) ✅
+- Session 5: Micro-Squads (1 lead flow) ✅
+- Session 6: small/medium C7 batch (~10 templates)
+  Small: Marketing AI, Background Verification, Bridge,
+         Developer Entropy, AI-Slop
+  Medium: Design-Token, Geo-Compliance, Agency-Twin,
+          Team Dashboard, Reverse Staffing, LMS, University
+- Session 7: Legacy-Shift + Skill-Twin (also needs persistence)
