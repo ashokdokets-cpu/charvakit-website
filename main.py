@@ -4359,6 +4359,34 @@ async def api_lock_in_breaker(request: Request):
         return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return products_engine.lock_in_breaker_audit(data)
 
+@app.post("/api/products/lock-in-breaker/migration-plan")
+@limiter.limit("20/minute")
+async def api_lock_in_migration_plan(request: Request):
+    data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+    require_auth_for_email(request, email)
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "lockin_migration")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+    return products_engine.lock_in_migration_plan(data)
+
+@app.post("/api/products/lock-in-breaker/protection")
+@limiter.limit("10/minute")
+async def api_lock_in_protection(request: Request):
+    data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+    require_auth_for_email(request, email)
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "lockin_protection")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+    return products_engine.lock_in_protection(data)
+
 @app.post("/api/products/reverse-staffing/match")
 @limiter.limit("60/minute")
 async def api_reverse_staffing(request: Request):
