@@ -157,9 +157,63 @@ function renderMatchResult(out, data) {
 
 // Subscription button — kept as interest capture. The subscription backend
 // was never built. Free-form matching is the shipped feature.
-function subscribePlan(event) {
+async function subscribePlan(event) {
     event.preventDefault();
-    window.notifyMe('Reverse Staffing Subscription');
+    const out = document.getElementById('rsOutput') || document.getElementById('reverseStaffingOutput') || document.getElementById('output');
+    const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    if (!authToken || !email) {
+        alert('Please log in.');
+        window.location.href = '/login?next=/reverse-staffing';
+        return;
+    }
+    const btn = event.target.closest('button') || event.target;
+    const origText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Activating subscription...';
+    try {
+        const res = await fetch('/api/products/reverse-staffing/subscribe', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authToken
+            },
+            body: JSON.stringify({ email: email })
+        });
+        if (res.status === 401) { window.location.href = '/login?next=/reverse-staffing'; return; }
+        if (res.status === 402) {
+            out.innerHTML += '<div class="alert alert-warning mt-3">Need 1000 credits for the subscription. <a href="/ai-credits-pricing" class="alert-link">Top up</a>.</div>';
+            return;
+        }
+        const data = await res.json();
+        if (data.status !== 'success') {
+            out.innerHTML += '<div class="alert alert-danger mt-3">' + esc(data.message || 'Subscription failed') + '</div>';
+            return;
+        }
+        const expiry = data.expires_at ? new Date(data.expires_at).toLocaleDateString() : '';
+        let html = '<div class="card bg-white text-dark mt-3"><div class="card-body">';
+        html += '<h5>Reverse Staffing Subscription Active</h5>';
+        html += '<p class="lead">' + esc(data.message || 'Unlimited candidate matching for 30 days.') + '</p>';
+        html += '<ul class="list-unstyled mb-0">';
+        html += '<li><strong>Tier:</strong> ' + esc(data.tier || 'subscription') + '</li>';
+        html += '<li><strong>Valid until:</strong> ' + esc(expiry) + '</li>';
+        html += '<li><strong>Days remaining:</strong> ' + esc(String(data.days_remaining || 30)) + '</li>';
+        html += '</ul>';
+        html += '</div></div>';
+        out.innerHTML += html;
+    } catch (e) {
+        out.innerHTML += '<div class="alert alert-danger mt-3">Network error: ' + esc(e.message) + '</div>';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = origText;
+    }
 }
+
+function esc(s) {
+    return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 </script>
 {% endblock %}

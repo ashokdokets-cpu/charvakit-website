@@ -166,14 +166,124 @@ function renderGeoResult(out, data) {
 }
 
 // Paid tiers — kept as interest capture.
-function generateContract(event) {
+async function generateContract(event) {
     event.preventDefault();
-    window.notifyMe('Contract Generation');
+    const out = document.getElementById('geoOutput') || document.getElementById('output');
+    const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    if (!authToken || !email) {
+        alert('Please log in.');
+        window.location.href = '/login?next=/geo-compliance';
+        return;
+    }
+    const btn = event.target.closest('button') || event.target;
+    const origText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Generating contract...';
+    try {
+        const res = await fetch('/api/products/geo-compliance/contract', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authToken
+            },
+            body: JSON.stringify({
+                email: email,
+                countries: (window.lastGeoResult && window.lastGeoResult.countries) || ['US', 'IN'],
+                service_type: (window.lastGeoResult && window.lastGeoResult.service_type) || 'Consulting',
+                payment_method: 'wire'
+            })
+        });
+        if (res.status === 401) { window.location.href = '/login?next=/geo-compliance'; return; }
+        if (res.status === 402) {
+            out.innerHTML += '<div class="alert alert-warning mt-3">Need 400 credits for contract generation. <a href="/ai-credits-pricing" class="alert-link">Top up</a>.</div>';
+            return;
+        }
+        const data = await res.json();
+        if (data.status !== 'success') {
+            out.innerHTML += '<div class="alert alert-danger mt-3">' + esc(data.message || 'Contract generation failed') + '</div>';
+            return;
+        }
+        let html = '<div class="card bg-white text-dark mt-3"><div class="card-body">';
+        html += '<h5>Cross-Border Contract</h5>';
+        html += '<p class="text-muted small">' + esc(data.summary || 'Contract draft generated.') + '</p>';
+        if (data.contract_markdown) {
+            html += '<pre style="white-space:pre-wrap;background:#f5f5f5;padding:12px;border-radius:6px;font-size:12px;max-height:400px;overflow:auto;">' + esc(data.contract_markdown) + '</pre>';
+        } else if (data.clauses) {
+            html += '<h6 class="mt-3">Key Clauses</h6><ul>';
+            data.clauses.forEach(function(c) { html += '<li>' + esc(typeof c === 'string' ? c : JSON.stringify(c)) + '</li>'; });
+            html += '</ul>';
+        }
+        html += '</div></div>';
+        out.innerHTML += html;
+    } catch (e) {
+        out.innerHTML += '<div class="alert alert-danger mt-3">Network error: ' + esc(e.message) + '</div>';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = origText;
+    }
 }
-function startHiring(event) {
+
+function esc(s) {
+    return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+async function startHiring(event) {
     event.preventDefault();
-    window.notifyMe('Global Hiring');
+    const out = document.getElementById('geoOutput') || document.getElementById('output');
+    const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    if (!authToken || !email) {
+        alert('Please log in.');
+        window.location.href = '/login?next=/geo-compliance';
+        return;
+    }
+    const btn = event.target.closest('button') || event.target;
+    const origText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Setting up global hiring...';
+    try {
+        const res = await fetch('/api/products/geo-compliance/hiring', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authToken
+            },
+            body: JSON.stringify({
+                email: email,
+                countries: (window.lastGeoResult && window.lastGeoResult.countries) || ['US', 'IN']
+            })
+        });
+        if (res.status === 401) { window.location.href = '/login?next=/geo-compliance'; return; }
+        if (res.status === 402) {
+            out.innerHTML += '<div class="alert alert-warning mt-3">Need 2000 credits for global hiring setup. <a href="/ai-credits-pricing" class="alert-link">Top up</a>.</div>';
+            return;
+        }
+        const data = await res.json();
+        if (data.status !== 'success') {
+            out.innerHTML += '<div class="alert alert-danger mt-3">' + esc(data.message || 'Global hiring setup failed') + '</div>';
+            return;
+        }
+        let html = '<div class="card bg-white text-dark mt-3"><div class="card-body">';
+        html += '<h5>Global Hiring Setup</h5>';
+        html += '<p class="text-muted small">' + esc(data.summary || 'Global hiring readiness report.') + '</p>';
+        if (data.steps) {
+            html += '<h6 class="mt-3">Onboarding Steps</h6><ol>';
+            data.steps.forEach(function(s) { html += '<li>' + esc(typeof s === 'string' ? s : JSON.stringify(s)) + '</li>'; });
+            html += '</ol>';
+        }
+        html += '</div></div>';
+        out.innerHTML += html;
+    } catch (e) {
+        out.innerHTML += '<div class="alert alert-danger mt-3">Network error: ' + esc(e.message) + '</div>';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = origText;
+    }
 }
+
 </script>
 {% include 'includes/premium-upsell.html' %}
 {% endblock %}
