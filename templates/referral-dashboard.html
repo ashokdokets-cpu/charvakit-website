@@ -131,10 +131,10 @@ function renderBounties(bounties) {
             <td><small class="text-muted">${(b.created_at || '').slice(0,10)}</small></td>
         </tr>`;
     }).join('');
-    container.innerHTML = `<table class="table">
+    container.innerHTML = `<div class="table-responsive"><table class="table">
         <thead><tr><th>Referred User</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
         <tbody>${rows}</tbody>
-    </table>`;
+    </table></div>`;
 }
 
 function escapeHtml(s) {

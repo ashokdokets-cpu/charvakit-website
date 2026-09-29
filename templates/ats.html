@@ -179,7 +179,7 @@ async function atsLoadCandidates() {
       return;
     }
 
-    let html = '<table class="ats-table"><thead><tr>'
+    let html = '<div class="table-responsive"><table class="ats-table"><thead><tr>'
              + '<th>Name</th><th>Role</th><th>Location</th><th>Skills</th><th>Exp</th><th>Score</th><th>Status</th><th style="text-align:right;">Action</th>'
              + '</tr></thead><tbody>';
 
@@ -197,7 +197,7 @@ async function atsLoadCandidates() {
             + '</tr>';
     });
 
-    html += '</tbody></table>';
+    html += '</tbody></table></div>';
     body.innerHTML = html;
   } catch (err) {
     body.innerHTML = '<div class="ats-empty"><h4>Could not load candidates</h4><p>' + escapeHtml(err.message) + '</p></div>';
@@ -276,7 +276,7 @@ async function atsLoadIntegrations() {
       body.innerHTML = '<div class="ats-empty"><h4>No integrations yet</h4><p>Connect Greenhouse, Lever, or Workday to sync jobs bidirectionally.</p></div>';
       return;
     }
-    let html = '<table class="ats-table"><thead><tr><th>Provider</th><th>Company</th><th>API Key</th><th>Direction</th><th>Status</th><th>Connected</th></tr></thead><tbody>';
+    let html = '<div class="table-responsive"><table class="ats-table"><thead><tr><th>Provider</th><th>Company</th><th>API Key</th><th>Direction</th><th>Status</th><th>Connected</th></tr></thead><tbody>';
     list.forEach(i => {
       const badge = i.status === 'connected' ? 'good' : 'low';
       html += '<tr>'
@@ -288,7 +288,7 @@ async function atsLoadIntegrations() {
             + '<td style="color:#6b7280; font-size:.85rem;">' + escapeHtml(i.connected_at || '') + '</td>'
             + '</tr>';
     });
-    html += '</tbody></table>';
+    html += '</tbody></table></div>';
     body.innerHTML = html;
   } catch (err) {
     body.innerHTML = '<div class="ats-empty"><h4>Could not load integrations</h4><p>' + escapeHtml(err.message) + '</p></div>';

@@ -458,3 +458,53 @@ p, h1, h2, h3, h4, h5, h6, li, span, a {
     .as-h6 { font-size: 16px; }
 }
 
+
+
+/* ============================================================
+   MOBILE RESPONSIVE FIXES - 2026-09-29
+   - Dropdowns auto-fit on <992px (tablet + mobile)
+   - Prevents the 400px/500px min-width dropdowns from clipping
+   ============================================================ */
+@media (max-width: 991.98px) {
+    .navbar-nav .dropdown-menu {
+        min-width: auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        columns: 1 !important;
+        column-gap: 0 !important;
+        max-height: none !important;
+        overflow-y: visible !important;
+    }
+    /* Ensure dropdown items are full-width tappable */
+    .navbar-nav .dropdown-item {
+        padding: 10px 16px;
+        white-space: normal;
+    }
+}
+
+/* ============================================================
+   TABLE RESPONSIVE FIXES - 2026-09-29
+   - Any table inside .table-responsive gets horizontal scroll
+   - Custom tables (an-table, rq-table, ats-table) default to block
+     display with scroll when wrapped
+   ============================================================ */
+.table-responsive {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    display: block;
+    width: 100%;
+}
+
+/* Prevent pre-wrap and long words from breaking layout on mobile */
+@media (max-width: 767.98px) {
+    .container, .container-fluid {
+        overflow-wrap: break-word;
+        word-wrap: break-word;
+    }
+    table {
+        max-width: 100%;
+    }
+    .table-responsive table {
+        min-width: 500px;   /* force scroll rather than squeeze */
+    }
+}
