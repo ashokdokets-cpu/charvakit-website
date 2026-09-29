@@ -4471,6 +4471,132 @@ async def api_micro_squads(request: Request):
         return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return products_engine.micro_squads_assemble(data)
 
+@app.post("/api/products/micro-squads/lead")
+@limiter.limit("10/minute")
+async def api_micro_squads_lead(request: Request):
+    """Capture a lead for the Rs 49,999 Micro-Squad sales tier.
+
+    Not a paid feature. Saves the lead and emails HR. Requires auth so
+    we can associate the request with a real account, but does NOT
+    deduct credits.
+    """
+    import os as _os, secrets as _secrets, json as _json
+
+    data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    name = (data.get("name") or "").strip()
+    phone = (data.get("phone") or "").strip()
+    company = (data.get("company") or "").strip()
+    requirement = (data.get("requirement") or "").strip()
+    project_type = (data.get("project_type") or "").strip()
+    duration_days = int(data.get("duration_days") or 0)
+    budget = int(data.get("budget") or 0)
+    squad_id = (data.get("squad_id") or "").strip()
+
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+
+    require_auth_for_email(request, email)
+
+    # Validation
+    if len(name) < 2:
+        return JSONResponse(status_code=422, content={"status": "error", "message": "Name must be at least 2 characters."})
+    if "@" not in email or "." not in email.split("@")[-1]:
+        return JSONResponse(status_code=422, content={"status": "error", "message": "Please enter a valid email address."})
+    if len(requirement) < 20:
+        return JSONResponse(status_code=422, content={"status": "error", "message": "Please describe your requirement in at least 20 characters."})
+    if len(requirement) > 5000:
+        return JSONResponse(status_code=422, content={"status": "error", "message": "Requirement must be under 5,000 characters."})
+
+    # Persist
+    lead_id = f"LEAD-{_secrets.token_hex(6).upper()}"
+    try:
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+        # Ensure table exists (idempotent)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS charvak_micro_squad_leads (
+                lead_id         TEXT PRIMARY KEY,
+                name            TEXT NOT NULL,
+                email           TEXT NOT NULL,
+                phone           TEXT,
+                company         TEXT,
+                requirement     TEXT,
+                project_type    TEXT,
+                duration_days   INTEGER,
+                budget          INTEGER,
+                squad_id        TEXT,
+                source          TEXT DEFAULT 'micro-squads',
+                status          TEXT DEFAULT 'new',
+                contacted_at    TIMESTAMP,
+                notes           TEXT,
+                created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        cur.execute("""
+            INSERT INTO charvak_micro_squad_leads
+                (lead_id, name, email, phone, company, requirement,
+                 project_type, duration_days, budget, squad_id)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (lead_id, name, email, phone or None, company or None, requirement,
+              project_type or None, duration_days or None, budget or None, squad_id or None))
+        conn.commit()
+        cur.close(); conn.close()
+    except Exception as e:
+        logger.error(f"micro_squads_lead persist failed: {e}")
+        return JSONResponse(status_code=500, content={"status": "error", "message": "Could not save your request. Please try again."})
+
+    # Email HR
+    hr_email = _os.getenv("HR_EMAIL", "hr@charvakit.com")
+    try:
+        from email_engine import email_engine
+        admin_subject = f"New Micro-Squad Lead: {name}" + (f" ({company})" if company else "")
+        admin_body = f"""<h3>New Micro-Squad Lead</h3>
+<p><strong>Lead ID:</strong> {lead_id}</p>
+<p><strong>Name:</strong> {name}</p>
+<p><strong>Email:</strong> {email}</p>
+<p><strong>Phone:</strong> {phone or '(not provided)'}</p>
+<p><strong>Company:</strong> {company or '(not provided)'}</p>
+<p><strong>Project Type:</strong> {project_type or '(not specified)'}</p>
+<p><strong>Duration:</strong> {duration_days or '?'} days</p>
+<p><strong>Budget:</strong> Rs {budget:,} </p>
+<p><strong>Squad ID (from free scan):</strong> {squad_id or '(none)'}</p>
+<hr>
+<p><strong>Requirement:</strong></p>
+<pre style="white-space:pre-wrap;background:#f5f5f5;padding:12px;border-radius:6px;">{requirement}</pre>
+<hr>
+<p><a href="https://www.charvakit.com/admin-control">Open admin dashboard</a></p>
+"""
+        email_engine.send_email(hr_email, admin_subject, admin_body)
+        print(f"OK: HR notification sent to {hr_email}")
+    except Exception as e:
+        logger.warning(f"micro_squads_lead HR email failed (non-fatal): {e}")
+
+    # Confirmation to the lead
+    try:
+        from email_engine import email_engine
+        user_subject = "We received your Micro-Squad request"
+        user_body = f"""<p>Hi {name},</p>
+<p>Thanks for your interest in Micro-Squads. We've received your request:</p>
+<p><strong>Lead ID:</strong> {lead_id}</p>
+<p><strong>Project:</strong> {project_type or 'Your project'}</p>
+<p><strong>Duration:</strong> {duration_days or '?'} days</p>
+<p>Our team will review your requirement and reach out within 24 hours to schedule a discovery call.</p>
+<p>If anything has changed, just reply to this email.</p>
+<p>&mdash; The Charvak Team</p>
+"""
+        email_engine.send_email(email, user_subject, user_body)
+        print(f"OK: confirmation sent to {email}")
+    except Exception as e:
+        logger.warning(f"micro_squads_lead confirmation email failed (non-fatal): {e}")
+
+    return {
+        "status": "success",
+        "lead_id": lead_id,
+        "message": "Thanks! Our team will reach out within 24 hours.",
+    }
+
 @app.post("/api/products/agency-twin/automate")
 @limiter.limit("60/minute")
 async def api_agency_twin(request: Request):
