@@ -401,13 +401,15 @@ separate Razorpay charges. Pattern proven twice.
 
 ### Still open
 
-**Session 5 - Micro-Squads (Rs 49,999)**
-Different shape: this is a sales-lead flow, not self-serve checkout.
-At Rs 49,999 a click-to-pay would be unusual. Plan:
-- New table: charvak_micro_squad_leads
+**Micro-Squads** (`1deb4fa`, 2026-09-30)
+Different shape: sales-lead flow, not self-serve checkout. At Rs 49,999
+a click-to-pay would be unusual.
 - Route: POST /api/products/micro-squads/lead
-- Frontend: replace notifyMe with a booking form
-- SendGrid notification to sales on new lead
+- Table: charvak_micro_squad_leads
+- No credit deduction (lead, not paid feature)
+- HR notification + user confirmation email
+- Frontend: modal lead form, prefilled email, hidden squad_id backref
+- CTA appears after free scan completes
 
 **Sessions 6+ - Remaining ~10 C7 templates**
 Small (< 1 hr): Marketing AI, Background Verification, Bridge,
