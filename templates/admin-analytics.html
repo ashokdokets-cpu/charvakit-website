@@ -219,11 +219,11 @@ function render(d) {
   if (!exams.length) {
     exHtml = '<div class="an-empty">No assessments yet</div>';
   } else {
-    exHtml = '<table class="an-table"><thead><tr><th>Assessment</th><th style="text-align:right;">Count</th></tr></thead><tbody>';
+    exHtml = '<div class="table-responsive"><table class="an-table"><thead><tr><th>Assessment</th><th style="text-align:right;">Count</th></tr></thead><tbody>';
     exams.forEach(function(e) {
       exHtml += '<tr><td>' + esc(e.assessment_name || '—') + '</td><td style="text-align:right;font-weight:600;">' + e.n + '</td></tr>';
     });
-    exHtml += '</tbody></table>';
+    exHtml += '</tbody></table></div>';
   }
   document.getElementById('examsTable').innerHTML = exHtml;
 

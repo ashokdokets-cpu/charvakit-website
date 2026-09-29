@@ -84,10 +84,10 @@ async function loadDashboard() {
             </tr>`;
         }).join('');
 
-        document.getElementById('sessionList').innerHTML = `<table class="table align-middle">
+        document.getElementById('sessionList').innerHTML = `<div class="table-responsive"><table class="table align-middle">
             <thead><tr><th>Role</th><th>Score</th><th>Date</th><th></th></tr></thead>
             <tbody>${rows}</tbody>
-        </table>`;
+        </table></div>`;
     } catch (e) {
         document.getElementById('loading').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
