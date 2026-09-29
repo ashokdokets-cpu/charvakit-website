@@ -1,6 +1,6 @@
 # Session Context - Charvak
 
-**HEAD:** `8bb21a5`
+**HEAD:** `0f6c5c1`
 **Last updated:** 2026-09-29 (Session B - 4 of 5 payment flags closed; #3 deferred)
 **Version:** `v3.5-session-B-20260929`
 
@@ -157,3 +157,46 @@ Real AI output on every call. Elapsed: 39 seconds for all 12.
 - Phase 4: persistence of tool results (charvak_tool_results table +
   /my-tools history page) - next
 - #3 live PayPal capture test - deferred
+
+---
+
+## Session 2026-09-29 (continued) - AI Tools persistence shipped
+
+**Commit:** `0f6c5c1`
+
+### Shipped
+
+Phase 4: every AI tool run is now persisted to `charvak_tool_results`.
+Users can view their history at `/my-tools`.
+
+New files:
+- `migrations/20260929_tool_results.sql` - table + 3 indexes
+- `tool_results.py` - record_tool_result() + get_tool_history()
+- `templates/my-tools.html` - history view
+
+Changes:
+- main.py: 13 routes call record_tool_result, 2 new routes
+- base.html: My Tools History nav link in AI Tools dropdown
+
+Design:
+- Non-fatal - tools work even if the table doesn't exist
+- Indexed on (email, created_at DESC) for fast history
+- 100-row limit per user (no pagination yet)
+
+### Full AI Tools Suite status
+
+12 tools, all end-to-end complete:
+- Backend route + auth + credits + real AI call
+- Frontend form with correct endpoint + safe rendering
+- 401/402/422 handling
+- Persistence + history view
+
+Verified E2E: 4 tool runs persisted and rendered on /my-tools
+(Counter-Offer 5cr, Micro-Trial 10cr, Role-Mirror 5cr, GhostBounty 10cr).
+
+### Still open
+
+- #3 PayPal live capture test (deferred to dedicated session)
+- Premium Report product (~8-12 hrs, product decision)
+- C7 remaining templates (~10-12 with dead paid tiers)
+- Rotate PayPal secret / SYNC keys (external dashboards)
