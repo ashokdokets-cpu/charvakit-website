@@ -1,6 +1,6 @@
 # Session Context - Charvak
 
-**HEAD:** `d1d21df`
+**HEAD:** `e06ed30`
 **Last updated:** 2026-09-29 (Session B - 4 of 5 payment flags closed; #3 deferred)
 **Version:** `v3.5-session-B-20260929`
 
@@ -501,3 +501,60 @@ Each needs full stack: migration + credit key + engine + route + frontend.
 - Rotate PayPal + SYNC keys
 - scripts/_*.py cleanup
 - ARCHITECTURE.md static section refresh
+
+---
+
+## Session 7 queue (2026-09-30)
+
+### Headline item: hosted booking page
+
+The Marketing AI Outreach Kit generates a `booking_link` that currently
+points at `https://www.charvakit.com/contact?ref={slug}` — a dead-end
+because the contact page doesn't read the `ref` param. The link has no
+product behind it yet.
+
+Build the real hosted page:
+
+**Public route:** `GET /booking/{slug}` — no auth required.
+- Reads charvak_marketing_booking_kits by slug
+- Renders: "You are booking a {meeting_type} with {host_name} from
+  {business_name}", agenda preview, and a request form
+- Form fields: prospect name, email, preferred time (text for now),
+  notes
+
+**Request endpoint:** `POST /api/booking/{slug}/request`
+- Saves to new table `charvak_booking_requests`
+  (request_id, slug, kit_id, host_email, prospect_name, prospect_email,
+   preferred_time, notes, status, created_at)
+- Sends host notification email (host email = the kit's email)
+- Sends prospect confirmation email
+- Returns {status, request_id}
+
+**Template:** `templates/booking.html` — clean, minimal, mobile-first.
+- Reads kit data server-side
+- 404 if slug doesn't exist
+- Handles "already requested" gracefully
+
+**Scope decision:** no calendar integration in Session 7. The host
+emails the prospect back with a time. Real slot-picking is Session 8
+if the product needs it.
+
+**Est: 2-3 hrs.**
+
+### Also in Session 7
+
+Complete the remaining C7 templates:
+- team-dashboard.html (Rs 1,999 Pro)
+- background-verification.html (variable)
+- lms.html
+- silent-killer.html
+- skill-twin.html (needs persistence — AA4d)
+- university.html
+- legacy-shift.html
+
+### Deferred indefinitely (external)
+
+- #3 PayPal live capture test
+- Rotate PayPal + SYNC keys
+- scripts/_*.py cleanup
+- ARCHITECTURE.md static-assets section refresh
