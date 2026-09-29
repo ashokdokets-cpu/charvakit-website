@@ -50,6 +50,8 @@
         <div class="col-md-4"><div class="card h-100 p-4"><i class="bi bi-graph-up display-4 text-primary mb-3"></i><h5>Benchmarked</h5><p class="text-muted">See how you rank against peers</p></div></div>
     </div>
 
+    <div id="pastResults"></div>
+
     <div class="text-center p-5 bg-light rounded">
         <h3>Take a Free Skill Check</h3>
         <p class="mb-4">Try the basic assessment first, upgrade to the full simulation.</p>
@@ -105,7 +107,15 @@ async function runSkillTwin(event) {
         }
 
         const data = await res.json();
+        window.lastSkillTwinResult = data;
         renderSkillTwinResult(out, data);
+        if (data.status === 'success' && data.badge_eligible) {
+            const cta = document.createElement('div');
+            cta.className = 'mt-3 text-center';
+            cta.innerHTML = '<button class="btn btn-success" onclick="getVerified(event)">Get Verified Badge &mdash; 100 credits</button>';
+            out.appendChild(cta);
+        }
+        loadPastResults();
     } catch (e) {
         out.innerHTML = '<div class="alert alert-danger">Error: ' + e.message + '</div>';
     } finally {
@@ -175,10 +185,114 @@ function renderSkillTwinResult(out, data) {
 }
 
 // Paid tier — kept as interest capture.
-function getVerified(event) {
+async function getVerified(event) {
     event.preventDefault();
-    window.notifyMe('Skill-Twin Verification');
+    const last = window.lastSkillTwinResult;
+    if (!last || last.status !== 'success') {
+        alert('Run an assessment first, then you can get the badge.');
+        return;
+    }
+    if (!last.badge_eligible) {
+        alert('Score too low for the badge (needs 70+). Keep upskilling!');
+        return;
+    }
+    if (!last.check_id) {
+        alert('Missing check_id - please re-run the assessment.');
+        return;
+    }
+    const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    if (!authToken || !email) {
+        alert('Please log in.');
+        window.location.href = '/login?next=/skill-twin';
+        return;
+    }
+    if (!confirm('Issue your verified badge?\n\nCost: 100 credits (approx. Rs 499)')) return;
+
+    const btn = event.target.closest('button') || event.target;
+    const origText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Issuing badge...';
+
+    try {
+        const r = await fetch('/api/products/skill-twin/buy-badge', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authToken
+            },
+            body: JSON.stringify({email: email, check_id: last.check_id})
+        });
+        if (r.status === 401) { window.location.href = '/login?next=/skill-twin'; return; }
+        if (r.status === 402) {
+            alert('Need 100 credits to issue the badge. Top up at /ai-credits-pricing');
+            return;
+        }
+        const j = await r.json();
+        if (j.status !== 'success') {
+            alert(j.message || 'Badge issuance failed.');
+            return;
+        }
+        if (confirm('Badge issued!\n\nBadge ID: ' + j.badge_id + '\n\nOpen your public badge page?')) {
+            window.location.href = '/badge/' + encodeURIComponent(j.badge_id);
+        } else {
+            loadPastResults();
+        }
+    } catch (err) {
+        alert('Network error: ' + err.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = origText;
+    }
 }
+
+
+function esc(s) {
+    return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+async function loadPastResults() {
+    const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    const wrap = document.getElementById('pastResults');
+    if (!wrap || !authToken || !email) return;
+    try {
+        const r = await fetch('/api/products/skill-twin/my-results/' + encodeURIComponent(email), {
+            headers: {'Authorization': 'Bearer ' + authToken}
+        });
+        if (!r.ok) { wrap.innerHTML = ''; return; }
+        const j = await r.json();
+        if (j.status !== 'success' || !j.results || j.results.length === 0) {
+            wrap.innerHTML = '';
+            return;
+        }
+        let html = '<div class="card border-0 shadow-sm mt-4"><div class="card-body">';
+        html += '<h4 class="as-h5 mb-3">Your Past Assessments (' + j.count + ')</h4>';
+        html += '<div class="table-responsive"><table class="table table-sm"><thead><tr>';
+        html += '<th>When</th><th>Score</th><th>Level</th><th>Badge</th>';
+        html += '</tr></thead><tbody>';
+        j.results.forEach(function(r) {
+            const when = new Date(r.created_at).toLocaleDateString('en-IN', {month: 'short', day: 'numeric', year: 'numeric'});
+            const badgeCell = r.badge_issued
+                ? '<a href="/badge/' + esc(r.badge_id || '') + '"><span class="badge bg-success">View Badge</span></a>'
+                : (r.badge_eligible ? '<span class="badge bg-warning text-dark">Eligible</span>' : '<span class="text-muted small">-</span>');
+            html += '<tr>';
+            html += '<td>' + esc(when) + '</td>';
+            html += '<td><strong>' + esc(r.verified_score) + '</strong>/100</td>';
+            html += '<td>' + esc(r.skill_level) + '</td>';
+            html += '<td>' + badgeCell + '</td>';
+            html += '</tr>';
+        });
+        html += '</tbody></table></div></div></div>';
+        wrap.innerHTML = html;
+    } catch (e) {
+        // non-fatal
+    }
+}
+
+document.addEventListener('DOMContentLoaded', loadPastResults);
 </script>
 {% include 'includes/premium-upsell.html' %}
 {% endblock %}

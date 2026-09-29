@@ -220,21 +220,37 @@ function showResult() {
     localStorage.setItem('skill_stack', currentStack);
 }
 
-function buyBadge() {
-    const score = localStorage.getItem('skill_score') || '0';
-    const stack = localStorage.getItem('skill_stack') || 'Unknown';
-    const badgeId = 'CVK-' + Math.random().toString(36).substring(2,10).toUpperCase();
-    
-    // Save badge
-    localStorage.setItem('badge_name', 'User');
-    localStorage.setItem('badge_stack', stack);
-    localStorage.setItem('badge_score', score + '%');
-    localStorage.setItem('badge_id', badgeId);
-    
-    // Redirect to payment (Razorpay integration placeholder)
-    if (confirm('Get your verified badge for ' + stack + ' (Score: ' + score + '%)? Payment will be processed securely via Razorpay/PayPal.')) {
-        alert('Payment successful! Your badge is ready.');
-        window.location.href = '/badge?name=User&stack=' + encodeURIComponent(stack) + '&score=' + score + '%&id=' + badgeId;
+async function buyBadge() {
+    const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    if (!authToken || !email) {
+        alert('Please log in.');
+        window.location.href = '/login?next=/skill-check';
+        return;
+    }
+    const checkId = localStorage.getItem('skill_twin_check_id') || '';
+    if (!checkId) {
+        alert('We could not find your latest assessment. Please run it again at /skill-twin.');
+        window.location.href = '/skill-twin';
+        return;
+    }
+    if (!confirm('Issue your verified badge for 100 credits (approx. Rs 499)?')) return;
+    try {
+        const r = await fetch('/api/products/skill-twin/buy-badge', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authToken
+            },
+            body: JSON.stringify({email: email, check_id: checkId})
+        });
+        if (r.status === 401) { window.location.href = '/login?next=/skill-check'; return; }
+        if (r.status === 402) { alert('Need 100 credits. Top up at /ai-credits-pricing'); return; }
+        const j = await r.json();
+        if (j.status !== 'success') { alert(j.message || 'Badge issuance failed.'); return; }
+        window.location.href = '/badge/' + encodeURIComponent(j.badge_id);
+    } catch (e) {
+        alert('Network error: ' + e.message);
     }
 }
 

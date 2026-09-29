@@ -1084,8 +1084,19 @@ async def post_micro_project(request: Request):
     return template_response("post-micro-project.html", request, "Post a Micro-Project - Charvak")
 
 @app.get("/badge", response_class=HTMLResponse)
-async def badge_page(request: Request):
+async def badge_page_legacy(request: Request):
+    """Legacy /badge with no badge_id. Renders the same shell."""
     return template_response("badge.html", request, "Your Verified Badge - Charvak")
+
+@app.get("/badge/{badge_id}", response_class=HTMLResponse)
+async def badge_page_by_id(badge_id: str, request: Request):
+    """Public badge verification page. No auth - badges are meant to be shared."""
+    return template_response("badge.html", request, f"Verified Badge - {badge_id}")
+
+@app.get("/api/badge/public/{badge_id}")
+async def get_public_badge(badge_id: str):
+    """Public badge data - never returns holder email."""
+    return products_engine.get_badge_by_id(badge_id)
 
 @app.get("/admin-dashboard", response_class=HTMLResponse)
 async def admin_dashboard(request: Request):
@@ -3927,8 +3938,10 @@ async def badge_stats():
 
 @app.post("/api/badge/issue")
 async def issue_badge(request: Request):
-    """Issue a badge to a user."""
+    """Issue a badge. Admin only. Regular users go through
+    /api/products/skill-twin/buy-badge (auth + credits)."""
     try:
+        require_admin(request)
         data = await request.json()
         result = badge_engine.issue_badge(data)
         return result
@@ -4500,6 +4513,43 @@ async def api_skill_twin(request: Request):
     if guard.get("status") != "success":
         return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return products_engine.skill_twin_assess(data)
+
+@app.get("/api/products/skill-twin/my-results/{email}")
+async def skill_twin_my_results(email: str, request: Request):
+    require_auth_for_email(request, email)
+    return products_engine.list_skill_twin_results(email)
+
+@app.post("/api/products/skill-twin/buy-badge")
+@limiter.limit("20/minute")
+async def api_skill_twin_buy_badge(request: Request):
+    data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+    require_auth_for_email(request, email)
+    check_id = (data.get("check_id") or "").strip()
+    if not check_id:
+        return JSONResponse(status_code=422, content={"status": "error", "message": "check_id required"})
+    # Idempotency: skip credit charge if badge already issued.
+    # If the lookup itself fails, refuse the request (do NOT charge).
+    already = False
+    try:
+        from database import db as _db
+        _c = _db.get_connection(); _cur = _c.cursor()
+        _cur.execute("SELECT badge_issued FROM charvak_skill_twin_results WHERE check_id = %s AND email = %s", (check_id, email))
+        _r = _cur.fetchone()
+        _cur.close(); _c.close()
+        if _r and _r[0]:
+            already = True
+    except Exception as _e:
+        logger.warning(f"buy_badge idempotency check failed: {_e}")
+        return JSONResponse(status_code=500, content={"status": "error", "message": "Could not verify assessment state. Please try again."})
+    if not already:
+        from credit_guard import require_credits_from_data
+        guard = require_credits_from_data(data, "skill_twin_badge")
+        if guard.get("status") != "success":
+            return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+    return products_engine.skill_twin_buy_badge(data)
 
 @app.post("/api/products/micro-squads/assemble")
 @limiter.limit("60/minute")

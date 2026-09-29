@@ -171,6 +171,7 @@ class AICreditEngine:
         "auditbot_fix": 600,
         "auditbot_continuous": 400,
         "product_skill_twin": 15,
+        "skill_twin_badge": 100,
         "product_micro_squads": 25,
         "product_agency_twin": 20,
         "product_geo_compliance": 15,
