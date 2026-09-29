@@ -1,6 +1,6 @@
 # Session Context - Charvak
 
-**HEAD:** `28fb6e2`
+**HEAD:** `52fc994`
 **Last updated:** 2026-09-29 (Session B - 4 of 5 payment flags closed; #3 deferred)
 **Version:** `v3.5-session-B-20260929`
 
@@ -310,3 +310,49 @@ flow, not self-serve checkout.
 5. Add 401/402/422 handling (copy from tools templates)
 6. Record the run (if it makes sense) - reuse tool_results.py pattern
 7. Test E2E: form -> credit deduction -> real output -> render
+
+---
+
+## Session 3 (2026-09-30) - AuditBot paid tiers shipped
+
+**Commit:** `52fc994`
+
+AuditBot is now complete end-to-end. Both paid tiers replace the
+Session G6 notifyMe placeholders with real credits-based flows.
+
+### One-Time Fix (600 credits)
+- Route: POST /api/products/auditbot/fix
+- Engine: products_engine.auditbot_fix(data)
+- Consumes last scan findings, calls OpenAI for a structured guide
+- Persists to charvak_auditbot_fixes
+- Frontend: "Get Fixed" button now POSTs and renders the guide inline
+
+### Continuous Monitoring (400 credits for 30 days)
+- Route: POST /api/products/auditbot/subscribe
+- Engine: products_engine.auditbot_subscribe(data)
+- UPSERT into charvak_auditbot_subscriptions (30-day expiry)
+- Frontend: "Subscribe" button now POSTs and renders confirmation
+
+### Design decisions
+- Credits-based, not separate Razorpay. Reuses existing infra.
+- 1 credit = Rs 0.50 (Pro plan rate)
+  - Rs 2,999 One-Time Fix = 600 credits
+  - Rs 1,999 Continuous = 400 credits
+- No cron for "real" 24/7 monitoring yet. Subscription unlocks
+  unlimited ad-hoc scans for 30 days. Scheduled scans = future feature
+  when there is demand.
+- Removed a stray trailing 'F' character after the Subscribe button
+
+### Verified E2E with test-register-2026-09-24@example.com
+- Scan: 200, 25 credits, SCAN-9F09F99A
+- Fix: 200, 600 credits, FIX-88A2A1FA2C5D, 7-step AI guide persisted
+- Subscribe: 200, 400 credits, continuous tier, 30-day expiry persisted
+- 402 correctly blocks Subscribe on insufficient credits
+- Browser flow works via /auditbot
+
+### Session 4 next - Lock-In Breaker paid tiers
+Two dead tiers (Rs 4,999 x 2). Same pattern:
+- Migration: charvak_lock_in_engagements table
+- Credit keys: lockin_migration, lockin_protection (suggest 1000 each)
+- Routes: /api/products/lock-in-breaker/migration-plan, .../protection
+- Frontend: replace 2 notifyMe calls in lock-in-breaker.html
