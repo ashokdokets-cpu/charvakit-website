@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+{% block title %}Book a Meeting - {{ business_name or "Charvak" }}{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4 text-center">
+        <h1 class="display-5 fw-bold" id="heroTitle">Book a Meeting</h1>
+        <p class="lead" id="heroSubtitle">Loading...</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <div id="bookingLoading" class="text-center py-5">
+                <div class="spinner-border text-primary"></div>
+                <p class="text-muted mt-3">Loading booking details...</p>
+            </div>
+
+            <div id="bookingNotFound" class="text-center py-5 d-none">
+                <i class="bi bi-calendar-x display-1 text-muted"></i>
+                <h3 class="mt-3">Booking page not found</h3>
+                <p class="text-muted">This link may have expired or been mistyped.</p>
+                <a href="/" class="btn btn-primary">Return Home</a>
+            </div>
+
+            <div id="bookingForm" class="d-none">
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body">
+                        <h2 class="as-h5 mb-3" id="meetingHeader">Meeting details</h2>
+                        <div id="meetingInfo"></div>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h2 class="as-h5 mb-3">Request this meeting</h2>
+                        <p class="text-muted small">Fill in your details and the host will confirm the exact time by email.</p>
+
+                        <form onsubmit="submitRequest(event)">
+                            <div class="mb-3">
+                                <label class="form-label">Your Name *</label>
+                                <input type="text" class="form-control" id="prospectName" maxlength="100" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Your Email *</label>
+                                <input type="email" class="form-control" id="prospectEmail" maxlength="200" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Preferred Time</label>
+                                <input type="text" class="form-control" id="preferredTime"
+                                       placeholder="e.g., Tue 3pm IST, or Mon-Wed next week" maxlength="200">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">What would you like to discuss?</label>
+                                <textarea class="form-control" id="notes" rows="3" maxlength="2000"
+                                          placeholder="Optional - any specific topics, questions, or context"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-lg w-100" id="submitBtn">
+                                Send Booking Request
+                            </button>
+                            <div id="requestError" class="alert alert-danger mt-3 d-none"></div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div id="bookingSuccess" class="d-none">
+                <div class="card border-success border-2 shadow-sm">
+                    <div class="card-body text-center py-5">
+                        <i class="bi bi-check-circle display-1 text-success"></i>
+                        <h3 class="mt-3">Request Sent!</h3>
+                        <p class="lead" id="successMessage"></p>
+                        <p class="text-muted">Reference: <code id="successRequestId"></code></p>
+                        <p class="text-muted small mt-3">You will receive a confirmation email shortly. The host will follow up to lock in the exact time.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Get slug from URL path /booking/{slug}
+const SLUG = window.location.pathname.split('/').pop();
+let kitData = null;
+
+function esc(s) {
+    return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+async function loadKit() {
+    try {
+        const r = await fetch('/api/booking/' + encodeURIComponent(SLUG));
+        const j = await r.json();
+        document.getElementById('bookingLoading').classList.add('d-none');
+        if (j.status !== 'success') {
+            document.getElementById('bookingNotFound').classList.remove('d-none');
+            return;
+        }
+        kitData = j;
+        renderKit(j);
+        document.getElementById('bookingForm').classList.remove('d-none');
+    } catch (e) {
+        document.getElementById('bookingLoading').classList.add('d-none');
+        document.getElementById('bookingNotFound').classList.remove('d-none');
+    }
+}
+
+function renderKit(kit) {
+    document.title = 'Book a ' + kit.meeting_type + ' - ' + kit.business_name;
+    document.getElementById('heroTitle').textContent = 'Book a ' + kit.meeting_type;
+    document.getElementById('heroSubtitle').textContent = kit.host_name + ' from ' + kit.business_name + ' would love to speak with you.';
+
+    let info = '';
+    info += '<p class="mb-2"><strong>Host:</strong> ' + esc(kit.host_name) + '</p>';
+    info += '<p class="mb-2"><strong>Company:</strong> ' + esc(kit.business_name) + '</p>';
+    info += '<p class="mb-2"><strong>Meeting:</strong> ' + esc(kit.meeting_type) + ' (' + esc(kit.duration_min) + ' minutes)</p>';
+    if (kit.context) {
+        info += '<p class="mb-3 text-muted small"><em>' + esc(kit.context) + '</em></p>';
+    }
+    const agenda = (kit.kit && kit.kit.meeting_agenda) || [];
+    if (agenda.length > 0) {
+        info += '<h6 class="mt-3">Agenda</h6><ul class="mb-0">';
+        agenda.forEach(function(a) {
+            info += '<li><strong>' + esc(a.minute || 0) + ' min:</strong> ' + esc(a.topic || '') + '</li>';
+        });
+        info += '</ul>';
+    }
+    document.getElementById('meetingInfo').innerHTML = info;
+}
+
+async function submitRequest(event) {
+    event.preventDefault();
+    const errEl = document.getElementById('requestError');
+    errEl.classList.add('d-none');
+    const name = document.getElementById('prospectName').value.trim();
+    const pemail = document.getElementById('prospectEmail').value.trim();
+    const preferred = document.getElementById('preferredTime').value.trim();
+    const notes = document.getElementById('notes').value.trim();
+
+    if (name.length < 2) { errEl.textContent = 'Please enter your name.'; errEl.classList.remove('d-none'); return; }
+    if (!pemail || pemail.indexOf('@') < 0) { errEl.textContent = 'Please enter a valid email.'; errEl.classList.remove('d-none'); return; }
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    const origText = btn.textContent;
+    btn.textContent = 'Sending...';
+
+    try {
+        const r = await fetch('/api/booking/' + encodeURIComponent(SLUG) + '/request', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                name: name,
+                email: pemail,
+                preferred_time: preferred,
+                notes: notes
+            })
+        });
+        const j = await r.json();
+        if (!r.ok || j.status !== 'success') {
+            errEl.textContent = (j && j.message) || 'Request failed. Please try again.';
+            errEl.classList.remove('d-none');
+            btn.disabled = false;
+            btn.textContent = origText;
+            return;
+        }
+        document.getElementById('successMessage').textContent = j.message || 'Your request has been sent.';
+        document.getElementById('successRequestId').textContent = j.request_id || '';
+        document.getElementById('bookingForm').classList.add('d-none');
+        document.getElementById('heroTitle').textContent = 'Request Received';
+        document.getElementById('heroSubtitle').textContent = 'Thank you! Check your inbox for confirmation.';
+        document.getElementById('bookingSuccess').classList.remove('d-none');
+        document.getElementById('bookingSuccess').scrollIntoView({behavior: 'smooth', block: 'start'});
+    } catch (e) {
+        errEl.textContent = 'Network error: ' + e.message;
+        errEl.classList.remove('d-none');
+        btn.disabled = false;
+        btn.textContent = origText;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', loadKit);
+</script>
+{% endblock %}

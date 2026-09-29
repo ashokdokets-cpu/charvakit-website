@@ -5639,6 +5639,31 @@ async def generate_booking_kit(request: Request):
 async def marketing_ai_page(request: Request):
     return template_response("marketing-ai.html", request, "Marketing AI - Charvak IT Consulting")
 
+@app.get("/booking/{slug}", response_class=HTMLResponse)
+async def booking_page(slug: str, request: Request):
+    """Public hosted booking page for a Marketing AI outreach kit."""
+    return template_response("booking.html", request, "Book a Meeting - Charvak")
+
+@app.get("/api/booking/{slug}")
+async def get_booking_kit(slug: str):
+    """Public - returns the kit info for the booking page to render."""
+    return marketing_ai_engine.get_kit_by_slug(slug)
+
+@app.post("/api/booking/{slug}/request")
+@limiter.limit("10/minute")
+async def submit_booking_request(slug: str, request: Request):
+    """Public - captures a booking request from a prospect."""
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "Invalid JSON"})
+    return marketing_ai_engine.create_booking_request(slug, data)
+
+@app.get("/api/booking/requests/{email}")
+async def list_booking_requests(email: str, request: Request):
+    require_auth_for_email(request, email)
+    return marketing_ai_engine.list_requests_for_email(email)
+
 # ============================================================
 # INDIAN LANGUAGE AI API ENDPOINTS
 # ============================================================

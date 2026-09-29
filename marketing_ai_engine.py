@@ -287,7 +287,7 @@ class MarketingAIEngine:
         # Generate the slug from business name + random suffix
         slug_base = "".join(c if c.isalnum() else "-" for c in business_name.lower())[:30].strip("-")
         slug = f"{slug_base}-{secrets.token_hex(3)}" if slug_base else secrets.token_hex(6)
-        booking_link = f"https://www.charvakit.com/contact?ref={slug}"
+        booking_link = f"https://www.charvakit.com/booking/{slug}"
 
         prompt = f"""You are a B2B sales copywriter. Build a personalized outreach kit for a meeting.
 
@@ -378,13 +378,19 @@ Only return the JSON."""
                     created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
+            # Ensure new columns exist (auto-create on first use)
+            cur.execute("ALTER TABLE charvak_marketing_booking_kits ADD COLUMN IF NOT EXISTS slug TEXT")
+            cur.execute("ALTER TABLE charvak_marketing_booking_kits ADD COLUMN IF NOT EXISTS host_email TEXT")
+            cur.execute("ALTER TABLE charvak_marketing_booking_kits ADD COLUMN IF NOT EXISTS booking_url TEXT")
             cur.execute("""
                 INSERT INTO charvak_marketing_booking_kits
                     (kit_id, email, host_name, business_name, meeting_type,
-                     duration_min, context, kit_json, credits_used)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 60)
+                     duration_min, context, kit_json, credits_used,
+                     slug, host_email, booking_url)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 60, %s, %s, %s)
             """, (kit_id, email, host_name, business_name, meeting_type,
-                  duration_min, context, json.dumps(kit)))
+                  duration_min, context, json.dumps(kit),
+                  slug, email, booking_link))
             conn.commit()
             cur.close(); conn.close()
         except Exception as e:
@@ -416,6 +422,192 @@ Only return the JSON."""
             "booking_link": f"https://charvakit.com/contact?booking={booking_id}",
             "meeting_type": meeting_type,
             "message": "Booking link ready! Share with clients.",
+        }
+
+    def get_kit_by_slug(self, slug: str) -> Dict:
+        """Fetch a booking kit by its slug (public - used by /booking/{slug})."""
+        if not slug:
+            return {"status": "error", "message": "slug required"}
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            # Ensure slug/host_email columns exist
+            cur.execute("ALTER TABLE charvak_marketing_booking_kits ADD COLUMN IF NOT EXISTS slug TEXT")
+            cur.execute("ALTER TABLE charvak_marketing_booking_kits ADD COLUMN IF NOT EXISTS host_email TEXT")
+            cur.execute("ALTER TABLE charvak_marketing_booking_kits ADD COLUMN IF NOT EXISTS booking_url TEXT")
+            cur.execute("""
+                SELECT kit_id, email, host_name, business_name, meeting_type,
+                       duration_min, context, kit_json, slug, booking_url, created_at
+                FROM charvak_marketing_booking_kits
+                WHERE slug = %s
+                LIMIT 1
+            """, (slug,))
+            row = cur.fetchone()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"get_kit_by_slug failed: {e}")
+            return {"status": "error", "message": "Could not load booking page"}
+
+        if not row:
+            return {"status": "error", "message": "Booking page not found"}
+
+        kit_json = row[7] if isinstance(row[7], dict) else {}
+        try:
+            if isinstance(row[7], str):
+                kit_json = json.loads(row[7])
+        except Exception:
+            kit_json = {}
+
+        return {
+            "status": "success",
+            "kit_id": row[0],
+            "email": row[1],
+            "host_name": row[2],
+            "business_name": row[3],
+            "meeting_type": row[4],
+            "duration_min": row[5],
+            "context": row[6],
+            "kit": kit_json,
+            "slug": row[8],
+            "booking_url": row[9],
+            "created_at": row[10].isoformat() if hasattr(row[10], "isoformat") else str(row[10]),
+        }
+
+    def create_booking_request(self, slug: str, prospect: Dict) -> Dict:
+        """
+        Save a booking request and email both host + prospect.
+        prospect = {name, email, preferred_time, notes}
+        """
+        import secrets
+        if not slug:
+            return {"status": "error", "message": "slug required"}
+        name = (prospect.get("name") or "").strip()
+        pemail = (prospect.get("email") or "").strip().lower()
+        preferred = (prospect.get("preferred_time") or "").strip()
+        notes = (prospect.get("notes") or "").strip()
+        if len(name) < 2:
+            return {"status": "error", "message": "Name is required"}
+        if "@" not in pemail:
+            return {"status": "error", "message": "Valid email is required"}
+
+        kit = self.get_kit_by_slug(slug)
+        if kit.get("status") != "success":
+            return {"status": "error", "message": "Booking page not found"}
+
+        request_id = f"REQ-{secrets.token_hex(6).upper()}"
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS charvak_booking_requests (
+                    request_id       TEXT PRIMARY KEY,
+                    slug             TEXT NOT NULL,
+                    kit_id           TEXT NOT NULL,
+                    host_email       TEXT NOT NULL,
+                    prospect_name    TEXT NOT NULL,
+                    prospect_email   TEXT NOT NULL,
+                    preferred_time   TEXT,
+                    notes            TEXT,
+                    status           TEXT NOT NULL DEFAULT 'pending',
+                    created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            cur.execute("""
+                INSERT INTO charvak_booking_requests
+                    (request_id, slug, kit_id, host_email, prospect_name,
+                     prospect_email, preferred_time, notes)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """, (request_id, slug, kit["kit_id"], kit["email"], name,
+                  pemail, preferred, notes))
+            conn.commit()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"create_booking_request persist failed: {e}")
+            return {"status": "error", "message": "Could not save request"}
+
+        # Email host
+        try:
+            from email_engine import email_engine
+            host_subject = f"New booking request from {name}"
+            host_body = f"""<h3>New Booking Request</h3>
+<p><strong>Request ID:</strong> {request_id}</p>
+<p><strong>From:</strong> {name} &lt;{pemail}&gt;</p>
+<p><strong>Meeting:</strong> {kit['meeting_type']} ({kit['duration_min']} min)</p>
+<p><strong>Preferred time:</strong> {preferred or '(not specified)'}</p>
+<p><strong>Notes:</strong></p>
+<pre style="white-space:pre-wrap;background:#f5f5f5;padding:12px;border-radius:6px;">{notes or '(none)'}</pre>
+<hr>
+<p>Reply directly to {pemail} to confirm the time.</p>
+"""
+            email_engine.send_email(kit["email"], host_subject, host_body)
+            print(f"OK: host notification sent to {kit['email']}")
+        except Exception as e:
+            logger.warning(f"Host email failed (non-fatal): {e}")
+
+        # Email prospect confirmation
+        try:
+            from email_engine import email_engine
+            prospect_subject = f"Your booking request to {kit['business_name']}"
+            prospect_body = f"""<p>Hi {name},</p>
+<p>Thanks for requesting a {kit['meeting_type']} with {kit['host_name']} from {kit['business_name']}.</p>
+<p><strong>Request ID:</strong> {request_id}</p>
+<p><strong>Preferred time:</strong> {preferred or '(to be confirmed)'}</p>
+<p>{kit['host_name']} will reach out shortly to confirm the exact time.</p>
+<p>&mdash; The {kit['business_name']} team</p>
+"""
+            email_engine.send_email(pemail, prospect_subject, prospect_body)
+            print(f"OK: confirmation sent to {pemail}")
+        except Exception as e:
+            logger.warning(f"Prospect email failed (non-fatal): {e}")
+
+        return {
+            "status": "success",
+            "request_id": request_id,
+            "message": "Request received. The host will confirm shortly.",
+        }
+
+    def list_requests_for_email(self, email: str) -> Dict:
+        """Return all incoming booking requests for a host."""
+        email = (email or "").strip().lower()
+        if not email:
+            return {"status": "error", "message": "email required"}
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT request_id, slug, prospect_name, prospect_email,
+                       preferred_time, notes, status, created_at
+                FROM charvak_booking_requests
+                WHERE host_email = %s
+                ORDER BY created_at DESC
+                LIMIT 100
+            """, (email,))
+            rows = cur.fetchall()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.warning(f"list_requests_for_email failed: {e}")
+            return {"status": "success", "email": email, "count": 0, "requests": []}
+
+        return {
+            "status": "success",
+            "email": email,
+            "count": len(rows),
+            "requests": [
+                {
+                    "request_id": r[0],
+                    "slug": r[1],
+                    "prospect_name": r[2],
+                    "prospect_email": r[3],
+                    "preferred_time": r[4],
+                    "notes": r[5],
+                    "status": r[6],
+                    "created_at": r[7].isoformat() if hasattr(r[7], "isoformat") else str(r[7]),
+                }
+                for r in rows
+            ],
         }
 
     def get_stats(self) -> Dict:
