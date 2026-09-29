@@ -176,6 +176,7 @@ class AICreditEngine:
         "product_geo_compliance": 15,
         "geo_contract": 400,
         "geo_hiring": 2000,
+        "team_pro_subscription": 500,
         "reverse_staffing_subscription": 1000,
         "product_design_token": 15,
         "product_silent_killer": 15,

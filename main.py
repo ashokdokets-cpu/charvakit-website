@@ -5200,6 +5200,13 @@ async def company_detail_page(request: Request, brand_id: str):
 @limiter.limit("60/minute")
 async def create_team(request: Request):
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+    require_auth_for_email(request, email)
+    # Force admin_email to the logged-in user's email
+    data["admin_email"] = email
+    # Enforce member limit: free = 5, pro = 20
     return team_engine.create_team(data)
 
 @app.get("/api/team/stats")
@@ -5207,14 +5214,60 @@ async def team_stats():
     return team_engine.get_stats()
 
 @app.get("/api/team/{team_id}")
-async def get_team(team_id: str):
+async def get_team(team_id: str, request: Request):
+    # Any logged-in user can view a team by ID (per-team RBAC deferred)
+    require_auth(request)
     return team_engine.get_team(team_id)
 
 @app.post("/api/team/invite")
 @limiter.limit("20/minute")
 async def invite_member(request: Request):
     data = await request.json()
+    caller_email = (data.get("email") or "").strip().lower()
+    if not caller_email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+    require_auth_for_email(request, caller_email)
+
+    # The frontend sends the member's address as "member_email" so we can
+    # distinguish it from the caller's auth email. The engine expects the
+    # member email under "email" — so we shuffle here.
+    member_email = (data.get("member_email") or "").strip().lower()
+    if not member_email:
+        return JSONResponse(status_code=422, content={"status": "error", "message": "member_email required"})
+    data["email"] = member_email
+
+    # Enforce member limit based on Pro status
+    team_id = data.get("team_id")
+    team = team_engine._find_team(team_id)
+    if not team:
+        return JSONResponse(status_code=404, content={"status": "error", "message": "Team not found"})
+    max_members = 20 if team_engine.is_pro(team.get("admin_email", "")) else 5
+    if (team.get("member_count") or 0) >= max_members:
+        return JSONResponse(status_code=402, content={
+            "status": "error",
+            "message": f"Team is at the free-tier limit ({max_members} members). Upgrade to Growing Team Pro for 20 members.",
+            "_http_status": 402,
+        })
     return team_engine.invite_member(data)
+
+@app.post("/api/team/subscribe")
+@limiter.limit("10/minute")
+async def subscribe_team(request: Request):
+    data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+    require_auth_for_email(request, email)
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "team_pro_subscription")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+    return team_engine.subscribe_pro(data)
+
+@app.get("/api/team/my-teams/{email}")
+async def my_teams(email: str, request: Request):
+    require_auth_for_email(request, email)
+    return team_engine.list_teams_for_email(email)
 
 
 # ============================================================
