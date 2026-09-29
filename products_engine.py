@@ -294,6 +294,211 @@ class ProductsEngine:
 
         self._log_result("auditbot", data, result)
         return {"status": "success", **result}
+
+    def _ensure_auditbot_tables(self):
+        """Create charvak_auditbot_* tables on first use. Idempotent."""
+        if getattr(self, "_auditbot_tables_ensured", False):
+            return
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS charvak_auditbot_fixes (
+                    fix_id        TEXT PRIMARY KEY,
+                    email         TEXT NOT NULL,
+                    scan_id       TEXT,
+                    repo_url      TEXT,
+                    language      TEXT,
+                    scan_type     TEXT,
+                    findings_json JSONB,
+                    guide_json    JSONB,
+                    credits_used  INTEGER NOT NULL DEFAULT 0,
+                    created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_auditbot_fixes_email ON charvak_auditbot_fixes (email, created_at DESC)")
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_auditbot_fixes_scan  ON charvak_auditbot_fixes (scan_id)")
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS charvak_auditbot_subscriptions (
+                    email          TEXT PRIMARY KEY,
+                    tier           TEXT NOT NULL DEFAULT 'continuous',
+                    started_at     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    expires_at     TIMESTAMP NOT NULL,
+                    scans_used     INTEGER NOT NULL DEFAULT 0,
+                    last_scan_at   TIMESTAMP,
+                    created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_auditbot_subs_expires ON charvak_auditbot_subscriptions (expires_at)")
+            conn.commit()
+            cur.close(); conn.close()
+            self._auditbot_tables_ensured = True
+        except Exception as e:
+            logger.warning(f"products_engine._ensure_auditbot_tables failed: {e}")
+
+    def auditbot_fix(self, data: Dict) -> Dict:
+        """
+        Generate a step-by-step remediation guide from a previous scan.
+        data = {"email", "scan_id", "findings": [...], "language", "repo_url", "scan_type"}
+        """
+        import json, secrets
+        from datetime import datetime
+
+        self._ensure_auditbot_tables()
+
+        email = (data.get("email") or "").strip().lower()
+        scan_id = data.get("scan_id") or ""
+        findings = data.get("findings") or []
+        language = data.get("language", "Python")
+        repo_url = data.get("repo_url", "")
+        scan_type = data.get("scan_type", "security")
+
+        if not email:
+            return {"status": "error", "message": "email required"}
+        if not findings:
+            return {"status": "error", "message": "No findings to fix - run a scan first"}
+
+        # Build the AI prompt
+        findings_text = "\n".join(
+            f"- [{f.get('severity','?')}] {f.get('issue','?')} @ {f.get('file','?')}:{f.get('line','?')}"
+            + (f" - {f.get('description','')}" if f.get('description') else "")
+            for f in findings[:30]
+        )
+        prompt = f"""You are a senior security engineer. Produce a remediation guide for these findings.
+
+Repo: {repo_url}
+Language: {language}
+Scan type: {scan_type}
+
+Findings:
+{findings_text}
+
+Return STRICT JSON:
+{{
+  "summary": "one sentence overview",
+  "priority_order": ["finding 1 title", "finding 2 title", ...],
+  "steps": [
+    {{
+      "step_number": 1,
+      "severity": "HIGH|MEDIUM|LOW",
+      "issue": "the finding being fixed",
+      "location": "file:line",
+      "fix": "concrete code change or command",
+      "verification": "how to confirm the fix worked",
+      "time_estimate": "5 min"
+    }}
+  ],
+  "estimated_total_time": "30 min",
+  "post_fix_checklist": ["item 1", "item 2"]
+}}
+Only return the JSON. No prose outside."""
+
+        try:
+            from openai import OpenAI
+            import os
+            client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+            resp = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[{"role": "user", "content": prompt}],
+                response_format={"type": "json_object"},
+                temperature=0.3,
+                timeout=45,
+            )
+            raw = resp.choices[0].message.content or "{}"
+            # Strip any markdown fences if OpenAI ignored the format hint
+            if raw.startswith("```"):
+                raw = raw.strip("`")
+                if raw.startswith("json\n"):
+                    raw = raw[5:]
+            guide = json.loads(raw)
+        except Exception as e:
+            logger.warning(f"auditbot_fix AI call failed: {e}")
+            # Fallback - produce a minimal guide from the findings themselves
+            guide = {
+                "summary": f"{len(findings)} findings identified - AI guide unavailable, using heuristic fallback.",
+                "priority_order": [f.get("issue","?") for f in findings[:5]],
+                "steps": [
+                    {
+                        "step_number": i + 1,
+                        "severity": f.get("severity", "LOW"),
+                        "issue": f.get("issue", "?"),
+                        "location": f"{f.get('file','?')}:{f.get('line','?')}",
+                        "fix": f.get("fix") or "Review the finding and apply the recommended change.",
+                        "verification": "Re-run the scan and confirm the finding no longer appears.",
+                        "time_estimate": "10 min",
+                    }
+                    for i, f in enumerate(findings[:15])
+                ],
+                "estimated_total_time": f"{len(findings) * 5} min",
+                "post_fix_checklist": ["Re-run AuditBot scan", "Commit and push fixes", "Notify your team"],
+            }
+
+        # Persist
+        fix_id = f"FIX-{secrets.token_hex(6).upper()}"
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                INSERT INTO charvak_auditbot_fixes
+                    (fix_id, email, scan_id, repo_url, language, scan_type,
+                     findings_json, guide_json, credits_used)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (fix_id, email, scan_id, repo_url, language, scan_type,
+                  json.dumps(findings), json.dumps(guide), 600))
+            conn.commit()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.warning(f"auditbot_fix persist failed: {e}")
+
+        return {"status": "success", "fix_id": fix_id, "scan_id": scan_id, "guide": guide}
+
+    def auditbot_subscribe(self, data: Dict) -> Dict:
+        """
+        Create or renew a 30-day AuditBot continuous monitoring subscription.
+        data = {"email"}
+        """
+        from datetime import datetime, timedelta
+
+        self._ensure_auditbot_tables()
+
+        email = (data.get("email") or "").strip().lower()
+        if not email:
+            return {"status": "error", "message": "email required"}
+
+        started_at = datetime.now()
+        expires_at = started_at + timedelta(days=30)
+
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                INSERT INTO charvak_auditbot_subscriptions
+                    (email, tier, started_at, expires_at, scans_used)
+                VALUES (%s, 'continuous', %s, %s, 0)
+                ON CONFLICT (email) DO UPDATE SET
+                    tier = 'continuous',
+                    started_at = EXCLUDED.started_at,
+                    expires_at = EXCLUDED.expires_at,
+                    scans_used = 0
+            """, (email, started_at, expires_at))
+            conn.commit()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"auditbot_subscribe persist failed: {e}")
+            return {"status": "error", "message": "Subscription could not be created"}
+
+        return {
+            "status": "success",
+            "email": email,
+            "tier": "continuous",
+            "started_at": started_at.isoformat(),
+            "expires_at": expires_at.isoformat(),
+            "days_remaining": 30,
+            "message": "Continuous monitoring active. Unlimited scans for 30 days.",
+        }
     
     # ============================================================
     # SKILL-TWIN

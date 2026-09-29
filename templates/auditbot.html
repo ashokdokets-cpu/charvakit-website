@@ -69,7 +69,7 @@
     <div class="row g-4 mb-5">
     <div class="col-md-4"><div class="card h-100 p-4 text-center border"><h4>🔍 Free Scan</h4><h2 class="display-4 fw-bold"><span data-inr="0">₹0</span></h2><p class="text-muted">One-time</p><ul class="list-unstyled text-start"><li class="mb-2">✅ Full website scan</li><li class="mb-2">✅ Health score report</li><li class="mb-2">❌ No auto-fix patches</li></ul><a href="/digital-health-checker" class="btn btn-outline-primary">Start Free Scan</a></div></div>
     <div class="col-md-4"><div class="card h-100 p-4 text-center border-primary" style="border-width:2px;"><span class="badge bg-primary mb-2">Popular</span><h3 class="as-h4">⚡ One-Time Fix</h3><h2 class="display-4 fw-bold"><span data-inr="2999">₹2,999</span></h2><p class="text-muted">Per scan</p><ul class="list-unstyled text-start"><li class="mb-2">✅ Everything in Free</li><li class="mb-2">✅ Auto-fix patch scripts</li><li class="mb-2">✅ 30-day support</li></ul><a href="#" class="btn btn-primary" onclick="auditGetFixed(event)">Get Fixed</a></div></div>
-    <div class="col-md-4"><div class="card h-100 p-4 text-center border"><h3 class="as-h4">🛡️ Continuous</h3><h2 class="display-4 fw-bold"><span data-inr="1999">₹1,999</span></h2><p class="text-muted">/month</p><ul class="list-unstyled text-start"><li class="mb-2">✅ 24/7 monitoring</li><li class="mb-2">✅ Auto-patch deployment</li><li class="mb-2">✅ Monthly health reports</li></ul><a href="#" class="btn btn-success" onclick="auditSubscribe(event)">Subscribe</a>F</div></div>
+    <div class="col-md-4"><div class="card h-100 p-4 text-center border"><h3 class="as-h4">🛡️ Continuous</h3><h2 class="display-4 fw-bold"><span data-inr="1999">₹1,999</span></h2><p class="text-muted">/month</p><ul class="list-unstyled text-start"><li class="mb-2">✅ 24/7 monitoring</li><li class="mb-2">✅ Auto-patch deployment</li><li class="mb-2">✅ Monthly health reports</li></ul><a href="#" class="btn btn-success" onclick="auditSubscribe(event)">Subscribe</a></div></div>
 </div>
 <div class="text-center p-5 bg-dark text-white rounded">
     <h3>Don't Wait for a Breach</h3>
@@ -184,13 +184,163 @@ function renderAuditResult(out, data) {
 
 // Paid tiers — kept as interest capture (Session G6 pattern).
 // The auto-fix patch service and continuous monitoring are not yet shipped.
-function auditGetFixed(event) {
+async function auditGetFixed(event) {
     event.preventDefault();
-    window.notifyMe('AuditBot Fix');
+    const out = document.getElementById('auditOutput');
+    const last = window.lastAuditResult;
+    if (!last || last.status !== 'success') {
+        alert('Run a scan first, then click Get Fixed.');
+        return;
+    }
+    const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    if (!authToken || !email) {
+        alert('Please log in.');
+        window.location.href = '/login?next=/auditbot';
+        return;
+    }
+    const btn = event.target.closest('a') || event.target;
+    const origText = btn.textContent;
+    btn.textContent = 'Generating fix guide...';
+    btn.setAttribute('aria-disabled', 'true');
+
+    try {
+        const res = await fetch('/api/products/auditbot/fix', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authToken
+            },
+            body: JSON.stringify({
+                email: email,
+                scan_id: last.scan_id,
+                findings: last.findings || [],
+                language: window.lastAuditLang || 'Python',
+                repo_url: window.lastAuditRepo || '',
+                scan_type: window.lastAuditType || 'security'
+            })
+        });
+        if (res.status === 401) { window.location.href = '/login?next=/auditbot'; return; }
+        if (res.status === 402) {
+            out.innerHTML = '<div class="alert alert-warning">Need 600 credits for the fix guide. <a href="/ai-credits-pricing">Top up</a>.</div>';
+            return;
+        }
+        const data = await res.json();
+        if (data.status !== 'success') {
+            out.innerHTML = '<div class="alert alert-danger">' + (data.message || 'Fix generation failed') + '</div>';
+            return;
+        }
+        renderFixGuide(out, data);
+    } catch (e) {
+        out.innerHTML = '<div class="alert alert-danger">Network error: ' + e.message + '</div>';
+    } finally {
+        btn.textContent = origText;
+        btn.removeAttribute('aria-disabled');
+    }
 }
-function auditSubscribe(event) {
+
+function renderFixGuide(out, data) {
+    const g = data.guide || {};
+    let html = '<div class="card border-success mt-4"><div class="card-body">';
+    html += '<h4 class="text-success">Fix Guide (' + (data.fix_id || '') + ')</h4>';
+    if (g.summary) html += '<p class="lead">' + esc(g.summary) + '</p>';
+    if (g.estimated_total_time) {
+        html += '<p><strong>Estimated time:</strong> ' + esc(g.estimated_total_time) + '</p>';
+    }
+    if (g.priority_order && g.priority_order.length) {
+        html += '<h5 class="mt-3">Priority Order</h5><ol>';
+        g.priority_order.forEach(function(p) { html += '<li>' + esc(p) + '</li>'; });
+        html += '</ol>';
+    }
+    if (g.steps && g.steps.length) {
+        html += '<h5 class="mt-3">Steps (' + g.steps.length + ')</h5>';
+        g.steps.forEach(function(s) {
+            const sev = (s.severity || 'LOW').toLowerCase();
+            const sevColor = sev === 'high' ? 'danger' : (sev === 'medium' ? 'warning' : 'info');
+            html += '<div class="card mb-2"><div class="card-body">';
+            html += '<div class="d-flex justify-content-between align-items-start">';
+            html += '<strong>Step ' + (s.step_number || '') + ': ' + esc(s.issue || '') + '</strong>';
+            html += '<span class="badge bg-' + sevColor + '">' + esc(s.severity || 'LOW') + '</span>';
+            html += '</div>';
+            if (s.location) html += '<div class="small text-muted mt-1">Location: ' + esc(s.location) + '</div>';
+            if (s.fix) html += '<p class="mt-2 mb-1"><strong>Fix:</strong> ' + esc(s.fix) + '</p>';
+            if (s.verification) html += '<p class="small mb-1"><strong>Verify:</strong> ' + esc(s.verification) + '</p>';
+            if (s.time_estimate) html += '<p class="small text-muted mb-0">' + esc(s.time_estimate) + '</p>';
+            html += '</div></div>';
+        });
+    }
+    if (g.post_fix_checklist && g.post_fix_checklist.length) {
+        html += '<h5 class="mt-3">Post-Fix Checklist</h5><ul>';
+        g.post_fix_checklist.forEach(function(c) { html += '<li>' + esc(c) + '</li>'; });
+        html += '</ul>';
+    }
+    html += '</div></div>';
+    out.innerHTML += html;
+    out.scrollIntoView({behavior:'smooth', block:'end'});
+}
+
+async function auditSubscribe(event) {
     event.preventDefault();
-    window.notifyMe('AuditBot Subscription');
+    const out = document.getElementById('auditOutput');
+    const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    if (!authToken || !email) {
+        alert('Please log in.');
+        window.location.href = '/login?next=/auditbot';
+        return;
+    }
+    const btn = event.target.closest('a') || event.target;
+    const origText = btn.textContent;
+    btn.textContent = 'Activating...';
+    btn.setAttribute('aria-disabled', 'true');
+
+    try {
+        const res = await fetch('/api/products/auditbot/subscribe', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authToken
+            },
+            body: JSON.stringify({email: email})
+        });
+        if (res.status === 401) { window.location.href = '/login?next=/auditbot'; return; }
+        if (res.status === 402) {
+            out.innerHTML = '<div class="alert alert-warning">Need 400 credits for continuous monitoring. <a href="/ai-credits-pricing">Top up</a>.</div>';
+            return;
+        }
+        const data = await res.json();
+        if (data.status !== 'success') {
+            out.innerHTML = '<div class="alert alert-danger">' + (data.message || 'Subscription failed') + '</div>';
+            return;
+        }
+        renderSubscription(out, data);
+    } catch (e) {
+        out.innerHTML = '<div class="alert alert-danger">Network error: ' + e.message + '</div>';
+    } finally {
+        btn.textContent = origText;
+        btn.removeAttribute('aria-disabled');
+    }
+}
+
+function renderSubscription(out, data) {
+    const expiry = new Date(data.expires_at).toLocaleDateString();
+    let html = '<div class="card border-success mt-4"><div class="card-body">';
+    html += '<h4 class="text-success">Continuous Monitoring Active</h4>';
+    html += '<p class="lead">' + esc(data.message || '') + '</p>';
+    html += '<ul class="list-unstyled mb-0">';
+    html += '<li class="mb-2"><strong>Tier:</strong> ' + esc(data.tier || 'continuous') + '</li>';
+    html += '<li class="mb-2"><strong>Valid until:</strong> ' + esc(expiry) + '</li>';
+    html += '<li class="mb-2"><strong>Days remaining:</strong> ' + esc(String(data.days_remaining || 30)) + '</li>';
+    html += '</ul>';
+    html += '</div></div>';
+    out.innerHTML += html;
+    out.scrollIntoView({behavior:'smooth', block:'end'});
+}
+
+function esc(s) {
+    return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 </script>
 {% include 'includes/premium-upsell.html' %}
