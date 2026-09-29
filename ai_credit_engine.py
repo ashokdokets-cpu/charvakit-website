@@ -140,6 +140,7 @@ class AICreditEngine:
         "ai_generate_schema": 15,
         # Session G6 batch 2: marketing + outreach
         "marketing_social_post": 10,
+        "marketing_booking_kit": 60,
         "marketing_lead_drip": 10,
         "outreach_cold_email": 15,
         "outreach_gmail_sync": 5,
