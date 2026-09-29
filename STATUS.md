@@ -1,6 +1,6 @@
 # Charvak IT Consulting - Project Status
 
-**Last updated:** 2026-09-29 (Session B - auth persistence + cache revalidation)
+**Last updated:** 2026-09-30 (Session 4 - C7 AuditBot + Lock-In Breaker paid tiers shipped)
 **Version:** v3.5-session-B-20260929
 **Live:** https://www.charvakit.com
 **Status:** Tier 1 + Tier 2 complete. Tier 3 in progress (6 of 10 features shipped). Session K closed: 3 security + 5 data integrity + 4 deferrals + 16 dead-field/easy-bug fixes + 2 migration features. B-3 notification persistence done. B-4 products verified stateless.
@@ -25,7 +25,7 @@
 - #6 PayPal credits webhook safety net
 - #3 PayPal credits capture test
 
-**HEAD:** e28c781
+**HEAD:** `6fa14d1`
 
 ---
 ---
@@ -59,7 +59,7 @@
 - Agent-Ready: example.com -> JSON-LD + micro-APIs + product schema
 - All 4 routes return 401 without auth (verified via curl)
 
-**HEAD:** da15ef6
+**HEAD:** `6fa14d1`
 
 
 ## Session 2026-09-19 - Session K (Security + Data Integrity + Cleanup)
