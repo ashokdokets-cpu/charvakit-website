@@ -2,7 +2,7 @@
 
 **Purpose:** Track every planned-but-not-completed item. Nothing gets lost again.
 **Created:** 2026-09-20
-**Last updated:** 2026-09-29 (Session B - flags #2, #4, #5, #6 closed; #3 deferred to dedicated test session). HEAD: `7c679f1`
+**Last updated:** 2026-09-30 (Session 4 - C7 AuditBot + Lock-In Breaker paid tiers shipped; #3 deferred). HEAD: `5036eff`
 **HEAD:** e28c781 (ai-slop) / f58e63f (auth + cache)
 
 ### FLAGGED — Premium Report product (₹199 PDF unlock) (2026-09-27)
@@ -373,6 +373,66 @@ Each needs:
 not safe to batch-patch with regex. Estimated 30-45 min.
 
 **Verdict:** SCHEDULED — manual cleanup session.
+
+
+---
+
+## C7 PAID-TIER PROGRESS (2026-09-30)
+
+The C7 gap is "product pages that advertise paid tiers but have no
+real purchase flow." Building these as credits-based flows, not
+separate Razorpay charges. Pattern proven twice.
+
+### Shipped
+
+**AuditBot** (`52fc994`, 2026-09-29)
+- One-Time Fix: 600 credits, POST /api/products/auditbot/fix
+- Continuous: 400 credits/30d, POST /api/products/auditbot/subscribe
+- Both persist to charvak_auditbot_fixes / charvak_auditbot_subscriptions
+- Frontend: templates/auditbot.html - real handlers replace notifyMe
+
+**Lock-In Breaker** (`24c9955`, 2026-09-30)
+- One-Time Migration: 1000 credits, POST /api/products/lock-in-breaker/migration-plan
+- Continuous Protection: 1000 credits/30d, POST /api/products/lock-in-breaker/protection
+- Both persist to charvak_lock_in_engagements (tier column)
+- Frontend: templates/lock-in-breaker.html - real handlers
+- Also: templates/lock-in-breaker-pricing.html became reference-only;
+  killed a latent Razorpay flow that charged without server-side record
+
+### Still open
+
+**Session 5 - Micro-Squads (Rs 49,999)**
+Different shape: this is a sales-lead flow, not self-serve checkout.
+At Rs 49,999 a click-to-pay would be unusual. Plan:
+- New table: charvak_micro_squad_leads
+- Route: POST /api/products/micro-squads/lead
+- Frontend: replace notifyMe with a booking form
+- SendGrid notification to sales on new lead
+
+**Sessions 6+ - Remaining ~10 C7 templates**
+Small (< 1 hr): Marketing AI, Background Verification, Bridge,
+Developer Entropy, AI-Slop Quarantine
+Medium (1-2 hrs): Design-Token, Geo-Compliance, Agency-Twin,
+Team Dashboard, Reverse Staffing, LMS, University
+Large (2-4 hrs): Legacy-Shift, Skill-Twin (also needs persistence -
+see AA4d)
+
+### Credit-to-INR ratio
+1 credit = Rs 0.50 (Pro plan mid-range). Tier credit amounts derived
+from the prices shown on the existing templates, not invented.
+
+### Reusable pattern (per template)
+1. Migration for the new table
+2. Credit keys in FEATURE_CREDITS
+3. Engine methods with _ensure_tables() auto-create
+4. Routes with require_auth_for_email + require_credits_from_data
+5. Frontend: esc() helper, real fetch, 401/402 handling, render inline
+6. Verify E2E via curl + DB check
+7. Commit
+
+This has now worked identically for AuditBot (2 tiers) and
+Lock-In Breaker (2 tiers).
+
 
 ---
 
