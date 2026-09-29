@@ -3,9 +3,9 @@
 {% block content %}
 <div class="page-hero bg-gradient-primary text-white py-5">
     <div class="container py-4">
-        <span class="badge bg-info text-dark mb-2 px-3 py-2">Concept</span>
+        <span class="badge bg-warning text-dark mb-2 px-3 py-2">Preview &middot; Continuous Monitoring Coming Soon</span>
         <h1 class="display-4 fw-bold">Silent-Killer Web Hook Sentinel</h1>
-        <p class="lead">Your checkout form broke 3 hours ago. You're losing money right now. We fix it before you notice.</p>
+        <p class="lead">Catch broken webhooks and checkout funnels before they cost you revenue. Run an on-demand scan any time.</p>
     </div>
 {% include "includes/beta_badge.html" %}
 </div>
@@ -15,7 +15,7 @@
         <div class="col-lg-6">
             <h2 class="fw-bold">Broken Funnels Kill Revenue Silently</h2>
             <p class="lead">A third-party API updates. Your payment gateway breaks. A webhook fails. You don't know until a customer complains — or worse, they just leave.</p>
-            <p>Silent-Killer Sentinel sets up continuous monitoring of your critical endpoints and webhooks, with alerts across email, WhatsApp, and webhook channels.</p>
+            <p>Silent-Killer Sentinel scans your critical endpoints and webhooks on demand, flagging broken funnels, dead integrations, and silent failures. Continuous scheduled monitoring is coming soon.</p>
         </div>
         <div class="col-lg-6">
             <div class="bg-dark text-white p-4 rounded">
@@ -30,7 +30,7 @@
                         <input type="text" class="form-control" id="skName" placeholder="e.g. Checkout Form" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label text-white-50">Check Interval (minutes)</label>
+                        <label class="form-label text-white-50">Preferred Check Interval (used when continuous scheduling ships)</label>
                         <select class="form-select" id="skInterval">
                             <option value="1">Every 1 minute</option>
                             <option value="5" selected>Every 5 minutes</option>
@@ -49,16 +49,22 @@
     </div>
 
     <div class="row g-4 mb-5 text-center">
-        <div class="col-md-3"><div class="card h-100 p-4"><i class="bi bi-activity display-4 text-primary mb-3"></i><h4 class="as-h5">Every 5 Minutes</h4><p class="text-muted">Continuous monitoring</p></div></div>
-        <div class="col-md-3"><div class="card h-100 p-4"><i class="bi bi-exclamation-triangle display-4 text-primary mb-3"></i><h4 class="as-h5">Instant Alerts</h4><p class="text-muted">Slack, email, SMS</p></div></div>
-        <div class="col-md-3"><div class="card h-100 p-4"><i class="bi bi-wrench display-4 text-primary mb-3"></i><h4 class="as-h5">Auto-Hotfix</h4><p class="text-muted">One-click patch deploy</p></div></div>
-        <div class="col-md-3"><div class="card h-100 p-4"><i class="bi bi-shield display-4 text-primary mb-3"></i><h4 class="as-h5">Zero False Alarms</h4><p class="text-muted">AI-verified incidents</p></div></div>
+        <div class="col-md-3"><div class="card h-100 p-4"><i class="bi bi-activity display-4 text-primary mb-3"></i><h4 class="as-h5">On-Demand Checks</h4><p class="text-muted">Run a scan any time</p></div></div>
+        <div class="col-md-3"><div class="card h-100 p-4"><i class="bi bi-exclamation-triangle display-4 text-primary mb-3"></i><h4 class="as-h5">Alert Ready</h4><p class="text-muted">Email + webhook alerts</p></div></div>
+        <div class="col-md-3"><div class="card h-100 p-4"><i class="bi bi-wrench display-4 text-primary mb-3"></i><h4 class="as-h5">Fix Suggestions</h4><p class="text-muted">AI-recommended remediation</p></div></div>
+        <div class="col-md-3"><div class="card h-100 p-4"><i class="bi bi-shield display-4 text-primary mb-3"></i><h4 class="as-h5">AI-Verified Findings</h4><p class="text-muted">Fewer false positives</p></div></div>
     </div>
 
     <div class="text-center p-5 bg-light rounded">
         <h3>Find Your Broken Funnels Now</h3>
         <p class="mb-4">Free scan checks all your critical touchpoints in 60 seconds.</p>
-        <a href="/dead-link-auditor" class="btn btn-primary btn-lg">Dead Link &amp; Broken Funnel Auditor</a>
+        <a href="/dead-link-auditor" class="btn btn-primary btn-lg me-2">Dead Link &amp; Broken Funnel Auditor</a>
+        <button type="button" class="btn btn-outline-primary btn-lg" onclick="silentKillerProtect(event)">
+            Notify Me When Continuous Monitoring Ships
+        </button>
+        <p class="small text-muted mt-3 mb-0">
+            Continuous scheduled monitoring is under development. Get notified the moment it&apos;s live.
+        </p>
     </div>
 </div>
 
@@ -147,12 +153,19 @@ function renderSilentKillerResult(out, data) {
     }
     out.innerHTML = html;
 }
-
-// Paid continuous plan — kept as interest capture. The continuous monitoring
-// backend (recurring checks + alerting infrastructure) is not yet shipped.
+// Continuous scheduled monitoring is not yet shipped. The backend engine
+// exists (products_engine.silent_killer_monitor) but no cron runs the
+// checks or sends alerts. Capture interest honestly instead.
+//
+// Session 8: build the real scheduler (Render cron -> iterate active
+// monitors -> check URLs -> alert on failure).
 function silentKillerProtect(event) {
     event.preventDefault();
-    window.notifyMe('Silent-Killer Continuous Plan');
+    if (typeof window.notifyMe === 'function') {
+        window.notifyMe('Silent-Killer Continuous Monitoring');
+    } else {
+        alert('Thanks! We will notify you when continuous monitoring ships.');
+    }
 }
 </script>
 {% include 'includes/premium-upsell.html' %}
