@@ -1,95 +1,141 @@
 {% extends "base.html" %}
-{% block title %}Your Verified Badge - Charvak Skill-Twin{% endblock %}
+{% block title %}Verified Badge - Charvak Skill-Twin{% endblock %}
 {% block content %}
 <div class="page-hero bg-gradient-primary text-white py-5">
-    <div class="container py-4">
-        <h1 class="display-4 fw-bold">🎖️ Verified Badge</h1>
-        <p class="lead">Share your achievement with the world</p>
+    <div class="container py-4 text-center">
+        <h1 class="display-5 fw-bold">Verified Skill-Twin Badge</h1>
+        <p class="lead">A tamper-proof, AI-verified skill scorecard</p>
     </div>
 </div>
 
 <div class="container py-5">
-    <div class="row"><div class="col-lg-7 mx-auto">
-        <div class="card border-0 shadow-lg p-5 text-center mb-4" id="badgeCard">
-            <div class="card-body">
-                <i class="bi bi-shield-check display-1 text-primary mb-3"></i>
-                <h2>Verified Skill-Twin Badge</h2>
-                <div class="bg-light p-4 rounded my-4">
-                    <h3 id="badgeName">--</h3>
-                    <h4 id="badgeStack">--</h4>
-                    <div class="display-2 fw-bold text-primary" id="badgeScore">--</div>
-                    <p>/100</p>
-                    <p><strong>Difficulty:</strong> <span id="badgeDifficulty"></span></p>
-                    <p><strong>Date Earned:</strong> <span id="badgeDate"></span></p>
-                    <p><strong>Badge ID:</strong> <code id="badgeId"></code></p>
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <div id="badgeLoading" class="text-center py-5">
+                <div class="spinner-border text-primary"></div>
+                <p class="text-muted mt-3">Loading badge...</p>
+            </div>
+
+            <div id="badgeNotFound" class="text-center py-5 d-none">
+                <i class="bi bi-shield-x display-1 text-muted"></i>
+                <h3 class="mt-3">Badge not found</h3>
+                <p class="text-muted">This badge does not exist, or has been revoked.</p>
+                <a href="/skill-twin" class="btn btn-primary">Take the Assessment</a>
+            </div>
+
+            <div id="badgeCard" class="d-none">
+                <div class="card border-0 shadow-lg text-center">
+                    <div class="card-body p-5">
+                        <i class="bi bi-shield-check display-1 text-primary mb-3"></i>
+                        <h2 class="mb-1">Verified Skill-Twin Badge</h2>
+                        <p class="text-muted mb-4">Issued by Charvak IT Consulting</p>
+
+                        <div class="bg-light p-4 rounded my-4">
+                            <h3 class="mb-1" id="badgeLevel">--</h3>
+                            <div class="display-2 fw-bold text-primary" id="badgeScore">--</div>
+                            <p class="mb-2">/ 100 verified</p>
+                            <p class="mb-2"><strong>Skills:</strong> <span id="badgeSkills">--</span></p>
+                            <p class="mb-2"><strong>Experience:</strong> <span id="badgeExperience">--</span> years</p>
+                            <p class="mb-2"><strong>Issued:</strong> <span id="badgeDate">--</span></p>
+                            <p class="mb-0"><strong>Badge ID:</strong> <code id="badgeId">--</code></p>
+                        </div>
+
+                        <p class="lead mb-3">Share this verified badge with employers and on your professional profiles.</p>
+                        <div class="d-flex justify-content-center gap-2 flex-wrap">
+                            <button class="btn btn-primary" onclick="shareLinkedIn()"><i class="bi bi-linkedin me-2"></i>Share on LinkedIn</button>
+                            <button class="btn btn-dark" onclick="shareTwitter()"><i class="bi bi-twitter-x me-2"></i>Share on X</button>
+                            <button class="btn btn-outline-primary" onclick="copyBadgeLink()"><i class="bi bi-link-45deg me-2"></i>Copy Link</button>
+                        </div>
+
+                        <div class="mt-4">
+                            <a href="/skill-twin" class="btn btn-outline-primary btn-sm">Earn Your Own Badge</a>
+                            <a href="/" class="btn btn-outline-secondary btn-sm">Home</a>
+                        </div>
+                    </div>
                 </div>
-                <p class="lead">Share this verified badge with employers and on your professional profiles.</p>
-                <div class="d-flex justify-content-center gap-2 flex-wrap">
-                    <button class="btn btn-primary btn-lg" onclick="shareLinkedIn()"><i class="bi bi-linkedin me-2"></i>Share on LinkedIn</button>
-                    <button class="btn btn-dark btn-lg" onclick="shareTwitter()"><i class="bi bi-twitter me-2"></i>Share on Twitter</button>
-                    <button class="btn btn-outline-primary btn-lg" onclick="copyBadgeLink()"><i class="bi bi-link-45deg me-2"></i>Copy Link</button>
-                    <button class="btn btn-outline-secondary btn-lg" onclick="downloadBadge()"><i class="bi bi-download me-2"></i>Download</button>
-                </div>
-                <div class="mt-3">
-                    <a href="/skill-twin" class="btn btn-outline-primary btn-sm">Earn More Badges</a>
-                    <a href="/ai-generate-stack" class="btn btn-outline-primary btn-sm">New Assessment</a>
+
+                <div class="alert alert-info mt-4 small">
+                    <strong>How verification works:</strong> Each Skill-Twin badge is tied to a unique
+                    badge ID and a specific AI-assessed skill score. Employers can check this page at
+                    any time to confirm the score has not been tampered with.
                 </div>
             </div>
         </div>
-
-        <!-- Badge Verification Info -->
-        <div class="card border-0 shadow-sm p-4">
-            <h5>🔒 Verification</h5>
-            <p class="text-muted">This badge is cryptographically signed by Charvak Skill-Twin. Employers can verify authenticity using the Badge ID above.</p>
-            <p class="text-muted">Issued by: <strong>Charvak IT Consulting Pvt Ltd</strong></p>
-            <p class="text-muted">Powered by: <strong>Dokets VouchAI Escrow</strong></p>
-        </div>
-    </div></div>
+    </div>
 </div>
 
 <script>
-// Load badge data from URL params or localStorage
-document.addEventListener('DOMContentLoaded', function(){
-    const params = new URLSearchParams(window.location.search);
-    const badgeData = {
-        name: params.get('name') || localStorage.getItem('badge_name') || 'User',
-        stack: params.get('stack') || localStorage.getItem('badge_stack') || 'Unknown',
-        score: params.get('score') || localStorage.getItem('badge_score') || '0',
-        difficulty: params.get('difficulty') || localStorage.getItem('badge_difficulty') || 'Intermediate',
-        date: params.get('date') || localStorage.getItem('badge_date') || new Date().toISOString().split('T')[0],
-        id: params.get('id') || localStorage.getItem('badge_id') || 'CVK-' + Math.random().toString(36).substring(2,10).toUpperCase()
-    };
-    
-    document.getElementById('badgeName').textContent = badgeData.name;
-    document.getElementById('badgeStack').textContent = badgeData.stack;
-    document.getElementById('badgeScore').textContent = badgeData.score + '%';
-    document.getElementById('badgeDifficulty').textContent = badgeData.difficulty;
-    document.getElementById('badgeDate').textContent = badgeData.date;
-    document.getElementById('badgeId').textContent = badgeData.id;
-    
-    // Update page title
-    document.title = badgeData.name + ' - ' + badgeData.stack + ' Badge - Charvak';
-});
+const PATH_PARTS = window.location.pathname.split('/').filter(Boolean);
+const BADGE_ID = (PATH_PARTS[0] === 'badge' && PATH_PARTS[1]) ? decodeURIComponent(PATH_PARTS[1]) : null;
+let badgeData = null;
 
-function shareLinkedIn(){
+function esc(s) {
+    return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+async function loadBadge() {
+    const loading = document.getElementById('badgeLoading');
+    const notFound = document.getElementById('badgeNotFound');
+    const card = document.getElementById('badgeCard');
+    if (!BADGE_ID) {
+        loading.classList.add('d-none');
+        notFound.classList.remove('d-none');
+        return;
+    }
+    try {
+        const r = await fetch('/api/badge/public/' + encodeURIComponent(BADGE_ID));
+        const j = await r.json();
+        loading.classList.add('d-none');
+        if (j.status !== 'success') {
+            notFound.classList.remove('d-none');
+            return;
+        }
+        badgeData = j;
+        renderBadge(j);
+        card.classList.remove('d-none');
+    } catch (e) {
+        loading.classList.add('d-none');
+        notFound.classList.remove('d-none');
+    }
+}
+
+function renderBadge(j) {
+    document.title = 'Verified Badge ' + j.badge_id + ' - Charvak';
+    document.getElementById('badgeLevel').textContent = j.skill_level || 'Verified';
+    document.getElementById('badgeScore').textContent = j.verified_score || 0;
+    document.getElementById('badgeSkills').textContent = (j.skills || []).join(', ') || '--';
+    document.getElementById('badgeExperience').textContent = j.experience != null ? j.experience : '--';
+    const issued = j.issued_at ? new Date(j.issued_at).toLocaleDateString('en-IN', {year: 'numeric', month: 'long', day: 'numeric'}) : '--';
+    document.getElementById('badgeDate').textContent = issued;
+    document.getElementById('badgeId').textContent = j.badge_id || '--';
+}
+
+function shareLinkedIn() {
+    if (!badgeData) return;
     const url = window.location.href;
-    window.open('https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(url));
+    window.open('https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(url), '_blank');
 }
 
-function shareTwitter(){
-    const stack = document.getElementById('badgeStack').textContent;
-    const score = document.getElementById('badgeScore').textContent;
-    window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent('I earned a verified '+stack+' badge with '+score+' on Charvak Skill-Twin! Check it out: ' + window.location.href));
+function shareTwitter() {
+    if (!badgeData) return;
+    const text = 'I earned a verified Skill-Twin badge (' + badgeData.verified_score + '/100) on Charvak.';
+    window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(window.location.href), '_blank');
 }
 
-function copyBadgeLink(){
-    navigator.clipboard.writeText(window.location.href);
-    alert('Badge link copied to clipboard!');
+function copyBadgeLink() {
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(window.location.href).then(function() {
+            alert('Badge link copied.');
+        }).catch(function() {
+            prompt('Copy this link:', window.location.href);
+        });
+    } else {
+        prompt('Copy this link:', window.location.href);
+    }
 }
 
-function downloadBadge(){
-    alert('Badge downloaded! Share it on your profiles.');
-    // In production: generate PNG/PDF of the badge
-}
+document.addEventListener('DOMContentLoaded', loadBadge);
 </script>
 {% endblock %}

@@ -8,6 +8,7 @@ from datetime import datetime
 from typing import Dict, List, Optional
 import secrets
 import hashlib
+import json
 
 logger = logging.getLogger("charvakit.products")
 
@@ -758,9 +759,246 @@ Only return the JSON. No prose outside."""
         else:
             result["analysis_mode"] = "heuristic_only"
 
+        # Persist for the AA4d badge flow
+        check_id = result.get("twin_id") or f"ST-{secrets.token_hex(6).upper()}"
+        result["check_id"] = check_id
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS charvak_skill_twin_results (
+                    check_id       TEXT PRIMARY KEY,
+                    email          TEXT NOT NULL,
+                    twin_id        TEXT,
+                    skills_json    JSONB,
+                    experience     INTEGER,
+                    self_rating    NUMERIC,
+                    verified_score INTEGER,
+                    gap            NUMERIC,
+                    skill_level    TEXT,
+                    badge_eligible BOOLEAN DEFAULT FALSE,
+                    badge_issued   BOOLEAN DEFAULT FALSE,
+                    badge_id       TEXT,
+                    result_json    JSONB,
+                    created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            cur.execute("""
+                INSERT INTO charvak_skill_twin_results
+                    (check_id, email, twin_id, skills_json, experience,
+                     self_rating, verified_score, gap, skill_level,
+                     badge_eligible, result_json)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (check_id) DO NOTHING
+            """, (
+                check_id,
+                (data.get("email") or "").strip().lower(),
+                result.get("twin_id"),
+                json.dumps(skills),
+                experience,
+                self_rating,
+                result.get("verified_score"),
+                result.get("gap"),
+                result.get("skill_level"),
+                bool(result.get("badge_eligible")),
+                json.dumps({k: v for k, v in result.items() if k != "skills"}),
+            ))
+            conn.commit()
+            cur.close(); conn.close()
+        except Exception as _e:
+            logger.warning(f"skill_twin persist failed (non-fatal): {_e}")
+
         self._log_result("skill_twin", data, result)
         return {"status": "success", **result}
     
+    def skill_twin_buy_badge(self, data: Dict) -> Dict:
+        """
+        Issue a verified badge for a check_id (idempotent).
+        data = {"email", "check_id"}
+        """
+        import secrets
+        from datetime import datetime
+
+        email = (data.get("email") or "").strip().lower()
+        check_id = (data.get("check_id") or "").strip()
+        if not email or not check_id:
+            return {"status": "error", "message": "email and check_id required"}
+
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT check_id, email, verified_score, badge_eligible,
+                       badge_issued, badge_id
+                FROM charvak_skill_twin_results
+                WHERE check_id = %s
+            """, (check_id,))
+            row = cur.fetchone()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"skill_twin_buy_badge lookup failed: {e}")
+            return {"status": "error", "message": "Could not load assessment"}
+
+        if not row:
+            return {"status": "error", "message": "Assessment not found"}
+        if row[1] != email:
+            return {"status": "error", "message": "Assessment does not belong to you"}
+        if not row[3]:
+            return {"status": "error", "message": "Not eligible for a badge (score too low)"}
+
+        if row[4] and row[5]:
+            return {
+                "status": "success",
+                "badge_id": row[5],
+                "check_id": check_id,
+                "already_issued": True,
+                "badge_url": f"https://www.charvakit.com/badge/{row[5]}",
+                "message": "Badge already issued for this assessment",
+            }
+
+        badge_id = f"STB-{secrets.token_hex(8).upper()}"
+        issued_at = datetime.now()
+
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("ALTER TABLE charvak_skill_twin_results ADD COLUMN IF NOT EXISTS badge_issued_at TIMESTAMP")
+            cur.execute("""
+                UPDATE charvak_skill_twin_results
+                SET badge_issued = TRUE,
+                    badge_id = %s,
+                    badge_issued_at = %s
+                WHERE check_id = %s AND (badge_issued = FALSE OR badge_id IS NULL)
+            """, (badge_id, issued_at, check_id))
+            affected = cur.rowcount
+            conn.commit()
+
+            if affected == 0:
+                cur.execute("SELECT badge_id FROM charvak_skill_twin_results WHERE check_id = %s", (check_id,))
+                r = cur.fetchone()
+                cur.close(); conn.close()
+                if r and r[0]:
+                    return {
+                        "status": "success",
+                        "badge_id": r[0],
+                        "check_id": check_id,
+                        "already_issued": True,
+                        "badge_url": f"https://www.charvakit.com/badge/{r[0]}",
+                        "message": "Badge already issued for this assessment",
+                    }
+                return {"status": "error", "message": "Could not issue badge"}
+
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"skill_twin_buy_badge update failed: {e}")
+            return {"status": "error", "message": "Could not issue badge"}
+
+        return {
+            "status": "success",
+            "badge_id": badge_id,
+            "check_id": check_id,
+            "issued_at": issued_at.isoformat(),
+            "badge_url": f"https://www.charvakit.com/badge/{badge_id}",
+            "verified_score": row[2],
+            "message": "Badge issued. Share the link to prove your verified score.",
+        }
+
+    def get_badge_by_id(self, badge_id: str) -> Dict:
+        """Public lookup for a badge."""
+        badge_id = (badge_id or "").strip().upper()
+        if not badge_id:
+            return {"status": "error", "message": "badge_id required"}
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT check_id, email, verified_score, skill_level,
+                       skills_json, self_rating, experience, badge_id,
+                       badge_issued_at, created_at
+                FROM charvak_skill_twin_results
+                WHERE badge_id = %s AND badge_issued = TRUE
+                LIMIT 1
+            """, (badge_id,))
+            row = cur.fetchone()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.warning(f"get_badge_by_id failed: {e}")
+            return {"status": "error", "message": "Could not load badge"}
+
+        if not row:
+            return {"status": "error", "message": "Badge not found"}
+
+        skills = row[4]
+        if isinstance(skills, str):
+            try:
+                import json as _json
+                skills = _json.loads(skills)
+            except Exception:
+                skills = []
+
+        return {
+            "status": "success",
+            "badge_id": row[7],
+            "check_id": row[0],
+            "verified_score": row[2],
+            "skill_level": row[3],
+            "skills": skills or [],
+            "self_rating": float(row[5]) if row[5] is not None else None,
+            "experience": row[6],
+            "issued_at": row[8].isoformat() if hasattr(row[8], "isoformat") else str(row[8]),
+            "assessment_at": row[9].isoformat() if hasattr(row[9], "isoformat") else str(row[9]),
+        }
+
+    def list_skill_twin_results(self, email: str, limit: int = 20) -> Dict:
+        """Return past skill-twin assessments for the given email."""
+        email = (email or "").strip().lower()
+        if not email:
+            return {"status": "error", "message": "email required"}
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT check_id, twin_id, verified_score, gap, skill_level,
+                       badge_eligible, badge_issued, badge_id,
+                       self_rating, experience, created_at
+                FROM charvak_skill_twin_results
+                WHERE email = %s
+                ORDER BY created_at DESC
+                LIMIT %s
+            """, (email, limit))
+            rows = cur.fetchall()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.warning(f"list_skill_twin_results failed: {e}")
+            return {"status": "success", "email": email, "count": 0, "results": []}
+
+        return {
+            "status": "success",
+            "email": email,
+            "count": len(rows),
+            "results": [
+                {
+                    "check_id": r[0],
+                    "twin_id": r[1],
+                    "verified_score": r[2],
+                    "gap": float(r[3]) if r[3] is not None else None,
+                    "skill_level": r[4],
+                    "badge_eligible": r[5],
+                    "badge_issued": r[6],
+                    "badge_id": r[7],
+                    "self_rating": float(r[8]) if r[8] is not None else None,
+                    "experience": r[9],
+                    "created_at": r[10].isoformat() if hasattr(r[10], "isoformat") else str(r[10]),
+                }
+                for r in rows
+            ],
+        }
+
     def _get_skill_level(self, score: int) -> str:
         if score >= 85: return "Expert"
         if score >= 70: return "Advanced"
