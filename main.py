@@ -4387,6 +4387,34 @@ async def api_auditbot(request: Request):
         return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return products_engine.auditbot_scan(data)
 
+@app.post("/api/products/auditbot/fix")
+@limiter.limit("30/minute")
+async def api_auditbot_fix(request: Request):
+    data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+    require_auth_for_email(request, email)
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "auditbot_fix")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+    return products_engine.auditbot_fix(data)
+
+@app.post("/api/products/auditbot/subscribe")
+@limiter.limit("10/minute")
+async def api_auditbot_subscribe(request: Request):
+    data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+    require_auth_for_email(request, email)
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "auditbot_continuous")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+    return products_engine.auditbot_subscribe(data)
+
 @app.post("/api/products/skill-twin/assess")
 @limiter.limit("60/minute")
 async def api_skill_twin(request: Request):

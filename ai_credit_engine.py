@@ -164,6 +164,8 @@ class AICreditEngine:
         "product_lock_in_breaker": 20,
         "product_reverse_staffing": 20,
         "product_auditbot_scan": 25,
+        "auditbot_fix": 600,
+        "auditbot_continuous": 400,
         "product_skill_twin": 15,
         "product_micro_squads": 25,
         "product_agency_twin": 20,
