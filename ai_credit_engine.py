@@ -155,6 +155,7 @@ class AICreditEngine:
         "interview_prep_start": 8,
         "interview_prep_submit": 5,
         "ai_bridge_start": 10,
+        "bridge_premium": 1000,
         "ai_bridge_answer": 3,
         "ai_bridge_premium": 25,
         "ai_tutor_start": 5,
