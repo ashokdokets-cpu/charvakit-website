@@ -162,6 +162,8 @@ class AICreditEngine:
         "ai_tutor_evaluate": 8,
         # Session G6 batch 4: products + company + ai-course + versant + lms
         "product_lock_in_breaker": 20,
+        "lockin_migration": 1000,
+        "lockin_protection": 1000,
         "product_reverse_staffing": 20,
         "product_auditbot_scan": 25,
         "auditbot_fix": 600,

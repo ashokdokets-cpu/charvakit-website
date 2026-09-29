@@ -178,6 +178,217 @@ class ProductsEngine:
             "GCP": ["Reduce BigQuery lock-in", "Use standard SQL", "Containerize with GKE"],
         }
         return recs.get(provider, ["Assess current vendor dependencies", "Create exit strategy", "Document all proprietary APIs"])
+
+    # ============================================================
+    # LOCK-IN BREAKER PAID TIERS
+    # ============================================================
+
+    def _ensure_lock_in_tables(self):
+        """Create charvak_lock_in_engagements on first use. Idempotent."""
+        if getattr(self, "_lock_in_tables_ensured", False):
+            return
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS charvak_lock_in_engagements (
+                    engagement_id  TEXT PRIMARY KEY,
+                    email          TEXT NOT NULL,
+                    tier           TEXT NOT NULL,
+                    audit_id       TEXT,
+                    provider       TEXT,
+                    monthly_spend  NUMERIC,
+                    services_json  JSONB,
+                    plan_json      JSONB,
+                    expires_at     TIMESTAMP,
+                    credits_used   INTEGER NOT NULL DEFAULT 0,
+                    created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_lock_in_engagements_email ON charvak_lock_in_engagements (email, created_at DESC)")
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_lock_in_engagements_tier ON charvak_lock_in_engagements (email, tier, created_at DESC)")
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_lock_in_engagements_audit ON charvak_lock_in_engagements (audit_id)")
+            conn.commit()
+            cur.close(); conn.close()
+            self._lock_in_tables_ensured = True
+        except Exception as e:
+            logger.warning(f"_ensure_lock_in_tables failed: {e}")
+
+    def lock_in_migration_plan(self, data: Dict) -> Dict:
+        """
+        Generate a full migration plan from an audit.
+        data = {"email", "audit_id", "provider", "monthly_spend", "services": [...],
+                "ai_analysis": {...}}
+        """
+        import json, secrets
+
+        self._ensure_lock_in_tables()
+
+        email = (data.get("email") or "").strip().lower()
+        audit_id = data.get("audit_id") or ""
+        provider = data.get("provider", "AWS")
+        spend = float(data.get("monthly_spend", 0))
+        services = data.get("services", [])
+        ai = data.get("ai_analysis") or {}
+
+        if not email:
+            return {"status": "error", "message": "email required"}
+
+        services_text = ", ".join(services) if services else "not specified"
+        recs_text = "; ".join(ai.get("recommendations", [])[:6]) if ai.get("recommendations") else "none provided"
+        quick_wins = "; ".join(ai.get("quick_wins", [])[:5]) if ai.get("quick_wins") else "none"
+        verdict = ai.get("verdict", "")
+        risk = ai.get("estimated_migration_risk", "MEDIUM")
+
+        prompt = f"""You are a senior cloud architect. Produce a complete, actionable migration plan.
+
+Context:
+- Provider: {provider}
+- Monthly spend: ${spend:,.0f}
+- Services in use: {services_text}
+- Detected risk: {risk}
+- Audit verdict: {verdict}
+- Existing recommendations: {recs_text}
+- Quick wins: {quick_wins}
+
+Return STRICT JSON:
+{{
+  "summary": "2-3 sentence executive overview",
+  "total_estimated_time": "X weeks",
+  "projected_new_monthly_spend": 5000,
+  "projected_monthly_savings": 5000,
+  "migration_phases": [
+    {{
+      "phase": 1,
+      "name": "Assess & Prioritize",
+      "duration": "1 week",
+      "tasks": ["task 1", "task 2"],
+      "risks": ["risk 1"],
+      "rollback": "how to undo if it fails"
+    }}
+  ],
+  "service_mapping": [
+    {{"from": "{provider} EC2", "to": "target equivalent", "effort": "low|medium|high", "notes": "..."}}
+  ],
+  "cutover_sequence": ["step 1", "step 2"],
+  "cost_projection_6mo": [{{"month": 1, "cost": 8000}}, {{"month": 2, "cost": 7000}}],
+  "success_criteria": ["criterion 1", "criterion 2"],
+  "recommended_team": ["role 1", "role 2"]
+}}
+Only return the JSON."""
+
+        try:
+            from openai import OpenAI
+            import os
+            client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+            resp = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[{"role": "user", "content": prompt}],
+                response_format={"type": "json_object"},
+                temperature=0.3,
+                timeout=60,
+            )
+            raw = resp.choices[0].message.content or "{}"
+            if raw.startswith("```"):
+                raw = raw.strip("`")
+                if raw.startswith("json\n"):
+                    raw = raw[5:]
+            plan = json.loads(raw)
+        except Exception as e:
+            logger.warning(f"lock_in_migration_plan AI call failed: {e}")
+            plan = {
+                "summary": f"Migration plan for {provider} (AI unavailable - heuristic fallback).",
+                "total_estimated_time": "6-8 weeks",
+                "projected_new_monthly_spend": round(spend * 0.65, 2),
+                "projected_monthly_savings": round(spend * 0.35, 2),
+                "migration_phases": [
+                    {"phase": 1, "name": "Assess & Prioritize", "duration": "1 week",
+                     "tasks": ["Inventory current resources", "Rank by cost impact"],
+                     "risks": ["Incomplete inventory"], "rollback": "N/A - read-only phase"},
+                    {"phase": 2, "name": "Pilot Migration", "duration": "2 weeks",
+                     "tasks": ["Migrate lowest-risk workload", "Validate performance"],
+                     "risks": ["Unexpected latency"], "rollback": "Revert DNS, keep old infra warm"},
+                    {"phase": 3, "name": "Full Cutover", "duration": "3-5 weeks",
+                     "tasks": ["Migrate remaining workloads", "Decommission old infra"],
+                     "risks": ["Downtime"], "rollback": "Staged cutover with parallel run"},
+                ],
+                "service_mapping": [{"from": f"{provider} (all services)", "to": "target equivalent", "effort": "medium", "notes": "Review individually"}],
+                "cutover_sequence": ["Notify stakeholders", "Freeze changes", "Run pilot", "Full cutover", "Decommission old"],
+                "cost_projection_6mo": [{"month": i, "cost": round(spend * (1 - i*0.05), 2)} for i in range(1, 7)],
+                "success_criteria": ["Zero customer-facing downtime", "30%+ cost reduction", "No data loss"],
+                "recommended_team": ["Cloud architect", "DevOps engineer", "DBA"],
+            }
+
+        engagement_id = f"LIE-{secrets.token_hex(6).upper()}"
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                INSERT INTO charvak_lock_in_engagements
+                    (engagement_id, email, tier, audit_id, provider, monthly_spend,
+                     services_json, plan_json, credits_used)
+                VALUES (%s, %s, 'migration', %s, %s, %s, %s, %s, 1000)
+            """, (engagement_id, email, audit_id, provider, spend,
+                  json.dumps(services), json.dumps(plan)))
+            conn.commit()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.warning(f"lock_in_migration_plan persist failed: {e}")
+
+        return {
+            "status": "success",
+            "engagement_id": engagement_id,
+            "audit_id": audit_id,
+            "tier": "migration",
+            "plan": plan,
+        }
+
+    def lock_in_protection(self, data: Dict) -> Dict:
+        """
+        Create a 30-day continuous protection engagement.
+        data = {"email", "audit_id" (optional)}
+        """
+        from datetime import datetime, timedelta
+        import secrets, json
+
+        self._ensure_lock_in_tables()
+
+        email = (data.get("email") or "").strip().lower()
+        audit_id = data.get("audit_id") or ""
+
+        if not email:
+            return {"status": "error", "message": "email required"}
+
+        started_at = datetime.now()
+        expires_at = started_at + timedelta(days=30)
+        engagement_id = f"LIE-{secrets.token_hex(6).upper()}"
+
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                INSERT INTO charvak_lock_in_engagements
+                    (engagement_id, email, tier, audit_id, expires_at, credits_used)
+                VALUES (%s, %s, 'protection', %s, %s, 1000)
+            """, (engagement_id, email, audit_id, expires_at))
+            conn.commit()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"lock_in_protection persist failed: {e}")
+            return {"status": "error", "message": "Protection engagement could not be created"}
+
+        return {
+            "status": "success",
+            "engagement_id": engagement_id,
+            "tier": "protection",
+            "started_at": started_at.isoformat(),
+            "expires_at": expires_at.isoformat(),
+            "days_remaining": 30,
+            "message": "Continuous Protection active. 24/7 monitoring for 30 days.",
+        }
     
     # ============================================================
     # REVERSE STAFFING
