@@ -1,6 +1,6 @@
 # Session Context - Charvak
 
-**HEAD:** `52fc994`
+**HEAD:** `24c9955`
 **Last updated:** 2026-09-29 (Session B - 4 of 5 payment flags closed; #3 deferred)
 **Version:** `v3.5-session-B-20260929`
 
@@ -356,3 +356,56 @@ Two dead tiers (Rs 4,999 x 2). Same pattern:
 - Credit keys: lockin_migration, lockin_protection (suggest 1000 each)
 - Routes: /api/products/lock-in-breaker/migration-plan, .../protection
 - Frontend: replace 2 notifyMe calls in lock-in-breaker.html
+
+---
+
+## Session 4 (2026-09-30) - Lock-In Breaker paid tiers shipped
+
+**Commit:** `24c9955`
+
+Both paid tiers now work end-to-end as credits-based flows. Was: one
+live notifyMe plus one fake Razorpay flow that never persisted a
+server-side record (latent money bug — Razorpay charge with no
+backend record).
+
+### One-Time Migration (1000 credits, ~Rs 4,999)
+- Route: POST /api/products/lock-in-breaker/migration-plan
+- Engine: products_engine.lock_in_migration_plan(data)
+- Real AI plan: 5 phases, service mapping, cutover, criteria, team
+- Persists to charvak_lock_in_engagements (tier='migration')
+
+### Continuous Protection (1000 credits for 30 days, ~Rs 4,999/mo)
+- Route: POST /api/products/lock-in-breaker/protection
+- Engine: products_engine.lock_in_protection(data)
+- 30-day engagement with expires_at
+- Persists to charvak_lock_in_engagements (tier='protection')
+
+### Frontend
+- lock-in-breaker.html: real handlers, esc() helper, Start Migration
+  button added next to existing Get Continuous Protection
+- lock-in-breaker-pricing.html: fake Razorpay flow stripped; page is
+  now reference-only, both buttons redirect to /lock-in-breaker
+- Copy: Rs 4,999 -> 1000 credits
+
+### Verified E2E
+- Audit: 20 cr, AUDIT-AFB077CA, HIGH complexity
+- Migration: 1000 cr, LIE-A746A84F9CEF, 5-phase AI plan
+- Protection: 1000 cr, LIE-5C94EAF47EFD, 30-day expiry
+- Balance 3000 -> 980 exactly
+- 2 rows in charvak_lock_in_engagements with correct tiers
+- 3 usage-history rows
+
+### Session 5 next - Micro-Squads (Rs 49,999)
+Different shape: sales-lead flow, not self-serve checkout.
+Plan:
+- New table: charvak_micro_squad_leads
+- Route: POST /api/products/micro-squads/lead
+- Frontend: replace notifyMe with a booking form + confirmation email
+- SendGrid notification to sales on new lead
+
+### Remaining C7 (~10 templates) after Micro-Squads
+Small (< 1 hr): Marketing AI, Background Verification, Bridge,
+Developer Entropy, AI-Slop
+Medium (1-2 hrs): Design-Token, Geo-Compliance, Agency-Twin,
+Team Dashboard, Reverse Staffing, LMS, University
+Large (2-4 hrs): Legacy-Shift, Skill-Twin (also needs persistence)
