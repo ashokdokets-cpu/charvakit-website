@@ -162,10 +162,72 @@ function renderSlopResult(out, data) {
 }
 
 // Paid cleanup tier — kept as interest capture.
-function aiSlopClean(event) {
+async function aiSlopClean(event) {
     event.preventDefault();
-    window.notifyMe('AI-Slop Clean');
+    const out = document.getElementById('slopOutput') || document.getElementById('aiSlopOutput') || document.getElementById('output');
+    const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    if (!authToken || !email) {
+        alert('Please log in.');
+        window.location.href = '/login?next=/ai-slop-quarantine';
+        return;
+    }
+    const btn = event.target.closest('button') || event.target;
+    const origText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Generating cleanup plan...';
+    try {
+        const res = await fetch('/api/products/ai-slop/scan', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authToken
+            },
+            body: JSON.stringify({
+                email: email,
+                code: (window.lastSlopInput && window.lastSlopInput.code) || '',
+                language: (window.lastSlopInput && window.lastSlopInput.language) || 'JavaScript',
+                cleanup_mode: true
+            })
+        });
+        if (res.status === 401) { window.location.href = '/login?next=/ai-slop-quarantine'; return; }
+        if (res.status === 402) {
+            out.innerHTML += '<div class="alert alert-warning mt-3">Need more credits for the cleanup plan. <a href="/ai-credits-pricing" class="alert-link">Top up</a>.</div>';
+            return;
+        }
+        const data = await res.json();
+        if (data.status !== 'success') {
+            out.innerHTML += '<div class="alert alert-danger mt-3">' + esc(data.message || 'Request failed') + '</div>';
+            return;
+        }
+        let html = '<div class="card bg-white text-dark mt-3"><div class="card-body">';
+        html += '<h5>Cleanup Plan</h5>';
+        html += '<p class="text-muted small">' + esc(data.summary || 'Suggested cleanup steps for the detected AI slop.') + '</p>';
+        if (data.refactored_suggestions && data.refactored_suggestions.length) {
+            html += '<h6 class="mt-3">Refactoring Steps</h6><ol>';
+            data.refactored_suggestions.forEach(function(s) { html += '<li>' + esc(s) + '</li>'; });
+            html += '</ol>';
+        }
+        if (data.cleaned_code) {
+            html += '<h6 class="mt-3">Cleaned Code</h6>';
+            html += '<pre style="white-space:pre-wrap;background:#f5f5f5;padding:12px;border-radius:6px;font-size:12px;">' + esc(data.cleaned_code) + '</pre>';
+        }
+        html += '</div></div>';
+        out.innerHTML += html;
+    } catch (e) {
+        out.innerHTML += '<div class="alert alert-danger mt-3">Network error: ' + esc(e.message) + '</div>';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = origText;
+    }
 }
+
+function esc(s) {
+    return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 </script>
 {% include 'includes/premium-upsell.html' %}
 {% endblock %}
