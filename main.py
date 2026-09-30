@@ -5815,6 +5815,90 @@ async def indian_language_ai_page(request: Request):
 # LMS API ENDPOINTS (Global Learning Management System)
 # ============================================================
 
+@app.post("/api/lms/enroll")
+@limiter.limit("20/minute")
+async def lms_enroll(request: Request):
+    """Enroll a student in a course.
+
+    Uses two static credit tiers so the standard credit guard applies:
+      - lms_enroll_standard: 200 credits (courses under Rs 1500)
+      - lms_enroll_premium:  1000 credits (courses Rs 1500+)
+
+    Idempotent: if the student is already enrolled, no charge.
+    """
+    data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+    require_auth_for_email(request, email)
+
+    course_id = (data.get("course_id") or "").strip()
+    if not course_id:
+        return JSONResponse(status_code=422, content={"status": "error", "message": "course_id required"})
+
+    # Look up the course price
+    try:
+        from database import db
+        _c = db.get_connection(); _cur = _c.cursor()
+        _cur.execute("SELECT course_name, price_inr FROM charvak_courses WHERE course_id = %s", (course_id,))
+        _r = _cur.fetchone()
+        _cur.close(); _c.close()
+    except Exception as e:
+        logger.error(f"lms_enroll price lookup failed: {e}")
+        return JSONResponse(status_code=500, content={"status": "error", "message": "Could not verify course."})
+
+    if not _r:
+        return JSONResponse(status_code=404, content={"status": "error", "message": "Course not found"})
+
+    course_name, price_inr = _r
+    price_inr = int(price_inr or 0)
+
+    # Idempotency check: already enrolled -> skip the whole flow
+    try:
+        from database import db
+        _c = db.get_connection(); _cur = _c.cursor()
+        _cur.execute("""
+            CREATE TABLE IF NOT EXISTS charvak_lms_enrollments (
+                enrollment_id   TEXT PRIMARY KEY,
+                email           TEXT NOT NULL,
+                course_id       TEXT NOT NULL,
+                course_name     TEXT,
+                price_inr       INTEGER,
+                credits_used    INTEGER NOT NULL DEFAULT 0,
+                enrolled_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                completed_at    TIMESTAMP,
+                UNIQUE (email, course_id)
+            )
+        """)
+        _cur.execute("SELECT enrollment_id FROM charvak_lms_enrollments WHERE email = %s AND course_id = %s", (email, course_id))
+        _existing = _cur.fetchone()
+        _cur.close(); _c.close()
+    except Exception as e:
+        logger.error(f"lms_enroll idempotency check failed: {e}")
+        return JSONResponse(status_code=500, content={"status": "error", "message": "Could not verify enrollment state."})
+
+    if _existing:
+        # No charge. Just return the existing enrollment info.
+        return lms_engine.enroll_course(data)
+
+    # Pick the tier
+    if price_inr >= 1500:
+        credit_key = "lms_enroll_premium"
+    else:
+        credit_key = "lms_enroll_standard"
+
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, credit_key)
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+
+    return lms_engine.enroll_course(data)
+
+@app.get("/api/lms/my-enrollments/{email}")
+async def lms_my_enrollments(email: str, request: Request):
+    require_auth_for_email(request, email)
+    return lms_engine.list_enrollments(email)
+
 @app.post("/api/lms/rate")
 @limiter.limit("20/minute")
 async def rate_course(request: Request):
