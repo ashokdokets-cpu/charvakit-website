@@ -109,6 +109,137 @@ class LMS_Engine:
             return {"status": "error", "message": str(e)}
 
 
+    def enroll_course(self, data: Dict) -> Dict:
+        """
+        Enroll a student in a course. Reuses charvak_courses catalog for pricing.
+        data = {"email", "course_id"}
+        Credits are charged by the route (credit_guard), not here.
+        """
+        email = (data.get("email") or "").strip().lower()
+        course_id = (data.get("course_id") or "").strip()
+        if not email or not course_id:
+            return {"status": "error", "message": "email and course_id required"}
+
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+
+            # Ensure table exists (idempotent)
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS charvak_lms_enrollments (
+                    enrollment_id   TEXT PRIMARY KEY,
+                    email           TEXT NOT NULL,
+                    course_id       TEXT NOT NULL,
+                    course_name     TEXT,
+                    price_inr       INTEGER,
+                    credits_used    INTEGER NOT NULL DEFAULT 0,
+                    enrolled_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    completed_at    TIMESTAMP,
+                    UNIQUE (email, course_id)
+                )
+            """)
+
+            # Look up the course for name + price
+            cur.execute("""
+                SELECT course_name, price_inr FROM charvak_courses WHERE course_id = %s
+            """, (course_id,))
+            row = cur.fetchone()
+            if not row:
+                cur.close(); conn.close()
+                return {"status": "error", "message": "Course not found"}
+            course_name, price_inr = row
+
+            # Check for existing enrollment (idempotent)
+            cur.execute("""
+                SELECT enrollment_id, enrolled_at FROM charvak_lms_enrollments
+                WHERE email = %s AND course_id = %s
+            """, (email, course_id))
+            existing = cur.fetchone()
+            if existing:
+                cur.close(); conn.close()
+                return {
+                    "status": "success",
+                    "enrollment_id": existing[0],
+                    "course_id": course_id,
+                    "course_name": course_name,
+                    "price_inr": price_inr,
+                    "already_enrolled": True,
+                    "message": f"You are already enrolled in {course_name}.",
+                }
+
+            # Create the enrollment
+            enrollment_id = f"ENR-{secrets.token_hex(6).upper()}"
+            # Credits used is decided by the route's tier lookup.
+            credits_used = int(data.get("_credits_used") or (200 if int(price_inr or 0) < 1500 else 1000))
+
+            cur.execute("""
+                INSERT INTO charvak_lms_enrollments
+                    (enrollment_id, email, course_id, course_name, price_inr, credits_used)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (enrollment_id, email, course_id, course_name, price_inr, credits_used))
+            conn.commit()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"enroll_course failed: {e}")
+            return {"status": "error", "message": "Could not enroll. Please try again."}
+
+        return {
+            "status": "success",
+            "enrollment_id": enrollment_id,
+            "course_id": course_id,
+            "course_name": course_name,
+            "price_inr": price_inr,
+            "credits_used": credits_used,
+            "already_enrolled": False,
+            "next_steps": [
+                "Access lessons from your enrollment dashboard",
+                "Take quizzes to earn a certificate",
+                "Track your progress at any time",
+            ],
+            "message": f"Enrolled in {course_name}!",
+        }
+
+    def list_enrollments(self, email: str) -> Dict:
+        """List every LMS enrollment for a student."""
+        email = (email or "").strip().lower()
+        if not email:
+            return {"status": "error", "message": "email required"}
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT enrollment_id, course_id, course_name, price_inr,
+                       credits_used, enrolled_at, completed_at
+                FROM charvak_lms_enrollments
+                WHERE email = %s
+                ORDER BY enrolled_at DESC
+            """, (email,))
+            rows = cur.fetchall()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.warning(f"list_enrollments failed: {e}")
+            return {"status": "success", "email": email, "count": 0, "enrollments": []}
+
+        return {
+            "status": "success",
+            "email": email,
+            "count": len(rows),
+            "enrollments": [
+                {
+                    "enrollment_id": r[0],
+                    "course_id": r[1],
+                    "course_name": r[2],
+                    "price_inr": r[3],
+                    "credits_used": r[4],
+                    "enrolled_at": r[5].isoformat() if hasattr(r[5], "isoformat") else str(r[5]),
+                    "completed_at": r[6].isoformat() if hasattr(r[6], "isoformat") and r[6] else None,
+                }
+                for r in rows
+            ],
+        }
+
     def get_course_ratings(self, course_id: str) -> Dict:
         try:
             from database import db

@@ -206,6 +206,8 @@ class AICreditEngine:
         "analysis_complete": 10,
         "ai_analysis_analyze": 15,
         "lms_rate": 2,
+        "lms_enroll_standard": 200,
+        "lms_enroll_premium": 1000,
         "lms_quiz_submit": 3,
         "lms_certificate": 10,
         "lms_discussion": 2,

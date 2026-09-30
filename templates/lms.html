@@ -3,13 +3,34 @@
 {% block content %}
 <div class="page-hero bg-gradient-primary text-white py-5">
     <div class="container py-4 text-center">
-        <h1 class="display-4 fw-bold">🎓 Learning Management System</h1>
+        <h1 class="display-4 fw-bold">Learning Management System</h1>
         <p class="lead">Courses, quizzes, certificates, and progress tracking</p>
     </div>
 </div>
 
 <div class="container py-5">
+    <div id="myEnrollments" class="mb-4"></div>
+
     <div class="row g-4">
+        <!-- Enroll in a Course -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm border-primary" style="border-width:2px !important;">
+                <div class="card-body">
+                    <span class="badge bg-primary mb-2">New</span>
+                    <h2 class="as-h5">Enroll in a Course</h2>
+                    <p class="text-muted small mb-3">Pick from our catalog. Credits charged based on course price.</p>
+                    <form onsubmit="enrollCourse(event)">
+                        <select class="form-select mb-2" id="enrollCourseId" required>
+                            <option value="">Loading courses...</option>
+                        </select>
+                        <div id="enrollPrice" class="small text-muted mb-3">Select a course to see the cost.</div>
+                        <button class="btn btn-primary btn-sm w-100" type="submit" id="enrollBtn">Enroll</button>
+                    </form>
+                    <div id="enrollResult" class="mt-2 small"></div>
+                </div>
+            </div>
+        </div>
+
         <!-- Rate Course -->
         <div class="col-md-6 col-lg-4">
             <div class="card h-100 border-0 shadow-sm">
@@ -264,10 +285,150 @@ async function searchCourses(e){
 function showOutput(msg){document.getElementById('lmsOutput').innerHTML='<div class="alert alert-success">'+msg+'</div>';}
 </script>
 <script>
-function enrollCourse(event) {
-    event.preventDefault();
-    // Session G6: feature under development — capture interest instead
-    window.notifyMe('LMS Course Enrollment');
+const ENROLL_TIERS = { standard: { max: 1500, credits: 200 }, premium: { min: 1500, credits: 1000 } };
+let COURSE_CATALOG = [];
+
+function esc(s) {
+    return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
+
+async function loadCatalog() {
+    const sel = document.getElementById('enrollCourseId');
+    if (!sel) return;
+    try {
+        const r = await fetch('/api/ai-course/catalog');
+        const j = await r.json();
+        const courses = j.courses || j.catalog || [];
+        COURSE_CATALOG = courses;
+        if (courses.length === 0) {
+            sel.innerHTML = '<option value="">No courses available</option>';
+            return;
+        }
+        let html = '<option value="">-- Select a course --</option>';
+        courses.forEach(function(c) {
+            const price = c.price_inr || c.price || 0;
+            const name = c.course_name || c.name || c.course_id || 'Course';
+            const id = c.course_id || c.id || '';
+            html += '<option value="' + esc(id) + '" data-price="' + esc(price) + '">' + esc(name) + ' (~' + esc(Math.max(1, Math.floor(price/5))) + ' cr)</option>';
+        });
+        sel.innerHTML = html;
+        sel.addEventListener('change', updateEnrollPrice);
+    } catch (e) {
+        sel.innerHTML = '<option value="">Could not load courses</option>';
+    }
+}
+
+function updateEnrollPrice() {
+    const sel = document.getElementById('enrollCourseId');
+    const info = document.getElementById('enrollPrice');
+    if (!sel || !info) return;
+    const opt = sel.options[sel.selectedIndex];
+    if (!opt || !opt.value) {
+        info.textContent = 'Select a course to see the cost.';
+        return;
+    }
+    const price = parseInt(opt.dataset.price || '0', 10);
+    const credits = price >= 1500 ? 1000 : 200;
+    info.innerHTML = '<strong>Rs ' + price.toLocaleString('en-IN') + '</strong> &middot; ' + credits + ' credits';
+}
+
+async function enrollCourse(event) {
+    event.preventDefault();
+    const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    if (!authToken || !email) {
+        alert('Please log in.');
+        window.location.href = '/login?next=/lms';
+        return;
+    }
+    const sel = document.getElementById('enrollCourseId');
+    const courseId = sel ? sel.value : '';
+    if (!courseId) {
+        alert('Pick a course first.');
+        return;
+    }
+    const opt = sel.options[sel.selectedIndex];
+    const price = parseInt(opt.dataset.price || '0', 10);
+    const credits = price >= 1500 ? 1000 : 200;
+
+    if (!confirm('Enroll in ' + opt.textContent + '?\n\nCost: ' + credits + ' credits')) return;
+
+    const btn = document.getElementById('enrollBtn');
+    const out = document.getElementById('enrollResult');
+    btn.disabled = true;
+    btn.textContent = 'Enrolling...';
+    out.innerHTML = '';
+
+    try {
+        const r = await fetch('/api/lms/enroll', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authToken
+            },
+            body: JSON.stringify({email: email, course_id: courseId})
+        });
+        if (r.status === 401) { window.location.href = '/login?next=/lms'; return; }
+        if (r.status === 402) {
+            out.innerHTML = '<div class="text-danger">Not enough credits (' + credits + ' needed). <a href="/ai-credits-pricing">Top up</a>.</div>';
+            return;
+        }
+        const j = await r.json();
+        if (j.status !== 'success') {
+            out.innerHTML = '<div class="text-danger">' + esc(j.message || 'Enrollment failed') + '</div>';
+            return;
+        }
+        out.innerHTML = '<div class="text-success">' + esc(j.message || 'Enrolled!') + ' (' + esc(j.enrollment_id || '') + ')</div>';
+        loadMyEnrollments();
+    } catch (e) {
+        out.innerHTML = '<div class="text-danger">Network error: ' + esc(e.message) + '</div>';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Enroll';
+    }
+}
+
+async function loadMyEnrollments() {
+    const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    const wrap = document.getElementById('myEnrollments');
+    if (!wrap || !authToken || !email) return;
+    try {
+        const r = await fetch('/api/lms/my-enrollments/' + encodeURIComponent(email), {
+            headers: {'Authorization': 'Bearer ' + authToken}
+        });
+        if (!r.ok) { wrap.innerHTML = ''; return; }
+        const j = await r.json();
+        if (j.status !== 'success' || !j.enrollments || j.enrollments.length === 0) {
+            wrap.innerHTML = '';
+            return;
+        }
+        let html = '<div class="card border-0 shadow-sm"><div class="card-body">';
+        html += '<h3 class="as-h5 mb-3">Your Enrollments (' + j.count + ')</h3>';
+        html += '<div class="table-responsive"><table class="table table-sm mb-0"><thead><tr>';
+        html += '<th>Course</th><th>Price</th><th>Credits</th><th>Enrolled</th>';
+        html += '</tr></thead><tbody>';
+        j.enrollments.forEach(function(e) {
+            const when = new Date(e.enrolled_at).toLocaleDateString('en-IN', {month: 'short', day: 'numeric', year: 'numeric'});
+            html += '<tr>';
+            html += '<td>' + esc(e.course_name) + '</td>';
+            html += '<td>Rs ' + Number(e.price_inr || 0).toLocaleString('en-IN') + '</td>';
+            html += '<td>' + esc(e.credits_used) + '</td>';
+            html += '<td>' + esc(when) + '</td>';
+            html += '</tr>';
+        });
+        html += '</tbody></table></div></div></div>';
+        wrap.innerHTML = html;
+    } catch (e) {
+        // non-fatal
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadCatalog();
+    loadMyEnrollments();
+});
 </script>
 {% endblock %}
