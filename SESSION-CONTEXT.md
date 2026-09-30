@@ -1,6 +1,6 @@
 # Session Context - Charvak
 
-**HEAD:** `7ae300a`
+**HEAD:** `5b9d1c5`
 **Last updated:** 2026-09-29 (Session B - 4 of 5 payment flags closed; #3 deferred)
 **Version:** `v3.5-session-B-20260929`
 
@@ -630,3 +630,60 @@ auditbot_continuous, lockin_migration, lockin_protection...
 - scripts/_*.py cleanup
 
 ### Files touched this session: ~40
+
+---
+
+## Session 7 COMPLETE (2026-09-30) - Booking page + C7 cleanup
+
+### Shipped
+
+**1. Hosted booking page (Session 7 headline)** - `6399d2f`
+- Public GET /booking/{slug} renders a page for any Marketing AI
+  outreach kit
+- POST /api/booking/{slug}/request captures prospect requests
+- Emails host + prospect on request
+- New table charvak_booking_requests
+- Marketing AI kit now returns a real booking link (was a dead-end)
+- Host dashboard on marketing-ai.html shows incoming requests
+
+**2. Silent-Killer honesty rewrite** - `5919305`
+- Removed 3 misleading product claims ("24/7 monitoring",
+  "Instant alerts", "Auto-hotfix") that didn't have backend support
+- Added a real "Notify Me When Continuous Monitoring Ships" button
+- Free on-demand scan still works unchanged
+- Session 8 will build the real scheduler
+
+**3. Skill-Twin AA4d - full badge system** - `d875705`
+- Phase A: skill-twin results now persist to charvak_skill_twin_results
+- Phase B: real badge purchase (100 credits), idempotent, no double-charge
+- Phase C: public verify page /badge/{badge_id} + API
+- Phase D: rewired skill-twin.html + skill-check.html + badge.html
+- SECURITY: /api/badge/issue was completely open; now admin-only
+- Fixed a money bug: idempotency check swallowed exceptions and charged
+  anyway. Now fails closed.
+
+**4. LMS course enrollment** - (this commit)
+- Reuses charvak_courses catalog (25 courses)
+- Real enroll flow, tier-based credits (200 standard / 1000 premium)
+- Public catalog dropdown + "Your Enrollments" list
+- Idempotent, no double-charge
+
+### What's left of the whole system
+
+**C7 templates:** 15 of ~17 done across sessions 3-7.
+Remaining: university.html, legacy-shift.html
+
+**Session 8 queue:**
+1. Silent-Killer continuous monitoring (cron + alerts) - ~4-6 hrs
+2. University.html paid tier - ~2 hrs
+3. Legacy-Shift.html migration tier - ~2 hrs
+4. Full doc pass on 4 trackers - ~30 min
+5. Hygiene: scripts/_*.py cleanup, git gc, ARCHITECTURE.md refresh
+6. #3 PayPal live test - ~30 min
+
+**Deferred / external:**
+- Rotate PayPal + SYNC keys
+- Premium Report product (8-12 hrs, product decision)
+- FYP feature roadmap (7 items, ~8 hrs)
+- Response object references in main.py that could be Response classes
+  (spotted during Silent-Killer; not fixed)
