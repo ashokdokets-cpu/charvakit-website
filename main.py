@@ -1421,6 +1421,9 @@ async def api_logout_all(request: Request):
 async def api_me(request: Request):
     try:
         user = require_auth(request)
+        # Strip sensitive fields before returning
+        if isinstance(user, dict):
+            user = {k: v for k, v in user.items() if k not in ("password_hash", "password", "salt")}
         return JSONResponse({"status": "success", "user": user})
     except HTTPException:
         return JSONResponse({"status": "error", "message": "Not authenticated"}, status_code=401)
