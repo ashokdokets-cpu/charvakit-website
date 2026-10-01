@@ -108,6 +108,78 @@ class UniversityEngine:
     # REGISTER + ADD
     # ============================================================
 
+    def subscribe_university(self, data: Dict) -> Dict:
+        """
+        Record a university subscription after credits are charged by the route.
+        data = {"university_id", "admin_email", "tier", "credits_used"}
+        """
+        from datetime import datetime, timedelta
+        university_id = (data.get("university_id") or "").strip()
+        admin_email = (data.get("admin_email") or "").strip().lower()
+        tier = (data.get("tier") or "").strip().lower()
+        credits_used = int(data.get("credits_used") or 0)
+
+        if not university_id or not admin_email or not tier:
+            return {"status": "error", "message": "university_id, admin_email, tier required"}
+
+        tier_prices = {
+            "starter": 19999,
+            "growth": 49999,
+            "enterprise": 99999,
+        }
+        if tier not in tier_prices:
+            return {"status": "error", "message": f"Unknown tier: {tier}"}
+
+        price_inr = tier_prices[tier]
+        started_at = datetime.now()
+        expires_at = started_at + timedelta(days=365)
+
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS charvak_university_subscriptions (
+                    university_id   TEXT PRIMARY KEY,
+                    admin_email     TEXT NOT NULL,
+                    tier            TEXT NOT NULL,
+                    price_inr       INTEGER,
+                    credits_used    INTEGER NOT NULL DEFAULT 0,
+                    started_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    expires_at      TIMESTAMP NOT NULL,
+                    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            cur.execute("""
+                INSERT INTO charvak_university_subscriptions
+                    (university_id, admin_email, tier, price_inr, credits_used, started_at, expires_at)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (university_id) DO UPDATE SET
+                    admin_email = EXCLUDED.admin_email,
+                    tier = EXCLUDED.tier,
+                    price_inr = EXCLUDED.price_inr,
+                    credits_used = EXCLUDED.credits_used,
+                    started_at = EXCLUDED.started_at,
+                    expires_at = EXCLUDED.expires_at
+            """, (university_id, admin_email, tier, price_inr, credits_used, started_at, expires_at))
+            conn.commit()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"subscribe_university persist failed: {e}")
+            return {"status": "error", "message": "Subscription could not be saved"}
+
+        return {
+            "status": "success",
+            "university_id": university_id,
+            "tier": tier,
+            "price_inr": price_inr,
+            "credits_used": credits_used,
+            "started_at": started_at.isoformat(),
+            "expires_at": expires_at.isoformat(),
+            "days_remaining": 365,
+            "message": f"{tier.title()} plan active. 365 days of portal access.",
+        }
+
     def register_university(self, data: Dict) -> Dict:
         """Register a university."""
         university_id = f"UNI-{secrets.token_hex(4).upper()}"

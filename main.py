@@ -5495,7 +5495,44 @@ async def api_ats_score_callback(token: str, sig: str, score: int, source: str =
 @limiter.limit("30/minute")
 async def register_university(request: Request):
     data = await request.json()
+    email = (data.get("admin_email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+    require_auth_for_email(request, email)
+    # Caller's email is authoritative (already verified above)
+    data["admin_email"] = email
     return university_engine.register_university(data)
+
+@app.post("/api/university/subscribe")
+@limiter.limit("10/minute")
+async def api_university_subscribe(request: Request):
+    data = await request.json()
+    email = (data.get("admin_email") or data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+    require_auth_for_email(request, email)
+
+    tier = (data.get("tier") or "").strip().lower()
+    key_map = {
+        "starter": "university_starter",
+        "growth": "university_growth",
+        "enterprise": "university_enterprise",
+    }
+    if tier not in key_map:
+        return JSONResponse(status_code=422, content={"status": "error", "message": "Invalid tier"})
+    credit_key = key_map[tier]
+
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data({**data, "email": email}, credit_key)
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+
+    return university_engine.subscribe_university({
+        "university_id": data.get("university_id"),
+        "admin_email": email,
+        "tier": tier,
+        "credits_used": guard.get("credits_deducted", 0),
+    })
 
 @app.get("/api/university/{university_id}/dashboard")
 async def university_dashboard(university_id: str):
