@@ -1934,6 +1934,119 @@ async def api_analyze_legacy(request: Request):
     except Exception as e:
         return handle_error(e, "legacy analysis", {"status": "error", "message": "Legacy analysis failed"})
 
+@app.post("/api/ai/legacy-shift-migration-plan")
+@limiter.limit("20/minute")
+async def api_legacy_shift_migration_plan(request: Request):
+    """Full file-by-file migration plan for the Legacy-Shift premium tier."""
+    import json, secrets, os
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "Invalid JSON"})
+
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+    require_auth_for_email(request, email)
+
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "legacy_shift_migration")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+
+    code = (data.get("code") or "").strip()[:3000]
+    if not code:
+        return JSONResponse(status_code=422, content={"status": "error", "message": "code required"})
+
+    analysis = data.get("analysis") or {}
+    prompt = f"""You are a senior modernization architect. Produce a COMPLETE file-by-file migration plan.
+
+Legacy code snippet:
+{code}
+
+Prior analysis (vulnerabilities, dependencies, stack):
+{json.dumps(analysis)[:1500]}
+
+Return STRICT JSON:
+{{
+  "summary": "2-3 sentence executive overview",
+  "target_stack": {{"framework": "Next.js 14", "styling": "Tailwind", "db": "Postgres", "hosting": "Vercel"}},
+  "estimated_effort_days": 12,
+  "file_plan": [
+    {{
+      "file": "pages/index.tsx",
+      "purpose": "converted homepage",
+      "sources": ["legacy/index.php"],
+      "tasks": ["extract markup", "extract copy", "convert forms to React"],
+      "risks": ["form validation parity"]
+    }}
+  ],
+  "data_migration": [
+    {{"from": "MySQL users table", "to": "Postgres users table", "steps": ["schema diff", "data copy", "verify counts"]}}
+  ],
+  "test_plan": ["unit", "integration", "e2e"],
+  "rollback_plan": "how to revert if migration fails",
+  "post_launch_checklist": ["item 1", "item 2"]
+}}
+Only return the JSON."""
+
+    try:
+        from openai import OpenAI
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        resp = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            response_format={"type": "json_object"},
+            temperature=0.3,
+            timeout=60,
+        )
+        raw = resp.choices[0].message.content or "{}"
+        if raw.startswith("```"):
+            raw = raw.strip("`")
+            if raw.startswith("json\n"):
+                raw = raw[5:]
+        plan = json.loads(raw)
+    except Exception as e:
+        logger.warning(f"legacy_shift_migration AI call failed: {e}")
+        plan = {
+            "summary": "AI unavailable - heuristic migration plan scaffold.",
+            "target_stack": {"framework": "Next.js 14", "styling": "Tailwind", "db": "Postgres", "hosting": "Vercel"},
+            "estimated_effort_days": 15,
+            "file_plan": [{"file": "pages/index.tsx", "purpose": "converted entry point", "sources": ["legacy entry"], "tasks": ["extract markup", "convert to React"], "risks": ["layout parity"]}],
+            "data_migration": [{"from": "legacy db", "to": "Postgres", "steps": ["schema mapping", "data copy", "verify"]}],
+            "test_plan": ["unit", "integration", "e2e"],
+            "rollback_plan": "Keep the old stack running in parallel for 30 days.",
+            "post_launch_checklist": ["Monitor error rate", "Verify SEO", "Confirm redirects"],
+        }
+
+    report_id = f"LS-{secrets.token_hex(6).upper()}"
+    try:
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS charvak_legacy_shift_reports (
+                report_id      TEXT PRIMARY KEY,
+                email          TEXT NOT NULL,
+                code_preview   TEXT,
+                analysis_json  JSONB,
+                plan_json      JSONB,
+                credits_used   INTEGER NOT NULL DEFAULT 0,
+                created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        cur.execute("""
+            INSERT INTO charvak_legacy_shift_reports
+                (report_id, email, code_preview, analysis_json, plan_json, credits_used)
+            VALUES (%s, %s, %s, %s, %s, 1000)
+        """, (report_id, email, code[:500], json.dumps(analysis), json.dumps(plan)))
+        conn.commit()
+        cur.close(); conn.close()
+    except Exception as e:
+        logger.warning(f"legacy_shift_migration persist failed: {e}")
+
+    return {"status": "success", "report_id": report_id, **plan}
+
 @app.post("/api/ai/generate-schema")
 @limiter.limit("60/minute")
 async def api_generate_schema(request: Request):
