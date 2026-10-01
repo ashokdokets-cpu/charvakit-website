@@ -3,7 +3,7 @@
 {% block content %}
 <div class="page-hero bg-gradient-primary text-white py-5">
     <div class="container py-4">
-        <span class="badge bg-warning text-dark mb-2 px-3 py-2">Preview &middot; Continuous Monitoring Coming Soon</span>
+        <span class="badge bg-success mb-2 px-3 py-2">Live &middot; On-Demand Scans Working</span>
         <h1 class="display-4 fw-bold">Silent-Killer Web Hook Sentinel</h1>
         <p class="lead">Catch broken webhooks and checkout funnels before they cost you revenue. Run an on-demand scan any time.</p>
     </div>
@@ -45,6 +45,16 @@
                 </form>
                 <div id="skOutput" class="mt-4"></div>
             </div>
+        </div>
+    </div>
+
+    <div class="row mb-5" id="skWatchesPanel" style="display:none;">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="fw-bold mb-0">Your Monitors</h2>
+                <button class="btn btn-sm btn-outline-secondary" onclick="loadWatches()">Refresh</button>
+            </div>
+            <div id="skWatchesList"></div>
         </div>
     </div>
 
@@ -167,6 +177,133 @@ function silentKillerProtect(event) {
         alert('Thanks! We will notify you when continuous monitoring ships.');
     }
 }
+
+
+// ---------- Session 9a: watch dashboard ----------
+function _skEsc(s) {
+    return String(s == null ? '' : s).replace(/[&<>'"]/g, function(c) {
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',''':'&#39;'}[c];
+    });
+}
+
+async function loadWatches() {
+    const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    const panel = document.getElementById('skWatchesPanel');
+    const list = document.getElementById('skWatchesList');
+    if (!panel || !list) return;
+    if (!authToken || !email) { panel.style.display = 'none'; return; }
+    try {
+        const r = await fetch('/api/products/silent-killer/watches/' + encodeURIComponent(email), {
+            headers: { 'Authorization': 'Bearer ' + authToken }
+        });
+        if (r.status === 401) { panel.style.display = 'none'; return; }
+        const j = await r.json();
+        if (j.status !== 'success' || !j.watches || !j.watches.length) {
+            panel.style.display = 'none';
+            return;
+        }
+        panel.style.display = 'block';
+        let html = '';
+        for (const w of j.watches) {
+            const ok = w.last_status === 'ok';
+            const badgeClass = ok ? 'bg-success' : 'bg-danger';
+            const badgeText = ok ? 'OK' : 'FAIL';
+            const code = w.last_status_code != null ? w.last_status_code : '—';
+            const lastScan = w.last_scan_at ? new Date(w.last_scan_at).toLocaleString() : 'never';
+            html += '<div class='"card mb-3"'><div class='"card-body"'>';
+            html += '<div class='"d-flex justify-content-between align-items-start flex-wrap gap-2"'>';
+            html += '<div><strong>' + _skEsc(w.name || 'Monitor') + '</strong> <span class='"badge "' + badgeClass + ' ms-2'>' + badgeText + '</span><br>';
+            html += '<small class='"text-muted"'>' + _skEsc(w.url) + '</small><br>';
+            html += '<small class='"text-muted"'>Last check: ' + _skEsc(lastScan) + ' &middot; HTTP ' + _skEsc(code) + ' &middot; every ' + _skEsc(w.interval_minutes) + ' min</small>';
+            if (w.last_error) {
+                html += '<div class='"alert alert-danger py-1 px-2 mt-2 mb-0 small"'>' + _skEsc(w.last_error) + '</div>';
+            }
+            html += '</div>';
+            html += '<div class='"d-flex gap-2"'>';
+            html += '<button class='"btn btn-sm btn-outline-primary"' onclick='"recheckWatch('' + w.watch_id + '')"'>Recheck (5 cr)</button>';
+            html += '<button class='"btn btn-sm btn-outline-secondary"' onclick='"toggleHistory('' + w.watch_id + '')"'>History</button>';
+            html += '<button class='"btn btn-sm btn-outline-danger"' onclick='"deleteWatch('' + w.watch_id + '')"'>Delete</button>';
+            html += '</div></div>';
+            html += '<div id='"skHist-"' + w.watch_id + '""' class='"mt-3"' style='"display:none;"'></div>';
+            html += '</div></div>';
+        }
+        list.innerHTML = html;
+    } catch (e) {
+        // non-fatal - dashboard just does not render
+    }
+}
+
+async function recheckWatch(watch_id) {
+    const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    if (!authToken || !email) { alert('Please log in.'); return; }
+    try {
+        const r = await fetch('/api/products/silent-killer/recheck', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+            body: JSON.stringify({ email: email, watch_id: watch_id })
+        });
+        if (r.status === 401) { window.location.href = '/login?next=/silent-killer'; return; }
+        if (r.status === 402) { alert('Not enough credits (5 needed). Top up at /ai-credits-pricing'); return; }
+        const j = await r.json();
+        if (j.status !== 'success') { alert(j.message || 'Recheck failed'); return; }
+        alert(j.ok ? ('OK: HTTP ' + j.status_code + ' in ' + j.response_ms + 'ms') : ('FAIL: ' + (j.error || 'unknown')));
+        loadWatches();
+    } catch (e) {
+        alert('Network error: ' + e.message);
+    }
+}
+
+async function toggleHistory(watch_id) {
+    const el = document.getElementById('skHist-' + watch_id);
+    if (!el) return;
+    if (el.style.display === 'block') { el.style.display = 'none'; return; }
+    const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    try {
+        const r = await fetch('/api/products/silent-killer/history/' + encodeURIComponent(watch_id) + '?email=' + encodeURIComponent(email) + '&limit=10', {
+            headers: { 'Authorization': 'Bearer ' + authToken }
+        });
+        const j = await r.json();
+        if (j.status !== 'success') { el.innerHTML = '<div class='"text-muted small"'>Could not load history</div>'; el.style.display = 'block'; return; }
+        let rows = '<table class='"table table-sm small"'><thead><tr><th>Time</th><th>Status</th><th>Latency</th><th>Error</th></tr></thead><tbody>';
+        for (const s of j.scans) {
+            const okBadge = s.ok ? '<span class='"badge bg-success"'>OK</span>' : '<span class='"badge bg-danger"'>FAIL</span>';
+            const t = s.checked_at ? new Date(s.checked_at).toLocaleString() : '';
+            rows += '<tr><td>' + _skEsc(t) + '</td><td>' + okBadge + ' ' + _skEsc(s.status_code != null ? s.status_code : '—') + '</td><td>' + _skEsc(s.response_ms) + ' ms</td><td>' + _skEsc(s.error || '""') + '</td></tr>';
+        }
+        rows += '</tbody></table>';
+        el.innerHTML = rows;
+        el.style.display = 'block';
+    } catch (e) {
+        el.innerHTML = '<div class='"text-muted small"'>Network error</div>';
+        el.style.display = 'block';
+    }
+}
+
+async function deleteWatch(watch_id) {
+    if (!confirm('Delete this monitor and all its scan history?')) return;
+    const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    if (!authToken || !email) { alert('Please log in.'); return; }
+    try {
+        const r = await fetch('/api/products/silent-killer/watch/' + encodeURIComponent(watch_id) + '?email=' + encodeURIComponent(email), {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + authToken }
+        });
+        const j = await r.json();
+        if (j.status !== 'success') { alert(j.message || 'Delete failed'); return; }
+        loadWatches();
+    } catch (e) {
+        alert('Network error: ' + e.message);
+    }
+}
+
+// Auto-load watches on page load if logged in
+document.addEventListener('DOMContentLoaded', function() {
+    loadWatches();
+});
 </script>
 {% include 'includes/premium-upsell.html' %}
 {% endblock %}

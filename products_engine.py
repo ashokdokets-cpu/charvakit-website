@@ -1442,30 +1442,415 @@ Only return the JSON."""
     # SILENT-KILLER
     # ============================================================
     
+    def _ensure_silent_killer_tables(self) -> None:
+        """Create silent-killer tables. Non-fatal on error."""
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS charvak_silent_killer_watches (
+                    watch_id         TEXT PRIMARY KEY,
+                    email            TEXT NOT NULL,
+                    url              TEXT NOT NULL,
+                    name             TEXT,
+                    interval_minutes INTEGER NOT NULL DEFAULT 5,
+                    active           BOOLEAN NOT NULL DEFAULT TRUE,
+                    last_scan_at     TIMESTAMP,
+                    last_status      TEXT,
+                    last_status_code INTEGER,
+                    last_error       TEXT,
+                    alert_count      INTEGER NOT NULL DEFAULT 0,
+                    created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            cur.execute("""
+                CREATE INDEX IF NOT EXISTS idx_sk_watches_email_active
+                    ON charvak_silent_killer_watches (email, active, created_at DESC)
+            """)
+            cur.execute("""
+                CREATE INDEX IF NOT EXISTS idx_sk_watches_active_lastscan
+                    ON charvak_silent_killer_watches (active, last_scan_at)
+            """)
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS charvak_silent_killer_scans (
+                    scan_id      TEXT PRIMARY KEY,
+                    watch_id     TEXT NOT NULL,
+                    email        TEXT NOT NULL,
+                    url          TEXT NOT NULL,
+                    status_code  INTEGER,
+                    response_ms  INTEGER,
+                    ok           BOOLEAN NOT NULL,
+                    error        TEXT,
+                    checked_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            cur.execute("""
+                CREATE INDEX IF NOT EXISTS idx_sk_scans_watch_time
+                    ON charvak_silent_killer_scans (watch_id, checked_at DESC)
+            """)
+            cur.execute("""
+                CREATE INDEX IF NOT EXISTS idx_sk_scans_email_time
+                    ON charvak_silent_killer_scans (email, checked_at DESC)
+            """)
+            conn.commit()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"silent-killer table init failed: {e}")
+
+    def _check_url(self, url: str) -> Dict:
+        """
+        Fetch a URL and measure. Never raises.
+        Returns {ok, status_code, response_ms, error}.
+        """
+        import time as _time
+        import requests
+        t0 = _time.time()
+        try:
+            r = requests.get(
+                url,
+                timeout=10,
+                allow_redirects=True,
+                headers={"User-Agent": "Charvak-Silent-Killer/1.0"},
+            )
+            ms = int((_time.time() - t0) * 1000)
+            ok = 200 <= r.status_code < 400
+            return {
+                "ok": ok,
+                "status_code": r.status_code,
+                "response_ms": ms,
+                "error": None if ok else f"HTTP {r.status_code}",
+            }
+        except Exception as e:
+            ms = int((_time.time() - t0) * 1000)
+            return {
+                "ok": False,
+                "status_code": None,
+                "response_ms": ms,
+                "error": f"{type(e).__name__}: {str(e)[:200]}",
+            }
+
     def silent_killer_monitor(self, data: Dict) -> Dict:
         """
-        Set up monitoring for webhooks/APIs.
-        data = {"url": str, "name": str, "interval_minutes": int}
+        Create a real monitor: persist the watch, run the first URL check,
+        record the scan, return the real result.
+        data = {"email", "url", "name", "interval_minutes"}
         """
-        url = data.get("url", "")
-        name = data.get("name", "Monitor")
-        interval = int(data.get("interval_minutes", 5))
-        
+        email = (data.get("email") or "").strip().lower()
+        url = (data.get("url") or "").strip()
+        name = (data.get("name") or "Monitor").strip()
+        try:
+            interval = int(data.get("interval_minutes") or 5)
+        except (ValueError, TypeError):
+            interval = 5
+        interval = max(1, min(interval, 1440))
+
+        if not email or not url:
+            return {"status": "error", "message": "email and url required"}
+        if not (url.startswith("http://") or url.startswith("https://")):
+            return {"status": "error", "message": "URL must start with http:// or https://"}
+
+        self._ensure_silent_killer_tables()
+
+        watch_id = f"MON-{secrets.token_hex(5).upper()}"
+        checked = self._check_url(url)
+        now_iso = datetime.now().isoformat()
+        status_label = "ok" if checked["ok"] else "fail"
+
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                INSERT INTO charvak_silent_killer_watches
+                    (watch_id, email, url, name, interval_minutes, active,
+                     last_scan_at, last_status, last_status_code, last_error)
+                VALUES (%s, %s, %s, %s, %s, TRUE, %s, %s, %s, %s)
+            """, (watch_id, email, url, name, interval, now_iso, status_label,
+                  checked["status_code"], checked["error"]))
+            scan_id = f"SK-{secrets.token_hex(5).upper()}"
+            cur.execute("""
+                INSERT INTO charvak_silent_killer_scans
+                    (scan_id, watch_id, email, url, status_code, response_ms, ok, error)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """, (scan_id, watch_id, email, url, checked["status_code"],
+                  checked["response_ms"], checked["ok"], checked["error"]))
+            conn.commit()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"silent_killer_monitor persist failed: {e}")
+            return {"status": "error", "message": "Could not save monitor"}
+
         result = {
-            "monitor_id": f"MON-{secrets.token_hex(4).upper()}",
+            "watch_id": watch_id,
+            "monitor_id": watch_id,
             "url": url,
             "name": name,
             "interval_minutes": interval,
-            "monitor_status": "active",
+            "monitor_status": "active" if checked["ok"] else "degraded",
+            "ok": checked["ok"],
+            "status_code": checked["status_code"],
+            "response_ms": checked["response_ms"],
+            "error": checked["error"],
+            "checked_at": now_iso,
             "checks_per_day": 24 * 60 // interval,
-            "alert_channels": ["Email", "WhatsApp", "Webhook"],
-            "auto_fix_enabled": True,
-            "created_at": datetime.now().isoformat()
+            "alert_channels": ["Email", "Webhook"],
+            "verdict": (
+                f"Endpoint healthy ({checked['status_code']} in {checked['response_ms']}ms). "
+                "Continuous scheduled monitoring is coming next."
+                if checked["ok"]
+                else f"Endpoint FAILED: {checked['error'] or 'unknown error'}. "
+                     "Monitor is saved - re-check after fixing."
+            ),
         }
-
-        self._log_result("silent_killer", data, result)
+        self._log_result("silent_killer", data, result, email)
         return {"status": "success", **result}
     
+    def silent_killer_recheck(self, data: Dict) -> Dict:
+        """Re-check an existing watch by watch_id. Verifies email matches."""
+        email = (data.get("email") or "").strip().lower()
+        watch_id = (data.get("watch_id") or "").strip()
+        if not email or not watch_id:
+            return {"status": "error", "message": "email and watch_id required"}
+
+        self._ensure_silent_killer_tables()
+
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT url FROM charvak_silent_killer_watches WHERE watch_id = %s AND email = %s",
+                (watch_id, email),
+            )
+            row = cur.fetchone()
+            if not row:
+                cur.close(); conn.close()
+                return {"status": "error", "message": "Watch not found or not yours"}
+            url = row[0]
+        except Exception as e:
+            logger.error(f"silent_killer_recheck lookup failed: {e}")
+            return {"status": "error", "message": "Lookup failed"}
+
+        checked = self._check_url(url)
+        now_iso = datetime.now().isoformat()
+        status_label = "ok" if checked["ok"] else "fail"
+
+        try:
+            scan_id = f"SK-{secrets.token_hex(5).upper()}"
+            cur.execute("""
+                INSERT INTO charvak_silent_killer_scans
+                    (scan_id, watch_id, email, url, status_code, response_ms, ok, error)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """, (scan_id, watch_id, email, url, checked["status_code"],
+                  checked["response_ms"], checked["ok"], checked["error"]))
+            cur.execute("""
+                UPDATE charvak_silent_killer_watches
+                SET last_scan_at = %s, last_status = %s, last_status_code = %s, last_error = %s
+                WHERE watch_id = %s
+            """, (now_iso, status_label, checked["status_code"], checked["error"], watch_id))
+            conn.commit()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"silent_killer_recheck persist failed: {e}")
+            return {"status": "error", "message": "Could not save check"}
+
+        return {
+            "status": "success",
+            "watch_id": watch_id,
+            "url": url,
+            "ok": checked["ok"],
+            "status_code": checked["status_code"],
+            "response_ms": checked["response_ms"],
+            "error": checked["error"],
+            "checked_at": now_iso,
+        }
+
+    def silent_killer_list_watches(self, email: str) -> Dict:
+        """List all watches for an email."""
+        email = (email or "").strip().lower()
+        if not email:
+            return {"status": "error", "message": "email required"}
+
+        self._ensure_silent_killer_tables()
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT watch_id, url, name, interval_minutes, active,
+                       last_scan_at, last_status, last_status_code, last_error,
+                       alert_count, created_at
+                FROM charvak_silent_killer_watches
+                WHERE email = %s
+                ORDER BY created_at DESC
+                LIMIT 100
+            """, (email,))
+            rows = cur.fetchall()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"silent_killer_list_watches failed: {e}")
+            return {"status": "error", "message": "Could not list watches"}
+
+        watches = []
+        for r in rows:
+            watches.append({
+                "watch_id": r[0],
+                "url": r[1],
+                "name": r[2],
+                "interval_minutes": r[3],
+                "active": r[4],
+                "last_scan_at": r[5].isoformat() if r[5] else None,
+                "last_status": r[6],
+                "last_status_code": r[7],
+                "last_error": r[8],
+                "alert_count": r[9],
+                "created_at": r[10].isoformat() if r[10] else None,
+            })
+        return {"status": "success", "watches": watches, "count": len(watches)}
+
+    def silent_killer_history(self, watch_id: str, email: str, limit: int = 10) -> Dict:
+        """Return recent scans for a watch. Email must match the watch owner."""
+        watch_id = (watch_id or "").strip()
+        email = (email or "").strip().lower()
+        if not watch_id or not email:
+            return {"status": "error", "message": "watch_id and email required"}
+        try:
+            limit = max(1, min(int(limit), 100))
+        except (ValueError, TypeError):
+            limit = 10
+
+        self._ensure_silent_killer_tables()
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT email FROM charvak_silent_killer_watches WHERE watch_id = %s",
+                (watch_id,),
+            )
+            row = cur.fetchone()
+            if not row or row[0] != email:
+                cur.close(); conn.close()
+                return {"status": "error", "message": "Watch not found or not yours"}
+            cur.execute("""
+                SELECT scan_id, status_code, response_ms, ok, error, checked_at
+                FROM charvak_silent_killer_scans
+                WHERE watch_id = %s
+                ORDER BY checked_at DESC
+                LIMIT %s
+            """, (watch_id, limit))
+            scans = cur.fetchall()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"silent_killer_history failed: {e}")
+            return {"status": "error", "message": "Could not load history"}
+
+        out = []
+        for s in scans:
+            out.append({
+                "scan_id": s[0],
+                "status_code": s[1],
+                "response_ms": s[2],
+                "ok": s[3],
+                "error": s[4],
+                "checked_at": s[5].isoformat() if s[5] else None,
+            })
+        return {"status": "success", "watch_id": watch_id, "scans": out, "count": len(out)}
+
+    def silent_killer_delete_watch(self, watch_id: str, email: str) -> Dict:
+        """Delete a watch and its scans. Email must match."""
+        watch_id = (watch_id or "").strip()
+        email = (email or "").strip().lower()
+        if not watch_id or not email:
+            return {"status": "error", "message": "watch_id and email required"}
+
+        self._ensure_silent_killer_tables()
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT email FROM charvak_silent_killer_watches WHERE watch_id = %s",
+                (watch_id,),
+            )
+            row = cur.fetchone()
+            if not row or row[0] != email:
+                cur.close(); conn.close()
+                return {"status": "error", "message": "Watch not found or not yours"}
+            cur.execute("DELETE FROM charvak_silent_killer_scans WHERE watch_id = %s", (watch_id,))
+            scans_deleted = cur.rowcount
+            cur.execute("DELETE FROM charvak_silent_killer_watches WHERE watch_id = %s", (watch_id,))
+            conn.commit()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"silent_killer_delete_watch failed: {e}")
+            return {"status": "error", "message": "Could not delete watch"}
+
+        return {"status": "success", "deleted": True, "watch_id": watch_id, "scans_deleted": scans_deleted}
+
+    def silent_killer_run_watch(self, watch_id: str) -> Dict:
+        """
+        Cron-facing: run one check for a watch_id, no auth check.
+        Session 9b calls this per active watch.
+        """
+        watch_id = (watch_id or "").strip()
+        if not watch_id:
+            return {"status": "error", "message": "watch_id required"}
+
+        self._ensure_silent_killer_tables()
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT url, email FROM charvak_silent_killer_watches WHERE watch_id = %s",
+                (watch_id,),
+            )
+            row = cur.fetchone()
+            if not row:
+                cur.close(); conn.close()
+                return {"status": "error", "message": "Watch not found"}
+            url, email = row[0], row[1]
+        except Exception as e:
+            logger.error(f"silent_killer_run_watch lookup failed: {e}")
+            return {"status": "error", "message": "Lookup failed"}
+
+        checked = self._check_url(url)
+        now_iso = datetime.now().isoformat()
+        status_label = "ok" if checked["ok"] else "fail"
+
+        try:
+            scan_id = f"SK-{secrets.token_hex(5).upper()}"
+            cur.execute("""
+                INSERT INTO charvak_silent_killer_scans
+                    (scan_id, watch_id, email, url, status_code, response_ms, ok, error)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """, (scan_id, watch_id, email, url, checked["status_code"],
+                  checked["response_ms"], checked["ok"], checked["error"]))
+            cur.execute("""
+                UPDATE charvak_silent_killer_watches
+                SET last_scan_at = %s, last_status = %s, last_status_code = %s, last_error = %s
+                WHERE watch_id = %s
+            """, (now_iso, status_label, checked["status_code"], checked["error"], watch_id))
+            conn.commit()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"silent_killer_run_watch persist failed: {e}")
+            return {"status": "error", "message": "Could not save check"}
+
+        return {
+            "status": "success",
+            "watch_id": watch_id,
+            "email": email,
+            "url": url,
+            "ok": checked["ok"],
+            "status_code": checked["status_code"],
+            "response_ms": checked["response_ms"],
+            "error": checked["error"],
+            "checked_at": now_iso,
+        }
+
     # ============================================================
     # AI-SLOP QUARANTINE
     # ============================================================

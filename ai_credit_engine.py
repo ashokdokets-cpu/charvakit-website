@@ -185,6 +185,7 @@ class AICreditEngine:
         "reverse_staffing_subscription": 1000,
         "product_design_token": 15,
         "product_silent_killer": 15,
+        "silent_killer_recheck": 5,
         "product_ai_slop": 10,
         "product_developer_entropy": 15,
         "company_start_mock": 25,
