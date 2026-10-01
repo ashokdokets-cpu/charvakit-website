@@ -1,113 +1,127 @@
 # Session Context - Charvak
 
-**HEAD:** `abd653d`
-**Last updated:** 2026-10-02 (Session 8 complete - University + Legacy-Shift shipped, C7 17/17)
-**Version:** `v3.5-session-8-20261002`
+**HEAD:** c041328
+**Last updated:** 2026-10-02 (Session 9a - Silent-Killer real monitoring shipped)
+**Version:** v3.5-session-9a-20261002
 
 ---
 
 ## Where we are
 
-Session 8 closed the C7 gap entirely. Every product page that advertised
-a paid tier now has a real credits-based purchase flow.
+Session 9a shipped the Silent-Killer real monitoring foundation. The
+stub that returned fake monitor_ids is gone; the free scan now actually
+fetches URLs, records results, and persists both a watch and a scan
+history. Users have a real "Your Monitors" dashboard.
 
-**Commits this session:**
-- `2d600f3` feat(university): real subscription flow + security fix
-- `abd653d` feat(legacy-shift): ship Rs 4,999 full migration plan tier
+**Commit this session:**
+- c041328 feat(silent-killer): real on-demand scan + watch dashboard
 
 ### Shipped this session
 
-**University Portal (Rs 19,999 / 49,999 / 99,999 per year)**
-- Fixed a security bug: `/api/university/register` was fully open
-  (anyone could register a university for any admin_email)
-- Removed a shadowing script block that hijacked `registerUniversity`
-  and just called `notifyMe`
-- New table `charvak_university_subscriptions` (tier, price_inr,
-  credits_used, expires_at 365 days)
-- New route `POST /api/university/subscribe` (auth + credits)
-- Credit tiers (Rs 5/credit):
-  - university_starter: 4000 (Rs 19,999/yr)
-  - university_growth: 10000 (Rs 49,999/yr)
-  - university_enterprise: 20000 (Rs 99,999/yr)
-- Frontend: 3 tier buttons wired to `chooseTier(tier)` which registers
-  the university (if needed) then subscribes
-- Verified E2E: UNI-EA076ACA, tier=starter, 20000 -> 16000, DB row with
-  2027-10-02 expiry
+**Backend:**
+- Migration 20261002_silent_killer.sql
+  - charvak_silent_killer_watches (watch_id PK, email, url, name,
+    interval_minutes, active, last_scan_at, last_status,
+    last_status_code, last_error, alert_count, created_at)
+  - charvak_silent_killer_scans (scan_id PK, watch_id, email, url,
+    status_code, response_ms, ok, error, checked_at)
+- New credit key: silent_killer_recheck = 5
+- products_engine.py:
+  - _ensure_silent_killer_tables() self-healing DDL
+  - _check_url(url) - requests.get(timeout=10, allow_redirects=True).
+    Never raises. Returns {ok, status_code, response_ms, error}.
+  - silent_killer_monitor(data) - real impl. Creates watch + first scan
+  - silent_killer_recheck(data) - re-check by watch_id (email match)
+  - silent_killer_list_watches(email) - dashboard
+  - silent_killer_history(watch_id, email, limit) - scan log
+  - silent_killer_delete_watch(watch_id, email) - removes watch + scans
+  - silent_killer_run_watch(watch_id) - cron-facing (Session 9b)
+- main.py: 4 new routes (all auth + email-match)
+  - POST /api/products/silent-killer/recheck (5 cr)
+  - GET /api/products/silent-killer/watches/{email}
+  - GET /api/products/silent-killer/history/{watch_id}
+  - DELETE /api/products/silent-killer/watch/{watch_id}
 
-**Legacy-Shift (Rs 4,999 migration plan)**
-- Free analysis (25 cr) already worked. Migration plan tier was missing.
-- New credit key `legacy_shift_migration: 1000`
-- New route `POST /api/ai/legacy-shift-migration-plan` (auth + credits)
-- OpenAI call returns file-by-file plan + data migration steps +
-  test plan + rollback + post-launch checklist
-- New table `charvak_legacy_shift_reports`
-- Frontend: "Get Full Migration Plan" card appears after free analysis
-  renders, with `getMigrationPlan()` + `Copy JSON`
-- Verified E2E: LS-225427023418, 16000 -> 14975 (25 + 1000 exact), DB
-  row created
+**Frontend (templates/silent-killer.html):**
+- Hero badge: Preview -> Live - On-Demand Scans Working
+- New "Your Monitors" panel with per-watch rows
+- loadWatches() / recheckWatch() / toggleHistory() / deleteWatch()
+- Auto-loads on DOMContentLoaded
+- XSS-safe _skEsc() rendering
 
-### C7 COMPLETE (17/17 templates)
+### Verified E2E
 
-| Session | Templates |
+test-register-2026-09-24@example.com:
+
+| Step | Result |
 |---|---|
-| 3 | AuditBot |
-| 4 | Lock-In Breaker |
-| 5 | Micro-Squads |
-| 6 | Developer Entropy, AI-Slop, Design-Token, Geo-Compliance, Agency-Twin, Reverse Staffing, Bridge, Marketing AI, Team Dashboard, Background Verification |
-| 7 | Silent-Killer (honesty), Skill-Twin AA4d, LMS, Hosted booking page |
-| 8 | University, Legacy-Shift |
+| Monitor example.com | MON-AC1732DCF7, 200 in 755ms, ok=true, 15 cr |
+| Monitor httpbin /status/500 | MON-160D66DB70, 500, ok=false, 15 cr |
+| Monitor dead-DNS URL | MON-4C4F3FE6F9, ok=false (ConnectionError), saved anyway, 15 cr |
+| Recheck good watch | 639ms, second scan, 5 cr |
+| History | 2 scans listed |
+| Delete | watch + 1 scan removed |
+| Auth mismatch | 403 |
+| Balance | 14975 -> 14925 (exactly -50) |
 
-Every paid tier across the product suite is now either:
-- A real credits-based purchase flow (backend + frontend + persistence), or
-- A notify-me interest capture for features not yet built
+DB confirmed:
+- ('MON-AC1732DCF7', 'https://example.com', 'ok', 200, None)
+- ('MON-160D66DB70', 'https://httpbin.org/status/500', 'fail', 500, 'HTTP 500')
+
+### What's NOT shipped yet
+
+- No cron runs the checks automatically. The "Notify Me When Continuous
+  Monitoring Ships" button on the page still exists for that reason.
+- No email alerts on state change.
+
+Session 9b will add: enhanced_email.send_silent_killer_alert(),
+POST /api/cron/silent-killer-scan (X-Cron-Secret auth), and a Render
+dashboard cron job iterating silent_killer_run_watch().
 
 ---
 
-## Known issues from this session
+## Recommended next session (Session 9b, ~3-4 hrs)
 
-- **Line length limit reached during chat.** Session 8 spanned two chat
-  windows. Full detail is in the two chat exports.
+**Silent-Killer cron + alerts**
+
+Deliverables:
+1. enhanced_email.send_silent_killer_alert(email, url, watch_name,
+   status, status_code, error) method
+2. POST /api/cron/silent-killer-scan endpoint
+   - X-Cron-Secret header required (shared secret)
+   - Iterates charvak_silent_killer_watches where active=true and
+     last_scan_at < now - interval_minutes
+   - Calls silent_killer_run_watch(watch_id) for each due watch
+   - On state change (ok -> fail or fail -> ok), sends alert email
+   - Returns a summary {checked: N, alerted: N}
+3. Render dashboard: new cron job silent-killer-scan
+   - Schedule: */5 * * * * (every 5 minutes)
+   - Command: curl -s -X POST -H "X-Cron-Secret: $CRON_SECRET" <prod-url>/api/cron/silent-killer-scan
+   - Env var: CRON_SECRET on the web service (Render settings)
+4. Frontend: alert timeline UI (last 30 scans per watch, color-coded)
+5. Hero badge: "Live - Continuous Monitoring Enabled" (retire the
+   notify-me button)
+
+**Estimate:** 3-4 hrs. Verification requires either waiting for the cron
+or calling the endpoint manually with the shared secret.
 
 ---
 
-## Recommended next session
+## Quick-wins still queued (any session)
 
-**Session 9 - Silent-Killer real cron (~4-6 hrs)**
-
-The honesty rewrite in Session 7 replaced three misleading claims
-("24/7 monitoring", "Instant alerts", "Auto-hotfix") with a real
-"Notify Me When Continuous Monitoring Ships" button. Session 9 builds
-the real scheduler:
-- Render cron job that runs the scan daily
-- Alert emails via SendGrid on new findings
-- New table for scan history + alert state
-- Frontend dashboard showing scan timeline
-
-**Also queued for Session 9:**
-- #3 PayPal live capture test (5 min, $2.39 + refund)
-- Full doc pass on 4 trackers
-- Hygiene: scripts/_*.py cleanup, git gc, ARCHITECTURE.md static
-  section refresh (still references immutable Cache-Control)
+- #3 PayPal live capture test (~5 min, $2.39 + refund)
+- ARCHITECTURE.md static-assets section refresh (~15 min)
+- scripts/_*.py cleanup (~30 min)
+- Full doc pass on 4 trackers (~30 min)
 
 ---
 
 ## Environment
 
-- HEAD: `abd653d`
+- HEAD: c041328
 - Local Python: 3.11.9 venv
 - Local DB: Postgres 15 at localhost:5432
-- Dev server: `uvicorn main:app --reload --port 8000`
-- Prod: https://www.charvakit.com (Render auto-deploy)
-- Render service: `srv-d9hhljd8nd3s73d2hoeg`
-
----
-
-## Session 8 provenance
-
-Two chat windows:
-1. University patch + Legacy-Shift first attempt (missed credit key
-   anchor — actual cost was 25 not 20, and the route anchor was inside
-   a try block)
-2. Legacy-Shift retry with corrected anchors + commit + push
-
-Both patches verified E2E against `test-register-2026-09-24@example.com`.
+- Dev server: uvicorn main:app --reload --port 8000
+- Prod: https://www.charvakit.com
+- Render service: srv-d9hhljd8nd3s73d2hoeg
+- Backup: C:\projects\Charvak_Complete_Backup_20261002_030453.zip
