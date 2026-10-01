@@ -4891,6 +4891,47 @@ async def api_silent_killer(request: Request):
         return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return products_engine.silent_killer_monitor(data)
 
+@app.post("/api/products/silent-killer/recheck")
+@limiter.limit("60/minute")
+async def api_silent_killer_recheck(request: Request):
+    data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+    require_auth_for_email(request, email)
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "silent_killer_recheck")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+    return products_engine.silent_killer_recheck(data)
+
+@app.get("/api/products/silent-killer/watches/{email}")
+@limiter.limit("120/minute")
+async def api_silent_killer_list_watches(request: Request, email: str):
+    email = (email or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+    require_auth_for_email(request, email)
+    return products_engine.silent_killer_list_watches(email)
+
+@app.get("/api/products/silent-killer/history/{watch_id}")
+@limiter.limit("120/minute")
+async def api_silent_killer_history(request: Request, watch_id: str, email: str = "", limit: int = 10):
+    email = (email or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+    require_auth_for_email(request, email)
+    return products_engine.silent_killer_history(watch_id, email, limit)
+
+@app.delete("/api/products/silent-killer/watch/{watch_id}")
+@limiter.limit("60/minute")
+async def api_silent_killer_delete(request: Request, watch_id: str, email: str = ""):
+    email = (email or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+    require_auth_for_email(request, email)
+    return products_engine.silent_killer_delete_watch(watch_id, email)
+
 @app.post("/api/products/ai-slop/scan")
 @limiter.limit("60/minute")
 async def api_ai_slop(request: Request):
