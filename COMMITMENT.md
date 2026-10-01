@@ -2894,3 +2894,62 @@ deduction. Sample verifications:
 
 No further C7 work remains.
 
+
+---
+
+### FLAGGED — /ai-assessment renders ai-bridge.html (URL/content mismatch) (2026-10-02)
+
+GET /ai-assessment (main.py:6540) renders i-bridge.html with the
+title "AI Career Assessment - Charvak IT Consulting". But ai-bridge.html
+is the AI Bridge product template — no career-assessment flow exists.
+
+**Fix:** Session 10 (Phase 1 of CAREER-ASSESSMENT-PLAN.md) — create
+	emplates/ai-assessment.html and update the route to render it.
+
+**Est:** tracked in the plan doc.
+
+**Verdict:** SCHEDULED — Session 10
+
+
+### FLAGGED — Silent-Killer continuous monitoring (cron + alerts) (2026-10-02)
+
+Session 9a shipped on-demand scanning + watch dashboard. The "Notify Me
+When Continuous Monitoring Ships" button remains on
+/silent-killer for the automatic-scheduled-scan feature.
+
+**Fix:** Session 9b — enhanced_email.send_silent_killer_alert(),
+POST /api/cron/silent-killer-scan (X-Cron-Secret auth), Render cron
+job (manual dashboard config), frontend alert timeline.
+
+**Est:** ~3-4 hrs. Requires Render dashboard access.
+
+**Verdict:** SCHEDULED — Session 9b
+
+
+### FLAGGED — Session 9 quick wins (2026-10-02)
+
+Three deferred items, ~1.5 hrs total:
+
+1. #3 PayPal live capture test (~5-10 min, \.39 charge + refund)
+2. ARCHITECTURE.md static-assets section still says immutable,
+   max-age=1y — needs max-age=3600, must-revalidate
+3. scripts/_*.py cleanup (~30 min — 20+ one-off dev scripts)
+4. Doc pass on 4 trackers (~30 min)
+
+**Verdict:** SCHEDULED — any session
+
+
+### FLAGGED — Python module escape sequences to check (2026-10-02)
+
+During Session 9a, noticed products_engine.py had \u2014 appearing
+inside normal string literals that were being written through a Python
+script. The behavior was correct on this run (the em-dash landed as a
+real U+2014), but the mechanism (Python string escaping through a
+PowerShell here-string into a Python script) is fragile and produced
+two misses earlier in the session (B2 stub anchor, Patch D JS).
+
+**Fix:** standardize on [System.IO.File]::WriteAllText(...) for any
+future multi-line doc or code write, or keep patches under 100 lines
+each. Already documented in this session's workflow.
+
+**Verdict:** documented, no code change needed

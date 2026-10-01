@@ -125,3 +125,51 @@ or calling the endpoint manually with the shared secret.
 - Prod: https://www.charvakit.com
 - Render service: srv-d9hhljd8nd3s73d2hoeg
 - Backup: C:\projects\Charvak_Complete_Backup_20261002_030453.zip
+---
+
+## Session 10-13 Queue — Career Assessment Product
+
+See CAREER-ASSESSMENT-PLAN.md for the full design.
+
+**Phase 1 (Session 10, ~4-5 hrs):**
+Build /api/career-assessment/* + templates/ai-assessment.html.
+Fix /ai-assessment to render the new template (currently it renders
+ai-bridge.html — URL and content mismatch).
+
+**Phase 2 (Session 11, ~5-6 hrs):**
+Add all formats: mcq, coding, sql, system_design, debugging,
+behavioral, case_study, short_answer, numeracy, situational_judgment.
+
+**Phase 3 (Session 12, ~4-6 hrs):**
+Adaptive difficulty + skill gap + recommended learning path.
+
+**Phase 4 (future):**
+Certificates, voice rounds, AI interviewer, employer badges.
+
+---
+
+## Session 9 quick wins (any session, ~1.5 hrs)
+
+Three small cleanup items still queued:
+
+1. #3 PayPal live capture test (~5-10 min) — real \.39 charge + refund
+2. ARCHITECTURE.md static-assets refresh (~15 min) — remove stale
+   immutable, max-age=1y reference
+3. scripts/_*.py cleanup (~30 min) — 20+ one-off dev scripts in root
+4. Doc pass on 4 trackers (~30 min)
+
+---
+
+## Session 9b queue (Silent-Killer cron + alerts, ~3-4 hrs)
+
+Same feature as Session 9a, extends it:
+
+- enhanced_email.send_silent_killer_alert() method
+- POST /api/cron/silent-killer-scan endpoint (X-Cron-Secret auth)
+- Render dashboard cron job (manual config — not in code)
+- Frontend alert timeline
+- Retire the "Notify Me" button
+
+Risk: Render cron config is manual; verification involves waiting for
+the cron to fire or calling the endpoint manually with the shared
+secret. Best done in a fresh window.
