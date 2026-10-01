@@ -137,6 +137,7 @@ class AICreditEngine:
         "ai_localize": 15,
         "ai_generate_contract": 20,
         "ai_analyze_legacy": 25,
+        "legacy_shift_migration": 1000,
         "ai_generate_schema": 15,
         # Session G6 batch 2: marketing + outreach
         "marketing_social_post": 10,

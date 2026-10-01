@@ -56,6 +56,32 @@ echo '&lt;script&gt;var user = ' . json_encode($user) . ';&lt;/script&gt;';
         <div id="lsResult" style="max-height:700px; overflow:auto;"></div>
     </div>
 </div>
+
+<div id="lsMigrationCTA" class="d-none mb-5">
+    <div class="card p-4 shadow-sm border-primary" style="border-width:2px !important;">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <h3 class="as-h4 mb-1">Get Full Migration Plan</h3>
+                <p class="text-muted mb-0">File-by-file rewrite plan, data migration steps, test plan, and rollback strategy. AI-generated from your analysis.</p>
+            </div>
+            <div class="text-end">
+                <div class="mb-2"><strong>1,000 credits</strong> <small class="text-muted">(approx. &#8377;4,999)</small></div>
+                <button id="lsMigBtn" class="btn btn-primary" onclick="getMigrationPlan()">Generate Plan &mdash; 1,000 cr</button>
+            </div>
+        </div>
+        <div id="lsMigError" class="alert alert-danger mt-3 d-none"></div>
+    </div>
+</div>
+
+<div id="lsMigResultWrap" class="d-none mb-5">
+    <div class="card p-4 shadow-sm">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="as-h4 mb-0">Migration Plan</h3>
+            <button class="btn btn-sm btn-outline-secondary" onclick="copyLsMigJson()">Copy JSON</button>
+        </div>
+        <div id="lsMigResult" style="max-height:700px; overflow:auto;"></div>
+    </div>
+</div>
 <script>
 async function analyzeLegacy() {
     const codeEl = document.getElementById('lsCode');
@@ -135,6 +161,9 @@ async function analyzeLegacy() {
         document.getElementById('lsResult').innerHTML = render(j, 0);
         document.getElementById('lsResultWrap').classList.remove('d-none');
         document.getElementById('lsResultWrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        window.__lastLegacyAnalysis = j;
+        window.__lastLegacyCode = code;
+        document.getElementById('lsMigrationCTA').classList.remove('d-none');
         btn.disabled = false;
         btn.textContent = 'Re-analyze (20 cr)';
     } catch (e) {
@@ -156,6 +185,97 @@ function copyLsJson() {
         alert('Copy failed — please select and copy manually.');
     });
 }
+
+async function getMigrationPlan() {
+    const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    const email = localStorage.getItem('userEmail') || '';
+    if (!authToken || !email) {
+        alert('Please log in.');
+        window.location.href = '/login?next=/legacy-shift';
+        return;
+    }
+    if (!confirm('Generate a full file-by-file migration plan?\n\nCost: 1,000 credits (approx. Rs 4,999)')) return;
+
+    const btn = document.getElementById('lsMigBtn');
+    const errEl = document.getElementById('lsMigError');
+    errEl.classList.add('d-none');
+    btn.disabled = true;
+    btn.textContent = 'Generating...';
+
+    try {
+        const r = await fetch('/api/ai/legacy-shift-migration-plan', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authToken,
+            },
+            body: JSON.stringify({
+                email: email,
+                code: window.__lastLegacyCode || '',
+                analysis: window.__lastLegacyAnalysis || {},
+            }),
+        });
+        if (r.status === 401) { window.location.href = '/login?next=/legacy-shift'; return; }
+        if (r.status === 402) {
+            errEl.textContent = 'Not enough credits (1,000 needed). Top up at /ai-credits-pricing';
+            errEl.classList.remove('d-none');
+            btn.disabled = false;
+            btn.textContent = 'Generate Plan \u2014 1,000 cr';
+            return;
+        }
+        const j = await r.json();
+        if (!j.status || j.status !== 'success') {
+            errEl.textContent = j.message || 'Migration plan failed.';
+            errEl.classList.remove('d-none');
+            btn.disabled = false;
+            btn.textContent = 'Generate Plan \u2014 1,000 cr';
+            return;
+        }
+        const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        function render(obj, depth) {
+            depth = depth || 0;
+            if (obj === null || obj === undefined) return '<span class="text-muted">\u2014</span>';
+            if (typeof obj === 'string') return '<p class="mb-2">' + esc(obj).replace(/\n/g, '<br>') + '</p>';
+            if (typeof obj === 'number' || typeof obj === 'boolean') return '<strong>' + esc(obj) + '</strong>';
+            if (Array.isArray(obj)) {
+                if (!obj.length) return '<em class="text-muted">(empty)</em>';
+                return '<ul class="mb-2">' + obj.map(x => '<li>' + render(x, depth+1) + '</li>').join('') + '</ul>';
+            }
+            if (typeof obj === 'object') {
+                const keys = Object.keys(obj);
+                if (!keys.length) return '<em class="text-muted">(empty)</em>';
+                const level = depth === 0 ? 'h5' : (depth === 1 ? 'h6' : 'div');
+                return '<div class="ms-' + (depth > 0 ? '3' : '0') + ' mb-3">' + keys.map(k => {
+                    const val = obj[k];
+                    const label = k.replace(/_/g, ' ').replace(/\b\w/g, ch => ch.toUpperCase());
+                    return '<div class="mb-2"><' + level + ' class="text-primary mb-1">' + esc(label) + '</' + level + '>' + render(val, depth+1) + '</div>';
+                }).join('') + '</div>';
+            }
+            return esc(String(obj));
+        }
+        document.getElementById('lsMigResult').innerHTML = render(j, 0);
+        document.getElementById('lsMigResultWrap').classList.remove('d-none');
+        document.getElementById('lsMigResultWrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        btn.disabled = false;
+        btn.textContent = 'Regenerate Plan \u2014 1,000 cr';
+    } catch (e) {
+        errEl.textContent = 'Network error \u2014 please try again.';
+        errEl.classList.remove('d-none');
+        btn.disabled = false;
+        btn.textContent = 'Generate Plan \u2014 1,000 cr';
+    }
+}
+
+function copyLsMigJson() {
+    const el = document.getElementById('lsMigResult');
+    if (!el) return;
+    navigator.clipboard.writeText(el.innerText || '').then(function() {
+        alert('Copied migration plan.');
+    }).catch(function() {
+        alert('Copy failed \u2014 please select and copy manually.');
+    });
+}
+
 </script>
 {% include 'includes/premium-upsell.html' %}
 {% endblock %}
