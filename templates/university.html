@@ -20,7 +20,7 @@
                 <h3><span data-inr="19999">₹19,999</span>/yr</h3>
                 <small class="text-muted">Up to 100 students</small>
                 <hr>
-                <button class="btn btn-outline-primary btn-sm w-100" onclick="document.getElementById('uniForm').scrollIntoView()">Choose Starter</button>
+                <button class="btn btn-outline-primary btn-sm w-100" onclick="chooseTier('starter')">Choose Starter &mdash; 4,000 cr</button>
             </div>
         </div>
     </div>
@@ -31,7 +31,7 @@
                 <h3><span data-inr="49999">₹49,999</span>/yr</h3>
                 <small>Up to 500 students</small>
                 <hr>
-                <button class="btn btn-light btn-sm w-100" onclick="document.getElementById('uniForm').scrollIntoView()">Choose Growth</button>
+                <button class="btn btn-light btn-sm w-100" onclick="chooseTier('growth')">Choose Growth &mdash; 10,000 cr</button>
             </div>
         </div>
     </div>
@@ -42,14 +42,13 @@
                 <h3><span data-inr="99999">₹99,999</span>/yr</h3>
                 <small class="text-muted">Unlimited students</small>
                 <hr>
-                <button class="btn btn-outline-primary btn-sm w-100" onclick="document.getElementById('uniForm').scrollIntoView()">Choose Enterprise</button>
+                <button class="btn btn-outline-primary btn-sm w-100" onclick="chooseTier('enterprise')">Choose Enterprise &mdash; 20,000 cr</button>
             </div>
         </div>
     </div>
 </div>
 
 <h4 class="as-h5">Register Your University</h4>
-                <h4 class="as-h5">Register Your University</h4>
                 <form onsubmit="registerUniversity(event)">
                     <div class="mb-3"><label class="form-label">University Name</label><input type="text" class="form-control" id="uniName" required></div>
                     <div class="mb-3"><label class="form-label">Admin Email</label><input type="email" class="form-control" id="uniEmail" required></div>
@@ -87,12 +86,86 @@ async function registerUniversity(e) {
     msg.textContent = result.message || 'University registered!';
     msg.style.display = 'block';
 }
-</script>
-<script>
-function registerUniversity(event) {
-    event.preventDefault();
-    // Session G6: feature under development — capture interest instead
-    window.notifyMe('University Portal');
+
+let CURRENT_UNIVERSITY_ID = null;
+let CURRENT_TIER = null;
+
+async function chooseTier(tier) {
+    // Ensure the user is registered first
+    const name = document.getElementById('uniName').value.trim();
+    const email = document.getElementById('uniEmail').value.trim();
+    const location = document.getElementById('uniLocation').value.trim();
+
+    if (!name || !email) {
+        alert('Please fill in the University Name and Admin Email above, then pick a tier.');
+        document.getElementById('uniForm').scrollIntoView({behavior: 'smooth'});
+        return;
+    }
+
+    const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    const userEmail = localStorage.getItem('userEmail') || '';
+    if (!authToken || !userEmail) {
+        alert('Please log in.');
+        window.location.href = '/login?next=/university';
+        return;
+    }
+
+    // Register the university (or get existing)
+    try {
+        const regResp = await fetch('/api/university/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authToken
+            },
+            body: JSON.stringify({name: name, admin_email: email, location: location})
+        });
+        const regResult = await regResp.json();
+        if (regResult.status === 'success' && regResult.university_id) {
+            CURRENT_UNIVERSITY_ID = regResult.university_id;
+        } else {
+            alert(regResult.message || 'Could not register the university.');
+            return;
+        }
+    } catch (e) {
+        alert('Network error: ' + e.message);
+        return;
+    }
+
+    // Now subscribe
+    const credits = tier === 'starter' ? 4000 : (tier === 'growth' ? 10000 : 20000);
+    const priceLabel = tier === 'starter' ? 'Rs 19,999' : (tier === 'growth' ? 'Rs 49,999' : 'Rs 99,999');
+    if (!confirm('Subscribe to ' + tier + ' (' + priceLabel + '/yr)?\n\nCost: ' + credits + ' credits')) return;
+
+    try {
+        const subResp = await fetch('/api/university/subscribe', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authToken
+            },
+            body: JSON.stringify({
+                admin_email: email,
+                university_id: CURRENT_UNIVERSITY_ID,
+                tier: tier
+            })
+        });
+        if (subResp.status === 401) { window.location.href = '/login?next=/university'; return; }
+        if (subResp.status === 402) {
+            alert('Not enough credits for ' + tier + '. Top up at /ai-credits-pricing');
+            return;
+        }
+        const subResult = await subResp.json();
+        if (subResult.status !== 'success') {
+            alert(subResult.message || 'Subscription failed.');
+            return;
+        }
+        const msg = document.getElementById('uniMsg');
+        msg.textContent = subResult.message || 'University subscribed!';
+        msg.style.display = 'block';
+        alert('Success! University ID: ' + CURRENT_UNIVERSITY_ID + '\nTier: ' + tier);
+    } catch (e) {
+        alert('Network error: ' + e.message);
+    }
 }
-</script>
-{% endblock %}
+</script>{% endblock %}
