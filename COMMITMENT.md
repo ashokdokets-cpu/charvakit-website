@@ -2953,3 +2953,56 @@ future multi-line doc or code write, or keep patches under 100 lines
 each. Already documented in this session's workflow.
 
 **Verdict:** documented, no code change needed
+
+---
+
+### FLAGGED — Indian Language AI: assessment questions are generated but never shown (2026-10-02)
+
+Session C fixed the authToken ReferenceError in templates/indian-language-ai.html.
+Both forms now reach the backend. But the Language Assessment flow stops
+at "Assessment Created!"
+
+**The gap:**
+- Backend /api/indian-languages/assessment generates N questions, stores
+  them in charvak_lang_ai_assessments.questions (JSONB), returns only a
+  summary (native_name, total_questions, skill, difficulty).
+- Frontend shows the summary and never renders the questions, never
+  collects answers, never calls /api/indian-languages/submit.
+- The user sees "5 questions created" and no way to answer them.
+
+**The fix:**
+1. Backend: either return questions in the create response, or add
+   GET /api/indian-languages/assessment/{assessment_id}/questions
+   (auth-gated, email match)
+2. Frontend: render questions below the summary
+   - MCQ questions: radio buttons
+   - Free-text questions: textarea
+3. Add "Submit Answers" button that POSTs to /api/indian-languages/submit
+4. Display score + pass/fail badge
+
+**Est:** 30-60 min. Self-contained.
+
+**Verdict:** SCHEDULED — next cleanup session
+
+
+### FLAGGED — Indian Language AI vs Career Assessment: relationship TBD (2026-10-02)
+
+/indian-language-ai and /ai-assessment (the Career Assessment product
+planned in CAREER-ASSESSMENT-PLAN.md) overlap. Both produce skill
+assessments. Questions:
+
+- Should Indian Language AI stay a lightweight translation + quick-
+  assessment tool, separate from the Career Assessment product?
+- Or should Indian Language AI become the "Indian language flavor" of
+  Career Assessment (same engine, different locale)?
+- Or should Career Assessment support all 34 languages via the existing
+  i18n system, making Indian Language AI redundant?
+
+**Recommendation for now:** keep separate. Career Assessment (Session 10)
+uses /api/career-assessment/* with its own UI. Indian Language AI is its
+own thing and just needs its question-display gap closed.
+
+**Revisit:** after Career Assessment Phase 1 ships. If overlap becomes
+painful, consolidate in Session 12+.
+
+**Verdict:** DEFERRED — product decision, revisit after Session 10

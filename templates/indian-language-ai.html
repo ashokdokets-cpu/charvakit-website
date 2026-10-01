@@ -93,9 +93,10 @@ async function createAssessment(e) {
     e.preventDefault();
 
     const email = localStorage.getItem('userEmail') || '';
-    if (!email) {
+    const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    if (!email || !authToken) {
         alert('Please log in to continue');
-        window.location.href = '/login';
+        window.location.href = '/login?next=/indian-language-ai';
         return;
     }
 
@@ -141,9 +142,10 @@ async function translateJobAd(e) {
     e.preventDefault();
 
     const email = localStorage.getItem('userEmail') || '';
-    if (!email) {
+    const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    if (!email || !authToken) {
         alert('Please log in to continue');
-        window.location.href = '/login';
+        window.location.href = '/login?next=/indian-language-ai';
         return;
     }
 
