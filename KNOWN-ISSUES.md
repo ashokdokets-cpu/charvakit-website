@@ -144,3 +144,33 @@
 2. **Fixed items move to "Fixed"** with date + fix reference.
 3. **Session K** is the dedicated bug-cleanup session. **Session I** does the final capstone + tag.
 4. **Keep it in git** so it survives across machines and sessions.
+
+### Open — pattern: frontend handlers reference undefined variables (2026-10-02)
+
+Second instance of this class: 'authToken is not defined' in
+templates/indian-language-ai.html (both createAssessment and
+translateJobAd). Fixed 2026-10-02.
+
+First instance was C7's processToolPayment (fixed 2026-09-27).
+
+Root cause: templates don't share an auth helper, so each form handler
+declares its own email + authToken. Some forgot.
+
+Systemic fix (future session): add a shared getAuthContext() helper in
+base.html that returns {email, token}. Every handler calls it, so a
+ReferenceError can't happen. Grep templates for 'authToken' and 'Bearer'
+to find all call sites.
+
+Verdict: FLAGGED - cleanup candidate
+
+
+### Open — Indian Language AI: questions generated but not displayed (2026-10-02)
+
+Full detail in COMMITMENT.md. The Language Assessment flow shows a
+summary ("5 questions created") and never renders the questions, never
+collects answers, never calls /submit.
+
+Fix: 30-60 min. Backend returns questions or new GET endpoint +
+frontend renders them + wires /submit + shows score.
+
+Verdict: SCHEDULED - next cleanup session
