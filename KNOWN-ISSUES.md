@@ -174,3 +174,72 @@ Fix: 30-60 min. Backend returns questions or new GET endpoint +
 frontend renders them + wires /submit + shows score.
 
 Verdict: SCHEDULED - next cleanup session
+
+---
+
+### Open — PowerShell process-kill leaves stale workers (2026-10-03)
+
+Hit this multiple times during Sessions 9-13:
+
+- `Stop-Process -Name python` runs but a "python" process remains
+- Subsequent curl hits the OLD code even after a "restart"
+- `taskkill /PID X /F` fails with "Process not found" moments later
+- Port 8000 has no listener even though `Get-Process` shows python
+
+Root cause: `--reload` spawns a supervisor + worker. Killing the
+supervisor leaves the worker holding the port. Some windows the
+`Get-Process` snapshot is also stale (process exited between commands).
+
+Fix — always verify after kill:
+
+    Get-Process | Where-Object { $_.ProcessName -eq "python" } | Stop-Process -Force -ErrorAction SilentlyContinue
+    Start-Sleep -Seconds 2
+    Get-Process | Where-Object { $_.ProcessName -eq "python" } | Select-Object Id, ProcessName, Path
+
+If a process remains, kill it explicitly by PID. If it says "not found"
+but still shows, wait 2 seconds and re-check. Never assume the kill
+worked — verify.
+
+Verdict: DOCUMENTED — apply the verify pattern
+
+
+### Open — PowerShell Get-Content displays correct UTF-8 as mojibake (2026-10-03)
+
+Two false alarms during Sessions 13-14 (COMMITMENT.md, CAREER-ASSESSMENT-PLAN.md):
+
+Files displayed as `â€"` (mojibake) in PowerShell's `Get-Content` output,
+but the bytes on disk were clean UTF-8 em-dashes.
+
+Root cause: Windows PowerShell 5.x `Get-Content` uses the console code page
+for output. `[System.IO.File]::ReadAllBytes()` and `ReadAllLines(path, UTF8)`
+show the truth.
+
+Fix — always verify with:
+
+    [System.IO.File]::ReadAllLines("path", [System.Text.Encoding]::UTF8)
+
+Never "fix" apparent mojibake without this check first. The earlier
+em-dash fix attempts might have been display-only, not real disk bugs.
+
+Verdict: DOCUMENTED — never fix mojibake without the byte check
+
+
+### RESOLVED — PayPal credits capture test (2026-10-03, db9e2a1)
+
+The Session B flag (#3 PayPal live capture test) is closed. Full
+sandbox flow verified end-to-end with a US sandbox buyer + US sandbox
+merchant. See COMMITMENT.md for details.
+
+Verdict: RESOLVED
+
+
+### FLAGGED — PAYPAL_MODE should be explicit on Render (2026-10-03)
+
+The new `PAYPAL_MODE` env var defaults to "live" when unset, so Render
+works correctly today. But an explicit value is clearer for ops and
+prevents accidental sandbox routing on production.
+
+Fix: add `PAYPAL_MODE=live` to Render's Environment tab.
+Est: 1 min. Verdict: SCHEDULED — next Render dashboard session
+
+
