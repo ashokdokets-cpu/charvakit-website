@@ -787,3 +787,36 @@ Route picks the right key based on the selected format.
 ---
 
 **Keep this file in sync. It is the roadmap for Sessions 11-13.**
+---
+
+### Session 13 scope boundary (2026-10-03)
+
+Phase 3 deliberately does NOT include (deferred to future sessions):
+
+- **Retake comparison charts** — nice-to-have, add when there's user demand
+- **Certificates / badges** — Phase 4
+- **Live adaptive mid-assessment** — complex (needs per-question state
+  tracking, breaks fairness guarantee between users), deferred
+  indefinitely. Phase 3 uses **cross-assessment adaptation** instead
+  (your last performance informs your next baseline).
+- **Peer benchmarking** — Phase 4
+
+Phase 3 delivers:
+1. Topic tagging on every question (fixed vocabulary, ~8-10 topics
+   per role category)
+2. Skill gap breakdown in complete_assessment response
+3. Cross-assessment adaptive baseline in start_assessment
+   (reads ability_engine, seeds the AI prompt with a difficulty hint)
+4. Ability update on complete_assessment (feeds ability_engine)
+5. Lazy-generated learning path (opt-in endpoint)
+6. Frontend: skill gap bars + learning path card
+
+Dependencies confirmed:
+- ability_engine.py exists (Session C4) with get_ability,
+  get_recommended_difficulty, update_from_assessment
+- charvak_user_ability table exists
+- charvak_courses has 25 real courses with category + level
+
+Open question deferred to Session 14: should the topic vocabulary be
+tunable per industry (e.g. HealthTech Data Scientist vs FinTech Data
+Scientist), or keep it role-only? Recommendation: role-only for now.
