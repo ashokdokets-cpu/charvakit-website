@@ -1,7 +1,7 @@
 # Charvak Architecture
 
-**Last updated:** 2026-09-28
-**Version:** v3.5-session-C-20260928
+**Last updated:** 2026-10-03
+**Version:** v3.5-session-13-20261003
 
 ---
 
@@ -406,7 +406,10 @@ class CachedStaticFiles(StarletteStaticFiles):
     async def get_response(self, path, scope):
         response = await super().get_response(path, scope)
         if response.status_code == 200:
-            response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+            # Session B (f58e63f): revalidate hourly instead of immutable
+            # to fix the ?v= bump footgun. Every JS/CSS edit required
+            # manually bumping ?v= in every template before this change.
+            response.headers["Cache-Control"] = "public, max-age=3600, must-revalidate"
         return response
 
 app.mount("/static", CachedStaticFiles(directory="static"), name="static")
@@ -415,7 +418,7 @@ Razorpay, PayPal, Chart.js, Bootstrap JS → all defer (loads after DOM parse, n
 
 Google Fonts → <link> with preconnect (not @import)
 
-Fonts cached for 1 year
+Fonts cached for 1 year (font files are immutable; JS/CSS revalidate hourly)
 
 Deployment
 Auto-deploy
@@ -561,21 +564,324 @@ Parameterized SQL - no string concatenation in queries
 
 Known weakness: CSP allows unsafe-inline and unsafe-eval (Bootstrap requirement). Hardening would break the site without a refactor.
 
-File Naming Conventions
-*_engine.py - feature module with business logic
+## University Subscriptions (Session 8, v3.5)
 
-*_service.py - supporting service (job, monitor)
+Universities purchase portal access via a credit-based subscription.
+Three tiers, all 365-day validity.
 
-*_manager.py - CRUD manager
+### Tiers
 
-templates/*.html - page templates
+| Tier | Credits | Rupee equivalent |
+|---|---|---|
+| `university_starter` | 4000 | ~Rs 19,999/yr |
+| `university_growth` | 10000 | ~Rs 49,999/yr |
+| `university_enterprise` | 20000 | ~Rs 99,999/yr |
 
-templates/includes/*.html - reusable components
+(1 credit ~= Rs 5, matching the Pro plan rate.)
 
-templates/tools/*.html - AI tool pages
+### Tables
 
-scripts/*.py - dev/ops scripts (not imported by main.py)
+- `charvak_university_subscriptions` (university_id PK, admin_email,
+  tier, price_inr, credits_used, started_at, expires_at)
 
-migrations/*.sql - idempotent SQL migrations
+### Routes
+
+- `POST /api/university/register` - auth-gated (was open before Session 8)
+- `POST /api/university/subscribe` - auth + credits
+
+### Frontend
+
+- `templates/university.html` - 3 tier buttons wired to `chooseTier()`
+- Registers the university first (if new), then subscribes
+- Fix in Session 8: removed a shadowing `notifyMe` script block that
+  hijacked `registerUniversity` in an older template version
+
+### Security note
+
+Session 8 closed an open IDOR: `/api/university/register` accepted any
+`admin_email` with no auth. Now forces `admin_email = caller's email`
+after `require_auth_for_email`.
+
+---
+
+## Legacy-Shift Migration Tier (Session 8, v3.5)
+
+The Legacy-Shift product has two tiers:
+- **Free analysis** (25 cr) - AI identifies vulnerabilities, deps,
+  recommended stack, and migration steps for a code snippet
+- **Full migration plan** (1000 cr, ~Rs 4,999) - file-by-file plan with
+  data migration steps, test plan, rollback strategy, and post-launch
+  checklist
+
+### Table
+
+- `charvak_legacy_shift_reports` (report_id PK, email, code_preview,
+  analysis_json, plan_json, credits_used, created_at)
+
+### Routes
+
+- `POST /api/ai/analyze-legacy` - 25 cr (existing)
+- `POST /api/ai/legacy-shift-migration-plan` - 1000 cr (Session 8)
+
+### Credit key
+
+- `legacy_shift_migration: 1000`
+
+### Frontend
+
+- `templates/legacy-shift.html`
+- The migration CTA appears only after a successful free analysis
+- Renders the plan with the same recursive JSON viewer as the free tier
+
+---
+
+## Silent-Killer Sentinel (Session 9a, v3.5)
+
+Real URL monitoring. Before Session 9a, `products_engine.silent_killer_monitor`
+returned a fake monitor_id and never touched the URL. Session 9a makes
+the free-tier scan real: fetch the URL, record the result, persist a
+watch + a scan history.
+
+### Tables
+
+- `charvak_silent_killer_watches` (watch_id PK, email, url, name,
+  interval_minutes, active, last_scan_at, last_status,
+  last_status_code, last_error, alert_count, created_at)
+- `charvak_silent_killer_scans` (scan_id PK, watch_id, email, url,
+  status_code, response_ms, ok, error, checked_at)
+
+### Engine methods (products_engine.py)
+
+- `_ensure_silent_killer_tables()` - self-healing DDL
+- `_check_url(url)` - requests.get with timeout=10, allow_redirects=True.
+  Never raises. 4xx/5xx = ok=False, connection errors = ok=False with
+  error string.
+- `silent_killer_monitor(data)` - creates watch + first scan
+- `silent_killer_recheck(data)` - re-check by watch_id
+- `silent_killer_list_watches(email)` - dashboard
+- `silent_killer_history(watch_id, email, limit)` - scan log
+- `silent_killer_delete_watch(watch_id, email)` - removes watch + scans
+- `silent_killer_run_watch(watch_id)` - cron-facing (used in Session 9b)
+
+### Routes
+
+- `POST /api/products/silent-killer/monitor` - 15 cr (setup)
+- `POST /api/products/silent-killer/recheck` - 5 cr
+- `GET /api/products/silent-killer/watches/{email}` - auth
+- `GET /api/products/silent-killer/history/{watch_id}` - auth
+- `DELETE /api/products/silent-killer/watch/{watch_id}` - auth
+
+### Credit keys
+
+- `product_silent_killer: 15`
+- `silent_killer_recheck: 5`
+
+### Frontend
+
+- `templates/silent-killer.html` - hero badge now says "Live - On-Demand
+  Scans Working"
+- "Your Monitors" panel below the setup form, loads on DOMContentLoaded
+- `loadWatches` / `recheckWatch` / `toggleHistory` / `deleteWatch`
+- XSS-safe rendering via `_skEsc()`
+
+### Still pending (Session 9b)
+
+- Render cron that runs checks on schedule
+- Email alerts on state change
+- The "Notify Me When Continuous Monitoring Ships" button is still there
+
+---
+
+## Indian Language AI - real MCQ scoring (Sessions 20-21, v3.5)
+
+The Language Assessment flow on `/indian-language-ai` used to be
+half-built: the backend generated questions and stored them, but the
+frontend only showed a summary. Session 20-21 made it a real product.
+
+### What changed
+
+- Free-text questions -> MCQ with 4 options and a correct index
+- Real deterministic scoring (compare user's pick to correct_index)
+- 10/15/20 question selector
+- `correct_index` stripped from the frontend response (cheat prevention)
+- Server-side option shuffle: even if the AI always put the right
+  answer at index 0, users see varied positions
+- Auth + email-match on `/api/indian-languages/submit` (was open)
+- Static fallback replaced: old catalog had mojibake in 12 languages
+
+### Credit key
+
+- `indian_language_assessment: 10`
+
+### Frontend
+
+- `templates/indian-language-ai.html`
+- Radio buttons per question, per-question progress badge
+- Score + correct_count display
+
+### One lesson
+
+The old scoring was `len(answers) * 30 + 10` - it counted answers,
+not correctness. Submitting junk gave 100%. Fixed in Session 21.
+
+---
+
+## Career Assessment (Sessions 10-13, v3.5)
+
+A dedicated career readiness product at `/ai-assessment`. Calibrated
+to (role x industry x level). Ships as 8 formats across 3 phases.
+
+### Phase 1 (Session 10, MCQ only)
+
+- New engine: `career_assessment_engine.py`
+- Catalog: 106 roles x 66 industries x 7 levels
+- Tables:
+  - `charvak_career_assessments` (assessment_id PK, email, role,
+    industry, level, format, size, num_questions, questions_json,
+    status, score, passed, correct_count, learning_path_json,
+    started_at, completed_at)
+  - `charvak_career_assessment_answers` (answer_id PK, assessment_id,
+    question_index, selected_index, is_correct, answer_text, ai_score,
+    ai_feedback, answered_at, UNIQUE(assessment_id, question_index))
+- 6 routes under `/api/career-assessment/*`
+- `/ai-assessment` now renders `templates/ai-assessment.html`
+  (was rendering `ai-bridge.html` - the URL/content mismatch flagged
+  in Session 9)
+
+### Phase 2a (Session 11, 7 more formats)
+
+- 8 total formats: mcq, short_answer, numeracy, situational_judgment,
+  behavioral, system_design, debugging, case_study
+- 2 more (coding, sql) are shown but disabled - they need a real
+  execution sandbox (Judge0/Piston), planned for Session 14
+- Per-format prompt builders, normalizers, and scoring:
+  - Deterministic: mcq, numeracy, SJT, short_answer (keyword match)
+  - AI batch-scored: behavioral, system_design, debugging, case_study
+- AI batch scoring: ONE OpenAI call handles all answers of one
+  AI-scored format (~$0.005 per assessment)
+- Credit keys (2 sets):
+  - Deterministic: `career_assessment_quick: 15`, `_standard: 25`,
+    `_full: 35`
+  - AI-scored: `career_assessment_ai_quick: 20`, `_standard: 30`,
+    `_full: 40`
+- Frontend: format picker, per-format rendering (radio / textarea /
+  number / best-worst pairs / code block), per-question breakdown
+
+### Phase 3 (Session 13, adaptive + skill gap + learning paths)
+
+- **Topic tagging**: 7 role categories x 8 topics each
+  (`TOPIC_VOCABULARY`). AI tags every question with 1-2 topics from
+  the vocabulary at generation time.
+- **Skill gap**: `_aggregate_skill_gap(questions, scored)` groups by
+  topic. Blended score = (binary_correct_pct + avg_ai_score_pct) / 2.
+  Status: strong (>=80), mixed (55-79), weak (<55). Weakest-first.
+- **Cross-assessment adaptive baseline**: `_baseline_hint(email, role,
+  industry, fmt)` reads `ability_engine.get_ability`. Elo bands:
+  <950 foundation-first, 950-1050 standard, >=1050 challenge. Injected
+  into the prompt via `_context_header` ADAPTIVE HINT block.
+  Response includes `baseline_used` / `ability_before` / `prior_attempts`.
+- **Ability update on complete**: `results_system.record_assessment_result`
+  with `skill=f"career_{fmt}"` triggers the internal
+  `ability_engine.update_from_assessment` call. First real use of
+  ability_engine since Session C4.
+- **AI-generated learning path**: lazy + cached in
+  `learning_path_json`. `_ai_generate_learning_path` matches
+  `charvak_courses` from the 25-course catalog, curates external
+  resources, generates a 2-4 week plan.
+
+### Route: learning path
+
+- `GET /api/career-assessment/learning-path/{assessment_id}` - auth,
+  free (bonus value; no credits charged). Cached after first generation.
+
+### Scope boundaries (Phase 3 deliberately does NOT include)
+
+- Retake comparison charts
+- Certificates / badges (Phase 4)
+- Live mid-assessment adaptation (deferred indefinitely)
+- Peer benchmarking (Phase 4)
+
+### Still pending (Session 14)
+
+- Phase 2b: coding + SQL via Judge0 sandbox
+- Difficulty-aware ability update (pass `difficulty=` to
+  `ability_engine.update_from_assessment` based on `level_key`)
+- Catalog coverage for niche roles (no frontend System Design course
+  exists in `charvak_courses`)
+
+### Reference
+
+Full plan in `CAREER-ASSESSMENT-PLAN.md`.
+
+---
+
+## File Naming Conventions
+
+### Python modules
+
+- `*_engine.py` - feature module with business logic
+  - Notables: `career_assessment_engine.py`, `products_engine.py`,
+    `ai_credit_engine.py`, `indian_language_ai.py`, `payment_engine.py`
+- `*_service.py` - supporting service (job, monitor)
+- `*_manager.py` - CRUD manager
+- `main.py` - FastAPI app (~10,000 lines; all routes)
+- `auth.py` - registration, login, tokens
+- `database.py` - DB connection + user CRUD
+- `ability_engine.py` - Elo-based adaptive difficulty (career assessment)
+- `results_system.py` - cross-product results feed (feeds `/my-results`)
+
+### Templates
+
+- `templates/*.html` - page templates
+- `templates/includes/*.html` - reusable components
+- `templates/tools/*.html` - AI tool pages
+
+### Scripts and migrations
+
+- `scripts/*.py` - dev/ops scripts (not imported by `main.py`)
+- `migrations/*.sql` - idempotent SQL migrations
+
+---
+
+## Environment Variables (production, Render)
+
+Required on Render and in local `.env`:
+
+| Var | Purpose |
+|---|---|
+| `DATABASE_URL` | Render Postgres internal URL |
+| `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` | Razorpay live credentials |
+| `RAZORPAY_WEBHOOK_SECRET` | HMAC for `/webhook/razorpay` |
+| `PAYPAL_CLIENT_ID` / `PAYPAL_CLIENT_SECRET` | PayPal live credentials |
+| `PAYPAL_WEBHOOK_ID` | Signature verification for `/webhook/paypal` |
+| `PAYPAL_MODE` | `live` (default) or `sandbox`. Added Session 9; defaults to `live` when unset |
+| `SENDGRID_API_KEY` | Transactional email |
+| `OPENAI_API_KEY` | All AI features |
+| `ELEVENLABS_API_KEY` | Voice features (Versant, TTS) |
+| `SECRET_KEY` | Session/CSRF, 64 chars |
+| `SITE_URL` | `https://www.charvakit.com` |
+| `ADMIN_EMAIL` / `HR_EMAIL` | Admin account emails |
+
+### Dev overrides (added Session 9)
+
+- `/api/region?country=US` - force region for a request
+  (e.g. to test PayPal on a local dev machine with an India IP)
+- `/api/region?currency=USD` - force currency only
+- Frontend `currency-utils.js` reads `?country=` from the page URL and
+  passes it through, so `http://localhost:8000/ai-credits-pricing?country=US`
+  works end-to-end
+
+### Sandbox testing note
+
+To test the PayPal flow locally without real money:
+1. Set `PAYPAL_MODE=sandbox` in `.env`
+2. Set `PAYPAL_CLIENT_ID` + `PAYPAL_CLIENT_SECRET` to a sandbox app's
+   credentials (US merchant recommended for USD transactions)
+3. Log in with a sandbox buyer account at
+   `https://www.sandbox.paypal.com`
+4. Prod is unaffected: Render has its own env vars; the local `.env`
+   is gitignored
+
+---
 
 Keep in sync with MASTER-REFERENCE.md.
