@@ -1,175 +1,123 @@
 # Session Context - Charvak
 
-**HEAD:** c041328
-**Last updated:** 2026-10-02 (Session 9a - Silent-Killer real monitoring shipped)
-**Version:** v3.5-session-9a-20261002
+**HEAD:** 585f21
+**Last updated:** 2026-10-03 (Session 13 - Career Assessment Phase 3 shipped)
+**Version:** 3.5-session-13-20261003
 
 ---
 
 ## Where we are
 
-Session 9a shipped the Silent-Killer real monitoring foundation. The
-stub that returned fake monitor_ids is gone; the free scan now actually
-fetches URLs, records results, and persists both a watch and a scan
-history. Users have a real "Your Monitors" dashboard.
+Session 13 shipped Career Assessment Phase 3: adaptive difficulty,
+skill gap analysis, and AI-generated learning paths. The product is
+now a real career coaching tool, not just a quiz.
 
-**Commit this session:**
-- c041328 feat(silent-killer): real on-demand scan + watch dashboard
+**Commits this session:**
+- `482d653` docs: Session 13 plan + scope boundary
+- `fbc5852` docs: flag difficulty-aware ability update for Session 14
+- `a585f21` feat(career-assessment): Session 13 Phase 3
 
-### Shipped this session
+### Shipped
 
-**Backend:**
-- Migration 20261002_silent_killer.sql
-  - charvak_silent_killer_watches (watch_id PK, email, url, name,
-    interval_minutes, active, last_scan_at, last_status,
-    last_status_code, last_error, alert_count, created_at)
-  - charvak_silent_killer_scans (scan_id PK, watch_id, email, url,
-    status_code, response_ms, ok, error, checked_at)
-- New credit key: silent_killer_recheck = 5
-- products_engine.py:
-  - _ensure_silent_killer_tables() self-healing DDL
-  - _check_url(url) - requests.get(timeout=10, allow_redirects=True).
-    Never raises. Returns {ok, status_code, response_ms, error}.
-  - silent_killer_monitor(data) - real impl. Creates watch + first scan
-  - silent_killer_recheck(data) - re-check by watch_id (email match)
-  - silent_killer_list_watches(email) - dashboard
-  - silent_killer_history(watch_id, email, limit) - scan log
-  - silent_killer_delete_watch(watch_id, email) - removes watch + scans
-  - silent_killer_run_watch(watch_id) - cron-facing (Session 9b)
-- main.py: 4 new routes (all auth + email-match)
-  - POST /api/products/silent-killer/recheck (5 cr)
-  - GET /api/products/silent-killer/watches/{email}
-  - GET /api/products/silent-killer/history/{watch_id}
-  - DELETE /api/products/silent-killer/watch/{watch_id}
+**1. Topic tagging (7 role categories x 8 topics each):**
+- Every question tagged with 1-2 topics at generation time
+- Topics flow from prompt -> AI -> normalizer -> API response -> frontend
 
-**Frontend (templates/silent-killer.html):**
-- Hero badge: Preview -> Live - On-Demand Scans Working
-- New "Your Monitors" panel with per-watch rows
-- loadWatches() / recheckWatch() / toggleHistory() / deleteWatch()
-- Auto-loads on DOMContentLoaded
-- XSS-safe _skEsc() rendering
+**2. Skill gap aggregation:**
+- `_aggregate_skill_gap` groups answers by topic
+- Blended score: (binary_correct_pct + avg_ai_score_pct) / 2
+- Status: strong (>=80), mixed (55-79), weak (<55)
+- Weakest-first sort in the response
+
+**3. Cross-assessment adaptive baseline:**
+- `_baseline_hint` reads ability_engine on /start
+- Elo bands: <950 foundation-first, 950-1050 standard, >=1050 challenge
+- Hint injected into prompt via _context_header ADAPTIVE HINT block
+- Response includes baseline_used / ability_before / prior_attempts
+- Frontend shows a badge when baseline_used != "baseline"
+
+**4. Ability engine integration (first real use since C4):**
+- `results_system.record_assessment_result(skill=f"career_{fmt}")` triggers
+  the internal ability_engine.update_from_assessment call
+- Row created on first /complete
+
+**5. AI-generated learning path:**
+- Lazy-loaded, cached in `charvak_career_assessments.learning_path_json`
+- One OpenAI call: matches charvak_courses from the 25-course catalog,
+  curates external resources, generates 2-4 week plan
+- Route: GET /api/career-assessment/learning-path/{assessment_id}
+- Free (bonus value; no credits charged)
 
 ### Verified E2E
 
-test-register-2026-09-24@example.com:
+Data Scientist / HealthTech / Mid, MCQ, 10 questions:
+- baseline_used=baseline, topics present on every question
+- 5/10 correct: score 50%, skill_gap 8 topics (6 weak/mixed, 2 strong)
+- Learning path: 3 real courses (Data Science & ML, Python for Data
+  Science, SQL & Database), 3 external resources (Coursera, Udacity),
+  4-week plan
+- Second start: baseline_used=standard, prior_attempts=1
 
-| Step | Result |
+### Scope boundaries (documented)
+
+Phase 3 does NOT include:
+- Retake comparison charts (future)
+- Certificates/badges (Phase 4)
+- Live mid-assessment adaptation (deferred)
+- Peer benchmarking (Phase 4)
+
+### Flagged for Session 14
+
+1. **difficulty-aware ability update** - ability_engine supports
+   difficulty= kwarg but nothing passes it. Fix: map level_key to
+   difficulty_value (intern=600, mid=1000, senior=1400...).
+   Est ~30 min.
+2. **catalog coverage for niche roles** - no frontend System Design
+   course exists in charvak_courses. Fix: expand catalog or refine
+   matching. Est varies.
+
+---
+
+## Recommended next session (Session 14)
+
+Three options:
+
+**Option A - Session 14: Career Assessment Phase 2b (coding + SQL)**
+Judge0 integration. Biggest remaining feature. Requires Judge0 API key.
+~1-2 sessions.
+
+**Option B - Session 9 quick wins** (~1.5 hrs):
+- PayPal live capture test (.39 + refund) - deferred since Session B
+- ARCHITECTURE.md static-assets refresh
+- Doc pass on 4 trackers
+- KNOWN-ISSUES: PowerShell process-kill + CRLF gotchas
+
+**Option C - Close-out Session 13 fully + backup, then pick A or B later**
+
+Recommendation: Option B first (clears nagging flags), then Session 14
+(Phase 2b) with full attention.
+
+---
+
+## Career Assessment product status
+
+| Phase | Status |
 |---|---|
-| Monitor example.com | MON-AC1732DCF7, 200 in 755ms, ok=true, 15 cr |
-| Monitor httpbin /status/500 | MON-160D66DB70, 500, ok=false, 15 cr |
-| Monitor dead-DNS URL | MON-4C4F3FE6F9, ok=false (ConnectionError), saved anyway, 15 cr |
-| Recheck good watch | 639ms, second scan, 5 cr |
-| History | 2 scans listed |
-| Delete | watch + 1 scan removed |
-| Auth mismatch | 403 |
-| Balance | 14975 -> 14925 (exactly -50) |
+| Phase 1 (MCQ + catalog + persistence) | Shipped 2026-10-02 |
+| Phase 2a (7 more formats) | Shipped 2026-10-02 |
+| Phase 3 (adaptive + skill gap + learning paths) | Shipped 2026-10-03 |
+| Phase 2b (coding + SQL via Judge0) | Session 14 |
+| Phase 4 (certs, badges, benchmarking) | Future |
 
-DB confirmed:
-- ('MON-AC1732DCF7', 'https://example.com', 'ok', 200, None)
-- ('MON-160D66DB70', 'https://httpbin.org/status/500', 'fail', 500, 'HTTP 500')
-
-### What's NOT shipped yet
-
-- No cron runs the checks automatically. The "Notify Me When Continuous
-  Monitoring Ships" button on the page still exists for that reason.
-- No email alerts on state change.
-
-Session 9b will add: enhanced_email.send_silent_killer_alert(),
-POST /api/cron/silent-killer-scan (X-Cron-Secret auth), and a Render
-dashboard cron job iterating silent_killer_run_watch().
-
----
-
-## Recommended next session (Session 9b, ~3-4 hrs)
-
-**Silent-Killer cron + alerts**
-
-Deliverables:
-1. enhanced_email.send_silent_killer_alert(email, url, watch_name,
-   status, status_code, error) method
-2. POST /api/cron/silent-killer-scan endpoint
-   - X-Cron-Secret header required (shared secret)
-   - Iterates charvak_silent_killer_watches where active=true and
-     last_scan_at < now - interval_minutes
-   - Calls silent_killer_run_watch(watch_id) for each due watch
-   - On state change (ok -> fail or fail -> ok), sends alert email
-   - Returns a summary {checked: N, alerted: N}
-3. Render dashboard: new cron job silent-killer-scan
-   - Schedule: */5 * * * * (every 5 minutes)
-   - Command: curl -s -X POST -H "X-Cron-Secret: $CRON_SECRET" <prod-url>/api/cron/silent-killer-scan
-   - Env var: CRON_SECRET on the web service (Render settings)
-4. Frontend: alert timeline UI (last 30 scans per watch, color-coded)
-5. Hero badge: "Live - Continuous Monitoring Enabled" (retire the
-   notify-me button)
-
-**Estimate:** 3-4 hrs. Verification requires either waiting for the cron
-or calling the endpoint manually with the shared secret.
-
----
-
-## Quick-wins still queued (any session)
-
-- #3 PayPal live capture test (~5 min, $2.39 + refund)
-- ARCHITECTURE.md static-assets section refresh (~15 min)
-- scripts/_*.py cleanup (~30 min)
-- Full doc pass on 4 trackers (~30 min)
+Full plan in CAREER-ASSESSMENT-PLAN.md.
 
 ---
 
 ## Environment
 
-- HEAD: c041328
+- HEAD: `a585f21`
 - Local Python: 3.11.9 venv
 - Local DB: Postgres 15 at localhost:5432
-- Dev server: uvicorn main:app --reload --port 8000
+- Dev server: `uvicorn main:app --reload --port 8000`
 - Prod: https://www.charvakit.com
-- Render service: srv-d9hhljd8nd3s73d2hoeg
-- Backup: C:\projects\Charvak_Complete_Backup_20261002_030453.zip
----
-
-## Session 10-13 Queue — Career Assessment Product
-
-See CAREER-ASSESSMENT-PLAN.md for the full design.
-
-**Phase 1 (Session 10, ~4-5 hrs):**
-Build /api/career-assessment/* + templates/ai-assessment.html.
-Fix /ai-assessment to render the new template (currently it renders
-ai-bridge.html — URL and content mismatch).
-
-**Phase 2 (Session 11, ~5-6 hrs):**
-Add all formats: mcq, coding, sql, system_design, debugging,
-behavioral, case_study, short_answer, numeracy, situational_judgment.
-
-**Phase 3 (Session 12, ~4-6 hrs):**
-Adaptive difficulty + skill gap + recommended learning path.
-
-**Phase 4 (future):**
-Certificates, voice rounds, AI interviewer, employer badges.
-
----
-
-## Session 9 quick wins (any session, ~1.5 hrs)
-
-Three small cleanup items still queued:
-
-1. #3 PayPal live capture test (~5-10 min) — real \.39 charge + refund
-2. ARCHITECTURE.md static-assets refresh (~15 min) — remove stale
-   immutable, max-age=1y reference
-3. scripts/_*.py cleanup (~30 min) — 20+ one-off dev scripts in root
-4. Doc pass on 4 trackers (~30 min)
-
----
-
-## Session 9b queue (Silent-Killer cron + alerts, ~3-4 hrs)
-
-Same feature as Session 9a, extends it:
-
-- enhanced_email.send_silent_killer_alert() method
-- POST /api/cron/silent-killer-scan endpoint (X-Cron-Secret auth)
-- Render dashboard cron job (manual config — not in code)
-- Frontend alert timeline
-- Retire the "Notify Me" button
-
-Risk: Render cron config is manual; verification involves waiting for
-the cron to fire or calling the endpoint manually with the shared
-secret. Best done in a fresh window.
+- Render service: `srv-d9hhljd8nd3s73d2hoeg`
