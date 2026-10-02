@@ -1,12 +1,12 @@
 # CHARVAKIT.COM - MASTER REFERENCE
 ## Charvak IT Consulting Pvt Ltd
-### Last updated: September 30, 2026 (Session 4 - C7 AuditBot + Lock-In Breaker paid tiers shipped)
+### Last updated: October 3, 2026 (Session 13 - Career Assessment Phase 3 + PayPal sandbox test)
 
-**HEAD:** `6fa14d1`
+**HEAD:** `5acefdb`
 **Live:** https://www.charvakit.com
 **Resume here:** see `SESSION-CONTEXT.md` (one-file state snapshot for fresh chat windows)
 **Backlog:** see `OUTSTANDING-WORK-INVENTORY.md` (master list of remaining work)
-**Version:** v3.5-session-B2-20260929
+**Version:** v3.5-session-13-20261003
 
 ### Reference Documents
 
@@ -17,6 +17,52 @@
 - **`SESSION-CONTEXT.md`** — One-file resume pointer for fresh chat windows.
 - **`KNOWN-ISSUES.md`** — Bug registry (fixed + open, categorized).
 - **`TIER3-PERSISTENCE-PROJECT.md`** — Persistence tracking for the 62-engine project.
+
+---
+
+## SESSION 2026-10-02/03 - Sessions 8-13 + PayPal sandbox test
+
+**Commits:** `2d600f3`, `abd653d`, `f42a607`, `dac60a8`, `c041328`, `69e3daa`,
+`5946ec3`, `86d1653`, `e9b30ab`, `94ab7e1`, `482d653`, `fbc5852`, `a585f21`,
+`6c7632a`, `db9e2a1`, `e27f052`, `5acefdb`, `a8f5e59`, `35e1954`, `4961c26`
+
+### Shipped
+
+**Session 8 — University + Legacy-Shift + C7 17/17**
+- University subscriptions (3 tiers: starter/growth/enterprise)
+- Legacy-Shift Rs 4,999 migration tier
+- C7 paid-tier sweep completed 17/17
+
+**Session 9a — Silent-Killer Sentinel**
+- Real URL monitoring (was a stub returning fake monitor ids)
+- `charvak_silent_killer_watches` + `charvak_silent_killer_scans`
+- 7 engine methods, 4 routes, dashboard
+
+**Session 9 quick wins — PayPal sandbox**
+- `payment_engine.py` gained `PAYPAL_MODE` env var + `_paypal_base()`
+  helper. Defaults to `live`.
+- `/api/region` accepts `?country=` / `?currency=` dev override
+- Verified the full PayPal capture flow end-to-end with sandbox
+  credentials: order -> approval -> capture -> credits -> idempotency
+
+**Sessions 10-13 — Career Assessment (3 phases)**
+- Phase 1: new `career_assessment_engine.py`, 106 roles, MCQ only
+- Phase 2a: 7 more formats (short_answer, numeracy, situational_judgment,
+  behavioral, system_design, debugging, case_study)
+- Phase 3: topic tagging, skill gap, cross-assessment adaptive
+  difficulty via `ability_engine`, AI-generated learning paths
+- 2 formats (coding, sql) still disabled pending Judge0 sandbox
+
+**Session 21 — Indian Language AI MCQ scoring**
+- Real deterministic scoring (was counting answers, not correctness)
+- 10/15/20 question selector, option shuffle
+- Auth + email match on `/api/indian-languages/submit`
+
+**Session 13 doc pass**
+- ARCHITECTURE.md refreshed (5 sessions of new sections)
+- KNOWN-ISSUES: PowerShell process-kill + mojibake display gotchas
+- OUTSTANDING-WORK-INVENTORY: sessions 8-13 closures + follow-ups
+- STATUS.md: Session 13 entry
 
 ---
 
@@ -121,6 +167,7 @@ RAZORPAY_KEY_SECRET
 RAZORPAY_WEBHOOK_SECRET (Fix C)
 PAYPAL_CLIENT_ID
 PAYPAL_CLIENT_SECRET
+PAYPAL_MODE (live | sandbox; defaults to live)
 SENDGRID_API_KEY
 OPENAI_API_KEY
 ELEVENLABS_API_KEY
@@ -147,7 +194,7 @@ text
 
 ---
 
-## ENGINES (32+)
+## ENGINES (33+)
 
 Core: payment, kyc, escrow, referral, badge, blog, chatbot, sso,
 micro_internship, training, interview_prep, job_board,
@@ -160,6 +207,12 @@ Data-backed: `ai_credit_engine`, `email_verification`, `ai_courses`, `ai_courses
 ---
 
 ## FEATURES
+
+- **Career Assessment** (v3.5, Sessions 10-13): 8 formats, 106 roles x 66 industries x 7 levels, adaptive difficulty, skill gap, AI-generated learning paths at `/ai-assessment`
+- **University Portal** (v3.5, Session 8): 3 paid tiers, credit-based subscriptions
+- **Silent-Killer Sentinel** (v3.5, Session 9a): real URL monitoring
+- **Legacy-Shift Migration Tier** (v3.5, Session 8): Rs 4,999 plan
+- **Indian Language AI** (v3.5, Session 21): real MCQ scoring
 
 - 16 AI Products + 12 AI Tools
 - NA Module (17 visas, 6 files)
@@ -211,6 +264,13 @@ Data-backed: `ai_credit_engine`, `email_verification`, `ai_courses`, `ai_courses
 | `charvak_skill_gaps` | skill gap analysis |
 | `charvak_synced_users` | Dokets RB sync |
 | `charvak_synced_applications` | Dokets RB sync |
+
+| `charvak_career_assessments` | Career Assessment parent rows (role x industry x level, questions_json, learning_path_json) |
+| `charvak_career_assessment_answers` | Per-question answers (idempotent per assessment+question_index) |
+| `charvak_university_subscriptions` | University portal subscriptions (starter/growth/enterprise) |
+| `charvak_legacy_shift_reports` | Legacy-Shift migration plans (analysis_json + plan_json) |
+| `charvak_silent_killer_watches` | URL monitor watches |
+| `charvak_silent_killer_scans` | URL scan history per watch |
 
 ### VouchAI-owned tables (shared DB, do not touch)
 
