@@ -562,3 +562,228 @@ When starting Session 10, paste this:
 
 **Keep this file in sync as the product evolves. It is the source of
 truth for Sessions 10-13.**
+---
+
+## Phase Split (updated 2026-10-02)
+
+Phase 2 was originally one session. It's now split because coding and
+SQL require real execution sandboxes that deserve their own focused
+session.
+
+### Phase 2a (Session 11, this session)
+
+Seven formats that don't need code execution:
+
+| Format | Question shape | Answer shape | Scoring |
+|---|---|---|---|
+| short_answer | {q, expected_answer, keywords} | 1-3 sentence text | AI-near-match |
+| numeracy | {q, correct_number, tolerance} | number | Exact / tolerance |
+| situational_judgment | {scenario, options, best_index, worst_index} | choice pair | Deterministic |
+| behavioral | {prompt, rubric_star} | free-text STAR | AI batch-scored |
+| system_design | {prompt, rubric} | free-text | AI batch-scored |
+| debugging | {buggy_code, correct_fix_summary} | free-text | AI batch-scored |
+| case_study | {scenario, rubric} | free-text | AI batch-scored |
+
+**UX:** single-format per assessment. User picks one format at Step 1,
+does N questions of that format, gets scored.
+
+**Scoring:** one OpenAI call at /complete returns per-answer scores
+for all answers. Batch AI scoring ~= 0.01-0.02 USD per assessment.
+
+**Credit model:** a multiplier applies for AI-scored formats since
+they cost more at scoring time. Recommended:
+- Deterministic formats (mcq, numeracy, SJT, short_answer): 15 cr (quick)
+- AI-scored formats (behavioral, system_design, debugging, case_study): 20 cr (quick)
+
+Sizes scale linearly: standard = 1.5x, full = 2x.
+
+### Phase 2b (Session 12, separate)
+
+Two formats that need a real execution sandbox:
+
+| Format | Needs |
+|---|---|
+| coding | External executor (Judge0 or Piston). Real code, run against test cases. |
+| sql | Sandbox DB (e.g. a fresh Postgres schema per request). Run query, compare output. |
+
+**Options:**
+1. Judge0 hosted API - quick to integrate, has a free tier
+2. Piston self-hosted - no vendor lock, but needs infra
+3. Custom Docker sandbox on Render - most control, most work
+
+Recommendation: Judge0 hosted for Phase 2b. It's a 1-day integration,
+handles the security (they run code in isolated containers), and gives
+us language coverage for Python, JS, Java, C++, Go, etc.
+
+### Phase 3 (Session 13+)
+
+- Adaptive difficulty (uses ability_engine from C4)
+- Skill gap analysis per format
+- Recommended learning path (maps weak topics to charvak_courses)
+
+### Phase 4 (future)
+
+- Certificates, voice rounds, employer badges, peer benchmarking
+- Multi-format assessments (all formats in one session)
+- Live mock interview mode
+
+---
+
+## Format Catalog (Phase 2a)
+
+The catalog becomes richer. Each format describes:
+
+- key - machine name
+- label - display name
+- scored_by - ai | deterministic | hybrid
+- available - bool (Phase 2a -> some are True, coding/sql are False)
+- question_count - default per size
+- credit_multiplier - 1.0 for deterministic, 1.33 for AI-scored
+
+Formats available in Phase 2a:
+- mcq (Phase 1)
+- short_answer
+- numeracy
+- situational_judgment
+- behavioral
+- system_design
+- debugging
+- case_study
+
+Formats shown but disabled (Phase 2b):
+- coding
+- sql
+
+The frontend shows the disabled formats greyed out with a "Coming soon"
+tooltip so users know they're planned.
+
+---
+
+## Backend Architecture (Phase 2a)
+
+### New methods in career_assessment_engine.py
+
+- _generate_format_batch(format_key, role, industry, level, count)
+  - dispatches to per-format prompt builders
+- _build_prompt_for_format(format_key, ...)
+  - one prompt template per format
+- _score_deterministic(format_key, question, answer)
+  - handles numeracy, SJT, short_answer (keyword match)
+- _score_ai_batch(format_key, questions, answers)
+  - one OpenAI call for all answers of one AI-scored format
+- _shuffle_mcq_options - kept for MCQ
+- _shuffle_sjt_options - new, for SJT (shuffles scenario options
+  while tracking best_index / worst_index)
+
+### Per-format question shapes
+
+The questions_json column holds an array of dicts. The shape varies
+by format. Frontend renders based on the format field of the
+assessment.
+
+- mcq: {q, options: [4], correct_index}
+- short_answer: {q, expected_answer, keywords: [...]}
+- numeracy: {q, correct_number, tolerance}
+- situational_judgment: {scenario, options: [5], best_index, worst_index}
+- behavioral: {prompt, rubric_star: {situation, task, action, result}}
+- system_design: {prompt, rubric: [criteria]}
+- debugging: {buggy_code, language, correct_fix_summary, bug_class}
+- case_study: {scenario, questions: [sub-questions], rubric}
+
+### Answer shapes stored
+
+charvak_career_assessment_answers currently has selected_index INTEGER.
+For text formats we need a text field. Migration:
+
+    ALTER TABLE charvak_career_assessment_answers
+        ADD COLUMN IF NOT EXISTS answer_text TEXT,
+        ADD COLUMN IF NOT EXISTS ai_score INTEGER,
+        ADD COLUMN IF NOT EXISTS ai_feedback TEXT;
+
+Deterministic formats keep using selected_index + is_correct.
+AI-scored formats use answer_text + ai_score (0-100).
+The overall score is a weighted average across questions.
+
+### Scoring aggregation
+
+For each format, questions contribute:
+- Deterministic: 0 or 100 per question (binary)
+- AI-scored: 0-100 per question (continuous)
+- Overall = sum(per_question_score) / total_questions
+
+Passing threshold stays at 70.
+
+---
+
+## Frontend Architecture (Phase 2a)
+
+### Step 1 - Picker gets a Format selector
+
+New select element with id carFormatSelect with all formats. Disabled
+options are shown but greyed:
+    <option value="coding" disabled>Coding (coming soon)</option>
+
+When the format changes, the size selector updates to reflect the
+credit multiplier:
+- Deterministic formats: "10 questions - 15 credits"
+- AI-scored formats: "10 questions - 20 credits"
+
+### Step 2 - Questions render per format
+
+renderQuestions(assessment) dispatches on assessment.format:
+- mcq / situational_judgment -> radio buttons
+- short_answer -> 2-line textarea
+- numeracy -> number input
+- behavioral / system_design / debugging / case_study -> multi-line textarea
+
+### Step 3 - Result unchanged, but AI feedback shown per question
+
+On complete, the response includes per-question scoring. A collapsible
+details element per question shows:
+- Question
+- User's answer
+- Score (0-100)
+- AI feedback (if applicable)
+
+---
+
+## Test Plan (Phase 2a)
+
+E2E for each of the 7 new formats, with the same test user.
+
+For each format:
+1. Start quick assessment (10 Q) at the standard role/industry/level
+2. Verify the question shape matches the format
+3. Submit all-wrong or junk answers -> expect low score
+4. Resubmit correct or strong answers -> expect high score
+5. Verify charvak_career_assessment_answers.answer_text holds the input
+6. Verify AI feedback populated for AI-scored formats
+
+Specific tests:
+- short_answer - submit a single-word answer -> AI says it's incomplete
+- numeracy - submit a number that's 5% off with tolerance=10% -> passes
+- situational_judgment - submit best_index for all -> high score
+- behavioral - submit "I did stuff" -> AI gives low rubric score
+- system_design - submit a structured 200-word answer -> high score
+- debugging - submit "add a null check" for a null-check bug -> high score
+- case_study - submit a structured analysis -> high score
+
+---
+
+## Credit Pricing (Phase 2a final)
+
+| Format type | Quick (10 Q) | Standard (15 Q) | Full (20 Q) |
+|---|---|---|---|
+| Deterministic (mcq, numeracy, SJT, short_answer) | 15 | 25 | 35 |
+| AI-scored (behavioral, system_design, debugging, case_study) | 20 | 30 | 40 |
+
+New credit keys:
+- career_assessment_ai_quick: 20
+- career_assessment_ai_standard: 30
+- career_assessment_ai_full: 40
+
+Route picks the right key based on the selected format.
+
+---
+
+**Keep this file in sync. It is the roadmap for Sessions 11-13.**
