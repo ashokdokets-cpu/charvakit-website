@@ -3068,3 +3068,18 @@ Session 13 delivers: topic tagging, skill gap, cross-assessment
 adaptation, ability update, learning path.
 
 Verdict: DOCUMENTED — no action needed
+
+---
+
+### FLAGGED — difficulty-aware ability update (2026-10-03)
+
+`ability_engine.update_from_assessment` supports a `difficulty=` kwarg
+but nothing passes it. Result: a 100% on an "intern" assessment and a
+100% on an "executive" assessment produce the same Elo delta (~12
+points with K=25). Real difficulty should scale the update.
+
+Fix: map career level_key to a difficulty_value (intern=600, junior=800,
+mid=1000, senior=1200, staff=1400, manager=1500, executive=1600) and
+pass it through from complete_assessment. Est: ~30 min.
+
+Verdict: SCHEDULED — Session 14
