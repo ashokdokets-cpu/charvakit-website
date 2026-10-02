@@ -1,12 +1,62 @@
 # Charvak — Complete Outstanding Work Inventory
 
-**State at time of writing:** HEAD b346012, reconciliation scan complete
-**Engine count:** 59 total (54 root + 6 na_module - 1 dup in scripts/one-off)
-**DB-backed:** ~46 confirmed via scan (49 claimed in docs, delta likely na_module + top-level modules)
-**Pulled from:** KNOWN-ISSUES.md, TODO-MASTER.md, TIER3-PERSISTENCE-PROJECT.md, master docs
+**State at time of writing:** HEAD 5acefdb (Session 13 complete)
+**Engine count:** 60+ (career_assessment_engine.py added Session 10)
+
+**Pulled from:** KNOWN-ISSUES.md, COMMITMENT.md, master docs
 **Filed:** 2026-09-19
-**Last updated:** 2026-09-28 (Session C)
-**Total line items:** ~77
+**Last updated:** 2026-10-03 (Session 13)
+**Total line items:** ~60 (many items resolved)
+
+---
+
+### Sessions 8-13 closures (2026-10-02 through 2026-10-03)
+
+Major multi-session work shipped:
+
+**Session 8 - University + Legacy-Shift + C7 17/17**
+- University subscription flow (3 tiers, security fix)
+- Legacy-Shift Rs 4,999 migration tier
+- C7 sweep complete: 17/17 templates shipped across sessions 3-8
+- Commits: 2d600f3, abd653d, f42a607, dac60a8
+
+**Session 9a - Silent-Killer real monitoring**
+- Real URL fetching (was a stub returning fake monitor_ids)
+- 7 engine methods, 4 routes, watch + scan tables
+- Dashboard UI, verified E2E
+- Commits: c041328, 69e3daa
+
+**Session 10 - Career Assessment Phase 1**
+- New `career_assessment_engine.py` (760 lines)
+- 106 roles, 66 industries, 7 levels, MCQ only
+- `/ai-assessment` now renders the right template (was ai-bridge.html)
+- Commits: 5946ec3, 86d1653, e9b30ab
+
+**Session 11 - Career Assessment Phase 2a**
+- 7 more formats (short_answer, numeracy, SJT, behavioral,
+  system_design, debugging, case_study)
+- AI batch scoring (one OpenAI call per assessment)
+- Commit: 94ab7e1
+
+**Session 13 - Career Assessment Phase 3**
+- Topic tagging (7 categories x 8 topics)
+- Skill gap analysis with strong/mixed/weak status
+- Cross-assessment adaptive difficulty via ability_engine
+- AI-generated learning paths (courses + resources + weekly plan)
+- Commits: 482d653, fbc5852, a585f21, 6c7632a
+
+**Session 9 quick wins (2026-10-03)**
+- PayPal credits capture test - RESOLVED, sandbox flow verified E2E
+  (order -> approval -> capture -> credits -> idempotency)
+- ARCHITECTURE.md refresh - 5 sessions of new sections added
+- KNOWN-ISSUES additions: PowerShell process-kill + mojibake display
+  gotchas, PAYPAL_MODE flag
+- Commits: db9e2a1, e27f052, 5acefdb, a8f5e59
+
+**Indian Language AI MCQ scoring (Session 21)**
+- Real deterministic scoring (was counting answers, not correctness)
+- 10/15/20 question selector, option shuffle, auth on /submit
+- Commits: 96535c0, 4385008, 8a80819, 1aca08f
 
 ---
 
@@ -43,6 +93,27 @@
 | 2 | whatsapp_bot.py | External block | — | Awaits Meta number registration. Also has AI JSON bug |
 
 **Total:** 1 persistable + 1 external-blocked.
+
+---
+
+## Open - Career Assessment follow-ups
+
+| # | Item | Session | Est. | Notes |
+|---|---|---|---|---|
+| CA1 | Career Assessment Phase 2b: coding + SQL | 14 | 2-3 days | Needs Judge0 or Piston sandbox. Real code execution. |
+| CA2 | Difficulty-aware ability update | 14 | ~30 min | ability_engine supports `difficulty=` but nothing passes it. Map level_key -> difficulty_value. |
+| CA3 | Catalog coverage for niche roles | TBD | Varies | No frontend System Design course exists in charvak_courses. |
+
+---
+
+## Open - Silent-Killer follow-ups
+
+| # | Item | Session | Est. | Notes |
+|---|---|---|---|---|
+| SK1 | Continuous monitoring cron | 9b | 3-4 hrs | Render cron iterating active watches, email alerts on state change. Requires Render dashboard access. |
+| SK2 | Retire 'Notify Me When Continuous Monitoring Ships' button | 9b | 5 min | Once SK1 ships. |
+
+---
 
 ---
 
