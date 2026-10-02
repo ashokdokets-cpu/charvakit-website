@@ -1512,6 +1512,7 @@ class CareerAssessmentEngine:
                     "format": fmt,
                 },
                 skill=f"career_{fmt}",
+                difficulty=level,
             )
         except Exception as e:
             logger.warning(f"career-assessment result persistence failed: {e}")
