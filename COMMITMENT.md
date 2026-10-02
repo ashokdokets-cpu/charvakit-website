@@ -3083,3 +3083,36 @@ mid=1000, senior=1200, staff=1400, manager=1500, executive=1600) and
 pass it through from complete_assessment. Est: ~30 min.
 
 Verdict: SCHEDULED — Session 14
+
+---
+
+### RESOLVED — PayPal credits capture test (Session 9 quick win) (2026-10-03, db9e2a1)
+
+The Session B flag (#3 PayPal live capture test) is closed. Full
+sandbox flow verified end-to-end with a US sandbox buyer + US sandbox
+merchant:
+
+- Order created: 1WH95310FS6736459, $5.99 USD
+- Buyer approved via sandbox checkout
+- Server captured: 9WF9133469670842D, status COMPLETED
+- /api/credits/purchase granted 1000 credits for the Pro plan
+- Second call: already_credited=true (idempotency verified)
+- Balance: 500 -> 1500
+
+Code changes required to enable sandbox testing (now committed):
+- payment_engine.py: new PAYPAL_MODE env var + _paypal_base() helper.
+  Defaults to "live" so prod is unchanged. Sandbox mode routes PayPal
+  API calls to api-m.sandbox.paypal.com.
+- main.py: /api/region accepts ?country= / ?currency= dev override
+- static/js/currency-utils.js: passes ?country= from the URL through
+  to /api/region
+
+Verified prod is unaffected:
+- Render still uses live PayPal (client_id prefix "Aaj...")
+- Local .env has sandbox creds (prefix "BAAP...")
+- .env is gitignored; never reaches Render
+
+Follow-up (1 min, requires Render dashboard access):
+- Add PAYPAL_MODE=live explicitly to Render's env vars for clarity
+
+Verdict: RESOLVED
