@@ -3027,3 +3027,26 @@ Verified E2E: junk answers = 0%, real answers = 100%.
 
 The other flag — "Indian Language AI vs Career Assessment relationship"
 — remains DEFERRED. Revisit after Session 10.
+
+---
+
+### RESOLVED — /ai-assessment renders ai-bridge.html (URL/content mismatch) (2026-10-02, 5946ec3)
+
+The flag from earlier tonight is closed. /ai-assessment now renders
+templates/ai-assessment.html - a real 3-step career readiness wizard
+calibrated to (role x industry x level).
+
+Session 10 Phase 1 shipped:
+- career_assessment_engine.py (new, 760 lines)
+- 6 routes under /api/career-assessment/*
+- 3 new credit keys (15/25/35)
+- New 3-step wizard template (443 lines)
+- 106 roles, 66 industries, 7 levels, 3 sizes
+- Real MCQ generation via OpenAI (role-calibrated prompts)
+- Deterministic scoring + persisted to /my-results
+- Verified E2E + prod endpoints live
+
+Session 11 (Phase 2) will add all non-MCQ formats.
+Full plan in CAREER-ASSESSMENT-PLAN.md.
+
+Verdict: RESOLVED
