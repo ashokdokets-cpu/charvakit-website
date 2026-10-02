@@ -53,6 +53,10 @@
                         <div class="form-text" id="carFormatHint"></div>
                     </div>
 
+                    <div id="carAdaptiveBadge" class="alert alert-info py-2 px-3 mb-3 d-none">
+                        <small><strong>Adapted to your last performance.</strong> <span id="carAdaptiveText"></span></small>
+                    </div>
+
                     <div class="mb-4">
                         <label class="form-label">Assessment Size</label>
                         <select class="form-select" id="carSizeSelect">
@@ -313,6 +317,29 @@ async function startAssessment() {
             return;
         }
         _carCurrentAssessment = j.assessment;
+        window.__lastAssessment = j.assessment;
+
+        // Adaptive badge
+        var badge = document.getElementById('carAdaptiveBadge');
+        var badgeText = document.getElementById('carAdaptiveText');
+        var hint = j.assessment.baseline_used || 'baseline';
+        var ability = j.assessment.ability_before;
+        var attempts = j.assessment.prior_attempts || 0;
+        if (badge && badgeText) {
+            if (hint === 'challenge') {
+                badgeText.textContent = 'Your last attempt scored well, so we pushed the difficulty up. (Ability: ' + (ability ? Math.round(ability) : '—') + ', attempts: ' + attempts + ')';
+                badge.classList.remove('d-none');
+            } else if (hint === 'foundation-first') {
+                badgeText.textContent = 'We are focusing on fundamentals based on your last attempt. (Ability: ' + (ability ? Math.round(ability) : '—') + ', attempts: ' + attempts + ')';
+                badge.classList.remove('d-none');
+            } else if (attempts > 0) {
+                badgeText.textContent = 'Continuing at your standard difficulty. (Attempts so far: ' + attempts + ')';
+                badge.classList.remove('d-none');
+            } else {
+                badge.classList.add('d-none');
+            }
+        }
+
         renderQuestions(j.assessment);
     } catch (e) {
         errEl.textContent = 'Network error: ' + e.message;
@@ -579,7 +606,131 @@ function renderResult(j) {
         document.getElementById('carResultMeta').innerHTML += bhtml;
     }
 
+    // Skill gap bars
+    var gap = j.skill_gap || [];
+    if (gap.length) {
+        var ghtml = '<div class="card border-0 shadow-sm mt-4"><div class="card-body p-4">';
+        ghtml += '<h3 class="as-h5 mb-1">Skill Gap</h3>';
+        ghtml += '<p class="text-muted small mb-3">Performance by topic. Weakest first.</p>';
+        for (var k = 0; k < gap.length; k++) {
+            var g = gap[k];
+            var barClass = g.status === 'strong' ? 'bg-success' : (g.status === 'mixed' ? 'bg-warning' : 'bg-danger');
+            ghtml += '<div class="mb-2">';
+            ghtml += '<div class="d-flex justify-content-between small mb-1"><span>' + _esc(g.topic) + '</span><span>' + g.pct + '%</span></div>';
+            ghtml += '<div class="progress" style="height: 8px;"><div class="progress-bar ' + barClass + '" role="progressbar" style="width: ' + g.pct + '%;"></div></div>';
+            ghtml += '</div>';
+        }
+        ghtml += '</div></div>';
+        document.getElementById('carResultMeta').innerHTML += ghtml;
+    }
+
+    // Learning path CTA
+    var lhtml = '<div class="card border-0 shadow-sm mt-4"><div class="card-body p-4">';
+    lhtml += '<h3 class="as-h5 mb-1">Personalized Learning Path</h3>';
+    lhtml += '<p class="text-muted small mb-3">Get a curated plan with courses, resources, and a weekly roadmap for your weak areas.</p>';
+    lhtml += '<button class="btn btn-primary" id="carLearningPathBtn" onclick="loadLearningPath()">Get My Learning Path</button>';
+    lhtml += '<div id="carLearningPathResult" class="mt-3"></div>';
+    lhtml += '</div></div>';
+    document.getElementById('carResultMeta').innerHTML += lhtml;
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function loadLearningPath() {
+    var a = window.__lastAssessment || _carCurrentAssessment;
+    if (!a) { alert('No active assessment.'); return; }
+    var email = _email();
+    if (!email) { alert('Please log in.'); return; }
+    var btn = document.getElementById('carLearningPathBtn');
+    var resultEl = document.getElementById('carLearningPathResult');
+    if (!btn || !resultEl) return;
+
+    btn.disabled = true;
+    btn.textContent = 'Generating... this may take 15-30 seconds';
+    resultEl.innerHTML = '<div class="text-muted small">Asking the AI to build your plan...</div>';
+
+    try {
+        var r = await fetch('/api/career-assessment/learning-path/' + encodeURIComponent(a.assessment_id) + '?email=' + encodeURIComponent(email), {
+            headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '') }
+        });
+        if (r.status === 401) { window.location.href = '/login?next=/ai-assessment'; return; }
+        var j = await r.json();
+        if (j.status !== 'success') {
+            resultEl.innerHTML = '<div class="alert alert-danger">' + _esc(j.message || 'Could not generate learning path') + '</div>';
+            btn.disabled = false;
+            btn.textContent = 'Get My Learning Path';
+            return;
+        }
+        renderLearningPath(resultEl, j);
+        btn.style.display = 'none';
+    } catch (e) {
+        resultEl.innerHTML = '<div class="alert alert-danger">Network error: ' + _esc(e.message) + '</div>';
+        btn.disabled = false;
+        btn.textContent = 'Get My Learning Path';
+    }
+}
+
+function renderLearningPath(el, j) {
+    var html = '';
+
+    // Message
+    if (j.message) {
+        html += '<div class="alert alert-info py-2 px-3 mb-3">' + _esc(j.message) + '</div>';
+    }
+
+    // Charvak courses
+    var courses = j.charvak_courses || [];
+    if (courses.length) {
+        html += '<h5 class="as-h6 mt-3 mb-2">Charvak Courses</h5>';
+        for (var i = 0; i < courses.length; i++) {
+            var c = courses[i];
+            html += '<div class="card mb-2"><div class="card-body py-2 px-3">';
+            html += '<strong>' + _esc(c.course_name || '') + '</strong><br>';
+            html += '<small class="text-muted">' + _esc(c.reason || '') + '</small>';
+            html += '</div></div>';
+        }
+    }
+
+    // External resources
+    var resources = j.external_resources || [];
+    if (resources.length) {
+        html += '<h5 class="as-h6 mt-3 mb-2">External Resources</h5>';
+        html += '<ul class="small mb-3">';
+        for (var k = 0; k < resources.length; k++) {
+            var res = resources[k];
+            html += '<li><strong>[' + _esc(res.topic || '') + ']</strong> ' + _esc(res.resource || '');
+            if (res.why) { html += ' <span class="text-muted">— ' + _esc(res.why) + '</span>'; }
+            html += '</li>';
+        }
+        html += '</ul>';
+    }
+
+    // Weekly plan
+    var plan = j.weekly_plan || [];
+    if (plan.length) {
+        html += '<h5 class="as-h6 mt-3 mb-2">Weekly Plan</h5>';
+        for (var w = 0; w < plan.length; w++) {
+            var week = plan[w];
+            html += '<div class="card mb-2"><div class="card-body py-2 px-3">';
+            html += '<strong>Week ' + _esc(week.week) + ':</strong> ' + _esc(week.focus || '');
+            var acts = week.activities || [];
+            if (acts.length) {
+                html += '<ul class="small mb-0 mt-1">';
+                for (var ai = 0; ai < acts.length; ai++) {
+                    html += '<li>' + _esc(acts[ai]) + '</li>';
+                }
+                html += '</ul>';
+            }
+            html += '</div></div>';
+        }
+    }
+
+    // Nothing to work on
+    if (!courses.length && !resources.length && !plan.length) {
+        html += '<div class="text-muted small">No specific recommendations - your topics are strong or have no data yet.</div>';
+    }
+
+    el.innerHTML = html;
 }
 
 function resetToStep1() {

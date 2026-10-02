@@ -6626,6 +6626,16 @@ async def api_career_assessment_history(request: Request, email: str):
     require_auth_for_email(request, email)
     return career_assessment_engine.get_history(email)
 
+@app.get("/api/career-assessment/learning-path/{assessment_id}")
+@limiter.limit("30/minute")
+async def api_career_assessment_learning_path(request: Request, assessment_id: str, email: str = ""):
+    """Generate (or return cached) learning path. Free - bonus value."""
+    email = (email or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+    require_auth_for_email(request, email)
+    return career_assessment_engine.generate_learning_path(assessment_id, email)
+
 @app.get("/api/career-assessment/{assessment_id}")
 @limiter.limit("120/minute")
 async def api_career_assessment_get(request: Request, assessment_id: str, email: str = ""):

@@ -132,6 +132,92 @@ CAREER_SIZES = {
     "full":     {"questions": 20, "credits": 35, "key": "career_assessment_full"},
 }
 
+# ============================================================
+# TOPIC VOCABULARY — per role category, used for skill-gap analysis
+# ============================================================
+
+TOPIC_VOCABULARY = {
+    "Engineering & Software": [
+        "Fundamentals & Syntax",
+        "Data Structures & Algorithms",
+        "System Design & Architecture",
+        "Debugging & Problem Solving",
+        "Testing & Quality",
+        "Tooling & Ecosystem",
+        "Collaboration & Communication",
+        "Domain Knowledge",
+    ],
+    "Data & Analytics": [
+        "Statistics & Probability",
+        "Data Wrangling & ETL",
+        "Modeling & ML",
+        "Evaluation & Experimentation",
+        "Data Engineering & Pipelines",
+        "Business Acumen",
+        "Tooling (SQL / Python / R)",
+        "Domain Knowledge",
+    ],
+    "Product & Design": [
+        "Discovery & User Research",
+        "Prioritization & Roadmapping",
+        "Design & UX Principles",
+        "Metrics & Experimentation",
+        "Stakeholder Management",
+        "Execution & Delivery",
+        "Domain Knowledge",
+        "Communication",
+    ],
+    "Business & Strategy": [
+        "Analytical Reasoning",
+        "Financial Acumen",
+        "Market & Competitive Analysis",
+        "Process & Operations",
+        "Stakeholder Management",
+        "Communication",
+        "Domain Knowledge",
+        "Tooling (Excel / BI / SQL)",
+    ],
+    "Go-to-Market": [
+        "Strategy & Positioning",
+        "Channel & Campaign Execution",
+        "Metrics & Attribution",
+        "Customer Insight",
+        "Relationship Building",
+        "Communication & Storytelling",
+        "Tooling (CRM / Analytics)",
+        "Domain Knowledge",
+    ],
+    "People & HR": [
+        "Talent Acquisition",
+        "Employee Relations",
+        "Compensation & Benefits",
+        "HR Operations & Compliance",
+        "Learning & Development",
+        "Analytics & Reporting",
+        "Communication",
+        "Domain Knowledge",
+    ],
+    "Domain-Specific": [
+        "Core Domain Knowledge",
+        "Regulatory & Compliance",
+        "Technical Application",
+        "Problem Solving",
+        "Stakeholder Management",
+        "Communication",
+        "Tooling",
+        "Safety & Ethics",
+    ],
+}
+
+
+def _topic_vocabulary_for_role(role: str) -> List[str]:
+    """Find the topic vocabulary for a role's category. Falls back to Engineering."""
+    for category, roles in CAREER_ROLES.items():
+        if role in roles:
+            return TOPIC_VOCABULARY.get(category, TOPIC_VOCABULARY["Engineering & Software"])
+    return TOPIC_VOCABULARY["Engineering & Software"]
+
+
 PASSING_SCORE = 70
 
 
@@ -189,6 +275,11 @@ class CareerAssessmentEngine:
             cur.execute("""
                 CREATE INDEX IF NOT EXISTS idx_career_answers_assess
                     ON charvak_career_assessment_answers (assessment_id, question_index)
+            """)
+            # Session 13: lazy learning-path cache column
+            cur.execute("""
+                ALTER TABLE charvak_career_assessments
+                    ADD COLUMN IF NOT EXISTS learning_path_json JSONB
             """)
             conn.commit()
             cur.close(); conn.close()
@@ -262,12 +353,17 @@ class CareerAssessmentEngine:
 
         self._ensure_tables()
 
-        # Generate questions (format-aware)
+        # Cross-assessment adaptive baseline (reads ability_engine)
+        baseline = self._baseline_hint(email, role, industry, fmt)
+        difficulty_hint = baseline.get("hint", "baseline")
+
+        # Generate questions (format-aware, adaptive-hint aware)
         questions = self._generate_questions(
             format_key=fmt,
             role=role, industry=industry,
             level_key=level_key, level_label=level_label,
             level_blurb=level_blurb, num_questions=num_questions,
+            difficulty_hint=difficulty_hint,
         )
         if not questions:
             return {"status": "error", "message": "Could not generate questions. Please try again."}
@@ -309,6 +405,9 @@ class CareerAssessmentEngine:
                 "questions": safe_questions,
                 "passing_score": PASSING_SCORE,
                 "started_at": datetime.now().isoformat(),
+                "baseline_used": difficulty_hint,
+                "ability_before": baseline.get("ability_score"),
+                "prior_attempts": baseline.get("attempts", 0),
             },
             "message": f"{role} in {industry} assessment started",
         }
@@ -436,7 +535,8 @@ class CareerAssessmentEngine:
 
     def _build_prompt_for_format(
         self, format_key: str, role: str, industry: str,
-        level_label: str, level_blurb: str, count: int
+        level_label: str, level_blurb: str, count: int,
+        difficulty_hint: str = "baseline"
     ) -> str:
         """Dispatch to the format-specific prompt builder."""
         builders = {
@@ -452,26 +552,99 @@ class CareerAssessmentEngine:
         builder = builders.get(format_key)
         if not builder:
             # Fallback to MCQ
-            return self._prompt_mcq(role, industry, level_label, level_blurb, count)
-        return builder(role, industry, level_label, level_blurb, count)
+            return self._prompt_mcq(role, industry, level_label, level_blurb, count, difficulty_hint)
+        return builder(role, industry, level_label, level_blurb, count, difficulty_hint)
 
-    def _context_header(self, role: str, industry: str, level_label: str, level_blurb: str) -> str:
-        """Shared context block for all prompts."""
+    def _baseline_hint(self, email: str, role: str, industry: str, fmt: str) -> Dict:
+        """
+        Read the user's ability for this role+format and return a
+        difficulty hint for the prompt. Cross-assessment adaptation:
+        your last performance informs your next baseline.
+        Returns {hint: str, ability_score: float|None, attempts: int}
+        """
+        try:
+            from ability_engine import ability_engine
+        except Exception as e:
+            logger.warning(f"ability_engine unavailable: {e}")
+            return {"hint": "baseline", "ability_score": None, "attempts": 0}
+
+        # Skill key: format only (matches results_system.record_assessment_result
+        # which uses skill=f"career_{fmt}")
+        skill = f"career_{fmt}"
+
+        try:
+            info = ability_engine.get_ability(email, skill)
+        except Exception as e:
+            logger.warning(f"ability lookup failed for {skill}: {e}")
+            return {"hint": "baseline", "ability_score": None, "attempts": 0}
+
+        ability = info.get("ability_score")
+        attempts = info.get("attempts", 0) or 0
+
+        if ability is None or attempts == 0:
+            return {"hint": "baseline", "ability_score": None, "attempts": 0}
+
+        try:
+            ability = float(ability)
+        except (ValueError, TypeError):
+            return {"hint": "baseline", "ability_score": None, "attempts": 0}
+
+        # Elo bands. Standard Elo baseline is 1000.
+        # Tightened 2026-10-03 after E2E: 100% on a mid-level MCQ moved
+        # ability only 1012 (delta per assessment ~12 with K=25). Wider
+        # bands (900/1100) would make "challenge" nearly unreachable.
+        if ability < 950:
+            hint = "foundation-first"
+        elif ability < 1050:
+            hint = "standard"
+        else:
+            hint = "challenge"
+
+        return {"hint": hint, "ability_score": ability, "attempts": attempts}
+
+    def _context_header(self, role: str, industry: str, level_label: str, level_blurb: str, difficulty_hint: str = "baseline") -> str:
+        """Shared context block for all prompts. Includes topic-tagging + difficulty-hint."""
+        topics = _topic_vocabulary_for_role(role)
+        topic_list = ", ".join(topics)
+
+        # Adaptive baseline: make the difficulty hint explicit to the AI
+        if difficulty_hint == "foundation-first":
+            hint_line = (
+                "ADAPTIVE HINT: The candidate is still building confidence. "
+                "Favor questions that test fundamentals clearly. Avoid "
+                "overly tricky edge cases — the goal is to reinforce core "
+                "understanding.\n\n"
+            )
+        elif difficulty_hint == "challenge":
+            hint_line = (
+                "ADAPTIVE HINT: The candidate has performed strongly before. "
+                "Push the difficulty: include edge cases, trade-off "
+                "scenarios, and questions that require deeper reasoning "
+                "than the level_label alone would suggest.\n\n"
+            )
+        else:  # baseline or standard
+            hint_line = ""
+
         return (
             f"TARGET ROLE: {role}\n"
             f"INDUSTRY: {industry}\n"
             f"EXPERIENCE LEVEL: {level_label} ({level_blurb})\n\n"
-            f"Calibrate all questions to what a real interviewer at the "
+            + hint_line
+            + f"Calibrate all questions to what a real interviewer at the "
             f"{level_label} level would ask for a {role} in {industry}. "
             f"Test practical knowledge, not trivia. Include trade-offs, "
             f"real-world scenarios, and tool familiarity appropriate to "
             f"the industry.\n\n"
+            f"TOPIC TAGGING (required on every question):\n"
+            f"Choose 1-2 topics from this list that best describe what the question tests:\n"
+            f"  [{topic_list}]\n"
+            f"Return each question with a \"topics\" array of 1-2 topic strings from the list above.\n\n"
         )
 
-    def _prompt_mcq(self, role, industry, level_label, level_blurb, count):
+    def _prompt_mcq(self, role, industry, level_label, level_blurb, count, difficulty_hint='baseline'):
         return (
             f"Generate {count} multiple-choice questions for a career readiness assessment.\n"
-            + self._context_header(role, industry, level_label, level_blurb)
+            + self._context_header(role, industry, level_label, level_blurb, difficulty_hint)
             + f"Rules:\n"
             f"- Each question MUST have exactly 4 options and one correct answer.\n"
             f"- correct_index is 0-based (0, 1, 2, or 3).\n"
@@ -479,26 +652,26 @@ class CareerAssessmentEngine:
             f"- Aim for a roughly even distribution across 0, 1, 2, 3.\n"
             f"- Keep options concise (1-15 words each).\n"
             f"- Return exactly {count} questions.\n\n"
-            f'Return JSON: {{"questions": [{{"q": "...", "options": ["...","...","...","..."], "correct_index": 0}}]}}'
+            f'Return JSON: {{"questions": [{{"q": "...", "options": ["...","...","...","..."], "correct_index": 0, "topics": ["...", "..."]}}]}}'
         )
 
-    def _prompt_short_answer(self, role, industry, level_label, level_blurb, count):
+    def _prompt_short_answer(self, role, industry, level_label, level_blurb, count, difficulty_hint='baseline'):
         return (
             f"Generate {count} short-answer questions for a career readiness assessment.\n"
-            + self._context_header(role, industry, level_label, level_blurb)
+            + self._context_header(role, industry, level_label, level_blurb, difficulty_hint)
             + f"Rules:\n"
             f"- Each question expects a 1-3 sentence text answer.\n"
             f"- Provide an 'expected_answer' capturing the ideal response in 2-4 sentences.\n"
             f"- Provide 3-6 'keywords' that a correct answer must mention.\n"
             f"- Questions should test understanding, not memorization.\n"
             f"- Return exactly {count} questions.\n\n"
-            f'Return JSON: {{"questions": [{{"q": "...", "expected_answer": "...", "keywords": ["...","...","..."]}}]}}'
+            f'Return JSON: {{"questions": [{{"q": "...", "expected_answer": "...", "keywords": ["...","...","..."], "topics": ["...", "..."]}}]}}'
         )
 
-    def _prompt_numeracy(self, role, industry, level_label, level_blurb, count):
+    def _prompt_numeracy(self, role, industry, level_label, level_blurb, count, difficulty_hint='baseline'):
         return (
             f"Generate {count} numeracy questions for a career readiness assessment.\n"
-            + self._context_header(role, industry, level_label, level_blurb)
+            + self._context_header(role, industry, level_label, level_blurb, difficulty_hint)
             + f"Rules:\n"
             f"- Each question has a single numeric answer.\n"
             f"- Answers can be integers or decimals.\n"
@@ -506,13 +679,13 @@ class CareerAssessmentEngine:
             f"  Use tolerance=0 for exact answers, or a small number (e.g. 0.5 or 5) for rounded answers.\n"
             f"- Include realistic business/technical scenarios (rates, budgets, KPIs, percentages).\n"
             f"- Return exactly {count} questions.\n\n"
-            f'Return JSON: {{"questions": [{{"q": "...", "correct_number": 42.5, "tolerance": 0.5}}]}}'
+            f'Return JSON: {{"questions": [{{"q": "...", "correct_number": 42.5, "tolerance": 0.5, "topics": ["...", "..."]}}]}}'
         )
 
-    def _prompt_sjt(self, role, industry, level_label, level_blurb, count):
+    def _prompt_sjt(self, role, industry, level_label, level_blurb, count, difficulty_hint='baseline'):
         return (
             f"Generate {count} situational judgment questions for a career readiness assessment.\n"
-            + self._context_header(role, industry, level_label, level_blurb)
+            + self._context_header(role, industry, level_label, level_blurb, difficulty_hint)
             + f"Rules:\n"
             f"- Each question presents a realistic workplace scenario.\n"
             f"- Provide 5 possible responses (options).\n"
@@ -520,39 +693,39 @@ class CareerAssessmentEngine:
             f"- Indexes are 0-based (0-4). best_index and worst_index must differ.\n"
             f"- Scenarios should reflect real pressure, trade-offs, or ethical decisions.\n"
             f"- Return exactly {count} questions.\n\n"
-            f'Return JSON: {{"questions": [{{"scenario": "...", "options": ["...","...","...","...","..."], "best_index": 0, "worst_index": 4}}]}}'
+            f'Return JSON: {{"questions": [{{"scenario": "...", "options": ["...","...","...","...","..."], "best_index": 0, "worst_index": 4, "topics": ["...", "..."]}}]}}'
         )
 
-    def _prompt_behavioral(self, role, industry, level_label, level_blurb, count):
+    def _prompt_behavioral(self, role, industry, level_label, level_blurb, count, difficulty_hint='baseline'):
         return (
             f"Generate {count} behavioral interview prompts for a career readiness assessment.\n"
-            + self._context_header(role, industry, level_label, level_blurb)
+            + self._context_header(role, industry, level_label, level_blurb, difficulty_hint)
             + f"Rules:\n"
             f"- Each prompt is a classic behavioral question suitable for STAR-format answers.\n"
             f"- Provide a 'rubric_star' object with 4 fields: situation, task, action, result.\n"
             f"  Each field describes what a strong STAR response should cover for this prompt.\n"
             f"- Prompts should reveal judgment, collaboration, and impact.\n"
             f"- Return exactly {count} questions.\n\n"
-            f'Return JSON: {{"questions": [{{"prompt": "...", "rubric_star": {{"situation": "...", "task": "...", "action": "...", "result": "..."}}}}]}}'
+            f'Return JSON: {{"questions": [{{"prompt": "...", "rubric_star": {{"situation": "...", "task": "...", "action": "...", "result": "..."}}, "topics": ["...", "..."]}}]}}'
         )
 
-    def _prompt_system_design(self, role, industry, level_label, level_blurb, count):
+    def _prompt_system_design(self, role, industry, level_label, level_blurb, count, difficulty_hint='baseline'):
         return (
             f"Generate {count} system design prompts for a career readiness assessment.\n"
-            + self._context_header(role, industry, level_label, level_blurb)
+            + self._context_header(role, industry, level_label, level_blurb, difficulty_hint)
             + f"Rules:\n"
             f"- Each prompt is an open-ended architecture or design challenge.\n"
             f"- Provide a 'rubric' with 4-6 criteria a strong answer should address.\n"
             f"- Prompts should require trade-off analysis (scalability, cost, latency, reliability, security).\n"
             f"- Appropriate for {role} in {industry} at {level_label}.\n"
             f"- Return exactly {count} questions.\n\n"
-            f'Return JSON: {{"questions": [{{"prompt": "...", "rubric": ["...","...","..."]}}]}}'
+            f'Return JSON: {{"questions": [{{"prompt": "...", "rubric": ["...","...","..."], "topics": ["...", "..."]}}]}}'
         )
 
-    def _prompt_debugging(self, role, industry, level_label, level_blurb, count):
+    def _prompt_debugging(self, role, industry, level_label, level_blurb, count, difficulty_hint='baseline'):
         return (
             f"Generate {count} debugging challenges for a career readiness assessment.\n"
-            + self._context_header(role, industry, level_label, level_blurb)
+            + self._context_header(role, industry, level_label, level_blurb, difficulty_hint)
             + f"Rules:\n"
             f"- Each challenge shows a small snippet of buggy code with a plausible-looking bug.\n"
             f"- Include the language (Python, JavaScript, SQL, etc.).\n"
@@ -560,20 +733,20 @@ class CareerAssessmentEngine:
             f"- Provide 'bug_class' — e.g. 'off_by_one', 'null_reference', 'race_condition', 'logic_error'.\n"
             f"- Keep code snippets under 15 lines so they render well.\n"
             f"- Return exactly {count} questions.\n\n"
-            f'Return JSON: {{"questions": [{{"buggy_code": "...", "language": "Python", "correct_fix_summary": "...", "bug_class": "..."}}]}}'
+            f'Return JSON: {{"questions": [{{"buggy_code": "...", "language": "Python", "correct_fix_summary": "...", "bug_class": "...", "topics": ["...", "..."]}}]}}'
         )
 
-    def _prompt_case_study(self, role, industry, level_label, level_blurb, count):
+    def _prompt_case_study(self, role, industry, level_label, level_blurb, count, difficulty_hint='baseline'):
         return (
             f"Generate {count} case study questions for a career readiness assessment.\n"
-            + self._context_header(role, industry, level_label, level_blurb)
+            + self._context_header(role, industry, level_label, level_blurb, difficulty_hint)
             + f"Rules:\n"
             f"- Each case study presents a realistic business or product scenario.\n"
             f"- Include 1-3 'questions' the user must answer based on the scenario.\n"
             f"- Provide a 'rubric' with 4-6 criteria a strong analysis should cover.\n"
             f"- Scenario should require diagnosis, prioritization, or trade-off reasoning.\n"
             f"- Return exactly {count} case studies.\n\n"
-            f'Return JSON: {{"questions": [{{"scenario": "...", "questions": ["...","..."], "rubric": ["...","..."]}}]}}'
+            f'Return JSON: {{"questions": [{{"scenario": "...", "questions": ["...","..."], "rubric": ["...","..."], "topics": ["...", "..."]}}]}}'
         )
 
     # ------------------------------------------------------------
@@ -582,7 +755,8 @@ class CareerAssessmentEngine:
 
     def _generate_questions(
         self, format_key: str, role: str, industry: str, level_key: str,
-        level_label: str, level_blurb: str, num_questions: int
+        level_label: str, level_blurb: str, num_questions: int,
+        difficulty_hint: str = "baseline"
     ) -> List[Dict]:
         """
         Generate questions for the given format via OpenAI.
@@ -608,6 +782,7 @@ class CareerAssessmentEngine:
                 role=role, industry=industry,
                 level_key=level_key, level_label=level_label,
                 level_blurb=level_blurb, count=batch_size,
+                difficulty_hint=difficulty_hint,
             )
             if not batch:
                 return []
@@ -625,7 +800,8 @@ class CareerAssessmentEngine:
 
     def _generate_one_batch(
         self, format_key: str, role: str, industry: str,
-        level_key: str, level_label: str, level_blurb: str, count: int
+        level_key: str, level_label: str, level_blurb: str, count: int,
+        difficulty_hint: str = "baseline"
     ) -> List[Dict]:
         """Single OpenAI call for a batch of questions in the given format."""
         import os as _os
@@ -638,6 +814,7 @@ class CareerAssessmentEngine:
             format_key=format_key,
             role=role, industry=industry,
             level_label=level_label, level_blurb=level_blurb, count=count,
+            difficulty_hint=difficulty_hint,
         )
 
         try:
@@ -691,26 +868,30 @@ class CareerAssessmentEngine:
         safe = []
         for q in questions:
             if format_key == "mcq":
-                safe.append({"q": q.get("q", ""), "options": q.get("options", [])})
+                safe.append({"q": q.get("q", ""), "options": q.get("options", []),
+                             "topics": q.get("topics", [])})
             elif format_key == "short_answer":
-                safe.append({"q": q.get("q", "")})
+                safe.append({"q": q.get("q", ""), "topics": q.get("topics", [])})
             elif format_key == "numeracy":
-                safe.append({"q": q.get("q", "")})
+                safe.append({"q": q.get("q", ""), "topics": q.get("topics", [])})
             elif format_key == "situational_judgment":
-                safe.append({"scenario": q.get("scenario", ""), "options": q.get("options", [])})
+                safe.append({"scenario": q.get("scenario", ""), "options": q.get("options", []),
+                             "topics": q.get("topics", [])})
             elif format_key == "behavioral":
-                safe.append({"prompt": q.get("prompt", "")})
+                safe.append({"prompt": q.get("prompt", ""), "topics": q.get("topics", [])})
             elif format_key == "system_design":
-                safe.append({"prompt": q.get("prompt", "")})
+                safe.append({"prompt": q.get("prompt", ""), "topics": q.get("topics", [])})
             elif format_key == "debugging":
                 safe.append({
                     "buggy_code": q.get("buggy_code", ""),
                     "language": q.get("language", ""),
+                    "topics": q.get("topics", []),
                 })
             elif format_key == "case_study":
                 safe.append({
                     "scenario": q.get("scenario", ""),
                     "questions": q.get("questions", []),
+                    "topics": q.get("topics", []),
                 })
             else:
                 safe.append({"q": q.get("q", "")})
@@ -737,6 +918,20 @@ class CareerAssessmentEngine:
         except Exception as e:
             logger.warning(f"career-assessment column migration: {e}")
 
+    def _normalize_topics_for_question(self, raw_topics) -> List[str]:
+        """
+        Soft-validate topic strings. Length-only check here; strict
+        vocabulary validation happens at aggregation time when the role
+        is known.
+        """
+        if not isinstance(raw_topics, list):
+            return []
+        out = []
+        for t in raw_topics[:2]:
+            if isinstance(t, str) and t.strip():
+                out.append(t.strip())
+        return out
+
     def _normalize_question(self, format_key: str, raw_q: Dict) -> Optional[Dict]:
         """Validate and normalize a raw question dict per format. Returns None if invalid."""
         if not isinstance(raw_q, dict):
@@ -750,7 +945,8 @@ class CareerAssessmentEngine:
                 return None
             if not isinstance(ci, int) or ci < 0 or ci >= len(options):
                 return None
-            q = {"q": text, "options": [str(o).strip() for o in options[:4]], "correct_index": ci}
+            q = {"q": text, "options": [str(o).strip() for o in options[:4]], "correct_index": ci,
+                 "topics": self._normalize_topics_for_question(raw_q.get("topics"))}
             return self._shuffle_question_options(q)
 
         if format_key == "short_answer":
@@ -760,7 +956,8 @@ class CareerAssessmentEngine:
             if not text or not expected or not isinstance(keywords, list):
                 return None
             return {"q": text, "expected_answer": expected,
-                    "keywords": [str(k).strip() for k in keywords if str(k).strip()]}
+                    "keywords": [str(k).strip() for k in keywords if str(k).strip()],
+                    "topics": self._normalize_topics_for_question(raw_q.get("topics"))}
 
         if format_key == "numeracy":
             text = (raw_q.get("q") or "").strip()
@@ -772,7 +969,8 @@ class CareerAssessmentEngine:
                 tol = float(tol)
             except (ValueError, TypeError):
                 tol = 0.0
-            return {"q": text, "correct_number": float(num), "tolerance": abs(tol)}
+            return {"q": text, "correct_number": float(num), "tolerance": abs(tol),
+                    "topics": self._normalize_topics_for_question(raw_q.get("topics"))}
 
         if format_key == "situational_judgment":
             scenario = (raw_q.get("scenario") or "").strip()
@@ -796,7 +994,8 @@ class CareerAssessmentEngine:
             except ValueError:
                 new_bi, new_wi = bi, wi
             return {"scenario": scenario, "options": [str(o).strip() for o in opts],
-                    "best_index": new_bi, "worst_index": new_wi}
+                    "best_index": new_bi, "worst_index": new_wi,
+                    "topics": self._normalize_topics_for_question(raw_q.get("topics"))}
 
         if format_key == "behavioral":
             prompt = (raw_q.get("prompt") or "").strip()
@@ -808,14 +1007,15 @@ class CareerAssessmentEngine:
                 "task": str(rubric.get("task", "")),
                 "action": str(rubric.get("action", "")),
                 "result": str(rubric.get("result", "")),
-            }}
+            }, "topics": self._normalize_topics_for_question(raw_q.get("topics"))}
 
         if format_key == "system_design":
             prompt = (raw_q.get("prompt") or "").strip()
             rubric = raw_q.get("rubric", [])
             if not prompt or not isinstance(rubric, list):
                 return None
-            return {"prompt": prompt, "rubric": [str(r).strip() for r in rubric if str(r).strip()]}
+            return {"prompt": prompt, "rubric": [str(r).strip() for r in rubric if str(r).strip()],
+                    "topics": self._normalize_topics_for_question(raw_q.get("topics"))}
 
         if format_key == "debugging":
             code = (raw_q.get("buggy_code") or "").strip()
@@ -825,7 +1025,8 @@ class CareerAssessmentEngine:
             if not code or not summary:
                 return None
             return {"buggy_code": code, "language": lang,
-                    "correct_fix_summary": summary, "bug_class": bug_class}
+                    "correct_fix_summary": summary, "bug_class": bug_class,
+                    "topics": self._normalize_topics_for_question(raw_q.get("topics"))}
 
         if format_key == "case_study":
             scenario = (raw_q.get("scenario") or "").strip()
@@ -835,7 +1036,8 @@ class CareerAssessmentEngine:
                 return None
             return {"scenario": scenario,
                     "questions": [str(q).strip() for q in questions if str(q).strip()],
-                    "rubric": [str(r).strip() for r in rubric if str(r).strip()]}
+                    "rubric": [str(r).strip() for r in rubric if str(r).strip()],
+                    "topics": self._normalize_topics_for_question(raw_q.get("topics"))}
 
         return None
 
@@ -989,6 +1191,66 @@ class CareerAssessmentEngine:
         except Exception as e:
             logger.error(f"AI batch scoring failed for {format_key}: {e}")
             return default
+
+    def _aggregate_skill_gap(self, questions: List[Dict], scored: List[Dict]) -> List[Dict]:
+        """
+        Group question scores by topic and return per-topic aggregates.
+        A question with 2 topics contributes its score to both.
+        Questions with no topics are skipped (they can't be attributed).
+        Returns a list sorted by pct ascending (weakest first).
+        """
+        buckets = {}  # topic -> {correct: int, total: int}
+        for i, q in enumerate(questions):
+            if i >= len(scored):
+                break
+            topics = q.get("topics") or []
+            if not topics:
+                continue
+            sc = scored[i].get("score", 0)
+            is_correct = scored[i].get("is_correct", False)
+            for topic in topics:
+                if not isinstance(topic, str) or not topic.strip():
+                    continue
+                topic = topic.strip()
+                if topic not in buckets:
+                    buckets[topic] = {"correct": 0, "total": 0}
+                buckets[topic]["total"] += 1
+                if is_correct:
+                    buckets[topic]["correct"] += 1
+                # Also track a running percentage for AI-scored formats
+                buckets[topic].setdefault("pct_sum", 0)
+                buckets[topic]["pct_sum"] = buckets[topic].get("pct_sum", 0) + sc
+
+        result = []
+        for topic, b in buckets.items():
+            total = b["total"]
+            if total == 0:
+                continue
+            correct = b["correct"]
+            # Blend: use correct/total for determinism, but for AI-scored
+            # formats the "correct" flag is >= 70%, which may be too strict.
+            # Use average of two signals for fairness.
+            correct_pct = round(correct / total * 100)
+            avg_score_pct = round(b.get("pct_sum", 0) / total)
+            blended = round((correct_pct + avg_score_pct) / 2)
+            if blended >= 80:
+                status = "strong"
+            elif blended >= 55:
+                status = "mixed"
+            else:
+                status = "weak"
+            result.append({
+                "topic": topic,
+                "correct": correct,
+                "total": total,
+                "correct_pct": correct_pct,
+                "avg_score_pct": avg_score_pct,
+                "pct": blended,
+                "status": status,
+            })
+        # Weakest first
+        result.sort(key=lambda x: x["pct"])
+        return result
 
     def _dispatch_scoring(
         self, format_key: str, questions: List[Dict], answers: List,
@@ -1227,7 +1489,11 @@ class CareerAssessmentEngine:
             logger.error(f"complete_assessment failed: {e}")
             return {"status": "error", "message": "Could not complete assessment"}
 
-        # Persist to /my-results feed
+        # NOTE: ability_engine.update_from_assessment is called internally
+        # by results_system.record_assessment_result() when skill= is passed.
+        # Do not call it here again (would double-count attempts).
+
+        # Persist to /my-results feed (this also updates ability)
         try:
             from results_system import results_system
             results_system.record_assessment_result(
@@ -1285,6 +1551,9 @@ class CareerAssessmentEngine:
                 entry["your_answer"] = answers[i]
             breakdown.append(entry)
 
+        # Aggregate skill gap by topic
+        skill_gap = self._aggregate_skill_gap(questions, scored)
+
         return {
             "status": "success",
             "assessment_id": assessment_id,
@@ -1298,12 +1567,275 @@ class CareerAssessmentEngine:
             "total_questions": total,
             "passing_score": PASSING_SCORE,
             "breakdown": breakdown,
+            "skill_gap": skill_gap,
             "message": f"Career readiness: {overall}%",
         }
 
     # ------------------------------------------------------------
     # History / Get
     # ------------------------------------------------------------
+
+    def generate_learning_path(self, assessment_id: str, email: str) -> Dict:
+        """
+        Generate (or return cached) learning path for a completed assessment.
+        Lazily invoked - no credits charged, but stored so repeat visits are free.
+        Returns weak/mixed topics + matched charvak_courses + AI-curated
+        external resources + a weekly plan.
+        """
+        assessment_id = (assessment_id or "").strip()
+        email = (email or "").strip().lower()
+        if not assessment_id or not email:
+            return {"status": "error", "message": "assessment_id and email required"}
+
+        self._ensure_tables()
+
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT email, role, industry, level, format, status, score,
+                       questions_json, learning_path_json
+                FROM charvak_career_assessments
+                WHERE assessment_id = %s
+            """, (assessment_id,))
+            row = cur.fetchone()
+            if not row:
+                cur.close(); conn.close()
+                return {"status": "error", "message": "Assessment not found"}
+            if row[0] != email:
+                cur.close(); conn.close()
+                return {"status": "error", "message": "Not your assessment"}
+            if row[5] != "completed":
+                cur.close(); conn.close()
+                return {"status": "error", "message": "Assessment must be completed first"}
+
+            _, role, industry, level, fmt, _, score, questions_json, cached_json = row
+            questions = questions_json if isinstance(questions_json, list) else json.loads(questions_json or "[]")
+            cached = cached_json if isinstance(cached_json, dict) else (json.loads(cached_json) if cached_json else None)
+
+            if cached:
+                cur.close(); conn.close()
+                return {"status": "success", "cached": True, **cached}
+
+            # Load answers to compute skill gap
+            cur.execute("""
+                SELECT question_index, is_correct, ai_score
+                FROM charvak_career_assessment_answers
+                WHERE assessment_id = %s
+            """, (assessment_id,))
+            answer_rows = cur.fetchall()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"learning path load failed: {e}")
+            return {"status": "error", "message": "Could not load assessment"}
+
+        # Recompute scored list for skill gap
+        answers_by_idx = {r[0]: r for r in answer_rows}
+        scored = []
+        for i in range(len(questions)):
+            r = answers_by_idx.get(i)
+            if r:
+                sc = r[2] if r[2] is not None else (100 if r[1] else 0)
+                scored.append({"score": sc, "is_correct": bool(r[1]), "feedback": None})
+            else:
+                scored.append({"score": 0, "is_correct": False, "feedback": None})
+
+        skill_gap = self._aggregate_skill_gap(questions, scored)
+        # Weak + mixed topics are what we build a path around
+        focus_topics = [g for g in skill_gap if g.get("status") in ("weak", "mixed")]
+
+        # Distinguish "no topics at all" (old assessment, no tagging) from
+        # "all strong" (real result, nothing to work on)
+        if not skill_gap:
+            result = {
+                "assessment_id": assessment_id,
+                "role": role,
+                "industry": industry,
+                "level": level,
+                "score": score,
+                "weak_topics": [],
+                "strong_topics": [],
+                "charvak_courses": [],
+                "external_resources": [],
+                "weekly_plan": [],
+                "message": "This assessment doesn't have topic data (created before topic tagging). Take a new assessment to get a personalized learning path.",
+            }
+            self._cache_learning_path(assessment_id, result)
+            return {"status": "success", "cached": False, **result}
+
+        if not focus_topics:
+            # All strong - return an honest "you're strong" message
+            result = {
+                "assessment_id": assessment_id,
+                "role": role,
+                "industry": industry,
+                "level": level,
+                "score": score,
+                "weak_topics": [],
+                "strong_topics": [g["topic"] for g in skill_gap if g.get("status") == "strong"],
+                "charvak_courses": [],
+                "external_resources": [],
+                "weekly_plan": [],
+                "message": "Strong across all topics - no weak areas to address. Consider a harder level or a different format.",
+            }
+            self._cache_learning_path(assessment_id, result)
+            return {"status": "success", "cached": False, **result}
+
+        # Fetch the charvak_courses catalog (25 rows) for AI matching
+        courses_catalog = []
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT course_id, course_name, category, level, description
+                FROM charvak_courses
+                WHERE status IS NULL OR status = 'active' OR status = 'published'
+                ORDER BY course_name
+                LIMIT 30
+            """)
+            for r in cur.fetchall():
+                courses_catalog.append({
+                    "course_id": r[0],
+                    "course_name": r[1],
+                    "category": r[2],
+                    "level": r[3],
+                    "description": (r[4] or "")[:200],
+                })
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.warning(f"course catalog lookup failed: {e}")
+
+        # AI call
+        path = self._ai_generate_learning_path(
+            role=role, industry=industry, level=level, fmt=fmt,
+            score=score, focus_topics=focus_topics,
+            strong_topics=[g["topic"] for g in skill_gap if g.get("status") == "strong"],
+            courses_catalog=courses_catalog,
+        )
+
+        result = {
+            "assessment_id": assessment_id,
+            "role": role,
+            "industry": industry,
+            "level": level,
+            "score": score,
+            "weak_topics": [g["topic"] for g in focus_topics],
+            "strong_topics": [g["topic"] for g in skill_gap if g.get("status") == "strong"],
+            "charvak_courses": path.get("charvak_courses", []),
+            "external_resources": path.get("external_resources", []),
+            "weekly_plan": path.get("weekly_plan", []),
+            "message": path.get("message", "Learning path generated."),
+        }
+        self._cache_learning_path(assessment_id, result)
+        return {"status": "success", "cached": False, **result}
+
+    def _cache_learning_path(self, assessment_id: str, path: Dict) -> None:
+        """Store the generated path on the assessment row. Non-fatal."""
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                UPDATE charvak_career_assessments
+                SET learning_path_json = %s::jsonb
+                WHERE assessment_id = %s
+            """, (json.dumps(path), assessment_id))
+            conn.commit()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.warning(f"learning path cache failed: {e}")
+
+    def _ai_generate_learning_path(
+        self, role: str, industry: str, level: str, fmt: str,
+        score: int, focus_topics: List[Dict], strong_topics: List[str],
+        courses_catalog: List[Dict]
+    ) -> Dict:
+        """One OpenAI call to build a curated learning path."""
+        import os as _os
+        import requests
+        api_key = _os.getenv("OPENAI_API_KEY", "")
+        if not api_key:
+            return {
+                "message": "AI unavailable - no learning path generated.",
+                "charvak_courses": [], "external_resources": [], "weekly_plan": [],
+            }
+
+        focus_str = ", ".join(f"{t['topic']} ({t['pct']}%)" for t in focus_topics)
+        strong_str = ", ".join(strong_topics) if strong_topics else "(none)"
+        courses_str = json.dumps(courses_catalog, ensure_ascii=False)[:5000] if courses_catalog else "[]"
+
+        prompt = (
+            f"You are a career coach building a personalized learning plan.\n\n"
+            f"CANDIDATE\n"
+            f"  Role: {role}\n"
+            f"  Industry: {industry}\n"
+            f"  Level: {level}\n"
+            f"  Recent {fmt} assessment score: {score}%\n\n"
+            f"WEAK / MIXED TOPICS (need improvement):\n  {focus_str}\n\n"
+            f"STRONG TOPICS (no action needed):\n  {strong_str}\n\n"
+            f"AVAILABLE CHARVAK COURSES (pick the best 2-4 that match weak topics):\n"
+            f"{courses_str}\n\n"
+            f"Return STRICT JSON with this exact shape:\n"
+            f"{{\n"
+            f'  "charvak_courses": [\n'
+            f'    {{"course_id": "...", "course_name": "...", "reason": "why this course addresses a weak topic (1 sentence)"}}\n'
+            f"  ],\n"
+            f'  "external_resources": [\n'
+            f'    {{"topic": "...", "resource": "e.g. MDN Web Docs / Harvard CS50 / specific book or course", "url_hint": "where to find it", "why": "1 sentence"}}\n'
+            f"  ],\n"
+            f'  "weekly_plan": [\n'
+            f'    {{"week": 1, "focus": "topic focus", "activities": ["activity 1", "activity 2"]}}\n'
+            f"  ],\n"
+            f'  "message": "2-3 sentence overview of the plan"\n'
+            f"}}\n\n"
+            f"Rules:\n"
+            f"- Pick charvak_courses ONLY from the provided catalog (don't invent course IDs).\n"
+            f"- If no course matches, return an empty array - don't force one.\n"
+            f"- External resources should be concrete and reputable.\n"
+            f"- Weekly plan: 2-4 weeks, calibrated to the level ({level}).\n"
+            f"- Be encouraging but honest about the gap.\n"
+        )
+
+        try:
+            response = requests.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers={"Authorization": f"Bearer {api_key}"},
+                json={
+                    "model": "gpt-4o-mini",
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": 0.4,
+                    "response_format": {"type": "json_object"},
+                },
+                timeout=60,
+            )
+            data = response.json()
+            content = (data.get("choices", [{}])[0].get("message", {}).get("content") or "").strip()
+            if content.startswith("```"):
+                content = content.split("```", 2)[1]
+                if content.startswith("json"):
+                    content = content[4:]
+                content = content.strip()
+            parsed = json.loads(content)
+            # Sanitize: only accept courses from the catalog
+            valid_ids = {c["course_id"] for c in courses_catalog}
+            valid_courses = []
+            for c in parsed.get("charvak_courses", []):
+                if isinstance(c, dict) and c.get("course_id") in valid_ids:
+                    valid_courses.append(c)
+            return {
+                "charvak_courses": valid_courses,
+                "external_resources": parsed.get("external_resources", []) if isinstance(parsed.get("external_resources"), list) else [],
+                "weekly_plan": parsed.get("weekly_plan", []) if isinstance(parsed.get("weekly_plan"), list) else [],
+                "message": str(parsed.get("message", ""))[:500],
+            }
+        except Exception as e:
+            logger.error(f"learning path AI failed: {e}")
+            return {
+                "message": "AI unavailable - please try again later.",
+                "charvak_courses": [], "external_resources": [], "weekly_plan": [],
+            }
 
     def get_history(self, email: str) -> Dict:
         """List past assessments for an email."""
