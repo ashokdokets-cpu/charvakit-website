@@ -5935,8 +5935,13 @@ async def create_language_assessment(request: Request):
 @app.post("/api/indian-languages/submit")
 @limiter.limit("20/minute")
 async def submit_language_assessment(request: Request):
-    """Submit assessment answers."""
+    """Submit assessment answers (auth-gated, email must match)."""
     data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+    require_auth_for_email(request, email)
+    data["email"] = email
     return indian_language_ai.submit_assessment(data)
 
 @app.post("/api/indian-languages/translate")
