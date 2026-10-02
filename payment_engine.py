@@ -22,6 +22,7 @@ RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID", "")
 RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET", "")
 PAYPAL_CLIENT_ID = os.getenv("PAYPAL_CLIENT_ID", "")
 PAYPAL_CLIENT_SECRET = os.getenv("PAYPAL_CLIENT_SECRET", "")
+PAYPAL_MODE = os.getenv("PAYPAL_MODE", "live").strip().lower()
 UPI_ID = os.getenv("UPI_ID", "charvakit@upi")
 PAYMENT_MODE = os.getenv("PAYMENT_MODE", "live")
 RAZORPAY_WEBHOOK_SECRET = os.getenv("RAZORPAY_WEBHOOK_SECRET", "")
@@ -30,11 +31,18 @@ RAZORPAY_WEBHOOK_SECRET = os.getenv("RAZORPAY_WEBHOOK_SECRET", "")
 class PaymentEngine:
     """Handles all payment processing for Charvak platform."""
 
+    def _paypal_base(self) -> str:
+        """Return the correct PayPal API base URL for the current mode."""
+        if getattr(self, "paypal_mode", "live") == "sandbox":
+            return "https://api-m.sandbox.paypal.com"
+        return "https://api-m.paypal.com"
+
     def __init__(self):
         self.razorpay_key_id = RAZORPAY_KEY_ID
         self.razorpay_key_secret = RAZORPAY_KEY_SECRET
         self.paypal_client_id = PAYPAL_CLIENT_ID
         self.paypal_client_secret = PAYPAL_CLIENT_SECRET
+        self.paypal_mode = PAYPAL_MODE
         self.upi_id = UPI_ID
         self.mode = PAYMENT_MODE
         self._ensure_tables()
@@ -271,7 +279,7 @@ class PaymentEngine:
         try:
             # 1. OAuth token
             auth = _requests.post(
-                "https://api-m.paypal.com/v1/oauth2/token",
+                f"{self._paypal_base()}/v1/oauth2/token",
                 auth=(self.paypal_client_id, self.paypal_client_secret),
                 data={"grant_type": "client_credentials"},
                 timeout=10,
@@ -298,7 +306,7 @@ class PaymentEngine:
                 "webhook_event":     event_obj,
             }
             resp = _requests.post(
-                "https://api-m.paypal.com/v1/notifications/verify-webhook-signature",
+                f"{self._paypal_base()}/v1/notifications/verify-webhook-signature",
                 headers={
                     "Authorization": f"Bearer {token}",
                     "Content-Type":  "application/json",
@@ -335,7 +343,7 @@ class PaymentEngine:
 
         try:
             import requests
-            base = "https://api-m.paypal.com"
+            base = self._paypal_base()
 
             # 1. Get OAuth token
             auth_resp = requests.post(
@@ -424,14 +432,14 @@ class PaymentEngine:
         try:
             import requests
             auth_response = requests.post(
-                "https://api-m.paypal.com/v1/oauth2/token",
+                f"{self._paypal_base()}/v1/oauth2/token",
                 auth=(self.paypal_client_id, self.paypal_client_secret),
                 data={"grant_type": "client_credentials"}
             )
             token = auth_response.json().get("access_token")
 
             verify_response = requests.get(
-                f"https://api-m.paypal.com/v2/checkout/orders/{paypal_order_id}",
+                f"{self._paypal_base()}/v2/checkout/orders/{paypal_order_id}",
                 headers={"Authorization": f"Bearer {token}"}
             )
             data = verify_response.json()
@@ -467,7 +475,7 @@ class PaymentEngine:
             # Sandbox vs live determined by the client_id prefix PayPal issues
             # (sandbox ids start with a specific pattern); simplest: try live,
             # fall back to sandbox on 401.
-            base = "https://api-m.paypal.com"
+            base = self._paypal_base()
             auth_resp = requests.post(
                 f"{base}/v1/oauth2/token",
                 auth=(self.paypal_client_id, self.paypal_client_secret),

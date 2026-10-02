@@ -64,9 +64,12 @@ var CharvakCurrency = {
             this.updateAllPrices();
             return saved;
         }
-        // Fetch region from server
+        // Fetch region from server (with dev override support)
         try {
-            var res = await fetch('/api/region');
+            var urlParams = new URLSearchParams(window.location.search);
+            var forceCountry = urlParams.get('country');
+            var regionUrl = '/api/region' + (forceCountry ? ('?country=' + encodeURIComponent(forceCountry)) : '');
+            var res = await fetch(regionUrl);
             var data = await res.json();
             if (data && data.currency && this.rates[data.currency]) {
                 this.current = data.currency;

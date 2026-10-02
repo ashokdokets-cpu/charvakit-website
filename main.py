@@ -7637,9 +7637,32 @@ async def robots_txt():
     return PlainTextResponse(content, media_type="text/plain")
 
 @app.get("/api/region")
-async def detect_region(request: Request):
-    """Region detection (W2b): CF-IPCountry > GeoLite2 > default."""
+async def detect_region(request: Request, country: str = None, currency: str = None):
+    """Region detection. Dev override: pass ?country=US or ?currency=USD."""
     try:
+        # DEV OVERRIDE (added 2026-10-03): allow forcing a region via query
+        # param so local testing can exercise PayPal / non-INR flows.
+        if country or currency:
+            override_country = (country or "US").upper()
+            override_currency = (currency or "").upper()
+            if not override_currency:
+                # Map common countries to currencies
+                _map = {
+                    "US": "USD", "GB": "GBP", "DE": "EUR", "FR": "EUR",
+                    "ES": "EUR", "IT": "EUR", "NL": "EUR", "IE": "EUR",
+                    "CA": "CAD", "AU": "AUD", "SG": "SGD", "AE": "AED",
+                    "IN": "INR", "JP": "JPY", "BR": "BRL", "ZA": "ZAR",
+                    "NG": "NGN", "MX": "MXN", "CH": "CHF", "SE": "SEK",
+                }
+                override_currency = _map.get(override_country, "USD")
+            return JSONResponse({
+                "country": override_country,
+                "currency": override_currency,
+                "language": "en",
+                "timezone": "UTC",
+                "source": "dev_override",
+            })
+
         accept_lang = request.headers.get("accept-language", "en")
         # Two-layer detector (CF header + GeoLite2)
         from ip_detection import ip_detector
