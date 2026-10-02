@@ -45,13 +45,22 @@
                         </select>
                     </div>
 
+                    <div class="mb-3">
+                        <label class="form-label">Format</label>
+                        <select class="form-select" id="carFormatSelect" onchange="updateSizeLabels()">
+                            <option value="">Loading formats...</option>
+                        </select>
+                        <div class="form-text" id="carFormatHint"></div>
+                    </div>
+
                     <div class="mb-4">
                         <label class="form-label">Assessment Size</label>
                         <select class="form-select" id="carSizeSelect">
-                            <option value="quick" selected>Quick &middot; 10 questions (~10 min) &mdash; 15 credits</option>
-                            <option value="standard">Standard &middot; 15 questions (~15 min) &mdash; 25 credits</option>
-                            <option value="full">Full &middot; 20 questions (~20 min) &mdash; 35 credits</option>
+                            <option value="quick" selected>Quick &middot; 10 questions</option>
+                            <option value="standard">Standard &middot; 15 questions</option>
+                            <option value="full">Full &middot; 20 questions</option>
                         </select>
+                        <div class="form-text" id="carSizeHint">Choose a format to see credit cost.</div>
                     </div>
 
                     <button class="btn btn-primary btn-lg w-100" id="carStartBtn" onclick="startAssessment()" disabled>
@@ -193,6 +202,55 @@ function populateSelects() {
         lo.textContent = lvls[m].label + ' (' + lvls[m].years + ')';
         lvlSel.appendChild(lo);
     }
+
+    var fmtSel = document.getElementById('carFormatSelect');
+    fmtSel.innerHTML = '<option value="">-- Choose a format --</option>';
+    var fmts = _carCatalog.formats || {};
+    var order = ['mcq', 'short_answer', 'numeracy', 'situational_judgment',
+                 'behavioral', 'system_design', 'debugging', 'case_study',
+                 'coding', 'sql'];
+    for (var n = 0; n < order.length; n++) {
+        var key = order[n];
+        var meta = fmts[key];
+        if (!meta) continue;
+        var fo = document.createElement('option');
+        fo.value = key;
+        if (meta.available) {
+            fo.textContent = meta.label + ' \u2014 ' + meta.description;
+        } else {
+            fo.textContent = meta.label + ' (coming soon)';
+            fo.disabled = true;
+        }
+        fmtSel.appendChild(fo);
+    }
+}
+
+function updateSizeLabels() {
+    var fmt = document.getElementById('carFormatSelect').value;
+    var sizeSel = document.getElementById('carSizeSelect');
+    var hintEl = document.getElementById('carSizeHint');
+    var fmtHint = document.getElementById('carFormatHint');
+
+    if (!fmt || !_carCatalog || !_carCatalog.formats[fmt]) {
+        hintEl.textContent = 'Choose a format to see credit cost.';
+        fmtHint.textContent = '';
+        return;
+    }
+
+    var meta = _carCatalog.formats[fmt];
+    var isAI = (meta.scored_by === 'ai');
+    var q = isAI ? 20 : 15;
+    var s = isAI ? 30 : 25;
+    var f = isAI ? 40 : 35;
+
+    sizeSel.options[0].textContent = 'Quick \u00b7 10 questions (~10 min) \u2014 ' + q + ' credits';
+    sizeSel.options[1].textContent = 'Standard \u00b7 15 questions (~15 min) \u2014 ' + s + ' credits';
+    sizeSel.options[2].textContent = 'Full \u00b7 20 questions (~20 min) \u2014 ' + f + ' credits';
+
+    hintEl.textContent = isAI
+        ? 'AI-scored format \u2014 includes per-question feedback'
+        : 'Instant scoring';
+    fmtHint.textContent = meta.description || '';
 }
 
 // ---------- Step 1 -> Step 2 ----------
@@ -209,13 +267,18 @@ async function startAssessment() {
     var industry = document.getElementById('carIndustrySelect').value;
     var level = document.getElementById('carLevelSelect').value;
     var size = document.getElementById('carSizeSelect').value;
+    var format = document.getElementById('carFormatSelect').value;
 
-    if (!role || !industry || !level) {
-        alert('Please choose a role, industry, and level.');
+    if (!role || !industry || !level || !format) {
+        alert('Please choose a role, industry, level, and format.');
         return;
     }
 
-    var sizeCredits = size === 'quick' ? 15 : (size === 'standard' ? 25 : 35);
+    var isAI = _carCatalog.formats[format].scored_by === 'ai';
+    var quick = isAI ? 20 : 15;
+    var standard = isAI ? 30 : 25;
+    var full = isAI ? 40 : 35;
+    var sizeCredits = size === 'quick' ? quick : (size === 'standard' ? standard : full);
     if (!confirm('Start a ' + size + ' assessment?\n\n' + role + ' in ' + industry + '\n\nCost: ' + sizeCredits + ' credits')) return;
 
     var btn = document.getElementById('carStartBtn');
@@ -230,7 +293,7 @@ async function startAssessment() {
             headers: _authHeaders(),
             body: JSON.stringify({
                 email: email, role: role, industry: industry,
-                level: level, size: size, format: 'mcq'
+                level: level, size: size, format: format
             })
         });
         if (r.status === 401) { window.location.href = '/login?next=/ai-assessment'; return; }
@@ -265,10 +328,12 @@ function renderQuestions(assessment) {
     document.getElementById('carStep2').classList.remove('d-none');
     document.getElementById('carStep3').classList.add('d-none');
 
+    var fmt = assessment.format || 'mcq';
     document.getElementById('carHeadline').textContent =
         assessment.role + ' in ' + assessment.industry;
     document.getElementById('carSubhead').textContent =
-        assessment.level_label + ' \u00b7 ' + assessment.questions.length + ' questions \u00b7 passing: ' + assessment.passing_score + '%';
+        assessment.level_label + ' \u00b7 ' + fmt + ' \u00b7 ' +
+        assessment.questions.length + ' questions \u00b7 passing: ' + assessment.passing_score + '%';
     document.getElementById('carProgressBadge').textContent =
         '0 / ' + assessment.questions.length;
 
@@ -276,10 +341,20 @@ function renderQuestions(assessment) {
     var qs = assessment.questions || [];
     for (var i = 0; i < qs.length; i++) {
         var q = qs[i];
-        var text = (typeof q === 'string') ? q : (q.q || '');
-        var opts = (typeof q === 'object' && q.options) ? q.options : [];
         html += '<div class="card border-0 shadow-sm mb-3"><div class="card-body p-4">';
-        html += '<h5 class="as-h6 mb-3"><span class="text-muted">Q' + (i + 1) + '.</span> ' + _esc(text) + '</h5>';
+        html += '<h5 class="as-h6 mb-3">Q' + (i + 1) + '.</h5>';
+        html += renderQuestionBody(fmt, i, q);
+        html += '</div></div>';
+    }
+    document.getElementById('carQuestions').innerHTML = html;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function renderQuestionBody(fmt, i, q) {
+    var html = '';
+    if (fmt === 'mcq') {
+        html += '<p class="mb-3">' + _esc(q.q || '') + '</p>';
+        var opts = q.options || [];
         for (var j = 0; j < opts.length; j++) {
             var id = 'car-q' + i + '-opt' + j;
             html += '<div class="form-check mb-2">';
@@ -287,39 +362,131 @@ function renderQuestions(assessment) {
             html += '<label class="form-check-label" for="' + id + '">' + _esc(opts[j]) + '</label>';
             html += '</div>';
         }
-        html += '</div></div>';
+    } else if (fmt === 'situational_judgment') {
+        html += '<p class="mb-3">' + _esc(q.scenario || '') + '</p>';
+        html += '<p class="small text-muted mb-2">Pick the BEST response and the WORST response.</p>';
+        var sjtOpts = q.options || [];
+        html += '<div class="mb-3"><strong class="small">Best response:</strong><br>';
+        for (var k = 0; k < sjtOpts.length; k++) {
+            var bid = 'car-q' + i + '-best-' + k;
+            html += '<div class="form-check">';
+            html += '<input class="form-check-input" type="radio" name="car-q' + i + '-best" value="' + k + '" id="' + bid + '" onchange="updateProgress()">';
+            html += '<label class="form-check-label" for="' + bid + '">' + _esc(sjtOpts[k]) + '</label>';
+            html += '</div>';
+        }
+        html += '</div>';
+        html += '<div><strong class="small">Worst response:</strong><br>';
+        for (var w = 0; w < sjtOpts.length; w++) {
+            var wid = 'car-q' + i + '-worst-' + w;
+            html += '<div class="form-check">';
+            html += '<input class="form-check-input" type="radio" name="car-q' + i + '-worst" value="' + w + '" id="' + wid + '" onchange="updateProgress()">';
+            html += '<label class="form-check-label" for="' + wid + '">' + _esc(sjtOpts[w]) + '</label>';
+            html += '</div>';
+        }
+        html += '</div>';
+    } else if (fmt === 'numeracy') {
+        html += '<p class="mb-3">' + _esc(q.q || '') + '</p>';
+        html += '<input type="number" step="any" class="form-control" id="car-q' + i + '-num" placeholder="Enter a number" onchange="updateProgress()">';
+    } else if (fmt === 'short_answer') {
+        html += '<p class="mb-3">' + _esc(q.q || '') + '</p>';
+        html += '<textarea class="form-control" rows="2" id="car-q' + i + '-txt" placeholder="1-3 sentences..." onchange="updateProgress()"></textarea>';
+    } else if (fmt === 'behavioral') {
+        html += '<p class="mb-3">' + _esc(q.prompt || '') + '</p>';
+        html += '<p class="small text-muted mb-2">Use the STAR method: Situation, Task, Action, Result.</p>';
+        html += '<textarea class="form-control" rows="6" id="car-q' + i + '-txt" placeholder="Describe the situation, your task, your actions, and the result..." onchange="updateProgress()"></textarea>';
+    } else if (fmt === 'system_design') {
+        html += '<p class="mb-3">' + _esc(q.prompt || '') + '</p>';
+        html += '<p class="small text-muted mb-2">Cover architecture, scalability, trade-offs, and failure modes.</p>';
+        html += '<textarea class="form-control" rows="8" id="car-q' + i + '-txt" placeholder="Describe your design approach..." onchange="updateProgress()"></textarea>';
+    } else if (fmt === 'debugging') {
+        html += '<p class="mb-2 small text-muted">Language: ' + _esc(q.language || '') + '</p>';
+        html += '<pre class="bg-light p-3 rounded" style="font-size:13px; white-space:pre-wrap;">' + _esc(q.buggy_code || '') + '</pre>';
+        html += '<p class="mt-2 mb-2">What is the bug and how would you fix it?</p>';
+        html += '<textarea class="form-control" rows="4" id="car-q' + i + '-txt" placeholder="Describe the bug and the fix..." onchange="updateProgress()"></textarea>';
+    } else if (fmt === 'case_study') {
+        html += '<p class="mb-3">' + _esc(q.scenario || '') + '</p>';
+        var subs = q.questions || [];
+        if (subs.length) {
+            html += '<ol class="small">';
+            for (var s = 0; s < subs.length; s++) {
+                html += '<li>' + _esc(subs[s]) + '</li>';
+            }
+            html += '</ol>';
+        }
+        html += '<textarea class="form-control" rows="8" id="car-q' + i + '-txt" placeholder="Write your analysis..." onchange="updateProgress()"></textarea>';
+    } else {
+        html += '<p class="mb-3 text-muted">Unsupported format: ' + _esc(fmt) + '</p>';
     }
-    document.getElementById('carQuestions').innerHTML = html;
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return html;
 }
 
 function updateProgress() {
     var a = _carCurrentAssessment;
     if (!a) return;
+    var fmt = a.format || 'mcq';
     var answered = 0;
     for (var i = 0; i < a.questions.length; i++) {
-        if (document.querySelector('input[name="car-q' + i + '"]:checked')) answered++;
+        if (fmt === 'situational_judgment') {
+            var b = document.querySelector('input[name="car-q' + i + '-best"]:checked');
+            var w = document.querySelector('input[name="car-q' + i + '-worst"]:checked');
+            if (b && w) answered++;
+        } else if (fmt === 'numeracy') {
+            var n = document.getElementById('car-q' + i + '-num');
+            if (n && n.value.trim() !== '') answered++;
+        } else if (fmt === 'mcq') {
+            if (document.querySelector('input[name="car-q' + i + '"]:checked')) answered++;
+        } else {
+            var txt = document.getElementById('car-q' + i + '-txt');
+            if (txt && txt.value.trim() !== '') answered++;
+        }
     }
     document.getElementById('carProgressBadge').textContent =
         answered + ' / ' + a.questions.length;
 }
 
-// ---------- Submit ----------
 async function submitAssessment() {
     var a = _carCurrentAssessment;
     if (!a) { alert('No active assessment.'); return; }
     var email = _email();
     if (!email) { alert('Please log in.'); return; }
 
+    var fmt = a.format || 'mcq';
     var answers = [];
     var answeredCount = 0;
     for (var i = 0; i < a.questions.length; i++) {
-        var sel = document.querySelector('input[name="car-q' + i + '"]:checked');
-        if (sel) {
-            answers.push(parseInt(sel.value, 10));
-            answeredCount++;
+        if (fmt === 'situational_judgment') {
+            var b = document.querySelector('input[name="car-q' + i + '-best"]:checked');
+            var w = document.querySelector('input[name="car-q' + i + '-worst"]:checked');
+            if (b && w) {
+                answers.push({best: parseInt(b.value, 10), worst: parseInt(w.value, 10)});
+                answeredCount++;
+            } else {
+                answers.push(null);
+            }
+        } else if (fmt === 'numeracy') {
+            var n = document.getElementById('car-q' + i + '-num');
+            if (n && n.value.trim() !== '') {
+                answers.push(parseFloat(n.value));
+                answeredCount++;
+            } else {
+                answers.push(null);
+            }
+        } else if (fmt === 'mcq') {
+            var sel = document.querySelector('input[name="car-q' + i + '"]:checked');
+            if (sel) {
+                answers.push(parseInt(sel.value, 10));
+                answeredCount++;
+            } else {
+                answers.push(-1);
+            }
         } else {
-            answers.push(-1);
+            var txt = document.getElementById('car-q' + i + '-txt');
+            if (txt && txt.value.trim() !== '') {
+                answers.push(txt.value.trim());
+                answeredCount++;
+            } else {
+                answers.push('');
+            }
         }
     }
     if (answeredCount === 0) {
@@ -384,6 +551,33 @@ function renderResult(j) {
     document.getElementById('carResultMeta').innerHTML =
         '<strong>' + _esc(j.role) + '</strong> in ' + _esc(j.industry) +
         '<br>' + _esc(j.level) + ' level \u00b7 <span class="text-muted">ID ' + _esc(j.assessment_id) + '</span>';
+
+    var bd = j.breakdown || [];
+    if (bd.length) {
+        var bhtml = '<div class="card border-0 shadow-sm mt-4"><div class="card-body p-4">';
+        bhtml += '<h3 class="as-h5 mb-3">Per-Question Breakdown</h3>';
+        for (var i = 0; i < bd.length; i++) {
+            var b = bd[i];
+            var badge = b.is_correct
+                ? '<span class="badge bg-success">' + b.score + '%</span>'
+                : '<span class="badge bg-danger">' + b.score + '%</span>';
+            bhtml += '<details class="mb-2"><summary>Q' + (i + 1) + ' ' + badge + '</summary>';
+            bhtml += '<div class="ps-3 pt-2 small">';
+            bhtml += '<p class="mb-1"><strong>Question:</strong> ' + _esc((b.question || '').substring(0, 300)) + '</p>';
+            if (b.your_answer !== undefined && b.your_answer !== null) {
+                var ua = (typeof b.your_answer === 'object')
+                    ? JSON.stringify(b.your_answer)
+                    : String(b.your_answer);
+                bhtml += '<p class="mb-1"><strong>Your answer:</strong> ' + _esc(ua.substring(0, 500)) + '</p>';
+            }
+            if (b.feedback) {
+                bhtml += '<p class="mb-1 text-primary"><strong>Feedback:</strong> ' + _esc(b.feedback) + '</p>';
+            }
+            bhtml += '</div></details>';
+        }
+        bhtml += '</div></div>';
+        document.getElementById('carResultMeta').innerHTML += bhtml;
+    }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
