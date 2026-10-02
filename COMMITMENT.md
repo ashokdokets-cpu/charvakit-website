@@ -3006,3 +3006,24 @@ own thing and just needs its question-display gap closed.
 painful, consolidate in Session 12+.
 
 **Verdict:** DEFERRED — product decision, revisit after Session 10
+
+---
+
+### RESOLVED — Indian Language AI: real MCQ scoring + varied answer positions (2026-10-02, 96535c0 + 4385008)
+
+The flag from earlier tonight ("questions generated but never shown")
+is closed. The full fix shipped:
+
+- Real MCQ scoring (deterministic correctness, not "count answers")
+- Question display (radio buttons with 4 options)
+- Submit flow wired to /api/indian-languages/submit
+- Auth on /submit (was IDOR — commit 4385008)
+- correct_index stripped from frontend response (cheat prevention)
+- Server-side option shuffle (bulletproof against lazy AI)
+- 10/15/20 question selector
+- Static mojibake fallback replaced with clean English MCQ templates
+
+Verified E2E: junk answers = 0%, real answers = 100%.
+
+The other flag — "Indian Language AI vs Career Assessment relationship"
+— remains DEFERRED. Revisit after Session 10.
