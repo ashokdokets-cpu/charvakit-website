@@ -9,6 +9,7 @@ from typing import Dict, Optional
 logger = logging.getLogger("charvakit.ability")
 
 DIFFICULTY_VALUE = {
+    # Generic strings (used by mock drives, IELTS, etc.)
     "beginner": 800,
     "easy": 800,
     "medium": 1000,
@@ -16,6 +17,17 @@ DIFFICULTY_VALUE = {
     "moderate": 1000,
     "hard": 1200,
     "advanced": 1200,
+    # Career Assessment level keys (Session 13):
+    # 100% on an "intern" assessment should move ability less than
+    # 100% on an "executive" assessment, because the expected score
+    # against a 1600-difficulty assessment is much lower.
+    "intern": 600,
+    "junior": 800,
+    "mid": 1000,
+    "senior": 1200,
+    "staff": 1400,
+    "manager": 1500,
+    "executive": 1600,
 }
 
 START_ABILITY = 1000.0
