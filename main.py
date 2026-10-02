@@ -6564,12 +6564,25 @@ async def api_career_assessment_start(request: Request):
     require_auth_for_email(request, email)
 
     size = (data.get("size") or "quick").strip().lower()
-    key_map = {
-        "quick": "career_assessment_quick",
-        "standard": "career_assessment_standard",
-        "full": "career_assessment_full",
-    }
-    credit_key = key_map.get(size, "career_assessment_quick")
+    fmt = (data.get("format") or "mcq").strip().lower()
+
+    # AI-scored formats cost more (batch OpenAI call at scoring time)
+    ai_formats = {"behavioral", "system_design", "debugging", "case_study"}
+    is_ai = fmt in ai_formats
+
+    if is_ai:
+        key_map = {
+            "quick": "career_assessment_ai_quick",
+            "standard": "career_assessment_ai_standard",
+            "full": "career_assessment_ai_full",
+        }
+    else:
+        key_map = {
+            "quick": "career_assessment_quick",
+            "standard": "career_assessment_standard",
+            "full": "career_assessment_full",
+        }
+    credit_key = key_map.get(size, key_map["quick"])
 
     from credit_guard import require_credits_from_data
     guard = require_credits_from_data(data, credit_key)

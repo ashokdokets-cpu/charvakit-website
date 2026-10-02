@@ -115,6 +115,9 @@ class AICreditEngine:
         "career_assessment_quick": 15,
         "career_assessment_standard": 25,
         "career_assessment_full": 35,
+        "career_assessment_ai_quick": 20,
+        "career_assessment_ai_standard": 30,
+        "career_assessment_ai_full": 40,
         "indian_language_translation": 10,
         "topic_questions": 2,
         # Session G6 batch 1: voice + AI tools

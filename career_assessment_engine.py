@@ -206,7 +206,7 @@ class CareerAssessmentEngine:
             "roles": CAREER_ROLES,
             "industries": CAREER_INDUSTRIES,
             "levels": CAREER_LEVELS,
-            "formats": CAREER_FORMATS,
+            "formats": self._format_registry(),
             "sizes": {k: {"questions": v["questions"], "credits": v["credits"]}
                       for k, v in CAREER_SIZES.items()},
             "passing_score": PASSING_SCORE,
@@ -240,8 +240,11 @@ class CareerAssessmentEngine:
             return {"status": "error", "message": f"Unknown size: {size_key}"}
         if level_key not in [l["key"] for l in CAREER_LEVELS]:
             return {"status": "error", "message": f"Unknown level: {level_key}"}
-        if fmt != "mcq":
-            return {"status": "error", "message": f"Format '{fmt}' not available yet"}
+        registry = self._format_registry()
+        if fmt not in registry:
+            return {"status": "error", "message": f"Unknown format: {fmt}"}
+        if not registry[fmt]["available"]:
+            return {"status": "error", "message": f"Format '{fmt}' is coming soon"}
 
         # Flatten role list for validation
         all_roles = []
@@ -259,8 +262,9 @@ class CareerAssessmentEngine:
 
         self._ensure_tables()
 
-        # Generate questions
+        # Generate questions (format-aware)
         questions = self._generate_questions(
+            format_key=fmt,
             role=role, industry=industry,
             level_key=level_key, level_label=level_label,
             level_blurb=level_blurb, num_questions=num_questions,
@@ -287,13 +291,8 @@ class CareerAssessmentEngine:
             logger.error(f"start_assessment persist failed: {e}")
             return {"status": "error", "message": "Could not save assessment"}
 
-        # Strip correct_index before sending to frontend
-        safe_questions = []
-        for q in questions:
-            safe_questions.append({
-                "q": q.get("q", ""),
-                "options": q.get("options", []),
-            })
+        # Strip scoring answers before sending to frontend
+        safe_questions = self._strip_answers_for_frontend(fmt, questions)
 
         return {
             "status": "success",
@@ -315,19 +314,286 @@ class CareerAssessmentEngine:
         }
 
     # ------------------------------------------------------------
+    # Format registry (Session 11 Phase 2a)
+    # ------------------------------------------------------------
+
+    def _format_registry(self) -> Dict:
+        """
+        Per-format metadata. Single source of truth for which formats
+        are available, what shape their questions take, how they're
+        scored, and what credit multiplier applies.
+        """
+        return {
+            "mcq": {
+                "label": "Multiple Choice",
+                "scored_by": "deterministic",
+                "available": True,
+                "phase": 1,
+                "question_shape": "{q, options: [4], correct_index}",
+                "answer_kind": "choice",
+                "credit_multiplier": 1.0,
+                "description": "4-option MCQs, instant scoring",
+            },
+            "short_answer": {
+                "label": "Short Answer",
+                "scored_by": "hybrid",
+                "available": True,
+                "phase": 2,
+                "question_shape": "{q, expected_answer, keywords: [...]}",
+                "answer_kind": "text_short",
+                "credit_multiplier": 1.0,
+                "description": "1-3 sentence text answers, AI near-match scored",
+            },
+            "numeracy": {
+                "label": "Numeracy",
+                "scored_by": "deterministic",
+                "available": True,
+                "phase": 2,
+                "question_shape": "{q, correct_number, tolerance}",
+                "answer_kind": "number",
+                "credit_multiplier": 1.0,
+                "description": "Quantitative reasoning, exact or tolerance match",
+            },
+            "situational_judgment": {
+                "label": "Situational Judgment",
+                "scored_by": "deterministic",
+                "available": True,
+                "phase": 2,
+                "question_shape": "{scenario, options: [5], best_index, worst_index}",
+                "answer_kind": "choice_best_worst",
+                "credit_multiplier": 1.0,
+                "description": "Pick the best and worst response to a scenario",
+            },
+            "behavioral": {
+                "label": "Behavioral (STAR)",
+                "scored_by": "ai",
+                "available": True,
+                "phase": 2,
+                "question_shape": "{prompt, rubric_star: {situation, task, action, result}}",
+                "answer_kind": "text_long",
+                "credit_multiplier": 1.33,
+                "description": "STAR-format responses, AI-scored against rubric",
+            },
+            "system_design": {
+                "label": "System Design",
+                "scored_by": "ai",
+                "available": True,
+                "phase": 2,
+                "question_shape": "{prompt, rubric: [criteria]}",
+                "answer_kind": "text_long",
+                "credit_multiplier": 1.33,
+                "description": "Open-ended architecture prompts, AI-scored",
+            },
+            "debugging": {
+                "label": "Debugging",
+                "scored_by": "ai",
+                "available": True,
+                "phase": 2,
+                "question_shape": "{buggy_code, language, correct_fix_summary, bug_class}",
+                "answer_kind": "text_long",
+                "credit_multiplier": 1.33,
+                "description": "Diagnose a bug, describe the fix, AI-scored",
+            },
+            "case_study": {
+                "label": "Case Study",
+                "scored_by": "ai",
+                "available": True,
+                "phase": 2,
+                "question_shape": "{scenario, questions: [sub-questions], rubric}",
+                "answer_kind": "text_long",
+                "credit_multiplier": 1.33,
+                "description": "Business/analytics scenarios, AI-scored",
+            },
+            "coding": {
+                "label": "Coding",
+                "scored_by": "hybrid",
+                "available": False,
+                "phase": 2,
+                "question_shape": "{problem, starter_code, language, test_cases}",
+                "answer_kind": "code",
+                "credit_multiplier": 1.33,
+                "description": "Real code, tested against cases (coming soon)",
+            },
+            "sql": {
+                "label": "SQL",
+                "scored_by": "hybrid",
+                "available": False,
+                "phase": 2,
+                "question_shape": "{schema, task, expected_output}",
+                "answer_kind": "sql",
+                "credit_multiplier": 1.33,
+                "description": "Query a schema, compare output (coming soon)",
+            },
+        }
+
+    def _is_ai_scored_format(self, format_key: str) -> bool:
+        registry = self._format_registry()
+        return registry.get(format_key, {}).get("scored_by") in ("ai", "hybrid")
+
+    # ------------------------------------------------------------
+    # Prompt builders (one per format)
+    # ------------------------------------------------------------
+
+    def _build_prompt_for_format(
+        self, format_key: str, role: str, industry: str,
+        level_label: str, level_blurb: str, count: int
+    ) -> str:
+        """Dispatch to the format-specific prompt builder."""
+        builders = {
+            "mcq": self._prompt_mcq,
+            "short_answer": self._prompt_short_answer,
+            "numeracy": self._prompt_numeracy,
+            "situational_judgment": self._prompt_sjt,
+            "behavioral": self._prompt_behavioral,
+            "system_design": self._prompt_system_design,
+            "debugging": self._prompt_debugging,
+            "case_study": self._prompt_case_study,
+        }
+        builder = builders.get(format_key)
+        if not builder:
+            # Fallback to MCQ
+            return self._prompt_mcq(role, industry, level_label, level_blurb, count)
+        return builder(role, industry, level_label, level_blurb, count)
+
+    def _context_header(self, role: str, industry: str, level_label: str, level_blurb: str) -> str:
+        """Shared context block for all prompts."""
+        return (
+            f"TARGET ROLE: {role}\n"
+            f"INDUSTRY: {industry}\n"
+            f"EXPERIENCE LEVEL: {level_label} ({level_blurb})\n\n"
+            f"Calibrate all questions to what a real interviewer at the "
+            f"{level_label} level would ask for a {role} in {industry}. "
+            f"Test practical knowledge, not trivia. Include trade-offs, "
+            f"real-world scenarios, and tool familiarity appropriate to "
+            f"the industry.\n\n"
+        )
+
+    def _prompt_mcq(self, role, industry, level_label, level_blurb, count):
+        return (
+            f"Generate {count} multiple-choice questions for a career readiness assessment.\n"
+            + self._context_header(role, industry, level_label, level_blurb)
+            + f"Rules:\n"
+            f"- Each question MUST have exactly 4 options and one correct answer.\n"
+            f"- correct_index is 0-based (0, 1, 2, or 3).\n"
+            f"- CRITICAL: Vary correct_index across questions. Do NOT always put the correct answer at position 0.\n"
+            f"- Aim for a roughly even distribution across 0, 1, 2, 3.\n"
+            f"- Keep options concise (1-15 words each).\n"
+            f"- Return exactly {count} questions.\n\n"
+            f'Return JSON: {{"questions": [{{"q": "...", "options": ["...","...","...","..."], "correct_index": 0}}]}}'
+        )
+
+    def _prompt_short_answer(self, role, industry, level_label, level_blurb, count):
+        return (
+            f"Generate {count} short-answer questions for a career readiness assessment.\n"
+            + self._context_header(role, industry, level_label, level_blurb)
+            + f"Rules:\n"
+            f"- Each question expects a 1-3 sentence text answer.\n"
+            f"- Provide an 'expected_answer' capturing the ideal response in 2-4 sentences.\n"
+            f"- Provide 3-6 'keywords' that a correct answer must mention.\n"
+            f"- Questions should test understanding, not memorization.\n"
+            f"- Return exactly {count} questions.\n\n"
+            f'Return JSON: {{"questions": [{{"q": "...", "expected_answer": "...", "keywords": ["...","...","..."]}}]}}'
+        )
+
+    def _prompt_numeracy(self, role, industry, level_label, level_blurb, count):
+        return (
+            f"Generate {count} numeracy questions for a career readiness assessment.\n"
+            + self._context_header(role, industry, level_label, level_blurb)
+            + f"Rules:\n"
+            f"- Each question has a single numeric answer.\n"
+            f"- Answers can be integers or decimals.\n"
+            f"- Provide a 'tolerance' field: the acceptable absolute difference from correct_number.\n"
+            f"  Use tolerance=0 for exact answers, or a small number (e.g. 0.5 or 5) for rounded answers.\n"
+            f"- Include realistic business/technical scenarios (rates, budgets, KPIs, percentages).\n"
+            f"- Return exactly {count} questions.\n\n"
+            f'Return JSON: {{"questions": [{{"q": "...", "correct_number": 42.5, "tolerance": 0.5}}]}}'
+        )
+
+    def _prompt_sjt(self, role, industry, level_label, level_blurb, count):
+        return (
+            f"Generate {count} situational judgment questions for a career readiness assessment.\n"
+            + self._context_header(role, industry, level_label, level_blurb)
+            + f"Rules:\n"
+            f"- Each question presents a realistic workplace scenario.\n"
+            f"- Provide 5 possible responses (options).\n"
+            f"- Mark the single 'best_index' (most professional/effective) and 'worst_index' (least effective).\n"
+            f"- Indexes are 0-based (0-4). best_index and worst_index must differ.\n"
+            f"- Scenarios should reflect real pressure, trade-offs, or ethical decisions.\n"
+            f"- Return exactly {count} questions.\n\n"
+            f'Return JSON: {{"questions": [{{"scenario": "...", "options": ["...","...","...","...","..."], "best_index": 0, "worst_index": 4}}]}}'
+        )
+
+    def _prompt_behavioral(self, role, industry, level_label, level_blurb, count):
+        return (
+            f"Generate {count} behavioral interview prompts for a career readiness assessment.\n"
+            + self._context_header(role, industry, level_label, level_blurb)
+            + f"Rules:\n"
+            f"- Each prompt is a classic behavioral question suitable for STAR-format answers.\n"
+            f"- Provide a 'rubric_star' object with 4 fields: situation, task, action, result.\n"
+            f"  Each field describes what a strong STAR response should cover for this prompt.\n"
+            f"- Prompts should reveal judgment, collaboration, and impact.\n"
+            f"- Return exactly {count} questions.\n\n"
+            f'Return JSON: {{"questions": [{{"prompt": "...", "rubric_star": {{"situation": "...", "task": "...", "action": "...", "result": "..."}}}}]}}'
+        )
+
+    def _prompt_system_design(self, role, industry, level_label, level_blurb, count):
+        return (
+            f"Generate {count} system design prompts for a career readiness assessment.\n"
+            + self._context_header(role, industry, level_label, level_blurb)
+            + f"Rules:\n"
+            f"- Each prompt is an open-ended architecture or design challenge.\n"
+            f"- Provide a 'rubric' with 4-6 criteria a strong answer should address.\n"
+            f"- Prompts should require trade-off analysis (scalability, cost, latency, reliability, security).\n"
+            f"- Appropriate for {role} in {industry} at {level_label}.\n"
+            f"- Return exactly {count} questions.\n\n"
+            f'Return JSON: {{"questions": [{{"prompt": "...", "rubric": ["...","...","..."]}}]}}'
+        )
+
+    def _prompt_debugging(self, role, industry, level_label, level_blurb, count):
+        return (
+            f"Generate {count} debugging challenges for a career readiness assessment.\n"
+            + self._context_header(role, industry, level_label, level_blurb)
+            + f"Rules:\n"
+            f"- Each challenge shows a small snippet of buggy code with a plausible-looking bug.\n"
+            f"- Include the language (Python, JavaScript, SQL, etc.).\n"
+            f"- Provide 'correct_fix_summary' — one sentence describing the fix.\n"
+            f"- Provide 'bug_class' — e.g. 'off_by_one', 'null_reference', 'race_condition', 'logic_error'.\n"
+            f"- Keep code snippets under 15 lines so they render well.\n"
+            f"- Return exactly {count} questions.\n\n"
+            f'Return JSON: {{"questions": [{{"buggy_code": "...", "language": "Python", "correct_fix_summary": "...", "bug_class": "..."}}]}}'
+        )
+
+    def _prompt_case_study(self, role, industry, level_label, level_blurb, count):
+        return (
+            f"Generate {count} case study questions for a career readiness assessment.\n"
+            + self._context_header(role, industry, level_label, level_blurb)
+            + f"Rules:\n"
+            f"- Each case study presents a realistic business or product scenario.\n"
+            f"- Include 1-3 'questions' the user must answer based on the scenario.\n"
+            f"- Provide a 'rubric' with 4-6 criteria a strong analysis should cover.\n"
+            f"- Scenario should require diagnosis, prioritization, or trade-off reasoning.\n"
+            f"- Return exactly {count} case studies.\n\n"
+            f'Return JSON: {{"questions": [{{"scenario": "...", "questions": ["...","..."], "rubric": ["...","..."]}}]}}'
+        )
+
+    # ------------------------------------------------------------
     # Question generation
     # ------------------------------------------------------------
 
     def _generate_questions(
-        self, role: str, industry: str, level_key: str,
+        self, format_key: str, role: str, industry: str, level_key: str,
         level_label: str, level_blurb: str, num_questions: int
     ) -> List[Dict]:
-        """Generate MCQs via OpenAI. Batched for 15/20. Returns [] on failure."""
+        """
+        Generate questions for the given format via OpenAI.
+        Returns [] on failure. Validates + normalizes every question.
+        """
         import os as _os
         api_key = _os.getenv("OPENAI_API_KEY", "")
         if not api_key:
             return []
 
+        # SJT: best+worst per item, keep count as-is
         batches = []
         remaining = num_questions
         while remaining > 0:
@@ -338,6 +604,7 @@ class CareerAssessmentEngine:
         all_questions = []
         for batch_size in batches:
             batch = self._generate_one_batch(
+                format_key=format_key,
                 role=role, industry=industry,
                 level_key=level_key, level_label=level_label,
                 level_blurb=level_blurb, count=batch_size,
@@ -347,63 +614,30 @@ class CareerAssessmentEngine:
             all_questions.extend(batch)
 
         cleaned = []
-        for q in all_questions:
-            if not isinstance(q, dict):
-                continue
-            text = (q.get("q") or "").strip()
-            options = q.get("options", [])
-            ci = q.get("correct_index")
-            if not text or not isinstance(options, list) or len(options) < 2:
-                continue
-            if not isinstance(ci, int) or ci < 0 or ci >= len(options):
-                continue
-            cleaned_q = {
-                "q": text,
-                "options": [str(o).strip() for o in options[:4]],
-                "correct_index": ci,
-            }
-            cleaned_q = self._shuffle_question_options(cleaned_q)
-            cleaned.append(cleaned_q)
+        for raw_q in all_questions:
+            q = self._normalize_question(format_key, raw_q)
+            if q:
+                cleaned.append(q)
 
         if len(cleaned) < num_questions:
-            logger.warning(f"Generated {len(cleaned)} valid, wanted {num_questions}")
+            logger.warning(f"Format {format_key}: {len(cleaned)} valid, wanted {num_questions}")
         return cleaned[:num_questions]
 
     def _generate_one_batch(
-        self, role: str, industry: str, level_key: str,
-        level_label: str, level_blurb: str, count: int
+        self, format_key: str, role: str, industry: str,
+        level_key: str, level_label: str, level_blurb: str, count: int
     ) -> List[Dict]:
-        """Single OpenAI call for a batch of MCQs. Returns [] on failure."""
+        """Single OpenAI call for a batch of questions in the given format."""
         import os as _os
         import requests
         api_key = _os.getenv("OPENAI_API_KEY", "")
         if not api_key:
             return []
 
-        prompt = (
-            f"Generate {count} multiple-choice questions for a career readiness "
-            f"assessment.\n"
-            f"TARGET ROLE: {role}\n"
-            f"INDUSTRY: {industry}\n"
-            f"EXPERIENCE LEVEL: {level_label} ({level_blurb})\n"
-            f"\n"
-            f"Calibrate the questions to what a real interviewer at the "
-            f"{level_label} level would ask for a {role} in {industry}.\n"
-            f"\n"
-            f"Rules:\n"
-            f"- Each question MUST have exactly 4 options and one correct answer.\n"
-            f"- Test practical knowledge, not trivia.\n"
-            f"- Include trade-offs, real-world scenarios, and tool familiarity "
-            f"appropriate to {industry}.\n"
-            f"- correct_index is 0-based (0, 1, 2, or 3).\n"
-            f"- CRITICAL: Vary correct_index across questions. Do NOT always "
-            f"put the correct answer at position 0.\n"
-            f"- Aim for a roughly even distribution across 0, 1, 2, 3.\n"
-            f"- Keep options concise (1-15 words each).\n"
-            f"- Questions and options in English.\n"
-            f"- Return exactly {count} questions.\n"
-            f"\n"
-            f'Return JSON: {{"questions": [{{"q": "...", "options": ["...","...","...","..."], "correct_index": 0}}]}}'
+        prompt = self._build_prompt_for_format(
+            format_key=format_key,
+            role=role, industry=industry,
+            level_label=level_label, level_blurb=level_blurb, count=count,
         )
 
         try:
@@ -431,7 +665,7 @@ class CareerAssessmentEngine:
                 return questions
             return []
         except Exception as e:
-            logger.error(f"career-assessment AI batch failed: {e}")
+            logger.error(f"AI batch failed for {format_key}: {e}")
             return []
 
     def _shuffle_question_options(self, q: Dict) -> Dict:
@@ -449,35 +683,360 @@ class CareerAssessmentEngine:
             q["correct_index"] = ci
         return q
 
+    def _strip_answers_for_frontend(self, format_key: str, questions: List[Dict]) -> List[Dict]:
+        """
+        Remove any field that reveals the correct answer before sending
+        to the frontend. Kept field set varies by format.
+        """
+        safe = []
+        for q in questions:
+            if format_key == "mcq":
+                safe.append({"q": q.get("q", ""), "options": q.get("options", [])})
+            elif format_key == "short_answer":
+                safe.append({"q": q.get("q", "")})
+            elif format_key == "numeracy":
+                safe.append({"q": q.get("q", "")})
+            elif format_key == "situational_judgment":
+                safe.append({"scenario": q.get("scenario", ""), "options": q.get("options", [])})
+            elif format_key == "behavioral":
+                safe.append({"prompt": q.get("prompt", "")})
+            elif format_key == "system_design":
+                safe.append({"prompt": q.get("prompt", "")})
+            elif format_key == "debugging":
+                safe.append({
+                    "buggy_code": q.get("buggy_code", ""),
+                    "language": q.get("language", ""),
+                })
+            elif format_key == "case_study":
+                safe.append({
+                    "scenario": q.get("scenario", ""),
+                    "questions": q.get("questions", []),
+                })
+            else:
+                safe.append({"q": q.get("q", "")})
+        return safe
+
     # ------------------------------------------------------------
     # Answer / Complete
     # ------------------------------------------------------------
 
+    def _ensure_format_columns(self) -> None:
+        """Add answer_text, ai_score, ai_feedback columns. Idempotent."""
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                ALTER TABLE charvak_career_assessment_answers
+                    ADD COLUMN IF NOT EXISTS answer_text TEXT,
+                    ADD COLUMN IF NOT EXISTS ai_score INTEGER,
+                    ADD COLUMN IF NOT EXISTS ai_feedback TEXT
+            """)
+            conn.commit()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.warning(f"career-assessment column migration: {e}")
+
+    def _normalize_question(self, format_key: str, raw_q: Dict) -> Optional[Dict]:
+        """Validate and normalize a raw question dict per format. Returns None if invalid."""
+        if not isinstance(raw_q, dict):
+            return None
+
+        if format_key == "mcq":
+            text = (raw_q.get("q") or "").strip()
+            options = raw_q.get("options", [])
+            ci = raw_q.get("correct_index")
+            if not text or not isinstance(options, list) or len(options) < 4:
+                return None
+            if not isinstance(ci, int) or ci < 0 or ci >= len(options):
+                return None
+            q = {"q": text, "options": [str(o).strip() for o in options[:4]], "correct_index": ci}
+            return self._shuffle_question_options(q)
+
+        if format_key == "short_answer":
+            text = (raw_q.get("q") or "").strip()
+            expected = (raw_q.get("expected_answer") or "").strip()
+            keywords = raw_q.get("keywords", [])
+            if not text or not expected or not isinstance(keywords, list):
+                return None
+            return {"q": text, "expected_answer": expected,
+                    "keywords": [str(k).strip() for k in keywords if str(k).strip()]}
+
+        if format_key == "numeracy":
+            text = (raw_q.get("q") or "").strip()
+            num = raw_q.get("correct_number")
+            tol = raw_q.get("tolerance", 0)
+            if not text or not isinstance(num, (int, float)):
+                return None
+            try:
+                tol = float(tol)
+            except (ValueError, TypeError):
+                tol = 0.0
+            return {"q": text, "correct_number": float(num), "tolerance": abs(tol)}
+
+        if format_key == "situational_judgment":
+            scenario = (raw_q.get("scenario") or "").strip()
+            options = raw_q.get("options", [])
+            bi = raw_q.get("best_index")
+            wi = raw_q.get("worst_index")
+            if not scenario or not isinstance(options, list) or len(options) < 3:
+                return None
+            if not isinstance(bi, int) or not isinstance(wi, int) or bi == wi:
+                return None
+            if bi < 0 or bi >= len(options) or wi < 0 or wi >= len(options):
+                return None
+            # Shuffle options and recompute best/worst
+            correct_best_text = options[bi]
+            correct_worst_text = options[wi]
+            opts = list(options)
+            random.shuffle(opts)
+            try:
+                new_bi = opts.index(correct_best_text)
+                new_wi = opts.index(correct_worst_text)
+            except ValueError:
+                new_bi, new_wi = bi, wi
+            return {"scenario": scenario, "options": [str(o).strip() for o in opts],
+                    "best_index": new_bi, "worst_index": new_wi}
+
+        if format_key == "behavioral":
+            prompt = (raw_q.get("prompt") or "").strip()
+            rubric = raw_q.get("rubric_star", {})
+            if not prompt or not isinstance(rubric, dict):
+                return None
+            return {"prompt": prompt, "rubric_star": {
+                "situation": str(rubric.get("situation", "")),
+                "task": str(rubric.get("task", "")),
+                "action": str(rubric.get("action", "")),
+                "result": str(rubric.get("result", "")),
+            }}
+
+        if format_key == "system_design":
+            prompt = (raw_q.get("prompt") or "").strip()
+            rubric = raw_q.get("rubric", [])
+            if not prompt or not isinstance(rubric, list):
+                return None
+            return {"prompt": prompt, "rubric": [str(r).strip() for r in rubric if str(r).strip()]}
+
+        if format_key == "debugging":
+            code = (raw_q.get("buggy_code") or "").strip()
+            lang = (raw_q.get("language") or "Python").strip()
+            summary = (raw_q.get("correct_fix_summary") or "").strip()
+            bug_class = (raw_q.get("bug_class") or "").strip()
+            if not code or not summary:
+                return None
+            return {"buggy_code": code, "language": lang,
+                    "correct_fix_summary": summary, "bug_class": bug_class}
+
+        if format_key == "case_study":
+            scenario = (raw_q.get("scenario") or "").strip()
+            questions = raw_q.get("questions", [])
+            rubric = raw_q.get("rubric", [])
+            if not scenario or not isinstance(questions, list) or not questions:
+                return None
+            return {"scenario": scenario,
+                    "questions": [str(q).strip() for q in questions if str(q).strip()],
+                    "rubric": [str(r).strip() for r in rubric if str(r).strip()]}
+
+        return None
+
+    def _score_deterministic(self, format_key: str, question: Dict, answer) -> Dict:
+        """
+        Score a deterministic format.
+        Returns {score: 0-100, is_correct: bool, feedback: str|None}
+        """
+        if format_key == "mcq":
+            try:
+                ans = int(answer) if answer is not None else -1
+            except (ValueError, TypeError):
+                ans = -1
+            correct = question.get("correct_index")
+            ok = (ans == correct)
+            return {"score": 100 if ok else 0, "is_correct": ok, "feedback": None}
+
+        if format_key == "numeracy":
+            try:
+                ans = float(answer) if answer is not None and str(answer).strip() != "" else None
+            except (ValueError, TypeError):
+                ans = None
+            if ans is None:
+                return {"score": 0, "is_correct": False, "feedback": None}
+            correct = question.get("correct_number", 0)
+            tol = question.get("tolerance", 0)
+            ok = abs(ans - correct) <= tol
+            return {"score": 100 if ok else 0, "is_correct": ok,
+                    "feedback": None if ok else f"Correct answer: {correct}"}
+
+        if format_key == "situational_judgment":
+            # Answer comes as {"best": int, "worst": int} or "best,worst" string
+            best_ans, worst_ans = None, None
+            if isinstance(answer, dict):
+                best_ans = answer.get("best")
+                worst_ans = answer.get("worst")
+            elif isinstance(answer, str) and "," in answer:
+                parts = answer.split(",")
+                try:
+                    best_ans = int(parts[0])
+                    worst_ans = int(parts[1])
+                except (ValueError, TypeError):
+                    pass
+            correct_best = question.get("best_index")
+            correct_worst = question.get("worst_index")
+            points = 0
+            if best_ans == correct_best:
+                points += 50
+            if worst_ans == correct_worst:
+                points += 50
+            return {"score": points, "is_correct": points == 100, "feedback": None}
+
+        if format_key == "short_answer":
+            # Keyword matching. If 0 keywords, treat as fail-safe.
+            text = str(answer or "").lower()
+            if not text.strip():
+                return {"score": 0, "is_correct": False, "feedback": None}
+            keywords = [k.lower() for k in question.get("keywords", []) if k]
+            if not keywords:
+                # Fallback: length-based heuristic (weak but honest)
+                score = min(len(text.split()) * 10, 60)
+                return {"score": score, "is_correct": False,
+                        "feedback": "No keywords configured; scored on completeness."}
+            hits = sum(1 for k in keywords if k in text)
+            ratio = hits / len(keywords)
+            score = int(ratio * 100)
+            return {"score": score, "is_correct": score >= 70,
+                    "feedback": f"Matched {hits} of {len(keywords)} key concepts" if score < 100 else None}
+
+        # Shouldn't reach here
+        return {"score": 0, "is_correct": False, "feedback": None}
+
+    def _score_ai_batch(self, format_key: str, questions: List[Dict],
+                        answers: List, role: str, industry: str, level_label: str) -> List[Dict]:
+        """
+        Score all AI-scored format answers in ONE OpenAI call.
+        Returns a list of {score, is_correct, feedback} matching `answers`.
+        """
+        import os as _os
+        import requests
+        api_key = _os.getenv("OPENAI_API_KEY", "")
+        default = [{"score": 0, "is_correct": False, "feedback": "AI scoring unavailable"} for _ in answers]
+        if not api_key:
+            return default
+
+        # Build scoring payload
+        payload_items = []
+        for i, (q, a) in enumerate(zip(questions, answers)):
+            item = {"index": i, "answer": str(a or "")[:2000]}
+            if format_key == "behavioral":
+                item["prompt"] = q.get("prompt", "")
+                item["rubric_star"] = q.get("rubric_star", {})
+            elif format_key == "system_design":
+                item["prompt"] = q.get("prompt", "")
+                item["rubric"] = q.get("rubric", [])
+            elif format_key == "debugging":
+                item["buggy_code"] = q.get("buggy_code", "")
+                item["language"] = q.get("language", "")
+                item["correct_fix_summary"] = q.get("correct_fix_summary", "")
+            elif format_key == "case_study":
+                item["scenario"] = q.get("scenario", "")
+                item["sub_questions"] = q.get("questions", [])
+                item["rubric"] = q.get("rubric", [])
+            payload_items.append(item)
+
+        prompt = (
+            f"You are scoring a {format_key} assessment for a {role} in {industry} "
+            f"at {level_label} level.\n\n"
+            f"For each item below, score the candidate's answer from 0-100 "
+            f"against the rubric and expected quality. Be fair but rigorous.\n\n"
+            f"ITEMS:\n{json.dumps(payload_items, ensure_ascii=False)[:12000]}\n\n"
+            f"Return STRICT JSON: {{\"scores\": [{{\"index\": 0, \"score\": 75, "
+            f"\"feedback\": \"one sentence\"}}]}}\n"
+            f"Return exactly {len(answers)} scores, indexes 0..{len(answers)-1}."
+        )
+
+        try:
+            response = requests.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers={"Authorization": f"Bearer {api_key}"},
+                json={
+                    "model": "gpt-4o-mini",
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": 0.2,
+                    "response_format": {"type": "json_object"},
+                },
+                timeout=90,
+            )
+            data = response.json()
+            content = (data.get("choices", [{}])[0].get("message", {}).get("content") or "").strip()
+            if content.startswith("```"):
+                content = content.split("```", 2)[1]
+                if content.startswith("json"):
+                    content = content[4:]
+                content = content.strip()
+            parsed = json.loads(content)
+            scores = parsed.get("scores", [])
+            # Map back to answer order
+            result = list(default)
+            for s in scores:
+                idx = s.get("index")
+                if isinstance(idx, int) and 0 <= idx < len(answers):
+                    sc = int(s.get("score", 0))
+                    sc = max(0, min(100, sc))
+                    result[idx] = {
+                        "score": sc,
+                        "is_correct": sc >= 70,
+                        "feedback": str(s.get("feedback", ""))[:500],
+                    }
+            return result
+        except Exception as e:
+            logger.error(f"AI batch scoring failed for {format_key}: {e}")
+            return default
+
+    def _dispatch_scoring(
+        self, format_key: str, questions: List[Dict], answers: List,
+        role: str, industry: str, level_label: str
+    ) -> List[Dict]:
+        """
+        Score every answer. Returns [{score, is_correct, feedback}] in order.
+        AI-scored formats go through one batched OpenAI call; deterministic
+        formats are scored per-answer with no API cost.
+        """
+        registry = self._format_registry()
+        fmt_meta = registry.get(format_key, {})
+        scored_by = fmt_meta.get("scored_by", "deterministic")
+
+        if scored_by == "ai":
+            return self._score_ai_batch(format_key, questions, answers,
+                                        role, industry, level_label)
+
+        results = []
+        for q, a in zip(questions, answers):
+            results.append(self._score_deterministic(format_key, q, a))
+        return results
+
     def submit_answer(self, data: Dict) -> Dict:
         """
         Record one answer. Idempotent per (assessment_id, question_index).
-        data = {email, assessment_id, question_index, selected_index}
+        data = {email, assessment_id, question_index, answer (any type)}
         """
         email = (data.get("email") or "").strip().lower()
         assessment_id = (data.get("assessment_id") or "").strip()
         try:
             q_index = int(data.get("question_index"))
-            selected = int(data.get("selected_index"))
         except (ValueError, TypeError):
-            return {"status": "error", "message": "question_index and selected_index must be integers"}
+            return {"status": "error", "message": "question_index must be an integer"}
+        answer = data.get("answer")
 
         if not email or not assessment_id:
             return {"status": "error", "message": "email and assessment_id required"}
 
         self._ensure_tables()
+        self._ensure_format_columns()
 
         try:
             from database import db
             conn = db.get_connection()
             cur = conn.cursor()
-            # Ownership check
             cur.execute(
-                "SELECT email, questions_json FROM charvak_career_assessments WHERE assessment_id = %s",
+                "SELECT email, questions_json, format FROM charvak_career_assessments WHERE assessment_id = %s",
                 (assessment_id,),
             )
             row = cur.fetchone()
@@ -489,23 +1048,46 @@ class CareerAssessmentEngine:
                 return {"status": "error", "message": "Not your assessment"}
 
             questions = row[1] if isinstance(row[1], list) else json.loads(row[1] or "[]")
+            fmt = row[2] or "mcq"
             if q_index < 0 or q_index >= len(questions):
                 cur.close(); conn.close()
                 return {"status": "error", "message": "Invalid question_index"}
 
-            correct_index = questions[q_index].get("correct_index")
-            is_correct = (selected == correct_index)
+            result = self._dispatch_scoring(fmt, [questions[q_index]], [answer], "", "", "")
+
+            selected_index = None
+            answer_text = None
+            if isinstance(answer, int):
+                selected_index = answer
+            elif isinstance(answer, str) and answer.isdigit():
+                selected_index = int(answer)
+            elif isinstance(answer, str):
+                answer_text = answer
+            elif isinstance(answer, dict):
+                try:
+                    answer_text = f"{answer.get('best')},{answer.get('worst')}"
+                except Exception:
+                    answer_text = json.dumps(answer)
+
+            sc = result[0]["score"] if result else 0
+            is_correct = result[0]["is_correct"] if result else False
+            feedback = result[0]["feedback"] if result else None
 
             answer_id = f"ANS-{secrets.token_hex(4).upper()}"
             cur.execute("""
                 INSERT INTO charvak_career_assessment_answers
-                    (answer_id, assessment_id, question_index, selected_index, is_correct)
-                VALUES (%s, %s, %s, %s, %s)
+                    (answer_id, assessment_id, question_index, selected_index,
+                     is_correct, answer_text, ai_score, ai_feedback)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                 ON CONFLICT (assessment_id, question_index) DO UPDATE
                 SET selected_index = EXCLUDED.selected_index,
                     is_correct = EXCLUDED.is_correct,
+                    answer_text = EXCLUDED.answer_text,
+                    ai_score = EXCLUDED.ai_score,
+                    ai_feedback = EXCLUDED.ai_feedback,
                     answered_at = CURRENT_TIMESTAMP
-            """, (answer_id, assessment_id, q_index, selected, is_correct))
+            """, (answer_id, assessment_id, q_index, selected_index,
+                  is_correct, answer_text, sc, feedback))
             conn.commit()
             cur.close(); conn.close()
         except Exception as e:
@@ -518,8 +1100,9 @@ class CareerAssessmentEngine:
     def complete_assessment(self, data: Dict) -> Dict:
         """
         Score the assessment and persist to charvak_assessment_results.
-        data = {email, assessment_id, answers: Optional[List[int]]}
+        data = {email, assessment_id, answers: Optional[List]}
         If answers provided, they're written first (single-shot submit).
+        AI-scored formats use ONE batched OpenAI call for all answers.
         """
         email = (data.get("email") or "").strip().lower()
         assessment_id = (data.get("assessment_id") or "").strip()
@@ -527,6 +1110,7 @@ class CareerAssessmentEngine:
             return {"status": "error", "message": "email and assessment_id required"}
 
         self._ensure_tables()
+        self._ensure_format_columns()
 
         try:
             from database import db
@@ -534,7 +1118,7 @@ class CareerAssessmentEngine:
             cur = conn.cursor()
             cur.execute("""
                 SELECT email, role, industry, level, size, num_questions,
-                       questions_json, status
+                       questions_json, status, format
                 FROM charvak_career_assessments
                 WHERE assessment_id = %s
             """, (assessment_id,))
@@ -549,43 +1133,84 @@ class CareerAssessmentEngine:
                 cur.close(); conn.close()
                 return {"status": "error", "message": "Assessment already completed"}
 
-            _, role, industry, level, size, num_questions, questions_json, _ = row
+            _, role, industry, level, size, num_questions, questions_json, _, fmt = row
+            fmt = fmt or "mcq"
             questions = questions_json if isinstance(questions_json, list) else json.loads(questions_json or "[]")
-
-            # Optional bulk answer write
-            if isinstance(data.get("answers"), list):
-                for i, sel in enumerate(data["answers"]):
-                    if i >= len(questions):
-                        break
-                    try:
-                        sel_int = int(sel) if sel is not None else -1
-                    except (ValueError, TypeError):
-                        sel_int = -1
-                    correct_index = questions[i].get("correct_index")
-                    is_correct = (sel_int == correct_index)
-                    cur.execute("""
-                        INSERT INTO charvak_career_assessment_answers
-                            (answer_id, assessment_id, question_index, selected_index, is_correct)
-                        VALUES (%s, %s, %s, %s, %s)
-                        ON CONFLICT (assessment_id, question_index) DO UPDATE
-                        SET selected_index = EXCLUDED.selected_index,
-                            is_correct = EXCLUDED.is_correct,
-                            answered_at = CURRENT_TIMESTAMP
-                    """, (f"ANS-{secrets.token_hex(4).upper()}",
-                          assessment_id, i, sel_int, is_correct))
-
-            # Score
-            cur.execute("""
-                SELECT question_index, is_correct
-                FROM charvak_career_assessment_answers
-                WHERE assessment_id = %s
-            """, (assessment_id,))
-            answered = cur.fetchall()
-            answered_map = {r[0]: r[1] for r in answered}
-            correct_count = sum(1 for r in answered if r[1])
             total = len(questions)
-            score = round(correct_count / total * 100) if total > 0 else 0
-            passed = score >= PASSING_SCORE
+
+            # Level label for scoring context
+            level_label = next((l["label"] for l in CAREER_LEVELS if l["key"] == level), level)
+
+            # If answers array provided, use it; else read from DB
+            submitted = data.get("answers")
+            if isinstance(submitted, list):
+                answers = submitted[:total]
+                while len(answers) < total:
+                    answers.append(None)
+            else:
+                # Read stored answers
+                cur.execute("""
+                    SELECT question_index, selected_index, answer_text
+                    FROM charvak_career_assessment_answers
+                    WHERE assessment_id = %s ORDER BY question_index
+                """, (assessment_id,))
+                rows = cur.fetchall()
+                answers_map = {}
+                for r in rows:
+                    q_idx, sel, txt = r
+                    if txt is not None:
+                        answers_map[q_idx] = txt
+                    else:
+                        answers_map[q_idx] = sel
+                answers = [answers_map.get(i) for i in range(total)]
+
+            # Score via dispatch (one batched AI call for AI formats)
+            scored = self._dispatch_scoring(fmt, questions, answers, role, industry, level_label)
+
+            # Persist per-answer scores
+            for i in range(total):
+                ans_val = answers[i] if i < len(answers) else None
+                sc = scored[i]["score"] if i < len(scored) else 0
+                corr = scored[i]["is_correct"] if i < len(scored) else False
+                fb = scored[i].get("feedback") if i < len(scored) else None
+
+                # Determine selected_index vs answer_text
+                selected_index = None
+                answer_text = None
+                if isinstance(ans_val, int):
+                    selected_index = ans_val
+                elif isinstance(ans_val, str) and ans_val.isdigit():
+                    selected_index = int(ans_val)
+                elif isinstance(ans_val, str):
+                    answer_text = ans_val
+                elif isinstance(ans_val, dict):
+                    try:
+                        answer_text = f"{ans_val.get('best')},{ans_val.get('worst')}"
+                    except Exception:
+                        answer_text = json.dumps(ans_val)
+
+                cur.execute("""
+                    INSERT INTO charvak_career_assessment_answers
+                        (answer_id, assessment_id, question_index, selected_index,
+                         is_correct, answer_text, ai_score, ai_feedback)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    ON CONFLICT (assessment_id, question_index) DO UPDATE
+                    SET selected_index = EXCLUDED.selected_index,
+                        is_correct = EXCLUDED.is_correct,
+                        answer_text = EXCLUDED.answer_text,
+                        ai_score = EXCLUDED.ai_score,
+                        ai_feedback = EXCLUDED.ai_feedback,
+                        answered_at = CURRENT_TIMESTAMP
+                """, (f"ANS-{secrets.token_hex(4).upper()}", assessment_id, i,
+                      selected_index, corr, answer_text, sc, fb))
+
+            # Aggregate: per-question scores are 0-100; overall is the mean
+            if total > 0:
+                overall = round(sum(s["score"] for s in scored) / total)
+            else:
+                overall = 0
+            correct_count = sum(1 for s in scored if s.get("is_correct"))
+            passed = overall >= PASSING_SCORE
 
             cur.execute("""
                 UPDATE charvak_career_assessments
@@ -595,21 +1220,21 @@ class CareerAssessmentEngine:
                     correct_count = %s,
                     completed_at = CURRENT_TIMESTAMP
                 WHERE assessment_id = %s
-            """, (score, passed, correct_count, assessment_id))
+            """, (overall, passed, correct_count, assessment_id))
             conn.commit()
             cur.close(); conn.close()
         except Exception as e:
             logger.error(f"complete_assessment failed: {e}")
             return {"status": "error", "message": "Could not complete assessment"}
 
-        # Persist to the shared assessment_results table (feeds /my-results)
+        # Persist to /my-results feed
         try:
             from results_system import results_system
             results_system.record_assessment_result(
                 email=email,
                 assessment_type="career_readiness",
-                assessment_name=f"{role} in {industry}",
-                score=float(score),
+                assessment_name=f"{role} in {industry} ({fmt})",
+                score=float(overall),
                 total_questions=total,
                 correct_answers=correct_count,
                 details={
@@ -618,12 +1243,47 @@ class CareerAssessmentEngine:
                     "industry": industry,
                     "level": level,
                     "size": size,
-                    "format": "mcq",
+                    "format": fmt,
                 },
-                skill=f"career_{role.lower().replace(' ', '_')}",
+                skill=f"career_{fmt}",
             )
         except Exception as e:
             logger.warning(f"career-assessment result persistence failed: {e}")
+
+        # Build per-question breakdown for the frontend
+        breakdown = []
+        for i in range(total):
+            entry = {
+                "index": i,
+                "score": scored[i]["score"] if i < len(scored) else 0,
+                "is_correct": scored[i].get("is_correct") if i < len(scored) else False,
+                "feedback": scored[i].get("feedback") if i < len(scored) else None,
+            }
+            q = questions[i]
+            if fmt == "mcq":
+                entry["question"] = q.get("q", "")
+                entry["your_answer"] = answers[i]
+                entry["correct_index"] = q.get("correct_index")
+            elif fmt in ("short_answer", "numeracy"):
+                entry["question"] = q.get("q", "")
+                entry["your_answer"] = answers[i]
+            elif fmt == "situational_judgment":
+                entry["question"] = q.get("scenario", "")
+                entry["your_answer"] = answers[i]
+                entry["best_index"] = q.get("best_index")
+            elif fmt == "behavioral":
+                entry["question"] = q.get("prompt", "")
+                entry["your_answer"] = answers[i]
+            elif fmt == "system_design":
+                entry["question"] = q.get("prompt", "")
+                entry["your_answer"] = answers[i]
+            elif fmt == "debugging":
+                entry["question"] = q.get("buggy_code", "")
+                entry["your_answer"] = answers[i]
+            elif fmt == "case_study":
+                entry["question"] = q.get("scenario", "")
+                entry["your_answer"] = answers[i]
+            breakdown.append(entry)
 
         return {
             "status": "success",
@@ -631,12 +1291,14 @@ class CareerAssessmentEngine:
             "role": role,
             "industry": industry,
             "level": level,
-            "score": score,
+            "format": fmt,
+            "score": overall,
             "passed": passed,
             "correct_count": correct_count,
             "total_questions": total,
             "passing_score": PASSING_SCORE,
-            "message": f"Career readiness: {score}%",
+            "breakdown": breakdown,
+            "message": f"Career readiness: {overall}%",
         }
 
     # ------------------------------------------------------------
