@@ -1,9 +1,98 @@
 # Charvak IT Consulting - Project Status
 
-**Last updated:** 2026-09-30 (Session 4 - C7 AuditBot + Lock-In Breaker paid tiers shipped)
-**Version:** v3.5-session-B-20260929
+**Last updated:** 2026-10-03 (Session 13 - Career Assessment Phase 3 + PayPal sandbox test)
+**Version:** v3.5-session-13-20261003
 **Live:** https://www.charvakit.com
 **Status:** Tier 1 + Tier 2 complete. Tier 3 in progress (6 of 10 features shipped). Session K closed: 3 security + 5 data integrity + 4 deferrals + 16 dead-field/easy-bug fixes + 2 migration features. B-3 notification persistence done. B-4 products verified stateless.
+
+## Session 2026-10-03 - Session 13 (Career Assessment Phase 3 + PayPal sandbox test)
+
+### Shipped
+
+**Career Assessment Phase 3 (Sessions 10-13 cumulative)**
+- Topic tagging: 7 role categories x 8 topics each. Every question
+  tagged with 1-2 topics at generation time.
+- Skill gap analysis: per-topic blended score, strong/mixed/weak labels,
+  weakest-first sort in the response.
+- Cross-assessment adaptive difficulty: reads `ability_engine` on
+  /start, seeds the prompt with a difficulty hint (foundation-first /
+  standard / challenge based on Elo bands).
+- Ability engine update on /complete (first real use since Session C4).
+- AI-generated learning paths: matches `charvak_courses` from the
+  25-course catalog, curates external resources, generates a 2-4
+  week plan. Cached after first generation.
+
+**Career Assessment formats shipped (Sessions 10-11)**
+- 8 formats: mcq, short_answer, numeracy, situational_judgment,
+  behavioral, system_design, debugging, case_study
+- 2 more shown but disabled (coding, sql - need a sandbox; Session 14)
+- Catalog: 106 roles, 66 industries, 7 experience levels
+
+**University Subscriptions (Session 8)**
+- 3 tiers: starter (4000 cr), growth (10000 cr), enterprise (20000 cr)
+- Security fix: `/api/university/register` was open IDOR
+
+**Legacy-Shift Migration Tier (Session 8)**
+- Rs 4,999 migration plan (1000 cr)
+- Real file-by-file plan with data migration + rollback
+
+**Silent-Killer Sentinel (Session 9a)**
+- Real URL monitoring (was a stub)
+- Watch + scan tables, 7 engine methods, 4 routes, dashboard
+
+**Indian Language AI MCQ scoring (Session 21)**
+- Real deterministic scoring (was counting answers)
+- 10/15/20 question selector, option shuffle, auth on /submit
+
+**C7 paid-tier sweep (Sessions 3-8)**
+- 17/17 templates shipped. Complete.
+
+**Session 9 quick wins (2026-10-03)**
+- PayPal credits capture test: verified end-to-end with a US sandbox
+  buyer + US sandbox merchant. Order -> approval -> capture -> credits
+  -> idempotency all confirmed.
+- ARCHITECTURE.md refresh: 5 sessions of new sections added.
+- KNOWN-ISSUES: PowerShell process-kill and mojibake display gotchas.
+- OUTSTANDING-WORK-INVENTORY: sessions 8-13 closures + follow-ups.
+
+### Code changes
+
+New engine: `career_assessment_engine.py` (~900 lines)
+
+New tables:
+- `charvak_career_assessments`
+- `charvak_career_assessment_answers`
+- `charvak_university_subscriptions`
+- `charvak_legacy_shift_reports`
+- `charvak_silent_killer_watches`
+- `charvak_silent_killer_scans`
+
+New env vars:
+- `PAYPAL_MODE` (`live` | `sandbox`; defaults to `live`)
+
+New credit keys (11 total for career assessment):
+- Deterministic: `career_assessment_quick|standard|full` (15/25/35)
+- AI-scored: `career_assessment_ai_quick|standard|full` (20/30/40)
+- University: `university_starter|growth|enterprise` (4000/10000/20000)
+- Legacy-Shift: `legacy_shift_migration` (1000)
+- Silent-Killer: `product_silent_killer` (15), `silent_killer_recheck` (5)
+
+### Verified
+
+- Career Assessment E2E: 8 formats, real scoring, adaptive flow,
+  learning paths
+- PayPal sandbox: order -> approval -> capture -> credits -> idempotency
+- All new routes tested with auth + credit gates
+- Production live and verified
+
+### Still pending
+
+- Career Assessment Phase 2b: coding + SQL via Judge0 (Session 14)
+- Silent-Killer continuous cron (Session 9b)
+- Difficulty-aware ability update (Session 14, ~30 min)
+- `PAYPAL_MODE=live` explicit on Render (1 min)
+
+---
 
 ## Session 2026-09-29 - Auth persistence + cache revalidation
 
