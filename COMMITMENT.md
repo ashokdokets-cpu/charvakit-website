@@ -3050,3 +3050,21 @@ Session 11 (Phase 2) will add all non-MCQ formats.
 Full plan in CAREER-ASSESSMENT-PLAN.md.
 
 Verdict: RESOLVED
+
+---
+
+### FLAGGED — Session 13 exclusions (2026-10-03)
+
+Phase 3 of Career Assessment ships WITHOUT these features, deliberately:
+
+1. Retake comparison charts — nice-to-have
+2. Certificates / badges — Phase 4
+3. Live adaptive mid-assessment — deferred indefinitely (see plan doc
+   for rationale)
+4. Peer benchmarking — Phase 4
+
+These are not bugs, not omissions. They are scope boundaries.
+Session 13 delivers: topic tagging, skill gap, cross-assessment
+adaptation, ability update, learning path.
+
+Verdict: DOCUMENTED — no action needed
