@@ -3149,3 +3149,26 @@ Follow-up (1 min, requires Render dashboard access):
 - Add PAYPAL_MODE=live explicitly to Render's env vars for clarity
 
 Verdict: RESOLVED
+
+---
+
+### RESOLVED — difficulty-aware ability update (2026-10-03, 36a400f)
+
+The COMMITMENT.md flag is closed. ability_engine.update_from_assessment
+now receives difficulty based on the career level:
+
+- ability_engine.DIFFICULTY_VALUE extended with career level keys:
+  intern=600, junior=800, mid=1000, senior=1200, staff=1400,
+  manager=1500, executive=1600
+- results_system.record_assessment_result accepts difficulty= and
+  forwards it (was hardcoded 'medium')
+- career_assessment_engine.complete_assessment passes difficulty=level
+
+Verified: 100% on intern -> +2.18 Elo; 100% on executive -> +23.26 Elo
+(was +12.00 for both before the fix).
+
+Also stripped a pre-existing UTF-8 BOM from results_system.py — the
+real cause of a phantom "invalid non-printable character U+FEFF"
+ast.parse error during patching.
+
+Verdict: RESOLVED
