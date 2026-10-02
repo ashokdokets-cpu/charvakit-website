@@ -1,0 +1,443 @@
+{% extends "base.html" %}
+{% block title %}AI Career Assessment - Charvak IT Consulting{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4 text-center">
+        <span class="badge bg-success mb-2 px-3 py-2">Live &middot; Role-Calibrated MCQ Assessments</span>
+        <h1 class="display-4 fw-bold">AI Career Assessment</h1>
+        <p class="lead">Practice the exact kind of questions a real interviewer will ask for your target role.</p>
+        <p class="mb-0 text-white-50 small">106 roles &middot; 66 industries &middot; 7 experience levels</p>
+    </div>
+</div>
+
+<div class="container py-5">
+
+    <!-- ============================================================ -->
+    <!-- STEP 1 - Picker -->
+    <!-- ============================================================ -->
+    <div id="carStep1" class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2 class="as-h4 mb-0">Step 1 &mdash; Choose your target</h2>
+                        <a href="#" id="carHistoryLink" class="small" onclick="loadHistory(event); return false;">My past assessments</a>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Target Role</label>
+                        <select class="form-select" id="carRoleSelect">
+                            <option value="">Loading roles...</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Industry</label>
+                        <select class="form-select" id="carIndustrySelect">
+                            <option value="">Loading industries...</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Experience Level</label>
+                        <select class="form-select" id="carLevelSelect">
+                            <option value="">Loading levels...</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">Assessment Size</label>
+                        <select class="form-select" id="carSizeSelect">
+                            <option value="quick" selected>Quick &middot; 10 questions (~10 min) &mdash; 15 credits</option>
+                            <option value="standard">Standard &middot; 15 questions (~15 min) &mdash; 25 credits</option>
+                            <option value="full">Full &middot; 20 questions (~20 min) &mdash; 35 credits</option>
+                        </select>
+                    </div>
+
+                    <button class="btn btn-primary btn-lg w-100" id="carStartBtn" onclick="startAssessment()" disabled>
+                        Loading catalog...
+                    </button>
+                    <div id="carError1" class="alert alert-danger mt-3 d-none"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- STEP 2 - Questions -->
+    <!-- ============================================================ -->
+    <div id="carStep2" class="d-none">
+        <div class="row justify-content-center">
+            <div class="col-lg-9">
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                            <div>
+                                <h2 class="as-h4 mb-1" id="carHeadline">Assessment</h2>
+                                <p class="text-muted mb-0 small" id="carSubhead"></p>
+                            </div>
+                            <span class="badge bg-primary" id="carProgressBadge">0 / 0</span>
+                        </div>
+                    </div>
+                </div>
+                <div id="carQuestions"></div>
+                <div class="d-flex gap-2 mb-5">
+                    <button class="btn btn-primary btn-lg" id="carSubmitBtn" onclick="submitAssessment()">Submit Answers for Scoring</button>
+                    <button class="btn btn-outline-secondary btn-lg" onclick="resetToStep1()">Cancel</button>
+                </div>
+                <div id="carError2" class="alert alert-danger d-none"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- STEP 3 - Result -->
+    <!-- ============================================================ -->
+    <div id="carStep3" class="d-none">
+        <div class="row justify-content-center">
+            <div class="col-lg-7">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-5 text-center">
+                        <div id="carResultBadge"></div>
+                        <h2 class="display-3 fw-bold mb-2" id="carResultScore">0%</h2>
+                        <p class="text-muted mb-4" id="carResultDetail"></p>
+                        <div id="carResultMeta" class="text-muted small mb-4"></div>
+                        <div class="d-flex gap-2 justify-content-center flex-wrap">
+                            <button class="btn btn-primary" onclick="resetToStep1()">Take Another Assessment</button>
+                            <a href="/my-results" class="btn btn-outline-secondary">View All Results</a>
+                        </div>
+                    </div>
+                </div>
+                <div id="carHistoryPanel" class="mt-4"></div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+// ---------- Career Assessment ----------
+var _carCatalog = null;
+var _carCurrentAssessment = null;
+
+function _esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+}
+
+function _authHeaders() {
+    var token = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+    };
+}
+
+function _email() {
+    return localStorage.getItem('userEmail') || '';
+}
+
+// ---------- Load catalog on page load ----------
+async function loadCatalog() {
+    try {
+        var r = await fetch('/api/career-assessment/options');
+        var j = await r.json();
+        if (j.status !== 'success') {
+            document.getElementById('carError1').textContent = j.message || 'Could not load catalog';
+            document.getElementById('carError1').classList.remove('d-none');
+            return;
+        }
+        _carCatalog = j;
+        populateSelects();
+        document.getElementById('carStartBtn').disabled = false;
+        document.getElementById('carStartBtn').textContent = 'Start Assessment';
+    } catch (e) {
+        document.getElementById('carError1').textContent = 'Network error: ' + e.message;
+        document.getElementById('carError1').classList.remove('d-none');
+    }
+}
+
+function populateSelects() {
+    var roleSel = document.getElementById('carRoleSelect');
+    roleSel.innerHTML = '<option value="">-- Choose a role --</option>';
+    for (var category in _carCatalog.roles) {
+        var group = document.createElement('optgroup');
+        group.label = category;
+        var roles = _carCatalog.roles[category];
+        for (var i = 0; i < roles.length; i++) {
+            var opt = document.createElement('option');
+            opt.value = roles[i];
+            opt.textContent = roles[i];
+            group.appendChild(opt);
+        }
+        roleSel.appendChild(group);
+    }
+
+    var indSel = document.getElementById('carIndustrySelect');
+    indSel.innerHTML = '<option value="">-- Choose an industry --</option>';
+    var inds = _carCatalog.industries || [];
+    for (var k = 0; k < inds.length; k++) {
+        var io = document.createElement('option');
+        io.value = inds[k];
+        io.textContent = inds[k];
+        indSel.appendChild(io);
+    }
+
+    var lvlSel = document.getElementById('carLevelSelect');
+    lvlSel.innerHTML = '<option value="">-- Choose a level --</option>';
+    var lvls = _carCatalog.levels || [];
+    for (var m = 0; m < lvls.length; m++) {
+        var lo = document.createElement('option');
+        lo.value = lvls[m].key;
+        lo.textContent = lvls[m].label + ' (' + lvls[m].years + ')';
+        lvlSel.appendChild(lo);
+    }
+}
+
+// ---------- Step 1 -> Step 2 ----------
+async function startAssessment() {
+    var email = _email();
+    var token = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    if (!email || !token) {
+        alert('Please log in.');
+        window.location.href = '/login?next=/ai-assessment';
+        return;
+    }
+
+    var role = document.getElementById('carRoleSelect').value;
+    var industry = document.getElementById('carIndustrySelect').value;
+    var level = document.getElementById('carLevelSelect').value;
+    var size = document.getElementById('carSizeSelect').value;
+
+    if (!role || !industry || !level) {
+        alert('Please choose a role, industry, and level.');
+        return;
+    }
+
+    var sizeCredits = size === 'quick' ? 15 : (size === 'standard' ? 25 : 35);
+    if (!confirm('Start a ' + size + ' assessment?\n\n' + role + ' in ' + industry + '\n\nCost: ' + sizeCredits + ' credits')) return;
+
+    var btn = document.getElementById('carStartBtn');
+    var errEl = document.getElementById('carError1');
+    errEl.classList.add('d-none');
+    btn.disabled = true;
+    btn.textContent = 'Generating questions... this may take 30-60 seconds';
+
+    try {
+        var r = await fetch('/api/career-assessment/start', {
+            method: 'POST',
+            headers: _authHeaders(),
+            body: JSON.stringify({
+                email: email, role: role, industry: industry,
+                level: level, size: size, format: 'mcq'
+            })
+        });
+        if (r.status === 401) { window.location.href = '/login?next=/ai-assessment'; return; }
+        if (r.status === 402) {
+            errEl.textContent = 'Not enough credits. Top up at /ai-credits-pricing';
+            errEl.classList.remove('d-none');
+            btn.disabled = false;
+            btn.textContent = 'Start Assessment';
+            return;
+        }
+        var j = await r.json();
+        if (j.status !== 'success') {
+            errEl.textContent = j.message || 'Could not start assessment';
+            errEl.classList.remove('d-none');
+            btn.disabled = false;
+            btn.textContent = 'Start Assessment';
+            return;
+        }
+        _carCurrentAssessment = j.assessment;
+        renderQuestions(j.assessment);
+    } catch (e) {
+        errEl.textContent = 'Network error: ' + e.message;
+        errEl.classList.remove('d-none');
+        btn.disabled = false;
+        btn.textContent = 'Start Assessment';
+    }
+}
+
+// ---------- Step 2 ----------
+function renderQuestions(assessment) {
+    document.getElementById('carStep1').classList.add('d-none');
+    document.getElementById('carStep2').classList.remove('d-none');
+    document.getElementById('carStep3').classList.add('d-none');
+
+    document.getElementById('carHeadline').textContent =
+        assessment.role + ' in ' + assessment.industry;
+    document.getElementById('carSubhead').textContent =
+        assessment.level_label + ' \u00b7 ' + assessment.questions.length + ' questions \u00b7 passing: ' + assessment.passing_score + '%';
+    document.getElementById('carProgressBadge').textContent =
+        '0 / ' + assessment.questions.length;
+
+    var html = '';
+    var qs = assessment.questions || [];
+    for (var i = 0; i < qs.length; i++) {
+        var q = qs[i];
+        var text = (typeof q === 'string') ? q : (q.q || '');
+        var opts = (typeof q === 'object' && q.options) ? q.options : [];
+        html += '<div class="card border-0 shadow-sm mb-3"><div class="card-body p-4">';
+        html += '<h5 class="as-h6 mb-3"><span class="text-muted">Q' + (i + 1) + '.</span> ' + _esc(text) + '</h5>';
+        for (var j = 0; j < opts.length; j++) {
+            var id = 'car-q' + i + '-opt' + j;
+            html += '<div class="form-check mb-2">';
+            html += '<input class="form-check-input" type="radio" name="car-q' + i + '" value="' + j + '" id="' + id + '" onchange="updateProgress()">';
+            html += '<label class="form-check-label" for="' + id + '">' + _esc(opts[j]) + '</label>';
+            html += '</div>';
+        }
+        html += '</div></div>';
+    }
+    document.getElementById('carQuestions').innerHTML = html;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function updateProgress() {
+    var a = _carCurrentAssessment;
+    if (!a) return;
+    var answered = 0;
+    for (var i = 0; i < a.questions.length; i++) {
+        if (document.querySelector('input[name="car-q' + i + '"]:checked')) answered++;
+    }
+    document.getElementById('carProgressBadge').textContent =
+        answered + ' / ' + a.questions.length;
+}
+
+// ---------- Submit ----------
+async function submitAssessment() {
+    var a = _carCurrentAssessment;
+    if (!a) { alert('No active assessment.'); return; }
+    var email = _email();
+    if (!email) { alert('Please log in.'); return; }
+
+    var answers = [];
+    var answeredCount = 0;
+    for (var i = 0; i < a.questions.length; i++) {
+        var sel = document.querySelector('input[name="car-q' + i + '"]:checked');
+        if (sel) {
+            answers.push(parseInt(sel.value, 10));
+            answeredCount++;
+        } else {
+            answers.push(-1);
+        }
+    }
+    if (answeredCount === 0) {
+        alert('Please answer at least one question.');
+        return;
+    }
+    if (answeredCount < a.questions.length) {
+        if (!confirm('You answered ' + answeredCount + ' of ' + a.questions.length + '.\n\nUnanswered questions will be marked wrong.\n\nSubmit anyway?')) return;
+    } else {
+        if (!confirm('Submit all ' + a.questions.length + ' answers for scoring?')) return;
+    }
+
+    var btn = document.getElementById('carSubmitBtn');
+    var errEl = document.getElementById('carError2');
+    errEl.classList.add('d-none');
+    btn.disabled = true;
+    btn.textContent = 'Scoring...';
+
+    try {
+        var r = await fetch('/api/career-assessment/complete', {
+            method: 'POST',
+            headers: _authHeaders(),
+            body: JSON.stringify({
+                email: email,
+                assessment_id: a.assessment_id,
+                answers: answers
+            })
+        });
+        if (r.status === 401) { window.location.href = '/login?next=/ai-assessment'; return; }
+        var j = await r.json();
+        if (j.status !== 'success') {
+            errEl.textContent = j.message || 'Could not score assessment';
+            errEl.classList.remove('d-none');
+            btn.disabled = false;
+            btn.textContent = 'Submit Answers for Scoring';
+            return;
+        }
+        renderResult(j);
+    } catch (e) {
+        errEl.textContent = 'Network error: ' + e.message;
+        errEl.classList.remove('d-none');
+        btn.disabled = false;
+        btn.textContent = 'Submit Answers for Scoring';
+    }
+}
+
+// ---------- Step 3 ----------
+function renderResult(j) {
+    document.getElementById('carStep1').classList.add('d-none');
+    document.getElementById('carStep2').classList.add('d-none');
+    document.getElementById('carStep3').classList.remove('d-none');
+
+    var passed = j.passed === true;
+    var badge = passed
+        ? '<span class="badge bg-success mb-3 px-3 py-2 fs-6">READY</span>'
+        : '<span class="badge bg-warning text-dark mb-3 px-3 py-2 fs-6">NEEDS PRACTICE</span>';
+    document.getElementById('carResultBadge').innerHTML = badge;
+
+    document.getElementById('carResultScore').textContent = j.score + '%';
+    document.getElementById('carResultDetail').textContent =
+        j.correct_count + ' of ' + j.total_questions + ' correct \u00b7 passing: ' + j.passing_score + '%';
+    document.getElementById('carResultMeta').innerHTML =
+        '<strong>' + _esc(j.role) + '</strong> in ' + _esc(j.industry) +
+        '<br>' + _esc(j.level) + ' level \u00b7 <span class="text-muted">ID ' + _esc(j.assessment_id) + '</span>';
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function resetToStep1() {
+    _carCurrentAssessment = null;
+    document.getElementById('carStep1').classList.remove('d-none');
+    document.getElementById('carStep2').classList.add('d-none');
+    document.getElementById('carStep3').classList.add('d-none');
+    document.getElementById('carError1').classList.add('d-none');
+    document.getElementById('carError2').classList.add('d-none');
+    document.getElementById('carStartBtn').disabled = false;
+    document.getElementById('carStartBtn').textContent = 'Start Assessment';
+    document.getElementById('carSubmitBtn').disabled = false;
+    document.getElementById('carSubmitBtn').textContent = 'Submit Answers for Scoring';
+    document.getElementById('carHistoryPanel').innerHTML = '';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ---------- History ----------
+async function loadHistory(ev) {
+    if (ev) ev.preventDefault();
+    var email = _email();
+    if (!email) { alert('Please log in.'); return; }
+    try {
+        var r = await fetch('/api/career-assessment/history/' + encodeURIComponent(email), {
+            headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '') }
+        });
+        if (r.status === 401) { window.location.href = '/login?next=/ai-assessment'; return; }
+        var j = await r.json();
+        if (j.status !== 'success' || !j.assessments || !j.assessments.length) {
+            alert('No past assessments yet.');
+            return;
+        }
+        var html = '<div class="card border-0 shadow-sm"><div class="card-body p-4"><h3 class="as-h5 mb-3">Past Assessments</h3><div class="table-responsive"><table class="table table-sm small mb-0">';
+        html += '<thead><tr><th>Date</th><th>Role</th><th>Industry</th><th>Level</th><th>Score</th><th>Status</th></tr></thead><tbody>';
+        for (var i = 0; i < j.assessments.length; i++) {
+            var a = j.assessments[i];
+            var dt = a.started_at ? new Date(a.started_at).toLocaleDateString() : '';
+            var status = a.status === 'completed'
+                ? (a.passed ? '<span class="badge bg-success">Passed</span>' : '<span class="badge bg-warning text-dark">Needs work</span>')
+                : '<span class="badge bg-secondary">In progress</span>';
+            var sc = (a.score !== null && a.score !== undefined) ? a.score + '%' : '\u2014';
+            html += '<tr><td>' + _esc(dt) + '</td><td>' + _esc(a.role) + '</td><td>' + _esc(a.industry) + '</td><td>' + _esc(a.level) + '</td><td>' + sc + '</td><td>' + status + '</td></tr>';
+        }
+        html += '</tbody></table></div></div></div>';
+        document.getElementById('carHistoryPanel').innerHTML = html;
+        document.getElementById('carStep3').classList.remove('d-none');
+        document.getElementById('carHistoryPanel').scrollIntoView({ behavior: 'smooth' });
+    } catch (e) {
+        alert('Network error: ' + e.message);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', loadCatalog);
+</script>
+{% endblock %}

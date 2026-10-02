@@ -112,6 +112,9 @@ class AICreditEngine:
         "assessment_mcq": 5,
         "assessment_skill_gap": 12,
         "assessment_custom": 8,
+        "career_assessment_quick": 15,
+        "career_assessment_standard": 25,
+        "career_assessment_full": 35,
         "indian_language_translation": 10,
         "topic_questions": 2,
         # Session G6 batch 1: voice + AI tools

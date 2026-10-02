@@ -78,6 +78,7 @@ from team_engine import team_engine
 from enterprise_engine import enterprise_engine
 from marketing_ai_engine import marketing_ai_engine
 from indian_language_ai import indian_language_ai
+from career_assessment_engine import career_assessment_engine
 from lms_engine import lms_engine
 from career_v2_engine import career_v2_engine
 from micro_internship_global import micro_internship_global
@@ -6542,9 +6543,89 @@ async def get_premium_report(request: Request):
 async def ai_bridge_stats():
     return ai_bridge_engine.get_stats()
 
+# ============================================================
+# CAREER ASSESSMENT (Session 10 Phase 1)
+# ============================================================
+
+@app.get("/api/career-assessment/options")
+@limiter.limit("120/minute")
+async def api_career_assessment_options(request: Request):
+    """Public catalog: roles, industries, levels, formats, sizes."""
+    return career_assessment_engine.get_catalog()
+
+@app.post("/api/career-assessment/start")
+@limiter.limit("20/minute")
+async def api_career_assessment_start(request: Request):
+    """Start a career assessment. Auth + credits by size."""
+    data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+    require_auth_for_email(request, email)
+
+    size = (data.get("size") or "quick").strip().lower()
+    key_map = {
+        "quick": "career_assessment_quick",
+        "standard": "career_assessment_standard",
+        "full": "career_assessment_full",
+    }
+    credit_key = key_map.get(size, "career_assessment_quick")
+
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, credit_key)
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+
+    data["email"] = email
+    return career_assessment_engine.start_assessment(data)
+
+@app.post("/api/career-assessment/answer")
+@limiter.limit("120/minute")
+async def api_career_assessment_answer(request: Request):
+    """Record one answer (idempotent per question)."""
+    data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+    require_auth_for_email(request, email)
+    data["email"] = email
+    return career_assessment_engine.submit_answer(data)
+
+@app.post("/api/career-assessment/complete")
+@limiter.limit("20/minute")
+async def api_career_assessment_complete(request: Request):
+    """Score the assessment, persist result, return report."""
+    data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+    require_auth_for_email(request, email)
+    data["email"] = email
+    return career_assessment_engine.complete_assessment(data)
+
+@app.get("/api/career-assessment/history/{email}")
+@limiter.limit("120/minute")
+async def api_career_assessment_history(request: Request, email: str):
+    """List past career assessments for an email."""
+    email = (email or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+    require_auth_for_email(request, email)
+    return career_assessment_engine.get_history(email)
+
+@app.get("/api/career-assessment/{assessment_id}")
+@limiter.limit("120/minute")
+async def api_career_assessment_get(request: Request, assessment_id: str, email: str = ""):
+    """Fetch a single assessment (for review)."""
+    email = (email or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+    require_auth_for_email(request, email)
+    return career_assessment_engine.get_assessment(assessment_id, email)
+
 @app.get("/ai-assessment", response_class=HTMLResponse)
 async def ai_assessment(request: Request):
-    return template_response("ai-bridge.html", request, "AI Career Assessment - Charvak IT Consulting")
+    return template_response("ai-assessment.html", request, "AI Career Assessment - Charvak IT Consulting")
 
 @app.get("/bridge", response_class=HTMLResponse)
 async def bridge_page(request: Request):
