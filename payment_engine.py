@@ -87,6 +87,9 @@ class PaymentEngine:
             # the secret is never returned.
             "razorpay_key_id": self.razorpay_key_id if razorpay_ok else None,
             "paypal_client_id": self.paypal_client_id if paypal_ok else None,
+            # Session 15: expose the mode so prod sanity checks can
+            # confirm sandbox vs live without inspecting the client ID.
+            "paypal_mode": getattr(self, "paypal_mode", "live"),
         }
 
     def create_razorpay_order(self, amount_inr: int, receipt: str, notes: Dict = None) -> Dict:
