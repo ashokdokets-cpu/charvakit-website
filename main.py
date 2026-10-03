@@ -6173,9 +6173,17 @@ async def update_progress(request: Request):
 
 @app.get("/api/lms/progress/{enrollment_id}")
 async def get_progress(request: Request, enrollment_id: str):
-    # Session 14 security sweep: was fully open. Now any logged-in user.
-    # Follow-up: make this ownership-checked (requires lms_engine change).
-    require_auth(request)
+    # Session 14 security sweep: was fully open. Now ownership-checked.
+    caller = require_auth(request)
+    caller_email = (caller.get("email") or "").strip().lower()
+    owner = lms_engine.get_enrollment_owner(enrollment_id)
+    if owner and owner != caller_email:
+        # Admin bypass for support/debugging
+        if caller_email not in ADMIN_EMAILS:
+            return JSONResponse(
+                status_code=403,
+                content={"status": "error", "message": "Not your enrollment"},
+            )
     return lms_engine.get_progress(enrollment_id)
 
 @app.post("/api/lms/discussion/post")
