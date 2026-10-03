@@ -6500,6 +6500,25 @@ async def api_premium_report_generate(request: Request):
         "source_data": source_data,
         "source_id": data.get("source_id"),
     })
+
+    if result.get("status") == "success":
+        rid = result.get("report_id", "")
+        result["download_url"] = "/api/premium-report/" + rid + "/download?email=" + email
+
+        try:
+            from pdf_engine import render_premium_report_pdf
+            from enhanced_email import enhanced_email
+            pdf_bytes = render_premium_report_pdf(result["content"])
+            enhanced_email.send_premium_report_email(
+                email=email,
+                report_title=result.get("title", "Premium Report"),
+                report_id=rid,
+                pdf_bytes=pdf_bytes,
+                download_url=result["download_url"],
+            )
+        except Exception as mail_err:
+            logger.warning(f"premium report email failed: {mail_err}")
+
     return result
 
 
@@ -6525,6 +6544,34 @@ async def api_premium_report_get(request: Request, report_id: str, email: str = 
     require_auth_for_email(request, email)
     from premium_report_engine import premium_report_engine
     return premium_report_engine.get_report(report_id, email)
+
+
+@app.get("/api/premium-report/{report_id}/download")
+@limiter.limit("60/minute")
+async def api_premium_report_download(request: Request, report_id: str, email: str = ""):
+    """Stream the Premium Report PDF (Session 16)."""
+    import io
+    from fastapi.responses import StreamingResponse
+
+    email = (email or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+    require_auth_for_email(request, email)
+
+    from premium_report_engine import premium_report_engine
+    result = premium_report_engine.get_report(report_id, email)
+    if result.get("status") != "success":
+        return JSONResponse(status_code=404, content=result)
+
+    from pdf_engine import render_premium_report_pdf
+    pdf_bytes = render_premium_report_pdf(result["report"]["content"])
+
+    fname = "Charvak-" + result["report"]["report_type"] + "-" + report_id + ".pdf"
+    return StreamingResponse(
+        io.BytesIO(pdf_bytes),
+        media_type="application/pdf",
+        headers={"Content-Disposition": 'attachment; filename="' + fname + '"'},
+    )
 
 
 @app.get("/api/report/stats")
