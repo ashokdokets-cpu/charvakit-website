@@ -121,6 +121,7 @@ async function runAudit(event) {
         }
 
         const data = await res.json();
+        window.lastAuditResult = data;
         renderAuditResult(out, data);
     } catch (e) {
         out.innerHTML = '<div class="alert alert-danger">Error: ' + e.message + '</div>';

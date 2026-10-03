@@ -97,7 +97,7 @@
       var rt = r.report_type || '';
       var title = r.title || 'Premium Report';
       var date = r.created_at ? new Date(r.created_at).toLocaleDateString('en-IN', {year:'numeric', month:'short', day:'numeric'}) : '';
-      var dl = '/api/premium-report/' + encodeURIComponent(r.report_id) + '/download?email=' + encodeURIComponent(email);
+      var dl = '/api/premium-report/' + encodeURIComponent(r.report_id) + '/download?email=' + encodeURIComponent(email) + '&token=' + encodeURIComponent(token);
       html += '<div class="mr-card">';
       html += '  <div>';
       html += '    <div class="mr-card-name">' + escapeHtml(title) + '<span class="mr-badge ' + rt + '">' + rt.replace(/_/g, ' ') + '</span></div>';

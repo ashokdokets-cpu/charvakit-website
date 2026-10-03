@@ -6509,7 +6509,15 @@ async def api_premium_report_generate(request: Request):
 
     if result.get("status") == "success":
         rid = result.get("report_id", "")
+        # Include the caller's token in the URL so the browser and any
+        # emailed link can download without an Authorization header.
+        _dl_token = ""
+        _auth = request.headers.get("Authorization", "")
+        if _auth.startswith("Bearer "):
+            _dl_token = _auth[7:]
         result["download_url"] = "/api/premium-report/" + rid + "/download?email=" + email
+        if _dl_token:
+            result["download_url"] += "&token=" + _dl_token
 
         try:
             from pdf_engine import render_premium_report_pdf
@@ -6554,15 +6562,39 @@ async def api_premium_report_get(request: Request, report_id: str, email: str = 
 
 @app.get("/api/premium-report/{report_id}/download")
 @limiter.limit("60/minute")
-async def api_premium_report_download(request: Request, report_id: str, email: str = ""):
-    """Stream the Premium Report PDF (Session 16)."""
+async def api_premium_report_download(request: Request, report_id: str, email: str = "", token: str = ""):
+    """Stream the Premium Report PDF (Session 16).
+
+    Accepts the bearer token via the Authorization header (JS fetch) OR
+    via the ?token= query param (browsers do not send Authorization on
+    <a href> navigations, and email clients never do).
+    """
     import io
     from fastapi.responses import StreamingResponse
 
     email = (email or "").strip().lower()
     if not email:
         return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
-    require_auth_for_email(request, email)
+
+    # Session 16 Commit 5: accept ?token= as a fallback for browser and
+    # email downloads (which never send Authorization headers).
+    resolved_token = ""
+    auth_header = request.headers.get("Authorization", "")
+    if auth_header.startswith("Bearer "):
+        resolved_token = auth_header[7:]
+    elif token:
+        resolved_token = token
+
+    if not resolved_token:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+
+    user = get_current_user(resolved_token)
+    if not user:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Invalid or expired token."})
+
+    caller_email = (user.get("email") or "").lower()
+    if caller_email != email and caller_email not in ADMIN_EMAILS:
+        return JSONResponse(status_code=403, content={"status": "error", "message": "You can only access your own data."})
 
     from premium_report_engine import premium_report_engine
     result = premium_report_engine.get_report(report_id, email)
