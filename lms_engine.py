@@ -407,6 +407,30 @@ class LMS_Engine:
             return {"status": "error", "message": str(e)}
 
 
+    def get_enrollment_owner(self, enrollment_id: str) -> Optional[str]:
+        """
+        Return the email that owns this enrollment, or None if not found.
+        Session 14 security sweep: used by the progress route for
+        ownership checks.
+        """
+        enrollment_id = (enrollment_id or "").strip()
+        if not enrollment_id:
+            return None
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT email FROM charvak_lms_enrollments WHERE enrollment_id = %s",
+                (enrollment_id,),
+            )
+            row = cur.fetchone()
+            cur.close(); conn.close()
+            return (row[0] or "").strip().lower() if row else None
+        except Exception as e:
+            logger.warning(f"enrollment owner lookup failed: {e}")
+            return None
+
     def get_progress(self, enrollment_id: str) -> Dict:
         try:
             from database import db
