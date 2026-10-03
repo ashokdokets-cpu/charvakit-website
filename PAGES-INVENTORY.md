@@ -1,7 +1,8 @@
 # Charvak — Pages Inventory
 
-**Last updated:** 2026-09-17
-**Version:** v2.2-mock-drives-20260917
+**Last updated:** 2026-10-03
+**Version:** v3.5-session-15-20261003
+**Delta section:** see "Recent Additions & Updates" at the bottom for the Sessions 8-15 changes.
 
 Every template in `templates/`. Grouped by purpose.
 
@@ -319,3 +320,57 @@ Every template in `templates/`. Grouped by purpose.
 ---
 
 *Keep in sync with MASTER-REFERENCE.md.*
+
+---
+
+## Recent Additions & Updates (Sessions 8-15, 2026-10-03)
+
+This delta tracks templates added or materially updated since 2026-09-17.
+When the main sections below drift too far, fold this back in.
+
+### Added Since Last Update
+
+| Template | Route | Purpose | Auth? |
+|---|---|---|---|
+| `booking.html` | `/booking/{slug}` | Public hosted booking page for Marketing AI outreach kits | No |
+| `my-results.html` | `/my-results` | Cross-test results dashboard (feeds IELTS, Career Assessment, Mock Drives) | Yes |
+| `my-tools.html` | `/my-tools` | History of AI Tool runs (persisted via tool_results.py) | Yes |
+| `cbat.html` | `/cbat` | RRB ALP CBAT sub-tests (Session M-2) | Yes |
+| `ai-assessment.html` | `/ai-assessment` | Career Assessment — 3-step wizard, 8 formats, adaptive, learning paths | Yes |
+| `silent-killer.html` | `/silent-killer` | Silent-Killer Sentinel (was stub, now real URL monitoring) | Yes |
+| `advanced-assessment.html` | (advanced assessment page) | Advanced assessment variant | Yes |
+| `custom-assessment.html` | (custom assessment) | Custom topic-based assessment | Yes |
+| `career-v2.html` | (career v2 engine) | Career Center v2 (alerts, saved jobs, offers, salary) | Yes |
+
+### Materially Updated
+
+| Template | Change | Session |
+|---|---|---|
+| `indian-language-ai.html` | Real MCQ scoring (was free-text) + auth on submit | Session 21 |
+| `silent-killer.html` | Real URL monitoring (was `notifyMe` stub) | Session 9a |
+| `legacy-shift.html` | Added Rs 4,999 migration plan tier | Session 8 |
+| `university.html` | Real subscription flow (3 tiers), security fix | Session 8 |
+| `lock-in-breaker.html` | Real paid tiers (migration + protection) | Session 4 |
+| `auditbot.html` | Real paid tiers (one-time fix + subscribe) | Session 3 |
+| `micro-squads.html` | Real sales-lead form (was notifyMe) | Session 5 |
+| `marketing-ai.html` | Real booking-kit generation + host dashboard | Session 6 |
+| `team-dashboard.html` | Real Pro subscription tier | Session 6 |
+| `background-verification.html` | Real BGV tier | Session 6 |
+| `design-token-sentinel.html` | Real paid tier | Session 6 |
+| `developer-entropy.html` | Real paid tier | Session 6 |
+| `geo-compliance.html` | Real contract + hiring tiers | Session 6 |
+| `agency-twin.html` | Real paid tier | Session 6 |
+| `reverse-staffing.html` | Real subscription tier | Session 6 |
+| `skill-twin.html` | Real badge system (AA4d) | Session 7 |
+| `lms.html` | Real course enrollment (reuses charvak_courses) | Session 7 |
+| `ai-bridge.html` / `bridge.html` | `/ai-assessment` no longer renders ai-bridge.html | Session 10 |
+| `pricing.html` | Updated plan pricing (Starter Rs 199 / Pro Rs 499 / Premium Rs 999) | Session C8 |
+
+### Deleted
+
+None removed. `scripts/one-off/*` scripts were archived (Session 14) but that folder held Python scripts, not templates.
+
+### Notes
+
+- Template count went from ~180 (2026-09-17) to 182 (2026-10-03)
+- Full 159-root + 23-subfolder inventory is available by running the script in the section below if added in the future
