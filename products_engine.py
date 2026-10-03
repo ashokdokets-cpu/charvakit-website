@@ -1530,6 +1530,47 @@ Only return the JSON."""
                 "error": f"{type(e).__name__}: {str(e)[:200]}",
             }
 
+    def silent_killer_due_watches(self, limit: int = 200) -> List[Dict]:
+        """
+        Return watches due for a scan based on their interval.
+        Session 15 (Silent-Killer 9b): called by the cron endpoint.
+        """
+        self._ensure_silent_killer_tables()
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT watch_id, email, url, name, interval_minutes,
+                       last_scan_at, last_status
+                FROM charvak_silent_killer_watches
+                WHERE active = TRUE
+                  AND (
+                    last_scan_at IS NULL
+                    OR last_scan_at < NOW() - (interval_minutes || ' minutes')::interval
+                  )
+                ORDER BY last_scan_at NULLS FIRST
+                LIMIT %s
+            """, (limit,))
+            rows = cur.fetchall()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"silent_killer_due_watches failed: {e}")
+            return []
+
+        out = []
+        for r in rows:
+            out.append({
+                "watch_id": r[0],
+                "email": r[1],
+                "url": r[2],
+                "name": r[3],
+                "interval_minutes": r[4],
+                "last_scan_at": r[5].isoformat() if r[5] else None,
+                "last_status": r[6],
+            })
+        return out
+
     def silent_killer_monitor(self, data: Dict) -> Dict:
         """
         Create a real monitor: persist the watch, run the first URL check,
