@@ -183,3 +183,117 @@ guard. A 200 with a generic error payload can mean either "guard did not
 fire" OR "body was malformed before the guard". Check the uvicorn log —
 a JSONDecodeError traceback at "data = await request.json()" confirms
 the second case.
+
+
+---
+
+## Security Sweep Checklist (Session 14, 2026-10-03)
+
+Every 4-6 sessions, run this. It catches leaks that code review alone
+cannot. Learned the hard way: earlier code-pattern-only sweeps missed
+4 real leaks that a live-endpoint probe would have caught instantly.
+
+### Live test first, code scan second.
+
+Code review sees guards. Live tests see *behaviour*. Do the live test
+first.
+
+### Step 1 - Probe suspect routes against prod
+
+Run these curls. Note the HTTP status. 200 on user-scoped routes is a
+red flag.
+
+    # Public routes (should be 200)
+    curl.exe -s -o NUL -w "GET / -> %{http_code}`n" "https://www.charvakit.com/"
+
+    # User-scoped with email in path (should be 401/403)
+    curl.exe -s -o NUL -w "GET /api/results/user/victim@example.com -> %{http_code}`n" `
+        "https://www.charvakit.com/api/results/user/victim@example.com"
+
+    # Credit-gated (should be 401 without token)
+    curl.exe -s -o NUL -w "POST /api/career-assessment/start -> %{http_code}`n" `
+        -X POST "https://www.charvakit.com/api/career-assessment/start" `
+        -H "Content-Type: application/json" -d "{}"
+
+    # Admin (should be 401 without token)
+    curl.exe -s -o NUL -w "GET /api/admin/users -> %{http_code}`n" `
+        "https://www.charvakit.com/api/admin/users"
+
+    # PII endpoints (should be 401 without token)
+    curl.exe -s -o NUL -w "GET /api/ats/candidates -> %{http_code}`n" `
+        "https://www.charvakit.com/api/ats/candidates"
+
+### Step 2 - Code scan
+
+Scan main.py for routes and their guards. Focus on these risky patterns:
+
+- Routes with `{email}` in path
+- Routes calling `require_credits_from_data` (must have auth too)
+- Routes under `/admin` or `/api/admin` (should be middleware-covered)
+- Routes accepting `email` in the JSON body (POST)
+
+    # Count guard usage
+    Select-String -Path "main.py" -Pattern "require_auth_for_email\(" | Measure-Object
+    Select-String -Path "main.py" -Pattern "require_admin\(" | Measure-Object
+
+    # Find routes with {email} in path
+    Select-String -Path "main.py" -Pattern '@app\.(get|post)\([^)]*\{email\}' | Select-Object LineNumber, Line
+
+### Step 3 - Cross-reference
+
+A route should return 401/403 if it:
+
+- Reads or returns PII (name, email, phone, resume, address)
+- Mutates user state (credits, subscriptions, progress)
+- Charges credits
+- Is under /admin or /api/admin
+
+If a route that should be gated returns 200 without a token,
+investigate.
+
+### Step 4 - Session 14 findings (reference)
+
+The 2026-10-03 sweep found 4 real leaks using this method:
+
+| Route | Issue | Fix |
+|---|---|---|
+| /api/ats/candidates | Full candidate PII exposed | require_admin |
+| /api/company-pattern/readiness/{email}/{company_id} | IDOR | require_auth_for_email |
+| /api/analysis/gap/{email}/{target_role} | IDOR | require_auth_for_email |
+| /api/lms/progress/{enrollment_id} | Any logged-in user could read any progress | require_auth + ownership check |
+
+All four had passed earlier code-only sweeps. The live probe caught
+what pattern matching missed.
+
+### Step 5 - Known false positives (do not re-investigate)
+
+- Routes under `/api/cron/*` - protected by X-Cron-Secret header,
+  not user auth. Return 200 with no token is expected.
+- `/api/contact`, `/api/questions/report`, `/api/referral/track-signup`,
+  `/api/credits/check`, `/api/credits/purchase` - intentionally public.
+  They validate input server-side; no PII is returned.
+- Admin routes under `/admin/*` or `/api/admin/*` - covered by
+  `admin_auth_guard` middleware (main.py:262). Even if a route body
+  has no guard, the middleware returns 401 for the whole namespace.
+- `/api/region`, `/api/payment/status`, `/api/credits/plans`,
+  `/api/career-assessment/options` - public catalogs / status.
+  Return 200 by design.
+
+### Step 6 - Verify guards actually fire
+
+For every route touched by a fix, verify in prod:
+
+    1. Anonymous call -> 401
+    2. Wrong-user call -> 403 (for email-match routes)
+    3. Right-user call -> 200
+    4. Admin call -> 200 (if admin bypass exists)
+
+Do not mark a fix complete until all four scenarios pass against
+prod, not localhost. Localhost can differ (see V4/V5 in KNOWN-ISSUES).
+
+### Quick wins if the sweep finds nothing
+
+- Re-run step 1 for any new routes added since the last sweep
+- Check `.env` for new secrets not in MASTER-REFERENCE.md
+- Verify prod still uses live PayPal (`paypal_client_id` starts with
+  "Aaj..." not the sandbox prefix)
