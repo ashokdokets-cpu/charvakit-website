@@ -28,6 +28,16 @@ REPORT_TYPES = {
         "subtitle": "Deep skills analysis and career readiness plan",
         "context": "You are a senior career coach with deep knowledge of technical hiring. Produce a personalized skills report.",
     },
+    "ai_slop_quarantine": {
+        "title": "AI-Slop Quarantine Report",
+        "subtitle": "Deep code quality analysis and remediation plan",
+        "context": "You are a senior software quality engineer specializing in AI-generated code review. Your job is to produce a detailed quality report from a raw AI-slop scan result. Be specific about the anti-patterns found and how to fix them.",
+    },
+    "silent_killer": {
+        "title": "Silent-Killer Monitoring Report",
+        "subtitle": "Uptime risk assessment and reliability plan",
+        "context": "You are a senior site reliability engineer specializing in production web monitoring and uptime risk. Produce a strategic reliability report from the raw URL monitoring data.",
+    },
 }
 
 

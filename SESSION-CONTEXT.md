@@ -1,8 +1,55 @@
 # Session Context - Charvak
 
-**HEAD:** `f468c50`
-**Last updated:** 2026-10-03 (Session 15 - Silent-Killer 9b complete + small wins)
-**Version:** `v3.5-session-15-20261003`
+**HEAD:** `980bbdc`
+**Last updated:** 2026-10-04 (Session 16 - Premium Report product shipped)
+**Version:** `v3.5-session-16-20261004`
+
+---
+
+## Where we are (Session 16)
+
+Session 16 shipped the **Premium Report** product (Rs 199 / 400 credits)
+end-to-end across 5 commits.
+
+**Commits this session:**
+- `aa8a279` feat(pdf): add PDF engine for Premium Report generation
+- `c60a9a5` feat(premium-report): add report generator engine + routes
+- `961a3dc` feat(premium-report): PDF download route + SendGrid email
+- `a2537e6` feat(premium-report): frontend unlock flow + /my-reports
+- `980bbdc` fix(premium-report): accept ?token= for browser/email downloads
+
+### Shipped
+
+**Premium Report product**
+- `pdf_engine.py` — fpdf2-based PDF renderer with branded cover page,
+  headers, footers, sections, severity badges, Unicode via DejaVu
+- `premium_report_engine.py` — one OpenAI call produces 5 AI sections
+  from the source product's free-tier scan data; persists to
+  `charvak_premium_reports`; falls back to a template if AI is down
+- 3 report types: `auditbot`, `lock_in_breaker`, `skill_twin`
+- Credit key: `premium_product_report` (400 cr) — separate from the
+  existing `premium_report` (25 cr) used by assessment reports
+- SendGrid email with the PDF as a base64 attachment
+- `templates/includes/premium-upsell.html` rewritten to be
+  config-aware (reads `window.CHARVAK_PREMIUM`); falls back to
+  notifyMe() on the 24 other pages that include it
+- `/my-reports` dashboard listing the user's reports with
+  Download PDF buttons
+
+### E2E verified
+- Full flow: free scan → unlock → AI generation → PDF → email → download
+- Credit deduction: exact 400 per report
+- 3 premium reports generated during testing
+- Email delivered to test-register email
+- Download works from both the inline upsell and the dashboard
+
+### Notes
+- Browser <a href> navigations don't send Authorization headers, so
+  the download route accepts ?token= as a fallback. `/generate`
+  includes the caller's token in the returned `download_url`.
+- Fixed a latent bug: `auditbot.html` never set
+  `window.lastAuditResult`, so the upsell always said "Run a scan
+  first". The other two premium pages already did.
 
 ---
 
@@ -100,3 +147,9 @@ Option B: Premium Report product - 8-12 hrs.
 Option C: Doc pass + cleanup - ~1.5 hrs.
 
 Recommendation: A.
+
+**Post-Session 16 update:** Premium Report shipped. Session 17 is now
+open to:
+- Career Assessment Phase 2b (coding + SQL via Judge0 sandbox)
+- Or a doc pass on the remaining stale files
+- Or a security sweep (Session 14 style)

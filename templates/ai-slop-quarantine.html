@@ -105,6 +105,7 @@ async function runSlopScan(event) {
         }
 
         const data = await res.json();
+        window.lastSlopResult = data;
         renderSlopResult(out, data);
     } catch (e) {
         out.innerHTML = '<div class="alert alert-danger">Error: ' + e.message + '</div>';
@@ -228,6 +229,9 @@ function esc(s) {
         .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
+</script>
+<script>
+  window.CHARVAK_PREMIUM = { reportType: "ai_slop_quarantine", resultGlobal: "lastSlopResult" };
 </script>
 {% include 'includes/premium-upsell.html' %}
 {% endblock %}

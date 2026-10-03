@@ -148,6 +148,7 @@ async function runSilentKiller(event) {
         }
 
         const data = await res.json();
+        window.lastSilentKillerResult = data;
         renderSilentKillerResult(out, data);
         loadWatches();
     } catch (e) {
@@ -301,6 +302,9 @@ async function deleteWatch(watch_id) {
 document.addEventListener('DOMContentLoaded', function() {
     loadWatches();
 });
+</script>
+<script>
+  window.CHARVAK_PREMIUM = { reportType: "silent_killer", resultGlobal: "lastSilentKillerResult" };
 </script>
 {% include 'includes/premium-upsell.html' %}
 {% endblock %}
