@@ -3172,3 +3172,29 @@ real cause of a phantom "invalid non-printable character U+FEFF"
 ast.parse error during patching.
 
 Verdict: RESOLVED
+
+---
+
+### FLAGGED — LMS progress ownership check (2026-10-03, Session 14 security sweep)
+
+`/api/lms/progress/{enrollment_id}` was fully open (any caller could
+read any enrollment's progress). Session 14 added `require_auth(request)`
+so it now requires a logged-in user.
+
+**Still missing:** ownership check. Any logged-in user can read any
+enrollment's progress by ID. The enrollment_id may not be guessable in
+practice, and the data returned is minimal (percentage only), so this
+is Medium priority.
+
+**Fix:** add ownership verification. Requires `lms_engine.get_progress`
+to expose the enrollment's owner email, OR a new helper
+`lms_engine.get_enrollment_owner(enrollment_id)`. Then:
+
+    require_auth_for_request(request)  # returns caller
+    owner = lms_engine.get_enrollment_owner(enrollment_id)
+    if owner != caller_email and not is_admin:
+        return 403
+
+**Est:** ~30 min (engine change + route change + E2E)
+
+**Verdict:** SCHEDULED — Session 15 or 16
