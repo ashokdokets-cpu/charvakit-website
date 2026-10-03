@@ -140,6 +140,25 @@ Prod uses vouchai on Render Postgres.
 
 ---
 
+## Session 17 priority (locked)
+
+**Scope:** Gap 1 (Role Readiness Score) + Gap 3 (Anti-Cheating Layer A)
+alongside Career Assessment Phase 2b (coding/SQL via Judge0).
+
+**Why:** Gap 3 is a prerequisite for Phase 2b — without integrity signals,
+employers will dismiss the coding/SQL assessments. Shipping 2b without
+anti-cheating produces a technically complete feature that fails commercially.
+
+**Reference:** See `COMPETITIVE-STRATEGY.md` for the full analysis, the 4 gaps,
+the roadmap, and the metrics we're tracking. Re-read at the start of every
+session.
+
+**Gaps 2 and 4 (deferred, documented):**
+- Gap 2: Multilingual Voice AI — Sessions 20+
+- Gap 4: AuditBot Continuous Compliance — Sessions 18-19
+
+---
+
 ## Recommended next session (Session 16)
 
 Option A: Career Assessment Phase 2b (coding + SQL) - 2-3 days.

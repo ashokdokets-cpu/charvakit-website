@@ -1,5 +1,29 @@
 # Charvak — Complete Outstanding Work Inventory
 
+## Open - Strategic Gaps (from COMPETITIVE-STRATEGY.md, 2026-10-04)
+
+Four gaps identified at the close of Session 16. Full analysis in
+`COMPETITIVE-STRATEGY.md`. Roadmap: Sessions 17, 18-19, 20+.
+
+| # | Item | Session | Est. | Notes |
+|---|---|---|---|---|
+| SG1 | Role Readiness Score - compute + certificate page | 17 | 1-2 days | Blends topic coverage + ability + market benchmark; shareable at /readiness/{id} |
+| SG2 | Anti-Cheating Layer A - environment signals | 17 | 1 day | Copy/paste, tab-switch, keystroke velocity. Ships with Phase 2b. |
+| SG3 | Anti-Cheating Layer C - behavioral analytics | 18+ | 2-3 days | Cross-candidate patterns, plagiarism via embeddings, retake-jump flags |
+| SG4 | AuditBot Continuous - repo scanner + dashboard | 18-19 | 2-3 days | Cron every 6h; /my-repos; email alerts on new HIGH/CRITICAL |
+| SG5 | AuditBot Continuous - GitHub App + Slack | 19+ | 2-3 days | PR comments like Snyk; team alerts |
+| SG6 | Voice Screening - infrastructure + Telugu pilot | 20+ | 3-5 days | IVR + ElevenLabs TTS + Whisper STT; frontier staffing play |
+| SG7 | Voice Screening - expand to 4 more languages | 21+ | 2-3 days | Tamil, Hindi, Kannada, Malayalam |
+
+### Why this matters
+
+The four gaps are what stand between Charvak being an interesting AI
+portfolio and being the best integrated platform for the Local-to-Global
+talent journey. Every future session should move at least one gap forward.
+
+---
+
+
 **State at time of writing:** HEAD 5acefdb (Session 13 complete)
 **Engine count:** 60+ (career_assessment_engine.py added Session 10)
 
