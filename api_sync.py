@@ -19,8 +19,18 @@ import os
 logger = logging.getLogger("charvakit.api_sync")
 
 # --- Configuration ---
-API_SECRET = os.getenv("SYNC_API_SECRET", "charvak-doketsrb-sync-secret-2024")
-API_KEY = os.getenv("SYNC_API_KEY", "cvk_sync_key_2024")
+API_SECRET = os.getenv("SYNC_API_SECRET", "")
+API_KEY = os.getenv("SYNC_API_KEY", "")
+
+# Session 15: hardcoded fallbacks removed. The previous defaults
+# ("charvak-doketsrb-sync-secret-2024" and "cvk_sync_key_2024") were
+# visible in the public repo. If the env vars are unset, calls to
+# /api/sync/* will 401 - that is intentional (fail closed).
+if not API_SECRET or not API_KEY:
+    logger.error(
+        "SYNC_API_KEY / SYNC_API_SECRET not set in env vars. "
+        "/api/sync/* routes will reject all callers with 401."
+    )
 
 
 # --- Data Models ---
