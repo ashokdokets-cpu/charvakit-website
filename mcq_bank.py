@@ -1,4 +1,4 @@
-﻿"""
+"""
 Charvak MCQ Question Bank
 210 Questions - 21 Topics - Market Standard
 """

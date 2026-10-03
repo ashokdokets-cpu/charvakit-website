@@ -1,4 +1,4 @@
-﻿"""
+"""
 Charvak Interactive AI Tutor
 Real-time one-to-one training, hands-on scenarios, adaptive learning
 """

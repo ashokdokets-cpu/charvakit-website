@@ -1,4 +1,4 @@
-﻿"""
+"""
 Charvak Admin Analytics - Integrates with existing admin dashboard
 """
 import logging

@@ -1,4 +1,4 @@
-﻿"""
+"""
 Admin cleanup endpoint - run once to remove suspicious users
 """
 from database import db

@@ -1,4 +1,4 @@
-﻿"""
+"""
 Charvak Company Assessment System
 Company-specific mock drives with AI question generation, monitoring, results
 """

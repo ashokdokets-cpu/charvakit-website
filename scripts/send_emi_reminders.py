@@ -1,4 +1,4 @@
-﻿"""
+"""
 Charvak EMI reminder runner.
 Finds pending/overdue installments and sends the appropriate email per stage.
 Dedupe via charvak_course_installments.last_reminder_stage.

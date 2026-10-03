@@ -1,4 +1,4 @@
-﻿"""
+"""
 Charvak Login Notifications
 """
 import logging

@@ -1,4 +1,4 @@
-﻿"""
+"""
 Charvak Market-Standard Question Generator
 Correct question counts, market standards, results generation
 """

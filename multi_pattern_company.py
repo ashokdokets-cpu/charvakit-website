@@ -1,4 +1,4 @@
-﻿"""
+"""
 Charvak Multi-Pattern Company System
 Supports multiple patterns per company (TCS NQT, Digital, Innovator)
 """

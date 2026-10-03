@@ -1,4 +1,4 @@
-﻿"""
+"""
 Charvak AI-Driven Skill Analysis
 OpenAI analyzes resume, education, certifications and generates recommendations
 """

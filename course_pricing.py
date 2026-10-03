@@ -1,4 +1,4 @@
-﻿"""
+"""
 Charvak Global Course Pricing
 Location-based competitive pricing for 25 courses
 """

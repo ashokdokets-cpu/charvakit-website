@@ -1,4 +1,4 @@
-﻿"""
+"""
 Charvak Enhanced AI Course Delivery
 Multiple engagement models: Text, Interactive, Project-based, Assessment
 """

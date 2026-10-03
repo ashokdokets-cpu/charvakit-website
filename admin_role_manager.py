@@ -1,4 +1,4 @@
-﻿"""
+"""
 Charvak Admin Role Management
 Only admins can add roles - users can view and analyze
 """

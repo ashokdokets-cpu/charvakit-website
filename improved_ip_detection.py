@@ -1,4 +1,4 @@
-﻿"""
+"""
 Charvak Improved IP Detection
 Better detection for real-world IPs
 """

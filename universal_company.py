@@ -1,4 +1,4 @@
-﻿"""
+"""
 Charvak Universal Company System
 Any company, user content requests, admin communication
 """

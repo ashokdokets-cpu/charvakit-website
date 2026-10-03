@@ -1,4 +1,4 @@
-﻿"""
+"""
 Charvak Integrated Location-Aware Pricing
 Works with: AI Credits, Internships, Training, Assessments
 """

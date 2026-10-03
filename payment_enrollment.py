@@ -1,4 +1,4 @@
-﻿"""
+"""
 Charvak Payment-Gated Course Enrollment
 Installments, access control, extension handling
 """

@@ -1,4 +1,4 @@
-﻿"""
+"""
 Charvak AI Versant Content Generator
 Unique questions for every user - no hardcoding
 """
