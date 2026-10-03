@@ -294,5 +294,8 @@ async function loadPastResults() {
 
 document.addEventListener('DOMContentLoaded', loadPastResults);
 </script>
+<script>
+  window.CHARVAK_PREMIUM = { reportType: "skill_twin", resultGlobal: "lastSkillTwinResult" };
+</script>
 {% include 'includes/premium-upsell.html' %}
 {% endblock %}

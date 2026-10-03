@@ -1,22 +1,91 @@
 <div class="container py-3">
-    <div class="card border-0 shadow-sm bg-light">
+    <div class="card border-0 shadow-sm bg-light" id="premiumUpsellCard">
         <div class="card-body text-center p-4">
-            <h5>🔒 Get the Complete Report</h5>
+            <h5>&#128274; Get the Complete Report</h5>
             <p class="text-muted mb-2">Your result is above. Get the full analysis with actionable recommendations.</p>
-            <button class="btn btn-primary btn-lg" onclick="unlockPremium()">Unlock Full Report — <span data-inr="199">₹199</span></button>
-            <p class="small text-muted mt-2">Instant access · Exportable PDF · Action plan included</p>
+            <button class="btn btn-primary btn-lg" id="premiumUnlockBtn" onclick="unlockPremium()">Unlock Full Report &mdash; <span data-inr="199">&#8377;199</span></button>
+            <p class="small text-muted mt-2">Instant access &middot; Exportable PDF &middot; Action plan included</p>
+            <div id="premiumUpsellMsg" class="mt-2"></div>
         </div>
     </div>
 </div>
 
 <script>
-function unlockPremium() {
-    // Session G6: the full report product is not yet shipped.
-    // Capture interest instead of running an undefined payment function.
-    if (typeof window.notifyMe === 'function') {
-        window.notifyMe('Premium Report Unlock');
-    } else {
-        alert('Premium report unlock is coming soon. Contact hr@charvakit.com for early access.');
+async function unlockPremium() {
+    var btn = document.getElementById('premiumUnlockBtn');
+    var msg = document.getElementById('premiumUpsellMsg');
+
+    // Legacy mode: no premium config on this page -> interest capture
+    var cfg = window.CHARVAK_PREMIUM;
+    if (!cfg || !cfg.reportType || !cfg.resultGlobal) {
+        if (typeof window.notifyMe === 'function') {
+            window.notifyMe('Premium Report Unlock');
+        } else {
+            alert('Premium report unlock is coming soon. Contact hr@charvakit.com for early access.');
+        }
+        return;
+    }
+
+    // Premium flow
+    var authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    var email = localStorage.getItem('userEmail') || '';
+    if (!authToken || !email) {
+        window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname);
+        return;
+    }
+
+    var sourceData = window[cfg.resultGlobal];
+    if (!sourceData || sourceData.status !== 'success') {
+        msg.innerHTML = '<div class="alert alert-warning mb-0">Run a scan first, then unlock the full report.</div>';
+        return;
+    }
+
+    btn.disabled = true;
+    var origText = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generating report (up to 30s)...';
+    msg.innerHTML = '';
+
+    try {
+        var res = await fetch('/api/premium-report/generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authToken
+            },
+            body: JSON.stringify({
+                email: email,
+                report_type: cfg.reportType,
+                source_data: sourceData,
+                source_id: sourceData.scan_id || sourceData.twin_id || ''
+            })
+        });
+
+        if (res.status === 401) {
+            window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname);
+            return;
+        }
+        if (res.status === 402) {
+            msg.innerHTML = '<div class="alert alert-warning mb-0">Not enough credits (400 needed). <a href="/ai-credits-pricing">Top up here</a>.</div>';
+            return;
+        }
+
+        var data = await res.json();
+        if (data.status !== 'success') {
+            msg.innerHTML = '<div class="alert alert-danger mb-0">' + (data.message || 'Generation failed.') + '</div>';
+            return;
+        }
+
+        msg.innerHTML =
+            '<div class="alert alert-success mb-0">' +
+            '<strong>Report ready!</strong> Emailed to ' + email + '.<br>' +
+            '<a class="btn btn-success btn-sm mt-2" href="' + data.download_url + '">Download PDF</a> ' +
+            '<a class="btn btn-outline-success btn-sm mt-2" href="/my-reports">View all reports</a>' +
+            '</div>';
+    } catch (e) {
+        msg.innerHTML = '<div class="alert alert-danger mb-0">Error: ' + e.message + '</div>';
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = origText;
     }
 }
 </script>
