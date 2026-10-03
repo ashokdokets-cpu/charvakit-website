@@ -1,4 +1,4 @@
-﻿"""
+"""
 Charvak Email Verification - Database-backed
 """
 import logging

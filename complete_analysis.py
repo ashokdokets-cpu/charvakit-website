@@ -1,4 +1,4 @@
-﻿"""
+"""
 Charvak Complete Skill Analysis
 Resume upload, education background, certifications, detailed reporting
 """

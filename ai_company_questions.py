@@ -1,4 +1,4 @@
-﻿"""
+"""
 Charvak AI Company Question Generator
 AI generates unique questions for every topic across all companies
 """

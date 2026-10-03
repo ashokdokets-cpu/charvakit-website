@@ -1,4 +1,4 @@
-﻿"""
+"""
 Charvak Email Queue — delayed email delivery for onboarding sequences.
 
 Usage:

@@ -1,4 +1,4 @@
-﻿"""
+"""
 Charvak Enhanced Payment System
 Integrates with existing payment_engine
 Adds: Subscriptions, Discounts, IP Detection

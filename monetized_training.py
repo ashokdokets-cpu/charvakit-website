@@ -1,4 +1,4 @@
-﻿"""
+"""
 Charvak Integrated Monetized Training System
 Complete: Trainer Enrollment, Scheduling, Payments, Gated Content
 Integrates with: Training Engine, LMS Engine

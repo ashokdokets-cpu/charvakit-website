@@ -1,4 +1,4 @@
-﻿"""
+"""
 Charvak AI Pattern Question Generator
 OpenAI generates unique questions for every pattern
 """

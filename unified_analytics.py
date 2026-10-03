@@ -1,4 +1,4 @@
-﻿"""
+"""
 Charvak Unified Analytics - Integrates with existing engines
 """
 import logging

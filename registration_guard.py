@@ -1,4 +1,4 @@
-﻿"""
+"""
 Block suspicious registration patterns
 """
 import re
