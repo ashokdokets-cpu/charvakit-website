@@ -755,6 +755,12 @@ async def my_results_page(request: Request):
     return template_response("my-results.html", request, "My Results")
 
 
+@app.get("/my-reports", response_class=HTMLResponse)
+async def my_reports_page(request: Request):
+    """Session 16: Premium Report dashboard."""
+    return template_response("my-reports.html", request, "My Reports")
+
+
 # C13.5 - Question report endpoint
 @app.post("/api/questions/report")
 async def report_question(request: Request):

@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}My Reports{% endblock %}
+{% block content %}
+<style>
+  .mr-hero { background: linear-gradient(135deg, #3ba591 0%, #2a8070 100%); color: #fff; padding: 48px 0; margin-bottom: 32px; }
+  .mr-hero h1 { font-weight: 800; margin-bottom: 8px; }
+  .mr-hero p { opacity: 0.9; margin: 0; }
+  .mr-wrap { max-width: 900px; margin: 0 auto; padding: 0 16px 40px; }
+  .mr-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 32px; }
+  .mr-stat { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; text-align: center; }
+  .mr-stat-value { font-size: 2rem; font-weight: 800; color: #111827; line-height: 1; }
+  .mr-stat-label { font-size: 0.8rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 6px; }
+  .mr-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; gap: 16px; transition: box-shadow 0.15s; flex-wrap: wrap; }
+  .mr-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+  .mr-card-name { font-weight: 600; font-size: 1.05rem; margin-bottom: 4px; }
+  .mr-card-meta { color: #6b7280; font-size: 0.85rem; }
+  .mr-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; background: #e0f2fe; color: #0369a1; margin-left: 8px; }
+  .mr-badge.auditbot { background: #fee2e2; color: #991b1b; }
+  .mr-badge.lock_in_breaker { background: #fef3c7; color: #92400e; }
+  .mr-badge.skill_twin { background: #d1fae5; color: #065f46; }
+  .mr-empty { text-align: center; padding: 60px 20px; color: #6b7280; }
+  .mr-empty h3 { font-weight: 700; margin-bottom: 8px; color: #111827; }
+  .mr-loading { text-align: center; padding: 60px 20px; color: #6b7280; }
+</style>
+
+<div class="mr-hero">
+  <div class="container text-center">
+    <h1>My Reports</h1>
+    <p>Your unlocked Premium Reports — downloadable any time.</p>
+  </div>
+</div>
+
+<div class="mr-wrap">
+  <div id="loading" class="mr-loading"><div class="spinner-border text-primary"></div><p class="mt-3">Loading reports...</p></div>
+
+  <div id="content" style="display:none;">
+    <div class="mr-stats" id="statsRow"></div>
+    <div id="reportsList"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var email = localStorage.getItem('userEmail') || '';
+  var authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+
+  if (!email || !authToken) {
+    document.getElementById('loading').innerHTML =
+      '<p>Please <a href="/login?next=/my-reports">log in</a> to view your reports.</p>';
+    return;
+  }
+
+  fetch('/api/premium-report/list/' + encodeURIComponent(email), {
+    headers: { 'Authorization': 'Bearer ' + authToken }
+  })
+  .then(function(r) {
+    if (r.status === 401) { window.location.href = '/login?next=/my-reports'; return null; }
+    return r.json();
+  })
+  .then(function(data) {
+    if (!data) return;
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('content').style.display = 'block';
+
+    var reports = (data && data.reports) || [];
+    renderStats(reports);
+    renderList(reports, email, authToken);
+  })
+  .catch(function(e) {
+    document.getElementById('loading').innerHTML = '<p class="text-danger">Error: ' + e.message + '</p>';
+  });
+
+  function renderStats(reports) {
+    var byType = { auditbot: 0, lock_in_breaker: 0, skill_twin: 0 };
+    reports.forEach(function(r) { if (byType[r.report_type] !== undefined) byType[r.report_type]++; });
+    var html = '';
+    html += '<div class="mr-stat"><div class="mr-stat-value">' + reports.length + '</div><div class="mr-stat-label">Total Reports</div></div>';
+    html += '<div class="mr-stat"><div class="mr-stat-value">' + byType.auditbot + '</div><div class="mr-stat-label">AuditBot</div></div>';
+    html += '<div class="mr-stat"><div class="mr-stat-value">' + byType.lock_in_breaker + '</div><div class="mr-stat-label">Lock-In Breaker</div></div>';
+    html += '<div class="mr-stat"><div class="mr-stat-value">' + byType.skill_twin + '</div><div class="mr-stat-label">Skill-Twin</div></div>';
+    document.getElementById('statsRow').innerHTML = html;
+  }
+
+  function renderList(reports, email, token) {
+    var wrap = document.getElementById('reportsList');
+    if (!reports.length) {
+      wrap.innerHTML =
+        '<div class="mr-empty">' +
+        '<h3>No reports yet</h3>' +
+        '<p>Unlock a Premium Report from any product page (AuditBot, Lock-In Breaker, Skill-Twin).</p>' +
+        '<a class="btn btn-primary mt-3" href="/auditbot">Try AuditBot</a>' +
+        '</div>';
+      return;
+    }
+    var html = '';
+    reports.forEach(function(r) {
+      var rt = r.report_type || '';
+      var title = r.title || 'Premium Report';
+      var date = r.created_at ? new Date(r.created_at).toLocaleDateString('en-IN', {year:'numeric', month:'short', day:'numeric'}) : '';
+      var dl = '/api/premium-report/' + encodeURIComponent(r.report_id) + '/download?email=' + encodeURIComponent(email);
+      html += '<div class="mr-card">';
+      html += '  <div>';
+      html += '    <div class="mr-card-name">' + escapeHtml(title) + '<span class="mr-badge ' + rt + '">' + rt.replace(/_/g, ' ') + '</span></div>';
+      html += '    <div class="mr-card-meta">Report ID: ' + escapeHtml(r.report_id) + ' &middot; ' + date + '</div>';
+      html += '  </div>';
+      html += '  <div><a class="btn btn-primary btn-sm" href="' + dl + '">Download PDF</a></div>';
+      html += '</div>';
+    });
+    wrap.innerHTML = html;
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+})();
+</script>
+{% endblock %}
