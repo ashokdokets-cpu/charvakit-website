@@ -1,5 +1,77 @@
 # Charvak — Commitment Tracker
 
+## STRATEGIC GAPS - from COMPETITIVE-STRATEGY.md (2026-10-04)
+
+Four critical gaps identified at the close of Session 16. See
+`COMPETITIVE-STRATEGY.md` for the full analysis, roadmap, and metrics.
+
+### FLAGGED - Gap 1 - Role Readiness Score (Session 17, Priority 1)
+
+**What:** Career Assessment produces a raw score. Global leaders (Knovia)
+sell a "Role Readiness Score" calibrated to what employers actually need
+for a specific (role x industry x level) combination.
+
+**Why:** Converts a self-improvement tool into an employer-facing artifact.
+The natural monetization point.
+
+**How:** Add `compute_role_readiness()` to `career_assessment_engine.py`.
+Blend topic coverage + ability baseline + market benchmark. Publish a
+shareable certificate at `/readiness/{assessment_id}`.
+
+**Effort:** 1-2 sessions.
+
+**Verdict:** SCHEDULED - Session 17
+
+### FLAGGED - Gap 3 - Anti-Cheating Layer A (Session 17, Priority 2)
+
+**What:** No integrity signals on coding/SQL assessments. Employers will
+dismiss results without them.
+
+**Why:** AI-assisted cheating is the existential problem of the assessment
+industry in 2026. It is the differentiator for trusted assessments.
+
+**How:** Layer A (environment signals - copy/paste, tab-switch, keystroke
+velocity) ships with Phase 2b. Layer B (question design) is a habit. Layer C
+(behavioral analytics) is Session 18+.
+
+**Effort:** 1-2 sessions.
+
+**Verdict:** SCHEDULED - Session 17 (Layer A alongside Phase 2b)
+
+### FLAGGED - Gap 2 - Multilingual Voice AI (Sessions 20+)
+
+**What:** No voice modality. Competitors (Hunar.AI, Vahan.ai) are winning
+the frontline/blue-collar Indian market with 20+ language voice AI.
+
+**Why:** Massive Indian market. Charvak has ElevenLabs + Whisper already.
+
+**How:** Voice Screening pilot - candidate calls a number, IVR in their
+language, AI asks questions, answers scored. Telugu/Tamil/Hindi first.
+
+**Effort:** 3-5 sessions.
+
+**Verdict:** DEFERRED - Session 20+ (do not start without a paying
+frontline/staffing client)
+
+### FLAGGED - Gap 4 - AuditBot Continuous Compliance (Sessions 18-19)
+
+**What:** AuditBot is a one-time PDF report. Enterprise CISOs need
+continuous monitoring. SonarQube/Snyk sell this as recurring SaaS.
+
+**Why:** Converts one-time purchase into a subscription - biggest revenue
+multiplier available. Pattern proven by Silent-Killer cron.
+
+**How:** Phase 1 - repo scanner + `/my-repos` dashboard + daily cron +
+email alerts on new HIGH/CRITICAL findings.
+
+**Effort:** 2-3 sessions.
+
+**Verdict:** SCHEDULED - Session 18-19
+
+
+---
+
+
 
 ### RESOLVED — Premium Report product (Rs 199 PDF unlock) (2026-10-04, 980bbdc)
 
