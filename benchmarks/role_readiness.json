@@ -1,0 +1,488 @@
+{
+  "default": 65,
+  "created_at": "2026-10-04",
+  "review_quarterly": true,
+  "notes": "Initial seed. Resolution order: exact match -> wildcard industry -> wildcard role -> default.",
+  "benchmarks": [
+    {
+      "role": "Data Scientist",
+      "industry": "*",
+      "level": "junior",
+      "benchmark": 60
+    },
+    {
+      "role": "Data Scientist",
+      "industry": "*",
+      "level": "mid",
+      "benchmark": 72
+    },
+    {
+      "role": "Data Scientist",
+      "industry": "*",
+      "level": "senior",
+      "benchmark": 78
+    },
+    {
+      "role": "Data Scientist",
+      "industry": "*",
+      "level": "staff",
+      "benchmark": 84
+    },
+    {
+      "role": "Data Analyst",
+      "industry": "*",
+      "level": "junior",
+      "benchmark": 58
+    },
+    {
+      "role": "Data Analyst",
+      "industry": "*",
+      "level": "mid",
+      "benchmark": 68
+    },
+    {
+      "role": "Data Analyst",
+      "industry": "*",
+      "level": "senior",
+      "benchmark": 74
+    },
+    {
+      "role": "Data Analyst",
+      "industry": "*",
+      "level": "staff",
+      "benchmark": 80
+    },
+    {
+      "role": "Backend Engineer",
+      "industry": "*",
+      "level": "junior",
+      "benchmark": 62
+    },
+    {
+      "role": "Backend Engineer",
+      "industry": "*",
+      "level": "mid",
+      "benchmark": 72
+    },
+    {
+      "role": "Backend Engineer",
+      "industry": "*",
+      "level": "senior",
+      "benchmark": 78
+    },
+    {
+      "role": "Backend Engineer",
+      "industry": "*",
+      "level": "staff",
+      "benchmark": 85
+    },
+    {
+      "role": "Frontend Engineer",
+      "industry": "*",
+      "level": "junior",
+      "benchmark": 60
+    },
+    {
+      "role": "Frontend Engineer",
+      "industry": "*",
+      "level": "mid",
+      "benchmark": 70
+    },
+    {
+      "role": "Frontend Engineer",
+      "industry": "*",
+      "level": "senior",
+      "benchmark": 76
+    },
+    {
+      "role": "Frontend Engineer",
+      "industry": "*",
+      "level": "staff",
+      "benchmark": 82
+    },
+    {
+      "role": "Full-Stack Engineer",
+      "industry": "*",
+      "level": "junior",
+      "benchmark": 62
+    },
+    {
+      "role": "Full-Stack Engineer",
+      "industry": "*",
+      "level": "mid",
+      "benchmark": 72
+    },
+    {
+      "role": "Full-Stack Engineer",
+      "industry": "*",
+      "level": "senior",
+      "benchmark": 78
+    },
+    {
+      "role": "Full-Stack Engineer",
+      "industry": "*",
+      "level": "staff",
+      "benchmark": 84
+    },
+    {
+      "role": "DevOps Engineer",
+      "industry": "*",
+      "level": "junior",
+      "benchmark": 62
+    },
+    {
+      "role": "DevOps Engineer",
+      "industry": "*",
+      "level": "mid",
+      "benchmark": 72
+    },
+    {
+      "role": "DevOps Engineer",
+      "industry": "*",
+      "level": "senior",
+      "benchmark": 78
+    },
+    {
+      "role": "DevOps Engineer",
+      "industry": "*",
+      "level": "staff",
+      "benchmark": 85
+    },
+    {
+      "role": "ML Engineer",
+      "industry": "*",
+      "level": "junior",
+      "benchmark": 62
+    },
+    {
+      "role": "ML Engineer",
+      "industry": "*",
+      "level": "mid",
+      "benchmark": 73
+    },
+    {
+      "role": "ML Engineer",
+      "industry": "*",
+      "level": "senior",
+      "benchmark": 80
+    },
+    {
+      "role": "ML Engineer",
+      "industry": "*",
+      "level": "staff",
+      "benchmark": 86
+    },
+    {
+      "role": "Mobile Engineer (Cross-Platform / React Native / Flutter)",
+      "industry": "*",
+      "level": "junior",
+      "benchmark": 60
+    },
+    {
+      "role": "Mobile Engineer (Cross-Platform / React Native / Flutter)",
+      "industry": "*",
+      "level": "mid",
+      "benchmark": 70
+    },
+    {
+      "role": "Mobile Engineer (Cross-Platform / React Native / Flutter)",
+      "industry": "*",
+      "level": "senior",
+      "benchmark": 76
+    },
+    {
+      "role": "Mobile Engineer (Cross-Platform / React Native / Flutter)",
+      "industry": "*",
+      "level": "staff",
+      "benchmark": 82
+    },
+    {
+      "role": "QA / Test Engineer",
+      "industry": "*",
+      "level": "junior",
+      "benchmark": 58
+    },
+    {
+      "role": "QA / Test Engineer",
+      "industry": "*",
+      "level": "mid",
+      "benchmark": 68
+    },
+    {
+      "role": "QA / Test Engineer",
+      "industry": "*",
+      "level": "senior",
+      "benchmark": 74
+    },
+    {
+      "role": "QA / Test Engineer",
+      "industry": "*",
+      "level": "staff",
+      "benchmark": 80
+    },
+    {
+      "role": "Security Engineer",
+      "industry": "*",
+      "level": "junior",
+      "benchmark": 63
+    },
+    {
+      "role": "Security Engineer",
+      "industry": "*",
+      "level": "mid",
+      "benchmark": 74
+    },
+    {
+      "role": "Security Engineer",
+      "industry": "*",
+      "level": "senior",
+      "benchmark": 80
+    },
+    {
+      "role": "Security Engineer",
+      "industry": "*",
+      "level": "staff",
+      "benchmark": 86
+    },
+    {
+      "role": "Product Manager",
+      "industry": "*",
+      "level": "junior",
+      "benchmark": 60
+    },
+    {
+      "role": "Product Manager",
+      "industry": "*",
+      "level": "mid",
+      "benchmark": 72
+    },
+    {
+      "role": "Product Manager",
+      "industry": "*",
+      "level": "senior",
+      "benchmark": 79
+    },
+    {
+      "role": "Product Manager",
+      "industry": "*",
+      "level": "staff",
+      "benchmark": 85
+    },
+    {
+      "role": "UX Designer",
+      "industry": "*",
+      "level": "junior",
+      "benchmark": 58
+    },
+    {
+      "role": "UX Designer",
+      "industry": "*",
+      "level": "mid",
+      "benchmark": 68
+    },
+    {
+      "role": "UX Designer",
+      "industry": "*",
+      "level": "senior",
+      "benchmark": 75
+    },
+    {
+      "role": "UX Designer",
+      "industry": "*",
+      "level": "staff",
+      "benchmark": 82
+    },
+    {
+      "role": "Program Manager",
+      "industry": "*",
+      "level": "junior",
+      "benchmark": 60
+    },
+    {
+      "role": "Program Manager",
+      "industry": "*",
+      "level": "mid",
+      "benchmark": 70
+    },
+    {
+      "role": "Program Manager",
+      "industry": "*",
+      "level": "senior",
+      "benchmark": 77
+    },
+    {
+      "role": "Program Manager",
+      "industry": "*",
+      "level": "staff",
+      "benchmark": 83
+    },
+    {
+      "role": "Business Analyst",
+      "industry": "*",
+      "level": "junior",
+      "benchmark": 58
+    },
+    {
+      "role": "Business Analyst",
+      "industry": "*",
+      "level": "mid",
+      "benchmark": 68
+    },
+    {
+      "role": "Business Analyst",
+      "industry": "*",
+      "level": "senior",
+      "benchmark": 75
+    },
+    {
+      "role": "Business Analyst",
+      "industry": "*",
+      "level": "staff",
+      "benchmark": 80
+    },
+    {
+      "role": "Financial Analyst",
+      "industry": "*",
+      "level": "junior",
+      "benchmark": 58
+    },
+    {
+      "role": "Financial Analyst",
+      "industry": "*",
+      "level": "mid",
+      "benchmark": 68
+    },
+    {
+      "role": "Financial Analyst",
+      "industry": "*",
+      "level": "senior",
+      "benchmark": 75
+    },
+    {
+      "role": "Financial Analyst",
+      "industry": "*",
+      "level": "staff",
+      "benchmark": 82
+    },
+    {
+      "role": "Marketing Specialist",
+      "industry": "*",
+      "level": "junior",
+      "benchmark": 56
+    },
+    {
+      "role": "Marketing Specialist",
+      "industry": "*",
+      "level": "mid",
+      "benchmark": 66
+    },
+    {
+      "role": "Marketing Specialist",
+      "industry": "*",
+      "level": "senior",
+      "benchmark": 73
+    },
+    {
+      "role": "Marketing Specialist",
+      "industry": "*",
+      "level": "staff",
+      "benchmark": 79
+    },
+    {
+      "role": "Sales Executive (SDR/BDR)",
+      "industry": "*",
+      "level": "junior",
+      "benchmark": 55
+    },
+    {
+      "role": "Sales Executive (SDR/BDR)",
+      "industry": "*",
+      "level": "mid",
+      "benchmark": 65
+    },
+    {
+      "role": "Sales Executive (SDR/BDR)",
+      "industry": "*",
+      "level": "senior",
+      "benchmark": 73
+    },
+    {
+      "role": "Sales Executive (SDR/BDR)",
+      "industry": "*",
+      "level": "staff",
+      "benchmark": 80
+    },
+    {
+      "role": "Customer Success Manager",
+      "industry": "*",
+      "level": "junior",
+      "benchmark": 56
+    },
+    {
+      "role": "Customer Success Manager",
+      "industry": "*",
+      "level": "mid",
+      "benchmark": 66
+    },
+    {
+      "role": "Customer Success Manager",
+      "industry": "*",
+      "level": "senior",
+      "benchmark": 74
+    },
+    {
+      "role": "Customer Success Manager",
+      "industry": "*",
+      "level": "staff",
+      "benchmark": 81
+    },
+    {
+      "role": "Content Writer / Copywriter",
+      "industry": "*",
+      "level": "junior",
+      "benchmark": 55
+    },
+    {
+      "role": "Content Writer / Copywriter",
+      "industry": "*",
+      "level": "mid",
+      "benchmark": 65
+    },
+    {
+      "role": "Content Writer / Copywriter",
+      "industry": "*",
+      "level": "senior",
+      "benchmark": 72
+    },
+    {
+      "role": "Content Writer / Copywriter",
+      "industry": "*",
+      "level": "staff",
+      "benchmark": 78
+    },
+    {
+      "role": "HR Generalist",
+      "industry": "*",
+      "level": "junior",
+      "benchmark": 56
+    },
+    {
+      "role": "HR Generalist",
+      "industry": "*",
+      "level": "mid",
+      "benchmark": 66
+    },
+    {
+      "role": "HR Generalist",
+      "industry": "*",
+      "level": "senior",
+      "benchmark": 74
+    },
+    {
+      "role": "HR Generalist",
+      "industry": "*",
+      "level": "staff",
+      "benchmark": 80
+    }
+  ]
+}

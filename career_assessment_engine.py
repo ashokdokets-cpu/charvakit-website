@@ -281,10 +281,378 @@ class CareerAssessmentEngine:
                 ALTER TABLE charvak_career_assessments
                     ADD COLUMN IF NOT EXISTS learning_path_json JSONB
             """)
+            # Session 17 Sprint A: readiness certificates
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS charvak_readiness_certificates (
+                    certificate_id    TEXT PRIMARY KEY,
+                    assessment_id     TEXT NOT NULL,
+                    email             TEXT NOT NULL,
+                    display_name      TEXT,
+                    role              TEXT NOT NULL,
+                    industry          TEXT NOT NULL,
+                    level             TEXT NOT NULL,
+                    readiness_score   INTEGER NOT NULL,
+                    percentile        INTEGER,
+                    benchmark_score   INTEGER,
+                    verdict           TEXT,
+                    payload_json      JSONB,
+                    certificate_hash  TEXT NOT NULL,
+                    source            TEXT NOT NULL DEFAULT 'written',
+                    created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            cur.execute("""
+                CREATE INDEX IF NOT EXISTS idx_rdc_email
+                    ON charvak_readiness_certificates (email, created_at DESC)
+            """)
+            cur.execute("""
+                CREATE INDEX IF NOT EXISTS idx_rdc_hash
+                    ON charvak_readiness_certificates (certificate_hash)
+            """)
+            cur.execute("""
+                CREATE INDEX IF NOT EXISTS idx_rdc_assessment
+                    ON charvak_readiness_certificates (assessment_id)
+            """)
             conn.commit()
             cur.close(); conn.close()
         except Exception as e:
             logger.error(f"career-assessment table init failed: {e}")
+
+    # ------------------------------------------------------------
+    # Sprint A helpers (Session 17)
+    # ------------------------------------------------------------
+
+    def _resolve_benchmark(self, role: str, industry: str, level: str) -> int:
+        """
+        Resolve the market benchmark for a (role, industry, level) combo.
+        Reads benchmarks/role_readiness.json (cached by mtime).
+        Resolution order:
+          1. Exact (role, industry, level)
+          2. Exact (role, *, level)
+          3. Any (*, *, level) -> uses the first matching level entry
+          4. Global default
+        """
+        import os as _os
+        default_value = 65
+        try:
+            bench_path = _os.path.join(_os.path.dirname(__file__), "benchmarks", "role_readiness.json")
+            if not _os.path.exists(bench_path):
+                return default_value
+
+            # Simple mtime-based cache
+            mtime = _os.path.getmtime(bench_path)
+            cached = getattr(self, "_bench_cache", None)
+            if cached and cached.get("mtime") == mtime:
+                data = cached["data"]
+            else:
+                with open(bench_path, "r", encoding="utf-8") as fh:
+                    data = json.load(fh)
+                self._bench_cache = {"mtime": mtime, "data": data}
+
+            default_value = int(data.get("default", 65))
+            benchmarks = data.get("benchmarks") or []
+
+            # 1. Exact (role, industry, level)
+            for b in benchmarks:
+                if b.get("role") == role and b.get("industry") == industry and b.get("level") == level:
+                    return int(b.get("benchmark", default_value))
+            # 2. Wildcard industry
+            for b in benchmarks:
+                if b.get("role") == role and b.get("industry") == "*" and b.get("level") == level:
+                    return int(b.get("benchmark", default_value))
+            # 3. Any role, same level
+            for b in benchmarks:
+                if b.get("level") == level:
+                    return int(b.get("benchmark", default_value))
+            # 4. Global default
+            return default_value
+        except Exception as e:
+            logger.error(f"_resolve_benchmark failed: {e}")
+            return default_value
+
+    def _generate_certificate_hash(self, certificate_id: str, email: str,
+                                   readiness_score: int, created_at_iso: str) -> str:
+        """
+        HMAC-SHA256 of the certificate's identifying fields, truncated to
+        16 hex chars. Uses READINESS_HMAC_KEY if set, else SECRET_KEY.
+        Used by /api/readiness/verify/{hash} for employer-side verification.
+        """
+        import os as _os
+        import hmac
+        import hashlib
+
+        key = (
+            _os.getenv("READINESS_HMAC_KEY")
+            or _os.getenv("SECRET_KEY")
+            or "dev-only-not-secret"
+        )
+        payload = f"{certificate_id}|{(email or '').lower()}|{readiness_score}|{created_at_iso}"
+        digest = hmac.new(key.encode("utf-8"), payload.encode("utf-8"), hashlib.sha256).hexdigest()
+        return digest[:16]
+
+    # ------------------------------------------------------------
+    # Sprint A: Role Readiness Certificate (Session 17)
+    # ------------------------------------------------------------
+
+    def _skill_gap_from_answers(self, questions, answers):
+        """
+        Aggregate per-topic skill gap from questions' 'topics' tags and
+        the answers' scores. Returns a list of {topic, score, status}.
+        """
+        topic_scores = {}
+        for i, q in enumerate(questions):
+            topics = q.get("topics") or []
+            if not topics:
+                continue
+            a = answers[i] if i < len(answers) else None
+            if isinstance(a, dict):
+                sc = a.get("score", 0)
+            elif isinstance(a, (int, float)):
+                sc = a
+            else:
+                sc = 0
+            sc = int(sc) if sc is not None else 0
+            for tp in topics:
+                topic_scores.setdefault(tp, []).append(sc)
+
+        out = []
+        for tp, scores in topic_scores.items():
+            if not scores:
+                continue
+            avg = int(round(sum(scores) / len(scores)))
+            if avg >= 80:
+                status = "strong"
+            elif avg >= 55:
+                status = "mixed"
+            else:
+                status = "weak"
+            out.append({"topic": tp, "score": avg, "status": status})
+        out.sort(key=lambda x: x["score"])
+        return out
+
+    def compute_role_readiness(self, data):
+        """
+        Compute and persist a Role Readiness Certificate.
+        data = {email, assessment_id, display_name (optional)}
+        Idempotent: one certificate per assessment_id.
+        Returns {status, certificate_id, readiness_score, ...}.
+        """
+        import datetime as _dt
+        email = (data.get("email") or "").strip().lower()
+        assessment_id = (data.get("assessment_id") or "").strip()
+        display_name = (data.get("display_name") or "").strip() or None
+
+        if not email or not assessment_id:
+            return {"status": "error", "message": "email and assessment_id required"}
+
+        self._ensure_tables()
+        self._ensure_format_columns()
+
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+
+            # Idempotency check
+            cur.execute("""
+                SELECT certificate_id, certificate_hash, readiness_score, percentile,
+                       benchmark_score, verdict, created_at
+                FROM charvak_readiness_certificates
+                WHERE assessment_id = %s
+            """, (assessment_id,))
+            existing = cur.fetchone()
+            if existing:
+                cur.close(); conn.close()
+                cid = existing[0]
+                return {
+                    "status": "success",
+                    "already_existed": True,
+                    "certificate_id": cid,
+                    "certificate_url": f"/readiness/{cid}",
+                    "certificate_hash": existing[1],
+                    "readiness_score": existing[2],
+                    "percentile": existing[3],
+                    "benchmark": existing[4],
+                    "verdict": existing[5],
+                    "created_at": existing[6].isoformat() if existing[6] else None,
+                }
+
+            # Load assessment
+            cur.execute("""
+                SELECT email, role, industry, level, format, num_questions,
+                       questions_json, status, score, correct_count
+                FROM charvak_career_assessments
+                WHERE assessment_id = %s
+            """, (assessment_id,))
+            row = cur.fetchone()
+            if not row:
+                cur.close(); conn.close()
+                return {"status": "error", "message": "Assessment not found"}
+            if row[0] != email:
+                cur.close(); conn.close()
+                return {"status": "error", "message": "Not your assessment"}
+            if row[7] != "completed":
+                cur.close(); conn.close()
+                return {"status": "error", "message": "Assessment not completed"}
+
+            _, role, industry, level, fmt, num_questions, questions_json, _, score, correct_count = row
+            fmt = fmt or "mcq"
+            questions = questions_json if isinstance(questions_json, list) else json.loads(questions_json or "[]")
+            total = len(questions)
+
+            # Load answers
+            cur.execute("""
+                SELECT question_index, selected_index, is_correct, ai_score
+                FROM charvak_career_assessment_answers
+                WHERE assessment_id = %s ORDER BY question_index
+            """, (assessment_id,))
+            answer_rows = cur.fetchall()
+            answers_map = {}
+            for ar in answer_rows:
+                q_idx, sel_idx, is_corr, ai_sc = ar
+                answers_map[q_idx] = {
+                    "selected_index": sel_idx,
+                    "is_correct": is_corr,
+                    "ai_score": ai_sc,
+                }
+            answers = [answers_map.get(i, {}) for i in range(total)]
+
+            # ---- Component 1: binary correct % (30%) ----
+            binary_correct = sum(1 for a in answers if a.get("is_correct"))
+            binary_pct = (binary_correct / total * 100) if total > 0 else 0
+
+            # ---- Component 2: AI-scored avg (25%) ----
+            ai_scores = [a.get("ai_score") for a in answers if a.get("ai_score") is not None]
+            ai_avg = (sum(ai_scores) / len(ai_scores)) if ai_scores else None
+
+            # ---- Component 3: skill-gap closure (20%) ----
+            per_answer_scores = []
+            for i, q in enumerate(questions):
+                a = answers[i] if i < len(answers) else {}
+                if a.get("ai_score") is not None:
+                    per_answer_scores.append({"score": a["ai_score"]})
+                elif a.get("is_correct"):
+                    per_answer_scores.append({"score": 100})
+                else:
+                    per_answer_scores.append({"score": 0})
+            skill_gap = self._skill_gap_from_answers(questions, per_answer_scores)
+            if skill_gap:
+                status_map = {"strong": 100, "mixed": 70, "weak": 40}
+                closure = sum(status_map[s["status"]] for s in skill_gap) / len(skill_gap)
+            else:
+                closure = binary_pct
+
+            # ---- Component 4: ability baseline percentile (15%) ----
+            skill_key = f"career_{fmt}"
+            try:
+                from ability_engine import ability_engine
+                ability_info = ability_engine.get_ability(email, skill_key)
+                ability_score = float(ability_info.get("ability_score", 1000.0))
+            except Exception:
+                ability_score = 1000.0
+            ability_pct = max(0, min(100, (ability_score - 800) / 4))
+
+            # ---- Component 5: difficulty adjustment (10%) ----
+            level_mult = {
+                "intern": 0.85, "junior": 0.92, "mid": 1.00,
+                "senior": 1.08, "staff": 1.12,
+                "manager": 1.10, "executive": 1.15,
+            }
+            level_key = (level or "mid").lower()
+            diff_mult = level_mult.get(level_key, 1.00)
+            diff_component = min(100, binary_pct * diff_mult)
+
+            # ---- Blend ----
+            if ai_avg is not None:
+                readiness = (
+                    0.30 * binary_pct
+                    + 0.25 * ai_avg
+                    + 0.20 * closure
+                    + 0.15 * ability_pct
+                    + 0.10 * diff_component
+                )
+            else:
+                readiness = (
+                    0.40 * binary_pct
+                    + 0.25 * closure
+                    + 0.20 * ability_pct
+                    + 0.15 * diff_component
+                )
+            readiness_int = max(0, min(100, int(round(readiness))))
+
+            # ---- Benchmark ----
+            benchmark = self._resolve_benchmark(role, industry, level_key)
+
+            # ---- Percentile ----
+            import math as _math
+            try:
+                z = (readiness_int - benchmark) / 15.0
+                percentile = int(round(50 + 50 * _math.erf(z / _math.sqrt(2))))
+                percentile = max(1, min(99, percentile))
+            except Exception:
+                percentile = 50
+
+            # ---- Verdict ----
+            if readiness_int >= benchmark + 10:
+                verdict = "Well above benchmark - strongly job ready"
+            elif readiness_int >= benchmark:
+                verdict = "Above benchmark - job ready"
+            elif readiness_int >= benchmark - 10:
+                verdict = "Near benchmark - close to job ready"
+            else:
+                verdict = "Below benchmark - skill gaps to close"
+
+            # ---- Certificate ID + hash ----
+            certificate_id = f"RDC-{secrets.token_hex(6).upper()}"
+            now_iso = _dt.datetime.now().isoformat()
+            cert_hash = self._generate_certificate_hash(certificate_id, email, readiness_int, now_iso)
+
+            # ---- Payload snapshot ----
+            payload = {
+                "skill_gap": skill_gap,
+                "binary_pct": round(binary_pct, 1),
+                "ai_avg": round(ai_avg, 1) if ai_avg is not None else None,
+                "closure": round(closure, 1),
+                "ability_pct": round(ability_pct, 1),
+                "diff_mult": diff_mult,
+                "total_questions": total,
+                "binary_correct": binary_correct,
+                "format": fmt,
+            }
+
+            # ---- Persist ----
+            cur.execute("""
+                INSERT INTO charvak_readiness_certificates
+                    (certificate_id, assessment_id, email, display_name,
+                     role, industry, level, readiness_score, percentile,
+                     benchmark_score, verdict, payload_json, certificate_hash, source)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s, 'written')
+            """, (
+                certificate_id, assessment_id, email, display_name,
+                role, industry, level, readiness_int, percentile,
+                benchmark, verdict, json.dumps(payload), cert_hash,
+            ))
+            conn.commit()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"compute_role_readiness failed: {e}")
+            return {"status": "error", "message": f"Could not compute certificate: {e}"}
+
+        return {
+            "status": "success",
+            "already_existed": False,
+            "certificate_id": certificate_id,
+            "certificate_url": f"/readiness/{certificate_id}",
+            "certificate_hash": cert_hash,
+            "readiness_score": readiness_int,
+            "percentile": percentile,
+            "benchmark": benchmark,
+            "verdict": verdict,
+            "role": role,
+            "industry": industry,
+            "level": level,
+            "created_at": now_iso,
+        }
 
     # ------------------------------------------------------------
     # Catalog

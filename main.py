@@ -6872,6 +6872,197 @@ async def api_career_assessment_get(request: Request, assessment_id: str, email:
     require_auth_for_email(request, email)
     return career_assessment_engine.get_assessment(assessment_id, email)
 
+
+
+# ============================================================
+# SPRINT A: ROLE READINESS CERTIFICATE (Session 17)
+# Free, shareable, verifiable. See SPRINT-A-SPEC.md.
+# ============================================================
+
+@app.post("/api/readiness/generate")
+@limiter.limit("20/minute")
+async def api_readiness_generate(request: Request):
+    """Generate a Role Readiness Certificate for a completed assessment.
+    Auth: caller must own the email + assessment."""
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "Invalid JSON"})
+
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+
+    try:
+        require_auth_for_email(request, email)
+    except HTTPException:
+        raise
+
+    result = career_assessment_engine.compute_role_readiness({
+        "email": email,
+        "assessment_id": data.get("assessment_id"),
+        "display_name": data.get("display_name"),
+    })
+    return result
+
+
+@app.get("/api/readiness/verify/{certificate_hash}")
+@limiter.limit("60/minute")
+async def api_readiness_verify(request: Request, certificate_hash: str):
+    """Public verification of a certificate hash. Returns non-PII fields only."""
+    from database import db
+    certificate_hash = (certificate_hash or "").strip()
+    if not certificate_hash:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "hash required"})
+
+    try:
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT certificate_id, role, industry, level, readiness_score,
+                   percentile, benchmark_score, display_name, created_at
+            FROM charvak_readiness_certificates
+            WHERE certificate_hash = %s
+        """, (certificate_hash,))
+        row = cur.fetchone()
+        cur.close(); conn.close()
+    except Exception as e:
+        logger.error(f"readiness verify failed: {e}")
+        return JSONResponse(status_code=500, content={"status": "error", "message": "Verify failed"})
+
+    if not row:
+        return {"status": "success", "valid": False}
+
+    # Non-PII display: first name + last initial only
+    display = row[7] or ""
+    parts = display.split()
+    if len(parts) >= 2:
+        display = f"{parts[0]} {parts[-1][0]}."
+    elif parts:
+        display = parts[0]
+
+    return {
+        "status": "success",
+        "valid": True,
+        "certificate_id": row[0],
+        "role": row[1],
+        "industry": row[2],
+        "level": row[3],
+        "readiness_score": row[4],
+        "percentile": row[5],
+        "benchmark": row[6],
+        "candidate_display": display,
+        "issued_at": row[8].isoformat() if row[8] else None,
+    }
+
+
+@app.get("/api/readiness/list/{email}")
+@limiter.limit("60/minute")
+async def api_readiness_list(request: Request, email: str):
+    """List a user's certificates."""
+    email = (email or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+
+    try:
+        require_auth_for_email(request, email)
+    except HTTPException:
+        raise
+
+    from database import db
+    try:
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT certificate_id, role, industry, level, readiness_score,
+                   percentile, benchmark_score, verdict, certificate_hash, created_at
+            FROM charvak_readiness_certificates
+            WHERE email = %s
+            ORDER BY created_at DESC LIMIT 100
+        """, (email,))
+        rows = cur.fetchall()
+        cur.close(); conn.close()
+    except Exception as e:
+        logger.error(f"readiness list failed: {e}")
+        return JSONResponse(status_code=500, content={"status": "error", "message": "List failed"})
+
+    certs = [{
+        "certificate_id": r[0],
+        "certificate_url": f"/readiness/{r[0]}",
+        "role": r[1],
+        "industry": r[2],
+        "level": r[3],
+        "readiness_score": r[4],
+        "percentile": r[5],
+        "benchmark": r[6],
+        "verdict": r[7],
+        "certificate_hash": r[8],
+        "created_at": r[9].isoformat() if r[9] else None,
+    } for r in rows]
+    return {"status": "success", "certificates": certs, "count": len(certs)}
+
+
+@app.get("/api/readiness/{certificate_id}")
+@limiter.limit("60/minute")
+async def api_readiness_get(request: Request, certificate_id: str):
+    """Public read of a certificate. Safe for public share pages."""
+    certificate_id = (certificate_id or "").strip()
+    if not certificate_id:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "certificate_id required"})
+
+    from database import db
+    try:
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT certificate_id, role, industry, level, readiness_score,
+                   percentile, benchmark_score, verdict, payload_json,
+                   certificate_hash, display_name, created_at, source
+            FROM charvak_readiness_certificates
+            WHERE certificate_id = %s
+        """, (certificate_id,))
+        row = cur.fetchone()
+        cur.close(); conn.close()
+    except Exception as e:
+        logger.error(f"readiness get failed: {e}")
+        return JSONResponse(status_code=500, content={"status": "error", "message": "Fetch failed"})
+
+    if not row:
+        return JSONResponse(status_code=404, content={"status": "error", "message": "Certificate not found"})
+
+    # Non-PII display
+    display = row[10] or ""
+    parts = display.split()
+    if len(parts) >= 2:
+        display = f"{parts[0]} {parts[-1][0]}."
+    elif parts:
+        display = parts[0]
+
+    return {
+        "status": "success",
+        "certificate": {
+            "certificate_id": row[0],
+            "role": row[1],
+            "industry": row[2],
+            "level": row[3],
+            "readiness_score": row[4],
+            "percentile": row[5],
+            "benchmark": row[6],
+            "verdict": row[7],
+            "payload": row[8],
+            "certificate_hash": row[9],
+            "candidate_display": display,
+            "created_at": row[11].isoformat() if row[11] else None,
+            "source": row[12] or "written",
+        }
+    }
+
+
+@app.get("/readiness/{certificate_id}", response_class=HTMLResponse)
+async def readiness_page(request: Request, certificate_id: str):
+    """Public shareable certificate page. Renders readiness.html."""
+    return template_response("readiness.html", request, "Role Readiness Certificate")
+
 @app.get("/ai-assessment", response_class=HTMLResponse)
 async def ai_assessment(request: Request):
     return template_response("ai-assessment.html", request, "AI Career Assessment - Charvak IT Consulting")
