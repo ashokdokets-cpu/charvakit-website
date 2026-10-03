@@ -3198,3 +3198,25 @@ to expose the enrollment's owner email, OR a new helper
 **Est:** ~30 min (engine change + route change + E2E)
 
 **Verdict:** SCHEDULED — Session 15 or 16
+
+---
+
+### RESOLVED — Rotated PayPal client secret (2026-10-03)
+
+Session 15 follow-up. The PayPal client secret was displayed in a chat
+during Session 12 and flagged for rotation. Rotated the LIVE secret in
+the PayPal Developer Dashboard.
+
+- Generated new secret via PayPal Dashboard -> Apps & Credentials
+  -> Live API Credentials -> Generate New Secret
+- Updated PAYPAL_CLIENT_SECRET in Render env vars (prod)
+- Updated PAYPAL_CLIENT_SECRET in local .env
+- Verified prod /api/payment/status still returns paypal: true
+- Verified sandbox auth still returns 200 with the new secret
+- Old secret deleted from the PayPal dashboard after verification
+
+Not related to this: SYNC_API_KEY / SYNC_API_SECRET were flagged
+separately as hardcoded defaults in the public repo. Those still need
+rotation — see "Rotate PayPal + SYNC keys" in the Session 16 queue.
+
+Verdict: RESOLVED
