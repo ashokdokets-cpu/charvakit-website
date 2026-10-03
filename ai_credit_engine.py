@@ -75,6 +75,7 @@ class AICreditEngine:
         "skill_assessment": 10,
         "ai_premium_report": 20,
         "premium_report": 25,
+        "premium_product_report": 400,  # Session 16: PDF Premium Report product
         "voice_to_web": 30,
         "neural_wireframe": 25,
         "assignment_assistant": 10,

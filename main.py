@@ -6463,6 +6463,70 @@ async def generate_report(request: Request):
         return JSONResponse(guard, status_code=guard.get("_http_status", 402))
     return assessment_report_engine.generate_report(data)
 
+# ============================================================
+# PREMIUM REPORT PRODUCT (Session 16)
+# Product-facing PDF reports generated from free-tier scan data.
+# Separate from the assessment_report_engine above (which produces
+# candidate assessment reports at 25 credits).
+# ============================================================
+
+@app.post("/api/premium-report/generate")
+@limiter.limit("10/minute")
+async def api_premium_report_generate(request: Request):
+    """Generate a Premium Report PDF from a product's free-tier scan data.
+    Costs 400 credits (premium_product_report key)."""
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "Invalid JSON"})
+
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+    require_auth_for_email(request, email)
+
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "premium_product_report")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+
+    report_type = (data.get("report_type") or "").strip().lower()
+    source_data = data.get("source_data") or {}
+
+    from premium_report_engine import premium_report_engine
+    result = premium_report_engine.generate_report({
+        "email": email,
+        "report_type": report_type,
+        "source_data": source_data,
+        "source_id": data.get("source_id"),
+    })
+    return result
+
+
+@app.get("/api/premium-report/list/{email}")
+@limiter.limit("60/minute")
+async def api_premium_report_list(request: Request, email: str):
+    """List a user's past Premium Reports."""
+    email = (email or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+    require_auth_for_email(request, email)
+    from premium_report_engine import premium_report_engine
+    return premium_report_engine.list_reports(email)
+
+
+@app.get("/api/premium-report/{report_id}")
+@limiter.limit("60/minute")
+async def api_premium_report_get(request: Request, report_id: str, email: str = ""):
+    """Fetch a single Premium Report record."""
+    email = (email or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+    require_auth_for_email(request, email)
+    from premium_report_engine import premium_report_engine
+    return premium_report_engine.get_report(report_id, email)
+
+
 @app.get("/api/report/stats")
 async def report_stats():
     return assessment_report_engine.get_stats()
