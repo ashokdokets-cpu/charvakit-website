@@ -1,5 +1,24 @@
 # Charvak — Commitment Tracker
 
+
+### RESOLVED — Premium Report product (Rs 199 PDF unlock) (2026-10-04, 980bbdc)
+
+Shipped end-to-end across Session 16, commits `aa8a279` through `980bbdc`.
+
+- `pdf_engine.py` — fpdf2-based PDF renderer with branded cover page + DejaVu fonts
+- `premium_report_engine.py` — one OpenAI call produces 5 AI sections from the source product's free-tier data
+- `charvak_premium_reports` table + migration `20261004_premium_reports.sql`
+- Credit key `premium_product_report` (400 cr)
+- 3 routes: POST /api/premium-report/generate, GET /api/premium-report/list/{email}, GET /api/premium-report/{report_id}/download
+- SendGrid email with PDF attachment
+- Frontend unlock flow on 3 products: AuditBot, Lock-In Breaker, Skill-Twin
+- `/my-reports` dashboard
+
+Verified E2E: real AI content, 400-credit deduction, PDF download works from browser and email link.
+
+**Verdict:** RESOLVED
+
+
 **Purpose:** Track every planned-but-not-completed item. Nothing gets lost again.
 **Created:** 2026-09-20
 **Last updated:** 2026-09-30 (Session 4 - C7 AuditBot + Lock-In Breaker paid tiers shipped; #3 deferred). HEAD: `5036eff`

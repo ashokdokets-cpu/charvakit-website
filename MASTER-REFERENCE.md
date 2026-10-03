@@ -1,12 +1,12 @@
 # CHARVAKIT.COM - MASTER REFERENCE
 ## Charvak IT Consulting Pvt Ltd
-### Last updated: October 3, 2026 (Session 13 - Career Assessment Phase 3 + PayPal sandbox test)
+### Last updated: October 4, 2026 (Session 16 - Premium Report product shipped)
 
-**HEAD:** `5acefdb`
+**HEAD:** `980bbdc`
 **Live:** https://www.charvakit.com
 **Resume here:** see `SESSION-CONTEXT.md` (one-file state snapshot for fresh chat windows)
 **Backlog:** see `OUTSTANDING-WORK-INVENTORY.md` (master list of remaining work)
-**Version:** v3.5-session-13-20261003
+**Version:** v3.5-session-16-20261004
 
 ### Reference Documents
 
