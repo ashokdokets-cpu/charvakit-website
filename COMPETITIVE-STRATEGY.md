@@ -382,5 +382,80 @@ analysis. Every future session should extend that pattern.
 
 ---
 
-Keep this doc updated after every session. It is the north star.
+## The Proof Layer - Sprints A through D (added 2026-10-04)
 
+The strategic analysis identified four gaps (Role Readiness, Anti-Cheating,
+Voice AI, Continuous Compliance). Execution framework: four sprints that
+connect what already exists in the codebase rather than build new subsystems.
+
+### Gap 6 - The "Where Are They Now" Data Story (NEW)
+
+**What's missing:** No public proof that the assessment predicts on-job
+success. Employers trust scores only when they see correlation with hires
+who worked out.
+
+**How to close:** Sprint C. Public `/outcomes` page with anonymized
+interview/offer rates by readiness score band. Sample-size floor of 50
+applications before publishing.
+
+**Why it matters:** Credibility flywheel. Every blog post, LinkedIn share,
+and investor conversation can start with the correlation number.
+
+### Gap 7 - Vernacular Voice Assessment (Priority: Sprint D)
+
+**What's missing:** Written MCQ is a barrier for students whose primary
+medium is Telugu / Tamil / Kannada / Malayalam. Competitors are Hindi-
+English bilingual at best.
+
+**How to close:** Sprint D. Voice-based version of the same Role Readiness
+Certificate, delivered by phone call, in 5 languages first.
+
+**Strategic note:** Voice ships AFTER the written certificate (Sprint A)
+because voice produces the SAME certificate URL. Doing voice first gives
+voice certificates that nobody shares and no jobs to apply to.
+
+---
+
+## Sprint Framework - Proof Layer
+
+| Sprint | Deliverable | Effort | Depends on |
+|---|---|---|---|
+| **A** | Free Role Readiness Certificate + shareable URL at `/readiness/{id}` | 2-3 sessions | Nothing |
+| **B** | `/my-jobs` - verified job matching; applications carry certificate_id | 2 sessions | Sprint A live |
+| **C** | `/outcomes` - public anonymized data story | 1-2 sessions | Sprint B has >=50 apps |
+| **D** | Voice readiness check in 5 Indian languages | 3-5 sessions | Sprint A live |
+
+### Why this order
+
+1. Sprint A produces a shareable URL - the traffic driver
+2. Sprint B makes the certificate USEFUL (unlocks jobs)
+3. Sprint C makes the certificate TRUSTED (employer proof)
+4. Sprint D extends REACH to non-English-medium students
+
+Each sprint produces an acquisition artifact that the next one builds on.
+
+---
+
+### What already exists to build on
+
+The four sprints do not require new subsystems. They connect:
+
+- `career_assessment_engine.py` (900 lines, 8 formats, 106 roles)
+- `ability_engine.py` (Elo math, per-skill baselines)
+- `charvak_career_assessments` + `charvak_career_assessment_answers` (live)
+- `charvak_jobs`, `charvak_applications`, `charvak_career_saved_jobs` (live)
+- `charvak_candidates` (with existing `skill_score` field)
+- `charvak_badges` + `/badge` route (public artifact precedent)
+- `Premium Report` product (Session 16) - PDF/email/share pattern
+- 34 languages in `global_config.LANGUAGES` (written)
+- ElevenLabs + Whisper (already in stack)
+- `charvak_career_interviews`, `charvak_career_offers` (outcome tracking)
+
+The gap is not capability. It is connection. Every sprint wires existing
+tables and routes into one candidate-facing loop.
+
+---
+
+
+
+Keep this doc updated after every session. It is the north star.
