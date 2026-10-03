@@ -157,3 +157,10 @@ data/*.tmp
 # Dev patcher scripts (transient - created by patching sessions)
 _*.py
 *.html.bak
+
+# Session 16: PDF generation test artifacts
+_test_*.pdf
+_test*.pdf
+static/fonts/*.eot
+static/fonts/*.woff
+static/fonts/*.woff2
