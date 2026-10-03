@@ -124,4 +124,31 @@ class EnhancedEmailSystem:
         })
         return result
 
+
+    def send_premium_report_email(self, email, report_title, report_id,
+                                  pdf_bytes=None, download_url=None):
+        """Send the Premium Report notification + PDF attachment (Session 16)."""
+        subject = "Your " + str(report_title) + " is ready"
+        body_html = (
+            "<h2>Your Premium Report is ready</h2>"
+            "<p>Hi,</p>"
+            "<p>Your <strong>" + str(report_title) + "</strong> has been generated.</p>"
+            "<p>Report ID: <code>" + str(report_id) + "</code></p>"
+            "<p>The PDF is attached to this email. You can also download it anytime from your dashboard.</p>"
+            "<p>The Charvak team</p>"
+        )
+
+        result = self.email_engine.send_email(
+            email, subject, body_html, is_html=True,
+            attachment_bytes=pdf_bytes,
+            attachment_filename="Charvak-Premium-Report-" + str(report_id) + ".pdf",
+        )
+        self.sent_emails.append({
+            "type": "premium_report",
+            "email": email,
+            "report_id": report_id,
+            "time": datetime.now().isoformat(),
+        })
+        return result
+
 enhanced_email = EnhancedEmailSystem()

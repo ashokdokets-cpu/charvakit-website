@@ -28,7 +28,7 @@ class EmailEngine:
         else:
             logger.warning("Email Engine: DISABLED (set SENDGRID_API_KEY)")
 
-    def send_email(self, to_email: str, subject: str, body: str, is_html: bool = True) -> Dict:
+    def send_email(self, to_email: str, subject: str, body: str, is_html: bool = True, attachment_bytes=None, attachment_filename=None) -> Dict:
         """Send email via SendGrid with reply-to set to GoDaddy email."""
         if not self.enabled:
             logger.warning(f"Email disabled - would send to {to_email}: {subject}")
@@ -60,6 +60,18 @@ class EmailEngine:
                     }
                 ]
             }
+
+            # Session 16: optional PDF attachment
+            if attachment_bytes and attachment_filename:
+                import base64
+                payload["attachments"] = [
+                    {
+                        "content": base64.b64encode(attachment_bytes).decode("ascii"),
+                        "filename": attachment_filename,
+                        "type": "application/pdf",
+                        "disposition": "attachment",
+                    }
+                ]
 
             response = requests.post(
                 "https://api.sendgrid.com/v3/mail/send",
