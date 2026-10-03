@@ -3220,3 +3220,32 @@ separately as hardcoded defaults in the public repo. Those still need
 rotation — see "Rotate PayPal + SYNC keys" in the Session 16 queue.
 
 Verdict: RESOLVED
+
+---
+
+### RESOLVED — Rotated SYNC_API_KEY + SYNC_API_SECRET, stripped fallbacks (2026-10-04, 30f9bf3)
+
+Session 12 backlog item. The SYNC_API_KEY and SYNC_API_SECRET had
+hardcoded fallback defaults in api_sync.py, visible in the public repo:
+
+  API_SECRET = os.getenv("SYNC_API_SECRET", "charvak-doketsrb-sync-secret-2024")
+  API_KEY    = os.getenv("SYNC_API_KEY",    "cvk_sync_key_2024")
+
+If Render env vars were missing, the app would silently accept these
+public defaults.
+
+What was done:
+- Rotated both values on Charvak (Render env vars)
+- Updated local .env with the new values
+- Updated DoketsRB (Vercel) env vars with the same values
+- Patched api_sync.py: removed fallbacks, added startup warning guard
+- Verified: prod /api/sync/health + /api/sync/jobs return 200 with
+  the new key
+- Module test: API_SECRET and API_KEY are empty strings when env vars
+  are cleared (no fallback)
+
+Monitoring:
+- Charvak Render logs show no 401s on /api/sync/*
+- Will confirm DoketsRB alignment on the next sync trigger from Vercel
+
+Verdict: RESOLVED
