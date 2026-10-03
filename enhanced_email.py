@@ -89,4 +89,39 @@ class EnhancedEmailSystem:
         """Get sent email history."""
         return {"status": "success", "total": len(self.sent_emails), "emails": self.sent_emails}
 
+
+    def send_silent_killer_alert(self, email, watch_name, url, new_status,
+                                 status_code=None, error=None, previous_status=None):
+        """Send a Silent-Killer state-change alert (Session 15)."""
+        name = watch_name or url or 'your monitor'
+        if new_status == "fail":
+            subject = f"[DOWN] {name} is failing"
+            body = (
+                f"<h2>Monitor failure detected</h2>"
+                f"<p><strong>URL:</strong> {url}</p>"
+                f"<p><strong>Status code:</strong> {status_code or 'n/a'}</p>"
+                f"<p><strong>Error:</strong> {error or 'unknown'}</p>"
+                f"<p><strong>Previous:</strong> {previous_status or 'unknown'} &rarr; {new_status}</p>"
+                f"<p>View the dashboard: <a href=\"https://www.charvakit.com/silent-killer\">https://www.charvakit.com/silent-killer</a></p>"
+            )
+        else:
+            subject = f"[RECOVERED] {name} is healthy again"
+            body = (
+                f"<h2>Monitor recovered</h2>"
+                f"<p><strong>URL:</strong> {url}</p>"
+                f"<p><strong>Status code:</strong> {status_code or 'n/a'}</p>"
+                f"<p><strong>Previous:</strong> {previous_status or 'unknown'} &rarr; {new_status}</p>"
+                f"<p>View the dashboard: <a href=\"https://www.charvakit.com/silent-killer\">https://www.charvakit.com/silent-killer</a></p>"
+            )
+
+        result = self.email_engine.send_email(email, subject, body, is_html=True)
+        self.sent_emails.append({
+            "type": "silent_killer_alert",
+            "email": email,
+            "url": url,
+            "new_status": new_status,
+            "time": datetime.now().isoformat(),
+        })
+        return result
+
 enhanced_email = EnhancedEmailSystem()

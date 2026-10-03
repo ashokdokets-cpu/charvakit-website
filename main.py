@@ -823,6 +823,70 @@ async def cron_send_queued_emails(request: Request):
         logger.error(f"cron send queued failed: {e}")
         return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
 
+@app.post("/api/cron/silent-killer-scan")
+async def cron_silent_killer_scan(request: Request):
+    """Cron: scan all due Silent-Killer watches. Sends state-change alerts
+    on ok<->fail flips. Requires X-Cron-Secret header.
+    Session 15 (Silent-Killer 9b)."""
+    import os as _os
+    expected = _os.getenv("CRON_SECRET", "")
+    provided = request.headers.get("X-Cron-Secret", "")
+    if not expected or provided != expected:
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+
+    try:
+        from products_engine import products_engine
+        from enhanced_email import enhanced_email
+
+        due = products_engine.silent_killer_due_watches(limit=200)
+        checked = 0
+        alerted = 0
+        alerts = []
+
+        for w in due:
+            watch_id = w["watch_id"]
+            previous_status = w.get("last_status")  # 'ok' | 'fail' | None
+            result = products_engine.silent_killer_run_watch(watch_id)
+            if result.get("status") != "success":
+                continue
+            checked += 1
+
+            new_ok = result.get("ok")
+            new_status = "ok" if new_ok else "fail"
+
+            # Alert only on state change (Session 15 design)
+            if previous_status and previous_status != new_status:
+                try:
+                    enhanced_email.send_silent_killer_alert(
+                        email=w["email"],
+                        watch_name=w.get("name"),
+                        url=w["url"],
+                        new_status=new_status,
+                        status_code=result.get("status_code"),
+                        error=result.get("error"),
+                        previous_status=previous_status,
+                    )
+                    alerted += 1
+                    alerts.append({
+                        "watch_id": watch_id,
+                        "email": w["email"],
+                        "flip": previous_status + " -> " + new_status,
+                    })
+                except Exception as mail_err:
+                    logger.warning(f"silent-killer alert failed for {watch_id}: {mail_err}")
+
+        return {
+            "status": "success",
+            "checked": checked,
+            "alerted": alerted,
+            "alerts": alerts,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"cron silent-killer failed: {e}")
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
 @app.get("/register", response_class=HTMLResponse)
 async def register_page(request: Request):
     return template_response("register.html", request, "Register - Charvak IT Consulting")

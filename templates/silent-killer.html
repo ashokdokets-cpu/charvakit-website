@@ -69,9 +69,11 @@
         <h3>Find Your Broken Funnels Now</h3>
         <p class="mb-4">Free scan checks all your critical touchpoints in 60 seconds.</p>
         <a href="/dead-link-auditor" class="btn btn-primary btn-lg me-2">Dead Link &amp; Broken Funnel Auditor</a>
-        <button type="button" class="btn btn-outline-primary btn-lg" onclick="silentKillerProtect(event)">
-            Notify Me When Continuous Monitoring Ships
-        </button>
+        <div class="alert alert-success d-inline-block mb-0 text-start" style="max-width:560px;">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <strong>Automated monitoring is live.</strong> Monitors are checked on their own intervals.
+            State changes (ok &rarr; fail or fail &rarr; ok) trigger email alerts.
+        </div>
         <p class="small text-muted mt-3 mb-0">
             Continuous scheduled monitoring is under development. Get notified the moment it&apos;s live.
         </p>
@@ -79,6 +81,23 @@
 </div>
 
 <script>
+
+// ---------- Session 15: Silent-Killer dashboard ----------
+function _skEsc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+}
+
+function _authToken() {
+    return localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+}
+
+function _userEmail() {
+    return localStorage.getItem('userEmail') || '';
+}
+
+// ---------- Setup form ----------
 async function runSilentKiller(event) {
     event.preventDefault();
     const url = document.getElementById('skUrl').value.trim();
@@ -94,8 +113,8 @@ async function runSilentKiller(event) {
         return;
     }
 
-    const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
-    const email = localStorage.getItem('userEmail') || '';
+    const authToken = _authToken();
+    const email = _userEmail();
     if (!authToken || !email) {
         alert('Please log in to set up monitoring.');
         window.location.href = '/login?next=/silent-killer';
@@ -106,7 +125,7 @@ async function runSilentKiller(event) {
     const out = document.getElementById('skOutput');
     btn.disabled = true;
     btn.textContent = 'Setting up... this takes 15-30 seconds';
-    out.innerHTML = '<div class="text-white-50 text-center py-3"><div class="spinner-border spinner-border-sm text-light"></div><p class="mt-2 mb-0">Setting up monitor for ' + name + '...</p></div>';
+    out.innerHTML = '<div class="text-white-50 text-center py-3"><div class="spinner-border spinner-border-sm text-light"></div><p class="mt-2 mb-0">Setting up monitor for ' + _skEsc(name) + '...</p></div>';
 
     try {
         const res = await fetch('/api/products/silent-killer/monitor', {
@@ -130,69 +149,47 @@ async function runSilentKiller(event) {
 
         const data = await res.json();
         renderSilentKillerResult(out, data);
+        loadWatches();
     } catch (e) {
-        out.innerHTML = '<div class="alert alert-danger">Error: ' + e.message + '</div>';
+        out.innerHTML = '<div class="alert alert-danger">Error: ' + _skEsc(e.message) + '</div>';
     } finally {
         btn.disabled = false;
-        btn.textContent = 'Set Up Monitor — 15 credits';
+        btn.textContent = 'Set Up Monitor \u2014 15 credits';
     }
 }
 
 function renderSilentKillerResult(out, data) {
     if (data.status !== 'success') {
-        out.innerHTML = '<div class="alert alert-danger">' + (data.message || 'Setup failed') + '</div>';
+        out.innerHTML = '<div class="alert alert-danger">' + _skEsc(data.message || 'Setup failed') + '</div>';
         return;
     }
     let html = '<div class="card bg-light text-dark mb-2"><div class="card-body">';
     html += '<div class="d-flex justify-content-between align-items-start mb-2">';
-    html += '<div><strong>Monitor ' + (data.monitor_id || '') + '</strong><br><small class="text-muted">' + (data.analysis_mode || 'heuristic_only') + '</small></div>';
-    html += '<span class="badge bg-success">' + (data.monitor_status || 'active') + '</span>';
+    html += '<div><strong>Monitor ' + _skEsc(data.monitor_id || data.watch_id || '') + '</strong><br><small class="text-muted">' + _skEsc(data.analysis_mode || 'live') + '</small></div>';
+    html += '<span class="badge bg-success">' + _skEsc(data.monitor_status || 'active') + '</span>';
     html += '</div>';
     html += '<hr class="my-2">';
-    html += '<p class="mb-1"><strong>Name:</strong> ' + (data.name || '') + '</p>';
-    html += '<p class="mb-1"><strong>URL:</strong> ' + (data.url || '') + '</p>';
-    html += '<p class="mb-1"><strong>Interval:</strong> every ' + (data.interval_minutes || 0) + ' minutes (' + (data.checks_per_day || 0) + ' checks/day)</p>';
-    html += '<p class="mb-0"><strong>Alert channels:</strong> ' + ((data.alert_channels || []).join(', ')) + '</p>';
-    if (data.auto_fix_enabled) {
-        html += '<p class="mb-0"><span class="badge bg-info">Auto-fix enabled</span></p>';
-    }
+    html += '<p class="mb-1"><strong>Name:</strong> ' + _skEsc(data.name || '') + '</p>';
+    html += '<p class="mb-1"><strong>URL:</strong> ' + _skEsc(data.url || '') + '</p>';
+    html += '<p class="mb-1"><strong>Interval:</strong> every ' + _skEsc(data.interval_minutes || 0) + ' minutes (' + _skEsc(data.checks_per_day || 0) + ' checks/day)</p>';
+    html += '<p class="mb-0"><strong>Alert channels:</strong> ' + _skEsc((data.alert_channels || []).join(', ')) + '</p>';
     html += '</div></div>';
 
     if (data.verdict) {
-        html += '<div class="alert alert-info py-2 mt-3 mb-0">' + data.verdict + '</div>';
+        html += '<div class="alert alert-info py-2 mt-3 mb-0">' + _skEsc(data.verdict) + '</div>';
     }
     out.innerHTML = html;
 }
-// Continuous scheduled monitoring is not yet shipped. The backend engine
-// exists (products_engine.silent_killer_monitor) but no cron runs the
-// checks or sends alerts. Capture interest honestly instead.
-//
-// Session 8: build the real scheduler (Render cron -> iterate active
-// monitors -> check URLs -> alert on failure).
-function silentKillerProtect(event) {
-    event.preventDefault();
-    if (typeof window.notifyMe === 'function') {
-        window.notifyMe('Silent-Killer Continuous Monitoring');
-    } else {
-        alert('Thanks! We will notify you when continuous monitoring ships.');
-    }
-}
 
-
-// ---------- Session 9a: watch dashboard ----------
-function _skEsc(s) {
-    return String(s == null ? '' : s).replace(/[&<>'"]/g, function(c) {
-        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',''':'&#39;'}[c];
-    });
-}
-
+// ---------- Your Monitors dashboard ----------
 async function loadWatches() {
-    const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
-    const email = localStorage.getItem('userEmail') || '';
+    const authToken = _authToken();
+    const email = _userEmail();
     const panel = document.getElementById('skWatchesPanel');
     const list = document.getElementById('skWatchesList');
     if (!panel || !list) return;
     if (!authToken || !email) { panel.style.display = 'none'; return; }
+
     try {
         const r = await fetch('/api/products/silent-killer/watches/' + encodeURIComponent(email), {
             headers: { 'Authorization': 'Bearer ' + authToken }
@@ -209,34 +206,34 @@ async function loadWatches() {
             const ok = w.last_status === 'ok';
             const badgeClass = ok ? 'bg-success' : 'bg-danger';
             const badgeText = ok ? 'OK' : 'FAIL';
-            const code = w.last_status_code != null ? w.last_status_code : '—';
+            const code = w.last_status_code != null ? w.last_status_code : '\u2014';
             const lastScan = w.last_scan_at ? new Date(w.last_scan_at).toLocaleString() : 'never';
-            html += '<div class='"card mb-3"'><div class='"card-body"'>';
-            html += '<div class='"d-flex justify-content-between align-items-start flex-wrap gap-2"'>';
-            html += '<div><strong>' + _skEsc(w.name || 'Monitor') + '</strong> <span class='"badge "' + badgeClass + ' ms-2'>' + badgeText + '</span><br>';
-            html += '<small class='"text-muted"'>' + _skEsc(w.url) + '</small><br>';
-            html += '<small class='"text-muted"'>Last check: ' + _skEsc(lastScan) + ' &middot; HTTP ' + _skEsc(code) + ' &middot; every ' + _skEsc(w.interval_minutes) + ' min</small>';
+            html += '<div class="card mb-3"><div class="card-body">';
+            html += '<div class="d-flex justify-content-between align-items-start flex-wrap gap-2">';
+            html += '<div><strong>' + _skEsc(w.name || 'Monitor') + '</strong> <span class="badge ' + badgeClass + ' ms-2">' + badgeText + '</span><br>';
+            html += '<small class="text-muted">' + _skEsc(w.url) + '</small><br>';
+            html += '<small class="text-muted">Last check: ' + _skEsc(lastScan) + ' &middot; HTTP ' + _skEsc(code) + ' &middot; every ' + _skEsc(w.interval_minutes) + ' min</small>';
             if (w.last_error) {
-                html += '<div class='"alert alert-danger py-1 px-2 mt-2 mb-0 small"'>' + _skEsc(w.last_error) + '</div>';
+                html += '<div class="alert alert-danger py-1 px-2 mt-2 mb-0 small">' + _skEsc(w.last_error) + '</div>';
             }
             html += '</div>';
-            html += '<div class='"d-flex gap-2"'>';
-            html += '<button class='"btn btn-sm btn-outline-primary"' onclick='"recheckWatch('' + w.watch_id + '')"'>Recheck (5 cr)</button>';
-            html += '<button class='"btn btn-sm btn-outline-secondary"' onclick='"toggleHistory('' + w.watch_id + '')"'>History</button>';
-            html += '<button class='"btn btn-sm btn-outline-danger"' onclick='"deleteWatch('' + w.watch_id + '')"'>Delete</button>';
+            html += '<div class="d-flex gap-2">';
+            html += '<button class="btn btn-sm btn-outline-primary" onclick="recheckWatch(\'' + w.watch_id + '\')">Recheck (5 cr)</button>';
+            html += '<button class="btn btn-sm btn-outline-secondary" onclick="toggleHistory(\'' + w.watch_id + '\')">Last 10 Checks</button>';
+            html += '<button class="btn btn-sm btn-outline-danger" onclick="deleteWatch(\'' + w.watch_id + '\')">Delete</button>';
             html += '</div></div>';
-            html += '<div id='"skHist-"' + w.watch_id + '""' class='"mt-3"' style='"display:none;"'></div>';
+            html += '<div id="skHist-' + w.watch_id + '" class="mt-3" style="display:none;"></div>';
             html += '</div></div>';
         }
         list.innerHTML = html;
     } catch (e) {
-        // non-fatal - dashboard just does not render
+        console.warn('loadWatches failed:', e);
     }
 }
 
 async function recheckWatch(watch_id) {
-    const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
-    const email = localStorage.getItem('userEmail') || '';
+    const authToken = _authToken();
+    const email = _userEmail();
     if (!authToken || !email) { alert('Please log in.'); return; }
     try {
         const r = await fetch('/api/products/silent-killer/recheck', {
@@ -259,33 +256,33 @@ async function toggleHistory(watch_id) {
     const el = document.getElementById('skHist-' + watch_id);
     if (!el) return;
     if (el.style.display === 'block') { el.style.display = 'none'; return; }
-    const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
-    const email = localStorage.getItem('userEmail') || '';
+    const authToken = _authToken();
+    const email = _userEmail();
     try {
         const r = await fetch('/api/products/silent-killer/history/' + encodeURIComponent(watch_id) + '?email=' + encodeURIComponent(email) + '&limit=10', {
             headers: { 'Authorization': 'Bearer ' + authToken }
         });
         const j = await r.json();
-        if (j.status !== 'success') { el.innerHTML = '<div class='"text-muted small"'>Could not load history</div>'; el.style.display = 'block'; return; }
-        let rows = '<table class='"table table-sm small"'><thead><tr><th>Time</th><th>Status</th><th>Latency</th><th>Error</th></tr></thead><tbody>';
+        if (j.status !== 'success') { el.innerHTML = '<div class="text-muted small">Could not load history</div>'; el.style.display = 'block'; return; }
+        let rows = '<table class="table table-sm small"><thead><tr><th>Time</th><th>Status</th><th>Latency</th><th>Error</th></tr></thead><tbody>';
         for (const s of j.scans) {
-            const okBadge = s.ok ? '<span class='"badge bg-success"'>OK</span>' : '<span class='"badge bg-danger"'>FAIL</span>';
+            const okBadge = s.ok ? '<span class="badge bg-success">OK</span>' : '<span class="badge bg-danger">FAIL</span>';
             const t = s.checked_at ? new Date(s.checked_at).toLocaleString() : '';
-            rows += '<tr><td>' + _skEsc(t) + '</td><td>' + okBadge + ' ' + _skEsc(s.status_code != null ? s.status_code : '—') + '</td><td>' + _skEsc(s.response_ms) + ' ms</td><td>' + _skEsc(s.error || '""') + '</td></tr>';
+            rows += '<tr><td>' + _skEsc(t) + '</td><td>' + okBadge + ' ' + _skEsc(s.status_code != null ? s.status_code : '\u2014') + '</td><td>' + _skEsc(s.response_ms) + ' ms</td><td>' + _skEsc(s.error || '') + '</td></tr>';
         }
         rows += '</tbody></table>';
         el.innerHTML = rows;
         el.style.display = 'block';
     } catch (e) {
-        el.innerHTML = '<div class='"text-muted small"'>Network error</div>';
+        el.innerHTML = '<div class="text-muted small">Network error</div>';
         el.style.display = 'block';
     }
 }
 
 async function deleteWatch(watch_id) {
     if (!confirm('Delete this monitor and all its scan history?')) return;
-    const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
-    const email = localStorage.getItem('userEmail') || '';
+    const authToken = _authToken();
+    const email = _userEmail();
     if (!authToken || !email) { alert('Please log in.'); return; }
     try {
         const r = await fetch('/api/products/silent-killer/watch/' + encodeURIComponent(watch_id) + '?email=' + encodeURIComponent(email), {
@@ -300,7 +297,7 @@ async function deleteWatch(watch_id) {
     }
 }
 
-// Auto-load watches on page load if logged in
+// Auto-load watches on page load
 document.addEventListener('DOMContentLoaded', function() {
     loadWatches();
 });
