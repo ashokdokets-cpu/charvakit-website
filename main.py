@@ -5541,13 +5541,15 @@ async def api_ats_sync_log(limit: int = 50):
 
 @app.get("/api/ats/candidates")
 async def api_ats_candidates(
+    request: Request,
     skill: str = None,
     location: str = None,
     skill_score_min: int = None,
     experience_min: int = None,
     limit: int = 100,
 ):
-    """Read-only candidate list for the recruiter view."""
+    """Read-only candidate list for the recruiter view. Admin only (Session 14 security sweep)."""
+    require_admin(request)
     from candidate_engine import candidate_engine
     filters = {}
     if skill: filters["skill"] = skill
@@ -6170,7 +6172,10 @@ async def update_progress(request: Request):
     return lms_engine.update_progress(data)
 
 @app.get("/api/lms/progress/{enrollment_id}")
-async def get_progress(enrollment_id: str):
+async def get_progress(request: Request, enrollment_id: str):
+    # Session 14 security sweep: was fully open. Now any logged-in user.
+    # Follow-up: make this ownership-checked (requires lms_engine change).
+    require_auth(request)
     return lms_engine.get_progress(enrollment_id)
 
 @app.post("/api/lms/discussion/post")
@@ -9080,7 +9085,8 @@ async def track_progress(request: Request):
     )
 
 @app.get("/api/company-pattern/readiness/{email}/{company_id}")
-async def get_readiness(email: str, company_id: str):
+async def get_readiness(request: Request, email: str, company_id: str):
+    require_auth_for_email(request, email)
     return company_content_engine.get_user_readiness(email, company_id)
 
 
@@ -9636,7 +9642,8 @@ async def get_analysis_report(request: Request, email: str):
     return complete_analysis.get_user_report(email)
 
 @app.get("/api/analysis/gap/{email}/{target_role}")
-async def get_gap_report(email: str, target_role: str):
+async def get_gap_report(request: Request, email: str, target_role: str):
+    require_auth_for_email(request, email)
     return complete_analysis.get_skill_gap_report(email, target_role)
 
 
