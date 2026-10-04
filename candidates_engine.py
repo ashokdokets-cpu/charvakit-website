@@ -179,4 +179,67 @@ class CandidatesEngine:
         }
 
 
+    # ----------------------------------------------------------------
+    # Applications list
+    # ----------------------------------------------------------------
+
+    def list_my_applications(self, email: str) -> Dict:
+        """List the caller's applications with role + certificate context."""
+        email = (email or "").strip().lower()
+        if not email:
+            return {"status": "error", "message": "email required"}
+
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT a.application_id,
+                       a.client_role_id,
+                       a.status,
+                       a.certificate_id,
+                       a.readiness_score,
+                       a.submission_status,
+                       a.submitted_at,
+                       a.created_at,
+                       r.title,
+                       r.location,
+                       r.skills_required,
+                       r.job_type,
+                       r.priority,
+                       r.status
+                FROM charvak_applications a
+                LEFT JOIN charvak_client_roles r ON r.role_id = a.client_role_id
+                WHERE a.user_id = %s
+                ORDER BY a.created_at DESC
+                LIMIT 100
+            """, (email,))
+            rows = cur.fetchall()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"list_my_applications failed: {e}")
+            return {"status": "error", "message": f"Fetch failed: {e}"}
+
+        apps = []
+        for r in rows:
+            apps.append({
+                "application_id": r[0],
+                "role_id": r[1],
+                "status": r[2],
+                "certificate_id": r[3],
+                "readiness_score": r[4],
+                "submission_status": r[5],
+                "submitted_at": r[6].isoformat() if r[6] else None,
+                "applied_at": r[7].isoformat() if r[7] else None,
+                "role_title": r[8],
+                "role_location": r[9],
+                "role_skills": r[10],
+                "role_job_type": r[11],
+                "role_priority": r[12],
+                "role_status": r[13],
+            })
+
+        return {"status": "success", "applications": apps, "count": len(apps)}
+
+
 candidates_engine = CandidatesEngine()

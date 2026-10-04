@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile - Charvak{% endblock %}
+
+{% block content %}
+<section class="py-5" style="background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%); color: #fff;">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-lg-8">
+        <h1 class="display-5 fw-bold mb-2" style="color:#fff;">My Profile</h1>
+        <p class="lead mb-0" style="color:#c9e4de;">
+          Keep your profile up to date — this is what Charvak shares with clients when you apply.
+        </p>
+      </div>
+      <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+        <a href="/open-roles" class="btn btn-outline-light">Browse open roles</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="py-5">
+  <div class="container">
+
+    <div id="loading" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status"></div>
+      <p class="text-muted mt-3 mb-0">Loading your profile...</p>
+    </div>
+
+    <div id="authBlock" class="alert alert-warning d-none">
+      You need to <a href="/login?next=/profile" class="alert-link">sign in</a> to view your profile.
+    </div>
+
+    <div id="formWrap" class="d-none">
+      <div id="errorBox" class="alert alert-danger d-none"></div>
+      <div id="successBox" class="alert alert-success d-none">
+        Profile saved. <a href="/open-roles" class="alert-link">Browse open roles</a>.
+      </div>
+
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <h4 class="h6 text-uppercase text-muted mb-3">Personal information</h4>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Full name <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="pf_name">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Email</label>
+              <input type="email" class="form-control" id="pf_email" readonly>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Phone <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="pf_phone">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Current location <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="pf_location">
+            </div>
+          </div>
+
+          <h4 class="h6 text-uppercase text-muted mb-3 mt-4">Professional</h4>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Current company</label>
+              <input type="text" class="form-control" id="pf_company">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Current job title</label>
+              <input type="text" class="form-control" id="pf_title">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Years of experience <span class="text-danger">*</span></label>
+              <input type="number" class="form-control" id="pf_experience" min="0" max="60">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Notice period</label>
+              <select class="form-select" id="pf_notice">
+                <option value="">-- select --</option>
+                <option>Immediate</option>
+                <option>15 days</option>
+                <option>30 days</option>
+                <option>60 days</option>
+                <option>90 days</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label small fw-semibold">Skills (comma separated)</label>
+              <input type="text" class="form-control" id="pf_skills" placeholder="e.g. Cisco, BGP, OSPF, SD-WAN">
+            </div>
+          </div>
+
+          <h4 class="h6 text-uppercase text-muted mb-3 mt-4">Education</h4>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Qualification</label>
+              <input type="text" class="form-control" id="pf_education">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Degree / major</label>
+              <input type="text" class="form-control" id="pf_degree">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">University</label>
+              <input type="text" class="form-control" id="pf_university">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Graduation year</label>
+              <input type="number" class="form-control" id="pf_grad_year" min="1950" max="2100">
+            </div>
+          </div>
+
+          <div class="mt-4 d-flex gap-2">
+            <button type="button" class="btn btn-success" id="saveBtn">Save profile</button>
+            <a href="/my-applications" class="btn btn-outline-secondary">My applications</a>
+            <a href="/open-roles" class="btn btn-outline-secondary">Browse open roles</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<script>
+(function () {
+  function token() {
+    return localStorage.getItem("auth_token") || localStorage.getItem("charvak_token") || "";
+  }
+  function myEmail() {
+    return (localStorage.getItem("userEmail") || "").toLowerCase();
+  }
+
+  function setVal(id, v) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.value = (v == null ? "" : v);
+  }
+  function getVal(id) {
+    var el = document.getElementById(id);
+    return el ? (el.value || "").trim() : "";
+  }
+
+  function prefill(c) {
+    if (!c) return;
+    setVal("pf_name", c.name);
+    setVal("pf_email", c.email);
+    setVal("pf_phone", c.phone);
+    setVal("pf_location", c.location);
+    setVal("pf_company", c.current_company);
+    setVal("pf_title", c.job_title);
+    setVal("pf_experience", c.experience_years);
+    setVal("pf_notice", c.notice_period);
+    // skills comes back as an array from the API
+    var sk = c.skills;
+    if (Array.isArray(sk)) setVal("pf_skills", sk.join(", "));
+    else setVal("pf_skills", sk || "");
+    setVal("pf_education", c.education);
+    setVal("pf_degree", c.degree);
+    setVal("pf_university", c.university);
+    setVal("pf_grad_year", c.graduation_year);
+  }
+
+  function load() {
+    var email = myEmail();
+    var tk = token();
+    if (!email || !tk) {
+      document.getElementById("loading").classList.add("d-none");
+      document.getElementById("authBlock").classList.remove("d-none");
+      return;
+    }
+    fetch("/api/candidates/me?email=" + encodeURIComponent(email), {
+      headers: { "Authorization": "Bearer " + tk }
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        document.getElementById("loading").classList.add("d-none");
+        document.getElementById("formWrap").classList.remove("d-none");
+        document.getElementById("pf_email").value = email;
+        if (data && data.status === "success" && data.candidate) {
+          prefill(data.candidate);
+        }
+        // If not_found, form is empty -- user creates it
+      })
+      .catch(function (err) {
+        document.getElementById("loading").classList.add("d-none");
+        document.getElementById("formWrap").classList.remove("d-none");
+        document.getElementById("errorBox").textContent = "Could not load profile: " + err.message;
+        document.getElementById("errorBox").classList.remove("d-none");
+        document.getElementById("pf_email").value = email;
+      });
+  }
+
+  function save() {
+    var tk = token();
+    var email = myEmail();
+    var err = document.getElementById("errorBox");
+    var ok = document.getElementById("successBox");
+    err.classList.add("d-none");
+    ok.classList.add("d-none");
+
+    var name = getVal("pf_name");
+    var phone = getVal("pf_phone");
+    var location = getVal("pf_location");
+    var experience = getVal("pf_experience");
+
+    var missing = [];
+    if (!name) missing.push("Full name");
+    if (!phone) missing.push("Phone");
+    if (!location) missing.push("Current location");
+    if (!experience) missing.push("Years of experience");
+    if (missing.length) {
+      err.textContent = "Please fill: " + missing.join(", ");
+      err.classList.remove("d-none");
+      return;
+    }
+
+    var payload = {
+      email: email,
+      name: name,
+      phone: phone,
+      location: location,
+      current_company: getVal("pf_company"),
+      job_title: getVal("pf_title"),
+      experience_years: parseInt(experience, 10) || null,
+      notice_period: getVal("pf_notice"),
+      skills: getVal("pf_skills"),
+      education: getVal("pf_education"),
+      degree: getVal("pf_degree"),
+      university: getVal("pf_university"),
+      graduation_year: parseInt(getVal("pf_grad_year"), 10) || null
+    };
+
+    var btn = document.getElementById("saveBtn");
+    btn.disabled = true;
+    btn.textContent = "Saving...";
+
+    fetch("/api/candidates/upsert", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + tk
+      },
+      body: JSON.stringify(payload)
+    })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
+      .then(function (res) {
+        btn.disabled = false;
+        btn.textContent = "Save profile";
+        if (!res.ok || res.data.status !== "success") {
+          err.textContent = (res.data && res.data.message) || "Save failed.";
+          err.classList.remove("d-none");
+          return;
+        }
+        ok.classList.remove("d-none");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      })
+      .catch(function (ex) {
+        btn.disabled = false;
+        btn.textContent = "Save profile";
+        err.textContent = "Network error: " + ex.message;
+        err.classList.remove("d-none");
+      });
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    document.getElementById("saveBtn").addEventListener("click", save);
+    load();
+  });
+})();
+</script>
+{% endblock %}
