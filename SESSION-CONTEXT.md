@@ -1,5 +1,29 @@
 # Session Context - Charvak
 
+## Session 18 CLOSED (2026-10-04) - Train stage resurrection
+
+Custom-course generator (Phase 1) plus critical Train-stage bug fixes.
+The lesson player went from broken to fully functional.
+
+**Highlights:**
+- Custom-course generator: users can generate a private course for any
+  weak topic without a matching catalog course (50 credits each)
+- Learning path is now fully self-contained (no external links)
+- Fixed charvak_enrollments missing recipient_name column
+- Fixed charvak_certificates missing recipient_name column
+- Fixed my-course.html missing updateProgress() function
+- Fixed all my-course.html POST fetches (auth headers)
+- complete_week() now auto-issues a certificate on the final week
+
+**Verified:** Course completed end-to-end, certificate CERT-9C1DBCD84B4E
+issued, verify URL live.
+
+**Session 19:** Phase 2 size upgrade CTA (10 -> 20 question upsell)
+**Session 20:** Certificate enhancement (signature, HMAC, QR)
+**Session 21:** Sprint B /my-jobs
+
+---
+
 **HEAD:** `980bbdc`
 **Last updated:** 2026-10-04 (Session 16 - Premium Report product shipped)
 **Version:** `v3.5-session-16-20261004`
