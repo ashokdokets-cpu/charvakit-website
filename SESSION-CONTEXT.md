@@ -1,5 +1,35 @@
 # Session Context - Charvak
 
+## Sessions 19-21 CLOSED (2026-10-04) - Certificate v2
+
+Three sessions shipped together as the certificate-v2 release.
+
+**Session 19 — Size upgrade CTA + supersedes chain**
+- supersedes / superseded_by columns on charvak_readiness_certificates
+- Auto-link on upgrade (same email/role/industry/level)
+- Yellow "want a more precise score?" card on below-benchmark certs
+- Green "Improved from an earlier check" callout on the new cert
+- 15-question Standard check CTA (25 cr)
+
+**Session 20 — Certificate polish**
+- Best Score stat card on /my-results
+- "Show only latest per role" toggle
+- Supersede email notification
+
+**Session 21 — PDF download**
+- render_readiness_certificate_pdf() — branded A4 layout, single page
+- GET /api/readiness/{id}/download (public + token fallback)
+- Frontend: real PDF download, no more window.print()
+
+**Session 22 candidates:**
+- A: Sprint B /my-jobs verified job matching (2 sessions)
+- B: Certificate round 2 (QR, watermark, multi-language)
+- C: Anti-cheating Layer A (1 session)
+
+Recommendation: A.
+
+---
+
 ## Session 18 CLOSED (2026-10-04) - Train stage resurrection
 
 Custom-course generator (Phase 1) plus critical Train-stage bug fixes.

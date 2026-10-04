@@ -1,5 +1,25 @@
 # Charvak — Commitment Tracker
 
+## Sessions 19-21 CLOSED (2026-10-04) - Certificate v2
+
+Three sessions shipped as one certificate-v2 release. See SESSION-CONTEXT.md
+for details.
+
+**Session 19 — Size upgrade CTA + supersedes chain** (1 session)
+**Session 20 — Certificate polish (Best Score, latest toggle, email)** (1 session)
+**Session 21 — Certificate PDF download** (1 session)
+
+**Session 22 scope (recommended):**
+Sprint B /my-jobs — verified job matching. The certificate is now a
+real shareable artifact; the next move is connecting it to open roles.
+Effort: 2 sessions.
+
+**Alternatives for Session 22:**
+- Certificate round 2 (QR, watermark, multi-language) — 1 session
+- Anti-cheating Layer A (environment signals) — 1 session
+
+---
+
 ## Session 18 CLOSED - Custom-course generator + Train stage resurrection (2026-10-04)
 
 Biggest single-fix session of the year. What was scoped as "custom-course
