@@ -1,5 +1,73 @@
 # Charvak — Commitment Tracker
 
+## Session 18 CLOSED - Custom-course generator + Train stage resurrection (2026-10-04)
+
+Biggest single-fix session of the year. What was scoped as "custom-course
+generator (Phase 1)" turned into a full resurrection of the Train stage.
+
+### Shipped (commit series fa50ccd + follow-ups)
+
+**Custom-course generator (the original Phase 1 scope)**
+- New credit key custom_course_generation: 50
+- ai_courses.generate_custom_course(email, topic, level, weeks, role_hint)
+  - reuses plan_curriculum() to build a real multi-week curriculum
+  - persists as a private course scoped to the requesting user
+- New columns on charvak_courses: is_custom, generated_for_email,
+  generated_from_topic, generated_at
+- Learning path prompt no longer references external platforms
+- Response includes custom_course_candidates — weak topics without a match
+- New POST /api/ai-course/generate-custom (auth + 50 cr, idempotent)
+- Frontend: "Custom Courses for Your Gaps" section with per-topic Generate CTA
+
+**Train stage bug fixes (unplanned, but critical)**
+- charvak_enrollments was missing recipient_name column — the lesson player
+  had NEVER worked
+- charvak_certificates was missing recipient_name column — certificate insert
+  had NEVER succeeded
+- my-course.html was missing updateProgress() function — progress stats
+  showed dashes forever
+- my-course.html POST fetches were missing Authorization headers — clicking
+  "Mark Week Complete" redirected to /login
+- complete_week() marked enrollment as 'completed' but never called
+  complete_course() — certificates were silently never issued
+- Course completion UX: after all weeks done, the button now says
+  "View Certificate" and links to the certificate page
+
+**Verified E2E**
+- Generated a custom course for "Evaluation & Experimentation" weak topic
+- Completed all 4 weeks through the browser
+- Certificate CERT-9C1DBCD84B4E issued, page renders with recipient name
+- Verify URL live at /certificate/{id}
+
+### Session 19 scope (next)
+
+**Session 18 Phase 2 — Size upgrade CTA**
+- The free quick readiness check is 10 questions
+- Below-benchmark results should offer: "Want a more precise score?
+  Take the 20-question Standard check for 25 credits"
+- Location: /readiness/{id} certificate page + ai-assessment result page
+- Effort: 1 session
+- Business impact: converts curiosity into revenue, natural upsell
+
+### Session 20 scope
+
+**Certificate enhancement (Phase 3)**
+- Visual signature image on certificate (handwritten scan)
+- HMAC verification hash column + /api/certificate/verify/{hash} endpoint
+- QR code on certificate that encodes the verify URL
+- Public revocation list for cancelled certificates
+- Effort: ~2 hours
+- Note: legal DSC (Aadhaar eSign/DocuSign) NOT needed for course completions
+
+### Session 21 scope
+
+**Sprint B — /my-jobs verified job matching**
+- Certificate becomes useful when it unlocks matched jobs
+- Applications carry certificate_id for employer-side verification
+- Effort: 2 sessions
+
+---
+
 ## Sprint A SHIPPED — Role Readiness Certificate (2026-10-04)
 
 The free, shareable Role Readiness Certificate is live end-to-end.
@@ -122,7 +190,7 @@ Verified E2E: real AI content, 400-credit deduction, PDF download works from bro
 
 **Purpose:** Track every planned-but-not-completed item. Nothing gets lost again.
 **Created:** 2026-09-20
-**Last updated:** 2026-09-30 (Session 4 - C7 AuditBot + Lock-In Breaker paid tiers shipped; #3 deferred). HEAD: `5036eff`
+**Last updated:** 2026-10-04 (Session 18 CLOSED - Train stage resurrection)
 **HEAD:** e28c781 (ai-slop) / f58e63f (auth + cache)
 
 ### FLAGGED — Premium Report product (₹199 PDF unlock) (2026-09-27)

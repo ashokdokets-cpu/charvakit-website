@@ -57,6 +57,12 @@ class AICourseSystem:
                     completed_at TIMESTAMP
                 )
             """)
+            # Session 18: recipient_name for certificate printing
+            # (was referenced by get_enrollment but never added to DDL)
+            cur.execute("""
+                ALTER TABLE charvak_enrollments
+                    ADD COLUMN IF NOT EXISTS recipient_name TEXT
+            """)
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS charvak_course_lessons (
                     lesson_id TEXT PRIMARY KEY,
@@ -78,6 +84,12 @@ class AICourseSystem:
                     duration_weeks INTEGER,
                     issued_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
+            """)
+            # Session 18: recipient_name was referenced by complete_course()
+            # but never added to the DDL — certificates silently failed.
+            cur.execute("""
+                ALTER TABLE charvak_certificates
+                    ADD COLUMN IF NOT EXISTS recipient_name TEXT
             """)
             # Session 18: custom-course generator columns
             cur.execute("""
@@ -682,23 +694,26 @@ Return JSON:
             row = cur.fetchone()
             total_weeks = row[0] if row else 0
 
-            # Auto-complete course
-            if completed_count >= total_weeks:
-                cur.execute("""
-                    UPDATE charvak_enrollments
-                    SET status = 'completed', completed_at = CURRENT_TIMESTAMP
-                    WHERE enrollment_id = %s
-                """, (enrollment_id,))
-
             conn.commit()
             cur.close()
             conn.close()
+
+            # Session 18: auto-issue certificate when the final week completes
+            # This was previously a silent no-op — the enrollment was marked
+            # 'completed' but no row was inserted into charvak_certificates.
+            course_completed = completed_count >= total_weeks
+            certificate_id = None
+            if course_completed:
+                cert_result = self.complete_course(enrollment_id)
+                if isinstance(cert_result, dict) and cert_result.get("status") == "success":
+                    certificate_id = (cert_result.get("certificate") or {}).get("certificate_id")
 
             return {
                 "status": "success",
                 "progress": completed_count,
                 "total_weeks": total_weeks,
-                "course_completed": completed_count >= total_weeks
+                "course_completed": course_completed,
+                "certificate_id": certificate_id
             }
         except Exception as e:
             logger.error(f"complete_week failed: {e}")

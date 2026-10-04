@@ -84,6 +84,7 @@
                                 <button class="btn btn-success" id="completeBtn" onclick="completeWeek()">
                                     ✅ Mark This Week Complete
                                 </button>
+                                <button class="btn btn-warning ms-2 d-none" id="courseCompleteBtn" onclick="completeCourse()">Complete Course &amp; Get Certificate</button>
                                 <button class="btn btn-outline-primary" onclick="toggleAskAI()">
                                     🤖 Ask AI Tutor (2 credits)
                                 </button>
@@ -137,6 +138,20 @@
 
 <script>
 const enrollmentId = window.location.pathname.split('/my-course/')[1] || '';
+
+function _userEmail() {
+    return localStorage.getItem('userEmail') || '';
+}
+function _authToken() {
+    return localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+}
+function _authHeaders(extra) {
+    var h = extra || {};
+    var tok = _authToken();
+    if (tok) h['Authorization'] = 'Bearer ' + tok;
+    h['Content-Type'] = 'application/json';
+    return h;
+}
 let enrollment = null;
 let currentWeek = 1;
 
@@ -152,8 +167,8 @@ async function saveName() {
     try {
         const r = await fetch('/api/ai-course/set-recipient-name', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({enrollment_id: enrollmentId, name: name})
+            headers: _authHeaders(),
+            body: JSON.stringify({enrollment_id: enrollmentId, name: name, email: _userEmail()})
         });
         const d = await r.json();
         if (d.status === 'success') {
@@ -205,6 +220,79 @@ async function loadEnrollment() {
         loadWeek(startWeek);
     } catch (e) {
         document.getElementById('loading').innerHTML = '<p class="text-danger">Course not found.</p>';
+    }
+}
+
+function updateProgress() {
+    if (!enrollment) return;
+    var total = enrollment.total_weeks || 0;
+    var lessons = enrollment.lessons || [];
+    var done = lessons.filter(function(l) { return l.completed; }).length;
+    var pct = total > 0 ? Math.round((done / total) * 100) : 0;
+
+    // Header progress
+    var pt = document.getElementById('progressText');
+    if (pt) pt.textContent = done + '/' + total + ' weeks complete';
+    var pb = document.getElementById('progressBar');
+    if (pb) {
+        pb.style.width = pct + '%';
+        pb.setAttribute('aria-valuenow', pct);
+    }
+
+    // Stats cards
+    var st = document.getElementById('statTotalWeeks');
+    if (st) st.textContent = total;
+    var sd = document.getElementById('statDone');
+    if (sd) sd.textContent = done;
+    var sp = document.getElementById('statPct');
+    if (sp) sp.textContent = pct + '%';
+
+    // Course completion button (separate from per-week completeBtn)
+    var courseBtn = document.getElementById('courseCompleteBtn');
+    if (courseBtn) {
+        if (enrollment.status === 'completed') {
+            // Session 18: the course is done — offer a link to the certificate.
+            courseBtn.classList.remove('d-none');
+            courseBtn.disabled = false;
+            courseBtn.textContent = 'View Certificate';
+            courseBtn.onclick = viewMyCertificate;
+        } else if (done >= total && total > 0) {
+            courseBtn.classList.remove('d-none');
+            courseBtn.disabled = false;
+            courseBtn.textContent = 'Complete Course & Get Certificate';
+            courseBtn.onclick = completeCourse;
+        } else {
+            courseBtn.classList.add('d-none');
+        }
+    }
+}
+
+async function viewMyCertificate() {
+    // Ask the server for this enrollment's certificate
+    var email = _userEmail();
+    var token = _authToken();
+    if (!token) { window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname); return; }
+
+    try {
+        // Re-use the enrollment's status: completed courses have exactly one cert.
+        // The certificate lookup endpoint is /api/ai-course/certificate/{id}.
+        // We need to find the cert id for this enrollment — the fastest way
+        // is a tiny helper endpoint, but we can also just call the complete
+        // route which is idempotent for completed courses.
+        var r = await fetch('/api/ai-course/complete', {
+            method: 'POST',
+            headers: _authHeaders(),
+            body: JSON.stringify({ enrollment_id: enrollmentId, email: email })
+        });
+        var d = await r.json();
+        var cid = (d.certificate && d.certificate.certificate_id) || d.certificate_id;
+        if (cid) {
+            window.location.href = '/certificate/' + encodeURIComponent(cid);
+        } else {
+            alert('Could not find certificate. Open /my-courses to retry.');
+        }
+    } catch (e) {
+        alert('Network error: ' + e.message);
     }
 }
 
@@ -300,7 +388,7 @@ async function payForUnlock() {
     try {
         const co = await fetch('/api/ai-course/create-order', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: _authHeaders(),
             body: JSON.stringify({ email: enrollment.email, course_name: enrollment.course_name, country_code: 'IN' })
         });
         const order = await co.json();
@@ -392,8 +480,12 @@ async function completeWeek() {
     try {
         const r = await fetch('/api/ai-course/complete-week', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({enrollment_id: enrollmentId, week_num: currentWeek})
+            headers: _authHeaders(),
+            body: JSON.stringify({
+                enrollment_id: enrollmentId,
+                week_num: currentWeek,
+                email: _userEmail()
+            })
         });
         const d = await r.json();
                 if (d.status === 'success') {
@@ -417,6 +509,47 @@ async function completeWeek() {
     } catch (e) { alert('Error: ' + e.message); }
 }
 
+
+async function completeCourse() {
+    if (!enrollment || !enrollment.enrollment_id) return;
+    if (!confirm('Mark the entire course complete and generate your certificate?')) return;
+
+    var btn = document.getElementById('courseCompleteBtn');
+    btn.disabled = true;
+    btn.textContent = 'Issuing certificate...';
+
+    var email = localStorage.getItem('userEmail') || enrollment.email || '';
+    var token = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+
+    try {
+        var r = await fetch('/api/ai-course/complete', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({ enrollment_id: enrollment.enrollment_id, email: email })
+        });
+        var d = await r.json();
+        if (d.status !== 'success') {
+            alert(d.message || 'Could not complete course');
+            btn.disabled = false;
+            btn.textContent = 'Complete Course & Get Certificate';
+            return;
+        }
+        var cid = (d.certificate && d.certificate.certificate_id) || d.certificate_id;
+        if (cid) {
+            window.location.href = '/certificate/' + encodeURIComponent(cid);
+        } else {
+            alert('Course completed, but no certificate ID returned. Check /my-courses.');
+        }
+    } catch (e) {
+        alert('Network error: ' + e.message);
+        btn.disabled = false;
+        btn.textContent = 'Complete Course & Get Certificate';
+    }
+}
+
 function toggleAskAI() {
     const box = document.getElementById('askAIBox');
     box.style.display = box.style.display === 'none' ? 'block' : 'none';
@@ -431,8 +564,8 @@ async function askAI() {
     try {
         const r = await fetch('/api/ai-course/project-help', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({enrollment_id: enrollmentId, project_question: q})
+            headers: _authHeaders(),
+            body: JSON.stringify({enrollment_id: enrollmentId, project_question: q, email: _userEmail()})
         });
         const d = await r.json();
         box.textContent = d.assistance || d.message || 'No answer';
@@ -443,8 +576,8 @@ async function getCertificate() {
     try {
         const r = await fetch('/api/ai-course/complete', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({enrollment_id: enrollmentId})
+            headers: _authHeaders(),
+            body: JSON.stringify({enrollment_id: enrollmentId, email: _userEmail()})
         });
         const d = await r.json();
         if (d.status === 'success') {
