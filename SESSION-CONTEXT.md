@@ -171,6 +171,12 @@ certificate URL with HMAC verification.
 - Verify URL returns {valid: true}
 - Tampered hash returns {valid: false}
 
+**Session 17d (2026-10-04):** Made the certificate discoverable.
+/my-results now lists readiness certificates with a filter pill + stat
+card. Top nav has a "Readiness Check" link. User dropdown has a
+"My Certificates" button. Closes the discoverability gap on the Sprint
+A certificate.
+
 **Session 18 scope (next):**
 1. Custom-course generator (replace external links with Charvak-hosted
    custom courses in learning paths)
