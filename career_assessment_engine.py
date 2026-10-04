@@ -313,6 +313,20 @@ class CareerAssessmentEngine:
                 CREATE INDEX IF NOT EXISTS idx_rdc_assessment
                     ON charvak_readiness_certificates (assessment_id)
             """)
+            # Session 19: upgrade chain (Phase 2 size upgrade CTA)
+            cur.execute("""
+                ALTER TABLE charvak_readiness_certificates
+                    ADD COLUMN IF NOT EXISTS supersedes TEXT
+            """)
+            cur.execute("""
+                ALTER TABLE charvak_readiness_certificates
+                    ADD COLUMN IF NOT EXISTS superseded_by TEXT
+            """)
+            cur.execute("""
+                CREATE INDEX IF NOT EXISTS idx_rdc_supersedes
+                    ON charvak_readiness_certificates (supersedes)
+                    WHERE supersedes IS NOT NULL
+            """)
             conn.commit()
             cur.close(); conn.close()
         except Exception as e:
@@ -602,6 +616,22 @@ class CareerAssessmentEngine:
             else:
                 verdict = "Below benchmark - skill gaps to close"
 
+            # ---- Session 19: upgrade chain ----
+            # If a prior certificate exists for the same (email, role, industry, level),
+            # link the new one to it. The prior certificate is marked superseded.
+            prior_certificate_id = None
+            try:
+                cur.execute("""
+                    SELECT certificate_id FROM charvak_readiness_certificates
+                    WHERE email = %s AND role = %s AND industry = %s AND level = %s
+                    ORDER BY created_at DESC LIMIT 1
+                """, (email, role, industry, level))
+                prior_row = cur.fetchone()
+                if prior_row:
+                    prior_certificate_id = prior_row[0]
+            except Exception as _e:
+                logger.warning(f"upgrade chain lookup failed: {_e}")
+
             # ---- Certificate ID + hash ----
             certificate_id = f"RDC-{secrets.token_hex(6).upper()}"
             now_iso = _dt.datetime.now().isoformat()
@@ -625,13 +655,24 @@ class CareerAssessmentEngine:
                 INSERT INTO charvak_readiness_certificates
                     (certificate_id, assessment_id, email, display_name,
                      role, industry, level, readiness_score, percentile,
-                     benchmark_score, verdict, payload_json, certificate_hash, source)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s, 'written')
+                     benchmark_score, verdict, payload_json, certificate_hash, source,
+                     supersedes)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s, 'written',
+                        %s)
             """, (
                 certificate_id, assessment_id, email, display_name,
                 role, industry, level, readiness_int, percentile,
                 benchmark, verdict, json.dumps(payload), cert_hash,
+                prior_certificate_id,
             ))
+
+            # Mark the prior certificate as superseded
+            if prior_certificate_id:
+                cur.execute("""
+                    UPDATE charvak_readiness_certificates
+                    SET superseded_by = %s
+                    WHERE certificate_id = %s
+                """, (certificate_id, prior_certificate_id))
             conn.commit()
             cur.close(); conn.close()
         except Exception as e:
@@ -652,6 +693,7 @@ class CareerAssessmentEngine:
             "industry": industry,
             "level": level,
             "created_at": now_iso,
+            "supersedes": prior_certificate_id,
         }
 
     # ------------------------------------------------------------

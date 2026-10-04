@@ -333,3 +333,228 @@ def render_simple_pdf(title: str, body_lines: List[str],
     for line in body_lines:
         pdf.multi_cell(0, 6, str(line))
     return bytes(pdf.output())
+
+
+def render_readiness_certificate_pdf(cert: Dict) -> bytes:
+    """
+    Render a Role Readiness Certificate as a branded, framed PDF.
+    cert = certificate dict from /api/readiness/{id}.
+    """
+    import os as _os
+    site = _os.getenv("SITE_URL", "https://www.charvakit.com").rstrip("/")
+
+    # Brand colors (teal, matching the site)
+    TEAL = (59, 165, 145)
+    TEAL_DARK = (42, 128, 112)
+    INK = (17, 24, 39)
+    MUTED = (107, 114, 128)
+    SOFT = (229, 231, 235)
+    WHITE = (255, 255, 255)
+    TEAL_LIGHT = (240, 253, 249)
+
+    pdf = CharvakReportPDF(
+        report_title="Role Readiness Certificate",
+        user_email=cert.get("email"),
+    )
+    # Single-page certificate — disable auto page break entirely so
+    # nothing spills to a second page.
+    pdf.add_page()
+    pdf.set_auto_page_break(auto=False)
+    # Suppress the base-class header/footer chrome (this certificate has
+    # its own frame and footer strip).
+    pdf.header = lambda: None
+    pdf.footer = lambda: None
+
+    W = 210.0  # A4 width
+    H = 297.0
+
+    # --- Double frame ---
+    pdf.set_draw_color(*TEAL)
+    pdf.set_line_width(1.5)
+    pdf.rect(10, 10, W - 20, H - 20, style="D")
+    pdf.set_line_width(0.4)
+    pdf.rect(14, 14, W - 28, H - 28, style="D")
+
+    # --- Logo (centered top) ---
+    logo_path = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)),
+                              "static", "images", "logo.png")
+    if _os.path.exists(logo_path):
+        try:
+            pdf.image(logo_path, x=W / 2 - 12, y=22, w=24)
+        except Exception:
+            pass
+
+    # --- "CERTIFICATE" eyebrow ---
+    pdf.set_xy(0, 52)
+    pdf.set_font("DejaVu", "B", size=10)
+    pdf.set_text_color(*MUTED)
+    pdf.cell(W, 5, "C H A R V A K  I T  C O N S U L T I N G", align="C")
+
+    # --- Title ---
+    pdf.set_xy(0, 62)
+    pdf.set_font("DejaVu", "B", size=30)
+    pdf.set_text_color(*INK)
+    pdf.cell(W, 14, "Certificate of Readiness", align="C")
+
+    # --- Ornamental divider (short teal line centered) ---
+    pdf.set_draw_color(*TEAL)
+    pdf.set_line_width(0.8)
+    pdf.line(90, 82, 120, 82)
+    # decorative dots
+    pdf.set_fill_color(*TEAL)
+    pdf.circle(88, 82, 0.7, style="F")
+    pdf.circle(122, 82, 0.7, style="F")
+
+    # --- "This certifies that" ---
+    pdf.set_xy(0, 92)
+    pdf.set_font("DejaVu", size=11)
+    pdf.set_text_color(*MUTED)
+    pdf.cell(W, 6, "This certifies that", align="C")
+
+    # --- Candidate name ---
+    name = str(cert.get("candidate_display") or "Verified Candidate")
+    pdf.set_xy(0, 102)
+    pdf.set_font("DejaVu", "B", size=26)
+    pdf.set_text_color(*TEAL)
+    pdf.cell(W, 12, name, align="C")
+
+    # Underline under the name
+    name_w = pdf.get_string_width(name) + 8
+    pdf.set_draw_color(*TEAL)
+    pdf.set_line_width(0.5)
+    pdf.line((W - name_w) / 2, 116, (W + name_w) / 2, 116)
+
+    # --- "has demonstrated readiness for" ---
+    pdf.set_xy(0, 124)
+    pdf.set_font("DejaVu", size=11)
+    pdf.set_text_color(*MUTED)
+    pdf.cell(W, 6, "has demonstrated readiness for the role of", align="C")
+
+    # --- Role ---
+    role = str(cert.get("role") or "")
+    pdf.set_xy(0, 132)
+    pdf.set_font("DejaVu", "B", size=16)
+    pdf.set_text_color(*INK)
+    pdf.cell(W, 9, role, align="C")
+
+    # --- Industry · Level ---
+    industry = str(cert.get("industry") or "")
+    level = str(cert.get("level") or "").capitalize()
+    pdf.set_xy(0, 142)
+    pdf.set_font("DejaVu", size=10)
+    pdf.set_text_color(*MUTED)
+    pdf.cell(W, 5, industry + "  |  " + level, align="C")
+
+    # --- Score badge (rounded teal box, centered) ---
+    badge_w = 70
+    badge_h = 26
+    bx = (W - badge_w) / 2
+    by = 158
+    pdf.set_fill_color(*TEAL)
+    pdf.set_draw_color(*TEAL)
+    # fpdf2 supports rounded rect via rect(style='DF', round_corners=True)
+    try:
+        pdf.rect(bx, by, badge_w, badge_h, style="F", round_corners=True, corner_radius=4)
+    except TypeError:
+        pdf.rect(bx, by, badge_w, badge_h, style="F")
+
+    score_val = cert.get("readiness_score")
+    score_str = str(score_val) if score_val is not None else "--"
+    pdf.set_xy(bx, by + 2)
+    pdf.set_font("DejaVu", "B", size=24)
+    pdf.set_text_color(*WHITE)
+    pdf.cell(badge_w, 12, score_str, align="C")
+    pdf.set_xy(bx, by + 15)
+    pdf.set_font("DejaVu", size=9)
+    pdf.cell(badge_w, 5, "out of 100", align="C")
+
+    # --- Verdict + benchmark line ---
+    pdf.set_xy(0, by + badge_h + 4)
+    pdf.set_font("DejaVu", size=10)
+    pdf.set_text_color(*INK)
+    pdf.cell(W, 6, str(cert.get("verdict") or ""), align="C")
+
+    # --- Secondary metrics row ---
+    pdf.set_xy(0, by + badge_h + 12)
+    pdf.set_font("DejaVu", size=9)
+    pdf.set_text_color(*MUTED)
+    bm = cert.get("benchmark_score")
+    pct = cert.get("percentile")
+    parts = []
+    if bm is not None:
+        parts.append("Benchmark: " + str(bm))
+    if pct is not None:
+        parts.append("Percentile: " + str(pct))
+    if parts:
+        pdf.cell(W, 5, "   |   ".join(parts), align="C")
+
+    # --- Verification divider ---
+    pdf.set_draw_color(*SOFT)
+    pdf.set_line_width(0.3)
+    pdf.line(30, 218, 180, 218)
+
+    # --- Verification block ---
+    pdf.set_xy(0, 222)
+    pdf.set_font("DejaVu", "B", size=9)
+    pdf.set_text_color(*MUTED)
+    pdf.cell(W, 5, "VERIFICATION", align="C")
+    pdf.set_xy(0, 228)
+    pdf.set_font("DejaVu", size=9)
+    pdf.set_text_color(*INK)
+    cert_id = str(cert.get("certificate_id") or "")
+    pdf.cell(W, 5, "Certificate ID:  " + cert_id, align="C")
+
+    issued = ""
+    try:
+        ca = cert.get("created_at")
+        if ca:
+            from datetime import datetime as _dt
+            issued = _dt.fromisoformat(ca.replace("Z", "+00:00")).strftime("%B %d, %Y")
+    except Exception:
+        issued = str(cert.get("created_at") or "")
+
+    pdf.set_xy(0, 234)
+    pdf.cell(W, 5, "Issued:  " + (issued or "N/A"), align="C")
+
+    verify_url = site + "/api/readiness/verify/" + str(cert.get("certificate_hash") or "")
+    pdf.set_xy(0, 240)
+    pdf.set_font("DejaVu", size=7)
+    pdf.set_text_color(*MUTED)
+    pdf.cell(W, 4, "Verify at:  " + verify_url, align="C")
+
+    # --- Signature block ---
+    sig_y = 258
+    # Signature line
+    pdf.set_draw_color(*INK)
+    pdf.set_line_width(0.4)
+    pdf.line(38, sig_y, 90, sig_y)
+    pdf.line(120, sig_y, 172, sig_y)
+
+    pdf.set_xy(0, sig_y + 2)
+    pdf.set_font("DejaVu", size=8)
+    pdf.set_text_color(*MUTED)
+    pdf.set_xy(38, sig_y + 2)
+    pdf.cell(52, 4, "Authorized Signatory", align="C")
+    pdf.set_xy(120, sig_y + 2)
+    pdf.cell(52, 4, "Date of Issue", align="C")
+
+    pdf.set_xy(38, sig_y + 7)
+    pdf.set_font("DejaVu", "B", size=9)
+    pdf.set_text_color(*TEAL_DARK)
+    pdf.cell(52, 4, "Charvak IT Consulting", align="C")
+    pdf.set_xy(120, sig_y + 7)
+    pdf.set_font("DejaVu", size=9)
+    pdf.set_text_color(*INK)
+    pdf.cell(52, 4, issued or "", align="C")
+
+    # --- Footer strip ---
+    pdf.set_xy(0, 275)
+    pdf.set_font("DejaVu", size=7)
+    pdf.set_text_color(*MUTED)
+    pdf.cell(W, 4, "This certificate can be independently verified at the URL above.",
+             align="C")
+
+    return bytes(pdf.output())
+
+
+

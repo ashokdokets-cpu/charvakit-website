@@ -46,6 +46,15 @@
   .rd-notfound { text-align: center; padding: 80px 20px; }
   .rd-notfound h3 { font-weight: 700; margin: 16px 0 8px; }
   .rd-footer-note { text-align: center; color: #9ca3af; font-size: 0.8rem; margin-top: 32px; }
+  .rd-upgrade-card { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 1px solid #f59e0b; border-radius: 12px; padding: 20px 22px; margin-top: 24px; }
+  .rd-upgrade-card h4 { font-weight: 700; margin: 0 0 8px; color: #78350f; font-size: 1.05rem; }
+  .rd-upgrade-card p { margin: 0 0 14px; color: #78350f; font-size: 0.9rem; line-height: 1.5; }
+  .rd-upgrade-card .btn { background: #f59e0b; color: #fff; font-weight: 700; border: none; padding: 10px 20px; }
+  .rd-upgrade-card .btn:hover { background: #d97706; color: #fff; }
+  .rd-improvement { background: #ecfdf5; border: 1px solid #10b981; border-radius: 12px; padding: 16px 20px; margin-top: 16px; text-align: center; }
+  .rd-improvement .rd-improv-title { font-weight: 700; color: #065f46; font-size: 0.95rem; margin: 0 0 4px; }
+  .rd-improvement .rd-improv-body { color: #047857; font-size: 0.9rem; margin: 0; }
+  .rd-improvement .rd-improv-link { color: #065f46; font-weight: 600; text-decoration: underline; margin-left: 6px; }
   @media (max-width: 600px) {
     .rd-hero h1 { font-size: 1.5rem; }
     .rd-score-num { font-size: 3.6rem; }
@@ -96,6 +105,20 @@
           <div class="rd-band-label">vs Benchmark</div>
         </div>
       </div>
+    </div>
+
+    <!-- Session 19: below-benchmark upgrade CTA -->
+    <div id="rdUpgradeCard" class="rd-upgrade-card" style="display:none;">
+      <h4>Want a more precise score?</h4>
+      <p>Your 10-question check is a starting point. Take the <strong>15-question Standard check</strong> for a more accurate readiness score on the same role.</p>
+      <button class="btn" onclick="rdUpgrade()">Take Standard Check &mdash; 25 cr</button>
+      <div id="rdUpgradeMsg" class="small mt-2"></div>
+    </div>
+
+    <!-- Session 19: improvement callout when supersedes is set -->
+    <div id="rdImprovement" class="rd-improvement" style="display:none;">
+      <p class="rd-improv-title" id="rdImprovTitle"></p>
+      <p class="rd-improv-body" id="rdImprovBody"></p>
     </div>
 
     <!-- Skill gap chart -->
@@ -178,6 +201,7 @@
     if (!data || data.status !== "success" || !data.certificate) {
       throw new Error("bad payload");
     }
+    window.__rdCert = data.certificate;
     renderCertificate(data.certificate);
   })
   .catch(function(err) {
@@ -224,7 +248,67 @@
     document.getElementById("rdWhatsApp").href = whatsAppUrl(c);
 
     renderSkillChart(c.payload && c.payload.skill_gap ? c.payload.skill_gap : []);
+
+    // Session 19: upgrade CTA when the score is below the benchmark
+    var _upCard = document.getElementById("rdUpgradeCard");
+    if (_upCard) {
+      _upCard.style.display = (score < (c.benchmark || 0)) ? "block" : "none";
+    }
+
+    // Session 19: improvement callout when this cert supersedes an earlier one
+    if (c.supersedes) {
+      var _imp = document.getElementById("rdImprovement");
+      var _impT = document.getElementById("rdImprovTitle");
+      var _impB = document.getElementById("rdImprovBody");
+      if (_imp && _impT && _impB) {
+        _impT.textContent = "Improved from an earlier check";
+        _impB.innerHTML = 'This certificate replaces an earlier one. <a class="rd-improv-link" href="/readiness/' + encodeURIComponent(c.supersedes) + '">View the earlier certificate</a>';
+        _imp.style.display = "block";
+      }
+    }
   }
+
+  function _rdEsc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function(ch) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[ch];
+    });
+  }
+
+  window.rdUpgrade = async function() {
+    var msg = document.getElementById("rdUpgradeMsg");
+    if (msg) msg.innerHTML = "";
+    var c = window.__rdCert;
+    if (!c) { if (msg) msg.innerHTML = '<span class="text-danger">Could not read certificate data.</span>'; return; }
+    var email = localStorage.getItem("userEmail") || "";
+    var token = localStorage.getItem("auth_token") || localStorage.getItem("charvak_token") || "";
+    if (!email || !token) {
+      window.location.href = "/login?next=" + encodeURIComponent(window.location.pathname);
+      return;
+    }
+    try {
+      var r = await fetch("/api/career-assessment/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+        body: JSON.stringify({
+          email: email, role: c.role, industry: c.industry, level: c.level,
+          format: "mcq", size: "standard"
+        })
+      });
+      if (r.status === 401) { window.location.href = "/login?next=" + encodeURIComponent(window.location.pathname); return; }
+      if (r.status === 402) {
+        if (msg) msg.innerHTML = '<span class="text-danger">Not enough credits (25 needed). <a href="/ai-credits-pricing">Top up</a>.</span>';
+        return;
+      }
+      var j = await r.json();
+      if (j.status !== "success") {
+        if (msg) msg.innerHTML = '<span class="text-danger">' + _rdEsc(j.message || "Could not start check") + '</span>';
+        return;
+      }
+      window.location.href = "/ai-assessment?aid=" + encodeURIComponent(j.assessment_id) + "&from=readiness-check";
+    } catch (e) {
+      if (msg) msg.innerHTML = '<span class="text-danger">Network error: ' + _rdEsc(e.message) + "</span>";
+    }
+  };
 
   function renderSkillChart(skillGap) {
     var canvas = document.getElementById("rdSkillChart");
@@ -323,7 +407,17 @@
 
   window.rdDownloadPdf = function(ev) {
     ev.preventDefault();
-    window.print();
+    var c = window.__rdCert;
+    if (!c || !c.certificate_id) { alert('Certificate not loaded yet.'); return; }
+    var email = localStorage.getItem('userEmail') || '';
+    var token = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    var url = '/api/readiness/' + encodeURIComponent(c.certificate_id) + '/download';
+    var params = [];
+    if (email) params.push('email=' + encodeURIComponent(email));
+    if (token) params.push('token=' + encodeURIComponent(token));
+    if (params.length) url += '?' + params.join('&');
+    // Fallback: if no email/token (anonymous), hit the public route
+    window.location.href = url;
   };
 
 })();

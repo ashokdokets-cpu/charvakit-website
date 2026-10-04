@@ -151,6 +151,15 @@ function render() {
   var certCount = (MR.certs || []).length;
   if (certCount > 0) {
     statsHtml += '<div class="mr-stat"><div class="mr-stat-value">' + certCount + '</div><div class="mr-stat-label">Certificates</div></div>';
+    // Session 20: Best Score card
+    var bestScore = 0;
+    (MR.certs || []).forEach(function(c) {
+      var s = c.readiness_score || 0;
+      if (s > bestScore) bestScore = s;
+    });
+    if (bestScore > 0) {
+      statsHtml += '<div class="mr-stat"><div class="mr-stat-value">' + bestScore + '</div><div class="mr-stat-label">Best Score</div></div>';
+    }
   }
   document.getElementById('statsRow').innerHTML = statsHtml;
 
@@ -164,6 +173,8 @@ function render() {
   // Session 17d: add Readiness filter if certs exist
   if (certCount > 0) {
     filtersHtml += '<button class="mr-filter" data-filter="readiness_certificate" onclick="setFilter(\'readiness_certificate\')">Readiness (' + certCount + ')</button>';
+    var _chk = MR.certsLatestOnly ? ' checked' : '';
+    filtersHtml += '<label class="mr-filter" style="cursor:pointer; user-select:none; display:inline-flex; align-items:center; gap:6px;"><input type="checkbox" id="mrLatestOnly" onchange="MR.certsLatestOnly = this.checked; renderList();"' + _chk + '> Show only latest per role</label>';
   }
   document.getElementById('filters').innerHTML = filtersHtml;
 
@@ -181,7 +192,21 @@ function setFilter(f) {
 function renderList() {
   var list = document.getElementById('resultsList');
   // Session 17d: merge certificates into the row set
-  var certRows = (MR.certs || []).map(function(c) {
+  // Session 20: dedupe to latest per role/industry/level when toggled
+  var _certs = (MR.certs || []).slice();
+  if (MR.certsLatestOnly) {
+    var _seen = {};
+    _certs.sort(function(a, b) {
+      return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+    });
+    _certs = _certs.filter(function(c) {
+      var key = (c.role || '') + '|' + (c.industry || '') + '|' + (c.level || '');
+      if (_seen[key]) return false;
+      _seen[key] = true;
+      return true;
+    });
+  }
+  var certRows = _certs.map(function(c) {
     return {
       _is_cert: true,
       _cert: c,
