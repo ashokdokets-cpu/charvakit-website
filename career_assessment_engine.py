@@ -2026,7 +2026,7 @@ class CareerAssessmentEngine:
                 "weak_topics": [],
                 "strong_topics": [],
                 "charvak_courses": [],
-                "external_resources": [],
+                "custom_course_candidates": [],
                 "weekly_plan": [],
                 "message": "This assessment doesn't have topic data (created before topic tagging). Take a new assessment to get a personalized learning path.",
             }
@@ -2044,7 +2044,7 @@ class CareerAssessmentEngine:
                 "weak_topics": [],
                 "strong_topics": [g["topic"] for g in skill_gap if g.get("status") == "strong"],
                 "charvak_courses": [],
-                "external_resources": [],
+                "custom_course_candidates": [],
                 "weekly_plan": [],
                 "message": "Strong across all topics - no weak areas to address. Consider a harder level or a different format.",
             }
@@ -2084,6 +2084,36 @@ class CareerAssessmentEngine:
             courses_catalog=courses_catalog,
         )
 
+        # Session 18: identify weak topics with no matching Charvak course.
+        # These become "custom course candidates" — the frontend offers to
+        # generate a private course for each (50 credits each).
+        matched_course_ids = {c.get("course_id") for c in (path.get("charvak_courses") or []) if isinstance(c, dict)}
+        matched_course_names = {c.get("course_name", "").lower() for c in (path.get("charvak_courses") or []) if isinstance(c, dict)}
+
+        custom_course_candidates = []
+        for topic_entry in focus_topics:
+            topic_name = topic_entry.get("topic", "")
+            if not topic_name:
+                continue
+            # A topic is "unmatched" if no returned course name contains any
+            # significant word from the topic. This is a heuristic — the
+            # catalog is small enough that name matching is reliable.
+            topic_words = [w.lower() for w in topic_name.split() if len(w) > 3]
+            matched = False
+            for cname in matched_course_names:
+                if any(w in cname for w in topic_words):
+                    matched = True
+                    break
+            if not matched:
+                custom_course_candidates.append({
+                    "topic": topic_name,
+                    "pct": topic_entry.get("pct", 0),
+                    "status": topic_entry.get("status", "weak"),
+                    "level": (level or "mid").lower(),
+                    "role": role,
+                    "industry": industry,
+                })
+
         result = {
             "assessment_id": assessment_id,
             "role": role,
@@ -2093,7 +2123,7 @@ class CareerAssessmentEngine:
             "weak_topics": [g["topic"] for g in focus_topics],
             "strong_topics": [g["topic"] for g in skill_gap if g.get("status") == "strong"],
             "charvak_courses": path.get("charvak_courses", []),
-            "external_resources": path.get("external_resources", []),
+            "custom_course_candidates": custom_course_candidates,
             "weekly_plan": path.get("weekly_plan", []),
             "message": path.get("message", "Learning path generated."),
         }
@@ -2151,9 +2181,6 @@ class CareerAssessmentEngine:
             f'  "charvak_courses": [\n'
             f'    {{"course_id": "...", "course_name": "...", "reason": "why this course addresses a weak topic (1 sentence)"}}\n'
             f"  ],\n"
-            f'  "external_resources": [\n'
-            f'    {{"topic": "...", "resource": "e.g. MDN Web Docs / Harvard CS50 / specific book or course", "url_hint": "where to find it", "why": "1 sentence"}}\n'
-            f"  ],\n"
             f'  "weekly_plan": [\n'
             f'    {{"week": 1, "focus": "topic focus", "activities": ["activity 1", "activity 2"]}}\n'
             f"  ],\n"
@@ -2162,9 +2189,9 @@ class CareerAssessmentEngine:
             f"Rules:\n"
             f"- Pick charvak_courses ONLY from the provided catalog (don't invent course IDs).\n"
             f"- If no course matches, return an empty array - don't force one.\n"
-            f"- External resources should be concrete and reputable.\n"
             f"- Weekly plan: 2-4 weeks, calibrated to the level ({level}).\n"
             f"- Be encouraging but honest about the gap.\n"
+            f"- Do NOT reference external platforms (Coursera, Khan Academy, Udemy, YouTube, etc). Only Charvak courses exist.\n"
         )
 
         try:
@@ -2195,7 +2222,6 @@ class CareerAssessmentEngine:
                     valid_courses.append(c)
             return {
                 "charvak_courses": valid_courses,
-                "external_resources": parsed.get("external_resources", []) if isinstance(parsed.get("external_resources"), list) else [],
                 "weekly_plan": parsed.get("weekly_plan", []) if isinstance(parsed.get("weekly_plan"), list) else [],
                 "message": str(parsed.get("message", ""))[:500],
             }

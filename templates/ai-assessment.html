@@ -574,7 +574,7 @@ function renderResult(j) {
 
     document.getElementById('carResultScore').textContent = j.score + '%';
     document.getElementById('carResultDetail').textContent =
-        j.correct_count + ' of ' + j.total_questions + ' correct \u00b7 passing: ' + (j.passing_score || (window.__lastAssessment || {}).passing_score || (window.__lastAssessment || {}).passing || 70) + '%';
+        (j.correct_count != null ? j.correct_count : ((window.__lastAssessment || {}).correct_count || 0)) + ' of ' + (j.total_questions || (window.__lastAssessment || {}).total_questions || (window.__lastAssessment || {}).num_questions || '?') + ' correct \u00b7 passing: ' + (j.passing_score || (window.__lastAssessment || {}).passing_score || (window.__lastAssessment || {}).passing || 70) + '%';
     var _a = window.__lastAssessment || _carCurrentAssessment || {};
     document.getElementById('carResultMeta').innerHTML =
         '<strong>' + _esc(j.role) + '</strong> in ' + _esc(j.industry) +
@@ -743,18 +743,23 @@ function renderLearningPath(el, j) {
         }
     }
 
-    // External resources
-    var resources = j.external_resources || [];
-    if (resources.length) {
-        html += '<h5 class="as-h6 mt-3 mb-2">External Resources</h5>';
-        html += '<ul class="small mb-3">';
-        for (var k = 0; k < resources.length; k++) {
-            var res = resources[k];
-            html += '<li><strong>[' + _esc(res.topic || '') + ']</strong> ' + _esc(res.resource || '');
-            if (res.why) { html += ' <span class="text-muted">— ' + _esc(res.why) + '</span>'; }
-            html += '</li>';
+    // Custom course candidates (Session 18)
+    var candidates = j.custom_course_candidates || [];
+    if (candidates.length) {
+        html += '<h5 class="as-h6 mt-3 mb-2">Custom Courses for Your Gaps</h5>';
+        html += '<p class="text-muted small mb-2">These topics do not match an existing Charvak course. Generate a personalized course for any of them. 50 credits each, then enroll free.</p>';
+        for (var cc = 0; cc < candidates.length; cc++) {
+            var cand = candidates[cc];
+            html += '<div class="card mb-2"><div class="card-body py-2 px-3">';
+            html += '<div class="d-flex justify-content-between align-items-center flex-wrap" style="gap:10px;">';
+            html += '<div><strong>' + _esc(cand.topic || '') + '</strong>';
+            html += ' <span class="badge bg-warning text-dark" style="font-size:0.7rem;">' + _esc(cand.status || 'weak') + ' - ' + (cand.pct || 0) + '%</span>';
+            html += '<div class="text-muted small mt-1">' + _esc(cand.level || '') + ' level - ' + _esc(cand.role || '') + '</div></div>';
+            html += '<button class="btn btn-sm btn-primary" onclick="generateCustomCourse(\'' + _esc(cand.topic).replace(/'/g, "\\'") + '\', \'' + _esc(cand.level || 'mid') + '\', \'' + _esc(cand.role || '') + '\')">Generate - 50 cr</button>';
+            html += '</div>';
+            html += '<div id="ccResult-' + cc + '" class="mt-2"></div>';
+            html += '</div></div>';
         }
-        html += '</ul>';
     }
 
     // Weekly plan
@@ -778,11 +783,79 @@ function renderLearningPath(el, j) {
     }
 
     // Nothing to work on
-    if (!courses.length && !resources.length && !plan.length) {
+    if (!courses.length && !candidates.length && !plan.length) {
         html += '<div class="text-muted small">No specific recommendations - your topics are strong or have no data yet.</div>';
     }
 
     el.innerHTML = html;
+}
+
+async function generateCustomCourse(topic, level, roleHint) {
+    var email = _email();
+    var token = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    if (!email || !token) {
+        window.location.href = '/login?next=/ai-assessment';
+        return;
+    }
+
+    // Find the button that triggered this and its result slot
+    var ev = window.event;
+    var btn = ev && ev.target ? ev.target : null;
+    var cardBody = btn ? btn.closest('.card-body') : null;
+    var resultSlot = cardBody ? cardBody.querySelector('[id^="ccResult-"]') : null;
+
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Generating...';
+    }
+    if (resultSlot) {
+        resultSlot.innerHTML = '<div class="text-muted small">AI is designing your course (15-30s)...</div>';
+    }
+
+    try {
+        var r = await fetch('/api/ai-course/generate-custom', {
+            method: 'POST',
+            headers: _authHeaders(),
+            body: JSON.stringify({
+                email: email,
+                topic: topic,
+                level: level || 'mid',
+                role_hint: roleHint || '',
+                weeks: 4,
+            })
+        });
+        if (r.status === 401) { window.location.href = '/login?next=/ai-assessment'; return; }
+        if (r.status === 402) {
+            if (resultSlot) resultSlot.innerHTML = '<div class="alert alert-warning py-2 px-3 mb-0">Not enough credits (50 needed). <a href="/ai-credits-pricing">Top up</a>.</div>';
+            if (btn) { btn.disabled = false; btn.textContent = 'Generate - 50 cr'; }
+            return;
+        }
+        var j = await r.json();
+        if (j.status !== 'success') {
+            if (resultSlot) resultSlot.innerHTML = '<div class="alert alert-danger py-2 px-3 mb-0">' + _esc(j.message || 'Could not generate course') + '</div>';
+            if (btn) { btn.disabled = false; btn.textContent = 'Generate - 50 cr'; }
+            return;
+        }
+
+        // Success — show the "ready" card with a Start Learning CTA
+        var enroll = j.enrollment || {};
+        var enrollId = enroll.enrollment_id || '';
+        var startUrl = enrollId ? '/my-course/' + encodeURIComponent(enrollId) : '/my-courses';
+        var creditLine = j.already_existed ? 'Already generated earlier - no credits charged.' : 'Course generated for 50 credits.';
+
+        var readyHtml = '<div class="alert alert-success mb-0">';
+        readyHtml += '<strong>' + _esc(j.course_name || 'Custom course') + '</strong> is ready.';
+        readyHtml += '<div class="small mt-1">' + _esc(creditLine) + '</div>';
+        readyHtml += '<a class="btn btn-sm btn-success mt-2" href="' + startUrl + '">Start Learning</a> ';
+        readyHtml += '<a class="btn btn-sm btn-outline-success mt-2" href="/my-courses">My Courses</a>';
+        readyHtml += '</div>';
+
+        if (resultSlot) resultSlot.innerHTML = readyHtml;
+        if (btn) btn.style.display = 'none';
+    } catch (e) {
+        if (resultSlot) resultSlot.innerHTML = '<div class="alert alert-danger py-2 px-3 mb-0">Network error: ' + _esc(e.message) + '</div>';
+        if (btn) { btn.disabled = false; btn.textContent = 'Generate - 50 cr'; }
+    }
 }
 
 function resetToStep1() {
