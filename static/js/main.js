@@ -9,20 +9,31 @@ window.addEventListener('scroll', function() {
 });
 
 // ========== Smooth Scrolling for Anchor Links ==========
-document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener('click', function (e) {
-        const href = this.getAttribute('href');
-        if (href && href !== '#' && href.length > 1) {
-            e.preventDefault();
-            const target = document.querySelector(href);
-            if (target) {
-                target.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
-                });
-            }
-        }
-    });
+// Session 21 hotfix: bind-time filter `a[href^="#"]` isn't enough because
+// some templates start with href="#" as a placeholder and swap the href in
+// later (e.g. WhatsApp / LinkedIn share buttons on the certificate page).
+// We must re-check at click time that the href still looks like a same-page
+// anchor, and that the resulting selector is safe to pass to querySelector.
+document.addEventListener('click', function (e) {
+    var el = e.target.closest ? e.target.closest('a[href^="#"]') : null;
+    if (!el) return;
+    var href = el.getAttribute('href');
+    if (!href || href === '#' || href.length < 2) return;
+    // Bail if it's not a same-page anchor at click time
+    if (href.charAt(0) !== '#') return;
+    // Guard against non-CSS-selector-safe fragments
+    // (letters, digits, -, _, :, ., # only)
+    if (!/^#[A-Za-z0-9_\-:.]+$/.test(href)) return;
+    var target = null;
+    try {
+        target = document.querySelector(href);
+    } catch (err) {
+        return;
+    }
+    if (target) {
+        e.preventDefault();
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
 });
 
 // ========== Scroll to Top Button ==========
