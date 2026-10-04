@@ -633,7 +633,58 @@ function renderResult(j) {
     lhtml += '</div></div>';
     document.getElementById('carResultMeta').innerHTML += lhtml;
 
+    if (window.__fromReadinessCheck) {
+        var certHtml = '<div class="card border-0 shadow-sm mt-4" style="background: linear-gradient(135deg, #f0fdf9 0%, #dcfce7 100%);">';
+        certHtml += '<div class="card-body p-4 text-center">';
+        certHtml += '<h3 class="as-h5 mb-1">Get Your Verified Role Readiness Certificate</h3>';
+        certHtml += '<p class="text-muted small mb-3">Free, shareable, and independently verifiable. Add it to LinkedIn in one click.</p>';
+        certHtml += '<button class="btn btn-success btn-lg" id="carGetCertBtn" onclick="generateCertificate()">Get My Certificate</button>';
+        certHtml += '<div id="carCertResult" class="mt-3"></div>';
+        certHtml += '</div></div>';
+        document.getElementById('carResultMeta').innerHTML += certHtml;
+    }
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function generateCertificate() {
+    var a = window.__lastAssessment || _carCurrentAssessment;
+    if (!a || !a.assessment_id) { alert('No active assessment.'); return; }
+    var email = _email();
+    var token = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    if (!email || !token) { window.location.href = '/login?next=/ai-assessment'; return; }
+    var btn = document.getElementById('carGetCertBtn');
+    var resultEl = document.getElementById('carCertResult');
+    if (!btn || !resultEl) return;
+    btn.disabled = true;
+    btn.textContent = 'Generating certificate...';
+    resultEl.innerHTML = '<div class="text-muted small">Computing your readiness score...</div>';
+    try {
+        var r = await fetch('/api/readiness/generate', {
+            method: 'POST',
+            headers: _authHeaders(),
+            body: JSON.stringify({
+                email: email,
+                assessment_id: a.assessment_id,
+                display_name: (localStorage.getItem('userName') || '')
+            })
+        });
+        if (r.status === 401) { window.location.href = '/login?next=/ai-assessment'; return; }
+        if (r.status === 403) {
+            resultEl.innerHTML = '<div class="alert alert-danger">You can only generate your own certificate.</div>';
+            btn.disabled = false; btn.textContent = 'Get My Certificate'; return;
+        }
+        var j = await r.json();
+        if (j.status !== 'success') {
+            resultEl.innerHTML = '<div class="alert alert-danger">' + _esc(j.message || 'Could not generate certificate') + '</div>';
+            btn.disabled = false; btn.textContent = 'Get My Certificate';
+            return;
+        }
+        window.location.href = j.certificate_url || ('/readiness/' + j.certificate_id);
+    } catch (e) {
+        resultEl.innerHTML = '<div class="alert alert-danger">Network error: ' + _esc(e.message) + '</div>';
+        btn.disabled = false; btn.textContent = 'Get My Certificate';
+    }
 }
 
 async function loadLearningPath() {
@@ -780,6 +831,64 @@ async function loadHistory(ev) {
         document.getElementById('carHistoryPanel').scrollIntoView({ behavior: 'smooth' });
     } catch (e) {
         alert('Network error: ' + e.message);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', loadCatalog);
+
+// ---------- Deep-link: ?aid=<assessment_id> from /readiness-check ----------
+(function() {
+    try {
+        var params = new URLSearchParams(window.location.search);
+        var aid = params.get('aid');
+        var from = params.get('from') || '';
+        if (aid) {
+            window.__fromReadinessCheck = (from === 'readiness-check');
+            setTimeout(function() { loadFromAid(aid); }, 400);
+        }
+    } catch (e) {
+        console.warn('ai-assessment deep-link parse failed', e);
+    }
+})();
+
+async function loadFromAid(aid) {
+    var email = _email();
+    var token = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    if (!email || !token) {
+        window.location.href = '/login?next=' + encodeURIComponent('/ai-assessment?aid=' + aid + '&from=readiness-check');
+        return;
+    }
+    try {
+        var r = await fetch('/api/career-assessment/' + encodeURIComponent(aid) + '?email=' + encodeURIComponent(email), {
+            headers: _authHeaders()
+        });
+        if (r.status === 401) {
+            window.location.href = '/login?next=' + encodeURIComponent('/ai-assessment?aid=' + aid + '&from=readiness-check');
+            return;
+        }
+        if (r.status === 403) {
+            alert('This assessment belongs to a different user.');
+            window.location.href = '/ai-assessment';
+            return;
+        }
+        var j = await r.json();
+        if (j.status !== 'success' || !j.assessment) {
+            alert(j.message || 'Could not load the assessment.');
+            window.location.href = '/ai-assessment';
+            return;
+        }
+        if (j.assessment.status === 'completed') {
+            _carCurrentAssessment = j.assessment;
+            window.__lastAssessment = j.assessment;
+            renderResult(j.assessment);
+            return;
+        }
+        _carCurrentAssessment = j.assessment;
+        window.__lastAssessment = j.assessment;
+        renderQuestions(j.assessment);
+    } catch (e) {
+        alert('Network error loading assessment: ' + e.message);
+        window.location.href = '/ai-assessment';
     }
 }
 
