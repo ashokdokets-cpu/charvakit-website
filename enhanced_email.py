@@ -185,4 +185,101 @@ class EnhancedEmailSystem:
             return {"status": "error", "message": str(e)}
 
 
+    def send_new_application(self, candidate_name, candidate_email,
+                              candidate_phone, candidate_location,
+                              candidate_experience, role_title,
+                              client_name, role_priority,
+                              readiness_score, certificate_id,
+                              application_id, screening_answers=None):
+        """Notify HR + admin of a new application. Non-fatal: returns True on any success."""
+        import os
+        recipients_raw = os.getenv("ADMIN_EMAILS", "") or "hr@charvakit.com,charvakit@gmail.com"
+        recipients = [e.strip() for e in recipients_raw.split(",") if e.strip()]
+        if not recipients:
+            recipients = ["hr@charvakit.com"]
+
+        urgency = "URGENT" if role_priority == "urgent" else "Normal"
+        readiness_line = f"{readiness_score}/100" if readiness_score else "not attached"
+        cert_line = certificate_id or "not attached"
+
+        rows_html = ""
+        if screening_answers:
+            for q in screening_answers[:20]:
+                qtext = (q.get("question_text") or "")[:90]
+                atext = (q.get("answer_text") or "")[:120]
+                rows_html += (
+                    '<tr>'
+                    f'<td style="padding:6px 10px;border-bottom:1px solid #eee;color:#555;font-size:13px;">{qtext}</td>'
+                    f'<td style="padding:6px 10px;border-bottom:1px solid #eee;font-size:13px;"><strong>{atext}</strong></td>'
+                    '</tr>'
+                )
+        if not rows_html:
+            rows_html = '<tr><td colspan="2" style="padding:10px;color:#888;">No answers recorded.</td></tr>'
+
+        subject = f"New application - {role_title}" + (f" ({client_name})" if client_name else "")
+
+        body_html = f"""
+        <div style="font-family:-apple-system,Segoe UI,sans-serif;max-width:640px;margin:0 auto;">
+          <div style="background:#3ba591;color:#fff;padding:20px 24px;border-radius:8px 8px 0 0;">
+            <h2 style="margin:0;font-size:18px;">New Application Received</h2>
+            <p style="margin:4px 0 0;font-size:13px;opacity:0.9;">{application_id} &middot; {urgency}</p>
+          </div>
+          <div style="background:#fff;border:1px solid #e5e7eb;border-top:none;padding:24px;border-radius:0 0 8px 8px;">
+
+            <h3 style="margin:0 0 8px;font-size:15px;color:#333;">Role</h3>
+            <p style="margin:0 0 16px;font-size:14px;">
+              <strong>{role_title}</strong><br>
+              <span style="color:#666;">Client: {client_name or 'unknown'}</span><br>
+              <span style="color:#666;">Priority: {role_priority or 'normal'}</span>
+            </p>
+
+            <h3 style="margin:0 0 8px;font-size:15px;color:#333;">Candidate</h3>
+            <p style="margin:0 0 16px;font-size:14px;line-height:1.7;">
+              <strong>{candidate_name or 'unknown'}</strong><br>
+              Email: <a href="mailto:{candidate_email}">{candidate_email}</a><br>
+              Phone: {candidate_phone or 'not provided'}<br>
+              Location: {candidate_location or 'not provided'}<br>
+              Experience: {candidate_experience or 'not provided'} years
+            </p>
+
+            <h3 style="margin:0 0 8px;font-size:15px;color:#333;">Readiness</h3>
+            <p style="margin:0 0 16px;font-size:14px;">
+              Score: <strong>{readiness_line}</strong><br>
+              Certificate: <span style="font-family:monospace;font-size:12px;">{cert_line}</span>
+            </p>
+
+            <h3 style="margin:0 0 8px;font-size:15px;color:#333;">Screening answers</h3>
+            <table style="width:100%;border-collapse:collapse;background:#fafafa;border-radius:6px;overflow:hidden;">
+              {rows_html}
+            </table>
+
+            <p style="margin:24px 0 0;font-size:13px;color:#888;">
+              Log in to the admin panel to review, shortlist, and generate a submission package.
+            </p>
+          </div>
+        </div>
+        """
+
+        sent = 0
+        for r in recipients:
+            try:
+                result = self.email_engine.send_email(r, subject, body_html, is_html=True)
+                if result:
+                    sent += 1
+            except Exception as e:
+                print(f"  WARN send_new_application to {r} failed: {e}")
+
+        try:
+            self.sent_emails.append({
+                "type": "new_application",
+                "recipients": recipients,
+                "application_id": application_id,
+                "sent": sent,
+            })
+        except Exception:
+            pass
+
+        return sent > 0
+
+
 enhanced_email = EnhancedEmailSystem()

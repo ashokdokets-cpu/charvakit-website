@@ -491,11 +491,90 @@ class ClientStaffingEngine:
             logger.error(f"apply_to_role failed: {e}")
             return {"status": "error", "message": f"Apply failed: {e}"}
 
+        # Notification (non-fatal): email HR + admin about the new application
+        try:
+            self._notify_new_application(
+                application_id=application_id,
+                candidate_id=candidate_id,
+                email=email,
+                role_id=role_id,
+                certificate_id=certificate_id,
+                readiness_score=readiness_score,
+                screening_answers=data.get("screening_answers") or [],
+            )
+        except Exception as _e:
+            logger.warning(f"new application notification failed (non-fatal): {_e}")
+
         return {
             "status": "success",
             "application_id": application_id,
             "candidate_id": candidate_id,
         }
+
+    def _notify_new_application(self, application_id, candidate_id, email,
+                                 role_id, certificate_id, readiness_score,
+                                 screening_answers):
+        """Fetch candidate + role context, call enhanced_email. Non-fatal."""
+        cand = (None, email, None, None, None)
+        role = (None, None, "normal")
+        qmap = {}
+
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+
+            cur.execute("""
+                SELECT name, email, phone, location, experience_years
+                FROM charvak_candidates WHERE candidate_id = %s
+            """, (candidate_id,))
+            row = cur.fetchone()
+            if row:
+                cand = row
+
+            cur.execute("""
+                SELECT title, client_name, priority
+                FROM charvak_client_roles WHERE role_id = %s
+            """, (role_id,))
+            row = cur.fetchone()
+            if row:
+                role = row
+
+            cur.execute("""
+                SELECT question_id, question_text FROM charvak_role_screening_questions
+                WHERE role_id = %s
+            """, (role_id,))
+            qmap = {r[0]: r[1] for r in cur.fetchall()}
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.warning(f"_notify_new_application context fetch failed: {e}")
+
+        enriched_answers = []
+        for a in screening_answers:
+            qid = a.get("question_id")
+            enriched_answers.append({
+                "question_text": qmap.get(qid, qid),
+                "answer_text": a.get("answer_text", ""),
+            })
+
+        try:
+            from enhanced_email import enhanced_email
+            enhanced_email.send_new_application(
+                candidate_name=cand[0],
+                candidate_email=cand[1] or email,
+                candidate_phone=cand[2],
+                candidate_location=cand[3],
+                candidate_experience=cand[4],
+                role_title=role[0] or role_id,
+                client_name=role[1],
+                role_priority=role[2] or "normal",
+                readiness_score=readiness_score,
+                certificate_id=certificate_id,
+                application_id=application_id,
+                screening_answers=enriched_answers,
+            )
+        except Exception as e:
+            logger.warning(f"enhanced_email.send_new_application failed: {e}")
 
     def list_applications_for_role(self, role_id: str) -> Dict:
         """Admin: applications for a role, ranked by readiness score."""
