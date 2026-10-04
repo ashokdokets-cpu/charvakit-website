@@ -660,4 +660,293 @@ class ClientStaffingEngine:
         return {"status": "success", "application_id": row[0], "submission_status": row[1]}
 
 
+    # ----------------------------------------------------------------
+    # CBREX package builder (Session 23)
+    # ----------------------------------------------------------------
+
+    def build_cbrex_package(self, application_id: str) -> Dict:
+        """
+        Build a CBREX-ready package for an application.
+        Returns a JSON structure grouped by CBREX form sections:
+          personal, contact, employment, education, readiness,
+          screening_answers, attachments_manifest, meta
+        """
+        application_id = (application_id or "").strip()
+        if not application_id:
+            return {"status": "error", "message": "application_id required"}
+
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+
+            # 1. Application row + role + certificate
+            cur.execute("""
+                SELECT a.application_id, a.user_id, a.client_role_id,
+                       a.certificate_id, a.readiness_score,
+                       a.status, a.submission_status, a.created_at,
+                       a.submitted_at, a.recruiter_notes,
+                       r.title, r.client_name, r.location, r.skills_required,
+                       r.experience_min_years, r.experience_max_years,
+                       r.job_type, r.priority, r.jd_text
+                FROM charvak_applications a
+                LEFT JOIN charvak_client_roles r ON r.role_id = a.client_role_id
+                WHERE a.application_id = %s
+            """, (application_id,))
+            app = cur.fetchone()
+            if not app:
+                cur.close(); conn.close()
+                return {"status": "error", "message": "Application not found"}
+
+            user_email = app[1]
+            role_id = app[2]
+            certificate_id = app[3]
+            readiness_score = app[4]
+            submitted_at = app[8]
+            recruiter_notes = app[9]
+            role_title = app[10]
+            client_name = app[11]
+            role_location = app[12]
+            role_skills = app[13]
+            role_exp_min = app[14]
+            role_exp_max = app[15]
+            role_job_type = app[16]
+            role_priority = app[17]
+            role_jd = app[18]
+
+            # 2. Candidate row
+            cur.execute("""
+                SELECT candidate_id, name, email, phone, location,
+                       job_title, current_company, experience_years,
+                       relevant_experience_years, notice_period,
+                       serving_notice_last_day, skills, education,
+                       degree, university, graduation_year, gpa,
+                       certifications, first_name, last_name,
+                       additional_email, additional_phone,
+                       current_salary_inr, current_salary_currency,
+                       expected_hike_percent, variable_component,
+                       other_benefits, candidate_summary, country,
+                       linkedin_url, github_url, portfolio_url,
+                       resume_text, visa_status, work_authorization,
+                       willing_to_relocate, availability,
+                       salary_expectation, preferred_roles,
+                       languages_spoken, remote_preference
+                FROM charvak_candidates
+                WHERE email = %s
+                LIMIT 1
+            """, (user_email,))
+            c = cur.fetchone()
+
+            # 3. Readiness certificate (if present)
+            cert = None
+            if certificate_id:
+                cur.execute("""
+                    SELECT certificate_id, display_name, role, industry, level,
+                           readiness_score, percentile, benchmark_score,
+                           verdict, certificate_hash, created_at
+                    FROM charvak_readiness_certificates
+                    WHERE certificate_id = %s
+                """, (certificate_id,))
+                cert = cur.fetchone()
+
+            # 4. Consent
+            consent = None
+            cur.execute("""
+                SELECT consent_id, consent_method, consented_at,
+                       ip_address, user_agent, consent_proof_doc_id
+                FROM charvak_candidate_consents
+                WHERE email = %s AND role_id = %s
+                ORDER BY consented_at DESC LIMIT 1
+            """, (user_email, role_id))
+            consent = cur.fetchone()
+
+            # 5. Documents manifest
+            docs = []
+            if c:
+                cur.execute("""
+                    SELECT document_id, document_type, filename, content_type,
+                           size_bytes, uploaded_at
+                    FROM charvak_candidate_documents
+                    WHERE candidate_id = %s
+                    ORDER BY uploaded_at DESC
+                """, (c[0],))
+                docs = cur.fetchall()
+
+            # 6. Screening answers with question text
+            cur.execute("""
+                SELECT q.question_num, q.question_text, q.answer_type,
+                       q.fill_source, a.answer_text, a.answered_by, a.answered_at
+                FROM charvak_role_screening_questions q
+                LEFT JOIN charvak_role_screening_answers a
+                    ON a.question_id = q.question_id
+                   AND a.role_id = q.role_id
+                WHERE q.role_id = %s
+                ORDER BY q.question_num, q.sort_order
+            """, (role_id,))
+            questions = cur.fetchall()
+
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"build_cbrex_package failed: {e}")
+            return {"status": "error", "message": f"Build failed: {e}"}
+
+        def s(v):
+            """Stringify null-safe."""
+            return "" if v is None else (str(v) if not isinstance(v, str) else v)
+
+        def jsonlist(v):
+            if v is None:
+                return []
+            if isinstance(v, list):
+                return v
+            try:
+                import json as _j
+                return _j.loads(v) if isinstance(v, str) else list(v)
+            except Exception:
+                return []
+
+        # Personal section
+        first_name = s(c[18]) if c else ""
+        last_name = s(c[19]) if c else ""
+        if not first_name and not last_name and c:
+            parts = s(c[1]).split(" ", 1)
+            first_name = parts[0] if parts else ""
+            last_name = parts[1] if len(parts) > 1 else ""
+
+        personal = {
+            "first_name": first_name,
+            "last_name": last_name,
+            "full_name": s(c[1]) if c else "",
+            "country": s(c[28]) if c and len(c) > 28 else "India",
+            "current_location": s(c[4]) if c else "",
+        }
+
+        # Contact section
+        contact = {
+            "primary_email": s(user_email),
+            "additional_email": s(c[20]) if c else "",
+            "primary_phone": s(c[3]) if c else "",
+            "additional_phone": s(c[21]) if c else "",
+            "linkedin_url": s(c[29]) if c else "",
+            "github_url": s(c[30]) if c else "",
+            "portfolio_url": s(c[31]) if c else "",
+        }
+
+        # Employment section
+        employment = {
+            "current_company": s(c[6]) if c else "",
+            "current_designation": s(c[5]) if c else "",
+            "total_experience_years": c[7] if c else None,
+            "relevant_experience_years": c[8] if c else None,
+            "current_salary": float(c[22]) if c and c[22] is not None else None,
+            "current_salary_currency": s(c[23]) if c else "INR",
+            "expected_hike_percent": c[24] if c else None,
+            "variable_component": s(c[25]) if c else "",
+            "other_benefits": s(c[26]) if c else "",
+            "notice_period": s(c[9]) if c else "",
+            "serving_notice_last_day": c[10].isoformat() if c and c[10] else None,
+            "availability": s(c[36]) if c else "",
+            "salary_expectation": s(c[37]) if c else "",
+            "visa_status": s(c[33]) if c else "",
+            "work_authorization": s(c[34]) if c else "",
+            "willing_to_relocate": bool(c[35]) if c else False,
+            "remote_preference": s(c[40]) if c else "",
+        }
+
+        # Education section
+        education = {
+            "qualification": s(c[12]) if c else "",
+            "degree": s(c[13]) if c else "",
+            "university": s(c[14]) if c else "",
+            "graduation_year": c[15] if c else None,
+            "gpa": float(c[16]) if c and c[16] is not None else None,
+        }
+
+        # Skills
+        skills = jsonlist(c[11]) if c else []
+
+        # Readiness section
+        readiness = {
+            "readiness_score": readiness_score,
+            "certificate_id": certificate_id,
+            "certificate_url": f"/readiness/{certificate_id}" if certificate_id else None,
+            "verdict": s(cert[8]) if cert else None,
+            "percentile": cert[6] if cert else None,
+            "benchmark_score": cert[7] if cert else None,
+            "certificate_hash": s(cert[9]) if cert else None,
+        }
+
+        # Screening answers
+        screening = []
+        for q in questions:
+            screening.append({
+                "question_num": q[0],
+                "question_text": s(q[1]),
+                "answer_type": s(q[2]),
+                "fill_source": s(q[3]),
+                "answer": s(q[4]),
+                "answered_by": s(q[5]),
+                "answered_at": q[6].isoformat() if q[6] else None,
+            })
+
+        # Attachments manifest
+        attachments = {
+            "resume_available": bool(c and c[31]),
+            "resume_url": s(c[31]) if c and len(c) > 31 else "",
+            "certificate_pdf_url": f"/api/readiness/{certificate_id}/download" if certificate_id else None,
+            "consent_recorded": bool(consent),
+            "consent_id": s(consent[0]) if consent else None,
+            "consent_proof_doc_id": s(consent[5]) if consent else None,
+            "uploaded_documents": [
+                {
+                    "document_id": d[0],
+                    "document_type": d[1],
+                    "filename": d[2],
+                    "content_type": d[3],
+                    "size_bytes": d[4],
+                    "uploaded_at": d[5].isoformat() if d[5] else None,
+                } for d in docs
+            ],
+        }
+
+        # Candidate summary
+        candidate_summary = s(c[27]) if c else ""
+
+        # Meta
+        meta = {
+            "application_id": application_id,
+            "role_id": role_id,
+            "role_title": role_title,
+            "client_name": client_name,
+            "role_location": role_location,
+            "role_skills": role_skills,
+            "role_experience_min": role_exp_min,
+            "role_experience_max": role_exp_max,
+            "role_job_type": role_job_type,
+            "role_priority": role_priority,
+            "candidate_id": c[0] if c else None,
+            "applied_at": app[7].isoformat() if app[7] else None,
+            "submitted_at": submitted_at.isoformat() if submitted_at else None,
+            "submission_status": app[6],
+            "recruiter_notes": s(recruiter_notes),
+            "generated_at": __import__("datetime").datetime.now().isoformat(),
+        }
+
+        return {
+            "status": "success",
+            "package": {
+                "meta": meta,
+                "personal": personal,
+                "contact": contact,
+                "employment": employment,
+                "education": education,
+                "skills": skills,
+                "readiness": readiness,
+                "candidate_summary": candidate_summary,
+                "screening_answers": screening,
+                "attachments": attachments,
+            },
+        }
+
+
 client_staffing_engine = ClientStaffingEngine()
