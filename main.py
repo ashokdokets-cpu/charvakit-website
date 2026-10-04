@@ -7390,6 +7390,34 @@ async def api_admin_list_role_applications(request: Request, role_id: str):
     return client_staffing_engine.list_applications_for_role(role_id)
 
 
+@app.get("/api/admin/applications/{application_id}/cbrex-package.pdf")
+@limiter.limit("30/minute")
+async def api_admin_cbrex_package_pdf(request: Request, application_id: str):
+    """Admin: render the CBREX evaluation form as a PDF (Session 23)."""
+    try:
+        require_admin(request)
+    except HTTPException:
+        raise
+
+    from client_staffing_engine import client_staffing_engine
+    result = client_staffing_engine.build_cbrex_package(application_id)
+    if result.get("status") != "success":
+        return JSONResponse(status_code=404, content=result)
+
+    package = result["package"]
+    from cbrex_pdf_engine import render_cbrex_evaluation_pdf, cbrex_package_filename
+    pdf_bytes = render_cbrex_evaluation_pdf(package)
+    filename = cbrex_package_filename(package)
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Cache-Control": "no-store",
+        },
+    )
+
+
 @app.get("/api/admin/applications/{application_id}/cbrex-package")
 @limiter.limit("30/minute")
 async def api_admin_cbrex_package(request: Request, application_id: str):
