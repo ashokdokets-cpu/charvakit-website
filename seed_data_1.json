@@ -1,0 +1,557 @@
+[
+  {
+    "client_name": "NCS",
+    "client_type": "partner",
+    "title": "AI Machine Learning Engineer",
+    "location": "Pune, Maharashtra",
+    "experience_min_years": 8,
+    "experience_max_years": 11,
+    "skills_required": "MLOps, SQL, Databricks, MLflow, Power BI, Tableau, Azure ML, Model Lifecycle Management, Git, CI/CD, Python",
+    "budget_min_inr": 2500000,
+    "budget_max_inr": 3000000,
+    "job_type": "Permanent",
+    "priority": "urgent",
+    "jd_text": "Strong MLOps and production operations focus. Responsible for managing MLOps workflows, tools, and production support processes for ML solutions. Ensure stability, reliability, and performance of ML models and pipelines. Manage model lifecycle controls including versioning, lineage, reproducibility, monitoring, and governance.\n\nMUST-HAVES:\n- Bachelor's or Master's in Computer Science or related field\n- 8+ years experience with MLOps processes and tools\n- Hands-on with MLflow, Databricks, Azure ML or equivalent cloud ML platforms\n- Strong SQL and data analysis skills\n- Experience with model lifecycle management\n- Familiarity with Power BI, Tableau, Databricks SQL dashboards\n- Working knowledge of Git, CI/CD, scripting, production support\n- Familiarity with ML and data development in telco environment\n- Excellent communication and stakeholder management\n- Job stability: min 2 years per organization\n- Notice period: Immediate to 45 days",
+    "questions": [
+      {
+        "question_text": "Rate the candidate's communication skills on a scale of 1 to 5 (5 highest).",
+        "answer_type": "choice_single",
+        "choices": [
+          "5",
+          "4",
+          "3",
+          "Below 3"
+        ],
+        "fill_source": "charvak",
+        "required": true
+      },
+      {
+        "question_text": "What is your notice period?",
+        "answer_type": "text",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "Do you have hands-on experience with MLOps tools such as MLflow, Databricks, or Azure ML?",
+        "answer_type": "yes_no",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "Do you have strong SQL skills and experience with data analysis for validation and troubleshooting?",
+        "answer_type": "yes_no",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "Have you worked with model lifecycle management including model registry, versioning, and deployment tracking?",
+        "answer_type": "yes_no",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "Do you have a Bachelor's or Master's degree in Computer Science or a related field?",
+        "answer_type": "yes_no",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "Which of the following dashboard and visualization tools have you used?",
+        "answer_type": "choice_multi",
+        "choices": [
+          "Power BI and/or Tableau",
+          "Databricks SQL dashboards",
+          "Other equivalent tools",
+          "None of the above"
+        ],
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "What is your experience level with Git, CI/CD pipelines, and scripting?",
+        "answer_type": "choice_single",
+        "choices": [
+          "Extensive hands-on experience in production environments",
+          "Moderate experience with some practical application",
+          "Basic familiarity only",
+          "No experience"
+        ],
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "Do you have experience working in a telecommunications (telco) environment?",
+        "answer_type": "choice_single",
+        "choices": [
+          "Yes, extensive experience",
+          "Yes, some experience",
+          "No experience"
+        ],
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "What are your primary skills?",
+        "answer_type": "text",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "What is your Current Fixed CTC?",
+        "answer_type": "text",
+        "fill_source": "charvak",
+        "required": true
+      },
+      {
+        "question_text": "What is your Current Variable CTC?",
+        "answer_type": "text",
+        "fill_source": "charvak",
+        "required": true
+      },
+      {
+        "question_text": "Do you have an offer in hand?",
+        "answer_type": "yes_no",
+        "fill_source": "charvak",
+        "required": true
+      },
+      {
+        "question_text": "Gender",
+        "answer_type": "choice_single",
+        "choices": [
+          "Male",
+          "Female"
+        ],
+        "fill_source": "charvak",
+        "required": true
+      }
+    ]
+  },
+  {
+    "client_name": "NCS",
+    "client_type": "partner",
+    "title": "AI Agent Operations Engineer",
+    "location": "Pune, Maharashtra",
+    "experience_min_years": 8,
+    "experience_max_years": 11,
+    "skills_required": "Production Operations, Monitoring, Observability, Log Analysis, Incident Management, SLOs, Runbooks, AI Agent Failure Modes, AI/ML Ops, Scripting, LLM Tooling",
+    "budget_min_inr": 800000,
+    "budget_max_inr": 1800000,
+    "job_type": "Permanent",
+    "priority": "urgent",
+    "jd_text": "Act as incident commander leading response to incidents, owning proactive detection, and holding the rollback trigger during degraded releases. Run daily proactive trend reviews, chair post-incident reviews.\n\nNote: Candidate will travel to Singapore within 30-45 days from onboarding. Salary in INR plus SGD 3,500/month allowance for accommodation and other expenses.\n\nMUST-HAVES:\n- Bachelor's or Master's in Computer Science or related field\n- 6+ years in production operations\n- Experience in customer-facing production environments\n- Monitoring/observability and log/trace analysis\n- Incident management, SLOs, and runbook operations\n- Understanding of AI agent failure modes and routing\n- Excellent communication and stakeholder management\n- Job stability: min 2 years per organization\n- Notice period: Immediate to 45 days",
+    "questions": [
+      {
+        "question_text": "Rate the candidate's communication skills on a scale of 1 to 5 (5 highest).",
+        "answer_type": "choice_single",
+        "choices": [
+          "5",
+          "4",
+          "3",
+          "Below 3"
+        ],
+        "fill_source": "charvak",
+        "required": true
+      },
+      {
+        "question_text": "What is your notice period?",
+        "answer_type": "text",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "Do you have 6 or more years of experience in production operations?",
+        "answer_type": "yes_no",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "Have you worked in customer-facing production environments?",
+        "answer_type": "yes_no",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "Do you have hands-on experience with monitoring, observability tools, and log/trace analysis?",
+        "answer_type": "yes_no",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "Do you hold a Bachelor's or Master's degree in Computer Science or a related field?",
+        "answer_type": "yes_no",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "Which best describes your experience with incident management and SLOs?",
+        "answer_type": "choice_single",
+        "choices": [
+          "Extensive experience defining, monitoring, and responding to SLO breaches",
+          "Moderate experience with incident management and some SLO exposure",
+          "Limited or no formal experience with incident management and SLOs"
+        ],
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "How would you rate your understanding of AI agent failure modes and routing?",
+        "answer_type": "choice_single",
+        "choices": [
+          "Strong understanding with direct experience troubleshooting AI agent failures",
+          "Foundational knowledge with some exposure to AI systems",
+          "Minimal or no experience with AI agent systems"
+        ],
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "What is your experience level in translating governance principles into technical implementation plans?",
+        "answer_type": "choice_single",
+        "choices": [
+          "Proven track record of converting governance requirements into actionable technical solutions",
+          "Some experience bridging governance and technical implementation",
+          "Limited experience in this area"
+        ],
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "Which best describes your ability to communicate technical risks to non-technical stakeholders?",
+        "answer_type": "choice_single",
+        "choices": [
+          "Excellent communicator who regularly explains complex technical concepts to business leaders",
+          "Competent communicator with some experience presenting to non-technical audiences",
+          "Limited experience communicating with non-technical stakeholders"
+        ],
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "What are your primary skills?",
+        "answer_type": "text",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "What is your Current Fixed CTC?",
+        "answer_type": "text",
+        "fill_source": "charvak",
+        "required": true
+      },
+      {
+        "question_text": "What is your Current Variable CTC?",
+        "answer_type": "text",
+        "fill_source": "charvak",
+        "required": true
+      },
+      {
+        "question_text": "Do you have an offer in hand?",
+        "answer_type": "yes_no",
+        "fill_source": "charvak",
+        "required": true
+      },
+      {
+        "question_text": "Gender",
+        "answer_type": "choice_single",
+        "choices": [
+          "Male",
+          "Female"
+        ],
+        "fill_source": "charvak",
+        "required": true
+      }
+    ]
+  },
+  {
+    "client_name": "NCS",
+    "client_type": "partner",
+    "title": "Platform Engineer",
+    "location": "Pune, Maharashtra",
+    "experience_min_years": 5,
+    "experience_max_years": 10,
+    "skills_required": "OpenShift, Kubernetes, Platform Monitoring, Incident Troubleshooting, Incident Recovery, Linux CLI, Networking (DNS, Ports, IP), Grafana, Prometheus, GitOps, Bash, Python",
+    "budget_min_inr": 2000000,
+    "budget_max_inr": 4600000,
+    "job_type": "Permanent",
+    "priority": "urgent",
+    "jd_text": "AI Platform Operations Engineer (L1) - part of the 24x7 operations team supporting the Central AI Kitchen platform and its AI services. Responsible for continuous monitoring, first-level incident detection and troubleshooting, execution of approved recovery procedures, and timely escalation.\n\nPlatform consists of AI services running on Red Hat OpenShift, hosted on on-prem infrastructure.\n\nMUST-HAVES:\n- Bachelor's in CS, IT, Engineering or related discipline\n- OpenShift experience MANDATORY\n- 5+ years IT operations, infrastructure, cloud or application support\n- Basic Linux command-line knowledge\n- Basic networking (IP addressing, DNS, ports, connectivity troubleshooting)\n- Basic understanding of containers and Kubernetes concepts\n- Willing to work in a 24x7 shift environment\n- Good written and verbal communication skills",
+    "questions": [
+      {
+        "question_text": "Rate the candidate's communication skills on a scale of 1 to 5 (5 highest).",
+        "answer_type": "choice_single",
+        "choices": [
+          "5",
+          "4",
+          "3",
+          "Below 3"
+        ],
+        "fill_source": "charvak",
+        "required": true
+      },
+      {
+        "question_text": "What is your notice period?",
+        "answer_type": "text",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "How would you rate your stakeholder management and communication skills?",
+        "answer_type": "choice_single",
+        "choices": [
+          "Basic level",
+          "Intermediate level",
+          "Advanced level",
+          "Expert level with proven track record"
+        ],
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "Do you have hands-on experience with OpenShift platform monitoring and incident troubleshooting?",
+        "answer_type": "yes_no",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "Do you hold a Bachelor's degree in Computer Science, Information Technology, Engineering, or a related discipline?",
+        "answer_type": "yes_no",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "Do you have a minimum of 2 years of experience in IT operations, infrastructure, cloud, or application support?",
+        "answer_type": "yes_no",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "Are you willing to work in a 24/7 shift environment?",
+        "answer_type": "yes_no",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "Are you willing to work from office all 5 days?",
+        "answer_type": "yes_no",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "What is your level of experience with Kubernetes concepts and container technologies?",
+        "answer_type": "choice_single",
+        "choices": [
+          "Basic understanding of containers and Kubernetes",
+          "Intermediate hands-on experience with Kubernetes",
+          "Advanced expertise with Kubernetes and container orchestration",
+          "No experience"
+        ],
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "How would you rate your Linux command-line proficiency?",
+        "answer_type": "choice_single",
+        "choices": [
+          "Basic command-line knowledge",
+          "Intermediate Linux administration skills",
+          "Advanced Linux system administration",
+          "No Linux experience"
+        ],
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "What is your experience level with networking concepts such as IP addressing, DNS, ports, and connectivity troubleshooting?",
+        "answer_type": "choice_single",
+        "choices": [
+          "Basic networking knowledge",
+          "Intermediate networking skills",
+          "Advanced networking expertise",
+          "No networking experience"
+        ],
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "Do you have experience in OpenShift, and for how long?",
+        "answer_type": "text",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "What are your primary skills?",
+        "answer_type": "text",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "What is your Current Fixed CTC?",
+        "answer_type": "text",
+        "fill_source": "charvak",
+        "required": true
+      },
+      {
+        "question_text": "What is your Current Variable CTC?",
+        "answer_type": "text",
+        "fill_source": "charvak",
+        "required": true
+      },
+      {
+        "question_text": "Do you have an offer in hand?",
+        "answer_type": "yes_no",
+        "fill_source": "charvak",
+        "required": true
+      },
+      {
+        "question_text": "Gender",
+        "answer_type": "choice_single",
+        "choices": [
+          "Male",
+          "Female"
+        ],
+        "fill_source": "charvak",
+        "required": true
+      }
+    ]
+  },
+  {
+    "client_name": "NCS",
+    "client_type": "partner",
+    "title": "AI Engineer",
+    "location": "Pune, Maharashtra",
+    "experience_min_years": 6,
+    "experience_max_years": 8,
+    "skills_required": "Python, TypeScript, LLMs, RAG Pipelines, AI Frameworks, APIs, Microservices, Distributed Systems, Kubernetes, Docker, CI/CD, AWS, Azure, GCP, LangGraph, Semantic Kernel, Vector Databases",
+    "budget_min_inr": 1400000,
+    "budget_max_inr": 1800000,
+    "job_type": "Permanent",
+    "priority": "urgent",
+    "jd_text": "Design, develop, and scale production-grade AI/GenAI applications, including agentic systems and enterprise integrations.\n\nKey responsibilities: build and deploy end-to-end AI and GenAI systems (RAG, agents, automation workflows); design APIs and microservices for scalable AI solutions; implement robust data pipelines and retrieval systems; optimize prompt engineering, evaluation, and model performance.\n\nMUST-HAVES:\n- Education: BE/BTech, ME/MTech, MCA, MSc (Computer Science)\n- 6-8 years in software engineering/AI roles\n- Min 5 years strong programming experience in Python (MUST)\n- Min 3.5 years hands-on AI experience with LLMs, RAG pipelines, and AI frameworks\n- Experience with cloud platforms (AWS/Azure/GCP)\n- Job stability: min 2 years per organization\n- Notice period: Immediate to 45 days",
+    "questions": [
+      {
+        "question_text": "Rate the candidate's communication skills on a scale of 1 to 5 (5 highest).",
+        "answer_type": "choice_single",
+        "choices": [
+          "5",
+          "4",
+          "3",
+          "Below 3"
+        ],
+        "fill_source": "charvak",
+        "required": true
+      },
+      {
+        "question_text": "What is your notice period?",
+        "answer_type": "text",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "How many years of experience do you have in software engineering or AI roles?",
+        "answer_type": "number",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "Have you worked with Large Language Models (LLMs) and RAG pipelines in a hands-on capacity?",
+        "answer_type": "yes_no",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "Do you have proficiency in Python or TypeScript?",
+        "answer_type": "yes_no",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "Which best describes your containerization and orchestration experience?",
+        "answer_type": "choice_single",
+        "choices": [
+          "Proficient with both Docker and Kubernetes",
+          "Proficient with Docker only",
+          "Proficient with Kubernetes only",
+          "Limited or no experience with either"
+        ],
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "What is your experience level with cloud platforms?",
+        "answer_type": "choice_single",
+        "choices": [
+          "Extensive experience with AWS, Azure, or GCP",
+          "Moderate experience with one or more cloud platforms",
+          "Basic experience with cloud platforms",
+          "No professional cloud platform experience"
+        ],
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "Which programming languages are you proficient in?",
+        "answer_type": "choice_single",
+        "choices": [
+          "Python and TypeScript",
+          "Python or TypeScript plus Java or Go",
+          "Python or TypeScript only",
+          "Other languages only"
+        ],
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "How would you rate your experience with CI/CD pipelines and distributed systems?",
+        "answer_type": "choice_single",
+        "choices": [
+          "Strong hands-on experience with both",
+          "Solid experience with one, basic with the other",
+          "Limited experience with both",
+          "No professional experience"
+        ],
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "How many years of experience do you have with Python?",
+        "answer_type": "number",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "What are your primary skills?",
+        "answer_type": "text",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "What is your Current Fixed salary?",
+        "answer_type": "text",
+        "fill_source": "charvak",
+        "required": true
+      },
+      {
+        "question_text": "What is your Current Variable salary?",
+        "answer_type": "text",
+        "fill_source": "charvak",
+        "required": true
+      },
+      {
+        "question_text": "Do you have an offer in hand?",
+        "answer_type": "yes_no",
+        "fill_source": "charvak",
+        "required": true
+      },
+      {
+        "question_text": "Gender",
+        "answer_type": "choice_single",
+        "choices": [
+          "Male",
+          "Female"
+        ],
+        "fill_source": "charvak",
+        "required": true
+      }
+    ]
+  }
+]
