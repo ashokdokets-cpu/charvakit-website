@@ -79,6 +79,28 @@ class AICourseSystem:
                     issued_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
+            # Session 18: custom-course generator columns
+            cur.execute("""
+                ALTER TABLE charvak_courses
+                    ADD COLUMN IF NOT EXISTS is_custom BOOLEAN DEFAULT FALSE
+            """)
+            cur.execute("""
+                ALTER TABLE charvak_courses
+                    ADD COLUMN IF NOT EXISTS generated_for_email TEXT
+            """)
+            cur.execute("""
+                ALTER TABLE charvak_courses
+                    ADD COLUMN IF NOT EXISTS generated_from_topic TEXT
+            """)
+            cur.execute("""
+                ALTER TABLE charvak_courses
+                    ADD COLUMN IF NOT EXISTS generated_at TIMESTAMP
+            """)
+            cur.execute("""
+                CREATE INDEX IF NOT EXISTS idx_courses_generated_for
+                    ON charvak_courses (generated_for_email)
+                    WHERE generated_for_email IS NOT NULL
+            """)
             conn.commit()
             cur.close()
             conn.close()
@@ -289,6 +311,117 @@ class AICourseSystem:
                 "project": f"Week {i} mini-project"
             })
         return {"course": course_name, "duration_weeks": duration_weeks, "weeks": weeks}
+
+    # ============================================================
+    # Session 18: Custom course generator
+    # ============================================================
+
+    def _slugify_course_name(self, topic: str, level: str) -> str:
+        """Build a descriptive, URL-safe course name from a topic."""
+        import re as _re
+        clean = _re.sub(r"[^\w\s\-]", "", topic).strip()
+        clean = _re.sub(r"\s+", " ", clean)
+        # Truncate to keep course_name under 80 chars
+        if len(clean) > 60:
+            clean = clean[:60].rsplit(" ", 1)[0]
+        lvl = (level or "mid").strip().title()
+        return f"{clean} ({lvl} Intensive)"
+
+    def generate_custom_course(self, email: str, topic: str, level: str = "mid",
+                                weeks: int = 4, role_hint: str = "") -> dict:
+        """
+        Generate a private custom course for one user. Reuses plan_curriculum()
+        but persists a new row to charvak_courses with is_custom=TRUE and
+        generated_for_email=email.
+
+        Idempotent per (email, topic, level): if a matching custom course
+        already exists for this user, returns it without regenerating.
+        """
+        email = (email or "").strip().lower()
+        topic = (topic or "").strip()
+        level = (level or "mid").strip().lower()
+        if not email or not topic:
+            return {"status": "error", "message": "email and topic required"}
+
+        # Clamp weeks to a sane range
+        try:
+            weeks = max(2, min(12, int(weeks)))
+        except Exception:
+            weeks = 4
+
+        self._ensure_tables()
+
+        course_name = self._slugify_course_name(topic, level)
+
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+
+            # Idempotency: same user + same topic + same level = return existing
+            cur.execute("""
+                SELECT course_id, course_name, duration_weeks, description
+                FROM charvak_courses
+                WHERE generated_for_email = %s
+                  AND generated_from_topic = %s
+                  AND level = %s
+                  AND is_custom = TRUE
+                LIMIT 1
+            """, (email, topic, level.title()))
+            existing = cur.fetchone()
+            if existing:
+                cur.close(); conn.close()
+                return {
+                    "status": "success",
+                    "already_existed": True,
+                    "course_id": existing[0],
+                    "course_name": existing[1],
+                    "duration_weeks": existing[2],
+                    "description": existing[3],
+                    "topic": topic,
+                    "level": level,
+                }
+
+            # Generate the curriculum via AI (same path as plan_curriculum)
+            curriculum = self.plan_curriculum(course_name, weeks, level)
+
+            course_id = f"CRS-CUSTOM-{secrets.token_hex(4).upper()}"
+            description = (
+                f"Personalized {weeks}-week course on {topic}, generated "
+                f"specifically for your {level} level gap"
+            )
+            if role_hint:
+                description += f" (for {role_hint})"
+
+            cur.execute("""
+                INSERT INTO charvak_courses
+                    (course_id, course_name, category, duration_weeks, price_inr,
+                     description, level, icon, status,
+                     is_custom, generated_for_email, generated_from_topic, generated_at)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s,
+                        TRUE, %s, %s, NOW())
+            """, (
+                course_id, course_name, "Custom", weeks, 0,
+                description, level.title(), "", "active",
+                email, topic,
+            ))
+            conn.commit()
+            cur.close(); conn.close()
+
+            return {
+                "status": "success",
+                "already_existed": False,
+                "course_id": course_id,
+                "course_name": course_name,
+                "duration_weeks": weeks,
+                "description": description,
+                "topic": topic,
+                "level": level,
+                "curriculum_weeks": len(curriculum.get("weeks", [])) if isinstance(curriculum, dict) else 0,
+            }
+        except Exception as e:
+            logger.error(f"generate_custom_course failed: {e}")
+            return {"status": "error", "message": f"Could not generate course: {e}"}
 
     # ============================================================
     # ENROLLMENT (free)

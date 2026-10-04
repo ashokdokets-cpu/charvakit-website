@@ -7069,6 +7069,99 @@ async def readiness_check_page(request: Request):
     """Public free Role Readiness landing page (Session 17b)."""
     return template_response("readiness-check.html", request, "Free Role Readiness Check")
 
+
+# ============================================================
+# SPRINT 18: CUSTOM COURSE GENERATOR
+# ============================================================
+
+@app.post("/api/ai-course/generate-custom")
+@limiter.limit("10/minute")
+async def api_generate_custom_course(request: Request):
+    """
+    Generate a private custom course for one user, tied to a weak topic
+    from their career assessment. Costs 50 credits (custom_course_generation).
+    Idempotent per (email, topic, level).
+    """
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "Invalid JSON"})
+
+    email = (data.get("email") or "").strip().lower()
+    topic = (data.get("topic") or "").strip()
+    level = (data.get("level") or "mid").strip().lower()
+    role_hint = (data.get("role_hint") or "").strip()
+    try:
+        weeks = int(data.get("weeks") or 4)
+    except Exception:
+        weeks = 4
+
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+    if not topic:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "topic required"})
+
+    try:
+        require_auth_for_email(request, email)
+    except HTTPException:
+        raise
+
+    # Credit guard — idempotency check first to avoid charging on repeat
+    from database import db
+    try:
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT course_id, course_name, duration_weeks, description
+            FROM charvak_courses
+            WHERE generated_for_email = %s
+              AND generated_from_topic = %s
+              AND level = %s
+              AND is_custom = TRUE
+            LIMIT 1
+        """, (email, topic, level.title()))
+        existing = cur.fetchone()
+        cur.close(); conn.close()
+    except Exception as e:
+        logger.error(f"custom course lookup failed: {e}")
+        return JSONResponse(status_code=500, content={"status": "error", "message": "Lookup failed"})
+
+    if existing:
+        # Already generated — return without charging credits
+        from ai_courses import ai_courses
+        enroll = ai_courses.enroll_student(email, existing[1], existing[2], level)
+        return {
+            "status": "success",
+            "already_existed": True,
+            "credits_charged": 0,
+            "course_id": existing[0],
+            "course_name": existing[1],
+            "description": existing[3],
+            "enrollment": enroll,
+        }
+
+    # Charge credits
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "custom_course_generation")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+
+    # Generate
+    from ai_courses import ai_courses
+    result = ai_courses.generate_custom_course(
+        email=email, topic=topic, level=level, weeks=weeks, role_hint=role_hint,
+    )
+    if result.get("status") != "success":
+        return JSONResponse(status_code=500, content=result)
+
+    # Auto-enroll the user in the freshly generated course
+    enroll = ai_courses.enroll_student(
+        email, result["course_name"], result.get("duration_weeks", weeks), level,
+    )
+    result["enrollment"] = enroll
+    result["credits_charged"] = 50
+    return result
+
 @app.get("/ai-assessment", response_class=HTMLResponse)
 async def ai_assessment(request: Request):
     return template_response("ai-assessment.html", request, "AI Career Assessment - Charvak IT Consulting")
