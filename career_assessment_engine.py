@@ -588,7 +588,7 @@ class CareerAssessmentEngine:
             try:
                 z = (readiness_int - benchmark) / 15.0
                 percentile = int(round(50 + 50 * _math.erf(z / _math.sqrt(2))))
-                percentile = max(1, min(99, percentile))
+                percentile = max(5, min(99, percentile))
             except Exception:
                 percentile = 50
 

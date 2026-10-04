@@ -360,7 +360,7 @@ function renderQuestions(assessment) {
         assessment.role + ' in ' + assessment.industry;
     document.getElementById('carSubhead').textContent =
         assessment.level_label + ' \u00b7 ' + fmt + ' \u00b7 ' +
-        assessment.questions.length + ' questions \u00b7 passing: ' + assessment.passing_score + '%';
+        assessment.questions.length + ' questions \u00b7 passing: ' + (assessment.passing_score || 70) + '%';
     document.getElementById('carProgressBadge').textContent =
         '0 / ' + assessment.questions.length;
 
@@ -574,10 +574,12 @@ function renderResult(j) {
 
     document.getElementById('carResultScore').textContent = j.score + '%';
     document.getElementById('carResultDetail').textContent =
-        j.correct_count + ' of ' + j.total_questions + ' correct \u00b7 passing: ' + j.passing_score + '%';
+        j.correct_count + ' of ' + j.total_questions + ' correct \u00b7 passing: ' + (j.passing_score || (window.__lastAssessment || {}).passing_score || (window.__lastAssessment || {}).passing || 70) + '%';
     document.getElementById('carResultMeta').innerHTML =
         '<strong>' + _esc(j.role) + '</strong> in ' + _esc(j.industry) +
-        '<br>' + _esc(j.level) + ' level \u00b7 <span class="text-muted">ID ' + _esc(j.assessment_id) + '</span>';
+        var _a = window.__lastAssessment || _carCurrentAssessment || {};
+
+        '<br>' + _esc(_a.level || j.level || '') + ' level &middot; <span class="text-muted">ID ' + _esc(j.assessment_id) + '</span>';
 
     var bd = j.breakdown || [];
     if (bd.length) {
