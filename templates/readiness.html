@@ -156,8 +156,8 @@
     <!-- Actions -->
     <div class="rd-actions">
       <a class="btn btn-primary" id="rdDownloadPdf" href="#" onclick="rdDownloadPdf(event)">Download PDF</a>
-      <a class="btn btn-outline-secondary" id="rdLinkedIn" href="#" target="_blank" rel="noopener">Add to LinkedIn</a>
-      <a class="btn btn-outline-success" id="rdWhatsApp" href="#" target="_blank" rel="noopener">Share on WhatsApp</a>
+      <a class="btn btn-outline-secondary" id="rdLinkedIn" href="javascript:void(0)" target="_blank" rel="noopener">Add to LinkedIn</a>
+      <a class="btn btn-outline-success" id="rdWhatsApp" href="javascript:void(0)" target="_blank" rel="noopener">Share on WhatsApp</a>
       <a class="btn btn-outline-secondary" href="/readiness-check">Take Another Check</a>
     </div>
 
@@ -244,8 +244,12 @@
 
     renderQR(verifyUrl);
 
-    document.getElementById("rdLinkedIn").href = linkedInUrl(c);
-    document.getElementById("rdWhatsApp").href = whatsAppUrl(c);
+    // Session 21 hotfix: buttons are real <a> anchors with target="_blank"
+    // so mobile Chrome opens them natively without popup blocking.
+    var _li = document.getElementById("rdLinkedIn");
+    if (_li) _li.href = _rdLinkedInUrl(c);
+    var _wa = document.getElementById("rdWhatsApp");
+    if (_wa) _wa.href = _rdWhatsAppUrl(c);
 
     renderSkillChart(c.payload && c.payload.skill_gap ? c.payload.skill_gap : []);
 
@@ -404,6 +408,57 @@
       if (btn) { var orig = btn.textContent; btn.textContent = "Copied"; setTimeout(function() { btn.textContent = orig; }, 1500); }
     } catch (e) {}
   };
+
+  // Canonical share base — never use localhost / IP origins
+  function _rdShareBase() {
+    var origin = window.location.origin || "";
+    if (origin.indexOf("charvakit.com") >= 0) return origin;
+    return "https://www.charvakit.com";
+  }
+
+  window.rdOpenShare = function(ev, type) {
+    if (ev) ev.preventDefault();
+    var c = window.__rdCert;
+    if (!c) { alert("Certificate is still loading. Please try again in a moment."); return; }
+
+    var url = "";
+    if (type === "linkedin") {
+      url = _rdLinkedInUrl(c);
+    } else {
+      url = _rdWhatsAppUrl(c);
+    }
+
+    // window.open must be called synchronously in the click handler.
+    // On mobile Chrome/Safari this is the only reliable way to open
+    // a new tab or an external app (WhatsApp).
+    var w = window.open(url, "_blank", "noopener,noreferrer");
+    if (!w) {
+      // Popup blocked — fall back to same-tab navigation
+      window.location.href = url;
+    }
+  };
+
+  function _rdShareCertUrl(c) {
+    return _rdShareBase() + "/readiness/" + encodeURIComponent(c.certificate_id || "");
+  }
+
+  function _rdLinkedInUrl(c) {
+    var name = "Role Readiness Certificate - " + c.role + " (" + capitalize(c.level) + ")";
+    var org = "Charvak IT Consulting";
+    var url = _rdShareCertUrl(c);
+    return "https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME"
+      + "&name=" + encodeURIComponent(name)
+      + "&organizationName=" + encodeURIComponent(org)
+      + "&certUrl=" + encodeURIComponent(url)
+      + "&certId=" + encodeURIComponent(c.certificate_id || "");
+  }
+
+  function _rdWhatsAppUrl(c) {
+    var msg = "I just got my Verified Role Readiness Score on Charvak! "
+      + c.readiness_score + "/100 for " + c.role + " (" + capitalize(c.level) + "). "
+      + "See my certificate: " + _rdShareCertUrl(c);
+    return "https://wa.me/?text=" + encodeURIComponent(msg);
+  }
 
   window.rdDownloadPdf = function(ev) {
     ev.preventDefault();
