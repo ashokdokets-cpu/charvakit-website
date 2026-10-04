@@ -1,3 +1,18 @@
+## Session 22.5 CLOSED (2026-10-05) - Staffing pipeline launched
+
+7 real CBREX roles loaded to prod (4 NCS urgent, 2 Lenze normal,
+1 Middle East normal). 92 screening questions. HR email notification
+live on every application. See SESSION-CONTEXT.md for full details.
+
+**Session 23 scope:** CBREX package generator (JSON + PDF + ZIP per
+application).
+
+**Alternatives for Session 23:**
+- Admin UI (/admin/client-roles list + role detail)
+- Nav link to /admin/client-roles in admin dropdown
+
+---
+
 ## Session 22 CLOSED (2026-10-05) - Sprint B: /open-roles pipeline
 
 Shipped the full client-staffing pipeline: public role listing, detail
