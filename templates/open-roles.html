@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block title %}Open Roles - Charvak{% endblock %}
+
+{% block content %}
+<section class="py-5" style="background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%); color: #fff;">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-lg-8">
+        <h1 class="display-5 fw-bold mb-2" style="color:#fff;">Open Roles</h1>
+        <p class="lead mb-0" style="color:#c9e4de;">
+          Roles Charvak is actively recruiting for. Apply with your verified
+          readiness certificate and we'll match you with the right client.
+        </p>
+      </div>
+      <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+        <a href="/readiness-check" class="btn btn-outline-light">
+          Get your certificate first
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="py-5">
+  <div class="container">
+
+    <div class="row mb-4 align-items-center">
+      <div class="col-md-6">
+        <h2 class="h4 mb-1">Currently open</h2>
+        <p class="text-muted mb-0 small" id="jobsCount">&mdash;</p>
+      </div>
+      <div class="col-md-6 text-md-end mt-2 mt-md-0">
+        <label class="me-2 small text-muted">Sort:</label>
+        <select id="sortSelect" class="form-select form-select-sm d-inline-block" style="width:auto;">
+          <option value="recent">Most recent</option>
+          <option value="urgent">Urgent first</option>
+          <option value="exp">Experience low &rarr; high</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="loading" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status"></div>
+      <p class="text-muted mt-3 mb-0">Loading open roles...</p>
+    </div>
+
+    <div id="emptyState" class="text-center py-5 d-none">
+      <div style="font-size:3rem;">&#128188;</div>
+      <h4 class="mt-3">No open roles right now</h4>
+      <p class="text-muted">Check back soon &mdash; new roles are posted regularly.</p>
+      <a href="/readiness-check" class="btn btn-outline-primary mt-2">
+        Get your readiness certificate ready
+      </a>
+    </div>
+
+    <div id="errorState" class="alert alert-danger d-none"></div>
+
+    <div id="rolesGrid" class="row g-4"></div>
+
+  </div>
+</section>
+
+<script>
+(function () {
+  var API = "/api/staffing/open";
+  var state = { roles: [], sort: "recent" };
+
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+
+  function expLabel(min, max) {
+    if (!min && !max) return "";
+    if (min && max) return min + "-" + max + " yrs";
+    if (min) return min + "+ yrs";
+    return "up to " + max + " yrs";
+  }
+
+  function budgetLabel(min, max) {
+    if (!min && !max) return "Negotiable";
+    var m = function (n) { return Math.round(n / 100000) + "L"; };
+    if (min && max) return "₹" + m(min) + " - ₹" + m(max);
+    if (min) return "₹" + m(min) + "+";
+    return "up to ₹" + m(max);
+  }
+
+  function sortRoles() {
+    var arr = state.roles.slice();
+    if (state.sort === "urgent") {
+      arr.sort(function (a, b) {
+        var pa = a.priority === "urgent" ? 0 : 1;
+        var pb = b.priority === "urgent" ? 0 : 1;
+        if (pa !== pb) return pa - pb;
+        return new Date(b.created_at) - new Date(a.created_at);
+      });
+    } else if (state.sort === "exp") {
+      arr.sort(function (a, b) {
+        return (a.experience_min_years || 0) - (b.experience_min_years || 0);
+      });
+    } else {
+      arr.sort(function (a, b) {
+        return new Date(b.created_at) - new Date(a.created_at);
+      });
+    }
+    return arr;
+  }
+
+  function render() {
+    var grid = document.getElementById("rolesGrid");
+    var empty = document.getElementById("emptyState");
+    var count = document.getElementById("jobsCount");
+
+    var arr = sortRoles();
+
+    if (!arr.length) {
+      grid.innerHTML = "";
+      empty.classList.remove("d-none");
+      count.textContent = "0 roles";
+      return;
+    }
+    empty.classList.add("d-none");
+    count.textContent = arr.length + " role" + (arr.length === 1 ? "" : "s");
+
+    grid.innerHTML = arr.map(function (r) {
+      var urgentBadge = r.priority === "urgent"
+        ? '<span class="badge bg-danger ms-2">Urgent</span>' : "";
+      var exp = expLabel(r.experience_min_years, r.experience_max_years);
+      var skills = (r.skills_required || "").split(",").slice(0, 6)
+        .map(function (s) { return s.trim(); })
+        .filter(function (s) { return s; })
+        .map(function (s) {
+          return '<span class="badge bg-light text-dark me-1 mb-1">' + esc(s) + "</span>";
+        }).join("");
+
+      return '<div class="col-md-6 col-lg-4">'
+        + '<a href="/open-roles/' + esc(r.role_id) + '" class="text-decoration-none">'
+        +   '<div class="card h-100 shadow-sm border-0 hover-lift">'
+        +     '<div class="card-body d-flex flex-column">'
+        +       '<div class="d-flex justify-content-between align-items-start mb-2">'
+        +         '<h5 class="card-title mb-0 text-dark">' + esc(r.title) + urgentBadge + "</h5>"
+        +       "</div>"
+        +       '<p class="text-muted small mb-2">'
+        +         (r.location ? "&#128205; " + esc(r.location) : "Location flexible")
+        +       "</p>"
+        +       (exp ? '<p class="text-muted small mb-2">&#127891; ' + esc(exp) + "</p>" : "")
+        +       '<p class="text-muted small mb-2">&#128176; ' + esc(budgetLabel(r.budget_min_inr, r.budget_max_inr)) + "</p>"
+        +       '<div class="mt-2 mb-3">' + skills + "</div>"
+        +       '<div class="mt-auto d-flex justify-content-between align-items-center">'
+        +         '<span class="badge" style="background:#e6f4f1;color:#1f5f56;font-weight:600;">'
+        +           esc(r.client_name || "via Charvak")
+        +         "</span>"
+        +         '<span class="small text-primary fw-semibold">View &rarr;</span>'
+        +       "</div>"
+        +     "</div>"
+        +   "</div>"
+        + "</a>"
+        + "</div>";
+    }).join("");
+  }
+
+  function load() {
+    fetch(API)
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        document.getElementById("loading").classList.add("d-none");
+        if (!data || data.status !== "success") {
+          var e = document.getElementById("errorState");
+          e.textContent = (data && data.message) || "Could not load roles.";
+          e.classList.remove("d-none");
+          return;
+        }
+        state.roles = data.roles || [];
+        render();
+      })
+      .catch(function (err) {
+        document.getElementById("loading").classList.add("d-none");
+        var e = document.getElementById("errorState");
+        e.textContent = "Network error: " + err.message;
+        e.classList.remove("d-none");
+      });
+  }
+
+  document.getElementById("sortSelect").addEventListener("change", function (ev) {
+    state.sort = ev.target.value;
+    render();
+  });
+
+  load();
+})();
+</script>
+
+<style>
+.hover-lift { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+.hover-lift:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.08) !important; }
+</style>
+{% endblock %}

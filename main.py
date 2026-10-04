@@ -7211,6 +7211,19 @@ async def readiness_check_page(request: Request):
     return template_response("readiness-check.html", request, "Free Role Readiness Check")
 
 
+@app.get("/open-roles", response_class=HTMLResponse)
+async def open_roles_page(request: Request):
+    """Public listing of open client roles (Session 22b)."""
+    return template_response("open-roles.html", request, "Open Roles - Charvak")
+
+
+@app.get("/open-roles/{role_id}", response_class=HTMLResponse)
+async def open_role_detail_page(request: Request, role_id: str):
+    """Public detail + apply for a specific open role (Session 22b)."""
+    return template_response("open-role-detail.html", request,
+                             f"Role {role_id} - Charvak")
+
+
 # ============================================================
 # SPRINT 22: CLIENT STAFFING PIPELINE (CBREX-mediated)
 # ============================================================
@@ -7319,37 +7332,42 @@ async def api_admin_update_submission_status(request: Request, application_id: s
     )
 
 
-@app.get("/api/jobs/open")
+@app.get("/api/staffing/open")
 @limiter.limit("120/minute")
 async def api_jobs_open(request: Request):
-    """Public: list open client roles. Hides client name for public view."""
+    """Public: list open client roles. Client + vendor identity hidden."""
     from client_staffing_engine import client_staffing_engine
     result = client_staffing_engine.list_roles(status="sourcing")
     if result.get("status") != "success":
         return result
-    # Sanitize: hide client_name on public view, show generic label
+    # Sanitize: no client name, no vendor name. Uniform public label.
     for r in result.get("roles", []):
-        r["client_name"] = "Confidential" if r.get("client_type") == "direct" else (r.get("vendor_portal") or "Client")
+        r["client_name"] = "via Charvak"
+        r["client_type"] = None
+        r["vendor_portal"] = None
     return result
 
 
-@app.get("/api/jobs/{role_id}")
+@app.get("/api/staffing/roles/{role_id}")
 @limiter.limit("120/minute")
 async def api_job_detail(request: Request, role_id: str):
-    """Public: role detail + screening questions (hides client name)."""
+    """Public: role detail + screening questions. Client + vendor hidden."""
     from client_staffing_engine import client_staffing_engine
     result = client_staffing_engine.get_role(role_id)
     if result.get("status") != "success":
         return result
     role = result.get("role", {})
-    if role.get("client_type") == "direct":
-        role["client_name"] = "Confidential"
-    elif role.get("vendor_portal"):
-        role["client_name"] = role["vendor_portal"]
+    role["client_name"] = "via Charvak"
+    role["client_type"] = None
+    role["vendor_portal"] = None
+    role["vendor_role_ref"] = None
+    role["source"] = None
+    role["source_email_ref"] = None
+    role["created_by"] = None
     return result
 
 
-@app.post("/api/jobs/{role_id}/apply")
+@app.post("/api/staffing/roles/{role_id}/apply")
 @limiter.limit("20/minute")
 async def api_job_apply(request: Request, role_id: str):
     """Candidate applies to a role with certificate + screening answers."""
