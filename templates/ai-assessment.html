@@ -645,7 +645,61 @@ function renderResult(j) {
         document.getElementById('carResultMeta').innerHTML += certHtml;
     }
 
+    // Session 19: below-benchmark upgrade CTA
+    if (window.__fromReadinessCheck && (j.score || 0) < 70) {
+        var upHtml = '<div class="card border-0 shadow-sm mt-4" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);">';
+        upHtml += '<div class="card-body p-4">';
+        upHtml += '<h3 class="as-h5 mb-1" style="color:#78350f;">Want a more precise score?</h3>';
+        upHtml += '<p class="text-muted small mb-3">Your 10-question check is a starting point. Take the <strong>15-question Standard check</strong> for a more accurate readiness score.</p>';
+        upHtml += '<button class="btn btn-warning" id="carUpgradeBtn" onclick="upgradeToStandard()">Take Standard Check &mdash; 25 cr</button>';
+        upHtml += '<div id="carUpgradeMsg" class="mt-2"></div>';
+        upHtml += '</div></div>';
+        document.getElementById('carResultMeta').innerHTML += upHtml;
+    }
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function upgradeToStandard() {
+    var a = window.__lastAssessment || _carCurrentAssessment;
+    if (!a) { alert('No active assessment.'); return; }
+    var email = _email();
+    var token = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    if (!email || !token) { window.location.href = '/login?next=/ai-assessment'; return; }
+    var btn = document.getElementById('carUpgradeBtn');
+    var msg = document.getElementById('carUpgradeMsg');
+    if (btn) { btn.disabled = true; btn.textContent = 'Starting...'; }
+    if (msg) msg.innerHTML = '';
+    try {
+        var r = await fetch('/api/career-assessment/start', {
+            method: 'POST',
+            headers: _authHeaders(),
+            body: JSON.stringify({
+                email: email,
+                role: a.role,
+                industry: a.industry,
+                level: a.level,
+                format: a.format || 'mcq',
+                size: 'standard'
+            })
+        });
+        if (r.status === 401) { window.location.href = '/login?next=/ai-assessment'; return; }
+        if (r.status === 402) {
+            if (msg) msg.innerHTML = '<div class="alert alert-warning py-2 px-3 mb-0">Not enough credits (25 needed). <a href="/ai-credits-pricing">Top up</a>.</div>';
+            if (btn) { btn.disabled = false; btn.textContent = 'Take Standard Check - 25 cr'; }
+            return;
+        }
+        var j = await r.json();
+        if (j.status !== 'success') {
+            if (msg) msg.innerHTML = '<div class="alert alert-danger py-2 px-3 mb-0">' + _esc(j.message || 'Could not start check') + '</div>';
+            if (btn) { btn.disabled = false; btn.textContent = 'Take Standard Check - 25 cr'; }
+            return;
+        }
+        window.location.href = '/ai-assessment?aid=' + encodeURIComponent(j.assessment_id) + '&from=readiness-check';
+    } catch (e) {
+        if (msg) msg.innerHTML = '<div class="alert alert-danger py-2 px-3 mb-0">Network error: ' + _esc(e.message) + '</div>';
+        if (btn) { btn.disabled = false; btn.textContent = 'Take Standard Check - 25 cr'; }
+    }
 }
 
 async function generateCertificate() {

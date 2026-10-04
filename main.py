@@ -6903,6 +6903,34 @@ async def api_readiness_generate(request: Request):
         "assessment_id": data.get("assessment_id"),
         "display_name": data.get("display_name"),
     })
+
+    # Session 20: notify the user when a new certificate supersedes an older one.
+    # Non-fatal — a failed email never blocks the certificate response.
+    if (result.get("status") == "success"
+            and result.get("supersedes")
+            and not result.get("already_existed")):
+        try:
+            from database import db as _db
+            _c = _db.get_connection()
+            _cur = _c.cursor()
+            _cur.execute(
+                "SELECT readiness_score FROM charvak_readiness_certificates WHERE certificate_id = %s",
+                (result["supersedes"],)
+            )
+            _old_row = _cur.fetchone()
+            _cur.close(); _c.close()
+            if _old_row:
+                from enhanced_email import enhanced_email as _email
+                _email.send_readiness_improved(
+                    email=email,
+                    old_score=_old_row[0],
+                    new_score=result.get("readiness_score", 0),
+                    new_cert_id=result.get("certificate_id"),
+                    old_cert_id=result.get("supersedes"),
+                )
+        except Exception as _mail_err:
+            logger.warning(f"readiness improvement email failed: {_mail_err}")
+
     return result
 
 
@@ -7002,6 +7030,109 @@ async def api_readiness_list(request: Request, email: str):
     return {"status": "success", "certificates": certs, "count": len(certs)}
 
 
+@app.get("/api/readiness/{certificate_id}/download")
+@limiter.limit("30/minute")
+async def api_readiness_download(request: Request, certificate_id: str,
+                                  email: str = "", token: str = ""):
+    """
+    Session 21: stream a Role Readiness Certificate as a branded PDF.
+    Accepts auth via Authorization header OR ?token= query param
+    (browser <a href> and email links never send headers).
+    """
+    import io
+    from fastapi.responses import StreamingResponse
+
+    certificate_id = (certificate_id or "").strip()
+    if not certificate_id:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "certificate_id required"})
+
+    email = (email or "").strip().lower()
+
+    # Token resolution: header wins, else ?token=, else optional
+    resolved = ""
+    auth_header = request.headers.get("Authorization", "")
+    if auth_header.startswith("Bearer "):
+        resolved = auth_header[7:]
+    elif token:
+        resolved = token
+
+    # If a token was provided, verify it and (optionally) check email match.
+    # If email is provided, the caller MUST present a valid token that owns it.
+    from database import db
+    try:
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT certificate_id, email, role, industry, level, readiness_score,
+                   percentile, benchmark_score, verdict, certificate_hash,
+                   display_name, created_at, source
+            FROM charvak_readiness_certificates
+            WHERE certificate_id = %s
+        """, (certificate_id,))
+        row = cur.fetchone()
+        cur.close(); conn.close()
+    except Exception as e:
+        logger.error(f"readiness download lookup failed: {e}")
+        return JSONResponse(status_code=500, content={"status": "error", "message": "Lookup failed"})
+
+    if not row:
+        return JSONResponse(status_code=404, content={"status": "error", "message": "Certificate not found"})
+
+    owner_email = (row[1] or "").lower()
+
+    # Auth gate: if a token was provided, it must match the owner.
+    # If email was provided, it must match the owner AND a valid token must be present.
+    if email and email != owner_email:
+        return JSONResponse(status_code=403, content={"status": "error", "message": "Not your certificate"})
+    if email:
+        if not resolved:
+            return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+        user = get_current_user(resolved)
+        if not user:
+            return JSONResponse(status_code=401, content={"status": "error", "message": "Invalid or expired token."})
+        caller_email = (user.get("email") or "").lower()
+        if caller_email != owner_email and caller_email not in ADMIN_EMAILS:
+            return JSONResponse(status_code=403, content={"status": "error", "message": "Not your certificate"})
+
+    # Build the certificate dict for the PDF renderer
+    display = row[10] or ""
+    parts = display.split()
+    if len(parts) >= 2:
+        display = f"{parts[0]} {parts[-1][0]}."
+    elif parts:
+        display = parts[0]
+
+    cert = {
+        "certificate_id": row[0],
+        "email": owner_email,
+        "role": row[2],
+        "industry": row[3],
+        "level": row[4],
+        "readiness_score": row[5],
+        "percentile": row[6],
+        "benchmark_score": row[7],
+        "verdict": row[8],
+        "certificate_hash": row[9],
+        "candidate_display": display,
+        "created_at": row[11].isoformat() if row[11] else None,
+        "source": row[12] or "written",
+    }
+
+    try:
+        from pdf_engine import render_readiness_certificate_pdf
+        pdf_bytes = render_readiness_certificate_pdf(cert)
+    except Exception as e:
+        logger.error(f"readiness PDF render failed: {e}")
+        return JSONResponse(status_code=500, content={"status": "error", "message": "Could not render PDF"})
+
+    fname = "Charvak-RoleReadiness-" + certificate_id + ".pdf"
+    return StreamingResponse(
+        io.BytesIO(pdf_bytes),
+        media_type="application/pdf",
+        headers={"Content-Disposition": 'attachment; filename="' + fname + '"'},
+    )
+
+
 @app.get("/api/readiness/{certificate_id}")
 @limiter.limit("60/minute")
 async def api_readiness_get(request: Request, certificate_id: str):
@@ -7017,7 +7148,8 @@ async def api_readiness_get(request: Request, certificate_id: str):
         cur.execute("""
             SELECT certificate_id, role, industry, level, readiness_score,
                    percentile, benchmark_score, verdict, payload_json,
-                   certificate_hash, display_name, created_at, source
+                   certificate_hash, display_name, created_at, source,
+                   supersedes, superseded_by
             FROM charvak_readiness_certificates
             WHERE certificate_id = %s
         """, (certificate_id,))
@@ -7054,6 +7186,8 @@ async def api_readiness_get(request: Request, certificate_id: str):
             "candidate_display": display,
             "created_at": row[11].isoformat() if row[11] else None,
             "source": row[12] or "written",
+            "supersedes": row[13],
+            "superseded_by": row[14],
         }
     }
 

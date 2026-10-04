@@ -151,4 +151,38 @@ class EnhancedEmailSystem:
         })
         return result
 
+    def send_readiness_improved(self, email, old_score, new_score,
+                                new_cert_id, old_cert_id):
+        """Session 20: notify the user when a new certificate supersedes an older one."""
+        import os as _os
+        site = _os.getenv("SITE_URL", "https://www.charvakit.com").rstrip("/")
+        subject = "Your Role Readiness score improved"
+        diff = int(new_score or 0) - int(old_score or 0)
+        sign = "+" if diff >= 0 else ""
+        body_html = (
+            "<h2>Your Role Readiness score improved</h2>"
+            "<p>Hi,</p>"
+            "<p>You just completed a longer assessment and your Role Readiness score went from "
+            "<strong>" + str(old_score) + "</strong> to <strong>" + str(new_score) + "</strong> "
+            "(" + sign + str(diff) + " points).</p>"
+            "<p><a href='" + site + "/readiness/" + str(new_cert_id) + "'>"
+            "View your new certificate</a></p>"
+            "<p>Your earlier certificate is still available at "
+            "<a href='" + site + "/readiness/" + str(old_cert_id) + "'>this link</a>.</p>"
+            "<p>&mdash; The Charvak team</p>"
+        )
+        try:
+            result = self.email_engine.send_email(email, subject, body_html, is_html=True)
+            self.sent_emails.append({
+                "type": "readiness_improved",
+                "email": email,
+                "new_cert_id": new_cert_id,
+                "old_cert_id": old_cert_id,
+                "time": datetime.now().isoformat(),
+            })
+            return result
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+
 enhanced_email = EnhancedEmailSystem()
