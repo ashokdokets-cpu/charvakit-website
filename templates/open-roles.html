@@ -146,9 +146,7 @@
         +         (r.location ? "&#128205; " + esc(r.location) : "Location flexible")
         +       "</p>"
         +       (exp ? '<p class="text-muted small mb-2">&#127891; ' + esc(exp) + "</p>" : "")
-        +       ((r.budget_min_inr || r.budget_max_inr)
-        +         ? '<p class="text-muted small mb-2">&#128176; ' + esc(budgetLabel(r.budget_min_inr, r.budget_max_inr)) + "</p>"
-        +         : "")
+        +       (r.budget_min_inr || r.budget_max_inr ? '<p class="text-muted small mb-2">&#128176; ' + esc(budgetLabel(r.budget_min_inr, r.budget_max_inr)) + "</p>" : "")
         +       '<div class="mt-2 mb-3">' + skills + "</div>"
         +       '<div class="mt-auto d-flex justify-content-between align-items-center">'
         +         '<span class="badge" style="background:#e6f4f1;color:#1f5f56;font-weight:600;">'
