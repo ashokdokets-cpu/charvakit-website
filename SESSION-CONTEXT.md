@@ -71,6 +71,47 @@ charvak_candidate_consents
 - Nav link for /open-roles in base.html
 - Candidate profile edit page (/profile)
 
+
+
+## Session 22.5 + Role Loading CLOSED (2026-10-05)
+
+Extended Session 22 into a full staffing pipeline launch.
+
+**7 real roles loaded to prod:** AI Machine Learning Engineer,
+AI Agent Operations Engineer, Platform Engineer, AI Engineer (all NCS,
+urgent), Lead Firmware Engineer, Application Engineer (Lenze), Sr.
+Mechanical Design Engineer STP (Middle East Group). 92 screening
+questions across all roles.
+
+**New features:**
+- /open-roles  public role listing (works on any device)
+- /open-roles/{id}  detail + apply modal
+- Inline profile collection when candidate has no profile
+- /profile  candidate profile edit
+- /my-applications  candidate's applications list
+- HR email notification on every application to
+  hr@charvakit.com + charvakit@gmail.com
+
+**CBREX name fully stripped:** client_name="via Charvak", all vendor
+fields nulled, budgets hidden from public API + UI, zero CBREX
+strings in DB.
+
+**Commits:** a2620d5, 8b7831f, e97d7ef, 5fb67f2 + seed files
+
+**Verified E2E on prod:** fresh user registration -> apply -> inline
+profile -> green success banner -> email arrives at both inboxes.
+
+**Lesson:** database.py loads .env.local with override=True — silently
+overrides shell env vars. For prod data ops: rename .env.local first,
+use direct psycopg2, restore after.
+
+**Next (Session 23):** CBREX package generator
+- GET /api/admin/applications/{app_id}/cbrex-package (JSON)
+- .pdf (Charvak Evaluation Form via pdf_engine.py)
+- .zip (resume + eval PDF + certificate PDF + consent proof)
+
+---
+
 ---
 
 ---
