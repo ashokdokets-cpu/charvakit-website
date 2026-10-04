@@ -7224,6 +7224,18 @@ async def open_role_detail_page(request: Request, role_id: str):
                              f"Role {role_id} - Charvak")
 
 
+@app.get("/profile", response_class=HTMLResponse)
+async def profile_page(request: Request):
+    """Candidate profile view/edit page (Session 22.5)."""
+    return template_response("profile.html", request, "My Profile - Charvak")
+
+
+@app.get("/my-applications", response_class=HTMLResponse)
+async def my_applications_page(request: Request):
+    """Candidate's list of submitted applications (Session 22.5)."""
+    return template_response("my-applications.html", request, "My Applications - Charvak")
+
+
 # ============================================================
 # SPRINT 22c: CANDIDATE PROFILE UPSERT (Patch 3a)
 # ============================================================
@@ -7244,6 +7256,24 @@ async def api_candidates_me(request: Request, email: str = ""):
 
     from candidates_engine import candidates_engine
     return candidates_engine.get_me(email)
+
+
+@app.get("/api/candidates/me/applications")
+@limiter.limit("60/minute")
+async def api_candidates_my_applications(request: Request, email: str = ""):
+    """List the caller's own applications."""
+    email = (email or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={
+            "status": "error", "message": "Login required.",
+        })
+    try:
+        require_auth_for_email(request, email)
+    except HTTPException:
+        raise
+
+    from candidates_engine import candidates_engine
+    return candidates_engine.list_my_applications(email)
 
 
 @app.post("/api/candidates/upsert")
