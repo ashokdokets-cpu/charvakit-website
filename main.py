@@ -577,7 +577,9 @@ def require_course_enrollment_owner(request: Request, enrollment_id: str) -> Dic
 ADMIN_EMAIL = "charvakit@gmail.com"
 
 # Admin emails ? both can access admin routes
-ADMIN_EMAILS = {"charvakit@gmail.com", "hr@charvakit.com"}
+_admin_env = os.getenv("ADMIN_EMAILS", "")
+ADMIN_EMAILS = {e.strip() for e in _admin_env.split(",") if e.strip()} \
+               or {"charvakit@gmail.com", "hr@charvakit.com"}
 
 def require_admin(request: Request) -> Dict:
     """Authenticate and ensure user is admin."""
@@ -7207,6 +7209,172 @@ async def readiness_page(request: Request, certificate_id: str):
 async def readiness_check_page(request: Request):
     """Public free Role Readiness landing page (Session 17b)."""
     return template_response("readiness-check.html", request, "Free Role Readiness Check")
+
+
+# ============================================================
+# SPRINT 22: CLIENT STAFFING PIPELINE (CBREX-mediated)
+# ============================================================
+
+@app.post("/api/admin/client-roles/create")
+@limiter.limit("30/minute")
+async def api_admin_create_client_role(request: Request):
+    """Admin: create a client role. Fields in body."""
+    try:
+        require_admin(request)
+    except HTTPException:
+        raise
+
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "Invalid JSON"})
+
+    from client_staffing_engine import client_staffing_engine
+    result = client_staffing_engine.create_role(data)
+    if result.get("status") != "success":
+        return JSONResponse(status_code=400, content=result)
+    return result
+
+
+@app.get("/api/admin/client-roles")
+@limiter.limit("60/minute")
+async def api_admin_list_client_roles(request: Request, status: str = "", client_name: str = ""):
+    """Admin: list all open client roles."""
+    try:
+        require_admin(request)
+    except HTTPException:
+        raise
+
+    from client_staffing_engine import client_staffing_engine
+    return client_staffing_engine.list_roles(
+        status=status.strip() or None,
+        client_name=client_name.strip() or None,
+    )
+
+
+@app.get("/api/admin/client-roles/{role_id}")
+@limiter.limit("60/minute")
+async def api_admin_get_client_role(request: Request, role_id: str):
+    """Admin: get role details with screening questions."""
+    try:
+        require_admin(request)
+    except HTTPException:
+        raise
+
+    from client_staffing_engine import client_staffing_engine
+    return client_staffing_engine.get_role(role_id)
+
+
+@app.post("/api/admin/client-roles/{role_id}/screening-questions")
+@limiter.limit("30/minute")
+async def api_admin_set_screening_questions(request: Request, role_id: str):
+    """Admin: replace all screening questions for a role."""
+    try:
+        require_admin(request)
+    except HTTPException:
+        raise
+
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "Invalid JSON"})
+
+    questions = data.get("questions") or []
+    from client_staffing_engine import client_staffing_engine
+    return client_staffing_engine.set_screening_questions(role_id, questions)
+
+
+@app.get("/api/admin/client-roles/{role_id}/applications")
+@limiter.limit("60/minute")
+async def api_admin_list_role_applications(request: Request, role_id: str):
+    """Admin: list applications for a role, ranked by readiness."""
+    try:
+        require_admin(request)
+    except HTTPException:
+        raise
+
+    from client_staffing_engine import client_staffing_engine
+    return client_staffing_engine.list_applications_for_role(role_id)
+
+
+@app.post("/api/admin/applications/{application_id}/submission-status")
+@limiter.limit("60/minute")
+async def api_admin_update_submission_status(request: Request, application_id: str):
+    """Admin: move an application through the submission pipeline."""
+    try:
+        require_admin(request)
+    except HTTPException:
+        raise
+
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "Invalid JSON"})
+
+    status = (data.get("status") or "").strip()
+    recruiter_notes = data.get("recruiter_notes")
+    from client_staffing_engine import client_staffing_engine
+    return client_staffing_engine.update_submission_status(
+        application_id, status, recruiter_notes=recruiter_notes,
+    )
+
+
+@app.get("/api/jobs/open")
+@limiter.limit("120/minute")
+async def api_jobs_open(request: Request):
+    """Public: list open client roles. Hides client name for public view."""
+    from client_staffing_engine import client_staffing_engine
+    result = client_staffing_engine.list_roles(status="sourcing")
+    if result.get("status") != "success":
+        return result
+    # Sanitize: hide client_name on public view, show generic label
+    for r in result.get("roles", []):
+        r["client_name"] = "Confidential" if r.get("client_type") == "direct" else (r.get("vendor_portal") or "Client")
+    return result
+
+
+@app.get("/api/jobs/{role_id}")
+@limiter.limit("120/minute")
+async def api_job_detail(request: Request, role_id: str):
+    """Public: role detail + screening questions (hides client name)."""
+    from client_staffing_engine import client_staffing_engine
+    result = client_staffing_engine.get_role(role_id)
+    if result.get("status") != "success":
+        return result
+    role = result.get("role", {})
+    if role.get("client_type") == "direct":
+        role["client_name"] = "Confidential"
+    elif role.get("vendor_portal"):
+        role["client_name"] = role["vendor_portal"]
+    return result
+
+
+@app.post("/api/jobs/{role_id}/apply")
+@limiter.limit("20/minute")
+async def api_job_apply(request: Request, role_id: str):
+    """Candidate applies to a role with certificate + screening answers."""
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "Invalid JSON"})
+
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+
+    try:
+        require_auth_for_email(request, email)
+    except HTTPException:
+        raise
+
+    # Capture client info for consent
+    data["role_id"] = role_id
+    data["ip_address"] = request.client.host if request.client else None
+    data["user_agent"] = request.headers.get("user-agent")
+
+    from client_staffing_engine import client_staffing_engine
+    return client_staffing_engine.apply_to_role(data)
+
 
 
 # ============================================================
