@@ -1,0 +1,436 @@
+{% extends "base.html" %}
+
+{% block title %}Role Detail - Charvak{% endblock %}
+
+{% block content %}
+<div id="pageRoot" data-role-id="{{ request.path_params.role_id if request.path_params else '' }}"></div>
+
+<div id="loading" class="container py-5 text-center">
+  <div class="spinner-border text-primary" role="status"></div>
+  <p class="text-muted mt-3">Loading role...</p>
+</div>
+
+<div id="errorBox" class="container py-5 d-none">
+  <div class="alert alert-danger">
+    <h5 class="mb-1">Role not found</h5>
+    <p class="mb-3" id="errorMsg">This role may have closed or the link is incorrect.</p>
+    <a href="/open-roles" class="btn btn-outline-primary btn-sm">Browse all open roles</a>
+  </div>
+</div>
+
+<div id="rolePage" class="d-none">
+
+  <section class="py-5" style="background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%); color: #fff;">
+    <div class="container">
+      <a href="/open-roles" class="text-decoration-none small" style="color:#c9e4de;">&larr; All open roles</a>
+      <div class="row align-items-end mt-3">
+        <div class="col-lg-9">
+          <h1 class="display-5 fw-bold mb-2" style="color:#fff;" id="roleTitle">&mdash;</h1>
+          <div class="d-flex flex-wrap gap-2 align-items-center">
+            <span class="badge" style="background:#e6f4f1;color:#1f5f56;font-weight:600;">via Charvak</span>
+            <span id="priorityBadge"></span>
+            <span class="badge bg-light text-dark" id="jobTypeBadge"></span>
+          </div>
+        </div>
+        <div class="col-lg-3 text-lg-end mt-3 mt-lg-0">
+          <button class="btn btn-lg btn-success px-4" id="applyTopBtn">Apply now</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="py-5">
+    <div class="container">
+      <div class="row g-4">
+
+        <div class="col-lg-8">
+
+          <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+              <h4 class="h6 text-uppercase text-muted mb-3">About this role</h4>
+              <div id="jdText" class="text-dark" style="white-space:pre-wrap;"></div>
+            </div>
+          </div>
+
+          <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+              <h4 class="h6 text-uppercase text-muted mb-3">Screening questions</h4>
+              <p class="text-muted small mb-3">When you apply, you'll be asked:</p>
+              <ol id="questionsPreview" class="mb-0 small"></ol>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="col-lg-4">
+
+          <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+              <h5 class="h6 text-uppercase text-muted mb-3">Details</h5>
+              <ul class="list-unstyled mb-0" id="metaList"></ul>
+            </div>
+          </div>
+
+          <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+              <h5 class="h6 text-uppercase text-muted mb-3">Required skills</h5>
+              <div id="skillsBox"></div>
+            </div>
+          </div>
+
+          <div class="card border-0 bg-light">
+            <div class="card-body">
+              <h5 class="h6 mb-2">Ready to apply?</h5>
+              <p class="small text-muted">Attach your verified readiness certificate and answer a short set of screening questions.</p>
+              <button class="btn btn-success w-100" id="applySideBtn">Apply now</button>
+              <a href="/readiness-check" class="btn btn-outline-secondary w-100 mt-2 small">Get certified first</a>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+(function () {
+  var ROLE_ID = (function () {
+    var parts = window.location.pathname.split("/").filter(Boolean);
+    return parts.length ? parts[parts.length - 1] : "";
+  })();
+
+  var state = { role: null, certs: [] };
+
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+
+  function token() {
+    return localStorage.getItem("auth_token") || localStorage.getItem("charvak_token") || "";
+  }
+  function myEmail() {
+    return (localStorage.getItem("userEmail") || "").toLowerCase();
+  }
+
+  function expLabel(min, max) {
+    if (!min && !max) return null;
+    if (min && max) return min + "-" + max + " yrs";
+    if (min) return min + "+ yrs";
+    return "up to " + max + " yrs";
+  }
+  function budgetLabel(min, max) {
+    if (!min && !max) return "Negotiable";
+    var m = function (n) { return Math.round(n / 100000) + "L"; };
+    if (min && max) return "₹" + m(min) + " - ₹" + m(max);
+    if (min) return "₹" + m(min) + "+";
+    return "up to ₹" + m(max);
+  }
+
+  function renderRole(role) {
+    state.role = role;
+
+    document.getElementById("roleTitle").textContent = role.title || "Open Role";
+    document.getElementById("modalRoleTitle").textContent = role.title || "";
+    document.getElementById("jdText").textContent = role.jd_text || "(No description provided)";
+
+    var p = document.getElementById("priorityBadge");
+    if (role.priority === "urgent") p.innerHTML = '<span class="badge bg-danger">Urgent</span>';
+    else p.innerHTML = "";
+
+    document.getElementById("jobTypeBadge").textContent = role.job_type || "Permanent";
+
+    // meta list
+    var meta = [];
+    if (role.location) meta.push(["Location", role.location]);
+    var exp = expLabel(role.experience_min_years, role.experience_max_years);
+    if (exp) meta.push(["Experience", exp]);
+    meta.push(["Budget", budgetLabel(role.budget_min_inr, role.budget_max_inr)]);
+    if (role.submission_deadline) meta.push(["Apply before", role.submission_deadline]);
+    document.getElementById("metaList").innerHTML = meta.map(function (m) {
+      return '<li class="mb-2"><span class="text-muted small d-block">' + esc(m[0])
+        + '</span><span class="fw-semibold">' + esc(m[1]) + "</span></li>";
+    }).join("");
+
+    // skills
+    var skills = (role.skills_required || "").split(",")
+      .map(function (s) { return s.trim(); }).filter(Boolean);
+    document.getElementById("skillsBox").innerHTML = skills.length
+      ? skills.map(function (s) {
+          return '<span class="badge bg-light text-dark me-1 mb-1">' + esc(s) + "</span>";
+        }).join("")
+      : '<span class="text-muted small">Not specified</span>';
+
+    // questions preview
+    var qs = role.screening_questions || [];
+    document.getElementById("questionsPreview").innerHTML = qs.length
+      ? qs.map(function (q) {
+          return '<li class="mb-2">' + esc(q.question_text) + "</li>";
+        }).join("")
+      : '<li class="text-muted">No screening questions for this role.</li>';
+
+    document.getElementById("loading").classList.add("d-none");
+    document.getElementById("rolePage").classList.remove("d-none");
+  }
+
+  function renderQuestionsForm(role) {
+    var qs = role.screening_questions || [];
+    var html = qs.map(function (q) {
+      var id = "q_" + q.question_id;
+      var label = '<label class="form-label small fw-semibold">' + esc(q.question_text)
+        + (q.required ? ' <span class="text-danger">*</span>' : "") + "</label>";
+      var input = "";
+
+      if (q.answer_type === "yes_no") {
+        input = '<div class="btn-group" role="group">'
+          + '<input type="radio" class="btn-check" name="' + id + '" id="' + id + '_y" value="Yes">'
+          + '<label class="btn btn-outline-success btn-sm" for="' + id + '_y">Yes</label>'
+          + '<input type="radio" class="btn-check" name="' + id + '" id="' + id + '_n" value="No">'
+          + '<label class="btn btn-outline-danger btn-sm" for="' + id + '_n">No</label>'
+          + "</div>";
+      } else if (q.answer_type === "choice_single") {
+        var opts = (q.choices || []).map(function (c) {
+          return '<option value="' + esc(c) + '">' + esc(c) + "</option>";
+        }).join("");
+        input = '<select class="form-select form-select-sm" id="' + id + '">'
+          + '<option value="">-- Select --</option>' + opts + "</select>";
+      } else if (q.answer_type === "choice_multi") {
+        var boxes = (q.choices || []).map(function (c, i) {
+          var cid = id + "_" + i;
+          return '<div class="form-check form-check-inline">'
+            + '<input class="form-check-input" type="checkbox" id="' + cid + '" data-qid="' + id + '" value="' + esc(c) + '">'
+            + '<label class="form-check-label small" for="' + cid + '">' + esc(c) + "</label>"
+            + "</div>";
+        }).join("");
+        input = '<div class="border rounded p-2">' + boxes + "</div>";
+      } else if (q.answer_type === "number") {
+        input = '<input type="number" class="form-control form-control-sm" id="' + id + '">';
+      } else if (q.answer_type === "multiline") {
+        input = '<textarea class="form-control form-control-sm" id="' + id + '" rows="3"></textarea>';
+      } else {
+        input = '<input type="text" class="form-control form-control-sm" id="' + id + '">';
+      }
+
+      return '<div class="mb-3" data-qid="' + id + '">' + label + input + "</div>";
+    }).join("");
+
+    document.getElementById("questionsForm").innerHTML = html || '<p class="text-muted small mb-0">No questions for this role.</p>';
+  }
+
+  function collectAnswers(role) {
+    var out = [];
+    (role.screening_questions || []).forEach(function (q) {
+      var id = "q_" + q.question_id;
+      var val = "";
+      if (q.answer_type === "yes_no") {
+        var sel = document.querySelector('input[name="' + id + '"]:checked');
+        val = sel ? sel.value : "";
+      } else if (q.answer_type === "choice_multi") {
+        var checked = document.querySelectorAll('input[data-qid="' + id + '"]:checked');
+        var arr = [];
+        checked.forEach(function (c) { arr.push(c.value); });
+        val = arr.join(", ");
+      } else {
+        var el = document.getElementById(id);
+        val = el ? el.value : "";
+      }
+      out.push({ question_id: q.question_id, answer_text: val });
+    });
+    return out;
+  }
+
+  function loadRole() {
+    fetch("/api/staffing/roles/" + encodeURIComponent(ROLE_ID))
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!data || data.status !== "success" || !data.role) {
+          document.getElementById("loading").classList.add("d-none");
+          var e = document.getElementById("errorBox");
+          document.getElementById("errorMsg").textContent = (data && data.message) || "Could not load this role.";
+          e.classList.remove("d-none");
+          return;
+        }
+        renderRole(data.role);
+        if (token()) loadCerts();
+      })
+      .catch(function (err) {
+        document.getElementById("loading").classList.add("d-none");
+        document.getElementById("errorMsg").textContent = "Network error: " + err.message;
+        document.getElementById("errorBox").classList.remove("d-none");
+      });
+  }
+
+  function loadCerts() {
+    var email = myEmail();
+    if (!email) return;
+    fetch("/api/readiness/list/" + encodeURIComponent(email), {
+      headers: { "Authorization": "Bearer " + token() }
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!data || data.status !== "success") return;
+        state.certs = data.certificates || data.items || [];
+        var sel = document.getElementById("certSelect");
+        sel.innerHTML = '<option value="">-- No certificate (optional) --</option>'
+          + state.certs.map(function (c) {
+              var score = c.readiness_score != null ? c.readiness_score : "?";
+              var lbl = (c.role || "") + " (" + score + "/100)";
+              return '<option value="' + esc(c.certificate_id) + '">' + esc(lbl) + "</option>";
+            }).join("");
+      })
+      .catch(function () { /* silent */ });
+  }
+
+  function openApplyModal() {
+    if (!token()) {
+      window.location.href = "/login?next=" + encodeURIComponent(window.location.pathname);
+      return;
+    }
+    document.getElementById("applyEmail").value = myEmail();
+    document.getElementById("modalError").classList.add("d-none");
+    document.getElementById("consentBox").checked = false;
+    renderQuestionsForm(state.role);
+    var m = new bootstrap.Modal(document.getElementById("applyModal"));
+    m.show();
+  }
+
+  function submitApplication() {
+    var btn = document.getElementById("submitApplyBtn");
+    var err = document.getElementById("modalError");
+    err.classList.add("d-none");
+
+    if (!document.getElementById("consentBox").checked) {
+      err.textContent = "Please tick the consent box to proceed.";
+      err.classList.remove("d-none");
+      return;
+    }
+
+    var answers = collectAnswers(state.role);
+    var empty = [];
+    (state.role.screening_questions || []).forEach(function (q) {
+      if (!q.required) return;
+      var found = answers.find(function (a) { return a.question_id === q.question_id; });
+      if (!found || !found.answer_text.trim()) empty.push(q.question_num);
+    });
+    if (empty.length) {
+      err.textContent = "Please answer required questions: " + empty.join(", ");
+      err.classList.remove("d-none");
+      return;
+    }
+
+    var payload = {
+      email: myEmail(),
+      role_id: ROLE_ID,
+      certificate_id: document.getElementById("certSelect").value || null,
+      screening_answers: answers,
+      consent: true
+    };
+
+    btn.disabled = true;
+    btn.textContent = "Submitting...";
+
+    fetch("/api/staffing/roles/" + encodeURIComponent(ROLE_ID) + "/apply", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token()
+      },
+      body: JSON.stringify(payload)
+    })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
+      .then(function (res) {
+        btn.disabled = false;
+        btn.textContent = "Submit application";
+        if (!res.ok || res.data.status !== "success") {
+          err.textContent = (res.data && res.data.message) || "Could not submit. Please try again.";
+          err.classList.remove("d-none");
+          if ((res.data && res.data.message || "").indexOf("Candidate profile") >= 0) {
+            var info = document.getElementById("modalInfo");
+            info.innerHTML = 'You need a candidate profile first. <a href="/candidate-signup" class="alert-link">Create one here</a>.';
+            info.classList.remove("d-none");
+          }
+          return;
+        }
+        // success
+        var modal = bootstrap.Modal.getInstance(document.getElementById("applyModal"));
+        if (modal) modal.hide();
+        var done = document.createElement("div");
+        done.className = "alert alert-success mt-4";
+        done.innerHTML = '<h5 class="mb-1">Application submitted</h5>'
+          + '<p class="mb-0 small">Charvak will review your application and contact you at '
+          + '<strong>' + esc(myEmail()) + '</strong> if there is a fit.</p>';
+        document.querySelector("section.py-5 .container").prepend(done);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      })
+      .catch(function (ex) {
+        btn.disabled = false;
+        btn.textContent = "Submit application";
+        err.textContent = "Network error: " + ex.message;
+        err.classList.remove("d-none");
+      });
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    document.getElementById("applyTopBtn").addEventListener("click", openApplyModal);
+    document.getElementById("applySideBtn").addEventListener("click", openApplyModal);
+    document.getElementById("submitApplyBtn").addEventListener("click", submitApplication);
+    loadRole();
+  });
+})();
+</script>
+{% endblock %}
+
+{% block modal %}
+<!-- Apply Modal -->
+<div class="modal fade" id="applyModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Apply &mdash; <span id="modalRoleTitle"></span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+
+        <div id="modalError" class="alert alert-danger d-none"></div>
+        <div id="modalInfo" class="alert alert-info d-none"></div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Applying as</label>
+          <input type="text" class="form-control" id="applyEmail" readonly>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Verified readiness certificate</label>
+          <select class="form-select" id="certSelect">
+            <option value="">-- No certificate (optional) --</option>
+          </select>
+          <small class="text-muted">Your certificate strengthens your application and shows up in the CBREX submission.</small>
+        </div>
+
+        <hr>
+
+        <h6 class="text-uppercase text-muted mb-3">Screening questions</h6>
+        <div id="questionsForm"></div>
+
+        <hr>
+
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="consentBox">
+          <label class="form-check-label" for="consentBox">
+            I consent to Charvak sharing my profile, resume, and answers with the client for this role.
+          </label>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-success" id="submitApplyBtn">Submit application</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
