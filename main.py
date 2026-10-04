@@ -7420,11 +7420,13 @@ async def api_jobs_open(request: Request):
     result = client_staffing_engine.list_roles(status="sourcing")
     if result.get("status") != "success":
         return result
-    # Sanitize: no client name, no vendor name. Uniform public label.
+    # Sanitize: no client name, no vendor name, no budget. Uniform public label.
     for r in result.get("roles", []):
         r["client_name"] = "via Charvak"
         r["client_type"] = None
         r["vendor_portal"] = None
+        r["budget_min_inr"] = None
+        r["budget_max_inr"] = None
     return result
 
 
@@ -7444,6 +7446,8 @@ async def api_job_detail(request: Request, role_id: str):
     role["source"] = None
     role["source_email_ref"] = None
     role["created_by"] = None
+    role["budget_min_inr"] = None
+    role["budget_max_inr"] = None
     return result
 
 
