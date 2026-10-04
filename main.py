@@ -7225,6 +7225,56 @@ async def open_role_detail_page(request: Request, role_id: str):
 
 
 # ============================================================
+# SPRINT 22c: CANDIDATE PROFILE UPSERT (Patch 3a)
+# ============================================================
+
+@app.get("/api/candidates/me")
+@limiter.limit("60/minute")
+async def api_candidates_me(request: Request, email: str = ""):
+    """Get the caller's own candidate profile."""
+    email = (email or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={
+            "status": "error", "message": "Login required.",
+        })
+    try:
+        require_auth_for_email(request, email)
+    except HTTPException:
+        raise
+
+    from candidates_engine import candidates_engine
+    return candidates_engine.get_me(email)
+
+
+@app.post("/api/candidates/upsert")
+@limiter.limit("30/minute")
+async def api_candidates_upsert(request: Request):
+    """Create or update the caller's own candidate profile."""
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse(status_code=400, content={
+            "status": "error", "message": "Invalid JSON",
+        })
+
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={
+            "status": "error", "message": "Login required.",
+        })
+    try:
+        require_auth_for_email(request, email)
+    except HTTPException:
+        raise
+
+    from candidates_engine import candidates_engine
+    result = candidates_engine.upsert(data)
+    if result.get("status") != "success":
+        return JSONResponse(status_code=400, content=result)
+    return result
+
+
+# ============================================================
 # SPRINT 22: CLIENT STAFFING PIPELINE (CBREX-mediated)
 # ============================================================
 
