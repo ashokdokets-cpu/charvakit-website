@@ -7390,6 +7390,19 @@ async def api_admin_list_role_applications(request: Request, role_id: str):
     return client_staffing_engine.list_applications_for_role(role_id)
 
 
+@app.get("/api/admin/applications/{application_id}/cbrex-package")
+@limiter.limit("30/minute")
+async def api_admin_cbrex_package(request: Request, application_id: str):
+    """Admin: build a CBREX-ready JSON package for an application (Session 23)."""
+    try:
+        require_admin(request)
+    except HTTPException:
+        raise
+
+    from client_staffing_engine import client_staffing_engine
+    return client_staffing_engine.build_cbrex_package(application_id)
+
+
 @app.post("/api/admin/applications/{application_id}/submission-status")
 @limiter.limit("60/minute")
 async def api_admin_update_submission_status(request: Request, application_id: str):
