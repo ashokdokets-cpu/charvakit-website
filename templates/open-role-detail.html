@@ -148,7 +148,10 @@
     if (role.location) meta.push(["Location", role.location]);
     var exp = expLabel(role.experience_min_years, role.experience_max_years);
     if (exp) meta.push(["Experience", exp]);
-    meta.push(["Budget", budgetLabel(role.budget_min_inr, role.budget_max_inr)]);
+    // Only show budget if the API actually returned one (we hide it publicly)
+    if (role.budget_min_inr || role.budget_max_inr) {
+      meta.push(["Budget", budgetLabel(role.budget_min_inr, role.budget_max_inr)]);
+    }
     if (role.submission_deadline) meta.push(["Apply before", role.submission_deadline]);
     document.getElementById("metaList").innerHTML = meta.map(function (m) {
       return '<li class="mb-2"><span class="text-muted small d-block">' + esc(m[0])
