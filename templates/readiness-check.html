@@ -1,0 +1,292 @@
+{% extends "base.html" %}
+{% block title %}Free Role Readiness Check{% endblock %}
+{% block content %}
+<style>
+  .rc-hero { background: linear-gradient(135deg, #3ba591 0%, #2a8070 100%); color: #fff; padding: 64px 0 48px; }
+  .rc-hero h1 { font-weight: 800; font-size: 2.4rem; margin: 0 0 12px; letter-spacing: -0.5px; }
+  .rc-hero .rc-sub { font-size: 1.1rem; opacity: 0.95; margin: 0 auto 8px; max-width: 640px; }
+  .rc-hero .rc-badge { display: inline-block; background: rgba(255,255,255,0.18); padding: 6px 16px; border-radius: 999px; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 16px; }
+  .rc-wrap { max-width: 720px; margin: 0 auto; padding: 0 16px 60px; }
+  .rc-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: -32px 0 32px; position: relative; z-index: 2; }
+  .rc-step { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 20px 16px; text-align: center; box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+  .rc-step-num { display: inline-flex; width: 32px; height: 32px; align-items: center; justify-content: center; background: #3ba591; color: #fff; border-radius: 50%; font-weight: 700; font-size: 0.9rem; margin-bottom: 10px; }
+  .rc-step-title { font-weight: 700; font-size: 0.95rem; color: #111827; margin: 0 0 4px; }
+  .rc-step-desc { font-size: 0.8rem; color: #6b7280; margin: 0; line-height: 1.4; }
+  .rc-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 32px 28px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+  .rc-card h2 { font-weight: 800; font-size: 1.3rem; margin: 0 0 6px; color: #111827; }
+  .rc-card .rc-card-sub { color: #6b7280; font-size: 0.9rem; margin: 0 0 24px; }
+  .rc-label { display: block; font-size: 0.85rem; font-weight: 600; color: #374151; margin-bottom: 6px; }
+  .rc-select { width: 100%; padding: 12px 14px; border: 1px solid #d1d5db; border-radius: 10px; font-size: 0.95rem; background: #fff; color: #111827; margin-bottom: 16px; }
+  .rc-select:focus { outline: none; border-color: #3ba591; box-shadow: 0 0 0 3px rgba(59,165,145,0.15); }
+  .rc-btn { width: 100%; padding: 14px 20px; background: #3ba591; color: #fff; border: none; border-radius: 10px; font-weight: 700; font-size: 1rem; cursor: pointer; transition: background 0.15s; }
+  .rc-btn:hover { background: #2a8070; }
+  .rc-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  .rc-meta { text-align: center; color: #6b7280; font-size: 0.8rem; margin-top: 12px; }
+  .rc-info { margin-top: 40px; }
+  .rc-info h3 { font-weight: 700; font-size: 1.1rem; color: #111827; margin: 0 0 12px; }
+  .rc-info p { color: #4b5563; font-size: 0.92rem; line-height: 1.6; margin: 0 0 14px; }
+  .rc-faq { margin-top: 40px; }
+  .rc-faq details { background: #f9fafb; border-radius: 10px; margin-bottom: 8px; }
+  .rc-faq summary { padding: 14px 18px; font-weight: 600; font-size: 0.92rem; color: #111827; cursor: pointer; }
+  .rc-faq summary::marker { color: #3ba591; }
+  .rc-faq .rc-faq-body { padding: 0 18px 16px; color: #4b5563; font-size: 0.88rem; line-height: 1.6; }
+  .rc-err { background: #fee2e2; color: #991b1b; padding: 12px 16px; border-radius: 8px; font-size: 0.9rem; margin-bottom: 16px; }
+  @media (max-width: 640px) {
+    .rc-hero h1 { font-size: 1.75rem; }
+    .rc-steps { grid-template-columns: 1fr; }
+    .rc-card { padding: 24px 18px; }
+  }
+</style>
+
+<div class="rc-hero">
+  <div class="container text-center">
+    <div class="rc-badge">Free - No credit card needed</div>
+    <h1>Get your Verified Role Readiness Score</h1>
+    <p class="rc-sub">10 minutes. One shareable certificate. Benchmark your skills against real market data.</p>
+  </div>
+</div>
+
+<div class="rc-wrap">
+
+  <!-- Steps -->
+  <div class="rc-steps">
+    <div class="rc-step">
+      <div class="rc-step-num">1</div>
+      <div class="rc-step-title">Pick your target</div>
+      <p class="rc-step-desc">Role, industry, and level. Takes 10 seconds.</p>
+    </div>
+    <div class="rc-step">
+      <div class="rc-step-num">2</div>
+      <div class="rc-step-title">Answer 10 questions</div>
+      <p class="rc-step-desc">Real scenarios calibrated to your target. No trick questions.</p>
+    </div>
+    <div class="rc-step">
+      <div class="rc-step-num">3</div>
+      <div class="rc-step-title">Share your certificate</div>
+      <p class="rc-step-desc">A public URL for LinkedIn, resumes, and employers.</p>
+    </div>
+  </div>
+
+  <!-- Form -->
+  <div class="rc-card">
+    <h2>Start your free check</h2>
+    <p class="rc-card-sub">Choose a target role. We will build a 10-question assessment.</p>
+
+    <div id="rcError" class="rc-err" style="display:none;"></div>
+
+    <label class="rc-label" for="rcRole">Target role</label>
+    <select id="rcRole" class="rc-select"><option value="">Loading roles...</option></select>
+
+    <label class="rc-label" for="rcIndustry">Industry</label>
+    <select id="rcIndustry" class="rc-select"><option value="">Loading industries...</option></select>
+
+    <label class="rc-label" for="rcLevel">Experience level</label>
+    <select id="rcLevel" class="rc-select"><option value="">Loading levels...</option></select>
+
+    <button id="rcStartBtn" class="rc-btn" onclick="rcStart(event)" disabled>Loading...</button>
+    <p class="rc-meta">No payment. No commitment. Just your score.</p>
+  </div>
+
+  <!-- Info -->
+  <div class="rc-info">
+    <h3>What is a Role Readiness Score?</h3>
+    <p>A Role Readiness Score benchmarks your current skills against real market data for a specific role x industry x level combination. Unlike a raw MCQ score, it accounts for topic coverage, AI-scored depth, and your learning trajectory over time.</p>
+    <p>The output is a public, verifiable certificate with an HMAC-signed hash. Any employer can check its authenticity with a single URL. No login required to view, no paywall to share.</p>
+  </div>
+
+  <!-- FAQ -->
+  <div class="rc-faq">
+    <h3>Common questions</h3>
+    <details>
+      <summary>Is this really free?</summary>
+      <div class="rc-faq-body">Yes. The 10-question quick check and the resulting certificate are completely free. No credit card, no account upgrade. Premium reports and matched jobs are paid add-ons, but the readiness certificate itself is free forever.</div>
+    </details>
+    <details>
+      <summary>How long does it take?</summary>
+      <div class="rc-faq-body">About 5-10 minutes end to end. The assessment is 10 questions. The certificate generates instantly after you answer.</div>
+    </details>
+    <details>
+      <summary>Who can see my certificate?</summary>
+      <div class="rc-faq-body">Only people you share the URL with. The certificate page shows your first name and last initial, your target role, and your score. It never exposes your email or full name.</div>
+    </details>
+    <details>
+      <summary>Can I retake the check?</summary>
+      <div class="rc-faq-body">Yes, anytime. Each retake produces a new certificate, and your score history accumulates. Improvement over time is a good signal employers like to see.</div>
+    </details>
+  </div>
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+  var ROLES = [];
+  var INDUSTRIES = [];
+  var LEVELS = [];
+  var READY = false;
+
+  document.addEventListener("DOMContentLoaded", loadOptions);
+
+  function loadOptions() {
+    fetch("/api/career-assessment/options")
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (!data || data.status !== "success") throw new Error("bad options");
+        ROLES = data.roles || [];
+        INDUSTRIES = data.industries || [];
+        LEVELS = data.levels || [];
+        fillSelect("rcRole", ROLES, "role");
+        fillSelect("rcIndustry", INDUSTRIES, "industry");
+        fillSelect("rcLevel", LEVELS, "level");
+        // Sensible defaults
+        pickDefault("rcLevel", "mid");
+        READY = true;
+        var btn = document.getElementById("rcStartBtn");
+        btn.disabled = false;
+        btn.textContent = "Start Free Check";
+      })
+      .catch(function(err) {
+        showError("Could not load options. Please refresh.");
+        console.error(err);
+      });
+  }
+
+  function fillSelect(id, items, key) {
+    var el = document.getElementById(id);
+    el.innerHTML = '<option value="">Select...</option>';
+    var flat = flattenItems(items);
+    for (var i = 0; i < flat.length; i++) {
+      var it = flat[i];
+      var value = (typeof it === "object" && it !== null) ? (it[key] || it.key || it.name || it.value) : it;
+      var label = (typeof it === "object" && it !== null) ? (it.label || it.name || it.value || value) : it;
+      if (!value) continue;
+      var opt = document.createElement("option");
+      opt.value = value;
+      opt.textContent = label;
+      el.appendChild(opt);
+    }
+  }
+
+  function flattenItems(items) {
+    if (Array.isArray(items)) return items;
+    if (items && typeof items === "object") {
+      var out = [];
+      for (var key in items) {
+        if (!Object.prototype.hasOwnProperty.call(items, key)) continue;
+        var v = items[key];
+        if (Array.isArray(v)) {
+          for (var i = 0; i < v.length; i++) {
+            var item = v[i];
+            if (typeof item === "string") {
+              out.push(item);
+            } else if (item && typeof item === "object") {
+              out.push(item);
+            }
+          }
+        }
+      }
+      return out;
+    }
+    return [];
+  }
+
+  function pickDefault(id, wantKey) {
+    var el = document.getElementById(id);
+    for (var i = 0; i < el.options.length; i++) {
+      if (el.options[i].value === wantKey) { el.selectedIndex = i; return; }
+    }
+  }
+
+  function showError(msg) {
+    var el = document.getElementById("rcError");
+    el.textContent = msg;
+    el.style.display = "block";
+  }
+
+  function hideError() {
+    document.getElementById("rcError").style.display = "none";
+  }
+
+  window.rcStart = function(ev) {
+    if (ev) ev.preventDefault();
+    hideError();
+
+    var role = document.getElementById("rcRole").value;
+    var industry = document.getElementById("rcIndustry").value;
+    var level = document.getElementById("rcLevel").value;
+    if (!role || !industry || !level) {
+      showError("Please choose a role, industry, and level.");
+      return;
+    }
+
+    var token = localStorage.getItem("auth_token") || localStorage.getItem("charvak_token") || "";
+    var email = localStorage.getItem("userEmail") || "";
+    if (!token || !email) {
+      // Login gate
+      window.location.href = "/login?next=" + encodeURIComponent("/readiness-check?role=" + role + "&industry=" + industry + "&level=" + level);
+      return;
+    }
+
+    var btn = document.getElementById("rcStartBtn");
+    btn.disabled = true;
+    btn.textContent = "Starting...";
+
+    fetch("/api/career-assessment/start", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+      },
+      body: JSON.stringify({
+        email: email,
+        role: role,
+        industry: industry,
+        level: level,
+        format: "mcq",
+        size: "quick"
+      })
+    })
+    .then(function(r) {
+      if (r.status === 401) {
+        window.location.href = "/login?next=/readiness-check";
+        return null;
+      }
+      if (r.status === 402) {
+        showError("Not enough credits. Visit /ai-credits-pricing to top up.");
+        btn.disabled = false;
+        btn.textContent = "Start Free Check";
+        return null;
+      }
+      return r.json();
+    })
+    .then(function(data) {
+      if (!data) return;
+      if (data.status !== "success") {
+        showError(data.message || "Could not start assessment.");
+        btn.disabled = false;
+        btn.textContent = "Start Free Check";
+        return;
+      }
+      // Redirect to the existing assessment page with the assessment_id
+      window.location.href = "/ai-assessment?aid=" + encodeURIComponent(data.assessment_id) + "&from=readiness-check";
+    })
+    .catch(function(err) {
+      showError("Network error. Please try again.");
+      console.error(err);
+      btn.disabled = false;
+      btn.textContent = "Start Free Check";
+    });
+  };
+
+  // Preselect from URL params if the user came back from login
+  var params = new URLSearchParams(window.location.search);
+  if (params.get("role")) setTimeout(function() { try { document.getElementById("rcRole").value = params.get("role"); } catch(e){} }, 800);
+  if (params.get("industry")) setTimeout(function() { try { document.getElementById("rcIndustry").value = params.get("industry"); } catch(e){} }, 800);
+  if (params.get("level")) setTimeout(function() { try { document.getElementById("rcLevel").value = params.get("level"); } catch(e){} }, 800);
+
+})();
+</script>
+{% endblock %}
+
