@@ -1,0 +1,264 @@
+[
+  {
+    "client_name": "LENZE MECHATRONICS",
+    "client_type": "partner",
+    "title": "Lead Firmware Engineer",
+    "location": "Pune, Maharashtra",
+    "experience_min_years": 12,
+    "experience_max_years": 18,
+    "skills_required": "Embedded C, RTOS, Bare-Metal Firmware, MCU/SoC Hardware Design, Analog/Digital Circuits, PCB Layout Review, EMC/EMI Debugging, JTAG/SWD, Bootloader, EtherCAT, CAN, PROFINET, IO-Link, Servo Drives, VFDs, Motion Controllers",
+    "budget_min_inr": 3000000,
+    "budget_max_inr": 3500000,
+    "job_type": "Permanent",
+    "priority": "normal",
+    "jd_text": "We are looking for a hands-on Lead Firmware Engineer to lead and grow our Embedded Hardware and Embedded Firmware teams, taking end-to-end responsibility for technical direction, architecture, execution quality, and delivery of embedded electronics used in industrial drives, servo inverters, frequency inverters, and motion/safety products.\n\nProducts: Servo drives, VFDs, motion controllers, safety drives.\n\nMUST-HAVES:\n- BE/ME in Electrical, Electronics, Computer Engineering, Mechatronics, or closely related field\n- 12+ years in embedded systems development\n- Strong background in embedded firmware AND hardware (70% FW / 30% HW split acceptable)\n- Currently Technical Manager / System Architect / Technical Lead, managing 4-6 engineers, still hands-on (writes code, does design/code reviews)\n- Strong embedded C, RTOS or bare-metal\n- MCU/SoC hardware design, analog/digital circuits\n- PCB layout review + EMC/EMI debugging\n- Lab skills: oscilloscope, logic analyzer, JTAG/SWD\n- Bootloader + firmware update experience\n- Industrial comms: EtherCAT, CAN, PROFINET, or IO-Link\n- Domain mandatory: Power Electronics, Industrial Drives, Motion Control, Servo, Frequency Inverter\n- Customer-facing with EU/US stakeholders\n- Notice: Immediate to 30 days preferred (up to 2 months)\n- Stable career (min 3 years per company)",
+    "questions": [
+      {
+        "question_text": "Do you have 12+ years of professional experience as a Firmware Engineer?",
+        "answer_type": "yes_no",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "Do you have hands-on laboratory experience with oscilloscopes, logic analyzers, and power analysis tools?",
+        "answer_type": "yes_no",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "Have you developed real-time firmware using either RTOS or bare metal programming?",
+        "answer_type": "yes_no",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "Do you have practical experience with industrial communication interfaces?",
+        "answer_type": "yes_no",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "Are you proficient in debugging firmware using JTAG/SWD and trace tools?",
+        "answer_type": "yes_no",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "Candidate's LinkedIn URL",
+        "answer_type": "text",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "What is your notice period? (If serving notice, specify LWD.)",
+        "answer_type": "text",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "Rate candidate's English communication on a scale of 1 to 10.",
+        "answer_type": "number",
+        "fill_source": "charvak",
+        "required": true
+      },
+      {
+        "question_text": "Is the candidate currently residing in Pune? If not, what is the relocation motivation?",
+        "answer_type": "multiline",
+        "fill_source": "charvak",
+        "required": true
+      },
+      {
+        "question_text": "Is the candidate willing to attend a face-to-face interview?",
+        "answer_type": "yes_no",
+        "fill_source": "candidate",
+        "required": true
+      }
+    ]
+  },
+  {
+    "client_name": "MIDDLE EAST GROUP HOLDING",
+    "client_type": "partner",
+    "title": "Sr. Mechanical Design Engineer - STP Projects",
+    "location": "Chennai, Tamil Nadu",
+    "experience_min_years": 8,
+    "experience_max_years": 15,
+    "skills_required": "Mechanical System Design, STP Design, Equipment Selection, Engineering Calculations, AutoCAD, SolidWorks, Autodesk Inventor, P&ID, GA Drawings, Project Coordination",
+    "budget_min_inr": 1000000,
+    "budget_max_inr": 1800000,
+    "job_type": "Permanent",
+    "priority": "normal",
+    "jd_text": "A Mechanical Design Engineer working in a sewerage treatment plant (STP) is responsible for designing, selecting, and supporting the installation of mechanical equipment used to treat wastewater safely and efficiently.\n\nResponsibilities include: design of mechanical systems (pumps, blowers, mixers, screens, sludge handling, aeration); equipment selection; engineering calculations (pump sizing, pipe sizing, flow rates, pressure losses, power); preparation and review of P&ID, GA drawings, equipment layouts; coordination with civil, electrical, and process teams; site support during installation, commissioning, and testing.\n\nMUST-HAVES:\n- Mechanical Engineering background\n- 5+ years designing mechanical systems for STP projects\n- 5+ years in equipment selection and engineering calculations for STP\n- Experience providing technical support during installation, commissioning, testing of STP\n- Currently working as a mechanical design engineer for STP projects\n- Notice period less than 60 days\n- Good communication and project management skills",
+    "questions": [
+      {
+        "question_text": "Do you have 5+ years of experience designing mechanical systems for STP (Sewage Treatment Plant) projects?",
+        "answer_type": "yes_no",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "Do you have 5+ years of experience in equipment selection and engineering calculations for STP projects?",
+        "answer_type": "yes_no",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "Are you currently working as a mechanical design engineer for STP projects?",
+        "answer_type": "yes_no",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "Do you have a Mechanical Engineering background?",
+        "answer_type": "yes_no",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "How many years of experience do you have providing technical support during installation, commissioning, and testing of STP projects?",
+        "answer_type": "choice_single",
+        "choices": [
+          "Less than 2 years",
+          "2-4 years",
+          "5+ years",
+          "No experience"
+        ],
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "How would you rate your project management skills?",
+        "answer_type": "choice_single",
+        "choices": [
+          "Excellent",
+          "Good",
+          "Average",
+          "Below Average"
+        ],
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "How would you rate your communication skills?",
+        "answer_type": "choice_single",
+        "choices": [
+          "Excellent",
+          "Good",
+          "Average",
+          "Below Average"
+        ],
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "What is your current role?",
+        "answer_type": "choice_single",
+        "choices": [
+          "Mechanical Design Engineer for STP projects",
+          "Mechanical Design Engineer for other projects",
+          "Other engineering role",
+          "Non-engineering role"
+        ],
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "What is your notice period?",
+        "answer_type": "text",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "Rate candidate's English communication on a scale of 1 to 10.",
+        "answer_type": "number",
+        "fill_source": "charvak",
+        "required": true
+      }
+    ]
+  },
+  {
+    "client_name": "LENZE MECHATRONICS",
+    "client_type": "partner",
+    "title": "Application Engineer - Motion Control & Automation",
+    "location": "Bangalore, Delhi",
+    "experience_min_years": 5,
+    "experience_max_years": 8,
+    "skills_required": "Motion Control Systems, Servo Drives, VFDs, PLC Programming, Industrial Automation, Mechatronics, Machine Automation, Industrial Communication Protocols, Commissioning, Hardware Diagnostics",
+    "budget_min_inr": 1000000,
+    "budget_max_inr": 1200000,
+    "job_type": "Permanent",
+    "priority": "normal",
+    "jd_text": "Application Engineer - Motion Control & Automation. Travel: customer-facing role with regular site visits across India (up to 80% travel). 3 positions open: 2 in Delhi and 1 in Bengaluru.\n\nResponsibilities: architect machine automation solutions using servo drives, motion controllers, PLCs, industrial networks; lead technical discussions with customers; develop and integrate automation software; commission and validate live systems; troubleshoot complex automation issues.\n\nMUST-HAVES:\n- BE in Electrical, Electronics & Telecommunication, Instrumentation, Mechatronics, or Mechanical Engineering\n- 5-8 years in Industrial Automation, Motion Control, Application Engineering, or Machine Automation\n- Knowledge of Electronics, Drives, PLC, servo and motion controllers\n- Hands-on commissioning, programming, hardware diagnostics, root-cause analysis, technical troubleshooting, report generation\n- Comfortable with extensive customer interaction and travel (up to 80%)\n- Notice: Immediate to 30 days\n- Stable career (min 2-3 years per company)",
+    "questions": [
+      {
+        "question_text": "Do you have a degree in Electrical Engineering, Electronics & Telecommunication Engineering, Instrumentation Engineering, Mechatronics Engineering, or Mechanical Engineering?",
+        "answer_type": "yes_no",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "Do you have 5-8 years of hands-on experience in Industrial Automation, Motion Control, Application Engineering, or Machine Automation?",
+        "answer_type": "yes_no",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "Do you have practical experience with PLC programming, servo controllers, and motion control systems?",
+        "answer_type": "yes_no",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "Are you comfortable with extensive customer interaction and travel requirements of up to 80%?",
+        "answer_type": "yes_no",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "Do you have hands-on experience in commissioning, hardware diagnostics, and technical troubleshooting?",
+        "answer_type": "yes_no",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "Which drive and controller technologies have you worked with?",
+        "answer_type": "text",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "Rate candidate's English communication on a scale of 1 to 10.",
+        "answer_type": "number",
+        "fill_source": "charvak",
+        "required": true
+      },
+      {
+        "question_text": "What is your notice period? (Mention LWD if immediate joiner or serving notice.)",
+        "answer_type": "text",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "Are you comfortable attending an in-person interview? (Travel expenses will not be reimbursed.)",
+        "answer_type": "yes_no",
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "What is your preferred location?",
+        "answer_type": "choice_single",
+        "choices": [
+          "Bengaluru",
+          "Delhi"
+        ],
+        "fill_source": "candidate",
+        "required": true
+      },
+      {
+        "question_text": "Candidate's LinkedIn URL",
+        "answer_type": "text",
+        "fill_source": "candidate",
+        "required": true
+      }
+    ]
+  }
+]
