@@ -1,5 +1,34 @@
 # Charvak — Commitment Tracker
 
+## Sprint A SHIPPED — Role Readiness Certificate (2026-10-04)
+
+The free, shareable Role Readiness Certificate is live end-to-end.
+7 commits: 14b2bb8 through the current HEAD.
+
+**Live routes:** /readiness-check, /readiness/{id}, /api/readiness/*
+**Tables:** charvak_readiness_certificates
+**Engine:** career_assessment_engine.compute_role_readiness()
+**Verified:** full flow works on local, 5 certificates generated
+
+### Follow-ups flagged for Session 18
+
+1. **Custom-course generator** — the learning path currently links to
+   external providers (Khan Academy, Coursera). This sends users OFF
+   Charvak. Replace with an on-platform custom course generator:
+   when no Charvak course matches a weak topic, offer to generate one
+   in-house (same shape as the 25-course catalog). No external links.
+   Effort: 1.5-2 sessions. Impact: keeps users on-platform, adds
+   revenue, closes the learning loop with a Charvak certificate.
+
+2. **Size upgrade CTA** — the free quick check is 10 questions. On
+   below-benchmark results, add a CTA to upgrade to a 20-question
+   Standard check. Converts curiosity into revenue. Effort: 1 session.
+
+3. **Sprint B — /my-jobs** — verified job matching. The certificate
+   becomes useful when it unlocks matched jobs. Effort: 2 sessions.
+
+---
+
 ## STRATEGIC GAPS - from COMPETITIVE-STRATEGY.md (2026-10-04)
 
 Four critical gaps identified at the close of Session 16. See

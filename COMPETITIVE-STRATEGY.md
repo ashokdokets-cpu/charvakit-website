@@ -420,7 +420,7 @@ voice certificates that nobody shares and no jobs to apply to.
 
 | Sprint | Deliverable | Effort | Depends on |
 |---|---|---|---|
-| **A** | Free Role Readiness Certificate + shareable URL at `/readiness/{id}` | 2-3 sessions | Nothing |
+| **A** | Free Role Readiness Certificate + shareable URL at `/readiness/{id}` | 2-3 sessions | **SHIPPED 2026-10-04** |
 | **B** | `/my-jobs` - verified job matching; applications carry certificate_id | 2 sessions | Sprint A live |
 | **C** | `/outcomes` - public anonymized data story | 1-2 sessions | Sprint B has >=50 apps |
 | **D** | Voice readiness check in 5 Indian languages | 3-5 sessions | Sprint A live |
