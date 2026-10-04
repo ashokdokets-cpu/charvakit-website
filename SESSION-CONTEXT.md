@@ -140,6 +140,46 @@ Prod uses vouchai on Render Postgres.
 
 ---
 
+## Session 17 COMPLETE — Sprint A shipped (2026-10-04)
+
+Sprint A of the Proof Layer framework is live. The free Role Readiness
+Certificate is end-to-end: landing page -> assessment -> shareable
+certificate URL with HMAC verification.
+
+**7 commits shipped:**
+- 14b2bb8  feat(readiness): Sprint A backend (engine + 5 routes + benchmarks)
+- 4fc158e  feat(readiness): readiness.html (public certificate page)
+- 2c09632  feat(readiness): readiness-check.html + route (public landing)
+- 87aa95a  feat(readiness): ai-assessment deep-link + certificate CTA
+- 814db5e  fix(readiness): percentile floor 5..99, level/passing fallbacks, OG tags
+- <next>   fix(readiness): move var _a out of string concat
+
+**Live at:**
+- GET /readiness-check     — public free landing
+- GET /readiness/{id}      — public shareable certificate
+- GET /api/readiness/{id}  — public read
+- GET /api/readiness/verify/{hash}  — public verification
+- POST /api/readiness/generate      — auth-gated certificate creation
+- GET /api/readiness/list/{email}   — auth-gated list
+
+**Verified E2E on local:**
+- Dropdowns populate [107, 67, 8] for role/industry/level
+- Free check start -> deep-link -> questions skip Step 1
+- Answer -> result page (with green certificate CTA)
+- Get My Certificate -> /readiness/RDC-XXXX
+- Certificate renders with score, benchmark, percentile (floor 5), hash
+- Verify URL returns {valid: true}
+- Tampered hash returns {valid: false}
+
+**Session 18 scope (next):**
+1. Custom-course generator (replace external links with Charvak-hosted
+   custom courses in learning paths)
+2. Size upgrade CTA on quick-check results (10 -> 20 questions for
+   below-benchmark users)
+3. Sprint B kickoff: /my-jobs verified matching
+
+---
+
 ## Session 17 priority (locked)
 
 **Scope:** Gap 1 (Role Readiness Score) + Gap 3 (Anti-Cheating Layer A)
