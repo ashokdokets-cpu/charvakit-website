@@ -7195,7 +7195,12 @@ async def api_readiness_get(request: Request, certificate_id: str):
 @app.get("/readiness/{certificate_id}", response_class=HTMLResponse)
 async def readiness_page(request: Request, certificate_id: str):
     """Public shareable certificate page. Renders readiness.html."""
-    return template_response("readiness.html", request, "Role Readiness Certificate")
+    response = template_response("readiness.html", request, "Role Readiness Certificate")
+    # No-cache so mobile browsers never serve stale HTML after a code change.
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 
 @app.get("/readiness-check", response_class=HTMLResponse)
