@@ -7063,6 +7063,12 @@ async def readiness_page(request: Request, certificate_id: str):
     """Public shareable certificate page. Renders readiness.html."""
     return template_response("readiness.html", request, "Role Readiness Certificate")
 
+
+@app.get("/readiness-check", response_class=HTMLResponse)
+async def readiness_check_page(request: Request):
+    """Public free Role Readiness landing page (Session 17b)."""
+    return template_response("readiness-check.html", request, "Free Role Readiness Check")
+
 @app.get("/ai-assessment", response_class=HTMLResponse)
 async def ai_assessment(request: Request):
     return template_response("ai-assessment.html", request, "AI Career Assessment - Charvak IT Consulting")
