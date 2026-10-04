@@ -28,6 +28,51 @@ Three sessions shipped together as the certificate-v2 release.
 
 Recommendation: A.
 
+
+
+## Session 22 CLOSED (2026-10-05) — Sprint B: Client Staffing Pipeline
+
+The CBREX-mediated staffing pipeline is live end-to-end.
+Candidates can browse open roles, apply with screening answers and
+consent, and self-provision their profile inline in the apply modal.
+
+**6 commits shipped:**
+- `e23b853` schema + engine + 9 routes (Session 22a)
+- `41a91a1` /open-roles + /open-roles/{id} + apply modal (Session 22b)
+- `598101e` candidates_engine + /api/candidates/* (Session 22c.1)
+- `b95d39d` inline profile form (Session 22c.2)
+- (+ two micro-fixes: registered_at column, JSONB skills coercion)
+
+**Live URLs (prod):**
+- /open-roles             public listing
+- /open-roles/{role_id}   public detail + apply
+
+**Backend namespace:**
+- /api/staffing/open                      public listing
+- /api/staffing/roles/{role_id}           public detail
+- /api/staffing/roles/{role_id}/apply     auth + consent
+- /api/candidates/me                      auth (caller only)
+- /api/candidates/upsert                  auth (create/update)
+- /api/admin/client-roles/*               6 admin endpoints
+
+**5 new tables:**
+charvak_client_roles, charvak_role_screening_questions,
+charvak_role_screening_answers, charvak_candidate_documents,
+charvak_candidate_consents
+
+**Verified E2E on local + prod:**
+- Anonymous browse, login-gated apply, dynamic question rendering,
+  consent capture, inline profile form, retry-on-profile-missing,
+  green success banner, all data persisted with correct FK links.
+
+**Still pending for Session 23+:**
+- CBREX package generator (PDF + ZIP with resume/eval/certificate)
+- Admin dashboard (/admin/client-roles UI)
+- Nav link for /open-roles in base.html
+- Candidate profile edit page (/profile)
+
+---
+
 ---
 
 ## Session 18 CLOSED (2026-10-04) - Train stage resurrection

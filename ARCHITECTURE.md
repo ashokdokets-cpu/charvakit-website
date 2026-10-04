@@ -885,3 +885,62 @@ To test the PayPal flow locally without real money:
 ---
 
 Keep in sync with MASTER-REFERENCE.md.
+
+## Client Staffing Pipeline (Session 22, v3.5)
+
+Public-facing candidate pipeline for CBREX-mediated client roles.
+
+### Data flow
+
+    Client email / admin input
+        |
+        v
+    charvak_client_roles (ROLE-xxxx)
+        |
+        +-- charvak_role_screening_questions (QST-xxxx, per role)
+        |
+        v
+    Candidate -> /open-roles -> /open-roles/{role_id}
+        |
+        v
+    POST /api/staffing/roles/{role_id}/apply
+        |
+        +-- charvak_applications (APP-xxxx, status='applied')
+        +-- charvak_role_screening_answers (7 rows per apply)
+        +-- charvak_candidate_consents (in_app, IP + UA)
+        |
+        v
+    If candidate row missing:
+        POST /api/candidates/upsert (inline profile form)
+        -> retry apply
+
+### Public sanitization
+
+Public API responses (`/api/staffing/open` and
+`/api/staffing/roles/{id}`) null out client_name, client_type,
+vendor_portal, vendor_role_ref, source, source_email_ref, and
+created_by. Public label is always "via Charvak".
+
+### Admin namespace
+
+`/api/admin/client-roles/*` (6 routes, protected by
+admin_auth_guard middleware + require_admin in route bodies).
+
+### Engine
+
+`client_staffing_engine.py`:
+- create_role, list_roles, get_role, set_screening_questions
+- apply_to_role, list_applications_for_role, update_submission_status
+
+`candidates_engine.py`:
+- get_me(email)
+- upsert(data) -- whitelist-guarded, JSONB-coerces list-shaped fields
+
+### Question types supported
+
+text, multiline, yes_no, choice_single, choice_multi, number
+
+### Fill source per question
+
+candidate (default) or charvak (admin reviews/overrides)
+

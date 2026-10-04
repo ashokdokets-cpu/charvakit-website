@@ -1,3 +1,26 @@
+## Session 22 CLOSED (2026-10-05) - Sprint B: /open-roles pipeline
+
+Shipped the full client-staffing pipeline: public role listing, detail
+page, apply modal with dynamic screening questions, consent capture,
+inline profile upsert, and automatic retry. CBREX-mediated staffing
+is now a working product.
+
+**6 commits (see SESSION-CONTEXT.md for details):**
+e23b853, 41a91a1, 598101e, b95d39d + 2 micro-fixes.
+
+**Session 23 scope (recommended):**
+CBREX package generator - one-click PDF/ZIP export per application
+containing resume, Charvak evaluation, certificate PDF, and consent
+proof. This is the piece that makes the pipeline immediately useful
+to the team's daily work.
+
+**Alternatives for Session 23:**
+- Admin dashboard (/admin/client-roles UI) - 1-2 sessions
+- Nav link + candidate profile page (/profile) - 1 short session
+- Session 22 retrospective + doc sync pass - 1 session
+
+---
+
 # Charvak — Commitment Tracker
 
 ## Sessions 19-21 CLOSED (2026-10-04) - Certificate v2
