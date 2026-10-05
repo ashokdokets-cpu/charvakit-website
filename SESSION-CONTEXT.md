@@ -1,6 +1,51 @@
 # Session Context - Charvak
 
 
+## Session 29 CLOSED (2026-10-06) - Career Assessment Phase 2b (SQL)
+
+The SQL format is live on prod. Phase 2b is COMPLETE — all 10 assessment
+formats from the original plan are shipped and tested.
+
+**Commit:** a649f80 feat(sql): Session 29 - SQL format E2E via Judge0 SQLite
+
+**What shipped:**
+- _prompt_sql: generates {schema, task, starter_code, expected_output}
+  with strict output-column rules (no id unless asked, no sort keys)
+- _normalize_question: sql branch validates schema + task + expected_output
+- _strip_answers_for_frontend: strips expected_output (no answer leak)
+- _score_sql_batch: runs schema+candidate query via Judge0 SQLite
+- _sql_outputs_match: NEW Python-side comparison with:
+    * float tolerance (abs < 1e-3) so AVG returns 150.0 matching 150
+    * trailing blank line normalization
+    * strict column-count match (still fails on shape mismatch)
+- _dispatch_scoring: routes hybrid + sql to _score_sql_batch
+- registry: sql.available = True (SQLite dialect)
+
+**Frontend (ai-assessment.html):**
+- renderQuestionBody: sql branch renders schema + task + query textarea
+- textareas (both coding and sql) no longer pre-filled with starter code
+  so blank submissions register as blank (was a real bug)
+- placeholder shows the hint text
+
+**Verified E2E:**
+- 10 SQL questions generated with valid schemas
+- Judge0 SQLite execution: 8/8 correct queries scored 100%
+- AVG float tolerance: SELECT AVG(price) returning 150.0 matches AI's '150'
+- Sort-key prompt fix: "names ordered by age" now produces 1-column output
+- Blank submissions: 'No query submitted' (not the starter text)
+- Skill gap + learning path work identically
+
+**Session 30 candidates:**
+- A: Admin UI for integrity events (surfaces Session 27 data)
+- B: Roll Layer A (integrity) to other assessments (Versant/Mock/CBAT)
+- C: Phase 4 — certificates for coding/SQL, employer-facing badges
+- D: Reverse Staffing / Career Center polish
+
+**Reminder:** Render Postgres password rotation still pending (Session 19).
+
+**Backup:** Full backup recommended at session close.
+
+
 ## Session 28 CLOSED (2026-10-06) - Career Assessment Phase 2b (coding)
 
 The coding format is live on prod. Real code execution against per-question
