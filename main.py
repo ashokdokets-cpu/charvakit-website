@@ -7305,7 +7305,7 @@ async def api_candidates_upsert(request: Request):
 
 
 # ============================================================
-# SPRINT 22: CLIENT STAFFING PIPELINE (CBREX-mediated)
+# SPRINT 22: CLIENT STAFFING PIPELINE (Partner-mediated)
 # ============================================================
 
 @app.post("/api/admin/client-roles/create")
@@ -7390,24 +7390,58 @@ async def api_admin_list_role_applications(request: Request, role_id: str):
     return client_staffing_engine.list_applications_for_role(role_id)
 
 
-@app.get("/api/admin/applications/{application_id}/cbrex-package.pdf")
+@app.get("/api/admin/applications/{application_id}/submission-package.zip")
 @limiter.limit("30/minute")
-async def api_admin_cbrex_package_pdf(request: Request, application_id: str):
-    """Admin: render the CBREX evaluation form as a PDF (Session 23)."""
+async def api_admin_cbrex_package_zip(request: Request, application_id: str):
+    """Admin: download the full submission ZIP (Session 23)."""
     try:
         require_admin(request)
     except HTTPException:
         raise
 
     from client_staffing_engine import client_staffing_engine
-    result = client_staffing_engine.build_cbrex_package(application_id)
+    result = client_staffing_engine.build_submission_package(application_id)
     if result.get("status") != "success":
         return JSONResponse(status_code=404, content=result)
 
     package = result["package"]
-    from cbrex_pdf_engine import render_cbrex_evaluation_pdf, cbrex_package_filename
-    pdf_bytes = render_cbrex_evaluation_pdf(package)
-    filename = cbrex_package_filename(package)
+    from submission_pdf_engine import build_submission_zip, submission_zip_filename
+    try:
+        zip_bytes = build_submission_zip(package)
+    except Exception as e:
+        logger.error(f"submission zip failed: {e}")
+        return JSONResponse(status_code=500, content={
+            "status": "error", "message": f"ZIP build failed: {e}",
+        })
+    filename = submission_zip_filename(package)
+    return Response(
+        content=zip_bytes,
+        media_type="application/zip",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Cache-Control": "no-store",
+        },
+    )
+
+
+@app.get("/api/admin/applications/{application_id}/submission-package.pdf")
+@limiter.limit("30/minute")
+async def api_admin_cbrex_package_pdf(request: Request, application_id: str):
+    """Admin: render the submission evaluation form as a PDF (Session 23)."""
+    try:
+        require_admin(request)
+    except HTTPException:
+        raise
+
+    from client_staffing_engine import client_staffing_engine
+    result = client_staffing_engine.build_submission_package(application_id)
+    if result.get("status") != "success":
+        return JSONResponse(status_code=404, content=result)
+
+    package = result["package"]
+    from submission_pdf_engine import render_submission_evaluation_pdf, submission_package_filename
+    pdf_bytes = render_submission_evaluation_pdf(package)
+    filename = submission_package_filename(package)
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
@@ -7418,17 +7452,17 @@ async def api_admin_cbrex_package_pdf(request: Request, application_id: str):
     )
 
 
-@app.get("/api/admin/applications/{application_id}/cbrex-package")
+@app.get("/api/admin/applications/{application_id}/submission-package")
 @limiter.limit("30/minute")
 async def api_admin_cbrex_package(request: Request, application_id: str):
-    """Admin: build a CBREX-ready JSON package for an application (Session 23)."""
+    """Admin: build a client-ready JSON package for an application (Session 23)."""
     try:
         require_admin(request)
     except HTTPException:
         raise
 
     from client_staffing_engine import client_staffing_engine
-    return client_staffing_engine.build_cbrex_package(application_id)
+    return client_staffing_engine.build_submission_package(application_id)
 
 
 @app.post("/api/admin/applications/{application_id}/submission-status")

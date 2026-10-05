@@ -1,7 +1,7 @@
 """
 Charvak Client Staffing Engine (Session 22)
 Manages client roles, screening questions, candidate applications, and
-CBREX-ready submission package generation.
+Client-ready submission package generation.
 """
 import os
 import json
@@ -480,7 +480,7 @@ class ClientStaffingEngine:
                 """, (
                     "CNS-" + secrets.token_hex(4).upper(),
                     candidate_id, email, role_id,
-                    data.get("vendor", "CBREX"),
+                    data.get("vendor", "Charvak"),
                     data.get("ip_address"),
                     data.get("user_agent"),
                 ))
@@ -661,13 +661,13 @@ class ClientStaffingEngine:
 
 
     # ----------------------------------------------------------------
-    # CBREX package builder (Session 23)
+    # Submission package builder (Session 23)
     # ----------------------------------------------------------------
 
-    def build_cbrex_package(self, application_id: str) -> Dict:
+    def build_submission_package(self, application_id: str) -> Dict:
         """
-        Build a CBREX-ready package for an application.
-        Returns a JSON structure grouped by CBREX form sections:
+        Build a client-ready submission package for an application.
+        Returns a JSON structure grouped by submission form sections:
           personal, contact, employment, education, readiness,
           screening_answers, attachments_manifest, meta
         """
