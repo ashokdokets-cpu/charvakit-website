@@ -949,4 +949,10 @@ class ClientStaffingEngine:
         }
 
 
+    # Batch download (Session 25 Patch 5c.2) - delegates to helper module
+    def build_batch_zip(self, role_id):
+        from client_staffing_batch import build_role_batch_zip
+        return build_role_batch_zip(self, role_id)
+
+
 client_staffing_engine = ClientStaffingEngine()

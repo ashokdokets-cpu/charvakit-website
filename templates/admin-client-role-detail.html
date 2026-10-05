@@ -104,7 +104,12 @@
         <!-- Applicants -->
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h4 class="mb-0">Applicants</h4>
-            <small class="text-muted">Ranked by readiness score</small>
+            <div>
+                <small class="text-muted me-3">Ranked by readiness score</small>
+                <button type="button" class="btn btn-sm btn-success" id="batchDownloadBtn">
+                    Download All as ZIP
+                </button>
+            </div>
         </div>
 
         <div id="emptyApplicants" class="card border-0 shadow-sm d-none">
@@ -378,6 +383,31 @@
         }
     }
 
+    function batchDownload() {
+        var url = "/api/admin/client-roles/" + encodeURIComponent(ROLE_ID) + "/applicants-batch.zip";
+        fetch(url, { headers: authHeaders() })
+        .then(function (r) {
+            if (!r.ok) {
+                return r.json().then(function (d) {
+                    throw new Error((d && d.message) || ("HTTP " + r.status));
+                });
+            }
+            return r.blob();
+        })
+        .then(function (blob) {
+            var a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = "Charvak_Submissions_" + ROLE_ID + ".zip";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(a.href);
+        })
+        .catch(function (err) {
+            alert("Batch download failed: " + err.message);
+        });
+    }
+
     window.downloadPackage = function (appId) {
         var url = "/api/admin/applications/" + encodeURIComponent(appId) + "/submission-package.zip";
         fetch(url, { headers: authHeaders() })
@@ -485,6 +515,10 @@
         var saveStatusBtn = document.getElementById("mSaveStatusBtn");
         if (saveStatusBtn) {
             saveStatusBtn.addEventListener("click", saveSubmissionStatus);
+        }
+        var batchBtn = document.getElementById("batchDownloadBtn");
+        if (batchBtn) {
+            batchBtn.addEventListener("click", batchDownload);
         }
         loadAll();
     });
