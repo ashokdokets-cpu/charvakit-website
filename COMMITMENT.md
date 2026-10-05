@@ -1,5 +1,30 @@
 ## Session 26 CLOSED (2026-10-05) - Security sweep + cautious cleanup
 
+## Session 28 CLOSED (2026-10-06) - Career Assessment Phase 2b (coding)
+
+Coding format is now live. Real code execution, real test-case scoring.
+
+**Commits:**
+- deca0c0 feat(judge0): Session 28a - Judge0 client (242 lines)
+- c65d118 feat(coding): Session 28b - coding format (164 lines changed)
+
+**Files:**
+- judge0_client.py (new)
+- career_assessment_engine.py (5 methods + registry flip)
+- templates/ai-assessment.html (renderQuestionBody coding branch)
+
+**Verified E2E:**
+- 10 coding questions generated (real OpenAI)
+- Judge0 executed candidate submissions
+- Score persisted, per-answer feedback populated
+- Result page renders correctly on prod
+
+**Session 29 candidates:**
+- A: SQL format (completes Phase 2b; 1 session)
+- B: Admin UI for integrity events (Session 27 output)
+- C: Roll Layer A + coding to Versant/Mock/CBAT/IELTS
+
+
 ## Session 27 CLOSED (2026-10-06) - Anti-Cheating Layer A
 
 Shipped environment-signal capture on Career Assessments. Framework

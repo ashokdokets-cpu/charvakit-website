@@ -202,7 +202,7 @@ products, candidate, email, messaging, events, brand, team,
 ats, university, enterprise, invoice, tools,
 marketing_ai, indian_language_ai, lms, career_v2
 
-Data-backed: `integrity_engine` (Session 27, Layer A integrity signals), `ai_credit_engine`, `email_verification`, `ai_courses`, `ai_courses_payments`, `complete_mock_drive`, `results_system`
+Data-backed: `judge0_client` (Session 28, code execution), `integrity_engine` (Session 27), `ai_credit_engine`, `email_verification`, `ai_courses`, `ai_courses_payments`, `complete_mock_drive`, `results_system`
 
 ---
 
