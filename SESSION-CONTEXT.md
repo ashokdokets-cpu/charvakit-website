@@ -110,6 +110,53 @@ use direct psycopg2, restore after.
 - .pdf (Charvak Evaluation Form via pdf_engine.py)
 - .zip (resume + eval PDF + certificate PDF + consent proof)
 
+
+
+## Session 23 CLOSED (2026-10-05) - Submission package generator
+
+Full pipeline now works end-to-end via API. Admin can generate a
+complete client-ready submission package from any application.
+
+**Commits:**
+- d35032c  Session 23 4a.1 - JSON package builder
+- b6ee7e3  Session 23 4a.2 - PDF evaluation form
+- 579b249  Session 23 4a.3 - ZIP bundle + CBREX de-identifier
+- 5a762aa  Session 23 polish - consistent 404s for missing apps
+
+**New endpoints (all admin-gated):**
+- GET /api/admin/applications/{id}/submission-package       (JSON)
+- GET /api/admin/applications/{id}/submission-package.pdf   (PDF)
+- GET /api/admin/applications/{id}/submission-package.zip   (ZIP)
+
+**ZIP contents:**
+- 01_candidate_profile.json
+- 02_evaluation_form.pdf (branded Charvak layout)
+- 03_readiness_certificate.pdf (if cert exists)
+- 04_resume.<ext>               (if uploaded or text present)
+- 05_consent_proof.<ext>        (if proof file uploaded)
+- README.txt                    (manifest enumerating actual contents)
+
+**CBREX de-identifier sweep completed:**
+- Renamed cbrex_pdf_engine.py -> submission_pdf_engine.py
+- All 3 routes renamed /cbrex-package* -> /submission-package*
+- All function names, docstrings, comments de-identified
+- Consent vendor default changed CBREX -> Charvak
+- Result: 0 CBREX references across the codebase
+
+**Verified E2E on local APP-7F862AE1:**
+- All 3 new routes 200 (JSON/PDF/ZIP)
+- Old routes 404
+- Missing app IDs 404 consistently across all three
+- ZIP contents match README
+
+**Next session (24):** admin UI for client roles + applications
+- /admin/client-roles          (list + applicant counts)
+- /admin/client-roles/{role_id} (detail + applicants + downloads)
+- Link in admin dropdown
+- All backend endpoints already exist
+
+---
+
 ---
 
 ---
