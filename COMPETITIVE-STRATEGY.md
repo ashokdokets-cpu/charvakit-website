@@ -32,7 +32,7 @@ tools.
 | Capability | Charvak has | Category leader | Gap |
 |---|---|---|---|
 | MCQ assessments (career, exam, language) | Yes, 106 roles x 66 industries x 7 levels | TestGorilla (400+ tests) | Breadth |
-| Coding/SQL assessments | Phase 2b (in progress) | HackerRank, Codility | Execution + integrity |
+| Coding/SQL assessments | **SHIPPED 2026-10-06** (Judge0 SQLite + Python) | HackerRank, Codility | Breadth of question bank |
 | Role readiness scoring | Partial (raw score only) | Knovia (role-readiness cert) | Positioning |
 | AI code quality (slop) | Yes (AI-Slop Quarantine) | Snyk, SonarQube | Depth |
 | AI security scanning | Yes (AuditBot) | Snyk, SonarQube | Continuous vs one-shot |

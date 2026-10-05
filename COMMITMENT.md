@@ -1,5 +1,36 @@
 ## Session 26 CLOSED (2026-10-05) - Security sweep + cautious cleanup
 
+## Session 29 CLOSED (2026-10-06) - Career Assessment Phase 2b COMPLETE
+
+SQL format shipped. Phase 2b is done — all 10 formats live.
+
+**Commit:** a649f80
+
+**Files:**
+- career_assessment_engine.py (+239 lines: _prompt_sql, _normalize_question
+  sql branch, _strip_answers_for_frontend sql branch, _score_sql_batch,
+  _sql_outputs_match helper, _dispatch_scoring wiring, registry flip)
+- templates/ai-assessment.html (+3 lines: sql renderer branch; textarea
+  starter prefill removed for both coding and sql)
+
+**Three bugs caught and fixed in-session:**
+1. AI included 'id' column in expected_output for single-column tasks
+   → prompt rule: only include columns the task names
+2. AI included sort key in expected_output (name|age for "names by age")
+   → prompt rule: sort keys are NOT output columns
+3. AVG returned 150.0 but AI wrote 150
+   → Python-side comparison with float tolerance instead of Judge0 exact match
+
+**Bonus fix:** textareas (coding + sql) had starter_code prefilled, so
+blank submissions submitted the starter text. Now empty + placeholder.
+
+**Session 30 candidates:**
+- A: Admin UI for integrity events (Session 27 data)
+- B: Roll Layer A out to other assessments
+- C: Phase 4 certificates for coding/sql
+- D: Backup + docs polish session
+
+
 ## Session 28 CLOSED (2026-10-06) - Career Assessment Phase 2b (coding)
 
 Coding format is now live. Real code execution, real test-case scoring.
