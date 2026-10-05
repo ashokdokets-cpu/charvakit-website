@@ -354,6 +354,15 @@
             : '<span class="text-muted">No readiness certificate attached</span>';
         document.getElementById("mReadiness").innerHTML = readiness;
 
+        // Prefill status + notes from meta
+        var meta = pkg.meta || {};
+        var sel = document.getElementById("mStatusSelect");
+        var notesEl = document.getElementById("mRecruiterNotes");
+        if (sel) sel.value = meta.submission_status || "pending";
+        if (notesEl) notesEl.value = meta.recruiter_notes || "";
+        document.getElementById("mSaveStatusMsg").classList.add("d-none");
+        document.getElementById("mSaveStatusErr").classList.add("d-none");
+
         var qs = pkg.screening_answers || [];
         if (!qs.length) {
             document.getElementById("mScreening").innerHTML = '<p class="text-muted">No answers recorded.</p>';
@@ -393,6 +402,61 @@
     // Expose loadAll for the Refresh button (which uses inline onclick)
     window.loadAll = loadAll;
 
+    // ---------- Save submission status + notes ----------
+    function saveSubmissionStatus() {
+        var sel = document.getElementById("mStatusSelect");
+        var notes = document.getElementById("mRecruiterNotes");
+        var saveBtn = document.getElementById("mSaveStatusBtn");
+        var msg = document.getElementById("mSaveStatusMsg");
+        var err = document.getElementById("mSaveStatusErr");
+
+        msg.classList.add("d-none");
+        err.classList.add("d-none");
+
+        if (!state.currentAppId) {
+            err.textContent = "No application selected.";
+            err.classList.remove("d-none");
+            return;
+        }
+
+        var payload = {
+            status: sel.value,
+            recruiter_notes: notes.value || null
+        };
+
+        saveBtn.disabled = true;
+        saveBtn.textContent = "Saving...";
+
+        fetch("/api/admin/applications/" + encodeURIComponent(state.currentAppId) + "/submission-status", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + token()
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
+        .then(function (res) {
+            saveBtn.disabled = false;
+            saveBtn.textContent = "Save";
+            if (!res.ok || res.data.status !== "success") {
+                err.textContent = (res.data && res.data.message) || "Save failed.";
+                err.classList.remove("d-none");
+                return;
+            }
+            msg.textContent = "Saved — status is now: " + res.data.submission_status;
+            msg.classList.remove("d-none");
+            // Refresh the applicant list behind the modal
+            loadAll();
+        })
+        .catch(function (ex) {
+            saveBtn.disabled = false;
+            saveBtn.textContent = "Save";
+            err.textContent = "Network error: " + ex.message;
+            err.classList.remove("d-none");
+        });
+    }
+
     // Event delegation for applicant cards (avoids inline onclick quote issues)
     document.addEventListener("click", function (ev) {
         var btn = ev.target.closest("[data-action]");
@@ -417,6 +481,10 @@
             dlBtn.addEventListener("click", function () {
                 if (state.currentAppId) downloadPackage(state.currentAppId);
             });
+        }
+        var saveStatusBtn = document.getElementById("mSaveStatusBtn");
+        if (saveStatusBtn) {
+            saveStatusBtn.addEventListener("click", saveSubmissionStatus);
         }
         loadAll();
     });
@@ -466,6 +534,38 @@
           <div id="mScreening">—</div>
 
         </div>
+
+        <hr>
+        <h6 class="text-muted text-uppercase small mb-2">Actions</h6>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label small fw-semibold">Submission status</label>
+            <select class="form-select" id="mStatusSelect">
+              <option value="pending">Pending review</option>
+              <option value="shortlisted">Shortlisted</option>
+              <option value="submitted">Submitted to client</option>
+              <option value="interviewing">Interviewing</option>
+              <option value="offer">Offer</option>
+              <option value="hired">Hired</option>
+              <option value="rejected">Not selected</option>
+              <option value="withdrawn">Withdrawn</option>
+            </select>
+          </div>
+          <div class="col-md-6 d-flex align-items-end">
+            <button type="button" class="btn btn-primary w-100" id="mSaveStatusBtn">
+              Save
+            </button>
+          </div>
+          <div class="col-12">
+            <label class="form-label small fw-semibold">Recruiter notes (private — not shown to candidates)</label>
+            <textarea class="form-control" id="mRecruiterNotes" rows="3" placeholder="Add context about this application..."></textarea>
+          </div>
+        </div>
+
+        <div id="mSaveStatusMsg" class="alert alert-success d-none mt-3 small mb-0"></div>
+        <div id="mSaveStatusErr" class="alert alert-danger d-none mt-3 small mb-0"></div>
+
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
