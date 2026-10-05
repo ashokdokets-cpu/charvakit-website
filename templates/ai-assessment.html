@@ -1021,5 +1021,255 @@ async function loadFromAid(aid) {
 }
 
 document.addEventListener('DOMContentLoaded', loadCatalog);
+// ========================================================================
+// Session 27 - Anti-Cheating Layer A: frontend integrity capture
+// ========================================================================
+// Records deterministic environment signals while an assessment is active.
+// RECORD ONLY. Nothing is blocked. Failures are silent.
+//
+// Events: paste, tab_switch, contextmenu, focus_out, rapid_input
+// Flush:  every 2 seconds (batched) + on pagehide/beforeunload (sendBeacon)
+// ========================================================================
+(function () {
+    'use strict';
+
+    // --- Guard: only capture when an assessment is active -----------------
+    function getActiveAid() {
+        try {
+            var a = window._carCurrentAssessment
+                || (typeof _carCurrentAssessment !== 'undefined' ? _carCurrentAssessment : null);
+            if (!a || !a.assessment_id) return null;
+            return a.assessment_id;
+        } catch (e) {
+            return null;
+        }
+    }
+    function getEmail() {
+        try {
+            return (localStorage.getItem('userEmail') || '').trim().toLowerCase();
+        } catch (e) {
+            return '';
+        }
+    }
+    function getToken() {
+        try {
+            return localStorage.getItem('auth_token')
+                || localStorage.getItem('charvak_token')
+                || '';
+        } catch (e) {
+            return '';
+        }
+    }
+
+    // --- Queue + flush ----------------------------------------------------
+    var queue = [];
+    var MAX_QUEUE = 50;
+    var flushTimer = null;
+
+    function queueEvent(type, metadata) {
+        var aid = getActiveAid();
+        if (!aid) return;   // no active assessment -> drop
+        var email = getEmail();
+        var token = getToken();
+        if (!email || !token) return;
+
+        queue.push({
+            email: email,
+            assessment_id: aid,
+            event_type: type,
+            metadata: metadata || {},
+            _token: token
+        });
+        if (queue.length > MAX_QUEUE) queue.shift();
+
+        if (!flushTimer) {
+            flushTimer = setTimeout(flush, 2000);
+        }
+    }
+
+    function flush() {
+        flushTimer = null;
+        if (!queue.length) return;
+        var batch = queue.slice();
+        queue = [];
+
+        // One POST per event. Simple, idempotent, easy to reason about.
+        // (Backend route accepts one event per call by design.)
+        batch.forEach(function (ev) {
+            var body = JSON.stringify({
+                email: ev.email,
+                assessment_id: ev.assessment_id,
+                event_type: ev.event_type,
+                metadata: ev.metadata
+            });
+            try {
+                fetch('/api/integrity/event', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + ev._token
+                    },
+                    body: body,
+                    keepalive: true
+                }).catch(function () { /* silent */ });
+            } catch (e) {
+                // silent — never break the assessment
+            }
+        });
+    }
+
+    // On page teardown, try sendBeacon for reliability. Falls back to sync
+    // XHR if sendBeacon is unavailable — but we prefer the async path.
+    function flushBeacon() {
+        if (!queue.length) return;
+        var batch = queue.slice();
+        queue = [];
+
+        // Synchronous-ish keepalive fetch: uses headers (unlike sendBeacon),
+        // and survives pagehide in modern browsers for small payloads.
+        batch.forEach(function (ev) {
+            var body = JSON.stringify({
+                email: ev.email,
+                assessment_id: ev.assessment_id,
+                event_type: ev.event_type,
+                metadata: ev.metadata
+            });
+            try {
+                fetch('/api/integrity/event', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + ev._token
+                    },
+                    body: body,
+                    keepalive: true
+                }).catch(function () { /* silent */ });
+            } catch (e) { /* silent */ }
+        });
+    }
+
+    // --- Event handlers ---------------------------------------------------
+
+    // 1. Paste
+    document.addEventListener('paste', function (e) {
+        if (!getActiveAid()) return;
+        var t = e.target || {};
+        var chars = 0;
+        try {
+            if (e.clipboardData && e.clipboardData.getData) {
+                chars = (e.clipboardData.getData('text') || '').length;
+            }
+        } catch (err) { /* ignore */ }
+        queueEvent('paste', {
+            target_id: t.id || t.name || t.tagName || 'unknown',
+            chars: chars
+        });
+    }, true);
+
+    // 2. Right-click
+    document.addEventListener('contextmenu', function (e) {
+        if (!getActiveAid()) return;
+        var t = e.target || {};
+        queueEvent('contextmenu', {
+            target_id: t.id || t.name || t.tagName || 'unknown'
+        });
+    }, true);
+
+    // 3. Tab switch (visibility)
+    var tabHiddenAt = null;
+    document.addEventListener('visibilitychange', function () {
+        if (!getActiveAid()) return;
+        if (document.hidden) {
+            tabHiddenAt = Date.now();
+        } else {
+            var dur = tabHiddenAt ? (Date.now() - tabHiddenAt) : 0;
+            tabHiddenAt = null;
+            queueEvent('tab_switch', { duration_ms: dur });
+        }
+    });
+
+    // 4. Window blur/focus (belt-and-suspenders)
+    //    Only fire tab_switch if visibilitychange did not already fire.
+    var blurAt = null;
+    window.addEventListener('blur', function () {
+        if (!getActiveAid()) return;
+        blurAt = Date.now();
+    });
+    window.addEventListener('focus', function () {
+        if (!getActiveAid()) return;
+        if (blurAt) {
+            var dur = Date.now() - blurAt;
+            blurAt = null;
+            // Only record if the tab did NOT already record it (avoid dup).
+            if (!tabHiddenAt) {
+                queueEvent('tab_switch', { duration_ms: dur, source: 'window' });
+            }
+        }
+    });
+
+    // 5. Focus out of a text field
+    document.addEventListener('focusout', function (e) {
+        if (!getActiveAid()) return;
+        var t = e.target || {};
+        var tag = (t.tagName || '').toLowerCase();
+        if (tag === 'textarea' || tag === 'input') {
+            queueEvent('focus_out', {
+                target_id: t.id || t.name || tag
+            });
+        }
+    }, true);
+
+    // 6. Rapid input (synthetic typing detection)
+    //    Track per-element timing. If >= 100 chars in < 200ms, flag it.
+    var lastKey = {};
+    document.addEventListener('input', function (e) {
+        if (!getActiveAid()) return;
+        var t = e.target || {};
+        var tag = (t.tagName || '').toLowerCase();
+        if (tag !== 'textarea' && tag !== 'input') return;
+
+        var now = Date.now();
+        var key = t.id || t.name || tag;
+        var entry = lastKey[key];
+
+        if (!entry) {
+            lastKey[key] = { t0: now, chars: (t.value || '').length };
+            return;
+        }
+        var deltaMs = now - entry.t0;
+        var deltaChars = (t.value || '').length - entry.chars;
+
+        // Reset the window every 500ms so ordinary typing isn't flagged.
+        if (deltaMs >= 500) {
+            lastKey[key] = { t0: now, chars: (t.value || '').length };
+            return;
+        }
+
+        // Only flag if a large burst in a tiny window.
+        if (deltaChars >= 100 && deltaMs < 200) {
+            var cpm = deltaMs > 0 ? (deltaChars / deltaMs) : deltaChars;
+            queueEvent('rapid_input', {
+                target_id: key,
+                chars: deltaChars,
+                window_ms: deltaMs,
+                chars_per_ms: Math.round(cpm * 100) / 100
+            });
+            // reset
+            lastKey[key] = { t0: now, chars: (t.value || '').length };
+        }
+    }, true);
+
+    // --- Periodic flush + teardown flush ---------------------------------
+    setInterval(flush, 2000);
+    window.addEventListener('pagehide', flushBeacon);
+    window.addEventListener('beforeunload', flushBeacon);
+
+    // Expose a debug hook for manual testing (harmless in prod)
+    window.__integrityDebug = {
+        queue: function () { return queue.slice(); },
+        flush: flush,
+        activeAid: getActiveAid
+    };
+})();
 </script>
 {% endblock %}
