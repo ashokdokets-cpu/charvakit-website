@@ -1,3 +1,20 @@
+## Session 25 CLOSED (2026-10-05) - Admin applicant actions
+
+Three patches: status+notes UI, batch download ZIP, dashboard card.
+Full admin workflow now runs from the browser.
+
+**Session 26 scope (recommended):**
+- Security sweep on new admin endpoints
+- Legacy /api/assessment/* route cleanup
+- Anti-cheating Layer A
+
+**Alternatives for Session 26:**
+- Career Assessment Phase 2b (coding + SQL sandbox)
+- AuditBot Continuous
+- Silent-Killer 9b cron polish
+
+---
+
 ## Session 24 CLOSED (2026-10-05) - Client Roles admin UI
 
 37f978f — full admin interface for staffing pipeline.

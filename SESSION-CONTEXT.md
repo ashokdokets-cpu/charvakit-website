@@ -215,6 +215,55 @@ list + role detail pages
 
 
 
+
+
+## Session 25 CLOSED (2026-10-05) - Admin applicant actions
+
+Three patches that close the admin workflow loop.
+
+**Commit:** `cdc5cb3` + following (dashboard card)
+
+**Shipped:**
+
+- **Patch 5c.1** - Applicant status + recruiter notes UI in the
+  modal on /admin/client-roles/{role_id}
+  - Status dropdown (pending/shortlisted/submitted/interviewing/
+    offer/hired/rejected/withdrawn)
+  - Recruiter notes textarea (private, not shown to candidates)
+  - Save button POSTs to /api/admin/applications/{id}/submission-status
+  - Prefills current values on modal open
+  - Auto-refreshes the applicant list after save
+
+- **Patch 5c.2** - Batch download ZIP per role
+  - New endpoint: GET /api/admin/client-roles/{role_id}/applicants-batch.zip
+  - Returns one ZIP containing a per-applicant subfolder for every
+    applicant of the role: candidate_profile.json + evaluation_form.pdf
+    + README.txt + SUMMARY.txt at the root
+  - New module: client_staffing_batch.py (standalone helper)
+  - Frontend: 'Download All as ZIP' button next to Applicants header
+
+- **Patch 5c.3** - Admin dashboard card
+  - 'Client Roles' button added to admin-unified.html Quick Actions
+
+**Fixed during session:**
+
+- Schema assumption bug: charvak_applications has no candidate_name
+  column. Batch query now LEFT JOINs charvak_candidates on email.
+
+**Session 25 result:** the full admin workflow works from the
+browser, no DB editing required:
+  dashboard -> roles list -> role detail -> applicant modal
+    -> status change + notes -> save
+    -> single download or batch download
+
+**Next session (26) candidates:**
+
+- Security sweep on new admin endpoints (Session 14 style)
+- Delete or leave legacy /api/assessment/* routes (8 remaining)
+- Verify charvak_jobs legacy reference in main.py
+- Anti-cheating Layer A (blocks Career Assessment Phase 2b)
+- Career Assessment Phase 2b (coding + SQL via Judge0 sandbox)
+
 ---
 
 ---
