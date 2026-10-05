@@ -7490,6 +7490,30 @@ async def api_admin_update_submission_status(request: Request, application_id: s
     )
 
 
+@app.get("/api/admin/client-roles/{role_id}/applicants-batch.zip")
+@limiter.limit("10/minute")
+async def api_admin_batch_download(request: Request, role_id: str):
+    """Admin: download all applicants for a role as one ZIP."""
+    try:
+        require_admin(request)
+    except HTTPException:
+        raise
+
+    from client_staffing_engine import client_staffing_engine
+    result = client_staffing_engine.build_batch_zip(role_id)
+    if result.get("status") != "success":
+        return JSONResponse(status_code=404, content=result)
+
+    return Response(
+        content=result["zip_bytes"],
+        media_type="application/zip",
+        headers={
+            "Content-Disposition": 'attachment; filename="' + result["filename"] + '"',
+            "Cache-Control": "no-store",
+        },
+    )
+
+
 @app.get("/api/staffing/open")
 @limiter.limit("120/minute")
 async def api_jobs_open(request: Request):
