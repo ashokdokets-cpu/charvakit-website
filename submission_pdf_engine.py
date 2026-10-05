@@ -1,13 +1,13 @@
 """
-CBREX Evaluation Form PDF (Session 23, Patch 4a.2)
+Submission Evaluation Form PDF (Session 23, Patch 4a.2)
 
-Consumes the JSON output of client_staffing_engine.build_cbrex_package()
+Consumes the JSON output of client_staffing_engine.build_submission_package()
 and renders a branded A4 PDF suitable for sharing with hiring managers
-or attaching to a CBREX submission.
+or attaching to a client submission.
 
 Usage:
-    from cbrex_pdf_engine import render_cbrex_evaluation_pdf
-    pdf_bytes = render_cbrex_evaluation_pdf(package_dict)
+    from submission_pdf_engine import render_submission_evaluation_pdf
+    pdf_bytes = render_submission_evaluation_pdf(package_dict)
 """
 import os
 from datetime import datetime
@@ -39,10 +39,10 @@ def _safe_fname(s: str) -> str:
     return out.strip("_") or "unknown"
 
 
-def render_cbrex_evaluation_pdf(package: Dict) -> bytes:
+def render_submission_evaluation_pdf(package: Dict) -> bytes:
     """
-    Render a CBREX evaluation form PDF.
-    package = the 'package' dict from build_cbrex_package().
+    Render a submission evaluation form PDF.
+    package = the 'package' dict from build_submission_package().
     """
     meta = package.get("meta", {}) or {}
     personal = package.get("personal", {}) or {}
@@ -307,7 +307,7 @@ def render_cbrex_evaluation_pdf(package: Dict) -> bytes:
     return bytes(pdf.output())
 
 
-def cbrex_package_filename(package: Dict) -> str:
+def submission_package_filename(package: Dict) -> str:
     """Build a sensible filename for the evaluation PDF."""
     meta = package.get("meta", {}) or {}
     personal = package.get("personal", {}) or {}
@@ -315,3 +315,260 @@ def cbrex_package_filename(package: Dict) -> str:
     name = _safe_fname(personal.get("full_name") or personal.get("first_name") or "candidate")
     app_id = _safe_fname(meta.get("application_id", "app"))
     return f"Charvak_Evaluation_{name}_{role_title}_{app_id}.pdf"
+
+# ============================================================
+# ZIP bundle (Session 23, Patch 4a.3)
+# ============================================================
+import io
+import json as _json
+import zipfile
+
+
+def _decode_document(doc_row: dict) -> tuple:
+    """
+    Given a charvak_candidate_documents row (as dict), return (filename, bytes).
+    Handles both content_base64 and storage_path storage.
+    Returns (None, None) if the file cannot be loaded.
+    """
+    import base64
+    filename = doc_row.get("filename") or "file.bin"
+
+    # Option 1: base64 blob in DB
+    b64 = doc_row.get("content_base64") or ""
+    if b64:
+        try:
+            return filename, base64.b64decode(b64)
+        except Exception:
+            pass
+
+    # Option 2: file on disk
+    path = doc_row.get("storage_path") or ""
+    if path:
+        try:
+            with open(path, "rb") as f:
+                return filename, f.read()
+        except Exception:
+            pass
+
+    return None, None
+
+
+def _safe_zip_entry(name: str, fallback: str) -> str:
+    """Sanitize a filename for use as a zip entry."""
+    import re
+    name = (name or "").strip() or fallback
+    name = name.replace("..", "_").replace("/", "_").replace("\\", "_")
+    name = re.sub(r"[^\w\.\-]+", "_", name)
+    return name or fallback
+
+
+def _fetch_documents_for_candidate(candidate_id: str) -> list:
+    """Return all document rows for a candidate as dicts."""
+    if not candidate_id:
+        return []
+    try:
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT document_id, document_type, filename, content_type,
+                   size_bytes, storage_path, content_base64, uploaded_at
+            FROM charvak_candidate_documents
+            WHERE candidate_id = %s
+            ORDER BY uploaded_at DESC
+        """, (candidate_id,))
+        rows = cur.fetchall()
+        cur.close(); conn.close()
+        return [{
+            "document_id": r[0], "document_type": r[1], "filename": r[2],
+            "content_type": r[3], "size_bytes": r[4], "storage_path": r[5],
+            "content_base64": r[6], "uploaded_at": r[7],
+        } for r in rows]
+    except Exception as e:
+        print(f"WARN: _fetch_documents_for_candidate failed: {e}")
+        return []
+
+
+def build_submission_zip(package: dict) -> bytes:
+    """
+    Build the client-ready submission ZIP bundle.
+    package = the 'package' dict from build_submission_package().
+    Returns ZIP bytes.
+
+    Contents:
+      01_candidate_profile.json
+      02_evaluation_form.pdf
+      03_readiness_certificate.pdf  (if cert exists)
+      04_resume.<ext>               (if uploaded or text available)
+      05_consent_proof.<ext>        (if uploaded)
+      README.txt                    (manifest + verify URLs)
+    """
+    meta = package.get("meta", {}) or {}
+    readiness = package.get("readiness", {}) or {}
+    attachments = package.get("attachments", {}) or {}
+    candidate_id = meta.get("candidate_id")
+    application_id = _s(meta.get("application_id"), "APP-UNKNOWN")
+
+    # Gather documents once
+    docs = _fetch_documents_for_candidate(candidate_id)
+
+    # -------- README is built AFTER we know what files landed --------
+    # (populated further down, right before writing the ZIP)
+
+    # -------- Build ZIP --------
+    from datetime import datetime as _dt
+    site = os.getenv("SITE_URL", "https://www.charvakit.com").rstrip("/")
+
+    buf = io.BytesIO()
+    entries_written = []  # list of (label, filename, note)
+    resume_note = ""
+
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
+        # 01 - JSON
+        z.writestr("01_candidate_profile.json",
+                   _json.dumps(package, indent=2, default=str, ensure_ascii=False))
+        entries_written.append(("01_candidate_profile.json", "01_candidate_profile.json",
+                                 "Full structured profile data"))
+
+        # 02 - Evaluation PDF
+        try:
+            pdf_bytes = render_submission_evaluation_pdf(package)
+            z.writestr("02_evaluation_form.pdf", pdf_bytes)
+            entries_written.append(("02_evaluation_form.pdf", "02_evaluation_form.pdf",
+                                     "Charvak branded evaluation form"))
+        except Exception as e:
+            err_name = "02_evaluation_form_ERROR.txt"
+            z.writestr(err_name, f"Could not generate evaluation PDF: {e}")
+            entries_written.append((err_name, err_name, "generation failed"))
+
+        # 03 - Readiness certificate PDF (if present)
+        cert_id = readiness.get("certificate_id")
+        if cert_id:
+            try:
+                from pdf_engine import render_readiness_certificate_pdf
+                cert_pdf = render_readiness_certificate_pdf({
+                    "certificate_id": cert_id,
+                    "email": _s(package.get("contact", {}).get("primary_email"), ""),
+                    "display_name": _s(package.get("personal", {}).get("full_name"), ""),
+                    "role": _s(meta.get("role_title"), ""),
+                    "readiness_score": readiness.get("readiness_score"),
+                    "verdict": readiness.get("verdict"),
+                    "certificate_hash": readiness.get("certificate_hash"),
+                    "percentile": readiness.get("percentile"),
+                    "benchmark_score": readiness.get("benchmark_score"),
+                })
+                z.writestr("03_readiness_certificate.pdf", cert_pdf)
+                entries_written.append(("03_readiness_certificate.pdf", "03_readiness_certificate.pdf",
+                                         f"Score {readiness.get('readiness_score')}/100  -  verify: {site}/readiness/{cert_id}"))
+            except Exception as e:
+                err_name = "03_readiness_certificate_ERROR.txt"
+                z.writestr(err_name, f"Could not generate certificate PDF: {e}")
+                entries_written.append((err_name, err_name, "generation failed"))
+
+        # 04 - Resume (prefer uploaded doc, fall back to resume_text)
+        resume_written = False
+        for d in docs:
+            if d.get("document_type") == "resume":
+                fname, content = _decode_document(d)
+                if content:
+                    entry = "04_resume_" + _safe_zip_entry(fname, "resume.bin")
+                    z.writestr(entry, content)
+                    entries_written.append((entry, entry, "candidate-uploaded resume"))
+                    resume_written = True
+                    break
+
+        if not resume_written:
+            # Try resume_text from profile
+            try:
+                resume_text = ""
+                if candidate_id:
+                    from database import db
+                    conn = db.get_connection()
+                    cur = conn.cursor()
+                    cur.execute("SELECT resume_text FROM charvak_candidates WHERE candidate_id = %s",
+                                (candidate_id,))
+                    row = cur.fetchone()
+                    cur.close(); conn.close()
+                    if row and row[0]:
+                        resume_text = row[0]
+                if resume_text.strip():
+                    z.writestr("04_resume_profile.txt", resume_text)
+                    entries_written.append(("04_resume_profile.txt", "04_resume_profile.txt",
+                                             "text resume from profile (no file uploaded)"))
+                else:
+                    resume_note = "No resume file or resume text available"
+            except Exception as e:
+                resume_note = f"Resume fallback failed: {e}"
+
+        # 05 - Consent proof (if document id given AND the file can be decoded)
+        consent_doc_id = attachments.get("consent_proof_doc_id") or ""
+        consent_written = False
+        if consent_doc_id:
+            consent_doc = next((d for d in docs if d.get("document_id") == consent_doc_id), None)
+            if consent_doc:
+                fname, content = _decode_document(consent_doc)
+                if content:
+                    entry = "05_consent_proof_" + _safe_zip_entry(fname, "consent.bin")
+                    z.writestr(entry, content)
+                    entries_written.append((entry, entry, "uploaded consent proof"))
+                    consent_written = True
+
+        # -------- Now build README (last, so it reflects what landed) --------
+        rlines = [
+            "Charvak IT Consulting - Candidate Submission Package",
+            "=" * 55,
+            "",
+            f"Application ID:   {application_id}",
+            f"Role:             {_s(meta.get('role_title'), 'N/A')}",
+            f"Client:           {_s(meta.get('client_name'), 'N/A')}",
+            f"Priority:         {_s(meta.get('role_priority'), 'normal')}",
+            f"Candidate:        {_s(package.get('personal', {}).get('full_name'), 'N/A')}",
+            f"Generated:        {_dt.now().strftime('%Y-%m-%d %H:%M')}",
+            "",
+            f"This ZIP contains {len(entries_written)} file(s):",
+            "",
+        ]
+        for _, fname, note in entries_written:
+            rlines.append(f"  {fname}")
+            if note:
+                rlines.append(f"      {note}")
+        if resume_note:
+            rlines.append("")
+            rlines.append(f"  NOTE: {resume_note}")
+
+        # Consent status (informational)
+        rlines.append("")
+        if consent_written:
+            rlines.append(f"Consent: recorded and included ({_s(attachments.get('consent_id'), '')})")
+        elif attachments.get("consent_recorded"):
+            rlines.append(f"Consent: recorded in system ({_s(attachments.get('consent_id'), '')})")
+            rlines.append("         (No signed proof file was uploaded separately.)")
+        else:
+            rlines.append("Consent: NOT RECORDED")
+
+        rlines += [
+            "",
+            "How to use:",
+            "  1. Open 01_candidate_profile.json for the raw data",
+            "  2. Open 02_evaluation_form.pdf for the formatted summary",
+            "  3. Share the package with the client via the agreed channel",
+            "",
+            "Confidential - do not share outside of Charvak IT Consulting.",
+        ]
+        readme = "\n".join(rlines)
+
+        z.writestr("README.txt", readme)
+
+    buf.seek(0)
+    return buf.read()
+
+
+def submission_zip_filename(package: dict) -> str:
+    """Sensible filename for the ZIP."""
+    meta = package.get("meta", {}) or {}
+    personal = package.get("personal", {}) or {}
+    role = _safe_fname(meta.get("role_title", "role"))
+    name = _safe_fname(personal.get("full_name") or personal.get("first_name") or "candidate")
+    app_id = _safe_fname(meta.get("application_id", "app"))
+    return f"Charvak_Submission_{name}_{role}_{app_id}.zip"
+
