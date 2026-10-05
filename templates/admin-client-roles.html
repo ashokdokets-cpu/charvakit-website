@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+
+{% block title %}Client Roles - Charvak Admin{% endblock %}
+
+{% block content %}
+<div class="page-hero bg-dark text-white py-4">
+    <div class="container py-3">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <h1 class="display-6 fw-bold mb-1">Client Roles</h1>
+                <p class="mb-0">Roles your team is actively recruiting for</p>
+            </div>
+            <a href="/admin-control" class="btn btn-outline-light">← Back to Admin</a>
+        </div>
+    </div>
+</div>
+
+<div class="container py-4">
+
+    <!-- Summary strip -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <h6 class="text-muted mb-1">Total Roles</h6>
+                    <h3 class="mb-0" id="statTotal">—</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <h6 class="text-muted mb-1">Urgent</h6>
+                    <h3 class="mb-0 text-danger" id="statUrgent">—</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <h6 class="text-muted mb-1">Total Applicants</h6>
+                    <h3 class="mb-0 text-primary" id="statApplicants">—</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <h6 class="text-muted mb-1">Sourcing</h6>
+                    <h3 class="mb-0 text-success" id="statSourcing">—</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters + refresh -->
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div class="btn-group" role="group" id="filterGroup">
+            <button type="button" class="btn btn-outline-secondary btn-sm active" data-filter="">All</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-filter="sourcing">Sourcing</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-filter="shortlisting">Shortlisting</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-filter="submitted">Submitted</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-filter="closed">Closed</button>
+        </div>
+        <button class="btn btn-sm btn-outline-primary" onclick="loadRoles()">🔄 Refresh</button>
+    </div>
+
+    <!-- Loading / Empty / Error -->
+    <div id="loading" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="text-muted mt-3 mb-0">Loading roles...</p>
+    </div>
+
+    <div id="emptyState" class="card border-0 shadow-sm d-none">
+        <div class="card-body text-center py-5">
+            <h4>No roles yet</h4>
+            <p class="text-muted mb-0">Load roles via the seed script to get started.</p>
+        </div>
+    </div>
+
+    <div id="errorBox" class="alert alert-danger d-none"></div>
+
+    <!-- Roles table -->
+    <div id="rolesTable" class="card border-0 shadow-sm d-none">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Role</th>
+                        <th>Client</th>
+                        <th>Location</th>
+                        <th class="text-center">Exp</th>
+                        <th class="text-center">Priority</th>
+                        <th class="text-center">Status</th>
+                        <th class="text-center">Applicants</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="rolesBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script>
+(function () {
+    var API = "/api/admin/client-roles";
+    var state = { all: [], filter: "" };
+
+    function esc(s) {
+        return String(s == null ? "" : s)
+            .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    }
+    function token() {
+        return localStorage.getItem("auth_token") || localStorage.getItem("charvak_token") || "";
+    }
+
+    function priorityBadge(p) {
+        if (p === "urgent") return '<span class="badge bg-danger">Urgent</span>';
+        return '<span class="badge bg-secondary">Normal</span>';
+    }
+
+    function statusBadge(s) {
+        var map = {
+            sourcing:     ["bg-success", "Sourcing"],
+            shortlisting: ["bg-info text-dark", "Shortlisting"],
+            submitted:    ["bg-primary", "Submitted"],
+            closed:       ["bg-secondary", "Closed"],
+            on_hold:      ["bg-warning text-dark", "On Hold"]
+        };
+        var pair = map[s] || ["bg-light text-dark", s || "-"];
+        return '<span class="badge ' + pair[0] + '">' + esc(pair[1]) + "</span>";
+    }
+
+    function render() {
+        var rows = state.filter
+            ? state.all.filter(function (r) { return r.status === state.filter; })
+            : state.all;
+
+        var tbody = document.getElementById("rolesBody");
+        var tableCard = document.getElementById("rolesTable");
+        var empty = document.getElementById("emptyState");
+
+        if (!rows.length) {
+            tableCard.classList.add("d-none");
+            empty.classList.remove("d-none");
+            return;
+        }
+        empty.classList.add("d-none");
+        tableCard.classList.remove("d-none");
+
+        tbody.innerHTML = rows.map(function (r) {
+            var exp = "";
+            if (r.experience_min_years != null || r.experience_max_years != null) {
+                exp = (r.experience_min_years || "?") + "-" + (r.experience_max_years || "?");
+            }
+            return '<tr>'
+                + '<td><strong>' + esc(r.title) + '</strong><br><small class="text-muted">' + esc(r.role_id) + '</small></td>'
+                + '<td>' + esc(r.client_name) + '</td>'
+                + '<td><small>' + esc(r.location || "-") + '</small></td>'
+                + '<td class="text-center"><small>' + esc(exp || "-") + '</small></td>'
+                + '<td class="text-center">' + priorityBadge(r.priority) + '</td>'
+                + '<td class="text-center">' + statusBadge(r.status) + '</td>'
+                + '<td class="text-center"><span class="badge bg-light text-dark">' + (r.applicant_count || 0) + '</span></td>'
+                + '<td class="text-end">'
+                +   '<a href="/admin/client-roles/' + encodeURIComponent(r.role_id) + '" class="btn btn-sm btn-primary me-1">View</a>'
+                +   '<a href="/open-roles/' + encodeURIComponent(r.role_id) + '" target="_blank" class="btn btn-sm btn-outline-secondary">Public ↗</a>'
+                + '</td>'
+                + '</tr>';
+        }).join("");
+    }
+
+    function updateStats() {
+        var total = state.all.length;
+        var urgent = state.all.filter(function (r) { return r.priority === "urgent"; }).length;
+        var applicants = state.all.reduce(function (sum, r) { return sum + (r.applicant_count || 0); }, 0);
+        var sourcing = state.all.filter(function (r) { return r.status === "sourcing"; }).length;
+
+        document.getElementById("statTotal").textContent = total;
+        document.getElementById("statUrgent").textContent = urgent;
+        document.getElementById("statApplicants").textContent = applicants;
+        document.getElementById("statSourcing").textContent = sourcing;
+    }
+
+    function loadRoles() {
+        document.getElementById("loading").classList.remove("d-none");
+        document.getElementById("errorBox").classList.add("d-none");
+
+        fetch(API, {
+            headers: { "Authorization": "Bearer " + token() }
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            document.getElementById("loading").classList.add("d-none");
+            if (!data || data.status !== "success") {
+                var e = document.getElementById("errorBox");
+                e.textContent = (data && data.message) || "Could not load roles.";
+                e.classList.remove("d-none");
+                return;
+            }
+            state.all = data.roles || [];
+            updateStats();
+            render();
+        })
+        .catch(function (err) {
+            document.getElementById("loading").classList.add("d-none");
+            var e = document.getElementById("errorBox");
+            e.textContent = "Network error: " + err.message;
+            e.classList.remove("d-none");
+        });
+    }
+
+    // Filter buttons
+    document.querySelectorAll("#filterGroup button").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+            document.querySelectorAll("#filterGroup button").forEach(function (b) {
+                b.classList.remove("active");
+            });
+            btn.classList.add("active");
+            state.filter = btn.getAttribute("data-filter");
+            render();
+        });
+    });
+
+    document.addEventListener("DOMContentLoaded", loadRoles);
+    // Expose loadRoles for the inline onclick Refresh button
+    window.loadRoles = loadRoles;
+
+})();
+</script>
+{% endblock %}

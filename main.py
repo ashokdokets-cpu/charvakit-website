@@ -11252,6 +11252,20 @@ async def admin_cleanup_users_page(request: Request):
     return template_response("admin-cleanup-users.html", request, "User Cleanup - Charvak Admin")
 
 
+@app.get("/admin/client-roles", response_class=HTMLResponse)
+async def admin_client_roles_page(request: Request):
+    """Admin: list all client roles + applicant counts (Session 24)."""
+    return template_response("admin-client-roles.html", request,
+                             "Client Roles - Charvak Admin")
+
+
+@app.get("/admin/client-roles/{role_id}", response_class=HTMLResponse)
+async def admin_client_role_detail_page(request: Request, role_id: str):
+    """Admin: role detail + applicant list (Session 24)."""
+    return template_response("admin-client-role-detail.html", request,
+                             f"Role {role_id} - Charvak Admin")
+
+
 @app.get("/api/admin/cleanup-users")
 async def admin_cleanup_users_api():
     """API endpoint returning cleanup/user data as JSON."""
