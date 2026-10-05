@@ -456,7 +456,26 @@ function renderQuestionBody(fmt, i, q) {
         html += '<textarea class="form-control" rows="10" id="car-q' + i + '-txt" spellcheck="false" ';
         html += 'style="font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px;" ';
         html += 'placeholder="# read input from stdin\n# your code here" ';
-        html += 'onchange="updateProgress()">' + _esc(starter) + '</textarea>';
+        html += 'onchange="updateProgress()"></textarea>';
+    } else if (fmt === 'sql') {
+        // SQL: show schema + task + query textarea
+        var schema = q.schema || '';
+        if (schema) {
+            html += '<p class="small text-muted mb-1">Schema:</p>';
+            html += '<pre class="bg-light p-3 rounded mb-3" style="font-size:13px; white-space:pre-wrap;">' + _esc(schema) + '</pre>';
+        }
+        html += '<p class="mb-3" style="white-space:pre-wrap;">' + _esc(q.task || '') + '</p>';
+        html += '<p class="small text-muted mb-2">Write a SELECT query. Output is compared exactly: one line per row, columns separated by <code>|</code>.</p>';
+        var sqlStarter = q.starter_code || '';
+        if (sqlStarter) {
+            html += '<p class="small text-muted mb-1">Starter:</p>';
+            html += '<pre class="bg-light p-3 rounded mb-2" style="font-size:13px; white-space:pre-wrap;">' + _esc(sqlStarter) + '</pre>';
+        }
+        html += '<label class="small fw-semibold mb-1" for="car-q' + i + '-txt">Your query:</label>';
+        html += '<textarea class="form-control" rows="6" id="car-q' + i + '-txt" spellcheck="false" ';
+        html += 'style="font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px;" ';
+        html += 'placeholder="-- write your SELECT query here" ';
+        html += 'onchange="updateProgress()"></textarea>';
     } else {
         html += '<p class="mb-3 text-muted">Unsupported format: ' + _esc(fmt) + '</p>';
     }

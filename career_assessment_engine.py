@@ -926,12 +926,12 @@ class CareerAssessmentEngine:
             "sql": {
                 "label": "SQL",
                 "scored_by": "hybrid",
-                "available": False,
+                "available": True,
                 "phase": 2,
                 "question_shape": "{schema, task, expected_output}",
                 "answer_kind": "sql",
                 "credit_multiplier": 1.33,
-                "description": "Query a schema, compare output (coming soon)",
+                "description": "Query a schema, compare output (SQLite)",
             },
         }
 
@@ -959,6 +959,7 @@ class CareerAssessmentEngine:
             "debugging": self._prompt_debugging,
             "case_study": self._prompt_case_study,
             "coding": self._prompt_coding,
+            "sql": self._prompt_sql,
         }
         builder = builders.get(format_key)
         if not builder:
@@ -1198,6 +1199,45 @@ class CareerAssessmentEngine:
     # Question generation
     # ------------------------------------------------------------
 
+    def _prompt_sql(self, role, industry, level_label, level_blurb, count, difficulty_hint='baseline'):
+        """SQL problems with SQLite schema + task + expected output (Judge0 language_id=82)."""
+        ctx = self._context_header(role, industry, level_label, level_blurb, difficulty_hint)
+        topics = _topic_vocabulary_for_role(role)
+        return (
+            f"{ctx}\n\n"
+            f"Generate {count} SQL problems for a {role} in {industry} at {level_label} level.\n"
+            f"Focus on topics: {', '.join(topics[:5])}\n\n"
+            f"STRICT RULES:\n"
+            f"- Dialect: SQLite 3 (language_id=82).\n"
+            f"- Each problem has a schema (CREATE TABLE + INSERT rows) and a task (SELECT query to write).\n"
+            f"- The candidate writes ONE SELECT query. Do NOT write it for them in starter_code.\n"
+            f"- Keep schemas small: 1-2 tables, 2-5 rows each.\n"
+            f"- CRITICAL: expected_output must contain EXACTLY the columns the task asks for, in the order asked.\n"
+            f"  Do NOT include the primary key `id` unless the task explicitly asks for it.\n"
+            f"  Example: task 'names of all users where id > 1' means SELECT name FROM users WHERE id > 1\n"
+            f"    output is 'Bob\\nCharlie\\n' (1 column), NOT '2|Bob\\n3|Charlie\\n' (2 columns, wrong).\n"
+            f"- Sort/ordering keys are NOT output columns. If the task says 'names of users ordered by age', the output is ONLY names (1 column), not names+age.\n"
+            f"  Only include a column in expected_output if the task explicitly names it in the output description.\n"
+            f"- expected_output MUST match SQLite's default stdout EXACTLY:\n"
+            f"  - One line per row, columns joined by the pipe character '|'.\n"
+            f"  - No column headers (headers are OFF by default in this environment).\n"
+            f"  - Trailing newline after the last row.\n"
+            f"  - Example for 'SELECT id, name FROM users ORDER BY id' with rows (1,'Alice'),(2,'Bob'):\n"
+            f"    expected_output = \"1|Alice\\n2|Bob\\n\"\n"
+            f"- Difficulty: calibrate to {level_label}. Cover a spread: filtering, JOINs, aggregation, sorting.\n"
+            f"- Topics: tag each problem with 1-2 from the provided list.\n\n"
+            f"Return STRICT JSON: {{\"questions\": [\n"
+            f"  {{\n"
+            f"    \"schema\": \"CREATE TABLE ...;\\nINSERT INTO ...;\",\n"
+            f"    \"task\": \"one paragraph describing the query to write (output columns, filters, ordering)\",\n"
+            f"    \"starter_code\": \"-- write your SELECT query here\\n\",\n"
+            f"    \"expected_output\": \"col1|col2\\ncol3|col4\\n\",\n"
+            f"    \"topics\": [\"{topics[0] if topics else 'SQL'}\"]\n"
+            f"  }}\n"
+            f"]}}\n"
+            f"Return exactly {count} questions."
+        )
+
     def _generate_questions(
         self, format_key: str, role: str, industry: str, level_key: str,
         level_label: str, level_blurb: str, num_questions: int,
@@ -1343,6 +1383,13 @@ class CareerAssessmentEngine:
                     "problem": q.get("problem", ""),
                     "starter_code": q.get("starter_code", ""),
                     "language": q.get("language", "python"),
+                    "topics": q.get("topics", []),
+                })
+            elif format_key == "sql":
+                safe.append({
+                    "schema": q.get("schema", ""),
+                    "task": q.get("task", ""),
+                    "starter_code": q.get("starter_code", ""),
                     "topics": q.get("topics", []),
                 })
             else:
@@ -1518,6 +1565,26 @@ class CareerAssessmentEngine:
                 "starter_code": starter or "# read input from stdin\n# your code here\n",
                 "language": lang if lang in ("python",) else "python",
                 "test_cases": test_cases,
+                "topics": self._normalize_topics_for_question(raw_q.get("topics")),
+            }
+
+        if format_key == "sql":
+            schema = (raw_q.get("schema") or "").strip()
+            task = (raw_q.get("task") or "").strip()
+            starter = (raw_q.get("starter_code") or "").strip()
+            expected = raw_q.get("expected_output", "")
+            if not schema or not task:
+                return None
+            if not isinstance(expected, str) or not expected.strip():
+                return None
+            # Ensure trailing newline for consistent exact-match
+            if not expected.endswith("\n"):
+                expected = expected + "\n"
+            return {
+                "schema": schema,
+                "task": task,
+                "starter_code": starter or "-- write your SELECT query here\n",
+                "expected_output": expected,
                 "topics": self._normalize_topics_for_question(raw_q.get("topics")),
             }
 
@@ -1745,6 +1812,157 @@ class CareerAssessmentEngine:
 
         return results
 
+    @staticmethod
+    def _sql_outputs_match(actual: str, expected: str) -> bool:
+        """
+        Compare two SQL stdout strings with numeric tolerance and whitespace normalization.
+
+        Rules:
+        - Trailing/leading whitespace on each line is stripped.
+        - Trailing blank lines are dropped.
+        - Row counts must match.
+        - Cell counts per row must match.
+        - If both cells parse as float, compare with abs(a - b) < 1e-3.
+        - Otherwise, exact string match.
+        """
+        def _rows(s: str):
+            return [line.rstrip() for line in (s or "").strip("\n").split("\n")]
+
+        a_rows = _rows(actual)
+        e_rows = _rows(expected)
+
+        # Drop trailing blank rows on both sides
+        while a_rows and a_rows[-1] == "":
+            a_rows.pop()
+        while e_rows and e_rows[-1] == "":
+            e_rows.pop()
+
+        if len(a_rows) != len(e_rows):
+            return False
+
+        for la, le in zip(a_rows, e_rows):
+            ca = [c.strip() for c in la.split("|")]
+            ce = [c.strip() for c in le.split("|")]
+            if len(ca) != len(ce):
+                return False
+            for va, ve in zip(ca, ce):
+                # Numeric tolerance path
+                try:
+                    fa = float(va)
+                    fe = float(ve)
+                    if abs(fa - fe) > 1e-3:
+                        return False
+                    continue
+                except (ValueError, TypeError):
+                    pass
+                # String path (case-sensitive)
+                if va != ve:
+                    return False
+
+        return True
+
+    def _score_sql_batch(self, questions: List[Dict], answers: List) -> List[Dict]:
+        """
+        Score SQL submissions via Judge0. Each question has {schema, task, expected_output}.
+        Each answer is the candidate's SELECT query (or None).
+
+        Runs the schema + query in Judge0 (SQLite), gets the raw stdout,
+        compares against expected_output with _sql_outputs_match (float
+        tolerance + whitespace normalization).
+
+        Returns [{score, is_correct, feedback}] in question order. score = 100 or 0.
+        """
+        try:
+            from judge0_client import judge0_client, LANGUAGE_IDS
+        except Exception as e:
+            logger.error(f"judge0_client import failed: {e}")
+            return [{"score": 0, "is_correct": False, "feedback": "SQL execution unavailable"} for _ in answers]
+
+        sql_lang_id = LANGUAGE_IDS.get("sqlite3", 82)
+
+        results = []
+        for i, (q, a) in enumerate(zip(questions, answers)):
+            query = (a or "").strip() if isinstance(a, str) else ""
+            if not query:
+                results.append({
+                    "score": 0,
+                    "is_correct": False,
+                    "feedback": "No query submitted",
+                })
+                continue
+
+            # Reject submissions that are only the starter comment
+            if query.startswith("--") and "\n" not in query and "select" not in query.lower():
+                results.append({
+                    "score": 0,
+                    "is_correct": False,
+                    "feedback": "No query submitted",
+                })
+                continue
+
+            schema = (q.get("schema") or "").strip()
+            expected = q.get("expected_output") or ""
+            if not schema or not expected:
+                results.append({
+                    "score": 0,
+                    "is_correct": False,
+                    "feedback": "Question misconfigured (missing schema or expected_output)",
+                })
+                continue
+
+            full_source = f"{schema}\n\n{query}\n"
+
+            # NOTE: we do NOT pass expected_output to Judge0 anymore. We
+            # compare ourselves, so we get float tolerance + whitespace
+            # normalization.
+            try:
+                exec_result = judge0_client.run_code(
+                    source_code=full_source,
+                    language_id=sql_lang_id,
+                )
+            except Exception as e:
+                logger.error(f"judge0 sql run failed for question {i}: {e}")
+                results.append({
+                    "score": 0,
+                    "is_correct": False,
+                    "feedback": f"Execution error: {e}",
+                })
+                continue
+
+            if exec_result.get("status") != "success":
+                results.append({
+                    "score": 0,
+                    "is_correct": False,
+                    "feedback": exec_result.get("message", "Execution failed"),
+                })
+                continue
+
+            # If Judge0 itself reports an error status (not "Accepted"), fail early.
+            raw_status = exec_result.get("raw_status", "") or ""
+            if raw_status and raw_status.lower() not in ("accepted",):
+                results.append({
+                    "score": 0,
+                    "is_correct": False,
+                    "feedback": f"Query failed: {raw_status}"[:200],
+                })
+                continue
+
+            actual = exec_result.get("stdout", "") or ""
+            if self._sql_outputs_match(actual, expected):
+                results.append({
+                    "score": 100,
+                    "is_correct": True,
+                    "feedback": "Query produced the expected output",
+                })
+            else:
+                results.append({
+                    "score": 0,
+                    "is_correct": False,
+                    "feedback": "Query produced different output",
+                })
+
+        return results
+
     def _aggregate_skill_gap(self, questions: List[Dict], scored: List[Dict]) -> List[Dict]:
         """
         Group question scores by topic and return per-topic aggregates.
@@ -1820,6 +2038,8 @@ class CareerAssessmentEngine:
 
         if scored_by == "hybrid" and format_key == "coding":
             return self._score_coding_batch(questions, answers)
+        if scored_by == "hybrid" and format_key == "sql":
+            return self._score_sql_batch(questions, answers)
 
         if scored_by == "ai":
             return self._score_ai_batch(format_key, questions, answers,
