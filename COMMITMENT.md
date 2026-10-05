@@ -1,3 +1,16 @@
+## Session 23 CLOSED (2026-10-05) - Submission package generator
+
+JSON + PDF + ZIP endpoints live. Zero CBREX references on user-facing
+surfaces. See SESSION-CONTEXT.md for details.
+
+**Session 24 scope (recommended):** admin UI
+- /admin/client-roles          (list page)
+- /admin/client-roles/{role_id} (detail + applicants + downloads)
+- Link in admin dropdown
+- All backend endpoints already exist; pure frontend work
+
+---
+
 ## Session 22.5 CLOSED (2026-10-05) - Staffing pipeline launched
 
 7 real CBREX roles loaded to prod (4 NCS urgent, 2 Lenze normal,
