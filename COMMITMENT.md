@@ -1,3 +1,24 @@
+## Session 26 CLOSED (2026-10-05) - Security sweep + cautious cleanup
+
+Security sweep on all new admin endpoints: PASSED (zero gaps).
+
+Legacy /api/assessment/* routes: KEPT (deep audit found live
+engine-method callers, historical docs, no proof of zero external
+callers). Tombstone comment added.
+
+charvak_jobs table: LIVE (DoketsRB sync + ATS engine + 4 public job
+board routes verified 200). No cleanup needed.
+
+**Session 27 scope (recommended):**
+- Anti-cheating Layer A
+- Career Assessment Phase 2b (coding + SQL via Judge0)
+
+**Alternatives for Session 27:**
+- AuditBot Continuous
+- Silent-Killer 9b polish
+
+---
+
 ## Session 25 CLOSED (2026-10-05) - Admin applicant actions
 
 Three patches: status+notes UI, batch download ZIP, dashboard card.

@@ -9140,6 +9140,31 @@ async def assessment_types():
     """Get all assessment types."""
     return advanced_assessment_engine.get_assessment_types()
 
+# ====================================================================
+# LEGACY ROUTES (kept by design, Session 26 decision - 2026-10-05)
+# ====================================================================
+# This block contains secondary /api/assessment/* routes superseded
+# by newer namespaces:
+#
+#   /api/assessment/versant/*        -> /api/versant/*
+#   /api/assessment/mock-drive       -> /api/mock/*
+#   /api/assessment/skill-gap        -> /api/analysis/*
+#   /api/assessment/companies        -> /api/company-patterns/*
+#   /api/assessment/scorecard/{e}    -> /api/results/*
+#
+# They are auth-gated + credit-gated (Session G6 hardening,
+# 2026-09-26) and cost nothing to keep. Deleting them is a
+# one-way action with non-zero external-caller risk.
+#
+# Decision: KEEP IN PLACE (deletion rejected after deep audit).
+# Rationale: no proof exists of zero external callers; the routes
+# are safe where they are; keeping is cheaper than a broken flow
+# for a caller we can't see.
+#
+# Revisit only if a future session can enumerate every external
+# client and confirm zero usage.
+# ====================================================================
+
 @app.get("/api/assessment/versant")
 async def versant_details():
     """Get Versant details."""
