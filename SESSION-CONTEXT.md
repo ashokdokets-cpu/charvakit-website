@@ -264,6 +264,72 @@ browser, no DB editing required:
 - Anti-cheating Layer A (blocks Career Assessment Phase 2b)
 - Career Assessment Phase 2b (coding + SQL via Judge0 sandbox)
 
+
+
+## Session 26 CLOSED (2026-10-05) - Security sweep + cautious cleanup
+
+Three items investigated; zero deletions made. The system is cleaner
+than the audit implied.
+
+**Item 1 - Security sweep on new admin endpoints (PASSED)**
+
+Ran the 4-scenario matrix on 10 admin routes from Sessions 22-25:
+- Anonymous -> 401
+- Non-admin user (valid token) -> 403
+- Admin -> 200 or 400
+- Zero security gaps
+
+Also confirmed: 10 pre-existing admin routes (analytics, settings,
+users, purchases, testimonials x5, cleanup-users) rely on
+`admin_auth_guard` middleware alone (no require_admin in body).
+Verified with non-admin token: all return 403.
+
+**Item 2 - Legacy /api/assessment/* routes (KEPT, not deleted)**
+
+Initial audit flagged 7 routes as dead. Deep audit revealed they
+must stay:
+- COMMITMENT.md documents them as deliberately preserved
+- Two underlying engine methods have OTHER live call sites
+  (main.py:10614 and main.py:10581)
+- audits/audit-routes.json catalogs all 8
+- No proof exists of zero external callers
+
+Action: tombstone comment added above the block documenting the
+decision. Routes left in place.
+
+Note: POST /api/assessment/mcq/generate IS live (used by mcq.html).
+
+**Item 3 - charvak_jobs reference (NOT dead, no action)**
+
+`charvak_jobs` is a LIVE table used by:
+- main.py:1629 - active /api/jobs/post route
+- api_sync.py - DoketsRB integration (jobs sync)
+- ats_engine.py - ATS provider integration
+- job_board_engine.py - the engine that owns the table
+- 4 public routes verified live: /api/jobs, /search, /stats, /applications
+
+The table serves the public job board, distinct from
+`charvak_client_roles` which serves the CBREX staffing pipeline.
+Both are live. Neither supersedes the other.
+
+Action: no action. Table and routes stay.
+
+**Process lesson:**
+
+Simple greps miss real usage. In both cases, only cross-referencing
+multiple file types + historical tracker decisions revealed the truth.
+
+Rule for future audits: grep across ALL file types including
+historical trackers and audit artifacts.
+
+**Next session (27) candidates:**
+
+- Anti-cheating Layer A (blocks Career Assessment Phase 2b)
+- Career Assessment Phase 2b (coding + SQL via Judge0)
+- AuditBot Continuous
+- Rotate Render Postgres password (still pending)
+
+
 ---
 
 ---
