@@ -1,6 +1,54 @@
 # Session Context - Charvak
 
 
+## Session 28 CLOSED (2026-10-06) - Career Assessment Phase 2b (coding)
+
+The coding format is live on prod. Real code execution against per-question
+test cases via Judge0 CE (ce.judge0.com, free, no auth).
+
+**Three commits pushed:**
+- deca0c0 feat(judge0): Session 28a - Judge0 client for code execution
+- c65d118 feat(coding): Session 28b - coding format E2E via Judge0
+- (this commit) docs(session-28): Phase 2b coding close-out
+
+**New surface area:**
+- judge0_client.py (new) - Judge0 CE wrapper, runs code against test cases
+- career_assessment_engine.py - coding format enabled (was "coming soon")
+- templates/ai-assessment.html - coding renderer with code textarea
+
+**Engine changes:**
+- _prompt_coding() - generates coding problems + starter_code + 3 test cases
+- _normalize_question() - coding branch validates problem + test_cases shape
+- _strip_answers_for_frontend() - strips test_cases (no answer leak)
+- _score_coding_batch() - runs submissions via judge0_client per question
+- _dispatch_scoring() - routes hybrid+coding to _score_coding_batch
+- _format_registry()["coding"]["available"] = True
+
+**Verified E2E on local + prod:**
+- 10 coding questions generated with valid test cases
+- Judge0 execution: 3/3, 3/3, 3/3, 3/3, 3/3, 3/3, 0/3, 0/3, 0/3, 0/2
+- Overall 60%, correct_count 6, persisted correctly
+- Skill gap + learning path work identically to other formats
+- Prod API confirms coding.available = true
+
+**Credit model:** reuses AI-scored keys (20/30/40 for quick/standard/full).
+No new credit key, no new table, no schema change.
+
+**Still disabled: SQL format.** Session 28c will add it. Requires:
+- Sandbox DB per request (or use Judge0's sqlite3 language ID)
+- _prompt_sql + _normalize_question sql branch + _score_sql_batch
+- _strip_answers_for_frontend sql branch
+- Frontend renderQuestionBody sql branch
+
+**Session 29 candidates:**
+- A: SQL format (Session 28c) - completes Phase 2b
+- B: Admin UI for integrity events (from Session 27)
+- C: Roll Layer A + coding out to other assessments
+- D: Document-phase close-out + backup
+
+**Reminder:** Render Postgres password rotation still pending.
+
+
 ## Session 27 CLOSED (2026-10-06) - Anti-Cheating Layer A
 
 Deterministic integrity signals on Career Assessments. Shipped in

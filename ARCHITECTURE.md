@@ -1066,3 +1066,48 @@ Recorded only, never enforced.
 Layer A ships first on Career Assessment (this session). Versant,
 Mock Drives, CBAT, and IELTS can adopt the same engine + route by
 adding a small frontend block (the backend is engine-agnostic).
+
+## Code Execution via Judge0 (Session 28, v3.5)
+
+Coding format uses Judge0 CE for real code execution. Called from
+`career_assessment_engine._score_coding_batch` at assessment completion.
+
+### Endpoint
+
+- Base URL: `https://ce.judge0.com` (free, no auth)
+- Configurable via `JUDGE0_BASE_URL` env var (defaults to ce.judge0.com)
+- Optional `JUDGE0_API_KEY` env var for RapidAPI-hosted migration
+- Synchronous mode: `?base64_encoded=false&wait=true`
+
+### Flow
+
+    Career Assessment (format=coding)
+      -> start_assessment
+         -> _generate_questions -> _generate_one_batch -> OpenAI
+         -> returns 10 problems with starter_code + 3 test cases
+         -> _strip_answers_for_frontend removes test_cases
+      -> candidate submits Python code
+      -> submit_answer stores source_code as answer_text
+      -> complete_assessment
+         -> _dispatch_scoring -> _score_coding_batch
+            -> judge0_client.run_test_cases(source, test_cases)
+            -> per-case pass/fail
+            -> score = passed/total*100
+
+### Language map (ready for expansion)
+
+- python=71 (live)
+- javascript=63, java=62, cpp=54, go=60 (declared, unused)
+
+### Cost
+
+- ce.judge0.com is free (no auth, no rate limit for reasonable use)
+- Each coding question costs 3 Judge0 submissions (one per test case)
+- A 10-question quick assessment = ~30 Judge0 calls
+
+### Design principles
+
+- Never raises: judge0_client returns {status: 'error', ...} on any failure
+- Timeouts: each submission has a 5s wall-time limit + 3s CPU limit
+- Silent fail: a Judge0 outage gives the candidate a score of 0, not a 500
+- Rate safety: no retries, no parallelism (sequential per question)
