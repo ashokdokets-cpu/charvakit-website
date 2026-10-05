@@ -7462,7 +7462,10 @@ async def api_admin_cbrex_package(request: Request, application_id: str):
         raise
 
     from client_staffing_engine import client_staffing_engine
-    return client_staffing_engine.build_submission_package(application_id)
+    result = client_staffing_engine.build_submission_package(application_id)
+    if result.get("status") != "success":
+        return JSONResponse(status_code=404, content=result)
+    return result
 
 
 @app.post("/api/admin/applications/{application_id}/submission-status")
