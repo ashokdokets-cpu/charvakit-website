@@ -79,6 +79,7 @@ from enterprise_engine import enterprise_engine
 from marketing_ai_engine import marketing_ai_engine
 from indian_language_ai import indian_language_ai
 from career_assessment_engine import career_assessment_engine
+from integrity_engine import integrity_engine
 from lms_engine import lms_engine
 from career_v2_engine import career_v2_engine
 from micro_internship_global import micro_internship_global
@@ -6874,6 +6875,117 @@ async def api_career_assessment_get(request: Request, assessment_id: str, email:
     require_auth_for_email(request, email)
     return career_assessment_engine.get_assessment(assessment_id, email)
 
+# ========================================================================
+# Session 27 - Anti-Cheating Layer A: assessment integrity events
+# ========================================================================
+# Deterministic environment signals captured during a Career Assessment:
+#   paste, tab_switch, contextmenu, focus_out, rapid_input
+# Recorded only, never enforced. Admin view surfaces them per-assessment.
+#
+# Security:
+#   - POST requires auth (email-match)
+#   - POST verifies assessment ownership before recording (403 on mismatch)
+#   - GET requires admin
+#   - No credits charged (signal recording is free; it is a trust feature)
+# ========================================================================
+
+@app.post("/api/integrity/event")
+@limiter.limit("120/minute")
+async def api_integrity_event(request: Request):
+    """
+    Record one integrity event for a Career Assessment.
+    Body: {email, assessment_id, event_type, metadata (optional)}
+    The caller must own the assessment.
+    """
+    try:
+        data = await request.json()
+        email = (data.get("email") or "").strip().lower()
+        raw_aid = data.get("assessment_id")
+        raw_etype = data.get("event_type")
+        if not isinstance(raw_aid, str) or not isinstance(raw_etype, str):
+            return JSONResponse(
+                status_code=400,
+                content={"status": "error", "message": "assessment_id and event_type must be strings"},
+            )
+        assessment_id = raw_aid.strip()
+        event_type = raw_etype.strip()
+        metadata = data.get("metadata") or {}
+
+        if not email:
+            return JSONResponse(
+                status_code=401,
+                content={"status": "error", "message": "Login required.", "login_url": "/login"},
+            )
+        require_auth_for_email(request, email)
+
+        if not assessment_id or not event_type:
+            return JSONResponse(
+                status_code=400,
+                content={"status": "error", "message": "assessment_id and event_type required"},
+            )
+
+        # Ownership check: the assessment must belong to this email.
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT email FROM charvak_career_assessments WHERE assessment_id = %s",
+            (assessment_id,),
+        )
+        row = cur.fetchone()
+        cur.close()
+        conn.close()
+
+        if not row:
+            return JSONResponse(
+                status_code=404,
+                content={"status": "error", "message": "Assessment not found"},
+            )
+        if (row[0] or "").strip().lower() != email:
+            return JSONResponse(
+                status_code=403,
+                content={"status": "error", "message": "Assessment does not belong to this user"},
+            )
+
+        result = integrity_engine.record_event(
+            assessment_id=assessment_id,
+            email=email,
+            event_type=event_type,
+            metadata=metadata,
+        )
+        return result
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "Failed to record integrity event")
+
+
+@app.get("/api/admin/career-assessment/{assessment_id}/integrity")
+@limiter.limit("60/minute")
+async def api_admin_assessment_integrity(request: Request, assessment_id: str):
+    """
+    Admin view: full event list + summary for one assessment.
+    Requires admin (enforced via admin_auth_guard middleware + require_admin).
+    """
+    try:
+        require_admin(request)  # belt-and-suspenders; middleware already gates /api/admin/*
+        events = integrity_engine.get_events(assessment_id, limit=500)
+        summary = integrity_engine.get_summary(assessment_id)
+        return {
+            "status": "success",
+            "assessment_id": assessment_id,
+            "summary": summary,
+            "events": events,
+            "event_count": len(events),
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "Failed to load integrity data")
+
+
+# ======================== end Session 27 block ==========================
 
 
 # ============================================================
@@ -11497,4 +11609,3 @@ async def api_reset_password(request: Request):
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
-
