@@ -441,6 +441,22 @@ function renderQuestionBody(fmt, i, q) {
             html += '</ol>';
         }
         html += '<textarea class="form-control" rows="8" id="car-q' + i + '-txt" placeholder="Write your analysis..." onchange="updateProgress()"></textarea>';
+    } else if (fmt === 'coding') {
+        // Coding: show problem + starter code prefill + code textarea
+        var lang = q.language || 'python';
+        html += '<p class="mb-2 small text-muted">Language: ' + _esc(lang) + '</p>';
+        html += '<p class="mb-3" style="white-space:pre-wrap;">' + _esc(q.problem || '') + '</p>';
+        html += '<p class="small text-muted mb-2">Read input from stdin (use <code>input()</code> or <code>sys.stdin</code>). Print the exact expected output.</p>';
+        var starter = q.starter_code || '';
+        if (starter) {
+            html += '<p class="small text-muted mb-1">Starter:</p>';
+            html += '<pre class="bg-light p-3 rounded mb-2" style="font-size:13px; white-space:pre-wrap;">' + _esc(starter) + '</pre>';
+        }
+        html += '<label class="small fw-semibold mb-1" for="car-q' + i + '-txt">Your solution:</label>';
+        html += '<textarea class="form-control" rows="10" id="car-q' + i + '-txt" spellcheck="false" ';
+        html += 'style="font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px;" ';
+        html += 'placeholder="# read input from stdin\n# your code here" ';
+        html += 'onchange="updateProgress()">' + _esc(starter) + '</textarea>';
     } else {
         html += '<p class="mb-3 text-muted">Unsupported format: ' + _esc(fmt) + '</p>';
     }

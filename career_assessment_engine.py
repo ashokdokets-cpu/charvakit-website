@@ -916,12 +916,12 @@ class CareerAssessmentEngine:
             "coding": {
                 "label": "Coding",
                 "scored_by": "hybrid",
-                "available": False,
+                "available": True,
                 "phase": 2,
                 "question_shape": "{problem, starter_code, language, test_cases}",
                 "answer_kind": "code",
                 "credit_multiplier": 1.33,
-                "description": "Real code, tested against cases (coming soon)",
+                "description": "Real code, tested against cases (Python only)",
             },
             "sql": {
                 "label": "SQL",
@@ -958,6 +958,7 @@ class CareerAssessmentEngine:
             "system_design": self._prompt_system_design,
             "debugging": self._prompt_debugging,
             "case_study": self._prompt_case_study,
+            "coding": self._prompt_coding,
         }
         builder = builders.get(format_key)
         if not builder:
@@ -1158,6 +1159,40 @@ class CareerAssessmentEngine:
             f"- Return exactly {count} case studies.\n\n"
             f'Return JSON: {{"questions": [{{"scenario": "...", "questions": ["...","..."], "rubric": ["...","..."], "topics": ["...", "..."]}}]}}'
         )
+    def _prompt_coding(self, role, industry, level_label, level_blurb, count, difficulty_hint='baseline'):
+        """Coding problems with real test cases. Python-only for now (Judge0 language_id=71)."""
+        ctx = self._context_header(role, industry, level_label, level_blurb, difficulty_hint)
+        topics = _topic_vocabulary_for_role(role)
+        return (
+            f"{ctx}\n\n"
+            f"Generate {count} coding problems for a {role} in {industry} at {level_label} level.\n"
+            f"Focus on topics: {', '.join(topics[:5])}\n\n"
+            f"STRICT RULES:\n"
+            f"- Language is Python 3.\n"
+            f"- Each problem reads input from stdin and writes output to stdout.\n"
+            f"- Each problem has exactly 3 test cases with valid stdin and the exact expected stdout.\n"
+            f"- Output must match EXACTLY (including trailing newline via print()).\n"
+            f"- Test cases must be small (integers, short strings, short lists).\n"
+            f"- Starter code should be a short comment + a hint, not a working solution.\n"
+            f"- Difficulty: calibrate to {level_label}. One problem may be a warm-up, but at least one must be non-trivial.\n"
+            f"- Do NOT include the solution in `starter_code`.\n"
+            f"- Do NOT include any imports the candidate does not need.\n\n"
+            f"Return STRICT JSON: {{\"questions\": [\n"
+            f"  {{\n"
+            f"    \"problem\": \"one paragraph describing what to write, with clear input/output spec\",\n"
+            f"    \"starter_code\": \"# read input from stdin\\n# your code here\\n\",\n"
+            f"    \"language\": \"python\",\n"
+            f"    \"test_cases\": [\n"
+            f"      {{\"stdin\": \"2 3\\n\", \"expected_output\": \"5\\n\"}},\n"
+            f"      {{\"stdin\": \"10 -4\\n\", \"expected_output\": \"6\\n\"}},\n"
+            f"      {{\"stdin\": \"0 0\\n\", \"expected_output\": \"0\\n\"}}\n"
+            f"    ],\n"
+            f"    \"topics\": [\"{topics[0] if topics else 'algorithms'}\"]\n"
+            f"  }}\n"
+            f"]}}\n"
+            f"Return exactly {count} questions."
+        )
+
 
     # ------------------------------------------------------------
     # Question generation
@@ -1301,6 +1336,13 @@ class CareerAssessmentEngine:
                 safe.append({
                     "scenario": q.get("scenario", ""),
                     "questions": q.get("questions", []),
+                    "topics": q.get("topics", []),
+                })
+            elif format_key == "coding":
+                safe.append({
+                    "problem": q.get("problem", ""),
+                    "starter_code": q.get("starter_code", ""),
+                    "language": q.get("language", "python"),
                     "topics": q.get("topics", []),
                 })
             else:
@@ -1448,6 +1490,36 @@ class CareerAssessmentEngine:
                     "questions": [str(q).strip() for q in questions if str(q).strip()],
                     "rubric": [str(r).strip() for r in rubric if str(r).strip()],
                     "topics": self._normalize_topics_for_question(raw_q.get("topics"))}
+
+        if format_key == "coding":
+            problem = (raw_q.get("problem") or "").strip()
+            starter = (raw_q.get("starter_code") or "").strip()
+            lang = (raw_q.get("language") or "python").strip().lower()
+            tc_raw = raw_q.get("test_cases", [])
+            if not problem or not isinstance(tc_raw, list) or not tc_raw:
+                return None
+            test_cases = []
+            for tc in tc_raw:
+                if not isinstance(tc, dict):
+                    continue
+                stdin = tc.get("stdin", "")
+                expected = tc.get("expected_output", "")
+                if not isinstance(stdin, str) or not isinstance(expected, str):
+                    continue
+                if not expected.strip():
+                    continue
+                test_cases.append({"stdin": stdin, "expected_output": expected})
+            if not test_cases:
+                return None
+            # Cap test cases at 5 to bound Judge0 call cost per question
+            test_cases = test_cases[:5]
+            return {
+                "problem": problem,
+                "starter_code": starter or "# read input from stdin\n# your code here\n",
+                "language": lang if lang in ("python",) else "python",
+                "test_cases": test_cases,
+                "topics": self._normalize_topics_for_question(raw_q.get("topics")),
+            }
 
         return None
 
@@ -1602,6 +1674,77 @@ class CareerAssessmentEngine:
             logger.error(f"AI batch scoring failed for {format_key}: {e}")
             return default
 
+    def _score_coding_batch(self, questions: List[Dict], answers: List) -> List[Dict]:
+        """
+        Score coding submissions via Judge0. Each question carries test_cases.
+        Each answer is the candidate's Python source code (or None).
+
+        Returns [{score, is_correct, feedback}] in question order.
+        score = round(passed_cases / total_cases * 100).
+        """
+        try:
+            from judge0_client import judge0_client, LANGUAGE_IDS
+        except Exception as e:
+            logger.error(f"judge0_client import failed: {e}")
+            return [{"score": 0, "is_correct": False, "feedback": "Code execution unavailable"} for _ in answers]
+
+        results = []
+        for i, (q, a) in enumerate(zip(questions, answers)):
+            source = (a or "").strip() if isinstance(a, str) else ""
+            if not source:
+                results.append({
+                    "score": 0,
+                    "is_correct": False,
+                    "feedback": "No code submitted",
+                })
+                continue
+
+            test_cases = q.get("test_cases") or []
+            if not test_cases:
+                results.append({
+                    "score": 0,
+                    "is_correct": False,
+                    "feedback": "No test cases configured for this question",
+                })
+                continue
+
+            lang = (q.get("language") or "python").lower()
+            lang_id = LANGUAGE_IDS.get(lang, LANGUAGE_IDS["python"])
+
+            try:
+                exec_result = judge0_client.run_test_cases(
+                    source_code=source,
+                    test_cases=test_cases,
+                    language_id=lang_id,
+                )
+            except Exception as e:
+                logger.error(f"judge0 run failed for question {i}: {e}")
+                results.append({
+                    "score": 0,
+                    "is_correct": False,
+                    "feedback": f"Execution error: {e}",
+                })
+                continue
+
+            if exec_result.get("status") != "success":
+                results.append({
+                    "score": 0,
+                    "is_correct": False,
+                    "feedback": exec_result.get("message", "Execution failed"),
+                })
+                continue
+
+            passed = exec_result.get("passed", 0)
+            total = exec_result.get("total", 0)
+            score = exec_result.get("score", 0)
+            results.append({
+                "score": score,
+                "is_correct": score >= 70,
+                "feedback": f"{passed}/{total} test cases passed",
+            })
+
+        return results
+
     def _aggregate_skill_gap(self, questions: List[Dict], scored: List[Dict]) -> List[Dict]:
         """
         Group question scores by topic and return per-topic aggregates.
@@ -1674,6 +1817,9 @@ class CareerAssessmentEngine:
         registry = self._format_registry()
         fmt_meta = registry.get(format_key, {})
         scored_by = fmt_meta.get("scored_by", "deterministic")
+
+        if scored_by == "hybrid" and format_key == "coding":
+            return self._score_coding_batch(questions, answers)
 
         if scored_by == "ai":
             return self._score_ai_batch(format_key, questions, answers,
