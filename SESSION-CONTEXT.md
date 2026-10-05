@@ -1,5 +1,77 @@
 # Session Context - Charvak
 
+
+## Session 27 CLOSED (2026-10-06) - Anti-Cheating Layer A
+
+Deterministic integrity signals on Career Assessments. Shipped in
+three commits: engine + schema + routes (1124a38), frontend capture
+(91e1b1f), and this docs commit.
+
+**What shipped:**
+
+- **`integrity_engine.py`** — standalone engine recording five
+  environment signals during an assessment: paste, tab_switch,
+  contextmenu, focus_out, rapid_input. Self-healing DDL. Batch read
+  + summary methods. Risk classifier (clean / minor / moderate /
+  elevated).
+
+- **New table `charvak_assessment_integrity_events`** — one row per
+  event. Columns: event_id, assessment_id, email, event_type,
+  metadata (JSONB), occurred_at. Indexes on assessment and email.
+
+- **New column `charvak_career_assessments.integrity_summary`** —
+  JSONB rollup: per-type counts + total + risk_level. Written on
+  every event for fast display (no aggregation query needed).
+
+- **`POST /api/integrity/event`** — auth-gated, email-match,
+  ownership-verified (the assessment must belong to the caller).
+  No credits charged. Rate limit 120/min. Rejects non-string
+  `assessment_id` / `event_type` with a clean 400.
+
+- **`GET /api/admin/career-assessment/{aid}/integrity`** —
+  admin-gated view returning event list + summary. Belt-and-suspenders
+  via require_admin (middleware already gates /api/admin/*).
+
+- **Frontend capture in `templates/ai-assessment.html`** —
+  document-level listeners armed only when `_carCurrentAssessment`
+  is non-null. Batches and flushes every 2 seconds via fetch.
+  Uses keepalive fetch on pagehide (sendBeacon can't set auth headers).
+  Silent-fails: a dead backend never breaks the candidate experience.
+  Exposes `window.__integrityDebug` for manual testing.
+
+**Verified E2E:**
+
+- 8-scenario curl matrix: 401/200/404/400/400/200/403 all pass
+- Engine unit test: records, reads back, summarizes, classifies risk
+- Browser test: all 5 event types land in the DB with correct
+  metadata (paste with chars, tab_switch with duration_ms,
+  rapid_input with chars_per_ms)
+- Input hardening: a list-shaped `assessment_id` returns 400,
+  not 500
+
+**Zero impact on the assessment flow itself.** The candidate UX is
+unchanged. Events are recorded as a side channel; nothing is blocked.
+
+**What's next — Session 28 candidates:**
+
+- A: **Career Assessment Phase 2b** (coding + SQL via Judge0) —
+  now unblocked by Layer A. This is the piece that makes the
+  assessment commercially viable.
+- B: **Admin UI for integrity data** — surface the events on
+  `/admin/client-roles/{role_id}` or a new page for assessment
+  review. Turns recorded events into an employer-facing artifact.
+- C: **Layer A roll-out to other assessment flows** — Versant,
+  Mock Drives, CBAT, IELTS. Each is a ~5-line frontend addition
+  because the engine + route already exist.
+
+Recommendation: **A** — Layer A unblocks Phase 2b, and Phase 2b is
+the product that makes the entire assessment stack sellable to
+employers. The admin UI is a valuable follow-up but Phase 2b is the
+strategic priority.
+
+**Backup:** recommended after Session 27 commit — snapshot the
+Layer A work in the same style as the Session 26 backup.
+
 ## Sessions 19-21 CLOSED (2026-10-04) - Certificate v2
 
 Three sessions shipped together as the certificate-v2 release.

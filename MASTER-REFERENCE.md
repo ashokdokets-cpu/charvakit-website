@@ -202,7 +202,7 @@ products, candidate, email, messaging, events, brand, team,
 ats, university, enterprise, invoice, tools,
 marketing_ai, indian_language_ai, lms, career_v2
 
-Data-backed: `ai_credit_engine`, `email_verification`, `ai_courses`, `ai_courses_payments`, `complete_mock_drive`, `results_system`
+Data-backed: `integrity_engine` (Session 27, Layer A integrity signals), `ai_credit_engine`, `email_verification`, `ai_courses`, `ai_courses_payments`, `complete_mock_drive`, `results_system`
 
 ---
 
@@ -321,6 +321,12 @@ Data-backed: `ai_credit_engine`, `email_verification`, `ai_courses`, `ai_courses
 - `POST /api/mock/start-complete`
 - `POST /api/mock/submit-complete`
 - `POST /api/mock/complete-full`
+
+
+### Integrity (Session 27)
+
+- `POST /api/integrity/event` — record one environment signal (auth + ownership)
+- `GET  /api/admin/career-assessment/{aid}/integrity` — admin view (events + summary)
 
 ### Results
 - `POST /api/results/record`

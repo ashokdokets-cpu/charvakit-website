@@ -119,7 +119,7 @@ def compute_role_readiness(assessment_id):
 
 ---
 
-### Gap 3 — Anti-Cheating & Assessment Integrity (Session 17, Priority 2)
+### Gap 3 — Anti-Cheating & Assessment Integrity (Layer A SHIPPED 2026-10-06)
 
 **What's missing:**
 Global technical assessment leaders have deep integrity infrastructure:
@@ -161,8 +161,7 @@ Three layers, shippable independently:
 - Plagiarism detection via embedding similarity on free-text answers
 - Retake integrity: a 40-point score jump in 24 hours is flagged, not hidden
 
-**Effort:** 1-2 sessions for Layer A; Layer B is a design habit; Layer C is
-Session 18+.
+**Effort:** Layer A shipped in Session 27 (2026-10-06, commits 1124a38 + 91e1b1f). Layers B+C are future work.
 
 **Success metric:** Verified candidates have a "Trust Score" badge. Employers
 can filter by minimum trust. Retake-jump anomalies are flagged in the admin
@@ -341,7 +340,7 @@ them.
 
 | Session | Scope | Effort |
 |---|---|---|
-| **17** | Role Readiness Score + Anti-Cheating Layer A + Career Assessment Phase 2b (coding/SQL via Judge0) | 2-3 days |
+| **17** | Role Readiness Score (SHIPPED) + Anti-Cheating Layer A (SHIPPED 2026-10-06) + Career Assessment Phase 2b (coding/SQL via Judge0 — unblocked) | 2-3 days |
 | **18** | AuditBot Continuous Phase 1 (repo scanner + dashboard + cron) | 1-2 days |
 | **19** | AuditBot Continuous Phase 2 (GitHub App + Slack alerts) + Anticheat Layer C (behavioral analytics) | 2-3 days |
 | **20** | Multilingual Voice Screening — infrastructure + Telugu pilot | 3-5 days |
