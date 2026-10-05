@@ -1,0 +1,478 @@
+{% extends "base.html" %}
+
+{% block title %}Role Detail - Charvak Admin{% endblock %}
+
+{% block content %}
+<div class="page-hero bg-dark text-white py-4">
+    <div class="container py-3">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <a href="/admin/client-roles" class="text-white-50 text-decoration-none small">← All client roles</a>
+                <h1 class="display-6 fw-bold mb-1" id="roleTitle">Loading...</h1>
+                <p class="mb-0" id="roleSubtitle">—</p>
+            </div>
+            <a href="/admin-control" class="btn btn-outline-light">← Back to Admin</a>
+        </div>
+    </div>
+</div>
+
+<div class="container py-4">
+
+    <div id="loading" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="text-muted mt-3 mb-0">Loading role + applicants...</p>
+    </div>
+
+    <div id="errorBox" class="alert alert-danger d-none"></div>
+
+    <div id="content" class="d-none">
+
+        <!-- Role info card -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <small class="text-muted d-block">Client</small>
+                        <strong id="infoClient">—</strong>
+                    </div>
+                    <div class="col-md-3">
+                        <small class="text-muted d-block">Location</small>
+                        <strong id="infoLocation">—</strong>
+                    </div>
+                    <div class="col-md-2">
+                        <small class="text-muted d-block">Experience</small>
+                        <strong id="infoExp">—</strong>
+                    </div>
+                    <div class="col-md-2">
+                        <small class="text-muted d-block">Priority</small>
+                        <span id="infoPriority">—</span>
+                    </div>
+                    <div class="col-md-2">
+                        <small class="text-muted d-block">Status</small>
+                        <span id="infoStatus">—</span>
+                    </div>
+                    <div class="col-md-12 mt-2">
+                        <small class="text-muted d-block">Skills required</small>
+                        <div id="infoSkills">—</div>
+                    </div>
+                    <div class="col-md-12 d-flex gap-2 mt-2">
+                        <a id="publicLink" href="#" target="_blank" class="btn btn-sm btn-outline-secondary">
+                            View public page ↗
+                        </a>
+                        <button class="btn btn-sm btn-outline-primary" onclick="loadAll()">🔄 Refresh</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary strip -->
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-md-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted mb-1">Total Applicants</h6>
+                        <h3 class="mb-0" id="statTotal">—</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted mb-1">Pending Review</h6>
+                        <h3 class="mb-0 text-warning" id="statPending">—</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted mb-1">Submitted to Client</h6>
+                        <h3 class="mb-0 text-primary" id="statSubmitted">—</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted mb-1">Shortlisted</h6>
+                        <h3 class="mb-0 text-success" id="statShortlisted">—</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Applicants -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="mb-0">Applicants</h4>
+            <small class="text-muted">Ranked by readiness score</small>
+        </div>
+
+        <div id="emptyApplicants" class="card border-0 shadow-sm d-none">
+            <div class="card-body text-center py-5">
+                <h5>No applications yet</h5>
+                <p class="text-muted mb-0">
+                    Share the public page with candidates to start receiving applications.
+                </p>
+            </div>
+        </div>
+
+        <div id="applicantsList" class="d-none"></div>
+
+    </div>
+</div>
+
+
+
+<script>
+(function () {
+    var ROLE_ID = (function () {
+        var parts = window.location.pathname.split("/").filter(Boolean);
+        return parts.length ? parts[parts.length - 1] : "";
+    })();
+
+    var state = {
+        role: null,
+        applicants: [],
+        currentAppId: null,
+    };
+
+    function esc(s) {
+        return String(s == null ? "" : s)
+            .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    }
+    function token() {
+        return localStorage.getItem("auth_token") || localStorage.getItem("charvak_token") || "";
+    }
+    function authHeaders() {
+        return { "Authorization": "Bearer " + token() };
+    }
+
+    function priorityBadge(p) {
+        if (p === "urgent") return '<span class="badge bg-danger">Urgent</span>';
+        return '<span class="badge bg-secondary">Normal</span>';
+    }
+    function statusBadge(sub) {
+        var s = (sub || "pending").toLowerCase();
+        var map = {
+            pending:      ["bg-secondary", "Pending review"],
+            shortlisted:  ["bg-info text-dark", "Shortlisted"],
+            submitted:    ["bg-primary", "Submitted"],
+            interviewing: ["bg-warning text-dark", "Interviewing"],
+            offer:        ["bg-success", "Offer"],
+            hired:        ["bg-success", "Hired"],
+            rejected:     ["bg-danger", "Not selected"],
+            withdrawn:    ["bg-light text-dark", "Withdrawn"]
+        };
+        var pair = map[s] || ["bg-secondary", s];
+        return '<span class="badge ' + pair[0] + '">' + esc(pair[1]) + "</span>";
+    }
+    function fmtDate(s) {
+        if (!s) return "—";
+        var d = new Date(s);
+        if (isNaN(d.getTime())) return s;
+        return d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+    }
+    function readinessChip(score) {
+        if (score == null) return '<span class="badge bg-light text-dark">No cert</span>';
+        var cls = score >= 70 ? "bg-success" : (score >= 50 ? "bg-warning text-dark" : "bg-danger");
+        return '<span class="badge ' + cls + '">' + score + "/100</span>";
+    }
+
+    function renderRole(role) {
+        state.role = role;
+        document.getElementById("roleTitle").textContent = role.title || "Role";
+        document.getElementById("roleSubtitle").textContent =
+            (role.client_name || "") + " · " + (role.role_id || "");
+        document.getElementById("infoClient").textContent = role.client_name || "—";
+        document.getElementById("infoLocation").textContent = role.location || "—";
+        var exp = (role.experience_min_years != null || role.experience_max_years != null)
+            ? (role.experience_min_years || "?") + "-" + (role.experience_max_years || "?")
+            : "—";
+        document.getElementById("infoExp").textContent = exp + " yrs";
+        document.getElementById("infoPriority").innerHTML = priorityBadge(role.priority);
+        document.getElementById("infoStatus").innerHTML = '<span class="badge bg-secondary">' +
+            esc(role.status || "-") + "</span>";
+        var skills = (role.skills_required || "").split(",")
+            .map(function (s) { return s.trim(); }).filter(function (s) { return s; })
+            .map(function (s) { return '<span class="badge bg-light text-dark me-1 mb-1">' + esc(s) + "</span>"; })
+            .join("");
+        document.getElementById("infoSkills").innerHTML = skills || "—";
+        document.getElementById("publicLink").href = "/open-roles/" + encodeURIComponent(role.role_id);
+    }
+
+    function renderApplicants(apps) {
+        var el = document.getElementById("applicantsList");
+        var empty = document.getElementById("emptyApplicants");
+        if (!apps.length) {
+            el.classList.add("d-none");
+            empty.classList.remove("d-none");
+            return;
+        }
+        empty.classList.add("d-none");
+        el.classList.remove("d-none");
+
+        el.innerHTML = apps.map(function (a) {
+            var skills = (a.skills || "");
+            if (Array.isArray(skills)) skills = skills.join(", ");
+            return '<div class="card border-0 shadow-sm mb-3">'
+                + '<div class="card-body">'
+                +   '<div class="row align-items-center g-3">'
+                +     '<div class="col-md-4">'
+                +       '<h5 class="mb-1">' + esc(a.candidate_name || a.email) + '</h5>'
+                +       '<p class="text-muted mb-1 small">' + esc(a.email) + '</p>'
+                +       '<p class="text-muted mb-0 small">' + esc(a.location || "") + (a.experience_years ? ' · ' + a.experience_years + ' yrs' : '') + '</p>'
+                +     '</div>'
+                +     '<div class="col-md-2 text-center">'
+                +       '<small class="text-muted d-block">Readiness</small>'
+                +       readinessChip(a.readiness_score)
+                +     '</div>'
+                +     '<div class="col-md-2 text-center">'
+                +       '<small class="text-muted d-block">Status</small>'
+                +       statusBadge(a.submission_status)
+                +     '</div>'
+                +     '<div class="col-md-2 text-center">'
+                +       '<small class="text-muted d-block">Applied</small>'
+                +       '<span class="small">' + fmtDate(a.created_at) + '</span>'
+                +     '</div>'
+                +     '<div class="col-md-2 text-end">'
+                +       '<button class="btn btn-sm btn-primary me-1" data-action="view" data-app-id="' + a.application_id + '">View</button>'
+                +       '<button class="btn btn-sm btn-success" data-action="download" data-app-id="' + a.application_id + '">Download</button>'
+                +     '</div>'
+                +   '</div>'
+                + '</div>'
+                + '</div>';
+        }).join("");
+    }
+
+    function updateStats(apps) {
+        var byStatus = {
+            pending: 0, shortlisted: 0, submitted: 0, interviewing: 0,
+            offer: 0, hired: 0, rejected: 0, withdrawn: 0
+        };
+        apps.forEach(function (a) {
+            var s = (a.submission_status || "pending").toLowerCase();
+            if (byStatus[s] != null) byStatus[s]++;
+        });
+        document.getElementById("statTotal").textContent = apps.length;
+        document.getElementById("statPending").textContent = byStatus.pending;
+        document.getElementById("statSubmitted").textContent = byStatus.submitted;
+        document.getElementById("statShortlisted").textContent = byStatus.shortlisted + byStatus.interviewing;
+    }
+
+    function loadAll() {
+        document.getElementById("loading").classList.remove("d-none");
+        document.getElementById("errorBox").classList.add("d-none");
+
+        Promise.all([
+            fetch("/api/admin/client-roles/" + encodeURIComponent(ROLE_ID), { headers: authHeaders() }).then(function (r) { return r.json(); }),
+            fetch("/api/admin/client-roles/" + encodeURIComponent(ROLE_ID) + "/applications", { headers: authHeaders() }).then(function (r) { return r.json(); })
+        ])
+        .then(function (results) {
+            document.getElementById("loading").classList.add("d-none");
+            var roleRes = results[0];
+            var appsRes = results[1];
+
+            if (!roleRes || roleRes.status !== "success" || !roleRes.role) {
+                var e = document.getElementById("errorBox");
+                e.textContent = (roleRes && roleRes.message) || "Could not load role.";
+                e.classList.remove("d-none");
+                return;
+            }
+            if (!appsRes || appsRes.status !== "success") {
+                var e2 = document.getElementById("errorBox");
+                e2.textContent = (appsRes && appsRes.message) || "Could not load applicants.";
+                e2.classList.remove("d-none");
+                return;
+            }
+
+            renderRole(roleRes.role);
+            state.applicants = appsRes.applications || [];
+            updateStats(state.applicants);
+            renderApplicants(state.applicants);
+
+            document.getElementById("content").classList.remove("d-none");
+        })
+        .catch(function (err) {
+            document.getElementById("loading").classList.add("d-none");
+            var e = document.getElementById("errorBox");
+            e.textContent = "Network error: " + err.message;
+            e.classList.remove("d-none");
+        });
+    }
+
+    // ---- Applicant detail modal ----
+    window.openApplicant = function (appId) {
+        state.currentAppId = appId;
+        document.getElementById("mAppId").textContent = appId;
+        document.getElementById("mLoading").classList.remove("d-none");
+        document.getElementById("mContent").classList.add("d-none");
+        document.getElementById("mError").classList.add("d-none");
+
+        var modal = new bootstrap.Modal(document.getElementById("applicantModal"));
+        modal.show();
+
+        fetch("/api/admin/applications/" + encodeURIComponent(appId) + "/submission-package", { headers: authHeaders() })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            document.getElementById("mLoading").classList.add("d-none");
+            if (!data || data.status !== "success") {
+                document.getElementById("mError").textContent = (data && data.message) || "Could not load applicant.";
+                document.getElementById("mError").classList.remove("d-none");
+                return;
+            }
+            renderApplicantModal(data.package);
+            document.getElementById("mContent").classList.remove("d-none");
+        })
+        .catch(function (err) {
+            document.getElementById("mLoading").classList.add("d-none");
+            document.getElementById("mError").textContent = "Network error: " + err.message;
+            document.getElementById("mError").classList.remove("d-none");
+        });
+    };
+
+    function renderApplicantModal(pkg) {
+        var p = pkg.personal || {};
+        var c = pkg.contact || {};
+        var emp = pkg.employment || {};
+        var r = pkg.readiness || {};
+
+        document.getElementById("mName").textContent = p.full_name || "—";
+        document.getElementById("mEmail").textContent = c.primary_email || "—";
+        document.getElementById("mPhone").textContent = c.primary_phone || "—";
+        document.getElementById("mLocation").textContent = p.current_location || "—";
+
+        document.getElementById("mCompany").textContent = emp.current_company || "—";
+        document.getElementById("mTitle").textContent = emp.current_designation || "—";
+        document.getElementById("mExperience").textContent = emp.total_experience_years != null
+            ? emp.total_experience_years + " yrs" : "—";
+        document.getElementById("mNotice").textContent = emp.notice_period || "—";
+
+        var readiness = r.readiness_score != null
+            ? '<span class="badge bg-success">' + r.readiness_score + "/100</span> " +
+              (r.verdict ? '<span class="text-muted small">' + esc(r.verdict) + '</span>' : "")
+            : '<span class="text-muted">No readiness certificate attached</span>';
+        document.getElementById("mReadiness").innerHTML = readiness;
+
+        var qs = pkg.screening_answers || [];
+        if (!qs.length) {
+            document.getElementById("mScreening").innerHTML = '<p class="text-muted">No answers recorded.</p>';
+        } else {
+            document.getElementById("mScreening").innerHTML = qs.map(function (q) {
+                return '<div class="mb-2 pb-2 border-bottom">'
+                    + '<div class="small text-muted">Q' + q.question_num + '. ' + esc(q.question_text) + '</div>'
+                    + '<div><strong>' + esc(q.answer || "—") + '</strong>'
+                    + (q.fill_source === "charvak" ? ' <span class="badge bg-light text-muted small">Charvak</span>' : '')
+                    + '</div>'
+                    + '</div>';
+            }).join("");
+        }
+    }
+
+    window.downloadPackage = function (appId) {
+        var url = "/api/admin/applications/" + encodeURIComponent(appId) + "/submission-package.zip";
+        fetch(url, { headers: authHeaders() })
+        .then(function (r) {
+            if (!r.ok) throw new Error("HTTP " + r.status);
+            return r.blob();
+        })
+        .then(function (blob) {
+            var a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = "Charvak_Submission_" + appId + ".zip";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(a.href);
+        })
+        .catch(function (err) {
+            alert("Download failed: " + err.message);
+        });
+    };
+
+    // Expose loadAll for the Refresh button (which uses inline onclick)
+    window.loadAll = loadAll;
+
+    // Event delegation for applicant cards (avoids inline onclick quote issues)
+    document.addEventListener("click", function (ev) {
+        var btn = ev.target.closest("[data-action]");
+        if (!btn) return;
+        var action = btn.getAttribute("data-action");
+        var appId = btn.getAttribute("data-app-id");
+        if (!appId) return;
+        if (action === "view") {
+            ev.preventDefault();
+            window.openApplicant(appId);
+        } else if (action === "download") {
+            ev.preventDefault();
+            window.downloadPackage(appId);
+        }
+    });
+
+    // Bind modal button + initial load only after the DOM is fully ready,
+    // because the modal HTML renders AFTER the content block in base.html
+    document.addEventListener("DOMContentLoaded", function () {
+        var dlBtn = document.getElementById("mDownloadBtn");
+        if (dlBtn) {
+            dlBtn.addEventListener("click", function () {
+                if (state.currentAppId) downloadPackage(state.currentAppId);
+            });
+        }
+        loadAll();
+    });
+})();
+</script>
+{% endblock %}
+
+{% block modal %}
+<!-- Applicant detail modal -->
+<div class="modal fade" id="applicantModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Applicant — <span id="mAppId"></span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="mLoading" class="text-center py-4">
+          <div class="spinner-border text-primary" role="status"></div>
+        </div>
+        <div id="mError" class="alert alert-danger d-none"></div>
+        <div id="mContent" class="d-none">
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <h6 class="text-muted text-uppercase small mb-2">Personal</h6>
+              <p class="mb-1"><strong id="mName">—</strong></p>
+              <p class="mb-1" id="mEmail">—</p>
+              <p class="mb-1" id="mPhone">—</p>
+              <p class="mb-1" id="mLocation">—</p>
+            </div>
+            <div class="col-md-6">
+              <h6 class="text-muted text-uppercase small mb-2">Professional</h6>
+              <p class="mb-1" id="mCompany">—</p>
+              <p class="mb-1" id="mTitle">—</p>
+              <p class="mb-1" id="mExperience">—</p>
+              <p class="mb-1" id="mNotice">—</p>
+            </div>
+          </div>
+
+          <hr>
+          <h6 class="text-muted text-uppercase small mb-2">Readiness</h6>
+          <div id="mReadiness">—</div>
+
+          <hr>
+          <h6 class="text-muted text-uppercase small mb-2">Screening answers</h6>
+          <div id="mScreening">—</div>
+
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-success" id="mDownloadBtn">Download Package</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
