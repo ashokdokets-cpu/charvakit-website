@@ -374,3 +374,21 @@ None removed. `scripts/one-off/*` scripts were archived (Session 14) but that fo
 
 - Template count went from ~180 (2026-09-17) to 182 (2026-10-03)
 - Full 159-root + 23-subfolder inventory is available by running the script in the section below if added in the future
+
+
+
+## Session 24 - Admin Client Roles (2026-10-05)
+
+Two new admin pages added.
+
+| Template | Route | Purpose | Auth? |
+|---|---|---|---|
+| `admin-client-roles.html` | `/admin/client-roles` | Client roles list with applicant counts + filters | admin_auth_guard |
+| `admin-client-role-detail.html` | `/admin/client-roles/{role_id}` | Role detail + ranked applicants + view/download modal | admin_auth_guard |
+
+### Notes
+
+- Both pages fetch data from `/api/admin/client-roles/*` endpoints
+- Detail page has a modal in the `{% block modal %}` slot
+- Applicant row actions use `data-action` + event delegation
+- Refresh buttons rely on `window.loadRoles` / `window.loadAll`
