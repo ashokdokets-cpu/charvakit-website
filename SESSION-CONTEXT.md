@@ -155,6 +155,66 @@ complete client-ready submission package from any application.
 - Link in admin dropdown
 - All backend endpoints already exist
 
+
+
+## Session 24 CLOSED (2026-10-05) - Client Roles admin UI
+
+Full admin interface for the staffing pipeline. Backend endpoints
+already existed from Session 22; this session added the frontend.
+
+**Commit:** `37f978f` — feat(admin): Session 24 - client roles
+list + role detail pages
+
+**New pages:**
+
+- `/admin/client-roles`
+  - Table of all client roles with applicant counts
+  - Summary strip: Total / Urgent / Applicants / Sourcing
+  - Filter buttons by status (all / sourcing / shortlisting / submitted / closed)
+  - Per-row: View detail, Open public page
+
+- `/admin/client-roles/{role_id}`
+  - Role info card with skills + priority badge
+  - Summary strip: Total / Pending / Submitted / Shortlisted
+  - Applicant list ranked by readiness
+  - Per-applicant actions:
+    - View modal with full profile + screening answers
+    - Download submission-package.zip
+
+**Bugs fixed during session:**
+
+1. Modal trapped in `<main>` stacking context — moved to `{% block modal %}`
+2. Modal button bindings moved inside DOMContentLoaded
+3. Jinja parsed a template tag inside a JS comment — removed
+4. Click delegation handler was silently lost in an earlier patch — restored
+5. `loadAll` / `loadRoles` exposed on `window` for inline Refresh buttons
+
+**Local dev admins created matching prod:**
+
+- hr@charvakit.com
+- charvakit@gmail.com
+- ADMIN_EMAILS env updated in `.env.local`
+
+**Verified E2E on local:**
+
+- List page renders 7 roles, filters work, Refresh works
+- Detail page renders 1 applicant, modal works, Download works
+- No console errors
+
+**Prod verified:**
+
+- `/admin/client-roles` returns 302 (redirect to login = gate works)
+- Old `/cbrex-package` route returns 401 (retired)
+
+**Next session (25) candidates:**
+
+- Status update UI in the applicant modal (shortlist / submitted / hired / etc.)
+- Recruiter notes textarea
+- Batch download ZIP (all applicants per role)
+- Security sweep on new admin endpoints
+
+
+
 ---
 
 ---

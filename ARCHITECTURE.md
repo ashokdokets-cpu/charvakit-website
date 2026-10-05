@@ -944,3 +944,67 @@ text, multiline, yes_no, choice_single, choice_multi, number
 
 candidate (default) or charvak (admin reviews/overrides)
 
+
+
+## Admin UI for Client Staffing (Session 24, v3.5)
+
+Two admin pages on top of the Session 22 backend endpoints.
+
+### Routes
+
+- `GET /admin/client-roles` - list page (protected by admin_auth_guard)
+- `GET /admin/client-roles/{role_id}` - detail page
+
+Both are protected by the `admin_auth_guard` middleware; no per-route
+`require_admin` needed in the route body. The middleware redirects
+unauthenticated page requests to `/admin-login`.
+
+### Frontend patterns
+
+- Templates: `templates/admin-client-roles.html`,
+  `templates/admin-client-role-detail.html`
+- Both extend `base.html` and use the `{% block modal %}` slot for
+  any modals (to escape the `<main>` stacking context)
+- Row actions use `data-action` + event delegation (no inline onclick
+  with string concat, which breaks on PowerShell quote-stripping)
+- Refresh buttons use inline `onclick="loadRoles()"` /
+  `onclick="loadAll()"`; the functions are exposed via
+  `window.loadRoles` / `window.loadAll` because the inline handler
+  runs in global scope
+
+### Data flow
+
+List page:
+
+    GET /admin/client-roles
+      -> admin_client_roles_page (route)
+      -> templates/admin-client-roles.html
+      -> JS fetches /api/admin/client-roles (with Authorization header)
+      -> renders table
+
+Detail page:
+
+    GET /admin/client-roles/{role_id}
+      -> admin_client_role_detail_page (route)
+      -> templates/admin-client-role-detail.html
+      -> JS fetches /api/admin/client-roles/{role_id}
+         AND /api/admin/client-roles/{role_id}/applications
+      -> renders role info + applicant list
+
+View modal:
+
+      -> JS fetches /api/admin/applications/{app_id}/submission-package
+      -> renders profile + screening answers
+
+Download Package:
+
+      -> JS fetches /api/admin/applications/{app_id}/submission-package.zip
+      -> triggers browser download
+
+### Jinja gotchas to remember
+
+- Jinja parses template tags ANYWHERE - including in JS comments.
+  Never write a template tag syntax inside a JS comment or string.
+- Modals must live in the `{% block modal %}` slot so they render as
+  direct children of `<body>`; otherwise they're trapped in `<main>`'s
+  stacking context and appear faded/unclickable.

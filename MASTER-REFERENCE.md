@@ -499,3 +499,38 @@ Write-Host "`nMarkers:" -ForegroundColor Cyan
     foreach ($l in $lines) { if ($l -match [regex]::Escape($_)) { $found = $true; break } }
     Write-Host ("  {0,-40} {1}" -f $_, $(if ($found) { 'OK' } else { 'MISSING' })) -ForegroundColor $(if ($found) { 'Green' } else { 'Red' })
 }
+
+
+
+## SESSION 2026-10-05 - Session 24 (Client Roles Admin UI)
+
+**Commit:** `37f978f`
+
+### Shipped
+
+- **/admin/client-roles** - list of all client roles with applicant
+  counts, summary strip, status filters, per-row actions
+- **/admin/client-roles/{role_id}** - role info + ranked applicant
+  list + View modal + Download Package button
+
+### Bugs fixed during session
+
+- Modal moved from content block to modal block slot to escape
+  the `<main>` stacking context
+- Modal button bindings moved inside DOMContentLoaded
+- Removed a template-tag reference inside a JS comment that Jinja
+  was parsing as a real tag
+- Restored click delegation handler that had been lost in an earlier
+  patch
+- Exposed `loadAll` / `loadRoles` on window for inline Refresh buttons
+
+### Local dev admins added
+
+- `hr@charvakit.com` / `DevPass!2026#HR`
+- `charvakit@gmail.com` / `DevPass!2026#CV`
+- Both added to `ADMIN_EMAILS` in `.env.local`
+
+### Prod verified
+
+- `/admin/client-roles` -> 302 (redirect to login = gate works)
+- Old `/cbrex-package` route -> 401 (retired)

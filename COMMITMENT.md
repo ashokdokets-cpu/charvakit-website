@@ -1,3 +1,31 @@
+## Session 24 CLOSED (2026-10-05) - Client Roles admin UI
+
+37f978f — full admin interface for staffing pipeline.
+
+**Shipped:**
+
+- `/admin/client-roles` list + stats + filters
+- `/admin/client-roles/{role_id}` detail + applicants + modal
+- View applicant modal + Download Package button
+
+**Bugs fixed:**
+
+- Modal stacking context, Jinja-in-JS-comment parse error,
+  delegation restore, window-scoped load functions
+
+**Session 25 scope (recommended):**
+
+- Status update UI in the applicant modal (shortlist / submitted / hired)
+- Recruiter notes textarea
+- Batch download ZIP (all applicants per role)
+
+**Alternatives for Session 25:**
+
+- Security sweep on new admin endpoints
+- Admin dashboard card linking to /admin/client-roles
+
+---
+
 ## Session 23 CLOSED (2026-10-05) - Submission package generator
 
 JSON + PDF + ZIP endpoints live. Zero CBREX references on user-facing

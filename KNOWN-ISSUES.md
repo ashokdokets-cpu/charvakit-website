@@ -243,3 +243,67 @@ Fix: add `PAYPAL_MODE=live` to Render's Environment tab.
 Est: 1 min. Verdict: SCHEDULED — next Render dashboard session
 
 
+
+### RESOLVED - Modal trapped in <main> stacking context (2026-10-05, 37f978f)
+
+The admin client-role detail page had a modal that appeared faded
+and unclickable. Root cause: modal HTML was inside the content block,
+which `base.html` wraps in `<main>`. `<main>` has `position: relative;
+z-index: 1`, creating a stacking context that trapped the modal behind
+its own backdrop.
+
+**Fix:** moved modal HTML to the `{% block modal %}` slot (rendered as
+a direct child of `<body>`, immediately after `</main>`). Same pattern
+applied to `open-role-detail.html` in Session 22c.2.
+
+**Verification:** `document.getElementById('applicantModal').parentElement.tagName`
+should be `BODY`, not `MAIN`.
+
+**Rule for future sessions:** any modal must go in the modal block slot,
+never in the content block.
+
+
+### RESOLVED - Jinja parsing template tags inside a JS comment (2026-10-05, 37f978f)
+
+The detail template had a JS comment containing a literal template tag
+for the modal block - Jinja treated it as a real tag, opening an extra
+block inside the JS. This caused:
+`TemplateSyntaxError: Unexpected end of template. Jinja was looking for: 'endblock'`
+
+**Fix:** reworded the comment to not include template tag syntax.
+
+**Rule:** never write `{%` or `%}` inside a `.html` template's JS or CSS,
+even in comments or string literals. Jinja has no context awareness.
+
+
+### RESOLVED - Click delegation handler missing (2026-10-05, 37f978f)
+
+After several reorganization patches, the `document.addEventListener("click", ...)`
+block that handles `data-action` buttons was silently removed. The page's
+`window.openApplicant` and `window.downloadPackage` were still defined,
+but the delegation that called them was gone.
+
+**Diagnosis technique (keep this):**
+
+    getEventListeners(document).click.forEach(function(l, i) {
+        var src = (l.listener && l.listener.toString) ? l.listener.toString() : '';
+        if (src.indexOf('data-action') !== -1) console.log('FOUND at', i);
+    });
+
+If no listener contains `data-action`, the delegation isn't attached.
+
+**Fix:** re-added the delegation listener before the `DOMContentLoaded` block.
+
+
+### Process lesson - inline onclick calls IIFE-scoped functions
+
+Both admin pages have buttons with `onclick="loadRoles()"` /
+`onclick="loadAll()"`. Inline handlers execute in **global scope**, but
+`loadRoles` / `loadAll` are defined **inside an IIFE**, so the inline
+handler can't find them unless they're explicitly assigned to `window`.
+
+**Fix:** `window.loadRoles = loadRoles;` / `window.loadAll = loadAll;`
+right before the IIFE closes.
+
+**Long-term rule:** prefer `data-action` + event delegation for all
+button handlers. Inline onclick to IIFE functions is a footgun.
