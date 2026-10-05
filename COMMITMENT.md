@@ -1,5 +1,41 @@
 ## Session 26 CLOSED (2026-10-05) - Security sweep + cautious cleanup
 
+## Session 27 CLOSED (2026-10-06) - Anti-Cheating Layer A
+
+Shipped environment-signal capture on Career Assessments. Framework
+ships standalone (integrity_engine.py); frontend integration is a
+self-contained block in ai-assessment.html.
+
+**Commits:**
+- 1124a38 feat(integrity): engine + schema + 2 routes
+- 91e1b1f feat(integrity): frontend capture
+
+**Files:**
+- integrity_engine.py (new)
+- migrations/20261005_assessment_integrity.sql (new)
+- main.py (import + 2 routes, +465 lines)
+- templates/ai-assessment.html (+250 lines)
+
+**Verified:**
+- 8-scenario curl matrix (401 / 200 / 404 / 400 / 400 / 200 / 403)
+- Engine unit test (record, read, summarize, classify)
+- Browser E2E: all 5 event types land in the DB
+- Input hardening: list-shaped payload returns 400
+
+**Session 28 candidates:**
+
+- A) Career Assessment Phase 2b — coding + SQL via Judge0. Layer A
+  now unblocks this commercially. Recommendation: A.
+- B) Admin UI for integrity events — surface them where employers
+  see them.
+- C) Roll out Layer A to Versant, Mock, CBAT, IELTS — each is a
+  small frontend addition.
+
+**Reminder:**
+- Render Postgres password rotation still pending (manual task
+  flagged since Session 19).
+
+
 Security sweep on all new admin endpoints: PASSED (zero gaps).
 
 Legacy /api/assessment/* routes: KEPT (deep audit found live

@@ -307,3 +307,19 @@ right before the IIFE closes.
 
 **Long-term rule:** prefer `data-action` + event delegation for all
 button handlers. Inline onclick to IIFE functions is a footgun.
+
+### RESOLVED — Anti-Cheating Layer A (2026-10-06, 1124a38 + 91e1b1f)
+
+Gap 3 from COMPETITIVE-STRATEGY.md is partially closed. Layer A
+(deterministic environment signals) is live on Career Assessments:
+paste, tab_switch, contextmenu, focus_out, rapid_input. Recorded to
+charvak_assessment_integrity_events, rolled up to
+charvak_career_assessments.integrity_summary.
+
+Layer B (question design) is an ongoing habit; Layer C (behavioral
+analytics) is still future work.
+
+**Commits:** 1124a38 (backend) + 91e1b1f (frontend)
+**Engine:** integrity_engine.py
+**Routes:** POST /api/integrity/event, GET /api/admin/career-assessment/{aid}/integrity
+**Verification:** 8-scenario curl matrix + engine unit test + browser E2E.

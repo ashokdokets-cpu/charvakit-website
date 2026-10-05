@@ -1008,3 +1008,61 @@ Download Package:
 - Modals must live in the `{% block modal %}` slot so they render as
   direct children of `<body>`; otherwise they're trapped in `<main>`'s
   stacking context and appear faded/unclickable.
+
+## Assessment Integrity Layer A (Session 27, v3.5)
+
+Deterministic environment-signal capture on Career Assessments.
+Recorded only, never enforced.
+
+### Signal types
+
+| Signal | Detects | Metadata |
+|---|---|---|
+| `paste` | User pasted into a text field | target_id, chars |
+| `tab_switch` | User left the assessment tab | duration_ms |
+| `contextmenu` | Right-click (paste via menu) | target_id |
+| `focus_out` | Input lost focus mid-answer | target_id |
+| `rapid_input` | Synthetic typing (100+ chars in <200ms) | chars, window_ms, chars_per_ms |
+
+### Storage
+
+- `charvak_assessment_integrity_events` — one row per event
+- `charvak_career_assessments.integrity_summary` (JSONB) — per-assessment rollup
+
+### Flow
+
+    Browser (ai-assessment.html)
+      -> document-level listeners (paste, contextmenu, visibilitychange,
+         blur/focus, focusout, input)
+      -> queued in memory
+      -> flush every 2s via fetch (Authorization header)
+      -> POST /api/integrity/event
+      -> route verifies auth + ownership (assessment belongs to caller)
+      -> integrity_engine.record_event(...)
+      -> INSERT into events table
+      -> update_parent_summary recomputes rollup + writes JSONB
+
+    Admin (later session)
+      -> GET /api/admin/career-assessment/{aid}/integrity
+      -> returns events list + summary
+
+### Risk levels
+
+- `clean`: 0 events
+- `minor`: 1-5 events
+- `moderate`: 6-15 events
+- `elevated`: >15 events OR (>=3 tab switches + >=2 pastes)
+
+### Design principles
+
+- Record only. Employers decide what to do with the signal.
+- Silent-fail on the frontend: a dead backend never breaks the
+  assessment.
+- Self-healing DDL: no manual migration step for the tables.
+- No credits charged: this is a trust feature, not a paid tool.
+
+### Rollout
+
+Layer A ships first on Career Assessment (this session). Versant,
+Mock Drives, CBAT, and IELTS can adopt the same engine + route by
+adding a small frontend block (the backend is engine-agnostic).
