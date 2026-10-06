@@ -8,6 +8,21 @@
     </div>
 </div>
 
+<!-- ============================================================
+     Session 30 — Unified activity panel (read-only)
+     Fetches /api/candidate/{email}/unified and renders a summary.
+     Hidden entirely if the user is not logged in.
+     ============================================================ -->
+<div class="container pt-4" id="unifiedPanel" style="display:none;">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h2 class="as-h4 mb-0">Your activity</h2>
+        <a href="#" class="small" onclick="loadUnifiedProfile(); return false;">Refresh</a>
+    </div>
+    <div class="row g-3" id="unifiedCards">
+        <!-- cards injected by JS -->
+    </div>
+    <div class="mt-3" id="unifiedRecent"></div>
+</div>
 <div class="container py-5">
     <div class="row g-4">
         <!-- Job Alert -->
@@ -114,5 +129,160 @@ async function addSalary(e){e.preventDefault();const d={role:document.getElement
 async function scheduleInterview(e){e.preventDefault();const d={candidate_email:document.getElementById('intEmail').value,employer:document.getElementById('intEmployer').value,role:document.getElementById('intRole').value,date:document.getElementById('intDate').value};const r=await fetch('/api/career/interview',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+_cv2Tok()},body:JSON.stringify(d)});const j=await r.json();show(j.message);}
 async function addOffer(e){e.preventDefault();const d={candidate_email:document.getElementById('offerEmail').value,company:document.getElementById('offerCompany').value,role:document.getElementById('offerRole').value,salary:parseFloat(document.getElementById('offerSalary').value)};const r=await fetch('/api/career/offer',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+_cv2Tok()},body:JSON.stringify(d)});const j=await r.json();show(j.message);}
 function show(msg){document.getElementById('careerV2Output').innerHTML='<div class="alert alert-success">'+msg+'</div>';}
+
+// ============================================================
+// Session 30 — Unified activity panel
+// ============================================================
+function _cv2Esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+}
+
+function _cv2Email() {
+    return (localStorage.getItem('userEmail') || '').trim().toLowerCase();
+}
+
+async function loadUnifiedProfile() {
+    var email = _cv2Email();
+    var token = _cv2Tok();
+    var panel = document.getElementById('unifiedPanel');
+    if (!panel) return;
+
+    if (!email || !token) {
+        panel.style.display = 'none';
+        return;
+    }
+    panel.style.display = '';
+
+    try {
+        var r = await fetch('/api/candidate/' + encodeURIComponent(email) + '/unified', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (r.status === 401) {
+            panel.style.display = 'none';
+            return;
+        }
+        var j = await r.json();
+        if (j.status !== 'success') {
+            panel.style.display = 'none';
+            return;
+        }
+        renderUnifiedPanel(j);
+    } catch (e) {
+        // silent — panel is optional
+        panel.style.display = 'none';
+    }
+}
+
+function renderUnifiedPanel(data) {
+    var cards = [];
+
+    // --- Certificates card ---
+    var certs = data.certificates || {};
+    var readiness = (certs.readiness_certificates || []);
+    var courses = (certs.course_certificates || []);
+    var certTotal = readiness.length + courses.length;
+    var certLink = readiness.length ? ('/readiness/' + encodeURIComponent(readiness[0].certificate_id))
+                  : (courses.length ? ('/certificate/' + encodeURIComponent(courses[0].certificate_id))
+                  : '/my-results');
+    cards.push({
+        icon: '🎓',
+        label: 'Certificates',
+        value: certTotal,
+        sub: readiness.length + ' readiness · ' + courses.length + ' courses',
+        href: certLink
+    });
+
+    // --- Applications card ---
+    var apps = data.applications || {};
+    var appTotals = apps.totals || {};
+    var appTotal = (appTotals.staffing || 0) + (appTotals.micro || 0);
+    cards.push({
+        icon: '📋',
+        label: 'Applications',
+        value: appTotal,
+        sub: (appTotals.staffing || 0) + ' staffing · ' + (appTotals.micro || 0) + ' micro',
+        href: '/my-applications'
+    });
+
+    // --- Integrity card ---
+    var integ = data.integrity || {};
+    var risk = integ.overall_risk_level || 'clean';
+    var riskColor = { clean: 'success', minor: 'info', moderate: 'warning', elevated: 'danger' }[risk] || 'secondary';
+    cards.push({
+        icon: '🛡️',
+        label: 'Integrity',
+        value: integ.total_events || 0,
+        sub: risk,
+        subBadge: 'bg-' + riskColor,
+        href: '#'
+    });
+
+    // --- Credits card ---
+    var credits = data.credits || {};
+    var bal = credits.balance || {};
+    cards.push({
+        icon: '💳',
+        label: 'Credits',
+        value: bal.credits_remaining != null ? bal.credits_remaining : '—',
+        sub: bal.plan || 'no plan',
+        href: '/credit-dashboard'
+    });
+
+    // Render cards
+    var html = '';
+    for (var i = 0; i < cards.length; i++) {
+        var c = cards[i];
+        html += '<div class="col-md-6 col-lg-3">';
+        html += '<a href="' + _cv2Esc(c.href) + '" class="text-decoration-none text-reset">';
+        html += '<div class="card h-100 border-0 shadow-sm">';
+        html += '<div class="card-body">';
+        html += '<div class="d-flex align-items-center mb-2">';
+        html += '<span style="font-size:22px;">' + _cv2Esc(c.icon) + '</span>';
+        html += '<span class="ms-2 text-muted small text-uppercase">' + _cv2Esc(c.label) + '</span>';
+        html += '</div>';
+        html += '<div class="fs-3 fw-bold">' + _cv2Esc(String(c.value)) + '</div>';
+        if (c.subBadge) {
+            html += '<span class="badge ' + _cv2Esc(c.subBadge) + '">' + _cv2Esc(c.sub) + '</span>';
+        } else {
+            html += '<div class="small text-muted">' + _cv2Esc(c.sub) + '</div>';
+        }
+        html += '</div></div></a></div>';
+    }
+    document.getElementById('unifiedCards').innerHTML = html;
+
+    // --- Recent activity list ---
+    var a = data.assessments || {};
+    var recent = a.recent_career_assessments || [];
+    if (recent.length) {
+        var rhtml = '<div class="card border-0 shadow-sm"><div class="card-body">';
+        rhtml += '<h3 class="as-h6 mb-3">Recent assessments</h3>';
+        rhtml += '<div class="list-group list-group-flush">';
+        for (var k = 0; k < recent.length; k++) {
+            var q = recent[k];
+            var passed = q.passed ? '<span class="badge bg-success ms-2">Passed</span>' : '<span class="badge bg-secondary ms-2">Not passed</span>';
+            rhtml += '<div class="list-group-item px-0">';
+            rhtml += '<div class="d-flex justify-content-between align-items-center">';
+            rhtml += '<div>';
+            rhtml += '<div class="fw-semibold">' + _cv2Esc(q.role || '') + ' — ' + _cv2Esc(q.format || '') + '</div>';
+            rhtml += '<div class="small text-muted">' + _cv2Esc(q.level || '') + ' · ' + _cv2Esc(q.industry || '') + '</div>';
+            rhtml += '</div>';
+            rhtml += '<div class="text-end">';
+            rhtml += '<div class="fw-bold">' + _cv2Esc(String(q.score || 0)) + '%</div>' + passed;
+            rhtml += '</div>';
+            rhtml += '</div></div>';
+        }
+        rhtml += '</div></div></div>';
+        document.getElementById('unifiedRecent').innerHTML = rhtml;
+    } else {
+        document.getElementById('unifiedRecent').innerHTML = '';
+    }
+}
+
+// Kick off the panel load when the page is ready
+document.addEventListener('DOMContentLoaded', function() {
+    loadUnifiedProfile();
+});
 </script>
 {% endblock %}
