@@ -202,7 +202,7 @@ products, candidate, email, messaging, events, brand, team,
 ats, university, enterprise, invoice, tools,
 marketing_ai, indian_language_ai, lms, career_v2
 
-Data-backed: `judge0_client` (Session 28, code execution), `integrity_engine` (Session 27), `ai_credit_engine`, `email_verification`, `ai_courses`, `ai_courses_payments`, `complete_mock_drive`, `results_system`
+Data-backed: `candidate_profile_engine` (Session 30, unified view), `judge0_client` (Session 28, code execution), `integrity_engine` (Session 27), `ai_credit_engine`, `email_verification`, `ai_courses`, `ai_courses_payments`, `complete_mock_drive`, `results_system`
 
 ---
 
@@ -323,6 +323,10 @@ Data-backed: `judge0_client` (Session 28, code execution), `integrity_engine` (S
 - `POST /api/mock/complete-full`
 
 
+### Candidate Profile (Session 30)
+
+- `GET /api/candidate/{email}/unified` — self-view of the candidate's
+  full activity across all subsystems. Supports `?include=` filter.
 ### Integrity (Session 27)
 
 - `POST /api/integrity/event` — record one environment signal (auth + ownership)
