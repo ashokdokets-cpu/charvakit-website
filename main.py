@@ -80,6 +80,7 @@ from marketing_ai_engine import marketing_ai_engine
 from indian_language_ai import indian_language_ai
 from career_assessment_engine import career_assessment_engine
 from candidate_profile_engine import candidate_profile_engine
+from jobs_unified_engine import jobs_unified_engine
 from integrity_engine import integrity_engine
 from lms_engine import lms_engine
 from career_v2_engine import career_v2_engine
@@ -6432,6 +6433,10 @@ async def career_v2_stats():
 async def career_center_page(request: Request):
     return template_response("career-v2.html", request, "Career Center - Charvak IT Consulting")
 
+@app.get("/career-center/jobs", response_class=HTMLResponse)
+async def career_center_jobs_page(request: Request):
+    return template_response("career-jobs.html", request, "Open Opportunities - Charvak IT Consulting")
+
 # Micro-Internship Global
 
 @app.post("/api/micro-internship/global/post")
@@ -7720,6 +7725,44 @@ async def api_job_detail(request: Request, role_id: str):
 
 
 @app.post("/api/staffing/roles/{role_id}/apply")
+
+
+# ========================================================================
+# Session 31 — Unified jobs feed (public)
+# ========================================================================
+# Merges three sources into one normalized feed:
+#   - charvak_jobs          (public job board)
+#   - charvak_client_roles  (staffing, sanitized via /open-roles policy)
+#   - charvak_micro_projects (gigs)
+#
+# Public read. Sanitization is baked into the engine shape — no
+# client_name, no vendor refs, no staffing budgets. Rate limited 120/min.
+# ========================================================================
+
+@app.get("/api/jobs/unified")
+@limiter.limit("120/minute")
+async def api_jobs_unified(request: Request):
+    """
+    Public unified feed of all open opportunities.
+    Query params: ?source=staffing,micro_project ?q=engineer ?limit=50
+    """
+    try:
+        from jobs_unified_engine import jobs_unified_engine, VALID_SOURCES
+        source = request.query_params.get("source")
+        q = request.query_params.get("q")
+        limit_raw = request.query_params.get("limit") or "100"
+        try:
+            limit = int(limit_raw)
+        except (ValueError, TypeError):
+            return JSONResponse(
+                status_code=400,
+                content={"status": "error", "message": "limit must be an integer"},
+            )
+        return jobs_unified_engine.get_unified_jobs(source=source, q=q, limit=limit)
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "Failed to load unified jobs feed")
 @limiter.limit("20/minute")
 async def api_job_apply(request: Request, role_id: str):
     """Candidate applies to a role with certificate + screening answers."""

@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+{% block title %}Open Opportunities - Charvak IT Consulting{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container py-4 text-center">
+        <h1 class="display-4 fw-bold">Open Opportunities</h1>
+        <p class="lead">Jobs and gigs across Charvak, in one place</p>
+    </div>
+</div>
+
+<div class="container py-5">
+
+    <!-- Filter bar -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row g-3 align-items-center">
+                <div class="col-lg-7">
+                    <div class="btn-group flex-wrap" role="group" id="sourcePills">
+                        <button type="button" class="btn btn-outline-primary active" data-source="">All</button>
+                        <button type="button" class="btn btn-outline-primary" data-source="staffing">via Charvak</button>
+                        <button type="button" class="btn btn-outline-primary" data-source="micro_project">Gigs</button>
+                        <button type="button" class="btn btn-outline-primary" data-source="job_board">Job Board</button>
+                    </div>
+                </div>
+                <div class="col-lg-5">
+                    <input type="text" id="jobSearch" class="form-control" placeholder="Search by title...">
+                </div>
+            </div>
+            <div class="mt-2 small text-muted" id="jobCountLine">Loading...</div>
+        </div>
+    </div>
+
+    <!-- Job list -->
+    <div id="jobsList">
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <div class="mt-2 text-muted">Loading opportunities...</div>
+        </div>
+    </div>
+
+    <div class="mt-4" id="jobsEmpty" style="display:none;">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center py-5">
+                <div class="fs-1">🔍</div>
+                <h3 class="as-h5 mt-2">No openings match your filters</h3>
+                <p class="text-muted mb-3">Try clearing the source or search term.</p>
+                <button class="btn btn-outline-primary btn-sm" onclick="clearFilters()">Clear filters</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+// ============================================================
+// Career Center — Jobs page
+// ============================================================
+var _ccState = {
+    source: '',
+    q: '',
+    items: [],
+    loading: false
+};
+var _ccDebounceTimer = null;
+
+function _ccEsc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+}
+
+function _ccSourceBadge(source) {
+    var map = {
+        'staffing':      { label: 'via Charvak', cls: 'bg-primary' },
+        'micro_project': { label: 'Gig',         cls: 'bg-success' },
+        'job_board':     { label: 'Job Board',   cls: 'bg-secondary' }
+    };
+    var m = map[source] || { label: source, cls: 'bg-secondary' };
+    return '<span class="badge ' + m.cls + '">' + _ccEsc(m.label) + '</span>';
+}
+
+function _ccBuildQuery() {
+    var params = [];
+    if (_ccState.source) params.push('source=' + encodeURIComponent(_ccState.source));
+    if (_ccState.q)      params.push('q=' + encodeURIComponent(_ccState.q));
+    return params.length ? ('?' + params.join('&')) : '';
+}
+
+async function loadJobs() {
+    if (_ccState.loading) return;
+    _ccState.loading = true;
+    var list = document.getElementById('jobsList');
+    var empty = document.getElementById('jobsEmpty');
+    var countLine = document.getElementById('jobCountLine');
+
+    list.style.display = '';
+    empty.style.display = 'none';
+    list.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></div>';
+
+    try {
+        var r = await fetch('/api/jobs/unified' + _ccBuildQuery());
+        var j = await r.json();
+        if (j.status !== 'success') {
+            list.innerHTML = '<div class="alert alert-warning">Could not load jobs: ' + _ccEsc(j.message || 'unknown error') + '</div>';
+            countLine.textContent = 'Error loading jobs';
+            _ccState.loading = false;
+            return;
+        }
+        _ccState.items = j.items || [];
+        renderJobs(j);
+    } catch (e) {
+        list.innerHTML = '<div class="alert alert-danger">Network error: ' + _ccEsc(e.message) + '</div>';
+        countLine.textContent = 'Error';
+    } finally {
+        _ccState.loading = false;
+    }
+}
+
+function renderJobs(payload) {
+    var items = _ccState.items;
+    var countLine = document.getElementById('jobCountLine');
+    var list = document.getElementById('jobsList');
+    var empty = document.getElementById('jobsEmpty');
+
+    var total = payload.count || items.length;
+    var srcCounts = payload.sources || {};
+    countLine.textContent = total + ' opening' + (total === 1 ? '' : 's')
+        + '  ·  '
+        + (srcCounts.staffing || 0) + ' via Charvak, '
+        + (srcCounts.micro_project || 0) + ' gigs, '
+        + (srcCounts.job_board || 0) + ' on job board';
+
+    if (!items.length) {
+        list.style.display = 'none';
+        empty.style.display = '';
+        return;
+    }
+
+    var html = '';
+    for (var i = 0; i < items.length; i++) {
+        var it = items[i];
+        html += '<div class="card border-0 shadow-sm mb-3 job-card" style="cursor:pointer;" onclick="window.location.href=\'' + _ccEsc(it.detail_url) + '\'">';
+        html += '<div class="card-body p-4">';
+        html += '<div class="d-flex flex-wrap align-items-start justify-content-between mb-2">';
+        html += '<div class="d-flex flex-wrap align-items-center gap-2">';
+        html += _ccSourceBadge(it.source);
+        if (it.priority === 'urgent') {
+            html += '<span class="badge bg-danger">Urgent</span>';
+        }
+        html += '</div>';
+        html += '<span class="small text-muted">' + _ccEsc(it.posted_at ? it.posted_at.slice(0, 10) : '') + '</span>';
+        html += '</div>';
+
+        html += '<h3 class="as-h5 mb-2">' + _ccEsc(it.title || '') + '</h3>';
+
+        html += '<div class="small text-muted mb-2">';
+        var parts = [];
+        if (it.company) parts.push(_ccEsc(it.company));
+        if (it.location) parts.push(_ccEsc(it.location));
+        if (it.type) parts.push(_ccEsc(it.type));
+        html += parts.join(' · ');
+        html += '</div>';
+
+        if (it.experience && (it.experience.min_years != null || it.experience.max_years != null)) {
+            html += '<div class="small mb-2"><strong>Experience:</strong> '
+                 + _ccEsc(it.experience.min_years != null ? it.experience.min_years : '')
+                 + (it.experience.max_years != null ? (' - ' + _ccEsc(it.experience.max_years)) : '')
+                 + ' years</div>';
+        }
+
+        if (it.compensation_display) {
+            html += '<div class="small mb-2"><strong>Compensation:</strong> ' + _ccEsc(it.compensation_display) + '</div>';
+        }
+
+        if (it.skills && it.skills.length) {
+            html += '<div class="mb-3">';
+            var shown = it.skills.slice(0, 6);
+            for (var s = 0; s < shown.length; s++) {
+                html += '<span class="badge bg-light text-dark border me-1 mb-1">' + _ccEsc(shown[s]) + '</span>';
+            }
+            if (it.skills.length > 6) {
+                html += '<span class="small text-muted">+' + (it.skills.length - 6) + ' more</span>';
+            }
+            html += '</div>';
+        }
+
+        html += '<div class="text-end"><span class="btn btn-primary btn-sm">View &amp; Apply &rarr;</span></div>';
+        html += '</div></div>';
+    }
+    list.innerHTML = html;
+    list.style.display = '';
+    empty.style.display = 'none';
+}
+
+function setSource(src) {
+    _ccState.source = src || '';
+    var pills = document.querySelectorAll('#sourcePills button');
+    for (var i = 0; i < pills.length; i++) {
+        pills[i].classList.toggle('active', pills[i].getAttribute('data-source') === _ccState.source);
+    }
+    loadJobs();
+}
+
+function clearFilters() {
+    _ccState.source = '';
+    _ccState.q = '';
+    document.getElementById('jobSearch').value = '';
+    var pills = document.querySelectorAll('#sourcePills button');
+    for (var i = 0; i < pills.length; i++) {
+        pills[i].classList.toggle('active', pills[i].getAttribute('data-source') === '');
+    }
+    loadJobs();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Wire pills
+    var pills = document.querySelectorAll('#sourcePills button');
+    for (var i = 0; i < pills.length; i++) {
+        pills[i].addEventListener('click', function() {
+            setSource(this.getAttribute('data-source'));
+        });
+    }
+    // Wire search (debounced)
+    var search = document.getElementById('jobSearch');
+    if (search) {
+        search.addEventListener('input', function() {
+            clearTimeout(_ccDebounceTimer);
+            var val = this.value.trim();
+            _ccDebounceTimer = setTimeout(function() {
+                _ccState.q = val;
+                loadJobs();
+            }, 300);
+        });
+    }
+    // Initial load
+    loadJobs();
+});
+</script>
+{% endblock %}
