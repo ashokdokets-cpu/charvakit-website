@@ -119,57 +119,38 @@ class CandidateEngine:
 
 
     def register_candidate(self, data: Dict) -> Dict:
-        """Register a new candidate."""
-        candidate_id = f"CAND-{secrets.token_hex(4).upper()}"
-        gpa = float(data.get("gpa", 0)) if data.get("gpa") else None
-        grad_year = int(data.get("graduation_year", 0)) if data.get("graduation_year") else None
-        years_coding = int(data.get("years_coding", 0)) if data.get("years_coding") else None
-        try:
-            from database import db
-            conn = db.get_connection()
-            cur = conn.cursor()
-            cur.execute('''
-                INSERT INTO charvak_candidates
-                    (candidate_id, name, email, phone, skills, experience_years,
-                     years_coding, job_title, preferred_roles, location, visa_status,
-                     portfolio_url, github_url, linkedin_url, resume_text,
-                     education, degree, major, university, gpa, graduation_year,
-                     certifications, languages_spoken, work_authorization,
-                     willing_to_relocate, remote_preference, salary_expectation,
-                     availability, status)
-                VALUES (%s, %s, %s, %s, %s::jsonb, %s, %s, %s, %s::jsonb,
-                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                        %s::jsonb, %s::jsonb, %s, %s, %s, %s, %s, 'registered')
-            ''', (candidate_id, data.get("name"), data.get("email"),
-                  data.get("phone", ""),
-                  json.dumps(data.get("skills", [])),
-                  int(data.get("experience_years", 0)),
-                  years_coding, data.get("current_role", ""),
-                  json.dumps(data.get("preferred_roles", [])),
-                  data.get("location", ""), data.get("visa_status", ""),
-                  data.get("portfolio_url", ""), data.get("github_url", ""),
-                  data.get("linkedin_url", ""), data.get("resume_text", ""),
-                  data.get("education", ""), data.get("degree", ""),
-                  data.get("major", ""), data.get("university", ""),
-                  gpa, grad_year,
-                  json.dumps(data.get("certifications", [])),
-                  json.dumps(data.get("languages_spoken", [])),
-                  data.get("work_authorization", ""),
-                  bool(data.get("willing_to_relocate", False)),
-                  data.get("remote_preference", "Open"),
-                  data.get("salary_expectation", ""),
-                  data.get("availability", "Immediate")))
-            conn.commit()
-            cur.close(); conn.close()
-            return {"status": "success", "candidate_id": candidate_id, "message": "Welcome to Charvak!"}
-        except Exception as e:
-            err_str = str(e).lower()
-            if "duplicate" in err_str or "unique constraint" in err_str:
-                logger.info(f"Duplicate candidate registration attempted: {data.get('email')}")
-                return {"status": "error", "message": "This email is already registered. Please log in or use a different email.", "code": "duplicate_email"}
-            logger.error(f"register_candidate failed: {e}")
-            return {"status": "error", "message": str(e)}
+        """
+        Register a new candidate (Session 32 -- unified write path).
 
+        Historically this method performed its own INSERT. It now delegates
+        to candidates_engine.upsert() so all candidate writes go through one
+        validated, whitelisted path. Adds signup_source='pool-register' to
+        tag the origin.
+
+        Kept as a method so the existing /api/candidate/register route
+        continues to work for any external integrations.
+        """
+        # Tag the source. Caller-provided values are ignored so this
+        # legacy path can't be used to forge a different source.
+        payload = dict(data or {})
+        payload["signup_source"] = "pool-register"
+
+        try:
+            from candidates_engine import candidates_engine
+        except Exception as e:
+            logger.error(f"register_candidate: candidates_engine unavailable: {e}")
+            return {"status": "error", "message": "Registration unavailable"}
+
+        result = candidates_engine.upsert(payload)
+        if result.get("status") != "success":
+            return result
+
+        # Backwards-compat: caller expects a friendly welcome
+        return {
+            "status": "success",
+            "candidate_id": result.get("candidate_id"),
+            "message": "Welcome to Charvak!",
+        }
 
     def get_candidate(self, candidate_id: str) -> Dict:
         """Get candidate by ID."""

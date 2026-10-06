@@ -935,9 +935,10 @@ async def reverse_staffing(request: Request):
 async def code_quality_checker(request: Request):
     return template_response("code-quality-checker.html", request, "Code Quality Checker - Charvak")
 
-@app.get("/developer-signup", response_class=HTMLResponse)
-async def developer_signup(request: Request):
-    return template_response("developer-signup.html", request, "Join Developer Pool - Charvak")
+@app.get("/developer-signup")
+async def developer_signup_redirect():
+    """Legacy route -- redirect to unified candidate signup (Session 32)."""
+    return RedirectResponse("/candidate/signup", status_code=302)
 
 @app.get("/hire-talent", response_class=HTMLResponse)
 async def hire_talent(request: Request):
@@ -5270,9 +5271,14 @@ async def candidate_pool_stats():
     """Get candidate pool statistics."""
     return candidate_engine.get_pool_stats()
 
-@app.get("/candidate-signup", response_class=HTMLResponse)
+@app.get("/candidate-signup")
+async def candidate_signup_redirect():
+    """Legacy route -- redirect to unified candidate signup (Session 32)."""
+    return RedirectResponse("/candidate/signup", status_code=302)
+
+
+@app.get("/candidate/signup", response_class=HTMLResponse)
 async def candidate_signup_page(request: Request):
-    """Candidate registration page."""
     return template_response("candidate-signup.html", request, "Join Charvak Talent Pool - Free")
 
 @app.get("/demos", response_class=HTMLResponse)
