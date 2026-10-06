@@ -1174,3 +1174,62 @@ This is the "read" side of the unification. Future sessions:
 
 The underlying engines stay separate. The unified layer is a thin
 read-side presentation.
+
+## Unified Jobs Feed (Session 31, v3.5)
+
+Read-only aggregation of three job sources into one public feed.
+Second step of the career-center unification arc.
+
+### Sources
+
+| Source | Table | Public route |
+|---|---|---|
+| Job board | charvak_jobs | /job-board |
+| Staffing | charvak_client_roles | /open-roles |
+| Gigs | charvak_micro_projects | /micro-internship |
+
+### Endpoint
+
+    GET /api/jobs/unified
+    GET /api/jobs/unified?source=staffing,gig
+    GET /api/jobs/unified?q=engineer&limit=50
+
+Public, rate-limited 120/min. No auth required.
+
+### Normalized shape
+
+    {
+      "id": "ROLE-XXX" | "JOB-XXX" | "PROJ-XXX",
+      "source": "staffing" | "job_board" | "micro_project",
+      "source_label": "via Charvak" | "Job Board" | "Gig",
+      "title": "...",
+      "company": "..." or "via Charvak",
+      "location": "...",
+      "type": "permanent" | "contract" | "gig",
+      "skills": ["..."],
+      "experience": {"min_years": N, "max_years": M} or null,
+      "compensation_display": "Rs.25L - Rs.30L" or null,
+      "compensation_min_inr": N or null,
+      "compensation_max_inr": M or null,
+      "posted_at": "ISO 8601",
+      "detail_url": "/open-roles/..." | "/job-board/..." | "/micro-internship/..."
+    }
+
+### Sanitization by construction
+
+Staffing items never carry: client_name, client_type, vendor_portal,
+vendor_role_ref, source, source_email_ref, created_by, budget fields.
+Matches the /api/staffing/open contract from Session 22. The unified
+shape simply doesn't have those fields - they cannot leak.
+
+### Frontend
+
+- /career-center/jobs renders the feed with filters + search
+- /career-center panel header has a "View all openings" link
+
+### Future extensions
+
+- ?type=permanent,gig filter
+- ?min_compensation=N filter
+- Location filter
+- Saved-searches tied to charvak_career_job_alerts

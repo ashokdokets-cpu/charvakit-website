@@ -1,5 +1,30 @@
 ## Session 26 CLOSED (2026-10-05) - Security sweep + cautious cleanup
 
+## Session 31 CLOSED (2026-10-06) - Unified jobs feed (Phase 2)
+
+Second step of the unification arc.
+
+**Commit:** d0d9d77
+
+**Files:**
+- jobs_unified_engine.py (new, ~230 lines)
+- main.py (+4 lines: import + /career-center/jobs route + /api/jobs/unified)
+- templates/career-jobs.html (new, ~280 lines)
+- templates/career-v2.html (+1 panel link, +9 lines refresh feedback)
+
+**Verified:**
+- 8-scenario HTTP matrix on /api/jobs/unified
+- Sanitization over HTTP (no staffing leaks)
+- Browser: 8 items, filters work, search works, cards navigate
+- Prod: /career-center/jobs and /api/jobs/unified both 200
+
+**Session 32 candidates:**
+- A (recommended): unified candidate signup entry point
+- B: Close the Assess -> Upskill loop
+- C: Roll unified panel to /my-results and /profile
+- D: Show top 3 jobs inline in the /career-center panel
+
+
 ## Session 30 CLOSED (2026-10-06) - Unified candidate profile (Phase 1)
 
 First step of the unification arc.

@@ -1,6 +1,68 @@
 # Session Context - Charvak
 
 
+## Session 31 CLOSED (2026-10-06) - Unified jobs feed (Phase 2)
+
+Second step of the unification arc. Merges three job sources into
+one normalized public feed and one Career Center page.
+
+**Commit:** d0d9d77 feat(jobs): Session 31 - unified jobs feed + Career Center page
+
+**What shipped:**
+
+New engine `jobs_unified_engine.py` (~230 lines):
+- get_unified_jobs(source, q, limit) -> dict
+- Merges charvak_jobs + charvak_client_roles + charvak_micro_projects
+- Normalized shape: id, source, source_label, title, company,
+  location, type, skills[], compensation{}, posted_at, detail_url
+- Sanitization by construction: staffing items never carry
+  client_name, vendor refs, or budget (matches /open-roles policy)
+- Source-isolated: a failure in one source never breaks others
+- Sort: posted_at DESC, source ASC
+- Filters: source (whitelist), q (title substring), limit (1..200)
+
+New route `GET /api/jobs/unified`:
+- Public read (no auth) — same data as /job-board + /open-roles + /micro-internship
+- Rate limited 120/min
+- Validates source against VALID_SOURCES whitelist
+- Rejects non-integer limit with 400
+
+New page `/career-center/jobs` (templates/career-jobs.html):
+- Filter pills: All / via Charvak / Gigs / Job Board
+- Debounced title search (300ms)
+- Job cards: source badge, urgency badge, title, company/location/type,
+  experience, skills (first 6 + "N more"), View & Apply button
+- Empty state with Clear Filters
+- Cards deep-link to /open-roles/... or /micro-internship/...
+
+Panel integration:
+- /career-center now has "View all openings ->" link in the
+  unified activity panel header
+- Refresh button shows dim-then-restore visual feedback
+
+**Verified:**
+- 8-scenario HTTP test: all sources, source filter, title search,
+  invalid source (200 + error dict), invalid limit (400), limit,
+  sanitization over HTTP (no leaks), first item shape
+- Browser: 8 items (7 staffing + 1 gig), filters work, search works,
+  cards navigate
+- Prod: /career-center/jobs -> 200, /api/jobs/unified -> 200
+
+**Session 32 candidates:**
+- A (recommended): Unified candidate signup entry point
+- B: Close the Assess -> Upskill loop
+- C: Roll the unified panel to /my-results and /profile
+- D: Show top 3 jobs inline in the /career-center panel
+
+**Long-term arc:**
+- 30: unified candidate profile (SHIPPED)
+- 31: unified jobs feed (SHIPPED)
+- 32: unified candidate signup (candidate)
+- 33: Assess -> Upskill loop (candidate)
+
+**Reminder:** Render Postgres password rotation still pending.
+
+
 ## Session 30 CLOSED (2026-10-06) - Unified candidate profile (Phase 1)
 
 The first concrete step of the unification arc. A read-only aggregation
