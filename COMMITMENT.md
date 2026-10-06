@@ -1,5 +1,24 @@
 ## Session 26 CLOSED (2026-10-05) - Security sweep + cautious cleanup
 
+## Session 36 CLOSED (2026-10-07) - Two-tier AI course unlock
+
+Restructured the AI-designed course into a freemium product.
+
+**Commit:** 3ea3320 (7 files, +549/-21)
+Plus: email_verification.py (Session 35 dev flag)
+
+**Product shape:**
+- Design: 50 credits
+- Weeks 1-2: free to consume
+- Unlock: 150 credits (weeks 3+ + certificate + AI tutor)
+
+**Session 37 candidates:**
+- A (recommended): Admin UI for integrity events
+- B: Roll unified panel to /my-results, /profile
+- C: Certificate round 2
+- D: AuditBot Continuous
+
+
 ## Session 34 CLOSED (2026-10-07) - AI course designer
 
 Zero dead ends achieved. Every weak topic now produces a course.
