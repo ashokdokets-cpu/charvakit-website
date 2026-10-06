@@ -119,6 +119,13 @@ class EmailVerification:
             return {"status": "error", "message": "Verification failed"}
     
     def is_verified(self, email):
+        # Session 35: dev bypass for local testing. Reads
+        # DEV_SKIP_EMAIL_VERIFICATION from env. Restricted to
+        # @charvak.local addresses so it cannot affect a real user.
+        # Production is unaffected: the env var is never set there.
+        import os as _os
+        if _os.getenv("DEV_SKIP_EMAIL_VERIFICATION") == "1" and (email or "").lower().endswith("@charvak.local"):
+            return True
         try:
             from database import db
             conn = db.get_connection()
