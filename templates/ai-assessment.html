@@ -819,16 +819,25 @@ function renderLearningPath(el, j) {
         html += '<div class="alert alert-info py-2 px-3 mb-3">' + _esc(j.message) + '</div>';
     }
 
-    // Charvak courses
+    // Charvak courses — Session 33: badge + Start course CTA
     var courses = j.charvak_courses || [];
     if (courses.length) {
         html += '<h5 class="as-h6 mt-3 mb-2">Charvak Courses</h5>';
         for (var i = 0; i < courses.length; i++) {
             var c = courses[i];
+            var courseName = c.course_name || '';
+            var courseHref = '/course/' + encodeURIComponent(courseName);
             html += '<div class="card mb-2"><div class="card-body py-2 px-3">';
-            html += '<strong>' + _esc(c.course_name || '') + '</strong><br>';
-            html += '<small class="text-muted">' + _esc(c.reason || '') + '</small>';
-            html += '</div></div>';
+            html += '<div class="d-flex justify-content-between align-items-start flex-wrap" style="gap:10px;">';
+            html += '<div style="flex:1; min-width:200px;">';
+            html += '<strong>' + _esc(courseName) + '</strong>';
+            if (c.fills_topic) {
+                html += ' <span class="badge bg-info text-dark ms-2" style="font-size:0.7rem;">Fills: ' + _esc(c.fills_topic) + '</span>';
+            }
+            html += '<div class="text-muted small mt-1">' + _esc(c.reason || '') + '</div>';
+            html += '</div>';
+            html += '<a href="' + courseHref + '" class="btn btn-sm btn-primary">Start course &rarr;</a>';
+            html += '</div></div></div>';
         }
     }
 
