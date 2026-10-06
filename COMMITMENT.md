@@ -1,5 +1,28 @@
 ## Session 26 CLOSED (2026-10-05) - Security sweep + cautious cleanup
 
+## Session 34 CLOSED (2026-10-07) - AI course designer
+
+Zero dead ends achieved. Every weak topic now produces a course.
+
+**Commit:** ce34cfe
+
+**Files:**
+- main.py (+20 free-enroll branch, -5 auto-enroll lines)
+- templates/ai-assessment.html (adaptive weeks + Review course CTA + escaped call site)
+- templates/course-detail.html (dynamic login hint)
+
+**Verified:**
+- create-order returns {status: exists, free: true} for Rs 0 courses
+- Enroll Now skips Razorpay and lands in the lesson player
+- Adaptive weeks (6/4/3) confirmed
+
+**Session 35 candidates:**
+- A (recommended): cleanup + polish (Postgres rotation, DEV_SKIP flag, Rs 0 EMI fix, panel rollouts)
+- B: Admin UI for integrity events
+- C: Certificate round 2
+- D: AuditBot Continuous
+
+
 ## Session 33 CLOSED (2026-10-07) - Assess -> Upskill loop
 
 Fourth step of the unification arc. Arc complete.
