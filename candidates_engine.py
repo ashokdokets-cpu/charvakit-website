@@ -24,6 +24,12 @@ ALLOWED_FIELDS = [
     "skills", "education", "degree", "university", "graduation_year",
     "resume_text", "additional_email", "additional_phone",
     "candidate_summary", "country",
+    # Session 32 -- added for the unified candidate signup flow
+    "preferred_roles", "visa_status", "portfolio_url", "github_url",
+    "linkedin_url", "availability", "remote_preference",
+    "willing_to_relocate", "salary_expectation",
+    "certifications", "languages_spoken", "first_name", "last_name",
+    "signup_source",
 ]
 
 
@@ -35,6 +41,30 @@ class CandidatesEngine:
     # Read
     # ----------------------------------------------------------------
 
+
+    # ----------------------------------------------------------------
+    # Self-healing schema (Session 32)
+    # ----------------------------------------------------------------
+    _columns_ready = False
+
+    def _ensure_columns(self):
+        """Ensure signup_source column exists on charvak_candidates. Idempotent."""
+        if CandidatesEngine._columns_ready:
+            return
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                ALTER TABLE charvak_candidates
+                ADD COLUMN IF NOT EXISTS signup_source TEXT
+            """)
+            conn.commit()
+            cur.close(); conn.close()
+            CandidatesEngine._columns_ready = True
+            logger.info("[candidates] signup_source column ready")
+        except Exception as e:
+            logger.warning(f"[candidates] _ensure_columns failed: {e}")
     def get_me(self, email: str) -> Dict:
         """Fetch the caller's candidate row."""
         email = (email or "").strip().lower()
@@ -51,7 +81,12 @@ class CandidatesEngine:
                        experience_years, relevant_experience_years, notice_period,
                        skills, education, degree, university, graduation_year,
                        resume_text, additional_email, additional_phone,
-                       candidate_summary, country, status, registered_at, updated_at
+                       candidate_summary, country, status, registered_at, updated_at,
+                       preferred_roles, visa_status, portfolio_url, github_url,
+                       linkedin_url, availability, remote_preference,
+                       willing_to_relocate, salary_expectation,
+                       certifications, languages_spoken,
+                       first_name, last_name, signup_source
                 FROM charvak_candidates
                 WHERE email = %s
             """, (email,))
@@ -92,6 +127,20 @@ class CandidatesEngine:
                 "status": row[22],
                 "created_at": row[23].isoformat() if row[23] else None,
                 "updated_at": row[24].isoformat() if row[24] else None,
+                "preferred_roles": row[25],
+                "visa_status": row[26],
+                "portfolio_url": row[27],
+                "github_url": row[28],
+                "linkedin_url": row[29],
+                "availability": row[30],
+                "remote_preference": row[31],
+                "willing_to_relocate": row[32],
+                "salary_expectation": row[33],
+                "certifications": row[34],
+                "languages_spoken": row[35],
+                "first_name": row[36],
+                "last_name": row[37],
+                "signup_source": row[38],
             },
         }
 
@@ -104,6 +153,7 @@ class CandidatesEngine:
         Create or update the candidate row for data['email'].
         Only non-empty fields in ALLOWED_FIELDS are written.
         """
+        self._ensure_columns()
         email = (data.get("email") or "").strip().lower()
         if not email:
             return {"status": "error", "message": "email required"}
@@ -117,6 +167,18 @@ class CandidatesEngine:
 
         # Only allow known fields
         payload = {k: data.get(k) for k in ALLOWED_FIELDS if data.get(k) not in (None, "")}
+
+        # Session 32 -- validate signup_source against a whitelist
+        if "signup_source" in payload:
+            _VALID_SOURCES = {
+                "candidate-signup", "developer-signup",
+                "open-roles-inline", "profile-edit", "pool-register",
+            }
+            v = str(payload["signup_source"]).strip()
+            if v not in _VALID_SOURCES:
+                payload.pop("signup_source", None)
+            else:
+                payload["signup_source"] = v
 
         if not payload:
             return {"status": "error", "message": "No fields to save"}

@@ -110,6 +110,44 @@
             </div>
           </div>
 
+          <h4 class="h6 text-uppercase text-muted mb-3 mt-4">Links</h4>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Portfolio URL</label>
+              <input type="url" class="form-control" id="pf_portfolio" placeholder="https://yourname.dev">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">GitHub</label>
+              <input type="url" class="form-control" id="pf_github" placeholder="https://github.com/...">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">LinkedIn</label>
+              <input type="url" class="form-control" id="pf_linkedin" placeholder="https://linkedin.com/in/...">
+            </div>
+          </div>
+
+          <h4 class="h6 text-uppercase text-muted mb-3 mt-4">Preferences</h4>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Preferred roles (comma separated)</label>
+              <input type="text" class="form-control" id="pf_preferred_roles" placeholder="e.g. Backend Engineer, Data Analyst">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Visa status (for US roles)</label>
+              <select class="form-select" id="pf_visa_status">
+                <option value="">Not applicable</option>
+                <option>US Citizen</option>
+                <option>Green Card</option>
+                <option>H-1B</option>
+                <option>OPT / STEM OPT</option>
+                <option>CPT</option>
+                <option>L-1A / L-1B</option>
+                <option>TN (USMCA)</option>
+                <option>EAD</option>
+              </select>
+            </div>
+          </div>
+
           <div class="mt-4 d-flex gap-2">
             <button type="button" class="btn btn-success" id="saveBtn">Save profile</button>
             <a href="/my-applications" class="btn btn-outline-secondary">My applications</a>
@@ -159,6 +197,14 @@
     setVal("pf_degree", c.degree);
     setVal("pf_university", c.university);
     setVal("pf_grad_year", c.graduation_year);
+    // preferences (Session 32)
+    var pr = c.preferred_roles;
+    if (Array.isArray(pr)) setVal("pf_preferred_roles", pr.join(", "));
+    else setVal("pf_preferred_roles", pr || "");
+    setVal("pf_visa_status", c.visa_status);
+    setVal("pf_portfolio", c.portfolio_url);
+    setVal("pf_github", c.github_url);
+    setVal("pf_linkedin", c.linkedin_url);
   }
 
   function load() {
@@ -228,7 +274,13 @@
       education: getVal("pf_education"),
       degree: getVal("pf_degree"),
       university: getVal("pf_university"),
-      graduation_year: parseInt(getVal("pf_grad_year"), 10) || null
+      graduation_year: parseInt(getVal("pf_grad_year"), 10) || null,
+      preferred_roles: getVal("pf_preferred_roles"),
+      visa_status: getVal("pf_visa_status"),
+      portfolio_url: getVal("pf_portfolio"),
+      github_url: getVal("pf_github"),
+      linkedin_url: getVal("pf_linkedin"),
+      signup_source: "profile-edit"
     };
 
     var btn = document.getElementById("saveBtn");
