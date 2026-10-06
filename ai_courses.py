@@ -63,6 +63,25 @@ class AICourseSystem:
                 ALTER TABLE charvak_enrollments
                     ADD COLUMN IF NOT EXISTS recipient_name TEXT
             """)
+
+            # Session 36: paid_unlock column distinguishes free 2-week preview
+            # enrollments from full-course unlocks. Custom AI courses start
+            # with paid_unlock = FALSE and require a 150-credit unlock to access
+            # Weeks 3+, the certificate, and the AI tutor.
+            cur.execute("""
+                ALTER TABLE charvak_enrollments
+                    ADD COLUMN IF NOT EXISTS paid_unlock BOOLEAN DEFAULT FALSE
+            """)
+
+            # Session 36: grandfather existing enrollments (one-time, self-limiting).
+            # The first time this runs, every enrollment row has paid_unlock = NULL
+            # (because the column was just added). We flip those to TRUE so
+            # existing users keep full access. On every subsequent run there are
+            # no NULLs, so the UPDATE matches zero rows.
+            cur.execute("""
+                UPDATE charvak_enrollments SET paid_unlock = TRUE
+                WHERE paid_unlock IS NULL
+            """)
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS charvak_course_lessons (
                     lesson_id TEXT PRIMARY KEY,
@@ -703,7 +722,39 @@ Return JSON:
             # 'completed' but no row was inserted into charvak_certificates.
             course_completed = completed_count >= total_weeks
             certificate_id = None
+            # Session 36: gate certificate issuance behind the full-course unlock
+            # for custom AI courses. Catalog courses are unaffected.
             if course_completed:
+                _is_custom = False
+                _paid_unlock = True
+                try:
+                    cur.execute("""
+                        SELECT c.is_custom, e.paid_unlock
+                        FROM charvak_courses c
+                        JOIN charvak_enrollments e ON e.course_name = c.course_name
+                        WHERE e.enrollment_id = %s
+                    """, (enrollment_id,))
+                    _cm = cur.fetchone()
+                    if _cm:
+                        _is_custom = bool(_cm[0])
+                        _paid_unlock = bool(_cm[1])
+                except Exception as _ce:
+                    logger.warning(f"cert gate lookup failed: {_ce}")
+
+                if _is_custom and not _paid_unlock:
+                    # Custom course without the paid unlock: no cert yet.
+                    # Week count updates normally; only issuance is gated.
+                    return {
+                        "status": "success",
+                        "progress": completed_count,
+                        "total_weeks": total_weeks,
+                        "course_completed": True,
+                        "certificate_id": None,
+                        "certificate_locked": True,
+                        "unlock_type": "full_course",
+                        "unlock_amount_credits": 150,
+                        "message": "Week complete! Unlock the full course to earn your certificate.",
+                    }
                 cert_result = self.complete_course(enrollment_id)
                 if isinstance(cert_result, dict) and cert_result.get("status") == "success":
                     certificate_id = (cert_result.get("certificate") or {}).get("certificate_id")
@@ -747,6 +798,27 @@ Return JSON:
             from database import db
             conn = db.get_connection()
             cur = conn.cursor()
+
+            # Session 36: certificate is a paid artifact. Custom AI courses
+            # require the 150-credit full-course unlock before certificate
+            # issuance. Catalog courses with paid installments are unaffected.
+            cur.execute("""
+                SELECT c.is_custom, e.paid_unlock
+                FROM charvak_courses c
+                JOIN charvak_enrollments e ON e.course_name = c.course_name
+                WHERE e.enrollment_id = %s
+            """, (enrollment_id,))
+            _cm = cur.fetchone()
+            _is_custom = bool(_cm[0]) if _cm else False
+            _paid_unlock = bool(_cm[1]) if _cm else True
+            if _is_custom and not _paid_unlock:
+                cur.close(); conn.close()
+                return {
+                    "status": "locked",
+                    "message": "Unlock the full course to earn your certificate.",
+                    "unlock_type": "full_course",
+                    "unlock_amount_credits": 150,
+                }
 
             cur.execute("""
                 SELECT email, course_name, duration_weeks, recipient_name
@@ -801,6 +873,95 @@ Return JSON:
             }
         except Exception as e:
             logger.error(f"complete_course failed: {e}")
+            return {"status": "error", "message": str(e)}
+
+    def check_unlock_status(self, enrollment_id: str, email: str) -> dict:
+        """
+        Session 36: idempotency check for the full-course unlock.
+        Returns {status, already_unlocked, enrollment_id, owns_it}.
+        """
+        email = (email or "").strip().lower()
+        if not email or not enrollment_id:
+            return {"status": "error", "message": "email and enrollment_id required"}
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT email, paid_unlock FROM charvak_enrollments
+                WHERE enrollment_id = %s
+            """, (enrollment_id,))
+            row = cur.fetchone()
+            cur.close(); conn.close()
+            if not row:
+                return {"status": "error", "message": "Enrollment not found"}
+            owner_email, paid_unlock = row[0], bool(row[1])
+            return {
+                "status": "success",
+                "enrollment_id": enrollment_id,
+                "owns_it": (owner_email or "").lower() == email,
+                "already_unlocked": paid_unlock,
+            }
+        except Exception as e:
+            logger.error(f"check_unlock_status failed: {e}")
+            return {"status": "error", "message": str(e)}
+
+    def unlock_full_course(self, enrollment_id: str, email: str) -> dict:
+        """
+        Session 36: flip paid_unlock to TRUE for a custom-course enrollment.
+
+        Called AFTER the credit deduction. Idempotent: if paid_unlock is
+        already TRUE, no-op and return success with already_unlocked=True.
+
+        Returns {status, enrollment_id, paid_unlock, already_unlocked}.
+        """
+        email = (email or "").strip().lower()
+        if not email or not enrollment_id:
+            return {"status": "error", "message": "email and enrollment_id required"}
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+
+            cur.execute("""
+                SELECT email, paid_unlock FROM charvak_enrollments
+                WHERE enrollment_id = %s
+            """, (enrollment_id,))
+            row = cur.fetchone()
+            if not row:
+                cur.close(); conn.close()
+                return {"status": "error", "message": "Enrollment not found"}
+
+            owner_email, paid_unlock = row[0], bool(row[1])
+            if (owner_email or "").lower() != email:
+                cur.close(); conn.close()
+                return {"status": "error", "message": "Not your enrollment"}
+
+            if paid_unlock:
+                cur.close(); conn.close()
+                return {
+                    "status": "success",
+                    "enrollment_id": enrollment_id,
+                    "paid_unlock": True,
+                    "already_unlocked": True,
+                }
+
+            cur.execute("""
+                UPDATE charvak_enrollments
+                SET paid_unlock = TRUE
+                WHERE enrollment_id = %s
+            """, (enrollment_id,))
+            conn.commit()
+            cur.close(); conn.close()
+
+            return {
+                "status": "success",
+                "enrollment_id": enrollment_id,
+                "paid_unlock": True,
+                "already_unlocked": False,
+            }
+        except Exception as e:
+            logger.error(f"unlock_full_course failed: {e}")
             return {"status": "error", "message": str(e)}
 
     def get_certificate(self, certificate_id: str) -> dict:

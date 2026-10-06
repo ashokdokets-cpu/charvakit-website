@@ -439,6 +439,54 @@ class AICoursePayments:
                 return {"status": "error", "message": "Enrollment not found"}
             enroll_status, total_weeks = e[0], e[1] or 0
 
+            # Session 36: custom AI courses gate Weeks 3+ behind the
+            # 150-credit full-course unlock. This check runs BEFORE the
+            # installment lookup because custom courses may have stray
+            # installment rows created by the enrollment path, but they
+            # are not real EMIs and should not be treated as such.
+            cur.execute("""
+                SELECT c.is_custom, e.paid_unlock
+                FROM charvak_courses c
+                JOIN charvak_enrollments e ON e.course_name = c.course_name
+                WHERE e.enrollment_id = %s
+            """, (enrollment_id,))
+            _meta = cur.fetchone()
+            _is_custom = bool(_meta[0]) if _meta else False
+            _paid_unlock = bool(_meta[1]) if _meta else True
+
+            if _is_custom and week_num >= 3 and not _paid_unlock:
+                cur.close(); conn.close()
+                return {
+                    "status": "success",
+                    "allowed": False,
+                    "week_num": week_num,
+                    "reason": "full_course_unlock_required",
+                    "unlock_type": "full_course",
+                    "unlock_amount_credits": 150,
+                    "unlock_label": "Unlock full course - 150 credits",
+                    "message": (
+                        "Weeks 3+ require the full-course unlock. "
+                        "150 credits unlocks every remaining week, "
+                        "the certificate, and AI tutor access."
+                    ),
+                    "unlock_url": "/api/ai-course/unlock-full",
+                    "resume_week": week_num,
+                    "total_weeks": total_weeks,
+                }
+
+            # Session 36: custom courses with paid_unlock=TRUE are free.
+            # Fall through to the allowed check below.
+            if _is_custom:
+                cur.close(); conn.close()
+                return {
+                    "status": "success",
+                    "allowed": True,
+                    "week_num": week_num,
+                    "enrollment_status": enroll_status,
+                    "resume_week": week_num,
+                    "custom": True,
+                }
+
             cur.execute("""
                 SELECT installment_num, total_installments, amount_inr,
                        unlocks_from_week, unlocks_to_week, due_date, status
@@ -460,7 +508,6 @@ class AICoursePayments:
                     "enrollment_status": enroll_status,
                     "resume_week": week_num,
                 }
-
             num, total, amt, ufrom, uto, due, st = inst
 
             # Compute resume week: first unlocked+unpaid week <= total
