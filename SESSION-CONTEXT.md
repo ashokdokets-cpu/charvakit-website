@@ -1,6 +1,63 @@
 # Session Context - Charvak
 
 
+## Session 34 CLOSED (2026-10-07) - AI course designer
+
+Closes the last dead-end in the Local-to-Global journey. When a
+candidate's learning path has a weak topic with no catalog match,
+the AI designs a full course on demand.
+
+**Commit:** ce34cfe feat(career): Session 34 - AI course designer
+
+**What shipped:**
+
+Backend (main.py):
+- /api/ai-course/generate-custom: stopped auto-enrolling. Returns
+  course info so the frontend can present a review step.
+- /api/ai-course/create-order: free (Rs 0) courses bypass the
+  payment gateway entirely. Returns {status: 'exists',
+  enrollment_id, free: true} which the frontend already handles.
+- Both idempotent paths updated to match.
+
+Frontend (ai-assessment.html):
+- generateCustomCourse(topic, level, roleHint, candStatus):
+  - Adaptive weeks: weak -> 6, mixed -> 4, strong -> 3
+  - Signature and call site updated to pass candStatus
+  - Call-site label: 'Generate - 50 cr' -> 'Design this course - 50 cr'
+- Success card: 'Start Learning' -> 'Review course ->' pointing at
+  /course/{name} so the candidate sees the curriculum before enrolling
+- Fixed JS string-escaping bug from Session 34 v1 (missing argument
+  connector between the 3rd and 4th function args)
+
+Frontend (course-detail.html):
+- Login hint is now dynamic. Logged in -> shows the account email.
+  Logged out -> shows the original 'Login required' warning.
+
+**Verified:**
+- Custom course generated: 'Fundamentals Syntax (Mid Intensive)',
+  6 weeks (weak -> adaptive), Rs 0
+- Custom course generated: 'Modeling ML (Mid Intensive)',
+  4 weeks (mixed), Rs 0
+- POST /api/ai-course/create-order returns
+  {status:'exists', enrollment_id:'ENROLL-6703420F', free:true}
+  for a Rs 0 course - no Razorpay gateway involved
+- Review course -> lands on course detail page
+- Enroll Now -> free enrollment, redirects to /my-course/{id}
+
+**Session 35 candidates (recommended: cleanup + polish):**
+- A (recommended): Necessary fixes + small polish
+  * Rotate Render Postgres password (pending since Session 19)
+  * Add DEV_SKIP_EMAIL_VERIFICATION=1 flag for local dev
+  * Fix 'Pay in EMIs' display on Rs 0 course pages
+  * Roll unified panel to /my-results
+  * Top-3 jobs preview on /career-center panel
+- B: Admin UI for integrity events (Session 27 output) — strategic
+- C: Certificate round 2 (QR, watermark, multi-language)
+- D: AuditBot Continuous (recurring revenue)
+
+**Reminder:** Render Postgres password rotation still pending.
+
+
 ## Session 33 CLOSED (2026-10-07) - Assess -> Upskill loop
 
 Fourth and final step of the unification arc. Closes the loop from

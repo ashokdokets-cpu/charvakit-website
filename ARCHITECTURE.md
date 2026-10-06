@@ -1345,3 +1345,64 @@ Unification arc sessions:
 - 31: unified jobs feed (read view)
 - 32: unified candidate signup (write path)
 - 33: Assess -> Upskill loop (this session)
+
+## AI Course Designer (Session 34, v3.5)
+
+Closes the last dead-end in the Local-to-Global journey. When a
+candidate's learning path recommends a topic with no catalog match,
+the AI designs a full course on demand.
+
+### The flow
+
+    Career Assessment (weak topic)
+      -> Learning Path generated
+      -> "Custom Courses for Your Gaps" section
+      -> card: "Tooling & Ecosystem  weak 0%"
+              "Design this course - 50 cr"
+      -> click
+      -> AI generates 6-week course
+         (adaptive: weak -> 6, mixed -> 4, strong -> 3)
+      -> green card: "Course generated for 50 credits"
+                     [Review course ->]  [My Courses]
+      -> click Review course
+      -> /course/{name}  (curriculum + free Enroll Now)
+      -> click Enroll Now
+      -> POST /api/ai-course/create-order
+      -> returns {status:'exists', free:true, enrollment_id}
+      -> /my-course/{enrollment_id}  (lesson player)
+
+### Backend changes
+
+- /api/ai-course/generate-custom: no longer auto-enrolls.
+  Returns course info so the frontend can present the review step.
+- /api/ai-course/create-order: free (Rs 0) courses bypass the
+  gateway entirely. Returns the shape the frontend already handles
+  for existing enrollments.
+- Both idempotent paths (existing custom course, existing enrollment)
+  return the same shape without charging credits.
+
+### Frontend changes
+
+- generateCustomCourse(): now takes candStatus, computes weeks from
+  the candidate's gap severity.
+- Confirmation card CTA: "Start Learning" -> "Review course" pointing
+  at /course/{name} (not /my-course/{id}). The candidate sees the
+  curriculum before enrolling.
+- course-detail.html: login hint is dynamic (shows email when signed
+  in, "Login required" when not).
+
+### Cost model
+
+- AI course design: 50 credits (custom_course_generation)
+- Enrollment after generation: free (Rs 0 to the candidate)
+
+The candidate pays once for the design; everything after is free.
+
+### Zero dead ends principle
+
+This is the completion of the Local-to-Global journey arc. No weak
+topic is a dead end now - if a catalog course matches, the candidate
+enrolls in it; if not, the AI designs one.
+
+    Assess -> Prove -> Upskill -> Match -> Place
+    [all five stages connected, zero dead ends]
