@@ -1233,3 +1233,55 @@ shape simply doesn't have those fields - they cannot leak.
 - ?min_compensation=N filter
 - Location filter
 - Saved-searches tied to charvak_career_job_alerts
+
+## Unified Candidate Signup (Session 32, v3.5)
+
+Write-side unification of the career-center arc. One signup entry
+point, one write path, one profile editor.
+
+### The single write path
+
+All candidate writes go through candidates_engine.upsert():
+  - /api/candidates/upsert         (canonical)
+  - /api/candidate/register        (legacy alias, delegates)
+  - /profile edit form             (calls /api/candidates/upsert)
+  - Inline profile form on /open-roles (same)
+
+No more parallel INSERTs. Field whitelist (37 fields) applies to every
+write. signup_source tags the origin:
+
+  "candidate-signup"  -- via /candidate/signup (public entry)
+  "developer-signup"  -- legacy /developer-signup (now redirects)
+  "open-roles-inline" -- via the inline profile form on a role page
+  "profile-edit"      -- via /profile (canonical editor)
+  "pool-register"     -- via legacy /api/candidate/register
+
+### The signup gate
+
+/candidate/signup is now a marketing page with two states:
+  - Anonymous: shows "Create account ->" CTA
+  - Authenticated: JS redirects to /profile (single write surface)
+
+### Route consolidation
+
+  /candidate-signup -> 302 -> /candidate/signup
+  /developer-signup -> 302 -> /candidate/signup
+
+Both legacy URLs preserved for external links and SEO.
+
+### The profile editor
+
+/profile is the canonical write surface. Fields:
+  identity, professional, education, links, preferences
+  (16 user-editable fields)
+
+Prefills from candidates_engine.get_me() on load.
+Writes via /api/candidates/upsert with signup_source="profile-edit".
+
+### Design principles
+
+- One write path. No parallel INSERTs.
+- Field whitelist enforced at the engine boundary.
+- Self-healing schema (signup_source column added on first use).
+- Read/write symmetry: get_me returns every field that can be written.
+- Legacy endpoints delegate - they never bypass the unified engine.
