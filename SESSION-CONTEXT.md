@@ -1,6 +1,70 @@
 # Session Context - Charvak
 
 
+## Session 32 CLOSED (2026-10-07) - Unified candidate signup (Phase 3)
+
+Third step of the unification arc. One signup entry point, one write
+path, one profile editor. Closes the "write side" of the arc.
+
+**Commit:** ffa00dc feat(candidate): Session 32 - unified candidate signup (Phase 3)
+
+**What shipped:**
+
+Engine (candidates_engine.py):
+- ALLOWED_FIELDS expanded from 23 to 37 fields
+- _ensure_columns() self-healing DDL for signup_source column
+- signup_source validation against a whitelist of source tags
+- get_me() now reads all 39 columns (was 25) - read/write symmetry
+  restored after the field expansion
+
+Engine (candidate_engine.py):
+- register_candidate() delegates to candidates_engine.upsert()
+- Adds signup_source='pool-register' (forgery-proof)
+- Repeat registrations now update rather than error
+
+Routes (main.py):
+- /candidate/signup -> marketing gate + redirect to /profile when authed
+- /candidate-signup -> 302 -> /candidate/signup (legacy)
+- /developer-signup -> 302 -> /candidate/signup (legacy)
+
+Templates:
+- candidate-signup.html: 252-line form replaced with 60-line gate
+- profile.html: 5 new fields (preferred_roles, visa_status,
+  portfolio_url, github_url, linkedin_url) + prefill on load
+- base.html: nav dropdown merged (2 signup items -> 1)
+- about.html, how-it-works.html, reverse-staffing.html, register.html:
+  links repointed, register.html CTA reworded
+
+**Verified:**
+- signup_source column self-heals, accepts valid tags, drops invalid
+- get_me round-trips all fields including the 14 new ones
+- Legacy /api/candidate/register lands through the unified path
+- /candidate/signup redirects authenticated users to /profile
+- /profile writes all 5 new fields and prefills them on reload
+
+**Prod verified:**
+- /candidate/signup -> 200
+- /candidate-signup -> 302 -> /candidate/signup
+- /developer-signup -> 302 -> /candidate/signup
+- /profile -> 200
+
+**Session 33 candidates:**
+- A (recommended): Assess -> Upskill loop. When a candidate
+  completes a Career Assessment with weak topics, the result page
+  links directly to course enrollment. Read-side only.
+- B: Roll the unified panel (Session 30) to /my-results and /profile
+- C: Add top-3 jobs preview to the /career-center panel
+- D: Docs + backup polish session
+
+**Unification arc:**
+- 30: unified candidate profile (read) -- SHIPPED
+- 31: unified jobs feed (read) -- SHIPPED
+- 32: unified candidate signup (write) -- SHIPPED
+- 33: Assess -> Upskill loop -- NEXT
+
+**Reminder:** Render Postgres password rotation still pending.
+
+
 ## Session 31 CLOSED (2026-10-06) - Unified jobs feed (Phase 2)
 
 Second step of the unification arc. Merges three job sources into

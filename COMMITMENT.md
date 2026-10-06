@@ -1,5 +1,35 @@
 ## Session 26 CLOSED (2026-10-05) - Security sweep + cautious cleanup
 
+## Session 32 CLOSED (2026-10-07) - Unified candidate signup (Phase 3)
+
+Third step of the unification arc. Write-side unification complete.
+
+**Commit:** ffa00dc
+
+**Files:**
+- candidates_engine.py (ALLOWED_FIELDS 23 -> 37, _ensure_columns, get_me 25 -> 39 cols)
+- candidate_engine.py (register_candidate delegates to upsert)
+- main.py (+new route, 2 redirects)
+- templates/candidate-signup.html (252-line form -> 60-line gate)
+- templates/profile.html (+5 fields +prefill)
+- templates/base.html (nav merged 2 -> 1)
+- templates/about.html, how-it-works.html, reverse-staffing.html, register.html (link repoints)
+
+**Verified:**
+- signup_source self-heals + validates
+- get_me round-trips all fields
+- Legacy register endpoint delegates
+- /candidate/signup redirects authed users to /profile
+- /profile writes and prefills the 5 new fields
+- Prod: all four endpoints return expected codes
+
+**Session 33 candidates:**
+- A (recommended): Assess -> Upskill loop
+- B: Roll unified panel to /my-results, /profile
+- C: Top-3 jobs in /career-center panel
+- D: Docs + backup polish
+
+
 ## Session 31 CLOSED (2026-10-06) - Unified jobs feed (Phase 2)
 
 Second step of the unification arc.

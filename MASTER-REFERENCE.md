@@ -323,6 +323,13 @@ Data-backed: `jobs_unified_engine` (Session 31, unified jobs feed), `candidate_p
 - `POST /api/mock/complete-full`
 
 
+### Candidate Profile + Signup (Sessions 30, 32)
+
+- `GET /api/candidate/{email}/unified` — self-view of full activity
+- `POST /api/candidates/upsert` — unified candidate write (whitelisted)
+- `GET /career-center/jobs` — unified jobs page
+- `GET /candidate/signup` — marketing gate -> /profile when authed
+- `/candidate-signup`, `/developer-signup` — 302 -> /candidate/signup
 ### Jobs Unified (Session 31)
 
 - `GET /api/jobs/unified` — public feed across job-board + staffing + gigs.
