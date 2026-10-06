@@ -7855,7 +7855,6 @@ async def api_generate_custom_course(request: Request):
     if existing:
         # Already generated — return without charging credits
         from ai_courses import ai_courses
-        enroll = ai_courses.enroll_student(email, existing[1], existing[2], level)
         return {
             "status": "success",
             "already_existed": True,
@@ -7863,7 +7862,6 @@ async def api_generate_custom_course(request: Request):
             "course_id": existing[0],
             "course_name": existing[1],
             "description": existing[3],
-            "enrollment": enroll,
         }
 
     # Charge credits
@@ -7880,11 +7878,6 @@ async def api_generate_custom_course(request: Request):
     if result.get("status") != "success":
         return JSONResponse(status_code=500, content=result)
 
-    # Auto-enroll the user in the freshly generated course
-    enroll = ai_courses.enroll_student(
-        email, result["course_name"], result.get("duration_weeks", weeks), level,
-    )
-    result["enrollment"] = enroll
     result["credits_charged"] = 50
     return result
 
@@ -9021,6 +9014,26 @@ async def ai_course_create_order(request: Request):
 
         if not email or not course_name:
             return JSONResponse({"status": "error", "message": "email and course_name required"}, status_code=400)
+
+        # Session 34: free/custom courses bypass the payment gateway entirely.
+        # If the resolved price is 0 (custom AI-designed courses are Rs 0),
+        # enroll directly and let the frontend redirect to the lesson player.
+        _pre = ai_course_payments.resolve_price(course_name, country_code, level)
+        if _pre.get("status") == "success" and int(_pre.get("amount_inr", 0) or 0) == 0:
+            _free = ai_courses.enroll_student(
+                email, course_name,
+                duration_weeks=_pre.get("duration_weeks", 4),
+                user_level=level,
+            )
+            if _free.get("status") in ("success", "exists"):
+                _enroll = _free.get("enrollment") or {}
+                _eid = _enroll.get("enrollment_id") or _free.get("enrollment_id")
+                return JSONResponse({
+                    "status": "exists",
+                    "enrollment_id": _eid,
+                    "free": True,
+                })
+            return JSONResponse(_free, status_code=400)
 
         enroll_plan = ai_courses.enroll_student_paid(email, course_name, country_code=country_code, level=level)
         if enroll_plan.get("status") == "error":

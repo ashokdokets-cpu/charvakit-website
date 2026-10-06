@@ -853,7 +853,7 @@ function renderLearningPath(el, j) {
             html += '<div><strong>' + _esc(cand.topic || '') + '</strong>';
             html += ' <span class="badge bg-warning text-dark" style="font-size:0.7rem;">' + _esc(cand.status || 'weak') + ' - ' + (cand.pct || 0) + '%</span>';
             html += '<div class="text-muted small mt-1">' + _esc(cand.level || '') + ' level - ' + _esc(cand.role || '') + '</div></div>';
-            html += '<button class="btn btn-sm btn-primary" onclick="generateCustomCourse(\'' + _esc(cand.topic).replace(/'/g, "\\'") + '\', \'' + _esc(cand.level || 'mid') + '\', \'' + _esc(cand.role || '') + '\')">Generate - 50 cr</button>';
+            html += '<button class="btn btn-sm btn-primary" onclick="generateCustomCourse(\'' + _esc(cand.topic).replace(/'/g, "\\'") + '\', \'' + _esc(cand.level || 'mid') + '\', \'' + _esc(cand.role || '') + '\', \'' + _esc(cand.status || 'mixed') + '\')">Design this course - 50 cr</button>';
             html += '</div>';
             html += '<div id="ccResult-' + cc + '" class="mt-2"></div>';
             html += '</div></div>';
@@ -888,8 +888,11 @@ function renderLearningPath(el, j) {
     el.innerHTML = html;
 }
 
-async function generateCustomCourse(topic, level, roleHint) {
+async function generateCustomCourse(topic, level, roleHint, candStatus) {
     var email = _email();
+    // Session 34: adaptive weeks based on gap severity
+    var _weeksByStatus = { weak: 6, mixed: 4, strong: 3 };
+    var weeks = _weeksByStatus[candStatus] || 4;
     var token = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
     if (!email || !token) {
         window.location.href = '/login?next=/ai-assessment';
@@ -919,7 +922,7 @@ async function generateCustomCourse(topic, level, roleHint) {
                 topic: topic,
                 level: level || 'mid',
                 role_hint: roleHint || '',
-                weeks: 4,
+                weeks: weeks,
             })
         });
         if (r.status === 401) { window.location.href = '/login?next=/ai-assessment'; return; }
@@ -935,21 +938,22 @@ async function generateCustomCourse(topic, level, roleHint) {
             return;
         }
 
-        // Success — show the "ready" card with a Start Learning CTA
-        var enroll = j.enrollment || {};
-        var enrollId = enroll.enrollment_id || '';
-        var startUrl = enrollId ? '/my-course/' + encodeURIComponent(enrollId) : '/my-courses';
-        var creditLine = j.already_existed ? 'Already generated earlier - no credits charged.' : 'Course generated for 50 credits.';
+        // Success (Session 34) — show confirmation card with Review course CTA.
+        // We do NOT auto-enroll. The candidate reviews the AI-designed course
+        // at /course/{name} and clicks Enroll there (free, 0 credits).
+        var courseName = j.course_name || "Custom course";
+        var courseHref = "/course/" + encodeURIComponent(courseName);
+        var creditLine = j.already_existed ? "Already generated earlier - no credits charged." : "Course generated for 50 credits.";
 
         var readyHtml = '<div class="alert alert-success mb-0">';
-        readyHtml += '<strong>' + _esc(j.course_name || 'Custom course') + '</strong> is ready.';
+        readyHtml += '<strong>' + _esc(courseName) + '</strong> is ready.';
         readyHtml += '<div class="small mt-1">' + _esc(creditLine) + '</div>';
-        readyHtml += '<a class="btn btn-sm btn-success mt-2" href="' + startUrl + '">Start Learning</a> ';
+        readyHtml += '<a class="btn btn-sm btn-success mt-2" href="' + courseHref + '">Review course &rarr;</a> ';
         readyHtml += '<a class="btn btn-sm btn-outline-success mt-2" href="/my-courses">My Courses</a>';
         readyHtml += '</div>';
 
         if (resultSlot) resultSlot.innerHTML = readyHtml;
-        if (btn) btn.style.display = 'none';
+        if (btn) btn.style.display = "none";
     } catch (e) {
         if (resultSlot) resultSlot.innerHTML = '<div class="alert alert-danger py-2 px-3 mb-0">Network error: ' + _esc(e.message) + '</div>';
         if (btn) { btn.disabled = false; btn.textContent = 'Generate - 50 cr'; }
