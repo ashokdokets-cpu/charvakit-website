@@ -87,9 +87,8 @@
                             </button>
 
                             <hr class="my-4">
-                            <div class="small text-muted">
-                                <strong>Login required</strong><br>
-                                Make sure you're <a href="/login">logged in</a> before enrolling.
+                            <div class="small text-muted" id="loginHint">
+                                <span id="loginHintText"></span>
                             </div>
                         </div>
                     </div>
@@ -103,6 +102,17 @@
 <script>
 const courseName = decodeURIComponent(window.location.pathname.split('/course/')[1] || '');
 const userEmail = localStorage.getItem('userEmail');
+
+    // Session 34-6: dynamic login hint instead of static "Login required"
+    (function() {
+        var el = document.getElementById("loginHintText");
+        if (!el) return;
+        if (userEmail) {
+            el.innerHTML = "✅ Signed in as <strong>" + userEmail + "</strong>";
+        } else {
+            el.innerHTML = "<strong>Login required</strong><br>Make sure you're <a href=\"/login\">logged in</a> before enrolling.";
+        }
+    })();
 let currentPlan = null;
 let currentLevel = "intermediate";
 const LEVEL_LABELS = { beginner: "Beginner", intermediate: "Intermediate", advanced: "Advanced" };
