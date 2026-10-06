@@ -2587,7 +2587,7 @@ class CareerAssessmentEngine:
             f"Return STRICT JSON with this exact shape:\n"
             f"{{\n"
             f'  "charvak_courses": [\n'
-            f'    {{"course_id": "...", "course_name": "...", "reason": "why this course addresses a weak topic (1 sentence)"}}\n'
+            f'    {{"course_id": "...", "course_name": "...", "fills_topic": "the single weak topic this course helps with, copied verbatim from the WEAK/MIXED list", "reason": "why this course addresses that topic (1 sentence)"}}\n'
             f"  ],\n"
             f'  "weekly_plan": [\n'
             f'    {{"week": 1, "focus": "topic focus", "activities": ["activity 1", "activity 2"]}}\n'
@@ -2596,6 +2596,7 @@ class CareerAssessmentEngine:
             f"}}\n\n"
             f"Rules:\n"
             f"- Pick charvak_courses ONLY from the provided catalog (don't invent course IDs).\n"
+            f"- fills_topic MUST be copied verbatim from the WEAK/MIXED topic list (exact string). Do not paraphrase.\n"
             f"- If no course matches, return an empty array - don't force one.\n"
             f"- Weekly plan: 2-4 weeks, calibrated to the level ({level}).\n"
             f"- Be encouraging but honest about the gap.\n"
@@ -2628,6 +2629,9 @@ class CareerAssessmentEngine:
             for c in parsed.get("charvak_courses", []):
                 if isinstance(c, dict) and c.get("course_id") in valid_ids:
                     valid_courses.append(c)
+                    # Session 33: ensure fills_topic always exists
+                    if "fills_topic" not in c:
+                        c["fills_topic"] = ""
             return {
                 "charvak_courses": valid_courses,
                 "weekly_plan": parsed.get("weekly_plan", []) if isinstance(parsed.get("weekly_plan"), list) else [],
