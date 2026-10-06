@@ -1,6 +1,58 @@
 # Session Context - Charvak
 
 
+## Session 30 CLOSED (2026-10-06) - Unified candidate profile (Phase 1)
+
+The first concrete step of the unification arc. A read-only aggregation
+layer that presents a candidate's activity across all subsystems in one
+call. First surface: the Career Center panel.
+
+**Two commits:**
+- 2040caf feat(candidate): Session 30 - unified candidate profile endpoint
+- 8a4025d feat(candidate): Session 30-4 - unified activity panel in Career Center
+
+**What shipped:**
+
+New engine `candidate_profile_engine.py` (~290 lines):
+- get_unified_profile(email, include=None) -> dict
+- 10 sections: identity, profile, assessments, certificates,
+  applications, training, career_engine, integrity, credits, doketsrb
+- Read-only. No writes, no schema changes, no engine modifications.
+- Aggregates large tables (integrity events -> counts + risk level)
+- Enumerates small tables (certificates, applications, enrollments)
+- Section-isolated: a failure in one section never breaks the response
+- Graceful empty sections for nonexistent users
+
+New route `GET /api/candidate/{email}/unified`:
+- Auth + email-match enforced (403 on mismatch)
+- Rate limited 60/min
+- ?include= filter validated against ALL_SECTIONS whitelist
+
+Frontend panel in career-v2.html:
+- "Your activity" section at the top of /career-center
+- 4 stat cards: Certificates, Applications, Integrity, Credits
+- Recent assessments list (last 5, with score + pass/fail)
+- Hidden entirely when logged out
+- Silent-fail on auth/network errors
+
+**Verified:**
+- Engine standalone test: all 10 sections return correct data
+- HTTP test matrix: 401 (no auth), 200 (full), 200 (filtered),
+  400 (invalid section), 403 (different user)
+- Browser: panel renders with real data (6 certs, 2 apps,
+  254 integrity events, 11641 credits)
+
+**Strategic context:**
+This is the read-only aggregation layer that the unification
+discussion called for. The engines stay separate; the experience
+becomes unified. Sessions 31-33 will extend it:
+- 31: /api/jobs/unified (merge job-board + staffing + micro-projects)
+- 32: Unified /candidate/signup entry point
+- 33: Close the Assess -> Upskill loop
+
+**Reminder:** Render Postgres password rotation still pending.
+
+
 ## Session 29 CLOSED (2026-10-06) - Career Assessment Phase 2b (SQL)
 
 The SQL format is live on prod. Phase 2b is COMPLETE — all 10 assessment

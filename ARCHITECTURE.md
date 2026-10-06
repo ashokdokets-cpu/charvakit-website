@@ -1111,3 +1111,66 @@ Coding format uses Judge0 CE for real code execution. Called from
 - Timeouts: each submission has a 5s wall-time limit + 3s CPU limit
 - Silent fail: a Judge0 outage gives the candidate a score of 0, not a 500
 - Rate safety: no retries, no parallelism (sequential per question)
+
+## Unified Candidate Profile (Session 30, v3.5)
+
+Read-only aggregation layer that presents a candidate's activity
+across all subsystems in one API call. First step of the
+career-center unification arc.
+
+### Why it exists
+
+Charvak has 8+ candidate-related tables across different engines
+(assessments, certificates, applications, staffing, micro-internships,
+career engine, integrity, credits). A user navigating the site
+had no single place to see their full activity. The unified profile
+solves that without merging any of the underlying engines.
+
+### Endpoint
+
+    GET /api/candidate/{email}/unified
+    GET /api/candidate/{email}/unified?include=assessments,certificates
+
+- Auth: caller must own the email
+- Rate limit: 60/min
+- include filter validates against ALL_SECTIONS whitelist
+- Returns 10 sections:
+    identity, profile, assessments, certificates, applications,
+    training, career_engine, integrity, credits, doketsrb
+
+### Engine
+
+`candidate_profile_engine.py` — read-only. One method:
+`get_unified_profile(email, include=None) -> dict`
+
+Each section:
+- Runs its own query on its own DB connection
+- Wrapped in `_safe_section` so a failure never breaks the response
+- Aggregates large tables (integrity events) and enumerates small ones
+
+### Design principles
+
+- **Read-only.** No writes, no schema changes.
+- **Section-isolated.** One failure does not affect other sections.
+- **Stable shape.** Empty tables still return their section with an
+  empty list/structure so the frontend can render consistently.
+- **Self-view only.** No admin variant in Session 30. The admin
+  variant is a separate concern.
+- **One call = one screen.** The response shape is designed to render
+  a dashboard in a single fetch.
+
+### Frontend
+
+`templates/career-v2.html` — a "Your activity" panel at the top of
+`/career-center`. Fetches the endpoint on page load; renders 4 stat
+cards + recent assessments. Hidden entirely when logged out. Silent-fail.
+
+### Long-term arc
+
+This is the "read" side of the unification. Future sessions:
+- Unified jobs feed (read across job-board + staffing + micro-projects)
+- Unified candidate signup (write once, land in the right table)
+- Assessment-to-course loop (close the Assess -> Upskill cycle)
+
+The underlying engines stay separate. The unified layer is a thin
+read-side presentation.

@@ -1,5 +1,37 @@
 ## Session 26 CLOSED (2026-10-05) - Security sweep + cautious cleanup
 
+## Session 30 CLOSED (2026-10-06) - Unified candidate profile (Phase 1)
+
+First step of the unification arc.
+
+**Commits:**
+- 2040caf feat(candidate): unified candidate profile endpoint
+- 8a4025d feat(candidate): unified activity panel in Career Center
+
+**Files:**
+- candidate_profile_engine.py (new, ~290 lines)
+- main.py (+54 lines: 1 import + 1 route)
+- templates/career-v2.html (+170 lines: panel HTML + JS)
+
+**Sections delivered (10):**
+identity, profile, assessments, certificates, applications,
+training, career_engine, integrity, credits, doketsrb
+
+**Session 31 candidates:**
+- A (recommended): /api/jobs/unified — merge job-board + staffing + micro-projects
+  into one feed, new /career-center/jobs page
+- B: Unified /candidate/signup entry point (deprecate /developer-signup)
+- C: Close the Assess -> Upskill loop (assessment result -> course enrollment)
+- D: Roll the unified panel to other pages (/my-results, /profile)
+
+**Longer-term arc (from the unification discussion):**
+- 31: unified jobs feed (read)
+- 32: unified candidate signup (write)
+- 33: assessment-to-course loop
+
+**Reminder:** Render Postgres password rotation still pending (since Session 19).
+
+
 ## Session 29 CLOSED (2026-10-06) - Career Assessment Phase 2b COMPLETE
 
 SQL format shipped. Phase 2b is done — all 10 formats live.
