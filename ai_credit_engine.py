@@ -85,6 +85,7 @@ class AICreditEngine:
         "fyp_documentation": 30,
     "fyp_expand_chapter": 10,
         "custom_course_generation": 50,  # Session 18: private custom course per user
+        "ai_course_full_unlock": 150,  # Session 36: unlock weeks 3+ of an AI-designed course
         "fyp_viva": 20,
         "marketing_job_ad": 10,
         "indian_language_assessment": 10,

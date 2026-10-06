@@ -845,7 +845,7 @@ function renderLearningPath(el, j) {
     var candidates = j.custom_course_candidates || [];
     if (candidates.length) {
         html += '<h5 class="as-h6 mt-3 mb-2">Custom Courses for Your Gaps</h5>';
-        html += '<p class="text-muted small mb-2">These topics do not match an existing Charvak course. Generate a personalized course for any of them. 50 credits each, then enroll free.</p>';
+        html += '<p class="text-muted small mb-2">These topics do not match an existing Charvak course. Design a personalized course for any of them.<br><strong>50 credits to design.</strong> First 2 weeks are <strong>free to consume</strong>. <strong>150 credits</strong> unlocks every remaining week, the certificate, and AI tutor access.</p>';
         for (var cc = 0; cc < candidates.length; cc++) {
             var cand = candidates[cc];
             html += '<div class="card mb-2"><div class="card-body py-2 px-3">';
@@ -928,13 +928,13 @@ async function generateCustomCourse(topic, level, roleHint, candStatus) {
         if (r.status === 401) { window.location.href = '/login?next=/ai-assessment'; return; }
         if (r.status === 402) {
             if (resultSlot) resultSlot.innerHTML = '<div class="alert alert-warning py-2 px-3 mb-0">Not enough credits (50 needed). <a href="/ai-credits-pricing">Top up</a>.</div>';
-            if (btn) { btn.disabled = false; btn.textContent = 'Generate - 50 cr'; }
+            if (btn) { btn.disabled = false; btn.textContent = 'Design this course - 50 cr'; }
             return;
         }
         var j = await r.json();
         if (j.status !== 'success') {
             if (resultSlot) resultSlot.innerHTML = '<div class="alert alert-danger py-2 px-3 mb-0">' + _esc(j.message || 'Could not generate course') + '</div>';
-            if (btn) { btn.disabled = false; btn.textContent = 'Generate - 50 cr'; }
+            if (btn) { btn.disabled = false; btn.textContent = 'Design this course - 50 cr'; }
             return;
         }
 
@@ -950,13 +950,19 @@ async function generateCustomCourse(topic, level, roleHint, candStatus) {
         readyHtml += '<div class="small mt-1">' + _esc(creditLine) + '</div>';
         readyHtml += '<a class="btn btn-sm btn-success mt-2" href="' + courseHref + '">Review course &rarr;</a> ';
         readyHtml += '<a class="btn btn-sm btn-outline-success mt-2" href="/my-courses">My Courses</a>';
+        readyHtml += '<div class="small mt-3 pt-3 border-top">';
+        readyHtml += '<strong>What comes next:</strong><ul class="mb-0 mt-1 ps-3">';
+        readyHtml += '<li><strong>First 2 weeks are free</strong> — start learning immediately</li>';
+        readyHtml += '<li><strong>150 credits</strong> unlocks every remaining week, the verified certificate, and AI tutor access</li>';
+        readyHtml += '</ul>';
+        readyHtml += '</div>';
         readyHtml += '</div>';
 
         if (resultSlot) resultSlot.innerHTML = readyHtml;
         if (btn) btn.style.display = "none";
     } catch (e) {
         if (resultSlot) resultSlot.innerHTML = '<div class="alert alert-danger py-2 px-3 mb-0">Network error: ' + _esc(e.message) + '</div>';
-        if (btn) { btn.disabled = false; btn.textContent = 'Generate - 50 cr'; }
+        if (btn) { btn.disabled = false; btn.textContent = 'Design this course - 50 cr'; }
     }
 }
 

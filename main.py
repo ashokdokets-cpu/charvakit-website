@@ -7881,6 +7881,76 @@ async def api_generate_custom_course(request: Request):
     result["credits_charged"] = 50
     return result
 
+
+
+# ========================================================================
+# Session 36 — full-course unlock (150 credits)
+# ========================================================================
+# Custom AI-designed courses are free to design (50 cr) and free to preview
+# (weeks 1-2). Weeks 3+ require the 150-credit full-course unlock, which also
+# unlocks the certificate and AI tutor access.
+#
+# Idempotent: a second call for an already-unlocked enrollment is a no-op
+# with no credit charge.
+# ========================================================================
+
+@app.post("/api/ai-course/unlock-full")
+@limiter.limit("20/minute")
+async def api_unlock_full(request: Request):
+    """Charge 150 credits and mark an enrollment as fully unlocked."""
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "Invalid JSON"})
+
+    email = (data.get("email") or "").strip().lower()
+    enrollment_id = (data.get("enrollment_id") or "").strip()
+
+    if not email:
+        return JSONResponse(status_code=401, content={
+            "status": "error", "message": "Login required.", "login_url": "/login",
+        })
+    if not enrollment_id:
+        return JSONResponse(status_code=400, content={
+            "status": "error", "message": "enrollment_id required",
+        })
+
+    try:
+        require_auth_for_email(request, email)
+    except HTTPException:
+        raise
+
+    from ai_courses import ai_courses
+
+    # Idempotency: if already unlocked, do NOT charge again
+    current = ai_courses.check_unlock_status(enrollment_id, email)
+    if current.get("status") != "success":
+        return JSONResponse(status_code=404, content=current)
+    if not current.get("owns_it"):
+        return JSONResponse(status_code=403, content={
+            "status": "error", "message": "Not your enrollment",
+        })
+    if current.get("already_unlocked"):
+        return {
+            "status": "success",
+            "already_unlocked": True,
+            "credits_charged": 0,
+            "enrollment_id": enrollment_id,
+        }
+
+    # Charge credits
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "ai_course_full_unlock")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+
+    # Flip the flag
+    result = ai_courses.unlock_full_course(enrollment_id, email)
+    if result.get("status") != "success":
+        return JSONResponse(status_code=500, content=result)
+
+    result["credits_charged"] = 150
+    return result
 @app.get("/ai-assessment", response_class=HTMLResponse)
 async def ai_assessment(request: Request):
     return template_response("ai-assessment.html", request, "AI Career Assessment - Charvak IT Consulting")
@@ -10971,6 +11041,11 @@ async def enroll_ai_course(request: Request):
 
 @app.get("/api/ai-course/content/{enrollment_id}/{week_num}")
 async def get_weekly_content(enrollment_id: str, week_num: int):
+    """Session 36: gated. Same paywall as /lesson/."""
+    from ai_courses import ai_courses
+    access = ai_courses.check_course_access(enrollment_id, week_num)
+    if access.get("status") == "success" and access.get("allowed") is False:
+        return {"status": "locked", **access}
     return ai_courses.get_weekly_content(enrollment_id, week_num)
 
 @app.post("/api/ai-course/project-help")
@@ -11481,6 +11556,14 @@ async def start_course_chat(request: Request):
 
 @app.get("/api/ai-course/lesson/{enrollment_id}/{week_num}")
 async def get_course_lesson(enrollment_id: str, week_num: int):
+    """Session 36: gated. Weeks 3+ of custom courses require the full unlock."""
+    from ai_courses import ai_courses
+    # Defense-in-depth: enforce the paywall on the content endpoint, not
+    # only on the access endpoint. A user with DevTools bypassing the
+    # frontend fetch pattern still gets blocked.
+    access = ai_courses.check_course_access(enrollment_id, week_num)
+    if access.get("status") == "success" and access.get("allowed") is False:
+        return {"status": "locked", **access}
     return ai_courses.get_course_lesson(enrollment_id, week_num)
 
 

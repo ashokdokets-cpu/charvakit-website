@@ -66,6 +66,29 @@
                                 <p class="small text-muted mt-3 mb-0">You keep full access to weeks you have already unlocked.</p>
                             </div>
                         </div>
+<div id="unlockCard" class="card border-0" style="display:none;">
+    <div class="card-body text-center p-5">
+        <div style="font-size:48px;">🔓</div>
+        <h4 class="mt-3 mb-2" id="unlockTitle">Unlock the full course</h4>
+        <p class="text-muted mb-4" id="unlockMessage"></p>
+        <div class="alert alert-info py-2 mb-4" style="display:inline-block; text-align:left;">
+            <div><strong>150 credits</strong> unlocks:</div>
+            <ul class="mb-0 small">
+                <li>Every remaining week</li>
+                <li>Verified certificate on completion</li>
+                <li>AI tutor access for the course</li>
+            </ul>
+        </div>
+        <div id="unlockMsg" class="alert" style="display:none; max-width:500px; margin:0 auto 16px;"></div>
+        <button class="btn btn-success btn-lg" id="unlockBtn" onclick="unlockFullCourse()">
+            Unlock for 150 credits
+        </button>
+        <p class="small text-muted mt-3 mb-0">
+            Weeks 1 and 2 remain free.
+            <a href="/credit-dashboard">View your credits</a>
+        </p>
+    </div>
+</div>
 
                         <div id="lessonContent" style="display:none;">
                             <h5 class="mt-4 mb-2">📖 Explanation</h5>
@@ -354,6 +377,22 @@ async function loadWeek(weekNum) {
 function showPaywall(offer) {
     document.getElementById('lessonLoading').style.display = 'none';
     document.getElementById('lessonContent').style.display = 'none';
+
+    // Session 36: full-course credit unlock for custom AI courses
+    if (offer.unlock_type === 'full_course') {
+        document.getElementById('paywallCard').style.display = 'none';
+        document.getElementById('unlockCard').style.display = 'block';
+        document.getElementById('unlockTitle').textContent = 'Unlock the full course';
+        document.getElementById('unlockMessage').textContent = offer.message || '';
+        document.getElementById('unlockMsg').style.display = 'none';
+        var ub = document.getElementById('unlockBtn');
+        if (ub) { ub.disabled = false; ub.textContent = 'Unlock for 150 credits'; }
+        window._currentOffer = offer;
+        return;
+    }
+
+    // EMI path (unchanged)
+    document.getElementById('unlockCard').style.display = 'none';
     const card = document.getElementById('paywallCard');
     card.style.display = 'block';
 
@@ -458,6 +497,75 @@ async function payForUnlock() {
         btn.textContent = 'Pay Now';
     }
 }
+
+async function unlockFullCourse() {
+    const offer = window._currentOffer;
+    const msg = document.getElementById('unlockMsg');
+    const btn = document.getElementById('unlockBtn');
+    if (!offer) { return; }
+
+    // Session 36: confirmation before charging 150 credits
+    if (!window.confirm('This will deduct 150 credits to unlock the full course.\n\nYou will get: every remaining week, the verified certificate, and AI tutor access.\n\nContinue?')) {
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Unlocking...';
+    msg.style.display = 'none';
+
+    try {
+        const r = await fetch('/api/ai-course/unlock-full', {
+            method: 'POST',
+            headers: _authHeaders(),
+            body: JSON.stringify({
+                email: enrollment.email,
+                enrollment_id: enrollmentId
+            })
+        });
+
+        if (r.status === 401) {
+            window.location.href = '/login?next=/my-course/' + enrollmentId;
+            return;
+        }
+        if (r.status === 403) {
+            msg.className = 'alert alert-danger';
+            msg.textContent = 'This is not your enrollment.';
+            msg.style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = 'Unlock for 150 credits';
+            return;
+        }
+        if (r.status === 402) {
+            msg.className = 'alert alert-warning';
+            msg.innerHTML = 'Not enough credits (150 needed). <a href="/ai-credits-pricing">Top up your credits</a>.';
+            msg.style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = 'Unlock for 150 credits';
+            return;
+        }
+
+        const j = await r.json();
+        if (j.status !== 'success') {
+            msg.className = 'alert alert-danger';
+            msg.textContent = j.message || 'Unlock failed.';
+            msg.style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = 'Unlock for 150 credits';
+            return;
+        }
+
+        msg.className = 'alert alert-success';
+        msg.textContent = j.already_unlocked ? 'Already unlocked. Reloading...' : 'Unlocked! Reloading...';
+        msg.style.display = 'block';
+        setTimeout(() => window.location.reload(), 800);
+    } catch (e) {
+        msg.className = 'alert alert-danger';
+        msg.textContent = 'Network error: ' + e.message;
+        msg.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Unlock for 150 credits';
+    }
+}
 function renderLesson(lesson) {
     document.getElementById('lessonLoading').style.display = 'none';
     document.getElementById('lessonContent').style.display = 'block';
@@ -503,7 +611,32 @@ async function completeWeek() {
             if (lesson.content) {
                 renderLesson(lesson);
             }
-            if (d.course_completed) alert('🎉 Course complete! You can now get your certificate.');
+            // Session 36: certificate issuance is gated behind paid_unlock for custom courses
+            if (d.certificate_locked) {
+                // Custom course, unlock required for the certificate.
+                // Route the user to the unlock card (same card used for week 3+).
+                document.getElementById('paywallCard').style.display = 'none';
+                document.getElementById('lessonLoading').style.display = 'none';
+                document.getElementById('lessonContent').style.display = 'none';
+                var _uc = document.getElementById('unlockCard');
+                if (_uc) {
+                    _uc.style.display = 'block';
+                    var _ut = document.getElementById('unlockTitle');
+                    if (_ut) _ut.textContent = '🎉 Week complete! Unlock to earn your certificate';
+                    var _um = document.getElementById('unlockMessage');
+                    if (_um) _um.textContent = d.message || 'Unlock the full course to earn your certificate.';
+                    var _ub = document.getElementById('unlockBtn');
+                    if (_ub) { _ub.disabled = false; _ub.textContent = 'Unlock for 150 credits'; }
+                    window._currentOffer = {
+                        unlock_type: 'full_course',
+                        unlock_amount_credits: 150,
+                        message: d.message || ''
+                    };
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            } else if (d.course_completed) {
+                alert('🎉 Course complete! You can now get your certificate.');
+            }
         }
          
     } catch (e) { alert('Error: ' + e.message); }
