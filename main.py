@@ -79,6 +79,7 @@ from enterprise_engine import enterprise_engine
 from marketing_ai_engine import marketing_ai_engine
 from indian_language_ai import indian_language_ai
 from career_assessment_engine import career_assessment_engine
+from candidate_profile_engine import candidate_profile_engine
 from integrity_engine import integrity_engine
 from lms_engine import lms_engine
 from career_v2_engine import career_v2_engine
@@ -6985,6 +6986,59 @@ async def api_admin_assessment_integrity(request: Request, assessment_id: str):
         return handle_error(e, "Failed to load integrity data")
 
 
+
+# ========================================================================
+# Session 30 — Unified candidate profile (read-only aggregation)
+# ========================================================================
+# Presents the candidate's activity across all subsystems in one call.
+# Used by /career-center to render a "Your full activity" panel.
+# Auth: caller must own the email. Rate-limited at 60/min.
+# ========================================================================
+
+@app.get("/api/candidate/{email}/unified")
+@limiter.limit("60/minute")
+async def api_candidate_unified(request: Request, email: str):
+    """
+    Get the caller's full activity across all Charvak subsystems:
+    identity, profile, assessments, certificates, applications,
+    training, career engine, integrity signals, credits, doketsrb.
+
+    Optional query param: ?include=assessments,certificates,integrity
+    """
+    try:
+        email = (email or "").strip().lower()
+        if not email:
+            return JSONResponse(
+                status_code=400,
+                content={"status": "error", "message": "email required"},
+            )
+        require_auth_for_email(request, email)
+
+        # Parse ?include= filter (comma-separated)
+        include_raw = (request.query_params.get("include") or "").strip()
+        include = None
+        if include_raw:
+            include = [s.strip() for s in include_raw.split(",") if s.strip()]
+            if include:
+                from candidate_profile_engine import ALL_SECTIONS
+                invalid = [s for s in include if s not in ALL_SECTIONS]
+                if invalid:
+                    return JSONResponse(
+                        status_code=400,
+                        content={
+                            "status": "error",
+                            "message": f"Unknown sections: {invalid}",
+                            "valid_sections": ALL_SECTIONS,
+                        },
+                    )
+
+        from candidate_profile_engine import candidate_profile_engine
+        return candidate_profile_engine.get_unified_profile(email, include=include)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "Failed to load unified profile")
 # ======================== end Session 27 block ==========================
 
 
