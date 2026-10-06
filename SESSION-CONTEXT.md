@@ -1,6 +1,76 @@
 # Session Context - Charvak
 
 
+## Session 36 CLOSED (2026-10-07) - Two-tier AI course unlock
+
+The AI-designed course is now a real freemium product. Design is 50
+credits, Weeks 1-2 are free to consume, and 150 credits unlock the
+full course plus the certificate and AI tutor.
+
+Total committed: 200 credits. Total curious: 50 credits.
+
+**Commit:** 3ea3320 feat(courses): Session 36 - two-tier AI course unlock
+
+**What shipped:**
+
+Backend (ai_courses_payments.py):
+- check_access now gates Weeks 3+ of custom courses on paid_unlock.
+- The custom-course check runs BEFORE the installment lookup so stray
+  installment rows from the enrollment path don't fire the EMI branch.
+- paid_unlock=TRUE custom courses bypass the check (full access).
+
+Backend (ai_courses.py):
+- charvak_enrollments.paid_unlock BOOLEAN DEFAULT FALSE (self-healing DDL).
+- Self-limiting grandfather: NULL rows flip to TRUE once.
+- New: check_unlock_status(enrollment_id, email)
+- New: unlock_full_course(enrollment_id, email)
+- complete_course gates certificate issuance on paid_unlock.
+- complete_week gates auto-issue and returns certificate_locked.
+
+Backend (main.py):
+- New: POST /api/ai-course/unlock-full (charges 150 credits, idempotent).
+- Defense-in-depth: /lesson/ and /content/ also call check_course_access.
+
+Backend (ai_credit_engine.py):
+- New credit key: ai_course_full_unlock = 150.
+
+Frontend (my-course.html):
+- New #unlockCard for credit-based unlock (distinct from EMI card).
+- showPaywall() branches on unlock_type === 'full_course'.
+- unlockFullCourse() with confirmation dialog + 401/402/403 handling.
+- completeWeek() checks certificate_locked and routes to unlock card.
+
+Frontend (course-detail.html):
+- Custom-course panel shows 'Start free (Weeks 1-2)' + 'Unlock for 150 credits'.
+- unlockFullFromDetail() ensures enrollment then charges.
+
+Frontend (ai-assessment.html):
+- Custom-course intro copy explains the two-tier model.
+- Design confirmation card adds a 'What comes next' bullet list.
+
+**Verified E2E on prod:**
+- 150 credits deducted (logged in usage history).
+- Custom course weeks 1-2 allowed, weeks 3-6 blocked.
+- POST /api/ai-course/unlock-full flips paid_unlock and returns success.
+- Certificate gate returns 'locked' for unpaid custom courses.
+- After unlock, certificate issues and public verify URL works
+  (CERT-F3C47CEFE7A7, CERT-BE0F380DC299 both verified).
+- Catalog courses unaffected at every layer.
+- All 5 existing test enrollments grandfathered (paid_unlock = TRUE).
+
+**Also committed in this session:**
+- Session 35's DEV_SKIP_EMAIL_VERIFICATION flag (email_verification.py).
+
+**Session 37 candidates:**
+- A (recommended): Admin UI for integrity events (Session 27 data) -
+  turn the trust signal into a visible employer-facing artifact.
+- B: Roll unified panel to /my-results and /profile (Session 30 pattern).
+- C: Certificate round 2 (QR, watermark, multi-language).
+- D: AuditBot Continuous (recurring revenue).
+
+**Reminder:** Render Postgres password rotation still pending.
+
+
 ## Session 34 CLOSED (2026-10-07) - AI course designer
 
 Closes the last dead-end in the Local-to-Global journey. When a

@@ -1406,3 +1406,78 @@ enrolls in it; if not, the AI designs one.
 
     Assess -> Prove -> Upskill -> Match -> Place
     [all five stages connected, zero dead ends]
+
+## Two-Tier AI Course Unlock (Session 36, v3.5)
+
+Restructures AI-designed courses into a freemium product. Design is
+50 credits; Weeks 1-2 are free to consume; 150 credits unlock the
+full course, the verified certificate, and AI tutor access.
+
+### The pricing model
+
+    Design     50 cr   AI generates the curriculum
+    Preview    0 cr    Weeks 1-2 free to consume
+    Unlock     150 cr  Weeks 3+ + certificate + AI tutor
+
+    Total committed: 200 cr
+    Total curious:   50 cr
+
+### The gate (three layers)
+
+Custom courses (is_custom = TRUE) gate on `charvak_enrollments.paid_unlock`:
+
+1. Access   - check_course_access returns allowed=False for weeks 3+
+2. Content  - /lesson/ and /content/ both call check_course_access
+3. Certificate - complete_course refuses to issue unless paid_unlock=TRUE
+
+The custom-course check runs BEFORE the installment lookup in
+check_course_access because custom courses may have stray installment
+rows from the enrollment path, and those should not be treated as real EMIs.
+
+### The unlock flow
+
+    User clicks Week 3
+      -> check_course_access returns {allowed: false, unlock_type: 'full_course'}
+      -> frontend showPaywall routes to #unlockCard
+      -> user confirms (window.confirm - 150 credits is meaningful)
+      -> POST /api/ai-course/unlock-full
+      -> require_credits_from_data(data, 'ai_course_full_unlock')
+      -> ai_courses.unlock_full_course() flips paid_unlock to TRUE
+      -> page reloads, all weeks unlocked
+
+Idempotent: a second unlock call returns already_unlocked=True without
+charging again.
+
+### Grandfather
+
+New column: charvak_enrollments.paid_unlock BOOLEAN DEFAULT FALSE
+
+On first run, all NULL rows flip to TRUE (one-time, self-limiting).
+This ensures existing users keep full access. Subsequent runs match
+zero rows.
+
+### Credit key
+
+ai_course_full_unlock: 150
+
+### Files touched
+
+- ai_courses.py         (unlock_full_course, check_unlock_status, gates)
+- ai_courses_payments.py (check_access gate)
+- ai_credit_engine.py   (credit key)
+- main.py               (unlock-full route, lesson + content gates)
+- templates/my-course.html       (#unlockCard + unlockFullCourse + completeWeek)
+- templates/course-detail.html   (Start free + Unlock buttons)
+- templates/ai-assessment.html   (two-tier messaging)
+
+### Market alignment
+
+Matches freemium course-builder pricing:
+- Criterium: free tier -> €39/mo
+- Oboe: free tier -> $12/mo
+- Honen: subscription
+- Chat2course: free tier -> ~$10/mo
+
+Charvak's version is assessment-driven (from the skill gap) rather than
+generic. That's the differentiated piece: the AI designs for YOUR gap,
+not a generic topic.
