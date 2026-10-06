@@ -1285,3 +1285,63 @@ Writes via /api/candidates/upsert with signup_source="profile-edit".
 - Self-healing schema (signup_source column added on first use).
 - Read/write symmetry: get_me returns every field that can be written.
 - Legacy endpoints delegate - they never bypass the unified engine.
+
+## Assess -> Upskill Loop (Session 33, v3.5)
+
+Closes the loop from Career Assessment result to course enrollment.
+Fourth and final step of the career-center unification arc.
+
+### What it does
+
+When a candidate completes a Career Assessment and requests their
+personalized learning path, each recommended course card now shows:
+  - The course name
+  - A "Fills: [weak topic]" badge
+  - The AI-generated reason
+  - A "Start course ->" button
+
+Clicking the button deep-links to /course/{canonical_name}, where the
+existing enrollment flow (tier selection, EMI schedule, payment) runs.
+
+### The fills_topic mapping
+
+The AI prompt for _ai_generate_learning_path now requests a
+`fills_topic` field on each `charvak_courses` entry:
+
+    {"course_id": "...", "course_name": "...",
+     "fills_topic": "<weak topic verbatim from WEAK/MIXED list>",
+     "reason": "why this course addresses that topic"}
+
+The rule: fills_topic MUST be copied verbatim from the weak topic
+list, so the badge always maps back to an actual gap in the skill
+gap analysis.
+
+A defensive normalize in the sanitizer ensures fills_topic always
+exists (defaults to '') so the frontend never breaks on old cached
+learning paths.
+
+### Caching
+
+learning_path_json is lazy-generated and cached in
+charvak_career_assessments. Paths generated before Session 33 have
+no fills_topic; new paths do. No migration needed - the field is
+optional and the renderer handles both cases.
+
+### Design principles
+
+- Read-only on the assessment side; write-only on the enrollment side.
+- The AI's job: map each course to the specific weak topic it fixes.
+- The candidate's job: click Start course.
+- One click from "here's your gap" to "here's the fix."
+
+### The full Local-to-Global journey (arc complete)
+
+    Assess -> Prove -> Upskill -> Match -> Place
+    [Career   [Readiness [AI     [Jobs    [Career
+     Assess]   Cert]     Courses] Feed]    Center]
+
+Unification arc sessions:
+- 30: unified candidate profile (read view)
+- 31: unified jobs feed (read view)
+- 32: unified candidate signup (write path)
+- 33: Assess -> Upskill loop (this session)

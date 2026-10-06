@@ -1,6 +1,58 @@
 # Session Context - Charvak
 
 
+## Session 33 CLOSED (2026-10-07) - Assess -> Upskill loop
+
+Fourth and final step of the unification arc. Closes the loop from
+assessment result to course enrollment.
+
+**Commit:** <hash from push>
+
+**What shipped:**
+
+Engine (career_assessment_engine.py):
+- _ai_generate_learning_path prompt now requests 'fills_topic' per
+  recommended course - the weak topic that course addresses
+- Rule added: fills_topic MUST be copied verbatim from weak topics
+- Defensive normalize: fills_topic defaults to '' if AI omits
+
+Frontend (ai-assessment.html):
+- renderLearningPath() course card now shows:
+    Course name
+    [Fills: <weak topic>] badge
+    Reason text
+    [Start course ->] button (deep-links to /course/{name})
+
+**Verified:**
+- New learning paths (2026-10-07+) populate fills_topic correctly
+- Old cached paths (2026-10-06) keep fills_topic=None (expected)
+- Browser renders badge + CTA
+- Clicking Start course -> lands on working course detail page
+- Price API + EMI schedule render (3 installments, ₹1,333 each)
+
+**Local-only fix (not a code change):**
+- charvak_course_levels migrations were missing from local dev DB
+- Applied: 20260916_course_levels.sql + seed + 20260920_desc_update
+- Result: 75 rows (25 courses x 3 levels), all tiers priced
+- Prod was unaffected - the route has always worked
+
+**Unification arc: 4 of 4 COMPLETE**
+- 30: unified candidate profile (read) - SHIPPED
+- 31: unified jobs feed (read) - SHIPPED
+- 32: unified candidate signup (write) - SHIPPED
+- 33: Assess -> Upskill loop - SHIPPED
+
+**Session 34 candidates:**
+- A (recommended): AI course designer - auto-generate courses for
+  topics with no catalog match. Reuses Session 18's custom-course
+  generator. Zero dead ends.
+- B: Render Postgres password rotation (still pending)
+- C: Admin UI for integrity events (Session 27 output)
+- D: Certificate round 2 (QR, watermark, multi-language)
+
+**Reminder:** Render Postgres password rotation still pending.
+
+
 ## Session 32 CLOSED (2026-10-07) - Unified candidate signup (Phase 3)
 
 Third step of the unification arc. One signup entry point, one write

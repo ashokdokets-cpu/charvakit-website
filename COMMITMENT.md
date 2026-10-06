@@ -1,5 +1,30 @@
 ## Session 26 CLOSED (2026-10-05) - Security sweep + cautious cleanup
 
+## Session 33 CLOSED (2026-10-07) - Assess -> Upskill loop
+
+Fourth step of the unification arc. Arc complete.
+
+**Commit:** <hash>
+
+**Files:**
+- career_assessment_engine.py (prompt + rule + normalize)
+- templates/ai-assessment.html (renderLearningPath course card)
+
+**Verified:**
+- fills_topic populated on all new paths
+- Browser renders badge + CTA
+- Start course -> course detail works
+
+**Local env fix:**
+- Applied charvak_course_levels migrations to local DB (75 rows)
+
+**Session 34 candidates:**
+- A (recommended): AI course designer (Session 18 reuse)
+- B: Render password rotation + docs polish
+- C: Admin UI for integrity events
+- D: Certificate round 2
+
+
 ## Session 32 CLOSED (2026-10-07) - Unified candidate signup (Phase 3)
 
 Third step of the unification arc. Write-side unification complete.
