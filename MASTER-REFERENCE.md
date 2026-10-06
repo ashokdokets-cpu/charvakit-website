@@ -202,7 +202,7 @@ products, candidate, email, messaging, events, brand, team,
 ats, university, enterprise, invoice, tools,
 marketing_ai, indian_language_ai, lms, career_v2
 
-Data-backed: `candidate_profile_engine` (Session 30, unified view), `judge0_client` (Session 28, code execution), `integrity_engine` (Session 27), `ai_credit_engine`, `email_verification`, `ai_courses`, `ai_courses_payments`, `complete_mock_drive`, `results_system`
+Data-backed: `jobs_unified_engine` (Session 31, unified jobs feed), `candidate_profile_engine` (Session 30, unified view), `judge0_client` (Session 28, code execution), `integrity_engine` (Session 27), `ai_credit_engine`, `email_verification`, `ai_courses`, `ai_courses_payments`, `complete_mock_drive`, `results_system`
 
 ---
 
@@ -323,6 +323,11 @@ Data-backed: `candidate_profile_engine` (Session 30, unified view), `judge0_clie
 - `POST /api/mock/complete-full`
 
 
+### Jobs Unified (Session 31)
+
+- `GET /api/jobs/unified` — public feed across job-board + staffing + gigs.
+  Supports `?source=`, `?q=`, `?limit=` filters.
+- `GET /career-center/jobs` — Career Center jobs page (HTML)
 ### Candidate Profile (Session 30)
 
 - `GET /api/candidate/{email}/unified` — self-view of the candidate's
