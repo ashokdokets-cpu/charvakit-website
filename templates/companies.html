@@ -60,6 +60,7 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="/static/js/integrity-capture.js"></script>
 <script>
     var userAnswers = {};
     var currentSessionId = null;
@@ -260,6 +261,28 @@
             resultsBox.innerHTML = '<div class="alert alert-danger mt-3">Error: ' + esc(e.message) + '</div>';
             if (btn) { btn.disabled = false; btn.textContent = "Submit & Get Results"; }
         }
+    }
+
+    // ========================================================================
+    // Session 39 - Integrity capture for Mock Drives
+    // ========================================================================
+    // Uses the shared helper in static/js/integrity-capture.js.
+    // Session ID comes from currentSessionId (window-scoped var declared above).
+    // ========================================================================
+
+    function _mockInitIntegrity() {
+        if (typeof window.CharvakIntegrity === 'undefined') return;
+        window.CharvakIntegrity.init({
+            getAssessmentId: function () {
+                return window.currentSessionId || null;
+            }
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', _mockInitIntegrity);
+    } else {
+        _mockInitIntegrity();
     }
 </script>
 {% endblock %}
