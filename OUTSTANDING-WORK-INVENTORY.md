@@ -386,3 +386,22 @@ ai-bridge, ai-generate-stack, ai-internship, ai_credits_pricing, application-das
 
 **Estimated:** 2-3 hr.
 
+
+
+## Session 38 closure (2026-10-07)
+
+Moved from open to resolved:
+- Admin UI for integrity events (Session 27 data) — SHIPPED in Session 38
+  at commit 33cb2f6
+- Public Trust Score badge on readiness certificates — SHIPPED as part of
+  the same session
+
+New follow-ups flagged by Session 38:
+- Roll Layer A + Trust Score badge to Versant, Mock Drives, CBAT, IELTS
+  (Session 39 candidate A)
+- Optional: integrity summary section in the submission-package PDF
+  (deferred from Session 38-4)
+- Optional: separate /api/admin/integrity-events?email= filter for
+  cross-assessment search (currently client-side only)
+
+Reminder: Render Postgres password rotation still pending (Session 19).

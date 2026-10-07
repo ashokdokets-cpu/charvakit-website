@@ -1,5 +1,68 @@
 # Session Context - Charvak
 
+## Session 38 CLOSED (2026-10-07) - Integrity admin UI + public Trust Score badge
+
+Session 27 recorded integrity signals; Session 38 turns them into
+visible artifacts. Employers can now see a candidate's trust signal
+on the certificate they receive, and admins can review the raw events.
+
+**Commit:** 33cb2f6 feat(integrity): Session 38 - admin UI + public Trust Score badge
+
+**What shipped:**
+
+Admin UI (new):
+- `/admin/integrity-events` — list page. Summary strip, risk filters,
+  email/ID search. Sorted by risk (elevated first), then by event count.
+- `/admin/integrity-events/{assessment_id}` — detail page. Assessment
+  metadata card, risk badge, per-type counts, chronological event
+  timeline with per-type filter pills.
+
+Backend (main.py):
+- `GET /api/admin/integrity-events` — new list endpoint (admin-gated).
+  Aggregates events per assessment, joins to `charvak_career_assessments`
+  for role/industry/level/format, computes risk level per row.
+- `GET /api/admin/career-assessment/{aid}/integrity` — enriched with
+  parent assessment metadata (email, role, industry, level, format,
+  size, score, passed, status, started_at, completed_at, num_questions).
+- `GET /api/readiness/{certificate_id}/integrity` — NEW public endpoint.
+  Looks up the source assessment via `charvak_readiness_certificates`,
+  returns the public-safe summary. No raw events, no PII.
+
+Engine (integrity_engine.py):
+- `get_public_summary(assessment_id)` — public-safe wrapper around
+  `get_summary()`. Returns {status, risk_level, verified, total_events,
+  message}. Strips per-type counts, timestamps, and metadata.
+
+Frontend (templates/readiness.html):
+- Trust Score badge renders below the verdict pill on every certificate.
+- Four states: clean (green shield), minor (blue info), moderate
+  (orange warning), elevated (red alert).
+- "What does this mean?" collapse explains the signals: what we
+  capture, what it means, what it doesn't mean.
+- Silent-fail: a dead backend never breaks the certificate.
+
+**Verified E2E:**
+- List page: 21 assessments, 7 elevated / 9 moderate / 5 minor / 0 clean
+  (before the elevated test)
+- Detail page for CAR-03ED7FFB32: 87 events (65 tab_switch, 14 focus_out,
+  8 paste), all rendering with correct metadata summaries
+- Public badge: clean state on RDC-7D1C13B5B5A4 (green shield), elevated
+  state after swapping to CAR-03ED7FFB32 (red alert), reverted after test
+- Both risk badges render the correct icon, color, and message
+
+**Session 39 candidates:**
+- A (recommended): Roll Layer A + Trust Score badge to Versant, Mock
+  Drives, CBAT, IELTS. Engine + route + badge pattern all exist.
+- B: Certificate round 2 (QR, watermark, multi-language)
+- C: AuditBot Continuous (recurring revenue)
+- D: Personalized training views on /training-engine
+- E: Docs + backup polish
+
+**Reminder:** Render Postgres password rotation still pending (since
+Session 19).
+
+
+
 
 ## Session 37 CLOSED (2026-10-07) - Wire the Career Engine trio to real data
 

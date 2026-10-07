@@ -3896,3 +3896,38 @@ are separate products. With it, they're one pipeline.
 Could start with just #1 + #2 for a v1 sync status.
 
 **Verdict:** FLAGGED — Session 38+.
+
+
+## Session 38 CLOSED (2026-10-07) - Integrity admin UI + Trust Score badge
+
+**Flag resolved:** "A (recommended): Admin UI for integrity events
+(Session 27 data)" — carried since Session 36 close-out.
+
+**Commit:** 33cb2f6
+
+**Shipped:**
+- `/admin/integrity-events` (list) + `/admin/integrity-events/{aid}`
+  (detail) — full admin review UI for the Layer A signals captured in
+  Session 27
+- `/api/admin/integrity-events` — new list endpoint
+- `/api/readiness/{cert_id}/integrity` — new public endpoint
+- `integrity_engine.get_public_summary()` — public-safe wrapper
+- Trust Score badge on readiness certificates (4 states + explainer)
+
+**Files touched:**
+- integrity_engine.py (+~65 lines)
+- main.py (+~130 lines: 3 routes)
+- templates/readiness.html (+~90 lines: badge HTML + CSS + JS)
+- templates/admin-integrity-events.html (new, ~6 KB)
+- templates/admin-integrity-detail.html (new, ~13 KB)
+
+**Session 39 candidates:**
+- A (recommended): Roll Layer A + Trust Score badge to Versant,
+  Mock Drives, CBAT, IELTS
+- B: Certificate round 2 (QR, watermark, multi-language)
+- C: AuditBot Continuous (recurring revenue)
+- D: Personalized training views on /training-engine
+- E: Docs + backup polish
+
+**Reminder:** Render Postgres password rotation still pending (Session 19).
+
