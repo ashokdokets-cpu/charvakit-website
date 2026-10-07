@@ -7200,14 +7200,21 @@ async def api_admin_integrity_list(request: Request):
                 MAX(e.email) as email,
                 MAX(e.occurred_at) as last_event_at,
                 COUNT(*) as total_events,
-                a.role,
-                a.industry,
-                a.level,
-                a.format
+                COALESCE(a.role,     m.company_name, c.sub_test, '') as role,
+                COALESCE(a.industry, '') as industry,
+                COALESCE(a.level,    '') as level,
+                COALESCE(a.format,   CASE WHEN m.session_id IS NOT NULL THEN 'mock_drive'
+                                          WHEN c.session_id IS NOT NULL THEN 'cbat'
+                                          ELSE '' END) as format
             FROM charvak_assessment_integrity_events e
             LEFT JOIN charvak_career_assessments a
                 ON a.assessment_id = e.assessment_id
-            GROUP BY e.assessment_id, a.role, a.industry, a.level, a.format
+            LEFT JOIN charvak_mock_sessions m
+                ON m.session_id = e.assessment_id
+            LEFT JOIN charvak_cbat_sessions c
+                ON c.session_id = e.assessment_id
+            GROUP BY e.assessment_id, a.role, a.industry, a.level, a.format,
+                     m.company_name, m.session_id, c.sub_test, c.session_id
             ORDER BY MAX(e.occurred_at) DESC
         """)
         rows = cur.fetchall()
