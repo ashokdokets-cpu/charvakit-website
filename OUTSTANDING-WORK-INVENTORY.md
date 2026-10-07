@@ -449,3 +449,38 @@ New follow-ups flagged by Session 40a:
   from backup on failure.
 
 Reminder: Render Postgres password rotation still pending (Session 19).
+
+## Session 40b closure (2026-10-08)
+
+**The assessment trust pipeline roll-out is COMPLETE.** Started in
+Session 38 (Career Assessment), rolled through Mock + CBAT (Session
+39), Versant (Session 40a), and now IELTS (Session 40b).
+
+**Moved from open to resolved:**
+- IELTS persistence (was missing entirely)
+- IELTS integrity prefixes in `_integrity_lookup_owner`
+- Admin list + detail metadata for IELTS
+- Trust badge + capture on 4 IELTS templates
+- Partial-credit tracking for reading + listening
+- 4 missing IELTS tables (from any migration)
+- `last_used_at` column on 2 tables
+
+**New follow-ups flagged by Session 40b:**
+- Roll integrity to IELTS writing + speaking partial handling
+  (Session 40c candidate A)
+- Seed scripts should load `.env.local` for local dev, matching
+  the pattern in `DEV-SETUP.md`
+- `charvakFetch` helper belongs in `base.html` (still pending)
+- Versant `passed` boolean column (from Session 40a)
+
+**Trust pipeline coverage matrix:**
+
+| Assessment | Persistence | Capture | Badge | Admin | Partial |
+|---|---|---|---|---|---|
+| Career | ✅ | ✅ | ✅ | ✅ | n/a |
+| Mock | ✅ | ✅ | ✅ | ✅ | n/a |
+| CBAT | ✅ | ✅ | ✅ | ✅ | n/a |
+| Versant | ✅ | ✅ | ✅ | ✅ | ✅ |
+| IELTS | ✅ | ✅ | ✅ | ✅ | ✅ (reading/listening) |
+
+**Reminder:** Render Postgres password rotation still pending (Session 19).
