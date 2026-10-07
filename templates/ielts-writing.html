@@ -141,12 +141,14 @@
       <a href="/ielts" class="btn btn-outline-primary me-2">Back to IELTS Hub</a>
       <button class="btn btn-outline-secondary" onclick="resetPage()">New Essay</button>
     </div>
+    <div id="iwIntegritySlot"></div>
   </div>
 
   <div id="errorBox" class="alert alert-danger mt-3" style="display:none;"></div>
 
 </div>
 
+<script src="/static/js/integrity-capture.js"></script>
 <script>
 // =============================================================
 // X3 — IELTS Writing page logic
@@ -260,8 +262,8 @@ async function submitEssay() {
         email: IW.email,
         task: IW.task,
         essay: essay,
-        prompt: IW.promptText
-        session_id: IW.sessionId
+        prompt: IW.promptText,
+        session_id: IW.sessionId,
       })
     });
     var j = await r.json();
@@ -323,6 +325,15 @@ function renderScorecard(j) {
   document.getElementById('introCard').style.display = 'none';
   document.getElementById('scoreCard').style.display = 'block';
   window.scrollTo({top: 0, behavior: 'smooth'});
+    // Session 40b-6: render the Trust Score badge via the shared helper
+    try {
+        if (window.CharvakIntegrity && window.CharvakIntegrity.renderBadge) {
+            window.CharvakIntegrity.renderBadge({
+                slotId: 'iwIntegritySlot',
+                assessmentId: IW.sessionId
+            });
+        }
+    } catch (e) { /* silent */ }
 }
 
 function formatBand(b) {
@@ -351,6 +362,24 @@ function escapeHtml(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
   });
+}
+
+// ========================================================================
+// Session 40b-6 - Integrity capture for IELTS
+// ========================================================================
+function _iwInitIntegrity() {
+    if (typeof window.CharvakIntegrity === 'undefined') return;
+    window.CharvakIntegrity.init({
+        getAssessmentId: function () {
+            return (IW && IW.sessionId) || null;
+        }
+    });
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _iwInitIntegrity);
+} else {
+    _iwInitIntegrity();
 }
 </script>
 {% endblock %}

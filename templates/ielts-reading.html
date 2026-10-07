@@ -131,12 +131,14 @@
       <button class="btn btn-outline-primary me-2" onclick="resetPage()">New Passage</button>
       <a href="/ielts" class="btn btn-outline-secondary">Back to IELTS Hub</a>
     </div>
+    <div id="irIntegritySlot"></div>
   </div>
 
   <div id="errorBox" class="alert alert-danger mt-3" style="display:none;"></div>
 
 </div>
 
+<script src="/static/js/integrity-capture.js"></script>
 <script>
 var IR = {
   email: localStorage.getItem('userEmail') || '',
@@ -258,7 +260,7 @@ async function submitAnswers() {
       body: JSON.stringify({
         email: IR.email,
         passage_id: IR.passage.passage_id,
-        session_id: IR.sessionId
+        session_id: IR.sessionId,
         answers: arr
       })
     });
@@ -302,6 +304,15 @@ function renderScorecard(j) {
   document.getElementById('sessionCard').style.display = 'none';
   document.getElementById('scoreCard').style.display = 'block';
   window.scrollTo({top: 0, behavior: 'smooth'});
+    // Session 40b-6: render the Trust Score badge via the shared helper
+    try {
+        if (window.CharvakIntegrity && window.CharvakIntegrity.renderBadge) {
+            window.CharvakIntegrity.renderBadge({
+                slotId: 'irIntegritySlot',
+                assessmentId: IR.sessionId
+            });
+        }
+    } catch (e) { /* silent */ }
 }
 
 function resetPage() {
@@ -325,6 +336,24 @@ function escapeHtml(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
   });
+}
+
+// ========================================================================
+// Session 40b-6 - Integrity capture for IELTS
+// ========================================================================
+function _irInitIntegrity() {
+    if (typeof window.CharvakIntegrity === 'undefined') return;
+    window.CharvakIntegrity.init({
+        getAssessmentId: function () {
+            return (IR && IR.sessionId) || null;
+        }
+    });
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _irInitIntegrity);
+} else {
+    _irInitIntegrity();
 }
 </script>
 {% endblock %}

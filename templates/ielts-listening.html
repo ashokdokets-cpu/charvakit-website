@@ -143,12 +143,14 @@
       <button class="btn btn-outline-primary me-2" onclick="resetPage()">New Lecture</button>
       <a href="/ielts" class="btn btn-outline-secondary">Back to IELTS Hub</a>
     </div>
+    <div id="ilIntegritySlot"></div>
   </div>
 
   <div id="errorBox" class="alert alert-danger mt-3" style="display:none;"></div>
 
 </div>
 
+<script src="/static/js/integrity-capture.js"></script>
 <script>
 // =============================================================
 // X4e — IELTS Listening page logic
@@ -379,7 +381,7 @@ async function submitAnswers() {
       body: JSON.stringify({
         email: IL.email,
         section_id: IL.section.section_id,
-        session_id: IL.sessionId
+        session_id: IL.sessionId,
         answers: arr
       })
     });
@@ -427,6 +429,15 @@ function renderScorecard(j) {
   document.getElementById('sessionCard').style.display = 'none';
   document.getElementById('scoreCard').style.display = 'block';
   window.scrollTo({top: 0, behavior: 'smooth'});
+    // Session 40b-6: render the Trust Score badge via the shared helper
+    try {
+        if (window.CharvakIntegrity && window.CharvakIntegrity.renderBadge) {
+            window.CharvakIntegrity.renderBadge({
+                slotId: 'ilIntegritySlot',
+                assessmentId: IL.sessionId
+            });
+        }
+    } catch (e) { /* silent */ }
 }
 
 function resetPage() {
@@ -465,6 +476,24 @@ function escapeHtml(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
   });
+}
+
+// ========================================================================
+// Session 40b-6 - Integrity capture for IELTS
+// ========================================================================
+function _ilInitIntegrity() {
+    if (typeof window.CharvakIntegrity === 'undefined') return;
+    window.CharvakIntegrity.init({
+        getAssessmentId: function () {
+            return (IL && IL.sessionId) || null;
+        }
+    });
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _ilInitIntegrity);
+} else {
+    _ilInitIntegrity();
 }
 </script>
 {% endblock %}

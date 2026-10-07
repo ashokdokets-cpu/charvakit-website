@@ -84,12 +84,14 @@
         <a href="/ielts" class="btn btn-outline-secondary">Back to IELTS</a>
       </div>
     </div>
+    <div id="isIntegritySlot"></div>
   </div>
 
   <div id="errorBox" class="alert alert-danger mt-3" style="display:none"></div>
 
 </div>
 
+<script src="/static/js/integrity-capture.js"></script>
 <script>
 // =========================================================
 // N4.5 — IELTS Speaking page logic
@@ -319,6 +321,15 @@ async function finishSession() {
   } catch (e) {
     speakErr('Evaluation network error: ' + e.message);
   }
+    // Session 40b-6: render the Trust Score badge via the shared helper
+    try {
+        if (window.CharvakIntegrity && window.CharvakIntegrity.renderBadge) {
+            window.CharvakIntegrity.renderBadge({
+                slotId: 'isIntegritySlot',
+                assessmentId: SPEAKING_STATE.sessionId
+            });
+        }
+    } catch (e) { /* silent */ }
 }
 
 // ---------- Helpers ----------
@@ -338,6 +349,24 @@ function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   })[c]);
+}
+
+// ========================================================================
+// Session 40b-6 - Integrity capture for IELTS
+// ========================================================================
+function _isInitIntegrity() {
+    if (typeof window.CharvakIntegrity === 'undefined') return;
+    window.CharvakIntegrity.init({
+        getAssessmentId: function () {
+            return (SPEAKING_STATE && SPEAKING_STATE.sessionId) || null;
+        }
+    });
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _isInitIntegrity);
+} else {
+    _isInitIntegrity();
 }
 </script>
 {% endblock %}
