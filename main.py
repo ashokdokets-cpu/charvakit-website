@@ -11478,10 +11478,22 @@ async def ielts_writing_generate(request: Request):
         guard = require_credits_from_data(data, "ielts_writing_prompt")
         if guard.get("status") != "success":
             return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
-    return ielts_engine.generate_writing_prompt(
+    result = ielts_engine.generate_writing_prompt(
         task=int(data.get("task", 2)),
         topic=data.get("topic"),
     )
+
+    # Session 40b-2b: create a session for the authenticated user
+    if email and result.get("status") == "success":
+        _sess = ielts_engine.create_session(
+            email=email,
+            test_type="writing",
+            content_ref=result.get("prompt_id") or "",
+        )
+        if _sess.get("status") == "success":
+            result["session_id"] = _sess["session_id"]
+
+    return result
 
 
 @app.post("/api/ielts/writing/evaluate")
@@ -11541,6 +11553,16 @@ async def ielts_reading_passage(request: Request):
     if result.get("status") == "success":
         result["credits_deducted"] = 5
         result["credits_remaining"] = guard.get("credits_remaining", 0)
+    # Session 40b-2b: create a session for the authenticated user
+    _sess_email = (guard.get("email") or data.get("email") or "").strip()
+    if _sess_email and result.get("status") == "success":
+        _sess = ielts_engine.create_session(
+            email=_sess_email,
+            test_type="reading",
+            content_ref=result.get("passage_id") or "",
+        )
+        if _sess.get("status") == "success":
+            result["session_id"] = _sess["session_id"]
     return result
 
 
@@ -11575,6 +11597,16 @@ async def ielts_listening_section(request: Request):
     if result.get("status") == "success":
         result["credits_deducted"] = 5
         result["credits_remaining"] = guard.get("credits_remaining", 0)
+    # Session 40b-2b: create a session for the authenticated user
+    _sess_email = (guard.get("email") or data.get("email") or "").strip()
+    if _sess_email and result.get("status") == "success":
+        _sess = ielts_engine.create_session(
+            email=_sess_email,
+            test_type="listening",
+            content_ref=result.get("section_id") or "",
+        )
+        if _sess.get("status") == "success":
+            result["session_id"] = _sess["session_id"]
     return result
 
 
@@ -11614,6 +11646,16 @@ async def ielts_speaking_generate(request: Request):
     result = ielts_engine.generate_speaking_prompt(topic=data.get("topic"))
     result["credits_deducted"] = 3
     result["credits_remaining"] = guard.get("credits_remaining", 0)
+    # Session 40b-2b: create a session for the authenticated user
+    _sess_email = (guard.get("email") or data.get("email") or "").strip()
+    if _sess_email and result.get("status") == "success":
+        _sess = ielts_engine.create_session(
+            email=_sess_email,
+            test_type="speaking",
+            content_ref="",
+        )
+        if _sess.get("status") == "success":
+            result["session_id"] = _sess["session_id"]
     return result
 
 
