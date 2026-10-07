@@ -155,7 +155,8 @@ var IW = {
   task: 2,
   promptId: null,
   promptText: "",
-  email: localStorage.getItem('userEmail') || ''
+  email: localStorage.getItem('userEmail') || '',
+  sessionId: null
 };
 
 function selectTask(t) {
@@ -187,6 +188,7 @@ async function generatePrompt() {
 
     IW.promptId = j.prompt_id;
     IW.promptText = j.prompt || '';
+    IW.sessionId = j.session_id || null;
 
     document.getElementById('promptText').textContent = IW.promptText;
     document.getElementById('promptTopic').textContent = j.topic || '-';
@@ -259,6 +261,7 @@ async function submitEssay() {
         task: IW.task,
         essay: essay,
         prompt: IW.promptText
+        session_id: IW.sessionId
       })
     });
     var j = await r.json();

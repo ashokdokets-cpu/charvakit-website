@@ -11504,12 +11504,23 @@ async def ielts_writing_evaluate(request: Request):
     guard = require_credits_from_data(data, "ielts_writing_eval")
     if guard.get("status") != "success":
         return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
-    return ielts_engine.evaluate_writing(
+    result = ielts_engine.evaluate_writing(
         essay=data.get("essay", ""),
         task=int(data.get("task", 2)),
         prompt_text=data.get("prompt_text", ""),
         email=data.get("email") or None,
     )
+
+    # Session 40b-2c: close the IELTS session if the frontend sent session_id
+    _sess_id = data.get("session_id")
+    if _sess_id and result.get("status") == "success":
+        _band = result.get("overall_band", 0) or 0
+        ielts_engine.complete_session(_sess_id, _band, details={
+            "task": result.get("task"),
+            "word_count": result.get("word_count"),
+        })
+
+    return result
 
 
 # ============================================================
@@ -11582,6 +11593,13 @@ async def ielts_reading_score(request: Request):
     if result.get("status") == "success":
         result["credits_deducted"] = 10
         result["credits_remaining"] = guard.get("credits_remaining", 0)
+    # Session 40b-2c: close the IELTS session if the frontend sent session_id
+    _sess_id = data.get("session_id")
+    if _sess_id and result.get("status") == "success":
+        ielts_engine.complete_session(_sess_id, result.get("band_score", 0) or 0, details={
+            "correct_count": result.get("correct_count"),
+            "total_questions": result.get("total_questions"),
+        })
     return result
 
 
@@ -11626,6 +11644,13 @@ async def ielts_listening_score(request: Request):
     if result.get("status") == "success":
         result["credits_deducted"] = 10
         result["credits_remaining"] = guard.get("credits_remaining", 0)
+    # Session 40b-2c: close the IELTS session if the frontend sent session_id
+    _sess_id = data.get("session_id")
+    if _sess_id and result.get("status") == "success":
+        ielts_engine.complete_session(_sess_id, result.get("band_score", 0) or 0, details={
+            "correct_count": result.get("correct_count"),
+            "total_questions": result.get("total_questions"),
+        })
     return result
 
 
@@ -11736,6 +11761,13 @@ async def ielts_speaking_evaluate(request: Request):
     result["credits_deducted"] = 15
     result["credits_remaining"] = guard.get("credits_remaining", 0)
 
+    # Session 40b-2c: close the IELTS session if the frontend sent session_id
+    _sess_id = data.get("session_id")
+    if _sess_id and result.get("status") == "success":
+        _band = (result.get("evaluation") or {}).get("overall_band", 0) or 0
+        ielts_engine.complete_session(_sess_id, _band, details={
+            "response_count": result.get("response_count"),
+        })
     return result
 
 

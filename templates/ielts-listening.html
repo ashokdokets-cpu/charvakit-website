@@ -163,7 +163,8 @@ var IL = {
   playInterval: null,
   playSeconds: 0,
   totalSeconds: 0,
-  loadingAudio: false
+  loadingAudio: false,
+  sessionId: null
 };
 
 var SECTION_LABELS = {
@@ -205,6 +206,7 @@ async function startLecture() {
       return ilErr(j.message || 'Could not load a lecture.');
     }
     IL.section = j;
+    IL.sessionId = j.session_id || null;
     IL.answers = {};
     renderSession(j);
   } catch (e) {
@@ -377,6 +379,7 @@ async function submitAnswers() {
       body: JSON.stringify({
         email: IL.email,
         section_id: IL.section.section_id,
+        session_id: IL.sessionId
         answers: arr
       })
     });

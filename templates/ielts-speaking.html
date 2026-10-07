@@ -104,7 +104,8 @@ const SPEAKING_STATE = {
   audioChunks: [],
   timerInterval: null,
   timerSeconds: 0,
-  email: localStorage.getItem('userEmail') || ''
+  email: localStorage.getItem('userEmail') || '',
+  sessionId: null
 };
 
 // ---------- Start session ----------
@@ -123,6 +124,7 @@ async function startSession() {
       return speakErr(j.message || 'Could not generate prompts.');
     }
     SPEAKING_STATE.session = j.session;
+    SPEAKING_STATE.sessionId = j.session_id || null;
     buildFlatQuestions(j.session);
     SPEAKING_STATE.currentIdx = 0;
     renderQuestion();
@@ -292,6 +294,7 @@ async function finishSession() {
       body: JSON.stringify({
         email: SPEAKING_STATE.email,
         topic: SPEAKING_STATE.session?.topic || '',
+        session_id: SPEAKING_STATE.sessionId,
         responses: responses
       })
     });
