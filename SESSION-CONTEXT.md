@@ -1,5 +1,107 @@
 # Session Context - Charvak
 
+## Session 40b IN PROGRESS (2026-10-08) - IELTS persistence + backend lifecycle
+
+**Backend phase DONE. Frontend integrity phase remains.**
+
+Session 40b extends the integrity roll-out to IELTS (4 sub-tests:
+writing, reading, listening, speaking). The backend session
+lifecycle is complete end-to-end and committed. The frontend
+integrity wiring (capture + trust badge) is deferred to a
+follow-up sitting.
+
+**Commits so far:**
+- 150015f  feat(ielts): Session 40b-1 - create IELTS session persistence table
+- ab499a1  feat(ielts): Session 40b-2a - engine session lifecycle methods
+- 6fcd3d7  feat(ielts): Session 40b-2b - start routes create sessions + fix missing tables
+- deacda8  feat(ielts): Session 40b-2c/3a-d - complete routes close sessions + frontends propagate session_id
+
+**What shipped:**
+
+1. New table `charvak_ielts_sessions` (10 columns, one row per
+   sub-test attempt). Session ID prefixes:
+   - `IELTS-W-XXXXXXXX` -> writing
+   - `IELTS-R-XXXXXXXX` -> reading
+   - `IELTS-L-XXXXXXXX` -> listening
+   - `IELTS-S-XXXXXXXX` -> speaking
+
+2. `ielts_engine.py` gains:
+   - `_ensure_tables()` (self-healing DDL on import)
+   - `create_session(email, test_type, content_ref)` 
+   - `complete_session(session_id, band_score, details)`
+
+3. 4 start routes now create sessions:
+   - POST /api/ielts/writing/generate  -> returns session_id
+   - POST /api/ielts/reading/passage   -> returns session_id
+   - POST /api/ielts/listening/section -> returns session_id
+   - POST /api/ielts/speaking/generate -> returns session_id
+
+4. 4 complete routes now close sessions:
+   - POST /api/ielts/writing/evaluate  -> complete_session (band = overall_band)
+   - POST /api/ielts/reading/score     -> complete_session (band = band_score)
+   - POST /api/ielts/listening/score   -> complete_session (band = band_score)
+   - POST /api/ielts/speaking/evaluate -> complete_session (band = evaluation.overall_band)
+
+5. 4 templates propagate session_id:
+   - `IW.sessionId` (writing)
+   - `IR.sessionId` (reading)
+   - `IL.sessionId` (listening)
+   - `SPEAKING_STATE.sessionId` (speaking)
+
+**Pre-existing bugs fixed along the way:**
+
+1. Four IELTS tables never created by any migration:
+   - charvak_ielts_reading_passages
+   - charvak_ielts_listening_sections
+   - charvak_ielts_reading_attempts
+   - charvak_ielts_listening_attempts
+   
+   Fix: migrations/20261008_ielts_reading_listening.sql + self-healing
+   DDL in `ielts_engine._ensure_tables()`.
+
+2. `last_used_at` column missing from reading_passages + listening_sections.
+   The engine's UPDATE queries reference it.
+
+3. Migration file `20261008_ielts_reading_listening.sql` had `#`
+   SQL comments (invalid syntax). Fixed to `--`.
+
+4. Seed scripts (scripts/seed_ielts_reading.py, seed_ielts_listening.py)
+   load `.env` (prod) by default. For local seeding we passed
+   DATABASE_URL explicitly. Flagged for cleanup.
+
+5. Two reserved PowerShell variable collisions in test scripts:
+   `$host` (console host) and `$pid` (process ID). Documented.
+
+**Verified E2E:**
+
+- Reading session `IELTS-R-A2C684404E33` started, Honey Bees
+  passage served, 10 answers submitted, band_score 4.5
+- DB row flipped from `in_progress` to `completed` with
+  completed_at timestamp
+- Per-question results with explanations still returned
+
+**What remains (next sitting):**
+
+| # | Patch | Effort |
+|---|---|---|
+| 40b-4 | Add 4 IELTS prefixes to `_integrity_lookup_owner` | 15 min |
+| 40b-5 | Extend list + detail endpoints with IELTS metadata | 40 min |
+| 40b-6 | Wire `CharvakIntegrity.init()` + trust badge on 4 result screens | 1 hr |
+| 40b-7 | Graceful partial-credit handling | 30 min |
+| 40b-8 | E2E test + full docs close-out | 45 min |
+
+**Resume from HEAD `deacda8`.** All patches 40b-4 through 40b-8 are
+copy-adapts of the Versant pattern from Session 40a. Every mechanic
+is proven.
+
+**Full Session 40b close-out pending** after 40b-4 through 40b-8.
+This is a partial note, not the final close-out.
+
+**Reminder:** Render Postgres password rotation still pending
+(since Session 19).
+
+
+
 ## Session 40a CLOSED (2026-10-07) - Versant persistence + integrity roll-out
 
 Session 39 shipped the integrity roll-out for Mock Drives and CBAT.
