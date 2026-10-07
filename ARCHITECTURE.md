@@ -1583,3 +1583,35 @@ honest partial flag. The pattern differs by scoring type:
 for writing and speaking do not yet enforce topical relevance. An
 off-topic submission can still score points, and an on-topic partial
 submission can score 0. Fix is scheduled as its own session.
+
+## Topical-Relevance Scoring (Session 41)
+
+Alongside partial-credit handling, IELTS writing and speaking now
+carry a topical-relevance signal.
+
+**Engine (ielts_engine.py):**
+- `evaluate_writing` and `evaluate_speaking` prompts instruct
+  the AI to verify the response addresses the prompt. Off-topic
+  responses cap Task Achievement / Task Response (writing) or all
+  sub-bands (speaking) at 3.0, and return:
+    - `topical_relevance`: true | false | None
+    - `relevance_note`: one-sentence explanation
+- `_topical_overlap(prompt, response)` - keyword-overlap sanity
+  helper, 0.0-1.0. LOG-ONLY. When overlap < 0.05 and the response
+  is > 30 words, a warning is logged alongside the AI's own
+  judgment. Never overrides the score.
+
+**Frontend:**
+- Red "Off-topic response" banner above the yellow partial banner,
+  shown when `topical_relevance === false`. Message is the AI's
+  `relevance_note`.
+
+**Coverage:**
+- Writing: yes (Session 41)
+- Speaking: yes (Session 41)
+- Reading / Listening: n/a (deterministic scoring)
+- Versant / Career / Mock / CBAT: n/a (no off-topic category)
+
+**Regression net:**
+- scripts/test_ielts_relevance.py - 6 canned cases, 14 checks.
+  Invoked manually after prompt changes. Cheap (~\.03).
