@@ -61,6 +61,20 @@
     .rd-band { grid-template-columns: 1fr 1fr; }
     .rd-actions { grid-template-columns: 1fr; }
   }
+  .rd-integrity-card { margin-top: 24px; padding: 18px 20px; border-radius: 12px; border-left: 4px solid #9ca3af; background: #f9fafb; display: flex; gap: 14px; align-items: flex-start; }
+  .rd-integrity-card.clean { border-left-color: #10b981; background: #ecfdf5; }
+  .rd-integrity-card.minor { border-left-color: #3b82f6; background: #eff6ff; }
+  .rd-integrity-card.moderate { border-left-color: #f59e0b; background: #fffbeb; }
+  .rd-integrity-card.elevated { border-left-color: #ef4444; background: #fef2f2; }
+  .rd-integrity-icon { font-size: 1.8rem; line-height: 1; flex-shrink: 0; }
+  .rd-integrity-title { font-weight: 700; margin: 0 0 4px; font-size: 1.05rem; }
+  .rd-integrity-msg { margin: 0; color: #4b5563; font-size: 0.92rem; }
+  .rd-integrity-toggle { margin-top: 8px; font-size: 0.85rem; }
+  .rd-integrity-toggle a { color: #2563eb; text-decoration: none; }
+  .rd-integrity-toggle a:hover { text-decoration: underline; }
+  .rd-integrity-explainer { margin-top: 10px; padding: 12px 14px; background: #fff; border-radius: 8px; font-size: 0.85rem; color: #4b5563; display: none; }
+  .rd-integrity-explainer.open { display: block; }
+  .rd-integrity-explainer ul { margin: 6px 0 0 0; padding-left: 20px; }
 </style>
 
 <div class="rd-hero">
@@ -91,6 +105,26 @@
     <div class="rd-score-card">
       <div class="rd-score-num" id="rdScore">--<span class="rd-of"> / 100</span></div>
       <div id="rdVerdict" class="rd-verdict near">--</div>
+      <!-- Session 38 — Trust Score badge (public) -->
+      <div id="rdIntegrity" class="rd-integrity-card" style="display:none;">
+        <div class="rd-integrity-icon" id="rdIntegrityIcon">&#128737;&#65039;</div>
+        <div class="flex-grow-1">
+          <p class="rd-integrity-title" id="rdIntegrityTitle">Integrity</p>
+          <p class="rd-integrity-msg" id="rdIntegrityMsg">Loading...</p>
+          <div class="rd-integrity-toggle">
+            <a href="#" onclick="rdToggleIntegrityExplainer(event);return false;">What does this mean?</a>
+          </div>
+          <div class="rd-integrity-explainer" id="rdIntegrityExplainer">
+            <strong>How to read this signal</strong>
+            <ul>
+              <li><b>What we capture:</b> paste events, tab switches, focus loss, and rapid input during the assessment.</li>
+              <li><b>What it means:</b> these are <i>signals</i>, not verdicts. A paste could be a candidate noting their own draft. A tab switch could be a legitimate interruption.</li>
+              <li><b>What it doesn't mean:</b> this is <b>one data point</b> alongside the readiness score, not a substitute for a structured interview.</li>
+              <li><b>Verified</b> (green) means no signals were detected. Other states are informational.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
       <div class="rd-band">
         <div class="rd-band-cell">
           <div class="rd-band-value" id="rdBenchmark">--</div>
@@ -476,6 +510,63 @@
   };
 
 })();
+
+/* ------------------------------------------------------------------
+   Session 38 — Trust Score badge
+   Fetches /api/readiness/{cert_id}/integrity and renders the badge.
+   Public endpoint — no auth header needed.
+   ------------------------------------------------------------------ */
+function rdToggleIntegrityExplainer(ev) {
+  if (ev && ev.preventDefault) ev.preventDefault();
+  var el = document.getElementById('rdIntegrityExplainer');
+  if (el) el.classList.toggle('open');
+}
+
+async function rdLoadIntegrity(certId) {
+  var card = document.getElementById('rdIntegrity');
+  if (!card) return;
+  try {
+    var r = await fetch('/api/readiness/' + encodeURIComponent(certId) + '/integrity');
+    if (!r.ok) return;
+    var j = await r.json();
+    if (j.status !== 'success') return;
+
+    var level = j.risk_level || 'clean';
+    var iconEl = document.getElementById('rdIntegrityIcon');
+    var titleEl = document.getElementById('rdIntegrityTitle');
+    var msgEl = document.getElementById('rdIntegrityMsg');
+
+    // Reset classes, then apply the level
+    card.className = 'rd-integrity-card ' + level;
+
+    var icons = {
+      'clean':    '\uD83D\uDEE1\uFE0F',  // shield
+      'minor':    '\u2139\uFE0F',         // info
+      'moderate': '\u26A0\uFE0F',         // warning
+      'elevated': '\uD83D\uDEA8'          // rotating light
+    };
+    var titles = {
+      'clean':    'Integrity Verified',
+      'minor':    'Minor signals detected',
+      'moderate': 'Multiple signals detected',
+      'elevated': 'Frequent signals detected'
+    };
+
+    if (iconEl) iconEl.textContent = icons[level] || icons.clean;
+    if (titleEl) titleEl.textContent = titles[level] || 'Integrity status';
+    if (msgEl) msgEl.textContent = j.message || '';
+
+    card.style.display = 'flex';
+  } catch (e) {
+    // silent fail — badge simply doesn't render
+  }
+}
+
+// Kick off once we know the certificate ID from the URL.
+document.addEventListener('DOMContentLoaded', function() {
+  var path = window.location.pathname || '';
+  var m = path.match(/\/readiness\/(RDC-[A-Z0-9]+)/i);
+  if (m && m[1]) rdLoadIntegrity(m[1]);
+});
 </script>
 {% endblock %}
-

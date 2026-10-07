@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+{% block title %}Integrity Detail - {{ request.path_params.assessment_id if request.path_params else 'Admin' }}{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-4">
+    <div class="container py-3">
+        <a href="/admin/integrity-events" class="btn btn-outline-light btn-sm mb-3">&larr; Back to Integrity Events</a>
+        <span class="badge bg-light text-dark mb-2 ms-2">Admin · Session 38</span>
+        <h1 class="display-6 fw-bold mb-1">Integrity Detail</h1>
+        <p class="lead mb-0" id="headerAid">Loading...</p>
+    </div>
+</div>
+
+<div class="container py-4">
+
+    <!-- Assessment metadata card -->
+    <div class="card border-0 shadow-sm mb-3">
+        <div class="card-body">
+            <div class="row g-3" id="metaRow">
+                <div class="col-12 text-muted">Loading metadata...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Risk + summary strip -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm p-3 text-center">
+                <div class="text-muted small mb-1">Risk Level</div>
+                <div id="riskBadge">—</div>
+            </div>
+        </div>
+        <div class="col-md-3"><div class="card border-0 shadow-sm p-3 text-center"><div class="text-muted small mb-1">Total Events</div><div class="fs-4 fw-bold" id="statTotal">—</div></div></div>
+        <div class="col-md-3"><div class="card border-0 shadow-sm p-3 text-center"><div class="text-muted small mb-1">Tab Switches</div><div class="fs-4 fw-bold" id="statTab">—</div></div></div>
+        <div class="col-md-3"><div class="card border-0 shadow-sm p-3 text-center"><div class="text-muted small mb-1">Pastes</div><div class="fs-4 fw-bold" id="statPaste">—</div></div></div>
+    </div>
+
+    <!-- Event type breakdown -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <h2 class="as-h6 mb-3">Event Types</h2>
+            <div class="row g-2" id="eventTypes"></div>
+        </div>
+    </div>
+
+    <!-- Event timeline -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h2 class="as-h6 mb-0">Event Timeline</h2>
+            <div class="d-flex gap-2 flex-wrap" id="filterPills">
+                <button type="button" class="btn btn-sm btn-outline-primary active" data-type="">All</button>
+                <button type="button" class="btn btn-sm btn-outline-primary" data-type="tab_switch">Tab Switch</button>
+                <button type="button" class="btn btn-sm btn-outline-primary" data-type="paste">Paste</button>
+                <button type="button" class="btn btn-sm btn-outline-primary" data-type="focus_out">Focus Out</button>
+                <button type="button" class="btn btn-sm btn-outline-primary" data-type="contextmenu">Context Menu</button>
+                <button type="button" class="btn btn-sm btn-outline-primary" data-type="rapid_input">Rapid Input</button>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width:180px;">Time</th>
+                        <th style="width:130px;">Type</th>
+                        <th>Metadata</th>
+                    </tr>
+                </thead>
+                <tbody id="eventBody">
+                    <tr><td colspan="3" class="text-center py-4 text-muted">Loading events...</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer bg-white">
+            <small class="text-muted" id="footerCount"></small>
+        </div>
+    </div>
+</div>
+
+<script>
+var _evAll = [];
+var _evFilter = '';
+
+function _evEsc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+}
+
+function _riskBadgeLg(level) {
+    var map = {
+        'elevated': 'bg-danger',
+        'moderate': 'bg-warning text-dark',
+        'minor':    'bg-info text-dark',
+        'clean':    'bg-success'
+    };
+    var cls = map[level] || 'bg-secondary';
+    return '<span class="badge ' + cls + ' fs-5 px-3 py-2">' + _evEsc(level || 'unknown').toUpperCase() + '</span>';
+}
+
+function _evTypeBadge(type) {
+    var map = {
+        'tab_switch':   'bg-warning text-dark',
+        'paste':        'bg-danger',
+        'focus_out':    'bg-info text-dark',
+        'contextmenu':  'bg-secondary',
+        'rapid_input':  'bg-dark'
+    };
+    var cls = map[type] || 'bg-light text-dark';
+    return '<span class="badge ' + cls + '">' + _evEsc(type) + '</span>';
+}
+
+function _relativeTime(iso) {
+    if (!iso) return '—';
+    var then = new Date(iso + 'Z');
+    var now = new Date();
+    var diff = Math.floor((now - then) / 1000);
+    if (diff < 60) return diff + 's ago';
+    if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+    if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+    return Math.floor(diff / 86400) + 'd ago';
+}
+
+function _metaSummary(type, meta) {
+    meta = meta || {};
+    if (type === 'tab_switch') {
+        return 'Duration: ' + (meta.duration_ms ? (Number(meta.duration_ms) / 1000).toFixed(1) + 's' : '—');
+    }
+    if (type === 'paste') {
+        return 'Field: ' + _evEsc(meta.target_id || '—') + '  ·  Chars: ' + _evEsc(meta.chars || 0);
+    }
+    if (type === 'focus_out') {
+        return 'Field: ' + _evEsc(meta.target_id || '—');
+    }
+    if (type === 'contextmenu') {
+        return 'Field: ' + _evEsc(meta.target_id || '—');
+    }
+    if (type === 'rapid_input') {
+        return 'Chars: ' + _evEsc(meta.chars || 0) + '  ·  Window: ' + _evEsc(meta.window_ms || 0) + 'ms  ·  Rate: ' + _evEsc(meta.chars_per_ms || 0) + '/ms';
+    }
+    return Object.keys(meta).length ? _evEsc(JSON.stringify(meta)) : '—';
+}
+
+async function loadDetail() {
+    var aid = window.location.pathname.split('/').pop();
+    document.getElementById('headerAid').textContent = aid;
+
+    var token = localStorage.getItem('charvak_admin_token') || localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    try {
+        var r = await fetch('/api/admin/career-assessment/' + encodeURIComponent(aid) + '/integrity', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (r.status === 401 || r.status === 403) {
+            document.getElementById('eventBody').innerHTML = '<tr><td colspan="3" class="text-center py-4 text-danger">Admin login required</td></tr>';
+            return;
+        }
+        var j = await r.json();
+        if (j.status !== 'success') {
+            document.getElementById('eventBody').innerHTML = '<tr><td colspan="3" class="text-center py-4 text-danger">' + _evEsc(j.message || 'Error') + '</td></tr>';
+            return;
+        }
+        _evAll = j.events || [];
+        renderMeta(j.meta || {});
+        renderSummary(j.summary || {});
+        renderEventTypes(j.summary || {});
+        applyFilter();
+    } catch (e) {
+        document.getElementById('eventBody').innerHTML = '<tr><td colspan="3" class="text-center py-4 text-danger">Network error: ' + _evEsc(e.message) + '</td></tr>';
+    }
+}
+
+function renderMeta(m) {
+    var html = '';
+    var pairs = [
+        ['Email', m.email],
+        ['Role', m.role],
+        ['Industry', m.industry],
+        ['Level', m.level],
+        ['Format', m.format],
+        ['Size', m.size],
+        ['Questions', m.num_questions],
+        ['Score', m.score],
+        ['Passed', m.passed === true ? 'Yes' : (m.passed === false ? 'No' : '—')],
+        ['Status', m.status],
+        ['Started', m.started_at ? m.started_at.substring(0, 19).replace('T', ' ') : '—'],
+        ['Completed', m.completed_at ? m.completed_at.substring(0, 19).replace('T', ' ') : '—'],
+    ];
+    for (var i = 0; i < pairs.length; i++) {
+        html += '<div class="col-md-3 col-6">';
+        html += '<div class="text-muted small">' + _evEsc(pairs[i][0]) + '</div>';
+        html += '<div class="fw-semibold">' + _evEsc(pairs[i][1] == null ? '—' : pairs[i][1]) + '</div>';
+        html += '</div>';
+    }
+    document.getElementById('metaRow').innerHTML = html;
+}
+
+function renderSummary(s) {
+    var counts = s.counts || {};
+    document.getElementById('riskBadge').innerHTML = _riskBadgeLg(s.risk_level || 'unknown');
+    document.getElementById('statTotal').textContent = s.total_events || 0;
+    document.getElementById('statTab').textContent = counts.tab_switch || 0;
+    document.getElementById('statPaste').textContent = counts.paste || 0;
+}
+
+function renderEventTypes(s) {
+    var counts = s.counts || {};
+    var order = ['tab_switch', 'focus_out', 'paste', 'contextmenu', 'rapid_input', 'other'];
+    var html = '';
+    for (var i = 0; i < order.length; i++) {
+        var t = order[i];
+        var c = counts[t] || 0;
+        html += '<div class="col-md-2 col-4">';
+        html += '<div class="border rounded p-2 text-center">';
+        html += '<div class="small">' + _evEsc(t) + '</div>';
+        html += '<div class="fw-bold fs-5">' + c + '</div>';
+        html += '</div></div>';
+    }
+    document.getElementById('eventTypes').innerHTML = html;
+}
+
+function applyFilter() {
+    var filtered = _evFilter ? _evAll.filter(function(e) { return e.event_type === _evFilter; }) : _evAll;
+    renderEvents(filtered);
+}
+
+function renderEvents(events) {
+    var tbody = document.getElementById('eventBody');
+    if (!events.length) {
+        tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-muted">No events match.</td></tr>';
+        document.getElementById('footerCount').textContent = '0 events';
+        return;
+    }
+    var html = '';
+    for (var i = 0; i < events.length; i++) {
+        var e = events[i];
+        var timeStr = e.occurred_at ? e.occurred_at.substring(0, 19).replace('T', ' ') : '—';
+        var rel = _relativeTime(e.occurred_at);
+        html += '<tr>';
+        html += '<td><div>' + _evEsc(timeStr) + '</div><small class="text-muted">' + _evEsc(rel) + '</small></td>';
+        html += '<td>' + _evTypeBadge(e.event_type) + '</td>';
+        html += '<td class="small">' + _metaSummary(e.event_type, e.metadata) + '</td>';
+        html += '</tr>';
+    }
+    tbody.innerHTML = html;
+    document.getElementById('footerCount').textContent = events.length + ' events (newest first)';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    var pills = document.querySelectorAll('#filterPills button');
+    for (var i = 0; i < pills.length; i++) {
+        pills[i].addEventListener('click', function() {
+            for (var j = 0; j < pills.length; j++) pills[j].classList.remove('active');
+            this.classList.add('active');
+            _evFilter = this.getAttribute('data-type') || '';
+            applyFilter();
+        });
+    }
+    loadDetail();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block title %}Integrity Events - Charvak Admin{% endblock %}
+{% block content %}
+<div class="page-hero bg-gradient-primary text-white py-4">
+    <div class="container py-3">
+        <span class="badge bg-light text-dark mb-2">Admin · Session 38</span>
+        <h1 class="display-5 fw-bold">Integrity Events</h1>
+        <p class="lead mb-0">Assessment integrity signals captured across Career Assessments.</p>
+    </div>
+</div>
+
+<div class="container py-4">
+
+    <!-- Summary strip -->
+    <div class="row g-3 mb-4" id="summaryStrip">
+        <div class="col-6 col-md-3"><div class="card border-0 shadow-sm p-3"><div class="text-muted small">Total assessments</div><div class="fs-4 fw-bold" id="statTotal">—</div></div></div>
+        <div class="col-6 col-md-3"><div class="card border-0 shadow-sm p-3"><div class="text-muted small">Elevated risk</div><div class="fs-4 fw-bold text-danger" id="statElevated">—</div></div></div>
+        <div class="col-6 col-md-3"><div class="card border-0 shadow-sm p-3"><div class="text-muted small">Moderate risk</div><div class="fs-4 fw-bold text-warning" id="statModerate">—</div></div></div>
+        <div class="col-6 col-md-3"><div class="card border-0 shadow-sm p-3"><div class="text-muted small">Clean</div><div class="fs-4 fw-bold text-success" id="statClean">—</div></div></div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card border-0 shadow-sm mb-3">
+        <div class="card-body">
+            <div class="row g-2 align-items-center">
+                <div class="col-md-3">
+                    <select class="form-select" id="riskFilter">
+                        <option value="">All risk levels</option>
+                        <option value="elevated">Elevated</option>
+                        <option value="moderate">Moderate</option>
+                        <option value="minor">Minor</option>
+                        <option value="clean">Clean</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <input type="text" class="form-control" id="searchEmail" placeholder="Filter by email or assessment ID">
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-outline-secondary w-100" onclick="loadIntegrityList()">Refresh</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Assessment</th>
+                        <th>Email</th>
+                        <th>Role · Format</th>
+                        <th class="text-end">Events</th>
+                        <th>Risk</th>
+                        <th>Last event</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="intListBody">
+                    <tr><td colspan="7" class="text-center py-4 text-muted">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <p class="text-muted small mt-3 mb-0" id="footerCount"></p>
+</div>
+
+<script>
+var _intAll = [];
+
+function _intEsc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+}
+
+function _riskBadge(level) {
+    var map = {
+        'elevated': 'bg-danger',
+        'moderate': 'bg-warning text-dark',
+        'minor':    'bg-info text-dark',
+        'clean':    'bg-success'
+    };
+    var cls = map[level] || 'bg-secondary';
+    return '<span class="badge ' + cls + '">' + _intEsc(level || 'unknown') + '</span>';
+}
+
+async function loadIntegrityList() {
+    var tbody = document.getElementById('intListBody');
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">Loading...</td></tr>';
+    try {
+        var token = localStorage.getItem('charvak_admin_token') || localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+        var r = await fetch('/api/admin/integrity-events', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (r.status === 401 || r.status === 403) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-danger">Admin login required. <a href="/admin-login">Log in</a></td></tr>';
+            return;
+        }
+        var j = await r.json();
+        if (j.status !== 'success') {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-danger">' + _intEsc(j.message || 'Error') + '</td></tr>';
+            return;
+        }
+        _intAll = j.items || [];
+        renderSummary(_intAll);
+        applyFilters();
+    } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-danger">Network error: ' + _intEsc(e.message) + '</td></tr>';
+    }
+}
+
+function renderSummary(items) {
+    document.getElementById('statTotal').textContent = items.length;
+    document.getElementById('statElevated').textContent = items.filter(function(i) { return i.risk_level === 'elevated'; }).length;
+    document.getElementById('statModerate').textContent = items.filter(function(i) { return i.risk_level === 'moderate'; }).length;
+    document.getElementById('statClean').textContent = items.filter(function(i) { return i.risk_level === 'clean'; }).length;
+}
+
+function applyFilters() {
+    var risk = document.getElementById('riskFilter').value;
+    var q = (document.getElementById('searchEmail').value || '').toLowerCase().trim();
+
+    var filtered = _intAll.filter(function(i) {
+        if (risk && i.risk_level !== risk) return false;
+        if (q) {
+            var emailMatch = (i.email || '').toLowerCase().indexOf(q) !== -1;
+            var aidMatch = (i.assessment_id || '').toLowerCase().indexOf(q) !== -1;
+            if (!emailMatch && !aidMatch) return false;
+        }
+        return true;
+    });
+    renderTable(filtered);
+}
+
+function renderTable(items) {
+    var tbody = document.getElementById('intListBody');
+    if (!items.length) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">No assessments match.</td></tr>';
+        document.getElementById('footerCount').textContent = '0 rows';
+        return;
+    }
+
+    var html = '';
+    for (var i = 0; i < items.length; i++) {
+        var it = items[i];
+        var created = it.last_event_at ? it.last_event_at.replace('T', ' ').substring(0, 19) : '—';
+        var roleFmt = [(it.role || '—'), (it.format || '—')].join(' · ');
+        html += '<tr>';
+        html += '<td><code class="small">' + _intEsc(it.assessment_id) + '</code></td>';
+        html += '<td>' + _intEsc(it.email || '—') + '</td>';
+        html += '<td class="small">' + _intEsc(roleFmt) + '</td>';
+        html += '<td class="text-end"><strong>' + _intEsc(it.total_events) + '</strong></td>';
+        html += '<td>' + _riskBadge(it.risk_level) + '</td>';
+        html += '<td class="small text-muted">' + _intEsc(created) + '</td>';
+        html += '<td class="text-end"><a class="btn btn-sm btn-outline-primary" href="/admin/integrity-events/' + encodeURIComponent(it.assessment_id) + '">Detail &rarr;</a></td>';
+        html += '</tr>';
+    }
+    tbody.innerHTML = html;
+    document.getElementById('footerCount').textContent = items.length + ' rows';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('riskFilter').addEventListener('change', applyFilters);
+    document.getElementById('searchEmail').addEventListener('input', applyFilters);
+    loadIntegrityList();
+});
+</script>
+{% endblock %}

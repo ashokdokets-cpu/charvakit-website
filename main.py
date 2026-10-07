@@ -6977,25 +6977,177 @@ async def api_integrity_event(request: Request):
 @limiter.limit("60/minute")
 async def api_admin_assessment_integrity(request: Request, assessment_id: str):
     """
-    Admin view: full event list + summary for one assessment.
+    Admin view: full event list + summary + assessment metadata for one assessment.
     Requires admin (enforced via admin_auth_guard middleware + require_admin).
     """
     try:
-        require_admin(request)  # belt-and-suspenders; middleware already gates /api/admin/*
+        require_admin(request)
         events = integrity_engine.get_events(assessment_id, limit=500)
         summary = integrity_engine.get_summary(assessment_id)
+
+        # Enrich with the parent assessment's metadata (Session 38)
+        meta = {}
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT email, role, industry, level, format, size,
+                       score, passed, status, started_at, completed_at,
+                       num_questions
+                FROM charvak_career_assessments
+                WHERE assessment_id = %s
+            """, (assessment_id,))
+            row = cur.fetchone()
+            cur.close(); conn.close()
+            if row:
+                meta = {
+                    "email": row[0],
+                    "role": row[1],
+                    "industry": row[2],
+                    "level": row[3],
+                    "format": row[4],
+                    "size": row[5],
+                    "score": row[6],
+                    "passed": row[7],
+                    "status": row[8],
+                    "started_at": row[9].isoformat() if row[9] else None,
+                    "completed_at": row[10].isoformat() if row[10] else None,
+                    "num_questions": row[11],
+                }
+        except Exception as e:
+            logger.warning(f"integrity detail meta lookup failed: {e}")
+
         return {
             "status": "success",
             "assessment_id": assessment_id,
             "summary": summary,
             "events": events,
             "event_count": len(events),
+            "meta": meta,
         }
     except HTTPException:
         raise
     except Exception as e:
         return handle_error(e, "Failed to load integrity data")
 
+
+# ========================================================================
+# Session 38 — Public integrity summary for a readiness certificate
+# ========================================================================
+# Public read (no auth). Employers view readiness certificates without
+# logging in, so the trust badge must be reachable anonymously.
+# Returns only risk level + verified flag. No raw events, no PII.
+# ========================================================================
+
+@app.get("/api/readiness/{certificate_id}/integrity")
+@limiter.limit("120/minute")
+async def api_readiness_integrity_public(request: Request, certificate_id: str):
+    """
+    Public integrity summary for a readiness certificate.
+    Looks up the certificate, finds the source assessment, returns the
+    public-safe summary.
+    """
+    try:
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT assessment_id
+            FROM charvak_readiness_certificates
+            WHERE certificate_id = %s
+        """, (certificate_id,))
+        row = cur.fetchone()
+        cur.close(); conn.close()
+
+        if not row or not row[0]:
+            raise HTTPException(status_code=404, detail="Certificate not found")
+
+        assessment_id = row[0]
+        summary = integrity_engine.get_public_summary(assessment_id)
+
+        # Verified is already a flag on the summary; keep the response flat.
+        return summary
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "Failed to load certificate integrity summary")
+
+
+
+# ========================================================================
+# Session 38 — Admin: list all assessments with integrity data
+# ========================================================================
+# Returns a summary row for every assessment that has any integrity
+# events, sorted by risk level then recency. Used by /admin/integrity-events.
+# ========================================================================
+
+@app.get("/api/admin/integrity-events")
+@limiter.limit("60/minute")
+async def api_admin_integrity_list(request: Request):
+    """
+    Admin view: list all assessments with integrity events.
+    Returns rows: {assessment_id, email, role, industry, level, format,
+                   total_events, risk_level, last_event_at}
+    """
+    try:
+        require_admin(request)
+
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+
+        # Aggregate events per assessment + join to assessment metadata
+        cur.execute("""
+            SELECT
+                e.assessment_id,
+                MAX(e.email) as email,
+                MAX(e.occurred_at) as last_event_at,
+                COUNT(*) as total_events,
+                a.role,
+                a.industry,
+                a.level,
+                a.format
+            FROM charvak_assessment_integrity_events e
+            LEFT JOIN charvak_career_assessments a
+                ON a.assessment_id = e.assessment_id
+            GROUP BY e.assessment_id, a.role, a.industry, a.level, a.format
+            ORDER BY MAX(e.occurred_at) DESC
+        """)
+        rows = cur.fetchall()
+        cur.close(); conn.close()
+
+        # For each row, compute risk level via the engine
+        items = []
+        for r in rows:
+            aid = r[0]
+            summary = integrity_engine.get_summary(aid)
+            items.append({
+                "assessment_id": aid,
+                "email": r[1],
+                "last_event_at": r[2].isoformat() if r[2] else None,
+                "total_events": int(r[3] or 0),
+                "role": r[4],
+                "industry": r[5],
+                "level": r[6],
+                "format": r[7],
+                "risk_level": summary.get("risk_level", "unknown"),
+                "counts": summary.get("counts", {}),
+            })
+
+        # Sort by risk (elevated > moderate > minor > clean), then by recency
+        risk_order = {"elevated": 0, "moderate": 1, "minor": 2, "clean": 3, "unknown": 4}
+        items.sort(key=lambda x: (risk_order.get(x["risk_level"], 99), -(x["total_events"] or 0)))
+
+        return {
+            "status": "success",
+            "count": len(items),
+            "items": items,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "Failed to load integrity list")
 
 
 # ========================================================================
@@ -11624,6 +11776,19 @@ async def admin_client_role_detail_page(request: Request, role_id: str):
     """Admin: role detail + applicant list (Session 24)."""
     return template_response("admin-client-role-detail.html", request,
                              f"Role {role_id} - Charvak Admin")
+
+
+# ========================================================================
+# Session 38 — Admin: integrity events pages
+# ========================================================================
+
+@app.get("/admin/integrity-events", response_class=HTMLResponse)
+async def admin_integrity_events_page(request: Request):
+    return template_response("admin-integrity-events.html", request, "Integrity Events - Admin")
+
+@app.get("/admin/integrity-events/{assessment_id}", response_class=HTMLResponse)
+async def admin_integrity_detail_page(request: Request, assessment_id: str):
+    return template_response("admin-integrity-detail.html", request, f"Integrity - {assessment_id}")
 
 
 @app.get("/api/admin/cleanup-users")
