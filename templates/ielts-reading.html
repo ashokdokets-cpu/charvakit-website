@@ -142,7 +142,8 @@ var IR = {
   email: localStorage.getItem('userEmail') || '',
   passageNum: 1,
   passage: null,
-  answers: {}
+  answers: {},
+  sessionId: null
 };
 
 var PASSAGE_LABELS = {
@@ -182,6 +183,7 @@ async function startReading() {
       return irErr(j.message || 'Could not load a passage.');
     }
     IR.passage = j;
+    IR.sessionId = j.session_id || null;
     IR.answers = {};
     renderSession(j);
   } catch (e) {
@@ -256,6 +258,7 @@ async function submitAnswers() {
       body: JSON.stringify({
         email: IR.email,
         passage_id: IR.passage.passage_id,
+        session_id: IR.sessionId
         answers: arr
       })
     });
