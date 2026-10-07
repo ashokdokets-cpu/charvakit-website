@@ -3972,3 +3972,49 @@ Extended Session 38's integrity work to two more assessment types.
 
 **Reminder:** Render Postgres password rotation still pending (Session 19).
 
+
+
+## Session 40a CLOSED (2026-10-07) - Versant persistence + integrity
+
+Fixed Versant, which had been silently broken since a refactor.
+Shipped the full integrity pipeline for Versant using the Session 39
+patterns.
+
+**Commit chain:** 150728a -> c0bb9fc -> 628cf98 -> 7a9be9f -> cbd1712
+                  -> 29f078b -> e25598e
+
+**What shipped:**
+- Migration + self-healing DDL for charvak_versant_sessions + _answers
+- VERSANT prefix in _integrity_lookup_owner (5 entries now)
+- List + detail endpoint branches for VERSANT metadata
+- versant.html wired to CharvakIntegrity.init() + Trust badge
+- Graceful partial-credit handling (banner + AI calibration +
+  persisted metadata)
+
+**What was fixed:**
+- Versant was dead-on-arrival (create_session always failed,
+  silently). Now works end-to-end.
+
+**Files touched:**
+- cbt_versant.py (+_ensure_tables, partial computation, prompt
+  calibration, enriched return, enriched result details)
+- main.py (+VERSANT prefix entry, +list JOIN, +detail branch)
+- templates/versant.html (+capture wire-up, +trust badge, +partial
+  banner)
+- migrations/20261007_versant_sessions.sql (new)
+
+**Session 40b candidates:**
+- A (recommended): Roll integrity pipeline to IELTS (4 sub-tests,
+  one charvak_ielts_sessions table with test_type column)
+- B: Certificate round 2
+- C: AuditBot Continuous
+- D: Personalized training views
+- E: Docs + backup polish
+
+**Follow-ups flagged:**
+- Add `passed` boolean to charvak_versant_sessions
+- charvakFetch belongs in base.html (still)
+- IELTS is the last assessment without the trust pipeline
+
+**Reminder:** Render Postgres password rotation still pending (Session 19).
+

@@ -426,3 +426,26 @@ New follow-ups flagged by Session 39:
   in the DB). Cosmetic.
 
 Reminder: Render Postgres password rotation still pending (Session 19).
+
+## Session 40a closure (2026-10-07)
+
+Moved from open to resolved:
+- Versant persistence - FIXED (40a-1; was silently broken)
+- VERSANT integrity ownership routing - SHIPPED (40a-3)
+- Admin list + detail metadata for VERSANT - SHIPPED (40a-4, 40a-5)
+- versant.html capture wire-up - SHIPPED (40a-6)
+- Trust badge on Versant scorecard - SHIPPED (40a-7)
+- Graceful partial-credit handling - SHIPPED (40a-9)
+
+New follow-ups flagged by Session 40a:
+- Add `passed` boolean to charvak_versant_sessions + populate in
+  complete_session. Admin detail currently shows "—" for Passed.
+- IELTS is the last assessment without the trust pipeline.
+  Session 40b candidate A: one `charvak_ielts_sessions` table with
+  a test_type column (writing/reading/listening/speaking).
+- Patcher discipline: when replacing a Python statement whose
+  closing paren is on its own line, the paren is part of the
+  boundary. Assert it. Add a post-write AST check that restores
+  from backup on failure.
+
+Reminder: Render Postgres password rotation still pending (Session 19).
