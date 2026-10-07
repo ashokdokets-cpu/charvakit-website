@@ -268,6 +268,43 @@ class IntegrityEngine:
 
     # ---------------------------------------------------------------- risk
 
+
+
+    def get_public_summary(self, assessment_id: str) -> Dict:
+        """
+        Public-safe integrity summary for a readiness certificate.
+
+        Strips anything that could leak PII or timing patterns.
+        Returns only: risk_level, verified flag, total_events, message.
+        No per-type counts, no timestamps, no metadata.
+        """
+        s = self.get_summary(assessment_id)
+        risk = s.get("risk_level", "clean")
+        total = int(s.get("total_events", 0) or 0)
+
+        if risk == "clean" or total == 0:
+            message = "No integrity signals detected during this assessment."
+            verified = True
+        elif risk == "minor":
+            message = "A small number of integrity signals were detected during this assessment."
+            verified = False
+        elif risk == "moderate":
+            message = "Multiple integrity signals were detected during this assessment."
+            verified = False
+        elif risk == "elevated":
+            message = "Frequent integrity signals were detected during this assessment."
+            verified = False
+        else:
+            message = "Integrity signals were recorded during this assessment."
+            verified = False
+
+        return {
+            "status": "success",
+            "risk_level": risk,
+            "verified": verified,
+            "total_events": total,
+            "message": message,
+        }
     def compute_risk_level(self, counts: Dict) -> str:
         """
         Deterministic risk classification.
