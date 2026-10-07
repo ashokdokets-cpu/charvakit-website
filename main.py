@@ -7052,29 +7052,54 @@ async def api_admin_assessment_integrity(request: Request, assessment_id: str):
             from database import db
             conn = db.get_connection()
             cur = conn.cursor()
-            cur.execute("""
-                SELECT email, role, industry, level, format, size,
-                       score, passed, status, started_at, completed_at,
-                       num_questions
-                FROM charvak_career_assessments
-                WHERE assessment_id = %s
-            """, (assessment_id,))
+            # Session 39-8b: prefix-based metadata lookup
+            aid_prefix = (assessment_id.split("-", 1)[0].upper() if assessment_id else "")
+            meta_row = None
+            if aid_prefix == "CAR":
+                cur.execute("""
+                    SELECT email, role, industry, level, format, size,
+                           score, passed, status, started_at, completed_at,
+                           num_questions
+                    FROM charvak_career_assessments
+                    WHERE assessment_id = %s
+                """, (assessment_id,))
+                meta_row = cur.fetchone()
+            elif aid_prefix in ("MK", "MOCK"):
+                cur.execute("""
+                    SELECT email, company_name as role, '' as industry, '' as level,
+                           'mock_drive' as format, '' as size,
+                           score, passed, status, started_at, completed_at,
+                           total_questions as num_questions
+                    FROM charvak_mock_sessions
+                    WHERE session_id = %s
+                """, (assessment_id,))
+                meta_row = cur.fetchone()
+            elif aid_prefix == "CBAT":
+                cur.execute("""
+                    SELECT email, sub_test as role, '' as industry, '' as level,
+                           'cbat' as format, '' as size,
+                           score, passed, status, started_at, completed_at,
+                           total_questions as num_questions
+                    FROM charvak_cbat_sessions
+                    WHERE session_id = %s
+                """, (assessment_id,))
+                meta_row = cur.fetchone()
             row = cur.fetchone()
             cur.close(); conn.close()
-            if row:
+            if meta_row:
                 meta = {
-                    "email": row[0],
-                    "role": row[1],
-                    "industry": row[2],
-                    "level": row[3],
-                    "format": row[4],
-                    "size": row[5],
-                    "score": row[6],
-                    "passed": row[7],
-                    "status": row[8],
-                    "started_at": row[9].isoformat() if row[9] else None,
-                    "completed_at": row[10].isoformat() if row[10] else None,
-                    "num_questions": row[11],
+                    "email": meta_row[0],
+                    "role": meta_row[1],
+                    "industry": meta_row[2],
+                    "level": meta_row[3],
+                    "format": meta_row[4],
+                    "size": meta_row[5],
+                    "score": meta_row[6],
+                    "passed": meta_row[7],
+                    "status": meta_row[8],
+                    "started_at": meta_row[9].isoformat() if meta_row[9] else None,
+                    "completed_at": meta_row[10].isoformat() if meta_row[10] else None,
+                    "num_questions": meta_row[11],
                 }
         except Exception as e:
             logger.warning(f"integrity detail meta lookup failed: {e}")
