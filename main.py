@@ -6938,7 +6938,8 @@ def _integrity_lookup_owner(assessment_id: str) -> str:
         return None
 
     aid = assessment_id.strip()
-    prefix = aid.split("-", 1)[0].upper()
+    parts = aid.split("-")
+    prefix = parts[0].upper() if parts else ""
 
     # Map prefix -> (table, id_column)
     table_map = {
@@ -6947,7 +6948,16 @@ def _integrity_lookup_owner(assessment_id: str) -> str:
         "MOCK": ("charvak_mock_sessions",      "session_id"),
         "CBAT": ("charvak_cbat_sessions",      "session_id"),
         "VERSANT": ("charvak_versant_sessions", "session_id"),
+        "IELTS-W": ("charvak_ielts_sessions", "session_id"),
+        "IELTS-R": ("charvak_ielts_sessions", "session_id"),
+        "IELTS-L": ("charvak_ielts_sessions", "session_id"),
+        "IELTS-S": ("charvak_ielts_sessions", "session_id"),
     }
+
+    # Session 40b: multi-dash IDs (IELTS-W-xxx) need two segments.
+    # Try single-segment first; fall back to two-segment if the map misses.
+    if prefix not in table_map and len(parts) >= 2:
+        prefix = "-".join(parts[:2]).upper()
 
     spec = table_map.get(prefix)
     if not spec:
