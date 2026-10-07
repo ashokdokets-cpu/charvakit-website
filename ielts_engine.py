@@ -73,9 +73,56 @@ class IELTSEngine:
         logger.info("IELTS Engine ready | AI: %s",
                     "ENABLED" if self.openai_api_key else "DISABLED")
 
+        # Session 40b - self-healing DDL for IELTS session table.
+        # Called on first import so the table exists on fresh databases.
+        # Same pattern as cbt_versant.
+        self._ensure_tables()
+
     # ============================================================
     # STATIC / INFO
     # ============================================================
+
+    def _ensure_tables(self) -> None:
+        """Session 40b - create IELTS session table if missing.
+
+        Self-healing DDL. Idempotent. Matches the pattern used by
+        cbt_versant, integrity_engine, and products_engine.
+        """
+        try:
+            from database import db
+            conn = db.get_pooled_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS charvak_ielts_sessions (
+                    session_id        TEXT PRIMARY KEY,
+                    email             TEXT NOT NULL,
+                    test_type         TEXT NOT NULL,
+                    content_ref       TEXT,
+                    status            TEXT NOT NULL DEFAULT 'in_progress',
+                    band_score        NUMERIC,
+                    details_json      JSONB NOT NULL DEFAULT '{}'::jsonb,
+                    started_at        TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    completed_at      TIMESTAMP WITHOUT TIME ZONE,
+                    integrity_summary JSONB DEFAULT '{}'::jsonb
+                )
+            """)
+            cur.execute("""
+                CREATE INDEX IF NOT EXISTS idx_ielts_sessions_email
+                    ON charvak_ielts_sessions (email)
+            """)
+            cur.execute("""
+                CREATE INDEX IF NOT EXISTS idx_ielts_sessions_type
+                    ON charvak_ielts_sessions (test_type)
+            """)
+            cur.execute("""
+                CREATE INDEX IF NOT EXISTS idx_ielts_sessions_status
+                    ON charvak_ielts_sessions (status)
+            """)
+            conn.commit()
+            cur.close()
+            db.release_pooled_connection(conn)
+        except Exception as e:
+            logger.error(f"_ensure_tables failed: {e}")
 
     def get_sections(self) -> Dict:
         """List IELTS Academic sections available for practice."""
