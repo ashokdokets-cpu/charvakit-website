@@ -11553,6 +11553,8 @@ async def ielts_writing_evaluate(request: Request):
         ielts_engine.complete_session(_sess_id, _band, details={
             "task": result.get("task"),
             "word_count": result.get("word_count"),
+            "min_words": result.get("min_words"),
+            "partial": result.get("partial"),
         })
 
     return result
@@ -11806,6 +11808,8 @@ async def ielts_speaking_evaluate(request: Request):
         _band = (result.get("evaluation") or {}).get("overall_band", 0) or 0
         ielts_engine.complete_session(_sess_id, _band, details={
             "response_count": result.get("response_count"),
+            "parts_covered": result.get("parts_covered"),
+            "partial": result.get("partial"),
         })
     return result
 

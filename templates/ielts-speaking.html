@@ -70,6 +70,9 @@
 
   <!-- Result -->
   <div id="result" class="card shadow-sm" style="display:none">
+    <div id="isPartialBanner" class="alert alert-warning mb-3" style="display:none;">
+      <strong>Partial submission</strong> &mdash; <span id="isPartialText"></span>
+    </div>
     <div class="card-body p-4">
       <h4 class="mb-3">Your Speaking Band Score</h4>
       <div class="text-center mb-4">
@@ -284,6 +287,7 @@ async function finishSession() {
   show('result');
   document.getElementById('overallBand').textContent = '…';
 
+
   const responses = SPEAKING_STATE.responses.filter(Boolean);
   if (!responses.length) {
     return speakErr('No answers recorded.');
@@ -303,6 +307,20 @@ async function finishSession() {
     const j = await r.json();
     if (j.status !== 'success') {
       return speakErr(j.message || 'Evaluation failed.');
+    }
+
+    // Session 40c: partial submission banner
+    var partialBanner = document.getElementById('isPartialBanner');
+    var partialText = document.getElementById('isPartialText');
+    if (j.partial && partialBanner && partialText) {
+      var covered = j.parts_covered || [];
+      var missing = [1, 2, 3].filter(function(p) { return covered.indexOf(p) === -1; });
+      partialText.textContent = 'You answered parts ' + (covered.join(', ') || 'none') +
+                                '. Part' + (missing.length > 1 ? 's ' : ' ') + missing.join(', ') +
+                                ' not attempted. Score may not reflect full ability.';
+      partialBanner.style.display = 'block';
+    } else if (partialBanner) {
+      partialBanner.style.display = 'none';
     }
     const ev = j.evaluation || {};
     document.getElementById('overallBand').textContent = (ev.overall_band || '—').toFixed ? ev.overall_band : ev.overall_band;
