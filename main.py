@@ -7064,8 +7064,12 @@ async def api_admin_assessment_integrity(request: Request, assessment_id: str):
             conn = db.get_connection()
             cur = conn.cursor()
             # Session 39-8b: prefix-based metadata lookup
-            aid_prefix = (assessment_id.split("-", 1)[0].upper() if assessment_id else "")
+            aid_parts = (assessment_id or "").split("-")
+            aid_prefix = aid_parts[0].upper() if aid_parts else ""
             meta_row = None
+            # Session 40b: multi-dash prefixes (IELTS-W-xxx) need two segments
+            if aid_prefix not in ("CAR", "MK", "MOCK", "CBAT", "VERSANT") and len(aid_parts) >= 2:
+                aid_prefix = "-".join(aid_parts[:2]).upper()
             if aid_prefix == "CAR":
                 cur.execute("""
                     SELECT email, role, industry, level, format, size,
@@ -7103,6 +7107,22 @@ async def api_admin_assessment_integrity(request: Request, assessment_id: str):
                            started_at, completed_at,
                            48 as num_questions
                     FROM charvak_versant_sessions
+                    WHERE session_id = %s
+                """, (assessment_id,))
+                meta_row = cur.fetchone()
+            elif aid_prefix.startswith("IELTS-"):
+                cur.execute("""
+                    SELECT email,
+                           'IELTS ' || test_type as role,
+                           '' as industry,
+                           '' as level,
+                           'ielts' as format,
+                           '' as size,
+                           band_score as score,
+                           (band_score >= 6.0) as passed,
+                           status, started_at, completed_at,
+                           NULL::integer as num_questions
+                    FROM charvak_ielts_sessions
                     WHERE session_id = %s
                 """, (assessment_id,))
                 meta_row = cur.fetchone()
@@ -7248,12 +7268,14 @@ async def api_admin_integrity_list(request: Request):
                 COUNT(*) as total_events,
                 COALESCE(a.role,        m.company_name, c.sub_test,
                          CASE WHEN v.session_id IS NOT NULL THEN 'English Assessment' END,
+                         CASE WHEN i.session_id IS NOT NULL THEN 'IELTS ' || i.test_type END,
                          '') as role,
                 COALESCE(a.industry, '') as industry,
                 COALESCE(a.level,    '') as level,
                 COALESCE(a.format,   CASE WHEN m.session_id IS NOT NULL THEN 'mock_drive'
                                           WHEN c.session_id IS NOT NULL THEN 'cbat'
                                           WHEN v.session_id IS NOT NULL THEN 'versant'
+                                          WHEN i.session_id IS NOT NULL THEN 'ielts'
                                           ELSE '' END) as format
             FROM charvak_assessment_integrity_events e
             LEFT JOIN charvak_career_assessments a
@@ -7264,8 +7286,11 @@ async def api_admin_integrity_list(request: Request):
                 ON c.session_id = e.assessment_id
             LEFT JOIN charvak_versant_sessions v
                 ON v.session_id = e.assessment_id
+            LEFT JOIN charvak_ielts_sessions i
+                ON i.session_id = e.assessment_id
             GROUP BY e.assessment_id, a.role, a.industry, a.level, a.format,
-                     m.company_name, m.session_id, c.sub_test, c.session_id, v.session_id
+                     m.company_name, m.session_id, c.sub_test, c.session_id,
+                     v.session_id, i.session_id, i.test_type
             ORDER BY MAX(e.occurred_at) DESC
         """)
         rows = cur.fetchall()
