@@ -1,6 +1,66 @@
 # Session Context - Charvak
 
 
+## Session 37 CLOSED (2026-10-07) - Wire the Career Engine trio to real data
+
+Three surfaces looked like products but two were hardcoded mockups.
+This session wired them to the real backends from Sessions 30-36.
+
+**Commit:** <hash> feat(career): Session 37 - wire the Career Engine trio to real data
+
+**What shipped:**
+
+Job Board (templates/job-board.html, full rewrite):
+- Was: 6 hardcoded jobs, prompt()-based Apply, localStorage state
+- Now: fetches /api/jobs/unified, renders 8 real items
+  (7 staffing + 1 gig), client-side filters, 'View & Apply'
+  navigates to the real detail page
+- Honest DoketsRB integration banner
+
+Training Engine (templates/training-engine.html, full rewrite):
+- Was: 3 fake courses, fake instructors, Coursera/Udemy links
+- Now: fetches /api/ai-course/catalog, renders the 31 real courses
+  with filters, sort, search; 'View Course' navigates to the real
+  detail page; AI-designed course callout to /ai-assessment
+- Removed external learning platform links
+
+Career Engine narrative (templates/career-engine.html, rewrite):
+- Was: 'Model 19' badge, stale external course links, no CTA
+- Now: 'Career Engine Overview', 'Your Career Journey - 7 Steps',
+  primary CTA to /career-center
+
+Navigation (templates/base.html):
+- Added 'My Career Center' to Services dropdown
+- Added 'My Career Center' to footer
+
+Cross-links (all three surfaces + career-v2):
+- /career-center panel: 'See the 7-step journey' link
+- /job-board: 'My Career Center' + 'Explore Training'
+- /training-engine: 'My Career Center' + 'See the 7-Step Journey'
+
+Fixed: nested anchor in career-v2.html panel header (37-3b).
+
+**Verified E2E:**
+- 8 real items on /job-board
+- 31 real courses on /training-engine
+- Filters, searches, and cross-links work
+- /career-engine and /career-center now distinguishable
+- Nav dropdown + footer both link to /career-center
+
+**Flagged (Session 38+):**
+- DoketsRB bidirectional sync (COMMITMENT.md line 3824)
+- Job posting as first-class feature
+- Personalized training views (needs readiness cert data)
+
+**Session 38 candidates:**
+- A (recommended): Admin UI for integrity events (Session 27 data)
+- B: Personalized training views (Job Board flag -> Training Engine)
+- C: Certificate round 2 (QR, watermark, multi-language)
+- D: AuditBot Continuous (recurring revenue)
+
+**Reminder:** Render Postgres password rotation still pending.
+
+
 ## Session 36 CLOSED (2026-10-07) - Two-tier AI course unlock
 
 The AI-designed course is now a real freemium product. Design is 50
