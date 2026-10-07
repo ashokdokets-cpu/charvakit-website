@@ -81,9 +81,65 @@ class CBTVersantSystem:
         logger.info("CBT Versant System ready (DB-backed) | AI: %s",
                     "ENABLED" if self.openai_api_key else "DISABLED")
 
-    # ============================================================
-    # INFO
-    # ============================================================
+        # Session 40a - self-healing DDL for Versant session tables.
+        # See _ensure_tables below. Called here so tables exist on
+        # first import even without running the migration.
+        self._ensure_tables()
+
+    def _ensure_tables(self) -> None:
+        """Session 40a - create Versant session + answer tables if missing.
+
+        Self-healing DDL. Idempotent. Matches the pattern used by
+        integrity_engine, products_engine, and other post-Tier-3 engines.
+        """
+        try:
+            from database import db
+            conn = db.get_pooled_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS charvak_versant_sessions (
+                    session_id      TEXT PRIMARY KEY,
+                    email           TEXT NOT NULL,
+                    status          TEXT NOT NULL DEFAULT 'in_progress',
+                    details_json    JSONB NOT NULL DEFAULT '{}'::jsonb,
+                    overall_score   NUMERIC,
+                    started_at      TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    completed_at    TIMESTAMP WITHOUT TIME ZONE,
+                    integrity_summary JSONB DEFAULT '{}'::jsonb
+                )
+            """)
+            cur.execute("""
+                CREATE INDEX IF NOT EXISTS idx_versant_sessions_email
+                    ON charvak_versant_sessions (email)
+            """)
+            cur.execute("""
+                CREATE INDEX IF NOT EXISTS idx_versant_sessions_status
+                    ON charvak_versant_sessions (status)
+            """)
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS charvak_versant_answers (
+                    answer_id       BIGSERIAL PRIMARY KEY,
+                    session_id      TEXT NOT NULL,
+                    section_id      TEXT NOT NULL,
+                    question_id     TEXT NOT NULL,
+                    question_text   TEXT,
+                    answer_text     TEXT,
+                    transcript      TEXT,
+                    answered_at     TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    CONSTRAINT charvak_versant_answers_unique
+                        UNIQUE (session_id, section_id, question_id)
+                )
+            """)
+            cur.execute("""
+                CREATE INDEX IF NOT EXISTS idx_versant_answers_session
+                    ON charvak_versant_answers (session_id)
+            """)
+            conn.commit()
+            cur.close()
+            db.release_pooled_connection(conn)
+        except Exception as e:
+            logger.error(f"_ensure_tables failed: {e}")
+
     def get_section_design(self, section_id: str) -> Dict:
         return self.SECTIONS.get(section_id, {"error": "Section not found"})
 
