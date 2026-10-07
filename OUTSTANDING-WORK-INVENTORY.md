@@ -405,3 +405,24 @@ New follow-ups flagged by Session 38:
   cross-assessment search (currently client-side only)
 
 Reminder: Render Postgres password rotation still pending (Session 19).
+
+## Session 39 closure (2026-10-07)
+
+Moved from open to resolved:
+- Integrity roll-out to Mock Drives - SHIPPED (39-4)
+- Integrity roll-out to CBAT - SHIPPED (39-5, with two bug fixes)
+- Shared CharvakIntegrity.renderBadge() - SHIPPED (39-7a)
+- Admin list + detail metadata for MK/CBAT - SHIPPED (39-8a, 39-8b)
+- CBAT page route - FIXED (39-5b, was missing since Session M-2)
+- cbat.html charvakFetch - FIXED (39-5c, was undefined)
+
+New follow-ups flagged by Session 39:
+- Systemic charvakFetch in base.html - three templates now duplicate
+  the pattern. One-line addition to base saves every future template.
+- Roll Layer A + badge to Versant + IELTS (Session 40 candidate A).
+  Needs a design decision on where session_id comes from - those
+  assessments don't have their own session tables yet.
+- Two CAR- rows show "— · —" (older sessions with no role metadata
+  in the DB). Cosmetic.
+
+Reminder: Render Postgres password rotation still pending (Session 19).

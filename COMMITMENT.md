@@ -3931,3 +3931,44 @@ Could start with just #1 + #2 for a v1 sync status.
 
 **Reminder:** Render Postgres password rotation still pending (Session 19).
 
+
+
+## Session 39 CLOSED (2026-10-07) - Integrity roll-out to Mock + CBAT
+
+Extended Session 38's integrity work to two more assessment types.
+
+**Commit chain:** 8e7607a → 2504a26 → 48905ca → 251e0d1 → f70c41e
+                  → 90a6290 → 9cae1ee → f6f9401 → 5ed18f4
+
+**What shipped:**
+- Prefix-based ownership lookup (_integrity_lookup_owner)
+- Public /api/integrity/public/{assessment_id} endpoint
+- CharvakIntegrity.renderBadge() shared renderer
+- Mock + CBAT result screens render the trust badge
+- Admin list + detail endpoints show real MK/CBAT metadata
+
+**Fixed along the way:**
+- CBAT page route was missing (unreachable since Session M-2)
+- cbat.html called window.charvakFetch() but never defined it
+
+**Files touched:**
+- main.py (+~120 lines: 3 routes, 1 helper)
+- integrity_engine.py (+~40 lines: get_public_summary)
+- static/js/integrity-capture.js (new, ~15K chars)
+- templates/ai-assessment.html (-222 lines, refactored)
+- templates/companies.html (-60 lines, refactored + wired)
+- templates/cbat.html (+~45 lines, wired + charvakFetch fix)
+- templates/admin-integrity-detail.html (unchanged - renders whatever
+  the API returns)
+
+**Session 40 candidates:**
+- A (recommended): Roll Layer A + badge to Versant + IELTS (Tier 2).
+  Needs a design decision: those assessments don't have their own
+  session tables, so where does the assessment_id come from?
+- B: Certificate round 2 (QR, watermark, multi-language)
+- C: AuditBot Continuous (recurring revenue)
+- D: Personalized training views on /training-engine
+- E: Docs + backup polish
+
+**Reminder:** Render Postgres password rotation still pending (Session 19).
+
