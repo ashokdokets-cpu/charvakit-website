@@ -1,105 +1,132 @@
 # Session Context - Charvak
 
-## Session 40b IN PROGRESS (2026-10-08) - IELTS persistence + backend lifecycle
 
-**Backend phase DONE. Frontend integrity phase remains.**
+## Session 40b CLOSED (2026-10-08) - IELTS persistence + integrity roll-out
 
-Session 40b extends the integrity roll-out to IELTS (4 sub-tests:
-writing, reading, listening, speaking). The backend session
-lifecycle is complete end-to-end and committed. The frontend
-integrity wiring (capture + trust badge) is deferred to a
-follow-up sitting.
+Session 40a extended the integrity pipeline to Versant. Session 40b
+does the same for IELTS (4 sub-tests: writing, reading, listening,
+speaking), and fixes a cluster of pre-existing IELTS bugs along the
+way.
 
-**Commits so far:**
+**Commits:**
 - 150015f  feat(ielts): Session 40b-1 - create IELTS session persistence table
 - ab499a1  feat(ielts): Session 40b-2a - engine session lifecycle methods
 - 6fcd3d7  feat(ielts): Session 40b-2b - start routes create sessions + fix missing tables
 - deacda8  feat(ielts): Session 40b-2c/3a-d - complete routes close sessions + frontends propagate session_id
+- c85d467  docs(session-40b): partial note - IELTS backend lifecycle done
+- 35cc66f  feat(integrity): Session 40b-4 + 40b-4b - IELTS prefixes in ownership helper
+- 9df36c7  feat(integrity): Session 40b-5 - admin list + detail endpoints show IELTS
+- d352bf9  feat(integrity): Session 40b-6/6b/6c - wire capture + trust badge into IELTS
+- c65b696  feat(ielts): Session 40b-7 - partial-credit tracking for reading + listening
 
 **What shipped:**
 
-1. New table `charvak_ielts_sessions` (10 columns, one row per
-   sub-test attempt). Session ID prefixes:
-   - `IELTS-W-XXXXXXXX` -> writing
-   - `IELTS-R-XXXXXXXX` -> reading
-   - `IELTS-L-XXXXXXXX` -> listening
-   - `IELTS-S-XXXXXXXX` -> speaking
+Backend:
+- New table `charvak_ielts_sessions` with 10 columns, one row per
+  sub-test attempt
+- Migration `20261008_ielts_sessions.sql` + self-healing DDL in
+  `ielts_engine._ensure_tables()`
+- `create_session(email, test_type, content_ref)` and
+  `complete_session(session_id, band_score, details)` methods
+- 4 start routes create sessions and return session_id
+- 4 complete routes close sessions on evaluate/score
+- 4 templates propagate session_id in the evaluate payload
 
-2. `ielts_engine.py` gains:
-   - `_ensure_tables()` (self-healing DDL on import)
-   - `create_session(email, test_type, content_ref)` 
-   - `complete_session(session_id, band_score, details)`
+Integrity layer:
+- `_integrity_lookup_owner` gains 4 IELTS prefixes (IELTS-W/R/L/S)
+- **Two-segment fallback** for multi-dash prefixes
+  (single-segment lookup first, then two-segment)
+- Admin list endpoint JOINs `charvak_ielts_sessions` and COALESCEs
+  role = 'IELTS {test_type}', format = 'ielts'
+- Admin detail endpoint gains the IELTS branch
 
-3. 4 start routes now create sessions:
-   - POST /api/ielts/writing/generate  -> returns session_id
-   - POST /api/ielts/reading/passage   -> returns session_id
-   - POST /api/ielts/listening/section -> returns session_id
-   - POST /api/ielts/speaking/generate -> returns session_id
+Frontend:
+- All 4 templates load `integrity-capture.js` + call
+  `CharvakIntegrity.init()` with a getter for the session ID
+- Badge slot + `CharvakIntegrity.renderBadge()` on each scorecard
+- Yellow partial-submission banner (reading + listening)
 
-4. 4 complete routes now close sessions:
-   - POST /api/ielts/writing/evaluate  -> complete_session (band = overall_band)
-   - POST /api/ielts/reading/score     -> complete_session (band = band_score)
-   - POST /api/ielts/listening/score   -> complete_session (band = band_score)
-   - POST /api/ielts/speaking/evaluate -> complete_session (band = evaluation.overall_band)
+Partial-credit handling:
+- `evaluate_reading` + `evaluate_listening` count answered (sel >= 0)
+- Response includes `answered_count` + `partial` flag
+- Persisted in `details_json`
+- Frontend shows banner when partial=True
 
-5. 4 templates propagate session_id:
-   - `IW.sessionId` (writing)
-   - `IR.sessionId` (reading)
-   - `IL.sessionId` (listening)
-   - `SPEAKING_STATE.sessionId` (speaking)
+**Pre-existing bugs fixed along the way (7):**
 
-**Pre-existing bugs fixed along the way:**
+1. **4 missing tables** — `charvak_ielts_reading_passages`,
+   `charvak_ielts_listening_sections`, `charvak_ielts_reading_attempts`,
+   `charvak_ielts_listening_attempts`. Engine code referenced them,
+   no migration ever created them. Silent failure at runtime.
 
-1. Four IELTS tables never created by any migration:
-   - charvak_ielts_reading_passages
-   - charvak_ielts_listening_sections
-   - charvak_ielts_reading_attempts
-   - charvak_ielts_listening_attempts
-   
-   Fix: migrations/20261008_ielts_reading_listening.sql + self-healing
-   DDL in `ielts_engine._ensure_tables()`.
+2. **`last_used_at` column missing** from `reading_passages` and
+   `listening_sections`. Engine's UPDATE queries referenced it.
 
-2. `last_used_at` column missing from reading_passages + listening_sections.
-   The engine's UPDATE queries reference it.
+3. **Migration file `#` comment syntax** — `20261008_ielts_reading_listening.sql`
+   had invalid `#` comments; needs `--`.
 
-3. Migration file `20261008_ielts_reading_listening.sql` had `#`
-   SQL comments (invalid syntax). Fixed to `--`.
+4. **Seed scripts target prod** — `scripts/seed_ielts_reading.py` and
+   `seed_ielts_listening.py` call `load_dotenv()` (which loads `.env` =
+   prod). Local seeding required passing `DATABASE_URL` explicitly.
 
-4. Seed scripts (scripts/seed_ielts_reading.py, seed_ielts_listening.py)
-   load `.env` (prod) by default. For local seeding we passed
-   DATABASE_URL explicitly. Flagged for cleanup.
+5. **3 missing commas after `session_id`** in template payloads.
+   The 40b-2c patcher inserted `session_id: XX.sessionId` without
+   a trailing comma in writing/reading/listening. Speaking was fine.
 
-5. Two reserved PowerShell variable collisions in test scripts:
-   `$host` (console host) and `$pid` (process ID). Documented.
+6. **1 missing comma before `session_id`** in writing template.
+   The `prompt: IW.promptText` line needed a comma after the insert.
+
+7. **`$host` and `$pid` PowerShell variable collisions** in test
+   scripts. Both are read-only built-in variables.
 
 **Verified E2E:**
 
-- Reading session `IELTS-R-A2C684404E33` started, Honey Bees
-  passage served, 10 answers submitted, band_score 4.5
-- DB row flipped from `in_progress` to `completed` with
-  completed_at timestamp
-- Per-question results with explanations still returned
+- 4 sessions created with correct prefixes
+  (IELTS-W/R/L/S + 12 hex chars)
+- Reading session completed (Honey Bees passage, band 3.5, 2/10)
+- Partial submission (6 of 10): banner renders, DB shows
+  partial=True, answered=6, band=4.5
+- Full submission (10 of 10): no banner, DB shows partial=False
+- Trust badge renders on all 4 result screens
+- Admin list shows format=ielts (1+ rows)
+- Regression: CBAT/VERSANT/MOCK/CAR still resolve correctly
 
-**What remains (next sitting):**
+**Patterns established:**
 
-| # | Patch | Effort |
-|---|---|---|
-| 40b-4 | Add 4 IELTS prefixes to `_integrity_lookup_owner` | 15 min |
-| 40b-5 | Extend list + detail endpoints with IELTS metadata | 40 min |
-| 40b-6 | Wire `CharvakIntegrity.init()` + trust badge on 4 result screens | 1 hr |
-| 40b-7 | Graceful partial-credit handling | 30 min |
-| 40b-8 | E2E test + full docs close-out | 45 min |
+- **Two-segment prefix fallback** in `_integrity_lookup_owner` —
+  single-segment lookup first, then two-segment when the map misses
+  and the ID has 2+ segments. Preserves CAR/CBAT/VERSANT behavior.
+- **Comma preservation rule** for JS object literal patches — when
+  inserting a field, verify both the preceding and following fields
+  end with commas as appropriate.
+- **Deterministic partial-credit tracking** — count answered vs total,
+  flag partial, render banner. Simpler than Versant's AI-calibrated
+  approach because IELTS scoring is objective.
 
-**Resume from HEAD `deacda8`.** All patches 40b-4 through 40b-8 are
-copy-adapts of the Versant pattern from Session 40a. Every mechanic
-is proven.
+**Session 40c candidates:**
+- A (recommended): Roll Layer A + badge to IELTS writing + speaking
+  (partial-credit handling; the writing/speaking scores are AI-generated,
+  so partial calibration is closer to Versant's pattern)
+- B: Certificate round 2 (QR, watermark, multi-language)
+- C: AuditBot Continuous (recurring revenue)
+- D: Personalized training views on /training-engine
+- E: Docs + backup polish
 
-**Full Session 40b close-out pending** after 40b-4 through 40b-8.
-This is a partial note, not the final close-out.
+**Follow-ups flagged:**
+- `charvakFetch` in `base.html` (still pending from Session 39)
+- Seed scripts env routing cleanup (loading `.env` instead of `.env.local`)
+- Versant `passed` boolean column (from Session 40a)
+- Render Postgres password rotation still pending (Session 19)
 
-**Reminder:** Render Postgres password rotation still pending
-(since Session 19).
+**Trust pipeline coverage: complete for all 5 assessment types:**
 
+| Assessment | Persistence | Capture | Badge | Admin | Partial |
+|---|---|---|---|---|---|
+| Career | ✅ | ✅ | ✅ | ✅ | n/a |
+| Mock | ✅ | ✅ | ✅ | ✅ | n/a |
+| CBAT | ✅ | ✅ | ✅ | ✅ | n/a |
+| Versant | ✅ | ✅ | ✅ | ✅ | ✅ |
+| IELTS | ✅ | ✅ | ✅ | ✅ | ✅ (reading/listening) |
 
 
 ## Session 40a CLOSED (2026-10-07) - Versant persistence + integrity roll-out

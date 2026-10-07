@@ -456,3 +456,63 @@ file is never left broken.
 **Follow-up flagged:**
 - Versant schema has no `passed` column. Add it and populate in
   complete_session (score >= threshold).
+
+### RESOLVED - IELTS persistence + integrity roll-out (2026-10-08, c65b696)
+
+IELTS had the same class of pre-existing bugs as Versant (40a): the
+engine code referenced tables and columns that no migration ever
+created. Every affected route failed silently.
+
+**What shipped (9 commits):**
+
+1. `charvak_ielts_sessions` table + migration + self-healing DDL
+2. `create_session` / `complete_session` on `ielts_engine.py`
+3. 4 start routes create sessions and return session_id
+4. 4 complete routes close sessions on evaluate/score
+5. 4 templates propagate session_id in the payload
+6. `_integrity_lookup_owner` gains 4 IELTS prefixes + two-segment
+   fallback for multi-dash prefixes
+7. Admin list endpoint JOINs IELTS sessions
+8. Admin detail endpoint gains IELTS metadata branch
+9. Trust badge + capture wired into all 4 templates
+10. Partial-credit tracking for reading + listening
+
+**Pre-existing bugs fixed (7):**
+
+- 4 missing tables: reading_passages, listening_sections,
+  reading_attempts, listening_attempts
+- `last_used_at` column missing from 2 tables
+- Migration file had `#` SQL comment syntax (invalid)
+- Seed scripts load `.env` (prod) instead of `.env.local`
+- 3 missing commas after `session_id:` in template payloads
+- 1 missing comma before `session_id:` in writing template
+- `$host` and `$pid` reserved PowerShell variable collisions
+
+**Two-segment prefix pattern (new):**
+
+`_integrity_lookup_owner` now tries single-segment prefixes first
+(CAR, CBAT, VERSANT), then falls back to two-segment (IELTS-W, IELTS-R)
+when the map misses and the ID has 2+ segments. Future prefixes
+following the two-segment shape plug in with a single map entry.
+
+**Comma preservation rule (new):**
+
+When patching a JS object literal by inserting a field, verify that
+the field before the insertion ends with a comma (if anything follows)
+and that the new field ends with a comma (if anything follows it).
+A missing comma produces a "Unexpected identifier" syntax error in
+the browser, easy to catch with a hard refresh.
+
+**Trust pipeline coverage: 5 of 5 assessment types.**
+
+Career, Mock, CBAT, Versant, IELTS all carry the full trust artifact
+now: capture events, admin visibility, badge on scorecard, and
+(honest) partial-credit handling where applicable.
+
+**Follow-ups flagged:**
+- `charvakFetch` belongs in `base.html` (still pending from Session 39)
+- Seed scripts should load `.env.local` (pattern documented in
+  `DEV-SETUP.md`, still needs applying to the IELTS seeds)
+- Versant `passed` boolean column (from Session 40a)
+- Partial-credit handling for IELTS writing + speaking (deferred to
+  Session 40c)

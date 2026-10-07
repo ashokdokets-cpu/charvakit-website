@@ -4018,3 +4018,61 @@ patterns.
 
 **Reminder:** Render Postgres password rotation still pending (Session 19).
 
+
+
+## Session 40b CLOSED (2026-10-08) - IELTS persistence + integrity
+
+Completes the assessment trust pipeline roll-out that started in
+Session 38. Every paid assessment now carries the trust artifact.
+
+**Commit chain:** 150015f -> ab499a1 -> 6fcd3d7 -> deacda8 -> c85d467
+                  -> 35cc66f -> 9df36c7 -> d352bf9 -> c65b696
+
+**What shipped:**
+- `charvak_ielts_sessions` table (one row per sub-test attempt)
+- `create_session` / `complete_session` engine methods
+- 4 start routes create sessions, 4 complete routes close them
+- 4 templates propagate session_id
+- `_integrity_lookup_owner` two-segment prefix fallback
+- Admin list + detail endpoints show IELTS metadata
+- Trust badge on all 4 IELTS result screens
+- Partial-credit tracking for reading + listening
+
+**Pre-existing bugs fixed (7):**
+- 4 missing IELTS tables
+- `last_used_at` column missing from 2 tables
+- Migration file `#` comment syntax
+- Seed scripts default to `.env` (prod)
+- 3 missing commas after session_id in template payloads
+- 1 missing comma before session_id in writing template
+- `$host` / `$pid` reserved PowerShell variable collisions
+
+**Files touched (this session):**
+- ielts_engine.py (+~250 lines: session lifecycle, answered count,
+  _ensure_tables extensions)
+- main.py (+~100 lines: 4 route edits, prefix fallback, admin
+  list + detail extensions)
+- templates/ielts-writing.html, ielts-reading.html,
+  ielts-listening.html, ielts-speaking.html (capture + badge +
+  partial banner)
+- migrations/20261008_ielts_sessions.sql (new)
+- migrations/20261008_ielts_reading_listening.sql (new)
+
+**Trust pipeline coverage: 5 of 5 assessment types.**
+
+**Session 40c candidates:**
+- A (recommended): Roll integrity to IELTS writing + speaking partial
+  handling (AI-calibrated, like Versant)
+- B: Certificate round 2 (QR, watermark, multi-language)
+- C: AuditBot Continuous (recurring revenue)
+- D: Personalized training views on /training-engine
+- E: Docs + backup polish
+
+**Follow-ups flagged:**
+- charvakFetch in base.html
+- Seed scripts env routing
+- Versant `passed` column
+- Render Postgres password rotation (Session 19)
+
+**Reminder:** Render Postgres password rotation still pending (Session 19).
+
