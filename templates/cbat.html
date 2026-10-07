@@ -92,6 +92,8 @@
                             </div>
                         </div>
 
+                        <div id="cbatIntegritySlot"></div>
+
                         <div class="d-grid gap-2">
                             <button class="btn btn-primary btn-lg" onclick="resetToSelect()">Try Another Sub-test</button>
                             <a href="/exam-prep" class="btn btn-outline-secondary">Back to Exam Prep</a>
@@ -362,6 +364,16 @@
         qs('resultTotal').textContent = j.total_questions;
 
         show('screen-result');
+
+        // Session 39-7c: render the Trust Score badge via the shared helper
+        try {
+            if (window.CharvakIntegrity && window.CharvakIntegrity.renderBadge) {
+                window.CharvakIntegrity.renderBadge({
+                    slotId: 'cbatIntegritySlot',
+                    assessmentId: state.sessionId
+                });
+            }
+        } catch (e) { /* silent */ }
     }
 
     window.resetToSelect = function() {
