@@ -104,10 +104,30 @@
 
 </div>
 
+<script src="/static/js/integrity-capture.js"></script>
 <script>
 // Session M-2 - CBAT client
 (function() {
     'use strict';
+
+    // ----------------------------------------------------------------
+    // Session 39-5c - HTTP helper with the standard auth headers.
+    // cbat.html had been calling window.charvakFetch() but the function
+    // was never defined. Same pattern used by every other template's
+    // inline fetches.
+    // ----------------------------------------------------------------
+    async function charvakFetch(url, options) {
+        options = options || {};
+        var token = localStorage.getItem('auth_token')
+            || localStorage.getItem('charvak_token')
+            || '';
+        options.headers = Object.assign({
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+        }, options.headers || {});
+        return fetch(url, options);
+    }
+    window.charvakFetch = charvakFetch;
 
     var state = {
         sessionId: null,
@@ -355,6 +375,32 @@
     // INIT
     // ============================================================
     document.addEventListener('DOMContentLoaded', loadSubTests);
+
+    // ========================================================================
+    // Session 39 - Integrity capture for CBAT
+    // ========================================================================
+    // state.sessionId is closure-scoped, so we expose a getter on window.
+    // The shared helper reads it via getAssessmentId.
+    // ========================================================================
+
+    window._cbatGetSessionId = function () {
+        return state.sessionId || null;
+    };
+
+    function _cbatInitIntegrity() {
+        if (typeof window.CharvakIntegrity === 'undefined') return;
+        window.CharvakIntegrity.init({
+            getAssessmentId: function () {
+                return window._cbatGetSessionId();
+            }
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', _cbatInitIntegrity);
+    } else {
+        _cbatInitIntegrity();
+    }
 })();
 </script>
 {% endblock %}

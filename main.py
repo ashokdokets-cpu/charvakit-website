@@ -5501,6 +5501,20 @@ async def mock_drive_page(request: Request):
     return template_response("companies.html", request, "Company Mock Drives - Charvak")
 
 
+
+# ========================================================================
+# Session 39-5b - CBAT page route (was never registered)
+# ========================================================================
+# Session M-2 shipped the CBAT engine + API + template, but the HTML
+# page route was missed. cbat.html has been orphaned since then.
+# Same pattern as /mock-drive (line ~5498) and /ai-assessment (line ~8153).
+# ========================================================================
+
+@app.get("/cbat", response_class=HTMLResponse)
+async def cbat_page(request: Request):
+    """RRB ALP Computer-Based Aptitude Test landing page."""
+    return template_response("cbat.html", request, "RRB ALP CBAT - Charvak")
+
 @app.get("/companies", response_class=HTMLResponse)
 async def companies_page(request: Request):
     """Companies brand pages listing."""
