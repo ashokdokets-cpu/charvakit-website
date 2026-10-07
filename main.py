@@ -6946,6 +6946,7 @@ def _integrity_lookup_owner(assessment_id: str) -> str:
         "MK":   ("charvak_mock_sessions",      "session_id"),
         "MOCK": ("charvak_mock_sessions",      "session_id"),
         "CBAT": ("charvak_cbat_sessions",      "session_id"),
+        "VERSANT": ("charvak_versant_sessions", "session_id"),
     }
 
     spec = table_map.get(prefix)
