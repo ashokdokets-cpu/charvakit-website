@@ -4076,3 +4076,24 @@ Session 38. Every paid assessment now carries the trust artifact.
 
 **Reminder:** Render Postgres password rotation still pending (Session 19).
 
+
+## Session 40c closure (2026-10-08)
+
+**Commit:** 668179e
+
+**Moved from open to resolved:**
+- IELTS writing + speaking partial-credit handling (was the last
+  structural gap in the assessment trust pipeline)
+- The v3 -> v4 hotfix on ielts-speaking.html (banner ordering)
+
+**New follow-up flagged by Session 40c:**
+- AI scoring relevance for IELTS writing + speaking - HIGH priority.
+  Off-topic submissions can still score points; on-topic partial
+  submissions can score 0. See KNOWN-ISSUES.md. Candidate for
+  Session 41.
+
+**Still pending (carried forward):**
+- `charvakFetch` helper belongs in `base.html` (Session 39 flag)
+- Seed scripts should load `.env.local` for local dev (Session 40b flag)
+- Versant `passed` boolean column (Session 40a flag)
+- Render Postgres password rotation (Session 19 flag)

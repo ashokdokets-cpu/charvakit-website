@@ -1,6 +1,88 @@
 # Session Context - Charvak
 
 
+## Session 40c CLOSED (2026-10-08) - IELTS writing + speaking partial-credit handling
+
+The final structural gap in the assessment trust pipeline. Writing and
+speaking are the two AI-scored IELTS sub-tests; they needed the same
+partial-credit treatment Versant received in 40a-9, calibrated for
+AI-scored flows.
+
+**Commit:** 668179e feat(ielts): Session 40c-1 - partial-credit handling
+for writing + speaking
+
+**What shipped (1 patch + 1 hotfix):**
+
+Writing (evaluate_writing):
+- Both the fallback and success returns gain
+    "partial": word_count < min_words
+- min_words is 150 for Task 1, 250 for Task 2
+- Response also carries word_count + min_words
+- Frontend: yellow banner
+    "You wrote N words. Minimum for this task is M words.
+     Task Response is capped at band 5.0."
+
+Speaking (evaluate_speaking):
+- Parts tracking: which of parts 1, 2, 3 have responses
+- Partial = any expected part missing
+- Response gains: partial, parts_covered, part_counts
+- Frontend: yellow banner
+    "You answered parts X. Part Y, Z not attempted.
+     Score may not reflect full ability."
+
+Routes (main.py):
+- Writing complete_session details carry partial + word_count + min_words
+- Speaking complete_session details carry partial + parts_covered + response_count
+
+**Hotfix during the session:**
+The v3 banner insertion for ielts-speaking.html landed ABOVE the fetch
+that defines `j`. Fix (v4) moved the banner block to inside the try,
+right after the `if (j.status !== 'success')` guard. Verified: the
+banner uses `j.partial` and `j` is in scope at that point.
+
+**Verified E2E:**
+- Writing partial (100 words on Task 2): banner renders, DB stores
+  partial=True, word_count=100, min_words=250
+- Writing full (252 words): banner does not render, partial=False
+- Speaking partial (parts 1+2 answered): banner renders listing the
+  missing part, DB stores partial=True, parts_covered=[1,2]
+- Trust badge + capture still work on both templates
+- No console errors on either result screen
+
+**Follow-up flagged (HIGH priority, its own session):**
+
+The AI scoring for writing + speaking does not reliably enforce
+topical relevance. Pasting off-topic text can still return a non-zero
+band score; conversely, a partial-but-on-topic submission scored 0
+with a feedback message about "missing responses." This is a prompt
+engineering problem, not a partial-credit problem. Logged in
+KNOWN-ISSUES.md as candidate for a dedicated session.
+
+**Trust pipeline coverage: complete for all 4 IELTS sub-tests + 5
+assessment types.**
+
+| Assessment | Persistence | Capture | Badge | Admin | Partial |
+|---|---|---|---|---|---|
+| Career | yes | yes | yes | yes | n/a |
+| Mock | yes | yes | yes | yes | n/a |
+| CBAT | yes | yes | yes | yes | n/a |
+| Versant | yes | yes | yes | yes | yes |
+| IELTS Writing | yes | yes | yes | yes | yes (new) |
+| IELTS Reading | yes | yes | yes | yes | yes |
+| IELTS Listening | yes | yes | yes | yes | yes |
+| IELTS Speaking | yes | yes | yes | yes | yes (new) |
+
+The assessment trust pipeline arc that started in Session 38 is
+now fully closed.
+
+**Session 41 candidates:**
+- A: AI scoring relevance fix for IELTS writing + speaking (own session)
+- B: Certificate round 2 (QR, watermark, multi-language)
+- C: AuditBot Continuous (recurring revenue)
+- D: Personalized training views on /training-engine
+- E: Docs + backup polish
+
+
 ## Session 40b CLOSED (2026-10-08) - IELTS persistence + integrity roll-out
 
 Session 40a extended the integrity pipeline to Versant. Session 40b
