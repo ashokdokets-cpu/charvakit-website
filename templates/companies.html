@@ -272,8 +272,15 @@
 
             // Scroll to results
             resultsBox.scrollIntoView({ behavior: "smooth", block: "center" });
-            // Session 39-6: render the Trust Score badge asynchronously
-            try { _renderMockIntegrityBadge(currentSessionId); } catch (e) { /* silent */ }
+            // Session 39-7b: render the Trust Score badge via the shared helper
+            try {
+                if (window.CharvakIntegrity && window.CharvakIntegrity.renderBadge) {
+                    window.CharvakIntegrity.renderBadge({
+                        slotId: 'mdIntegritySlot',
+                        assessmentId: currentSessionId
+                    });
+                }
+            } catch (e) { /* silent */ }
 
         } catch (e) {
             resultsBox.innerHTML = '<div class="alert alert-danger mt-3">Error: ' + esc(e.message) + '</div>';
@@ -298,73 +305,6 @@
     }
 
 
-    // ========================================================================
-    // Session 39-6 — Render Trust Score badge on a Mock result
-    // ========================================================================
-    // Fetches /api/integrity/public/{sessionId} and injects the badge
-    // into #mdIntegritySlot. Silent-fail — a dead backend never breaks
-    // the scorecard.
-    // ========================================================================
-
-    function _mockEsc(s) {
-        return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
-            return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
-        });
-    }
-
-    function _mockToggleIntegrity() {
-        var el = document.getElementById('mdIntegrityExplainer');
-        if (el) el.classList.toggle('open');
-    }
-
-    async function _renderMockIntegrityBadge(sessionId) {
-        var slot = document.getElementById('mdIntegritySlot');
-        if (!slot) return;
-        if (!sessionId) return;
-
-        try {
-            var r = await fetch('/api/integrity/public/' + encodeURIComponent(sessionId));
-            if (!r.ok) return;
-            var j = await r.json();
-            if (j.status !== 'success') return;
-
-            var level = j.risk_level || 'clean';
-            var icons = {
-                'clean':    '\uD83D\uDEE1\uFE0F',
-                'minor':    '\u2139\uFE0F',
-                'moderate': '\u26A0\uFE0F',
-                'elevated': '\uD83D\uDEA8'
-            };
-            var titles = {
-                'clean':    'Integrity Verified',
-                'minor':    'Minor signals detected',
-                'moderate': 'Multiple signals detected',
-                'elevated': 'Frequent signals detected'
-            };
-
-            var html = '';
-            html += '<div class="rd-integrity-card ' + _mockEsc(level) + '">';
-            html += '<div class="rd-integrity-icon">' + (icons[level] || icons.clean) + '</div>';
-            html += '<div class="flex-grow-1">';
-            html += '<p class="rd-integrity-title">' + _mockEsc(titles[level] || 'Integrity status') + '</p>';
-            html += '<p class="rd-integrity-msg">' + _mockEsc(j.message || '') + '</p>';
-            html += '<div class="rd-integrity-toggle"><a href="#" onclick="_mockToggleIntegrity();return false;">What does this mean?</a></div>';
-            html += '<div class="rd-integrity-explainer" id="mdIntegrityExplainer">';
-            html += '<strong>How to read this signal</strong>';
-            html += '<ul>';
-            html += '<li><b>What we capture:</b> paste events, tab switches, focus loss, and rapid input during the assessment.</li>';
-            html += '<li><b>What it means:</b> these are signals, not verdicts.</li>';
-            html += '<li><b>What it doesn&#39;t mean:</b> this is one data point alongside the score.</li>';
-            html += '<li><b>Verified</b> (green) means no signals were detected.</li>';
-            html += '</ul>';
-            html += '</div>';
-            html += '</div></div>';
-
-            slot.innerHTML = html;
-        } catch (e) {
-            // silent — badge simply doesn't render
-        }
-    }
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', _mockInitIntegrity);
