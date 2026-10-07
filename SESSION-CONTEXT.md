@@ -1,6 +1,87 @@
 # Session Context - Charvak
 
 
+## Session 41 CLOSED (2026-10-08) - IELTS topical-relevance scoring
+
+Closes the flag logged in Session 40c: IELTS writing and speaking
+AI scoring did not enforce topical relevance, so off-topic
+submissions could still receive a normal band score. Along the way,
+found and fixed a pre-existing production bug that made the whole
+relevance story silently ineffective.
+
+**Commits:**
+- b3fd1f6  feat(ielts): Session 41-1 - topical-relevance scoring for writing + speaking
+- 0f17fe9  feat(ielts): Session 41-2 - off-topic banners + fix writing prompt param
+
+**What shipped:**
+
+Engine (ielts_engine.py):
+- New `_topical_overlap()` helper (keyword-overlap, log-only).
+- `evaluate_writing` prompt now instructs the AI to verify the
+  essay addresses the task prompt; off-topic essays cap Task
+  Achievement at 3.0 and return `topical_relevance=false` +
+  `relevance_note`.
+- `evaluate_speaking` prompt now:
+    * tells the AI which parts were answered, and instructs it NOT
+      to cap the band for missing parts (regression fix - partial
+      submissions were scoring 0)
+    * verifies the responses address the topic; off-topic caps all
+      sub-bands at 3.0 and returns `topical_relevance=false`.
+- Both methods log a warning when a naive keyword-overlap check
+  disagrees with the AI's relevance judgment. Diagnostic signal,
+  never overrides the score.
+
+Frontend:
+- ielts-writing.html + ielts-speaking.html: red "Off-topic
+  response" banner above the yellow partial banner when
+  `topical_relevance === false`. Uses the AI's
+  `relevance_note` as the message.
+
+Root-cause fix (main.py):
+- The writing evaluate route read `data.get("prompt_text", "")`
+  but the frontend sends `{prompt: ...}`. The prompt never reached
+  the engine, so the AI could not judge topical relevance. Every
+  IELTS writing evaluation since the feature shipped was scored
+  without the prompt.
+- Fixed to read `prompt` first, fall back to `prompt_text`.
+
+Test harness (scripts/test_ielts_relevance.py, new):
+- 6 canned cases: on-topic full, on-topic partial, off-topic full,
+  off-topic short, speaking on-topic partial, speaking off-topic.
+- Asserts on topical_relevance, partial, and band caps.
+- ~\.03 per full run. Invoked manually after prompt changes.
+- Tracked via .gitignore whitelist (`!scripts/test_ielts_relevance.py`).
+
+**Verified E2E:**
+- Harness: 14/14 checks pass.
+- Browser (writing off-topic tea essay on road-safety prompt):
+  red banner + yellow partial banner, Task Response 3.0,
+  Overall Band 4.5, feedback explicitly notes the mismatch.
+- Browser (writing on-topic technology essay): no banners, all
+  bands 8.0, feedback praises the on-topic content.
+- Browser (speaking off-topic): red banner with the AI's note.
+- Browser (speaking on-topic partial): yellow partial banner only.
+- Trust badge + integrity capture still work on both templates.
+
+**Follow-up flagged:**
+- The harness is a manual script, not wired to CI. If a future
+  session wants a CI gate, `python scripts/test_ielts_relevance.py`
+  exiting non-zero on failure is the hook point.
+- Repo hygiene note: `.gitignore`'s `!scripts/*` whitelist has
+  duplicates (`update_geoip.py`, `ai_verify_questions.py`, etc.
+  appear twice). Cosmetic; not fixed.
+- The writing-evaluate route now accepts both `prompt` and
+  `prompt_text`. Once we confirm nothing else sends
+  `prompt_text`, the fallback can be removed. Low priority.
+
+**Session 42 candidates:**
+- A: Certificate round 2 (QR, watermark, multi-language)
+- B: AuditBot Continuous (recurring revenue)
+- C: Personalized training views on /training-engine
+- D: Docs + backup polish
+- E: Wire scripts/test_ielts_relevance.py into a pre-deploy check
+
+
 ## Session 40c CLOSED (2026-10-08) - IELTS writing + speaking partial-credit handling
 
 The final structural gap in the assessment trust pipeline. Writing and

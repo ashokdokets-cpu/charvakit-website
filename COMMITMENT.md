@@ -4097,3 +4097,31 @@ Session 38. Every paid assessment now carries the trust artifact.
 - Seed scripts should load `.env.local` for local dev (Session 40b flag)
 - Versant `passed` boolean column (Session 40a flag)
 - Render Postgres password rotation (Session 19 flag)
+
+## Session 41 closure (2026-10-08)
+
+**Commits:** b3fd1f6 (engine + harness) + 0f17fe9 (frontend + route fix)
+
+**Moved from open to resolved:**
+- IELTS writing + speaking topical-relevance scoring. Off-topic
+  submissions now cap Task Achievement / Task Response at 3.0 and
+  set topical_relevance=false. The AI's relevance_note is rendered
+  as a red banner above the existing partial-credit banner.
+- Root-cause bug: the writing evaluate route read
+  `data.get("prompt_text", "")` but the frontend sends
+  `{prompt: ...}`. The prompt never reached the engine. Fixed to
+  read `prompt` first, `prompt_text` fallback.
+
+**New follow-up flagged by Session 41:**
+- Wire scripts/test_ielts_relevance.py into a pre-deploy check
+  (exit code 1 on failure is already there; a CI hook is the work).
+- Repo hygiene: `.gitignore`'s scripts whitelist has duplicate
+  entries. Cosmetic.
+- Once confirmed, remove the `prompt_text` fallback in the writing
+  route.
+
+**Still pending (carried forward):**
+- charvakFetch helper belongs in base.html (Session 39 flag)
+- Seed scripts should load .env.local for local dev (Session 40b flag)
+- Versant passed boolean column (Session 40a flag)
+- Render Postgres password rotation (Session 19 flag)

@@ -4,6 +4,47 @@
 **Last updated:** 2026-09-28 (Session C)
 **Purpose:** Central registry for bugs, dead code, and design issues found during the persistence project. Every session appends to this file. Session I resolves what's still open.
 
+### RESOLVED - IELTS writing + speaking topical relevance (2026-10-08, b3fd1f6 + 0f17fe9)
+
+Session 40c flagged that the IELTS writing + speaking AI scoring
+did not enforce topical relevance. Off-topic submissions could
+receive a normal band score; on-topic partial submissions could
+score 0.
+
+Session 41 fixes both:
+
+1. Prompt hardening in `evaluate_writing` and `evaluate_speaking`:
+   the AI is now instructed to verify the response addresses the
+   prompt. Off-topic responses cap Task Achievement / Task Response
+   (or all sub-bands, for speaking) at 3.0 and set
+   `topical_relevance=false` + `relevance_note`.
+
+2. Speaking prompt explicitly tells the AI which parts were
+   answered, and instructs it NOT to cap the band for missing
+   parts. This closes the "partial scored 0" regression.
+
+3. Frontend red banner above the yellow partial banner when
+   `topical_relevance === false`, showing the AI's
+   `relevance_note`.
+
+4. Root-cause fix: the writing evaluate route read
+   `data.get("prompt_text", "")` while the frontend sends
+   `{prompt: ...}`. The prompt never reached the engine.
+   Every IELTS writing evaluation since the feature shipped was
+   scored without the prompt. Now reads `prompt` with a
+   `prompt_text` fallback.
+
+Verified:
+- scripts/test_ielts_relevance.py: 14/14 (6 canned cases)
+- Browser off-topic writing: red + yellow banners, TR 3.0,
+  overall 4.5, feedback notes the mismatch
+- Browser on-topic writing: no banners, all bands 8.0
+- Browser off-topic speaking: red banner with the AI's note
+- Browser on-topic partial speaking: yellow partial banner only
+
+Verdict: RESOLVED.
+
+
 **Legend:** 🔴 data integrity | 🟠 feature gap | 🟡 cosmetic | 🟢 hygiene
 
 ---
