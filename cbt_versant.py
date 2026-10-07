@@ -416,7 +416,17 @@ class CBTVersantSystem:
             )
         summary = "\n\n".join(summary_lines)
 
-        scores = self._score_versant(summary, len(rows))
+        # Session 40a-9: compute partial flag from response ratio
+        total_count = 48
+        answered_count = len(rows)
+        is_partial = answered_count < total_count
+
+        scores = self._score_versant(
+            summary, len(rows),
+            partial=is_partial,
+            answered_count=answered_count,
+            total_count=total_count,
+        )
         if scores is None:
             return {"status": "error", "message": "AI scoring unavailable"}
 
@@ -452,21 +462,34 @@ class CBTVersantSystem:
                 score=float(scores.get("overall_score", 0)),
                 total_questions=len(rows),
                 correct_answers=0,
-                details={"scores": scores},
+                details={"scores": scores, "partial": is_partial, "answered_count": answered_count, "total_count": total_count},
             )
         except Exception as e:
             logger.warning(f"Versant persist to assessment_results failed: {e}")
 
-        return {"status": "success", "session_id": session_id, "scoring": scores}
+        return {"status": "success", "session_id": session_id, "scoring": scores,
+                "partial": is_partial, "answered_count": answered_count, "total_count": total_count}
 
-    def _score_versant(self, summary: str, response_count: int) -> Optional[Dict]:
+    def _score_versant(self, summary: str, response_count: int,
+                      partial: bool = False, answered_count: int = 0,
+                      total_count: int = 0) -> Optional[Dict]:
         """Call OpenAI to score on 5 Versant criteria."""
         if not self.openai_api_key:
             return None
+        partial_note = ""
+        if partial and total_count > 0:
+            partial_note = (
+                f"\n\nIMPORTANT: This is a PARTIAL submission. The candidate "
+                f"answered only {answered_count} of {total_count} questions. "
+                f"Score accordingly with reduced confidence and mention this "
+                f"limitation in your feedback."
+            )
+
         prompt = (
             "You are a certified Versant English Test examiner. Score the candidate's "
             "performance on the 5 official Versant criteria.\n\n"
-            f"Candidate responses ({response_count} total):\n{summary[:6000]}\n\n"
+            f"Candidate responses ({response_count} total):\n{summary[:6000]}"
+            f"{partial_note}\n\n"
             "Return ONLY valid JSON:\n"
             "{\n"
             '  "overall_score": 0,\n'
@@ -475,10 +498,13 @@ class CBTVersantSystem:
             '  "vocabulary": 0,\n'
             '  "sentence_mastery": 0,\n'
             '  "coherence": 0,\n'
+            '  "confidence": "high",\n'
             '  "feedback": "3-5 sentences of specific, constructive feedback."\n'
             "}\n\n"
             "Scores are 20-80 (Versant scale). Be honest — most candidates land 30-60. "
-            "Empty or nonsense answers should score 20."
+            "Empty or nonsense answers should score 20. "
+            "The confidence field must be 'high' if the candidate answered all "
+            "questions, 'reduced' for a partial submission."
         )
         try:
             import requests

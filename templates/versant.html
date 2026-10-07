@@ -107,6 +107,9 @@
 
   <!-- ============ SCORECARD ============ -->
   <div id="scoreCard" style="display:none;">
+    <div id="vsPartialBanner" class="alert alert-warning mb-4" style="display:none;">
+      <strong>Partial submission</strong> &mdash; <span id="vsPartialText"></span>
+    </div>
     <div class="vs-card text-center mb-4">
       <div class="text-uppercase small text-muted mb-2">Overall Score</div>
       <div class="vs-score-big" id="scoreBig">&mdash;</div>
@@ -414,7 +417,7 @@ async function submitTest() {
       var detail = j.message || j.detail || JSON.stringify(j);
       throw new Error('Scoring failed: ' + detail);
     }
-    showScorecard(j.scoring);
+    showScorecard(j.scoring, j.partial, j.answered_count, j.total_count);
   } catch (e) {
     document.getElementById('submitError').textContent = e.message;
     document.getElementById('submitError').style.display = 'block';
@@ -423,9 +426,21 @@ async function submitTest() {
   }
 }
 
-function showScorecard(scoring) {
+function showScorecard(scoring, partial, answeredCount, totalCount) {
   document.getElementById('completeCard').style.display = 'none';
   document.getElementById('scoreCard').style.display = 'block';
+
+  // Session 40a-9: show partial submission warning if applicable
+  var partialBanner = document.getElementById('vsPartialBanner');
+  var partialText = document.getElementById('vsPartialText');
+  if (partial && partialBanner && partialText) {
+    partialText.textContent = 'You answered ' + (answeredCount || 0) + ' of ' +
+                              (totalCount || 48) + ' questions. The score below is ' +
+                              'not comparable to a full-test result.';
+    partialBanner.style.display = 'block';
+  } else if (partialBanner) {
+    partialBanner.style.display = 'none';
+  }
   document.getElementById('scoreBig').textContent = scoring.overall_score || '-';
   var criteria = [
     ['Pronunciation', scoring.pronunciation],
