@@ -330,6 +330,32 @@ class IELTSEngine:
     # WRITING - band scoring
     # ============================================================
 
+    @staticmethod
+    def _topical_overlap(prompt_text: str, response_text: str) -> float:
+        """Keyword-overlap sanity check between prompt and response.
+
+        Returns 0.0-1.0. LOG-ONLY - never overrides the AI score.
+        Used to detect when the AI and a naive overlap check disagree.
+        """
+        import re as _re
+        STOP = {
+            "the","a","an","and","or","but","of","to","in","on","for","with",
+            "is","are","was","were","be","been","being","this","that","these",
+            "those","it","its","as","at","by","from","about","into","over",
+            "your","you","i","we","they","he","she","them","their","our",
+            "what","which","who","when","where","why","how","do","does","did"
+        }
+        def _toks(s):
+            return {w for w in _re.findall(r"[a-zA-Z]{3,}", (s or "").lower())
+                    if w not in STOP}
+        pt = _toks(prompt_text)
+        rt = _toks(response_text)
+        if not pt:
+            return 1.0
+        if not rt:
+            return 0.0
+        return len(pt & rt) / len(pt)
+
     def evaluate_writing(self, essay: str, task: int = 2,
                          prompt_text: str = "", email: Optional[str] = None) -> Dict:
         """
@@ -366,6 +392,12 @@ class IELTSEngine:
             "- Each criterion is scored on a 0-9 band scale in 0.5 increments\n"
             "- Overall band = average of 4 criteria, rounded to nearest 0.5\n"
             "- If word count is below minimum, cap Task Achievement/Response at 5.0\n"
+            "- FIRST, verify the essay addresses the task prompt. If the essay is"
+            "  clearly off-topic (does not discuss the given prompt subject), set"
+            "  topical_relevance=false and cap task_achievement_or_response at 3.0."
+            "- If the essay is on-topic but under the word minimum, apply the"
+            "  existing cap and set topical_relevance=true."
+            "- Otherwise set topical_relevance=true."
             "- Be honest and calibrated - do not inflate\n\n"
             "Return a JSON object: {\n"
             f'  "task_achievement_or_response": <band 0-9>,\n'
@@ -379,12 +411,25 @@ class IELTSEngine:
             '    "lexical_resource": "2-3 sentence feedback",\n'
             '    "grammatical_range_accuracy": "2-3 sentence feedback"\n'
             '  },\n'
+            '  "topical_relevance": true or false,'
+            '  "relevance_note": "one sentence explaining the relevance judgment",\n'
             '  "strengths": ["...", "...", "..."],\n'
             '  "improvements": ["...", "...", "..."]\n'
             "}"
         )
 
         result = self._ai_json(eval_prompt, max_tokens=1200, temperature=0.3)
+
+        # Session 41: log-only topical-overlap sanity check
+        try:
+            _overlap = self._topical_overlap(prompt_text, essay)
+            if _overlap < 0.05 and word_count > 30:
+                logger.warning(
+                    f"IELTS writing topical overlap low ({_overlap:.3f}); "
+                    f"ai_topical_relevance={result.get('topical_relevance') if result else None}"
+                )
+        except Exception:
+            pass
 
         if not result or "overall_band" not in result:
             # Fallback - heuristic score based on word count only
@@ -410,6 +455,8 @@ class IELTSEngine:
                 "improvements": [],
                 "message": ("AI scoring unavailable. Essay saved for review. "
                             "Word count: " + str(word_count)),
+                "topical_relevance": None,
+                "relevance_note": "AI scoring unavailable",
                 "partial": word_count < min_words,
             }
 
@@ -429,6 +476,8 @@ class IELTSEngine:
             "strengths": result.get("strengths", []),
             "improvements": result.get("improvements", []),
             "criterion_1_label": criterion_1,
+            "topical_relevance": result.get("topical_relevance", True),
+            "relevance_note": result.get("relevance_note", "on-topic"),
             "partial": word_count < min_words,
         }
 
@@ -982,6 +1031,14 @@ class IELTSEngine:
             "You are a certified IELTS Speaking examiner. Score the candidate's "
             "performance on the 4 official IELTS Speaking criteria.\n\n"
             f"Overall topic: {topic or 'not specified'}\n\n"
+            f"Candidate answered parts: {sorted(parts_covered) or 'none'} of 1,2,3.\n\n"
+            "CRITICAL scoring context:\n"
+            "- If some parts are missing, do NOT score them as if answered poorly. "
+            "Score only the parts present. Describe incompleteness in feedback. "
+            "Do NOT cap overall_band to 0 for missing parts.\n"
+            "- FIRST, verify the responses address the given topic. If clearly "
+            "off-topic, set topical_relevance=false and cap ALL sub-bands at 3.0.\n"
+            "- Otherwise set topical_relevance=true.\n\n"
             f"Transcribed responses:\n{summary}\n\n"
             "Return ONLY valid JSON:\n"
             "{\n"
@@ -990,6 +1047,8 @@ class IELTSEngine:
             '  "grammatical_range": 0.0,\n'
             '  "pronunciation": 0.0,\n'
             '  "overall_band": 0.0,\n'
+            '  "topical_relevance": true or false,\n'
+            '  "relevance_note": "one sentence",'
             '  "feedback": "3-5 sentences of specific, constructive feedback."\n'
             "}\n\n"
             "Bands are 0-9 in 0.5 increments. Pronunciation is estimated from "
@@ -998,6 +1057,18 @@ class IELTSEngine:
         )
 
         parsed = self._ai_json(prompt, max_tokens=600, temperature=0.3)
+
+        # Session 41: log-only topical-overlap sanity check
+        try:
+            _concat = " ".join((r.get("transcript", "") or "") for r in responses)
+            _overlap = self._topical_overlap(topic, _concat)
+            if _overlap < 0.05 and len(_concat.split()) > 30:
+                logger.warning(
+                    f"IELTS speaking topical overlap low ({_overlap:.3f}); "
+                    f"ai_topical_relevance={parsed.get('topical_relevance') if parsed else None}"
+                )
+        except Exception:
+            pass
 
         if not parsed:
             return {"status": "error", "message": "AI scoring unavailable"}
