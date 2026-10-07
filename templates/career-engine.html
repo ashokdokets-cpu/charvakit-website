@@ -1,47 +1,53 @@
 {% extends "base.html" %}
-{% block title %}Career Engine - Charvak IT Consulting Pvt Ltd{% endblock %}
+{% block title %}Your Career Journey — 7 Steps | Charvak{% endblock %}
 {% block content %}
 <div class="page-hero bg-gradient-primary text-white py-5">
     <div class="container py-4">
-        <span class="badge bg-success mb-2 px-3 py-2">Model 19</span>
-        <h1 class="display-4 fw-bold">Charvak Career Engine</h1>
-        <p class="lead">Complete Talent Lifecycle — Resume to Hired. Powered by DoketsRB + Charvak.</p>
+        <span class="badge bg-success mb-2 px-3 py-2">Career Engine Overview</span>
+        <h1 class="display-4 fw-bold">Your Career Journey — 7 Steps</h1>
+        <p class="lead">Resume to Hired. One integrated pipeline across DoketsRB + Charvak.</p>
+        <div class="mt-4">
+            <a href="/career-center" class="btn btn-light btn-lg me-2">Go to your Career Center &rarr;</a>
+            <a href="#steps" class="btn btn-outline-light btn-lg">See the 7 steps</a>
+        </div>
     </div>
 </div>
 
 <div class="container py-5">
-    <!-- Integration Note -->
+
+    <!-- Two-Platform Integration Note -->
     <div class="alert alert-info mb-5">
         <div class="row align-items-center">
             <div class="col-md-8">
                 <h2 class="as-h5">Two Platforms, One Journey</h2>
-                <p class="mb-0"><strong>DoketsRB.com</strong> handles Resume Building, Job Tracking & Skill Analysis. <strong>Charvakit.com</strong> handles Job Board, Training, Verification & Placement. They sync seamlessly.</p>
+                <p class="mb-0"><strong>DoketsRB.com</strong> handles Resume Building, Job Tracking &amp; Skill Analysis. <strong>Charvakit.com</strong> handles Job Board, Training, Verification &amp; Placement.</p>
             </div>
             <div class="col-md-4 text-center">
                 <a href="https://doketsrb.com" target="_blank" class="btn btn-outline-primary me-2">Go to DoketsRB</a>
-                <a href="#steps" class="btn btn-primary">Start Journey</a>
+                <a href="/career-center" class="btn btn-primary">My Career Center</a>
             </div>
         </div>
     </div>
 
     <!-- 7-Step Pipeline -->
-    <h3 id="steps" class="mb-4 text-center">Your Career Journey — 7 Steps</h3>
-    
+    <h3 id="steps" class="mb-4 text-center">The 7-Step Pipeline</h3>
+
     <div class="row g-4">
+
         <!-- Step 1 -->
         <div class="col-lg-4 col-md-6">
             <div class="card h-100 border-0 shadow-sm" style="border-top:4px solid #3b82f6;">
                 <div class="card-body p-4">
                     <span class="badge bg-info text-dark mb-2">DoketsRB</span>
                     <h3>Step 1: Build Your Resume</h3>
-                    <p class="text-muted">AI-powered resume builder. Professional templates. ATS-friendly formats. Get your resume ready in minutes.</p>
+                    <p class="text-muted">AI-powered resume builder. Professional templates. ATS-friendly formats.</p>
                     <ul class="list-unstyled">
                         <li class="mb-2">AI Resume Generator</li>
                         <li class="mb-2">Multiple Templates</li>
-                        <li class="mb-2">Download & Share</li>
+                        <li class="mb-2">Download &amp; Share</li>
                     </ul>
                     <a href="https://doketsrb.com" target="_blank" class="btn btn-primary w-100">Build Resume on DoketsRB</a>
-               </div>
+                </div>
             </div>
         </div>
 
@@ -50,18 +56,17 @@
             <div class="card h-100 border-0 shadow-sm" style="border-top:4px solid #10b981;">
                 <div class="card-body p-4">
                     <span class="badge bg-primary mb-2">Charvak</span>
-                    <h3>Step 2: Find & Track Jobs</h3>
-                    <p class="text-muted">Browse jobs posted by companies. Submit your DoketsRB resume. Track every application.</p>
+                    <h3>Step 2: Find &amp; Track Jobs</h3>
+                    <p class="text-muted">Browse open roles across our unified feed. Submit your profile. Track every application.</p>
                     <ul class="list-unstyled">
-                        <li class="mb-2">Browse Open Positions</li>
-                        <li class="mb-2">Post Jobs (for Employers)</li>
-                        <li class="mb-2">Track Applications</li>
+                        <li class="mb-2">Unified Job Board</li>
+                        <li class="mb-2">Public + Staffing Roles</li>
+                        <li class="mb-2">Application Tracking</li>
                     </ul>
                     <a href="/job-board" class="btn btn-primary w-100">Go to Job Board</a>
-               </div>
+                </div>
             </div>
         </div>
-
 
         <!-- Step 3 -->
         <div class="col-lg-4 col-md-6">
@@ -69,27 +74,27 @@
                 <div class="card-body p-4">
                     <span class="badge bg-info text-dark mb-2">DoketsRB</span>
                     <h3>Step 3: Prepare for Interviews</h3>
-                    <p class="text-muted">AI mock interviews. Question banks. Skill gap analysis. Get job-ready.</p>
+                    <p class="text-muted">AI mock interviews. Role-calibrated question banks. Skill gap analysis.</p>
                     <ul class="list-unstyled">
                         <li class="mb-2">AI Mock Interviews</li>
-                        <li class="mb-2">500+ Question Bank</li>
+                        <li class="mb-2">Role-Calibrated Q&amp;A</li>
                         <li class="mb-2">Skill Gap Analyzer</li>
                     </ul>
                     <a href="/interview-prep" class="btn btn-primary w-100">Prepare for Interviews</a>
-               </div>
+                </div>
             </div>
         </div>
 
-        <!-- Step 4: Micro-Internship -->
+        <!-- Step 4 -->
         <div class="col-lg-4 col-md-6">
             <div class="card h-100 border-0 shadow-sm" style="border-top:4px solid #10b981;">
                 <div class="card-body p-4">
-                    <span class="badge bg-success mb-2">Charvak 🆕</span>
+                    <span class="badge bg-success mb-2">Charvak</span>
                     <h3>Step 4: Get Real Experience</h3>
-                    <p class="text-muted">Micro-Internship: Work on real company projects for 2 weeks. Build your portfolio. Free.</p>
+                    <p class="text-muted">Micro-Internship: work on real company projects. Build your portfolio.</p>
                     <ul class="list-unstyled">
                         <li class="mb-2">Real Company Projects</li>
-                        <li class="mb-2">AI-Reviewed Code</li>
+                        <li class="mb-2">AI-Reviewed Work</li>
                         <li class="mb-2">Verified Portfolio</li>
                     </ul>
                     <a href="/micro-internship" class="btn btn-primary w-100">Explore Micro-Internships</a>
@@ -102,16 +107,16 @@
         <div class="col-lg-4 col-md-6">
             <div class="card h-100 border-0 shadow-sm" style="border-top:4px solid #8b5cf6;">
                 <div class="card-body p-4">
-                    <span class="badge bg-primary mb-2">Charvak + Global</span>
-                    <h3>Step 5: Train & Upskill</h3>
-                    <p class="text-muted">Courses from Charvak trainers + Coursera, Udemy, edX, Pluralsight. Fill skill gaps.</p>
+                    <span class="badge bg-primary mb-2">Charvak</span>
+                    <h3>Step 5: Train &amp; Upskill</h3>
+                    <p class="text-muted">31 Charvak courses + AI-designed courses for your specific gaps.</p>
                     <ul class="list-unstyled">
-                        <li class="mb-2">Charvak Trainers</li>
-                        <li class="mb-2">Third-Party Providers</li>
-                        <li class="mb-2">Request Custom Training</li>
+                        <li class="mb-2">Curated Catalog</li>
+                        <li class="mb-2">AI-Designed for Your Gaps</li>
+                        <li class="mb-2">Certificates on Completion</li>
                     </ul>
                     <a href="/training-engine" class="btn btn-primary w-100">Explore Training</a>
-               </div>
+                </div>
             </div>
         </div>
 
@@ -121,14 +126,14 @@
                 <div class="card-body p-4">
                     <span class="badge bg-primary mb-2">Charvak</span>
                     <h3>Step 6: Background Verification</h3>
-                    <p class="text-muted">Identity, education, employment checks. Third-party agencies welcome.</p>
+                    <p class="text-muted">Identity, education, and employment checks. Escrow protected.</p>
                     <ul class="list-unstyled">
-                        <li class="mb-2">6 Types of Checks</li>
-                        <li class="mb-2">Third-Party Providers</li>
+                        <li class="mb-2">Multi-Type Checks</li>
+                        <li class="mb-2">Third-Party Partners</li>
                         <li class="mb-2">Escrow Protected</li>
                     </ul>
                     <a href="/background-verification" class="btn btn-primary w-100">Start Verification</a>
-               </div>
+                </div>
             </div>
         </div>
 
@@ -137,18 +142,25 @@
             <div class="card h-100 border-0 shadow-sm" style="border-top:4px solid #ec4899;">
                 <div class="card-body p-4">
                     <span class="badge bg-primary mb-2">Charvak</span>
-                    <h3>Step 7: Get Hired!</h3>
+                    <h3>Step 7: Get Hired</h3>
                     <p class="text-muted">Placement by Charvak. Pay only on success. Escrow protected.</p>
                     <ul class="list-unstyled">
-                        <li class="mb-2">Permanent: 8.33% CTC</li>
-                        <li class="mb-2">Contract-to-Hire: 12%</li>
-                        <li class="mb-2">Contract: 15%</li>
+                        <li class="mb-2">Permanent / Contract-to-Hire</li>
+                        <li class="mb-2">Verified Roles Only</li>
+                        <li class="mb-2">Dokets VouchAI Escrow</li>
                     </ul>
                     <a href="/reverse-staffing" class="btn btn-primary w-100">Get Placed</a>
-                    <p class="small text-muted mt-2">Powered by Dokets VouchAI Escrow</p>
                 </div>
             </div>
         </div>
-     </div>
+
+    </div>
+
+    <!-- Bottom CTA -->
+    <div class="text-center mt-5">
+        <p class="text-muted mb-2">Ready to see where you stand?</p>
+        <a href="/career-center" class="btn btn-primary btn-lg me-2">Go to your Career Center &rarr;</a>
+        <a href="/ai-assessment" class="btn btn-outline-primary btn-lg">Take a Free Readiness Check</a>
+    </div>
 </div>
 {% endblock %}
