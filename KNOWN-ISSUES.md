@@ -323,3 +323,30 @@ analytics) is still future work.
 **Engine:** integrity_engine.py
 **Routes:** POST /api/integrity/event, GET /api/admin/career-assessment/{aid}/integrity
 **Verification:** 8-scenario curl matrix + engine unit test + browser E2E.
+
+
+### RESOLVED — Admin UI for integrity events + public Trust Score badge (2026-10-07, 33cb2f6)
+
+Session 27 shipped the integrity engine (event capture). Session 38
+shipped the surfaces that make it useful:
+
+- `/admin/integrity-events` — list of all assessments with integrity
+  events, sorted by risk level, filterable by risk and email/ID
+- `/admin/integrity-events/{aid}` — full event timeline with metadata
+  card and per-type filters
+- `/api/admin/integrity-events` — new admin list endpoint
+- `GET /api/readiness/{cert_id}/integrity` — public endpoint returning
+  only {risk_level, verified, total_events, message}
+- `integrity_engine.get_public_summary()` — strips per-type counts and
+  timestamps so the public badge can't leak assessment detail
+- Trust Score badge on `/readiness/{id}` — 4 states, explainer collapse,
+  silent-fail
+
+**Verified:** 21 assessments in the list, 87-event detail renders all
+five event types, clean + elevated badge states both confirmed on the
+certificate. Reverted after the elevated test — cert back to clean.
+
+**Rule going forward:** any new assessment format (Versant, Mock Drives,
+CBAT, IELTS) that wants a trust artifact reuses this exact pattern.
+Engine and route are assessment-type-agnostic; only the frontend
+wiring differs.
