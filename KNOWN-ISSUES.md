@@ -350,3 +350,52 @@ certificate. Reverted after the elevated test — cert back to clean.
 CBAT, IELTS) that wants a trust artifact reuses this exact pattern.
 Engine and route are assessment-type-agnostic; only the frontend
 wiring differs.
+
+### RESOLVED - Integrity roll-out to Mock + CBAT (2026-10-07, 5ed18f4)
+
+Session 38 shipped the integrity admin UI + public badge for Career
+Assessments only. Session 39 extends the same pattern to Mock Drives
+and CBAT.
+
+**What shipped:**
+- `_integrity_lookup_owner()` in main.py - prefix-based table routing
+  (CAR/MK/MOCK/CBAT)
+- `/api/integrity/public/{assessment_id}` - public endpoint for any
+  assessment type (extends the Session 38 cert-scoped endpoint)
+- `CharvakIntegrity.renderBadge()` in static/js/integrity-capture.js -
+  shared badge renderer with self-injecting CSS
+- Admin list + detail endpoints now show real metadata for MK/CBAT rows
+- Mock + CBAT result screens render the trust badge
+
+**Two pre-existing bugs fixed along the way:**
+
+1. **CBAT page route was never registered.** Session M-2 shipped
+   `cbat_engine.py`, five `/api/cbat/*` routes, and `templates/cbat.html`
+   - but `@app.get("/cbat")` was missing. The page was unreachable for
+   weeks. Fixed in 39-5b.
+
+2. **`cbat.html` called `window.charvakFetch()` at 3 sites but the
+   function was never defined.** Same class of bug as `processToolPayment`
+   (Session C) and `authToken` (Session 21). Fixed in 39-5c.
+
+**Patterns established for future assessment roll-outs:**
+
+- Adding a new assessment type = one entry in the prefix map +
+  a getter function in the template. ~15 lines total per assessment.
+- The badge renders via `CharvakIntegrity.renderBadge({slotId,
+  assessmentId})`. One call site, self-contained.
+
+**Patcher discipline:** the session's patcher for 39-8b uses
+preview-then-assert-then-write. Three asserts fire before any write:
+1. Expected anchor line matches
+2. No unclosed docstring above the replacement block (the specific
+   bug that broke the first 39-8 attempt)
+3. Exact block boundaries match expectation
+
+Both gates would have aborted the patcher before writing if the file
+shape had changed. main.py was never at risk.
+
+**Follow-up flagged:**
+- Systemic `charvakFetch` belongs in base.html. Three templates now
+  duplicate a ~12-line helper. One-line addition to base would let
+  every template share it.

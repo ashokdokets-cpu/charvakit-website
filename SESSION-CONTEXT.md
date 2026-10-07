@@ -1,5 +1,87 @@
 # Session Context - Charvak
 
+## Session 39 CLOSED (2026-10-07) - Integrity roll-out to Mock + CBAT
+
+Session 38 shipped the integrity admin UI + public trust badge for
+Career Assessments. Session 39 extends the same engine, admin UI,
+and badge to Mock Drives and CBAT.
+
+**Commits:**
+- 8e7607a  feat(integrity): Session 39-1 - generalize ownership check
+- 2504a26  refactor(integrity): Session 39-2 + 39-3 - extract capture to shared helper
+- 48905ca  feat(integrity): Session 39-4 - wire capture into Mock Drives
+- 251e0d1  feat(integrity): Session 39-5/5b/5c - wire CBAT + fix two blocking bugs
+- f70c41e  feat(integrity): Session 39-6 - public integrity endpoint + Mock result badge
+- 90a6290  refactor(integrity): Session 39-7a/7b - shared badge renderer
+- 9cae1ee  feat(integrity): Session 39-7c - CBAT result badge
+- f6f9401  feat(integrity): Session 39-8a - list endpoint joins mock + cbat tables
+- 5ed18f4  feat(integrity): Session 39-8b - detail endpoint prefix-based metadata
+
+**What shipped:**
+
+Backend:
+- _integrity_lookup_owner() helper in main.py: routes assessment_id
+  prefixes to the correct table (CAR/MK/MOCK/CBAT)
+- /api/integrity/public/{assessment_id} - new public endpoint that
+  returns risk_level + verified + message for any assessment prefix
+- /api/admin/integrity-events list endpoint: LEFT JOINs career + mock
+  + cbat tables, COALESCEs role/format so MK/CBAT rows show real values
+- /api/admin/career-assessment/{aid}/integrity detail endpoint:
+  prefix-based metadata lookup (was hardcoded to career table)
+
+Frontend:
+- static/js/integrity-capture.js: extracted the 250-line capture IIFE
+  into a shared helper. CharvakIntegrity.init({ getAssessmentId })
+- CharvakIntegrity.renderBadge({ slotId, assessmentId }) - shared
+  trust badge renderer with self-injecting CSS
+- ai-assessment.html, companies.html, cbat.html all now call the
+  shared helper (10-15 lines each instead of 250)
+- Trust badge renders on Mock Drives result + CBAT result screens
+
+Two pre-existing bugs fixed along the way:
+- CBAT page route was never registered in main.py (Session M-2
+  shipped the engine + template, forgot the route)
+- cbat.html called window.charvakFetch() at 3 sites but the
+  function was never defined
+
+**Verified E2E:**
+- 31 assessments in /admin/integrity-events, all showing real
+  Role · Format (Capgemini · mock_drive, analogies · cbat,
+  Data Analyst · sql)
+- Mock + CBAT detail pages: metadata card fully populated
+- Public /api/integrity/public/MOCK-xxx returns the correct summary
+- Career Assessment flow unchanged - full regression pass
+- /readiness/{id} public badge still works
+
+**Patterns established:**
+- ID prefix routing (_integrity_lookup_owner) - any future assessment
+  type plugs in with one entry in the prefix map
+- Shared renderBadge - any future assessment result page renders the
+  badge in ~10 lines
+- Patcher discipline: preview-then-assert-then-write. Three asserts
+  fire before any file write. Two gate failures saved main.py from
+  corruption during 39-8b.
+
+**Session 40 candidates:**
+- A (recommended): Roll Layer A + badge to Versant + IELTS
+  (Tier 2 - needs design decision on where session_id comes from)
+- B: Certificate round 2 (QR, watermark, multi-language)
+- C: AuditBot Continuous (recurring revenue)
+- D: Personalized training views on /training-engine
+- E: Docs + backup polish
+
+**Follow-ups flagged:**
+- Systemic charvakFetch helper belongs in base.html - 3+ templates
+  duplicate the pattern now. One-line addition to base saves every
+  future template.
+- Two CAR- rows still show "— · —" (older assessments from before
+  Session 10 added role metadata). Cosmetic, not worth chasing.
+
+**Reminder:** Render Postgres password rotation still pending
+(since Session 19).
+
+
+
 ## Session 38 CLOSED (2026-10-07) - Integrity admin UI + public Trust Score badge
 
 Session 27 recorded integrity signals; Session 38 turns them into
