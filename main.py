@@ -7137,6 +7137,41 @@ async def api_readiness_integrity_public(request: Request, certificate_id: str):
 
 
 # ========================================================================
+# Session 39-6 — Public integrity summary by assessment_id
+# ========================================================================
+# Same shape as /api/readiness/{cert_id}/integrity, but takes an
+# assessment_id directly (CAR-, MK-, MOCK-, CBAT-). Used by the trust
+# badge on Mock / CBAT result pages, which don't have readiness certs.
+#
+# Public read. Returns only risk_level + verified + total_events + message.
+# No raw events, no PII, no timestamps.
+# ========================================================================
+
+@app.get("/api/integrity/public/{assessment_id}")
+@limiter.limit("120/minute")
+async def api_integrity_public_by_assessment(request: Request, assessment_id: str):
+    """
+    Public integrity summary keyed by assessment_id (any prefix).
+    """
+    try:
+        aid = (assessment_id or "").strip()
+        if not aid:
+            raise HTTPException(status_code=400, detail="assessment_id required")
+
+        # Ownership lookup proves the ID is real; we don't need the email here.
+        owner = _integrity_lookup_owner(aid)
+        if owner is None:
+            raise HTTPException(status_code=404, detail="Assessment not found")
+
+        summary = integrity_engine.get_public_summary(aid)
+        return summary
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "Failed to load integrity summary")
+
+
+# ========================================================================
 # Session 38 — Admin: list all assessments with integrity data
 # ========================================================================
 # Returns a summary row for every assessment that has any integrity
