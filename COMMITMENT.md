@@ -3820,3 +3820,58 @@ Monitoring:
 - Will confirm DoketsRB alignment on the next sync trigger from Vercel
 
 Verdict: RESOLVED
+
+## FLAGGED — DoketsRB bidirectional sync (Session 38+)
+
+**The infrastructure is real, the wiring is pending.**
+
+`api_sync.py` is a complete, secured sync module with six endpoints:
+- POST /api/sync/resume       (DoketsRB -> Charvak)
+- POST /api/sync/application  (DoketsRB -> Charvak)
+- GET  /api/sync/jobs         (Charvak -> DoketsRB, for their tracker)
+- POST /api/sync/skills       (DoketsRB -> Charvak, gap analysis)
+- GET  /api/sync/status/{user_id}
+- GET  /api/sync/health
+
+Security is enforced (SYNC_API_KEY + HMAC signature, fail-closed).
+Tables exist: charvak_synced_users, charvak_synced_applications,
+charvak_ats_sync_log, charvak_doketsrb_score_tokens,
+charvak_doketsrb_score_events, charvak_doketsrb_bundle_subs.
+
+**Current state:** 0 rows in the sync tables. The endpoints are
+ready to receive, but nothing is sending yet.
+
+**What to build:**
+
+1. **DoketsRB-side alignment** (external, non-code)
+   - Verify SYNC_API_KEY and SYNC_API_SECRET match on both Vercel
+     and Render (rotated in Session 15)
+   - DoketsRB calls /api/sync/resume on profile save
+   - DoketsRB calls /api/sync/application on tracker update
+   - DoketsRB calls /api/sync/skills after ATS scan
+   - Estimated: coordination effort, minimal code
+
+2. **Charvak-side UX** (Session 38+)
+   - "Sync now" button on /job-board -> pulls latest from DoketsRB
+   - Sync status indicator on /career-center panel
+   - Show "Last synced: 2 min ago" for user confidence
+   - `/api/sync/pull` route (user-triggered) that calls DoketsRB's
+     public endpoints and returns the merged state
+   - Estimated: ~1 session
+
+3. **The full picture for users** (Session 39+)
+   - Onboarding flow: "Connect your DoketsRB account" with OAuth-like link
+   - Auto-sync on page load when user is linked
+   - Real-time status: "Your DoketsRB resume is in sync as of [time]"
+   - Estimated: ~1 session
+
+**Why this matters:**
+The DoketsRB sync is the bridge between resume-building (DoketsRB)
+and job-matching (Charvak). It's how a user's resume ends up matched
+to roles they can actually apply for. Without it, the two platforms
+are separate products. With it, they're one pipeline.
+
+**Trigger to start:** DoketsRB-side readiness to call the six endpoints.
+Could start with just #1 + #2 for a v1 sync status.
+
+**Verdict:** FLAGGED — Session 38+.

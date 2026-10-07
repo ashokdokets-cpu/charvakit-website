@@ -1,100 +1,264 @@
 {% extends "base.html" %}
-{% block title %}Training & Learning Engine - Charvak Career Engine{% endblock %}
+{% block title %}Training Engine - Charvak Career Engine{% endblock %}
 {% block content %}
 <div class="page-hero bg-gradient-primary text-white py-5">
     <div class="container py-4">
         <span class="badge bg-success mb-2 px-3 py-2">Step 4 of 6</span>
         <h1 class="display-4 fw-bold">Training & Learning Engine</h1>
-        <p class="lead">Upskill, reskill, get job-ready. Charvak trainers + global third-party providers.</p>
+        <p class="lead">Real courses. Calibrated to your gaps. Certified by Charvak.</p>
     </div>
 </div>
 
 <div class="container py-5">
+
+    <!-- Two guiding cards -->
     <div class="row g-4 mb-5">
-        <div class="col-md-6"><div class="card h-100 p-4 bg-success text-white"><h2 class="as-h3">Interview Cleared - Upgrade</h2><p>Enhance skills for the next level. Learn advanced topics and stay ahead.</p><a href="#courses" class="btn btn-light">Browse Advanced Courses</a></div></div>
-        <div class="col-md-6"><div class="card h-100 p-4 bg-warning"><h2 class="as-h3">Interview Not Cleared - Reskill</h2><p>Fill skill gaps from DoketsRB analyzer. Targeted learning for your dream job.</p><a href="#courses" class="btn btn-dark">View Recommended Courses</a></div></div>
+        <div class="col-md-6">
+            <div class="card h-100 p-4 bg-success text-white">
+                <h2 class="as-h3">Interview Cleared — Upgrade</h2>
+                <p>Level up. Advanced courses to prep for senior roles and specialized tracks.</p>
+                <button type="button" class="btn btn-light" onclick="filterByLevel('Advanced')">Browse Advanced Courses</button>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100 p-4 bg-warning">
+                <h2 class="as-h3">Interview Not Cleared — Reskill</h2>
+                <p>Take a 3-minute career assessment. We analyze your gaps, then design courses if the catalog doesn't have a match.</p>
+                <a href="/ai-assessment" class="btn btn-dark">Get AI-Designed Course</a>
+            </div>
+        </div>
     </div>
 
-    <h2 class="as-h3" id="courses" class="mb-4">Course Marketplace</h2>
-    <div class="row g-4 mb-5">
-        <div class="col-md-4"><div class="card h-100 p-4"><span class="badge bg-primary mb-2">Python</span><h3 class="as-h5">Advanced FastAPI Development</h3><p class="text-muted">By TechGuru Academy - 4.8 (120 reviews)</p><p>12 weeks - Live Online</p><h4 class="text-primary"><span data-inr="3999">₹3,999</span></h4><a href="#" class="btn btn-outline-primary btn-sm" onclick="enrollCourse(event, 'Advanced FastAPI Development', '3999')">Enroll Now</a>
-<a href="#" class="btn btn-outline-primary btn-sm mt-2" onclick="enterClassroom(event, 'Advanced FastAPI Development')">Enter Classroom</a></div></div>
-        <div class="col-md-4"><div class="card h-100 p-4"><span class="badge bg-info mb-2">React</span><h5>React & Next.js Masterclass</h5><p class="text-muted">By CodeMentor - 4.7 (85 reviews)</p><p>8 weeks - Self-paced</p><h4 class="text-primary"><span data-inr="1999">₹1,999</span></h4><a href="#" class="btn btn-outline-primary btn-sm" onclick="enrollCourse(event, 'React & Next.js Masterclass', '1999')">Enroll Now</a>
-<a href="#" class="btn btn-outline-primary btn-sm mt-2" onclick="enterClassroom(event, 'React & Next.js Masterclass')">Enter Classroom</a></div></div>
-        <div class="col-md-4"><div class="card h-100 p-4"><span class="badge bg-warning text-dark mb-2">DevOps</span><h5>AWS Solutions Architect Prep</h5><p class="text-muted">By CloudExpert - 4.9 (200 reviews)</p><p>6 weeks - Live + Lab</p><h4 class="text-primary"><span data-inr="3999">₹3,999</span></h4><a href="#" class="btn btn-outline-primary btn-sm" onclick="enrollCourse(event, 'AWS Solutions Architect Prep', '3999')">Enroll Now</a>
-<a href="#" class="btn btn-outline-primary btn-sm mt-2" onclick="enterClassroom(event, 'AWS Solutions Architect Prep')">Enter Classroom</a></div></div>
+    <!-- Search + Filters -->
+    <h2 class="as-h3 mb-3" id="courses">Course Marketplace</h2>
+    <div class="card border-0 shadow-sm p-3 mb-4">
+        <div class="row g-2 align-items-center">
+            <div class="col-md-5">
+                <input type="text" class="form-control" id="courseSearch" placeholder="Search by course name or skill">
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="courseCategory">
+                    <option value="">All categories</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select class="form-select" id="courseLevel">
+                    <option value="">All levels</option>
+                    <option value="Beginner">Beginner</option>
+                    <option value="Intermediate">Intermediate</option>
+                    <option value="Advanced">Advanced</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select class="form-select" id="courseSort">
+                    <option value="">Sort: A–Z</option>
+                    <option value="price-asc">Price: Low → High</option>
+                    <option value="price-desc">Price: High → Low</option>
+                    <option value="duration-asc">Duration: Short → Long</option>
+                </select>
+            </div>
+        </div>
+        <div class="mt-2 small text-muted" id="courseCountLine">Loading courses...</div>
     </div>
 
-    <h4 class="mb-3">Third-Party Global Training Partners</h4>
-    <div class="row g-3 mb-5 text-center">
-        <div class="col-6 col-md-2"><div class="card p-3"><i class="bi bi-mortarboard display-4 text-primary"></i><small>Coursera</small></div></div>
-        <div class="col-6 col-md-2"><div class="card p-3"><i class="bi bi-laptop display-4 text-danger"></i><small>Udemy</small></div></div>
-        <div class="col-6 col-md-2"><div class="card p-3"><i class="bi bi-globe display-4 text-info"></i><small>edX</small></div></div>
-        <div class="col-6 col-md-2"><div class="card p-3"><i class="bi bi-display display-4 text-warning"></i><small>Pluralsight</small></div></div>
-        <div class="col-6 col-md-2"><div class="card p-3"><i class="bi bi-linkedin display-4 text-primary"></i><small>LinkedIn Learning</small></div></div>
-        <div class="col-6 col-md-2"><div class="card p-3"><i class="bi bi-person-video3 display-4 text-success"></i><small>Local Trainers</small></div></div>
+    <!-- Course grid -->
+    <div class="row g-4 mb-5" id="courseGrid">
+        <div class="col-12 text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <div class="mt-2 text-muted">Loading courses...</div>
+        </div>
     </div>
-    <p class="text-muted mb-4">20% commission on every enrollment through Charvakit. We track and pay automatically.</p>
+    <p class="text-center text-muted d-none" id="noCourses">No courses match your filters. <a href="/ai-assessment">Take an assessment to design a custom one.</a></p>
 
+    <!-- AI-designed courses callout -->
+    <div class="card border-0 shadow-sm mb-5" style="background: linear-gradient(135deg, #3ba591 0%, #2c8571 100%);">
+        <div class="card-body p-4 p-lg-5 text-white">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h3 class="as-h3 mb-2">🎯 Don't see the course you need?</h3>
+                    <p class="mb-0">Take a 3-minute Career Assessment. If a weak topic has no matching catalog course, we'll design one for you. <strong>50 credits to design</strong>, first 2 weeks free, then <strong>150 credits</strong> unlocks the full course + certificate.</p>
+                </div>
+                <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                    <a href="/ai-assessment" class="btn btn-light btn-lg">Take Assessment &rarr;</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trainer + Request CTAs -->
     <div class="row g-4 mb-5">
         <div class="col-md-6"><div class="card h-100 p-4 text-center bg-light"><h4>Are You a Trainer?</h4><p>Post your courses. Earn 80% of every enrollment.</p><a href="/post-course" class="btn btn-primary btn-lg">Post Your Course</a></div></div>
-        <div class="col-md-6"><div class="card h-100 p-4 text-center bg-light"><h4>Need Specific Training?</h4><p>Request a course. We'll find the best trainer.</p><a href="/request-training" class="btn btn-primary btn-lg">Request Training</a></div></div>
+        <div class="col-md-6"><div class="card h-100 p-4 text-center bg-light"><h4>Need Specific Training?</h4><p>Tell us what you need. We'll design it for your team.</p><a href="/request-training" class="btn btn-primary btn-lg">Request Training</a></div></div>
     </div>
 
     <div class="text-center">
-        <a href="/interview-prep" class="btn btn-outline-primary me-2">Back to Interview Prep</a>
+        <a href="/career-center" class="btn btn-outline-primary me-2">My Career Center</a>
+        <a href="/career-engine" class="btn btn-outline-primary me-2">See the 7-Step Journey</a>
+        <a href="/job-board" class="btn btn-outline-primary me-2">Browse Jobs</a>
         <a href="/background-verification" class="btn btn-primary">Next: Background Verification</a>
     </div>
 </div>
 
 <script>
-function enrollCourse(e, courseName, price) {
-    e.preventDefault();
-    if (confirm('Enroll in "' + courseName + '" for ₹' + price + '? Payment secured via Razorpay/PayPal.')) {
-        // Simulate payment
-        const enrolled = JSON.parse(localStorage.getItem('enrolled_courses') || '[]');
-        if (!enrolled.includes(courseName)) {
-            enrolled.push(courseName);
-            localStorage.setItem('enrolled_courses', JSON.stringify(enrolled));
+// ============================================================
+// Session 37: /training-engine now consumes /api/ai-course/catalog
+// ============================================================
+
+var _teAllCourses = [];
+
+function _teEsc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+}
+
+function _teLevelBadge(level) {
+    var map = {
+        'Beginner':     'bg-success',
+        'Intermediate': 'bg-info text-dark',
+        'Advanced':     'bg-warning text-dark',
+        'Mid':          'bg-info text-dark',
+        'Senior':       'bg-warning text-dark'
+    };
+    var cls = map[level] || 'bg-secondary';
+    return '<span class="badge ' + cls + '">' + _teEsc(level || '') + '</span>';
+}
+
+function _teCategoryBadge(category) {
+    var map = {
+        'Technology': 'bg-primary',
+        'Cloud':      'bg-info text-dark',
+        'Data':       'bg-success',
+        'Security':   'bg-danger',
+        'Design':     'bg-secondary',
+        'Custom':     'bg-dark'
+    };
+    var cls = map[category] || 'bg-secondary';
+    return '<span class="badge ' + cls + '">' + _teEsc(category || '') + '</span>';
+}
+
+async function loadCourses() {
+    var grid = document.getElementById('courseGrid');
+    grid.innerHTML = '<div class="col-12 text-center py-5"><div class="spinner-border text-primary" role="status"></div></div>';
+
+    try {
+        var r = await fetch('/api/ai-course/catalog');
+        var j = await r.json();
+        if (j.status !== 'success') {
+            grid.innerHTML = '<div class="col-12"><div class="alert alert-warning">Could not load courses: ' + _teEsc(j.message || 'unknown') + '</div></div>';
+            return;
         }
-        alert('Payment successful! You are now enrolled in "' + courseName + '". Click "Enter Classroom" to start.');
-        location.reload();
+        _teAllCourses = j.courses || [];
+
+        // Populate category dropdown from the real data
+        var cats = {};
+        for (var i = 0; i < _teAllCourses.length; i++) {
+            var c = _teAllCourses[i].category || 'Uncategorized';
+            cats[c] = (cats[c] || 0) + 1;
+        }
+        var catSel = document.getElementById('courseCategory');
+        var catNames = Object.keys(cats).sort();
+        for (var k = 0; k < catNames.length; k++) {
+            var opt = document.createElement('option');
+            opt.value = catNames[k];
+            opt.textContent = catNames[k] + ' (' + cats[catNames[k]] + ')';
+            catSel.appendChild(opt);
+        }
+
+        document.getElementById('courseCountLine').textContent = _teAllCourses.length + ' courses across ' + catNames.length + ' categories';
+        applyCourseFilters();
+    } catch (e) {
+        grid.innerHTML = '<div class="col-12"><div class="alert alert-danger">Network error: ' + _teEsc(e.message) + '</div></div>';
     }
 }
 
-function enterClassroom(e, courseName) {
-    e.preventDefault();
-    const enrolled = JSON.parse(localStorage.getItem('enrolled_courses') || '[]');
-    if (enrolled.includes(courseName)) {
-        window.location.href = '/online-classroom?course=' + encodeURIComponent(courseName);
+function applyCourseFilters() {
+    var keyword = (document.getElementById('courseSearch').value || '').toLowerCase().trim();
+    var category = document.getElementById('courseCategory').value;
+    var level = document.getElementById('courseLevel').value;
+    var sort = document.getElementById('courseSort').value;
+
+    var filtered = _teAllCourses.filter(function(c) {
+        if (category && (c.category || '') !== category) return false;
+        if (level && (c.level || '') !== level) return false;
+        if (keyword) {
+            var nameMatch = (c.course_name || '').toLowerCase().indexOf(keyword) !== -1;
+            var descMatch = (c.description || '').toLowerCase().indexOf(keyword) !== -1;
+            if (!nameMatch && !descMatch) return false;
+        }
+        return true;
+    });
+
+    if (sort === 'price-asc') {
+        filtered.sort(function(a, b) { return (a.price_inr || 0) - (b.price_inr || 0); });
+    } else if (sort === 'price-desc') {
+        filtered.sort(function(a, b) { return (b.price_inr || 0) - (a.price_inr || 0); });
+    } else if (sort === 'duration-asc') {
+        filtered.sort(function(a, b) { return (a.duration_weeks || 0) - (b.duration_weeks || 0); });
     } else {
-        alert('Please enroll in "' + courseName + '" first to access the classroom.');
+        filtered.sort(function(a, b) { return (a.course_name || '').localeCompare(b.course_name || ''); });
     }
+
+    renderCourses(filtered);
+}
+
+function renderCourses(courses) {
+    var grid = document.getElementById('courseGrid');
+    var noCourses = document.getElementById('noCourses');
+
+    document.getElementById('courseCountLine').textContent =
+        courses.length + ' course' + (courses.length === 1 ? '' : 's') + ' matching';
+
+    if (!courses.length) {
+        grid.innerHTML = '';
+        noCourses.classList.remove('d-none');
+        return;
+    }
+    noCourses.classList.add('d-none');
+
+    var html = '';
+    for (var i = 0; i < courses.length; i++) {
+        var c = courses[i];
+        var isCustom = (c.category === 'Custom') || (c.price_inr === 0);
+        var priceLabel = isCustom ? 'Free after design' : ('₹' + Number(c.price_inr || 0).toLocaleString());
+
+        html += '<div class="col-md-4">';
+        html += '<div class="card h-100 p-4">';
+        html += '<div class="mb-2">' + _teCategoryBadge(c.category) + ' ' + _teLevelBadge(c.level) + '</div>';
+        html += '<h3 class="as-h5 mb-2">' + _teEsc(c.course_name || '') + '</h3>';
+        html += '<p class="text-muted small mb-2">' + _teEsc((c.description || '').substring(0, 120)) + '</p>';
+        html += '<p class="small text-muted mb-2">' + _teEsc(c.duration_weeks || 0) + ' weeks</p>';
+        html += '<h4 class="text-primary mb-3">' + _teEsc(priceLabel) + '</h4>';
+        html += '<a href="/course/' + encodeURIComponent(c.course_name || '') + '" class="btn btn-primary">View Course &rarr;</a>';
+        html += '</div></div>';
+    }
+    grid.innerHTML = html;
+}
+
+function filterByLevel(level) {
+    document.getElementById('courseLevel').value = level;
+    applyCourseFilters();
+    var el = document.getElementById('courses');
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    const enrolled = JSON.parse(localStorage.getItem('enrolled_courses') || '[]');
-    const customCourses = JSON.parse(localStorage.getItem('charvak_courses') || '[]');
-    
-    // Update existing course buttons
-    document.querySelectorAll('.enroll-btn').forEach(btn => {
-        const course = btn.getAttribute('data-course');
-        if (enrolled.includes(course)) {
-            btn.textContent = 'Enrolled ✓';
-            btn.classList.remove('btn-outline-primary');
-            btn.classList.add('btn-success');
-            btn.disabled = true;
-        }
-    });
-    
-    // Dynamically add custom courses
-    if (customCourses.length > 0) {
-        const container = document.getElementById('courses');
-        const lastCourse = customCourses[customCourses.length - 1];
-        const courseHTML = '<div class="col-md-4"><div class="card h-100 p-4"><span class="badge bg-success mb-2">New</span><h5>' + lastCourse.title + '</h5><p class="text-muted">By ' + lastCourse.trainer + ' - New Course</p><p>' + lastCourse.duration + '</p><h4 class="text-primary">₹' + lastCourse.price + '</h4><a href="#" class="btn btn-outline-primary btn-sm enroll-btn" data-course="' + lastCourse.title + '" onclick="enrollCourse(event, \'' + lastCourse.title + '\', \'' + lastCourse.price + '\')">Enroll Now</a><a href="#" class="btn btn-outline-primary btn-sm mt-2" onclick="enterClassroom(event, \'' + lastCourse.title + '\')">Enter Classroom</a></div></div>';
-        container.insertAdjacentHTML('beforeend', courseHTML);
+    var s = document.getElementById('courseSearch');
+    var cat = document.getElementById('courseCategory');
+    var lvl = document.getElementById('courseLevel');
+    var sort = document.getElementById('courseSort');
+
+    var timer = null;
+    function debounced() {
+        clearTimeout(timer);
+        timer = setTimeout(applyCourseFilters, 200);
     }
+    if (s) s.addEventListener('input', debounced);
+    if (cat) cat.addEventListener('change', applyCourseFilters);
+    if (lvl) lvl.addEventListener('change', applyCourseFilters);
+    if (sort) sort.addEventListener('change', applyCourseFilters);
+
+    loadCourses();
 });
 </script>
-
 {% endblock %}

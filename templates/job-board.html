@@ -10,121 +10,63 @@
 </div>
 
 <div class="container py-5">
-    <!-- Integration Note -->
+
+    <!-- DoketsRB Integration (Session 37: honest copy — endpoints exist, wiring pending) -->
     <div class="alert alert-info mb-4">
-        <i class="bi bi-arrow-repeat me-2"></i> <strong>Seamless Integration:</strong> Build your resume on <strong>DoketsRB.com</strong>, track applications there. Charvakit handles training, verification, and placement. Both platforms sync automatically.
+        <i class="bi bi-arrow-repeat me-2"></i> <strong>DoketsRB Integration:</strong>
+        Build your resume at <a href="https://doketsrb.com/#builder" target="_blank">DoketsRB.com</a>.
+        When you take their free ATS scan, your score is stored here and used to match you with verified roles.
     </div>
 
     <!-- Pipeline Steps -->
     <div class="row g-3 mb-4 text-center">
-    <div class="col-md-2"><a href="https://doketsrb.com/#builder" target="_blank" class="text-decoration-none"><div class="card p-3 bg-light h-100"><div class="as-h5">1</div><small>Resume</small><br><span class="badge bg-info text-dark mt-1">DoketsRB</span></div></a></div>
-    <div class="col-md-2"><div class="card p-3 bg-primary text-white h-100"><div class="as-h5">2</div><small>Job Board</small><br><span class="badge bg-light text-dark mt-1">Charvakit</span></div></div>
-    <div class="col-md-2"><a href="https://www.doketsrb.com/#job-tracker" target="_blank" class="text-decoration-none"><div class="card p-3 bg-light h-100"><div class="as-h5">3</div><small>Job Tracker</small><br><span class="badge bg-info text-dark mt-1">DoketsRB</span></div></a></div>
-    <div class="col-md-2"><a href="https://doketsrb.com/#builder" target="_blank" class="text-decoration-none"><div class="card p-3 bg-light h-100"><div class="as-h5">4</div><small>Interview Prep</small><br><span class="badge bg-info text-dark mt-1">DoketsRB</span></div></a></div>
-    <div class="col-md-2"><a href="/training-engine" class="text-decoration-none"><div class="card p-3 bg-light h-100"><div class="as-h5">5</div><small>Training</small><br><span class="badge bg-primary mt-1">Charvakit</span></div></a></div>
-    <div class="col-md-2"><a href="/background-verification" class="text-decoration-none"><div class="card p-3 bg-light h-100"><div class="as-h5">6</div><small>Verification + Placement</small><br><span class="badge bg-primary mt-1">Charvakit</span></div></a></div>
-</div>
+        <div class="col-md-2"><a href="https://doketsrb.com/#builder" target="_blank" class="text-decoration-none"><div class="card p-3 bg-light h-100"><div class="as-h5">1</div><small>Resume</small><br><span class="badge bg-info text-dark mt-1">DoketsRB</span></div></a></div>
+        <div class="col-md-2"><div class="card p-3 bg-primary text-white h-100"><div class="as-h5">2</div><small>Job Board</small><br><span class="badge bg-light text-dark mt-1">Charvakit</span></div></div>
+        <div class="col-md-2"><a href="https://www.doketsrb.com/#job-tracker" target="_blank" class="text-decoration-none"><div class="card p-3 bg-light h-100"><div class="as-h5">3</div><small>Job Tracker</small><br><span class="badge bg-info text-dark mt-1">DoketsRB</span></div></a></div>
+        <div class="col-md-2"><a href="https://doketsrb.com/#builder" target="_blank" class="text-decoration-none"><div class="card p-3 bg-light h-100"><div class="as-h5">4</div><small>Interview Prep</small><br><span class="badge bg-info text-dark mt-1">DoketsRB</span></div></a></div>
+        <div class="col-md-2"><a href="/training-engine" class="text-decoration-none"><div class="card p-3 bg-light h-100"><div class="as-h5">5</div><small>Training</small><br><span class="badge bg-primary mt-1">Charvakit</span></div></a></div>
+        <div class="col-md-2"><a href="/background-verification" class="text-decoration-none"><div class="card p-3 bg-light h-100"><div class="as-h5">6</div><small>Verification + Placement</small><br><span class="badge bg-primary mt-1">Charvakit</span></div></a></div>
+    </div>
 
-    <!-- Stats Bar -->
-
-<div class="container py-5">
     <!-- Stats Bar -->
     <div class="row g-3 mb-4 text-center">
-    <div class="col-4"><div class="bg-light p-3 rounded"><div class="as-h4" id="activeJobs">6</div><small>Active Jobs</small></div></div>
-    <div class="col-4"><div class="bg-light p-3 rounded"><div class="as-h4">10,000+</div><small>Candidates</small></div></div>
-    <div class="col-4"><div class="bg-light p-3 rounded"><div class="as-h4">48hrs</div><small>Avg Response</small></div></div>
-</div>
+        <div class="col-4"><div class="bg-light p-3 rounded"><div class="as-h4" id="activeJobs">—</div><small>Active Jobs</small></div></div>
+        <div class="col-4"><div class="bg-light p-3 rounded"><div class="as-h4">10,000+</div><small>Candidates</small></div></div>
+        <div class="col-4"><div class="bg-light p-3 rounded"><div class="as-h4">48hrs</div><small>Avg Response</small></div></div>
+    </div>
 
-        <!-- Search -->
+    <!-- Search + Filters -->
     <div class="card border-0 shadow-sm p-3 mb-4">
-        <div class="row g-2">
-            <div class="col-md-3"><input type="text" class="form-control" id="jobSearch" placeholder="Job title or keyword" onkeyup="filterJobs()"></div>
-            <div class="col-md-2"><select class="form-select" id="jobType" onchange="filterJobs()"><option value="">All Types</option><option>Permanent</option><option>Contract</option><option>Contract-to-Hire</option><option>Freelance</option><option>Fractional</option><option>Internship</option><option>Part-Time</option><option>Gig / Project-Based</option></select></div>
-            <div class="col-md-3">
-                <select class="form-select" id="jobLocation" onchange="filterJobs()">
-    <option value="">All Locations</option>
-    <option>Remote</option>
-    <option>Bengaluru</option><option>Hyderabad</option><option>Mumbai</option><option>Delhi NCR</option><option>Chennai</option><option>Pune</option><option>Guntur</option><option>Visakhapatnam</option>
-    <option>🇺🇸 United States</option><option>🇬🇧 United Kingdom</option><option>🇦🇪 UAE</option><option>🇸🇬 Singapore</option><option>🇨🇦 Canada</option><option>🇦🇺 Australia</option><option>🇩🇪 Germany</option><option>🇯🇵 Japan</option><option>🇧🇷 Brazil</option><option>🇳🇬 Nigeria</option>
-</select>
+        <div class="row g-2 align-items-center">
+            <div class="col-md-4">
+                <input type="text" class="form-control" id="jobSearch" placeholder="Job title or keyword">
             </div>
-            <div class="col-md-2"><input type="text" class="form-control" id="customLocation" placeholder="Or type location..."></div>
-            <div class="col-md-2"><button class="btn btn-primary w-100" onclick="filterJobs()">Search Jobs</button></div>
+            <div class="col-md-3">
+                <select class="form-select" id="jobSource">
+                    <option value="">All sources</option>
+                    <option value="staffing">via Charvak</option>
+                    <option value="micro_project">Gigs</option>
+                    <option value="job_board">Job Board</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <input type="text" class="form-control" id="jobLocation" placeholder="Filter by location">
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-primary w-100" id="searchBtn">Search Jobs</button>
+            </div>
         </div>
-        <small class="text-muted mt-1">Can't find your location? Type it in "Or type location" and press Search.</small>
+        <div class="mt-2 small text-muted" id="jobCountLine">Loading opportunities...</div>
     </div>
 
     <!-- Job Listings -->
     <div class="row g-3 mb-4" id="jobListings">
-        <div class="col-md-6 job-card" data-type="Permanent" data-location="Bengaluru" data-title="Senior React Developer"><div class="card h-100 p-3"><span class="badge bg-primary mb-2">Permanent</span><h3 class="as-h5">Senior React Developer</h3><p class="text-muted mb-1">Bengaluru - 15-25 LPA</p><small>React, TypeScript, Node.js - 5+ yrs</small><div class="mt-2"><a href="#" class="btn btn-outline-primary btn-sm" onclick="applyJob(event, 'Senior React Developer', 'TechCorp')">Apply</a><button class="btn btn-outline-secondary btn-sm ms-1">Save</button></div></div></div>
-        <div class="col-md-6 job-card" data-type="Contract" data-location="Remote" data-title="Python Backend Developer"><div class="card h-100 p-3"><span class="badge bg-warning text-dark mb-2">Contract</span><h3 class="as-h5">Python Backend Developer</h3><p class="text-muted mb-1">Remote - 6 months</p><small>FastAPI, PostgreSQL, AWS</small><div class="mt-2"><a href="#" class="btn btn-outline-primary btn-sm" onclick="applyJob(event, 'Python Backend Developer', 'DataFlow')">Apply</a><button class="btn btn-outline-secondary btn-sm ms-1">Save</button></div></div></div>
-        <div class="col-md-6 job-card" data-type="Contract-to-Hire" data-location="Hyderabad" data-title="Full Stack Developer"><div class="card h-100 p-3"><span class="badge bg-info text-dark mb-2">Contract-to-Hire</span><h3 class="as-h5">Full Stack Developer</h3><p class="text-muted mb-1">Hyderabad - 10-18 LPA</p><small>MERN Stack - 3+ yrs</small><div class="mt-2"><a href="#" class="btn btn-outline-primary btn-sm" onclick="applyJob(event, 'Full Stack Developer', 'WebSolutions')">Apply</a><button class="btn btn-outline-secondary btn-sm ms-1">Save</button></div></div></div>
-        <div class="col-md-6 job-card" data-type="Permanent" data-location="Remote" data-title="DevOps Engineer"><div class="card h-100 p-3"><span class="badge bg-primary mb-2">Permanent</span><h3 class="as-h5">DevOps Engineer</h3><p class="text-muted mb-1">Remote - 12-20 LPA</p><small>AWS, Docker, K8s, CI/CD</small><div class="mt-2"><a href="#" class="btn btn-outline-primary btn-sm" onclick="applyJob(event, 'DevOps Engineer', 'CloudFirst')">Apply</a><button class="btn btn-outline-secondary btn-sm ms-1">Save</button></div></div></div>
-        <div class="col-md-6 job-card" data-type="Permanent" data-location="🇸🇬 Singapore" data-title="AI Engineer"><div class="card h-100 p-3"><span class="badge bg-primary mb-2">Permanent</span><h3 class="as-h5">AI/ML Engineer</h3><p class="text-muted mb-1">Singapore - SGD 80-120K</p><small>Python, TensorFlow, PyTorch - 3+ yrs</small><div class="mt-2"><a href="#" class="btn btn-outline-primary btn-sm" onclick="applyJob(event, 'AI/ML Engineer', 'AI Labs')">Apply</a><button class="btn btn-outline-secondary btn-sm ms-1">Save</button></div></div></div>
-        <div class="col-md-6 job-card" data-type="Contract" data-location="🇦🇪 UAE" data-title="Cloud Architect"><div class="card h-100 p-3"><span class="badge bg-warning text-dark mb-2">Contract</span><h3 class="as-h5">Cloud Architect</h3><p class="text-muted mb-1">Dubai - 12 months</p><small>AWS, Azure, GCP - 7+ yrs</small><div class="mt-2"><a href="#" class="btn btn-outline-primary btn-sm" onclick="applyJob(event, 'Cloud Architect', 'CloudSys')">Apply</a><button class="btn btn-outline-secondary btn-sm ms-1" onclick="saveJob(event, 'Job Title Here')">Save</button></div></div></div>
+        <div class="col-12 text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <div class="mt-2 text-muted">Loading jobs...</div>
+        </div>
     </div>
     <p class="text-center text-muted d-none" id="noJobs">No jobs match your filters. Try different keywords or <a href="/post-job">post a job</a>.</p>
-
-<script>
-function filterJobs(){
-    const keyword = document.getElementById('jobSearch').value.toLowerCase();
-    const type = document.getElementById('jobType').value;
-    const location = document.getElementById('jobLocation').value;
-    const customLoc = document.getElementById('customLocation').value.toLowerCase();
-    let visible = 0;
-    document.querySelectorAll('.job-card').forEach(card => {
-        const title = card.dataset.title.toLowerCase();
-        const cardType = card.dataset.type;
-        const cardLoc = card.dataset.location.toLowerCase();
-        const matchKeyword = !keyword || title.includes(keyword);
-        const matchType = !type || cardType === type;
-        const matchLoc = !location || cardLoc.includes(location.toLowerCase());
-        const matchCustom = !customLoc || cardLoc.includes(customLoc);
-        if(matchKeyword && matchType && (matchLoc || matchCustom)){
-            card.style.display = 'block';
-            visible++;
-        } else {
-            card.style.display = 'none';
-        }
-    });
-    document.getElementById('noJobs').classList.toggle('d-none', visible > 0);
-    document.getElementById('activeJobs').textContent = visible;
-}
-
-function applyJob(e, title, company){
-    e.preventDefault();
-    const name = prompt('Enter your name to apply for ' + title + ' at ' + company + ':');
-    if(name){
-        // Save locally
-        const applications = JSON.parse(localStorage.getItem('job_applications')||'[]');
-        applications.push({name, title, company, date: new Date().toISOString()});
-        localStorage.setItem('job_applications', JSON.stringify(applications));
-        
-        // Also send to server
-        fetch('/api/jobs/apply', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({name, title, company, date: new Date().toISOString()})
-        });
-        
-        alert('Application submitted for ' + title + ' at ' + company + '!');
-    }
-}
-
-function saveJob(e, title){
-    e.preventDefault();
-    const saved = JSON.parse(localStorage.getItem('saved_jobs')||'[]');
-    if(saved.includes(title)){
-        alert(title + ' is already saved!');
-    } else {
-        saved.push(title);
-        localStorage.setItem('saved_jobs', JSON.stringify(saved));
-        e.target.textContent = 'Saved!';
-        e.target.classList.add('btn-success');
-        alert(title + ' saved to your list!');
-    }
-}
-</script>
 
     <!-- Three Action Cards -->
     <div class="row g-3 mb-4">
@@ -133,10 +75,182 @@ function saveJob(e, title){
         <div class="col-md-4"><div class="card h-100 p-4 text-center bg-info text-white"><i class="bi bi-share display-4 mb-3"></i><h3 class="as-h4">Submit Referral</h3><p>Know an opening? Share it. Earn rewards on successful hires.</p><a href="/submit-referral" class="btn btn-light">Submit Referral</a></div></div>
     </div>
 
-        <div class="text-center">
-        <a href="/career-engine" class="btn btn-outline-primary me-2">Back to Career Engine</a>
+    <div class="text-center">
+        <a href="/career-center" class="btn btn-outline-primary me-2">My Career Center</a>
+        <a href="/training-engine" class="btn btn-outline-primary me-2">Explore Training</a>
         <a href="/application-dashboard" class="btn btn-outline-primary me-2">View Dashboard</a>
-        <a href="https://www.doketsrb.com/#job-tracker" target="_blank" class="btn btn-primary">Open DoketsRB Tracker</a>
     </div>
 </div>
+
+<script>
+// ============================================================
+// Session 37: /job-board now consumes the Session 31 unified feed.
+// Filtering is client-side over the fetched items.
+// ============================================================
+
+var _jbAllItems = [];       // every item from the last fetch
+var _jbVisibleItems = [];   // after client-side filters
+
+function _jbEsc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+}
+
+function _jbSourceBadge(source) {
+    var map = {
+        'staffing':      { label: 'via Charvak', cls: 'bg-primary' },
+        'micro_project': { label: 'Gig',         cls: 'bg-success' },
+        'job_board':     { label: 'Job Board',   cls: 'bg-secondary' }
+    };
+    var m = map[source] || { label: source, cls: 'bg-secondary' };
+    return '<span class="badge ' + m.cls + '">' + _jbEsc(m.label) + '</span>';
+}
+
+async function loadJobs() {
+    var list = document.getElementById('jobListings');
+    var countLine = document.getElementById('jobCountLine');
+    list.innerHTML = '<div class="col-12 text-center py-5"><div class="spinner-border text-primary" role="status"></div></div>';
+
+    try {
+        var r = await fetch('/api/jobs/unified?limit=200');
+        var j = await r.json();
+        if (j.status !== 'success') {
+            list.innerHTML = '<div class="col-12"><div class="alert alert-warning">Could not load jobs: ' + _jbEsc(j.message || 'unknown') + '</div></div>';
+            countLine.textContent = 'Error';
+            return;
+        }
+        _jbAllItems = j.items || [];
+        var src = j.sources || {};
+        countLine.textContent = _jbAllItems.length + ' opening' + (_jbAllItems.length === 1 ? '' : 's')
+            + '  ·  '
+            + (src.staffing || 0) + ' via Charvak, '
+            + (src.micro_project || 0) + ' gigs, '
+            + (src.job_board || 0) + ' on job board';
+        applyFilters();
+    } catch (e) {
+        list.innerHTML = '<div class="col-12"><div class="alert alert-danger">Network error: ' + _jbEsc(e.message) + '</div></div>';
+        countLine.textContent = 'Error';
+    }
+}
+
+function applyFilters() {
+    var keyword = (document.getElementById('jobSearch').value || '').toLowerCase().trim();
+    var source = document.getElementById('jobSource').value;
+    var location = (document.getElementById('jobLocation').value || '').toLowerCase().trim();
+
+    _jbVisibleItems = _jbAllItems.filter(function(it) {
+        if (source && it.source !== source) return false;
+        if (keyword) {
+            var titleMatch = (it.title || '').toLowerCase().indexOf(keyword) !== -1;
+            var skillMatch = false;
+            if (Array.isArray(it.skills)) {
+                for (var i = 0; i < it.skills.length; i++) {
+                    if ((it.skills[i] || '').toLowerCase().indexOf(keyword) !== -1) { skillMatch = true; break; }
+                }
+            }
+            if (!titleMatch && !skillMatch) return false;
+        }
+        if (location) {
+            var loc = (it.location || '').toLowerCase();
+            if (loc.indexOf(location) === -1) return false;
+        }
+        return true;
+    });
+
+    renderJobs(_jbVisibleItems);
+}
+
+function renderJobs(items) {
+    var list = document.getElementById('jobListings');
+    var empty = document.getElementById('noJobs');
+    var activeJobs = document.getElementById('activeJobs');
+
+    activeJobs.textContent = items.length;
+    document.getElementById('jobCountLine').textContent = items.length + ' matching opening' + (items.length === 1 ? '' : 's');
+
+    if (!items.length) {
+        list.innerHTML = '';
+        empty.classList.remove('d-none');
+        return;
+    }
+    empty.classList.add('d-none');
+
+    var html = '';
+    for (var i = 0; i < items.length; i++) {
+        var it = items[i];
+        html += '<div class="col-md-6 job-card" data-source="' + _jbEsc(it.source) + '">';
+        html += '<div class="card h-100 p-3">';
+        html += '<div class="d-flex flex-wrap align-items-start justify-content-between mb-2">';
+        html += '<div class="d-flex flex-wrap align-items-center gap-2">' + _jbSourceBadge(it.source);
+        if (it.priority === 'urgent') { html += '<span class="badge bg-danger">Urgent</span>'; }
+        html += '</div>';
+        html += '<small class="text-muted">' + _jbEsc(it.posted_at ? it.posted_at.slice(0, 10) : '') + '</small>';
+        html += '</div>';
+
+        html += '<h3 class="as-h5 mb-2">' + _jbEsc(it.title || '') + '</h3>';
+
+        var metaParts = [];
+        if (it.company) metaParts.push(_jbEsc(it.company));
+        if (it.location) metaParts.push(_jbEsc(it.location));
+        if (it.type) metaParts.push(_jbEsc(it.type));
+        html += '<p class="text-muted small mb-2">' + metaParts.join(' · ') + '</p>';
+
+        if (it.experience && (it.experience.min_years != null || it.experience.max_years != null)) {
+            html += '<small class="d-block mb-2"><strong>Experience:</strong> '
+                 + _jbEsc(it.experience.min_years != null ? it.experience.min_years : '')
+                 + (it.experience.max_years != null ? (' - ' + _jbEsc(it.experience.max_years)) : '')
+                 + ' years</small>';
+        }
+        if (it.compensation_display) {
+            html += '<small class="d-block mb-2"><strong>Compensation:</strong> ' + _jbEsc(it.compensation_display) + '</small>';
+        }
+        if (it.skills && it.skills.length) {
+            var shown = it.skills.slice(0, 5);
+            for (var s = 0; s < shown.length; s++) {
+                html += '<span class="badge bg-light text-dark border me-1 mb-1">' + _jbEsc(shown[s]) + '</span>';
+            }
+            if (it.skills.length > 5) {
+                html += '<small class="text-muted">+' + (it.skills.length - 5) + ' more</small>';
+            }
+        }
+
+        html += '<div class="mt-3"><a href="' + _jbEsc(it.detail_url || '#') + '" class="btn btn-outline-primary btn-sm">View & Apply →</a></div>';
+        html += '</div></div>';
+    }
+    list.innerHTML = html;
+}
+
+function filterJobs() { applyFilters(); }
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Wire search inputs
+    var s = document.getElementById('jobSearch');
+    var src = document.getElementById('jobSource');
+    var loc = document.getElementById('jobLocation');
+    var btn = document.getElementById('searchBtn');
+
+    // Live search on the source dropdown (fast)
+    if (src) src.addEventListener('change', applyFilters);
+    // Debounced live search on text inputs
+    var timer = null;
+    function debouncedFilter() {
+        clearTimeout(timer);
+        timer = setTimeout(applyFilters, 250);
+    }
+    if (s) s.addEventListener('input', debouncedFilter);
+    if (loc) loc.addEventListener('input', debouncedFilter);
+    if (btn) btn.addEventListener('click', applyFilters);
+
+    // Initial load
+    loadJobs();
+});
+
+// Legacy-compat shims (kept for any inline onclick that might reference them)
+function filterJobs() { applyFilters(); }
+function applyJob(e, title, company) {
+    if (e) e.preventDefault();
+    alert('Use the "View & Apply" button on the job card to open the application flow.');
+}
+</script>
 {% endblock %}
