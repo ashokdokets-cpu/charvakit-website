@@ -1,5 +1,26 @@
 ## Session 26 CLOSED (2026-10-05) - Security sweep + cautious cleanup
 
+## Session 37 CLOSED (2026-10-07) - Wire the Career Engine trio
+
+Three surfaces wired to real data. Nav now works end-to-end.
+
+**Commit:** <hash>
+
+**Files:**
+- templates/job-board.html (rewrite)
+- templates/training-engine.html (rewrite)
+- templates/career-engine.html (rewrite)
+- templates/career-v2.html (+1 journey link, fixed nested anchor)
+- templates/base.html (+2 nav/footer items)
+- COMMITMENT.md (DoketsRB sync flag)
+
+**Session 38 candidates:**
+- A (recommended): Admin UI for integrity events
+- B: Personalized training views (Session 38+ flag)
+- C: Certificate round 2
+- D: AuditBot Continuous
+
+
 ## Session 36 CLOSED (2026-10-07) - Two-tier AI course unlock
 
 Restructured the AI-designed course into a freemium product.

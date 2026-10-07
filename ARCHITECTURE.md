@@ -1481,3 +1481,66 @@ Matches freemium course-builder pricing:
 Charvak's version is assessment-driven (from the skill gap) rather than
 generic. That's the differentiated piece: the AI designs for YOUR gap,
 not a generic topic.
+
+## Career Engine Trio (Session 37, v3.5)
+
+Four surfaces form the Career journey. Each has a distinct purpose.
+All cross-link.
+
+### The four surfaces
+
+| URL | Template | Purpose | Data source |
+|---|---|---|---|
+| /career-engine | career-engine.html | Marketing narrative - "7 Steps" | Static |
+| /career-center | career-v2.html | Logged-in dashboard | /api/candidate/{email}/unified |
+| /career-center/jobs | career-jobs.html | Unified jobs feed (inside center) | /api/jobs/unified |
+| /job-board | job-board.html | Public job board | /api/jobs/unified |
+| /training-engine | training-engine.html | Public course catalog | /api/ai-course/catalog |
+
+### The unified feed (Sessions 31, 37)
+
+/api/jobs/unified merges three sources into one public feed:
+
+  charvak_jobs           (public job board - currently empty)
+  charvak_client_roles   (staffing pipeline - 7 live roles)
+  charvak_micro_projects (gigs - 1 live project)
+
+Consumed by both /job-board and /career-center/jobs.
+
+### The training catalog (Sessions 16, 34, 36, 37)
+
+/api/ai-course/catalog returns all active courses from
+charvak_courses. 31 real courses across 6 categories (Cloud,
+Custom, Data, Design, Security, Technology).
+
+Custom courses (is_custom=TRUE) are AI-designed per user per weak
+topic. They show "Free after design" in the catalog UI.
+
+Consumed by /training-engine (Session 37 wiring) and by the
+individual /course/{name} detail pages.
+
+### Cross-links
+
+    career-engine  ->  career-center (dashboard CTA + journey link)
+    career-center  ->  career-engine (See the 7-step journey)
+    career-engine  ->  job-board (Step 2 card)
+    career-engine  ->  training-engine (Step 5 card)
+    job-board      ->  career-center (My Career Center)
+    job-board      ->  training-engine (Explore Training)
+    training-engine ->  career-center (My Career Center)
+    training-engine ->  career-engine (See the 7-Step Journey)
+
+### Nav consolidation (Session 37)
+
+The top nav's Services dropdown and the footer now expose:
+
+    Career Engine      ->  /career-engine  (narrative)
+    My Career Center   ->  /career-center  (dashboard)
+    Job Board          ->  /job-board      (public)
+    Training Engine    ->  /training-engine (courses)
+
+### Session 37 flagged for future work
+
+- Job posting as first-class feature (Session 38+)
+- Personalized training views (Session 38+, needs readiness cert data)
+- DoketsRB bidirectional sync (Session 38+, see COMMITMENT.md)
