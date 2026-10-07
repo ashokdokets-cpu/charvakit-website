@@ -942,4 +942,114 @@ class IELTSEngine:
             logger.warning(f"IELTS speaking persist failed: {e}")
 
         return {"status": "success", "evaluation": parsed, "response_count": len(responses)}
+
+    # ============================================================
+    # SESSION LIFECYCLE (Session 40b)
+    # ============================================================
+    # One generic session table for all four IELTS sub-tests. The
+    # session_id is the anchor for integrity events recorded during
+    # the test. Prefix map:
+    #   IELTS-W-*  ->  test_type='writing'
+    #   IELTS-R-*  ->  test_type='reading'
+    #   IELTS-L-*  ->  test_type='listening'
+    #   IELTS-S-*  ->  test_type='speaking'
+    # ============================================================
+
+    def create_session(self, email: str, test_type: str,
+                       content_ref: str = "") -> Dict:
+        """Create a new IELTS session for one sub-test.
+
+        test_type must be one of: writing, reading, listening, speaking.
+        content_ref is an optional identifier (passage_id, section_id,
+        prompt_id) that ties the session to the specific content used.
+
+        Returns {status, session_id, test_type, started_at} on success.
+        """
+        if not email:
+            return {"status": "error", "message": "email required"}
+
+        test_type = (test_type or "").strip().lower()
+        prefix_map = {
+            "writing":   "IELTS-W",
+            "reading":   "IELTS-R",
+            "listening": "IELTS-L",
+            "speaking":  "IELTS-S",
+        }
+        prefix = prefix_map.get(test_type)
+        if not prefix:
+            return {"status": "error",
+                    "message": f"unknown test_type: {test_type}"}
+
+        import secrets
+        session_id = f"{prefix}-{secrets.token_hex(6).upper()}"
+        started_at = datetime.utcnow()
+
+        try:
+            from database import db
+            conn = db.get_pooled_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                INSERT INTO charvak_ielts_sessions
+                    (session_id, email, test_type, content_ref,
+                     status, started_at)
+                VALUES (%s, %s, %s, %s, 'in_progress', %s)
+            """, (session_id, email, test_type, content_ref, started_at))
+            conn.commit()
+            cur.close()
+            db.release_pooled_connection(conn)
+        except Exception as e:
+            logger.error(f"create_session DB insert failed: {e}")
+            return {"status": "error", "message": "could not create session"}
+
+        return {
+            "status": "success",
+            "session_id": session_id,
+            "test_type": test_type,
+            "started_at": started_at.isoformat(),
+        }
+
+    def complete_session(self, session_id: str, band_score,
+                         details: Optional[Dict] = None) -> Dict:
+        """Close an IELTS session with the final band score.
+
+        band_score is a float (IELTS band, typically 0.0-9.0).
+        details (optional) is merged into details_json.
+
+        Returns {status, session_id, band_score}.
+        """
+        if not session_id:
+            return {"status": "error", "message": "session_id required"}
+
+        import json as _json
+        details_json = _json.dumps(details or {})
+
+        try:
+            from database import db
+            conn = db.get_pooled_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                UPDATE charvak_ielts_sessions
+                SET status = 'completed',
+                    completed_at = NOW(),
+                    band_score = %s,
+                    details_json = details_json || %s::jsonb
+                WHERE session_id = %s
+                RETURNING session_id
+            """, (band_score, details_json, session_id))
+            row = cur.fetchone()
+            conn.commit()
+            cur.close()
+            db.release_pooled_connection(conn)
+        except Exception as e:
+            logger.error(f"complete_session update failed: {e}")
+            return {"status": "error", "message": "could not update session"}
+
+        if not row:
+            return {"status": "error", "message": "session not found"}
+
+        return {
+            "status": "success",
+            "session_id": session_id,
+            "band_score": band_score,
+        }
 ielts_engine = IELTSEngine()
