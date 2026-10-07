@@ -1544,3 +1544,42 @@ The top nav's Services dropdown and the footer now expose:
 - Job posting as first-class feature (Session 38+)
 - Personalized training views (Session 38+, needs readiness cert data)
 - DoketsRB bidirectional sync (Session 38+, see COMMITMENT.md)
+
+## Partial-Credit Handling Across the Trust Pipeline
+
+Every assessment that can be submitted incomplete now carries an
+honest partial flag. The pattern differs by scoring type:
+
+**Deterministic scoring (reading, listening):**
+- `partial = answered_count < total_count`
+- `answered_count` and `partial` returned in the response
+- Persisted in `details_json`
+- Frontend yellow banner
+
+**AI-scored (Versant, IELTS writing, IELTS speaking):**
+- Versant: `partial = answered_count < 48`; the AI prompt is told
+  the answered count and returns a `confidence` field
+- IELTS writing: `partial = word_count < min_words`; min_words is
+  150 for Task 1 and 250 for Task 2
+- IELTS speaking: `partial = not (parts 1 and 2 and 3 present)`;
+  `parts_covered` and `part_counts` returned
+- All three persist the flag + supporting counts in `details_json`
+- All three render a yellow banner on the result screen
+
+**Coverage (as of Session 40c):**
+
+| Assessment | Type | Partial handling |
+|---|---|---|
+| Career | deterministic | n/a (no partial state) |
+| Mock | deterministic | n/a |
+| CBAT | deterministic | n/a |
+| Versant | AI-scored | yes |
+| IELTS Reading | deterministic | yes |
+| IELTS Listening | deterministic | yes |
+| IELTS Writing | AI-scored | yes (Session 40c) |
+| IELTS Speaking | AI-scored | yes (Session 40c) |
+
+**Known gap (logged in KNOWN-ISSUES.md):** the AI scoring prompts
+for writing and speaking do not yet enforce topical relevance. An
+off-topic submission can still score points, and an on-topic partial
+submission can score 0. Fix is scheduled as its own session.

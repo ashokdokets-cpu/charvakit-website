@@ -58,6 +58,50 @@
 ---
 
 ## Open — data integrity 🔴
+### FLAGGED - IELTS writing + speaking AI scoring does not enforce topical relevance (2026-10-08)
+
+Discovered during Session 40c testing. Two related observations:
+
+1. Pasting text from a DIFFERENT topic into a writing or speaking
+   response can still return a non-zero band score. The AI grades
+   fluency / lexical resource / grammar, but does not reliably check
+   whether the answer actually addresses the prompt.
+
+2. Conversely, a partial-but-on-topic submission (e.g. parts 1+2 of
+   speaking answered correctly) returned band 0 with feedback about
+   "missing responses." The AI overcorrected for incompleteness.
+
+**Impact:** HIGH. This directly undermines the trust-pipeline story.
+An employer viewing a certificate needs confidence that the band
+reflects on-topic ability. Off-topic submissions scoring points is
+the kind of gap that loses enterprise deals.
+
+**Root cause:** The prompts in `evaluate_writing` and
+`evaluate_speaking` (ielts_engine.py) do not include a
+topical-relevance criterion. The AI is asked to score the 4 official
+IELTS criteria (Task Achievement / Coherence / Lexical / Grammar)
+but Task Achievement specifically is under-specified for
+off-topic detection.
+
+**Suggested fix (its own session, ~2 hrs):**
+1. Add an explicit top-of-prompt instruction:
+   - "If the response does not address the prompt topic, cap Task
+     Achievement at 3.0 and note the topical mismatch in feedback."
+2. Add a pre-scoring sanity check on the backend:
+   - Compute a lightweight topical-similarity score between prompt
+     keywords and response text (keyword overlap is sufficient for
+     a first pass; embeddings would be stronger).
+   - If similarity is below a threshold, route to a specific
+     "response does not address the prompt" band.
+3. Build a regression test harness with 5 known cases:
+   - On-topic full response -> normal score
+   - On-topic partial response -> band + partial flag
+   - Off-topic full response -> capped / flagged
+   - Off-topic short response -> capped / flagged
+   - Empty / near-empty response -> band 0, no error
+
+**Verdict:** SCHEDULED - Session 41 candidate A.
+
 
 | # | File | Line / Area | Issue | Fix in session |
 |---|---|---|---|---|
