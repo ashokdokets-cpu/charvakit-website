@@ -128,6 +128,7 @@
 
 </div>
 
+<script src="/static/js/integrity-capture.js"></script>
 <script>
 // =============================================================
 // V5 — Versant page logic (DB-backed)
@@ -461,5 +462,28 @@ fetch('/api/versant/sections', {headers: {'Authorization': 'Bearer ' + (localSto
     renderSectionList();
   }
 });
+
+// ========================================================================
+// Session 40a-6 - Integrity capture for Versant
+// ========================================================================
+// Uses the shared helper in static/js/integrity-capture.js.
+// VS.sessionId is set by startTest() on the start-session response
+// and used by the complete call. The helper reads it via the getter.
+// ========================================================================
+
+function _vsInitIntegrity() {
+    if (typeof window.CharvakIntegrity === 'undefined') return;
+    window.CharvakIntegrity.init({
+        getAssessmentId: function () {
+            return (window.VS && window.VS.sessionId) || null;
+        }
+    });
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _vsInitIntegrity);
+} else {
+    _vsInitIntegrity();
+}
 </script>
 {% endblock %}
