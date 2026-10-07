@@ -11542,7 +11542,7 @@ async def ielts_writing_evaluate(request: Request):
     result = ielts_engine.evaluate_writing(
         essay=data.get("essay", ""),
         task=int(data.get("task", 2)),
-        prompt_text=data.get("prompt_text", ""),
+        prompt_text=(data.get("prompt") or data.get("prompt_text") or ""),
         email=data.get("email") or None,
     )
 
