@@ -399,3 +399,60 @@ shape had changed. main.py was never at risk.
 - Systemic `charvakFetch` belongs in base.html. Three templates now
   duplicate a ~12-line helper. One-line addition to base would let
   every template share it.
+
+### RESOLVED - Versant persistence + integrity roll-out (2026-10-07, e25598e)
+
+Versant had been dead-on-arrival for weeks. cbt_versant.py was
+refactored to persist to Postgres, but the migration was never
+added and no self-healing DDL was in place. Every create_session()
+call hit a try/except and returned "could not create session",
+silently failing.
+
+**What shipped (7 commits):**
+
+1. `charvak_versant_sessions` + `charvak_versant_answers` migration
+   + self-healing DDL in cbt_versant.py.__init__
+
+2. VERSANT prefix in _integrity_lookup_owner's table_map
+
+3. List endpoint LEFT JOINs versant + COALESCEs role/format
+
+4. Detail endpoint gains a VERSANT metadata branch
+
+5. versant.html wired to CharvakIntegrity.init() via
+   window.VS.sessionId
+
+6. Trust badge on the Versant scorecard via the shared
+   CharvakIntegrity.renderBadge()
+
+7. Graceful partial-credit handling: the engine now computes
+   partial = (answered_count < total_count), tells the AI in the
+   prompt, tags the response, persists the metadata, and the
+   frontend shows a yellow warning banner.
+
+**Verified E2E:**
+- Full session completes (was broken)
+- 10 events captured live
+- Admin list shows "English Assessment · versant"
+- Detail page metadata populated
+- Partial submission shows banner + DB records partial=True
+- Full submission: no banner
+
+**Patcher discipline lesson (worth keeping):**
+The 40a-9 v1 patcher broke cbt_versant.py by stopping its
+_score_versant replacement at the last quoted string, leaving the
+original closing `)` as an orphan (SyntaxError: unmatched ')'). v2
+fixed it by:
+  1. Asserting lines[promptEndIdx + 1].Trim() == ')' BEFORE writing
+  2. Including the `)` line in the replacement range
+  3. Post-write ast.parse with automatic restore-from-backup on
+     failure
+
+Rule: when replacing a Python statement whose closing paren is on
+its own line, the paren is part of the boundary. Assert it. Replace
+it. And add a post-write AST check that restores on failure so the
+file is never left broken.
+
+**Follow-up flagged:**
+- Versant schema has no `passed` column. Add it and populate in
+  complete_session (score >= threshold).

@@ -1,5 +1,117 @@
 # Session Context - Charvak
 
+## Session 40a CLOSED (2026-10-07) - Versant persistence + integrity roll-out
+
+Session 39 shipped the integrity roll-out for Mock Drives and CBAT.
+Session 40a extends the same pipeline to Versant - and along the way
+fixed a Tier 3 persistence gap that had been silently breaking
+Versant since it was refactored.
+
+**Commits:**
+- 150728a  feat(versant): Session 40a-1 - create session persistence tables
+- c0bb9fc  feat(integrity): Session 40a-3 - add VERSANT prefix to ownership helper
+- 628cf98  feat(integrity): Session 40a-4 - list endpoint joins versant sessions
+- 7a9be9f  feat(integrity): Session 40a-5 - detail endpoint prefix routing for VERSANT
+- cbd1712  feat(integrity): Session 40a-6 - wire capture into versant.html
+- 29f078b  feat(integrity): Session 40a-7 - Trust badge on the Versant scorecard
+- e25598e  feat(versant): Session 40a-9 - graceful partial-credit handling
+
+**What was broken before this session:**
+
+Versant has been dead-on-arrival. `cbt_versant.py` was refactored at
+some point to persist to Postgres, but:
+- No migration created the tables
+- No `_ensure_tables()` self-healed them
+- Every `create_session()` call hit the try/except and returned
+  "could not create session"
+- 0 rows in `charvak_versant_sessions` locally
+- 0 Versant rows in `charvak_assessment_results`
+
+The bug was invisible because the try/except swallowed the error and
+logged it silently.
+
+**What shipped:**
+
+Backend:
+- migrations/20261007_versant_sessions.sql - creates
+  `charvak_versant_sessions` + `charvak_versant_answers`
+- cbt_versant.py._ensure_tables() - self-healing DDL called from
+  __init__. Tables now create on first import even without running
+  the migration.
+- _integrity_lookup_owner's table_map gains a VERSANT entry routing
+  to charvak_versant_sessions
+- /api/admin/integrity-events list query LEFT JOINs versant +
+  COALESCEs role = 'English Assessment', format = 'versant'
+- Detail endpoint prefix switch gains a VERSANT branch
+
+Graceful partial-credit handling:
+- complete_session computes partial = answered_count < 48
+- _score_versant prompt tells the AI how many were answered and
+  asks for a "confidence" JSON field
+- Response includes partial / answered_count / total_count
+- results_system.record_assessment_result persists the metadata
+- Frontend renders a yellow banner: "Partial submission - You
+  answered N of 48 questions. The score below is not comparable
+  to a full-test result."
+
+Frontend:
+- versant.html loads integrity-capture.js and calls
+  CharvakIntegrity.init() with a getter for window.VS.sessionId
+- Trust badge renders on the scorecard via the shared
+  CharvakIntegrity.renderBadge()
+- Partial banner renders above the score when partial=true
+
+**Verified E2E:**
+- Versant session starts (was broken before)
+- 10 events captured in a live session
+- Admin list shows VERSANT row with "English Assessment · versant"
+- Detail page metadata card fully populated
+- Scorecard badge renders green/blue/yellow/red depending on state
+- Partial submission (10/48 and 28/48): yellow banner renders,
+  DB records partial=True + answered_count + confidence='reduced'
+- Full submission: no banner, confidence='high'
+
+**Patterns established:**
+- Versant joins the ownership prefix map (5 entries now:
+  CAR/MK/MOCK/CBAT/VERSANT)
+- The badge renderer works on 4 assessment types with the same
+  10-line call pattern
+- Graceful partial-credit handling is now the model for any future
+  scoring integration: no hard block, but a clear label + AI
+  calibration + persisted metadata
+
+**Patcher discipline lesson:**
+- When replacing a Python statement whose closing paren is on its
+  own line, the paren MUST be part of the replacement boundary.
+  The 40a-9 v1 patcher stopped at the last quoted string and left
+  the original `)` orphaned. v2 added an explicit assertion on the
+  closing paren line + a post-write AST parse check with automatic
+  restore-on-failure. Both gates are now standard for multi-line
+  Python replacements.
+
+**Session 40b candidates:**
+- A (recommended): Roll integrity pipeline to IELTS (Session 40b).
+  Same pattern as Versant. IELTS has 4 sub-tests (writing/reading/
+  listening/speaking), needs one `charvak_ielts_sessions` table
+  with a `test_type` column.
+- B: Certificate round 2 (QR, watermark, multi-language)
+- C: AuditBot Continuous (recurring revenue)
+- D: Personalized training views on /training-engine
+- E: Docs + backup polish
+
+**Follow-ups flagged:**
+- `charvak_versant_sessions` has no `passed` boolean column.
+  Admin detail shows "—" for Passed. Add a passed column +
+  populate it in complete_session (score >= threshold). Small.
+- `charvakFetch` helper belongs in base.html - 3+ templates
+  duplicate the pattern (still on the list from Session 39).
+- IELTS is now the only assessment without the trust pipeline.
+
+**Reminder:** Render Postgres password rotation still pending
+(since Session 19).
+
+
+
 ## Session 39 CLOSED (2026-10-07) - Integrity roll-out to Mock + CBAT
 
 Session 38 shipped the integrity admin UI + public trust badge for
