@@ -6900,6 +6900,62 @@ async def api_career_assessment_get(request: Request, assessment_id: str, email:
 #   - GET requires admin
 #   - No credits charged (signal recording is free; it is a trust feature)
 # ========================================================================
+# Session 39 — Shared integrity ownership resolver
+# ========================================================================
+# Routes an assessment_id to the correct table based on its ID prefix.
+# Returns the owning email, or None if no owner is found.
+#
+# Prefix map:
+#   CAR-*   -> charvak_career_assessments  (Session 10-13)
+#   MK-*    -> charvak_mock_sessions       (Session 22, Mock Drives)
+#   MOCK-*  -> charvak_mock_sessions       (alias)
+#   CBAT-*  -> charvak_cbat_sessions       (Session M-2, RRB ALP CBAT)
+#
+# Session 40 will add VS-* / IELTS-* once those assessments get their
+# own session tables. Until then, an unrecognized prefix returns None.
+# ========================================================================
+
+def _integrity_lookup_owner(assessment_id: str) -> str:
+    """
+    Return the owning email for an assessment_id, or None if not found.
+    Never raises - callers treat None as 'not authorized' or 'not found'.
+    """
+    if not assessment_id or not isinstance(assessment_id, str):
+        return None
+
+    aid = assessment_id.strip()
+    prefix = aid.split("-", 1)[0].upper()
+
+    # Map prefix -> (table, id_column)
+    table_map = {
+        "CAR":  ("charvak_career_assessments", "assessment_id"),
+        "MK":   ("charvak_mock_sessions",      "session_id"),
+        "MOCK": ("charvak_mock_sessions",      "session_id"),
+        "CBAT": ("charvak_cbat_sessions",      "session_id"),
+    }
+
+    spec = table_map.get(prefix)
+    if not spec:
+        return None
+
+    table, col = spec
+    try:
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+        # Both column names and table names are hard-coded above, not
+        # user-supplied, so string interpolation is safe here.
+        cur.execute(
+            f"SELECT email FROM {table} WHERE {col} = %s",
+            (aid,),
+        )
+        row = cur.fetchone()
+        cur.close(); conn.close()
+        return (row[0] or "").strip().lower() if row else None
+    except Exception:
+        return None
+
+# ========================================================================
 
 @app.post("/api/integrity/event")
 @limiter.limit("120/minute")
@@ -6937,26 +6993,17 @@ async def api_integrity_event(request: Request):
             )
 
         # Ownership check: the assessment must belong to this email.
-        from database import db
-        conn = db.get_connection()
-        cur = conn.cursor()
-        cur.execute(
-            "SELECT email FROM charvak_career_assessments WHERE assessment_id = %s",
-            (assessment_id,),
-        )
-        row = cur.fetchone()
-        cur.close()
-        conn.close()
-
-        if not row:
+        # Ownership check: route to the correct table based on ID prefix.
+        owner_email = _integrity_lookup_owner(assessment_id)
+        if owner_email is None:
             return JSONResponse(
                 status_code=404,
                 content={"status": "error", "message": "Assessment not found"},
             )
-        if (row[0] or "").strip().lower() != email:
+        if owner_email != email:
             return JSONResponse(
                 status_code=403,
-                content={"status": "error", "message": "Assessment does not belong to this user"},
+                content={"status": "error", "message": "Not your assessment"},
             )
 
         result = integrity_engine.record_event(
