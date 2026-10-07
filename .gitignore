@@ -92,6 +92,7 @@ scripts/*
 !scripts/migrate_tier3_referral.py
 !scripts/send_emi_reminders.py
 !scripts/system_audit.py
+!scripts/test_ielts_relevance.py
 requirements.txt.bak
 runtime.txt.bak
 

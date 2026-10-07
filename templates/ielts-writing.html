@@ -122,6 +122,9 @@
 
   <!-- Scorecard -->
   <div id="scoreCard" class="iw-card" style="display:none;">
+    <div id="iwRelevanceBanner" class="alert alert-danger mb-3" style="display:none;">
+      <strong>Off-topic response</strong> &mdash; <span id="iwRelevanceText"></span>
+    </div>
     <div id="iwPartialBanner" class="alert alert-warning mb-3" style="display:none;">
       <strong>Partial submission</strong> &mdash; <span id="iwPartialText"></span>
     </div>
@@ -273,7 +276,7 @@ async function submitEssay() {
     if (j.status !== 'success') {
       return iwErr(j.message || 'Could not score your essay.');
     }
-  renderScorecard(j, j.partial, j.word_count, j.min_words);
+  renderScorecard(j, j.partial, j.word_count, j.min_words, j.topical_relevance, j.relevance_note);
   } catch (e) {
     iwErr('Network error: ' + e.message);
   } finally {
@@ -282,7 +285,7 @@ async function submitEssay() {
   }
 }
 
-function renderScorecard(j, partial, wordCount, minWords) {
+function renderScorecard(j, partial, wordCount, minWords, topicalRelevance, relevanceNote) {
   // Accept multiple response shapes defensively
   var ev = j.evaluation || j;
   document.getElementById('overallBand').textContent = formatBand(ev.overall_band);
@@ -328,6 +331,15 @@ function renderScorecard(j, partial, wordCount, minWords) {
   document.getElementById('introCard').style.display = 'none';
   document.getElementById('scoreCard').style.display = 'block';
   window.scrollTo({top: 0, behavior: 'smooth'});
+  // Session 41: topical-relevance banner
+  var relevanceBanner = document.getElementById('iwRelevanceBanner');
+  var relevanceText = document.getElementById('iwRelevanceText');
+  if (topicalRelevance === false && relevanceBanner && relevanceText) {
+    relevanceText.textContent = relevanceNote || 'Your essay did not address the task prompt.';
+    relevanceBanner.style.display = 'block';
+  } else if (relevanceBanner) {
+    relevanceBanner.style.display = 'none';
+  }
   // Session 40c: partial submission banner
   var partialBanner = document.getElementById('iwPartialBanner');
   var partialText = document.getElementById('iwPartialText');
