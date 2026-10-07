@@ -118,6 +118,9 @@
   </div>
 
   <div id="scoreCard" class="ir-card" style="display:none;">
+    <div id="irPartialBanner" class="alert alert-warning mb-3" style="display:none;">
+      <strong>Partial submission</strong> &mdash; <span id="irPartialText"></span>
+    </div>
     <div class="text-center mb-4">
       <div class="text-uppercase small text-muted mb-1">Band Score</div>
       <div class="ir-band-big" id="bandValue">&mdash;</div>
@@ -268,7 +271,7 @@ async function submitAnswers() {
     if (j.status !== 'success') {
       return irErr(j.message || 'Scoring failed.');
     }
-    renderScorecard(j);
+  renderScorecard(j, j.partial, j.answered_count, j.total_questions);
   } catch (e) {
     irErr('Network error: ' + e.message);
   } finally {
@@ -277,7 +280,7 @@ async function submitAnswers() {
   }
 }
 
-function renderScorecard(j) {
+function renderScorecard(j, partial, answeredCount, totalCount) {
   document.getElementById('bandValue').textContent = (j.band_score || 0).toFixed(1);
   document.getElementById('correctCount').textContent = j.correct_count;
   document.getElementById('totalQuestions').textContent = j.total_questions;
@@ -303,6 +306,17 @@ function renderScorecard(j) {
 
   document.getElementById('sessionCard').style.display = 'none';
   document.getElementById('scoreCard').style.display = 'block';
+
+  // Session 40b-7: partial submission banner
+  var partialBanner = document.getElementById('irPartialBanner');
+  var partialText = document.getElementById('irPartialText');
+  if (partial && partialBanner && partialText) {
+    partialText.textContent = 'You answered ' + (answeredCount || 0) + ' of ' +
+                              (totalCount || 0) + ' questions. Skipped questions count as wrong.';
+    partialBanner.style.display = 'block';
+  } else if (partialBanner) {
+    partialBanner.style.display = 'none';
+  }
   window.scrollTo({top: 0, behavior: 'smooth'});
     // Session 40b-6: render the Trust Score badge via the shared helper
     try {

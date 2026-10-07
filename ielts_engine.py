@@ -560,12 +560,15 @@ class IELTSEngine:
         qs = row[3] if isinstance(row[3], list) else json.loads(row[3] or "[]")
         total = len(qs)
         correct = 0
+        answered = 0
         results = []
         for i, q in enumerate(qs):
             try:
                 sel = int(answers[i]) if i < len(answers) else -1
             except Exception:
                 sel = -1
+            if sel >= 0:
+                answered += 1
             is_correct = (sel == q.get("correct_idx", -1))
             if is_correct:
                 correct += 1
@@ -626,6 +629,8 @@ class IELTSEngine:
             "correct_count": correct,
             "total_questions": total,
             "band_score": band,
+            "answered_count": answered,
+            "partial": answered < total,
             "results": results,
         }
 
@@ -728,12 +733,15 @@ class IELTSEngine:
         qs = row[3] if isinstance(row[3], list) else json.loads(row[3] or "[]")
         total = len(qs)
         correct = 0
+        answered = 0
         results = []
         for i, q in enumerate(qs):
             try:
                 sel = int(answers[i]) if i < len(answers) else -1
             except Exception:
                 sel = -1
+            if sel >= 0:
+                answered += 1
             is_correct = (sel == q.get("correct_idx", -1))
             if is_correct:
                 correct += 1
@@ -796,6 +804,8 @@ class IELTSEngine:
             "correct_count": correct,
             "total_questions": total,
             "band_score": band,
+            "answered_count": answered,
+            "partial": answered < total,
             "results": results,
         }
 

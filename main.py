@@ -11634,6 +11634,8 @@ async def ielts_reading_score(request: Request):
         ielts_engine.complete_session(_sess_id, result.get("band_score", 0) or 0, details={
             "correct_count": result.get("correct_count"),
             "total_questions": result.get("total_questions"),
+            "answered_count": result.get("answered_count"),
+            "partial": result.get("partial"),
         })
     return result
 
@@ -11685,6 +11687,8 @@ async def ielts_listening_score(request: Request):
         ielts_engine.complete_session(_sess_id, result.get("band_score", 0) or 0, details={
             "correct_count": result.get("correct_count"),
             "total_questions": result.get("total_questions"),
+            "answered_count": result.get("answered_count"),
+            "partial": result.get("partial"),
         })
     return result
 
