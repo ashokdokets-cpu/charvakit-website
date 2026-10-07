@@ -7085,7 +7085,17 @@ async def api_admin_assessment_integrity(request: Request, assessment_id: str):
                     WHERE session_id = %s
                 """, (assessment_id,))
                 meta_row = cur.fetchone()
-            row = cur.fetchone()
+            elif aid_prefix == "VERSANT":
+                cur.execute("""
+                    SELECT email, 'English Assessment' as role, '' as industry, '' as level,
+                           'versant' as format, '' as size,
+                           overall_score as score, NULL as passed, status,
+                           started_at, completed_at,
+                           48 as num_questions
+                    FROM charvak_versant_sessions
+                    WHERE session_id = %s
+                """, (assessment_id,))
+                meta_row = cur.fetchone()
             cur.close(); conn.close()
             if meta_row:
                 meta = {
