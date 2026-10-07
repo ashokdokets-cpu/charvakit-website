@@ -410,6 +410,7 @@ class IELTSEngine:
                 "improvements": [],
                 "message": ("AI scoring unavailable. Essay saved for review. "
                             "Word count: " + str(word_count)),
+                "partial": word_count < min_words,
             }
 
         scored = {
@@ -428,6 +429,7 @@ class IELTSEngine:
             "strengths": result.get("strengths", []),
             "improvements": result.get("improvements", []),
             "criterion_1_label": criterion_1,
+            "partial": word_count < min_words,
         }
 
         # Persist to results_system if email provided
@@ -954,6 +956,21 @@ class IELTSEngine:
 
         # Build transcript summary
         summary_lines = []
+        # Session 40c: track which parts the candidate answered
+        parts_covered = set()
+        part_counts = {}
+        for _r in responses:
+            _p = _r.get("part")
+            if _p is not None:
+                try:
+                    _p_int = int(_p)
+                    parts_covered.add(_p_int)
+                    part_counts[_p_int] = part_counts.get(_p_int, 0) + 1
+                except (ValueError, TypeError):
+                    pass
+        # IELTS Speaking has 3 parts. Partial = any of 1, 2, 3 missing.
+        expected_parts = {1, 2, 3}
+        is_partial_speaking = not expected_parts.issubset(parts_covered)
         for r in responses:
             part = r.get("part", "?")
             q = r.get("question", "")[:120]
@@ -1019,7 +1036,14 @@ class IELTSEngine:
         except Exception as e:
             logger.warning(f"IELTS speaking persist failed: {e}")
 
-        return {"status": "success", "evaluation": parsed, "response_count": len(responses)}
+        return {
+            "status": "success",
+            "evaluation": parsed,
+            "response_count": len(responses),
+            "partial": is_partial_speaking,
+            "parts_covered": sorted(list(parts_covered)),
+            "part_counts": part_counts,
+        }
 
     # ============================================================
     # SESSION LIFECYCLE (Session 40b)
