@@ -93,6 +93,21 @@
     }
 
     async function selectCompany(companyId) {
+        // Session 42-3c: gate on login before fetching (the API requires auth)
+        var _token = (localStorage.getItem("auth_token") || localStorage.getItem("charvak_token") || "").trim();
+        var _email = (localStorage.getItem("userEmail") || "").trim();
+        if (!_token || !_email) {
+            var _here = window.location.pathname + window.location.search;
+            var _loginUrl = "/login?next=" + encodeURIComponent(_here);
+            var _content = document.getElementById("mainContent");
+            _content.innerHTML =
+                '<div class="card-body p-4 text-center">' +
+                '<h4 class="mb-2">Log in to take a mock drive</h4>' +
+                '<p class="text-muted mb-3">The mock drive is free. Logging in lets us save your score and give you a shareable result.</p>' +
+                '<a href="' + _loginUrl + '" class="md-btn-primary" style="display:inline-block;padding:10px 24px;text-decoration:none;">Log in / Sign up &rarr;</a>' +
+                '</div>';
+            return;
+        }
         document.querySelectorAll(".md-company-card").forEach(function(c) { c.classList.remove("active"); });
         var card = document.querySelector('[data-company="' + companyId + '"]');
         if (card) card.classList.add("active");
@@ -132,8 +147,8 @@
     async function startAIQuestions(companyId, patternId, patternName, difficulty) {
         var email = getUserEmail();
         if (!email) {
-            alert("Please log in first to start a mock drive.");
-            window.location.href = "/login";
+            var _here = window.location.pathname + window.location.search;
+            window.location.href = "/login?next=" + encodeURIComponent(_here);
             return;
         }
 
@@ -144,9 +159,16 @@
             var response = await fetch("/api/mock/start-complete", {
                 method: "POST",
                 headers: {"Content-Type": "application/json", "Authorization": "Bearer " + (localStorage.getItem("auth_token") || localStorage.getItem("charvak_token") || "")},
-                body: JSON.stringify({email: email, company_id: companyId})
+                body: JSON.stringify({email: email, company_id: companyId, pattern_id: patternId, pattern_name: patternName, difficulty: difficulty})
             });
             var result = await response.json();
+
+            // Session 42-3c: if the token is invalid/expired, redirect to login
+            if (response.status === 401 || (result && result.status === "error" && (result.message || "").toLowerCase().includes("login"))) {
+                var _here = window.location.pathname + window.location.search;
+                window.location.href = "/login?next=" + encodeURIComponent(_here);
+                return;
+            }
 
             if (result.status !== "success" || !result.session) {
                 content.innerHTML = '<div class="card-body p-4"><p class="text-danger">' + esc(result.message || "Could not start the mock drive.") + '</p></div>';
@@ -311,5 +333,28 @@
     } else {
         _mockInitIntegrity();
     }
+
+    // Session 42-3: auto-select company from URL query param
+    // e.g. /mock-drive?company=tcs -> click the TCS card automatically
+    (function() {
+        var _params = new URLSearchParams(window.location.search);
+        var _preselect = _params.get("company");
+        if (!_preselect) return;
+        // Wait for the card grid to render, then click the matching card
+        var _tryClick = function(attempts) {
+            var card = document.querySelector('[data-company="' + _preselect + '"]');
+            if (card) {
+                card.click();
+                // Scroll the mock-drive content into view
+                setTimeout(function() {
+                    var target = document.getElementById("mainContent");
+                    if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+                }, 400);
+                return;
+            }
+            if (attempts > 0) setTimeout(function() { _tryClick(attempts - 1); }, 150);
+        };
+        _tryClick(10);  // 10 attempts over 1.5 seconds
+    })();
 </script>
 {% endblock %}

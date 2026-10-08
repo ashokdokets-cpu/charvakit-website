@@ -5501,6 +5501,12 @@ async def mock_drive_page(request: Request):
     return template_response("companies.html", request, "Company Mock Drives - Charvak")
 
 
+@app.get("/placement-prep-2026", response_class=HTMLResponse)
+async def placement_prep_2026(request: Request):
+    """Session 42-3: Campus placement season landing page."""
+    return template_response("placement-prep-2026.html", request, "Campus Placement Season 2026-27 — Free Mock Drives")
+
+
 
 # ========================================================================
 # Session 39-5b - CBAT page route (was never registered)
@@ -11232,7 +11238,7 @@ async def start_complete_mock(request: Request):
     if guard.get("status") != "success":
         return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     require_auth_for_email(request, guard["email"])
-    return complete_mock.start_mock_drive(guard["email"], data.get("company_id"))
+    return complete_mock.start_mock_drive(guard["email"], data.get("company_id"), pattern_id=data.get("pattern_id"))
 
 
 @app.post("/api/mock/submit-complete")
