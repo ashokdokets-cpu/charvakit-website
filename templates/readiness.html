@@ -143,9 +143,9 @@
 
     <!-- Session 19: below-benchmark upgrade CTA -->
     <div id="rdUpgradeCard" class="rd-upgrade-card" style="display:none;">
-      <h4>Want a more precise score?</h4>
-      <p>Your 10-question check is a starting point. Take the <strong>15-question Standard check</strong> for a more accurate readiness score on the same role.</p>
-      <button class="btn" onclick="rdUpgrade()">Take Standard Check &mdash; 25 cr</button>
+      <h4>Want a deeper assessment?</h4>
+      <p>The Standard check adds a <strong>full skill breakdown</strong> and a longer benchmark sample. 15 minutes, on the same role.</p>
+      <button class="btn" onclick="rdUpgrade()">Take Standard Check &mdash; 25 credits</button>
       <div id="rdUpgradeMsg" class="small mt-2"></div>
     </div>
 
@@ -334,7 +334,7 @@
       });
       if (r.status === 401) { window.location.href = "/login?next=" + encodeURIComponent(window.location.pathname); return; }
       if (r.status === 402) {
-        if (msg) msg.innerHTML = '<span class="text-danger">Not enough credits (25 needed). <a href="/ai-credits-pricing">Top up</a>.</span>';
+        if (msg) msg.innerHTML = '<span class="text-danger">Not enough credits (25 needed for Standard). <a href="/ai-credits-pricing">Top up</a>.</span>';
         return;
       }
       var j = await r.json();
