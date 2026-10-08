@@ -1,5 +1,8 @@
 {% extends "base.html" %}
 {% block title %}Free Role Readiness Check{% endblock %}
+{% block description %}Free 5-minute Role Readiness Check. Pick your target role from 106 options, answer 10 questions, get a benchmarked readiness score and a shareable, verifiable certificate. No payment.{% endblock %}
+{% block og_title %}Free Role Readiness Check — 5 minutes, verified certificate{% endblock %}
+{% block og_description %}Check your readiness for any of 106 roles. 5 minutes. Free. Shareable, verifiable certificate.{% endblock %}
 {% block content %}
 <style>
   .rc-hero { background: linear-gradient(135deg, #3ba591 0%, #2a8070 100%); color: #fff; padding: 64px 0 48px; }
@@ -233,6 +236,7 @@
     btn.disabled = true;
     btn.textContent = "Starting...";
 
+    if (typeof charvakTrack === 'function') charvakTrack('readiness_start', { page: 'readiness-check' });
     fetch("/api/career-assessment/start", {
       method: "POST",
       headers: {
@@ -289,4 +293,3 @@
 })();
 </script>
 {% endblock %}
-
