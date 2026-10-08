@@ -855,7 +855,7 @@ function renderLearningPath(el, j) {
             html += '<div><strong>' + _esc(cand.topic || '') + '</strong>';
             html += ' <span class="badge bg-warning text-dark" style="font-size:0.7rem;">' + _esc(cand.status || 'weak') + ' - ' + (cand.pct || 0) + '%</span>';
             html += '<div class="text-muted small mt-1">' + _esc(cand.level || '') + ' level - ' + _esc(cand.role || '') + '</div></div>';
-            html += '<button class="btn btn-sm btn-primary" onclick="generateCustomCourse(\'' + _esc(cand.topic).replace(/'/g, "\\'") + '\', \'' + _esc(cand.level || 'mid') + '\', \'' + _esc(cand.role || '') + '\', \'' + _esc(cand.status || 'mixed') + '\')">Design this course - 50 cr</button>';
+            html += '<button class="btn btn-sm btn-primary" onclick="generateCustomCourse(\'' + _esc(cand.topic).replace(/'/g, "\\'") + '\', \'' + _esc(cand.level || 'mid') + '\', \'' + _esc(cand.role || '') + '\', \'' + _esc(cand.status || 'mixed') + '\')">Design this course - 50 credits</button>';
             html += '</div>';
             html += '<div id="ccResult-' + cc + '" class="mt-2"></div>';
             html += '</div></div>';
@@ -930,13 +930,13 @@ async function generateCustomCourse(topic, level, roleHint, candStatus) {
         if (r.status === 401) { window.location.href = '/login?next=/ai-assessment'; return; }
         if (r.status === 402) {
             if (resultSlot) resultSlot.innerHTML = '<div class="alert alert-warning py-2 px-3 mb-0">Not enough credits (50 needed). <a href="/ai-credits-pricing">Top up</a>.</div>';
-            if (btn) { btn.disabled = false; btn.textContent = 'Design this course - 50 cr'; }
+            if (btn) { btn.disabled = false; btn.textContent = 'Design this course - 50 credits'; }
             return;
         }
         var j = await r.json();
         if (j.status !== 'success') {
             if (resultSlot) resultSlot.innerHTML = '<div class="alert alert-danger py-2 px-3 mb-0">' + _esc(j.message || 'Could not generate course') + '</div>';
-            if (btn) { btn.disabled = false; btn.textContent = 'Design this course - 50 cr'; }
+            if (btn) { btn.disabled = false; btn.textContent = 'Design this course - 50 credits'; }
             return;
         }
 
@@ -964,7 +964,7 @@ async function generateCustomCourse(topic, level, roleHint, candStatus) {
         if (btn) btn.style.display = "none";
     } catch (e) {
         if (resultSlot) resultSlot.innerHTML = '<div class="alert alert-danger py-2 px-3 mb-0">Network error: ' + _esc(e.message) + '</div>';
-        if (btn) { btn.disabled = false; btn.textContent = 'Design this course - 50 cr'; }
+        if (btn) { btn.disabled = false; btn.textContent = 'Design this course - 50 credits'; }
     }
 }
 
