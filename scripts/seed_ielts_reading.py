@@ -26,7 +26,15 @@ from datetime import datetime
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dotenv import load_dotenv
-load_dotenv()
+load_dotenv(".env.local", override=True)  # dev first
+load_dotenv()                                # fall back to .env (prod) only if .env.local absent
+
+# Safety: refuse to run against prod unless CHARVAK_ALLOW_PROD=1
+import os as _os
+_db_url = _os.getenv("DATABASE_URL", "")
+_host = _db_url.split("@")[1].split("/")[0] if "@" in _db_url else "unknown"
+if ("render.com" in _host or "singapore" in _host) and _os.getenv("CHARVAK_ALLOW_PROD") != "1":
+    raise SystemExit("REFUSING prod (" + _host + "). Set CHARVAK_ALLOW_PROD=1 to override.")
 
 import requests
 import psycopg2
