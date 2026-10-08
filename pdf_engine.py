@@ -375,20 +375,47 @@ def render_readiness_certificate_pdf(cert: Dict) -> bytes:
     pdf.set_line_width(0.4)
     pdf.rect(14, 14, W - 28, H - 28, style="D")
 
-    # --- Logo (centered top) ---
-    logo_path = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)),
-                              "static", "images", "logo.png")
-    if _os.path.exists(logo_path):
-        try:
-            pdf.image(logo_path, x=W / 2 - 12, y=22, w=24)
-        except Exception:
-            pass
+    # --- Logo / wordmark (centered top) ---
+    # If a high-res logo-wordmark.png exists (>=700px wide), use it
+    # as an image. Otherwise render the wordmark as crisp vector text
+    # using the brand teal. This keeps the certificate sharp
+    # regardless of the source image resolution.
+    _wordmark_drawn = False
+    try:
+        _wm = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)),
+                            "static", "images", "logo-wordmark.png")
+        if _os.path.exists(_wm):
+            try:
+                from PIL import Image as _PILImage
+                with _PILImage.open(_wm) as _im:
+                    _w, _h = _im.size
+                if _w >= 700:
+                    _draw_w = 55.0
+                    _draw_h = _draw_w * (_h / float(_w))
+                    pdf.image(_wm, x=W / 2 - _draw_w / 2, y=14,
+                              w=_draw_w, h=_draw_h)
+                    _wordmark_drawn = True
+            except Exception:
+                pass
+    except Exception:
+        pass
 
-    # --- "CERTIFICATE" eyebrow ---
+    if not _wordmark_drawn:
+        # Vector-text wordmark fallback
+        pdf.set_xy(0, 14)
+        pdf.set_font("DejaVu", "B", size=26)
+        pdf.set_text_color(*TEAL)
+        pdf.cell(W, 12, "Charvak", align="C")
+        pdf.set_xy(0, 26)
+        pdf.set_font("DejaVu", "B", size=9)
+        pdf.set_text_color(*INK)
+        pdf.cell(W, 5, "I T   C O N S U L T I N G", align="C")
+
+    # --- Tagline (replaces the old duplicate-wordmark eyebrow) ---
     pdf.set_xy(0, 52)
-    pdf.set_font("DejaVu", "B", size=10)
+    pdf.set_font("DejaVu", "I", size=10)
     pdf.set_text_color(*MUTED)
-    pdf.cell(W, 5, "C H A R V A K  I T  C O N S U L T I N G", align="C")
+    pdf.cell(W, 5, "Verified Role Readiness  ·  Independently Benchmarked", align="C")
 
     # --- Title ---
     pdf.set_xy(0, 62)
@@ -526,11 +553,27 @@ def render_readiness_certificate_pdf(cert: Dict) -> bytes:
     sig_y = 258
     # Signature line
     pdf.set_draw_color(*INK)
+    # --- Signature block ---
+    sig_y = 258
+    # Optional handwritten signature image (drop a PNG in
+    # static/images/signature.png and it appears automatically).
+    try:
+        import os as _sig_os
+        sig_img = _sig_os.path.join("static", "images", "signature.png")
+        if _sig_os.path.exists(sig_img):
+            # Left column is 38..90 (52 wide). Right column 120..172.
+            # Signature sits just above the line.
+            pdf.image(sig_img, x=44, y=sig_y - 14, w=40)
+    except Exception:
+        pass
+
+    # Signature line
+    pdf.set_draw_color(*INK)
     pdf.set_line_width(0.4)
     pdf.line(38, sig_y, 90, sig_y)
     pdf.line(120, sig_y, 172, sig_y)
 
-    pdf.set_xy(0, sig_y + 2)
+    # Labels under the line
     pdf.set_font("DejaVu", size=8)
     pdf.set_text_color(*MUTED)
     pdf.set_xy(38, sig_y + 2)
@@ -538,14 +581,21 @@ def render_readiness_certificate_pdf(cert: Dict) -> bytes:
     pdf.set_xy(120, sig_y + 2)
     pdf.cell(52, 4, "Date of Issue", align="C")
 
-    pdf.set_xy(38, sig_y + 7)
+    # Signatory name + title (bold, in ink), and the issue date.
+    pdf.set_xy(38, sig_y + 6)
     pdf.set_font("DejaVu", "B", size=9)
-    pdf.set_text_color(*TEAL_DARK)
-    pdf.cell(52, 4, "Charvak IT Consulting", align="C")
-    pdf.set_xy(120, sig_y + 7)
+    pdf.set_text_color(*INK)
+    pdf.cell(52, 4, "Bhavya M", align="C")
+    pdf.set_xy(120, sig_y + 6)
     pdf.set_font("DejaVu", size=9)
     pdf.set_text_color(*INK)
     pdf.cell(52, 4, issued or "", align="C")
+
+    # Signatory title (small, muted) below the name, on the left only.
+    pdf.set_xy(38, sig_y + 10)
+    pdf.set_font("DejaVu", "I", size=8)
+    pdf.set_text_color(*MUTED)
+    pdf.cell(52, 4, "Founder & CEO, Charvak IT Consulting", align="C")
 
     # --- Footer strip ---
     pdf.set_xy(0, 275)
@@ -555,6 +605,3 @@ def render_readiness_certificate_pdf(cert: Dict) -> bytes:
              align="C")
 
     return bytes(pdf.output())
-
-
-
