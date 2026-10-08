@@ -150,4 +150,26 @@
   </div>
 
 </div>
+
+{% block scripts %}
+<script>
+// Session 42-3: GA4 funnel for the placement-prep page
+document.addEventListener("DOMContentLoaded", function() {
+  if (typeof charvakTrack === "function") {
+    charvakTrack("placement_prep_view", { season: "2026-27" });
+  }
+  // Company card clicks
+  document.querySelectorAll("a.pp-card").forEach(function(card) {
+    card.addEventListener("click", function() {
+      var href = card.getAttribute("href") || "";
+      var m = href.match(/company=([^&]+)/);
+      var company = m ? decodeURIComponent(m[1]) : "unknown";
+      if (typeof charvakTrack === "function") {
+        charvakTrack("mock_company_click", { company: company, source: "placement-prep" });
+      }
+    });
+  });
+});
+</script>
+{% endblock %}
 {% endblock %}

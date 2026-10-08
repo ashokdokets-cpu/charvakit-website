@@ -11265,6 +11265,47 @@ async def complete_full_mock(request: Request):
     return complete_mock.complete_mock(data.get("session_id"))
 
 
+@app.get("/mock-result/{session_id}", response_class=HTMLResponse)
+async def mock_result_page(request: Request, session_id: str):
+    """Session 42-3: shareable mock drive result page."""
+    return template_response("mock-result.html", request, "Mock Drive Result — Charvak")
+
+
+@app.get("/api/mock/result/{session_id}")
+async def get_mock_result(session_id: str):
+    """Session 42-3: public read of a completed mock session result."""
+    try:
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT session_id, company_name, pattern, total_questions,
+                   correct_count, score, passed, completed_at
+            FROM charvak_mock_sessions
+            WHERE session_id = %s AND status = 'completed'
+        """, (session_id,))
+        row = cur.fetchone()
+        cur.close(); conn.close()
+    except Exception as e:
+        logger.error(f"mock result read failed: {e}")
+        return JSONResponse(status_code=500, content={"status": "error"})
+    if not row:
+        return JSONResponse(status_code=404, content={"status": "error", "message": "Result not found"})
+    return {
+        "status": "success",
+        "result": {
+            "session_id": row[0],
+            "company": row[1],
+            "pattern": row[2],
+            "total_questions": row[3],
+            "correct": row[4],
+            "score": float(row[5]) if row[5] is not None else 0.0,
+            "passed": bool(row[6]),
+            "completed_at": row[7].isoformat() if row[7] else None,
+        },
+    }
+
+
 
 from multi_pattern_company import multi_pattern
 
