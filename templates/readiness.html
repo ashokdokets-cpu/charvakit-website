@@ -236,6 +236,7 @@
       throw new Error("bad payload");
     }
     window.__rdCert = data.certificate;
+    if (typeof charvakTrack === 'function') { var _c = data.certificate; charvakTrack('readiness_complete', { role: _c.role, score: _c.readiness_score }); }
     renderCertificate(data.certificate);
   })
   .catch(function(err) {
@@ -313,6 +314,7 @@
   }
 
   window.rdUpgrade = async function() {
+    if (typeof charvakTrack === 'function') charvakTrack('readiness_upgrade_click', { cert_id: (window.__rdCert && window.__rdCert.certificate_id) || '' });
     var msg = document.getElementById("rdUpgradeMsg");
     if (msg) msg.innerHTML = "";
     var c = window.__rdCert;
@@ -495,6 +497,7 @@
   }
 
   window.rdDownloadPdf = function(ev) {
+    if (typeof charvakTrack === 'function') charvakTrack('readiness_download_pdf', { cert_id: (window.__rdCert && window.__rdCert.certificate_id) || '' });
     ev.preventDefault();
     var c = window.__rdCert;
     if (!c || !c.certificate_id) { alert('Certificate not loaded yet.'); return; }
