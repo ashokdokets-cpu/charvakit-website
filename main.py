@@ -7103,7 +7103,7 @@ async def api_admin_assessment_integrity(request: Request, assessment_id: str):
                 cur.execute("""
                     SELECT email, 'English Assessment' as role, '' as industry, '' as level,
                            'versant' as format, '' as size,
-                           overall_score as score, NULL as passed, status,
+                           overall_score as score, COALESCE(passed, FALSE) as passed, status,
                            started_at, completed_at,
                            48 as num_questions
                     FROM charvak_versant_sessions
