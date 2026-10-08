@@ -8,7 +8,7 @@
     <div class="card border-0 shadow-lg p-4 mb-4"><div class="card-body text-center">
         <h2 class="as-h4">Test Your Site</h2>
         <input type="url" class="form-control mb-3" id="siteUrl" placeholder="https://yoursite.com">
-        <button class="btn btn-primary btn-lg w-100" id="slopBtn" onclick="detectSlop()">Scan Site (25 cr)</button>
+        <button class="btn btn-primary btn-lg w-100" id="slopBtn" onclick="detectSlop()">Scan Site (25 credits)</button>
         <div id="slopError" class="alert alert-danger mt-3 d-none"></div>
     </div></div>
     <div class="card border-0 shadow-lg p-4 d-none" id="resultCard" style="border-left:5px solid #fb923c;"><div class="card-body text-center">
@@ -55,7 +55,7 @@ async function detectSlop(){
         const j = await r.json();
         if (!r.ok) {
             btn.disabled = false;
-            btn.textContent = 'Scan Site (25 cr)';
+            btn.textContent = 'Scan Site (25 credits)';
             if (r.status === 401) { alert(j.message || 'Please log in again.'); window.location.href = '/login?next=/ai-contamination-detector'; return; }
             if (r.status === 402) { alert(j.message || 'Insufficient credits.'); window.location.href = '/ai-credits-pricing'; return; }
             errEl.textContent = j.message || 'Scan failed.';
@@ -77,13 +77,13 @@ async function detectSlop(){
         document.getElementById('resultCard').classList.remove('d-none');
         document.getElementById('resultCard').scrollIntoView({behavior: 'smooth'});
         btn.disabled = false;
-        btn.textContent = 'Scan Again (25 cr)';
+        btn.textContent = 'Scan Again (25 credits)';
     } catch (e) {
         console.error('detectSlop failed', e);
         errEl.textContent = 'Network error — please try again.';
         errEl.classList.remove('d-none');
         btn.disabled = false;
-        btn.textContent = 'Scan Site (25 cr)';
+        btn.textContent = 'Scan Site (25 credits)';
     }
 }
 

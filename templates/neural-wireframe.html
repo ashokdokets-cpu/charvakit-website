@@ -49,7 +49,7 @@
                 </div>
                 <div class="d-flex justify-content-between align-items-center">
                     <div class="text-muted small">Cost: <strong>25 credits</strong> per generation</div>
-                    <button id="nwGenerateBtn" class="btn btn-primary" onclick="generateWireframe()">Generate Code (25 cr)</button>
+                    <button id="nwGenerateBtn" class="btn btn-primary" onclick="generateWireframe()">Generate Code (25 credits)</button>
                 </div>
                 <div id="nwError" class="alert alert-danger mt-3 d-none"></div>
             </div>
@@ -109,7 +109,7 @@ async function generateWireframe() {
         const j = await r.json();
         if (!r.ok || (j.status && j.status !== 'success')) {
             btn.disabled = false;
-            btn.textContent = 'Generate Code (25 cr)';
+            btn.textContent = 'Generate Code (25 credits)';
             if (r.status === 401) {
                 alert(j.message || 'Please log in again.');
                 window.location.href = '/login?next=/neural-wireframe';
@@ -127,20 +127,20 @@ async function generateWireframe() {
             errEl.textContent = 'No code was returned. Please try again.';
             errEl.classList.remove('d-none');
             btn.disabled = false;
-            btn.textContent = 'Generate Code (25 cr)';
+            btn.textContent = 'Generate Code (25 credits)';
             return;
         }
         document.getElementById('nwResult').textContent = code;
         document.getElementById('nwResultWrap').classList.remove('d-none');
         document.getElementById('nwResultWrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
         btn.disabled = false;
-        btn.textContent = 'Regenerate (25 cr)';
+        btn.textContent = 'Regenerate (25 credits)';
     } catch (e) {
         console.error('generateWireframe failed', e);
         errEl.textContent = 'Network error — please try again.';
         errEl.classList.remove('d-none');
         btn.disabled = false;
-        btn.textContent = 'Generate Code (25 cr)';
+        btn.textContent = 'Generate Code (25 credits)';
     }
 }
 

@@ -303,7 +303,7 @@ async function generateDocs(e) {
             +   '<button type="button" class="btn btn-sm btn-outline-primary" '
             +           'data-fyp-chapter="' + num + '" '
             +           'onclick="expandFypChapter(this, ' + num + ', \'' + escCh(title).replace(/'/g, "\\'") + '\', \'' + escCh(outline).replace(/'/g, "\\'") + '\', \'' + topicEsc.replace(/'/g, "\\'") + '\')">'
-            +     '<span class="fyp-expand-label">Expand (10 cr)</span>'
+            +     '<span class="fyp-expand-label">Expand (10 credits)</span>'
             +   '</button>'
             + '</div>'
             + '<div class="fyp-chapter-content mt-2" data-fyp-content="' + num + '" style="display:none;"></div>'
@@ -355,7 +355,7 @@ async function expandFypChapter(btn, chapterNum, title, outline, topic) {
         });
         const j = await r.json();
         if (!r.ok || j.status !== 'success') {
-            label.textContent = 'Expand (10 cr)';
+            label.textContent = 'Expand (10 credits)';
             btn.disabled = false;
             if (r.status === 401) {
                 alert(j.message || 'Please log in again.');
@@ -389,7 +389,7 @@ async function expandFypChapter(btn, chapterNum, title, outline, topic) {
         btn.disabled = false;
     } catch (e) {
         console.error('expandFypChapter failed', e);
-        label.textContent = 'Expand (10 cr)';
+        label.textContent = 'Expand (10 credits)';
         btn.disabled = false;
         alert('Network error — please try again.');
     }

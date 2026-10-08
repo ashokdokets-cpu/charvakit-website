@@ -511,7 +511,7 @@ def render_readiness_certificate_pdf(cert: Dict) -> bytes:
     if bm is not None:
         parts.append("Benchmark: " + str(bm))
     if pct is not None:
-        parts.append("Percentile: " + str(pct))
+        parts.append("Your Score: " + str(cert.get("readiness_score")))
     if parts:
         pdf.cell(W, 5, "   |   ".join(parts), align="C")
 
