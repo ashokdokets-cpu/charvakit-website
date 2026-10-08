@@ -11,6 +11,7 @@
 
     <!-- Career tools -->
     <url><loc>https://www.charvakit.com/readiness-check</loc><priority>0.9</priority><changefreq>weekly</changefreq></url>
+    <url><loc>https://www.charvakit.com/placement-prep-2026</loc><priority>0.9</priority><changefreq>weekly</changefreq></url>
 
     <!-- About & Company -->
     <url><loc>https://www.charvakit.com/team</loc><priority>0.7</priority></url>

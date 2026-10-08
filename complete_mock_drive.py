@@ -284,9 +284,28 @@ class CompleteMockDrive:
         ]
 
 
-    def start_mock_drive(self, email, company_id):
+    def start_mock_drive(self, email, company_id, pattern_id=None):
         """Start mock drive with AI-generated questions matching exact counts."""
-        config = self.get_company_config(company_id)
+        # Session 42-3d: when a pattern_id is provided, load that pattern
+        # from multi_pattern_company. Otherwise fall back to the single
+        # default config in get_company_config().
+        config = None
+        if pattern_id:
+            try:
+                from multi_pattern_company import multi_pattern
+                _company = multi_pattern.patterns.get(company_id)
+                if _company:
+                    _pattern = _company["patterns"].get(pattern_id)
+                    if _pattern:
+                        config = {
+                            "name": _company["name"],
+                            "pattern": _pattern["name"],
+                            "sections": _pattern["sections"],
+                        }
+            except Exception as _e:
+                logger.warning(f"pattern lookup failed ({company_id}/{pattern_id}): {_e}")
+        if config is None:
+            config = self.get_company_config(company_id)
         session_id = f"MOCK-{secrets.token_hex(6).upper()}"
 
         sections_with_questions = []
