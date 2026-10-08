@@ -105,8 +105,13 @@ class CBTVersantSystem:
                     overall_score   NUMERIC,
                     started_at      TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
                     completed_at    TIMESTAMP WITHOUT TIME ZONE,
-                    integrity_summary JSONB DEFAULT '{}'::jsonb
+                    integrity_summary JSONB DEFAULT '{}'::jsonb,
+                    passed          BOOLEAN DEFAULT FALSE
                 )
+            """)
+            cur.execute("""
+                ALTER TABLE charvak_versant_sessions
+                    ADD COLUMN IF NOT EXISTS passed BOOLEAN DEFAULT FALSE
             """)
             cur.execute("""
                 CREATE INDEX IF NOT EXISTS idx_versant_sessions_email
@@ -440,10 +445,12 @@ class CBTVersantSystem:
                 SET status = 'completed',
                     completed_at = NOW(),
                     overall_score = %s,
-                    details_json = details_json || %s::jsonb
+                    details_json = details_json || %s::jsonb,
+                    passed = (%s >= 60)
                 WHERE session_id = %s
             """, (scores.get("overall_score", 0),
                   json.dumps({"scoring": scores}),
+                  scores.get("overall_score", 0),
                   session_id))
             conn.commit()
             cur.close()
