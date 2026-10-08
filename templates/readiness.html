@@ -131,8 +131,8 @@
           <div class="rd-band-label">Benchmark</div>
         </div>
         <div class="rd-band-cell">
-          <div class="rd-band-value" id="rdPercentile">--</div>
-          <div class="rd-band-label">Percentile</div>
+          <div class="rd-band-value" id="rdYourScore">--</div>
+          <div class="rd-band-label">Your Score</div>
         </div>
         <div class="rd-band-cell">
           <div class="rd-band-value" id="rdDelta">--</div>
@@ -260,7 +260,7 @@
     var scoreHtml = score + '<span class="rd-of"> / 100</span>';
     document.getElementById("rdScore").innerHTML = scoreHtml;
     document.getElementById("rdBenchmark").textContent = c.benchmark || "--";
-    document.getElementById("rdPercentile").textContent = (c.percentile || "--") + suffix(c.percentile);
+    document.getElementById("rdYourScore").textContent = (score !== undefined && score !== null) ? score : "--";
     var delta = (score - (c.benchmark || 0));
     var deltaStr = (delta >= 0 ? "+" : "") + delta;
     document.getElementById("rdDelta").textContent = deltaStr;
@@ -549,8 +549,18 @@ async function rdLoadIntegrity(certId) {
       'clean':    'Integrity Verified',
       'minor':    'Minor signals detected',
       'moderate': 'Multiple signals detected',
-      'elevated': 'Frequent signals detected'
+      'elevated': 'Under Review'
     };
+
+
+    // Session 42-0g: public-page policy — suppress the badge for
+    // minor/moderate states. Those are informational (any tab switch,
+    // paste, or focus loss counts) and would read as "something went
+    // wrong" to a stranger on a certificate. Admin view shows all.
+    if (level === 'minor' || level === 'moderate') {
+      card.style.display = 'none';
+      return;
+    }
 
     if (iconEl) iconEl.textContent = icons[level] || icons.clean;
     if (titleEl) titleEl.textContent = titles[level] || 'Integrity status';
