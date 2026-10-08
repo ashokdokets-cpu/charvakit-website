@@ -114,22 +114,7 @@
 
     // ----------------------------------------------------------------
     // Session 39-5c - HTTP helper with the standard auth headers.
-    // cbat.html had been calling window.charvakFetch() but the function
-    // was never defined. Same pattern used by every other template's
-    // inline fetches.
-    // ----------------------------------------------------------------
-    async function charvakFetch(url, options) {
-        options = options || {};
-        var token = localStorage.getItem('auth_token')
-            || localStorage.getItem('charvak_token')
-            || '';
-        options.headers = Object.assign({
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + token
-        }, options.headers || {});
-        return fetch(url, options);
-    }
-    window.charvakFetch = charvakFetch;
+    // charvakFetch is now provided globally by base.html (Session 42-1a)
 
     var state = {
         sessionId: null,

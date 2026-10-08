@@ -860,6 +860,20 @@ if (document.readyState === 'loading') {
     loadNavCredits();
 }
 </script>
+<!-- Global authed-fetch helper (Session 42-1a) -->
+<script>
+window.charvakFetch = async function(url, options) {
+    options = options || {};
+    var token = localStorage.getItem('auth_token')
+        || localStorage.getItem('charvak_token')
+        || '';
+    options.headers = Object.assign({
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+    }, options.headers || {});
+    return fetch(url, options);
+};
+</script>
 <!-- Global credit-gate handlers (moved from exam-prep.html, 2026-09-24) -->
 <script>
 window.addEventListener('charvak:402', function(e) {
