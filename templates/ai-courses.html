@@ -8,6 +8,19 @@
     .course-card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
     .price-tag { background: #e8f5e9; color: #2e7d32; padding: 6px 14px; border-radius: 20px; font-weight: 600; }
     .level-badge { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+    .designer-card { background: linear-gradient(135deg, #f0fdf9 0%, #ecfdf5 100%); border: 1px solid #a7f3d0; border-radius: 14px; padding: 22px; margin-bottom: 28px; }
+    .designer-card h3 { font-weight: 800; color: #065f46; margin: 0 0 6px; font-size: 1.15rem; }
+    .designer-card .designer-sub { color: #047857; font-size: 0.9rem; margin: 0 0 16px; }
+    .designer-row { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+    .designer-row input, .designer-row select { padding: 10px 12px; border: 1px solid #a7f3d0; border-radius: 8px; background: #fff; font-size: 0.95rem; }
+    .designer-btn { background: #059669; color: #fff; border: none; padding: 11px 22px; border-radius: 8px; font-weight: 700; cursor: pointer; }
+    .designer-btn:hover { background: #047857; }
+    .designer-btn:disabled { background: #9ca3af; cursor: not-allowed; }
+    .custom-section { margin-bottom: 28px; padding: 16px 20px; background: #fffbeb; border: 1px solid #fcd34d; border-radius: 12px; }
+    .custom-section h4 { font-weight: 700; color: #78350f; margin: 0 0 10px; font-size: 1rem; }
+    @media (max-width: 640px) {
+        .designer-row { grid-template-columns: 1fr; }
+    }
 </style>
 
 <div class="course-hero text-center">
@@ -30,6 +43,36 @@
         <div class="col-lg-6 mx-auto">
             <input type="text" class="form-control form-control-lg" id="courseSearch" placeholder="🔍 Search courses by name or category..." oninput="filterCourses()">
         </div>
+
+    <!-- Session 42-5: Your custom AI courses -->
+    <div id="customCoursesSection" class="custom-section" style="display:none;">
+        <h4>Your custom courses <span id="customCount" style="font-weight:400; color:#92400e;"></span></h4>
+        <div id="customCoursesList" class="row g-3"></div>
+    </div>
+
+    <!-- Session 42-5: AI Course Designer -->
+    <div class="designer-card">
+        <h3>Cannot find what you need? Design your own.</h3>
+        <p class="designer-sub">Type any topic. AI designs a full curriculum in about 30 seconds. Preview before you enroll.</p>
+        <div class="designer-row">
+            <input type="text" id="designerTopic" placeholder="e.g. Advanced React patterns, Financial modeling, Cybersecurity fundamentals..." maxlength="120">
+            <select id="designerLevel">
+                <option value="beginner">Beginner</option>
+                <option value="mid" selected>Intermediate</option>
+                <option value="advanced">Advanced</option>
+            </select>
+            <select id="designerWeeks">
+                <option value="4" selected>4 weeks</option>
+                <option value="6">6 weeks</option>
+                <option value="8">8 weeks</option>
+            </select>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+            <button class="designer-btn" id="designerBtn" onclick="designCustomCourse()">Design my course - 50 credits</button>
+            <small style="color:#047857;">AI generates the curriculum. Preview it before paying anything else.</small>
+        </div>
+        <div id="designerResult" class="mt-3"></div>
+    </div>
     </div>
 
     <div class="row mb-3">
@@ -120,5 +163,121 @@ function escapeHtml(s) {
 }
 
 loadCourses();
+// Session 42-5 — AI Course Designer on /ai-courses
+function _designerEmail() { return (localStorage.getItem("userEmail") || "").trim(); }
+function _designerToken() { return (localStorage.getItem("auth_token") || localStorage.getItem("charvak_token") || "").trim(); }
+function _designerEsc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function(c) { return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+
+async function designCustomCourse() {
+    var topicEl = document.getElementById("designerTopic");
+    var levelEl = document.getElementById("designerLevel");
+    var weeksEl = document.getElementById("designerWeeks");
+    var btn = document.getElementById("designerBtn");
+    var result = document.getElementById("designerResult");
+
+    var topic = (topicEl.value || "").trim();
+    if (!topic) { result.innerHTML = '<div class="alert alert-warning mb-0">Please enter a topic first.</div>'; topicEl.focus(); return; }
+
+    var email = _designerEmail();
+    var token = _designerToken();
+    if (!email || !token) {
+        window.location.href = "/login?next=" + encodeURIComponent("/ai-courses");
+        return;
+    }
+
+    if (typeof charvakTrack === "function") charvakTrack("ai_course_design_start", { topic: topic, level: levelEl.value });
+
+    btn.disabled = true;
+    btn.textContent = "Designing your course... (15-30s)";
+    result.innerHTML = '<div class="text-muted small">AI is designing the curriculum...</div>';
+
+    try {
+        var r = await fetch("/api/ai-course/generate-custom", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+            body: JSON.stringify({
+                email: email,
+                topic: topic,
+                level: levelEl.value || "mid",
+                role_hint: "",
+                weeks: parseInt(weeksEl.value || "4", 10)
+            })
+        });
+
+        if (r.status === 401) { window.location.href = "/login?next=" + encodeURIComponent("/ai-courses"); return; }
+        if (r.status === 402) {
+            result.innerHTML = '<div class="alert alert-warning mb-0">Not enough credits (50 needed). <a href="/ai-credits-pricing">Top up credits</a>.</div>';
+            btn.disabled = false; btn.textContent = "Design my course - 50 credits";
+            if (typeof charvakTrack === "function") charvakTrack("ai_course_design_error", { reason: "insufficient_credits" });
+            return;
+        }
+
+        var j = await r.json();
+        if (j.status !== "success") {
+            result.innerHTML = '<div class="alert alert-danger mb-0">' + _designerEsc(j.message || "Could not generate course.") + '</div>';
+            btn.disabled = false; btn.textContent = "Design my course - 50 credits";
+            if (typeof charvakTrack === "function") charvakTrack("ai_course_design_error", { reason: "server_error" });
+            return;
+        }
+
+        var name = j.course_name || "Your custom course";
+        var href = "/course/" + encodeURIComponent(name);
+        var creditLine = j.already_existed ? "Already designed earlier - no credits charged." : "Course designed for 50 credits.";
+
+        result.innerHTML =
+            '<div class="alert alert-success mb-0">' +
+            '<strong>' + _designerEsc(name) + '</strong> is ready.<br>' +
+            '<span class="small">' + _designerEsc(j.description || "") + '</span><br>' +
+            '<span class="small text-muted">' + creditLine + '</span>' +
+            '<div class="mt-2">' +
+            '<a href="' + href + '" class="btn btn-success btn-sm me-2">Review course</a>' +
+            '<a href="/my-courses" class="btn btn-outline-secondary btn-sm">My Courses</a>' +
+            '</div>' +
+            '</div>';
+
+        btn.disabled = false;
+        btn.textContent = "Design my course - 50 credits";
+
+        if (typeof charvakTrack === "function") charvakTrack("ai_course_design_complete", { topic: topic, course_name: name, already_existed: !!j.already_existed });
+
+        loadCustomCourses();
+    } catch (e) {
+        result.innerHTML = '<div class="alert alert-danger mb-0">Error: ' + _designerEsc(e.message) + '</div>';
+        btn.disabled = false; btn.textContent = "Design my course - 50 credits";
+        if (typeof charvakTrack === "function") charvakTrack("ai_course_design_error", { reason: "network" });
+    }
+}
+
+async function loadCustomCourses() {
+    var email = _designerEmail();
+    var token = _designerToken();
+    if (!email || !token) { document.getElementById("customCoursesSection").style.display = "none"; return; }
+
+    try {
+        var r = await fetch("/api/ai-course/custom-list?email=" + encodeURIComponent(email), {
+            headers: { "Authorization": "Bearer " + token }
+        });
+        if (!r.ok) return;
+        var j = await r.json();
+        var list = (j && j.courses) || [];
+        if (!list.length) { document.getElementById("customCoursesSection").style.display = "none"; return; }
+
+        document.getElementById("customCount").textContent = "(" + list.length + ")";
+        document.getElementById("customCoursesList").innerHTML = list.map(function(c) {
+            return '<div class="col-md-6 col-lg-4"><div class="card h-100"><div class="card-body">' +
+                '<h6 class="fw-bold mb-1">' + _designerEsc(c.course_name) + '</h6>' +
+                '<p class="small text-muted mb-2">' + (c.duration_weeks || "?") + ' weeks - ' + _designerEsc(c.category || "Custom") + '</p>' +
+                '<a href="/course/' + encodeURIComponent(c.course_name) + '" class="btn btn-sm btn-outline-primary">Open</a>' +
+                '</div></div></div>';
+        }).join("");
+        document.getElementById("customCoursesSection").style.display = "block";
+    } catch (e) {
+        // silent
+    }
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+    loadCustomCourses();
+});
 </script>
 {% endblock %}

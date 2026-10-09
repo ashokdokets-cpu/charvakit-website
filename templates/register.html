@@ -124,7 +124,12 @@ async function registerUser(e) {
             if (typeof charvakTrack === 'function') {
                 charvakTrack('sign_up', { method: 'email', role: data.role || 'candidate' });
             }
-            setTimeout(() => window.location.href = data.role === 'admin' ? '/admin-control' : '/welcome', 800);
+            // Session 42-5c: honor ?next= (same-origin sanitized). Admin still goes to /admin-control.
+            var _qp = new URLSearchParams(window.location.search);
+            var _raw = _qp.get("next") || "";
+            var _next = (_raw && _raw.charAt(0) === "/" && _raw.charAt(1) !== "/") ? _raw : "/welcome";
+            var _dest = data.role === "admin" ? "/admin-control" : _next;
+            setTimeout(() => window.location.href = _dest, 800);
         } else {
             msg.textContent = '❌ ' + (j.message || 'Registration failed');
             msg.style.color = '#ef4444';

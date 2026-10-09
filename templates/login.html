@@ -25,7 +25,7 @@
                     <div class="mb-3"><input type="password" class="form-control" id="password" placeholder="Password" required></div>
                     <button type="submit" class="btn btn-primary w-100">Sign In</button>
                 </form>
-                <p class="text-center mt-3 small"><a href="/forgot-password" class="text-primary">Forgot Password?</a><br>Don't have an account? <a href="/register">Register</a></p>
+                <p class="text-center mt-3 small"><a href="/forgot-password" class="text-primary">Forgot Password?</a><br>Don't have an account? <a href="/register" id="registerLink">Register</a></p>
                 <p id="loginMsg" class="text-center small mt-2"></p>
             </div>
         </div>
@@ -45,7 +45,13 @@ async function loginUser(e) {
     localStorage.setItem('charvak_token', data.token); 
     localStorage.setItem('auth_token', data.token); 
      const _u = data.user || {}; const _email = (_u.email || document.getElementById('email')?.value || '').trim(); localStorage.setItem('userEmail', _email); localStorage.setItem('userName', (_u.name || (_email ? _email.split('@')[0] : '')));
-    const redirect = new URLSearchParams(window.location.search).get('redirect') || '/';
+      // Session 42-5c: honor ?next= (preferred) or ?redirect= (legacy).
+      // Sanitize to a same-origin path — reject anything not starting with "/"
+      // (and reject protocol-relative "//evil.com").
+      var _qp = new URLSearchParams(window.location.search);
+      var _raw = _qp.get("next") || _qp.get("redirect") || "/";
+      var _redirect = (_raw && _raw.charAt(0) === "/" && _raw.charAt(1) !== "/") ? _raw : "/";
+      setTimeout(() => window.location = _redirect, 500);
 setTimeout(() => window.location = redirect, 500); 
 }
 }
@@ -53,10 +59,21 @@ async function initiateSSO(provider) {
     const resp = await fetch('/api/sso/login', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({provider: provider, redirect: '/'})
+    body: JSON.stringify({provider: provider, redirect: (new URLSearchParams(window.location.search).get("next") || "/")})
     });
     const data = await resp.json();
     if (data.redirect) window.location = data.redirect;
 }
+
+  // Session 42-5c: carry ?next= through the Register link
+  (function() {
+    var _regLink = document.getElementById("registerLink");
+    if (!_regLink) return;
+    var _qp = new URLSearchParams(window.location.search);
+    var _raw = _qp.get("next") || _qp.get("redirect") || "";
+    if (_raw && _raw.charAt(0) === "/" && _raw.charAt(1) !== "/") {
+      _regLink.href = "/register?next=" + encodeURIComponent(_raw);
+    }
+  })();
 </script>
 {% endblock %}
