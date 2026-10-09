@@ -4125,3 +4125,34 @@ Session 38. Every paid assessment now carries the trust artifact.
 - Seed scripts should load .env.local for local dev (Session 40b flag)
 - Versant passed boolean column (Session 40a flag)
 - Render Postgres password rotation (Session 19 flag)
+
+## Session 42 closure (2026-10-09)
+
+**Commits:** 12 total (see SESSION-CONTEXT.md for the list)
+**HEAD:** 9d2aced
+
+**Moved from open to resolved:**
+- Certificate polish (signature, wordmark, quiet integrity badge,
+  honest comparison strip, CTA copy)
+- charvakFetch moved to base.html globally
+- Seed scripts env fix + prod guard
+- Versant passed column
+- .gitignore duplicate cleanup
+- PDF "Percentile" -> "Your Score"
+- "N cr" -> "N credits" platform-wide
+- Readiness-check SEO (meta + sitemap) + GA4 funnel
+- Placement-prep landing page + mock-drive preselect + login gate
+- Pattern-selection bug on /mock-drive (silent since launch)
+- Shareable mock result page + next-step block
+- AI course designer on /ai-courses
+- ?next= honor in login.html + register.html
+
+**New follow-ups flagged by Session 42:**
+- Custom courses section may flicker on slow connections (cosmetic)
+- Search-0-results "design a course" hint dropped for now
+- Render Postgres password rotation (still pending since Session 19)
+
+**Still pending (carried forward):**
+- Render Postgres password rotation
+- DoketsRB bidirectional sync (Session 38+)
+- AuditBot Continuous (COMPETITIVE-STRATEGY Gap 4)

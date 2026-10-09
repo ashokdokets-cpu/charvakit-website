@@ -1,6 +1,132 @@
 # Session Context - Charvak
 
 
+## Session 42 CLOSED (2026-10-09) - Certificate polish, funnel wiring, AI course designer
+
+The largest single session in the arc. Twelve commits across five
+sub-sessions, all pushed to main. Four real bugs fixed, four new
+features shipped, the complete student funnel now works end-to-end.
+
+### Commits (chronological)
+
+- b1a0668  feat(readiness): Session 42-0 - certificate polish for market launch
+- 35dedf4  feat(readiness): Session 42-0g - quiet integrity badge + Your Score
+- 79097b9  feat(readiness): Session 42-0i - final pre-launch CTA polish
+- ba11798  chore(ui): align career assessment CTA with certificate CTA
+- d1be352  refactor(session-42-1): move charvakFetch to base.html + fix seed env
+- b4b494d  feat(versant): Session 42-1b - passed column on Versant sessions
+- 717467e  chore(session-42-1d): .gitignore + PDF + "cr" -> "credits"
+- c64c32f  feat(session-42-2): readiness-check SEO + GA4 funnel
+- 83d0a81  feat(session-42-3): placement-prep landing page + pattern selection
+- 1c929a5  feat(session-42-3): GA4 funnel + shareable mock drive result page
+- 9eb635f  feat(session-42-4): next-step block on the mock-result page
+- 9d2aced  feat(session-42-5): AI course designer on /ai-courses + ?next= auth fix
+
+### What shipped
+
+**42-0 - Certificate polish**
+- Signatory block now reads "Bhavya M" + "Founder & CEO, Charvak IT Consulting"
+- Wordmark header (text-rendered, swaps to image if a 700px+ logo-wordmark.png exists)
+- Tagline replaced the duplicate eyebrow line
+- Quiet integrity badge: only fires clean (green) or elevated (red "Under Review")
+- Percentile cell replaced with "Your Score"
+- CTA copy: "Want a deeper assessment?" + "25 credits"
+
+**42-1 - Code cleanups (four carry-forward flags closed)**
+- charvakFetch moved from cbat.html to base.html (now globally available)
+- Seed scripts load .env.local first, refuse prod without CHARVAK_ALLOW_PROD=1
+- Versant sessions gained a passed BOOLEAN column (default threshold 60)
+- .gitignore duplicate whitelist lines removed (14 entries)
+- PDF readiness certificate: "Percentile: N" -> "Your Score: N"
+- Platform-wide: "N cr" -> "N credits" across 10 templates (38 instances)
+
+**42-2 - Readiness SEO + GA4**
+- Meta description + OG tags on readiness-check.html
+- /readiness-check added to sitemap.xml (priority 0.9)
+- GA4 events: readiness_start, readiness_complete, readiness_download_pdf,
+  readiness_upgrade_click
+
+**42-3 - Placement-prep landing + pattern selection fix**
+- New public page: /placement-prep-2026 (18 companies in 3 sections)
+- URL preselect: /mock-drive?company=tcs auto-selects TCS
+- Login gate on companies.html (inline "Log in to take a mock drive"
+  card with ?next= preservation)
+- **Pattern-selection bug FIXED**: clicking any of a company's
+  patterns previously generated the SAME questions. Now threads
+  pattern_id through start_mock_drive -> multi_pattern lookup.
+  Verified: TCS NQT / Digital / Innovator produce distinct drives.
+- GA4 events: placement_prep_view, mock_company_click, mock_start, mock_complete
+
+**42-4 - Next-step block on mock result**
+- /mock-result/{session_id} public shareable page
+- New API: GET /api/mock/result/{session_id}
+- "What next?" section with 3 cards:
+  1. Role Readiness Check (deep-linked with company->role mapping)
+  2. AI Courses (existing catalog)
+  3. Retake this drive
+- GA4: mock_result_view, mock_result_share
+
+**42-5 - AI Course Designer on /ai-courses**
+- Designer card below the search: topic + level + weeks
+- Calls /api/ai-course/generate-custom (50 credits, existing engine)
+- Success card with Review course CTA
+- "Your custom courses" section lists the user's previously designed
+  courses at the top of the catalog
+- New API: GET /api/ai-course/custom-list?email=X (auth-gated)
+- GA4: ai_course_design_start / complete / error
+- **?next= auth fix**: login.html and register.html both now honor
+  ?next= with sanitization. Previously login.html read ?redirect=
+  (legacy) and register.html ignored both - users always landed on
+  "/" or "/welcome". The Register link now carries ?next= through.
+
+### The four bugs fixed
+
+1. Empty signature block on the readiness PDF certificate
+2. Pattern-selection bug on /mock-drive - silently broken since
+   launch. Every pattern of a company generated the same questions.
+3. Login dead-end on /mock-drive (and any other ?next= redirect)
+4. Register flow ignoring ?next= - new users lost their destination
+
+### The complete student funnel (live)
+
+    Placement-prep landing  ->  Pick company  ->  Take mock drive
+        ->  Shareable result page  ->  Next-step block
+        ->  Readiness check (pre-filled)  ->  Certificate
+        ->  AI course designer (if topic not found)
+        ->  Course enrollment
+
+Two entry points (readiness-first, mock-drive-first), one connected
+funnel, every step free until the student chooses otherwise.
+
+### Verified in production
+
+- https://www.charvakit.com/placement-prep-2026     200
+- https://www.charvakit.com/ai-courses              200
+- https://www.charvakit.com/readiness-check         200
+
+### Follow-up flagged (low priority)
+
+- The "Your custom courses" section on /ai-courses may briefly
+  flicker on slow connections (display:none -> display:block).
+  Move to a CSS class if it becomes an issue.
+- The search-0-results "design a custom course for this term" hint
+  from the original 42-5 plan was dropped (JS escaping complexity).
+  Could be added in a follow-up if user testing shows demand.
+- Render Postgres password rotation still pending (Session 19 flag).
+
+### Session 43 candidates
+
+- A: AuditBot Continuous (recurring revenue, COMPETITIVE-STRATEGY Gap 4)
+- B: Certificate round 3 (QR in the PDF, watermark, multi-language)
+- C: Personalized training views on /training-engine
+- D: Review launch results - check-stats.ps1 + GA4 Realtime
+- E: Docs + backup polish
+
+**Recommendation: D first.** Read the numbers from the placement
+and readiness launches before building anything else. Then A or C
+based on what the data shows.
+
+
 ## Session 41 CLOSED (2026-10-08) - IELTS topical-relevance scoring
 
 Closes the flag logged in Session 40c: IELTS writing and speaking

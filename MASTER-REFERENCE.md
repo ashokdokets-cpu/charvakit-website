@@ -2,11 +2,11 @@
 ## Charvak IT Consulting Pvt Ltd
 ### Last updated: October 4, 2026 (Session 16 - Premium Report product shipped)
 
-**HEAD:** `980bbdc`
+**HEAD:** 9d2aced
 **Live:** https://www.charvakit.com
 **Resume here:** see `SESSION-CONTEXT.md` (one-file state snapshot for fresh chat windows)
 **Backlog:** see `OUTSTANDING-WORK-INVENTORY.md` (master list of remaining work)
-**Version:** v3.5-session-16-20261004
+**Version:** v3.5-session-42-20261009
 
 ### Reference Documents
 

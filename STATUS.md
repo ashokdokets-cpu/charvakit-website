@@ -5,6 +5,53 @@
 **Live:** https://www.charvakit.com
 **Status:** Tier 1 + Tier 2 complete. Tier 3 in progress (6 of 10 features shipped). Session K closed: 3 security + 5 data integrity + 4 deferrals + 16 dead-field/easy-bug fixes + 2 migration features. B-3 notification persistence done. B-4 products verified stateless.
 
+## Session 2026-10-09 - Session 42 (certificate polish + funnel wiring + AI course designer)
+
+**HEAD:** 9d2aced
+
+11 commits, four real bugs fixed, four new features shipped. The
+complete student funnel now works end-to-end.
+
+### Shipped
+
+- **Certificate polish** (42-0): signature block, wordmark header,
+  quiet integrity badge, honest comparison strip, CTA copy
+- **Code cleanups** (42-1): charvakFetch global, seed env fix,
+  Versant passed column, .gitignore cleanup, PDF "Your Score",
+  "N cr" -> "N credits"
+- **Readiness SEO + GA4** (42-2): meta tags, sitemap, 4 funnel events
+- **Placement-prep landing** (42-3): /placement-prep-2026, URL
+  preselect, login gate, pattern-selection bug fix
+- **Shareable mock result** (42-3/4): /mock-result/{session_id},
+  next-step block with readiness + courses + retake
+- **AI Course Designer** (42-5): designer card on /ai-courses,
+  custom-list API, ?next= auth fix
+
+### Bugs fixed
+
+1. Empty signature block on the readiness PDF
+2. Pattern selection on /mock-drive generated the wrong questions
+3. Login dead-end on any ?next= redirect
+4. Register flow ignoring ?next=
+
+### Verified in production
+
+- /placement-prep-2026  200
+- /ai-courses           200
+- /readiness-check      200
+
+### Backup
+
+Charvak_Complete_Backup_20261009_061207.zip (60.94 MB, 813 files,
+167 charvak_* tables, HEAD at 9d2aced)
+
+### Next session
+
+Read the launch numbers first. Then decide the next feature based on
+what real users actually did, not speculation.
+
+---
+
 ## Session 2026-10-03 - Session 13 (Career Assessment Phase 3 + PayPal sandbox test)
 
 ### Shipped

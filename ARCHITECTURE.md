@@ -1615,3 +1615,53 @@ carry a topical-relevance signal.
 **Regression net:**
 - scripts/test_ielts_relevance.py - 6 canned cases, 14 checks.
   Invoked manually after prompt changes. Cheap (~\.03).
+
+## Campus Placement Funnel (Session 42-3/4/5)
+
+A complete public-facing funnel for the Nov-Dec campus placement season.
+
+### Public pages
+
+- /placement-prep-2026 - landing page. 18 companies in 3 sections
+  (IT services, consulting, product). Each card links to
+  /mock-drive?company=<id>. Includes 3-step explainer, trust strip,
+  5-item FAQ, sitemap entry, meta + OG tags.
+- /mock-drive - the mock-drive engine. Reads ?company=<id> on
+  load and auto-selects the card. Login-gated with an inline card that
+  preserves the current URL as ?next=.
+- /mock-result/{session_id} - public shareable result page. Reads
+  /api/mock/result/{session_id}. Shows score + verdict + sections
+  + share buttons + a "What next?" block linking to the readiness
+  check (role-mapped), AI courses, and the placement-prep page.
+- /ai-courses - course catalog with an AI Course Designer card.
+  Design 50 credits via /api/ai-course/generate-custom.
+
+### New API routes
+
+- GET /api/mock/result/{session_id} - public read of a completed mock session
+- GET /api/ai-course/custom-list?email=X - auth-gated list of the
+  user's own custom courses
+
+### The ?next= auth pattern
+
+Every public page that requires login for part of its flow redirects
+to /login?next=<current-path>. Both login.html and register.html now
+honor this parameter with same-origin sanitization (must start with
+"/", reject "//evil.com"). The Register link on login.html carries
+?next= through.
+
+This pattern was already used by the readiness check and the mock-drive
+login gate; the bug fix in Session 42-5 made it actually work.
+
+### Company -> role mapping
+
+The mock-result page deep-links to /readiness-check?role=<role>.
+The mapping (in mock-result.html) is:
+
+- Software Engineer: TCS, Infosys, Wipro, Cognizant, HCLTech, HCL,
+  Tech Mahindra, LTI, Mindtree, Capgemini, IBM, Amazon, Google, Microsoft
+- Business Analyst: Deloitte, KPMG, EY, PwC
+- Technology Analyst: Accenture
+
+The readiness check's own ?role= handling pre-selects the dropdown
+after page load.
