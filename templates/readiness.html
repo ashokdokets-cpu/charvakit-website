@@ -75,6 +75,20 @@
   .rd-integrity-explainer { margin-top: 10px; padding: 12px 14px; background: #fff; border-radius: 8px; font-size: 0.85rem; color: #4b5563; display: none; }
   .rd-integrity-explainer.open { display: block; }
   .rd-integrity-explainer ul { margin: 6px 0 0 0; padding-left: 20px; }
+  /* Session 42-7: next-step funnel block */
+  .rd-nextsteps { margin-top: 40px; padding: 28px 24px; background: linear-gradient(135deg, #f0fdf9 0%, #ecfdf5 100%); border: 1px solid #a7f3d0; border-radius: 16px; }
+  .rd-nextsteps h3 { font-weight: 800; color: #065f46; margin: 0 0 6px; font-size: 1.25rem; }
+  .rd-nextsteps .rd-ns-sub { color: #047857; font-size: 0.95rem; margin: 0 0 20px; }
+  .rd-ns-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .rd-ns-tile { display: block; background: #fff; border: 1px solid #d1fae5; border-radius: 12px; padding: 18px 16px; text-decoration: none; color: inherit; transition: border-color 0.15s, transform 0.15s; }
+  .rd-ns-tile:hover { border-color: #059669; transform: translateY(-2px); text-decoration: none; color: inherit; }
+  .rd-ns-tile .rd-ns-icon { display: inline-flex; width: 34px; height: 34px; align-items: center; justify-content: center; background: #3ba591; color: #fff; border-radius: 50%; font-weight: 700; margin-bottom: 10px; font-size: 0.95rem; }
+  .rd-ns-tile h4 { font-weight: 700; font-size: 1rem; color: #111827; margin: 0 0 4px; }
+  .rd-ns-tile p { color: #4b5563; font-size: 0.85rem; margin: 0 0 8px; line-height: 1.5; }
+  .rd-ns-tile .rd-ns-cta { color: #3ba591; font-weight: 600; font-size: 0.85rem; }
+  @media (max-width: 640px) {
+    .rd-ns-grid { grid-template-columns: 1fr; }
+  }
 </style>
 
 <div class="rd-hero">
@@ -193,6 +207,38 @@
       <a class="btn btn-outline-secondary" id="rdLinkedIn" href="javascript:void(0)" target="_blank" rel="noopener">Add to LinkedIn</a>
       <a class="btn btn-outline-success" id="rdWhatsApp" href="javascript:void(0)" target="_blank" rel="noopener">Share on WhatsApp</a>
       <a class="btn btn-outline-secondary" href="/readiness-check">Take Another Check</a>
+    </div>
+
+    <!-- Session 42-7: what next? funnel block -->
+    <div class="rd-nextsteps">
+      <h3>Want to improve this score?</h3>
+      <p class="rd-ns-sub">Free tools to help you close the gaps and get placement-ready.</p>
+      <div class="rd-ns-grid">
+        <a class="rd-ns-tile" href="/mock-drive">
+          <span class="rd-ns-icon">1</span>
+          <h4>Practice a mock drive</h4>
+          <p>Free mock drives in the real exam pattern for 18 top campus recruiters &mdash; TCS, Infosys, Accenture, Amazon, and more.</p>
+          <span class="rd-ns-cta">Start a mock drive &rarr;</span>
+        </a>
+        <a class="rd-ns-tile" href="/ai-courses">
+          <span class="rd-ns-icon">2</span>
+          <h4>Close your skill gaps</h4>
+          <p>AI-designed courses on the topics you scored lowest in. 25 in the catalog, plus design-your-own for anything else.</p>
+          <span class="rd-ns-cta">Browse courses &rarr;</span>
+        </a>
+        <a class="rd-ns-tile" href="/interview-prep">
+          <span class="rd-ns-icon">3</span>
+          <h4>Ace the interview</h4>
+          <p>AI-powered interview prep for HR, technical, and behavioral rounds. Real questions, instant feedback, mock scoring.</p>
+          <span class="rd-ns-cta">Start interview prep &rarr;</span>
+        </a>
+        <a class="rd-ns-tile" href="/ai-internship">
+          <span class="rd-ns-icon">4</span>
+          <h4>Get real experience</h4>
+          <p>AI internship program for students with no work experience yet. Real AI projects, self-paced, certificate at the end.</p>
+          <span class="rd-ns-cta">Join the internship &rarr;</span>
+        </a>
+      </div>
     </div>
 
     <!-- Bottom CTA -->
