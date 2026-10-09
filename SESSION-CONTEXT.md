@@ -1,6 +1,59 @@
 # Session Context - Charvak
 
 
+## Session 42 continuation (2026-10-09) - Entry point + funnel for readiness
+
+Post-Session-42 small additions. Two commits that matter more
+than their line counts suggest: they turned the readiness check
+from a standalone tool into a proper funnel.
+
+### Commits
+
+- 025c637  feat(readiness): dynamic CTA + sample certificate preview
+- 30296ad  feat(readiness): next-step funnel on the certificate page
+
+### What changed
+
+**42-6 (readiness-check landing page)**
+- CTA button is now dynamic: "Get my readiness score for <role>
+  - free, 5 min" and updates live as the user picks a role
+- Added a sample certificate preview below the CTA showing a
+  78/100 example with benchmark comparison and cert ID
+
+**42-7 (readiness certificate page)**
+- New "Want to improve this score?" block below the share buttons.
+  4 tiles linking to:
+    1. /mock-drive
+    2. /ai-courses
+    3. /interview-prep
+    4. /ai-internship
+- Same pattern as the mock-result next-step block (Session 42-4)
+
+### Why this matters
+
+The readiness check was an endpoint. A student completed it,
+got a score, and had nowhere to go. Now:
+
+    readiness check  ->  score + certificate
+                     ->  "Want to improve?"
+                     ->  4 next-step tiles
+                     ->  discover the rest of the platform
+
+Combined with Session 42-2's GA4 funnel events, the readiness
+check is now measurable AND connected to the rest of the
+system. Every certificate page becomes a discovery moment.
+
+### Strategic note
+
+Across Sessions 42-2 through 42-7, the positioning shifted:
+- Before: "we have 10 products, come use everything"
+- After: "start with the free readiness check; then discover
+  the rest based on your gaps"
+
+The readiness check is the entry point. The certificate page
+is the discovery surface. The rest of the platform is what
+students find when they're ready.
+
 ## Session 42 CLOSED (2026-10-09) - Certificate polish, funnel wiring, AI course designer
 
 The largest single session in the arc. Twelve commits across five
