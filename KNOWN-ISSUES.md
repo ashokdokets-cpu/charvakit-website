@@ -601,3 +601,37 @@ now: capture events, admin visibility, badge on scorecard, and
 - Versant `passed` boolean column (from Session 40a)
 - Partial-credit handling for IELTS writing + speaking (deferred to
   Session 40c)
+
+### RESOLVED - Session 42 fixes (2026-10-09, 9d2aced)
+
+Four bugs fixed across Session 42:
+
+1. **Empty signature block on the readiness PDF certificate** (2026-10-09, b1a0668)
+   The certificate printed "Authorized Signatory" over an empty line.
+   Fixed: signatory name + title added above the line, with an
+   optional hook for a handwritten signature.png.
+
+2. **Pattern selection on /mock-drive generated the wrong questions**
+   (2026-10-09, 83d0a81). Previously, clicking any of a company's
+   patterns started the same default pattern. The frontend passed
+   pattern_id, but start_mock_drive ignored it. Fixed by threading
+   pattern_id through /api/mock/start-complete -> start_mock_drive,
+   which now looks up the pattern in multi_pattern_company.
+
+3. **Login dead-end on any page using ?next=** (2026-10-09, 9d2aced)
+   login.html read ?redirect= (legacy) instead of ?next= (used
+   everywhere else). Users landed on "/" instead of the page they
+   came from. Fixed: honor ?next= OR ?redirect= with sanitization
+   (same-origin paths only).
+
+4. **Register flow ignored ?next=** (2026-10-09, 9d2aced)
+   register.html had no ?next= handling at all - new users always
+   went to /welcome. The Register link on login.html also dropped
+   ?next=. Fixed: register.html honors ?next=, login.html's Register
+   link carries it through.
+
+**Session 42 also closed four carry-forward flags:**
+- charvakFetch moved to base.html (Session 39 flag)
+- Seed scripts load .env.local (Session 40b flag)
+- Versant passed column added (Session 40a flag)
+- .gitignore duplicate cleanup (Session 41 flag)

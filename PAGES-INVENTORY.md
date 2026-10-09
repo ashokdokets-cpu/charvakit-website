@@ -392,3 +392,21 @@ Two new admin pages added.
 - Detail page has a modal in the `{% block modal %}` slot
 - Applicant row actions use `data-action` + event delegation
 - Refresh buttons rely on `window.loadRoles` / `window.loadAll`
+
+## Session 42 additions (2026-10-09)
+
+| Template | Route | Purpose | Auth? |
+|---|---|---|---|
+| placement-prep-2026.html | /placement-prep-2026 | Campus placement landing (Nov-Dec 2026) | No |
+| mock-result.html | /mock-result/{session_id} | Shareable mock drive result | No |
+
+### Materially updated in Session 42
+
+- readiness.html - quiet integrity badge, "Your Score" cell, CTA polish
+- readiness-check.html - meta description + OG tags for social previews
+- ai-courses.html - AI Course Designer card + "Your custom courses"
+- companies.html - URL preselect + login gate + pattern_id passthrough
+- login.html - honors ?next= with sanitization; Register link carries it
+- register.html - honors ?next= after successful registration
+- cbat.html - local charvakFetch removed (now in base.html)
+- base.html - global charvakFetch helper
