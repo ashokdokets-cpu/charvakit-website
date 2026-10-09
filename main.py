@@ -8219,6 +8219,57 @@ async def api_generate_custom_course(request: Request):
     return result
 
 
+@app.get("/api/ai-course/custom-list")
+@limiter.limit("60/minute")
+async def api_list_custom_courses(request: Request):
+    """
+    Session 42-5b: list a user's own AI-designed custom courses.
+    Auth-gated. Returns only courses where is_custom=TRUE and
+    generated_for_email = caller's email.
+    """
+    email = (request.query_params.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "email required"})
+    try:
+        require_auth_for_email(request, email)
+    except HTTPException:
+        raise
+
+    from database import db
+    try:
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT course_id, course_name, category, duration_weeks,
+                   description, level, generated_from_topic, generated_at
+            FROM charvak_courses
+            WHERE is_custom = TRUE
+              AND generated_for_email = %s
+              AND status = 'active'
+            ORDER BY generated_at DESC NULLS LAST
+            LIMIT 50
+        """, (email,))
+        rows = cur.fetchall()
+        cur.close(); conn.close()
+    except Exception as e:
+        logger.error(f"custom-list failed: {e}")
+        return JSONResponse(status_code=500, content={"status": "error", "message": "Lookup failed"})
+
+    courses = []
+    for r in rows:
+        courses.append({
+            "course_id": r[0],
+            "course_name": r[1],
+            "category": r[2] or "Custom",
+            "duration_weeks": r[3] or 0,
+            "description": r[4] or "",
+            "level": r[5] or "",
+            "topic": r[6] or "",
+            "generated_at": r[7].isoformat() if r[7] else None,
+        })
+    return {"status": "success", "courses": courses, "count": len(courses)}
+
+
 
 # ========================================================================
 # Session 36 — full-course unlock (150 credits)
