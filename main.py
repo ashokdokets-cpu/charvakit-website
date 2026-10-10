@@ -5664,6 +5664,37 @@ async def api_ats_candidates(
     return result
 
 
+@app.get("/go/ats-score")
+async def go_ats_score(request: Request, email: str = ""):
+    """
+    Session 42-8: public redirect to DoketsRB ATS checker.
+    If the caller is logged in (query param email + valid token), we create
+    a signed score-link token and redirect to DoketsRB with it attached.
+    Otherwise we just redirect to the plain DoketsRB ATS URL so anyone can try.
+    """
+    target = "https://www.doketsrb.com/#ats-scanner"
+    email = (email or "").strip().lower()
+    if email:
+        try:
+            require_auth_for_email(request, email)
+            from database import db as _db
+            _conn = _db.get_connection()
+            _cur = _conn.cursor()
+            _cur.execute("SELECT candidate_id FROM charvak_candidates WHERE email = %s LIMIT 1", (email,))
+            _row = _cur.fetchone()
+            _cur.close(); _conn.close()
+            if _row:
+                from doketsrb_integration import doketsrb
+                _r = doketsrb.request_score_link(_row[0], target_role="")
+                if _r.get("status") == "success" and _r.get("url"):
+                    target = _r["url"]
+        except Exception as _e:
+            logger.warning(f"go/ats-score redirect fallback: {_e}")
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url=target, status_code=302)
+
+
+
 @app.post("/api/ats/candidates/{candidate_id}/score-link")
 async def api_ats_score_link(candidate_id: str, request: Request):
     """Generate a signed deep-link to run the free ATS check on DoketsRB."""
