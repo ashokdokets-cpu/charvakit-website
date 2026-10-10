@@ -79,6 +79,7 @@
 <script>
     var userAnswers = {};
     var currentSessionId = null;
+    var currentSession = null;
     var currentSectionQuestions = [];
     var totalQuestionsGlobal = 0;
 
@@ -176,6 +177,7 @@
             }
 
             var session = result.session;
+            currentSession = session;
             if (typeof charvakTrack === "function") { charvakTrack("mock_start", { company: companyId, pattern: patternId }); }
             currentSessionId = session.session_id;
             userAnswers = {};
@@ -290,7 +292,7 @@
             html += '<a href="/my-results" class="btn btn-outline-secondary">View My Progress</a>';
             html += '</div>';
 
-            if (typeof charvakTrack === "function") { charvakTrack("mock_complete", { company: session.company, pattern: session.pattern, score: r.score, passed: r.pass }); }
+            if (typeof charvakTrack === "function") { charvakTrack("mock_complete", { company: (currentSession ? currentSession.company : "unknown"), pattern: (currentSession ? currentSession.pattern : "unknown"), score: r.score, passed: r.pass }); }
             html += '<div class="text-center mt-2"><a href="/mock-result/' + encodeURIComponent(currentSessionId) + '" class="btn btn-primary">View Full Result &amp; Share &rarr;</a></div>';
             resultsBox.innerHTML = html;
             if (btn) { btn.disabled = true; btn.textContent = "Submitted"; }
