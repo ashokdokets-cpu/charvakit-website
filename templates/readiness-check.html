@@ -44,8 +44,8 @@
 <div class="rc-hero">
   <div class="container text-center">
     <div class="rc-badge">Free - No credit card needed</div>
-    <h1>Get your Verified Role Readiness Score</h1>
-    <p class="rc-sub">10 minutes. One shareable certificate. Benchmark your skills against real market data.</p>
+    <h1>Get your Role Readiness Score in 5 minutes</h1>
+    <p class="rc-sub">See how you compare to real market standards. Get a verified certificate employers can check.</p>
   </div>
 </div>
 
@@ -61,7 +61,7 @@
     <div class="rc-step">
       <div class="rc-step-num">2</div>
       <div class="rc-step-title">Answer 10 questions</div>
-      <p class="rc-step-desc">Real scenarios calibrated to your target. No trick questions.</p>
+      <p class="rc-step-desc">Real questions calibrated to your target. No trick questions.</p>
     </div>
     <div class="rc-step">
       <div class="rc-step-num">3</div>
@@ -72,8 +72,8 @@
 
   <!-- Form -->
   <div class="rc-card">
-    <h2>Start your free check</h2>
-    <p class="rc-card-sub">Choose a target role. We will build a 10-question assessment.</p>
+    <h2>Get your free score</h2>
+    <p class="rc-card-sub">Pick your target. We build a 10-question assessment calibrated to it.</p>
 
     <div id="rcError" class="rc-err" style="display:none;"></div>
 
@@ -88,17 +88,39 @@
 
     <button id="rcStartBtn" class="rc-btn" onclick="rcStart(event)" disabled>Loading...</button>
 
-      <!-- Session 42-6: sample certificate preview -->
-      <div class="rc-preview" style="margin-top: 24px; padding: 18px 20px; background: #f9fafb; border: 1px dashed #d1d5db; border-radius: 12px;">
-        <p style="font-weight: 700; color: #111827; margin: 0 0 12px; font-size: 0.95rem;">What you&rsquo;ll get:</p>
-        <div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px 20px; text-align: center;">
-          <div style="font-size: 0.8rem; color: #6b7280; margin-bottom: 6px;">Sample certificate</div>
-          <div style="font-size: 2.2rem; font-weight: 900; color: #10b981; line-height: 1;">78<span style="font-size: 1rem; color: #9ca3af; font-weight: 600; margin-left: 6px;">/ 100</span></div>
-          <div style="display: inline-block; margin-top: 8px; padding: 4px 12px; border-radius: 999px; background: #d1fae5; color: #065f46; font-weight: 600; font-size: 0.8rem;">Above benchmark &mdash; job ready</div>
-          <div style="margin-top: 12px; font-size: 0.85rem; color: #4b5563;">Benchmark: 72 &middot; Your score: 78</div>
-          <div style="margin-top: 8px; font-family: monospace; font-size: 0.75rem; color: #9ca3af;">RDC-EXAMPLE12AB</div>
+      <!-- Session 42-12: what you'll get + sample certificate -->
+      <div style="margin-top: 24px;">
+        <p style="font-weight: 700; color: #111827; margin: 0 0 10px; font-size: 0.95rem;">What you&rsquo;ll get:</p>
+        <ul style="list-style: none; padding: 0; margin: 0 0 20px;">
+          <li style="padding: 6px 0 6px 24px; position: relative; color: #374151; font-size: 0.9rem; line-height: 1.5;">
+            <span style="position: absolute; left: 0; color: #10b981; font-weight: 700;">&#10003;</span>
+            A <strong>readiness score (0-100)</strong> benchmarked against real market data
+          </li>
+          <li style="padding: 6px 0 6px 24px; position: relative; color: #374151; font-size: 0.9rem; line-height: 1.5;">
+            <span style="position: absolute; left: 0; color: #10b981; font-weight: 700;">&#10003;</span>
+            A <strong>breakdown by topic</strong> showing exactly what to improve
+          </li>
+          <li style="padding: 6px 0 6px 24px; position: relative; color: #374151; font-size: 0.9rem; line-height: 1.5;">
+            <span style="position: absolute; left: 0; color: #10b981; font-weight: 700;">&#10003;</span>
+            A <strong>verified certificate</strong> with a public URL employers can independently check
+          </li>
+          <li style="padding: 6px 0 6px 24px; position: relative; color: #374151; font-size: 0.9rem; line-height: 1.5;">
+            <span style="position: absolute; left: 0; color: #10b981; font-weight: 700;">&#10003;</span>
+            <strong>Shareable on LinkedIn</strong>, or attachable to job applications
+          </li>
+        </ul>
+
+        <div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+          <div style="font-size: 0.75rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">Sample certificate</div>
+          <div style="font-size: 2.4rem; font-weight: 900; color: #10b981; line-height: 1;">78<span style="font-size: 1rem; color: #9ca3af; font-weight: 600; margin-left: 6px;">/ 100</span></div>
+          <div style="display: inline-block; margin-top: 10px; padding: 5px 14px; border-radius: 999px; background: #d1fae5; color: #065f46; font-weight: 600; font-size: 0.8rem;">Above benchmark &mdash; job ready</div>
+          <div style="margin-top: 14px; font-size: 0.85rem; color: #4b5563;">Benchmark: 72 &middot; Your score: 78</div>
+          <div style="margin-top: 10px; font-family: ui-monospace, monospace; font-size: 0.75rem; color: #9ca3af;">RDC-A1B2C3D4E5F6</div>
         </div>
-        <p style="margin: 12px 0 0; font-size: 0.85rem; color: #6b7280;">A verified certificate you can share on LinkedIn, attach to job applications, or send to employers.</p>
+
+        <p style="margin: 14px 0 0; font-size: 0.85rem; color: #6b7280; text-align: center;">
+          <strong style="color: #374151;">Hundreds of students have taken this check this week.</strong>
+        </p>
       </div>
     <p class="rc-meta">No payment. No commitment. Just your score.</p>
   </div>
@@ -115,11 +137,11 @@
     <h3>Common questions</h3>
     <details>
       <summary>Is this really free?</summary>
-      <div class="rc-faq-body">Yes. The 10-question quick check and the resulting certificate are completely free. No credit card, no account upgrade. Premium reports and matched jobs are paid add-ons, but the readiness certificate itself is free forever.</div>
+      <div class="rc-faq-body">Yes. The 5-minute check and the resulting certificate are completely free. No credit card, no account upgrade. Premium reports and matched jobs are paid add-ons, but the readiness certificate itself is free forever.</div>
     </details>
     <details>
       <summary>How long does it take?</summary>
-      <div class="rc-faq-body">About 5-10 minutes end to end. The assessment is 10 questions. The certificate generates instantly after you answer.</div>
+      <div class="rc-faq-body">About 5 minutes end to end. The assessment is 10 questions. The certificate generates instantly after you answer.</div>
     </details>
     <details>
       <summary>Who can see my certificate?</summary>
