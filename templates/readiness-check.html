@@ -305,11 +305,7 @@
     });
   };
 
-  // Preselect from URL params if the user came back from login
-  var params = new URLSearchParams(window.location.search);
-  if (params.get("role")) setTimeout(function() { try { document.getElementById("rcRole").value = params.get("role"); } catch(e){} }, 800);
-  if (params.get("industry")) setTimeout(function() { try { document.getElementById("rcIndustry").value = params.get("industry"); } catch(e){} }, 800);
-  if (params.get("level")) setTimeout(function() { try { document.getElementById("rcLevel").value = params.get("level"); } catch(e){} }, 800);
+
 
 })();
 
@@ -324,6 +320,71 @@
     };
     roleSel.addEventListener("change", update);
     update();
+
+  // Session 42-11 v3: unified preselect + auto-start after login.
+  // Poll every 300ms until the option lists are loaded, then set
+  // the three values AND click Start. Gives up after 12s.
+  //
+  // Why polling: the options are fetched async and can take
+  // 1-4s to arrive. A fixed setTimeout fires too early and
+  // silently fails to set .value (no matching option yet).
+  (function() {
+    var token = localStorage.getItem("auth_token") || localStorage.getItem("charvak_token") || "";
+    var email = localStorage.getItem("userEmail") || "";
+    if (!token || !email) return;
+
+    var p = new URLSearchParams(window.location.search);
+    var wantRole = p.get("role");
+    var wantInd = p.get("industry");
+    var wantLvl = p.get("level");
+    if (!wantRole && !wantInd && !wantLvl) return;
+
+    var attempts = 0;
+    var maxAttempts = 40;  // 40 * 300ms = 12s
+    var iv = setInterval(function() {
+      attempts++;
+      try {
+        var roleEl = document.getElementById("rcRole");
+        var indEl = document.getElementById("rcIndustry");
+        var lvlEl = document.getElementById("rcLevel");
+        var btn = document.getElementById("rcStartBtn");
+        if (!roleEl || !indEl || !lvlEl || !btn) return;
+
+        // Try setting the values (idempotent — safe to retry)
+        if (wantRole && roleEl.value !== wantRole) roleEl.value = wantRole;
+        if (wantInd && indEl.value !== wantInd) indEl.value = wantInd;
+        if (wantLvl && lvlEl.value !== wantLvl) lvlEl.value = wantLvl;
+
+        // Did all three take?
+        var roleOk = !wantRole || roleEl.value === wantRole;
+        var indOk = !wantInd || indEl.value === wantInd;
+        var lvlOk = !wantLvl || lvlEl.value === wantLvl;
+
+        // Update the CTA label since role changed
+        if (roleOk && typeof rcBtnLabel === "function") {
+          try { btn.textContent = rcBtnLabel(); } catch (e) {}
+        }
+
+        if (roleOk && indOk && lvlOk && !btn.disabled) {
+          clearInterval(iv);
+          console.log("[readiness] preselect + auto-start succeeded after", attempts, "attempts");
+          if (typeof charvakTrack === "function") {
+            charvakTrack("readiness_autostart", { role: wantRole, level: wantLvl });
+          }
+          // Only auto-click if the user came back from login (which
+          // they did — we checked the token above). Small delay so
+          // the CTA label settles.
+          setTimeout(function() { btn.click(); }, 200);
+          return;
+        }
+      } catch (e) { /* keep trying */ }
+
+      if (attempts >= maxAttempts) {
+        clearInterval(iv);
+        console.warn("[readiness] preselect gave up after " + attempts + " attempts");
+      }
+    }, 300);
+  })();
   })();
 
   // Session 42-6: update the CTA label when the role changes
