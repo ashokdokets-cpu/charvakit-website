@@ -36,6 +36,25 @@ Both tracks share 80% of the codebase. Track B adds a packaging layer
 
 **Success:** Prod 200, no console errors, PayPal status=live, CI fires.
 
+### Batch A1.5 — Signup wall fix (1.5 sessions)
+
+**Trigger:** GA4 + DB data (Oct 12) show 368 visitors → 26 signups (7%).
+180 form_starts → 46 completions (25%). Only 7 certs.
+
+**Goal:** Let students take the assessment before login.
+Prompt signup only when saving the certificate.
+
+**Expected impact:** 3x more certificates from same traffic.
+
+**Approach:**
+1. Issue a signed short-lived token on assessment start
+2. Store answers against token (not user)
+3. Show score without login
+4. Prompt login only for certificate generation
+5. Migrate token data to user account on login
+
+**Success metric:** `readiness_complete` events double within 2 weeks.
+
 ### Batch A2 — Certificate round 3 (~3 hrs, 1 session)
 
 | ID | Item | Effort |
