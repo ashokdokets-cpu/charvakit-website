@@ -91,12 +91,40 @@ class FinalYearProjectEngine:
         interests = data.get("interests", [])
         if OPENAI_API_KEY:
             prompt = f"""Generate 10 unique final year project topics for a {branch} student.
-            Domain: {domain}
-            Skills: {', '.join(skills) if skills else 'General programming'}
-            Interests: {', '.join(interests) if interests else 'Open to suggestions'}
 
-            Return JSON: {{"topics": [{{"title": "...", "domain": "...", "difficulty": "...", "description": "..."}}]}}"""
-            topics_data = self._ai_json(prompt, max_tokens=800, temperature=0.8)
+Domain: {domain}
+Skills: {', '.join(skills) if skills else 'Not specified'}
+Interests: {', '.join(interests) if interests else 'Open to suggestions'}
+
+CRITICAL: Infer the correct discipline from the DOMAIN name and generate
+projects appropriate to that discipline. Do NOT default to software
+engineering projects.
+
+Discipline rules:
+- Engineering domains (CS, IT, AI/ML, Cybersecurity, IoT, Data Science,
+  Electronics, Mechanical, Civil): produce software/hardware/system
+  projects that involve building, coding, or prototyping.
+- Business domains (MBA, Marketing, Finance, HR, Operations, Strategy,
+  Consulting, Management): produce RESEARCH-BASED analytical projects
+  using surveys, case studies, secondary data, or mixed methods.
+  NOT software projects. NOT "build a chatbot". Instead: "A study of X",
+  "An analysis of Y", "A comparative study of Z".
+- Commerce domains (MCom, BCom, Accounting, Taxation): produce research
+  or analytical projects on financial/accounting topics.
+- Design domains (UX, Graphic, Product Design): produce portfolio-based
+  or user-research projects.
+- Other domains: infer the appropriate project shape from the domain.
+
+Each project should include:
+- "title": the project title (natural, discipline-appropriate)
+- "domain": the domain
+- "difficulty": Beginner / Intermediate / Advanced
+- "description": 1-2 sentences describing the project AND its methodology
+  (e.g., "Primary survey of N respondents" for MBA, "Python + TensorFlow
+  implementation" for engineering)
+
+Return JSON: {{"topics": [{{"title": "...", "domain": "...", "difficulty": "...", "description": "..."}}]}}"""
+            topics_data = self._ai_json(prompt, max_tokens=1400, temperature=0.8)
             if topics_data is not None:
                 return {"status": "success", "ai_generated": True, **topics_data}
         return self._fallback_topics(branch, domain)
