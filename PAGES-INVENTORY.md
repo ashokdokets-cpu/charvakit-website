@@ -410,3 +410,33 @@ Two new admin pages added.
 - register.html - honors ?next= after successful registration
 - cbat.html - local charvakFetch removed (now in base.html)
 - base.html - global charvakFetch helper
+
+## Session 43 additions (2026-10-12)
+
+Active roadmap for the current work: see `TRACK-A-B-PLAN.md`.
+
+### Session 43 shipped
+
+- Integrity fact-panel certificate redesign (facts, not verdicts)
+- FYP discipline-aware topic generation (MBA/commerce support)
+- 8 MBA courses generated and promoted to public catalog
+
+### Materially updated in Session 43
+
+- readiness.html - fact-based integrity panel (replaced verdict badge)
+- final-year-project.html - MBA-calibrated topic generation
+- ai-courses - 8 MBA courses added to catalog
+- readiness-check.html - dynamic CTA (Session 42-6)
+- ai-assessment.html - clean integrity fact panel
+
+### Track A pending (see TRACK-A-B-PLAN.md)
+
+- Batch A1: Small cleanup (Render password, PAYPAL_MODE, flicker, CI hook)
+- Batch A2: Certificate round 3 (QR, watermark, i18n)
+- Batch A3: FYP features (Citation, Milestone Roadmap, Plagiarism, Refine)
+- Batch A4: Personalized training views
+- Batch A5: DoketsRB bidirectional sync
+
+### Track B pending (after A2)
+
+- B1-B4: CSR skilling business model - see TRACK-A-B-PLAN.md

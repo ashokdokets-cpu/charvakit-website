@@ -1,3 +1,10 @@
+# Charvak — Commitment Tracker
+
+**Last updated:** 2026-10-12
+**Purpose:** Track every planned-but-not-completed item.
+
+**Active roadmap:** See TRACK-A-B-PLAN.md for the full Track A (B2C)
+and Track B (CSR) sequencing.
 ## Session 26 CLOSED (2026-10-05) - Security sweep + cautious cleanup
 
 ## Session 37 CLOSED (2026-10-07) - Wire the Career Engine trio
@@ -709,7 +716,7 @@ Audited the three "unknown state" files flagged by earlier sessions:
 
 | File | Verdict | Notes |
 |---|---|---|
-| `tools_engine.py` | ❌ Doesn't exist | Stale tracker entry; file was never committed or was removed in a prior cleanup |
+| `tools_engine.py` | [HEART] Doesn't exist | Stale tracker entry; file was never committed or was removed in a prior cleanup |
 | `enhanced_assessment_engine.py` | ✅ Healthy | Active (main.py:6603+, universal_company.py:167). OpenAI call uses `requests.post(timeout=20)` — valid sync call, not the Session bug. Has `response_format={"type":"json_object"}`, fence stripping, regex fallback, and real logging. No changes needed. |
 | `chatbot_engine.py` | ✅ Healthy | Active (main.py:61, 3611-3633). Uses official `openai.OpenAI` SDK. Returns plain text (chat prose), not JSON — so "AI JSON mode missing" was a false positive. Real logging. No changes needed. |
 
@@ -1083,13 +1090,13 @@ After this session:
 | Voice-to-Web | ✅ | ✅ |
 | Student Suite | ✅ | ✅ |
 | FYP | ✅ | ✅ |
-| 11 AI Products | ✅ | ❌ (10 need forms — separate project) |
+| 11 AI Products | ✅ | [HEART] (10 need forms — separate project) |
 | AI Bridge | ✅ | ✅ |
 | Bridge | ✅ | ✅ (except premium flow) |
 | Marketing AI | ✅ | ✅ |
 | Indian Language AI | ✅ | ✅ |
 | Interview Prep | ✅ | ✅ |
-| LMS AI | ✅ | ❌ (lms.html — see above) |
+| LMS AI | ✅ | [HEART] (lms.html — see above) |
 | Assessment | ✅ | Unknown — needs audit |
 
 **Remaining unverified cluster:** Assessment engines (6 routes: start_versant,
@@ -1988,25 +1995,25 @@ Verdict: SCHEDULED — own session
 
 ---
 
-## âœ… COMPLETED
+## [OK] COMPLETED
 
 ### N1 - State exam smoke test + content quality fixes
 
 - **Completed:** 2026-09-22 (Session N1) - commits `9a8ce83` through `00aec90`
-- **Catalog:** `upsc_cse` + `neet_ug` added (136 â†’ 138 exams)
+- **Catalog:** `upsc_cse` + `neet_ug` added (136 > 138 exams)
 - **Question bank:** 5 state PCS exams topped to 40+ per topic; ~13,600+ rows total
-- **Mock test performance:** batched bank query (3 DB calls â†’ 1); 2-4s â†’ 0.4s
+- **Mock test performance:** batched bank query (3 DB calls > 1); 2-4s > 0.4s
 - **Connection pool:** `get_pooled_connection()` + `release_pooled_connection()` in `database.py`; `exam_prep_engine` hot paths migrated; startup warmup in `main.py`
 - **Language hints:** AI prompt forces correct script for 10 language sections (Bengali, Hindi, Tamil, Telugu, Marathi, Kannada, Malayalam, Gujarati, Punjabi, Urdu)
 - **Practice route fix:** `/api/exam/ai-questions` redirected from legacy `ai_question_generator` to `exam_prep_engine` - was serving wrong content for state-specific topics
 - **Verified in prod (Render logs):**
-  - `[startup] DB connection pool warmed` âœ…
-  - `bank lookup: X/Topic -> 10 rows (wanted 10)` for all 5 state PCS exams âœ…
-  - Bengali content serves correctly âœ…
-  - Credit deduction: 3 cr practice / 15 cr mock âœ…
+  - `[startup] DB connection pool warmed` [OK]
+  - `bank lookup: X/Topic -> 10 rows (wanted 10)` for all 5 state PCS exams [OK]
+  - Bengali content serves correctly [OK]
+  - Credit deduction: 3 cr practice / 15 cr mock [OK]
 - **N1.5 Legal audit:** PASSED - all 4 pages render on `www.charvakit.com` (terms, privacy, refund, cookie-policy), plus `accessibility`
 - **Follow-ups:**
-  - Semantic duplicate questions (near-identical wording across topics) â†’ C13
+  - Semantic duplicate questions (near-identical wording across topics) > C13
   - Two engines to consolidate (`exam_prep_engine` vs `ai_question_generator`)
   - Apex domain `charvakit.com` returns 404; optional Cloudflare redirect to `www`
 
@@ -2023,7 +2030,7 @@ Verdict: SCHEDULED — own session
   - **Write-time dedup:** seed script's `seed_one` runs `dedup_bank()` after each generation
   - **One-time cleanup:** deleted 1,069 semantic near-dupes (7.8% of bank)
 - **Verified:**
-  - Bank: 13,720 â†’ 12,651
+  - Bank: 13,720 > 12,651
   - All 10 sampled questions unique per topic
   - Mixed mock serves diverse content
 - **Follow-ups:**
@@ -2160,19 +2167,19 @@ Verdict: SCHEDULED — own session
 - **Follow-ups:**
   - localStorage `userEmail`/`userName` not set on register (minor UX)
   - Currency auto-detected as USD for some users (region detection issue)
-  - Mojibake in register.html (`âœ…` vs `✅`, `â€”` vs `—`) — cosmetic
+  - Mojibake in register.html (`[OK]` vs `✅`, `—` vs `—`) — cosmetic
 - **HEAD after:** `bad2ad9`
 
 ### C1 - Assessment AI for global languages
 
 - **Completed:** 2026-09-21 (Session G1) - commit `c3dc68a`
 - **Discovered:** 2026-09-20 (audit was wrong; corrected 2026-09-20)
-- **Reality:** `global_config.LANGUAGES` has 34 languages âœ… (config complete)
+- **Reality:** `global_config.LANGUAGES` has 34 languages [OK] (config complete)
 - **Real gap fixed:** `indian_language_ai._generate_questions` only handled 12 Indian languages.
   Spanish, French, German, Japanese, etc. users got English/Hinglish assessment questions.
 - **What shipped:**
   - `LANG_NAME_FOR_PROMPT` (36 languages) for AI prompt naming
-  - `LANG_META()` resolver: INDIAN_LANGUAGES â†’ global_config.LANGUAGES â†’ fallback
+  - `LANG_META()` resolver: INDIAN_LANGUAGES > global_config.LANGUAGES > fallback
   - Silent-Hindi bug fixed in BOTH `create_assessment` AND `translate_job_ad`
   - Static fallback guard: non-Indian returns `[]` instead of Hinglish default
   - `_generate_questions_via_ai` now serves all 34 languages
@@ -2198,7 +2205,7 @@ Verdict: SCHEDULED — own session
     difficulty when caller omits it
   - `main.py` routes `/api/enhanced/*` forward `difficulty` + `email`
 - **Verified:**
-  - Local Elo math (8/10 â†’ +7.2, 2/10 â†’ âˆ’7.45)
+  - Local Elo math (8/10 > +7.2, 2/10 > −7.45)
   - Prod table exists with all columns + PK `(email, skill)` + 2 indexes
 - **Not in scope (Phase 2):** mock drives still generate at fixed difficulty.
   Ability only read by `/api/enhanced/*` today.
@@ -2219,7 +2226,7 @@ Verdict: SCHEDULED — own session
 - **Verified (local):**
   - Phase 2: **207/207 pairs succeeded** in 5281s (88 min)
   - Bank now: **12,892 rows** across 67 exams, 43 distinct topics
-  - **207/207 pairs cache-eligible** (â‰¥30 questions)
+  - **207/207 pairs cache-eligible** (≥30 questions)
   - Average 62 questions/pair (target 50; OpenAI variance + top-up)
 - **Known limitations:**
   - `jssc/Math` had 30 stub rows from OpenAI timeout during batch;
@@ -2236,7 +2243,7 @@ Verdict: SCHEDULED — own session
 - **Completed:** 2026-09-21 (Session G5) - commits `fa83917` through `acd450e`
 - **What shipped:**
   - **`static/js/i18n.js`** - client-side loader (~5.5 KB)
-    - Language priority: localStorage â†’ `window.CHARVAK_LANG` â†’ Accept-Language â†’ `en`
+    - Language priority: localStorage > `window.CHARVAK_LANG` > Accept-Language > `en`
     - Replaces `[data-i18n]`, `[data-i18n-placeholder]`, `[data-i18n-title]`
     - Exposes `window.changeLanguage()` + `window.t()` for programmatic use
     - Graceful fallback: missing keys render English
@@ -2278,21 +2285,21 @@ Verdict: SCHEDULED — own session
   but NO backend endpoint. Currently take payment intent but deliver
   no actual feature.
 - **Affected templates:**
-  1. `agency-twin.html` - â‚¹2,999 Agency-Twin Pro
-  2. `agent-ready.html` - â‚¹399 Agent-Ready Wrapper
-  3. `ai-internship.html` - variable (weeks Ã— program)
-  4. `ai-slop-quarantine.html` - â‚¹149 AI-Slop Clean
-  5. `auditbot.html` - â‚¹299 Fix + â‚¹999 Subscription (2 features)
-  6. `design-token-sentinel.html` - â‚¹299 Design-Token Pro
-  7. `developer-entropy.html` - â‚¹299 Monitoring
-  8. `geo-compliance.html` - â‚¹199 Contract Gen + â‚¹999 Global Hiring (2)
-  9. `legacy-shift.html` - â‚¹4,999 Migration
-  10. `lock-in-breaker.html` - â‚¹4,999 + â‚¹4,999 (2)
-  11. `marketing-ai.html` - â‚¹299
-  12. `micro-squads.html` - â‚¹49,999 Assembly
-  13. `reports.html` - â‚¹299 Premium Report
-  14. `skill-twin.html` - â‚¹499 Verification
-  15. `team-dashboard.html` - â‚¹1,999 Pro
+  1. `agency-twin.html` - ₹2,999 Agency-Twin Pro
+  2. `agent-ready.html` - ₹399 Agent-Ready Wrapper
+  3. `ai-internship.html` - variable (weeks x program)
+  4. `ai-slop-quarantine.html` - ₹149 AI-Slop Clean
+  5. `auditbot.html` - ₹299 Fix + ₹999 Subscription (2 features)
+  6. `design-token-sentinel.html` - ₹299 Design-Token Pro
+  7. `developer-entropy.html` - ₹299 Monitoring
+  8. `geo-compliance.html` - ₹199 Contract Gen + ₹999 Global Hiring (2)
+  9. `legacy-shift.html` - ₹4,999 Migration
+  10. `lock-in-breaker.html` - ₹4,999 + ₹4,999 (2)
+  11. `marketing-ai.html` - ₹299
+  12. `micro-squads.html` - ₹49,999 Assembly
+  13. `reports.html` - ₹299 Premium Report
+  14. `skill-twin.html` - ₹499 Verification
+  15. `team-dashboard.html` - ₹1,999 Pro
   16. `skill-twin` variants
 - **Temporary handling (G6):** replace payment button with
   "Notify Me" CTA. Captures intent, no fraud risk.
@@ -2302,19 +2309,19 @@ Verdict: SCHEDULED — own session
 - Added 2026-09-28: `internship_custom_program: 50` (AI curriculum design)
   - Guard with `require_credits_from_data`
   - Wire frontend to credit purchase flow
-- **Est:** 3-5 hr per feature Ã— 15 features = **~45-75 hr total**
+- **Est:** 3-5 hr per feature x 15 features = **~45-75 hr total**
 - **Priority:** Medium - tackle top 3 by market demand first
 - **Verdict:** DEFERRED (post-G6, iterative)**
 
 - **Expanded (2026-09-21, Session G6 revenue audit):** 5 additional
   templates confirmed to have the same problem - dead
   `processCharvakPayment` callbacks + working free paths with no gate:
-  1. `events.html` - RSVP works free; â‚¹499 button was dead
-  2. `ats.html` - no form exists; â‚¹999 button was dead
-  3. `lms.html` - no real enroll endpoint; â‚¹999 button was dead
+  1. `events.html` - RSVP works free; ₹499 button was dead
+  2. `ats.html` - no form exists; ₹999 button was dead
+  3. `lms.html` - no real enroll endpoint; ₹999 button was dead
   4. `micro-internship.html` - form on `/post-micro-project` ignores
-     the `?payment_id=` redirect; â‚¹2,000 bypassed
-  5. `university.html` - no form exists; â‚¹4,999 button was dead
+     the `?payment_id=` redirect; ₹2,000 bypassed
+  5. `university.html` - no form exists; ₹4,999 button was dead
 
   **G6 handling:** All 5 buttons replaced with `notifyMe()` (matches
   the pattern used across 13 other templates). No working flow was
@@ -2324,7 +2331,7 @@ Verdict: SCHEDULED — own session
   - Build proper form (events needs RSVP confirmation page; ats
     needs provider/api_key inputs; university needs registration form)
   - Add backend endpoint guard where one exists
-  - Wire frontend to `notifyMe()` â†’ real "Buy Credits" flow when
+  - Wire frontend to `notifyMe()` > real "Buy Credits" flow when
     the feature ships
 
 - **Total C7 scope:** **18 templates** (~25 features across them)
@@ -2345,7 +2352,7 @@ Verdict: SCHEDULED — own session
   - **NEW category `international`** +3: `gmat_focus` (Section-Adaptive CAT),
     `gre_general` (Section-Adaptive), `toefl_ibt` (CBT)
   - Single-file change: `exam_prep_engine.py`
-  - Docstring updated: `67 exams, 8 categories` â†’ `79 exams, 9 categories`
+  - Docstring updated: `67 exams, 8 categories` > `79 exams, 9 categories`
 - **Verified:**
   - Local + prod: `total_categories: 9`, `total_exams: 79`
   - All 12 new exam IDs resolve via `get_exam_details`
@@ -2366,9 +2373,9 @@ Verdict: SCHEDULED — own session
   - **`credit_guard.py`** - reusable `require_credits_from_data(data, feature)`
     + `require_credits_dep` dependency factory; 401 for missing email,
     402 for insufficient credits
-  - **Pricing (repriced):** Starter â‚¹199/300cr, Pro â‚¹499/1000cr,
-    Premium â‚¹999/2500cr, Enterprise â‚¹4999/15000cr
-  - **8 new feature keys** in `FEATURE_CREDITS` (mock_test repriced 20â†’15)
+  - **Pricing (repriced):** Starter ₹199/300cr, Pro ₹499/1000cr,
+    Premium ₹999/2500cr, Enterprise ₹4999/15000cr
+  - **8 new feature keys** in `FEATURE_CREDITS` (mock_test repriced 20>15)
   - **10 routes guarded** across exam / assessment / mock drive
   - **`exam-prep.html` rewritten** - 4 credit packages + balance banner;
     fake subscription system (subscribeExam, planLimits, canPractice,
@@ -2378,10 +2385,10 @@ Verdict: SCHEDULED — own session
   - **`indian-language-ai.html`** - migrated to credits (2 routes guarded)
   - **18 dead payment buttons** replaced with `notifyMe()` (interest capture);
     `/api/features/notify` + `charvak_feature_interest` table added
-  - **`payment-helper.js`** - region-aware modal (India â†’ Razorpay first,
-    Intl â†’ PayPal first) with "RECOMMENDED" badge
+  - **`payment-helper.js`** - region-aware modal (India > Razorpay first,
+    Intl > PayPal first) with "RECOMMENDED" badge
 - **Bugs found in Phase 9 testing & fixed:**
-  - Free-plan credit farming (click "Start Free" repeatedly â†’ +50 each):
+  - Free-plan credit farming (click "Start Free" repeatedly > +50 each):
     `purchase_credits` now rejects repeat free claims; UI hides Free
     card for users with credits
   - `charvak_feature_interest` table creation moved to `_ensure_tables`
@@ -2467,7 +2474,7 @@ Verdict: SCHEDULED — own session
     - `state_tet` (17 exams): UPTET, REET, MAHA TET, TNTET, KARTET,
       UTET, WBTET, MPTET, JTET, OTET, PSTET, HPTET, APTET, TSTET,
       KTET, Assam TET, Bihar TET
-  - **Catalog: 81 â†’ 136 exams, 9 â†’ 12 categories**
+  - **Catalog: 81 > 136 exams, 9 > 12 categories**
   - Zero new engines, tables, routes, or templates - all reuse
     existing infrastructure
   - AI question generation works for every new exam
@@ -2512,7 +2519,7 @@ Verdict: SCHEDULED — own session
 - **Est:** 2-3 hr per batch
 - **Priority:** Medium-High
 
-## ðŸ”´ CRITICAL - Must Fix
+## [RED] CRITICAL - Must Fix
 
 ### C2 - `voice_to_web_engine.py` persistence
 
@@ -2541,7 +2548,7 @@ Verdict: SCHEDULED — own session
 
 ---
 
-## ðŸ” NEEDS VERIFICATION
+## [MOJI] NEEDS VERIFICATION
 
 ### V1 - Doc sprawl
 
@@ -2555,13 +2562,13 @@ Verdict: SCHEDULED — own session
   `audio.transcriptions.create` (Whisper), NOT chat completions.
   Text format is correct for Whisper.
 - **Line 89** (the only LLM call) uses JSON mode correctly.
-- **Verdict:** âœ… No bug. No action needed.
+- **Verdict:** [OK] No bug. No action needed.
 
 ### V3 - 34-language claim vs delivered
 
 - **Check:** Count actual supported languages
 - **Concern:** Site copy says 34; actual may be less
-- **Status:** âœ… RESOLVED 2026-09-21 - `global_config.LANGUAGES` has 34 languages,
+- **Status:** [OK] RESOLVED 2026-09-21 - `global_config.LANGUAGES` has 34 languages,
   and as of Session G1 `indian_language_ai._generate_questions` serves all of them
   via AI. Copy claim is now accurate for the assessment flow.
 
@@ -2596,7 +2603,7 @@ Verdict: SCHEDULED — own session
     `postgresql://postgres:dev@localhost:5432/charvak_dev`, run
     migrations + seed scripts against it.
   - **Option B (Render staging):** New Render Postgres resource;
-    copy prod â†’ staging periodically for realistic tests.
+    copy prod > staging periodically for realistic tests.
 - **Escalation trigger:** Any of the following:
   1. Any destructive operation planned (DROP, DELETE without WHERE,
      bulk UPDATE)
@@ -2620,7 +2627,7 @@ Verdict: SCHEDULED — own session
   ```powershell
   $env:DATABASE_URL = ((Get-Content .env | Where-Object { $_ -match '^DATABASE_URL=' }) -replace '^DATABASE_URL=', '').Trim()
 
-## âœ… CONFIRMED BY DESIGN (no action)
+## [OK] CONFIRMED BY DESIGN (no action)
 
 | # | Item | Verified |
 |---|---|---|
@@ -2632,7 +2639,7 @@ Verdict: SCHEDULED — own session
 
 ---
 
-## ðŸ“… SCHEDULED
+## [MOJI] SCHEDULED
 
 | # | Item | When |
 |---|---|---|
@@ -2640,7 +2647,7 @@ Verdict: SCHEDULED — own session
 
 ---
 
-## ðŸ”’ BLOCKED
+## [MOJI] BLOCKED
 
 | # | Item | Blocker |
 |---|---|---|
@@ -2648,14 +2655,14 @@ Verdict: SCHEDULED — own session
 
 ---
 
-## ðŸ“‹ EXECUTION ORDER (revised 2026-09-21)
+## [MOJI] EXECUTION ORDER (revised 2026-09-21)
 
 1. ~~**Session B-2**~~ - voice_to_web persistence (C2)  [SKIPPED, re-schedule later]
-2. ~~**Session G1**~~ - Assessment AI for 34 languages (C1)  âœ… DONE 2026-09-21
+2. ~~**Session G1**~~ - Assessment AI for 34 languages (C1)  [OK] DONE 2026-09-21
 3. ~~**Session G4**~~ - RTL UI (C3)  [DEFERRED 2026-09-21 - no Arabic user base]
-4. ~~**Session G2**~~ - Adaptive difficulty (C4)  âœ… DONE 2026-09-21 (commit `15193f9`)
-5. ~~**Session G3**~~ - Question banks (C5)  âœ… DONE 2026-09-21 (commit `f4a3fd3`)
-6. ~~**Session G5**~~ - Assessment i18n (C6)  âœ… DONE 2026-09-21
+4. ~~**Session G2**~~ - Adaptive difficulty (C4)  [OK] DONE 2026-09-21 (commit `15193f9`)
+5. ~~**Session G3**~~ - Question banks (C5)  [OK] DONE 2026-09-21 (commit `f4a3fd3`)
+6. ~~**Session G5**~~ - Assessment i18n (C6)  [OK] DONE 2026-09-21
 
 **All CRITICAL items resolved.** Remaining: C2 (parked), C3 (deferred).
 **Dead code cleanup completed 2026-09-21 (Session G2-pre):**
@@ -2664,7 +2671,7 @@ Verdict: SCHEDULED — own session
 - Commits: `bdf32fa`, `8951c9b`
 ---
 
-## ðŸ§  PROCESS LESSONS LEARNED
+## [MOJI] PROCESS LESSONS LEARNED
 
 ### L1 - PowerShell + Python file patching is fragile (Session G1, 2026-09-21)
 
@@ -2766,7 +2773,7 @@ or operate on string matches rather than line indices.
 
 Session G5 found `base.html`'s language dropdown had 17 `<option>`
 values that were double-encoded (UTF-8 bytes reinterpreted as Latin-1,
-then re-encoded). `à¤¹à¤¿à¤¨à¥à¤¦à¥€` was stored as `Ã Â¤Â¹Ã Â¤Â¿Ã Â¤Â¨Ã Â¥Ã Â¤Â¦Ã Â¥â‚¬`.
+then re-encoded). `[MOJI]` was stored as `[MOJI]`.
 
 **Fix:** rewrite `<option value="XX">ANYTHING</option>` from
 `global_config.LANGUAGES` (which was clean).
@@ -2775,8 +2782,8 @@ then re-encoded). `à¤¹à¤¿à¤¨à¥à¤¦à¥€` was stored as `Ã Â�
 `[System.IO.File]::ReadAllBytes()`. If the first bytes of a Devanagari
 character are `C3 A0` instead of `E0 A4`, it's double-encoded.
 
-**Search for hidden instances:** grep for `Ã Â¤`, `Ã Â®`, `Ã Â²`, `Ã˜Â§`, `Ã¤Â¸`,
-`Ã `, etc. across all templates.
+**Search for hidden instances:** grep for `[MOJI]`, `[MOJI]`, `[MOJI]`, `[MOJI]`, `[MOJI]`,
+`[MOJI] `, etc. across all templates.
 
 ---
 
@@ -2874,8 +2881,8 @@ Discovered after the 11-product sprint. These 4 tools have:
 - ✅ Template file exists
 - ✅ Backend API route
 - ✅ Credit-gating via require_credits_from_data
-- ❌ No require_auth_for_email
-- ❌ Frontend never calls the AI route
+- [HEART] No require_auth_for_email
+- [HEART] Frontend never calls the AI route
 
 | Tool | Page | API route | Credit key |
 |---|---|---|---|

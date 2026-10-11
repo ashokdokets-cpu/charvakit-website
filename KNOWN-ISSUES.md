@@ -1,6 +1,12 @@
 # Charvak — Known Issues Registry
 
 **Created:** 2026-09-18
+**Last updated:** 2026-10-12
+**Purpose:** Central registry for bugs, dead code, and design issues.
+
+**Active roadmap:** See TRACK-A-B-PLAN.md for the full Track A (B2C)
+and Track B (CSR) sequencing.
+**Created:** 2026-09-18
 **Last updated:** 2026-09-28 (Session C)
 **Purpose:** Central registry for bugs, dead code, and design issues found during the persistence project. Every session appends to this file. Session I resolves what's still open.
 
@@ -45,7 +51,7 @@ Verified:
 Verdict: RESOLVED.
 
 
-**Legend:** 🔴 data integrity | 🟠 feature gap | 🟡 cosmetic | 🟢 hygiene
+**Legend:** [RED] data integrity | [WHITE] feature gap | [YELLOW] cosmetic | [GREEN] hygiene
 
 ---
 
@@ -90,15 +96,15 @@ Verdict: RESOLVED.
 | 2026-09-18 | H/2 | `enhanced_assessment_engine.py` | Dead `question_cache` field + missing `response_format` on AI call | Removed dead field; added `response_format` + timeout + defensive fence strip |
 | 2026-09-18 | TierE | `payment_engine.py` | `self.payments` in-memory list backed admin endpoints (`get_all_payments`, `get_payment_status`); all reset on restart | Persist to `charvak_payment_log` with `raw_data JSONB` |
 | 2026-09-18 | D/2 | `brand_engine.py` | `promote_job` used `timedelta` without importing it — every call would `NameError` | Added `from datetime import timedelta` |
-| 2026-09-18 | D/1 | `badge_engine.py` | `share_text` had mojibake `ðŸ†` instead of 🏆 | `\U0001F3C6` unicode escape |
-| 2026-09-18 | F/3 | `marketing_ai_engine.py` | Mojibake in templates — `ðŸš€` instead of 🚀 in every generated job ad / social post | `\U0001F680` unicode escapes (source stays ASCII) |
+| 2026-09-18 | D/1 | `badge_engine.py` | `share_text` had mojibake `[PIN]` instead of [FLAG] | `\U0001F3C6` unicode escape |
+| 2026-09-18 | F/3 | `marketing_ai_engine.py` | Mojibake in templates — `[LAUNCH]` instead of [LAUNCH] in every generated job ad / social post | `\U0001F680` unicode escapes (source stays ASCII) |
 | 2026-09-18 | F/4 | `dynamic_role_engine.py` | `recommend_custom_role` mutated in-memory `role_database` — custom roles lost on every restart | Persist to `charvak_dynamic_custom_roles`, merge into `get_all_roles()` |
 | 2026-09-17 | C | `main.py` | `GET /api/exam/progress` shadowed by `/api/exam/{exam_id}` catch-all | Routes inserted before catch-all |
 | 2026-09-17 | C/3 | `exam_prep_engine.py` | Docstring said "83 exams" but actual catalog is 67 | Updated to 67 |
 
 ---
 
-## Open — data integrity 🔴
+## Open — data integrity [RED]
 ### FLAGGED - IELTS writing + speaking AI scoring does not enforce topical relevance (2026-10-08)
 
 Discovered during Session 40c testing. Two related observations:
@@ -181,7 +187,7 @@ off-topic detection.
 
 ---
 
-## Open — feature gaps 🟠
+## Open — feature gaps [WHITE]
 
 | # | File | Issue | Fix in session |
 |---|---|---|---|
@@ -197,19 +203,19 @@ off-topic detection.
 
 ---
 
-## Open — cosmetic 🟡
+## Open — cosmetic [YELLOW]
 
 | # | File | Issue |
 |---|---|---|
-| 15a | `notification_engine.py` | Mojibake in email subject (`âš ï¸` instead of warning emoji) — fix in Session H |
-| 15b | `products_engine.py` | Mojibake in log message (`âœ…`) — fix in Session H |
+| 15a | `notification_engine.py` | Mojibake in email subject (`[WARN] ` instead of warning emoji) — fix in Session H |
+| 15b | `products_engine.py` | Mojibake in log message (`[OK]`) — fix in Session H |
 | 16 | Multiple engines | Heading order on remaining pages (accessibility) |
 | 17 | Site-wide | TBT ~1,900ms mobile — needs conditional script loading |
 | 18 | `na_module/vector_matcher.py`, `work_auth.py`, etc. | Emoji icons in some docstrings — clean up during Session I |
 
 ---
 
-## Open — hygiene / process 🟢
+## Open — hygiene / process [GREEN]
 
 | # | Item | Notes |
 |---|---|---|
@@ -292,7 +298,7 @@ Verdict: DOCUMENTED — apply the verify pattern
 
 Two false alarms during Sessions 13-14 (COMMITMENT.md, CAREER-ASSESSMENT-PLAN.md):
 
-Files displayed as `â€"` (mojibake) in PowerShell's `Get-Content` output,
+Files displayed as `—"` (mojibake) in PowerShell's `Get-Content` output,
 but the bytes on disk were clean UTF-8 em-dashes.
 
 Root cause: Windows PowerShell 5.x `Get-Content` uses the console code page

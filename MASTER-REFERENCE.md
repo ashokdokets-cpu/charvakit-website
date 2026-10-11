@@ -1,12 +1,12 @@
 # CHARVAKIT.COM - MASTER REFERENCE
 ## Charvak IT Consulting Pvt Ltd
-### Last updated: October 4, 2026 (Session 16 - Premium Report product shipped)
+### Last updated: October 12, 2026 (Session 43 - FYP MBA calibration + integrity fact panel)
 
-**HEAD:** 9d2aced
+**HEAD:** c56e9c6
 **Live:** https://www.charvakit.com
-**Resume here:** see `SESSION-CONTEXT.md` (one-file state snapshot for fresh chat windows)
+**Resume here:** see `SESSION-CONTEXT.md` and `TRACK-A-B-PLAN.md`
 **Backlog:** see `OUTSTANDING-WORK-INVENTORY.md` (master list of remaining work)
-**Version:** v3.5-session-42-20261009
+**Version:** v3.5-session-43-20261012
 
 ### Reference Documents
 
@@ -410,32 +410,32 @@ text
 
 ## PROJECT STRUCTURE
 charvakit-new/
-├── main.py # FastAPI app (~5900 lines)
-├── auth.py # Register, login, tokens
-├── database.py # DB connection + user CRUD
-├── payment_engine.py # Razorpay + PayPal + webhook sig verify
-├── ai_credit_engine.py # DB-backed credits
-├── ai_courses.py # AI courses + certificates
-├── ai_courses_payments.py # Course payments + India EMI (NEW v2.0)
-├── complete_mock_drive.py # Company mock drives (DB-backed v2.2)
-├── results_system.py # Assessment results (DB-backed v2.2)
-├── notification_engine.py # Email notifications + EMI reminders
-├── email_verification.py # DB-backed verification
-├── password_reset.py
-├── email_engine.py # SendGrid
-├── [40+ other engines]
-├── templates/ # 203 Jinja2 pages
-├── static/ # css, js, images, fonts
-├── na_module/ # North America modules
-├── migrations/ # SQL migrations (idempotent)
-├── scripts/ # Dev/ops scripts
-├── requirements.txt, runtime.txt
-├── .env # Never committed
-├── STATUS.md
-├── MASTER-REFERENCE.md # <- this file
-├── ARCHITECTURE.md
-├── TIER3-MASTER-PLAN.md
-├── PAGES-INVENTORY.md
+â”œâ”€â”€ main.py # FastAPI app (~5900 lines)
+â”œâ”€â”€ auth.py # Register, login, tokens
+â”œâ”€â”€ database.py # DB connection + user CRUD
+â”œâ”€â”€ payment_engine.py # Razorpay + PayPal + webhook sig verify
+â”œâ”€â”€ ai_credit_engine.py # DB-backed credits
+â”œâ”€â”€ ai_courses.py # AI courses + certificates
+â”œâ”€â”€ ai_courses_payments.py # Course payments + India EMI (NEW v2.0)
+â”œâ”€â”€ complete_mock_drive.py # Company mock drives (DB-backed v2.2)
+â”œâ”€â”€ results_system.py # Assessment results (DB-backed v2.2)
+â”œâ”€â”€ notification_engine.py # Email notifications + EMI reminders
+â”œâ”€â”€ email_verification.py # DB-backed verification
+â”œâ”€â”€ password_reset.py
+â”œâ”€â”€ email_engine.py # SendGrid
+â”œâ”€â”€ [40+ other engines]
+â”œâ”€â”€ templates/ # 203 Jinja2 pages
+â”œâ”€â”€ static/ # css, js, images, fonts
+â”œâ”€â”€ na_module/ # North America modules
+â”œâ”€â”€ migrations/ # SQL migrations (idempotent)
+â”œâ”€â”€ scripts/ # Dev/ops scripts
+â”œâ”€â”€ requirements.txt, runtime.txt
+â”œâ”€â”€ .env # Never committed
+â”œâ”€â”€ STATUS.md
+â”œâ”€â”€ MASTER-REFERENCE.md # <- this file
+â”œâ”€â”€ ARCHITECTURE.md
+â”œâ”€â”€ TIER3-MASTER-PLAN.md
+â”œâ”€â”€ PAGES-INVENTORY.md
 
 text
 
