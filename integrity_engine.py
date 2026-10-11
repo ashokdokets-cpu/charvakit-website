@@ -272,62 +272,124 @@ class IntegrityEngine:
 
     def get_public_summary(self, assessment_id: str) -> Dict:
         """
-        Public-safe integrity summary for a readiness certificate.
+        Public-facing integrity summary. Never uses judgmental language.
 
-        Strips anything that could leak PII or timing patterns.
-        Returns only: risk_level, verified flag, total_events, message.
-        No per-type counts, no timestamps, no metadata.
+        Returns a fact panel - plain-language statements about what the
+        assessment environment looked like. No verdict, no accusation.
+
+        Response shape:
+          status:             "success"
+          verified:           True (always - the certificate is HMAC-backed)
+          review_recommended: bool (True only for clear behavioral signals)
+          total_events:       int
+          facts:              list of plain-language fact strings
+          message:            one-line summary for the certificate page
+
+        The legacy risk_level field is retained for backward compatibility
+        (older admin UIs may still read it) but is no longer authoritative.
         """
         s = self.get_summary(assessment_id)
-        risk = s.get("risk_level", "clean")
+        counts = s.get("counts", {}) or {}
         total = int(s.get("total_events", 0) or 0)
 
-        if risk == "clean" or total == 0:
-            message = "No integrity signals detected during this assessment."
-            verified = True
-        elif risk == "minor":
-            message = "A small number of integrity signals were detected during this assessment."
-            verified = False
-        elif risk == "moderate":
-            message = "Multiple integrity signals were detected during this assessment."
-            verified = False
-        elif risk == "elevated":
-            message = "Frequent integrity signals were detected during this assessment."
-            verified = False
+        tabs        = counts.get("tab_switch", 0) or 0
+        pastes      = counts.get("paste", 0) or 0
+        rapid_input = counts.get("rapid_input", 0) or 0
+        focus_out   = counts.get("focus_out", 0) or 0
+
+        facts = []
+
+        # Tab switching (fact-only)
+        if tabs == 0:
+            facts.append("Remained on the assessment tab throughout")
+        elif tabs <= 3:
+            facts.append(
+                "Briefly left the assessment tab "
+                f"({tabs} time{'s' if tabs != 1 else ''})"
+            )
+        elif tabs <= 6:
+            facts.append(f"Left the assessment tab several times ({tabs})")
         else:
-            message = "Integrity signals were recorded during this assessment."
-            verified = False
+            facts.append(f"Frequently left the assessment tab ({tabs} times)")
+
+        # Paste (fact-only)
+        if pastes == 0:
+            facts.append("No external content was pasted into responses")
+        elif pastes == 1:
+            facts.append("External content pasted into responses once")
+        else:
+            facts.append(f"External content pasted into responses {pastes} times")
+
+        # Typing pattern
+        if rapid_input == 0:
+            facts.append("Typing pattern within normal range")
+        else:
+            facts.append(f"Rapid input events detected ({rapid_input})")
+
+        # Focus (fact-only, never framed as a problem unless extreme)
+        if focus_out < 20:
+            facts.append("Normal window focus behavior")
+        elif focus_out < 50:
+            facts.append(f"Frequent window focus changes ({focus_out})")
+        else:
+            facts.append(f"Very frequent window focus changes ({focus_out})")
+
+        review_recommended = (
+            (tabs >= 7) or (pastes >= 1) or (rapid_input >= 1)
+        )
+
+        if total == 0:
+            message = "No environment signals were recorded during this assessment."
+        elif review_recommended:
+            message = (
+                "Some environment signals were recorded. Employers may wish "
+                "to verify the candidate's skills in an interview."
+            )
+        else:
+            message = (
+                "Assessment completed with typical environment signals. "
+                "The certificate is independently verifiable."
+            )
 
         return {
             "status": "success",
-            "risk_level": risk,
-            "verified": verified,
+            # Legacy field - kept so any older caller does not break.
+            "risk_level": s.get("risk_level", "clean"),
+            "verified": True,
+            "review_recommended": review_recommended,
             "total_events": total,
+            "facts": facts,
             "message": message,
         }
     def compute_risk_level(self, counts: Dict) -> str:
         """
-        Deterministic risk classification.
+        Internal-only risk classification.
 
-        clean:    0 events
-        minor:    1-5 events
-        moderate: 6-15 events
-        elevated: >15 events OR (>=3 tab switches + >=2 pastes)
+        NOT shown to end users. The public certificate renders fact
+        sentences from the counts directly (see get_public_summary).
+        This field is retained for admin filtering + internal sorting.
+
+        Thresholds are calibrated so that NORMAL browser behavior
+        (form interaction, mobile keyboard, one-off tab checks) never
+        leaves the 'clean' bucket. Only genuinely notable patterns
+        move up.
+
+        clean:    no pastes, <=3 tab switches, <30 focus_out
+        minor:    4-6 tab switches OR 30-50 focus_out OR 1 contextmenu
+        moderate: 7-8 tab switches OR 1 paste
+        elevated: >=9 tab switches OR >=2 pastes OR rapid_input
         """
-        total = sum(v for v in counts.values() if isinstance(v, int))
+        tabs        = counts.get("tab_switch", 0) or 0
+        pastes      = counts.get("paste", 0) or 0
+        contextmenu = counts.get("contextmenu", 0) or 0
+        rapid_input = counts.get("rapid_input", 0) or 0
+        focus_out   = counts.get("focus_out", 0) or 0
 
-        if total == 0:
-            return "clean"
-        if total > RISK_ELEVATED - 1:
+        if rapid_input >= 1 or pastes >= 2 or tabs >= 9:
             return "elevated"
-
-        pastes = counts.get("paste", 0)
-        tabs = counts.get("tab_switch", 0)
-        if tabs >= HIGH_SIGNAL_TAB_SWITCH_THRESHOLD and pastes >= HIGH_SIGNAL_PASTE_THRESHOLD:
-            return "elevated"
-        if total >= RISK_MODERATE:
+        if pastes >= 1 or tabs >= 7:
             return "moderate"
-        if total >= RISK_MINOR:
+        if tabs >= 4 or focus_out >= 30 or contextmenu >= 1:
             return "minor"
         return "clean"
 
