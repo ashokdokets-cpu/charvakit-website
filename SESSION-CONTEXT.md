@@ -1,3 +1,45 @@
+## Session 43 CLOSED (2026-10-12) - Integrity fact panel + FYP MBA calibration
+
+**HEAD at close:** c56e9c6 + pending docs commit
+**Active roadmap:** see `TRACK-A-B-PLAN.md`
+
+### Shipped
+
+- Integrity fact-panel certificate redesign (facts, not verdicts)
+- FYP discipline-aware topic generation (MBA/commerce support)
+- 8 MBA courses generated and promoted to public catalog
+- MBA role calibration verified for 5 roles
+
+### Commits
+
+- e6daf79 - feat(integrity): fact-based certificate panel + reweighted classifier
+- 3fd8ad7 - feat(fyp): discipline-aware topic generation - MBA/commerce support
+- c56e9c6 - docs: Track A (B2C) + Track B (CSR) master plan
+
+### Files touched
+
+- integrity_engine.py (compute_risk_level + get_public_summary)
+- templates/readiness.html (badge + fact panel)
+- final_year_project_engine.py (discipline-aware prompt)
+- 8 MBA courses in charvak_courses (public catalog)
+
+### Site health
+
+- 182 page routes: all 200 or legit redirect
+- 155 API routes: all reachable
+- 0 broken buttons
+- 0 HTTP 500s
+
+### Still pending
+
+- Batch A1-A5 (Track A) - see `TRACK-A-B-PLAN.md`
+- Stage B1-B4 (Track B) - after A2
+
+### Next session kickoff
+
+Read `TRACK-A-B-PLAN.md`. Start with Batch A1 (small cleanup, ~45 min).
+
+---
 # Session Context - Charvak
 
 
@@ -396,7 +438,7 @@ Partial-credit handling:
 
 **Pre-existing bugs fixed along the way (7):**
 
-1. **4 missing tables** — `charvak_ielts_reading_passages`,
+1. **4 missing tables** â€” `charvak_ielts_reading_passages`,
    `charvak_ielts_listening_sections`, `charvak_ielts_reading_attempts`,
    `charvak_ielts_listening_attempts`. Engine code referenced them,
    no migration ever created them. Silent failure at runtime.
@@ -404,10 +446,10 @@ Partial-credit handling:
 2. **`last_used_at` column missing** from `reading_passages` and
    `listening_sections`. Engine's UPDATE queries referenced it.
 
-3. **Migration file `#` comment syntax** — `20261008_ielts_reading_listening.sql`
+3. **Migration file `#` comment syntax** â€” `20261008_ielts_reading_listening.sql`
    had invalid `#` comments; needs `--`.
 
-4. **Seed scripts target prod** — `scripts/seed_ielts_reading.py` and
+4. **Seed scripts target prod** â€” `scripts/seed_ielts_reading.py` and
    `seed_ielts_listening.py` call `load_dotenv()` (which loads `.env` =
    prod). Local seeding required passing `DATABASE_URL` explicitly.
 
@@ -435,13 +477,13 @@ Partial-credit handling:
 
 **Patterns established:**
 
-- **Two-segment prefix fallback** in `_integrity_lookup_owner` —
+- **Two-segment prefix fallback** in `_integrity_lookup_owner` â€”
   single-segment lookup first, then two-segment when the map misses
   and the ID has 2+ segments. Preserves CAR/CBAT/VERSANT behavior.
-- **Comma preservation rule** for JS object literal patches — when
+- **Comma preservation rule** for JS object literal patches â€” when
   inserting a field, verify both the preceding and following fields
   end with commas as appropriate.
-- **Deterministic partial-credit tracking** — count answered vs total,
+- **Deterministic partial-credit tracking** â€” count answered vs total,
   flag partial, render banner. Simpler than Versant's AI-calibrated
   approach because IELTS scoring is objective.
 
@@ -464,11 +506,11 @@ Partial-credit handling:
 
 | Assessment | Persistence | Capture | Badge | Admin | Partial |
 |---|---|---|---|---|---|
-| Career | ✅ | ✅ | ✅ | ✅ | n/a |
-| Mock | ✅ | ✅ | ✅ | ✅ | n/a |
-| CBAT | ✅ | ✅ | ✅ | ✅ | n/a |
-| Versant | ✅ | ✅ | ✅ | ✅ | ✅ |
-| IELTS | ✅ | ✅ | ✅ | ✅ | ✅ (reading/listening) |
+| Career | âœ… | âœ… | âœ… | âœ… | n/a |
+| Mock | âœ… | âœ… | âœ… | âœ… | n/a |
+| CBAT | âœ… | âœ… | âœ… | âœ… | n/a |
+| Versant | âœ… | âœ… | âœ… | âœ… | âœ… |
+| IELTS | âœ… | âœ… | âœ… | âœ… | âœ… (reading/listening) |
 
 
 ## Session 40a CLOSED (2026-10-07) - Versant persistence + integrity roll-out
@@ -535,7 +577,7 @@ Frontend:
 **Verified E2E:**
 - Versant session starts (was broken before)
 - 10 events captured in a live session
-- Admin list shows VERSANT row with "English Assessment · versant"
+- Admin list shows VERSANT row with "English Assessment Â· versant"
 - Detail page metadata card fully populated
 - Scorecard badge renders green/blue/yellow/red depending on state
 - Partial submission (10/48 and 28/48): yellow banner renders,
@@ -572,7 +614,7 @@ Frontend:
 
 **Follow-ups flagged:**
 - `charvak_versant_sessions` has no `passed` boolean column.
-  Admin detail shows "—" for Passed. Add a passed column +
+  Admin detail shows "â€”" for Passed. Add a passed column +
   populate it in complete_session (score >= threshold). Small.
 - `charvakFetch` helper belongs in base.html - 3+ templates
   duplicate the pattern (still on the list from Session 39).
@@ -629,8 +671,8 @@ Two pre-existing bugs fixed along the way:
 
 **Verified E2E:**
 - 31 assessments in /admin/integrity-events, all showing real
-  Role · Format (Capgemini · mock_drive, analogies · cbat,
-  Data Analyst · sql)
+  Role Â· Format (Capgemini Â· mock_drive, analogies Â· cbat,
+  Data Analyst Â· sql)
 - Mock + CBAT detail pages: metadata card fully populated
 - Public /api/integrity/public/MOCK-xxx returns the correct summary
 - Career Assessment flow unchanged - full regression pass
@@ -657,7 +699,7 @@ Two pre-existing bugs fixed along the way:
 - Systemic charvakFetch helper belongs in base.html - 3+ templates
   duplicate the pattern now. One-line addition to base saves every
   future template.
-- Two CAR- rows still show "— · —" (older assessments from before
+- Two CAR- rows still show "â€” Â· â€”" (older assessments from before
   Session 10 added role metadata). Cosmetic, not worth chasing.
 
 **Reminder:** Render Postgres password rotation still pending
@@ -676,25 +718,25 @@ on the certificate they receive, and admins can review the raw events.
 **What shipped:**
 
 Admin UI (new):
-- `/admin/integrity-events` — list page. Summary strip, risk filters,
+- `/admin/integrity-events` â€” list page. Summary strip, risk filters,
   email/ID search. Sorted by risk (elevated first), then by event count.
-- `/admin/integrity-events/{assessment_id}` — detail page. Assessment
+- `/admin/integrity-events/{assessment_id}` â€” detail page. Assessment
   metadata card, risk badge, per-type counts, chronological event
   timeline with per-type filter pills.
 
 Backend (main.py):
-- `GET /api/admin/integrity-events` — new list endpoint (admin-gated).
+- `GET /api/admin/integrity-events` â€” new list endpoint (admin-gated).
   Aggregates events per assessment, joins to `charvak_career_assessments`
   for role/industry/level/format, computes risk level per row.
-- `GET /api/admin/career-assessment/{aid}/integrity` — enriched with
+- `GET /api/admin/career-assessment/{aid}/integrity` â€” enriched with
   parent assessment metadata (email, role, industry, level, format,
   size, score, passed, status, started_at, completed_at, num_questions).
-- `GET /api/readiness/{certificate_id}/integrity` — NEW public endpoint.
+- `GET /api/readiness/{certificate_id}/integrity` â€” NEW public endpoint.
   Looks up the source assessment via `charvak_readiness_certificates`,
   returns the public-safe summary. No raw events, no PII.
 
 Engine (integrity_engine.py):
-- `get_public_summary(assessment_id)` — public-safe wrapper around
+- `get_public_summary(assessment_id)` â€” public-safe wrapper around
   `get_summary()`. Returns {status, risk_level, verified, total_events,
   message}. Strips per-type counts, timestamps, and metadata.
 
@@ -909,7 +951,7 @@ Frontend (course-detail.html):
   * Fix 'Pay in EMIs' display on Rs 0 course pages
   * Roll unified panel to /my-results
   * Top-3 jobs preview on /career-center panel
-- B: Admin UI for integrity events (Session 27 output) — strategic
+- B: Admin UI for integrity events (Session 27 output) â€” strategic
 - C: Certificate round 2 (QR, watermark, multi-language)
 - D: AuditBot Continuous (recurring revenue)
 
@@ -943,7 +985,7 @@ Frontend (ai-assessment.html):
 - Old cached paths (2026-10-06) keep fills_topic=None (expected)
 - Browser renders badge + CTA
 - Clicking Start course -> lands on working course detail page
-- Price API + EMI schedule render (3 installments, ₹1,333 each)
+- Price API + EMI schedule render (3 installments, â‚¹1,333 each)
 
 **Local-only fix (not a code change):**
 - charvak_course_levels migrations were missing from local dev DB
@@ -1053,7 +1095,7 @@ New engine `jobs_unified_engine.py` (~230 lines):
 - Filters: source (whitelist), q (title substring), limit (1..200)
 
 New route `GET /api/jobs/unified`:
-- Public read (no auth) — same data as /job-board + /open-roles + /micro-internship
+- Public read (no auth) â€” same data as /job-board + /open-roles + /micro-internship
 - Rate limited 120/min
 - Validates source against VALID_SOURCES whitelist
 - Rejects non-integer limit with 400
@@ -1148,7 +1190,7 @@ becomes unified. Sessions 31-33 will extend it:
 
 ## Session 29 CLOSED (2026-10-06) - Career Assessment Phase 2b (SQL)
 
-The SQL format is live on prod. Phase 2b is COMPLETE — all 10 assessment
+The SQL format is live on prod. Phase 2b is COMPLETE â€” all 10 assessment
 formats from the original plan are shipped and tested.
 
 **Commit:** a649f80 feat(sql): Session 29 - SQL format E2E via Judge0 SQLite
@@ -1183,7 +1225,7 @@ formats from the original plan are shipped and tested.
 **Session 30 candidates:**
 - A: Admin UI for integrity events (surfaces Session 27 data)
 - B: Roll Layer A (integrity) to other assessments (Versant/Mock/CBAT)
-- C: Phase 4 — certificates for coding/SQL, employer-facing badges
+- C: Phase 4 â€” certificates for coding/SQL, employer-facing badges
 - D: Reverse Staffing / Career Center polish
 
 **Reminder:** Render Postgres password rotation still pending (Session 19).
@@ -1247,30 +1289,30 @@ three commits: engine + schema + routes (1124a38), frontend capture
 
 **What shipped:**
 
-- **`integrity_engine.py`** — standalone engine recording five
+- **`integrity_engine.py`** â€” standalone engine recording five
   environment signals during an assessment: paste, tab_switch,
   contextmenu, focus_out, rapid_input. Self-healing DDL. Batch read
   + summary methods. Risk classifier (clean / minor / moderate /
   elevated).
 
-- **New table `charvak_assessment_integrity_events`** — one row per
+- **New table `charvak_assessment_integrity_events`** â€” one row per
   event. Columns: event_id, assessment_id, email, event_type,
   metadata (JSONB), occurred_at. Indexes on assessment and email.
 
-- **New column `charvak_career_assessments.integrity_summary`** —
+- **New column `charvak_career_assessments.integrity_summary`** â€”
   JSONB rollup: per-type counts + total + risk_level. Written on
   every event for fast display (no aggregation query needed).
 
-- **`POST /api/integrity/event`** — auth-gated, email-match,
+- **`POST /api/integrity/event`** â€” auth-gated, email-match,
   ownership-verified (the assessment must belong to the caller).
   No credits charged. Rate limit 120/min. Rejects non-string
   `assessment_id` / `event_type` with a clean 400.
 
-- **`GET /api/admin/career-assessment/{aid}/integrity`** —
+- **`GET /api/admin/career-assessment/{aid}/integrity`** â€”
   admin-gated view returning event list + summary. Belt-and-suspenders
   via require_admin (middleware already gates /api/admin/*).
 
-- **Frontend capture in `templates/ai-assessment.html`** —
+- **Frontend capture in `templates/ai-assessment.html`** â€”
   document-level listeners armed only when `_carCurrentAssessment`
   is non-null. Batches and flushes every 2 seconds via fetch.
   Uses keepalive fetch on pagehide (sendBeacon can't set auth headers).
@@ -1290,44 +1332,44 @@ three commits: engine + schema + routes (1124a38), frontend capture
 **Zero impact on the assessment flow itself.** The candidate UX is
 unchanged. Events are recorded as a side channel; nothing is blocked.
 
-**What's next — Session 28 candidates:**
+**What's next â€” Session 28 candidates:**
 
-- A: **Career Assessment Phase 2b** (coding + SQL via Judge0) —
+- A: **Career Assessment Phase 2b** (coding + SQL via Judge0) â€”
   now unblocked by Layer A. This is the piece that makes the
   assessment commercially viable.
-- B: **Admin UI for integrity data** — surface the events on
+- B: **Admin UI for integrity data** â€” surface the events on
   `/admin/client-roles/{role_id}` or a new page for assessment
   review. Turns recorded events into an employer-facing artifact.
-- C: **Layer A roll-out to other assessment flows** — Versant,
+- C: **Layer A roll-out to other assessment flows** â€” Versant,
   Mock Drives, CBAT, IELTS. Each is a ~5-line frontend addition
   because the engine + route already exist.
 
-Recommendation: **A** — Layer A unblocks Phase 2b, and Phase 2b is
+Recommendation: **A** â€” Layer A unblocks Phase 2b, and Phase 2b is
 the product that makes the entire assessment stack sellable to
 employers. The admin UI is a valuable follow-up but Phase 2b is the
 strategic priority.
 
-**Backup:** recommended after Session 27 commit — snapshot the
+**Backup:** recommended after Session 27 commit â€” snapshot the
 Layer A work in the same style as the Session 26 backup.
 
 ## Sessions 19-21 CLOSED (2026-10-04) - Certificate v2
 
 Three sessions shipped together as the certificate-v2 release.
 
-**Session 19 — Size upgrade CTA + supersedes chain**
+**Session 19 â€” Size upgrade CTA + supersedes chain**
 - supersedes / superseded_by columns on charvak_readiness_certificates
 - Auto-link on upgrade (same email/role/industry/level)
 - Yellow "want a more precise score?" card on below-benchmark certs
 - Green "Improved from an earlier check" callout on the new cert
 - 15-question Standard check CTA (25 cr)
 
-**Session 20 — Certificate polish**
+**Session 20 â€” Certificate polish**
 - Best Score stat card on /my-results
 - "Show only latest per role" toggle
 - Supersede email notification
 
-**Session 21 — PDF download**
-- render_readiness_certificate_pdf() — branded A4 layout, single page
+**Session 21 â€” PDF download**
+- render_readiness_certificate_pdf() â€” branded A4 layout, single page
 - GET /api/readiness/{id}/download (public + token fallback)
 - Frontend: real PDF download, no more window.print()
 
@@ -1340,7 +1382,7 @@ Recommendation: A.
 
 
 
-## Session 22 CLOSED (2026-10-05) — Sprint B: Client Staffing Pipeline
+## Session 22 CLOSED (2026-10-05) â€” Sprint B: Client Staffing Pipeline
 
 The CBREX-mediated staffing pipeline is live end-to-end.
 Candidates can browse open roles, apply with screening answers and
@@ -1411,7 +1453,7 @@ strings in DB.
 **Verified E2E on prod:** fresh user registration -> apply -> inline
 profile -> green success banner -> email arrives at both inboxes.
 
-**Lesson:** database.py loads .env.local with override=True — silently
+**Lesson:** database.py loads .env.local with override=True â€” silently
 overrides shell env vars. For prod data ops: rename .env.local first,
 use direct psycopg2, restore after.
 
@@ -1472,7 +1514,7 @@ complete client-ready submission package from any application.
 Full admin interface for the staffing pipeline. Backend endpoints
 already existed from Session 22; this session added the frontend.
 
-**Commit:** `37f978f` — feat(admin): Session 24 - client roles
+**Commit:** `37f978f` â€” feat(admin): Session 24 - client roles
 list + role detail pages
 
 **New pages:**
@@ -1493,10 +1535,10 @@ list + role detail pages
 
 **Bugs fixed during session:**
 
-1. Modal trapped in `<main>` stacking context — moved to `{% block modal %}`
+1. Modal trapped in `<main>` stacking context â€” moved to `{% block modal %}`
 2. Modal button bindings moved inside DOMContentLoaded
-3. Jinja parsed a template tag inside a JS comment — removed
-4. Click delegation handler was silently lost in an earlier patch — restored
+3. Jinja parsed a template tag inside a JS comment â€” removed
+4. Click delegation handler was silently lost in an earlier patch â€” restored
 5. `loadAll` / `loadRoles` exposed on `window` for inline Refresh buttons
 
 **Local dev admins created matching prod:**
@@ -1693,13 +1735,13 @@ end-to-end across 5 commits.
 ### Shipped
 
 **Premium Report product**
-- `pdf_engine.py` — fpdf2-based PDF renderer with branded cover page,
+- `pdf_engine.py` â€” fpdf2-based PDF renderer with branded cover page,
   headers, footers, sections, severity badges, Unicode via DejaVu
-- `premium_report_engine.py` — one OpenAI call produces 5 AI sections
+- `premium_report_engine.py` â€” one OpenAI call produces 5 AI sections
   from the source product's free-tier scan data; persists to
   `charvak_premium_reports`; falls back to a template if AI is down
 - 3 report types: `auditbot`, `lock_in_breaker`, `skill_twin`
-- Credit key: `premium_product_report` (400 cr) — separate from the
+- Credit key: `premium_product_report` (400 cr) â€” separate from the
   existing `premium_report` (25 cr) used by assessment reports
 - SendGrid email with the PDF as a base64 attachment
 - `templates/includes/premium-upsell.html` rewritten to be
@@ -1709,7 +1751,7 @@ end-to-end across 5 commits.
   Download PDF buttons
 
 ### E2E verified
-- Full flow: free scan → unlock → AI generation → PDF → email → download
+- Full flow: free scan â†’ unlock â†’ AI generation â†’ PDF â†’ email â†’ download
 - Credit deduction: exact 400 per report
 - 3 premium reports generated during testing
 - Email delivered to test-register email
@@ -1812,7 +1854,7 @@ Prod uses vouchai on Render Postgres.
 
 ---
 
-## Session 17 COMPLETE — Sprint A shipped (2026-10-04)
+## Session 17 COMPLETE â€” Sprint A shipped (2026-10-04)
 
 Sprint A of the Proof Layer framework is live. The free Role Readiness
 Certificate is end-to-end: landing page -> assessment -> shareable
@@ -1827,12 +1869,12 @@ certificate URL with HMAC verification.
 - <next>   fix(readiness): move var _a out of string concat
 
 **Live at:**
-- GET /readiness-check     — public free landing
-- GET /readiness/{id}      — public shareable certificate
-- GET /api/readiness/{id}  — public read
-- GET /api/readiness/verify/{hash}  — public verification
-- POST /api/readiness/generate      — auth-gated certificate creation
-- GET /api/readiness/list/{email}   — auth-gated list
+- GET /readiness-check     â€” public free landing
+- GET /readiness/{id}      â€” public shareable certificate
+- GET /api/readiness/{id}  â€” public read
+- GET /api/readiness/verify/{hash}  â€” public verification
+- POST /api/readiness/generate      â€” auth-gated certificate creation
+- GET /api/readiness/list/{email}   â€” auth-gated list
 
 **Verified E2E on local:**
 - Dropdowns populate [107, 67, 8] for role/industry/level
@@ -1863,7 +1905,7 @@ A certificate.
 **Scope:** Gap 1 (Role Readiness Score) + Gap 3 (Anti-Cheating Layer A)
 alongside Career Assessment Phase 2b (coding/SQL via Judge0).
 
-**Why:** Gap 3 is a prerequisite for Phase 2b — without integrity signals,
+**Why:** Gap 3 is a prerequisite for Phase 2b â€” without integrity signals,
 employers will dismiss the coding/SQL assessments. Shipping 2b without
 anti-cheating produces a technically complete feature that fails commercially.
 
@@ -1872,8 +1914,8 @@ the roadmap, and the metrics we're tracking. Re-read at the start of every
 session.
 
 **Gaps 2 and 4 (deferred, documented):**
-- Gap 2: Multilingual Voice AI — Sessions 20+
-- Gap 4: AuditBot Continuous Compliance — Sessions 18-19
+- Gap 2: Multilingual Voice AI â€” Sessions 20+
+- Gap 4: AuditBot Continuous Compliance â€” Sessions 18-19
 
 ---
 

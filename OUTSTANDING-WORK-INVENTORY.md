@@ -484,3 +484,22 @@ Session 38 (Career Assessment), rolled through Mock + CBAT (Session
 | IELTS | ✅ | ✅ | ✅ | ✅ | ✅ (reading/listening) |
 
 **Reminder:** Render Postgres password rotation still pending (Session 19).
+---
+
+## Session 43 closure (2026-10-12)
+
+Moved from open to resolved:
+- Integrity classifier bug (focus_out treated as cheat signal) — FIXED
+- Certificate badge "Under Review" on clean students — FIXED
+- FYP topic generation engineering-biased for MBA — FIXED
+- MBA course generation verified and 8 courses promoted to public
+
+New follow-ups flagged by Session 43:
+- Track A: 5 batches (A1-A5) — see TRACK-A-B-PLAN.md
+- Track B: 4 stages (B1-B4) — CSR business model — see TRACK-A-B-PLAN.md
+
+Commits:
+- e6daf79 — integrity fact-based certificate panel
+- 3fd8ad7 — FYP discipline-aware topic generation
+
+HEAD: 3fd8ad7
