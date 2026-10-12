@@ -59,6 +59,28 @@ CURRENCIES = {
     "ZAR": {"symbol": "R", "name": "South African Rand", "rate": 0.22},
 }
 
+# --- Country → Currency map (authoritative; W1a + Session 43-A1.6) ---
+# Used by pricing, region detection, and tool payments.
+COUNTRY_TO_CURRENCY = {
+    "IN": "INR",
+    "US": "USD",
+    "GB": "GBP",
+    "AE": "AED",
+    "SG": "SGD",
+    "AU": "AUD",
+    "CA": "CAD",
+    "JP": "JPY",
+    "CN": "CNY",
+    "BR": "BRL",
+    "NG": "NGN",
+    "ZA": "ZAR",
+    # Eurozone
+    "DE": "EUR", "FR": "EUR", "ES": "EUR", "IT": "EUR", "NL": "EUR",
+    "IE": "EUR", "PT": "EUR", "AT": "EUR", "BE": "EUR", "FI": "EUR",
+    "GR": "EUR", "LU": "EUR", "SK": "EUR", "SI": "EUR", "EE": "EUR",
+    "LV": "EUR", "LT": "EUR", "MT": "EUR", "CY": "EUR",
+}
+
 # --- Country Pricing Tiers ---
 PRICING_TIERS = {
     "tier_1": {  # India, Nigeria, Bangladesh, etc.
@@ -174,16 +196,9 @@ def detect_user_region(ip_address: str = None, accept_language: str = None) -> D
         if lang in LANGUAGES:
             region["language"] = lang
 
-    # W1a: country -> currency (authoritative)
-    country_currency_map = {
-        "IN": "INR", "US": "USD", "GB": "GBP", "AE": "AED", "SG": "SGD",
-        "AU": "AUD", "CA": "CAD", "JP": "JPY", "CN": "CNY", "BR": "BRL",
-        "NG": "NGN", "ZA": "ZAR",
-        "DE": "EUR", "FR": "EUR", "ES": "EUR", "IT": "EUR", "NL": "EUR",
-        "IE": "EUR", "PT": "EUR", "AT": "EUR", "BE": "EUR", "FI": "EUR", "GR": "EUR",
-    }
-    if region["country"] in country_currency_map:
-        region["currency"] = country_currency_map[region["country"]]
+    # W1a: country -> currency (authoritative — module-level COUNTRY_TO_CURRENCY)
+    if region["country"] in COUNTRY_TO_CURRENCY:
+        region["currency"] = COUNTRY_TO_CURRENCY[region["country"]]
     else:
         lang_currency_fallback = {
             "hi": "INR", "te": "INR", "ta": "INR", "bn": "INR",
