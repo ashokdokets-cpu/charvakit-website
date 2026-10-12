@@ -6866,8 +6866,11 @@ async def api_career_assessment_start(request: Request):
         data["size"] = "quick"
         data["format"] = "mcq"
 
-        temp_token = _secrets.token_hex(16)
-        placeholder_email = f"anon-{temp_token}@anon.charvak.local"
+        # Generate the session token FIRST so the placeholder email is
+        # deterministic from it. resolve_token() recomputes the same
+        # placeholder from the token, so the email stays consistent.
+        session_token = _secrets.token_hex(16)
+        placeholder_email = anonymous_sessions.placeholder_email_from_token(session_token)
         data["email"] = placeholder_email
 
         result = career_assessment_engine.start_assessment(data)
@@ -6879,15 +6882,17 @@ async def api_career_assessment_start(request: Request):
             )
 
         assessment_id = result.get("assessment_id")
+
+        # Persist the session row (token already generated above)
         try:
-            real_token = anonymous_sessions.create_session(assessment_id)
+            anonymous_sessions.create_session_with_token(assessment_id, session_token)
         except Exception as e:
             return JSONResponse(
                 status_code=500,
                 content={"status": "error", "message": f"Could not create session: {e}"},
             )
 
-        result["anonymous_token"] = real_token
+        result["anonymous_token"] = session_token
         result["anonymous"] = True
         return result
 
@@ -6925,25 +6930,58 @@ async def api_career_assessment_start(request: Request):
 @app.post("/api/career-assessment/answer")
 @limiter.limit("120/minute")
 async def api_career_assessment_answer(request: Request):
-    """Record one answer (idempotent per question)."""
+    """Record one answer (idempotent per question). Accepts email OR anonymous_token."""
     data = await request.json()
     email = (data.get("email") or "").strip().lower()
-    if not email:
-        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
-    require_auth_for_email(request, email)
-    data["email"] = email
+    token = (data.get("anonymous_token") or "").strip()
+
+    if email:
+        # Authenticated path
+        require_auth_for_email(request, email)
+        data["email"] = email
+    elif token:
+        # Anonymous path
+        import anonymous_sessions
+        try:
+            resolved = anonymous_sessions.resolve_token(token)
+        except ValueError as e:
+            return JSONResponse(status_code=401, content={"status": "error", "message": str(e)})
+        data["email"] = resolved["placeholder_email"]
+    else:
+        return JSONResponse(
+            status_code=401,
+            content={"status": "error", "message": "Login or anonymous_token required.", "login_url": "/login"},
+        )
+
     return career_assessment_engine.submit_answer(data)
 
 @app.post("/api/career-assessment/complete")
 @limiter.limit("20/minute")
 async def api_career_assessment_complete(request: Request):
-    """Score the assessment, persist result, return report."""
+    """Score the assessment, persist result, return report. Accepts email OR anonymous_token."""
     data = await request.json()
     email = (data.get("email") or "").strip().lower()
-    if not email:
-        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
-    require_auth_for_email(request, email)
-    data["email"] = email
+    token = (data.get("anonymous_token") or "").strip()
+
+    if email:
+        # Authenticated path — unchanged
+        require_auth_for_email(request, email)
+        data["email"] = email
+    elif token:
+        # Anonymous path — score only, no persistence to results yet
+        import anonymous_sessions
+        try:
+            resolved = anonymous_sessions.resolve_token(token)
+        except ValueError as e:
+            return JSONResponse(status_code=401, content={"status": "error", "message": str(e)})
+        data["email"] = resolved["placeholder_email"]
+        data["_anonymous"] = True  # signal to engine not to persist
+    else:
+        return JSONResponse(
+            status_code=401,
+            content={"status": "error", "message": "Login or anonymous_token required.", "login_url": "/login"},
+        )
+
     return career_assessment_engine.complete_assessment(data)
 
 @app.get("/api/career-assessment/history/{email}")

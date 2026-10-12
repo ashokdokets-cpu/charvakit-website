@@ -56,7 +56,13 @@ def _ensure_table() -> None:
 
 
 def create_session(assessment_id: str) -> str:
-    """Generate a new anonymous token for the given assessment_id."""
+    """
+    Generate a new anonymous token for the given assessment_id.
+
+    IMPORTANT: The placeholder email must be deterministic from the
+    token, because resolve_token() computes it the same way. We generate
+    the token FIRST, then use it to build the placeholder email.
+    """
     if not assessment_id:
         raise ValueError("assessment_id required")
 
@@ -76,6 +82,11 @@ def create_session(assessment_id: str) -> str:
     cur.close()
     conn.close()
     return token
+
+
+def placeholder_email_from_token(token: str) -> str:
+    """Canonical placeholder email derived from a session token."""
+    return f"anon-{token}{PLACEHOLDER_SUFFIX}"
 
 
 def resolve_token(token: str) -> dict:
@@ -123,6 +134,34 @@ def resolve_token(token: str) -> dict:
 def get_placeholder_email(token: str) -> str:
     """Convenience wrapper used by route handlers."""
     return resolve_token(token)["placeholder_email"]
+
+
+def create_session_with_token(assessment_id: str, token: str) -> None:
+    """
+    Persist a session row for a pre-generated token.
+    Used by /api/career-assessment/start where the token is generated
+    before the assessment so the placeholder email is deterministic.
+    """
+    if not assessment_id:
+        raise ValueError("assessment_id required")
+    if not token or len(token) != 32:
+        raise ValueError("token must be 32 hex chars")
+
+    _ensure_table()
+    expires_at = datetime.now(timezone.utc) + timedelta(hours=TOKEN_TTL_HOURS)
+
+    from database import db
+    conn = db.get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO charvak_anonymous_assessment_sessions
+            (token, assessment_id, expires_at)
+        VALUES (%s, %s, %s)
+        ON CONFLICT (token) DO NOTHING
+    """, (token, assessment_id, expires_at))
+    conn.commit()
+    cur.close()
+    conn.close()
 
 
 def claim_token(token: str, email: str) -> dict:

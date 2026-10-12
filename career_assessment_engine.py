@@ -2269,29 +2269,34 @@ class CareerAssessmentEngine:
         # by results_system.record_assessment_result() when skill= is passed.
         # Do not call it here again (would double-count attempts).
 
-        # Persist to /my-results feed (this also updates ability)
-        try:
-            from results_system import results_system
-            results_system.record_assessment_result(
-                email=email,
-                assessment_type="career_readiness",
-                assessment_name=f"{role} in {industry} ({fmt})",
-                score=float(overall),
-                total_questions=total,
-                correct_answers=correct_count,
-                details={
-                    "assessment_id": assessment_id,
-                    "role": role,
-                    "industry": industry,
-                    "level": level,
-                    "size": size,
-                    "format": fmt,
-                },
-                skill=f"career_{fmt}",
-                difficulty=level,
-            )
-        except Exception as e:
-            logger.warning(f"career-assessment result persistence failed: {e}")
+        # Persist to /my-results feed (this also updates ability).
+        # Anonymous sessions are NOT persisted here - they are persisted on
+        # /api/career-assessment/claim after the user registers.
+        if data.get("_anonymous"):
+            logger.info(f"career-assessment {assessment_id}: anonymous session, skipping persistence")
+        else:
+            try:
+                from results_system import results_system
+                results_system.record_assessment_result(
+                    email=email,
+                    assessment_type="career_readiness",
+                    assessment_name=f"{role} in {industry} ({fmt})",
+                    score=float(overall),
+                    total_questions=total,
+                    correct_answers=correct_count,
+                    details={
+                        "assessment_id": assessment_id,
+                        "role": role,
+                        "industry": industry,
+                        "level": level,
+                        "size": size,
+                        "format": fmt,
+                    },
+                    skill=f"career_{fmt}",
+                    difficulty=level,
+                )
+            except Exception as e:
+                logger.warning(f"career-assessment result persistence failed: {e}")
 
         # Build per-question breakdown for the frontend
         breakdown = []
