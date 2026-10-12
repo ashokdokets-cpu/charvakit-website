@@ -1225,4 +1225,66 @@ class IELTSEngine:
             "session_id": session_id,
             "band_score": band_score,
         }
+
+    # ============================================================
+    # Session 43-A1.7: persist raw responses for the deep report
+    # ============================================================
+
+    def attach_responses(self, session_id: str, responses: dict) -> dict:
+        """
+        Persist the raw essay/transcripts/answers on the session row.
+        Called at free-eval time so the paid deep report can use the
+        exact content that was scored (tamper-proof).
+        """
+        if not session_id:
+            return {"status": "error", "message": "session_id required"}
+        try:
+            import json as _json
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                ALTER TABLE charvak_ielts_sessions
+                ADD COLUMN IF NOT EXISTS responses_json JSONB
+            """)
+            cur.execute("""
+                UPDATE charvak_ielts_sessions
+                SET responses_json = %s
+                WHERE session_id = %s
+            """, (_json.dumps(responses), session_id))
+            conn.commit()
+            cur.close()
+            conn.close()
+            return {"status": "success"}
+        except Exception as e:
+            return {"status": "error", "message": f"attach_responses failed: {e}"}
+
+    def get_responses(self, session_id: str) -> dict:
+        """Load the persisted responses for a session. Raises on missing."""
+        if not session_id:
+            raise ValueError("session_id required")
+        import json as _json
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT responses_json, test_type, email, band_score
+            FROM charvak_ielts_sessions
+            WHERE session_id = %s
+        """, (session_id,))
+        row = cur.fetchone()
+        cur.close()
+        conn.close()
+
+        if not row:
+            raise ValueError(f"session not found: {session_id}")
+        if not row[0]:
+            raise ValueError("responses not stored for this session")
+
+        data = row[0] if isinstance(row[0], dict) else _json.loads(row[0])
+        data["_test_type"] = row[1]
+        data["_email"] = row[2]
+        data["_band_score"] = float(row[3]) if row[3] is not None else None
+        return data
+
 ielts_engine = IELTSEngine()

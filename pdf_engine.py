@@ -38,6 +38,13 @@ COLOR_WHITE = (255, 255, 255)
 class CharvakReportPDF(FPDF):
     """Charvak-branded PDF with header, footer, and section helpers."""
 
+    def mc_full_width(self, h, text, *args, **kwargs):
+        """multi_cell(0, h, text) with X reset to the left margin first.
+        Prevents the 'Not enough horizontal space' crash when previous
+        multi_cell calls left X near the right edge."""
+        self.set_x(self.l_margin)
+        return self.multi_cell(0, h, text, *args, **kwargs)
+
     def __init__(self, report_title: str = "Charvak Premium Report",
                  user_email: Optional[str] = None):
         super().__init__(orientation="P", unit="mm", format="A4")
@@ -603,5 +610,214 @@ def render_readiness_certificate_pdf(cert: Dict) -> bytes:
     pdf.set_text_color(*MUTED)
     pdf.cell(W, 4, "This certificate can be independently verified at the URL above.",
              align="C")
+
+    return bytes(pdf.output())
+
+# ============================================================
+# Session 43-A1.7: IELTS Deep Report PDF
+# ============================================================
+
+def render_ielts_deep_report_pdf(report: Dict, meta: Dict) -> bytes:
+    """
+    Render the IELTS deep-report as a branded PDF.
+
+    report: the AI-generated JSON (from ielts_deep_report_engine.generate_report)
+    meta:   {report_id, test_type, email, band (optional)}
+
+    Returns bytes of the PDF.
+    """
+    pdf = CharvakReportPDF(
+        report_title="Charvak IELTS Deep Report",
+        user_email=meta.get("email"),
+    )
+
+    # ---- Cover page ----
+    pdf.add_page()
+
+    # Header band
+    pdf.set_fill_color(59, 165, 145)   # Charvak green
+    pdf.rect(0, 0, 210, 40, style="F")
+
+    pdf.set_y(14)
+    pdf.set_font("DejaVu", "B", 24)
+    pdf.set_text_color(255, 255, 255)
+    pdf.cell(0, 12, "Charvak IELTS Deep Report", ln=True, align="C")
+
+    pdf.set_font("DejaVu", "", 11)
+    pdf.cell(0, 6, "Examiner-grade diagnostic - not affiliated with IELTS", ln=True, align="C")
+    pdf.set_text_color(0, 0, 0)
+
+    pdf.set_y(50)
+
+    # Meta box
+    pdf.set_font("DejaVu", "B", 12)
+    pdf.cell(0, 8, "Report details", ln=True)
+
+    pdf.set_font("DejaVu", "", 10)
+    test_type = str(meta.get("test_type", "")).capitalize()
+    report_id = str(meta.get("report_id", ""))
+    email = str(meta.get("email", ""))
+    band = meta.get("band") or report.get("band")
+
+    pdf.cell(0, 6, f"Test type: IELTS {test_type}", ln=True)
+    pdf.cell(0, 6, f"Report ID: {report_id}", ln=True)
+    if band is not None:
+        pdf.set_font("DejaVu", "B", 13)
+        pdf.cell(0, 8, f"Overall Band: {band}", ln=True)
+    pdf.set_font("DejaVu", "", 10)
+
+    pdf.ln(4)
+
+    # Summary
+    if report.get("summary"):
+        pdf.set_font("DejaVu", "B", 12)
+        pdf.cell(0, 7, "Summary", ln=True)
+        pdf.set_font("DejaVu", "", 10)
+        pdf.mc_full_width(5, str(report["summary"]))
+        pdf.ln(3)
+
+    # Sub-band reasoning
+    sub = report.get("sub_band_reasoning") or {}
+    if sub:
+        pdf.add_page()
+        pdf.set_font("DejaVu", "B", 14)
+        pdf.cell(0, 8, "Sub-band reasoning", ln=True)
+        pdf.ln(2)
+        for key, val in sub.items():
+            pdf.set_font("DejaVu", "B", 11)
+            pdf.cell(0, 6, key.replace("_", " ").title(), ln=True)
+            pdf.set_font("DejaVu", "", 10)
+            pdf.mc_full_width(5, str(val))
+            pdf.ln(2)
+
+    # Grammar corrections
+    gc = report.get("grammar_corrections") or []
+    if gc:
+        pdf.add_page()
+        pdf.set_font("DejaVu", "B", 14)
+        pdf.cell(0, 8, "Grammar corrections", ln=True)
+        pdf.ln(2)
+        for i, item in enumerate(gc, 1):
+            pdf.set_font("DejaVu", "B", 10)
+            pdf.mc_full_width(5, f"{i}. Original: {item.get('original', '')}")
+            pdf.set_font("DejaVu", "", 10)
+            pdf.mc_full_width(5, f"   Corrected: {item.get('corrected', '')}")
+            pdf.mc_full_width(5, f"   Rule: {item.get('rule', '')}")
+            pdf.mc_full_width(5, f"   Why: {item.get('explanation', '')}")
+            pdf.ln(2)
+
+    # Vocabulary upgrades
+    vu = report.get("vocabulary_upgrades") or []
+    if vu:
+        pdf.add_page()
+        pdf.set_font("DejaVu", "B", 14)
+        pdf.cell(0, 8, "Vocabulary upgrades", ln=True)
+        pdf.ln(2)
+        for i, item in enumerate(vu, 1):
+            pdf.set_font("DejaVu", "B", 10)
+            pdf.mc_full_width(5, f"{i}. Original: {item.get('original', '')}")
+            pdf.set_font("DejaVu", "", 10)
+            better = item.get("better") or []
+            if isinstance(better, list):
+                better_str = ", ".join(str(b) for b in better)
+            else:
+                better_str = str(better)
+            pdf.mc_full_width(5, f"   Better: {better_str}")
+            if item.get("context"):
+                pdf.mc_full_width(5, f"   When: {item.get('context')}")
+            pdf.ln(2)
+
+    # Example high-band rewrite (writing) OR example answer (speaking)
+    rewrite = report.get("example_high_band_rewrite") or {}
+    if rewrite:
+        pdf.add_page()
+        pdf.set_font("DejaVu", "B", 14)
+        pdf.cell(0, 8, "Example high-band rewrite", ln=True)
+        pdf.ln(2)
+        for i, key in enumerate(["paragraph_1", "paragraph_2"]):
+            if rewrite.get(key):
+                pdf.set_font("DejaVu", "B", 11)
+                pdf.cell(0, 6, f"Paragraph {i+1}", ln=True)
+                pdf.set_font("DejaVu", "", 10)
+                pdf.mc_full_width(5, str(rewrite[key]))
+                pdf.ln(3)
+
+    example_answer = report.get("example_high_band_answer") or {}
+    if example_answer:
+        pdf.add_page()
+        pdf.set_font("DejaVu", "B", 14)
+        pdf.cell(0, 8, "Example high-band answer", ln=True)
+        pdf.ln(2)
+        if example_answer.get("question"):
+            pdf.set_font("DejaVu", "B", 10)
+            pdf.mc_full_width(5, f"Question: {example_answer['question']}")
+        pdf.set_font("DejaVu", "", 10)
+        if example_answer.get("band_8_answer"):
+            pdf.mc_full_width(5, str(example_answer["band_8_answer"]))
+
+    # Response by response (speaking)
+    rbr = report.get("response_by_response") or []
+    if rbr:
+        pdf.add_page()
+        pdf.set_font("DejaVu", "B", 14)
+        pdf.cell(0, 8, "Response-by-response review", ln=True)
+        pdf.ln(2)
+        for i, item in enumerate(rbr, 1):
+            pdf.set_font("DejaVu", "B", 10)
+            pdf.mc_full_width(5, f"Part {item.get('part', '?')}: {item.get('question', '')[:80]}")
+            pdf.set_font("DejaVu", "", 10)
+            if item.get("strength"):
+                pdf.mc_full_width(5, f"   + Strength: {item['strength']}")
+            if item.get("improvement"):
+                pdf.mc_full_width(5, f"   - Improve: {item['improvement']}")
+            pdf.ln(2)
+
+    # Pronunciation notes (speaking)
+    pn = report.get("pronunciation_notes") or []
+    if pn:
+        pdf.add_page()
+        pdf.set_font("DejaVu", "B", 14)
+        pdf.cell(0, 8, "Pronunciation notes", ln=True)
+        pdf.ln(2)
+        for item in pn:
+            pdf.set_font("DejaVu", "B", 10)
+            pdf.mc_full_width(5, f"Sounds: {item.get('sounds', '')}")
+            pdf.set_font("DejaVu", "", 10)
+            pdf.mc_full_width(5, f"   Tip: {item.get('tip', '')}")
+            pdf.ln(2)
+
+    # Common pitfalls
+    cp = report.get("common_pitfalls") or []
+    if cp:
+        pdf.add_page()
+        pdf.set_font("DejaVu", "B", 14)
+        pdf.cell(0, 8, "Common pitfalls in this attempt", ln=True)
+        pdf.ln(2)
+        pdf.set_font("DejaVu", "", 10)
+        for item in cp:
+            pdf.mc_full_width(5, f"- {item}")
+
+    # Exercises
+    ex = report.get("exercises") or []
+    if ex:
+        pdf.add_page()
+        pdf.set_font("DejaVu", "B", 14)
+        pdf.cell(0, 8, "Recommended exercises", ln=True)
+        pdf.ln(2)
+        for i, item in enumerate(ex, 1):
+            pdf.set_font("DejaVu", "B", 10)
+            pdf.mc_full_width(5, f"{i}. {item.get('topic', '')}")
+            pdf.set_font("DejaVu", "", 10)
+            pdf.mc_full_width(5, f"   Task: {item.get('task', '')}")
+            if item.get("rationale"):
+                pdf.mc_full_width(5, f"   Why: {item.get('rationale')}")
+            pdf.ln(2)
+
+    # Footer
+    pdf.ln(6)
+    pdf.set_font("DejaVu", "I", 9)
+    pdf.set_text_color(120, 120, 120)
+    pdf.cell(0, 6, "Issued by Charvak IT Consulting Pvt Ltd - charvakit.com", ln=True, align="C")
+    pdf.cell(0, 6, "This report is generated by AI for study guidance and is not affiliated with IELTS or its governing bodies.", ln=True, align="C")
 
     return bytes(pdf.output())
