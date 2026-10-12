@@ -7006,13 +7006,42 @@ async def api_career_assessment_learning_path(request: Request, assessment_id: s
 
 @app.get("/api/career-assessment/{assessment_id}")
 @limiter.limit("120/minute")
-async def api_career_assessment_get(request: Request, assessment_id: str, email: str = ""):
-    """Fetch a single assessment (for review)."""
+async def api_career_assessment_get(
+    request: Request,
+    assessment_id: str,
+    email: str = "",
+    anon_token: str = "",
+):
+    """Fetch a single assessment (for review). Accepts email OR anon_token."""
     email = (email or "").strip().lower()
-    if not email:
-        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
-    require_auth_for_email(request, email)
-    return career_assessment_engine.get_assessment(assessment_id, email)
+    anon_token = (anon_token or "").strip()
+
+    if email:
+        # Authenticated path
+        require_auth_for_email(request, email)
+        return career_assessment_engine.get_assessment(assessment_id, email)
+
+    if anon_token:
+        # Anonymous path — resolve token, then fetch by placeholder email
+        import anonymous_sessions
+        try:
+            resolved = anonymous_sessions.resolve_token(anon_token)
+        except ValueError as e:
+            return JSONResponse(status_code=401, content={"status": "error", "message": str(e)})
+
+        # Ensure the token is for THIS assessment
+        if resolved["assessment_id"] != assessment_id:
+            return JSONResponse(
+                status_code=403,
+                content={"status": "error", "message": "Token does not match assessment"},
+            )
+
+        return career_assessment_engine.get_assessment(assessment_id, resolved["placeholder_email"])
+
+    return JSONResponse(
+        status_code=401,
+        content={"status": "error", "message": "Login or anon_token required.", "login_url": "/login"},
+    )
 
 # ========================================================================
 # Session 27 - Anti-Cheating Layer A: assessment integrity events
