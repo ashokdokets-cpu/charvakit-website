@@ -576,4 +576,4 @@ Public integrity glossary + cross-links shipped. Commits:
 - A1.12: Candidate-side explainer for blue badge (30 min)
 - A1.15: Email certificate to employer (1 session)
 
-**Next major batch:** A1.6 (AI Tools one-off purchases at Rs 99)
+**Next major batch:** A1.6 (AI Tools one-off purchases at Rs 99)...
