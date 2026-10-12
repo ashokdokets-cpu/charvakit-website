@@ -2860,6 +2860,171 @@ async def my_tools_page(request: Request):
     return template_response("my-tools.html", request, "My AI Tools History - Charvak")
 
 
+# ============================================================
+# Session 43-A1.6: paid tool runs (Rs 99 / $4.99 / etc.)
+# Bypasses credits. Two-step: create order, then run after payment.
+# ============================================================
+
+@app.post("/api/tools/paid/create-order")
+@limiter.limit("30/minute")
+async def api_tools_paid_create_order(request: Request):
+    """
+    Create a Razorpay/PayPal order for a one-off tool run.
+    Body: {tool_slug, country_code (optional)}
+    """
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "Invalid JSON"})
+
+    tool_slug = (data.get("tool_slug") or "").strip().lower()
+    if not tool_slug:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "tool_slug required"})
+
+    country_code = (data.get("country_code") or "").strip().upper()
+    if not country_code:
+        try:
+            from ip_detection import ip_detector
+            country_code = ip_detector.detect_from_request(request).get("country", "IN")
+        except Exception:
+            country_code = "IN"
+
+    import tool_payment_engine as tpe
+    result = tpe.create_order(tool_slug=tool_slug, country_code=country_code)
+    if result.get("status") != "success":
+        return JSONResponse(status_code=400, content=result)
+    return result
+
+
+@app.post("/api/tools/paid/run")
+@limiter.limit("30/minute")
+async def api_tools_paid_run(request: Request):
+    """
+    Verify payment + run the tool.
+
+    Body: {tool_slug, email, user_id (opt),
+           gateway: 'razorpay'|'paypal',
+           For razorpay: razorpay_payment_id, razorpay_order_id, razorpay_signature
+           For paypal:   paypal_order_id}
+           Plus: the tool's input fields.
+    """
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "Invalid JSON"})
+
+    tool_slug = (data.get("tool_slug") or "").strip().lower()
+    email = (data.get("email") or "").strip().lower()
+    user_id = (data.get("user_id") or "").strip() or None
+    gateway = (data.get("gateway") or "").strip().lower()
+
+    if not tool_slug:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "tool_slug required"})
+    if not email:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "email required"})
+
+    import tool_payment_engine as tpe
+
+    if gateway == "razorpay":
+        claim = tpe.verify_and_claim_razorpay(
+            tool_slug=tool_slug,
+            razorpay_payment_id=(data.get("razorpay_payment_id") or "").strip(),
+            razorpay_order_id=(data.get("razorpay_order_id") or "").strip(),
+            razorpay_signature=(data.get("razorpay_signature") or "").strip(),
+            email=email,
+            user_id=user_id,
+        )
+    elif gateway == "paypal":
+        claim = tpe.verify_and_claim_paypal(
+            tool_slug=tool_slug,
+            paypal_order_id=(data.get("paypal_order_id") or "").strip(),
+            email=email,
+            user_id=user_id,
+        )
+    else:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "gateway must be razorpay or paypal"})
+
+    if claim.get("status") != "success":
+        return JSONResponse(status_code=402, content=claim)
+
+    purchase_id = claim.get("purchase_id")
+
+    try:
+        result = await _dispatch_paid_tool(tool_slug, data)
+    except Exception as e:
+        tpe.record_result(purchase_id, error=str(e))
+        return JSONResponse(status_code=500, content={"status": "error", "message": f"Tool run failed: {e}"})
+
+    tpe.record_result(purchase_id, result=result)
+
+    try:
+        record_tool_result(email, tool_slug, data, result, credits_used=0)
+    except Exception as e:
+        logger.warning(f"tool_pay: tool_results record failed: {e}")
+
+    return {"status": "success", "purchase_id": purchase_id, "result": result}
+
+
+async def _dispatch_paid_tool(tool_slug: str, data: dict):
+    """
+    Run a tool directly, bypassing the credit guard.
+    Reuses the same tools_ai_backend functions the credit routes call.
+    """
+    if tool_slug == "resume_roast":
+        return await resume_roast_ai(
+            data.get("resume", "") or data.get("resume_text", ""),
+            data.get("job_title", ""),
+        )
+    elif tool_slug == "ghost_bounty":
+        return await ghost_bounty_ai(data.get("challenge", "") or data.get("challenge_type", ""))
+    elif tool_slug == "role_mirror":
+        return await role_mirror_ai(
+            data.get("rejected_role", ""),
+            data.get("candidate_skills", ""),
+        )
+    elif tool_slug == "offer_matcher":
+        return await offer_matcher_ai(
+            data.get("offer_a", ""),
+            data.get("offer_b", ""),
+        )
+    elif tool_slug == "ghost_job_shield":
+        return await ghost_job_ai(data.get("job_url", ""))
+    elif tool_slug == "counter_offer":
+        return await counter_offer_ai(
+            int(data.get("new_salary", 0) or 0),
+            int(data.get("counter_salary", 0) or 0),
+        )
+    elif tool_slug == "pitch_roast":
+        return await pitch_roast_ai(data.get("inmail_text", "") or data.get("pitch", ""))
+    elif tool_slug == "ref_check":
+        names = data.get("ref_names", []) or data.get("refs", [])
+        if isinstance(names, str):
+            names = [n.strip() for n in names.split(",") if n.strip()]
+        return await ref_check_ai(names)
+    elif tool_slug == "bounty_swap":
+        return await bounty_swap_ai(
+            int(data.get("bounty_amount", 0) or 0),
+            data.get("referrer_name", ""),
+        )
+    elif tool_slug == "micro_trial":
+        return await micro_trial_ai(
+            data.get("trial_type", ""),
+            data.get("candidate_skills", ""),
+        )
+    elif tool_slug == "ref_swap":
+        return await ref_swap_ai(
+            data.get("ref_type", ""),
+            data.get("industry", ""),
+        )
+    elif tool_slug == "ghost_tracker":
+        apps = data.get("applications", []) or []
+        if isinstance(apps, str):
+            apps = [a.strip() for a in apps.split("\n") if a.strip()]
+        return await ghosted_tracker_ai(apps)
+    else:
+        raise ValueError(f"Unknown tool: {tool_slug}")
+
+
 @app.get("/api/tools/history/{email}")
 async def api_tools_history(email: str, request: Request):
     try:
