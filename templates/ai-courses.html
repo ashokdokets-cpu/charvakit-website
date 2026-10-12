@@ -3,6 +3,15 @@
 {% block description %}25 high-demand courses with AI tutor, weekly lessons, and certificates. Pay in easy installments in India, or one-time worldwide.{% endblock %}
 {% block content %}
 <style>
+    /* Session 43-A1.3: reserve space to prevent layout shift flicker */
+    #customCoursesSection {
+        min-height: 0;
+        transition: opacity 0.15s ease-in;
+        opacity: 0;
+    }
+    #customCoursesSection.is-visible {
+        opacity: 1;
+    }
     .course-hero { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 60px 0; }
     .course-card { transition: transform 0.3s ease, box-shadow 0.3s ease; }
     .course-card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
@@ -45,7 +54,7 @@
         </div>
 
     <!-- Session 42-5: Your custom AI courses -->
-    <div id="customCoursesSection" class="custom-section" style="display:none;">
+    <div id="customCoursesSection" class="custom-section">
         <h4>Your custom courses <span id="customCount" style="font-weight:400; color:#92400e;"></span></h4>
         <div id="customCoursesList" class="row g-3"></div>
     </div>
@@ -251,7 +260,7 @@ async function designCustomCourse() {
 async function loadCustomCourses() {
     var email = _designerEmail();
     var token = _designerToken();
-    if (!email || !token) { document.getElementById("customCoursesSection").style.display = "none"; return; }
+    if (!email || !token) { document.getElementById("customCoursesSection").classList.remove("is-visible"); return; }
 
     try {
         var r = await fetch("/api/ai-course/custom-list?email=" + encodeURIComponent(email), {
@@ -260,7 +269,7 @@ async function loadCustomCourses() {
         if (!r.ok) return;
         var j = await r.json();
         var list = (j && j.courses) || [];
-        if (!list.length) { document.getElementById("customCoursesSection").style.display = "none"; return; }
+        if (!list.length) { document.getElementById("customCoursesSection").classList.remove("is-visible"); return; }
 
         document.getElementById("customCount").textContent = "(" + list.length + ")";
         document.getElementById("customCoursesList").innerHTML = list.map(function(c) {
@@ -270,7 +279,7 @@ async function loadCustomCourses() {
                 '<a href="/course/' + encodeURIComponent(c.course_name) + '" class="btn btn-sm btn-outline-primary">Open</a>' +
                 '</div></div></div>';
         }).join("");
-        document.getElementById("customCoursesSection").style.display = "block";
+        document.getElementById("customCoursesSection").classList.add("is-visible");
     } catch (e) {
         // silent
     }
