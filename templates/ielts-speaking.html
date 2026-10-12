@@ -85,6 +85,9 @@
       <div class="row g-3 mb-4" id="subBands"></div>
       <h6>Feedback</h6>
       <p id="feedbackText" class="text-muted"></p>
+
+      <!-- Session 43-A1.7: IELTS Deep Report CTA slot -->
+      <div id="deepReportSlot" style="display:none;"></div>
       <div class="mt-3 d-flex gap-2">
         <a href="/ielts-speaking" class="btn btn-outline-primary">Retake</a>
         <a href="/ielts" class="btn btn-outline-secondary">Back to IELTS</a>
@@ -97,6 +100,7 @@
 
 </div>
 
+<script src="/static/js/ielts-deep-report.js?v=20261013a"></script>
 <script src="/static/js/integrity-capture.js?v=20261012b"></script>
 <script>
 // =========================================================
@@ -348,6 +352,22 @@ async function finishSession() {
         <div class="small text-muted">${k}</div>
        </div></div></div>`).join('');
     document.getElementById('feedbackText').textContent = ev.feedback || 'No feedback available.';
+
+    // Session 43-A1.7: init the deep-report CTA
+    try {
+      if (window.IeltsDeepReport && SPEAKING_STATE && SPEAKING_STATE.sessionId) {
+        var _drSlot = document.getElementById('deepReportSlot');
+        if (_drSlot) _drSlot.innerHTML = '';
+        IeltsDeepReport.init({
+          testType: 'speaking',
+          slotId: 'deepReportSlot',
+          getSessionId: function () { return SPEAKING_STATE.sessionId; },
+          getEmail: function () {
+            return (localStorage.getItem('userEmail') || '').toLowerCase();
+          },
+        });
+      }
+    } catch (e) { /* silent */ }
   } catch (e) {
     speakErr('Evaluation network error: ' + e.message);
   }

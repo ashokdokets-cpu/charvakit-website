@@ -12126,8 +12126,284 @@ async def ielts_writing_evaluate(request: Request):
             "min_words": result.get("min_words"),
             "partial": result.get("partial"),
         })
+        # Session 43-A1.7: persist raw essay for the paid deep report
+        try:
+            ielts_engine.attach_responses(_sess_id, {
+                "essay": data.get("essay", ""),
+                "task": int(data.get("task", 2)),
+                "prompt": data.get("prompt") or data.get("prompt_text") or "",
+                "evaluation": result,
+            })
+        except Exception as _e:
+            logger.warning(f"ielts writing attach_responses failed: {_e}")
 
     return result
+
+
+# ============================================================
+# Session 43-A1.7: IELTS Deep Report micro-paywall
+# ============================================================
+
+@app.get("/api/ielts/deep-report/price")
+@limiter.limit("60/minute")
+async def api_ielts_deep_report_price(request: Request):
+    """Return the localized deep-report price (Rs 99 in India, ~$4.99 global)."""
+    try:
+        from ip_detection import ip_detector
+        detected = ip_detector.detect_from_request(request)
+        # ip_detector may return a full country name ("India") or ISO code ("IN").
+        # Normalize to a 2-letter ISO code.
+        country_code = detected.get("country_code") or detected.get("country") or "IN"
+    except Exception:
+        country_code = "IN"
+
+    # Normalize: if 2 chars, uppercase; else try to map common names
+    country_code = (country_code or "").strip()
+    if len(country_code) == 2:
+        country_code = country_code.upper()
+    else:
+        # Fallback map for full names detected by ip_detector
+        _NAME_TO_ISO = {
+            "India": "IN", "United States": "US", "USA": "US",
+            "United Kingdom": "GB", "UK": "GB", "Germany": "DE",
+            "France": "FR", "Canada": "CA", "Australia": "AU",
+            "Singapore": "SG", "Japan": "JP", "China": "CN",
+            "United Arab Emirates": "AE", "UAE": "AE",
+        }
+        country_code = _NAME_TO_ISO.get(country_code, "IN")
+
+    # Dev override (Session 9)
+    q_country = request.query_params.get("country")
+    if q_country:
+        country_code = q_country.strip().upper()
+
+    import ielts_deep_report_engine as idre
+    price = idre.resolve_price(country_code)
+    return {
+        "status": "success",
+        "country_code": country_code,
+        "currency": price["currency"],
+        "amount": price["amount"],
+        "amount_display": price["amount_display"],
+        "symbol": price["symbol"],
+        "gateway": price["gateway"],
+        "tier": price["tier"],
+    }
+
+
+@app.post("/api/ielts/deep-report/create-order")
+@limiter.limit("20/minute")
+async def api_ielts_deep_report_create_order(request: Request):
+    """Create a Razorpay/PayPal order for the deep report (Rs 99)."""
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "Invalid JSON"})
+
+    session_id = (data.get("session_id") or "").strip()
+    test_type = (data.get("test_type") or "").strip().lower()
+    email = (data.get("email") or "").strip().lower()
+    country_code = (data.get("country_code") or "").strip().upper()
+
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+    try:
+        require_auth_for_email(request, email)
+    except HTTPException:
+        raise
+
+    if not country_code:
+        try:
+            from improved_ip_detection import improved_ip_detector
+            _loc = improved_ip_detector.detect_from_request(request) or {}
+            country_code = _loc.get("country_code") or _loc.get("country") or "IN"
+        except Exception:
+            country_code = "IN"
+
+    # Session 43-A1.7: normalize to 2-letter ISO
+    country_code = (country_code or "").strip()
+    if len(country_code) == 2:
+        country_code = country_code.upper()
+    else:
+        _NAME_TO_ISO_CR = {
+            "India": "IN", "United States": "US", "USA": "US",
+            "United Kingdom": "GB", "UK": "GB", "Germany": "DE",
+            "France": "FR", "Canada": "CA", "Australia": "AU",
+            "Singapore": "SG", "Japan": "JP", "China": "CN",
+            "United Arab Emirates": "AE", "UAE": "AE",
+        }
+        country_code = _NAME_TO_ISO_CR.get(country_code, "IN")
+
+    import ielts_deep_report_engine as idre
+    result = idre.create_order(
+        session_id=session_id,
+        test_type=test_type,
+        email=email,
+        country_code=country_code,
+    )
+    if result.get("status") != "success":
+        return JSONResponse(status_code=400, content=result)
+    return result
+
+
+@app.post("/api/ielts/deep-report/run")
+@limiter.limit("20/minute")
+async def api_ielts_deep_report_run(request: Request):
+    """
+    Verify payment + generate the deep report.
+    Body: {report_id, session_id, test_type, email, gateway,
+           For razorpay: razorpay_payment_id, razorpay_order_id, razorpay_signature
+           For paypal:   paypal_order_id}
+    """
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "Invalid JSON"})
+
+    report_id = (data.get("report_id") or "").strip()
+    session_id = (data.get("session_id") or "").strip()
+    test_type = (data.get("test_type") or "").strip().lower()
+    email = (data.get("email") or "").strip().lower()
+    gateway = (data.get("gateway") or "").strip().lower()
+
+    if not report_id or not session_id or not test_type:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "report_id, session_id, test_type required"})
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "email required"})
+    try:
+        require_auth_for_email(request, email)
+    except HTTPException:
+        raise
+
+    import ielts_deep_report_engine as idre
+
+    # --- Verify payment ---
+    if gateway == "razorpay":
+        claim = idre.verify_and_claim_razorpay(
+            report_id=report_id,
+            razorpay_payment_id=(data.get("razorpay_payment_id") or "").strip(),
+            razorpay_order_id=(data.get("razorpay_order_id") or "").strip(),
+            razorpay_signature=(data.get("razorpay_signature") or "").strip(),
+            email=email,
+        )
+    elif gateway == "paypal":
+        claim = idre.verify_and_claim_paypal(
+            report_id=report_id,
+            paypal_order_id=(data.get("paypal_order_id") or "").strip(),
+            email=email,
+        )
+    else:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "gateway must be razorpay or paypal"})
+
+    if claim.get("status") != "success":
+        return JSONResponse(status_code=402, content=claim)
+
+    # --- If already has a report_json, return it (idempotent) ---
+    try:
+        existing = idre.get_report(report_id)
+        if existing.get("report"):
+            return {
+                "status": "success",
+                "report_id": report_id,
+                "test_type": existing["test_type"],
+                "report": existing["report"],
+                "pdf_url": f"/api/ielts/deep-report/{report_id}.pdf",
+                "already_generated": True,
+            }
+    except ValueError:
+        pass
+
+    # --- Generate the report ---
+    gen = idre.generate_report(session_id=session_id, test_type=test_type)
+    if gen.get("status") != "success":
+        idre.record_error(report_id, gen.get("message", "generation failed"))
+        return JSONResponse(status_code=500, content=gen)
+
+    idre.save_report(report_id, gen["report"])
+
+    # --- Generate PDF (best-effort) ---
+    pdf_ok = False
+    try:
+        from pdf_engine import render_ielts_deep_report_pdf
+        from ielts_engine import ielts_engine as _ie
+        stored = _ie.get_responses(session_id)
+        pdf_bytes = render_ielts_deep_report_pdf(
+            report=gen["report"],
+            meta={
+                "report_id": report_id,
+                "test_type": test_type,
+                "email": email,
+                "band": stored.get("evaluation", {}).get("overall_band"),
+            },
+        )
+        idre.mark_pdf_generated(report_id)
+        pdf_ok = True
+    except Exception as e:
+        logger.warning(f"ielts deep report PDF render failed: {e}")
+        pdf_bytes = None
+
+    # --- Email (best-effort) ---
+    if pdf_bytes:
+        try:
+            from enhanced_email import enhanced_email
+            enhanced_email.send_ielts_deep_report_email(
+                email=email,
+                report_id=report_id,
+                test_type=test_type,
+                pdf_bytes=pdf_bytes,
+                download_url=f"/api/ielts/deep-report/{report_id}.pdf",
+            )
+            idre.mark_email_sent(report_id)
+        except Exception as e:
+            logger.warning(f"ielts deep report email failed: {e}")
+
+    return {
+        "status": "success",
+        "report_id": report_id,
+        "test_type": test_type,
+        "report": gen["report"],
+        "pdf_url": f"/api/ielts/deep-report/{report_id}.pdf",
+        "pdf_generated": pdf_ok,
+        "already_generated": False,
+    }
+
+
+@app.get("/api/ielts/deep-report/{report_id}.pdf")
+@limiter.limit("30/minute")
+async def api_ielts_deep_report_pdf(request: Request, report_id: str):
+    """Public PDF download for a completed deep report."""
+    report_id = (report_id or "").strip().upper()
+    if not report_id:
+        raise HTTPException(status_code=400, detail="report_id required")
+
+    import ielts_deep_report_engine as idre
+    try:
+        record = idre.get_report(report_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+    try:
+        from pdf_engine import render_ielts_deep_report_pdf
+        pdf_bytes = render_ielts_deep_report_pdf(
+            report=record["report"],
+            meta={
+                "report_id": record["report_id"],
+                "test_type": record["test_type"],
+                "email": record["email"],
+            },
+        )
+    except Exception as e:
+        logger.error(f"PDF regeneration failed for {report_id}: {e}")
+        raise HTTPException(status_code=500, detail="Could not render PDF")
+
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'inline; filename="Charvak-IELTS-{record["test_type"].capitalize()}-{report_id}.pdf"',
+            "Cache-Control": "private, max-age=3600",
+        },
+    )
 
 
 # ============================================================
@@ -12342,6 +12618,10 @@ async def ielts_speaking_evaluate(request: Request):
     responses = data.get("responses", []) or []
     if not responses:
         return JSONResponse({"status": "error", "message": "no responses provided"}, status_code=400)
+
+    # Session 43-A1.7: session_id and topic now flow through (for the paid deep report)
+    _sess_id_sp = data.get("session_id")
+    _topic_sp = data.get("topic", "")
 
     try:
         from credit_guard import require_credits_from_data

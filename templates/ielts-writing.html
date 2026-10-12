@@ -138,6 +138,9 @@
     <h6 class="fw-bold mb-2">Detailed Feedback</h6>
     <div id="feedbackDetails"></div>
 
+    <!-- Session 43-A1.7: IELTS Deep Report CTA slot -->
+    <div id="deepReportSlot" style="display:none;"></div>
+
     <div id="strengthsBlock" class="mt-3" style="display:none;">
       <h6 class="fw-bold mb-2">Strengths</h6>
       <ul id="strengthsList" class="mb-0"></ul>
@@ -154,6 +157,7 @@
 
 </div>
 
+<script src="/static/js/ielts-deep-report.js?v=20261013a"></script>
 <script src="/static/js/integrity-capture.js?v=20261012b"></script>
 <script>
 // =============================================================
@@ -331,6 +335,21 @@ function renderScorecard(j, partial, wordCount, minWords, topicalRelevance, rele
   document.getElementById('introCard').style.display = 'none';
   document.getElementById('scoreCard').style.display = 'block';
   window.scrollTo({top: 0, behavior: 'smooth'});
+
+  // Session 43-A1.7: init the deep-report CTA
+  try {
+    if (window.IeltsDeepReport && IW && IW.sessionId) {
+      document.getElementById('deepReportSlot').innerHTML = '';
+      IeltsDeepReport.init({
+        testType: 'writing',
+        slotId: 'deepReportSlot',
+        getSessionId: function () { return IW.sessionId; },
+        getEmail: function () {
+          return (localStorage.getItem('userEmail') || '').toLowerCase();
+        },
+      });
+    }
+  } catch (e) { /* silent */ }
   // Session 41: topical-relevance banner
   var relevanceBanner = document.getElementById('iwRelevanceBanner');
   var relevanceText = document.getElementById('iwRelevanceText');

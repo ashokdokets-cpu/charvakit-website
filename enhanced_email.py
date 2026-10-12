@@ -281,5 +281,57 @@ class EnhancedEmailSystem:
 
         return sent > 0
 
+    # ============================================================
+    # Session 43-A1.7: IELTS Deep Report email + PDF attachment
+    # ============================================================
+
+    def send_ielts_deep_report_email(self, email, report_id, test_type,
+                                     pdf_bytes=None, download_url=None):
+        """Send the IELTS Deep Report with PDF attachment (Session 43-A1.7)."""
+        tt = str(test_type).capitalize()
+        subject = f"Your IELTS {tt} Deep Report is ready"
+
+        body_lines = [
+            f"<h2>Your IELTS {tt} Deep Report is ready</h2>",
+            f"<p>Report ID: <strong>{report_id}</strong></p>",
+            "<p>Inside this report you will find:</p>",
+            "<ul>",
+            "<li>Detailed sub-band reasoning (why you got each band)</li>",
+            "<li>Grammar corrections with explanations</li>",
+            "<li>Vocabulary upgrades with context</li>",
+            "<li>An example high-band rewrite / answer</li>",
+            "<li>Common pitfalls specific to your attempt</li>",
+            "<li>Recommended exercises</li>",
+            "</ul>",
+        ]
+        if download_url:
+            body_lines.append(
+                f'<p><a href="{download_url}">Re-download the PDF</a></p>'
+            )
+        body_lines.append(
+            "<p>The PDF is attached to this email for your records.</p>"
+        )
+        body_lines.append("<p>- Charvak IT Consulting</p>")
+        body_html = "\n".join(body_lines)
+
+        try:
+            self.email_engine.send_email(
+                email,
+                subject,
+                body_html,
+                is_html=True,
+                attachment_bytes=pdf_bytes,
+                attachment_filename=f"Charvak-IELTS-{tt}-{report_id}.pdf",
+            )
+            self.sent_emails.append({
+                "type": "ielts_deep_report",
+                "email": email,
+                "report_id": report_id,
+                "test_type": test_type,
+            })
+            return {"status": "success"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
 
 enhanced_email = EnhancedEmailSystem()
