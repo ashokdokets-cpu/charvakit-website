@@ -127,4 +127,32 @@ async function runTool() {
 }
 
 </script>
+
+<!-- Session 43-A1.6: one-off paid path -->
+<script src="/static/js/tool-pay.js?v=1"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    if (typeof ToolPay === 'undefined') return;
+    ToolPay.init({
+        toolSlug: 'offer_matcher',
+        toolName: 'Offer Matcher',
+        collectInput: function () {
+            return { offer_a: document.getElementById("offerA").value.trim(), offer_b: document.getElementById("offerB").value.trim() };
+        },
+        renderResult: function (result) {
+            if (typeof renderResult === 'function') {
+                renderResult(result);
+            } else {
+                var body = document.getElementById('resultBody');
+                if (body) body.innerHTML = '<pre>' + JSON.stringify(result, null, 2) + '</pre>';
+            }
+            var card = document.getElementById('resultCard');
+            if (card) {
+                card.classList.remove('d-none');
+                card.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+    });
+});
+</script>
 {% endblock %}
