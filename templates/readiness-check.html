@@ -269,35 +269,39 @@
 
     var token = localStorage.getItem("auth_token") || localStorage.getItem("charvak_token") || "";
     var email = localStorage.getItem("userEmail") || "";
-    if (!token || !email) {
-      // Login gate
-      window.location.href = "/login?next=" + encodeURIComponent("/readiness-check?role=" + role + "&industry=" + industry + "&level=" + level);
-      return;
-    }
+    var isAuthed = !!(token && email);
 
     var btn = document.getElementById("rcStartBtn");
     btn.disabled = true;
     btn.textContent = "Starting...";
 
     if (typeof charvakTrack === 'function') charvakTrack('readiness_start', { page: 'readiness-check' });
+
+    // Session 43-A1.5b: send email + auth only when the user is logged in.
+    // Anonymous users get the same free assessment, but must register
+    // later to save their certificate (via /api/career-assessment/claim).
+    var headers = { "Content-Type": "application/json" };
+    var body = {
+      role: role,
+      industry: industry,
+      level: level,
+      format: "mcq",
+      size: "quick"
+    };
+    if (isAuthed) {
+      headers["Authorization"] = "Bearer " + token;
+      body.email = email;
+    }
+
     fetch("/api/career-assessment/start", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + token
-      },
-      body: JSON.stringify({
-        email: email,
-        role: role,
-        industry: industry,
-        level: level,
-        format: "mcq",
-        size: "quick"
-      })
+      headers: headers,
+      body: JSON.stringify(body)
     })
     .then(function(r) {
       if (r.status === 401) {
-        window.location.href = "/login?next=/readiness-check";
+        // Only reachable if we sent a stale token; anonymous is fine.
+        window.location.href = "/login?next=" + encodeURIComponent("/readiness-check?role=" + role + "&industry=" + industry + "&level=" + level);
         return null;
       }
       if (r.status === 402) {
@@ -316,8 +320,20 @@
         btn.textContent = rcBtnLabel();
         return;
       }
-      // Redirect to the existing assessment page with the assessment_id
-      window.location.href = "/ai-assessment?aid=" + encodeURIComponent(data.assessment_id) + "&from=readiness-check";
+
+      // If this is an anonymous session, stash the token so the
+      // assessment page can submit + claim later.
+      var extra = "";
+      if (data.anonymous && data.anonymous_token) {
+        sessionStorage.setItem("charvak_anon_token", data.anonymous_token);
+        sessionStorage.setItem("charvak_anon_aid", data.assessment_id);
+        extra = "&anon=1";
+      } else {
+        sessionStorage.removeItem("charvak_anon_token");
+        sessionStorage.removeItem("charvak_anon_aid");
+      }
+
+      window.location.href = "/ai-assessment?aid=" + encodeURIComponent(data.assessment_id) + extra + "&from=readiness-check";
     })
     .catch(function(err) {
       showError("Network error. Please try again.");

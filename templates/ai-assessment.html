@@ -149,6 +149,26 @@ function _authHeaders() {
     };
 }
 
+// Session 43-A1.5b: anonymous assessment helpers.
+// When the URL has ?anon=1 and sessionStorage has a token, we can
+// take the assessment without logging in. Claim happens later.
+function _isAnonMode() {
+    try {
+        var p = new URLSearchParams(window.location.search);
+        return p.get('anon') === '1';
+    } catch (e) {
+        return false;
+    }
+}
+
+function _anonToken() {
+    return sessionStorage.getItem('charvak_anon_token') || '';
+}
+
+function _anonAid() {
+    return sessionStorage.getItem('charvak_anon_aid') || '';
+}
+
 function _email() {
     return localStorage.getItem('userEmail') || '';
 }
@@ -263,7 +283,11 @@ function updateSizeLabels() {
 async function startAssessment() {
     var email = _email();
     var token = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
-    if (!email || !token) {
+
+    // Session 43-A1.5b: allow anon start if the URL carries ?anon=1
+    var isAnon = _isAnonMode();
+
+    if (!isAnon && (!email || !token)) {
         alert('Please log in.');
         window.location.href = '/login?next=/ai-assessment';
         return;
@@ -511,8 +535,11 @@ function updateProgress() {
 async function submitAssessment() {
     var a = _carCurrentAssessment;
     if (!a) { alert('No active assessment.'); return; }
+
+    // Session 43-A1.5b: in anon mode, allow submit without email
+    var isAnonEarly = _isAnonMode() && _anonToken() && _anonAid() === a.assessment_id;
     var email = _email();
-    if (!email) { alert('Please log in.'); return; }
+    if (!email && !isAnonEarly) { alert('Please log in.'); return; }
 
     var fmt = a.format || 'mcq';
     var answers = [];
@@ -570,16 +597,21 @@ async function submitAssessment() {
     btn.textContent = 'Scoring...';
 
     try {
+        // Session 43-A1.5b: in anon mode, submit via token instead of email
+        var isAnon = _isAnonMode() && _anonToken() && _anonAid() === a.assessment_id;
+        var submitHeaders = isAnon
+            ? { 'Content-Type': 'application/json' }
+            : _authHeaders();
+        var submitBody = isAnon
+            ? { anonymous_token: _anonToken(), assessment_id: a.assessment_id, answers: answers }
+            : { email: email, assessment_id: a.assessment_id, answers: answers };
+
         var r = await fetch('/api/career-assessment/complete', {
             method: 'POST',
-            headers: _authHeaders(),
-            body: JSON.stringify({
-                email: email,
-                assessment_id: a.assessment_id,
-                answers: answers
-            })
+            headers: submitHeaders,
+            body: JSON.stringify(submitBody)
         });
-        if (r.status === 401) { window.location.href = '/login?next=/ai-assessment'; return; }
+        if (r.status === 401 && !isAnon) { window.location.href = '/login?next=/ai-assessment'; return; }
         var j = await r.json();
         if (j.status !== 'success') {
             errEl.textContent = j.message || 'Could not score assessment';
@@ -672,11 +704,17 @@ function renderResult(j) {
     document.getElementById('carResultMeta').innerHTML += lhtml;
 
     if (window.__fromReadinessCheck) {
+        var isAnonNow = _isAnonMode() && _anonToken() && _anonAid();
         var certHtml = '<div class="card border-0 shadow-sm mt-4" style="background: linear-gradient(135deg, #f0fdf9 0%, #dcfce7 100%);">';
         certHtml += '<div class="card-body p-4 text-center">';
         certHtml += '<h3 class="as-h5 mb-1">Get Your Verified Role Readiness Certificate</h3>';
         certHtml += '<p class="text-muted small mb-3">Free, shareable, and independently verifiable. Add it to LinkedIn in one click.</p>';
-        certHtml += '<button class="btn btn-success btn-lg" id="carGetCertBtn" onclick="generateCertificate()">Get My Certificate</button>';
+        if (isAnonNow) {
+            certHtml += '<button class="btn btn-success btn-lg" id="carGetCertBtn" onclick="startClaimFlow()">Save My Certificate - Register</button>';
+            certHtml += '<div class="text-muted small mt-2">Your score will be preserved. Takes 30 seconds.</div>';
+        } else {
+            certHtml += '<button class="btn btn-success btn-lg" id="carGetCertBtn" onclick="generateCertificate()">Get My Certificate</button>';
+        }
         certHtml += '<div id="carCertResult" class="mt-3"></div>';
         certHtml += '</div></div>';
         document.getElementById('carResultMeta').innerHTML += certHtml;
@@ -776,6 +814,82 @@ async function generateCertificate() {
     } catch (e) {
         resultEl.innerHTML = '<div class="alert alert-danger">Network error: ' + _esc(e.message) + '</div>';
         btn.disabled = false; btn.textContent = 'Get My Certificate';
+    }
+}
+
+function startClaimFlow() {
+    var token = _anonToken();
+    var aid = _anonAid();
+    if (!token || !aid) {
+        alert('Session expired. Please retake the readiness check.');
+        window.location.href = '/readiness-check';
+        return;
+    }
+    localStorage.setItem('charvak_pending_claim_token', token);
+    localStorage.setItem('charvak_pending_claim_aid', aid);
+    var next = '/ai-assessment?aid=' + encodeURIComponent(aid) + '&anon=1&claim=1';
+    window.location.href = '/register?next=' + encodeURIComponent(next);
+}
+
+async function handleClaimCallback() {
+    var pendingToken = localStorage.getItem('charvak_pending_claim_token');
+    var pendingAid = localStorage.getItem('charvak_pending_claim_aid');
+    var authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    var userEmail = (localStorage.getItem('userEmail') || '').trim().toLowerCase();
+
+    if (!pendingToken || !pendingAid || !authToken || !userEmail) {
+        console.warn('[claim] missing precondition', {
+            pendingToken: !!pendingToken, pendingAid: !!pendingAid,
+            authToken: !!authToken, userEmail: !!userEmail,
+        });
+        return;
+    }
+
+    try {
+        var claimResp = await fetch('/api/career-assessment/claim', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authToken
+            },
+            body: JSON.stringify({
+                anonymous_token: pendingToken,
+                email: userEmail
+            })
+        });
+        var claimJson = await claimResp.json();
+        if (claimJson.status !== 'success') {
+            alert('Could not save your assessment: ' + (claimJson.message || 'unknown error'));
+            return;
+        }
+
+        localStorage.removeItem('charvak_pending_claim_token');
+        localStorage.removeItem('charvak_pending_claim_aid');
+        sessionStorage.removeItem('charvak_anon_token');
+        sessionStorage.removeItem('charvak_anon_aid');
+
+        var certResp = await fetch('/api/readiness/generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authToken
+            },
+            body: JSON.stringify({
+                email: userEmail,
+                assessment_id: claimJson.assessment_id,
+                display_name: (localStorage.getItem('userName') || '')
+            })
+        });
+        var certJson = await certResp.json();
+        if (certJson.status === 'success') {
+            window.location.href = certJson.certificate_url || ('/readiness/' + certJson.certificate_id);
+        } else {
+            alert('Assessment saved. Head to My Results to view it.');
+            window.location.href = '/my-results';
+        }
+    } catch (e) {
+        console.error('[claim] error', e);
+        alert('Network error while saving. Please try again.');
     }
 }
 
@@ -1020,6 +1134,23 @@ async function loadHistory(ev) {
 
 document.addEventListener('DOMContentLoaded', loadCatalog);
 
+// Session 43-A1.5b.4: if we just came back from registration
+// with ?claim=1, run the claim + certificate flow.
+(function() {
+    try {
+        var p = new URLSearchParams(window.location.search);
+        if (p.get('claim') === '1' && p.get('anon') === '1') {
+            setTimeout(function() {
+                if (typeof handleClaimCallback === 'function') {
+                    handleClaimCallback();
+                }
+            }, 500);
+        }
+    } catch (e) {
+        // silent
+    }
+})();
+
 // ---------- Deep-link: ?aid=<assessment_id> from /readiness-check ----------
 (function() {
     try {
@@ -1038,19 +1169,26 @@ document.addEventListener('DOMContentLoaded', loadCatalog);
 async function loadFromAid(aid) {
     var email = _email();
     var token = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
-    if (!email || !token) {
+
+    // Session 43-A1.5b: allow anonymous load when ?anon=1 + token present
+    var isAnon = _isAnonMode() && _anonToken() && _anonAid() === aid;
+
+    if (!isAnon && (!email || !token)) {
         window.location.href = '/login?next=' + encodeURIComponent('/ai-assessment?aid=' + aid + '&from=readiness-check');
         return;
     }
     try {
-        var r = await fetch('/api/career-assessment/' + encodeURIComponent(aid) + '?email=' + encodeURIComponent(email), {
-            headers: _authHeaders()
-        });
-        if (r.status === 401) {
+        var fetchUrl = isAnon
+            ? '/api/career-assessment/' + encodeURIComponent(aid) + '?anon_token=' + encodeURIComponent(_anonToken())
+            : '/api/career-assessment/' + encodeURIComponent(aid) + '?email=' + encodeURIComponent(email);
+        var fetchHeaders = isAnon ? { 'Content-Type': 'application/json' } : _authHeaders();
+
+        var r = await fetch(fetchUrl, { headers: fetchHeaders });
+        if (r.status === 401 && !isAnon) {
             window.location.href = '/login?next=' + encodeURIComponent('/ai-assessment?aid=' + aid + '&from=readiness-check');
             return;
         }
-        if (r.status === 403) {
+        if (r.status === 403 && !isAnon) {
             alert('This assessment belongs to a different user.');
             window.location.href = '/ai-assessment';
             return;
@@ -1076,7 +1214,6 @@ async function loadFromAid(aid) {
     }
 }
 
-document.addEventListener('DOMContentLoaded', loadCatalog);
 // ========================================================================
 // Session 39 - Integrity capture (extracted to static/js/integrity-capture.js)
 // ========================================================================
