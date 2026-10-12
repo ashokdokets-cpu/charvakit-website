@@ -176,6 +176,37 @@ window.addEventListener('charvak:mainready', function() {
         console.log('[GA4]', eventName, params || {});
       }
     };
+
+    // Session 43-A1.8: UTM-tagged share URL builder.
+    // Usage: charvakShareUrl('https://www.charvakit.com/readiness/RDC-ABC',
+    //                        'whatsapp', 'readiness_cert')
+    // -> .../readiness/RDC-ABC?utm_source=whatsapp&utm_medium=share&utm_campaign=readiness_cert
+    window.charvakShareUrl = function(baseUrl, source, campaign) {
+      if (!baseUrl) return '';
+      var sep = baseUrl.indexOf('?') >= 0 ? '&' : '?';
+      return baseUrl + sep
+        + 'utm_source=' + encodeURIComponent(source || 'direct')
+        + '&utm_medium=share'
+        + '&utm_campaign=' + encodeURIComponent(campaign || 'unknown');
+    };
+
+    // Session 43-A1.8: fire a landing event if the visitor arrived
+    // via a share link. Call this on page load.
+    // pageType: 'readiness' | 'mock_result' | etc.
+    window.charvakTrackShareLanding = function(pageType) {
+      try {
+        var u = new URLSearchParams(window.location.search);
+        var src = u.get('utm_source');
+        if (!src) return;
+        if (typeof charvakTrack === 'function') {
+          charvakTrack(pageType + '_view_from_share', {
+            source: src,
+            medium: u.get('utm_medium') || '',
+            campaign: u.get('utm_campaign') || '',
+          });
+        }
+      } catch (e) { /* silent */ }
+    };
     </script>
 </head>
 <body>

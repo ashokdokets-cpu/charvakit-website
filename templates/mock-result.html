@@ -227,21 +227,37 @@ style="text-decoration:none; color:inherit; display:block; padding:18px; backgro
         secBox.innerHTML = '<p class="text-muted">No section breakdown available.</p>';
       }
 
-      var shareUrl = window.location.href;
-      var shareText = "I scored " + scoreRounded + "/100 on the " + (r.company || "mock") + " " + (r.pattern || "") + " mock drive on Charvak. Try it: " + shareUrl;
+      var shareUrlBase = window.location.href;
+      // Session 43-A1.8: UTM-tag the shared URL by channel for attribution.
+      function _mrTagUrl(ch) {
+        if (typeof charvakShareUrl === 'function') {
+          return charvakShareUrl(shareUrlBase, ch, 'mock_result');
+        }
+        return shareUrlBase;
+      }
 
       var li = document.getElementById("mrLinkedIn");
       var wa = document.getElementById("mrWhatsApp");
-      li.href = "https://www.linkedin.com/sharing/share-offsite/?url=" + encodeURIComponent(shareUrl);
+      var liUrl = _mrTagUrl('linkedin');
+      var waUrl = _mrTagUrl('whatsapp');
+      var shareText = "I scored " + scoreRounded + "/100 on the " + (r.company || "mock") + " " + (r.pattern || "") + " mock drive on Charvak. Try it: " + waUrl;
+
+      li.href = "https://www.linkedin.com/sharing/share-offsite/?url=" + encodeURIComponent(liUrl);
       wa.href = "https://wa.me/?text=" + encodeURIComponent(shareText);
 
-      [li, wa].forEach(function(a) {
-        a.addEventListener("click", function() {
-          if (typeof charvakTrack === "function") {
-            charvakTrack("mock_result_share", { company: r.company, score: scoreRounded });
-          }
-        });
+      li.addEventListener("click", function() {
+        if (typeof charvakTrack === "function") {
+          charvakTrack("mock_result_shared", { channel: "linkedin", company: r.company, score: scoreRounded });
+        }
       });
+      wa.addEventListener("click", function() {
+        if (typeof charvakTrack === "function") {
+          charvakTrack("mock_result_shared", { channel: "whatsapp", company: r.company, score: scoreRounded });
+        }
+      });
+
+      // moved: A1.8 landing tracker now fires on DOMContentLoaded
+      // (independent of fetch success).
 
       if (typeof charvakTrack === "function") {
 
@@ -286,5 +302,13 @@ style="text-decoration:none; color:inherit; display:block; padding:18px; backgro
       notFoundEl.style.display = "block";
     });
 })();
+
+// Session 43-A1.8 (moved): fire arrival tracking on page load,
+// independent of whether the result fetch succeeds.
+document.addEventListener('DOMContentLoaded', function() {
+  if (typeof charvakTrackShareLanding === 'function') {
+    charvakTrackShareLanding('mock_result');
+  }
+});
 </script>
 {% endblock %}
