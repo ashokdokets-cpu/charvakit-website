@@ -64,6 +64,19 @@
         }
     }
 
+    // Session 43-A1.5b: for anonymous sessions, the placeholder email is
+    // derived from a session token. Return the token so the backend can
+    // resolve it to the same placeholder email.
+    function getAnonToken() {
+        try {
+            return sessionStorage.getItem('charvak_anon_token')
+                || localStorage.getItem('charvak_anon_token')
+                || '';
+        } catch (e) {
+            return '';
+        }
+    }
+
     function getToken() {
         try {
             return localStorage.getItem('auth_token')
@@ -92,10 +105,16 @@
         if (!aid) return;
         var email = getEmail();
         var token = getToken();
-        if (!email || !token) return;
+        var anonToken = getAnonToken();
+
+        // Authenticated: need email + auth token.
+        // Anonymous: need anon token. No email required.
+        var isAnon = !email && anonToken;
+        if (!isAnon && (!email || !token)) return;
 
         queue.push({
             email: email,
+            anonymous_token: anonToken,
             assessment_id: aid,
             event_type: type,
             metadata: metadata || {},
@@ -110,18 +129,23 @@
 
     function sendOne(ev) {
         var body = JSON.stringify({
-            email: ev.email,
+            email: ev.email || '',
+            anonymous_token: ev.anonymous_token || '',
             assessment_id: ev.assessment_id,
             event_type: ev.event_type,
             metadata: ev.metadata
         });
         try {
+            var headers = { 'Content-Type': 'application/json' };
+            // Only send Authorization when we have a real token.
+            // Anonymous events use anonymous_token in the body.
+            if (!ev.anonymous_token) {
+                var authTok = getToken();
+                if (authTok) headers['Authorization'] = 'Bearer ' + authTok;
+            }
             fetch(CONFIG.endpoint, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + ev._token
-                },
+                headers: headers,
                 body: body,
                 keepalive: true
             }).catch(function () { /* silent */ });
