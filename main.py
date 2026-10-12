@@ -738,6 +738,10 @@ async def terms(request: Request):
 async def privacy(request: Request):
     return template_response("privacy.html", request, "Privacy Policy")
 
+@app.get("/integrity", response_class=HTMLResponse)
+async def integrity(request: Request):
+    return template_response("integrity.html", request, "Assessment Integrity - Charvak")
+
 @app.get("/refund", response_class=HTMLResponse)
 async def refund(request: Request):
     return template_response("refund.html", request, "Refund & Cancellation Policy")
