@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% block title %}Assessment Integrity — Charvak{% endblock %}
+{% block description %}How Charvak records assessment environment signals and reports them factually. Facts, not verdicts.{% endblock %}
+{% block og_title %}Assessment Integrity — Charvak{% endblock %}
+{% block og_description %}Facts, not verdicts. Every Charvak certificate carries a full integrity panel. Here's how to read it.{% endblock %}
+{% block content %}
+<style>
+  .ig-hero { background: linear-gradient(135deg, #3ba591 0%, #2a8070 100%); color: #fff; padding: 56px 0 44px; }
+  .ig-hero h1 { font-weight: 900; font-size: 2.2rem; margin: 0 0 12px; letter-spacing: -0.5px; }
+  .ig-hero p { font-size: 1.05rem; opacity: 0.95; margin: 0; max-width: 680px; }
+  .ig-wrap { max-width: 820px; margin: 0 auto; padding: 0 16px 60px; }
+  .ig-section { margin-top: 48px; }
+  .ig-section h2 { font-weight: 800; font-size: 1.5rem; color: #0f172a; letter-spacing: -0.4px; margin: 0 0 8px; }
+  .ig-section .ig-sub { color: #64748b; font-size: 0.95rem; margin: 0 0 20px; }
+  .ig-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 24px 26px; margin-bottom: 16px; }
+  .ig-card h3 { font-weight: 700; font-size: 1.05rem; margin: 0 0 6px; color: #0f172a; }
+  .ig-card p { color: #475569; margin: 0; font-size: 0.94rem; line-height: 1.55; }
+  .ig-signal { display: flex; gap: 14px; align-items: flex-start; padding: 18px 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 10px; }
+  .ig-signal-icon { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: #ecfdf5; border-radius: 10px; font-size: 1.2rem; flex-shrink: 0; }
+  .ig-signal-body { flex: 1; }
+  .ig-signal-title { font-weight: 700; color: #0f172a; font-size: 0.98rem; margin: 0 0 4px; }
+  .ig-signal-desc { color: #475569; font-size: 0.88rem; margin: 0; line-height: 1.5; }
+  .ig-signal-label { display: inline-block; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.8px; color: #3ba591; font-weight: 700; background: #ecfdf5; padding: 2px 8px; border-radius: 4px; margin-bottom: 6px; }
+  .ig-risks { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 12px; }
+  .ig-risk { padding: 18px 14px; border-radius: 12px; text-align: center; }
+  .ig-risk.clean   { background: #ecfdf5; border: 1px solid #a7f3d0; }
+  .ig-risk.minor   { background: #eff6ff; border: 1px solid #bfdbfe; }
+  .ig-risk.moderate { background: #fffbeb; border: 1px solid #fcd34d; }
+  .ig-risk.elevated { background: #fef2f2; border: 1px solid #fca5a5; }
+  .ig-risk-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; margin-bottom: 4px; }
+  .ig-risk.clean   .ig-risk-label { color: #065f46; }
+  .ig-risk.minor   .ig-risk-label { color: #1e40af; }
+  .ig-risk.moderate .ig-risk-label { color: #92400e; }
+  .ig-risk.elevated .ig-risk-label { color: #991b1b; }
+  .ig-risk-desc { font-size: 0.82rem; color: #475569; line-height: 1.4; }
+  .ig-badge-row { display: flex; gap: 12px; align-items: flex-start; padding: 16px 18px; border-radius: 12px; margin-bottom: 12px; }
+  .ig-badge-row.verified { background: #ecfdf5; border-left: 4px solid #10b981; }
+  .ig-badge-row.review   { background: #eff6ff; border-left: 4px solid #3b82f6; }
+  .ig-badge-icon { font-size: 1.6rem; line-height: 1; flex-shrink: 0; }
+  .ig-badge-title { font-weight: 700; margin: 0 0 4px; font-size: 1rem; color: #065f46; }
+  .ig-badge-row.review .ig-badge-title { color: #1e40af; }
+  .ig-badge-desc { margin: 0; color: #475569; font-size: 0.9rem; line-height: 1.5; }
+  .ig-cta { background: linear-gradient(135deg, #3ba591 0%, #2a8070 100%); color: #fff; border-radius: 16px; padding: 32px 28px; margin-top: 48px; text-align: center; }
+  .ig-cta h3 { font-weight: 800; margin: 0 0 8px; font-size: 1.3rem; }
+  .ig-cta p { margin: 0 0 20px; opacity: 0.95; }
+  .ig-cta .btn { background: #fff; color: #2a8070; font-weight: 700; padding: 12px 26px; border: none; border-radius: 10px; }
+  .ig-cta .btn:hover { background: #f0fdf9; }
+  @media (max-width: 640px) {
+    .ig-hero h1 { font-size: 1.6rem; }
+    .ig-risks { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+
+<div class="ig-hero">
+    <div class="container">
+        <div class="ig-wrap" style="padding-bottom:0;">
+            <h1>Assessment Integrity</h1>
+            <p>Every Charvak certificate reports what happened during the assessment — the environment, the signals, the raw facts. No verdicts. Here's how to read it.</p>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="ig-wrap">
+
+        <div class="ig-section">
+            <h2>Why we record the environment</h2>
+            <p class="ig-sub">AI-assisted cheating is the single biggest credibility problem in assessments today.</p>
+            <div class="ig-card">
+                <p>In 2026, anyone can paste a question into ChatGPT, get an answer, and submit it. Traditional proctoring (webcams, human invigilators) doesn't scale, costs a lot, and creates anxiety for honest candidates.</p>
+                <p style="margin-top:12px;">Charvak takes a different approach: <strong>we record the environment signals that indicate an assessment's integrity, and we report them as plain facts.</strong> No accusation. No automated verdict. The employer sees exactly what happened and decides what it means for their role.</p>
+            </div>
+        </div>
+
+        <div class="ig-section">
+            <h2>What we record</h2>
+            <p class="ig-sub">Five environment signals, recorded silently during the assessment. Nothing is blocked. Nothing is judged.</p>
+
+            <div class="ig-signal">
+                <div class="ig-signal-icon">📋</div>
+                <div class="ig-signal-body">
+                    <div class="ig-signal-label">Paste</div>
+                    <div class="ig-signal-title">Content pasted into an answer field</div>
+                    <div class="ig-signal-desc">Recorded when the candidate pastes text or code into a response. Not automatically a cheat signal — some candidates paste from their own notes — but worth noting.</div>
+                </div>
+            </div>
+
+            <div class="ig-signal">
+                <div class="ig-signal-icon">↔️</div>
+                <div class="ig-signal-body">
+                    <div class="ig-signal-label">Tab switch</div>
+                    <div class="ig-signal-title">Candidate left the assessment tab</div>
+                    <div class="ig-signal-desc">Recorded when the browser tab loses visibility. A few tab switches is normal — checking the time, answering a message. Eight or more during a 10-minute assessment is unusual and worth an interview.</div>
+                </div>
+            </div>
+
+            <div class="ig-signal">
+                <div class="ig-signal-icon">🖱️</div>
+                <div class="ig-signal-body">
+                    <div class="ig-signal-label">Context menu</div>
+                    <div class="ig-signal-title">Right-click menu opened</div>
+                    <div class="ig-signal-desc">Recorded when the candidate opens the right-click menu. Most commonly this is a path to pasting content via the menu rather than the keyboard shortcut.</div>
+                </div>
+            </div>
+
+            <div class="ig-signal">
+                <div class="ig-signal-icon">👁️</div>
+                <div class="ig-signal-body">
+                    <div class="ig-signal-label">Focus out</div>
+                    <div class="ig-signal-title">Input field lost focus mid-answer</div>
+                    <div class="ig-signal-desc">Recorded every time an answer input loses focus. On laptops and phones this is often just normal form interaction — clicking a radio button, opening a keyboard — so we treat it as a form artifact, not a cheat signal, unless the volume is unusually high.</div>
+                </div>
+            </div>
+
+            <div class="ig-signal">
+                <div class="ig-signal-icon">⌨️</div>
+                <div class="ig-signal-body">
+                    <div class="ig-signal-label">Rapid input</div>
+                    <div class="ig-signal-title">Synthetic typing pattern detected</div>
+                    <div class="ig-signal-desc">Recorded when 100+ characters appear in under 200 milliseconds — faster than a human can type or dictate. This is a strong signal of automated text insertion.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="ig-section">
+            <h2>How we classify</h2>
+            <p class="ig-sub">Four risk levels, weighted by signal type. Most assessments fall in the clean or minor bucket.</p>
+
+            <div class="ig-risks">
+                <div class="ig-risk clean">
+                    <div class="ig-risk-label">Clean</div>
+                    <div class="ig-risk-desc">No notable signals. Typical of most honest assessments.</div>
+                </div>
+                <div class="ig-risk minor">
+                    <div class="ig-risk-label">Minor</div>
+                    <div class="ig-risk-desc">A few signals (up to 3 tab switches, or normal focus behavior). Informational.</div>
+                </div>
+                <div class="ig-risk moderate">
+                    <div class="ig-risk-label">Moderate</div>
+                    <div class="ig-risk-desc">Clear signals — 7-8 tab switches, a paste event, or a high focus-out count.</div>
+                </div>
+                <div class="ig-risk elevated">
+                    <div class="ig-risk-label">Elevated</div>
+                    <div class="ig-risk-desc">Frequent signals — 9+ tab switches, multiple pastes, or synthetic typing detected.</div>
+                </div>
+            </div>
+
+            <p class="ig-sub" style="margin-top:20px;">The classifier is calibrated so that normal browser behavior — form interaction, mobile keyboard, one-off tab checks — stays in the "clean" bucket. Only genuinely unusual patterns move up.</p>
+        </div>
+
+        <div class="ig-section">
+            <h2>What appears on the certificate</h2>
+            <p class="ig-sub">Two badge states. Both use the same scoring engine. The difference is the environment.</p>
+
+            <div class="ig-badge-row verified">
+                <div class="ig-badge-icon">🛡️</div>
+                <div>
+                    <p class="ig-badge-title">Independently Verifiable</p>
+                    <p class="ig-badge-desc">No notable environment signals. The score is normal, the certificate is signed, and any employer can verify it via the public URL.</p>
+                </div>
+            </div>
+
+            <div class="ig-badge-row review">
+                <div class="ig-badge-icon">ℹ️</div>
+                <div>
+                    <p class="ig-badge-title">Employer Review Recommended</p>
+                    <p class="ig-badge-desc">Notable environment signals were recorded. The score is still valid — the same engine produced it — but employers may wish to verify the candidate's skills in an interview. That's the whole point.</p>
+                </div>
+            </div>
+
+            <p class="ig-sub" style="margin-top:20px;">Below the badge, the certificate shows the raw facts — "Frequently left the assessment tab (8 times)", "No external content was pasted into responses" — so an employer can see exactly what happened and make their own call.</p>
+        </div>
+
+        <div class="ig-section">
+            <h2>What we don't do</h2>
+            <div class="ig-card">
+                <p><strong>We don't accuse.</strong> A tab switch is not a cheat. A focus-out is often just the mobile keyboard. We report facts, not verdicts, because the same behavior means different things in different roles and contexts.</p>
+                <p style="margin-top:12px;"><strong>We don't block.</strong> Nothing in the assessment is prevented by the integrity layer. Candidates can navigate, paste, and interact normally. We just record what happened.</p>
+                <p style="margin-top:12px;"><strong>We don't sell the data.</strong> Integrity signals appear only on the candidate's own certificate, visible to anyone who has the certificate URL. We never sell or share signals with third parties.</p>
+            </div>
+        </div>
+
+        <div class="ig-cta">
+            <h3>See it in action</h3>
+            <p>Take a free 10-minute readiness check. Get a verified certificate with your own integrity panel.</p>
+            <a href="/readiness-check" class="btn">Start your free check</a>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
