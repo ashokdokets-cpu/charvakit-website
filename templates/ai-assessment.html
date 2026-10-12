@@ -712,6 +712,12 @@ function renderResult(j) {
         if (isAnonNow) {
             certHtml += '<button class="btn btn-success btn-lg" id="carGetCertBtn" onclick="startClaimFlow()">Save My Certificate - Register</button>';
             certHtml += '<div class="text-muted small mt-2">Your score will be preserved. Takes 30 seconds.</div>';
+            // A1.5c: track claim prompt view
+            if (typeof charvakTrack === 'function') {
+                charvakTrack('readiness_claim_prompt_shown', {
+                    aid: (window._carCurrentAssessment && window._carCurrentAssessment.assessment_id) || ''
+                });
+            }
         } else {
             certHtml += '<button class="btn btn-success btn-lg" id="carGetCertBtn" onclick="generateCertificate()">Get My Certificate</button>';
         }
@@ -825,6 +831,10 @@ function startClaimFlow() {
         window.location.href = '/readiness-check';
         return;
     }
+    // A1.5c: track claim click
+    if (typeof charvakTrack === 'function') {
+        charvakTrack('readiness_claim_clicked', { aid: aid });
+    }
     localStorage.setItem('charvak_pending_claim_token', token);
     localStorage.setItem('charvak_pending_claim_aid', aid);
     var next = '/ai-assessment?aid=' + encodeURIComponent(aid) + '&anon=1&claim=1';
@@ -868,6 +878,14 @@ async function handleClaimCallback() {
         sessionStorage.removeItem('charvak_anon_token');
         sessionStorage.removeItem('charvak_anon_aid');
 
+        // A1.5c: track claim success (assessment migrated to user)
+        if (typeof charvakTrack === 'function') {
+            charvakTrack('readiness_claim_success', {
+                aid: claimJson.assessment_id,
+                email_masked: (userEmail.split('@')[0] || '').slice(0, 3) + '***'
+            });
+        }
+
         var certResp = await fetch('/api/readiness/generate', {
             method: 'POST',
             headers: {
@@ -882,6 +900,13 @@ async function handleClaimCallback() {
         });
         var certJson = await certResp.json();
         if (certJson.status === 'success') {
+            // A1.5c: track cert issuance
+            if (typeof charvakTrack === 'function') {
+                charvakTrack('readiness_cert_issued', {
+                    aid: claimJson.assessment_id,
+                    cert_id: certJson.certificate_id || ''
+                });
+            }
             window.location.href = certJson.certificate_url || ('/readiness/' + certJson.certificate_id);
         } else {
             alert('Assessment saved. Head to My Results to view it.');
