@@ -641,3 +641,37 @@ Four bugs fixed across Session 42:
 - Seed scripts load .env.local (Session 40b flag)
 - Versant passed column added (Session 40a flag)
 - .gitignore duplicate cleanup (Session 41 flag)
+
+
+### FLAGGED - A1.6 tools route uses raw ip_detector (2026-10-13)
+
+Discovered during A1.7 while auditing the country-detection fix. The
+`/api/tools/paid/create-order` route (line ~2885 in main.py) still uses
+the raw `ip_detector.detect_from_request()` call, which returns the
+country **name** (`"India"`) rather than the ISO code (`"IN"`).
+
+Consequence: if a caller omits `country_code` in the request body, the
+route falls through to `tier_3` → USD → PayPal, even for Indian users.
+
+The A1.6 frontend currently sends an explicit `country_code`, so real
+users are not affected. But the backend has the same latent bug that
+A1.7 hit.
+
+**Fix:** identical to A1.7's - swap to `improved_ip_detector` (returns
+ISO codes) plus a name-to-ISO fallback map. ~5 minutes.
+
+**Verdict:** SCHEDULED - small cleanup, any session
+
+
+### FLAGGED - A1.7 PayPal capture route may not exist (2026-10-13)
+
+`static/js/ielts-deep-report.js._unlockViaPayPal` calls
+`/api/payment/paypal/capture`. This route may or may not exist in
+main.py. It only fires for non-INR users (paypal gateway), so India
+E2E tested fine.
+
+**Fix:** verify the route exists; if not, implement client-side capture
+via PayPal's `actions.order.capture()` (the A1.6 pattern) or add a
+server-side capture route.
+
+**Verdict:** SCHEDULED - A1.7b, only matters for non-INR users

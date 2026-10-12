@@ -1,3 +1,29 @@
+## Session 43-A1.7 CLOSED (2026-10-13) - IELTS Deep Report micro-paywall
+
+**HEAD:** `731b70a`
+**Status:** A1.7 shipped. Track A1.6 + A1.7 = first two revenue lines live.
+
+### Read this next
+
+1. If continuing Track A, the next batch is **A1.8** (WhatsApp loop
+   instrumentation) or **A2** (Certificate round 3).
+2. If doing cleanup, the A1.6 country-code bug is a 5-min patch.
+3. Production smoke test after Render deploys:
+   - `curl https://www.charvakit.com/api/ielts/deep-report/price`
+   - Expect `₹99` for IN, `$4.99` for US.
+
+### What shipped this session
+
+- `ielts_deep_report_engine.py` — new engine, 773 lines
+- `static/js/ielts-deep-report.js` — new frontend, 421 lines
+- 4 new routes under `/api/ielts/deep-report/`
+- PDF renderer + email helper
+- CTA slot + init on both IELTS templates
+
+Full details in COMMITMENT.md.
+
+---
+
 ## Session 43 CLOSED (2026-10-12) - Integrity fact panel + FYP MBA calibration
 
 **HEAD at close:** c56e9c6 + pending docs commit

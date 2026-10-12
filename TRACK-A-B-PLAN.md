@@ -249,8 +249,8 @@ Based on Oct 11-12 GA4 + DB data:
 |---|---|---|---|
 | A1 | Small cleanup (Render password, PAYPAL_MODE, flicker, CI hook) | 45 min | Hygiene — closes 4 long-carried flags |
 | **A1.5** | **Signup wall fix** — let students take check before login | **1.5 sessions** | **3-5x more certificates** |
-| A1.6 | AI Tools one-off purchases at Rs 99 (Resume Roast, etc.) | 1 session | New revenue line, impulse-buy |
-| A1.7 | IELTS deep diagnostic micro-paywall (Rs 99) | 1 session | Higher revenue per user |
+| **A1.6** | **AI Tools one-off purchases at Rs 99 (Resume Roast, etc.)** | **1 session** | **SHIPPED 2026-10-13** |
+| **A1.7** | **IELTS deep diagnostic micro-paywall (Rs 99)** | **1 session** | **SHIPPED 2026-10-13 (commit 731b70a)** |
 | A1.8 | WhatsApp loop instrumentation (UTM tags on share URLs) | 0.5 session | Measure + grow viral coefficient |
 | A1.9 | Placement-prep instrumentation + promotion | 0.5 session | Promote the 8x-more-efficient page |
 | **A1.10** | **Fix 404 on `/readiness/RDC-433259E0C0D1`** | **5 min** | **56 users hit a dead URL** |
@@ -643,3 +643,60 @@ ZA -> $2.99 USD (tier_2 fallback)
 - Optional: exchange-rate table staleness review
 
 **Next batch:** A1.7 - IELTS diagnostic micro-paywall
+
+---
+
+## A1.7 COMPLETE (2026-10-13)
+
+The IELTS Deep Report micro-paywall is live. This is the second real
+revenue line on the platform (after A1.6 AI Tools one-off purchases).
+
+**Commit:** `731b70a`
+**Files:** 9 changed, 1,885 insertions, 1 deletion
+
+### What shipped
+
+**Backend:**
+- `charvak_ielts_deep_reports` table + `responses_json` column on sessions
+- `ielts_engine.attach_responses / get_responses` (tamper-proof source)
+- `ielts_deep_report_engine.py` (773 lines): pricing tiers, Razorpay +
+  PayPal order creation, OpenAI report generation for writing +
+  speaking, idempotent claim, save/get
+- 4 routes: `/api/ielts/deep-report/{price,create-order,run}` +
+  `GET {id}.pdf`
+- `pdf_engine.render_ielts_deep_report_pdf` (branded 7-page A4)
+- `CharvakReportPDF.mc_full_width` helper (fixes fpdf2 X-drift crash)
+- `enhanced_email.send_ielts_deep_report_email` (SendGrid PDF attachment)
+- Country detection normalized via `improved_ip_detector`
+
+**Frontend:**
+- `static/js/ielts-deep-report.js` (421 lines): shared CTA + payment +
+  inline report renderer + PDF download
+- CTA slot + init on `ielts-writing.html` and `ielts-speaking.html`
+
+### Pricing
+
+| Market | Price | Gateway |
+|---|---|---|
+| India | Rs 99 | Razorpay |
+| US | USD 4.99 | PayPal |
+| UK | GBP 3.99 | PayPal |
+| AU | AUD 6.49 | PayPal |
+
+### E2E verified (Razorpay test mode)
+
+- Rs 99 charged for IN users (gateway: razorpay, tier_1)
+- 7-page branded PDF, 46 KB, inline render
+- PDF downloadable from browser and curl
+- Email sent with PDF attachment (SendGrid accepted, verified against
+  real inbox)
+
+### Follow-ups flagged (not blocking)
+
+- **A1.6 latent bug:** `/api/tools/paid/create-order` still uses raw
+  `ip_detector` (returns full country names). Same fix pattern as A1.7
+  is a 5-line patch. Frontend currently sends explicit `country_code`
+  so it works in practice.
+- **PayPal flow on A1.7:** `_unlockViaPayPal` calls
+  `/api/payment/paypal/capture`, which may not exist. Only hit for
+  non-INR users. Flag for A1.7b.

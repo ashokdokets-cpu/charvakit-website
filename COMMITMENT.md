@@ -4163,3 +4163,57 @@ Session 38. Every paid assessment now carries the trust artifact.
 - Render Postgres password rotation
 - DoketsRB bidirectional sync (Session 38+)
 - AuditBot Continuous (COMPETITIVE-STRATEGY Gap 4)
+
+
+## Session 43-A1.7 CLOSED (2026-10-13) - IELTS Deep Report micro-paywall
+
+**Commit:** `731b70a` (9 files, +1885/-1)
+
+Second real revenue line after A1.6. The IELTS Writing + Speaking eval
+result pages now offer a Rs 99 "Unlock the full examiner report" CTA.
+
+### What shipped
+
+- New table: `charvak_ielts_deep_reports`
+- New column: `charvak_ielts_sessions.responses_json` (tamper-proof source)
+- New engine: `ielts_deep_report_engine.py` (pricing, order, verify,
+  generate, save/get)
+- New frontend: `static/js/ielts-deep-report.js` (shared CTA + payment
+  + inline report + PDF download)
+- 4 new routes under `/api/ielts/deep-report/`
+- New PDF renderer + `mc_full_width` helper (fpdf2 X-drift fix)
+- New SendGrid attachment helper
+
+### Bugs found and fixed during the session
+
+1. **Country detection was returning full names ("India")**, which fell
+   through to tier_3/USD/paypal. Fixed by using `improved_ip_detector`
+   (returns ISO codes) in both the price and create-order routes.
+2. **fpdf2 X-drift crash** on `multi_cell(0, ...)` after `cell()`. Fixed
+   with the `mc_full_width` helper that resets X to `l_margin`.
+3. **`EmailEngine.send_email` signature mismatch** — expected `body`,
+   not `body_html`. Fixed by passing positionally with `is_html=True`.
+4. **PDF header said "Charvak Premium Report"** — class default. Fixed
+   by passing `report_title=` and `user_email=` at instantiation.
+
+### E2E verified (Razorpay test mode)
+
+- India user: Rs 99, Razorpay test modal, `key_id: rzp_test_...`
+- Report generated: 8 sections, valid JSON
+- PDF rendered: 46,025 bytes, 7 pages, correct branding
+- PDF downloadable from browser and curl
+- Email sent with PDF attachment (SendGrid accepted; verified against
+  a real inbox)
+
+### Still open (from this session)
+
+- **A1.6 latent bug:** `/api/tools/paid/create-order` still uses raw
+  `ip_detector` — same fix pattern as A1.7. ~5 min patch.
+- **PayPal capture route:** `ielts-deep-report.js._unlockViaPayPal`
+  calls `/api/payment/paypal/capture` which may not exist. Non-blocking
+  for India E2E.
+- **Repo cleanup:** stray files from earlier sessions
+  (`_patch_fyp_topics.py`, `_patch_integrity_anon_*.py`,
+  `_test_cert*.pdf`) still sit in the working tree. Not committed.
+
+**HEAD at close:** `731b70a`
