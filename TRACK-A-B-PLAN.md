@@ -350,3 +350,63 @@ and verified. Or earlier if there is a natural pause in code work.
 **Why deferred:** they break code-flow and require browser context switch.
 Code batches are higher value per hour in the current push.
 ---
+
+---
+
+## A1.5 FULLY COMPLETE (2026-10-12)
+
+The signup wall has been removed. Anonymous users can now take a full
+assessment, see their score, register, and receive a verified certificate
+WITH integrity signals intact.
+
+**The full flow (verified E2E):**
+1. Anonymous user lands on /readiness-check
+2. Takes 10-question MCQ assessment (no login)
+3. Integrity capture records tab_switch, focus_out, paste, contextmenu,
+   rapid_input events (all 5 signal types verified)
+4. Score renders
+5. User clicks "Save My Certificate - Register"
+6. Registers/logs in
+7. Backend /claim migrates assessment to user's real email
+8. Certificate generated — integrity panel shows the real signals
+9. Badge correctly shows "Employer Review Recommended" (blue) or
+   "Independently Verifiable" (green) based on risk
+
+**Backend changes:**
+- anonymous_sessions.py (new module, 6 functions)
+- charvak_anonymous_assessment_sessions (new table)
+- /api/career-assessment/start — accepts no-email requests
+- /api/career-assessment/answer — accepts anonymous_token
+- /api/career-assessment/complete — accepts anonymous_token, skips
+  persistence until claimed
+- /api/career-assessment/claim — NEW: migrates assessment
+- /api/career-assessment/{aid} — accepts ?anon_token=
+- /api/integrity/event — accepts anonymous_token (Session 43-A1.5b)
+
+**Frontend changes:**
+- readiness-check.html — sends no auth for anon
+- ai-assessment.html — anon-aware gates + register-and-claim CTA
+- integrity-capture.js — sends anon_token when email absent; fixed
+  syntax error from earlier patch
+
+**Cache-bust:**
+- 8 templates got ?v=20261012b on integrity-capture.js include
+
+**Commits:**
+- 38feac8: anonymous_sessions module + table
+- 4fbf876: /start accepts anon
+- d42fa5f: /answer, /complete, /claim (all anon-aware)
+- 6889649: /{aid} accepts anon_token
+- 59f6c18: fix /claim before generic route
+- 93dc598: frontend anonymous flow + register-and-claim CTA
+- (pending): integrity for anon sessions + cache bust
+
+**Expected conversion impact:** /readiness-check conversion should rise
+from 28% to 55-75% because users no longer hit the login wall.
+
+**Verification:**
+- Test user: newashtester@gmail.com
+- Certificate: RDC-DBE9676715FF (shows 8 tab switches in integrity panel)
+- All 5 signal types fired and landed in DB
+
+**A1.5 is closed. Next: A1.5c (GA4 instrumentation for the anon funnel).**
