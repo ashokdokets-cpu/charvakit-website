@@ -7004,6 +7004,84 @@ async def api_career_assessment_learning_path(request: Request, assessment_id: s
     require_auth_for_email(request, email)
     return career_assessment_engine.generate_learning_path(assessment_id, email)
 
+@app.post("/api/career-assessment/claim")
+@limiter.limit("20/minute")
+async def api_career_assessment_claim(request: Request):
+    """
+    Migrate an anonymous assessment to the authenticated user's account.
+
+    Called after the user registers/logs in, with the anonymous_token
+    from the /start response. Requires auth (email must match the caller).
+    """
+    data = await request.json()
+    token = (data.get("anonymous_token") or data.get("token") or "").strip()
+    email = (data.get("email") or "").strip().lower()
+
+    if not token:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "anonymous_token required"})
+    if not email:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "email required"})
+
+    # Caller must own this email
+    require_auth_for_email(request, email)
+
+    import anonymous_sessions
+    try:
+        result = anonymous_sessions.claim_token(token, email)
+    except ValueError as e:
+        return JSONResponse(status_code=400, content={"status": "error", "message": str(e)})
+
+    assessment_id = result["assessment_id"]
+
+    # Now that the assessment belongs to a real user, persist it to results
+    try:
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT role, industry, level, format, score, correct_count, num_questions
+            FROM charvak_career_assessments
+            WHERE assessment_id = %s
+        """, (assessment_id,))
+        row = cur.fetchone()
+        cur.close()
+        conn.close()
+
+        if row:
+            role, industry, level, fmt, score, correct_count, num_questions = row
+            if score is not None:
+                from results_system import results_system
+                results_system.record_assessment_result(
+                    email=email,
+                    assessment_type="career_readiness",
+                    assessment_name=f"{role} in {industry} ({fmt})",
+                    score=float(score),
+                    total_questions=num_questions or 10,
+                    correct_answers=correct_count or 0,
+                    details={
+                        "assessment_id": assessment_id,
+                        "role": role,
+                        "industry": industry,
+                        "level": level,
+                        "size": "quick",
+                        "format": fmt,
+                        "claimed_from_anonymous": True,
+                    },
+                    skill=f"career_{fmt}",
+                    difficulty=level,
+                )
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning(f"claim persistence failed: {e}")
+
+    return {
+        "status": "success",
+        "assessment_id": assessment_id,
+        "email": email,
+        "message": "Assessment claimed successfully",
+    }
+
+
 @app.get("/api/career-assessment/{assessment_id}")
 @limiter.limit("120/minute")
 async def api_career_assessment_get(
