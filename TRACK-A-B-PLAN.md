@@ -229,3 +229,105 @@ Track A runs weekly. Track B runs monthly. Track A funds this quarter.
 Track B builds next year. When Track A stalls, pause Track B. When
 Track B pilots produce signal, scale Track B without touching Track A
 cadence. Shared infrastructure is what makes both viable.
+---
+
+## Revised Track A — full sequence (updated 2026-10-12, evening)
+
+Based on Oct 11-12 GA4 + DB data:
+- 419 users, 411 new, 283 key events (+87% from prior day)
+- `/readiness-check` converts 28.5% to key events
+- `/placement-prep-2026` converts **239%** to key events (no signup wall)
+- Oct 10 spike: 217 users (expected 30-145), 88 key events (expected 9-45)
+- Zero revenue
+- Zero retention after day 1
+
+**The signal:** Flow friction is the bottleneck, not features or traffic.
+
+### Updated batch order
+
+| Batch | What | Effort | Why |
+|---|---|---|---|
+| A1 | Small cleanup (Render password, PAYPAL_MODE, flicker, CI hook) | 45 min | Hygiene — closes 4 long-carried flags |
+| **A1.5** | **Signup wall fix** — let students take check before login | **1.5 sessions** | **3-5x more certificates** |
+| A1.6 | AI Tools one-off purchases at Rs 99 (Resume Roast, etc.) | 1 session | New revenue line, impulse-buy |
+| A1.7 | IELTS deep diagnostic micro-paywall (Rs 99) | 1 session | Higher revenue per user |
+| A1.8 | WhatsApp loop instrumentation (UTM tags on share URLs) | 0.5 session | Measure + grow viral coefficient |
+| A1.9 | Placement-prep instrumentation + promotion | 0.5 session | Promote the 8x-more-efficient page |
+| **A1.10** | **Fix 404 on `/readiness/RDC-433259E0C0D1`** | **5 min** | **56 users hit a dead URL** |
+| A2 | Certificate round 3 (QR, watermark, i18n) | 1 session | Polish artifact |
+| A2.5 | Real social proof feed (from DB, not fabricated) | 0.5 session | Trust without legal risk |
+| A3 | FYP features (Citation, Milestone, Plagiarism, Refine) | 1 session | Product capability |
+| A4 | Personalized training views on /training-engine | 1 session | Cross-sell |
+| A5 | DoketsRB bidirectional sync | 2 sessions | Resume-jobs bridge |
+| A6 | Benchmark data instrumentation | 1 session | Foundation for moat monetization |
+| A7 | Certificate-as-a-Service packaging | 1-2 sessions | B2B revenue line |
+
+**Total: ~12-13 sessions.** Split as:
+
+- Session 1: A1 + A1.10 (~1 hr)
+- Session 2: A1.5a — backend (~3 hrs)
+- Session 3: A1.5b + A1.5c — frontend + GA4 (~3 hrs)
+- Session 4: A1.6 + A1.7 (~4 hrs)
+- Session 5: A1.8 + A1.9 + A2.5 (~4 hrs)
+- Session 6: A2 + A3 (~6 hrs)
+- Sessions 7-10: A4, A5, A6, A7 (~6-8 sessions)
+
+**Revenue timeline:** Zero for 2-3 more weeks. First revenue expected after A1.6 (AI Tools purchases) — realistic target is end of October.
+
+**Moat timeline:** Benchmark data becomes statistically meaningful at 500+ certificates. Certificate-as-a-Service viable at 1,000+ certificates.
+
+---
+
+## Monetization strategy (based on Oct 12 data review)
+
+**Do now:**
+- A1.6: AI Tools one-off purchases
+- A1.7: IELTS diagnostic micro-paywall
+
+**Do soon:**
+- A2.5: Real social proof (never fabricate)
+- Email retargeting (not WhatsApp — policy/legal risk)
+- Tool-gated B2B audit offer (from free Cloud Waste Calculator)
+
+**Defer to Q1 2027:**
+- Job Seeker Survival Pack bundle
+- 48-Hour Placement fee (needs volume first)
+- Benchmark API
+- Integrity classifier licensing
+
+**Never do:**
+- WhatsApp cold messaging (policy violation)
+- Fake social proof popups (Consumer Protection Rules violation)
+
+---
+
+## The proprietary moat (based on scoring analysis)
+
+**Three defensible assets:**
+
+1. **Role Readiness Score formula + benchmark data** — the calibration underneath makes each score meaningful. Compounds with volume.
+2. **Integrity fact panel + weighted classifier** — the honest trust layer. No competitor offers this in India today.
+3. **Adaptive ability baseline (Elo)** — enables longitudinal tracking. Rare in Indian assessment tools.
+
+**These become revenue when:**
+- 1,000+ certificates for statistical significance
+- 10+ interested institutional buyers
+- Packaging as Certificate-as-a-Service API
+
+**Track B is the path to monetize the moat.** Not before.
+
+---
+
+## The one-paragraph strategy (locked)
+
+Fix the flow. Reach 500-1,000 certificates. Instrument everything.
+Launch one-off purchases (A1.6) and IELTS diagnostic (A1.7) as the first revenue lines.
+Build Certificate-as-a-Service (A7) as the first B2B revenue line at 1,000+ certificates.
+Add CSR (Track B) parallel once Track A proves the flow.
+Monetize the moat when volume justifies it.
+
+**Revenue timeline:**
+- Week 1-2: Flow fixes (A1, A1.5) → 3x more certs
+- Week 3-4: First paid features (A1.6, A1.7) → Rs 10-50K/month
+- Month 2-3: Certificate-as-a-Service (A7) → Rs 50K-2L/month
+- Month 4-6: Benchmark API, moat monetization, CSR
