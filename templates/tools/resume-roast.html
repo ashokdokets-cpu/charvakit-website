@@ -124,4 +124,39 @@ async function runTool() {
 }
 
 </script>
+
+<!-- Session 43-A1.6: one-off paid path -->
+<script src="/static/js/tool-pay.js?v=1"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    if (typeof ToolPay === 'undefined') {
+        console.warn('ToolPay helper not loaded');
+        return;
+    }
+    ToolPay.init({
+        toolSlug: 'resume_roast',
+        toolName: 'Resume Roast',
+        collectInput: function () {
+            return {
+                resume: document.getElementById('resumeText').value.trim(),
+                job_title: document.getElementById('jobTitle').value.trim() || 'General'
+            };
+        },
+        renderResult: function (result) {
+            // Reuse the page's existing renderResult
+            if (typeof renderResult === 'function') {
+                renderResult(result);
+            } else {
+                var body = document.getElementById('resultBody');
+                if (body) body.innerHTML = '<pre>' + JSON.stringify(result, null, 2) + '</pre>';
+            }
+            var card = document.getElementById('resultCard');
+            if (card) {
+                card.classList.remove('d-none');
+                card.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+    });
+});
+</script>
 {% endblock %}
