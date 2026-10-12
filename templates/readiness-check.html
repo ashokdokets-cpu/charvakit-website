@@ -328,9 +328,21 @@
         sessionStorage.setItem("charvak_anon_token", data.anonymous_token);
         sessionStorage.setItem("charvak_anon_aid", data.assessment_id);
         extra = "&anon=1";
+        // A1.5c: track anonymous start
+        if (typeof charvakTrack === "function") {
+          charvakTrack("readiness_anon_start", {
+            role: role, level: level, aid: data.assessment_id
+          });
+        }
       } else {
         sessionStorage.removeItem("charvak_anon_token");
         sessionStorage.removeItem("charvak_anon_aid");
+        // A1.5c: track authed start
+        if (typeof charvakTrack === "function") {
+          charvakTrack("readiness_authed_start", {
+            role: role, level: level, aid: data.assessment_id
+          });
+        }
       }
 
       window.location.href = "/ai-assessment?aid=" + encodeURIComponent(data.assessment_id) + extra + "&from=readiness-check";
