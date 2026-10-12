@@ -346,6 +346,36 @@
     var _wa = document.getElementById("rdWhatsApp");
     if (_wa) _wa.href = _rdWhatsAppUrl(c);
 
+    // Session 43-A1.8: anchor click listeners (the real buttons are plain
+    // <a href> anchors; the old rdOpenShare() helper is dead code).
+    // Attach once, guard with data-bound to avoid duplicate listeners on re-render.
+    if (_li && !_li.dataset.a18Bound) {
+      _li.dataset.a18Bound = "1";
+      _li.addEventListener("click", function () {
+        if (typeof charvakTrack === "function") {
+          charvakTrack("cert_shared", {
+            channel: "linkedin",
+            cert_id: c.certificate_id || "",
+            role: c.role || "",
+            level: c.level || "",
+          });
+        }
+      });
+    }
+    if (_wa && !_wa.dataset.a18Bound) {
+      _wa.dataset.a18Bound = "1";
+      _wa.addEventListener("click", function () {
+        if (typeof charvakTrack === "function") {
+          charvakTrack("cert_shared", {
+            channel: "whatsapp",
+            cert_id: c.certificate_id || "",
+            role: c.role || "",
+            level: c.level || "",
+          });
+        }
+      });
+    }
+
     renderSkillChart(c.payload && c.payload.skill_gap ? c.payload.skill_gap : []);
 
     // Session 19: upgrade CTA when the score is below the benchmark
@@ -524,6 +554,16 @@
       url = _rdWhatsAppUrl(c);
     }
 
+    // Session 43-A1.8: track the share emission for the viral loop.
+    if (typeof charvakTrack === 'function') {
+      charvakTrack('cert_shared', {
+        channel: type || 'unknown',
+        cert_id: c.certificate_id || '',
+        role: c.role || '',
+        level: c.level || '',
+      });
+    }
+
     // window.open must be called synchronously in the click handler.
     // On mobile Chrome/Safari this is the only reliable way to open
     // a new tab or an external app (WhatsApp).
@@ -534,14 +574,19 @@
     }
   };
 
-  function _rdShareCertUrl(c) {
-    return _rdShareBase() + "/readiness/" + encodeURIComponent(c.certificate_id || "");
+  function _rdShareCertUrl(c, channel) {
+    var base = _rdShareBase() + "/readiness/" + encodeURIComponent(c.certificate_id || "");
+    // Session 43-A1.8: UTM-tag the shared URL for attribution.
+    if (typeof charvakShareUrl === 'function') {
+      return charvakShareUrl(base, channel || 'unknown', 'readiness_cert');
+    }
+    return base;
   }
 
   function _rdLinkedInUrl(c) {
     var name = "Role Readiness Certificate - " + c.role + " (" + capitalize(c.level) + ")";
     var org = "Charvak IT Consulting";
-    var url = _rdShareCertUrl(c);
+    var url = _rdShareCertUrl(c, 'linkedin');
     return "https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME"
       + "&name=" + encodeURIComponent(name)
       + "&organizationName=" + encodeURIComponent(org)
@@ -552,7 +597,7 @@
   function _rdWhatsAppUrl(c) {
     var msg = "I just got my Verified Role Readiness Score on Charvak! "
       + c.readiness_score + "/100 for " + c.role + " (" + capitalize(c.level) + "). "
-      + "See my certificate: " + _rdShareCertUrl(c);
+      + "See my certificate: " + _rdShareCertUrl(c, 'whatsapp');
     return "https://wa.me/?text=" + encodeURIComponent(msg);
   }
 
@@ -636,6 +681,10 @@ async function rdLoadIntegrity(certId) {
 
 // Kick off once we know the certificate ID from the URL.
 document.addEventListener('DOMContentLoaded', function() {
+  // Session 43-A1.8: track arrivals from share links
+  if (typeof charvakTrackShareLanding === 'function') {
+    charvakTrackShareLanding('readiness');
+  }
   var path = window.location.pathname || '';
   var m = path.match(/\/readiness\/(RDC-[A-Z0-9]+)/i);
   if (m && m[1]) rdLoadIntegrity(m[1]);

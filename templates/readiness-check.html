@@ -439,6 +439,11 @@
 
   // Session 42-6: update the CTA label when the role changes
   document.addEventListener("DOMContentLoaded", function() {
+  // Session 43-A1.8: track arrivals from share links
+  if (typeof charvakTrackShareLanding === 'function') {
+    charvakTrackShareLanding('readiness_check');
+  }
+
     var roleEl = document.getElementById("rcRole");
     if (!roleEl) return;
     roleEl.addEventListener("change", function() {
