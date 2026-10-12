@@ -511,3 +511,36 @@ These new batches slot in after A1.5 and before A1.6:
 **Rationale:** A1.11 is the next most valuable small thing after A1.5c.
 It closes the employer-side loop. A1.13 (glossary) can piggyback on the
 same session since both use existing content.
+---
+
+## A1.11 COMPLETE (2026-10-12)
+
+The verify URL now renders as a branded HTML page for browsers and
+returns JSON for API clients. Commits:
+
+- e0b2e2e: feat(verify): A1.11 - text-based branded HTML verification page
+
+**What shipped:**
+- New template: templates/verify.html
+- Route: /api/readiness/verify/{hash} branches on Accept header
+- Browser → HTML page with Charvak branding + integrity facts
+- API client → JSON (unchanged)
+- ?format=json force JSON
+- Invalid hash → friendly "not found" page
+
+**What this closes:**
+- Employer opens verify link → sees a readable page (not raw JSON)
+- Charvak wordmark in brand green + AI-Verified Talent pill
+- Score + benchmark + certificate details + integrity facts
+- Cryptographically signed trust seal
+- CTA to /readiness-check (funnel loop closed)
+
+**Verification:**
+- /api/readiness/verify/eeb2390f55e93db0 → HTML page
+- /api/readiness/verify/eeb2390f55e93db0?format=json → JSON
+- /api/readiness/verify/0000000000000000 → friendly not-found card
+
+**Remaining A1.11 follow-ups (small):**
+- A1.13: Public integrity glossary (/integrity) — reference page
+- A1.12: Candidate-side explainer for blue badge — 30 min
+- A1.15: Email certificate to employer — 1 session
