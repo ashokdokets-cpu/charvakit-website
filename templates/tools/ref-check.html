@@ -123,4 +123,32 @@ async function runTool() {
 }
 
 </script>
+
+<!-- Session 43-A1.6: one-off paid path -->
+<script src="/static/js/tool-pay.js?v=1"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    if (typeof ToolPay === 'undefined') return;
+    ToolPay.init({
+        toolSlug: 'ref_check',
+        toolName: 'Ref-Check Roulette',
+        collectInput: function () {
+            return { ref_names: [document.getElementById("ref1").value.trim(), document.getElementById("ref2").value.trim(), document.getElementById("ref3").value.trim()].filter(Boolean) };
+        },
+        renderResult: function (result) {
+            if (typeof renderResult === 'function') {
+                renderResult(result);
+            } else {
+                var body = document.getElementById('resultBody');
+                if (body) body.innerHTML = '<pre>' + JSON.stringify(result, null, 2) + '</pre>';
+            }
+            var card = document.getElementById('resultCard');
+            if (card) {
+                card.classList.remove('d-none');
+                card.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+    });
+});
+</script>
 {% endblock %}

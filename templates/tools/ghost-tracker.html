@@ -151,4 +151,41 @@ function addAppRow() {
     wrap.appendChild(row);
 }
 </script>
+
+<!-- Session 43-A1.6: one-off paid path -->
+<script src="/static/js/tool-pay.js?v=1"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    if (typeof ToolPay === 'undefined') return;
+    ToolPay.init({
+        toolSlug: 'ghost_tracker',
+        toolName: 'Ghosted Tracker',
+        collectInput: function () {
+            var rows = document.querySelectorAll('#appRows .app-row');
+            var applications = [];
+            rows.forEach(function (row) {
+                var inputEl = row.querySelector('input');
+                var selectEl = row.querySelector('select');
+                var company = inputEl ? inputEl.value.trim() : '';
+                var status = selectEl ? selectEl.value : '';
+                if (company) applications.push({ company: company, status: status });
+            });
+            return { applications: applications };
+        },
+        renderResult: function (result) {
+            if (typeof renderResult === 'function') {
+                renderResult(result);
+            } else {
+                var body = document.getElementById('resultBody');
+                if (body) body.innerHTML = '<pre>' + JSON.stringify(result, null, 2) + '</pre>';
+            }
+            var card = document.getElementById('resultCard');
+            if (card) {
+                card.classList.remove('d-none');
+                card.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+    });
+});
+</script>
 {% endblock %}
