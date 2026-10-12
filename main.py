@@ -6848,17 +6848,55 @@ async def api_career_assessment_options(request: Request):
 @app.post("/api/career-assessment/start")
 @limiter.limit("20/minute")
 async def api_career_assessment_start(request: Request):
-    """Start a career assessment. Auth + credits by size."""
+    """
+    Start a career assessment.
+
+    Two modes:
+      - Authenticated (email provided): full flow with credits
+      - Anonymous (no email): free quick MCQ only, returns anonymous_token
+    """
     data = await request.json()
     email = (data.get("email") or "").strip().lower()
+
+    # --- ANONYMOUS PATH ---
     if not email:
-        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
+        import secrets as _secrets
+        import anonymous_sessions
+
+        data["size"] = "quick"
+        data["format"] = "mcq"
+
+        temp_token = _secrets.token_hex(16)
+        placeholder_email = f"anon-{temp_token}@anon.charvak.local"
+        data["email"] = placeholder_email
+
+        result = career_assessment_engine.start_assessment(data)
+
+        if result.get("status") != "success":
+            return JSONResponse(
+                status_code=400,
+                content={"status": "error", "message": result.get("message", "Could not start anonymous assessment")},
+            )
+
+        assessment_id = result.get("assessment_id")
+        try:
+            real_token = anonymous_sessions.create_session(assessment_id)
+        except Exception as e:
+            return JSONResponse(
+                status_code=500,
+                content={"status": "error", "message": f"Could not create session: {e}"},
+            )
+
+        result["anonymous_token"] = real_token
+        result["anonymous"] = True
+        return result
+
+    # --- AUTHENTICATED PATH ---
     require_auth_for_email(request, email)
 
     size = (data.get("size") or "quick").strip().lower()
     fmt = (data.get("format") or "mcq").strip().lower()
 
-    # AI-scored formats cost more (batch OpenAI call at scoring time)
     ai_formats = {"behavioral", "system_design", "debugging", "case_study"}
     is_ai = fmt in ai_formats
 
