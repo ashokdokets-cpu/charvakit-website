@@ -7213,6 +7213,7 @@ async def api_integrity_event(request: Request):
     try:
         data = await request.json()
         email = (data.get("email") or "").strip().lower()
+        anon_token = (data.get("anonymous_token") or "").strip()
         raw_aid = data.get("assessment_id")
         raw_etype = data.get("event_type")
         if not isinstance(raw_aid, str) or not isinstance(raw_etype, str):
@@ -7224,12 +7225,35 @@ async def api_integrity_event(request: Request):
         event_type = raw_etype.strip()
         metadata = data.get("metadata") or {}
 
+        # Session 43-A1.5b: allow anonymous sessions to record integrity
+        # events via an anonymous_token. The placeholder email is derived
+        # from the token so it always matches the assessment's stored email.
+        if not email and anon_token:
+            import anonymous_sessions
+            try:
+                resolved = anonymous_sessions.resolve_token(anon_token)
+            except ValueError as e:
+                return JSONResponse(
+                    status_code=403,
+                    content={"status": "error", "message": str(e)},
+                )
+            if resolved["assessment_id"] != assessment_id:
+                return JSONResponse(
+                    status_code=403,
+                    content={"status": "error", "message": "Token does not match assessment"},
+                )
+            # Use the placeholder email so the ownership check below passes
+            email = resolved["placeholder_email"]
+
         if not email:
             return JSONResponse(
                 status_code=401,
-                content={"status": "error", "message": "Login required.", "login_url": "/login"},
+                content={"status": "error", "message": "Login or anonymous_token required.", "login_url": "/login"},
             )
-        require_auth_for_email(request, email)
+
+        # Only call auth check for real (non-placeholder) emails
+        if not email.endswith("@anon.charvak.local"):
+            require_auth_for_email(request, email)
 
         if not assessment_id or not event_type:
             return JSONResponse(
