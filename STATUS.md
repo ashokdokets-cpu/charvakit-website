@@ -1,3 +1,28 @@
+## Session 2026-10-13 - Session 43-A1.7
+
+**HEAD:** `731b70a`
+
+### Shipped
+
+- IELTS Deep Report micro-paywall (Rs 99)
+- 9 files changed, +1,885 / -1
+- 4 new routes, new engine, new frontend, new PDF renderer
+
+### Bugs fixed mid-session
+
+- Country detection returning full names
+- fpdf2 X-drift crash on multi_cell after cell
+- EmailEngine.send_email signature mismatch
+- PDF header showing "Charvak Premium Report"
+
+### Next
+
+- A1.8 (WhatsApp loop) or A2 (Certificate round 3)
+- A1.6 country-code cleanup (5 min)
+- Prod smoke test after deploy
+
+---
+
 # Charvak IT Consulting - Project Status
 
 **Last updated:** 2026-10-12 (Session 43 - FYP MBA calibration + integrity fact panel)

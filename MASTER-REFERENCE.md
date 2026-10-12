@@ -1,12 +1,12 @@
 # CHARVAKIT.COM - MASTER REFERENCE
 ## Charvak IT Consulting Pvt Ltd
-### Last updated: October 12, 2026 (Session 43 - FYP MBA calibration + integrity fact panel)
+### Last updated: October 13, 2026 (Session 43-A1.7 - IELTS Deep Report micro-paywall)
 
 **HEAD:** c56e9c6
 **Live:** https://www.charvakit.com
 **Resume here:** see `SESSION-CONTEXT.md` and `TRACK-A-B-PLAN.md`
 **Backlog:** see `OUTSTANDING-WORK-INVENTORY.md` (master list of remaining work)
-**Version:** v3.5-session-43-20261012
+**Version:** v3.5-session-43-a17-20261013
 
 ### Reference Documents
 
