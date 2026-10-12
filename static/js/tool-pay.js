@@ -257,16 +257,35 @@ window.ToolPay = (function () {
                         return cachedPrice.order_id;
                     },
                     onApprove: function (data) {
-                        overlay.remove();
-                        var input = cfg.collectInput();
-                        var payload = Object.assign({}, input, {
-                            tool_slug: cfg.toolSlug,
-                            email: email,
-                            user_id: _getUserId(),
-                            gateway: 'paypal',
-                            paypal_order_id: data.orderID
+                        // Session 43-A1.7: capture server-side BEFORE passing the
+                        // order_id to /run. Without this, the order stays in
+                        // APPROVED state and verify_and_claim_paypal rejects it.
+                        return fetch('/api/payment/paypal/capture', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ order_id: data.orderID })
+                        }).then(function (r) {
+                            return r.json();
+                        }).then(function (j) {
+                            if (j.status !== 'success') {
+                                overlay.remove();
+                                reject(new Error(j.message || 'PayPal capture failed'));
+                                return;
+                            }
+                            overlay.remove();
+                            var input = cfg.collectInput();
+                            var payload = Object.assign({}, input, {
+                                tool_slug: cfg.toolSlug,
+                                email: email,
+                                user_id: _getUserId(),
+                                gateway: 'paypal',
+                                paypal_order_id: data.orderID
+                            });
+                            resolve(payload);
+                        }).catch(function (err) {
+                            overlay.remove();
+                            reject(err);
                         });
-                        resolve(payload);
                     },
                     onCancel: function () {
                         overlay.remove();

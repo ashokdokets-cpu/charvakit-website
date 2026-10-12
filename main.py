@@ -2884,10 +2884,26 @@ async def api_tools_paid_create_order(request: Request):
     country_code = (data.get("country_code") or "").strip().upper()
     if not country_code:
         try:
-            from ip_detection import ip_detector
-            country_code = ip_detector.detect_from_request(request).get("country", "IN")
+            # Session 43-A1.6-cleanup: use improved_ip_detector (returns ISO codes)
+            from improved_ip_detection import improved_ip_detector
+            _loc = improved_ip_detector.detect_from_request(request) or {}
+            country_code = _loc.get("country_code") or _loc.get("country") or "IN"
         except Exception:
             country_code = "IN"
+
+    # Normalize to 2-letter ISO (ip detector may return a full name in edge cases)
+    country_code = (country_code or "").strip()
+    if len(country_code) == 2:
+        country_code = country_code.upper()
+    else:
+        _NAME_TO_ISO_T = {
+            "India": "IN", "United States": "US", "USA": "US",
+            "United Kingdom": "GB", "UK": "GB", "Germany": "DE",
+            "France": "FR", "Canada": "CA", "Australia": "AU",
+            "Singapore": "SG", "Japan": "JP", "China": "CN",
+            "United Arab Emirates": "AE", "UAE": "AE",
+        }
+        country_code = _NAME_TO_ISO_T.get(country_code, "IN")
 
     import tool_payment_engine as tpe
     result = tpe.create_order(tool_slug=tool_slug, country_code=country_code)
@@ -12143,6 +12159,35 @@ async def ielts_writing_evaluate(request: Request):
 # ============================================================
 # Session 43-A1.7: IELTS Deep Report micro-paywall
 # ============================================================
+
+@app.post("/api/payment/paypal/capture")
+@limiter.limit("30/minute")
+async def api_paypal_capture(request: Request):
+    """
+    Capture an approved PayPal order (Session 43-A1.7).
+
+    Called by the client after the buyer approves in the PayPal modal.
+    Server-side capture is safer than client-side actions.order.capture()
+    because it doesn't trust the buyer's browser session.
+
+    Body: {order_id}
+    Returns: {status, paypal_order_id, capture_id, status_field,
+              amount, currency, already_captured}
+    """
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "Invalid JSON"})
+
+    order_id = (data.get("order_id") or "").strip()
+    if not order_id:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "order_id required"})
+
+    result = payment_engine.capture_paypal_order(order_id)
+    if result.get("status") != "success":
+        return JSONResponse(status_code=402, content=result)
+    return result
+
 
 @app.get("/api/ielts/deep-report/price")
 @limiter.limit("60/minute")
