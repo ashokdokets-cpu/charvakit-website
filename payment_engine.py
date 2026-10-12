@@ -518,6 +518,87 @@ class PaymentEngine:
             logger.error(f"PayPal fetch exception: {e}")
             return {"status": "error", "message": str(e)}
 
+    def capture_paypal_order(self, paypal_order_id: str) -> Dict:
+        """
+        Capture an approved PayPal order (Session 43-A1.7).
+
+        Called after the buyer approves in the PayPal modal. Fetches an
+        OAuth token, POSTs to /capture, and returns the captured amount
+        + currency so the caller can verify against the expected price.
+
+        Idempotent: PayPal returns the same capture_id if called twice
+        on an already-captured order; we detect that via 422 + fallback
+        fetch.
+        """
+        if not self.paypal_client_id or not self.paypal_client_secret:
+            return {"status": "error", "message": "PayPal not configured"}
+
+        if not paypal_order_id or len(paypal_order_id) < 8:
+            return {"status": "error", "message": "Invalid PayPal order_id format"}
+
+        try:
+            import requests
+            base = self._paypal_base()
+            auth_resp = requests.post(
+                f"{base}/v1/oauth2/token",
+                auth=(self.paypal_client_id, self.paypal_client_secret),
+                data={"grant_type": "client_credentials"},
+                timeout=10
+            )
+            token = (auth_resp.json() or {}).get("access_token")
+            if not token:
+                return {"status": "error", "message": "PayPal auth failed"}
+
+            r = requests.post(
+                f"{base}/v2/checkout/orders/{paypal_order_id}/capture",
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Content-Type": "application/json",
+                },
+                timeout=15,
+            )
+
+            if r.status_code == 404:
+                return {"status": "error", "message": "PayPal order not found"}
+
+            if r.status_code == 422:
+                # Already captured or otherwise unprocessable.
+                fetched = self.fetch_paypal_order(paypal_order_id)
+                if fetched.get("status") == "success" and fetched.get("captured"):
+                    return {
+                        "status": "success",
+                        "paypal_order_id": paypal_order_id,
+                        "capture_id": None,
+                        "status_field": "COMPLETED",
+                        "amount": fetched.get("amount"),
+                        "currency": fetched.get("currency"),
+                        "already_captured": True,
+                    }
+                return {"status": "error", "message": f"PayPal capture failed: {r.status_code} {r.text[:200]}"}
+
+            if r.status_code not in (200, 201):
+                logger.error(f"PayPal capture failed: {r.status_code} {r.text[:200]}")
+                return {"status": "error", "message": f"PayPal API error: {r.status_code}"}
+
+            data = r.json()
+            pu = (data.get("purchase_units") or [{}])[0]
+            payments = (pu.get("payments") or {}).get("captures") or [{}]
+            capture = payments[0] if payments else {}
+            amount_obj = capture.get("amount") or pu.get("amount") or {}
+
+            return {
+                "status": "success",
+                "paypal_order_id": data.get("id"),
+                "capture_id": capture.get("id"),
+                "status_field": data.get("status"),           # 'COMPLETED'
+                "amount": float(amount_obj.get("value") or 0),
+                "currency": amount_obj.get("currency_code"),
+                "already_captured": False,
+            }
+        except Exception as e:
+            logger.error(f"PayPal capture exception: {e}")
+            return {"status": "error", "message": str(e)}
+
     def verify_upi_payment(self, txn_id: str, amount: float, notes: str = "") -> Dict:
         """Record UPI payment."""
         order_id = f"UPI_{secrets.token_hex(6)}"
