@@ -544,3 +544,36 @@ returns JSON for API clients. Commits:
 - A1.13: Public integrity glossary (/integrity) — reference page
 - A1.12: Candidate-side explainer for blue badge — 30 min
 - A1.15: Email certificate to employer — 1 session
+---
+
+## A1.13 COMPLETE (2026-10-12)
+
+Public integrity glossary + cross-links shipped. Commits:
+- 0d433c8: feat(integrity): A1.13 - public integrity glossary page
+- 8144c99: feat(integrity): A1.13 - cross-links + 2026 copyright + dedupe
+
+**What shipped:**
+- templates/integrity.html (12.9 KB) — public glossary page
+  - Why we record: AI cheating problem
+  - What we record: 5 signal cards (paste, tab switch, context menu,
+    focus out, rapid input)
+  - How we classify: 4 risk levels (clean, minor, moderate, elevated)
+  - What appears: 2 badge states (green shield / blue info)
+  - What we dont do: dont accuse, dont block, dont sell data
+  - CTA: /readiness-check
+- Route /integrity added to main.py (matches template_response pattern)
+- Footer "Assessment Integrity" link under Legal
+- Certificate card "Learn more about integrity ->" link (opens new tab)
+- Footer copyright: 2022 -> 2026
+
+**Verification:**
+- /integrity loads with all sections rendered
+- Footer shows single "Assessment Integrity" link
+- Certificate card shows the "Learn more" link next to existing toggle
+- Copyright year is 2026
+
+**Remaining small follow-ups:**
+- A1.12: Candidate-side explainer for blue badge (30 min)
+- A1.15: Email certificate to employer (1 session)
+
+**Next major batch:** A1.6 (AI Tools one-off purchases at Rs 99)
