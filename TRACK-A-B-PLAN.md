@@ -577,3 +577,69 @@ Public integrity glossary + cross-links shipped. Commits:
 - A1.15: Email certificate to employer (1 session)
 
 **Next major batch:** A1.6 (AI Tools one-off purchases at Rs 99)...
+---
+
+## A1.6 COMPLETE (2026-10-13)
+
+All 12 AI Tools now have a one-off payment path (Rs 99 / $4.99 / etc.)
+alongside the existing credit-gated path. Global pricing across 13 currencies.
+
+**Architecture:**
+- Explicit per-market price table (not conversion math)
+- 3 tiers: tier_1 (India + emerging), tier_2 (emerging), tier_3 (global)
+- INR -> Razorpay, all others -> PayPal
+- NGN/BRL/ZAR fall back to USD (PayPal does not support those currencies)
+- Purchases in charvak_tool_purchases
+- Idempotent on razorpay_payment_id / paypal_order_id
+
+**Files added:**
+- tool_payment_engine.py
+- migrations/20261012_tool_purchases.sql
+- static/js/tool-pay.js
+
+**Files modified:**
+- main.py: +2 routes + _dispatch_paid_tool
+- global_config.py: COUNTRY_TO_CURRENCY promoted to module level
+- 12 tool templates: ToolPay.init() blocks
+
+**Pricing table (final):**
+| Tier | India | US | UK | EU | UAE | SG | AU | CA | JP | CN |
+|------|-------|-----|-----|-----|------|-----|-----|-----|-----|-----|
+| tier_1 | Rs 99 | $1.99 | GBP 1.49 | EUR 1.99 | AED 7 | SGD 2.49 | AUD 2.99 | CAD 2.49 | JPY 300 | CNY 14 |
+| tier_2 | Rs 149 | $2.99 | GBP 2.49 | EUR 2.99 | AED 11 | SGD 3.99 | AUD 4.49 | CAD 3.99 | JPY 450 | CNY 21 |
+| tier_3 | Rs 299 | $4.99 | GBP 3.99 | EUR 4.49 | AED 17 | SGD 5.99 | AUD 6.49 | CAD 5.99 | JPY 700 | CNY 32 |
+
+BR -> $2.99 USD (tier_2 fallback)
+NG -> $1.99 USD (tier_1 fallback)
+ZA -> $2.99 USD (tier_2 fallback)
+
+**Verified E2E on prod:**
+- TPUR-1C8ED6AEF1B7
+- tool: resume_roast
+- INR 99.00
+- razorpay order_Tn6FaN1avlAnE2
+- razorpay payment pay_Tn6GxHrPLMNCuN
+- email: hr@charvakit.com
+- status: completed
+- has_result: True
+
+**Full 12-tool frontend verification:**
+- All 12 return HTTP 200
+- All 12 include tool-pay.js
+- All 12 include ToolPay.init
+
+**Commits:**
+- bb68098: backend - currency-aware tool payment engine
+- 645e2d5: routes - create-order + run
+- 6058ded: frontend - tool-pay.js + Resume Roast
+- cfe8fd1: one-off button on all 12 tools
+
+**This is the first real revenue line in the platform.**
+
+**Follow-ups flagged (not blocking):**
+- Cron to clean up pending purchases older than 24h
+- Email receipt after successful purchase
+- Retry endpoint for captured_but_failed status
+- Optional: exchange-rate table staleness review
+
+**Next batch:** A1.7 - IELTS diagnostic micro-paywall
