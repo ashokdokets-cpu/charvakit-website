@@ -410,3 +410,104 @@ from 28% to 55-75% because users no longer hit the login wall.
 - All 5 signal types fired and landed in DB
 
 **A1.5 is closed. Next: A1.5c (GA4 instrumentation for the anon funnel).**
+---
+
+## Employer Story Gaps (flagged 2026-10-12, post-A1.5)
+
+The anonymous certificate flow now works end-to-end. The certificate
+shows the correct badge and integrity panel to whoever opens it.
+
+**What's missing for a complete employer-facing experience:**
+
+| Gap | Effort | Impact | Priority |
+|---|---|---|---|
+| A1.11 — Verify URL → HTML page (not JSON) | 1 session | High — non-technical recruiters can read it | Next |
+| A1.12 — Candidate-side explainer for blue badge | 30 min | Low — cosmetic polish | Soon |
+| A1.13 — Public integrity glossary (/integrity) | 30 min | Medium — builds trust, easy reference | Soon |
+| A1.14 — Employer portal for verification + notes | 2 sessions | Low until real employer demand | Defer |
+| A1.15 — Email certificate to employer from candidate | 1 session | Medium — closes the "share" loop | Medium |
+
+### A1.11 — Verify URL HTML page (recommended next)
+
+**Current state:** /api/readiness/verify/{hash} returns raw JSON. A
+recruiter copying the URL into Slack gets a JSON blob. First impression
+is broken for non-technical audiences.
+
+**Goal:** When the URL is opened in a browser, render a friendly HTML
+page. When called by an API client (Accept: application/json header),
+keep returning JSON.
+
+**Approach:**
+- Detect browser via Accept header or ?format=query
+- HTML version: small page showing verified status, candidate display
+  name, role, level, score, issue date, integrity badge
+- Keep JSON for programmatic callers
+- New template: templates/verify.html
+
+**Effort:** 1 session. Highest-value small build in the trust story.
+
+### A1.12 — Candidate-side explainer for blue badge
+
+**Current state:** The blue "Employer Review Recommended" badge appears
+without context. Candidates may not know what to do with it.
+
+**Goal:** Inline help text: "This assessment recorded some environment
+signals. Employers can still see your score — we just recommend they
+interview you to verify your skills."
+
+**Effort:** 30 min. Add to readiness.html near the badge.
+
+### A1.13 — Public integrity glossary
+
+**Current state:** "Frequently left the assessment tab (8 times)" is
+plain English, but a curious employer might want the deeper explanation.
+
+**Goal:** Public /integrity page explaining:
+- What signals we record (paste, tab_switch, focus_out, etc.)
+- What each means (and what it doesn't mean)
+- Why we show facts, not verdicts
+- How to read the four risk levels (clean / minor / moderate / elevated)
+- Link to /readiness-check and a sample certificate
+
+**Effort:** 30 min. Static page. Good SEO.
+
+### A1.14 — Employer portal (defer until demand)
+
+**Current state:** No employer-side portal.
+
+**Goal (when there's demand):** /verify-employer page where a recruiter
+can paste a certificate ID, see verified data, and optionally leave
+an audit trail.
+
+**Effort:** 2 sessions. Deferred until we have 3+ employers asking
+for it.
+
+### A1.15 — Email certificate to employer
+
+**Current state:** Candidate must copy the certificate URL manually.
+
+**Goal:** "Email this certificate" button on /readiness/{cert_id} that
+sends to any email with a link + summary.
+
+**Effort:** 1 session. Uses existing SendGrid integration.
+
+### Insertion into Track A sequence
+
+These new batches slot in after A1.5 and before A1.6:
+
+- A1.5 (signup wall fix) — DONE
+- **A1.5c (GA4 instrumentation) — next**
+- **A1.11 (verify HTML) — after A1.5c**
+- A1.6 (AI Tools one-off)
+- A1.7 (IELTS diagnostic)
+- A1.8 (WhatsApp loop instrumentation)
+- **A1.12 (candidate-side explainer) — piggyback on A1.8 or A2.5**
+- **A1.13 (integrity glossary) — piggyback on A1.11**
+- A1.9 (placement-prep + real social proof)
+- A1.15 (email certificate) — after A1.7
+- A2 (certificate round 3)
+- A1.14 (employer portal) — defer to Q1 2027
+
+**Rationale:** A1.11 is the next most valuable small thing after A1.5c.
+It closes the employer-side loop. A1.13 (glossary) can piggyback on the
+same session since both use existing content.
