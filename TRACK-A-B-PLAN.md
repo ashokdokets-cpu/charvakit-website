@@ -331,3 +331,21 @@ Monetize the moat when volume justifies it.
 - Week 3-4: First paid features (A1.6, A1.7) → Rs 10-50K/month
 - Month 2-3: Certificate-as-a-Service (A7) → Rs 50K-2L/month
 - Month 4-6: Benchmark API, moat monetization, CSR
+
+---
+
+## Deferred Render dashboard tasks (added 2026-10-12)
+
+The following require the Render dashboard and are deferred until the
+current code-shipping push is complete:
+
+- **A1.1** — Rotate Render Postgres password (pending since Session 19)
+- **A1.2** — Set PAYPAL_MODE=live explicitly on Render env
+
+**Trigger to resume:** after Batch A1.5 (signup wall fix) is fully shipped
+and verified. Or earlier if there is a natural pause in code work.
+
+**Status:** still pending. Do not lose these.
+
+**Why deferred:** they break code-flow and require browser context switch.
+Code batches are higher value per hour in the current push.
