@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Certificate Verified — Charvak</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { height: 100%; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(180deg, #f9fafb 0%, #eef2f5 100%);
+            color: #0f172a;
+            line-height: 1.55;
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+            padding: 32px 16px;
+        }
+        .v-wrap { max-width: 680px; margin: 0 auto; }
+
+        /* Brand header */
+        .v-brand {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+        }
+        .v-brand-text {
+            display: flex;
+            flex-direction: column;
+            line-height: 1;
+        }
+        .v-brand-name {
+            font-weight: 900;
+            font-size: 1.75rem;
+            color: #3ba591;
+            letter-spacing: -0.8px;
+            line-height: 1;
+            margin-bottom: 3px;
+        }
+        .v-brand-sub {
+            font-size: 0.7rem;
+            color: #64748b;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+        .v-brand-tag {
+            font-size: 0.68rem;
+            color: #3ba591;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            padding: 7px 14px;
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            border-radius: 999px;
+            line-height: 1;
+            white-space: nowrap;
+        }
+
+        /* Card */
+        .v-card {
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 0;
+            box-shadow: 0 20px 48px rgba(15,23,42,0.08), 0 4px 12px rgba(15,23,42,0.04);
+            overflow: hidden;
+        }
+
+        /* Status banner */
+        .v-status {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 24px 28px;
+            background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+            border-bottom: 1px solid #a7f3d0;
+        }
+        .v-status.review {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border-bottom-color: #bfdbfe;
+        }
+        .v-status-icon {
+            display: inline-flex;
+            width: 52px;
+            height: 52px;
+            align-items: center;
+            justify-content: center;
+            background: #ffffff;
+            border-radius: 14px;
+            font-size: 1.6rem;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(16,185,129,0.15);
+        }
+        .v-status.review .v-status-icon {
+            box-shadow: 0 4px 12px rgba(59,130,246,0.15);
+        }
+        .v-status-body { padding-top: 4px; }
+        .v-status-title {
+            font-weight: 800;
+            font-size: 1.15rem;
+            margin: 0 0 4px;
+            color: #065f46;
+            letter-spacing: -0.2px;
+        }
+        .v-status.review .v-status-title { color: #1e40af; }
+        .v-status-sub {
+            margin: 0;
+            font-size: 0.9rem;
+            color: #475569;
+            line-height: 1.5;
+        }
+
+        /* Card body */
+        .v-body { padding: 32px 28px; }
+
+        /* Score grid */
+        .v-score-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        .v-score-cell {
+            position: relative;
+            padding: 24px 16px;
+            border-radius: 16px;
+            text-align: center;
+            background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+            border: 1px solid #e2e8f0;
+        }
+        .v-score-cell.primary {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            border-color: #0f172a;
+            color: #fff;
+        }
+        .v-score-value {
+            font-size: 2.75rem;
+            font-weight: 900;
+            line-height: 1;
+            letter-spacing: -2px;
+            color: #0f172a;
+        }
+        .v-score-cell.primary .v-score-value { color: #fff; }
+        .v-score-cell.primary .v-score-value::after {
+            content: '/100';
+            font-size: 0.95rem;
+            color: #94a3b8;
+            font-weight: 600;
+            margin-left: 4px;
+            letter-spacing: 0;
+        }
+        .v-score-label {
+            font-size: 0.72rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-top: 10px;
+            font-weight: 600;
+        }
+        .v-score-cell.primary .v-score-label { color: #94a3b8; }
+
+        /* Section */
+        .v-section-title {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #64748b;
+            font-weight: 700;
+            margin: 0 0 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .v-section-title::before {
+            content: '';
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: #3ba591;
+        }
+
+        /* Details table */
+        .v-details {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 4px 20px;
+            margin-bottom: 28px;
+        }
+        .v-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 0;
+            font-size: 0.95rem;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .v-row:not(:last-child) { border-bottom: 1px solid #e2e8f0; }
+        .v-row-label { color: #64748b; font-weight: 500; }
+        .v-row-value { font-weight: 600; color: #0f172a; text-align: right; }
+        .v-row-value.mono {
+            font-family: 'JetBrains Mono', Consolas, monospace;
+            font-size: 0.82rem;
+            color: #3ba591;
+            background: #ecfdf5;
+            padding: 4px 10px;
+            border-radius: 6px;
+            border: 1px solid #a7f3d0;
+        }
+
+        /* Integrity facts */
+        .v-integrity-list {
+            list-style: none;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 8px 20px;
+            margin-bottom: 8px;
+        }
+        .v-integrity-list li {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            font-size: 0.92rem;
+            color: #334155;
+            line-height: 1.45;
+        }
+        .v-integrity-list li:not(:last-child) {
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .v-integrity-list li::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+            flex-shrink: 0;
+        }
+        .v-status.review ~ .v-body .v-integrity-list li::before {
+            background: #3b82f6;
+        }
+
+        /* Footer */
+        .v-footer {
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            padding: 24px 28px 28px;
+            text-align: center;
+        }
+        .v-footer-seal {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.82rem;
+            color: #065f46;
+            font-weight: 700;
+            padding: 8px 16px;
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            border-radius: 999px;
+            margin-bottom: 16px;
+        }
+        .v-footer p {
+            font-size: 0.83rem;
+            color: #64748b;
+            line-height: 1.6;
+            margin: 0 0 20px;
+            max-width: 520px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .v-cta {
+            display: inline-block;
+            padding: 12px 26px;
+            background: linear-gradient(135deg, #3ba591 0%, #2a8070 100%);
+            color: #fff !important;
+            border-radius: 10px;
+            font-weight: 700;
+            text-decoration: none;
+            font-size: 0.92rem;
+            box-shadow: 0 6px 16px rgba(59,165,145,0.25);
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .v-cta:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(59,165,145,0.35);
+            text-decoration: none !important;
+        }
+
+        /* Not-found state */
+        .v-notfound {
+            text-align: center;
+            padding: 60px 28px;
+        }
+        .v-notfound-icon {
+            display: inline-flex;
+            width: 80px;
+            height: 80px;
+            align-items: center;
+            justify-content: center;
+            background: #fef3c7;
+            border-radius: 50%;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+        .v-notfound h2 {
+            font-weight: 800;
+            margin: 0 0 8px;
+            font-size: 1.5rem;
+            letter-spacing: -0.4px;
+        }
+        .v-notfound p {
+            color: #64748b;
+            margin: 0 auto 24px;
+            max-width: 400px;
+            font-size: 0.95rem;
+        }
+
+        /* Footer signature */
+        .v-signature {
+            text-align: center;
+            color: #94a3b8;
+            font-size: 0.75rem;
+            margin-top: 24px;
+            padding: 0 16px;
+            line-height: 1.6;
+        }
+        .v-signature strong { color: #64748b; font-weight: 600; }
+
+        /* Mobile */
+        @media (max-width: 520px) {
+            body { padding: 20px 12px; }
+            .v-body { padding: 24px 20px; }
+            .v-footer { padding: 20px 20px 24px; }
+            .v-status { padding: 20px; }
+            .v-score-value { font-size: 2.2rem; }
+            .v-score-cell { padding: 18px 12px; }
+            .v-row-value.mono { font-size: 0.75rem; padding: 3px 8px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="v-wrap">
+        <div class="v-brand">
+            <div class="v-brand-text">
+                <div class="v-brand-name">Charvak</div>
+                <div class="v-brand-sub">IT Consulting Pvt Ltd</div>
+            </div>
+            <div class="v-brand-tag">AI-Verified Talent</div>
+        </div>
+
+        {% if valid %}
+        <div class="v-card">
+            <div class="v-status {% if review_recommended %}review{% endif %}">
+                <div class="v-status-icon">{% if review_recommended %}ℹ️{% else %}🛡️{% endif %}</div>
+                <div class="v-status-body">
+                    <p class="v-status-title">{% if review_recommended %}Employer Review Recommended{% else %}Certificate Verified{% endif %}</p>
+                    <p class="v-status-sub">{{ integrity_message }}</p>
+                </div>
+            </div>
+
+            <div class="v-body">
+                <div class="v-score-row">
+                    <div class="v-score-cell primary">
+                        <div class="v-score-value">{{ readiness_score }}</div>
+                        <div class="v-score-label">Candidate</div>
+                    </div>
+                    <div class="v-score-cell">
+                        <div class="v-score-value">{{ benchmark_score or '—' }}</div>
+                        <div class="v-score-label">Benchmark</div>
+                    </div>
+                </div>
+
+                <div class="v-section-title">Certificate details</div>
+                <div class="v-details">
+                    <div class="v-row">
+                        <span class="v-row-label">Issued to</span>
+                        <span class="v-row-value">{{ display_name or 'Verified Candidate' }}</span>
+                    </div>
+                    <div class="v-row">
+                        <span class="v-row-label">Role</span>
+                        <span class="v-row-value">{{ role }}</span>
+                    </div>
+                    <div class="v-row">
+                        <span class="v-row-label">Level</span>
+                        <span class="v-row-value">{{ level | capitalize }}</span>
+                    </div>
+                    {% if industry %}
+                    <div class="v-row">
+                        <span class="v-row-label">Industry</span>
+                        <span class="v-row-value">{{ industry }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="v-row">
+                        <span class="v-row-label">Issued</span>
+                        <span class="v-row-value">{{ issued_date or '—' }}</span>
+                    </div>
+                    <div class="v-row">
+                        <span class="v-row-label">Certificate ID</span>
+                        <span class="v-row-value mono">{{ certificate_id }}</span>
+                    </div>
+                </div>
+
+                {% if integrity_facts %}
+                <div class="v-section-title">Assessment environment</div>
+                <ul class="v-integrity-list">
+                    {% for fact in integrity_facts %}
+                    <li>{{ fact }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+
+            <div class="v-footer">
+                <div class="v-footer-seal">🔒 Cryptographically signed</div>
+                <p>This certificate is authentic and was issued by <strong>Charvak IT Consulting Pvt Ltd</strong>. The underlying data cannot be edited. Verification of this URL is instantaneous and requires no account.</p>
+                <a href="/readiness-check" class="v-cta">Take your own free readiness check</a>
+            </div>
+        </div>
+        {% else %}
+        <div class="v-card">
+            <div class="v-notfound">
+                <div class="v-notfound-icon">🔍</div>
+                <h2>Certificate not found</h2>
+                <p>This certificate ID or verification hash doesn't exist in our records. It may have been mistyped.</p>
+                <a href="/readiness-check" class="v-cta">Take your own free readiness check</a>
+            </div>
+        </div>
+        {% endif %}
+
+        <p class="v-signature">
+            &copy; 2026 <strong>Charvak IT Consulting Pvt Ltd</strong> &middot; Guntur, Andhra Pradesh, India<br>
+            Independently verifiable trust infrastructure for the talent journey
+        </p>
+    </div>
+</body>
+</html>

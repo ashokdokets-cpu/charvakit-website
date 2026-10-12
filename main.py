@@ -7712,7 +7712,22 @@ async def api_readiness_verify(request: Request, certificate_hash: str):
         logger.error(f"readiness verify failed: {e}")
         return JSONResponse(status_code=500, content={"status": "error", "message": "Verify failed"})
 
+    # Detect browser vs API client
+    # A1.11: HTML for browsers, JSON for programmatic callers
+    accept = request.headers.get("accept", "")
+    force_json = request.query_params.get("format") == "json"
+    wants_html = (
+        not force_json
+        and "text/html" in accept
+        and "application/json" not in accept
+    )
+
     if not row:
+        if wants_html:
+            return templates.TemplateResponse("verify.html", {
+                "request": request,
+                "valid": False,
+            })
         return {"status": "success", "valid": False}
 
     # Non-PII display: first name + last initial only
@@ -7722,6 +7737,56 @@ async def api_readiness_verify(request: Request, certificate_hash: str):
         display = f"{parts[0]} {parts[-1][0]}."
     elif parts:
         display = parts[0]
+
+    # A1.11: HTML rendering path
+    if wants_html:
+        certificate_id = row[0]
+        # Look up the source assessment for integrity
+        integrity_facts = []
+        integrity_message = ""
+        review_recommended = False
+        try:
+            from database import db
+            conn2 = db.get_connection()
+            cur2 = conn2.cursor()
+            cur2.execute(
+                "SELECT assessment_id FROM charvak_readiness_certificates WHERE certificate_id = %s",
+                (certificate_id,),
+            )
+            arow = cur2.fetchone()
+            cur2.close()
+            conn2.close()
+            if arow and arow[0]:
+                from integrity_engine import integrity_engine
+                summary = integrity_engine.get_public_summary(arow[0])
+                review_recommended = bool(summary.get("review_recommended"))
+                integrity_message = summary.get("message", "")
+                integrity_facts = summary.get("facts", [])
+        except Exception as e:
+            logger.warning(f"verify html integrity lookup failed: {e}")
+
+        issued_date = ""
+        if row[8]:
+            try:
+                issued_date = row[8].strftime("%d %b %Y")
+            except Exception:
+                issued_date = str(row[8])[:10]
+
+        return templates.TemplateResponse("verify.html", {
+            "request": request,
+            "valid": True,
+            "certificate_id": certificate_id,
+            "display_name": display,
+            "role": row[1],
+            "industry": row[2],
+            "level": row[3],
+            "readiness_score": row[4],
+            "benchmark_score": row[6],
+            "issued_date": issued_date,
+            "review_recommended": review_recommended,
+            "integrity_message": integrity_message,
+            "integrity_facts": integrity_facts,
+        })
 
     return {
         "status": "success",
