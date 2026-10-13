@@ -42,6 +42,8 @@
   <div class="container">
     <div class="pp-badge">Campus Placement Season 2026-27</div>
     <h1>Free Mock Drives for Your Target Company</h1>
+
+    <p id="ppStatsLine" style="margin-top:10px; color:#1e293b; font-size:1rem; font-weight:600;">Loading live stats...</p>
     <p class="pp-sub">Practice the real exam pattern. Get instant scoring. See what to fix before the actual drive.</p>
     <a href="#companies" class="pp-cta mt-3">Start a Free Mock Drive →</a>
   </div>
@@ -174,6 +176,66 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   });
 });
+
+
+// Session 43-D (A2.5): real stats line for placement-prep
+(function placementStatsLoad() {
+    async function load() {
+        try {
+            var r = await fetch('/api/public/stats', { cache: 'default' });
+            var j = await r.json();
+            if (j.status !== 'success' || !j.stats) return;
+            var s = j.stats;
+            var el = document.getElementById('ppStatsLine');
+            if (!el) return;
+            var mocks = s.mock_sessions_completed_30d;
+            var companies = s.mock_companies_supported;
+            if (mocks === 0) {
+                el.textContent = companies + ' companies \u00b7 Real exam patterns \u00b7 Free forever';
+            } else if (mocks === 1) {
+                el.textContent = '1 mock drive completed this month \u00b7 ' + companies + ' companies \u00b7 Free';
+            } else {
+                el.textContent = mocks + ' mock drives completed this month \u00b7 ' + companies + ' companies \u00b7 Free';
+            }
+        } catch (e) { console.warn('stats:', e); }
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', load);
+    else load();
+})();
+
+
+// Session 43-D (A2.5): dynamically update 'N patterns' labels on the
+// company cards from the /api/company-patterns/counts endpoint.
+(function loadPPPatternCounts() {
+    async function load() {
+        try {
+            var r = await fetch('/api/company-patterns/counts');
+            var j = await r.json();
+            if (j.status !== 'success' || !j.counts) return;
+            var counts = j.counts;
+            document.querySelectorAll('a.pp-card').forEach(function(card) {
+                var href = card.getAttribute('href') || '';
+                var m = href.match(/company=([^&]+)/);
+                if (!m) return;
+                var cid = decodeURIComponent(m[1]);
+                var n = counts[cid];
+                if (typeof n === 'number') {
+                    var small = card.querySelector('small');
+                    if (small) {
+                        small.textContent = n + ' pattern' + (n === 1 ? '' : 's');
+                    }
+                }
+            });
+        } catch (e) {
+            console.warn('PP pattern counts load failed:', e);
+        }
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', load);
+    } else {
+        load();
+    }
+})();
 </script>
 {% endblock %}
 {% endblock %}
