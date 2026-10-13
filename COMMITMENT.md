@@ -4386,3 +4386,129 @@ a new font file.
 **Trigger:** after Amrita pilot Week 2, OR on demand.
 
 **Verdict:** FLAGGED — Session 43-D
+
+
+## Track E — Behavioral Readiness (FLAGGED 2026-10-14)
+
+Expansion from technical readiness to full-stack (technical + behavioral)
+readiness. Directly strengthens the MBA/management pitch for Amrita and
+future university partners. Opens a path to the corporate L&D market.
+
+Inspired by corporate training programs like the Grant Thornton /
+LearningGT "People Skills for a Stronger Workplace" offering — 15+
+behavioral training programmes sold to companies at Rs 15K-75K per
+program per batch.
+
+### Why this matters
+
+Charvak's current moat is technical readiness (DSA, coding, system
+design, mock drives). But employers hire on more than that —
+communication, teamwork, learning agility, business judgment, and
+emotional intelligence all screen in the final rounds.
+
+Every major assessment competitor (HackerRank, Codility, TestGorilla)
+stops at technical. Behavioral + situational judgment at scale via AI
+is a genuine category of one.
+
+### Phases
+
+**Phase E1 — Behavioral Readiness in Career Assessment (1-2 sessions)**
+
+Where it fits: after Amrita signs the pilot.
+Where it lands: the existing Career Assessment engine + certificate.
+
+Deliverables:
+- 10-15 behavioral scenarios per role category, AI-scored
+- Reuse existing `behavioral` and `situational_judgment` formats
+- Add a "Behavioral Readiness" dimension to the certificate
+  (currently the certificate shows technical score + topic skill gap)
+- Situational Judgment (SJT) questions shipped with proper scenarios
+- Effort: 1-2 sessions
+
+The output would be a "Behavioral Readiness Score" (0-100), calibrated
+to the target role, on the same certificate students already get.
+
+**Phase E2 — Behavioral catalog courses (1 session)**
+
+Mirror the Grant Thornton program list. The AI Course Designer can
+already generate courses on any topic — we populate the catalog with:
+
+- Time & Task Management
+- Business Communication Essentials
+- Feedback Handling
+- Facilitation Skills
+- Systems Thinking & Awareness
+- Collaboration and Teamwork
+- Active Listening (text-based first)
+- Critical-thinking Skills
+- Understanding Organisation Culture
+- Emotional Intelligence & Agility
+- Influencing Without Authority
+- Workplace Conflict Management
+- Business Storytelling
+- Workplace Psychological Safety
+
+Add "Behavioral" as a new catalog category. 15-20 new courses.
+Effort: 1 session (mostly running the AI Course Designer on each topic).
+
+**Phase E3 — Corporate training platform (4-6 sessions, 2027)**
+
+Only build when a paying corporate customer asks. Do not build
+speculatively.
+
+- Batch assessment mode for corporate cohorts
+- Manager dashboard with team-level behavioral analytics
+- ROI tracking across retakes
+- Voice-based practice for Public Speaking / Active Listening
+  (reuses Voice Screening infrastructure from Track B)
+- Group simulation via multi-user scenarios
+
+Buyer: HR/L&D directors, not students.
+Pricing: Rs 50K-5L per program per batch.
+Sales motion: relationship-led, not product-led.
+
+### Which programs are AI-testable today
+
+Of Grant Thornton's 16 programs, 13 are testable via existing formats:
+
+| Program | AI-Testable? | Format |
+|---|---|---|
+| Time & Task Management | Yes | SJT + scenario |
+| Business Communication | Yes | Writing samples + AI grading |
+| Feedback Handling | Yes | Behavioral STAR |
+| Facilitation Skills | Partial | Case study (harder in text) |
+| Systems Thinking & Awareness | Yes | Case study |
+| Collaboration and Teamwork | Yes | Behavioral + SJT |
+| Active Listening | Partial | Voice-based ideal; text scenario works |
+| Critical-thinking Skills | Yes | Case study + SJT |
+| Neuro-Linguistic Programming | Partial | Requires live coaching |
+| Understanding Organisation Culture | Yes | SJT |
+| Emotional Intelligence & Agility | Yes | SJT + behavioral |
+| Art of Public Speaking | No | Requires voice + video |
+| Influencing Without Authority | Yes | SJT + case study |
+| Workplace Conflict Management | Yes | SJT + scenario |
+| Business Storytelling | Yes | Writing + AI grading |
+| Workplace Psychological Safety | Yes | SJT |
+
+13 of 16 are testable today. The three that aren't need Voice Screening
+infrastructure (Track B Phase 1).
+
+### Trigger to start
+
+- After Amrita pilot signs (Week 1-2), OR
+- When a second university requests behavioral assessment, OR
+- When a corporate customer asks for a behavioral training pilot
+
+### Effort summary
+
+- Phase E1 + E2 before Amrita Pilot Week 2: 2-3 sessions
+- Phase E3: 4-6 sessions in 2027, only with a paying customer
+
+### Strategic value
+
+- **B2C:** richer certificate = stronger Amrita pitch (behavioral +
+  technical readiness = complete picture)
+- **B2B:** opens corporate L&D market (Rs 50K-5L per program per batch)
+- **Moat:** no coding-test competitor does behavioral + SJT at scale
+
+**Verdict:** FLAGGED — Track E. Build after Amrita pilot starts.

@@ -745,3 +745,40 @@ Full WhatsApp/LinkedIn share instrumentation across the platform.
 /placement-prep-2026 converts at 239% vs /readiness-check at 28.5%
 (Oct 12 data). A1.9 puts that page in front of high-intent audiences
 on /mock-drive and /readiness certs, and makes every share attributable.
+
+
+---
+
+## Track E — Behavioral Readiness (added 2026-10-14)
+
+New track. Expands Charvak from technical readiness to technical +
+behavioral readiness. Directly strengthens the MBA/management pitch.
+
+### Phase E1 — Behavioral Readiness in Career Assessment
+
+Add a behavioral dimension to the existing Career Assessment engine.
+
+Deliverables:
+- 10-15 behavioral scenarios per role category
+- Situational Judgment (SJT) and behavioral STAR formats
+- A "Behavioral Readiness Score" on the existing certificate
+- Effort: 1-2 sessions
+
+### Phase E2 — Behavioral catalog courses
+
+Populate the catalog with 15-20 AI-generated behavioral courses
+(mirrors the corporate training program list — Time Management,
+Feedback Handling, Active Listening, Emotional Intelligence, etc.).
+
+Effort: 1 session.
+
+### Phase E3 — Corporate training platform (2027)
+
+Batch mode + manager dashboard + ROI tracking + voice-based practice.
+Only build when a paying corporate customer asks.
+
+Effort: 4-6 sessions.
+
+**Trigger:** after Amrita pilot Week 2.
+
+**Verdict:** FLAGGED — full detail in COMMITMENT.md.
