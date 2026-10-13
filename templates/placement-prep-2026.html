@@ -43,7 +43,7 @@
     <div class="pp-badge">Campus Placement Season 2026-27</div>
     <h1>Free Mock Drives for Your Target Company</h1>
 
-    <p id="ppStatsLine" style="margin-top:10px; color:#1e293b; font-size:1rem; font-weight:600;">Loading live stats...</p>
+    <p id="ppStatsLine" style="margin-top:10px; color:#1e293b; font-size:1rem; font-weight:600;">18 companies &middot; 43 exam patterns &middot; Free</p>
     <p class="pp-sub">Practice the real exam pattern. Get instant scoring. See what to fix before the actual drive.</p>
     <a href="#companies" class="pp-cta mt-3">Start a Free Mock Drive →</a>
   </div>
@@ -179,7 +179,8 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
 // Session 43-D (A2.5): real stats line for placement-prep
-(function placementStatsLoad() {
+// Session 43-D: static social proof line (dynamic mock count removed)
+/* (function placementStatsLoad() {
     async function load() {
         try {
             var r = await fetch('/api/public/stats', { cache: 'default' });
@@ -201,7 +202,7 @@ document.addEventListener("DOMContentLoaded", function() {
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', load);
     else load();
-})();
+})(); */
 
 
 // Session 43-D (A2.5): dynamically update 'N patterns' labels on the
