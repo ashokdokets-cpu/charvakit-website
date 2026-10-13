@@ -43,9 +43,10 @@ CUTOFFS = {
 # Recommended courses per weak topic. Falls back to a generic
 # suggestion if the topic has no match.
 TOPIC_TO_COURSE = {
+    # ---------- Engineering topics ----------
     "Quant": ["Data Analytics [Beginner]", "Python for Data Science [Intermediate]"],
     "Advanced Quant": ["Data Analytics [Beginner]"],
-    "Verbal": [],
+    "Verbal": ["Business Communication"],
     "CS Fundamentals": ["Data Science & ML [Intermediate]", "Python Programming [Beginner]"],
     "Basic": ["Python Programming [Beginner]"],
     "DSA": ["Full Stack Web Development [Beginner]", "Python Programming [Beginner]"],
@@ -55,6 +56,22 @@ TOPIC_TO_COURSE = {
     "Coding": ["Python Programming [Beginner]"],
     "Data Structures": ["Data Science & ML [Intermediate]"],
     "Algorithms": ["Data Science & ML [Intermediate]"],
+
+    # ---------- Business Analyst topics (Session 43-C) ----------
+    "Case Reasoning": ["Case Study Fundamentals", "Consulting Case Frameworks"],
+    "Market Sizing": ["Consulting Math", "Case Study Fundamentals"],
+    "Data Interpretation": ["Data Interpretation for Managers"],
+    "Business Logic": ["Strategy Frameworks", "Business Ethics & Compliance"],
+    "Business Writing": ["Business Communication"],
+    "Reading": ["Business Communication"],
+    "Product Metrics": ["Product Management Fundamentals"],
+    "Product Case": ["Product Management Fundamentals"],
+    "Financial Math": ["Financial Modelling in Excel"],
+    "Financial Reasoning": ["Financial Modelling in Excel"],
+    "Strategy": ["Strategy Frameworks"],
+    "Grammar": ["Business Communication"],
+    "Problem Solving": ["Full Stack Web Development [Beginner]"],
+    "Advanced Logic": ["Data Science & ML [Intermediate]"],
 }
 
 
@@ -266,6 +283,110 @@ class CompleteMockDrive:
             }
         }
         return configs.get(company_id, configs["tcs"])
+
+
+    # ============================================================
+    # Session 43-C: Business Analyst pattern variants (BA_VARIANTS)
+    # ============================================================
+    # Every consulting + services company gets a "Business Analyst"
+    # pattern alongside the existing (generalist/analyst) pattern.
+    # The existing patterns are NOT modified — the BA variants are
+    # additional tracks an MBA student can choose.
+    #
+    # Each variant:
+    #   - Aptitude (20 Q, 45 min)    — Quant, Logical, Verbal
+    #   - Business Reasoning (15 Q, 40 min) — Case Reasoning, Market Sizing,
+    #                                          Data Interpretation, Business Logic
+    #   - Communication (5 Q, 15 min) — Grammar, Business Writing
+
+    def _ba_variant(self, company_name: str, pattern_name: str = "Business Analyst") -> dict:
+        """Return the standard Business Analyst pattern for a company."""
+        return {
+            "name": company_name,
+            "pattern": pattern_name,
+            "sections": [
+                {
+                    "name": "Aptitude",
+                    "count": 20,
+                    "time": "45 min",
+                    "topics": ["Quant", "Logical", "Verbal"],
+                },
+                {
+                    "name": "Business Reasoning",
+                    "count": 15,
+                    "time": "40 min",
+                    "topics": ["Case Reasoning", "Market Sizing", "Data Interpretation", "Business Logic"],
+                },
+                {
+                    "name": "Communication",
+                    "count": 5,
+                    "time": "15 min",
+                    "topics": ["Grammar", "Business Writing"],
+                },
+            ],
+        }
+
+    def get_company_config_variant(self, company_id: str, pattern_id: str = None) -> dict:
+        """
+        Return a specific pattern config for a company.
+
+        pattern_id=None returns the default pattern (existing behaviour).
+        pattern_id="business_analyst" returns the BA variant.
+
+        This method does NOT replace get_company_config — it wraps it
+        and adds variants on top.
+        """
+        base = self.get_company_config(company_id)
+        if not base:
+            return None
+
+        # BA variant companies
+        ba_companies = {
+            "deloitte": "Deloitte",
+            "kpmg": "KPMG",
+            "ey": "EY",
+            "pwc": "PwC",
+            "tcs": "TCS",
+            "accenture": "Accenture",
+            "capgemini": "Capgemini",
+        }
+
+        if pattern_id == "business_analyst":
+            if company_id in ba_companies:
+                return self._ba_variant(ba_companies[company_id])
+            return None
+
+        # Default: return the base config as-is
+        return base
+
+    def get_all_patterns(self, company_id: str) -> list:
+        """
+        Return all available patterns for a company.
+
+        Each entry: {"id": "<slug>", "name": "<pattern>", "is_default": bool}
+        """
+        base = self.get_company_config(company_id)
+        if not base:
+            return []
+
+        patterns = [
+            {
+                "id": "default",
+                "name": base.get("pattern", "Default"),
+                "is_default": True,
+            }
+        ]
+
+        ba_companies = {"deloitte", "kpmg", "ey", "pwc", "tcs", "accenture", "capgemini"}
+        if company_id in ba_companies:
+            patterns.append({
+                "id": "business_analyst",
+                "name": "Business Analyst",
+                "is_default": False,
+            })
+
+        return patterns
+
 
     def _sanitize_questions(self, questions):
         """Validate AI output. Correct is an integer 0..len(options)-1.

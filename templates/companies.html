@@ -494,5 +494,34 @@
         };
         _tryClick(10);  // 10 attempts over 1.5 seconds
     })();
+
+// Session 43-C: fetch pattern counts from the backend and update the
+// "N Patterns" label on every company card. Fixes the hardcoded counts
+// so new patterns show up automatically.
+async function loadPatternCounts() {
+    try {
+        var r = await fetch("/api/company-patterns/counts");
+        var j = await r.json();
+        if (j.status !== "success" || !j.counts) return;
+        var counts = j.counts;
+        document.querySelectorAll(".md-company-card").forEach(function(card) {
+            var cid = card.getAttribute("data-company");
+            var small = card.querySelector("small");
+            if (!small || !cid) return;
+            var n = counts[cid];
+            if (typeof n === "number") {
+                small.textContent = n + " Pattern" + (n === 1 ? "" : "s");
+            }
+        });
+    } catch (e) {
+        console.warn("Pattern counts load failed:", e);
+    }
+}
+
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", loadPatternCounts);
+} else {
+    loadPatternCounts();
+}
 </script>
 {% endblock %}
