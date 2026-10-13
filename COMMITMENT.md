@@ -4217,3 +4217,50 @@ result pages now offer a Rs 99 "Unlock the full examiner report" CTA.
   `_test_cert*.pdf`) still sit in the working tree. Not committed.
 
 **HEAD at close:** `731b70a`
+
+
+## Session 43-A1.8 + A1.9 CLOSED (2026-10-13) - Share instrumentation + placement promotion
+
+**Commits:** `7ec8f14` (A1.8) + A1.9 (this commit)
+
+### What shipped
+
+**A1.8 - Share instrumentation (frontend-only)**
+- `base.html`: `charvakShareUrl()` + `charvakTrackShareLanding()`
+- `readiness.html`: UTM-tagged share URLs; `cert_shared` on click;
+  `readiness_view_from_share` on arrival
+- `readiness-check.html`: `readiness_check_view_from_share` on arrival
+- `mock-result.html`: `mock_result_shared` per channel;
+  `mock_result_view_from_share` on DOMContentLoaded
+
+**A1.9 - Placement-prep instrumentation + promotion**
+- `placement-prep-2026.html`: `placement_prep_view_from_share`
+- `readiness.html`: 5th "what next?" tile -> /placement-prep-2026
+- `companies.html`: hero promo banner -> /placement-prep-2026
+
+### Bug found and fixed during A1.8
+
+The share buttons on `readiness.html` were plain `<a href>` anchors
+bound via `element.href = ...`. The pre-existing `rdOpenShare()`
+helper was dead code — never wired to the anchors. Our A1.8 patch
+added `charvakTrack('cert_shared')` inside `rdOpenShare()`, which
+never fired. Fixed by attaching `addEventListener('click', ...)`
+directly on the anchors with a `data-a18-bound` guard against
+re-rendering. Verified in browser: both WhatsApp and LinkedIn fire
+`cert_shared` with the full payload.
+
+### Design decision (mock-result)
+
+`mock_result_view_from_share` fires on `DOMContentLoaded`, not inside
+the result-fetch success handler. This means a shared link that 404s
+(deleted session, wrong user) still attributes the arrival click.
+Verified: `/mock-result/MOCK-DOESNOTEXIST?utm_source=whatsapp` fires
+the event even though the API returns 404.
+
+### Still open
+
+- **rdOpenShare()** in readiness.html is now unused (anchors navigate
+  directly via href). Left in place for a future cleanup pass.
+- **PayPal capture for A1.6 tools** — the route now exists but hasn't
+  been E2E tested with real PayPal sandbox flow. Razorpay (India) is
+  verified.

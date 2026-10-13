@@ -700,3 +700,48 @@ revenue line on the platform (after A1.6 AI Tools one-off purchases).
 - **PayPal flow on A1.7:** `_unlockViaPayPal` calls
   `/api/payment/paypal/capture`, which may not exist. Only hit for
   non-INR users. Flag for A1.7b.
+
+
+---
+
+## A1.8 + A1.9 COMPLETE (2026-10-13)
+
+Full WhatsApp/LinkedIn share instrumentation across the platform.
+
+### A1.8 - Share instrumentation
+
+- `base.html`: new `charvakShareUrl()` + `charvakTrackShareLanding()`
+  helpers reusable across all share surfaces
+- `readiness.html`: UTM-tagged share URLs (linkedin/whatsapp);
+  `cert_shared` on click; `readiness_view_from_share` on arrival
+- `readiness-check.html`: `readiness_check_view_from_share` on arrival
+- `mock-result.html`: `mock_result_shared` per-channel;
+  `mock_result_view_from_share` on DOMContentLoaded
+  (fires even when the result 404s)
+
+### A1.9 - Placement-prep instrumentation + promotion
+
+- `placement-prep-2026.html`: `placement_prep_view_from_share` on arrival
+- `readiness.html`: 5th "what next?" tile -> /placement-prep-2026
+- `companies.html`: hero promo banner -> /placement-prep-2026
+
+### GA4 events now in the funnel
+
+| Event | When |
+|---|---|
+| cert_shared | Cert share button clicked |
+| readiness_view_from_share | Cert page loaded with UTM |
+| readiness_check_view_from_share | Landing page loaded with UTM |
+| mock_result_shared | Mock share button clicked |
+| mock_result_view_from_share | Mock page loaded with UTM |
+| placement_prep_view_from_share | Placement page loaded with UTM |
+| placement_prep_view | Placement page loaded (any) |
+| mock_company_click | Company card clicked |
+| mock_start | Mock drive started |
+| mock_complete | Mock drive completed |
+
+### Why this matters
+
+/placement-prep-2026 converts at 239% vs /readiness-check at 28.5%
+(Oct 12 data). A1.9 puts that page in front of high-intent audiences
+on /mock-drive and /readiness certs, and makes every share attributable.

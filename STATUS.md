@@ -1,3 +1,24 @@
+## Session 2026-10-13 - A1.8 + A1.9
+
+### Shipped
+
+- WhatsApp/LinkedIn share instrumentation across 4 templates
+- Placement-prep promotion + UTM attribution
+- 2 new helper functions in base.html
+- 6 new GA4 events in the funnel
+
+### Bugs fixed
+
+- `readiness.html` share buttons were plain anchors; tracking
+  wrapped in dead `rdOpenShare()` and never fired. Fixed.
+
+### Next
+
+- A2 (Certificate round 3) or A3 (FYP features)
+- Or cleanup pass: rdOpenShare removal, PayPal E2E for A1.6
+
+---
+
 ## Session 2026-10-13 - Session 43-A1.7
 
 **HEAD:** `731b70a`

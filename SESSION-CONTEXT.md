@@ -1,3 +1,26 @@
+## Session 43-A1.8 + A1.9 CLOSED (2026-10-13)
+
+**Status:** Share instrumentation + placement-prep promotion shipped.
+The full campus placement funnel is now attributable end to end.
+
+### What shipped today (all 4 batches)
+
+| Batch | What | Revenue impact |
+|---|---|---|
+| A1.6 | AI Tools one-off purchases (Rs 99) | First revenue line |
+| A1.7 | IELTS Deep Report micro-paywall (Rs 99) | Second revenue line |
+| A1.8 | WhatsApp/LinkedIn share instrumentation | Measurement only |
+| A1.9 | Placement-prep promotion + attribution | Funnel improvement |
+
+### Next session
+
+- **A2** - Certificate round 3 (QR, watermark, i18n)
+- **A2.5** - Real social proof feed
+- **A3** - FYP features (Citation, Milestone, Plagiarism, Refine)
+- Or cleanup: `rdOpenShare()` removal, PayPal E2E for A1.6
+
+---
+
 ## Session 43-A1.7 CLOSED (2026-10-13) - IELTS Deep Report micro-paywall
 
 **HEAD:** `731b70a`
