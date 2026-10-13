@@ -163,3 +163,57 @@ universities.
 ---
 
 **Keep this file in sync as Track C evolves.**
+
+---
+
+## B2 follow-ups (flagged 2026-10-13)
+
+Two items surfaced during B2 that need to be tracked:
+
+### Skip vs Wrong distinction (Phase 3, after pilot Week 2)
+
+The mock drive treats unanswered questions the same as wrong
+answers. Both get AI explanations. This is intentional through the
+pilot (it nudges engagement), but it's imprecise — it can't
+distinguish "tried and struggled" from "skipped the test."
+
+**Fix (Phase 3):**
+- Tag blank answers in `build_question_review` with `is_skipped=True`
+- Add a "Skipped only" tab next to "Show only wrong"
+- Show a "You skipped N questions" callout in the cut-off card
+- Optionally skip AI explanations for skipped questions
+
+**Decision trigger:** after Amrita pilot Week 2 data. If students
+are attempting and failing, skip/wrong matters less. If they're
+skipping half the test, it becomes the top signal.
+
+**Verdict:** SCHEDULED — Phase 3, after pilot Week 2
+
+### B3 — Role-readiness framing (deferred)
+
+Every mock drive should also produce a **role-readiness signal**,
+not just a company score:
+- Today: "You scored 6.2% on the TCS Digital drive"
+- Vision: "Your Software Engineer readiness: 6.2%. Benchmark: 60%"
+
+This reframes the same data into what the CDC coordinator and the
+student both need. The company→role mapping already exists in
+`mock-result.html` (`_companyRoleMap`). The A1.11 verify URL for
+role certs exists.
+
+**Why deferred:**
+- Touches readiness engine, certificate renderer, and mock-result
+  deep links (4-6 hours)
+- Real risk of introducing a bug before Thursday's demo
+- No real user feedback yet on what "role readiness" should mean
+- B1 + B2 already give a complete, sellable diagnostic
+
+**Trigger to build:**
+- After Amrita pilot Week 2
+- OR when a second university requests it
+
+**Verdict:** DEFERRED — Phase 2, after pilot Week 2
+
+---
+
+Keep this file in sync as the pilot progresses.
