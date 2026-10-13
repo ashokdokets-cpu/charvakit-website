@@ -23,6 +23,17 @@
     </div>
     <div class="mt-3" id="unifiedRecent"></div>
 </div>
+        <!-- Session 43-D (A5): DoketsRB sync status -->
+        <div id="doketsrbSyncSection" class="mt-4 pt-4" style="border-top:1px solid #e5e7eb;">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h3 class="as-h5 mb-0">DoketsRB sync</h3>
+                <span class="badge" id="doketsrbSyncBadge" style="background:#e5e7eb;color:#6b7280;">Checking...</span>
+            </div>
+            <p class="small text-muted mb-2" id="doketsrbSyncDesc">Connecting your DoketsRB resume with Charvak's job matching.</p>
+            <div class="row g-2" id="doketsrbSyncStats"></div>
+            <a href="https://www.doketsrb.com" target="_blank" rel="noopener" class="small" style="color:#3ba591;text-decoration:none;display:inline-block;margin-top:8px;" id="doketsrbSyncLink">Learn about DoketsRB &rarr;</a>
+        </div>
+
 <div class="container py-5">
     <div class="row g-4">
         <!-- Job Alert -->
@@ -293,5 +304,69 @@ function renderUnifiedPanel(data) {
 document.addEventListener('DOMContentLoaded', function() {
     loadUnifiedProfile();
 });
+
+
+// Session 43-D (A5): DoketsRB sync status loader
+(function doketsrbSyncLoad() {
+    async function load() {
+        try {
+            var r = await fetch('/api/sync/overview');
+            var j = await r.json();
+            if (j.status !== 'success') return;
+
+            var badge = document.getElementById('doketsrbSyncBadge');
+            var desc = document.getElementById('doketsrbSyncDesc');
+            var stats = document.getElementById('doketsrbSyncStats');
+            var link = document.getElementById('doketsrbSyncLink');
+            if (!badge || !desc || !stats) return;
+
+            if (j.linked) {
+                badge.style.background = '#d1fae5';
+                badge.style.color = '#065f46';
+                badge.textContent = 'Active';
+                var when = j.last_sync ? _ago(j.last_sync) : 'recently';
+                desc.textContent = 'Your DoketsRB resume is in sync as of ' + when + '.';
+                stats.innerHTML =
+                    '<div class="col-4"><div class="small text-muted">Users synced</div><div class="fw-bold">' + (j.users_synced || 0) + '</div></div>' +
+                    '<div class="col-4"><div class="small text-muted">Applications</div><div class="fw-bold">' + (j.applications_synced || 0) + '</div></div>' +
+                    '<div class="col-4"><div class="small text-muted">Score events</div><div class="fw-bold">' + (j.score_events || 0) + '</div></div>';
+            } else if (j.doketsrb_configured) {
+                badge.style.background = '#fef3c7';
+                badge.style.color = '#92400e';
+                badge.textContent = 'Ready to connect';
+                desc.textContent = 'Connect your DoketsRB account to sync your resume with Charvak job matching. Coming soon — no data has been synced yet.';
+                stats.innerHTML = '';
+            } else {
+                badge.style.background = '#e5e7eb';
+                badge.style.color = '#6b7280';
+                badge.textContent = 'Not configured';
+                desc.textContent = 'DoketsRB sync is not yet enabled on this environment.';
+                stats.innerHTML = '';
+            }
+        } catch (e) {
+            console.warn('DoketsRB sync load failed:', e);
+        }
+    }
+
+    function _ago(ts) {
+        try {
+            var t = new Date(ts).getTime();
+            if (isNaN(t)) return 'recently';
+            var secs = Math.floor((Date.now() - t) / 1000);
+            if (secs < 60) return 'just now';
+            if (secs < 3600) return Math.floor(secs / 60) + ' min ago';
+            if (secs < 86400) return Math.floor(secs / 3600) + 'h ago';
+            return Math.floor(secs / 86400) + 'd ago';
+        } catch (e) {
+            return 'recently';
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', load);
+    } else {
+        load();
+    }
+})();
 </script>
 {% endblock %}
