@@ -103,6 +103,48 @@
                 </div>
             </div>
         </div>
+
+        <!-- Session 43-D (A3.1): Citation Helper -->
+        <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5>📚 Citation Helper</h5>
+                    <p class="text-muted small mb-3">Generate proper references (IEEE, APA, MLA) for any chapter or topic in your report.</p>
+                    <form onsubmit="fypCitations(event)">
+                        <input type="text" class="form-control mb-2" id="fypCitTopic" placeholder="Project Topic" required>
+                        <input type="text" class="form-control mb-2" id="fypCitChapter" placeholder="Chapter (optional, e.g. Literature Review)">
+                        <textarea class="form-control mb-2" id="fypCitContent" rows="3" placeholder="Paste a chapter excerpt for better context (optional)"></textarea>
+                        <button class="btn btn-primary w-100" type="submit">Generate Citations (8 credits)</button>
+                    </form>
+                    <div class="mt-3" id="fypCitationsOutput"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Session 43-D (A3.2): Milestone Roadmap -->
+        <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5>🗺️ Milestone Roadmap</h5>
+                    <p class="text-muted small mb-3">Get a week-by-week plan for your project, from research to final viva.</p>
+                    <form onsubmit="fypRoadmap(event)">
+                        <input type="text" class="form-control mb-2" id="fypRoadTopic" placeholder="Project Topic" required>
+                        <select class="form-control mb-3" id="fypRoadWeeks">
+                            <option value="8">8 weeks</option>
+                            <option value="12">12 weeks</option>
+                            <option value="16" selected>16 weeks (semester)</option>
+                            <option value="20">20 weeks</option>
+                            <option value="24">24 weeks (2 semesters)</option>
+                        </select>
+                        <button class="btn btn-primary w-100" type="submit">Generate Roadmap (15 credits)</button>
+                    </form>
+                    <div class="mt-3" id="fypRoadmapOutput"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- fixed-nesting-a3 -->
+        </div>
     </div>
 </div>
 
@@ -461,6 +503,159 @@ async function vivaPrep(e) {
         console.error('vivaPrep failed:', err);
         out.innerHTML = '<div class="alert alert-danger">Network error. Please try again.</div>';
     }
+}
+
+
+// Session 43-D (A3.1): Citation Helper
+async function fypCitations(e) {
+    e.preventDefault();
+    const email = localStorage.getItem('userEmail') || '';
+    const token = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    if (!email) {
+        alert('Please log in to generate citations.');
+        window.location.href = '/login?next=/final-year-project';
+        return;
+    }
+
+    const topic = document.getElementById('fypCitTopic').value.trim();
+    const chapter = document.getElementById('fypCitChapter').value.trim();
+    const contentEl = document.getElementById('fypCitContent');
+    const contentVal = contentEl ? contentEl.value.trim() : '';
+
+    const out = document.getElementById('fypCitationsOutput');
+    out.innerHTML = '<div class="alert alert-info"><div class="spinner-border spinner-border-sm me-2"></div>Generating citations...</div>';
+
+    try {
+        const r = await fetch('/api/fyp/citations', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify({ email: email, topic: topic, chapter_title: chapter, content: contentVal })
+        });
+        const j = await r.json();
+
+        if (j.status !== 'success') {
+            if (r.status === 401) {
+                alert('Session expired. Please log in again.');
+                window.location.href = '/login?next=/final-year-project';
+                return;
+            }
+            if (r.status === 402) {
+                out.innerHTML = '<div class="alert alert-warning"><strong>Not enough credits.</strong> This costs 8 credits. <a href="/ai-credits-pricing">Top up credits</a></div>';
+                return;
+            }
+            out.innerHTML = '<div class="alert alert-danger">' + escFyp(j.message || 'Could not generate citations.') + '</div>';
+            return;
+        }
+
+        const citations = j.citations || [];
+        const notes = j.notes || '';
+
+        let html = '<div class="border rounded p-3 bg-light">';
+        if (notes) {
+            html += '<div class="small text-muted mb-3"><strong>Note:</strong> ' + escFyp(notes) + '</div>';
+        }
+        html += '<div class="small text-uppercase fw-bold mb-2" style="letter-spacing:0.05em;color:#3ba591;">Generated References</div>';
+
+        citations.forEach(function(c, i) {
+            html += '<div class="mb-3 pb-2" style="border-bottom:1px solid #e5e7eb;">';
+            html += '<div class="mb-2"><span class="badge bg-secondary me-2">IEEE</span><span class="font-monospace small">' + escFyp(c.ieee || '') + '</span></div>';
+            html += '<div class="mb-2"><span class="badge bg-secondary me-2">APA</span><span class="small">' + escFyp(c.apa || '') + '</span></div>';
+            html += '<div class="mb-2"><span class="badge bg-secondary me-2">MLA</span><span class="small">' + escFyp(c.mla || '') + '</span></div>';
+            if (c.note) {
+                html += '<div class="small text-muted"><em>' + escFyp(c.note) + '</em></div>';
+            }
+            html += '</div>';
+        });
+        html += '<div class="small text-muted mt-2"><em>AI-generated references — verify each source exists before submitting.</em></div>';
+        html += '</div>';
+        out.innerHTML = html;
+    } catch (err) {
+        out.innerHTML = '<div class="alert alert-danger">Error: ' + escFyp(err.message) + '</div>';
+    }
+}
+
+// Session 43-D (A3.2): Milestone Roadmap
+async function fypRoadmap(e) {
+    e.preventDefault();
+    const email = localStorage.getItem('userEmail') || '';
+    const token = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    if (!email) {
+        alert('Please log in to generate a roadmap.');
+        window.location.href = '/login?next=/final-year-project';
+        return;
+    }
+
+    const topic = document.getElementById('fypRoadTopic').value.trim();
+    const weeks = parseInt(document.getElementById('fypRoadWeeks').value, 10) || 16;
+
+    const out = document.getElementById('fypRoadmapOutput');
+    out.innerHTML = '<div class="alert alert-info"><div class="spinner-border spinner-border-sm me-2"></div>Generating roadmap...</div>';
+
+    try {
+        const r = await fetch('/api/fyp/roadmap', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify({ email: email, topic: topic, duration_weeks: weeks })
+        });
+        const j = await r.json();
+
+        if (j.status !== 'success') {
+            if (r.status === 401) {
+                alert('Session expired. Please log in again.');
+                window.location.href = '/login?next=/final-year-project';
+                return;
+            }
+            if (r.status === 402) {
+                out.innerHTML = '<div class="alert alert-warning"><strong>Not enough credits.</strong> This costs 15 credits. <a href="/ai-credits-pricing">Top up credits</a></div>';
+                return;
+            }
+            out.innerHTML = '<div class="alert alert-danger">' + escFyp(j.message || 'Could not generate roadmap.') + '</div>';
+            return;
+        }
+
+        const roadmap = j.roadmap || [];
+        const tips = j.tips || [];
+
+        let html = '<div class="border rounded p-3 bg-light">';
+        html += '<div class="small text-uppercase fw-bold mb-3" style="letter-spacing:0.05em;color:#3ba591;">Week-by-Week Plan</div>';
+
+        roadmap.forEach(function(phase, i) {
+            html += '<div class="mb-3 pb-3" style="border-bottom:1px solid #e5e7eb;">';
+            html += '<div class="d-flex align-items-baseline mb-1">';
+            html += '<span class="badge bg-primary me-2">Week ' + escFyp(String(phase.week_range || phase.week)) + '</span>';
+            html += '<strong>' + escFyp(phase.title || '') + '</strong>';
+            html += '</div>';
+            if (phase.goal) {
+                html += '<div class="small text-muted mb-2">' + escFyp(phase.goal) + '</div>';
+            }
+            if (Array.isArray(phase.deliverables) && phase.deliverables.length) {
+                html += '<div class="small mb-1"><strong>Deliverables:</strong></div><ul class="small mb-2">';
+                phase.deliverables.forEach(function(d) { html += '<li>' + escFyp(d) + '</li>'; });
+                html += '</ul>';
+            }
+            if (Array.isArray(phase.tools) && phase.tools.length) {
+                html += '<div class="small text-muted"><strong>Tools:</strong> ' + phase.tools.map(escFyp).join(', ') + '</div>';
+            }
+            html += '</div>';
+        });
+
+        if (tips.length) {
+            html += '<div class="small"><strong>Tips:</strong><ul class="mb-0 mt-1">';
+            tips.forEach(function(t) { html += '<li>' + escFyp(t) + '</li>'; });
+            html += '</ul></div>';
+        }
+
+        html += '</div>';
+        out.innerHTML = html;
+    } catch (err) {
+        out.innerHTML = '<div class="alert alert-danger">Error: ' + escFyp(err.message) + '</div>';
+    }
+}
+
+function escFyp(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+        return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]);
+    });
 }
 </script>
 {% endblock %}
