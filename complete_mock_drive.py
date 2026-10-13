@@ -12,6 +12,64 @@ from datetime import datetime
 logger = logging.getLogger("charvakit.complete_mock")
 
 
+# ============================================================
+# Session 43-B1: Mock drive diagnostics constants
+# ============================================================
+# Industry-typical "passing" cutoff per company, in percent.
+# These are based on the usually published cutoff for each
+# company's freshers test. Replace with real data over time.
+CUTOFFS = {
+    "tcs": 60,
+    "infosys": 55,
+    "wipro": 55,
+    "cognizant": 55,
+    "hcl": 55,
+    "hcltech": 55,
+    "tech_mahindra": 55,
+    "lti": 55,
+    "mindtree": 55,
+    "accenture": 60,
+    "capgemini": 55,
+    "ibm": 60,
+    "deloitte": 65,
+    "kpmg": 65,
+    "ey": 65,
+    "pwc": 65,
+    "amazon": 70,
+    "google": 75,
+    "microsoft": 75,
+}
+
+# Recommended courses per weak topic. Falls back to a generic
+# suggestion if the topic has no match.
+TOPIC_TO_COURSE = {
+    "Quant": ["Data Analytics [Beginner]", "Python for Data Science [Intermediate]"],
+    "Advanced Quant": ["Data Analytics [Beginner]"],
+    "Verbal": [],
+    "CS Fundamentals": ["Data Science & ML [Intermediate]", "Python Programming [Beginner]"],
+    "Basic": ["Python Programming [Beginner]"],
+    "DSA": ["Full Stack Web Development [Beginner]", "Python Programming [Beginner]"],
+    "System Design": ["Cloud Architecture [Advanced]", "DevOps Engineering [Intermediate]"],
+    "DBMS": ["SQL & Database [Beginner]"],
+    "OS": ["DevOps Engineering [Intermediate]"],
+    "Coding": ["Python Programming [Beginner]"],
+    "Data Structures": ["Data Science & ML [Intermediate]"],
+    "Algorithms": ["Data Science & ML [Intermediate]"],
+}
+
+
+def get_cutoff(company_id: str) -> int:
+    """Return the freshers cutoff for a company, default 60."""
+    return CUTOFFS.get((company_id or "").lower(), 60)
+
+
+def get_course_suggestions(topic: str) -> list:
+    """Return catalog course names matching a weak topic."""
+    return TOPIC_TO_COURSE.get(topic, [])
+
+
+
+
 class CompleteMockDrive:
     def __init__(self):
         from dotenv import load_dotenv
@@ -407,6 +465,156 @@ class CompleteMockDrive:
             return {"status": "error", "message": str(e)}
 
 
+    # ============================================================
+    # Session 43-B1: Diagnostics — section + topic breakdown + cutoff
+    # ============================================================
+
+    def compute_diagnostics(self, company_id, company_name, sections, answers):
+        """
+        Given the sections config + raw answers, compute:
+        - section_breakdown: [{name, correct, total, pct}]
+        - topic_breakdown:   [{topic, correct, total, pct}]  (weakest first)
+        - cutoff_comparison: {cutoff_pct, your_pct, gap, verdict}
+        - recommended_actions: [{action, reason, type}]
+
+        `answers` is a list of (section_name, question_id, selected).
+        `sections` is a list of {name, count, questions: [{id, topic, correct, ...}]}.
+        """
+        # Build a lookup: (section_name, question_id) -> {correct, topic}
+        lookup = {}
+        for sec in sections or []:
+            sname = sec.get("name")
+            for q in sec.get("questions", []) or []:
+                lookup[(sname, q.get("id"))] = {
+                    "correct_index": q.get("correct"),
+                    "topic": q.get("topic") or "General",
+                }
+
+        # Answer map for O(1) lookup
+        ans_map = {}
+        for sname, qid, sel in answers or []:
+            ans_map[(sname, qid)] = sel
+
+        # --- Section breakdown ---
+        section_breakdown = []
+        for sec in sections or []:
+            sname = sec.get("name")
+            questions = sec.get("questions", []) or []
+            correct = 0
+            for q in questions:
+                sel = ans_map.get((sname, q.get("id")))
+                if sel is not None and sel == q.get("correct"):
+                    correct += 1
+            total = len(questions)
+            pct = round(correct / total * 100, 1) if total else 0.0
+            section_breakdown.append({
+                "name": sname,
+                "correct": correct,
+                "total": total,
+                "pct": pct,
+            })
+
+        # --- Topic breakdown ---
+        topic_stats = {}
+        for sec in sections or []:
+            sname = sec.get("name")
+            for q in sec.get("questions", []) or []:
+                topic = q.get("topic") or "General"
+                if topic not in topic_stats:
+                    topic_stats[topic] = {"correct": 0, "total": 0}
+                topic_stats[topic]["total"] += 1
+                sel = ans_map.get((sname, q.get("id")))
+                if sel is not None and sel == q.get("correct"):
+                    topic_stats[topic]["correct"] += 1
+
+        topic_breakdown = []
+        for topic, stats in topic_stats.items():
+            pct = round(stats["correct"] / stats["total"] * 100, 1) if stats["total"] else 0.0
+            topic_breakdown.append({
+                "topic": topic,
+                "correct": stats["correct"],
+                "total": stats["total"],
+                "pct": pct,
+            })
+        # Weakest first
+        topic_breakdown.sort(key=lambda t: t["pct"])
+
+        # --- Cutoff comparison ---
+        total_correct = sum(s["correct"] for s in section_breakdown)
+        total_questions = sum(s["total"] for s in section_breakdown)
+        your_pct = round(total_correct / total_questions * 100, 1) if total_questions else 0.0
+        cutoff = get_cutoff(company_id)
+        gap = round(your_pct - cutoff, 1)
+
+        if your_pct >= cutoff:
+            verdict = f"Above cut-off — you are ready for {company_name}"
+        elif your_pct >= cutoff - 10:
+            verdict = f"Close — {abs(gap):.0f} points below the {company_name} cut-off"
+        elif your_pct >= cutoff - 25:
+            verdict = f"Below cut-off — {abs(gap):.0f} points to close"
+        else:
+            verdict = f"Not yet ready — {abs(gap):.0f} points below the cut-off"
+
+        cutoff_comparison = {
+            "cutoff_pct": cutoff,
+            "your_pct": your_pct,
+            "gap": gap,
+            "verdict": verdict,
+            "passed": your_pct >= cutoff,
+        }
+
+        # --- Recommended actions ---
+        recommendations = []
+
+        # 1. Weakest section (only if there are >1 sections and one is clearly weak)
+        if len(section_breakdown) > 1:
+            weakest_section = min(section_breakdown, key=lambda s: s["pct"])
+            if weakest_section["pct"] < cutoff:
+                recommendations.append({
+                    "type": "retake_section",
+                    "action": f"Retake the {weakest_section['name']} section",
+                    "reason": f"You scored {weakest_section['pct']:.0f}% — target {cutoff}%",
+                })
+
+        # 2. Course recommendations from the weakest topics
+        weak_topics = [t for t in topic_breakdown if t["pct"] < cutoff][:3]
+        seen_courses = set()
+        for wt in weak_topics:
+            suggestions = get_course_suggestions(wt["topic"])
+            for course in suggestions:
+                if course in seen_courses:
+                    continue
+                seen_courses.add(course)
+                recommendations.append({
+                    "type": "course",
+                    "action": f"Take the course: {course}",
+                    "reason": f"Fixes your weak area: {wt['topic']} ({wt['pct']:.0f}%)",
+                })
+                break  # one course per weak topic
+
+        # 3. Retake the full drive
+        if your_pct < cutoff:
+            recommendations.append({
+                "type": "retake_full",
+                "action": f"Retake the full {company_name} drive",
+                "reason": "After completing the course and section retake, aim for the cut-off",
+            })
+
+        # 4. If everything is above cutoff
+        if not recommendations:
+            recommendations.append({
+                "type": "advance",
+                "action": "You're ready — take the drive at a harder pattern",
+                "reason": f"You scored above the {company_name} cut-off ({cutoff}%)",
+            })
+
+        return {
+            "section_breakdown": section_breakdown,
+            "topic_breakdown": topic_breakdown,
+            "cutoff_comparison": cutoff_comparison,
+            "recommended_actions": recommendations,
+        }
+
     def complete_mock(self, session_id):
         """Complete mock: score from persisted answers, record result, update session."""
         try:
@@ -453,10 +661,28 @@ class CompleteMockDrive:
             conn.commit()
             cur.close(); conn.close()
 
+            # Session 43-B1: compute full diagnostics
+            try:
+                diagnostics = self.compute_diagnostics(
+                    company_id=company_id,
+                    company_name=company_name,
+                    sections=sections,
+                    answers=answers,
+                )
+            except Exception as e:
+                logger.warning(f"diagnostics failed: {e}")
+                diagnostics = {
+                    "section_breakdown": [],
+                    "topic_breakdown": [],
+                    "cutoff_comparison": {"cutoff_pct": 60, "your_pct": round(score, 1), "gap": 0, "verdict": "", "passed": passed},
+                    "recommended_actions": [],
+                }
+
             results = {
                 "session_id": session_id,
                 "email": email,
                 "company": company_name,
+                "company_id": company_id,
                 "pattern": pattern,
                 "total_questions": total_questions,
                 "answered": answered,
@@ -464,6 +690,7 @@ class CompleteMockDrive:
                 "score": round(score, 1),
                 "pass": passed,
                 "sections": [{"name": s.get("name"), "count": s.get("count")} for s in sections],
+                "diagnostics": diagnostics,
                 "completed_at": datetime.now().isoformat()
             }
 
