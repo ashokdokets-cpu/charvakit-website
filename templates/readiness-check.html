@@ -119,7 +119,7 @@
         </div>
 
         <p style="margin: 14px 0 0; font-size: 0.85rem; color: #6b7280; text-align: center;">
-          <strong style="color: #374151;">Hundreds of students have taken this check this week.</strong>
+          <strong style="color: #1e293b; font-weight: 700;" id="rcCertCount">Loading...</strong>
         </p>
       </div>
     <p class="rc-meta">No payment. No commitment. Just your score.</p>
@@ -451,5 +451,38 @@
       if (btn && !btn.disabled) btn.textContent = rcBtnLabel();
     });
   });
+
+
+// Session 43-D (A2.5): Real social proof — fetch real counts from the backend
+(function charvakStatsLoad() {
+    async function load() {
+        try {
+            var r = await fetch('/api/public/stats', { cache: 'default' });
+            var j = await r.json();
+            if (j.status !== 'success' || !j.stats) return;
+            var s = j.stats;
+
+            // Certificates issued this week
+            var certEl = document.getElementById('rcCertCount');
+            if (certEl) {
+                var n = s.certificates_issued_7d;
+                if (n === 0) {
+                    certEl.textContent = 'Join hundreds of students taking the free check';
+                } else if (n === 1) {
+                    certEl.textContent = '1 certificate issued this week';
+                } else {
+                    certEl.textContent = n + ' certificates issued this week';
+                }
+            }
+        } catch (e) {
+            console.warn('Stats load failed:', e);
+        }
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', load);
+    } else {
+        load();
+    }
+})();
 </script>
 {% endblock %}

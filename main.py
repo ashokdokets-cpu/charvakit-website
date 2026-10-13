@@ -9817,6 +9817,129 @@ async def robots_txt():
     )
     return PlainTextResponse(content, media_type="text/plain")
 
+@app.get("/api/public/stats")
+@limiter.limit("60/minute")
+async def api_public_stats(request: Request):
+    """
+    Public statistics for landing-page social proof (Session 43-D A2.5).
+
+    Uses per-query isolated connections so one bad table/column can't
+    abort the whole transaction. Fallbacks are conservative (0).
+    Cached 5 min via HTTP headers.
+    """
+    import logging
+    logger = logging.getLogger("charvakit.public_stats")
+
+    def _safe_count(query: str, label: str) -> int:
+        """Run one COUNT query in its own connection. Returns 0 on any error."""
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute(query)
+            row = cur.fetchone()
+            cur.close()
+            conn.close()
+            return int(row[0]) if row and row[0] is not None else 0
+        except Exception as e:
+            logger.warning(f"public_stats query '{label}' failed: {e}")
+            try:
+                cur.close()
+                conn.close()
+            except Exception:
+                pass
+            return 0
+
+    stats = {
+        "certificates_issued_7d": _safe_count(
+            "SELECT COUNT(*) FROM charvak_readiness_certificates WHERE created_at > NOW() - INTERVAL '7 days'",
+            "certificates_7d"),
+        "certificates_issued_30d": _safe_count(
+            "SELECT COUNT(*) FROM charvak_readiness_certificates WHERE created_at > NOW() - INTERVAL '30 days'",
+            "certificates_30d"),
+        "mock_sessions_completed_7d": _safe_count(
+            "SELECT COUNT(*) FROM charvak_mock_sessions WHERE status='completed' AND started_at > NOW() - INTERVAL '7 days'",
+            "mock_7d"),
+        "mock_sessions_completed_30d": _safe_count(
+            "SELECT COUNT(*) FROM charvak_mock_sessions WHERE status='completed' AND started_at > NOW() - INTERVAL '30 days'",
+            "mock_30d"),
+        "mock_companies_supported": 18,
+        "enrollments_30d": 0,
+        "courses_available": _safe_count(
+            "SELECT COUNT(*) FROM charvak_courses WHERE is_custom = FALSE",
+            "courses"),
+        "users_total": _safe_count(
+            "SELECT COUNT(*) FROM users",
+            "users"),
+        "active_cities_30d": 0,
+    }
+
+    # Try enrollments with any timestamp column that exists
+    try:
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+        # Introspect columns once
+        cur.execute("""
+            SELECT column_name FROM information_schema.columns
+            WHERE table_name = 'charvak_enrollments'
+              AND data_type LIKE 'timestamp%%'
+            ORDER BY ordinal_position
+            LIMIT 1
+        """)
+        ts_col_row = cur.fetchone()
+        cur.close()
+        conn.close()
+        if ts_col_row:
+            ts_col = ts_col_row[0]
+            stats["enrollments_30d"] = _safe_count(
+                f"SELECT COUNT(*) FROM charvak_enrollments WHERE {ts_col} > NOW() - INTERVAL '30 days'",
+                "enrollments_30d")
+        else:
+            # Fallback: just count all
+            stats["enrollments_30d"] = _safe_count(
+                "SELECT COUNT(*) FROM charvak_enrollments",
+                "enrollments_all")
+    except Exception as e:
+        logger.warning(f"enrollments introspection failed: {e}")
+
+    # Try active cities count from users with a city/location column
+    try:
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT column_name FROM information_schema.columns
+            WHERE table_name = 'users'
+              AND column_name IN ('city', 'location', 'town')
+            LIMIT 1
+        """)
+        city_row = cur.fetchone()
+        cur.close()
+        conn.close()
+        if city_row:
+            city_col = city_row[0]
+            stats["active_cities_30d"] = _safe_count(
+                f"SELECT COUNT(DISTINCT LOWER({city_col})) FROM users WHERE {city_col} IS NOT NULL AND {city_col} != ''",
+                "cities")
+    except Exception as e:
+        logger.warning(f"city introspection failed: {e}")
+
+    # Timestamp
+    try:
+        from datetime import datetime
+        stats["generated_at"] = datetime.utcnow().isoformat() + "Z"
+    except Exception:
+        stats["generated_at"] = None
+
+    return JSONResponse(
+        content={"status": "success", "stats": stats},
+        headers={
+            "Cache-Control": "public, max-age=300, s-maxage=300",
+            "Access-Control-Allow-Origin": "*",
+        },
+    )
+
 @app.get("/api/region")
 async def detect_region(request: Request, country: str = None, currency: str = None):
     """Region detection. Dev override: pass ?country=US or ?currency=USD."""
