@@ -1310,6 +1310,81 @@ async def view_site(site_id: str):
 # API SYNC ENDPOINTS (DoketsRB Integration)
 # ============================================================
 
+@app.get("/api/sync/overview")
+@limiter.limit("60/minute")
+async def api_sync_overview(request: Request):
+    """
+    Public DoketsRB sync overview (Session 43-D A5).
+
+    Returns aggregate counts and the last sync timestamp across the
+    DoketsRB <-> Charvak bridge. Safe for public consumption: no
+    per-user data, no secrets. Cached 60s.
+
+    The existing /api/sync/status/{user_id} remains for per-user
+    status checks.
+    """
+    import os, logging
+    logger = logging.getLogger("charvakit.sync_overview")
+
+    def _safe_count(query, label):
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute(query)
+            row = cur.fetchone()
+            cur.close(); conn.close()
+            return int(row[0]) if row and row[0] is not None else 0
+        except Exception as e:
+            logger.warning(f"sync_overview count '{label}': {e}")
+            try:
+                cur.close(); conn.close()
+            except Exception:
+                pass
+            return 0
+
+    def _safe_max_ts(query, label):
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute(query)
+            row = cur.fetchone()
+            cur.close(); conn.close()
+            return str(row[0]) if row and row[0] else None
+        except Exception as e:
+            logger.warning(f"sync_overview max '{label}': {e}")
+            try:
+                cur.close(); conn.close()
+            except Exception:
+                pass
+            return None
+
+    users_synced = _safe_count("SELECT COUNT(*) FROM charvak_synced_users", "users")
+    apps_synced = _safe_count("SELECT COUNT(*) FROM charvak_synced_applications", "apps")
+    score_events = _safe_count("SELECT COUNT(*) FROM charvak_doketsrb_score_events", "score_events")
+    last_sync = _safe_max_ts("SELECT MAX(synced_at) FROM charvak_ats_sync_log", "last_sync")
+    if not last_sync:
+        # Fallback: use the max synced_at from users
+        last_sync = _safe_max_ts("SELECT MAX(synced_at) FROM charvak_synced_users", "last_sync_users")
+
+    configured = bool(os.getenv("SYNC_API_KEY"))
+    linked = (users_synced > 0 or apps_synced > 0)
+
+    return JSONResponse(
+        content={
+            "status": "success",
+            "linked": linked,
+            "doketsrb_configured": configured,
+            "last_sync": last_sync,
+            "users_synced": users_synced,
+            "applications_synced": apps_synced,
+            "score_events": score_events,
+        },
+        headers={"Cache-Control": "public, max-age=60"},
+    )
+
+
 @app.post("/api/sync/resume")
 async def sync_resume(data: ResumeSync, request: Request, auth=Depends(verify_api_key)):
     return await handle_resume_sync(data, request)
