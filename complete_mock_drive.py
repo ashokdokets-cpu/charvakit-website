@@ -469,6 +469,152 @@ class CompleteMockDrive:
     # Session 43-B1: Diagnostics — section + topic breakdown + cutoff
     # ============================================================
 
+    # ============================================================
+    # Session 43-B2: Question-by-question review + AI explanations
+    # ============================================================
+
+    def build_question_review(self, sections, answers):
+        """
+        Build a per-question review list:
+        [{section, q_num, question, topic, options, your_index,
+          your_text, correct_index, correct_text, is_correct}]
+        """
+        # Answer map: (section, q_id) -> selected_index
+        ans_map = {}
+        for sname, qid, sel in answers or []:
+            ans_map[(sname, qid)] = sel
+
+        review = []
+        for sec in sections or []:
+            sname = sec.get("name")
+            for q in sec.get("questions", []) or []:
+                qid = q.get("id")
+                sel = ans_map.get((sname, qid))
+                correct_idx = q.get("correct")
+                options = q.get("options", []) or []
+                your_text = options[sel] if isinstance(sel, int) and 0 <= sel < len(options) else None
+                correct_text = options[correct_idx] if isinstance(correct_idx, int) and 0 <= correct_idx < len(options) else None
+                review.append({
+                    "section": sname,
+                    "q_num": qid,
+                    "question": q.get("question", ""),
+                    "topic": q.get("topic") or "General",
+                    "options": options,
+                    "your_index": sel,
+                    "your_text": your_text,
+                    "correct_index": correct_idx,
+                    "correct_text": correct_text,
+                    "is_correct": (sel is not None and sel == correct_idx),
+                })
+        return review
+
+    def generate_ai_explanations(self, wrong_questions):
+        """
+        Batch AI explanations for wrong answers.
+
+        Input: list of dicts with {question, topic, options, correct_text, your_text}
+        Output: {q_key: explanation_text}
+
+        Behavior:
+        - Batches up to 30 questions per OpenAI call (single call).
+        - Hard ceiling of 90 questions total (3 chunks). Beyond that,
+          remaining questions get a rule-based fallback explanation.
+        - Any question not covered by the AI gets a rule-based fallback.
+        - Silent-fail: never raises. Coverage is logged for observability.
+        """
+        if not wrong_questions:
+            return {}
+        if not self.openai_api_key:
+            # No API key — fallback for all
+            return self._fallback_explanations(wrong_questions, [])
+
+        BATCH_SIZE = 30
+        MAX_QUESTIONS = 90  # 3 chunks max
+
+        # Slice to ceiling
+        questions_to_explain = wrong_questions[:MAX_QUESTIONS]
+
+        explanations = {}
+        try:
+            from openai import OpenAI
+            client = OpenAI(api_key=self.openai_api_key)
+            import json as _json
+
+            # Process in chunks of BATCH_SIZE
+            for chunk_start in range(0, len(questions_to_explain), BATCH_SIZE):
+                chunk = questions_to_explain[chunk_start:chunk_start + BATCH_SIZE]
+
+                payload = []
+                for i, wq in enumerate(chunk):
+                    payload.append({
+                        "id": i,
+                        "question": wq.get("question", ""),
+                        "topic": wq.get("topic", ""),
+                        "correct": wq.get("correct_text", ""),
+                        "student_answered": wq.get("your_text", ""),
+                    })
+
+                prompt = (
+                    f"You are an exam coach for Indian campus placements. For each "
+                    f"wrong answer below, explain in 2 short sentences why the correct "
+                    f"answer is right and what the student should remember. Be specific "
+                    f"and pedagogical — not generic.\n\n"
+                    f"CRITICAL: You MUST return exactly {len(payload)} items in the "
+                    f"explanations array — one for every input id from 0 to {len(payload)-1}. "
+                    f"Do not skip or merge any.\n\n"
+                    'Return ONLY valid JSON in this shape:\n'
+                    '{"explanations": [{"id": <int>, "text": "<2-sentence explanation>"}, ...]}\n\n'
+                    "Questions:\n" + _json.dumps(payload, indent=2)
+                )
+
+                resp = client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[
+                        {"role": "system", "content": "You are an expert exam coach. Return JSON only. Never skip items."},
+                        {"role": "user", "content": prompt},
+                    ],
+                    response_format={"type": "json_object"},
+                    max_tokens=8000,
+                    temperature=0.3,
+                )
+                raw = resp.choices[0].message.content
+                parsed = _json.loads(raw)
+
+                for item in parsed.get("explanations", []):
+                    idx = item.get("id")
+                    text = item.get("text", "")
+                    if isinstance(idx, int) and 0 <= idx < len(chunk):
+                        key = (chunk[idx].get("question") or "")[:200]
+                        explanations[key] = text
+
+            logger.info(
+                f"AI explanations: requested={len(questions_to_explain)} "
+                f"returned={len(explanations)}"
+            )
+        except Exception as e:
+            logger.warning(f"AI explanations failed: {e}")
+
+        # Fill in fallback explanations for any missed questions
+        return self._fallback_explanations(wrong_questions, list(explanations.keys()), explanations)
+
+    def _fallback_explanations(self, wrong_questions, covered_keys, existing=None):
+        """
+        Merge existing (AI) explanations with rule-based fallbacks for any
+        wrong questions the AI did not cover.
+        """
+        result = dict(existing) if existing else {}
+        for wq in wrong_questions:
+            key = (wq.get("question") or "")[:200]
+            if key in result:
+                continue
+            correct = wq.get("correct_text") or "the listed correct option"
+            topic = wq.get("topic") or "this topic"
+            result[key] = (
+                f"The correct answer is {correct}. "
+                f"Review {topic} — it was identified as a weak area in your report."
+            )
+        return result
+
     def compute_diagnostics(self, company_id, company_name, sections, answers):
         """
         Given the sections config + raw answers, compute:
@@ -608,11 +754,26 @@ class CompleteMockDrive:
                 "reason": f"You scored above the {company_name} cut-off ({cutoff}%)",
             })
 
+        # --- Question-by-question review (Session 43-B2) ---
+        question_review = self.build_question_review(sections, answers)
+
+        # Attach AI explanations to wrong answers
+        wrong_items = [q for q in question_review if not q.get("is_correct")]
+        if wrong_items:
+            explanations = self.generate_ai_explanations(wrong_items)
+            for q in question_review:
+                key = (q.get("question") or "")[:200]
+                q["ai_explanation"] = explanations.get(key, "")
+        else:
+            for q in question_review:
+                q["ai_explanation"] = ""
+
         return {
             "section_breakdown": section_breakdown,
             "topic_breakdown": topic_breakdown,
             "cutoff_comparison": cutoff_comparison,
             "recommended_actions": recommendations,
+            "question_review": question_review,
         }
 
     def complete_mock(self, session_id):
