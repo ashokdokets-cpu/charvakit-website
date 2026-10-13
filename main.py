@@ -9143,6 +9143,36 @@ async def fyp_viva_questions(request: Request):
         return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return final_year_project_engine.generate_viva_ai(data)
 
+@app.post("/api/fyp/citations")
+@limiter.limit("30/minute")
+async def fyp_citations(request: Request):
+    """Generate proper citations for a FYP chapter. 8 credits."""
+    data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "fyp_citations")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+    return final_year_project_engine.generate_citations_ai(data)
+
+@app.post("/api/fyp/roadmap")
+@limiter.limit("30/minute")
+async def fyp_roadmap(request: Request):
+    """Generate a week-by-week milestone roadmap. 15 credits."""
+    data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "fyp_roadmap")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+    return final_year_project_engine.generate_roadmap_ai(data)
+
 @app.post("/api/fyp/subscribe")
 @limiter.limit("60/minute")
 async def fyp_subscribe(request: Request):

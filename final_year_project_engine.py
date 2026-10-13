@@ -12,6 +12,22 @@ from typing import Dict, List
 
 logger = logging.getLogger("charvakit.fyp")
 
+
+
+def _runtime_key_present() -> bool:
+    """Return True if an OpenAI key is available right now."""
+    import os as _os
+    return bool(_os.getenv("OPENAI_API_KEY") or OPENAI_API_KEY)
+
+# Session 43-D fix: load .env before reading OPENAI_API_KEY.
+# Without this, the module-level constant is empty because the
+# shell env only populates after load_dotenv() runs.
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except Exception:
+    pass
+
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 
 
@@ -59,7 +75,16 @@ class FinalYearProjectEngine:
         """Call OpenAI in JSON mode and return parsed dict, or None on failure."""
         try:
             import openai
-            client = openai.OpenAI(api_key=OPENAI_API_KEY)
+            # Session 43-D: Runtime env re-read. The module-level
+            # OPENAI_API_KEY can be empty if the module was imported
+            # before load_dotenv() ran in some code paths. Re-read
+            # at call time as a safety net.
+            import os as _os
+            _key = _os.getenv("OPENAI_API_KEY") or OPENAI_API_KEY
+            if not _key:
+                print("[FYP] OpenAI key missing at call time — falling back")
+                return None
+            client = openai.OpenAI(api_key=_key)
             response = client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[{"role": "user", "content": prompt}],
@@ -310,6 +335,168 @@ Return JSON: {{"topics": [{{"title": "...", "domain": "...", "difficulty": "..."
     # ============================================================
     # MONETIZATION (DB-backed)
     # ============================================================
+
+    def generate_citations_ai(self, data: Dict) -> Dict:
+        """
+        Generate proper citations for a chapter or topic.
+
+        Body: {topic, chapter_title?, content?}
+        Returns: {"citations": {"ieee": [...], "apa": [...], "mla": [...]}, "notes": "..."}
+
+        Each citation is a full formatted string ready to paste into the
+        references section. AI-generated; the student should verify the
+        actual source exists before submitting.
+        """
+        topic = (data.get("topic") or "").strip()
+        chapter_title = (data.get("chapter_title") or "").strip()
+        chapter_content = (data.get("content") or "").strip()
+
+        if not topic:
+            return {"status": "error", "message": "topic required."}
+
+        # Cap the pasted content to keep tokens bounded
+        if len(chapter_content) > 4000:
+            chapter_content = chapter_content[:4000]
+
+        if _runtime_key_present():
+            prompt = (
+                "You are helping a final year engineering student write the References "
+                "section of their project report.\n\n"
+                f"Project topic: {topic}\n"
+                f"Chapter: {chapter_title or 'General'}\n"
+            )
+            if chapter_content:
+                prompt += f"Chapter content (for context):\n{chapter_content}\n\n"
+            prompt += (
+                "Generate 6 real, plausible academic or industry references "
+                "that a project on this topic would cite. For each reference, "
+                "give the full formatted string in THREE citation styles.\n\n"
+                "Rules:\n"
+                "- Include a mix: 3-4 academic papers, 1-2 books, 1-2 industry/standard sources.\n"
+                "- Author names, years, titles, journals/publishers must look plausible for the topic.\n"
+                "- IEEE format: [N] A. Author, \"Title,\" Journal, vol. X, no. Y, pp. Z, Year.\n"
+                "- APA format: Author, A. A. (Year). Title. Journal, Volume(Issue), Pages.\n"
+                "- MLA format: Author. \"Title.\" Journal, vol. X, no. Y, Year, pp. Z.\n"
+                "- Add a short 'note' field per reference explaining what it supports.\n\n"
+                "Return STRICT JSON only with this exact shape:\n"
+                "{\n"
+                '  "citations": [\n'
+                '    {\n'
+                '      "ieee": "<IEEE formatted string>",\n'
+                '      "apa": "<APA formatted string>",\n'
+                '      "mla": "<MLA formatted string>",\n'
+                '      "note": "<what this reference supports in the report>"\n'
+                '    }\n'
+                "  ],\n"
+                '  "notes": "<one-line advice about verifying real sources before submission>"\n'
+                "}"
+            )
+            result = self._ai_json(prompt, max_tokens=3000, temperature=0.4)
+            if result and result.get("citations"):
+                return {"status": "success", **result}
+
+        # Fallback — generic templates
+        return self._fallback_citations(topic, chapter_title)
+
+    def _fallback_citations(self, topic: str, chapter_title: str) -> Dict:
+        """Generic fallback when AI is unavailable. Clearly placeholder citations."""
+        return {
+            "status": "success",
+            "citations": [
+                {
+                    "ieee": f"[1] A. Author, \"Foundations of {topic},\" Journal of {topic}, vol. 1, no. 1, pp. 1-10, 2024.",
+                    "apa": f"Author, A. (2024). Foundations of {topic}. Journal of {topic}, 1(1), 1-10.",
+                    "mla": f"Author, A. \"Foundations of {topic}.\" Journal of {topic}, vol. 1, no. 1, 2024, pp. 1-10.",
+                    "note": f"Placeholder for {chapter_title or topic}. Replace with a real source."
+                }
+            ],
+            "notes": "AI was unavailable. Please search Google Scholar, IEEE Xplore, or the ACM Digital Library for real references on this topic and format them manually."
+        }
+
+    def generate_roadmap_ai(self, data: Dict) -> Dict:
+        """
+        Generate a week-by-week milestone roadmap for a final year project.
+
+        Body: {topic, duration_weeks (default 16)}
+        Returns: {"roadmap": [{"week": N, "title": "...", "goal": "...",
+                               "deliverables": [...], "tools": [...]}], "tips": [...]}
+        """
+        topic = (data.get("topic") or "").strip()
+        try:
+            duration = int(data.get("duration_weeks") or 16)
+        except Exception:
+            duration = 16
+        # Sanity clamp
+        duration = max(4, min(24, duration))
+
+        if not topic:
+            return {"status": "error", "message": "topic required."}
+
+        if _runtime_key_present():
+            prompt = (
+                f"You are planning a final year engineering project on: {topic}\n"
+                f"Duration: {duration} weeks\n\n"
+                "Produce a phase-based milestone roadmap.\n\n"
+                "Rules:\n"
+                "- Return between 4 and 7 phases total (ONE entry per phase, not per deliverable)\n"
+                "- Each phase covers a range of weeks, in order: research → design → implementation → testing → report\n"
+                "- Each phase must have: 1 clear goal, 2-4 deliverables, 2-4 tools\n"
+                "- Week ranges must cover the full duration without overlap or gaps\n"
+                "- Be specific to the project topic, not generic\n"
+                "- DO NOT return multiple entries for the same phase or the same week range\n"
+                "- DO NOT repeat a phase title\n\n"
+                "Return STRICT JSON only with this exact shape:\n"
+                "{\n"
+                '  "roadmap": [\n'
+                '    {\n'
+                '      "week": 1,\n'
+                '      "week_range": "1-2",\n'
+                '      "title": "<phase title>",\n'
+                '      "goal": "<what the student must accomplish>",\n'
+                '      "deliverables": ["<item>", "<item>"],\n'
+                '      "tools": ["<tool>", "<tool>"]\n'
+                '    }\n'
+                "  ],\n"
+                '  "tips": ["<3-5 short tips to stay on track>"]\n'
+                "}"
+            )
+            result = self._ai_json(prompt, max_tokens=3500, temperature=0.4)
+            if result and result.get("roadmap"):
+                return {"status": "success", **result}
+
+        # Fallback
+        return self._fallback_roadmap(topic, duration)
+
+    def _fallback_roadmap(self, topic: str, duration: int) -> Dict:
+        """Generic fallback roadmap when AI is unavailable."""
+        phases = [
+            ("Research & Literature Review", "Survey existing work and define scope"),
+            ("Design & Architecture", "Finalise system design and component choices"),
+            ("Implementation", "Build the core system iteratively"),
+            ("Testing & Validation", "Unit test, integration test, and validate against requirements"),
+            ("Report Writing & Viva Prep", "Write the final report and prepare for viva"),
+        ]
+        roadmap = []
+        for i, (title, goal) in enumerate(phases):
+            start = 1 + (i * duration) // len(phases)
+            end = ((i + 1) * duration) // len(phases)
+            roadmap.append({
+                "week": start,
+                "week_range": f"{start}-{end}" if start != end else str(start),
+                "title": title,
+                "goal": f"{goal} for {topic}",
+                "deliverables": [f"{title} section in the report"],
+                "tools": ["(define per your project)"],
+            })
+        return {
+            "status": "success",
+            "roadmap": roadmap,
+            "tips": [
+                "AI was unavailable — this is a generic roadmap. Refine it manually.",
+                "Set a weekly check-in with your guide.",
+                "Keep an evidence log (screenshots, notes) as you go.",
+            ],
+        }
 
     def subscribe(self, data: Dict) -> Dict:
         """
