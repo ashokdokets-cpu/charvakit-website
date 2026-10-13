@@ -11848,6 +11848,26 @@ async def get_mock_result(session_id: str):
 
 from multi_pattern_company import multi_pattern
 
+@app.get("/api/company-patterns/counts")
+@limiter.limit("120/minute")
+async def api_company_pattern_counts(request: Request):
+    """
+    Return {company_id: pattern_count} for all companies. Public.
+    Used by the frontend to render the 'N Patterns' label on each
+    company card without hardcoding.
+
+    IMPORTANT: this route must be registered BEFORE
+    /api/company-patterns/{company_id}, or the dynamic route will
+    match 'counts' as a company_id.
+    """
+    from multi_pattern_company import multi_pattern
+    counts = {
+        cid: len(c.get("patterns", {}))
+        for cid, c in multi_pattern.patterns.items()
+    }
+    return {"status": "success", "counts": counts, "total_companies": len(counts)}
+
+
 @app.get("/api/company-patterns/{company_id}")
 async def get_company_patterns(request: Request, company_id: str):
     require_auth(request)

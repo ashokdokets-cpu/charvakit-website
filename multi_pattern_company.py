@@ -49,6 +49,16 @@ class MultiPatternCompany:
                             {"name": "Advanced Coding", "count": 3, "time": "90 min", "topics": ["DSA", "Algorithms", "System Design"]},
                             {"name": "Innovation Challenge", "count": 5, "time": "45 min", "topics": ["Problem Solving", "Design Thinking"]}
                         ]
+                    },
+                    "business_analyst": {
+                        "name": "Business Analyst",
+                        "difficulty": "Moderate",
+                        "description": "MBA-focused track — case reasoning, market sizing, business communication",
+                        "sections": [
+                            {"name": "Aptitude", "count": 20, "time": "45 min", "topics": ["Quant", "Logical", "Verbal"]},
+                            {"name": "Business Reasoning", "count": 15, "time": "40 min", "topics": ["Case Reasoning", "Market Sizing", "Data Interpretation", "Business Logic"]},
+                            {"name": "Communication", "count": 5, "time": "15 min", "topics": ["Grammar", "Business Writing"]}
+                        ]
                     }
                 }
             },
@@ -308,6 +318,16 @@ class MultiPatternCompany:
                             {"name": "Technical", "count": 15, "time": "30 min", "topics": ["DSA", "DBMS"]},
                             {"name": "Case Study", "count": 5, "time": "30 min", "topics": ["Problem Solving"]}
                         ]
+                    },
+                    "business_analyst": {
+                        "name": "Business Analyst",
+                        "difficulty": "Moderate",
+                        "description": "MBA-focused track — case reasoning, market sizing, business communication",
+                        "sections": [
+                            {"name": "Aptitude", "count": 20, "time": "45 min", "topics": ["Quant", "Logical", "Verbal"]},
+                            {"name": "Business Reasoning", "count": 15, "time": "40 min", "topics": ["Case Reasoning", "Market Sizing", "Data Interpretation", "Business Logic"]},
+                            {"name": "Communication", "count": 5, "time": "15 min", "topics": ["Grammar", "Business Writing"]}
+                        ]
                     }
                 }
             },
@@ -329,6 +349,16 @@ class MultiPatternCompany:
                         "sections": [
                             {"name": "Advanced Aptitude", "count": 25, "time": "60 min", "topics": ["Advanced Quant", "Critical Reasoning"]},
                             {"name": "Technical", "count": 15, "time": "30 min", "topics": ["DSA", "DBMS"]}
+                        ]
+                    },
+                    "business_analyst": {
+                        "name": "Business Analyst",
+                        "difficulty": "Moderate",
+                        "description": "MBA-focused track — case reasoning, market sizing, business communication",
+                        "sections": [
+                            {"name": "Aptitude", "count": 20, "time": "45 min", "topics": ["Quant", "Logical", "Verbal"]},
+                            {"name": "Business Reasoning", "count": 15, "time": "40 min", "topics": ["Case Reasoning", "Market Sizing", "Data Interpretation", "Business Logic"]},
+                            {"name": "Communication", "count": 5, "time": "15 min", "topics": ["Grammar", "Business Writing"]}
                         ]
                     }
                 }
@@ -352,6 +382,16 @@ class MultiPatternCompany:
                             {"name": "Advanced Aptitude", "count": 25, "time": "60 min", "topics": ["Advanced Quant", "Critical Reasoning"]},
                             {"name": "Technical", "count": 15, "time": "30 min", "topics": ["DSA", "DBMS"]}
                         ]
+                    },
+                    "business_analyst": {
+                        "name": "Business Analyst",
+                        "difficulty": "Moderate",
+                        "description": "MBA-focused track — case reasoning, market sizing, business communication",
+                        "sections": [
+                            {"name": "Aptitude", "count": 20, "time": "45 min", "topics": ["Quant", "Logical", "Verbal"]},
+                            {"name": "Business Reasoning", "count": 15, "time": "40 min", "topics": ["Case Reasoning", "Market Sizing", "Data Interpretation", "Business Logic"]},
+                            {"name": "Communication", "count": 5, "time": "15 min", "topics": ["Grammar", "Business Writing"]}
+                        ]
                     }
                 }
             },
@@ -373,6 +413,16 @@ class MultiPatternCompany:
                         "sections": [
                             {"name": "Advanced Aptitude", "count": 25, "time": "60 min", "topics": ["Advanced Quant", "Critical Reasoning"]},
                             {"name": "Technical", "count": 15, "time": "30 min", "topics": ["DSA", "DBMS"]}
+                        ]
+                    },
+                    "business_analyst": {
+                        "name": "Business Analyst",
+                        "difficulty": "Moderate",
+                        "description": "MBA-focused track — case reasoning, market sizing, business communication",
+                        "sections": [
+                            {"name": "Aptitude", "count": 20, "time": "45 min", "topics": ["Quant", "Logical", "Verbal"]},
+                            {"name": "Business Reasoning", "count": 15, "time": "40 min", "topics": ["Case Reasoning", "Market Sizing", "Data Interpretation", "Business Logic"]},
+                            {"name": "Communication", "count": 5, "time": "15 min", "topics": ["Grammar", "Business Writing"]}
                         ]
                     }
                 }
