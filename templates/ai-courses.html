@@ -302,13 +302,13 @@ document.addEventListener("DOMContentLoaded", function() {
             var el = document.getElementById('acStatsLine');
             if (!el) return;
             var courses = s.courses_available || 0;
-            var enrollments = s.enrollments_30d || 0;
-            if (enrollments === 0) {
-                el.textContent = courses + ' courses in the catalog \u00b7 Design your own for any topic';
-            } else if (enrollments === 1) {
-                el.textContent = courses + ' courses \u00b7 1 student enrolled this month';
+            // Session 43-D: show breadth (courses available) not usage
+            // (enrollments). Breadth is more impressive and doesn't
+            // depend on daily activity.
+            if (courses === 0) {
+                el.textContent = 'AI-powered catalog \u00b7 Design your own for any topic';
             } else {
-                el.textContent = courses + ' courses \u00b7 ' + enrollments + ' students enrolled this month';
+                el.textContent = courses + ' courses in the catalog \u00b7 Design your own for any topic';
             }
         } catch (e) { console.warn('stats:', e); }
     }

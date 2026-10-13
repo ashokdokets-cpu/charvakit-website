@@ -465,13 +465,16 @@
             // Certificates issued this week
             var certEl = document.getElementById('rcCertCount');
             if (certEl) {
-                var n = s.certificates_issued_7d;
+                // Session 43-D: use the cumulative 30-day count for a
+                // more stable, better-rounded number. Weekly reads too
+                // small on a young platform.
+                var n = s.certificates_issued_30d || s.certificates_issued_7d || 0;
                 if (n === 0) {
-                    certEl.textContent = 'Join hundreds of students taking the free check';
+                    certEl.textContent = 'Free — no credit card needed';
                 } else if (n === 1) {
-                    certEl.textContent = '1 certificate issued this week';
+                    certEl.textContent = '1 verified certificate issued';
                 } else {
-                    certEl.textContent = n + ' certificates issued this week';
+                    certEl.textContent = n + ' verified certificates issued';
                 }
             }
         } catch (e) {
