@@ -20,6 +20,42 @@ FONT_BOLD_ITALIC = os.path.join(FONT_DIR, "DejaVuSans-BoldOblique.ttf")
 
 
 # ============================================================
+# Session 43-D (A2.1): QR code helper for PDFs
+# ============================================================
+def _generate_qr_png(text: str, box_size: int = 6, border: int = 2) -> bytes:
+    """
+    Generate a QR code as PNG bytes.
+    Used to embed a scan-to-verify QR on certificates.
+
+    Requires the `qrcode[pil]` package (installed via requirements.txt).
+    Silent-fail on any error — returns b"" if the QR cannot be generated.
+    """
+    try:
+        import qrcode
+        from io import BytesIO
+        qr = qrcode.QRCode(
+            version=None,
+            error_correction=qrcode.constants.ERROR_CORRECT_M,
+            box_size=box_size,
+            border=border,
+        )
+        qr.add_data(text)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color="black", back_color="white")
+        buf = BytesIO()
+        img.save(buf, format="PNG")
+        return buf.getvalue()
+    except Exception as _e:
+        try:
+            import logging
+            logging.getLogger("charvakit.pdf").warning(f"QR generation failed: {_e}")
+        except Exception:
+            pass
+        return b""
+
+
+
+# ============================================================
 # Brand colors (RGB)
 # ============================================================
 COLOR_PRIMARY = (13, 110, 253)      # Bootstrap blue
@@ -610,6 +646,34 @@ def render_readiness_certificate_pdf(cert: Dict) -> bytes:
     pdf.set_text_color(*MUTED)
     pdf.cell(W, 4, "This certificate can be independently verified at the URL above.",
              align="C")
+
+    # --- QR code (Session 43-D A2.1) ---
+    # Embed a scan-to-verify QR pointing at the public verify URL.
+    # Silent-fail: if QR generation fails, the certificate still renders.
+    try:
+        _hash = cert.get("certificate_hash") or ""
+        if _hash:
+            _verify_url = f"{site}/api/readiness/verify/{_hash}"
+            _qr_bytes = _generate_qr_png(_verify_url, box_size=5, border=1)
+            if _qr_bytes:
+                from io import BytesIO as _BytesIO
+                _qr_w = 28.0  # mm
+                _qr_h = 28.0
+                # Place bottom-right, above the footer strip
+                pdf.image(_BytesIO(_qr_bytes),
+                          x=W - 22 - _qr_w, y=H - 52 - _qr_h,
+                          w=_qr_w, h=_qr_h)
+                # Small caption under the QR
+                pdf.set_xy(W - 22 - _qr_w - 4, H - 52 + 2)
+                pdf.set_font("DejaVu", size=7)
+                pdf.set_text_color(*MUTED)
+                pdf.cell(_qr_w + 8, 4, "Scan to verify", align="C")
+    except Exception as _e:
+        try:
+            import logging
+            logging.getLogger("charvakit.pdf").warning(f"QR embed failed: {_e}")
+        except Exception:
+            pass
 
     return bytes(pdf.output())
 
