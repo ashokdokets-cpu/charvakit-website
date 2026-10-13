@@ -8137,6 +8137,70 @@ async def api_readiness_download(request: Request, certificate_id: str,
     )
 
 
+@app.get("/api/readiness/latest/{email}")
+@limiter.limit("60/minute")
+async def api_readiness_latest(request: Request, email: str):
+    """
+    Session 43-D (A4): Latest readiness certificate for a user.
+
+    Returns the most recent certificate (with skill_gap payload) or
+    {status: 'success', certificate: null} if the user has none.
+
+    Auth-gated: caller must own the email.
+    """
+    email = (email or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "email required"})
+    require_auth_for_email(request, email)
+
+    try:
+        from database import db
+        import json as _json
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT certificate_id, email, display_name, role, industry,
+                   level, readiness_score, percentile, benchmark_score,
+                   verdict, payload_json, certificate_hash, source,
+                   created_at
+            FROM charvak_readiness_certificates
+            WHERE LOWER(email) = %s
+            ORDER BY created_at DESC
+            LIMIT 1
+        """, (email,))
+        row = cur.fetchone()
+        cur.close()
+        conn.close()
+
+        if not row:
+            return {"status": "success", "certificate": None}
+
+        payload = row[10] if isinstance(row[10], dict) else (_json.loads(row[10]) if row[10] else {})
+
+        cert = {
+            "certificate_id": row[0],
+            "email": row[1],
+            "display_name": row[2],
+            "role": row[3],
+            "industry": row[4],
+            "level": row[5],
+            "readiness_score": row[6],
+            "percentile": row[7],
+            "benchmark_score": row[8],
+            "verdict": row[9],
+            "payload": payload,
+            "certificate_hash": row[11],
+            "source": row[12],
+            "created_at": str(row[13]) if row[13] else None,
+            "skill_gap": payload.get("skill_gap", []),
+        }
+        return {"status": "success", "certificate": cert}
+    except Exception as e:
+        import logging
+        logging.getLogger("charvakit.readiness").warning(f"latest cert lookup failed: {e}")
+        return JSONResponse(status_code=500, content={"status": "error", "message": "Could not load certificate."})
+
+
 @app.get("/api/readiness/{certificate_id}")
 @limiter.limit("60/minute")
 async def api_readiness_get(request: Request, certificate_id: str):
