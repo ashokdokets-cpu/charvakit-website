@@ -358,6 +358,66 @@
                 html += '</div>';
             }
 
+            // Session 43-B2: question review
+            var qrev = diag.question_review || [];
+            if (qrev.length) {
+                html += '<div class="card mt-3 p-3">';
+                html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">';
+                html += '<h6 class="fw-bold m-0">Review every question</h6>';
+                html += '<label style="font-size:0.85rem;color:#6b7280;cursor:pointer;"><input type="checkbox" id="mdShowOnlyWrong" style="margin-right:6px;">Show only wrong</label>';
+                html += '</div>';
+                html += '<div id="mdQuestionList">';
+                qrev.forEach(function(q, i) {
+                    var isRight = q.is_correct;
+                    var showWrongOnly = false;  // updated by toggle
+                    html += '<details class="md-qrev-row" data-correct="' + (isRight ? "1" : "0") + '" style="border-bottom:1px solid #f3f4f6;padding:8px 0;">';
+                    html += '<summary style="cursor:pointer;list-style:none;display:flex;align-items:center;gap:10px;">';
+                    html += '<span style="font-weight:700;color:' + (isRight ? '#059669' : '#dc2626') + ';">' + (isRight ? '✓' : '✗') + '</span>';
+                    html += '<span style="font-weight:600;color:#111827;">Q' + (i + 1) + '.</span>';
+                    html += '<span style="flex:1;color:#374151;font-size:0.92rem;">' + esc((q.question || "").slice(0, 140)) + ((q.question || "").length > 140 ? '…' : '') + '</span>';
+                    html += '<span style="font-size:0.78rem;color:#6b7280;background:#f3f4f6;padding:2px 8px;border-radius:10px;">' + esc(q.topic || '') + '</span>';
+                    html += '</summary>';
+                    html += '<div style="margin-top:10px;padding-left:24px;">';
+                    html += '<div style="color:#374151;font-weight:500;margin-bottom:10px;">' + esc(q.question || '') + '</div>';
+                    (q.options || []).forEach(function(opt, oIdx) {
+                        var isCorrect = (oIdx === q.correct_index);
+                        var isChosen = (oIdx === q.your_index);
+                        var color = isCorrect ? '#059669' : (isChosen && !isCorrect ? '#dc2626' : '#6b7280');
+                        var bg = isCorrect ? '#ecfdf5' : (isChosen && !isCorrect ? '#fef2f2' : '#fff');
+                        var badge = isCorrect ? ' <span style="color:#059669;font-weight:700;">✓ correct</span>' : '';
+                        var badgeChosen = (isChosen && !isCorrect) ? ' <span style="color:#dc2626;font-weight:700;">← your answer</span>' : '';
+                        var badgeChosenRight = (isChosen && isCorrect) ? ' <span style="color:#059669;font-weight:700;">← your answer</span>' : '';
+                        html += '<div style="padding:8px 12px;margin:4px 0;border-radius:6px;background:' + bg + ';color:' + color + ';font-size:0.9rem;">';
+                        html += String.fromCharCode(65 + oIdx) + ') ' + esc(opt) + badge + badgeChosen + badgeChosenRight;
+                        html += '</div>';
+                    });
+                    if (!isRight && q.ai_explanation) {
+                        html += '<div style="margin-top:10px;padding:10px 14px;background:#eff6ff;border-radius:6px;border-left:3px solid #3b82f6;">';
+                        html += '<div style="font-size:0.78rem;color:#1e40af;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:4px;">Why</div>';
+                        html += '<div style="color:#1e3a8a;font-size:0.9rem;line-height:1.5;">' + esc(q.ai_explanation) + '</div>';
+                        html += '</div>';
+                    }
+                    html += '</div>';
+                    html += '</details>';
+                });
+                html += '</div>';
+                html += '</div>';
+
+                // Wire the "show only wrong" toggle after the HTML is injected
+                setTimeout(function() {
+                    var toggle = document.getElementById("mdShowOnlyWrong");
+                    if (toggle) {
+                        toggle.addEventListener("change", function() {
+                            var show = this.checked;
+                            document.querySelectorAll(".md-qrev-row").forEach(function(row) {
+                                var isCorrect = row.getAttribute("data-correct") === "1";
+                                row.style.display = (show && isCorrect) ? "none" : "";
+                            });
+                        });
+                    }
+                }, 0);
+            }
+
             html += '<div id="mdIntegritySlot"></div>';
 
             html += '<div class="text-center mt-3">';
