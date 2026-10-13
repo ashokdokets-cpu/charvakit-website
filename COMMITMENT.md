@@ -4264,3 +4264,67 @@ the event even though the API returns 404.
 - **PayPal capture for A1.6 tools** — the route now exists but hasn't
   been E2E tested with real PayPal sandbox flow. Razorpay (India) is
   verified.
+
+
+## Session 43-B2 CLOSED (2026-10-13) - Mock drive question review + AI explanations
+
+**Commit:** `d89f4e8` (3 files, +386)
+
+The mock drive result now shows a full question-by-question review
+with AI-generated explanations for every wrong answer.
+
+### What shipped
+
+**Backend (complete_mock_drive.py):**
+- `build_question_review(sections, answers)` - per-question entry with
+  question text, topic, options, your_index/text, correct_index/text,
+  is_correct
+- `generate_ai_explanations(wrong_questions)` - batches wrong answers
+  into OpenAI calls (gpt-4o-mini, JSON mode). 30 per call, up to 3
+  chunks (90 max). max_tokens=8000.
+- `_fallback_explanations()` - rule-based explanation for any AI
+  misses. 100% coverage guaranteed.
+- Coverage logged: "AI explanations: requested=N returned=M"
+
+**Frontend (templates/companies.html):**
+- Collapsible per-question review block below "What to do next"
+- Correct + your-answer highlighting
+- AI "Why" explanation box for each wrong answer
+- "Show only wrong" toggle
+
+**Also:** TRACK-C-B2B-PLAN.md (B2B roadmap for Amrita + future
+universities).
+
+### Verified E2E
+
+- LTI Digital: 36 wrong answers, 36 AI explanations (100% coverage)
+- TCS Innovator: 24 wrong answers, all explained
+- The LTI session triggered 2 OpenAI HTTP calls (30 + 6 chunked)
+
+### Flags carried forward
+
+**FLAG 1 - skip vs wrong distinction (Phase 3, after pilot Week 2)**
+
+Today, blank answers are treated the same as wrong answers. The AI
+explains them all. This is intentional for the pilot (it nudges
+students to engage), but imprecise. Fix: tag blank answers with
+`is_skipped=True`, add a "Skipped" toggle, show a "You skipped N
+questions" callout. Decide based on pilot data: if students are
+attempting and failing, the distinction matters less; if they're
+skipping half the test, it becomes the top signal.
+
+**FLAG 2 - B3 role-readiness framing (deferred, Phase 2)**
+
+Mock results are company-oriented ("6.2% on TCS Digital"). The
+vision: also produce a role-readiness signal ("Software Engineer
+readiness: 6.2%, benchmark 60%"). Deferred because it touches the
+readiness engine, certificate renderer, and mock-result deep links
+(4-6 hours). Trigger to build: after Amrita pilot Week 2, when we
+have real feedback on what "role readiness" should mean.
+
+### What remains for Thursday
+
+- Reply email to Prof. Raj (pending)
+- Save 4 HTML demo files to OneDrive\Desktop\Charvak-TPO-Demo
+- Print to PDF (deck, one-pager, proposal)
+- Live demo test run
