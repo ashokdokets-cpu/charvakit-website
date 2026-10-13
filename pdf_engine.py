@@ -403,6 +403,35 @@ def render_readiness_certificate_pdf(cert: Dict) -> bytes:
     # nothing spills to a second page.
     pdf.add_page()
     pdf.set_auto_page_break(auto=False)
+
+    # --- Watermark (Session 43-D A2.2, v3) ---
+    # Subtle diagonal 'CHARVAK' behind all content. Much lighter color
+    # and smaller font so it acts as a genuine background watermark,
+    # not a foreground element.
+    try:
+        _wm_text = "CHARVAK"
+        # Very light teal — barely visible on white, but a photocopy
+        # would still show it. (250, 253, 252) = ~2% tint.
+        _wm_color = (228, 245, 240)
+        pdf.set_text_color(*_wm_color)
+        pdf.set_font("DejaVu", "B", 55)
+        # Anchor at the center of the A4 page.
+        # FPDF2 rotation rotates around (x, y) — the anchor point.
+        # We place the text so that its center is at the page center.
+        with pdf.rotation(30, x=105, y=148):
+            _wm_w = pdf.get_string_width(_wm_text)
+            _wm_h = 20  # line height
+            # set_xy sets the top-left of the cell in un-rotated coords
+            pdf.set_xy(105 - _wm_w / 2, 148 - _wm_h / 2)
+            pdf.cell(_wm_w, _wm_h, _wm_text, align="C")
+        pdf.set_text_color(0, 0, 0)
+        print("WATERMARK DRAWN OK")
+    except Exception as _e:
+        import traceback
+        print(f"WATERMARK FAILED: {_e}")
+        traceback.print_exc()
+
+    # --- End watermark ---
     # Suppress the base-class header/footer chrome (this certificate has
     # its own frame and footer strip).
     pdf.header = lambda: None
