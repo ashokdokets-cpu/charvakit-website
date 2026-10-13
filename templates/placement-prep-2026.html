@@ -158,6 +158,10 @@ document.addEventListener("DOMContentLoaded", function() {
   if (typeof charvakTrack === "function") {
     charvakTrack("placement_prep_view", { season: "2026-27" });
   }
+  // Session 43-A1.9: track arrivals from share links
+  if (typeof charvakTrackShareLanding === "function") {
+    charvakTrackShareLanding("placement_prep");
+  }
   // Company card clicks
   document.querySelectorAll("a.pp-card").forEach(function(card) {
     card.addEventListener("click", function() {
