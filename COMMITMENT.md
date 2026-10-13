@@ -4328,3 +4328,61 @@ have real feedback on what "role readiness" should mean.
 - Save 4 HTML demo files to OneDrive\Desktop\Charvak-TPO-Demo
 - Print to PDF (deck, one-pager, proposal)
 - Live demo test run
+
+
+## Session 43-D — A2.3 FLAGGED (2026-10-13)
+
+Multi-language certificate render (Hindi + Telugu) deferred to a
+future session. The QR code + watermark work is shipped; the
+translation layer is polish, not critical path.
+
+### Why deferred
+
+- Not required for Thursday's Amrita CDC demo
+- Requires three coordinated changes (PDF renderer, routes,
+  frontend) with cross-file risk
+- Better to ship it in a dedicated session with full E2E testing
+
+### What needs to be built
+
+1. **pdf_engine.py**
+   - CERT_LANG dict with en, hi, te translations for:
+     certificate_of_readiness, verified_role_readiness,
+     this_certifies_that, has_demonstrated_readiness, out_of_100,
+     below_benchmark, above_benchmark, at_benchmark, benchmark,
+     your_score, verification, certificate_id, issued, verify_at,
+     scan_to_verify, authorized_signatory, date_of_issue,
+     founder_title, verify_footer
+   - _cert_t(key, lang) helper
+   - render_readiness_certificate_pdf(cert, lang="en") -- accept
+     and use lang
+
+2. **main.py**
+   - GET /api/readiness/CERT_ID/download?lang=hi|te
+   - GET /readiness/CERT_ID?lang=hi|te (template render)
+
+3. **templates/readiness.html**
+   - JS reads ?lang= from URL
+   - renderCertificate() uses translated labels
+
+### Design notes
+
+- Keep in English always: Role names, cert ID, hash, verify URL
+  (must be copied verbatim by employers)
+- Translate: All labels, headings, verdict text, footer
+- Fallback: Unknown lang -> English
+- Fonts: DejaVu Sans already covers Devanagari (Hindi) and has
+  limited Telugu coverage. Verify Telugu renders correctly or add
+  Noto Sans Telugu if needed.
+- PDF source lang for Telugu: Test with a sample certificate to
+  confirm no glyphs are missing
+
+### Est. effort
+
+~1 hour: 30 min for the translations dict, 15 min for routes,
+15 min for the frontend. Add 30 min if Telugu font fallback needs
+a new font file.
+
+**Trigger:** after Amrita pilot Week 2, OR on demand.
+
+**Verdict:** FLAGGED — Session 43-D
