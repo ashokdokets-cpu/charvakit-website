@@ -12104,42 +12104,159 @@ async def mock_result_page(request: Request, session_id: str):
 
 @app.get("/api/mock/result/{session_id}")
 async def get_mock_result(session_id: str):
-    """Session 42-3: public read of a completed mock session result."""
+    """
+    Public read of a completed mock session result.
+
+    Session 43-D: Extended to include sections, section_breakdown,
+    topic_breakdown, cutoff_comparison, and recommended_actions —
+    matching the shape returned by complete_mock.complete_mock().
+    The shareable result page reads this to render the diagnostic.
+    """
     try:
         from database import db
+        import json as _json
+
         conn = db.get_connection()
         cur = conn.cursor()
+
         cur.execute("""
-            SELECT session_id, company_name, pattern, total_questions,
-                   correct_count, score, passed, completed_at
+            SELECT session_id, email, company_id, company_name, pattern,
+                   sections_json, total_questions, correct_count, score,
+                   passed, completed_at
             FROM charvak_mock_sessions
-            WHERE session_id = %s AND status = 'completed'
+            WHERE session_id = %s
         """, (session_id,))
         row = cur.fetchone()
-        cur.close(); conn.close()
-    except Exception as e:
-        logger.error(f"mock result read failed: {e}")
-        return JSONResponse(status_code=500, content={"status": "error"})
-    if not row:
-        return JSONResponse(status_code=404, content={"status": "error", "message": "Result not found"})
-    return {
-        "status": "success",
-        "result": {
+
+        if not row:
+            cur.close()
+            conn.close()
+            return JSONResponse(status_code=404, content={
+                "status": "error", "message": "Session not found"
+            })
+
+        # Load answers
+        cur.execute("""
+            SELECT section_name, question_id, selected
+            FROM charvak_mock_answers
+            WHERE session_id = %s
+        """, (session_id,))
+        answer_rows = cur.fetchall()
+        cur.close()
+        conn.close()
+
+        sections_raw = row[5]
+        sections = sections_raw if isinstance(sections_raw, list) else (_json.loads(sections_raw) if sections_raw else [])
+
+        answers = [(a[0], a[1], a[2]) for a in answer_rows]
+
+        # Compute section + topic breakdowns
+        section_breakdown = []
+        topic_stats = {}
+
+        for sec in sections or []:
+            sname = sec.get("name")
+            qs = sec.get("questions", []) or []
+            correct = 0
+            for q in qs:
+                # Find the answer for this question
+                for a in answers:
+                    if a[0] == sname and a[1] == q.get("id"):
+                        if a[2] == q.get("correct"):
+                            correct += 1
+                        break
+
+            total = len(qs)
+            pct = round(correct / total * 100, 1) if total else 0.0
+            section_breakdown.append({
+                "name": sname,
+                "count": total,
+                "correct": correct,
+                "total": total,
+                "pct": pct,
+            })
+
+            # Topic breakdown
+            for q in qs:
+                topic = q.get("topic") or "General"
+                if topic not in topic_stats:
+                    topic_stats[topic] = {"correct": 0, "total": 0}
+                topic_stats[topic]["total"] += 1
+                for a in answers:
+                    if a[0] == sname and a[1] == q.get("id"):
+                        if a[2] == q.get("correct"):
+                            topic_stats[topic]["correct"] += 1
+                        break
+
+        topic_breakdown = []
+        for topic, stats in topic_stats.items():
+            pct = round(stats["correct"] / stats["total"] * 100, 1) if stats["total"] else 0.0
+            topic_breakdown.append({
+                "topic": topic,
+                "correct": stats["correct"],
+                "total": stats["total"],
+                "pct": pct,
+            })
+        topic_breakdown.sort(key=lambda t: t["pct"])
+
+        # Cutoff + recommendations (best-effort, reuse complete_mock logic if available)
+        cutoff_comparison = {}
+        recommended_actions = []
+        try:
+            from complete_mock_drive import complete_mock as _cm
+            diag = _cm.compute_diagnostics(
+                company_id=row[2] or "",
+                company_name=row[3] or "",
+                sections=sections,
+                answers=answers,
+            )
+            cutoff_comparison = diag.get("cutoff_comparison", {})
+            recommended_actions = diag.get("recommended_actions", [])
+            # Use the richer section_breakdown from diagnostics if present
+            if diag.get("section_breakdown"):
+                section_breakdown = diag["section_breakdown"]
+            if diag.get("topic_breakdown"):
+                topic_breakdown = diag["topic_breakdown"]
+        except Exception:
+            # Fallback: minimal cutoff
+            cutoff_pct = 60
+            your_pct = float(row[8] or 0)
+            cutoff_comparison = {
+                "cutoff_pct": cutoff_pct,
+                "your_pct": your_pct,
+                "gap": round(your_pct - cutoff_pct, 1),
+                "passed": your_pct >= cutoff_pct,
+                "verdict": "",
+            }
+
+        result = {
             "session_id": row[0],
-            "company": row[1],
-            "pattern": row[2],
-            "total_questions": row[3],
-            "correct": row[4],
-            "score": float(row[5]) if row[5] is not None else 0.0,
-            "passed": bool(row[6]),
-            "completed_at": row[7].isoformat() if row[7] else None,
-        },
-    }
+            "email": row[1],
+            "company_id": row[2],
+            "company": row[3],
+            "pattern": row[4],
+            "total_questions": row[6],
+            "correct": row[7],
+            "score": float(row[8]) if row[8] is not None else 0,
+            "passed": bool(row[9]) if row[9] is not None else False,
+            "completed_at": str(row[10]) if row[10] else None,
+            "sections": section_breakdown,
+            "diagnostics": {
+                "section_breakdown": section_breakdown,
+                "topic_breakdown": topic_breakdown,
+                "cutoff_comparison": cutoff_comparison,
+                "recommended_actions": recommended_actions,
+            },
+        }
 
+        return {"status": "success", "result": result}
 
-
-from multi_pattern_company import multi_pattern
-
+    except Exception as e:
+        import logging
+        logging.getLogger("charvakit.mock_result").warning(f"mock result lookup failed: {e}")
+        return JSONResponse(status_code=500, content={
+            "status": "error", "message": "Could not load mock result."
+        })
 @app.get("/api/company-patterns/counts")
 @limiter.limit("120/minute")
 async def api_company_pattern_counts(request: Request):
