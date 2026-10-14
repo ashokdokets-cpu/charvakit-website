@@ -1,3 +1,24 @@
+## HIGH PRIORITY FLAG - GPT-4o-mini retirement (Jan 14, 2027)
+
+OpenAI is retiring GPT-4o-mini on 14 January 2027.
+34 files, 78 references. This is the AI engine for the whole platform.
+
+**Read GPT-RETIREMENT-REMINDER.md before starting any session.**
+Full plan in COMMITMENT.md, search: GPT-4o-mini retirement.
+
+Timeline:
+  Phase 1 (Centralize):  Oct 20, 2026
+  Phase 2 (Evaluate):    Oct 27, 2026
+  Phase 3 (Swap + test): Nov 3, 2026
+  Latest start:          Dec 15, 2026
+  DEADLINE:              Jan 14, 2027
+
+First task before migration:
+  Centralize model name in global_config.py as OPENAI_MODEL
+  with env var override. Then swap is 1 line, not 34 files.
+
+---
+
 ## Session 43-A1.8 + A1.9 CLOSED (2026-10-13)
 
 **Status:** Share instrumentation + placement-prep promotion shipped.
