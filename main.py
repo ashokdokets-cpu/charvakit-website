@@ -12215,6 +12215,11 @@ async def get_mock_result(session_id: str):
             # Use the richer section_breakdown from diagnostics if present
             if diag.get("section_breakdown"):
                 section_breakdown = diag["section_breakdown"]
+            # Normalize: add "count" as an alias for "total" so the
+            # existing frontend (which expects s.count) renders correctly.
+            for sec in section_breakdown:
+                if "count" not in sec and "total" in sec:
+                    sec["count"] = sec["total"]
             if diag.get("topic_breakdown"):
                 topic_breakdown = diag["topic_breakdown"]
         except Exception:
