@@ -4512,3 +4512,96 @@ infrastructure (Track B Phase 1).
 - **Moat:** no coding-test competitor does behavioral + SJT at scale
 
 **Verdict:** FLAGGED — Track E. Build after Amrita pilot starts.
+
+## REMINDER - GPT-4o-mini retirement (2027-01-14) - flagged 2026-10-15
+
+**Status:** Flagged. Plan + work shortly. DO NOT FORGET.
+
+**Owner:** Bhavya M
+**Deadline:** 14 January 2027
+**Latest start:** 15 December 2026
+
+---
+
+### What OpenAI announced
+
+OpenAI is retiring four models on **14 January 2027**:
+- GPT-4o
+- **GPT-4o-mini** <- the one that matters most
+- GPT-4.1
+- GPT-4.1-mini
+
+They have given 3 months notice so we have time to plan.
+
+### Discovery result - the actual scope
+
+**34 Python files. 78 references.** Not a quick find-replace.
+
+Biggest offenders:
+- products_engine.py - 13 references
+- interactive_tutor.py - 4
+- career_assessment_engine.py - 3
+- ai_course_delivery.py - 3
+- tools_ai_backend.py - 3
+
+Also: whatsapp_bot.py uses **gpt-4o** (not mini) - 2 references.
+
+### Impact
+
+GPT-4o-mini is the workhorse of the platform. Every AI feature
+depends on it. When retired, every generation call fails silently.
+
+Features affected (partial):
+- Career Assessment (all roles, formats, sizes)
+- IELTS Writing / Speaking scoring + Deep Report
+- Mock Drive question generation
+- FYP topics / proposal / documentation / viva / citations / roadmap
+- AI Course Designer
+- Readiness checks
+- AI Internship
+- Marketing AI
+- Indian Language AI (34 languages)
+- Exam prep (state exams)
+- Content generator (Versant, IELTS, etc.)
+- All 16 AI Products
+- Voice-to-Web
+
+### The right 3-phase plan
+
+**Phase 1 - Centralize the model name (1 hour, ~34 files)**
+The single most valuable thing. Add to global_config.py:
+
+    OPENAI_MODEL = os.getenv('OPENAI_MODEL', 'gpt-4o-mini')
+    OPENAI_MODEL_CHEAP = os.getenv('OPENAI_MODEL_CHEAP', OPENAI_MODEL)
+    OPENAI_MODEL_SMART = os.getenv('OPENAI_MODEL_SMART', 'gpt-4o')
+
+Then every engine imports from global_config instead of hardcoding
+the string. After this, swapping models is a 1-env-var change.
+
+**Phase 2 - Model evaluation (1-2 hours)**
+Test OpenAI's current flagship against our actual prompts.
+Compare cost / latency / quality / JSON support.
+Pick the successor.
+
+**Phase 3 - Swap the env var + test (1 hour)**
+Set OPENAI_MODEL=<new model> on Render. Test every feature E2E.
+
+### Timeline
+
+| Week | Task | Status |
+|---|---|---|
+| Oct 20 | Phase 1 - Centralize model name | Pending |
+| Oct 27 | Phase 2 - Evaluate successor model | Pending |
+| Nov 3  | Phase 3 - Swap + test | Pending |
+| Dec 15 | ABSOLUTE LATEST start | Deadline |
+| Jan 14, 2027 | DEADLINE | DEADLINE |
+
+### Reminder checkpoints
+
+- Oct 27: check if Phase 1 (centralize) is done
+- Nov 3: check if Phase 2 (evaluate) is done
+- Dec 15: ABSOLUTE LATEST START - drop everything if not done
+- Jan 7, 2027: final regression test
+- Jan 14, 2027: models retired
+
+**Verdict:** FLAGGED. Plan and work shortly.
