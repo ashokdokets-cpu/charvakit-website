@@ -277,6 +277,7 @@ TOPIC_TO_COURSE = {
     "Technical Application": ["Full Stack Web Development", "Cloud Architecture", "Data Science & ML"],
     "Problem Solving": ["Consulting Case Frameworks", "Case Study Fundamentals"],
     "Safety & Ethics": ["Business Ethics & Compliance", "Cybersecurity"],
+    "Domain Knowledge": ["Data Science & ML", "Cloud Architecture", "Business Ethics & Compliance"],
 }
 
 # Short highlights per course — used in the "why this course" message.
@@ -2758,6 +2759,33 @@ class CareerAssessmentEngine:
                 "message": "AI unavailable - please try again later.",
                 "charvak_courses": [], "external_resources": [], "weekly_plan": [],
             }
+    def _resolve_topic_key(self, topic_name: str) -> str:
+        """
+        Map a topic name (possibly truncated or slightly varied) to a key
+        in TOPIC_TO_COURSE. Handles cases like:
+          "Tooling (SQL)" -> "Tooling (SQL / Python / R)"
+          "Tooling (Excel)" -> "Tooling (Excel / BI / SQL)"
+        """
+        if topic_name in TOPIC_TO_COURSE:
+            return topic_name
+
+        import re as _re
+        m = _re.match(r"^([^(]+)\s*\(([^)]+)\)\s*$", topic_name)
+        if m:
+            base = m.group(1).strip()
+            inner = m.group(2).strip()
+            for key in TOPIC_TO_COURSE.keys():
+                km = _re.match(r"^([^(]+)\s*\(([^)]+)\)\s*$", key)
+                if not km:
+                    continue
+                kbase = km.group(1).strip()
+                kinner = km.group(2).strip()
+                if kbase != base:
+                    continue
+                if inner.lower() in kinner.lower() or kinner.lower() in inner.lower():
+                    return key
+
+        return topic_name
 
     def get_personalized_recommendations(self, email: str) -> Dict:
         """
@@ -2862,7 +2890,8 @@ class CareerAssessmentEngine:
             topic_name = topic_entry["topic"]
             topic_score = topic_entry["score"]
 
-            course_names = TOPIC_TO_COURSE.get(topic_name, [])
+            resolved_key = self._resolve_topic_key(topic_name)
+            course_names = TOPIC_TO_COURSE.get(resolved_key, [])
             for course_name in course_names:
                 course = catalog.get(course_name)
                 if not course:
@@ -2884,10 +2913,27 @@ class CareerAssessmentEngine:
             te = entry["best_topic_entry"]
 
             highlights = COURSE_HIGHLIGHTS.get(course_name, course.get("description", "")[:80])
-            why = (
-                f"You scored {te['score']}% on {te['topic']}. "
-                f"This course covers {highlights}."
-            )
+            _sc = te["score"]
+            if _sc == 0:
+                why = (
+                    f"Your {te['topic']} skill gap was flagged as critical. "
+                    f"This course covers {highlights}."
+                )
+            elif _sc < 40:
+                why = (
+                    f"You scored {_sc}% on {te['topic']} — a critical gap. "
+                    f"This course covers {highlights}."
+                )
+            elif _sc < 70:
+                why = (
+                    f"You scored {_sc}% on {te['topic']}. "
+                    f"This course covers {highlights}."
+                )
+            else:
+                why = (
+                    f"Your {te['topic']} score ({_sc}%) is close to strong — "
+                    f"this course can push you over the line. Covers {highlights}."
+                )
 
             recommended.append({
                 "course_name": course_name,
@@ -2910,7 +2956,7 @@ class CareerAssessmentEngine:
             "industry": industry,
             "level": level,
             "readiness_score": score,
-            "recommended": recommended[:6],
+            "recommended": recommended[:8],
             "gaps": [
                 {"topic": t["topic"], "score": t["score"], "status": t["status"]}
                 for t in focus_topics
