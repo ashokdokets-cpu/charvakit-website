@@ -365,7 +365,11 @@ async function generateDocs(e) {
             +   '<div><strong>Ch ' + num + ':</strong> ' + escCh(title) + '</div>'
             +   '<button type="button" class="btn btn-sm btn-outline-primary" '
             +           'data-fyp-chapter="' + num + '" '
-            +           'onclick="expandFypChapter(this, ' + num + ', \'' + escCh(title).replace(/'/g, "\\'") + '\', \'' + escCh(outline).replace(/'/g, "\\'") + '\', \'' + topicEsc.replace(/'/g, "\\'") + '\')">'
+            +           'data-fyp-expand="1" ' 
+            +           'data-chapter="' + num + '" ' 
+            +           'data-title="' + escCh(title) + '" ' 
+            +           'data-outline="' + escCh(outline) + '" ' 
+            +           'data-topic="' + topicEsc + '">'
             +     '<span class="fyp-expand-label">Expand (10 credits)</span>'
             +   '</button>'
             + '</div>'
@@ -683,6 +687,21 @@ async function fypRoadmap(e) {
         out.innerHTML = '<div class="alert alert-danger">Error: ' + escFyp(err.message) + '</div>';
     }
 }
+
+// Session 43-A3.4-fix: delegated handler for expand buttons.
+// Avoids the inline-onclick quoting problem by reading data-* attributes.
+document.addEventListener('click', function(e) {
+    var btn = e.target.closest('[data-fyp-expand]');
+    if (!btn) return;
+    e.preventDefault();
+    var chapterNum = parseInt(btn.getAttribute('data-chapter'), 10);
+    var title = btn.getAttribute('data-title') || '';
+    var outline = btn.getAttribute('data-outline') || '';
+    var topic = btn.getAttribute('data-topic') || '';
+    if (typeof expandFypChapter === 'function') {
+        expandFypChapter(btn, chapterNum, title, outline, topic);
+    }
+});
 
 function escFyp(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
