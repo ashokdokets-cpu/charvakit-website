@@ -8342,15 +8342,38 @@ async def api_readiness_get(request: Request, certificate_id: str):
 
 @app.get("/readiness/{certificate_id}", response_class=HTMLResponse)
 async def readiness_page(request: Request, certificate_id: str):
-    """Public shareable certificate page. Renders readiness.html."""
+    """Public shareable certificate page. Renders readiness.html.
+    Returns 404 with a friendly page if the certificate does not exist."""
+    # Look up the cert — prevents blank pages on dead links
+    cert_exists = False
+    try:
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT 1 FROM charvak_readiness_certificates WHERE certificate_id = %s",
+            (certificate_id,)
+        )
+        cert_exists = cur.fetchone() is not None
+        cur.close(); conn.close()
+    except Exception as e:
+        logger.warning(f"readiness_page lookup failed for {certificate_id}: {e}")
+        cert_exists = True  # Fail open — page renders and JS handles it
+
+    if not cert_exists:
+        response = template_response(
+            "readiness-not-found.html", request, "Certificate Not Found",
+            certificate_id=certificate_id
+        )
+        response.status_code = 404
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        return response
+
     response = template_response("readiness.html", request, "Role Readiness Certificate")
-    # No-cache so mobile browsers never serve stale HTML after a code change.
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "0"
     return response
-
-
 @app.get("/readiness-check", response_class=HTMLResponse)
 async def readiness_check_page(request: Request):
     """Public free Role Readiness landing page (Session 17b)."""
