@@ -211,6 +211,115 @@ TOPIC_VOCABULARY = {
 }
 
 
+
+# ============================================================
+# TOPIC -> COURSE MAPPING (Session 43-A4)
+# ============================================================
+# Static mapping from TOPIC_VOCABULARY topics to catalog courses.
+# Used by get_personalized_recommendations() to match a candidate's
+# weak topics (from their readiness certificate) to specific courses.
+#
+# Course names must exactly match charvak_courses.course_name.
+
+TOPIC_TO_COURSE = {
+    # --- Engineering & Software ---
+    "Fundamentals & Syntax": ["Python Programming", "Java Development", "Full Stack Web Development"],
+    "Data Structures & Algorithms": ["Python Programming", "Data Science & ML"],
+    "System Design & Architecture": ["Cloud Architecture", "Docker & Kubernetes", "Full Stack Web Development"],
+    "Debugging & Problem Solving": ["Software Testing", "Git & DevOps Tools"],
+    "Testing & Quality": ["Software Testing", "Git & DevOps Tools"],
+    "Tooling & Ecosystem": ["Git & DevOps Tools", "Docker & Kubernetes"],
+    "Collaboration & Communication": ["Business Communication", "Git & DevOps Tools"],
+
+    # --- Data & Analytics ---
+    "Statistics & Probability": ["Data Science & ML", "Python for Data Science"],
+    "Data Wrangling & ETL": ["Data Analytics", "Python for Data Science", "Big Data"],
+    "Modeling & ML": ["Data Science & ML", "Machine Learning Ops", "AI & Deep Learning"],
+    "Evaluation & Experimentation": ["Data Science & ML", "Marketing Analytics"],
+    "Data Engineering & Pipelines": ["Big Data", "Data Analytics", "SQL & Database"],
+    "Business Acumen": ["Data Interpretation for Managers", "Strategy Frameworks", "Financial Modelling in Excel"],
+    "Tooling (SQL / Python / R)": ["SQL & Database", "Python for Data Science"],
+
+    # --- Product & Design ---
+    "Discovery & User Research": ["Product Management Fundamentals", "UI/UX Design"],
+    "Prioritization & Roadmapping": ["Product Management Fundamentals", "Consulting Case Frameworks"],
+    "Design & UX Principles": ["UI/UX Design"],
+    "Metrics & Experimentation": ["Marketing Analytics", "Product Management Fundamentals"],
+    "Stakeholder Management": ["Business Communication", "Product Management Fundamentals"],
+    "Execution & Delivery": ["Product Management Fundamentals", "Consulting Case Frameworks"],
+
+    # --- Business & Strategy ---
+    "Analytical Reasoning": ["Consulting Math", "Case Study Fundamentals", "Strategy Frameworks"],
+    "Financial Acumen": ["Financial Modelling in Excel", "Business Ethics & Compliance"],
+    "Market & Competitive Analysis": ["Strategy Frameworks", "Marketing Analytics"],
+    "Process & Operations": ["Consulting Case Frameworks", "Business Ethics & Compliance"],
+    "Communication": ["Business Communication"],
+
+    # --- Go-to-Market ---
+    "Strategy & Positioning": ["Strategy Frameworks", "Marketing Analytics"],
+    "Channel & Campaign Execution": ["Marketing Analytics"],
+    "Metrics & Attribution": ["Marketing Analytics", "Data Analytics"],
+    "Customer Insight": ["Product Management Fundamentals", "Marketing Analytics"],
+    "Relationship Building": ["Business Communication"],
+    "Communication & Storytelling": ["Business Communication"],
+
+    # --- People & HR ---
+    "Talent Acquisition": ["Business Communication", "Business Ethics & Compliance"],
+    "Employee Relations": ["Business Communication", "Business Ethics & Compliance"],
+    "Compensation & Benefits": ["Financial Modelling in Excel"],
+    "HR Operations & Compliance": ["Business Ethics & Compliance"],
+    "Learning & Development": ["Business Communication"],
+    "Analytics & Reporting": ["Data Analytics", "SQL & Database"],
+
+    # --- Domain-Specific ---
+    "Core Domain Knowledge": ["Data Science & ML", "Cloud Architecture", "Cybersecurity"],
+    "Regulatory & Compliance": ["Business Ethics & Compliance", "Cybersecurity"],
+    "Technical Application": ["Full Stack Web Development", "Cloud Architecture", "Data Science & ML"],
+    "Problem Solving": ["Consulting Case Frameworks", "Case Study Fundamentals"],
+    "Safety & Ethics": ["Business Ethics & Compliance", "Cybersecurity"],
+}
+
+# Short highlights per course — used in the "why this course" message.
+# Keep each under 100 chars.
+COURSE_HIGHLIGHTS = {
+    "Python Programming": "syntax, control flow, functions, and file I/O",
+    "Java Development": "object-oriented design, collections, and exception handling",
+    "Full Stack Web Development": "frontend, backend, databases, and deployment",
+    "Cloud Architecture": "distributed systems, load balancing, and cloud-native patterns",
+    "Docker & Kubernetes": "container orchestration, deployment, and scaling",
+    "Software Testing": "unit tests, integration tests, and CI pipelines",
+    "Git & DevOps Tools": "version control, branching, CI/CD, and release flow",
+    "Business Communication": "written and verbal communication for professional settings",
+    "Data Science & ML": "statistics, model training, and evaluation",
+    "Python for Data Science": "pandas, NumPy, and data manipulation",
+    "Data Analytics": "data cleaning, exploration, and visualization",
+    "Big Data": "distributed data processing and storage at scale",
+    "Machine Learning Ops": "model deployment, monitoring, and production ML",
+    "AI & Deep Learning": "neural networks, transformers, and modern AI systems",
+    "SQL & Database": "query design, joins, and database schema",
+    "Marketing Analytics": "campaign metrics, attribution, and ROI tracking",
+    "Data Interpretation for Managers": "reading charts and making data-driven decisions",
+    "Strategy Frameworks": "Porter's 5 Forces, SWOT, and competitive positioning",
+    "Financial Modelling in Excel": "three-statement models, DCF, and scenario analysis",
+    "Product Management Fundamentals": "discovery, prioritization, and roadmapping",
+    "UI/UX Design": "user research, wireframing, and interaction design",
+    "Consulting Case Frameworks": "3C, 4P, profitability, and value-chain frameworks",
+    "Consulting Math": "market sizing, profitability math, and estimation",
+    "Case Study Fundamentals": "market sizing, profitability, and business cases",
+    "Business Ethics & Compliance": "corporate governance and compliance frameworks",
+    "Cybersecurity": "security fundamentals, threat modeling, and defense",
+    "Ethical Hacking": "penetration testing and vulnerability assessment",
+    "Blockchain Development": "smart contracts and distributed ledgers",
+    "AWS Cloud Computing": "AWS services, IAM, and cloud deployment",
+    "DevOps Engineering": "CI/CD, infrastructure-as-code, and monitoring",
+    "Angular Development": "component-driven frontend architecture",
+    "Mobile App Development": "native and cross-platform mobile apps",
+    "Node.js Backend": "server-side JavaScript, REST APIs, and microservices",
+    "React & Frontend": "component-based UI, hooks, and state management",
+    "Spring Boot": "Java backend services, REST, and dependency injection",
+}
+
+
 def _topic_vocabulary_for_role(role: str) -> List[str]:
     """Find the topic vocabulary for a role's category. Falls back to Engineering."""
     for category, roles in CAREER_ROLES.items():
@@ -2649,6 +2758,170 @@ class CareerAssessmentEngine:
                 "message": "AI unavailable - please try again later.",
                 "charvak_courses": [], "external_resources": [], "weekly_plan": [],
             }
+
+    def get_personalized_recommendations(self, email: str) -> Dict:
+        """
+        Match a candidate's weak topics (from their latest readiness
+        certificate) to catalog courses. Returns recommendations with
+        a "why" line per course.
+
+        Returns: {
+          status: "success" | "no_cert" | "no_gaps" | "error",
+          certificate_id: str,
+          role: str,
+          recommended: [{course_name, category, level, price_inr,
+                          fills_topic, score, status, why}],
+          gaps: [{topic, score, status}],
+          message: str
+        }
+        """
+        email = (email or "").strip().lower()
+        if not email:
+            return {"status": "error", "message": "email required"}
+
+        # --- 1. Fetch the latest certificate ---
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT certificate_id, role, industry, level,
+                       readiness_score, payload_json
+                FROM charvak_readiness_certificates
+                WHERE LOWER(email) = %s
+                ORDER BY created_at DESC
+                LIMIT 1
+            """, (email,))
+            row = cur.fetchone()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"personalized recs cert lookup failed: {e}")
+            return {"status": "error", "message": "Could not load certificate"}
+
+        if not row:
+            return {
+                "status": "no_cert",
+                "message": "Take a free readiness check to unlock personalized course recommendations.",
+                "cta_url": "/readiness-check",
+                "cta_label": "Take a Free Readiness Check",
+            }
+
+        certificate_id, role, industry, level, score, payload_json = row
+        payload = payload_json if isinstance(payload_json, dict) else (json.loads(payload_json or "{}"))
+        skill_gap = payload.get("skill_gap", []) or []
+
+        # --- 2. Extract weak + mixed topics (skip strong) ---
+        focus_topics = [
+            {"topic": g["topic"], "score": g.get("pct", 0) or g.get("score", 0),
+             "status": g.get("status", "weak")}
+            for g in skill_gap
+            if g.get("status") in ("weak", "mixed")
+        ]
+        if not focus_topics:
+            return {
+                "status": "no_gaps",
+                "certificate_id": certificate_id,
+                "role": role,
+                "message": (
+                    "Strong across all tested topics - no skill gaps to close. "
+                    "Consider a harder level or a different format."
+                ),
+                "recommended": [],
+                "gaps": skill_gap,
+            }
+
+        # --- 3. Load the catalog once ---
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT course_name, category, level, price_inr, description
+                FROM charvak_courses
+                WHERE status IS NULL OR status = 'active' OR status = 'published'
+            """)
+            catalog_rows = cur.fetchall()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"personalized recs catalog lookup failed: {e}")
+            return {"status": "error", "message": "Could not load catalog"}
+
+        catalog = {}
+        for r in catalog_rows:
+            catalog[r[0]] = {
+                "course_name": r[0],
+                "category": r[1] or "General",
+                "level": r[2] or "Beginner",
+                "price_inr": r[3] or 0,
+                "description": r[4] or "",
+            }
+
+        # --- 4. Match each focus topic to courses ---
+        course_bucket = {}
+        for topic_entry in focus_topics:
+            topic_name = topic_entry["topic"]
+            topic_score = topic_entry["score"]
+
+            course_names = TOPIC_TO_COURSE.get(topic_name, [])
+            for course_name in course_names:
+                course = catalog.get(course_name)
+                if not course:
+                    continue
+
+                existing = course_bucket.get(course_name)
+                if existing and existing["best_topic_entry"]["score"] <= topic_score:
+                    continue
+
+                course_bucket[course_name] = {
+                    "course": course,
+                    "best_topic_entry": topic_entry,
+                }
+
+        # --- 5. Build the response, sorted by topic urgency ---
+        recommended = []
+        for course_name, entry in course_bucket.items():
+            course = entry["course"]
+            te = entry["best_topic_entry"]
+
+            highlights = COURSE_HIGHLIGHTS.get(course_name, course.get("description", "")[:80])
+            why = (
+                f"You scored {te['score']}% on {te['topic']}. "
+                f"This course covers {highlights}."
+            )
+
+            recommended.append({
+                "course_name": course_name,
+                "category": course["category"],
+                "level": course["level"],
+                "price_inr": course["price_inr"],
+                "fills_topic": te["topic"],
+                "score": te["score"],
+                "status": te["status"],
+                "why": why,
+            })
+
+        priority_rank = {"weak": 0, "mixed": 1, "strong": 2}
+        recommended.sort(key=lambda x: (priority_rank.get(x["status"], 9), x["score"]))
+
+        return {
+            "status": "success",
+            "certificate_id": certificate_id,
+            "role": role,
+            "industry": industry,
+            "level": level,
+            "readiness_score": score,
+            "recommended": recommended[:6],
+            "gaps": [
+                {"topic": t["topic"], "score": t["score"], "status": t["status"]}
+                for t in focus_topics
+            ],
+            "message": (
+                f"Based on your readiness check for {role}, "
+                f"these courses close your {len(focus_topics)} skill gap"
+                f"{'s' if len(focus_topics) != 1 else ''}."
+            ),
+        }
+
 
     def get_history(self, email: str) -> Dict:
         """List past assessments for an email."""
