@@ -9377,6 +9377,22 @@ async def fyp_stats(request: Request):
     require_admin(request)
     return final_year_project_engine.get_stats()
 
+@app.post("/api/fyp/refine")
+@limiter.limit("30/minute")
+async def fyp_refine(request: Request):
+    """Apply a natural-language instruction to a section of text. 5 credits per call."""
+    data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "fyp_refine")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+    return final_year_project_engine.refine_section_ai(data)
+
+
 @app.get("/final-year-project", response_class=HTMLResponse)
 async def fyp_page(request: Request):
     return template_response("final-year-project.html", request, "Final Year Project Assistant - Charvak")
