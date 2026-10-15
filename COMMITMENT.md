@@ -5,6 +5,30 @@
 
 **Active roadmap:** See TRACK-A-B-PLAN.md for the full Track A (B2C)
 and Track B (CSR) sequencing.
+## Batch A1 Cleanup - PARTIAL COMPLETE (2026-10-15)
+
+Small cleanup batch. Five of six items closed.
+
+**Items:**
+- A1.1 (Render Postgres password rotation) - DEFERRED (5-min dashboard task)
+- A1.2 (PAYPAL_MODE=live on Render) - DONE, verified on prod
+- A1.3 (Custom-courses flicker fix) - ALREADY SHIPPED in Session 43-A1.3
+- A1.4 (Pre-push hook for IELTS test) - DONE, verified working (14/14 checks)
+- A1.6-latent (ip_detector in tools route) - ALREADY SHIPPED in 43-A1.6-cleanup
+- A1.10 (rdOpenShare dead code removal) - DONE (75aa666)
+
+**Discovery:** Four of the six items were already shipped by earlier
+sessions but the tracker hadn't been updated. Only A1.4 (pre-push hook)
+and A1.10 (dead code) required new work.
+
+**Commits:**
+- 75aa666 - chore(readiness): remove dead rdOpenShare() helper
+
+**Remaining:** A1.1 (Render password rotation) - low priority, do during
+any future Render dashboard session.
+
+---
+
 ## GPT-4o-mini Phase 1 - COMPLETE (2026-10-15)
 
 Centralized every hardcoded OpenAI model name into global_config.
