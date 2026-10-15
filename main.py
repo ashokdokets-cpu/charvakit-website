@@ -9341,6 +9341,23 @@ async def fyp_roadmap(request: Request):
         return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
     return final_year_project_engine.generate_roadmap_ai(data)
 
+
+@app.post("/api/fyp/humanize")
+@limiter.limit("30/minute")
+async def fyp_humanize(request: Request):
+    """Rewrite AI-generated text to sound more naturally human. 15 credits."""
+    data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Login required. Please log in and try again.", "login_url": "/login"})
+    require_auth_for_email(request, email)
+    from credit_guard import require_credits_from_data
+    guard = require_credits_from_data(data, "fyp_humanize")
+    if guard.get("status") != "success":
+        return JSONResponse(status_code=guard.get("_http_status", 402), content=guard)
+    return final_year_project_engine.humanize_text_ai(data)
+
+
 @app.post("/api/fyp/subscribe")
 @limiter.limit("60/minute")
 async def fyp_subscribe(request: Request):

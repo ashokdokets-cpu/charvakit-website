@@ -143,6 +143,27 @@
             </div>
         </div>
 
+        <!-- Session 43-A3.3: Plagiarism-Safe Rewriter -->
+        <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5>✍️ Plagiarism-Safe Rewriter</h5>
+                    <p class="text-muted small mb-3">Rewrite AI-generated text so it reads as your own voice — less AI-detectable, same facts.</p>
+                    <form onsubmit="fypHumanize(event)">
+                        <input type="text" class="form-control mb-2" id="fypHumTopic" placeholder="Project Topic (optional)">
+                        <textarea class="form-control mb-2" id="fypHumText" rows="5" placeholder="Paste the text you want to humanize (min 50 characters)" required></textarea>
+                        <select class="form-control mb-3" id="fypHumTone">
+                            <option value="academic" selected>Academic report tone</option>
+                            <option value="report">Formal project report</option>
+                            <option value="casual">Reflective / personal tone</option>
+                        </select>
+                        <button class="btn btn-primary w-100" type="submit">Humanize Text (15 credits)</button>
+                    </form>
+                    <div class="mt-3" id="fypHumOutput"></div>
+                </div>
+            </div>
+        </div>
+
         <!-- fixed-nesting-a3 -->
         </div>
     </div>
@@ -584,6 +605,71 @@ async function fypRoadmap(e) {
         window.location.href = '/login?next=/final-year-project';
         return;
     }
+
+// Session 43-A3.3: Plagiarism-Safe Rewriter
+async function fypHumanize(e) {
+    e.preventDefault();
+    const email = (localStorage.getItem('userEmail') || '').toLowerCase();
+    const token = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    if (!email || !token) {
+        alert('Please log in to humanize text.');
+        return;
+    }
+    const topic = document.getElementById('fypHumTopic').value.trim();
+    const text = document.getElementById('fypHumText').value.trim();
+    const tone = document.getElementById('fypHumTone').value;
+    if (text.length < 50) {
+        alert('Please paste at least 50 characters of text.');
+        return;
+    }
+    const out = document.getElementById('fypHumOutput');
+    out.innerHTML = '<div class="alert alert-info"><div class="spinner-border spinner-border-sm me-2"></div>Rewriting your text...</div>';
+    try {
+        const r = await fetch('/api/fyp/humanize', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token,
+            },
+            body: JSON.stringify({ email: email, topic: topic, text: text, tone: tone })
+        });
+        const j = await r.json();
+        if (r.status === 401) {
+            out.innerHTML = '<div class="alert alert-warning">Please log in again. <a href="/login?next=/final-year-project">Log in</a></div>';
+            return;
+        }
+        if (r.status === 402) {
+            out.innerHTML = '<div class="alert alert-danger">Not enough credits. <a href="/ai-credits-pricing">Top up</a>.</div>';
+            return;
+        }
+        if (j.status !== 'success' || !j.humanized) {
+            out.innerHTML = '<div class="alert alert-danger">' + escFyp(j.message || 'Could not rewrite text.') + '</div>';
+            return;
+        }
+        let html = '<div class="small text-uppercase fw-bold mb-2" style="letter-spacing:0.05em;color:#3ba591;">Rewritten Text</div>';
+        html += '<div class="p-3 mb-3" style="background:#f0fdf9;border:1px solid #a7f3d0;border-radius:8px;white-space:pre-wrap;font-size:0.92rem;line-height:1.6;">';
+        html += escFyp(j.humanized);
+        html += '</div>';
+        if (Array.isArray(j.changes_summary) && j.changes_summary.length) {
+            html += '<div class="small text-uppercase fw-bold mb-2" style="letter-spacing:0.05em;color:#6b7280;">What changed</div>';
+            html += '<ul class="small mb-3" style="color:#4b5563;">';
+            j.changes_summary.forEach(function(c) {
+                html += '<li>' + escFyp(c) + '</li>';
+            });
+            html += '</ul>';
+        }
+        if (j.notes) {
+            html += '<div class="small text-muted fst-italic">' + escFyp(j.notes) + '</div>';
+        }
+        if (j.original_length && j.humanized_length) {
+            html += '<div class="small text-muted mt-2">Length: ' + j.original_length + ' → ' + j.humanized_length + ' chars</div>';
+        }
+        html += '<button class="btn btn-sm btn-outline-secondary mt-2" onclick="navigator.clipboard.writeText(document.getElementById(\'fypHumOutput\').querySelector(\'div[style*=\\\'f0fdf9\\\']\').textContent)">Copy rewritten text</button>';
+        out.innerHTML = html;
+    } catch (err) {
+        out.innerHTML = '<div class="alert alert-danger">Network error: ' + escFyp(err.message || 'unknown') + '</div>';
+    }
+}
 
     const topic = document.getElementById('fypRoadTopic').value.trim();
     const weeks = parseInt(document.getElementById('fypRoadWeeks').value, 10) || 16;

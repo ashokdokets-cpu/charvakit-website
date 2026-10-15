@@ -499,6 +499,104 @@ Return JSON: {{"topics": [{{"title": "...", "domain": "...", "difficulty": "..."
             ],
         }
 
+    # ============================================================
+    # Session 43-A3.3: Plagiarism-Safe Rewriter
+    # ============================================================
+
+    def humanize_text_ai(self, data: Dict) -> Dict:
+        """
+        Rewrite AI-generated text so it reads as more naturally human.
+        Reduces telltale AI patterns: uniform sentence length, repetitive
+        transitions, overly formal tone, list-heavy structure.
+
+        Body: {text, topic?, tone?}
+        Returns: {"humanized": "<rewritten text>", "changes_summary": [...], "notes": "..."}
+        """
+        text = (data.get("text") or "").strip()
+        topic = (data.get("topic") or "").strip()
+        tone = (data.get("tone") or "academic").strip().lower()
+
+        if not text:
+            return {"status": "error", "message": "text required."}
+        if len(text) < 50:
+            return {"status": "error", "message": "text too short to humanize (min 50 chars)."}
+
+        # Cap input to bound tokens
+        original_len = len(text)
+        if len(text) > 6000:
+            text = text[:6000]
+
+        if _runtime_key_present():
+            tone_hint = {
+                "academic": "an academic report written by a final-year student",
+                "report":   "a formal project report",
+                "casual":   "a student's reflective write-up",
+            }.get(tone, "an academic report written by a final-year student")
+
+            prompt = (
+                "You are helping a final year student rewrite text so it reads as "
+                f"their own writing for {tone_hint}.\n\n"
+            )
+            if topic:
+                prompt += f"Project topic: {topic}\n\n"
+            prompt += (
+                "Original text (may be AI-generated):\n"
+                "---\n"
+                f"{text}\n"
+                "---\n\n"
+                "Rewrite it to sound like a student wrote it. Rules:\n"
+                "- Preserve all factual content, numbers, definitions, and terms of art.\n"
+                "- Vary sentence length: mix short, medium, and long sentences.\n"
+                "- Replace uniform transition words (Furthermore, Moreover, In conclusion) "
+                "with natural alternatives used sparingly.\n"
+                "- Break up long lists; some content should be woven into prose.\n"
+                "- Reduce passive voice; prefer active where it reads naturally.\n"
+                "- Introduce mild hedging or personal framing where appropriate "
+                "(e.g., 'it seems', 'in my analysis', 'the data suggests').\n"
+                "- Do NOT introduce new facts, claims, or sources.\n"
+                "- Do NOT add first-person anecdotes that weren't in the original.\n"
+                "- Keep roughly the same length (within 15%).\n\n"
+                "Return STRICT JSON only with this exact shape:\n"
+                "{\n"
+                '  "humanized": "<the rewritten text>",\n'
+                '  "changes_summary": ["<short bullet describing a change>", "..."],\n'
+                '  "notes": "<one-line advice on how to use or verify the rewrite>"\n'
+                "}"
+            )
+            result = self._ai_json(prompt, max_tokens=4000, temperature=0.6)
+            if result and result.get("humanized"):
+                result["original_length"] = original_len
+                result["humanized_length"] = len(result["humanized"])
+                result["truncated_input"] = (original_len > 6000)
+                return {"status": "success", **result}
+
+        # Fallback — no AI available
+        return self._fallback_humanize(text, topic)
+
+    def _fallback_humanize(self, text: str, topic: str) -> Dict:
+        """Simple rule-based rewrite when AI is unavailable. Light touch."""
+        import re as _re
+        fallback = text
+        if "\n\n" not in fallback and len(fallback) > 400:
+            sentences = _re.split(r"(?<=[.!?])\s+", fallback)
+            chunks = []
+            for i in range(0, len(sentences), 3):
+                chunks.append(" ".join(sentences[i:i+3]))
+            fallback = "\n\n".join(chunks)
+        return {
+            "status": "success",
+            "humanized": fallback,
+            "changes_summary": [
+                "Paragraph breaks added for readability",
+                "No deep rewrite performed - AI unavailable",
+            ],
+            "notes": "AI service was unavailable. Only structural changes applied. "
+                     "Consider retrying when the service is back.",
+            "original_length": len(text),
+            "humanized_length": len(fallback),
+            "truncated_input": False,
+        }
+
     def subscribe(self, data: Dict) -> Dict:
         """
         Subscribe to FYP plan.
