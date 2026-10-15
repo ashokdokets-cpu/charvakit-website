@@ -25,6 +25,7 @@ from datetime import datetime
 import global_config
 import payment_engine as pe_module
 from payment_engine import payment_engine
+from global_config import OPENAI_MODEL
 
 logger = logging.getLogger("charvakit.ielts_deep_report")
 
@@ -374,7 +375,7 @@ Rules:
 
     try:
         resp = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=OPENAI_MODEL,
             messages=[
                 {"role": "system", "content": "You are a senior IELTS examiner producing a JSON deep-diagnostic report."},
                 {"role": "user", "content": prompt_text},
@@ -458,7 +459,7 @@ Rules:
 
     try:
         resp = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=OPENAI_MODEL,
             messages=[
                 {"role": "system", "content": "You are a senior IELTS examiner producing a JSON deep-diagnostic report."},
                 {"role": "user", "content": prompt_text},

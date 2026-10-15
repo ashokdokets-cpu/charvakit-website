@@ -10,11 +10,11 @@ import secrets
 import requests
 from datetime import datetime
 from typing import Dict, List, Optional
+from global_config import OPENAI_MODEL
 
 logger = logging.getLogger("charvakit.interviewprep")
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
-OPENAI_MODEL = "gpt-4o-mini"
 CREDITS_PER_SESSION = 8
 QUESTIONS_PER_SESSION = int(os.getenv("INTERVIEW_QUESTIONS_PER_SESSION", "8"))
 

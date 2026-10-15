@@ -5,6 +5,7 @@ Student Suite Engine - Accepts both email and student_email
 import logging
 import secrets
 from typing import Dict, Optional
+from global_config import OPENAI_MODEL
 
 logger = logging.getLogger("charvakit.student_suite")
 
@@ -142,7 +143,7 @@ class StudentSuiteEngine:
                 "https://api.openai.com/v1/chat/completions",
                 headers={"Authorization": f"Bearer {api_key}"},
                 json={
-                    "model": "gpt-4o-mini",
+                    "model": OPENAI_MODEL,
                     "messages": [{"role": "user", "content": prompt}],
                     "temperature": 0.7,
                     "response_format": {"type": "json_object"},

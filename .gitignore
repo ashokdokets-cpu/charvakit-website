@@ -151,3 +151,5 @@ _test*.pdf
 static/fonts/*.eot
 static/fonts/*.woff
 static/fonts/*.woff2
+# OpenAI migration backups (2026-10-15)
+*.bak_openai_*

@@ -6,6 +6,7 @@ import logging
 import json
 import os
 from datetime import datetime
+from global_config import OPENAI_MODEL
 
 logger = logging.getLogger("charvakit.ai_pattern_questions")
 
@@ -82,7 +83,7 @@ class AIPatternQuestionGenerator:
                 "https://api.openai.com/v1/chat/completions",
                 headers={"Authorization": f"Bearer {self.openai_api_key}"},
                 json={
-                    "model": "gpt-4o-mini",
+                    "model": OPENAI_MODEL,
                     "messages": [{"role": "user", "content": prompt}],
                     "temperature": 0.95,
                     "max_tokens": 3000

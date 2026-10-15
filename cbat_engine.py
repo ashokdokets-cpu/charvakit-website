@@ -13,6 +13,7 @@ import os
 import secrets
 from datetime import datetime
 from typing import Dict, List, Optional
+from global_config import OPENAI_MODEL
 
 logger = logging.getLogger("charvakit.cbat")
 
@@ -148,7 +149,7 @@ class CBATEngine:
                 headers={"Authorization": f"Bearer {self.openai_api_key}",
                          "Content-Type": "application/json"},
                 json={
-                    "model": "gpt-4o-mini",
+                    "model": OPENAI_MODEL,
                     "messages": [{"role": "user", "content": prompt}],
                     "temperature": temperature,
                     "max_tokens": max_tokens,

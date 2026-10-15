@@ -11,6 +11,7 @@ import os
 import secrets
 from datetime import datetime
 from typing import Dict, List, Optional
+from global_config import OPENAI_MODEL
 
 # Global language catalog (34+ languages). Used for AI prompt naming and
 # metadata fallback. Wrapped in try/except so a global_config import failure
@@ -319,7 +320,7 @@ class IndianLanguageAI:
                 "https://api.openai.com/v1/chat/completions",
                 headers={"Authorization": f"Bearer {api_key}"},
                 json={
-                    "model": "gpt-4o-mini",
+                    "model": OPENAI_MODEL,
                     "messages": [{"role": "user", "content": prompt}],
                     "temperature": 0.7,
                     "response_format": {"type": "json_object"},

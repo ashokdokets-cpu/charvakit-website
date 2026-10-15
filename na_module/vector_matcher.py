@@ -10,6 +10,7 @@ import re
 import secrets
 from typing import Dict, List, Tuple
 from datetime import datetime
+from global_config import OPENAI_EMBEDDING_MODEL
 
 logger = logging.getLogger("charvakit.na.vector_matcher")
 
@@ -102,7 +103,7 @@ class VectorMatcher:
             response = requests.post(
                 "https://api.openai.com/v1/embeddings",
                 headers={"Authorization": f"Bearer {self._openai_api_key}"},
-                json={"model": "text-embedding-3-small", "input": text},
+                json={"model": OPENAI_EMBEDDING_MODEL, "input": text},
                 timeout=15,
             )
             data = response.json()

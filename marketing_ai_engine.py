@@ -8,6 +8,7 @@ import logging
 import secrets
 from datetime import datetime
 from typing import Dict, List, Optional
+from global_config import OPENAI_MODEL
 
 logger = logging.getLogger("charvakit.marketingai")
 
@@ -323,7 +324,7 @@ Only return the JSON."""
             import os
             client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
             resp = client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=OPENAI_MODEL,
                 messages=[{"role": "user", "content": prompt}],
                 response_format={"type": "json_object"},
                 temperature=0.4,

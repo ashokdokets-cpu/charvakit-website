@@ -12,6 +12,7 @@ import os
 import secrets
 from datetime import datetime
 from typing import Dict, List, Optional
+from global_config import OPENAI_MODEL
 
 logger = logging.getLogger("charvakit.cbt_versant")
 
@@ -519,7 +520,7 @@ class CBTVersantSystem:
                 "https://api.openai.com/v1/chat/completions",
                 headers={"Authorization": f"Bearer {self.openai_api_key}",
                          "Content-Type": "application/json"},
-                json={"model": "gpt-4o-mini",
+                json={"model": OPENAI_MODEL,
                       "messages": [{"role": "user", "content": prompt}],
                       "temperature": 0.3,
                       "response_format": {"type": "json_object"}},
