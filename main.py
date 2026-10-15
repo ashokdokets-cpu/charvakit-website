@@ -4785,6 +4785,26 @@ async def student_dashboard(request: Request, email: str):
     require_auth_for_email(request, email)
     return training_engine.get_student_dashboard(email)
 
+
+
+@app.get("/api/training-engine/personalized")
+@limiter.limit("60/minute")
+async def training_personalized(request: Request, email: str = ""):
+    """
+    Return personalized course recommendations for a candidate with a
+    readiness certificate. Auth-gated via email-match.
+    """
+    email = (email or "").strip().lower()
+    if not email:
+        return JSONResponse(status_code=401, content={
+            "status": "error",
+            "message": "Login required.",
+            "login_url": "/login",
+        })
+    require_auth_for_email(request, email)
+    return career_assessment_engine.get_personalized_recommendations(email)
+
+
 # ============================================================
 # INTERVIEW PREP API ENDPOINTS
 # ============================================================
