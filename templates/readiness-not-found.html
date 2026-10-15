@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Certificate Not Found - Charvak{% endblock %}
+{% block content %}
+<div style="max-width: 640px; margin: 60px auto; padding: 0 20px; text-align: center;">
+
+  <div style="font-size: 3rem; margin-bottom: 16px;">&#128269;</div>
+
+  <h1 style="font-weight: 800; color: #111827; margin: 0 0 12px; font-size: 1.75rem;">
+    Certificate Not Found
+  </h1>
+
+  <p style="color: #4b5563; font-size: 1.05rem; line-height: 1.6; margin: 0 0 8px;">
+    We couldn't find a certificate with the ID
+  </p>
+
+  <p style="font-family: 'SF Mono', Menlo, Consolas, monospace; font-weight: 600; color: #111827; font-size: 1rem; background: #f3f4f6; padding: 10px 16px; border-radius: 8px; display: inline-block; margin: 0 0 28px;">
+    {{ certificate_id }}
+  </p>
+
+  <p style="color: #6b7280; font-size: 0.95rem; line-height: 1.6; max-width: 480px; margin: 0 auto 32px;">
+    The certificate may have been mistyped, superseded by a newer assessment,
+    or removed. Every Charvak certificate is independently verifiable — if you
+    have a verification hash from an older copy, you can still look it up below.
+  </p>
+
+  <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 40px;">
+    <a href="/readiness-check" style="background: #059669; color: #fff; padding: 12px 24px; border-radius: 10px; text-decoration: none; font-weight: 700;">
+      Take a Free Readiness Check &rarr;
+    </a>
+    <a href="/integrity" style="background: #fff; color: #059669; border: 2px solid #059669; padding: 10px 22px; border-radius: 10px; text-decoration: none; font-weight: 700;">
+      How Integrity Works
+    </a>
+  </div>
+
+  <div style="border-top: 1px solid #e5e7eb; padding-top: 24px; color: #9ca3af; font-size: 0.85rem;">
+    Looking for something else?
+    <a href="/" style="color: #2563eb; text-decoration: none;">Go to homepage &rarr;</a>
+  </div>
+
+</div>
+{% endblock %}
