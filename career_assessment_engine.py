@@ -2892,6 +2892,17 @@ class CareerAssessmentEngine:
 
             resolved_key = self._resolve_topic_key(topic_name)
             course_names = TOPIC_TO_COURSE.get(resolved_key, [])
+            if not course_names:
+                # Fallback: keyword match on course name + description.
+                # Catches courses added to the catalog that we haven't
+                # explicitly mapped yet.
+                import re as _re
+                kws = [w.lower() for w in _re.split(r'[ &,/]+', topic_name) if len(w) > 3]
+                if kws:
+                    for _cn, _c in catalog.items():
+                        _haystack = (_cn + " " + (_c.get("description") or "")).lower()
+                        if any(kw in _haystack for kw in kws):
+                            course_names.append(_cn)
             for course_name in course_names:
                 course = catalog.get(course_name)
                 if not course:

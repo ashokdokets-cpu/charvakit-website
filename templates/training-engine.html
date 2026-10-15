@@ -279,185 +279,108 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 // ============================================================
-// Session 43-D (A4): Personalized training recommendations
+// Session 43-A4: Personalized training recommendations
 // ============================================================
-// Reads the user's latest readiness certificate, extracts weak
-// topics, and matches them to catalog courses. Silent-fail: if
-// the user is not logged in or has no cert, the panel stays hidden.
+// Calls /api/training-engine/personalized which matches the user's
+// readiness cert skill gaps to catalog courses server-side.
+// States: success (render cards) | no_cert (subtle CTA) |
+//         no_gaps (hidden) | error (silent fail).
 
-// Course name -> weak topic mapping (mirrors the FYP-mock mapping
-// but keys are what appears in a certification's skill_gap list).
-var _teTopicToCourseHints = {
-    // Product / PM roles
-    'Prioritization & Roadmapping': ['product', 'management', 'roadmap'],
-    'Execution & Delivery':         ['agile', 'delivery', 'management'],
-    'Domain Knowledge':             ['domain', 'business', 'strategy'],
-    'Stakeholder Management':       ['communication', 'leadership'],
-    'Discovery & User Research':    ['research', 'discovery', 'product'],
-    'Product Analytics':            ['analytics', 'metrics', 'product'],
-
-    // Engineering roles
-    'DSA':                          ['dsa', 'algorithm', 'data structure'],
-    'Algorithms':                   ['algorithm', 'dsa'],
-    'System Design':                ['system design', 'architecture'],
-    'DBMS':                         ['sql', 'database', 'dbms'],
-    'OS':                           ['operating system', 'devops'],
-    'Coding':                       ['programming', 'coding', 'python', 'java'],
-    'Data Structures':              ['data structure', 'dsa'],
-
-    // Data roles
-    'Data Analysis':                ['analytics', 'data', 'sql'],
-    'Machine Learning':             ['machine learning', 'ml', 'deep learning'],
-    'Statistics':                   ['statistics', 'analytics'],
-    'Modeling & ML':                ['machine learning', 'modeling'],
-
-    // Business / MBA
-    'Case Reasoning':               ['case study', 'consulting', 'strategy'],
-    'Market Sizing':                ['consulting', 'math', 'market'],
-    'Data Interpretation':          ['data', 'interpretation', 'analytics'],
-    'Business Communication':       ['communication', 'writing', 'presentation'],
-    'Financial Analysis':           ['financial', 'finance', 'accounting'],
-    'Strategy':                     ['strategy', 'frameworks'],
-
-    // Soft skills
-    'Verbal Communication':         ['communication', 'language'],
-    'Quantitative Reasoning':       ['quant', 'math', 'numeracy'],
-};
-
-function _teMatchTopicToCourses(topic, catalog) {
-    // Return courses whose name+description match the topic via keywords
-    var hints = _teTopicToCourseHints[topic];
-    if (!hints) {
-        // Fallback: tokenize the topic and try direct substring match
-        hints = String(topic || '').toLowerCase().split(/[ &,\/]+/).filter(function(w) { return w.length > 2; });
-    }
-    var matches = [];
-    for (var i = 0; i < catalog.length; i++) {
-        var c = catalog[i];
-        var hay = ((c.course_name || '') + ' ' + (c.description || '') + ' ' + (c.category || '')).toLowerCase();
-        for (var h = 0; h < hints.length; h++) {
-            var hint = String(hints[h] || '').toLowerCase();
-            if (hint && hay.indexOf(hint) !== -1) {
-                matches.push({ course: c, matchedOn: topic });
-                break;
-            }
-        }
-    }
-    return matches;
-}
-
+    
 async function loadPersonalizedRecommendations() {
-    var email = localStorage.getItem('userEmail') || '';
+    // Session 43-A4: fetch from the server-side recommendation engine.
+    var email = (localStorage.getItem('userEmail') || '').trim().toLowerCase();
     var token = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
-    if (!email || !token) {
-        return; // not logged in — leave panel hidden
-    }
+    if (!email || !token) return; // logged out — panel stays hidden
 
     var panel = document.getElementById('teRecommendedPanel');
     if (!panel) return;
 
     try {
-        var r = await fetch('/api/readiness/latest/' + encodeURIComponent(email), {
+        var r = await fetch('/api/training-engine/personalized?email=' + encodeURIComponent(email), {
             headers: { 'Authorization': 'Bearer ' + token }
         });
-        if (!r.ok) return;
+        if (!r.ok) return; // silent fail on 401/403/500
         var j = await r.json();
-        if (j.status !== 'success' || !j.certificate) return;
 
-        var cert = j.certificate;
-        var gaps = cert.skill_gap || [];
-        if (!gaps.length) return;
-
-        // Weak-only topics, weakest first
-        var weakTopics = gaps
-            .filter(function(g) { return g && g.status === 'weak'; })
-            .sort(function(a, b) { return (a.score || 0) - (b.score || 0); });
-
-        if (!weakTopics.length) return;
-
-        // Wait for catalog to load — poll if needed
-        var tries = 0;
-        while (!_teAllCourses.length && tries < 20) {
-            await new Promise(function(res) { setTimeout(res, 150); });
-            tries++;
-        }
-        if (!_teAllCourses.length) return;
-
-        // Build a deduped map of course -> matched topic
-        var courseToTopic = {};
-        for (var i = 0; i < weakTopics.length; i++) {
-            var topic = weakTopics[i].topic;
-            var matches = _teMatchTopicToCourses(topic, _teAllCourses);
-            for (var m = 0; m < matches.length; m++) {
-                var cid = matches[m].course.course_id || matches[m].course.course_name;
-                if (!courseToTopic[cid]) {
-                    courseToTopic[cid] = { course: matches[m].course, topic: topic };
-                }
+        // no_cert state: subtle CTA nudging toward the readiness check
+        if (j.status === 'no_cert') {
+            var subNC = document.getElementById('teRecommendedSub');
+            if (subNC) {
+                subNC.textContent = 'Unlock personalized recommendations by taking a free readiness check.';
             }
-        }
-
-        var matchesArr = Object.keys(courseToTopic).map(function(k) { return courseToTopic[k]; });
-        matchesArr.sort(function(a, b) { return (a.course.price_inr || 0) - (b.course.price_inr || 0); });
-
-        if (!matchesArr.length) {
-            // Show a small note: gaps exist but no catalog matches
+            var gridNC = document.getElementById('teRecommendedGrid');
+            if (gridNC) {
+                gridNC.innerHTML = ''
+                    + '<div class="col-12 text-center py-2">'
+                    +   '<a href="' + (j.cta_url || '/readiness-check') + '" '
+                    +      'class="btn btn-outline-primary btn-sm">'
+                    +     _teEsc(j.cta_label || 'Take a Free Readiness Check') + ' &rarr;'
+                    +   '</a>'
+                    + '</div>';
+            }
             panel.style.display = 'block';
-            var gapsLine = document.getElementById('teRecommendedGaps');
-            if (gapsLine) {
-                gapsLine.innerHTML = '<strong>Your weakest topics:</strong> ' +
-                    weakTopics.slice(0, 4).map(function(g) { return _teEsc(g.topic); }).join(', ') +
-                    '. No catalog course matches these yet — use <a href="/ai-courses">the AI Course Designer</a> to generate a custom course.';
-            }
             return;
         }
 
-        // Render up to 6 recommended course cards
-        var grid = document.getElementById('teRecommendedGrid');
-        var html = '';
-        for (var k = 0; k < Math.min(matchesArr.length, 6); k++) {
-            var item = matchesArr[k];
-            var c = item.course;
-            var isCustom = (c.category === 'Custom') || (c.price_inr === 0);
-            var priceLabel = isCustom ? 'Free after design' : ('₹' + Number(c.price_inr || 0).toLocaleString());
-
-            html += '<div class="col-md-4">';
-            html += '<div class="card h-100 p-3" style="border:1px solid #d1fae5;">';
-            html += '<div class="mb-2" style="font-size:0.75rem;color:#065f46;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;">Fills your gap: ' + _teEsc(item.topic) + '</div>';
-            html += '<h5 class="mb-2" style="font-size:1rem;">' + _teEsc(c.course_name || '') + '</h5>';
-            html += '<p class="text-muted small mb-2">' + _teEsc((c.description || '').substring(0, 100)) + '</p>';
-            html += '<div class="small text-muted mb-2">' + _teEsc(c.duration_weeks || 0) + ' weeks · ' + priceLabel + '</div>';
-            html += '<a href="/course/' + encodeURIComponent(c.course_name || '') + '" class="btn btn-sm" style="background:#3ba591;color:#fff;font-weight:600;">Start course &rarr;</a>';
-            html += '</div></div>';
+        // no_gaps or empty: keep panel hidden
+        if (j.status !== 'success' || !Array.isArray(j.recommended) || !j.recommended.length) {
+            return;
         }
-        grid.innerHTML = html;
 
-        // Sub line with count
+        // success state: render the recommended cards
         var sub = document.getElementById('teRecommendedSub');
         if (sub) {
-            sub.textContent = 'Based on your ' + _teEsc(cert.role) + ' (' + _teEsc(cert.level) + ') readiness certificate — ' + matchesArr.length + ' course' + (matchesArr.length === 1 ? '' : 's') + ' match your weak topics';
+            sub.textContent = 'Based on your ' + (j.role || 'recent') + ' readiness check — '
+                             + j.recommended.length + ' courses to close your gaps.';
         }
 
-        // Gap summary
+        var grid = document.getElementById('teRecommendedGrid');
+        if (grid) {
+            grid.innerHTML = j.recommended.map(function(rec) {
+                var priceHtml = rec.price_inr
+                    ? '<span class="fw-bold" style="color:#3ba591;">\u20B9' + rec.price_inr.toLocaleString('en-IN') + '</span>'
+                    : '<span class="text-muted">Free</span>';
+                var statusBadge = rec.status === 'weak'
+                    ? '<span class="badge bg-danger" style="font-size:0.65rem;">Critical</span>'
+                    : '<span class="badge bg-warning text-dark" style="font-size:0.65rem;">Strengthen</span>';
+                return ''
+                    + '<div class="col-md-6 col-lg-4">'
+                    +   '<div class="card h-100 border-0 shadow-sm" style="border-left:3px solid #3ba591 !important;">'
+                    +     '<div class="card-body p-3">'
+                    +       '<div class="d-flex justify-content-between align-items-start mb-2">'
+                    +         statusBadge
+                    +         '<span class="small text-muted">' + _teEsc(rec.level || '') + '</span>'
+                    +       '</div>'
+                    +       '<h6 class="mb-2" style="color:#111827;">' + _teEsc(rec.course_name) + '</h6>'
+                    +       '<div class="small mb-2" style="color:#3ba591;"><strong>Fills:</strong> ' + _teEsc(rec.fills_topic) + '</div>'
+                    +       '<p class="small text-muted mb-3" style="line-height:1.5;">' + _teEsc(rec.why) + '</p>'
+                    +       '<div class="d-flex justify-content-between align-items-center">'
+                    +         priceHtml
+                    +         '<a href="/course/' + encodeURIComponent(rec.course_name) + '" class="btn btn-sm btn-primary">View course &rarr;</a>'
+                    +       '</div>'
+                    +     '</div>'
+                    +   '</div>'
+                    + '</div>';
+            }).join('');
+        }
+
         var gapsLine = document.getElementById('teRecommendedGaps');
-        if (gapsLine) {
-            gapsLine.innerHTML = '<strong>Your weakest topics:</strong> ' +
-                weakTopics.slice(0, 5).map(function(g) {
-                    return _teEsc(g.topic) + ' (' + (g.score || 0) + '%)';
-                }).join(' · ');
+        if (gapsLine && Array.isArray(j.gaps) && j.gaps.length) {
+            var names = j.gaps.map(function(g) { return _teEsc(g.topic); }).join(', ');
+            gapsLine.innerHTML = '<strong>Your gap areas:</strong> ' + names;
         }
 
         panel.style.display = 'block';
 
-        // Fire GA4 event
         if (typeof charvakTrack === 'function') {
             charvakTrack('training_personalized_view', {
-                cert_id: cert.certificate_id,
-                weak_topics: weakTopics.length,
-                matched_courses: matchesArr.length,
+                cert_id: j.certificate_id,
+                weak_topics: (j.gaps || []).length,
+                matched_courses: j.recommended.length,
             });
         }
     } catch (e) {
-        // Silent-fail
         console.warn('personalized recs failed:', e);
     }
 }
