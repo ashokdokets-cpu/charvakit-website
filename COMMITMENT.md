@@ -5,6 +5,42 @@
 
 **Active roadmap:** See TRACK-A-B-PLAN.md for the full Track A (B2C)
 and Track B (CSR) sequencing.
+## A1.12 + A2.5 - COMPLETE (2026-10-16)
+
+Two quick UX items closed.
+
+**A1.12 - Blue badge candidate-facing reassurance - DONE**
+
+Commits: 52ef7ed + 05f7573 (apostrophe fix)
+
+When a readiness certificate shows the 'Employer Review Recommended'
+badge (blue), the candidate now sees a short reassurance note in a
+light-blue box below the integrity facts:
+
+  This is normal. Employers can still see your score - we just
+  recommend they verify your skills in an interview. Things like
+  checking your phone mid-assessment get recorded, but they don't
+  fail your certificate.
+
+The note appears only in the review state. The green verified state
+stays clean. Closes the last outstanding integrity UX item.
+
+Follow-up fix: the initial commit used single quotes around a string
+containing 'don't', which broke JS on load. Fixed by switching to
+double quotes.
+
+**A2.5 - Real social proof feed - SKIPPED (no action needed)**
+
+Discovery: no fabricated social proof exists in the codebase. A grep
+of all templates for 'just now', 'trusted by', 'minutes ago', and
+similar patterns found only real relative-time formatters and
+generic marketing headings with no fabricated numbers.
+
+The Session 16 concern about fabricated proof was resolved implicitly
+by subsequent work. No action needed; marking closed.
+
+---
+
 ## Batch A1 Cleanup - PARTIAL COMPLETE (2026-10-15)
 
 Small cleanup batch. Five of six items closed.
