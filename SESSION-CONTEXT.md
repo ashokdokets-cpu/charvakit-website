@@ -19,6 +19,71 @@ First task before migration:
 
 ---
 
+## Session 43-A3/A4 CLOSED (2026-10-16) - FYP features + personalized training
+
+**HEAD at close:** 13dad7b
+
+Two complete Track A feature batches shipped in one session.
+
+### A3 batch - FYP feature set (4/4 complete)
+
+| Feature | Status | Route | Credits |
+|---|---|---|---|
+| A3.1 Citation Helper | Done (verified today, shipped earlier) | /api/fyp/citations | 8 |
+| A3.2 Milestone Roadmap | Done (verified today, shipped earlier) | /api/fyp/roadmap | 15 |
+| A3.3 Plagiarism-Safe Rewriter | Done (NEW today) | /api/fyp/humanize | 15 |
+| A3.4 Refine Section | Done (NEW today) | /api/fyp/refine | 5 per instruction |
+
+Full FYP credit-bearing features: 9 (topics, proposal, documentation, expand-chapter, viva, citations, roadmap, humanize, refine).
+
+### A4 batch - Personalized training recommendations
+
+Server-side recommendation engine that matches a user's readiness cert skill gaps to catalog courses.
+
+**New route:** `GET /api/training-engine/personalized?email=X` (auth-gated)
+
+**New engine method:** `career_assessment_engine.get_personalized_recommendations(email)`
+
+**Architecture:** Server-side mapping (TOPIC_TO_COURSE dict in Python) - single source of truth. Reusable across pages.
+
+**Frontend:** `/training-engine` shows a "Recommended for you" panel with tiered "why" text based on the user's actual score.
+
+### Also closed this session
+
+- A1.12 - Blue badge candidate reassurance (52ef7ed + 05f7573)
+- A2.1 - QR code on certificate PDF (5fd8aec)
+- A1.10 - Readiness 404 friendly page (f8fedb7 + 84884ac)
+- `multi_pattern` NameError fix (4b49771) - unblocked the Amrita demo
+- GPT-4o-mini Phase 1 - centralized model name in global_config (8a579f7 + d091998)
+- A2.5 - Confirmed N/A (no fabricated social proof exists)
+
+### Next session options
+
+1. **A2.3 i18n** - Hindi + Telugu certificate labels (2 hrs). High value if Amrita moves forward.
+2. **Track C prep** - Pilot proposal + weekly report template, ready to fire when Prof. Raj replies.
+3. **Docs sync** - Update KNOWN-ISSUES.md, ARCHITECTURE.md, TRACK-A-B-PLAN.md, STATUS.md.
+4. **Amrita tracker** - Waiting on Prof. Raj. Follow-up email due Sunday if silent.
+
+### Pending / Deferred
+
+- A1.1 Render Postgres password rotation (5-min dashboard task)
+- A2.3 Certificate i18n (deferred)
+- A6 Benchmark data instrumentation (needs 200+ certs)
+- A7 Certificate-as-a-Service (needs a buyer)
+- Track B (CSR) - starts after A2 complete
+- Track D (JD2P) - after Amrita pilot Week 2
+- Track E (Behavioral readiness) - after Amrita signs
+
+### Prod verification
+
+Full /training-engine flow verified on prod with a real Data Engineer cert:
+- 8 recommended courses matched
+- Correct "Fills: [topic]" badges
+- Tiered "why" text
+- All 7 gap areas listed
+
+---
+
 ## Session 43-A1.8 + A1.9 CLOSED (2026-10-13)
 
 **Status:** Share instrumentation + placement-prep promotion shipped.

@@ -1,12 +1,12 @@
 # CHARVAKIT.COM - MASTER REFERENCE
 ## Charvak IT Consulting Pvt Ltd
-### Last updated: October 13, 2026 (Session 43-A1.7 - IELTS Deep Report micro-paywall)
+### Last updated: October 16, 2026 (Session 43-A3.4 + A4 - FYP features + personalized training)
 
-**HEAD:** c56e9c6
+**HEAD:** 13dad7b
 **Live:** https://www.charvakit.com
 **Resume here:** see `SESSION-CONTEXT.md` and `TRACK-A-B-PLAN.md`
 **Backlog:** see `OUTSTANDING-WORK-INVENTORY.md` (master list of remaining work)
-**Version:** v3.5-session-43-a17-20261013
+**Version:** v3.5-session-43-a3a4-20261016
 
 ### Reference Documents
 
@@ -17,6 +17,47 @@
 - **`SESSION-CONTEXT.md`** — One-file resume pointer for fresh chat windows.
 - **`KNOWN-ISSUES.md`** — Bug registry (fixed + open, categorized).
 - **`TIER3-PERSISTENCE-PROJECT.md`** — Persistence tracking for the 62-engine project.
+
+---
+
+## SESSION 2026-10-16 - Session 43-A3.4 + A4
+
+**Commits:** `4e8148a`, `d13d2be`, `69f09d0`, `a4f6354`, `d2531de`, `3b5dc0d`, `13dad7b`
+
+### Shipped
+
+**A3.4 - FYP Refine Section (interactive iterative rewrite)**
+- New engine method: `refine_section_ai()` + `_fallback_refine()`
+- New route: `POST /api/fyp/refine` (5 credits per instruction)
+- Frontend: refine panel inside each expanded chapter
+- History preserved in DOM with revert option
+
+**A3.3 - FYP Plagiarism-Safe Rewriter (humanize text)**
+- Engine: `humanize_text_ai()` + `_fallback_humanize()`
+- Route: `POST /api/fyp/humanize` (15 credits)
+- Tone selector (academic / report / casual)
+
+**A4 - Personalized training recommendations**
+- `TOPIC_TO_COURSE` + `COURSE_HIGHLIGHTS` dicts (42 topics, 35 courses)
+- `get_personalized_recommendations()` in career_assessment_engine
+- `_resolve_topic_key()` fuzzy matcher for truncated topic names
+- Keyword fallback for topics without explicit mapping
+- Route: `GET /api/training-engine/personalized` (auth-gated)
+- Frontend: server-call version of loadPersonalizedRecommendations
+- Removed client-side `_teTopicToCourseHints` + `_teMatchTopicToCourses`
+
+**Also closed:**
+- A1.12 Blue badge candidate reassurance
+- A2.1 QR code on certificate PDF
+- A1.10 Readiness 404 friendly page
+- GPT-4o-mini Phase 1 (centralized OPENAI_MODEL in global_config)
+- `multi_pattern` NameError fix
+
+**Remaining in Track A:**
+- A1.1 Render Postgres password rotation
+- A2.3 Certificate i18n (deferred)
+- A6 Benchmark data (needs 200+ certs)
+- A7 Certificate-as-a-Service (needs a buyer)
 
 ---
 
