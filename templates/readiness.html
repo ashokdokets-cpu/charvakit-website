@@ -548,38 +548,6 @@
     return "https://www.charvakit.com";
   }
 
-  window.rdOpenShare = function(ev, type) {
-    if (ev) ev.preventDefault();
-    var c = window.__rdCert;
-    if (!c) { alert("Certificate is still loading. Please try again in a moment."); return; }
-
-    var url = "";
-    if (type === "linkedin") {
-      url = _rdLinkedInUrl(c);
-    } else {
-      url = _rdWhatsAppUrl(c);
-    }
-
-    // Session 43-A1.8: track the share emission for the viral loop.
-    if (typeof charvakTrack === 'function') {
-      charvakTrack('cert_shared', {
-        channel: type || 'unknown',
-        cert_id: c.certificate_id || '',
-        role: c.role || '',
-        level: c.level || '',
-      });
-    }
-
-    // window.open must be called synchronously in the click handler.
-    // On mobile Chrome/Safari this is the only reliable way to open
-    // a new tab or an external app (WhatsApp).
-    var w = window.open(url, "_blank", "noopener,noreferrer");
-    if (!w) {
-      // Popup blocked — fall back to same-tab navigation
-      window.location.href = url;
-    }
-  };
-
   function _rdShareCertUrl(c, channel) {
     var base = _rdShareBase() + "/readiness/" + encodeURIComponent(c.certificate_id || "");
     // Session 43-A1.8: UTM-tag the shared URL for attribution.
