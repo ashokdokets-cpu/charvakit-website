@@ -6,6 +6,7 @@ import logging
 import json
 import os
 from datetime import datetime, timedelta
+from global_config import OPENAI_MODEL
 
 logger = logging.getLogger("charvakit.ai_delivery")
 
@@ -50,7 +51,7 @@ class AICourseDelivery:
             response = requests.post(
                 "https://api.openai.com/v1/chat/completions",
                 headers={"Authorization": f"Bearer {self.openai_api_key}"},
-                json={"model": "gpt-4o-mini", "messages": [{"role": "user", "content": prompt}], "temperature": 0.8, "max_tokens": 4000},
+                json={"model": OPENAI_MODEL, "messages": [{"role": "user", "content": prompt}], "temperature": 0.8, "max_tokens": 4000},
                 timeout=25
             )
             data = response.json()
@@ -123,7 +124,7 @@ class AICourseDelivery:
             response = requests.post(
                 "https://api.openai.com/v1/chat/completions",
                 headers={"Authorization": f"Bearer {self.openai_api_key}"},
-                json={"model": "gpt-4o-mini", "messages": [{"role": "user", "content": prompt}], "temperature": 0.8, "max_tokens": 3000},
+                json={"model": OPENAI_MODEL, "messages": [{"role": "user", "content": prompt}], "temperature": 0.8, "max_tokens": 3000},
                 timeout=20
             )
             data = response.json()
@@ -145,7 +146,7 @@ class AICourseDelivery:
                 response = requests.post(
                     "https://api.openai.com/v1/chat/completions",
                     headers={"Authorization": f"Bearer {self.openai_api_key}"},
-                    json={"model": "gpt-4o-mini", "messages": [{"role": "user", "content": prompt}], "temperature": 0.7, "max_tokens": 2000},
+                    json={"model": OPENAI_MODEL, "messages": [{"role": "user", "content": prompt}], "temperature": 0.7, "max_tokens": 2000},
                     timeout=15
                 )
                 data = response.json()

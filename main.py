@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request, Depends, HTTPException, Response
 from fastapi.responses import HTMLResponse, PlainTextResponse, FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.staticfiles import StaticFiles as StarletteStaticFiles
+from global_config import OPENAI_MODEL
 
 class CachedStaticFiles(StarletteStaticFiles):
     """StaticFiles subclass that adds long cache headers to static assets."""
@@ -2155,7 +2156,7 @@ Only return the JSON."""
         from openai import OpenAI
         client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
         resp = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=OPENAI_MODEL,
             messages=[{"role": "user", "content": prompt}],
             response_format={"type": "json_object"},
             temperature=0.3,

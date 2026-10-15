@@ -9,6 +9,7 @@ import os
 import secrets
 from datetime import datetime
 from typing import Dict, List
+from global_config import OPENAI_MODEL
 
 logger = logging.getLogger("charvakit.fyp")
 
@@ -86,7 +87,7 @@ class FinalYearProjectEngine:
                 return None
             client = openai.OpenAI(api_key=_key)
             response = client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=OPENAI_MODEL,
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=max_tokens,
                 temperature=temperature,

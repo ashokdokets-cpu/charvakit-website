@@ -9,6 +9,7 @@ from typing import Dict, List, Optional
 import secrets
 import hashlib
 import json
+from global_config import OPENAI_MODEL
 
 logger = logging.getLogger("charvakit.products")
 
@@ -284,7 +285,7 @@ Only return the JSON."""
             import os
             client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
             resp = client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=OPENAI_MODEL,
                 messages=[{"role": "user", "content": prompt}],
                 response_format={"type": "json_object"},
                 temperature=0.3,
@@ -611,7 +612,7 @@ Only return the JSON. No prose outside."""
             import os
             client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
             resp = client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=OPENAI_MODEL,
                 messages=[{"role": "user", "content": prompt}],
                 response_format={"type": "json_object"},
                 temperature=0.3,
@@ -1201,7 +1202,7 @@ Only return the JSON."""
             import os
             client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
             resp = client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=OPENAI_MODEL,
                 messages=[{"role": "user", "content": prompt}],
                 response_format={"type": "json_object"},
                 temperature=0.2,
@@ -1285,7 +1286,7 @@ Only return the JSON."""
             import os
             client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
             resp = client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=OPENAI_MODEL,
                 messages=[{"role": "user", "content": prompt}],
                 response_format={"type": "json_object"},
                 temperature=0.3,
@@ -2038,7 +2039,7 @@ Only return the JSON."""
                 "https://api.openai.com/v1/chat/completions",
                 headers={"Authorization": f"Bearer {api_key}"},
                 json={
-                    "model": "gpt-4o-mini",
+                    "model": OPENAI_MODEL,
                     "messages": [{"role": "user", "content": prompt}],
                     "temperature": 0.5,
                     "response_format": {"type": "json_object"},
@@ -2095,7 +2096,7 @@ Only return the JSON."""
                 "https://api.openai.com/v1/chat/completions",
                 headers={"Authorization": f"Bearer {api_key}"},
                 json={
-                    "model": "gpt-4o-mini",
+                    "model": OPENAI_MODEL,
                     "messages": [{"role": "user", "content": prompt}],
                     "temperature": 0.5,
                     "response_format": {"type": "json_object"},
@@ -2158,7 +2159,7 @@ Only return the JSON."""
                 "https://api.openai.com/v1/chat/completions",
                 headers={"Authorization": f"Bearer {api_key}"},
                 json={
-                    "model": "gpt-4o-mini",
+                    "model": OPENAI_MODEL,
                     "messages": [{"role": "user", "content": prompt}],
                     "temperature": 0.3,
                     "response_format": {"type": "json_object"},
@@ -2217,7 +2218,7 @@ Only return the JSON."""
                 "https://api.openai.com/v1/chat/completions",
                 headers={"Authorization": f"Bearer {api_key}"},
                 json={
-                    "model": "gpt-4o-mini",
+                    "model": OPENAI_MODEL,
                     "messages": [{"role": "user", "content": prompt}],
                     "temperature": 0.3,
                     "response_format": {"type": "json_object"},
@@ -2274,7 +2275,7 @@ Only return the JSON."""
                 "https://api.openai.com/v1/chat/completions",
                 headers={"Authorization": f"Bearer {api_key}"},
                 json={
-                    "model": "gpt-4o-mini",
+                    "model": OPENAI_MODEL,
                     "messages": [{"role": "user", "content": prompt}],
                     "temperature": 0.5,
                     "response_format": {"type": "json_object"},
@@ -2327,7 +2328,7 @@ Only return the JSON."""
                 "https://api.openai.com/v1/chat/completions",
                 headers={"Authorization": f"Bearer {api_key}"},
                 json={
-                    "model": "gpt-4o-mini",
+                    "model": OPENAI_MODEL,
                     "messages": [{"role": "user", "content": prompt}],
                     "temperature": 0.6,
                     "response_format": {"type": "json_object"},
@@ -2387,7 +2388,7 @@ Only return the JSON."""
                 "https://api.openai.com/v1/chat/completions",
                 headers={"Authorization": f"Bearer {api_key}"},
                 json={
-                    "model": "gpt-4o-mini",
+                    "model": OPENAI_MODEL,
                     "messages": [{"role": "user", "content": prompt}],
                     "temperature": 0.5,
                     "response_format": {"type": "json_object"},
@@ -2448,7 +2449,7 @@ Only return the JSON."""
                 "https://api.openai.com/v1/chat/completions",
                 headers={"Authorization": f"Bearer {api_key}"},
                 json={
-                    "model": "gpt-4o-mini",
+                    "model": OPENAI_MODEL,
                     "messages": [{"role": "user", "content": prompt}],
                     "temperature": 0.5,
                     "response_format": {"type": "json_object"},
@@ -2502,7 +2503,7 @@ Only return the JSON."""
                 "https://api.openai.com/v1/chat/completions",
                 headers={"Authorization": f"Bearer {api_key}"},
                 json={
-                    "model": "gpt-4o-mini",
+                    "model": OPENAI_MODEL,
                     "messages": [{"role": "user", "content": prompt}],
                     "temperature": 0.5,
                     "response_format": {"type": "json_object"},

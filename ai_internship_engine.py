@@ -10,6 +10,7 @@ import re
 import secrets
 from datetime import datetime, timedelta
 from typing import Dict, List
+from global_config import OPENAI_MODEL
 
 logger = logging.getLogger("charvakit.ai_internship")
 
@@ -435,7 +436,7 @@ class AIInternshipEngine:
                 "https://api.openai.com/v1/chat/completions",
                 headers={"Authorization": f"Bearer {api_key}"},
                 json={
-                    "model": "gpt-4o-mini",
+                    "model": OPENAI_MODEL,
                     "messages": [
                         {"role": "system", "content": "You are a curriculum designer. Always respond with valid JSON only."},
                         {"role": "user", "content": prompt},
@@ -1051,7 +1052,7 @@ Rules:
                 "https://api.openai.com/v1/chat/completions",
                 headers={"Authorization": f"Bearer {api_key}"},
                 json={
-                    "model": "gpt-4o-mini",
+                    "model": OPENAI_MODEL,
                     "messages": [
                         {"role": "system", "content": "You are an experienced technical mentor. Always respond with valid JSON only."},
                         {"role": "user", "content": prompt},

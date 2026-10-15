@@ -6,6 +6,7 @@ import os
 import json
 import httpx
 from typing import Optional, Dict
+from global_config import OPENAI_MODEL
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_BASE = "https://api.openai.com/v1"
@@ -16,7 +17,7 @@ async def call_ai(prompt: str, max_tokens: int = 800, json_mode: bool = False) -
         return None
 
     payload = {
-        "model": "gpt-4o-mini",
+        "model": OPENAI_MODEL,
         "messages": [{"role": "user", "content": prompt}],
         "max_tokens": max_tokens,
         "temperature": 0.7,

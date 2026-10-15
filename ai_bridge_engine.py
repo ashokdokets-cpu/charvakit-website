@@ -10,6 +10,7 @@ import os
 import secrets
 from datetime import datetime
 from typing import Dict, List, Optional
+from global_config import OPENAI_MODEL
 
 logger = logging.getLogger("charvakit.aibridge")
 
@@ -112,7 +113,7 @@ class AIBridgeEngine:
         try:
             client = openai.OpenAI(api_key=OPENAI_API_KEY)
             response = client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=OPENAI_MODEL,
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=max_tokens,
                 temperature=temperature,

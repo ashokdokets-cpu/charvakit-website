@@ -38,8 +38,11 @@ def _strip_fences(s: str) -> str:
     return cleaned
 
 
-async def call_openai(prompt: str, model: str = "gpt-4o-mini", max_tokens: int = 2000, temperature: float = 0.7, json_mode: bool = False) -> Optional[str]:
+async def call_openai(prompt: str, model: str = None, max_tokens: int = 2000, temperature: float = 0.7, json_mode: bool = False) -> Optional[str]:
     """Generic OpenAI API call. Set json_mode=True to force valid JSON output."""
+    if model is None:
+        from global_config import OPENAI_MODEL
+        model = OPENAI_MODEL
     if not OPENAI_API_KEY:
         return None
 

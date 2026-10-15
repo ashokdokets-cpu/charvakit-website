@@ -7,6 +7,7 @@ import json
 import os
 import random
 from datetime import datetime
+from global_config import OPENAI_MODEL
 
 logger = logging.getLogger("charvakit.ai_versant")
 
@@ -48,7 +49,7 @@ class AIVersantGenerator:
                 response = requests.post(
                     "https://api.openai.com/v1/chat/completions",
                     headers={"Authorization": f"Bearer {self.openai_api_key}"},
-                    json={"model": "gpt-4o-mini", "messages": [{"role": "user", "content": prompt}], "temperature": 0.9, "max_tokens": 1000},
+                    json={"model": OPENAI_MODEL, "messages": [{"role": "user", "content": prompt}], "temperature": 0.9, "max_tokens": 1000},
                     timeout=15
                 )
                 data = response.json()
@@ -132,7 +133,7 @@ class AIVersantGenerator:
                 "https://api.openai.com/v1/chat/completions",
                 headers={"Authorization": f"Bearer {self.openai_api_key}"},
                 json={
-                    "model": "gpt-4o-mini",
+                    "model": OPENAI_MODEL,
                     "messages": [{"role": "user", "content": prompt}],
                     "temperature": 0.95,
                     "max_tokens": 2000

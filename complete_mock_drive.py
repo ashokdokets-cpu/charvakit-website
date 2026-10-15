@@ -8,6 +8,7 @@ import json
 import os
 import secrets
 from datetime import datetime
+from global_config import OPENAI_MODEL
 
 logger = logging.getLogger("charvakit.complete_mock")
 
@@ -441,7 +442,7 @@ class CompleteMockDrive:
                 response = requests.post(
                     "https://api.openai.com/v1/chat/completions",
                     headers={"Authorization": "Bearer " + self.openai_api_key},
-                    json={"model": "gpt-4o-mini", "messages": [{"role": "user", "content": prompt}], "temperature": 0.95},
+                    json={"model": OPENAI_MODEL, "messages": [{"role": "user", "content": prompt}], "temperature": 0.95},
                     timeout=15
                 )
                 data = response.json()
@@ -689,7 +690,7 @@ class CompleteMockDrive:
                 )
 
                 resp = client.chat.completions.create(
-                    model="gpt-4o-mini",
+                    model=OPENAI_MODEL,
                     messages=[
                         {"role": "system", "content": "You are an expert exam coach. Return JSON only. Never skip items."},
                         {"role": "user", "content": prompt},

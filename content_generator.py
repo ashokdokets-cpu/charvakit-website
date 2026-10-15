@@ -9,6 +9,7 @@ import os
 import random
 from datetime import datetime
 from typing import Dict, List, Optional
+from global_config import OPENAI_MODEL
 
 logger = logging.getLogger("charvakit.content_generator")
 
@@ -168,7 +169,7 @@ class AIContentGenerator:
                 "https://api.openai.com/v1/chat/completions",
                 headers={"Authorization": f"Bearer {self.openai_api_key}"},
                 json={
-                    "model": "gpt-4o-mini",
+                    "model": OPENAI_MODEL,
                     "messages": [{"role": "user", "content": prompts.get(section_type, "")}],
                     "temperature": 0.9,
                     "max_tokens": 2000,

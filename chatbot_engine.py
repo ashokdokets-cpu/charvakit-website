@@ -9,6 +9,7 @@ import os
 import secrets
 from datetime import datetime
 from typing import Dict, List, Optional
+from global_config import OPENAI_MODEL
 
 logger = logging.getLogger("charvakit.chatbot")
 
@@ -203,7 +204,7 @@ class ChatbotEngine:
             import openai
             client = openai.OpenAI(api_key=OPENAI_API_KEY)
             response = client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=OPENAI_MODEL,
                 messages=[
                     {"role": "system", "content": "You are Charvak's AI assistant. Keep responses under 3 sentences. Be helpful and friendly. If you don't know, suggest contacting hr@charvakit.com."},
                     {"role": "user", "content": message},

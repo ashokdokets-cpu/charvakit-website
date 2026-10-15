@@ -9,6 +9,7 @@ import logging
 import secrets
 import requests
 from datetime import datetime, timedelta
+from global_config import OPENAI_MODEL
 
 logger = logging.getLogger("charvakit.ai_courses")
 
@@ -206,7 +207,7 @@ class AICourseSystem:
                     "Content-Type": "application/json"
                 },
                 json={
-                    "model": "gpt-4o-mini",
+                    "model": OPENAI_MODEL,
                     "messages": [{"role": "user", "content": prompt}],
                     "temperature": 0.7,
                     "max_tokens": max_tokens,
@@ -232,7 +233,7 @@ class AICourseSystem:
                     "Content-Type": "application/json"
                 },
                 json={
-                    "model": "gpt-4o-mini",
+                    "model": OPENAI_MODEL,
                     "messages": [{"role": "user", "content": prompt}],
                     "temperature": 0.7,
                     "max_tokens": max_tokens
