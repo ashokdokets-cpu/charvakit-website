@@ -5,6 +5,36 @@
 
 **Active roadmap:** See TRACK-A-B-PLAN.md for the full Track A (B2C)
 and Track B (CSR) sequencing.
+## A4 - Personalized Training Views - COMPLETE (2026-10-16)
+
+The /training-engine page now shows personalized course recommendations
+based on the user's latest readiness certificate. When a user has a
+cert with weak/mixed skill gaps, courses that address those gaps appear
+at the top of the catalog with a "Fills: [topic]" badge and a
+contextual "why" line.
+
+**What shipped:**
+- `TOPIC_TO_COURSE` + `COURSE_HIGHLIGHTS` dicts (42 topics, 35 courses)
+- `get_personalized_recommendations()` in career_assessment_engine
+- `_resolve_topic_key()` - fuzzy matcher for truncated topic names
+- Keyword fallback for topics without explicit mapping
+- `GET /api/training-engine/personalized` route (auth-gated)
+- Frontend: server-call version of loadPersonalizedRecommendations
+- Removed client-side `_teTopicToCourseHints` + `_teMatchTopicToCourses`
+
+**Architecture decisions:**
+- Single source of truth for the topic->course mapping is now Python
+- Reusable across pages (readiness cert, career-center, my-results)
+- Tiered "why" text based on the user's actual score
+- Subtle CTA on the no_cert state (nudges toward readiness check)
+
+**Verified against real cert data:**
+RDC-92539322D092 (Product Owner) returns 8 recommendations with
+correct course-topic mappings. All 7 weak topics covered.
+
+---
+
+
 ## A3.4 + A3 BATCH - COMPLETE (2026-10-16)
 
 **A3.4 - Refine Section - DONE.** A3 batch is 4/4 complete.
