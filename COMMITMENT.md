@@ -5,6 +5,39 @@
 
 **Active roadmap:** See TRACK-A-B-PLAN.md for the full Track A (B2C)
 and Track B (CSR) sequencing.
+## A3.3 - Plagiarism-Safe Rewriter - COMPLETE (2026-10-16)
+
+New FYP feature: rewrites AI-generated text to read more naturally.
+Reduces telltale AI patterns (uniform sentence length, repetitive
+transitions, list-heavy structure) while preserving all facts.
+
+**Commits:**
+- a037db9 - feat(fyp): A3.3 - initial implementation
+- a3b713b - fix(fyp): move fypHumanize out of fypRoadmap body
+
+**What shipped:**
+- Engine: `humanize_text_ai()` at `final_year_project_engine.py:506`
+- Fallback: `_fallback_humanize()` (rule-based paragraph breaks)
+- Credit: `fyp_humanize: 15` (existed from Session 43-D)
+- Route: `POST /api/fyp/humanize` at `main.py:9345`
+- Frontend: card + tone selector + JS at `templates/final-year-project.html`
+
+**Tone options:** academic report / formal project report / reflective
+
+**Verified on prod:** the rewriter produced a 2900 â†’ 3044 char output
+with natural transitions, mixed sentence lengths, and reduced passive
+voice. The 'What changed' bullet list is populated. Length shown with
+delta. Copy button present.
+
+**Paste error discovered and fixed:** the initial patch put the entire
+`fypHumanize` function INSIDE the `fypRoadmap` function body, so
+the form's `onsubmit` couldn't find it and the page reloaded on
+every click. Fixed by moving the function to the top-level scope.
+
+**A3 progress:** 3 of 4 done. Only A3.4 (Refine Section) remains.
+
+---
+
 ## A3.1 + A3.2 - ALREADY SHIPPED (verified 2026-10-16)
 
 Both features were fully shipped in Session 43-D but the tracker
