@@ -5,6 +5,49 @@
 
 **Active roadmap:** See TRACK-A-B-PLAN.md for the full Track A (B2C)
 and Track B (CSR) sequencing.
+## A3.4 + A3 BATCH - COMPLETE (2026-10-16)
+
+**A3.4 - Refine Section - DONE.** A3 batch is 4/4 complete.
+
+An interactive refine panel appears inside every expanded FYP
+chapter. Students type a natural-language instruction, the AI
+revises the section text, and history is preserved per chapter
+with a revert option that doesn't charge credits.
+
+**Commits:**
+- 4e8148a - feat(fyp): A3.4 - initial implementation
+- <fix> - fix(fyp): use data-attributes for expand button
+
+**What shipped:**
+- Engine: `refine_section_ai()` at `final_year_project_engine.py:604`
+- Fallback: `_fallback_refine()` (returns original with honest note)
+- Credit: `fyp_refine: 5` in `ai_credit_engine.py`
+- Route: `POST /api/fyp/refine` at `main.py:9380`
+- Frontend: refine panel HTML + JS handlers in `final-year-project.html`
+
+**Bug fixed during rollout:** The expand button's inline onclick was
+embedding title/outline as JS-string arguments, escaping only single
+quotes. Newlines in chapter outlines broke the attribute parser ->
+'Uncaught SyntaxError' on click. Fix: data-* attributes + delegated
+click handler (same pattern as Session 24 admin-client-roles).
+
+**Verified on prod:**
+- Chapter expansion works, refine panel appears
+- Refine instruction applied (5899 -> 5998 chars)
+- 4-entry history with revert works
+- Revert does not charge credits
+
+**A3 batch summary (all 4 done):**
+- A3.1 Citation Helper - IEEE/APA/MLA refs (8 cr)
+- A3.2 Milestone Roadmap - week-by-week plan (15 cr)
+- A3.3 Plagiarism-Safe Rewriter - humanize text (15 cr)
+- A3.4 Refine Section - iterative edits (5 cr/instruction)
+
+**Full FYP credit-bearing features:** 9 total (topics, proposal,
+documentation, expand-chapter, viva, citations, roadmap, humanize, refine).
+
+---
+
 ## A3.3 - Plagiarism-Safe Rewriter - COMPLETE (2026-10-16)
 
 New FYP feature: rewrites AI-generated text to read more naturally.
