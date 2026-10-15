@@ -39,6 +39,30 @@ The Jan 14, 2027 GPT-4o-mini retirement can be handled by setting
 
 ---
 
+## A2.1 QR Code on Certificate PDF - COMPLETE (2026-10-15)
+
+The certificate PDF now embeds a scannable QR code in the bottom-right
+corner pointing at the public verify URL.
+
+**Discovery:** Session 43-D shipped the QR render block (pdf_engine.py
+lines 679-705) but omitted `qrcode[pil]` from requirements.txt. The
+silent-fail wrapper caught the ImportError, so every certificate rendered
+cleanly - just without a QR. Nobody noticed because the QR wasn't part of
+the visual review.
+
+**Fix:** added `qrcode[pil]>=7.4.2` to requirements.txt. One-line commit (5fd8aec).
+
+**Verified:** the QR renders on the certificate PDF. Scanning it with a
+phone opens the branded verify page. The certificate is now a physically
+verifiable artifact.
+
+**Track A2 progress:**
+- A2.1 - QR code - DONE 2026-10-15
+- A2.2 - Watermark - DONE Session 43-D (verified 2026-10-15)
+- A2.3 - Multi-language - deferred per Session 43-D
+
+---
+
 ## Session 26 CLOSED (2026-10-05) - Security sweep + cautious cleanup
 
 ## Session 37 CLOSED (2026-10-07) - Wire the Career Engine trio
