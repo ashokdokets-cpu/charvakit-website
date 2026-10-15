@@ -81,6 +81,25 @@ COUNTRY_TO_CURRENCY = {
     "LV": "EUR", "LT": "EUR", "MT": "EUR", "CY": "EUR",
 }
 
+# --- OpenAI Model Configuration ---
+# Centralized so future model changes are a single env var update.
+# See COMMITMENT.md - GPT-4o-mini retirement (14 Jan 2027).
+#
+# Usage:
+#   from global_config import OPENAI_MODEL
+#   client.chat.completions.create(model=OPENAI_MODEL, ...)
+#
+# Model constants:
+#   OPENAI_MODEL           - default model for all AI features
+#   OPENAI_MODEL_CHEAP     - cheaper variant (falls back to OPENAI_MODEL)
+#   OPENAI_MODEL_SMART     - higher quality for complex tasks (e.g. deep reports)
+#   OPENAI_EMBEDDING_MODEL - embedding model for vector search
+import os as _os
+OPENAI_MODEL           = _os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+OPENAI_MODEL_CHEAP     = _os.getenv("OPENAI_MODEL_CHEAP", OPENAI_MODEL)
+OPENAI_MODEL_SMART     = _os.getenv("OPENAI_MODEL_SMART", "gpt-4o")
+OPENAI_EMBEDDING_MODEL = _os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small")
+
 # --- Country Pricing Tiers ---
 PRICING_TIERS = {
     "tier_1": {  # India, Nigeria, Bangladesh, etc.
@@ -216,7 +235,5 @@ def detect_user_region(ip_address: str = None, accept_language: str = None) -> D
     }
     if region["country"] in _tz_map:
         region["timezone"] = _tz_map[region["country"]]
-
-    return region
 
     return region
