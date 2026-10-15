@@ -30,4 +30,6 @@ razorpay>=1.4.0
 
 # PDF generation (Session 16 - Premium Report)
 fpdf2>=2.8.0
+
+# QR codes for certificate verification (Session 43-A2.1)
 qrcode[pil]>=7.4.2
