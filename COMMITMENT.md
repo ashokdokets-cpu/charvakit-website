@@ -5,6 +5,40 @@
 
 **Active roadmap:** See TRACK-A-B-PLAN.md for the full Track A (B2C)
 and Track B (CSR) sequencing.
+## GPT-4o-mini Phase 1 - COMPLETE (2026-10-15)
+
+Centralized every hardcoded OpenAI model name into global_config.
+
+**Commits:**
+- 8a579f7 - feat(config): centralize OpenAI model names in global_config
+- d091998 - refactor(ai): complete Phase 1 - centralize OpenAI model names
+
+**What shipped:**
+- `global_config.py`: OPENAI_MODEL, OPENAI_MODEL_CHEAP, OPENAI_MODEL_SMART,
+  OPENAI_EMBEDDING_MODEL - all env-var-driven
+- 34 files updated to import from global_config
+- 57 string replacements across the codebase
+- `.gitignore`: skip *.bak_openai_* backups
+
+**Result:** future model swap is now a single env var change.
+The Jan 14, 2027 GPT-4o-mini retirement can be handled by setting
+`OPENAI_MODEL=<new-model>` on Render. Zero code edits, zero deploys, zero downtime.
+
+**Timeline update:**
+- Phase 1 (Centralize): COMPLETE 2026-10-15
+- Phase 2 (Evaluate successor): Oct 27, 2026
+- Phase 3 (Swap + test): Nov 3, 2026
+- Latest safe start: Dec 15, 2026
+- HARD DEADLINE: Jan 14, 2027
+
+**Special cases handled:**
+- ai_service.py: default param -> None, fallback to OPENAI_MODEL
+- interview_prep_engine.py: imports from global_config
+- na_module/vector_matcher.py: uses OPENAI_EMBEDDING_MODEL
+- whatsapp_bot.py: untouched (uses gpt-4o, external-blocked)
+
+---
+
 ## Session 26 CLOSED (2026-10-05) - Security sweep + cautious cleanup
 
 ## Session 37 CLOSED (2026-10-07) - Wire the Career Engine trio
