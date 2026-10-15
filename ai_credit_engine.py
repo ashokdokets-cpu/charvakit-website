@@ -86,6 +86,7 @@ class AICreditEngine:
     "fyp_expand_chapter": 10,
         "fyp_citations": 8,
         "fyp_roadmap": 15,
+        "fyp_humanize": 15,
         "custom_course_generation": 50,  # Session 18: private custom course per user
         "ai_course_full_unlock": 150,  # Session 36: unlock weeks 3+ of an AI-designed course
         "fyp_viva": 20,
@@ -167,6 +168,7 @@ class AICreditEngine:
         "fyp_viva_questions": 20,
         "fyp_citations": 8,
         "fyp_roadmap": 15,
+        "fyp_humanize": 15,
         "interview_prep_start": 8,
         "interview_prep_submit": 5,
         "ai_bridge_start": 10,
