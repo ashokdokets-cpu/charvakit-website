@@ -5,6 +5,38 @@
 
 **Active roadmap:** See TRACK-A-B-PLAN.md for the full Track A (B2C)
 and Track B (CSR) sequencing.
+## A3.1 + A3.2 - ALREADY SHIPPED (verified 2026-10-16)
+
+Both features were fully shipped in Session 43-D but the tracker
+was never updated. Verification on 2026-10-16 confirmed all layers
+are live: engine method, credit key, route, frontend HTML + JS.
+
+**A3.1 - Citation Helper - DONE**
+- Engine: `generate_citations_ai()` at `final_year_project_engine.py:340`
+- Credit: `fyp_citations: 8` at `ai_credit_engine.py:87`
+- Route: `POST /api/fyp/citations` at `main.py:9314`
+- Frontend: form + JS at `templates/final-year-project.html:107-121, 510+`
+- Returns IEEE/APA/MLA citations per topic + chapter content
+
+**A3.2 - Milestone Roadmap - DONE**
+- Engine: `generate_roadmap_ai()` at `final_year_project_engine.py:417`
+- Credit: `fyp_roadmap: 15` at `ai_credit_engine.py:88`
+- Route: `POST /api/fyp/roadmap` at `main.py:9329`
+- Frontend: form + JS at `templates/final-year-project.html:124-142, 578+`
+- Returns 4-7 phases with weeks, goals, deliverables, tools
+
+**Remaining A3 work (real effort ~3 hrs):**
+- A3.3 - Plagiarism-Safe Rewriter (1 hr, `fyp_humanize: 15`)
+- A3.4 - Refine Section (2 hrs, `fyp_refine: 5` per instruction)
+
+**Lesson:** the FYP feature set was shipped faster than it was
+tracked. Session 43-D closed 7 FYP features in one go; the tracker
+only marked the FYP resurrection task as done. Future sessions
+should grep for engine methods + routes + credit keys before
+starting new work to avoid duplicating existing functionality.
+
+---
+
 ## A1.12 + A2.5 - COMPLETE (2026-10-16)
 
 Two quick UX items closed.
