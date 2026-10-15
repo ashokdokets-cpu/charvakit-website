@@ -597,6 +597,99 @@ Return JSON: {{"topics": [{{"title": "...", "domain": "...", "difficulty": "..."
             "truncated_input": False,
         }
 
+    # ============================================================
+    # Session 43-A3.4: Refine Section (interactive rewrite)
+    # ============================================================
+
+    def refine_section_ai(self, data: Dict) -> Dict:
+        """
+        Apply a natural-language instruction to rewrite a section of text.
+        Iterative editing - the student types "make this formal", "add
+        examples", "shorten to half", and the AI revises accordingly.
+
+        Body: {text, instruction, topic?, context?}
+        Returns: {"refined": "<revised text>", "changes_summary": [...], "notes": "..."}
+        """
+        text = (data.get("text") or "").strip()
+        instruction = (data.get("instruction") or "").strip()
+        topic = (data.get("topic") or "").strip()
+        context = (data.get("context") or "").strip()  # optional earlier history
+
+        if not text:
+            return {"status": "error", "message": "text required."}
+        if not instruction:
+            return {"status": "error", "message": "instruction required."}
+        if len(text) < 30:
+            return {"status": "error", "message": "text too short to refine (min 30 chars)."}
+        if len(instruction) > 500:
+            return {"status": "error", "message": "instruction too long (max 500 chars)."}
+
+        # Cap input to bound tokens
+        original_len = len(text)
+        if len(text) > 6000:
+            text = text[:6000]
+
+        if _runtime_key_present():
+            prompt = (
+                "You are helping a final year student iteratively refine a "
+                "section of their project report.\n\n"
+            )
+            if topic:
+                prompt += f"Project topic: {topic}\n\n"
+            if context:
+                prompt += (
+                    "Earlier instructions applied to this section (most recent last):\n"
+                    f"{context[:800]}\n\n"
+                )
+            prompt += (
+                "Current section text:\n"
+                "---\n"
+                f"{text}\n"
+                "---\n\n"
+                f"Student's instruction: {instruction}\n\n"
+                "Apply this instruction to the current text. Rules:\n"
+                "- Preserve all factual content, numbers, definitions, and terms of art "
+                "unless the instruction explicitly asks to remove or shorten them.\n"
+                "- Do NOT introduce new facts, claims, sources, or numbers.\n"
+                "- Do NOT contradict anything in the current text.\n"
+                "- Keep the same overall structure and headings (##, ###) unless the "
+                "instruction says to change them.\n"
+                "- If the instruction is ambiguous, make the most conservative change.\n"
+                "- Return the FULL revised section, not just the changed parts.\n\n"
+                "Return STRICT JSON only with this exact shape:\n"
+                "{\n"
+                '  "refined": "<the full revised section text>",\n'
+                '  "changes_summary": ["<short bullet describing a change>", "..."],\n'
+                '  "notes": "<one-line note about what the change did or any caveats>"\n'
+                "}"
+            )
+            result = self._ai_json(prompt, max_tokens=4000, temperature=0.4)
+            if result and result.get("refined"):
+                result["original_length"] = original_len
+                result["refined_length"] = len(result["refined"])
+                result["truncated_input"] = (original_len > 6000)
+                return {"status": "success", **result}
+
+        # Fallback — no AI available
+        return self._fallback_refine(text, instruction)
+
+    def _fallback_refine(self, text: str, instruction: str) -> Dict:
+        """Cannot truly refine without AI. Return the original with an honest note."""
+        return {
+            "status": "success",
+            "refined": text,
+            "changes_summary": [
+                "No changes applied — AI service unavailable",
+            ],
+            "notes": (
+                "The refinement service is currently unavailable. Your original "
+                "text is unchanged. Please retry when the service is back."
+            ),
+            "original_length": len(text),
+            "refined_length": len(text),
+            "truncated_input": False,
+        }
+
     def subscribe(self, data: Dict) -> Dict:
         """
         Subscribe to FYP plan.

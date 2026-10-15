@@ -445,7 +445,17 @@ async function expandFypChapter(btn, chapterNum, title, outline, topic) {
                 return '<p class="mb-2">' + l + '</p>';
             })
             .join('');
-        container.innerHTML = '<div class="p-3 bg-light border rounded">' + html + '</div>';
+        container.innerHTML = ''
+    + '<div class="p-3 bg-light border rounded fyp-chapter-body">' + html + '</div>'
+    + '<div class="fyp-refine-panel mt-3 p-3 border rounded" style="background:#fafafa;">'
+    +   '<div class="small text-uppercase fw-bold mb-2" style="letter-spacing:0.05em;color:#6b7280;">Refine this section</div>'
+    +   '<div class="input-group input-group-sm mb-2">'
+    +     '<input type="text" class="form-control fyp-refine-input" placeholder="e.g. make this more formal, add examples, shorten to half" maxlength="500">'
+    +     '<button type="button" class="btn btn-primary fyp-refine-btn" onclick="fypRefine(this)">Refine (5 credits)</button>'
+    +   '</div>'
+    +   '<div class="small text-muted fyp-refine-history" style="display:none;"></div>'
+    +   '<div class="fyp-refine-output mt-2"></div>'
+    + '</div>';
         container.dataset.loaded = '1';
         container.style.display = 'block';
         label.textContent = 'Hide chapter';
@@ -678,6 +688,188 @@ function escFyp(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
         return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]);
     });
+}
+
+
+// Session 43-A3.4: Refine Section (per-chapter iterative rewrite)
+async function fypRefine(btn) {
+    const panel = btn.closest('.fyp-refine-panel');
+    if (!panel) return;
+
+    const input = panel.querySelector('.fyp-refine-input');
+    const out = panel.querySelector('.fyp-refine-output');
+    const historyEl = panel.querySelector('.fyp-refine-history');
+    const bodyEl = panel.closest('.fyp-chapter-content').querySelector('.fyp-chapter-body');
+
+    const instruction = (input.value || '').trim();
+    if (!instruction) {
+        alert('Please type an instruction (e.g. "make this more formal").');
+        return;
+    }
+    if (instruction.length > 500) {
+        alert('Instruction too long (max 500 characters).');
+        return;
+    }
+
+    const email = (localStorage.getItem('userEmail') || '').toLowerCase();
+    const token = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+    if (!email || !token) {
+        alert('Please log in to refine text.');
+        return;
+    }
+
+    // Pull current text from the container
+    const currentText = (bodyEl && bodyEl.textContent) ? bodyEl.textContent.trim() : '';
+    if (currentText.length < 30) {
+        alert('The section is too short to refine. Expand or write more first.');
+        return;
+    }
+
+    // Extract topic from URL context if available (best-effort)
+    const topic = (document.getElementById('fypDocTopic') && document.getElementById('fypDocTopic').value) || '';
+
+    // Read existing history (JSON array on the panel)
+    let history = [];
+    try {
+        history = JSON.parse(panel.dataset.history || '[]');
+    } catch (e) { history = []; }
+
+    // Snapshot current content as a history entry BEFORE the change
+    history.push({ content: currentText, instruction: '(before refine)' });
+
+    out.innerHTML = '<div class="alert alert-info py-2 mb-0"><div class="spinner-border spinner-border-sm me-2"></div>Refining...</div>';
+    btn.disabled = true;
+
+    try {
+        const r = await fetch('/api/fyp/refine', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token,
+            },
+            body: JSON.stringify({
+                email: email,
+                topic: topic,
+                text: currentText,
+                instruction: instruction,
+            })
+        });
+        const j = await r.json();
+        if (r.status === 401) {
+            out.innerHTML = '<div class="alert alert-warning py-2 mb-0">Please log in again. <a href="/login?next=/final-year-project">Log in</a></div>';
+            btn.disabled = false;
+            return;
+        }
+        if (r.status === 402) {
+            out.innerHTML = '<div class="alert alert-danger py-2 mb-0">Not enough credits (5 needed). <a href="/ai-credits-pricing">Top up</a></div>';
+            btn.disabled = false;
+            return;
+        }
+        if (j.status !== 'success' || !j.refined) {
+            out.innerHTML = '<div class="alert alert-danger py-2 mb-0">' + escFyp(j.message || 'Could not refine.') + '</div>';
+            btn.disabled = false;
+            return;
+        }
+
+        // Replace the body content
+        const refinedHtml = j.refined
+            .split('\n')
+            .map(line => {
+                const l = line.trim();
+                if (!l) return '';
+                if (l.startsWith('## ')) return '<h6 class="mt-3">' + escFyp(l.slice(3)) + '</h6>';
+                if (l.startsWith('# ')) return '<h5 class="mt-3">' + escFyp(l.slice(2)) + '</h5>';
+                if (l.startsWith('- ')) return '<div class="ms-3">• ' + escFyp(l.slice(2)) + '</div>';
+                return '<p class="mb-2">' + escFyp(l) + '</p>';
+            })
+            .join('');
+        if (bodyEl) bodyEl.innerHTML = refinedHtml;
+
+        // Store the refined content as latest history entry
+        history.push({ content: j.refined, instruction: instruction });
+        panel.dataset.history = JSON.stringify(history);
+
+        // Render history + summary
+        let outHtml = '<div class="alert alert-success py-2 mb-0"><strong>Refined.</strong> ';
+        if (j.original_length && j.refined_length) {
+            outHtml += 'Length: ' + j.original_length + ' → ' + j.refined_length + ' chars';
+        }
+        outHtml += '</div>';
+        if (Array.isArray(j.changes_summary) && j.changes_summary.length) {
+            outHtml += '<ul class="small mt-2 mb-0" style="color:#4b5563;">';
+            j.changes_summary.forEach(c => { outHtml += '<li>' + escFyp(c) + '</li>'; });
+            outHtml += '</ul>';
+        }
+        if (j.notes) {
+            outHtml += '<div class="small text-muted fst-italic mt-1">' + escFyp(j.notes) + '</div>';
+        }
+        out.innerHTML = outHtml;
+
+        // Render history with revert button
+        if (history.length > 1) {
+            historyEl.style.display = 'block';
+            let histHtml = '<div class="small text-uppercase fw-bold mb-1" style="letter-spacing:0.05em;color:#6b7280;">History (' + history.length + ')</div><ul class="small mb-0" style="color:#4b5563;padding-left:18px;">';
+            history.forEach(function (h, idx) {
+                const label = idx === 0 ? 'Initial' : ('v' + idx + ': ' + escFyp(h.instruction || ''));
+                const isCurrent = (idx === history.length - 1);
+                histHtml += '<li>' + label + (isCurrent ? ' <em>(current)</em>' : '');
+                if (!isCurrent) {
+                    histHtml += ' <a href="#" class="ms-1" data-revert-index="' + idx + '" onclick="fypRevert(event, this)">revert</a>';
+                }
+                histHtml += '</li>';
+            });
+            histHtml += '</ul>';
+            historyEl.innerHTML = histHtml;
+        }
+
+        // Clear input
+        input.value = '';
+    } catch (err) {
+        out.innerHTML = '<div class="alert alert-danger py-2 mb-0">Network error: ' + escFyp(err.message || 'unknown') + '</div>';
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+// Session 43-A3.4: revert to an earlier history entry (no credit charge)
+function fypRevert(ev, link) {
+    ev.preventDefault();
+    const panel = link.closest('.fyp-refine-panel');
+    if (!panel) return;
+    const idx = parseInt(link.getAttribute('data-revert-index'), 10);
+    if (isNaN(idx)) return;
+
+    let history = [];
+    try { history = JSON.parse(panel.dataset.history || '[]'); } catch (e) { return; }
+    if (idx < 0 || idx >= history.length) return;
+
+    const entry = history[idx];
+    const bodyEl = panel.closest('.fyp-chapter-content').querySelector('.fyp-chapter-body');
+    if (!bodyEl || !entry) return;
+
+    const restoredHtml = entry.content
+        .split('\n')
+        .map(line => {
+            const l = line.trim();
+            if (!l) return '';
+            if (l.startsWith('## ')) return '<h6 class="mt-3">' + escFyp(l.slice(3)) + '</h6>';
+            if (l.startsWith('# ')) return '<h5 class="mt-3">' + escFyp(l.slice(2)) + '</h5>';
+            if (l.startsWith('- ')) return '<div class="ms-3">• ' + escFyp(l.slice(2)) + '</div>';
+            return '<p class="mb-2">' + escFyp(l) + '</p>';
+        })
+        .join('');
+    bodyEl.innerHTML = restoredHtml;
+
+    // Truncate history to that point and append a reverted marker
+    const newHistory = history.slice(0, idx + 1);
+    newHistory.push({ content: entry.content, instruction: 'reverted to v' + idx });
+    panel.dataset.history = JSON.stringify(newHistory);
+
+    // Re-render history
+    const historyEl = panel.querySelector('.fyp-refine-history');
+    if (historyEl) {
+        historyEl.innerHTML = '<div class="alert alert-secondary py-2 mb-0 small">Reverted to earlier version (no credit charged).</div>';
+    }
 }
 
 // Session 43-A3.3: Plagiarism-Safe Rewriter
