@@ -104,6 +104,11 @@ from global_exams_engine import global_exams_engine
 from ai_question_generator import ai_question_generator
 from exam_analytics_engine import exam_analytics_engine
 from ai_internship_engine import ai_internship_engine
+
+# Fix (2026-10-15): multi_pattern was referenced but never imported/instantiated
+import multi_pattern_company
+multi_pattern = multi_pattern_company.MultiPatternCompany()
+
 from fastapi.responses import HTMLResponse, PlainTextResponse, FileResponse, JSONResponse, RedirectResponse
 
 
