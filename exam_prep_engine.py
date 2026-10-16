@@ -301,6 +301,75 @@ class ExamPrepEngine:
             total_exams += len(cat_data["exams"])
         return {"status": "success", "total_categories": len(categories), "total_exams": total_exams, "categories": categories}
 
+    def get_free_mock_questions(self, exam_id: str, sections: int = 3, per_section: int = 5) -> Dict:
+        """
+        Session 44-A3: Fetch a small free-tier mock for a state-PSC exam.
+
+        Returns 15 questions by default (3 sections x 5 questions).
+        Bank-only — no AI fallback, so the free tier stays cheap and fast.
+
+        Response:
+          {status, exam: {id, name, full_name, sections, ...},
+           questions: [{question_text, options, correct_index, topic, ...}],
+           sections_used: [...], total: N}
+
+        On failure:
+          {status: 'error', message: '...'}
+        """
+        details = self.get_exam_details(exam_id)
+        if details.get("status") != "success":
+            return {"status": "error", "message": f"Exam {exam_id} not found"}
+
+        exam = details["exam"]
+        all_sections = exam.get("sections") or []
+        if not all_sections:
+            return {"status": "error", "message": "Exam has no sections defined"}
+
+        # Cap sections to what the exam actually has
+        section_list = all_sections[:max(1, sections)]
+
+        # Bank-only fetch (no AI fallback for the free tier)
+        try:
+            bank_rows = self._fetch_bank_multi(exam_id, section_list, per_section) or {}
+        except Exception as e:
+            logger.error(f"get_free_mock_questions bank fetch failed: {e}")
+            bank_rows = {}
+
+        questions = []
+        for sec in section_list:
+            for row in (bank_rows.get(sec) or [])[:per_section]:
+                questions.append({
+                    "question_text": row.get("question_text") or row.get("question") or "",
+                    "options": row.get("options") or [],
+                    "correct_index": int(row.get("correct_index") or 0),
+                    "topic": sec,
+                })
+
+        if not questions:
+            return {
+                "status": "error",
+                "message": (
+                    f"No bank questions available for {exam_id}. "
+                    "The question bank may be empty for this exam — try again later."
+                ),
+            }
+
+        return {
+            "status": "success",
+            "exam": {
+                "id": exam.get("id"),
+                "name": exam.get("name"),
+                "full_name": exam.get("full_name") or exam.get("name"),
+                "sections": all_sections,
+                "duration": exam.get("duration"),
+                "questions": exam.get("questions"),
+                "tier": exam.get("tier"),
+                "difficulty": exam.get("difficulty"),
+            },
+            "questions": questions,
+            "sections_used": section_list,
+            "total": len(questions),
+        }
     def get_exams_by_category(self, category_id: str) -> Dict:
         """Get all exams in a category."""
         if category_id not in self.exams:
@@ -337,36 +406,165 @@ class ExamPrepEngine:
             })
         return questions
 
+    def _probe_bank_columns(self) -> dict:
+        """
+        Session 44-A3: probe once which optional columns exist on
+        charvak_exam_question_bank. Dev DBs may lack pgvector (embedding) or
+        curation columns (reviewed). Result cached on the instance.
+
+        Returns: {"embedding": bool, "reviewed": bool}
+        """
+        cached = getattr(self, "_bank_columns", None)
+        if cached is not None:
+            return cached
+        result = {"embedding": False, "reviewed": False}
+        try:
+            from database import db
+            conn = db.get_connection()
+            try:
+                cur = conn.cursor()
+                cur.execute("""
+                    SELECT column_name FROM information_schema.columns
+                    WHERE table_name = 'charvak_exam_question_bank'
+                      AND column_name IN ('embedding', 'reviewed')
+                """)
+                for row in cur.fetchall():
+                    result[row[0]] = True
+                cur.close()
+            finally:
+                conn.close()
+        except Exception as e:
+            logger.warning(f"bank column probe failed, assuming none: {e}")
+        self._bank_columns = result
+        if not result["embedding"]:
+            logger.info("charvak_exam_question_bank has no embedding column - read-time dedup disabled")
+        if not result["reviewed"]:
+            logger.info("charvak_exam_question_bank has no reviewed column - order by random only")
+        return result
+
+    def _has_embedding_column(self) -> bool:
+        """Convenience wrapper for backward compatibility."""
+        return self._probe_bank_columns().get("embedding", False)
+
+    def _bank_sql_single(self) -> str:
+        """SQL to fetch questions for one topic. Adapts to available columns."""
+        cols = self._probe_bank_columns()
+        has_embed = cols.get("embedding", False)
+        has_reviewed = cols.get("reviewed", False)
+
+        # Build the SELECT-list of optional columns conditionally
+        extra_sel = ""
+        if has_embed:
+            extra_sel += ", embedding"
+        if has_reviewed:
+            extra_sel += ", reviewed"
+
+        # Order clause: prefer curated first if reviewed exists
+        order_inner = "RANDOM()"
+        order_outer = (
+            "ORDER BY reviewed DESC NULLS LAST, RANDOM()"
+            if has_reviewed else "ORDER BY RANDOM()"
+        )
+
+        # No dedup possible without embedding column — straight fetch
+        if not has_embed:
+            return f"""
+                SELECT question_id, question_text, options, correct_index,
+                       explanation, difficulty{", reviewed" if has_reviewed else ""}
+                FROM charvak_exam_question_bank
+                WHERE exam_id = %s AND topic = %s
+                {order_outer}
+                LIMIT %s
+            """
+
+        # Dedup path (embedding present)
+        return f"""
+            WITH candidates AS (
+                SELECT question_id, question_text, options, correct_index,
+                       explanation, difficulty{extra_sel},
+                       ROW_NUMBER() OVER (ORDER BY {order_inner}) AS rn
+                FROM charvak_exam_question_bank
+                WHERE exam_id = %s AND topic = %s
+            ),
+            deduped AS (
+                SELECT c1.* FROM candidates c1
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM candidates c2
+                    WHERE c2.rn < c1.rn
+                      AND c1.embedding IS NOT NULL
+                      AND c2.embedding IS NOT NULL
+                      AND c1.embedding <=> c2.embedding < 0.15
+                )
+            )
+            SELECT question_id, question_text, options, correct_index,
+                   explanation, difficulty{", reviewed" if has_reviewed else ""}
+            FROM deduped
+            {order_outer}
+            LIMIT %s
+        """
+
+    def _bank_sql_multi(self) -> str:
+        """SQL to fetch per_topic questions for EACH topic in ONE DB round trip.
+        Adapts to available columns."""
+        cols = self._probe_bank_columns()
+        has_embed = cols.get("embedding", False)
+        has_reviewed = cols.get("reviewed", False)
+
+        extra_sel = ""
+        if has_embed:
+            extra_sel += ", embedding"
+        if has_reviewed:
+            extra_sel += ", reviewed"
+
+        if not has_embed:
+            return f"""
+                WITH candidates AS (
+                    SELECT topic, question_id, question_text, options, correct_index,
+                           explanation, difficulty{", reviewed" if has_reviewed else ""},
+                           ROW_NUMBER() OVER (PARTITION BY topic ORDER BY RANDOM()) AS rn
+                    FROM charvak_exam_question_bank
+                    WHERE exam_id = %s AND topic = ANY(%s)
+                )
+                SELECT topic, question_id, question_text, options, correct_index,
+                       explanation, difficulty
+                FROM candidates
+                WHERE rn <= %s
+            """
+
+        return f"""
+            WITH candidates AS (
+                SELECT topic, question_id, question_text, options, correct_index,
+                       explanation, difficulty{extra_sel},
+                       ROW_NUMBER() OVER (PARTITION BY topic ORDER BY RANDOM()) AS rn
+                FROM charvak_exam_question_bank
+                WHERE exam_id = %s AND topic = ANY(%s)
+            ),
+            deduped AS (
+                SELECT c1.* FROM candidates c1
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM candidates c2
+                    WHERE c2.topic = c1.topic
+                      AND c2.rn < c1.rn
+                      AND c1.embedding IS NOT NULL
+                      AND c2.embedding IS NOT NULL
+                      AND c1.embedding <=> c2.embedding < 0.15
+                )
+            ),
+            final AS (
+                SELECT *, ROW_NUMBER() OVER (PARTITION BY topic ORDER BY RANDOM()) AS rn2
+                FROM deduped
+            )
+            SELECT topic, question_id, question_text, options, correct_index,
+                   explanation, difficulty
+            FROM final
+            WHERE rn2 <= %s
+        """
     def _load_from_bank(self, exam_id: str, topic: str, count: int) -> List[Dict]:
         try:
             from database import db
             conn = db.get_connection()
             cur = conn.cursor()
-            cur.execute('''
-                WITH candidates AS (
-                    SELECT question_id, question_text, options, correct_index,
-                           explanation, difficulty, embedding, reviewed,
-                           ROW_NUMBER() OVER (ORDER BY RANDOM()) AS rn
-                    FROM charvak_exam_question_bank
-                    WHERE exam_id = %s AND topic = %s
-                ),
-                deduped AS (
-                    SELECT c1.*
-                    FROM candidates c1
-                    WHERE NOT EXISTS (
-                        SELECT 1 FROM candidates c2
-                        WHERE c2.rn < c1.rn
-                          AND c1.embedding IS NOT NULL
-                          AND c2.embedding IS NOT NULL
-                          AND c1.embedding <=> c2.embedding < 0.15
-                    )
-                )
-                SELECT question_id, question_text, options, correct_index,
-                       explanation, difficulty, reviewed
-                FROM deduped
-                ORDER BY reviewed DESC NULLS LAST, RANDOM()
-                LIMIT %s
-            ''', (exam_id, topic, count))
+            cur.execute(self._bank_sql_single(), (exam_id, topic, count))
             rows = cur.fetchall()
             cur.close(); conn.close()
             logger.info(f"bank lookup: {exam_id}/{topic} -> {len(rows)} rows (wanted {count})")
@@ -390,31 +588,7 @@ class ExamPrepEngine:
             from database import db
             conn = db.get_pooled_connection()
             cur = conn.cursor()
-            cur.execute('''
-                WITH candidates AS (
-                    SELECT question_id, question_text, options, correct_index,
-                           explanation, difficulty, embedding, reviewed,
-                           ROW_NUMBER() OVER (ORDER BY RANDOM()) AS rn
-                    FROM charvak_exam_question_bank
-                    WHERE exam_id = %s AND topic = %s
-                ),
-                deduped AS (
-                    SELECT c1.*
-                    FROM candidates c1
-                    WHERE NOT EXISTS (
-                        SELECT 1 FROM candidates c2
-                        WHERE c2.rn < c1.rn
-                          AND c1.embedding IS NOT NULL
-                          AND c2.embedding IS NOT NULL
-                          AND c1.embedding <=> c2.embedding < 0.15
-                    )
-                )
-                SELECT question_id, question_text, options, correct_index,
-                       explanation, difficulty, reviewed
-                FROM deduped
-                ORDER BY reviewed DESC NULLS LAST, RANDOM()
-                LIMIT %s
-            ''', (exam_id, topic, count))
+            cur.execute(self._bank_sql_single(), (exam_id, topic, count))
             rows = cur.fetchall()
             cur.close()
             logger.info(f"bank lookup: {exam_id}/{topic} -> {len(rows)} rows (wanted {count})")
@@ -442,35 +616,7 @@ class ExamPrepEngine:
             from database import db
             conn = db.get_pooled_connection()
             cur = conn.cursor()
-            cur.execute('''
-                WITH candidates AS (
-                    SELECT topic, question_id, question_text, options, correct_index,
-                           explanation, difficulty, embedding, reviewed,
-                           ROW_NUMBER() OVER (PARTITION BY topic ORDER BY RANDOM()) AS rn
-                    FROM charvak_exam_question_bank
-                    WHERE exam_id = %s AND topic = ANY(%s)
-                ),
-                deduped AS (
-                    SELECT c1.*
-                    FROM candidates c1
-                    WHERE NOT EXISTS (
-                        SELECT 1 FROM candidates c2
-                        WHERE c2.topic = c1.topic
-                          AND c2.rn < c1.rn
-                          AND c1.embedding IS NOT NULL
-                          AND c2.embedding IS NOT NULL
-                          AND c1.embedding <=> c2.embedding < 0.15
-                    )
-                ),
-                final AS (
-                    SELECT *, ROW_NUMBER() OVER (PARTITION BY topic ORDER BY RANDOM()) AS rn2
-                    FROM deduped
-                )
-                SELECT topic, question_id, question_text, options, correct_index,
-                       explanation, difficulty
-                FROM final
-                WHERE rn2 <= %s
-            ''', (exam_id, topics, per_topic))
+            cur.execute(self._bank_sql_multi(), (exam_id, topics, per_topic))
             rows = cur.fetchall()
             cur.close()
             logger.info(f"bank multi-lookup: {exam_id} topics={topics} -> {len(rows)} rows")
