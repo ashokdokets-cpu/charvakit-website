@@ -5763,18 +5763,22 @@ async def api_public_ielts_confirm_paypal(request: Request):
 
 @app.get("/api/public/price/{key}")
 @limiter.limit("60/minute")
-async def api_public_price(request: Request, key: str):
+async def api_public_price(request: Request, key: str, country: str = None):
     """
     Public price resolution for a given product key.
     Detects country from IP (Cloudflare-aware), returns the local price.
-    No auth. Used by frontend templates to display prices in the user's currency.
+    Dev override: pass ?country=US to force a country (Session 44-B).
     """
-    try:
-        from improved_ip_detection import improved_ip_detector
-        _loc = improved_ip_detector.detect_from_request(request) or {}
-        country_code = _loc.get("country_code") or _loc.get("country") or "IN"
-    except Exception:
-        country_code = "IN"
+    # Dev override first (matches /api/region behavior)
+    if country:
+        country_code = country.strip().upper()[:2] or "IN"
+    else:
+        try:
+            from improved_ip_detection import improved_ip_detector
+            _loc = improved_ip_detector.detect_from_request(request) or {}
+            country_code = _loc.get("country_code") or _loc.get("country") or "IN"
+        except Exception:
+            country_code = "IN"
 
     from payment_engine import payment_engine
     return payment_engine.resolve_public_price(key.strip().lower(), country_code)
