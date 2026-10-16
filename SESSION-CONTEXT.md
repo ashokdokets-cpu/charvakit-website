@@ -1,6 +1,6 @@
 # Session Context - Charvak
 
-**HEAD:** (after this session's push - see git log)
+**HEAD:** f2dbf00
 **Live:** https://www.charvakit.com
 **Updated:** 2026-10-16 (Session 44-A3 closed)
 **Next up:** 44-A4 (Resume Roaster Teaser) or A5 (DoketsRB sync)
@@ -79,7 +79,7 @@ MPPSC SSE, GPSC Class 1 & 2, APSC CCE, Kerala PSC KAS.
 ---
 # Session Context - Charvak
 
-**HEAD:** 6181bd0
+**HEAD:** f2dbf00
 **Live:** https://www.charvakit.com
 **Updated:** 2026-10-16 (Session 44-B closed)
 **Next up:** 44-A3 (Localized Exam Funnels) or 44-A4 (Resume Roaster)
@@ -267,7 +267,7 @@ The full campus placement funnel is now attributable end to end.
 
 ## Session 43-A1.7 CLOSED (2026-10-13) - IELTS Deep Report micro-paywall
 
-**HEAD:** `731b70a`
+**HEAD:** f2dbf00
 **Status:** A1.7 shipped. Track A1.6 + A1.7 = first two revenue lines live.
 
 ### Read this next
@@ -2007,7 +2007,7 @@ issued, verify URL live.
 
 ---
 
-**HEAD:** `980bbdc`
+**HEAD:** f2dbf00
 **Last updated:** 2026-10-04 (Session 16 - Premium Report product shipped)
 **Version:** `v3.5-session-16-20261004`
 
