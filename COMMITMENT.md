@@ -1,5 +1,39 @@
 ---
 
+## Session 44-A3c/d/e - Background seed + dynamic catalog + dynamic sitemap - COMPLETE (2026-10-17)
+
+Three small follow-ons that turn the free-mock funnel into a fully
+self-managing system.
+
+**44-A3c - Background lazy seed**
+- Moved `_lazy_seed_bank` into a daemon thread via `_spawn_background_seed`
+- First request to empty exam returns HTTP 202 `warming_up` in <1s
+- Generation happens off the request thread; client retries with backoff
+- Verified: first call <1s 202, second call after 45s → 200 success
+
+**44-A3d - Dynamic SUPPORTED_EXAMS**
+- Replaced the hardcoded 20-exam set with `_build_supported_exams()`
+- Reads every exam ID from the catalog automatically
+- Any new exam added to the catalog gets a free-mock page immediately
+- Verified: 138 exams supported (was 20)
+
+**44-A3e - Dynamic sitemap**
+- Replaced the static FileResponse with a generator that:
+  - Reads the static sitemap for core pages
+  - Appends free-mock URLs for every exam in the catalog
+  - Serves the merged XML
+- Verified: 199 URLs (61 static + 138 free-mock)
+- Sample checks: uppsc_pcs, afcat, ssc_cgl, neet_ug, jee_main all present
+
+**Result:** Every exam in the catalog (138) has a working
+`/free-mock/{exam_id}` page. Empty banks self-populate in the
+background. Sitemap auto-updates with any catalog change. Zero manual
+lists to maintain.
+
+**Commits:** 5f55828, f9264fe
+
+---
+
 ## Session 44-A3b - Lazy Seeding - COMPLETE (2026-10-16)
 
 Follow-on to 44-A3. Closes the "empty bank" gap for all 138 exams in
