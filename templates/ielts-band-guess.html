@@ -365,7 +365,9 @@
   window.__ibgPrice = { amount_local: 99, currency: 'INR', display: 'Rs 99' };
   (async function() {
     try {
-      var r = await fetch('/api/public/price/ielts_band_report');
+      var _cp = new URLSearchParams(window.location.search).get('country');
+      var _url = '/api/public/price/ielts_band_report' + (_cp ? '?country=' + encodeURIComponent(_cp) : '');
+      var r = await fetch(_url);
       var j = await r.json();
       if (j.status === 'success') {
         var symbol = { 'INR': 'Rs ', 'USD': '$', 'EUR': '€', 'GBP': '£', 'AED': 'AED ', 'SGD': 'S$', 'AUD': 'A$', 'CAD': 'C$', 'JPY': '¥', 'CNY': '¥' }[j.currency] || (j.currency + ' ');
