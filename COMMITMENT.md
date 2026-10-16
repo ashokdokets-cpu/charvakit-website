@@ -1,5 +1,9 @@
 ## Session 44-A3 - State-PSC Free-Mock Funnels - COMPLETE (2026-10-16)
 
+**Update (same day):** Extended from 10 to all 20 state-PSC exams after
+verifying bank coverage and seeding the missing ones. All 20 exams now
+have 55-145 questions in prod. Total sitemap URLs: 81.
+
 The highest-ceiling revenue initiative in the current series is live.
 Ten SEO-optimized public landing pages, one per high-traffic state-PSC
 exam. Each offers a free 15-question mock (no login), then a Rs 49
