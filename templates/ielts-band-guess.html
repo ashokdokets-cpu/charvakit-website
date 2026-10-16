@@ -296,19 +296,27 @@
       var r = await fetch(API_ORDER, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ share_id: LAST_SHARE_ID, email: email })
+        body: JSON.stringify({
+          share_id: LAST_SHARE_ID,
+          email: email,
+          country_code: new URLSearchParams(window.location.search).get('country') || ''
+        })
       });
       var j = await r.json();
       if (j.status !== 'success' || !j.order_id) {
         msg.textContent = j.message || 'Could not create order.';
         return;
       }
-      if (j.gateway === 'paypal') {
+            if (j.gateway === 'paypal') {
+        msg.textContent = 'Loading PayPal...';
+        if (typeof ensurePayPalLoaded === 'function') {
+          await ensurePayPalLoaded();
+        }
         if (typeof paypal === 'undefined') {
           msg.textContent = 'PayPal not loaded. Please refresh.';
           return;
         }
-        msg.textContent = 'Opening PayPal...';
+        msg.textContent = '';
         var container = document.getElementById('ibgPaypalContainer');
         if (!container) {
           container = document.createElement('div');
@@ -338,6 +346,10 @@
             msg.textContent = 'PayPal error: ' + (err && err.message ? err.message : 'unknown');
           }
         }).render('#ibgPaypalContainer');
+
+        setTimeout(function() {
+          if (container) container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 300);
       } else {
         var options = {
           key: j.key_id,

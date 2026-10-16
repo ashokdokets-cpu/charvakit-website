@@ -248,7 +248,11 @@
       var r = await fetch(API_ORDER, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ scan_id: scanId, email: email })
+        body: JSON.stringify({
+          scan_id: scanId,
+          email: email,
+          country_code: new URLSearchParams(window.location.search).get('country') || ''
+        })
       });
       var j = await r.json();
       if (j.status !== 'success' || !j.order_id) {
@@ -256,13 +260,17 @@
         return;
       }
 
-      if (j.gateway === 'paypal') {
+            if (j.gateway === 'paypal') {
         // PayPal client-confirm flow
+        msg.textContent = 'Loading PayPal...';
+        if (typeof ensurePayPalLoaded === 'function') {
+          await ensurePayPalLoaded();
+        }
         if (typeof paypal === 'undefined') {
           msg.textContent = 'PayPal not loaded. Please refresh.';
           return;
         }
-        msg.textContent = 'Opening PayPal...';
+                msg.textContent = '';   // clear the message
         var container = document.getElementById('slopPaypalContainer');
         if (!container) {
           container = document.createElement('div');
@@ -293,6 +301,9 @@
             msg.textContent = 'PayPal error: ' + (err && err.message ? err.message : 'unknown');
           }
         }).render('#slopPaypalContainer');
+        setTimeout(function() {
+          if (container) container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 300);
       } else {
         // Razorpay flow (existing)
         var options = {
