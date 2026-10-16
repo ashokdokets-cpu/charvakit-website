@@ -686,24 +686,18 @@ Four bugs fixed across Session 42:
 - .gitignore duplicate cleanup (Session 41 flag)
 
 
-### FLAGGED - A1.6 tools route uses raw ip_detector (2026-10-13)
+### RESOLVED - A1.6 tools route uses raw ip_detector (2026-10-13 -> resolved 2026-10-13)
 
-Discovered during A1.7 while auditing the country-detection fix. The
-`/api/tools/paid/create-order` route (line ~2885 in main.py) still uses
-the raw `ip_detector.detect_from_request()` call, which returns the
-country **name** (`"India"`) rather than the ISO code (`"IN"`).
+**Resolved 2026-10-13 in commit 5573b13** ("fix(payments): A1.6 country
+code + PayPal server-side capture"). The fix was applied the same day the
+flag was filed, but the tracker was never updated.
 
-Consequence: if a caller omits `country_code` in the request body, the
-route falls through to `tier_3` â†’ USD â†’ PayPal, even for Indian users.
+**Verified 2026-10-16** at main.py:2971-2992:
+- Uses improved_ip_detector (returns ISO codes)
+- Has a name-to-ISO fallback map for edge cases
+- Passes normalized country_code into tool_payment_engine.create_order()
 
-The A1.6 frontend currently sends an explicit `country_code`, so real
-users are not affected. But the backend has the same latent bug that
-A1.7 hit.
-
-**Fix:** identical to A1.7's - swap to `improved_ip_detector` (returns
-ISO codes) plus a name-to-ISO fallback map. ~5 minutes.
-
-**Verdict:** SCHEDULED - small cleanup, any session
+**Verdict:** RESOLVED - docs-only close-out.
 
 
 ### FLAGGED - A1.7 PayPal capture route may not exist (2026-10-13)
