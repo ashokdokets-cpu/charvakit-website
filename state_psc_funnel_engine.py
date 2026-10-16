@@ -31,15 +31,27 @@ logger = logging.getLogger(__name__)
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-only-not-secret-not-used-for-prod")
 
 # The 10 supported state-PSC exams for the free funnel
-SUPPORTED_EXAMS = {
-    # Tier 1 (shipped 2026-10-16 in Session 44-A3)
-    "uppsc_pcs", "mpsc_rajyaseva", "rpsc_ras", "wbpsc_wbcs",
-    "tnpsc_group1", "kpsc_kas", "mppsc_sse", "gpsc_class12",
-    "apsc_cce", "kpsc_kerala",
-    # Tier 2 (extended 2026-10-16 after bank seeding verified)
-    "opsc_ocs", "cgpsc_sse", "jpsc_ccs", "ukpsc_pcs", "hpsc_hcs",
-    "ppsc_pcs", "mpsc_manipur", "jkpsc_kas", "tnpsc_group2", "tpsc_tcs",
-}
+# Session 44-A3d: dynamic — every exam in the catalog is a free-mock candidate.
+# Lazy seeding fills the bank on first request, so no manual curation is needed.
+def _build_supported_exams() -> set:
+    try:
+        from exam_prep_engine import exam_prep_engine
+        ids = set()
+        for cat in exam_prep_engine.exams.values():
+            for e in cat["exams"]:
+                ids.add(e["id"])
+        return ids
+    except Exception:
+        # Fallback to the original 20 if the engine can't be imported
+        return {
+            "uppsc_pcs", "mpsc_rajyaseva", "rpsc_ras", "wbpsc_wbcs",
+            "tnpsc_group1", "kpsc_kas", "mppsc_sse", "gpsc_class12",
+            "apsc_cce", "kpsc_kerala",
+            "opsc_ocs", "cgpsc_sse", "jpsc_ccs", "ukpsc_pcs", "hpsc_hcs",
+            "ppsc_pcs", "mpsc_manipur", "jkpsc_kas", "tnpsc_group2", "tpsc_tcs",
+        }
+
+SUPPORTED_EXAMS = _build_supported_exams()
 
 # Full mock size (questions)
 FULL_MOCK_QUESTIONS = 100
