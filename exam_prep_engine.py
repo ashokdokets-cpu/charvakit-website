@@ -324,6 +324,30 @@ class ExamPrepEngine:
         """Release a lazy-seed lock so the next request can acquire it."""
         _LAZY_LOCKS.pop(exam_id, None)
 
+    def _spawn_background_seed(self, exam_id: str, section_list: list, questions_per_section: int = 20) -> None:
+        """
+        Session 44-A3c: spawn a daemon thread that seeds the bank in the
+        background. The request thread returns immediately with a warming_up
+        status; the client retries with backoff until questions are ready.
+
+        The lock stays held until the thread finishes so the next request
+        sees warming_up rather than starting a second seed.
+        """
+        import threading
+
+        def _run():
+            try:
+                self._lazy_seed_bank(exam_id, section_list, questions_per_section)
+                logger.info(f"background lazy seed complete: {exam_id}")
+            except Exception as e:
+                logger.error(f"background lazy seed failed: {exam_id}: {e}")
+            finally:
+                self._release_lazy_lock(exam_id)
+
+        t = threading.Thread(target=_run, daemon=True, name=f"lazyseed-{exam_id}")
+        t.start()
+        logger.info(f"background lazy seed spawned: {exam_id} thread={t.name}")
+
     def _lazy_seed_bank(self, exam_id: str, section_list: list, questions_per_section: int = 20) -> None:
         """
         Session 44-A3b: generate & persist questions for an empty exam.
@@ -380,29 +404,16 @@ class ExamPrepEngine:
                     "topic": sec,
                 })
 
-        # Session 44-A3b: lazy seeding on empty bank.
-        # The first request for an empty exam triggers AI generation
-        # for its sections, caches them in the bank, and re-fetches.
-        # A per-exam lock prevents concurrent requests from double-generating.
+        # Session 44-A3c: lazy seeding in a background thread.
+        # The first request for an empty exam spawns the generation work and
+        # returns warming_up immediately (no 40-60s wait for the user).
+        # The lock is held by the background thread until it finishes.
         if not questions and self._acquire_lazy_lock(exam_id):
             try:
-                logger.info(f"lazy seed triggered for {exam_id} sections={section_list}")
-                self._lazy_seed_bank(exam_id, section_list, questions_per_section=20)
-                # Re-fetch now that the bank has fresh rows
-                try:
-                    bank_rows = self._fetch_bank_multi(exam_id, section_list, per_section) or {}
-                except Exception as e:
-                    logger.error(f"lazy seed re-fetch failed: {e}")
-                    bank_rows = {}
-                for sec in section_list:
-                    for row in (bank_rows.get(sec) or [])[:per_section]:
-                        questions.append({
-                            "question_text": row.get("question_text") or row.get("question") or "",
-                            "options": row.get("options") or [],
-                            "correct_index": int(row.get("correct_index") or 0),
-                            "topic": sec,
-                        })
-            finally:
+                self._spawn_background_seed(exam_id, section_list, questions_per_section=20)
+            except Exception as e:
+                # If spawning fails, release the lock so a later request can retry
+                logger.error(f"failed to spawn background seed: {exam_id}: {e}")
                 self._release_lazy_lock(exam_id)
 
         if not questions:
