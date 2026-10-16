@@ -8567,6 +8567,157 @@ async def api_admin_assessment_integrity(request: Request, assessment_id: str):
 
 
 # ========================================================================
+# Session 44-A3 — State-PSC Free-Mock Funnel
+# Public landing + 15-question free mock + Rs 49 currency-aware unlock.
+# Engine: state_psc_funnel_engine.py
+# ========================================================================
+
+@app.get("/free-mock/{exam_id}", response_class=HTMLResponse)
+@limiter.limit("120/minute")
+async def free_mock_page(request: Request, exam_id: str):
+    """Public landing page for a state-PSC free mock test."""
+    import state_psc_funnel_engine as spfe
+    if exam_id not in spfe.SUPPORTED_EXAMS:
+        return RedirectResponse(url="/exam-prep", status_code=302)
+    details = exam_prep_engine.get_exam_details(exam_id)
+    exam_meta = (details.get("exam") or {}) if details.get("status") == "success" else {}
+    title = f"{exam_meta.get('name', 'Free Mock')} - Free Practice Test | Charvak"
+    return template_response(
+        "free-mock.html", request, title,
+        {"exam_id": exam_id, "exam": exam_meta},
+    )
+
+
+@app.post("/api/exam/free-mock/{exam_id}/start")
+@limiter.limit("20/minute")
+async def api_free_mock_start(request: Request, exam_id: str):
+    """Return 15 free-tier questions + a signed token. No auth, no credits."""
+    try:
+        import state_psc_funnel_engine as spfe
+        result = spfe.get_free_questions(exam_id)
+        if result.get("status") != "success":
+            return JSONResponse(status_code=400, content=result)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "free-mock start")
+
+
+@app.post("/api/exam/free-mock/{exam_id}/submit")
+@limiter.limit("20/minute")
+async def api_free_mock_submit(request: Request, exam_id: str):
+    """Score free-tier answers. Verifies the signed token. No auth needed."""
+    try:
+        data = await request.json()
+        token = (data.get("free_token") or "").strip()
+        answers = data.get("answers") or []
+        import state_psc_funnel_engine as spfe
+        if not token or not spfe.verify_free_token(token, exam_id):
+            return JSONResponse(
+                status_code=401,
+                content={"status": "error", "message": "Invalid or expired session. Please restart the free mock."},
+            )
+        result = spfe.score_free_answers(exam_id, answers)
+        if result.get("status") != "success":
+            return JSONResponse(status_code=400, content=result)
+        country_code = ""
+        try:
+            from improved_ip_detection import improved_ip_detector
+            _loc = improved_ip_detector.detect_from_request(request) or {}
+            country_code = _loc.get("country_code") or _loc.get("country") or "IN"
+        except Exception:
+            country_code = "IN"
+        price = payment_engine.resolve_public_price("state_psc_full_mock", country_code)
+        result["unlock_offer"] = {
+            "key": "state_psc_full_mock",
+            "label": "Unlock the full 100-question mock",
+            "currency": price.get("currency", "INR"),
+            "amount_local": price.get("amount_local"),
+            "amount_inr": price.get("amount_inr"),
+            "gateway": price.get("gateway"),
+        }
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "free-mock submit")
+
+
+@app.post("/api/exam/free-mock/{exam_id}/unlock-order")
+@limiter.limit("10/minute")
+async def api_free_mock_unlock_order(request: Request, exam_id: str):
+    """Create a Razorpay or PayPal order for the full-mock unlock."""
+    try:
+        data = await request.json()
+        email = (data.get("email") or "").strip().lower()
+        if not email or "@" not in email:
+            return JSONResponse(status_code=400, content={"status": "error", "message": "Valid email required"})
+
+        country_code = (data.get("country_code") or "").strip().upper()
+        if not country_code:
+            try:
+                from improved_ip_detection import improved_ip_detector
+                _loc = improved_ip_detector.detect_from_request(request) or {}
+                country_code = _loc.get("country_code") or _loc.get("country") or "IN"
+            except Exception:
+                country_code = "IN"
+
+        country_code = (country_code or "").strip()
+        if len(country_code) == 2:
+            country_code = country_code.upper()
+        else:
+            _NAME_TO_ISO_SPSC = {
+                "India": "IN", "United States": "US", "USA": "US",
+                "United Kingdom": "GB", "UK": "GB", "Germany": "DE",
+                "France": "FR", "Canada": "CA", "Australia": "AU",
+                "Singapore": "SG", "Japan": "JP", "China": "CN",
+                "United Arab Emirates": "AE", "UAE": "AE",
+            }
+            country_code = _NAME_TO_ISO_SPSC.get(country_code, "IN")
+
+        import state_psc_funnel_engine as spfe
+        result = spfe.create_unlock_order(exam_id, email, country_code)
+        if result.get("status") != "success":
+            return JSONResponse(status_code=400, content=result)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "free-mock unlock-order")
+
+
+@app.post("/api/exam/free-mock/{exam_id}/unlock-run")
+@limiter.limit("10/minute")
+async def api_free_mock_unlock_run(request: Request, exam_id: str):
+    """Verify payment + return the full 100-question mock."""
+    try:
+        data = await request.json()
+        email = (data.get("email") or "").strip().lower()
+        gateway = (data.get("gateway") or "").strip().lower()
+        if not email or not gateway:
+            return JSONResponse(status_code=400, content={"status": "error", "message": "email and gateway required"})
+
+        import state_psc_funnel_engine as spfe
+        result = spfe.verify_and_serve(
+            exam_id=exam_id,
+            email=email,
+            gateway=gateway,
+            razorpay_payment_id=data.get("razorpay_payment_id"),
+            razorpay_order_id=data.get("razorpay_order_id"),
+            razorpay_signature=data.get("razorpay_signature"),
+            paypal_order_id=data.get("paypal_order_id"),
+        )
+        if result.get("status") != "success":
+            return JSONResponse(status_code=402, content=result)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "free-mock unlock-run")
+
+
+# ========================================================================
 # Session 38 — Public integrity summary for a readiness certificate
 # ========================================================================
 # Public read (no auth). Employers view readiness certificates without
