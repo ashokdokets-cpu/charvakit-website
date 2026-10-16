@@ -5518,6 +5518,7 @@ async def api_public_ai_slop_create_order(request: Request):
             receipt=f"rcpt_slop_{scan_id[-8:]}",
             notes={
                 "tool": "ai_slop_report",
+                "plan": "ai_slop_report",
                 "email": email,
                 "scan_id": scan_id,
                 "amount_inr": 199,
