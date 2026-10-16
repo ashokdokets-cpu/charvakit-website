@@ -8584,7 +8584,7 @@ async def free_mock_page(request: Request, exam_id: str):
     title = f"{exam_meta.get('name', 'Free Mock')} - Free Practice Test | Charvak"
     return template_response(
         "free-mock.html", request, title,
-        {"exam_id": exam_id, "exam": exam_meta},
+        exam_id=exam_id, exam=exam_meta or {},
     )
 
 
