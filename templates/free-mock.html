@@ -2,7 +2,7 @@
 
 {% block title %}{{ exam.name or exam_id }} - Free Mock Test | Charvak{% endblock %}
 
-{% block meta %}
+{% block head %}
 <meta name="description" content="Take a free 15-question mock test for {{ exam.full_name or exam.name }}. No login required. Real practice questions for state PSC exams in India.">
 <meta name="keywords" content="{{ exam.name }}, free mock test, {{ exam.name }} practice, state PSC, {{ exam.sections|join(', ') if exam.sections else '' }}">
 <meta property="og:title" content="{{ exam.name }} Free Mock Test - Charvak">
