@@ -39,6 +39,11 @@ REPORT_TYPES = {
         "subtitle": "Uptime risk assessment and reliability plan",
         "context": "You are a senior site reliability engineer specializing in production web monitoring and uptime risk. Produce a strategic reliability report from the raw URL monitoring data.",
     },
+    "ai_slop": {
+        "title": "AI Slop Analysis Report",
+        "subtitle": "Full code review with line-by-line issues and refactored suggestions",
+        "context": "You are a senior code quality engineer specializing in AI-generated code review. The candidate has run a free AI-slop scan and paid Rs 199 to unlock the full analysis. Your report must go deeper than the free preview: enumerate ALL issues (not just the top 3) with severity and line numbers where available, diagnose the root causes, provide concrete refactored suggestions, benchmark the code against industry norms, and deliver a prioritized action roadmap. Be specific about the actual code, not generic advice.",
+    },
 }
 
 

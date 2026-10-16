@@ -1046,6 +1046,11 @@ async def dead_link_auditor(request: Request):
 async def ai_slop_quarantine(request: Request):
     return template_response("ai-slop-quarantine.html", request, "AI-Slop Quarantine - Charvak")
 
+@app.get("/slop-check", response_class=HTMLResponse)
+async def slop_check_page(request: Request):
+    """Session 44-A1: Public free AI slop checker."""
+    return template_response("ai-slop-check.html", request, "Free AI Slop Code Checker - Charvak")
+
 @app.get("/ai-contamination-detector", response_class=HTMLResponse)
 async def ai_contamination_detector(request: Request):
     return template_response("ai-contamination-detector.html", request, "AI-Contamination Detector - Charvak")
@@ -3501,6 +3506,109 @@ async def razorpay_webhook(request: Request):
                 logger.error(f"Razorpay webhook: ai_course branch failed: {ce}", exc_info=True)
                 return JSONResponse({"status": "error", "message": "course processing failed"}, status_code=200)
 
+        # --- Session 44-A1: ai_slop_report branch ---
+        # Rs 199 payment for the full AI-Slop PDF report.
+        # Idempotent on scan_id (one report per scan).
+        if tool == "ai_slop_report":
+            try:
+                scan_id = (notes.get("scan_id") or "").strip()
+                if not scan_id:
+                    logger.warning("Razorpay webhook: ai_slop_report missing scan_id")
+                    return JSONResponse({"status": "ignored", "message": "missing scan_id"})
+
+                # Verify amount: Rs 199 = 19900 paise
+                got = int(payment_entity.get("amount") or 0)
+                if got != 19900:
+                    logger.warning(f"webhook ai_slop amount mismatch: got {got}, expected 19900")
+                    return JSONResponse({"status": "ignored", "message": "amount mismatch"})
+
+                from database import db
+                conn = db.get_connection()
+                cur = conn.cursor()
+
+                # Idempotency: one report per scan_id
+                cur.execute("""
+                    SELECT report_id FROM charvak_premium_reports
+                    WHERE report_type = 'ai_slop' AND source_id = %s
+                    LIMIT 1
+                """, (scan_id,))
+                existing = cur.fetchone()
+                if existing:
+                    cur.close(); conn.close()
+                    logger.info(f"ai_slop_report already delivered: {existing[0]}")
+                    return JSONResponse({"status": "success", "payment_id": payment_id, "report_id": existing[0], "already_delivered": True})
+
+                # Fetch the original scan
+                cur.execute("""
+                    SELECT result_data FROM charvak_product_results
+                    WHERE result_data->>'scan_id' = %s
+                    ORDER BY created_at DESC
+                    LIMIT 1
+                """, (scan_id,))
+                scan_row = cur.fetchone()
+                cur.close(); conn.close()
+
+                if not scan_row:
+                    logger.warning(f"ai_slop_report: scan {scan_id} not found in product_results")
+                    return JSONResponse({"status": "ignored", "message": "scan not found"})
+
+                scan_result = scan_row[0] if isinstance(scan_row[0], dict) else json.loads(scan_row[0] or "{}")
+
+                # Generate the full report via premium_report_engine
+                from premium_report_engine import premium_report_engine
+                report = premium_report_engine.generate_report({
+                    "email": email,
+                    "report_type": "ai_slop",
+                    "source_id": scan_id,
+                    "source_data": {
+                        "scan_id": scan_id,
+                        "cleanliness_score": scan_result.get("cleanliness_score"),
+                        "issue_count": scan_result.get("issue_count"),
+                        "verdict": scan_result.get("verdict"),
+                        "issues_found": scan_result.get("issues_found", []),
+                        "top_issues": scan_result.get("top_issues", []),
+                        "refactored_suggestions": scan_result.get("refactored_suggestions", []),
+                        "language": scan_result.get("language", "JavaScript"),
+                        "razorpay_payment_id": payment_id,
+                    },
+                })
+
+                if report.get("status") != "success":
+                    logger.error(f"ai_slop_report generate failed: {report}")
+                    return JSONResponse({"status": "error", "message": report.get("message", "generate failed")}, status_code=200)
+
+                # Generate the PDF
+                pdf_bytes = None
+                try:
+                    from pdf_engine import render_premium_report_pdf
+                    pdf_bytes = render_premium_report_pdf(report["content"])
+                except Exception as pdf_e:
+                    logger.error(f"ai_slop_report PDF render failed: {pdf_e}")
+
+                # Email the PDF
+                if pdf_bytes:
+                    try:
+                        from enhanced_email import enhanced_email
+                        enhanced_email.send_premium_report_email(
+                            email=email,
+                            report_title="AI Slop Analysis Report",
+                            report_id=report["report_id"],
+                            pdf_bytes=pdf_bytes,
+                        )
+                    except Exception as em_e:
+                        logger.error(f"ai_slop_report email failed: {em_e}")
+
+                logger.info(f"ai_slop_report delivered: {report['report_id']} for {email}")
+                return JSONResponse({
+                    "status": "success",
+                    "payment_id": payment_id,
+                    "report_id": report["report_id"],
+                })
+
+            except Exception as se:
+                logger.error(f"Razorpay webhook: ai_slop_report branch failed: {se}", exc_info=True)
+                return JSONResponse({"status": "error", "message": str(se)}, status_code=200)
+
         result = ai_credit_engine.purchase_credits(email, plan, payment_id=payment_id)
 
         # --- internship_enroll_branch_marker ---
@@ -5294,6 +5402,138 @@ async def api_silent_killer_delete(request: Request, watch_id: str, email: str =
         return JSONResponse(status_code=401, content={"status": "error", "message": "Login required.", "login_url": "/login"})
     require_auth_for_email(request, email)
     return products_engine.silent_killer_delete_watch(watch_id, email)
+
+# ============================================================
+# Session 44-A1: Public AI-Slop Check (free preview + Rs 199 PDF)
+# ============================================================
+# No auth on the free scan. Rate-limited by real client IP.
+# Full report is a Rs 199 PDF, delivered via the standard
+# Razorpay order flow + webhook, reusing premium_report_engine.
+
+@app.post("/api/public/ai-slop/quick-scan")
+@limiter.limit("3/hour")
+async def api_public_ai_slop_quick_scan(request: Request):
+    """
+    Public, no-auth, rate-limited AI-slop scan.
+    Returns: score, verdict, top 3 issues, scan_id for upgrade.
+    The full report (all issues + line numbers + PDF) is paid (Rs 199).
+    """
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "Invalid JSON"})
+
+    code = (data.get("code") or "").strip()
+    language = (data.get("language") or "JavaScript").strip()
+
+    if not code:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "Paste some code to scan."})
+    if len(code) < 30:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "Paste at least 30 characters."})
+
+    # Cap length for the free tier
+    truncated = False
+    if len(code) > 3000:
+        code = code[:3000]
+        truncated = True
+
+    try:
+        engine_result = products_engine.ai_slop_scan({"code": code, "language": language})
+    except Exception as e:
+        logger.error(f"public slop scan failed: {e}")
+        return JSONResponse(status_code=500, content={"status": "error", "message": "Scan failed. Try again."})
+
+    if engine_result.get("status") != "success":
+        return JSONResponse(status_code=500, content={"status": "error", "message": "Scan failed"})
+
+    all_issues = engine_result.get("issues_found") or []
+    preview_issues = all_issues[:3]
+
+    return {
+        "status": "success",
+        "preview": True,
+        "scan_id": engine_result.get("scan_id"),
+        "language": language,
+        "cleanliness_score": engine_result.get("cleanliness_score"),
+        "issue_count": engine_result.get("issue_count", len(all_issues)),
+        "verdict": engine_result.get("verdict", ""),
+        "top_issues": preview_issues,
+        "total_issues_available": len(all_issues),
+        "truncated_input": truncated,
+        "upgrade": {
+            "message": f"Unlock the full report ({len(all_issues)} issues with line numbers and specific fixes).",
+            "price_inr": 199,
+            "cta_url": "/slop-check",
+        },
+    }
+
+
+@app.post("/api/public/ai-slop/create-order")
+@limiter.limit("10/minute")
+async def api_public_ai_slop_create_order(request: Request):
+    """
+    Create a Razorpay order for the full AI-Slop PDF report (Rs 199).
+    Body: {scan_id, email}
+    Returns: {status, order_id, key_id, amount, currency}
+    Webhook branch handles PDF generation + email delivery.
+    """
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "Invalid JSON"})
+
+    scan_id = (data.get("scan_id") or "").strip()
+    email = (data.get("email") or "").strip().lower()
+
+    if not scan_id or not email:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "scan_id and email required"})
+    if "@" not in email:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "Invalid email"})
+
+    # Verify the scan exists and belongs to a recent session
+    try:
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT result_id FROM charvak_product_results
+            WHERE result_data->>'scan_id' = %s
+            ORDER BY created_at DESC
+            LIMIT 1
+        """, (scan_id,))
+        row = cur.fetchone()
+        cur.close(); conn.close()
+    except Exception as e:
+        logger.error(f"ai_slop create-order lookup failed: {e}")
+        return JSONResponse(status_code=500, content={"status": "error", "message": "Lookup failed"})
+
+    if not row:
+        return JSONResponse(status_code=404, content={"status": "error", "message": "Scan not found. Run a fresh scan first."})
+
+    # Create Razorpay order for Rs 199 (19900 paise)
+    try:
+        from payment_engine import payment_engine
+        order = payment_engine.create_razorpay_order(
+            amount_inr=19900,  # paise
+            receipt=f"rcpt_slop_{scan_id[-8:]}",
+            notes={
+                "tool": "ai_slop_report",
+                "email": email,
+                "scan_id": scan_id,
+                "amount_inr": 199,
+            },
+        )
+        return {
+            "status": "success",
+            "order_id": order.get("order_id"),
+            "key_id": order.get("key_id"),
+            "amount": order.get("amount"),
+            "currency": order.get("currency", "INR"),
+        }
+    except Exception as e:
+        logger.error(f"ai_slop create-order failed: {e}")
+        return JSONResponse(status_code=500, content={"status": "error", "message": "Could not create order"})
+
 
 @app.post("/api/products/ai-slop/scan")
 @limiter.limit("60/minute")
