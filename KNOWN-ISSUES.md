@@ -1,6 +1,49 @@
 # Charvak — Known Issues Registry
 
 **Created:** 2026-09-18
+**Last updated:** 2026-10-16 (Session 44-B — multi-currency)
+**Purpose:** Central registry for bugs, dead code, and design issues.
+
+---
+
+### RESOLVED - Razorpay webhook plan guard rejects orders without `plan` key (2026-10-16, 48298e1)
+
+Discovered during 44-A1 (AI Slop Checker) launch. The Razorpay
+webhook has an initial guard:
+
+    if not payment_id or not plan or not email:
+        return {'status': 'ignored', 'message': 'missing data'}
+
+Our `ai_slop_report` orders were not setting `plan` in their notes,
+so the webhook silently rejected every delivery. The 44-A1 order
+was paid (Razorpay captured the charge), but credits/report were
+never generated.
+
+**Fix (commit 48298e1):** add `"plan": "ai_slop_report"` to the
+notes dict at order creation.
+
+**Verified:** SLOP-CDE1EB71 -> PR-34DF3743E6EE2C25 -> PDF 47,619 bytes
+delivered via email.
+
+**Lesson for future paid products:**
+
+Any new paid product that goes through the Razorpay webhook MUST
+set a `plan` key in notes, even if the product already has a
+different `tool` identifier. The guard checks `plan`, not `tool`.
+
+Pattern to copy from 44-A2 (Band Guesser) and 44-B follow-ups:
+
+    notes = {
+        "plan": "<product_key>",   # REQUIRED for webhook guard
+        "tool": "<product_key>",   # used for the tool-specific branch
+        "email": email,
+        ...
+    }
+
+---
+# Charvak â€” Known Issues Registry
+
+**Created:** 2026-09-18
 **Last updated:** 2026-10-12
 **Purpose:** Central registry for bugs, dead code, and design issues.
 
@@ -55,14 +98,14 @@ Verdict: RESOLVED.
 
 ---
 
-### V4-adjacent gap — scripts with `load_dotenv()` silently target prod (2026-09-26)
+### V4-adjacent gap â€” scripts with `load_dotenv()` silently target prod (2026-09-26)
 
 - **Discovered during:** Voice-to-Web Option 2 E2E testing.
 - **Reality:** `.env.local` gets renamed `.env.local.off` when testing against prod.
   Any dev script run during that window that calls plain `load_dotenv()` (no args)
-  will load `.env` → **prod**. Not dev.
+  will load `.env` â†’ **prod**. Not dev.
 - **Consequence:** the dev user's verification row was inserted into prod while the
-  server was pointed at dev — leading to a 30-minute 403 debugging rabbit hole that
+  server was pointed at dev â€” leading to a 30-minute 403 debugging rabbit hole that
   looked like a code bug but was a state mismatch.
 - **Rule:** any script that intends dev MUST call
   `load_dotenv(".env.local", override=True)` explicitly, not `load_dotenv()`.
@@ -81,13 +124,13 @@ Verdict: RESOLVED.
 | 2026-09-28 | Sec | main.py | 147 routes swallowed HTTPException via broad except Exception (guards never fired) | except HTTPException: raise inserted - a8e1275 |
 | 2026-09-28 | Fix | templates/lock-in-breaker-pricing.html | Dead fetch to /api/notifications/send | Removed - 03903a2 |
 | 2026-09-28 | Fix | main.py | Duplicate /api/payment/history route | Removed duplicate - 03903a2 |
-| 2026-09-18 | G/4 | `na_module/resume_engine.py` | PII phone regex had a capture group → `re.findall` returned empty strings → `replace('', ...)` inserted redaction marker between every character (86 chars → 1529 chars) | Non-capturing group `(?:...)` |
-| 2026-09-18 | G/2 | `na_module/vms_connector.py` | `job_id = f"NA-JOB-{hash(str(raw_data))}"` — `hash()` randomized per process, IDs changed on every restart | `secrets.token_hex(4).upper()` |
-| 2026-09-18 | G/4 | `na_module/resume_engine.py` | `vendor_id = f"VEN-{hash(...)}"` — same bug | `secrets.token_hex(4).upper()` |
-| 2026-09-18 | E/4 | `final_year_project_engine.py` | AI methods called `json.loads(response.choices[0].message.content)` without `response_format`; GPT-4o-mini returned prose + markdown fences → `Expecting value: line 1 column 1` | `response_format={"type": "json_object"}` + defensive fence strip |
+| 2026-09-18 | G/4 | `na_module/resume_engine.py` | PII phone regex had a capture group â†’ `re.findall` returned empty strings â†’ `replace('', ...)` inserted redaction marker between every character (86 chars â†’ 1529 chars) | Non-capturing group `(?:...)` |
+| 2026-09-18 | G/2 | `na_module/vms_connector.py` | `job_id = f"NA-JOB-{hash(str(raw_data))}"` â€” `hash()` randomized per process, IDs changed on every restart | `secrets.token_hex(4).upper()` |
+| 2026-09-18 | G/4 | `na_module/resume_engine.py` | `vendor_id = f"VEN-{hash(...)}"` â€” same bug | `secrets.token_hex(4).upper()` |
+| 2026-09-18 | E/4 | `final_year_project_engine.py` | AI methods called `json.loads(response.choices[0].message.content)` without `response_format`; GPT-4o-mini returned prose + markdown fences â†’ `Expecting value: line 1 column 1` | `response_format={"type": "json_object"}` + defensive fence strip |
 | 2026-09-18 | J/6 | `ai_question_generator.py` | `generate_with_openai` had no `response_format` (same AI JSON bug class) | Added `response_format={"type": "json_object"}` + defensive fence strip + regex fallback |
 | 2026-09-18 | J/3 | `indian_language_ai.py` | Mojibake emoji in `translate_job_ad` ad string (rocket, pin, arrow) | Converted to `\U` escapes; real Hindi/Tamil/Telugu content preserved as raw UTF-8 |
-| 2026-09-18 | J/2 | `content_generator.py` | `_deduplicate` crashed on `sentence_builds` items (dict with list `words` value — unhashable) | Stringify non-string keys via `str()` |
+| 2026-09-18 | J/2 | `content_generator.py` | `_deduplicate` crashed on `sentence_builds` items (dict with list `words` value â€” unhashable) | Stringify non-string keys via `str()` |
 | 2026-09-18 | J/2 | `content_generator.py` | `_generate_with_ai` had no `response_format` + no timeout (same AI JSON bug class) | Added `response_format={"type": "json_object"}` + timeout + defensive fence strip |
 | 2026-09-18 | H/8 | `advanced_assessment_engine.py` | `_generate_mcq_with_openai` AI JSON parsing without `response_format` + no timeout + fragile regex-only extraction | Added `response_format={"type": "json_object"}` + timeout + defensive fence strip + regex fallback |
 | 2026-09-18 | H/8 | `advanced_assessment_engine.py` | Dead `user_scores` field (declared, never written) | Removed; no table created |
@@ -95,16 +138,16 @@ Verdict: RESOLVED.
 | 2026-09-18 | H/5 | `training_mapping_engine.py` | `get_job_market_insights` avg_salary mojibake stripped to bare `",000 - ,000"` (both ranges empty). Restored to sensible `Rs.8L - Rs.30L` style | Manual restoration |
 | 2026-09-18 | H/2 | `enhanced_assessment_engine.py` | Dead `question_cache` field + missing `response_format` on AI call | Removed dead field; added `response_format` + timeout + defensive fence strip |
 | 2026-09-18 | TierE | `payment_engine.py` | `self.payments` in-memory list backed admin endpoints (`get_all_payments`, `get_payment_status`); all reset on restart | Persist to `charvak_payment_log` with `raw_data JSONB` |
-| 2026-09-18 | D/2 | `brand_engine.py` | `promote_job` used `timedelta` without importing it — every call would `NameError` | Added `from datetime import timedelta` |
+| 2026-09-18 | D/2 | `brand_engine.py` | `promote_job` used `timedelta` without importing it â€” every call would `NameError` | Added `from datetime import timedelta` |
 | 2026-09-18 | D/1 | `badge_engine.py` | `share_text` had mojibake `[PIN]` instead of [FLAG] | `\U0001F3C6` unicode escape |
-| 2026-09-18 | F/3 | `marketing_ai_engine.py` | Mojibake in templates — `[LAUNCH]` instead of [LAUNCH] in every generated job ad / social post | `\U0001F680` unicode escapes (source stays ASCII) |
-| 2026-09-18 | F/4 | `dynamic_role_engine.py` | `recommend_custom_role` mutated in-memory `role_database` — custom roles lost on every restart | Persist to `charvak_dynamic_custom_roles`, merge into `get_all_roles()` |
+| 2026-09-18 | F/3 | `marketing_ai_engine.py` | Mojibake in templates â€” `[LAUNCH]` instead of [LAUNCH] in every generated job ad / social post | `\U0001F680` unicode escapes (source stays ASCII) |
+| 2026-09-18 | F/4 | `dynamic_role_engine.py` | `recommend_custom_role` mutated in-memory `role_database` â€” custom roles lost on every restart | Persist to `charvak_dynamic_custom_roles`, merge into `get_all_roles()` |
 | 2026-09-17 | C | `main.py` | `GET /api/exam/progress` shadowed by `/api/exam/{exam_id}` catch-all | Routes inserted before catch-all |
 | 2026-09-17 | C/3 | `exam_prep_engine.py` | Docstring said "83 exams" but actual catalog is 67 | Updated to 67 |
 
 ---
 
-## Open — data integrity [RED]
+## Open â€” data integrity [RED]
 ### FLAGGED - IELTS writing + speaking AI scoring does not enforce topical relevance (2026-10-08)
 
 Discovered during Session 40c testing. Two related observations:
@@ -152,23 +195,23 @@ off-topic detection.
 
 | # | File | Line / Area | Issue | Fix in session |
 |---|---|---|---|---|
-| 1 | `na_module/revenue_engine.py` | `create_subscription` | Re-subscribe re-adds `monthly_fee` to `transactions` without adding a new subscription row. Revenue inflates silently on tier changes | TBD — product decision |
+| 1 | `na_module/revenue_engine.py` | `create_subscription` | Re-subscribe re-adds `monthly_fee` to `transactions` without adding a new subscription row. Revenue inflates silently on tier changes | TBD â€” product decision |
 | 2 | `na_module/resume_engine.py` | `SubVendorManager.track_submission` | Duplicate `(vendor, candidate, job)` bumps `active_candidates` counter even though the row is deduped via `ON CONFLICT DO NOTHING` | TBD |
 | 3 | `na_module/charvak_vms.py` | `approve_timecard` | Repeated approvals grow `approval_history` and overwrite `payment_reference` (no guard for already-approved state) | TBD |
 | 4 | `migrations/20260916_course_payments.sql` | Foreign key | References `charvak_enrollments` which no migration creates. Fresh-clone / DR restore fails | Session I |
-| 5a | `payment_engine.py` | `is_ready()` | `/api/payment/status` publicly returns `razorpay_key_id` + `paypal_client_id` — should trim to just bool flags. (Secret values NOT leaked — key_id is the public half.) | Security audit |
-| 5 | `main.py` | `/api/exam/progress`, `/api/exam/history`, `/api/exam/study-plan` | No auth check — anyone can query any email's data | Security audit |
+| 5a | `payment_engine.py` | `is_ready()` | `/api/payment/status` publicly returns `razorpay_key_id` + `paypal_client_id` â€” should trim to just bool flags. (Secret values NOT leaked â€” key_id is the public half.) | Security audit |
+| 5 | `main.py` | `/api/exam/progress`, `/api/exam/history`, `/api/exam/study-plan` | No auth check â€” anyone can query any email's data | Security audit |
 | 6 | `whatsapp_bot.py` | ~line 92 | AI JSON parsing bug (same as fixed in E/4) | When WhatsApp unblocks (external) |
-| 6a | `badge_engine.py` | `self.certifications` | Dead field — declared but never written to, no table created | Session I or future work |
-| 6b | `profile_network_engine.py` | `self.referral_matches` | Dead field — computed inline but never stored in list, no table created | Session I |
-| 6c | `profile_network_engine.py` | `candidate_data` in master_profiles | Snapshot at create time — goes stale after candidate updates their own profile | Product decision |
-| 6d | `university_engine.py` | `student_count` | Denormalized counter — only increments (no `remove_student` method exists) | Product decision |
-| 6e | `messaging_engine.py` | `get_stats.unread_messages` | Counts only `sent`+`delivered` — excludes `replied` | Product decision |
+| 6a | `badge_engine.py` | `self.certifications` | Dead field â€” declared but never written to, no table created | Session I or future work |
+| 6b | `profile_network_engine.py` | `self.referral_matches` | Dead field â€” computed inline but never stored in list, no table created | Session I |
+| 6c | `profile_network_engine.py` | `candidate_data` in master_profiles | Snapshot at create time â€” goes stale after candidate updates their own profile | Product decision |
+| 6d | `university_engine.py` | `student_count` | Denormalized counter â€” only increments (no `remove_student` method exists) | Product decision |
+| 6e | `messaging_engine.py` | `get_stats.unread_messages` | Counts only `sent`+`delivered` â€” excludes `replied` | Product decision |
 | 26 | `ai_bridge_engine.py` | `get_premium_report` |
-| 27 | `enterprise_engine.py` | `review_resume` | Typo in response: `f"Resume {decision}d"` → "Resume rejectd" for reject | Cosmetic / Session K |
+| 27 | `enterprise_engine.py` | `review_resume` | Typo in response: `f"Resume {decision}d"` â†’ "Resume rejectd" for reject | Cosmetic / Session K |
 | 28 | `enterprise_engine.py` | `record_survey_response` / `kiosk_check_in` | Increment counters but don't store respondent/student data (matches original) | Product decision |
 | 30 | `content_generator.py` |
-| 31 | `indian_language_ai.py` | `self.translations` | Dead field — declared but never written, `get_stats.total_translations` always 0 | Session K or later |
+| 31 | `indian_language_ai.py` | `self.translations` | Dead field â€” declared but never written, `get_stats.total_translations` always 0 | Session K or later |
 | 32 | `indian_language_ai.py` |
 | 33 | `role_manager.py` + `dynamic_role_engine.py` | Custom roles | Two parallel custom-role stores (`charvak_role_manager_custom_roles` + `charvak_dynamic_custom_roles`). `role_manager.get_all_roles()` merges both via `dynamic_role_engine.get_all_roles()` + own table. Consolidation is a future refactor | Session K or I |
 | 34 | `monitor_service.py` | `SiteMonitor.check_site` | `requests.Session(timeout=10)` is invalid - Session takes no `timeout` kwarg. Every check fails with TypeError, but the error is captured in `issues` (matches original behavior) | Session K or I |
@@ -176,46 +219,46 @@ off-topic detection.
 | 36 | `ai_question_generator.py` | `self.used_questions` | Dead field - declared but never written or read | Session K or later |
  module-level state | Original used module-level `monitored_sites = {}` and `alert_history = []`. Now DB-backed; dummy `monitor = SiteMonitor("", "")` kept for backwards-compat | Done (this session) |
  `submit_assessment` | Score not persisted back to assessment record (matches original) | Product decision |
- `self.content_cache` | Dead field — declared but never written to, no table created | Session K or later |
+ `self.content_cache` | Dead field â€” declared but never written to, no table created | Session K or later |
 | 29 | `voice_to_web_engine.py` | (not audited yet) | Persistence deferred to Session B-2 | Session B-2 |
  Not idempotent - calling twice for same session creates 2 premium rows + doubles revenue | Product decision / bug fix |
 | 25 | `chatbot_engine.py` | `_match_faq` | Keyword keys don't match FAQ question text - some FAQs unreachable (e.g. "pricing" keyword vs "cost" in question text). Falls back to AI. | Product decision / bug fix |
 | 7 | `ai_bridge_engine.py` | `_generate_ai_questions` + `_generate_report` | AI JSON parsing bug (missing `response_format`, both places) | FIXED in H/6 |
-| 5b | `outreach_engine.py` | `subscribe_premium`, `connect_gmail` | No UNIQUE constraint — multiple subscriptions and Gmail syncs allowed per email (matches original behavior) | Product decision |
-| 5c | `dynamic_role_engine.py` | `recommend_custom_role` | Anyone can add a global custom role — no auth, no per-user scoping | Security audit |
-| 5d | `dynamic_role_engine.py` | `create_dynamic_training_plan` | Stateless — plan returned but not stored (matches original) | Product decision |
+| 5b | `outreach_engine.py` | `subscribe_premium`, `connect_gmail` | No UNIQUE constraint â€” multiple subscriptions and Gmail syncs allowed per email (matches original behavior) | Product decision |
+| 5c | `dynamic_role_engine.py` | `recommend_custom_role` | Anyone can add a global custom role â€” no auth, no per-user scoping | Security audit |
+| 5d | `dynamic_role_engine.py` | `create_dynamic_training_plan` | Stateless â€” plan returned but not stored (matches original) | Product decision |
 
 ---
 
-## Open — feature gaps [WHITE]
+## Open â€” feature gaps [WHITE]
 
 | # | File | Issue | Fix in session |
 |---|---|---|---|
-| 8 | `final_year_project_engine.py` | `total_projects` always returns 0 — `self.projects` was a dead field | Future feature work |
+| 8 | `final_year_project_engine.py` | `total_projects` always returns 0 â€” `self.projects` was a dead field | Future feature work |
 | 9 | `ai_internship_engine.py` | `submit_work` uses `random.randint(7,10)` for score | Product decision |
-| 10 | `exam_prep_engine.py` | Icons changed from emoji to ASCII IDs — needs frontend mapping | When UI is built |
+| 10 | `exam_prep_engine.py` | Icons changed from emoji to ASCII IDs â€” needs frontend mapping | When UI is built |
 | 11 | `main.py` | Exam prep frontend mock-test UI doesn't exist (backend + routes live) | Dedicated UI session |
-| 12 | `na_module/charvak_vms.py` | `vendor_performance` dead field — never written to | Future feature work |
-| 13 | `student_suite_engine.py` | `assist_assignment` / `assist_research` return stubs — no real AI | Feature work |
-| 26 | `advanced_assessment_engine.py` | `_generate_versant_questions` | Declared question counts (e.g. repeats=16) exceed available static prompts (4) — questions limited by prompt count | Feature gap |
+| 12 | `na_module/charvak_vms.py` | `vendor_performance` dead field â€” never written to | Future feature work |
+| 13 | `student_suite_engine.py` | `assist_assignment` / `assist_research` return stubs â€” no real AI | Feature work |
+| 26 | `advanced_assessment_engine.py` | `_generate_versant_questions` | Declared question counts (e.g. repeats=16) exceed available static prompts (4) â€” questions limited by prompt count | Feature gap |
 | 14 | `na_module/vector_matcher.py` | `SKILL_EMBEDDINGS` is a small static dict; comment says "in production, use pgvector/Pinecone" | Future scaling |
 | 15 | Analytics Dashboards | Never audited; page exists but no data source verified | Dedicated audit |
 
 ---
 
-## Open — cosmetic [YELLOW]
+## Open â€” cosmetic [YELLOW]
 
 | # | File | Issue |
 |---|---|---|
-| 15a | `notification_engine.py` | Mojibake in email subject (`[WARN] ` instead of warning emoji) — fix in Session H |
-| 15b | `products_engine.py` | Mojibake in log message (`[OK]`) — fix in Session H |
+| 15a | `notification_engine.py` | Mojibake in email subject (`[WARN] ` instead of warning emoji) â€” fix in Session H |
+| 15b | `products_engine.py` | Mojibake in log message (`[OK]`) â€” fix in Session H |
 | 16 | Multiple engines | Heading order on remaining pages (accessibility) |
-| 17 | Site-wide | TBT ~1,900ms mobile — needs conditional script loading |
-| 18 | `na_module/vector_matcher.py`, `work_auth.py`, etc. | Emoji icons in some docstrings — clean up during Session I |
+| 17 | Site-wide | TBT ~1,900ms mobile â€” needs conditional script loading |
+| 18 | `na_module/vector_matcher.py`, `work_auth.py`, etc. | Emoji icons in some docstrings â€” clean up during Session I |
 
 ---
 
-## Open — hygiene / process [GREEN]
+## Open â€” hygiene / process [GREEN]
 
 | # | Item | Notes |
 |---|---|---|
@@ -231,12 +274,12 @@ off-topic detection.
 
 ## Rules for this file
 
-1. **Every session appends to it** — if you preserve a bug, note it here.
+1. **Every session appends to it** â€” if you preserve a bug, note it here.
 2. **Fixed items move to "Fixed"** with date + fix reference.
 3. **Session K** is the dedicated bug-cleanup session. **Session I** does the final capstone + tag.
 4. **Keep it in git** so it survives across machines and sessions.
 
-### Open — pattern: frontend handlers reference undefined variables (2026-10-02)
+### Open â€” pattern: frontend handlers reference undefined variables (2026-10-02)
 
 Second instance of this class: 'authToken is not defined' in
 templates/indian-language-ai.html (both createAssessment and
@@ -255,7 +298,7 @@ to find all call sites.
 Verdict: FLAGGED - cleanup candidate
 
 
-### Open — Indian Language AI: questions generated but not displayed (2026-10-02)
+### Open â€” Indian Language AI: questions generated but not displayed (2026-10-02)
 
 Full detail in COMMITMENT.md. The Language Assessment flow shows a
 summary ("5 questions created") and never renders the questions, never
@@ -268,7 +311,7 @@ Verdict: SCHEDULED - next cleanup session
 
 ---
 
-### Open — PowerShell process-kill leaves stale workers (2026-10-03)
+### Open â€” PowerShell process-kill leaves stale workers (2026-10-03)
 
 Hit this multiple times during Sessions 9-13:
 
@@ -281,7 +324,7 @@ Root cause: `--reload` spawns a supervisor + worker. Killing the
 supervisor leaves the worker holding the port. Some windows the
 `Get-Process` snapshot is also stale (process exited between commands).
 
-Fix — always verify after kill:
+Fix â€” always verify after kill:
 
     Get-Process | Where-Object { $_.ProcessName -eq "python" } | Stop-Process -Force -ErrorAction SilentlyContinue
     Start-Sleep -Seconds 2
@@ -289,33 +332,33 @@ Fix — always verify after kill:
 
 If a process remains, kill it explicitly by PID. If it says "not found"
 but still shows, wait 2 seconds and re-check. Never assume the kill
-worked — verify.
+worked â€” verify.
 
-Verdict: DOCUMENTED — apply the verify pattern
+Verdict: DOCUMENTED â€” apply the verify pattern
 
 
-### Open — PowerShell Get-Content displays correct UTF-8 as mojibake (2026-10-03)
+### Open â€” PowerShell Get-Content displays correct UTF-8 as mojibake (2026-10-03)
 
 Two false alarms during Sessions 13-14 (COMMITMENT.md, CAREER-ASSESSMENT-PLAN.md):
 
-Files displayed as `—"` (mojibake) in PowerShell's `Get-Content` output,
+Files displayed as `â€”"` (mojibake) in PowerShell's `Get-Content` output,
 but the bytes on disk were clean UTF-8 em-dashes.
 
 Root cause: Windows PowerShell 5.x `Get-Content` uses the console code page
 for output. `[System.IO.File]::ReadAllBytes()` and `ReadAllLines(path, UTF8)`
 show the truth.
 
-Fix — always verify with:
+Fix â€” always verify with:
 
     [System.IO.File]::ReadAllLines("path", [System.Text.Encoding]::UTF8)
 
 Never "fix" apparent mojibake without this check first. The earlier
 em-dash fix attempts might have been display-only, not real disk bugs.
 
-Verdict: DOCUMENTED — never fix mojibake without the byte check
+Verdict: DOCUMENTED â€” never fix mojibake without the byte check
 
 
-### RESOLVED — PayPal credits capture test (2026-10-03, db9e2a1)
+### RESOLVED â€” PayPal credits capture test (2026-10-03, db9e2a1)
 
 The Session B flag (#3 PayPal live capture test) is closed. Full
 sandbox flow verified end-to-end with a US sandbox buyer + US sandbox
@@ -324,14 +367,14 @@ merchant. See COMMITMENT.md for details.
 Verdict: RESOLVED
 
 
-### FLAGGED — PAYPAL_MODE should be explicit on Render (2026-10-03)
+### FLAGGED â€” PAYPAL_MODE should be explicit on Render (2026-10-03)
 
 The new `PAYPAL_MODE` env var defaults to "live" when unset, so Render
 works correctly today. But an explicit value is clearer for ops and
 prevents accidental sandbox routing on production.
 
 Fix: add `PAYPAL_MODE=live` to Render's Environment tab.
-Est: 1 min. Verdict: SCHEDULED — next Render dashboard session
+Est: 1 min. Verdict: SCHEDULED â€” next Render dashboard session
 
 
 
@@ -399,7 +442,7 @@ right before the IIFE closes.
 **Long-term rule:** prefer `data-action` + event delegation for all
 button handlers. Inline onclick to IIFE functions is a footgun.
 
-### RESOLVED — Anti-Cheating Layer A (2026-10-06, 1124a38 + 91e1b1f)
+### RESOLVED â€” Anti-Cheating Layer A (2026-10-06, 1124a38 + 91e1b1f)
 
 Gap 3 from COMPETITIVE-STRATEGY.md is partially closed. Layer A
 (deterministic environment signals) is live on Career Assessments:
@@ -416,26 +459,26 @@ analytics) is still future work.
 **Verification:** 8-scenario curl matrix + engine unit test + browser E2E.
 
 
-### RESOLVED — Admin UI for integrity events + public Trust Score badge (2026-10-07, 33cb2f6)
+### RESOLVED â€” Admin UI for integrity events + public Trust Score badge (2026-10-07, 33cb2f6)
 
 Session 27 shipped the integrity engine (event capture). Session 38
 shipped the surfaces that make it useful:
 
-- `/admin/integrity-events` — list of all assessments with integrity
+- `/admin/integrity-events` â€” list of all assessments with integrity
   events, sorted by risk level, filterable by risk and email/ID
-- `/admin/integrity-events/{aid}` — full event timeline with metadata
+- `/admin/integrity-events/{aid}` â€” full event timeline with metadata
   card and per-type filters
-- `/api/admin/integrity-events` — new admin list endpoint
-- `GET /api/readiness/{cert_id}/integrity` — public endpoint returning
+- `/api/admin/integrity-events` â€” new admin list endpoint
+- `GET /api/readiness/{cert_id}/integrity` â€” public endpoint returning
   only {risk_level, verified, total_events, message}
-- `integrity_engine.get_public_summary()` — strips per-type counts and
+- `integrity_engine.get_public_summary()` â€” strips per-type counts and
   timestamps so the public badge can't leak assessment detail
-- Trust Score badge on `/readiness/{id}` — 4 states, explainer collapse,
+- Trust Score badge on `/readiness/{id}` â€” 4 states, explainer collapse,
   silent-fail
 
 **Verified:** 21 assessments in the list, 87-event detail renders all
 five event types, clean + elevated badge states both confirmed on the
-certificate. Reverted after the elevated test — cert back to clean.
+certificate. Reverted after the elevated test â€” cert back to clean.
 
 **Rule going forward:** any new assessment format (Versant, Mock Drives,
 CBAT, IELTS) that wants a trust artifact reuses this exact pattern.
@@ -524,7 +567,7 @@ silently failing.
 **Verified E2E:**
 - Full session completes (was broken)
 - 10 events captured live
-- Admin list shows "English Assessment · versant"
+- Admin list shows "English Assessment Â· versant"
 - Detail page metadata populated
 - Partial submission shows banner + DB records partial=True
 - Full submission: no banner
@@ -651,7 +694,7 @@ the raw `ip_detector.detect_from_request()` call, which returns the
 country **name** (`"India"`) rather than the ISO code (`"IN"`).
 
 Consequence: if a caller omits `country_code` in the request body, the
-route falls through to `tier_3` → USD → PayPal, even for Indian users.
+route falls through to `tier_3` â†’ USD â†’ PayPal, even for Indian users.
 
 The A1.6 frontend currently sends an explicit `country_code`, so real
 users are not affected. But the backend has the same latent bug that
