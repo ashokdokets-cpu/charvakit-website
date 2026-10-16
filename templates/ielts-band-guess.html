@@ -1,0 +1,409 @@
+{% extends "base.html" %}
+{% block title %}Free IELTS Band Guesser - 30-Second Check | Charvak{% endblock %}
+{% block description %}Record 30 seconds of IELTS Speaking and get an instant band estimate. Free, no login required. Full examiner report for Rs 99.{% endblock %}
+{% block content %}
+
+<style>
+  .ibg-hero { background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%); color: #fff; padding: 48px 0 40px; }
+  .ibg-hero h1 { font-weight: 800; font-size: 2.1rem; margin: 0 0 10px; letter-spacing: -0.5px; }
+  .ibg-hero p { opacity: 0.9; font-size: 1.05rem; margin: 0; }
+  .ibg-hero .badge-free { background: #10b981; color: #fff; font-weight: 700; padding: 6px 14px; border-radius: 999px; font-size: 0.75rem; letter-spacing: 0.5px; display: inline-block; margin-bottom: 12px; text-transform: uppercase; }
+  .ibg-wrap { max-width: 780px; margin: 0 auto; padding: 0 16px; }
+  .ibg-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 32px 28px; margin-top: -30px; box-shadow: 0 10px 40px rgba(0,0,0,0.08); position: relative; z-index: 2; }
+  .ibg-prompt { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 16px 20px; border-radius: 8px; margin-bottom: 24px; }
+  .ibg-prompt .label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: #6b7280; font-weight: 700; margin: 0 0 6px; }
+  .ibg-prompt .text { font-size: 1.05rem; color: #111827; font-weight: 600; margin: 0; line-height: 1.5; }
+  .ibg-textarea { width: 100%; min-height: 180px; font-size: 0.95rem; border: 1px solid #d1d5db; border-radius: 10px; padding: 14px 16px; line-height: 1.6; resize: vertical; font-family: inherit; }
+  .ibg-textarea:focus { outline: none; border-color: #1e40af; box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.15); }
+  .ibg-btn-primary { background: #1e40af; color: #fff; border: none; font-weight: 700; padding: 14px 32px; border-radius: 10px; font-size: 1rem; transition: background 0.15s; }
+  .ibg-btn-primary:hover { background: #1e3a8a; color: #fff; }
+  .ibg-btn-primary:disabled { background: #9ca3af; cursor: not-allowed; }
+  .ibg-record-btn { background: #dc2626; color: #fff; border: none; font-weight: 700; padding: 14px 32px; border-radius: 10px; font-size: 1rem; }
+  .ibg-record-btn:hover { background: #b91c1c; color: #fff; }
+  .ibg-record-btn.recording { background: #111827; animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.7; } }
+  .ibg-result { margin-top: 32px; }
+  .ibg-band-big { display: inline-block; padding: 24px 40px; border-radius: 16px; font-weight: 900; font-size: 3.5rem; line-height: 1; letter-spacing: -2px; background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); color: #1e3a8a; }
+  .ibg-band-big .of { font-size: 1.3rem; color: #6b7280; margin-left: 8px; letter-spacing: 0; }
+  .ibg-verdict { font-size: 1rem; color: #374151; margin: 20px 0 0; line-height: 1.6; }
+  .ibg-subb { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 24px; }
+  .ibg-subb-cell { background: #f9fafb; border-radius: 10px; padding: 14px 12px; }
+  .ibg-subb-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280; font-weight: 700; margin: 0 0 4px; }
+  .ibg-subb-value { font-size: 1.4rem; font-weight: 800; color: #111827; line-height: 1; }
+  .ibg-paywall { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 1px solid #f59e0b; border-radius: 14px; padding: 24px 26px; margin-top: 28px; }
+  .ibg-paywall h3 { font-weight: 800; color: #78350f; margin: 0 0 8px; font-size: 1.15rem; }
+  .ibg-paywall p { color: #78350f; margin: 0 0 18px; font-size: 0.92rem; line-height: 1.55; }
+  .ibg-paywall .btn-buy { background: #f59e0b; color: #fff; border: none; font-weight: 700; padding: 12px 26px; border-radius: 8px; font-size: 0.95rem; }
+  .ibg-paywall .btn-buy:hover { background: #d97706; color: #fff; }
+  .ibg-explainer { margin-top: 56px; padding: 32px 0; }
+  .ibg-explainer h2 { font-weight: 800; color: #111827; margin: 0 0 20px; font-size: 1.4rem; }
+  .ibg-explainer h3 { font-weight: 700; color: #111827; margin: 24px 0 8px; font-size: 1.05rem; }
+  .ibg-explainer p, .ibg-explainer li { color: #4b5563; line-height: 1.7; font-size: 0.95rem; }
+</style>
+
+<div class="ibg-hero">
+  <div class="container">
+    <div class="ibg-wrap">
+      <span class="badge-free">100% Free — No Login</span>
+      <h1>Guess your IELTS Speaking band in 30 seconds</h1>
+      <p>Record a 30-second answer or paste a transcript. Get an instant band estimate from our AI examiner.</p>
+    </div>
+  </div>
+</div>
+
+<div class="ibg-wrap">
+  <div class="ibg-card">
+    <div class="ibg-prompt">
+      <p class="label">Your IELTS Part 2 Prompt</p>
+      <p class="text">Describe a place you've visited that left a strong impression on you.</p>
+    </div>
+
+    <div class="mb-3">
+      <label class="fw-bold d-block mb-2" style="color:#111827;">Choose how to answer:</label>
+      <div class="d-flex gap-2 mb-3">
+        <button type="button" class="btn btn-outline-primary btn-sm" id="ibgModeText" onclick="ibgSetMode('text')">Paste transcript</button>
+        <button type="button" class="btn btn-outline-primary btn-sm" id="ibgModeVoice" onclick="ibgSetMode('voice')">Record 30s answer</button>
+      </div>
+
+      <div id="ibgTextPanel">
+        <textarea id="ibgTranscript" class="ibg-textarea" placeholder="Speak your answer out loud, then paste the transcript here. Or just type a fresh answer as if you were speaking. Aim for 100-250 words." required></textarea>
+      </div>
+
+      <div id="ibgVoicePanel" style="display:none;">
+        <div class="text-center py-4" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;">
+          <button type="button" id="ibgRecordBtn" class="ibg-record-btn" onclick="ibgToggleRecording()">
+            <i class="bi bi-mic-fill me-2"></i>Start Recording
+          </button>
+          <div class="mt-3 small text-muted" id="ibgRecHint">Aim for 30 seconds. Max 45 seconds.</div>
+          <div id="ibgTranscriptPreview" class="mt-3 small text-start" style="display:none;max-width:600px;margin:0 auto;padding:12px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <form id="ibgForm" onsubmit="ibgSubmit(event)">
+      <button type="submit" class="ibg-btn-primary" id="ibgSubmitBtn">
+        Estimate my band (Free) &rarr;
+      </button>
+      <div id="ibgCount" class="text-muted small mt-2"></div>
+    </form>
+
+    <div id="ibgError" class="alert alert-danger mt-3" style="display:none;"></div>
+    <div id="ibgLoading" class="text-center py-4" style="display:none;">
+      <div class="spinner-border text-primary" role="status"></div>
+      <p class="mt-3 text-muted">Analysing your response...</p>
+    </div>
+    <div id="ibgResult" class="ibg-result" style="display:none;"></div>
+  </div>
+
+  <div class="ibg-explainer">
+    <h2>How this works</h2>
+    <p>We send your transcript to a certified IELTS examiner AI. It scores you on the four official IELTS criteria:</p>
+    <ul>
+      <li><strong>Fluency &amp; Coherence</strong> — how smoothly and logically you spoke</li>
+      <li><strong>Lexical Resource</strong> — vocabulary range and accuracy</li>
+      <li><strong>Grammatical Range &amp; Accuracy</strong> — sentence variety and correctness</li>
+      <li><strong>Pronunciation</strong> — estimated from transcript confidence (less reliable than a live examiner)</li>
+    </ul>
+
+    <h2>Why 30 seconds is enough</h2>
+    <p>A single Part 2 answer of 30 seconds gives us enough signal to estimate your band within ±0.5. Real examiners make the same judgment in the first 30 seconds of an interview — the rest just confirms it.</p>
+
+    <h2>What you get for free</h2>
+    <p>Your estimated overall band, an honest verdict, and a snapshot of the four sub-bands. No login, no credit card.</p>
+
+    <h2>What the Rs 99 report adds</h2>
+    <p>The full examiner report goes deeper: every grammar mistake in your response with the correct version, vocabulary upgrades from your actual phrasing, a Band 8+ model rewrite of your answer, and 5 personalized next steps. Delivered as a PDF by email.</p>
+  </div>
+</div>
+
+<script>
+(function() {
+  var API_GUESS = '/api/public/ielts/band-guess';
+  var API_ORDER = '/api/public/ielts/create-order';
+  var PROMPT = "Describe a place you've visited that left a strong impression on you.";
+
+  var MODE = 'text';
+  var RECORDING = false;
+  var MEDIA_RECORDER = null;
+  var AUDIO_CHUNKS = [];
+  var LAST_SHARE_ID = '';
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  window.ibgSetMode = function(mode) {
+    MODE = mode;
+    document.getElementById('ibgTextPanel').style.display = mode === 'text' ? 'block' : 'none';
+    document.getElementById('ibgVoicePanel').style.display = mode === 'voice' ? 'block' : 'none';
+    document.getElementById('ibgModeText').classList.toggle('active', mode === 'text');
+    document.getElementById('ibgModeVoice').classList.toggle('active', mode === 'voice');
+  };
+
+  window.ibgToggleRecording = async function() {
+    if (RECORDING) {
+      // stop
+      if (MEDIA_RECORDER) MEDIA_RECORDER.stop();
+      return;
+    }
+    try {
+      var stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      MEDIA_RECORDER = new MediaRecorder(stream);
+      AUDIO_CHUNKS = [];
+      MEDIA_RECORDER.ondataavailable = function(e) { if (e.data.size > 0) AUDIO_CHUNKS.push(e.data); };
+      MEDIA_RECORDER.onstop = async function() {
+        document.getElementById('ibgRecordBtn').innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Transcribing...';
+        var blob = new Blob(AUDIO_CHUNKS, { type: 'audio/webm' });
+        // Use Whisper endpoint (existing)
+        var fd = new FormData();
+        fd.append('audio', blob, 'answer.webm');
+        try {
+          var r = await fetch('/api/ielts/speaking/transcribe', { method: 'POST', body: fd });
+          var j = await r.json();
+          if (j.status === 'success' && j.transcript) {
+            document.getElementById('ibgTranscript').value = j.transcript;
+            document.getElementById('ibgTranscriptPreview').style.display = 'block';
+            document.getElementById('ibgTranscriptPreview').textContent = j.transcript;
+            document.getElementById('ibgRecordBtn').innerHTML = '<i class="bi bi-check2-circle me-2"></i>Recorded';
+            document.getElementById('ibgRecordBtn').className = 'ibg-record-btn';
+          } else {
+            alert('Transcription failed. Please try again or paste your answer.');
+            document.getElementById('ibgRecordBtn').innerHTML = '<i class="bi bi-mic-fill me-2"></i>Try Again';
+            document.getElementById('ibgRecordBtn').className = 'ibg-record-btn';
+          }
+        } catch (e) {
+          alert('Transcription error: ' + e.message);
+          document.getElementById('ibgRecordBtn').innerHTML = '<i class="bi bi-mic-fill me-2"></i>Try Again';
+          document.getElementById('ibgRecordBtn').className = 'ibg-record-btn';
+        }
+      };
+      MEDIA_RECORDER.start();
+      RECORDING = true;
+      document.getElementById('ibgRecordBtn').innerHTML = '<i class="bi bi-stop-fill me-2"></i>Stop Recording';
+      document.getElementById('ibgRecordBtn').className = 'ibg-record-btn recording';
+      // Auto-stop at 45 seconds
+      setTimeout(function() {
+        if (RECORDING && MEDIA_RECORDER && MEDIA_RECORDER.state === 'recording') {
+          MEDIA_RECORDER.stop();
+          RECORDING = false;
+        }
+      }, 45000);
+    } catch (e) {
+      alert('Microphone access required. Please allow it and try again.');
+    }
+  };
+
+  window.ibgSubmit = async function(e) {
+    e.preventDefault();
+    var transcript = (document.getElementById('ibgTranscript').value || '').trim();
+    if (transcript.length < 50) {
+      document.getElementById('ibgError').textContent = 'Please provide at least 50 characters (aim for 100-250 words).';
+      document.getElementById('ibgError').style.display = 'block';
+      return;
+    }
+
+    document.getElementById('ibgError').style.display = 'none';
+    document.getElementById('ibgResult').style.display = 'none';
+    document.getElementById('ibgLoading').style.display = 'block';
+    document.getElementById('ibgSubmitBtn').disabled = true;
+
+    try {
+      var r = await fetch(API_GUESS, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transcript: transcript, topic: PROMPT })
+      });
+      if (r.status === 429) {
+        throw new Error('Too many attempts. Please wait an hour and try again.');
+      }
+      var j = await r.json();
+      if (j.status !== 'success') {
+        throw new Error(j.message || 'Scoring failed.');
+      }
+      ibgRenderResult(j);
+    } catch (err) {
+      document.getElementById('ibgError').textContent = err.message || 'Something went wrong. Please try again.';
+      document.getElementById('ibgError').style.display = 'block';
+    } finally {
+      document.getElementById('ibgLoading').style.display = 'none';
+      document.getElementById('ibgSubmitBtn').disabled = false;
+    }
+  };
+
+  function ibgRenderResult(j) {
+    LAST_SHARE_ID = j.share_id || '';
+    var band = j.preview_band != null ? j.preview_band : '--';
+    var sub = j.sub_bands || {};
+
+    var html = '<div class="text-center">';
+    html += '<div class="ibg-band-big">' + band + '<span class="of">/ 9</span></div>';
+    html += '<div class="small text-muted mt-2">Estimated overall band</div>';
+    if (j.verdict) {
+      html += '<p class="ibg-verdict">' + esc(j.verdict) + '</p>';
+    }
+    if (j.topical_relevance === false) {
+      html += '<div class="alert alert-warning mt-3"><strong>Off-topic response.</strong> ' + esc(j.relevance_note || 'Your answer did not address the prompt.') + '</div>';
+    }
+    html += '</div>';
+
+    html += '<div class="ibg-subb">';
+    html += '<div class="ibg-subb-cell"><p class="ibg-subb-label">Fluency &amp; Coherence</p><p class="ibg-subb-value">' + (sub.fluency_coherence != null ? sub.fluency_coherence : '--') + '</p></div>';
+    html += '<div class="ibg-subb-cell"><p class="ibg-subb-label">Lexical Resource</p><p class="ibg-subb-value">' + (sub.lexical_resource != null ? sub.lexical_resource : '--') + '</p></div>';
+    html += '<div class="ibg-subb-cell"><p class="ibg-subb-label">Grammatical Range</p><p class="ibg-subb-value">' + (sub.grammatical_range != null ? sub.grammatical_range : '--') + '</p></div>';
+    html += '<div class="ibg-subb-cell"><p class="ibg-subb-label">Pronunciation</p><p class="ibg-subb-value">' + (sub.pronunciation != null ? sub.pronunciation : '--') + '</p></div>';
+    html += '</div>';
+
+    // Paywall
+    var p = window.__ibgPrice || { amount_local: 99, currency: 'INR', display: 'Rs 99' };
+    html += '<div class="ibg-paywall">';
+    html += '<h3>Unlock your full examiner report for ' + esc(p.display) + '</h3>';
+    html += '<p>Every grammar mistake in your response with the correct version, vocabulary upgrades from your actual phrasing, a Band 8+ model rewrite of your answer, and 5 personalized next steps. Delivered by email as a PDF.</p>';
+    html += '<div class="d-flex flex-wrap gap-2 align-items-center">';
+    html += '<input type="email" id="ibgEmail" class="form-control" placeholder="you@example.com" style="max-width:280px;">';
+    html += '<button type="button" class="btn-buy" onclick="ibgBuy()">Get full report - ' + esc(p.display) + '</button>';
+    html += '</div>';
+    html += '<div id="ibgBuyMsg" class="small mt-2" style="color:#78350f;"></div>';
+    html += '</div>';
+
+    // Share buttons
+    html += '<div class="text-center mt-4 small text-muted">';
+    html += 'Share your band: ';
+    html += '<a href="#" onclick="ibgShare(\'whatsapp\');return false;" class="ms-2">WhatsApp</a>';
+    html += ' &middot; ';
+    html += '<a href="#" onclick="ibgShare(\'linkedin\');return false;">LinkedIn</a>';
+    html += '</div>';
+
+    document.getElementById('ibgResult').innerHTML = html;
+    document.getElementById('ibgResult').style.display = 'block';
+    document.getElementById('ibgResult').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  window.ibgBuy = async function() {
+    var email = document.getElementById('ibgEmail').value.trim();
+    var msg = document.getElementById('ibgBuyMsg');
+    if (!email || email.indexOf('@') < 0) {
+      msg.textContent = 'Please enter a valid email.';
+      return;
+    }
+    if (!LAST_SHARE_ID) {
+      msg.textContent = 'Share ID missing. Please run the scan again.';
+      return;
+    }
+    msg.textContent = 'Opening payment...';
+    try {
+      var r = await fetch(API_ORDER, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ share_id: LAST_SHARE_ID, email: email })
+      });
+      var j = await r.json();
+      if (j.status !== 'success' || !j.order_id) {
+        msg.textContent = j.message || 'Could not create order.';
+        return;
+      }
+      if (j.gateway === 'paypal') {
+        if (typeof paypal === 'undefined') {
+          msg.textContent = 'PayPal not loaded. Please refresh.';
+          return;
+        }
+        msg.textContent = 'Opening PayPal...';
+        var container = document.getElementById('ibgPaypalContainer');
+        if (!container) {
+          container = document.createElement('div');
+          container.id = 'ibgPaypalContainer';
+          container.style.cssText = 'margin-top:12px;';
+          msg.parentElement.appendChild(container);
+        }
+        container.innerHTML = '';
+        paypal.Buttons({
+          createOrder: function() { return j.order_id; },
+          onApprove: async function(data) {
+            msg.textContent = 'Confirming payment...';
+            var conf = await fetch('/api/public/ielts/confirm-paypal', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ share_id: LAST_SHARE_ID, email: email, paypal_order_id: data.orderID })
+            });
+            var cj = await conf.json();
+            if (cj.status === 'success') {
+              msg.innerHTML = '<strong>Payment received.</strong> Your full examiner report is being generated - it will arrive in your inbox within 2 minutes.';
+              container.innerHTML = '';
+            } else {
+              msg.textContent = cj.message || 'PayPal capture failed.';
+            }
+          },
+          onError: function(err) {
+            msg.textContent = 'PayPal error: ' + (err && err.message ? err.message : 'unknown');
+          }
+        }).render('#ibgPaypalContainer');
+      } else {
+        var options = {
+          key: j.key_id,
+          amount: j.amount,
+          currency: j.currency || 'INR',
+          name: 'Charvak IT Consulting',
+          description: 'IELTS Speaking Band Report',
+          order_id: j.order_id,
+          handler: function(resp) {
+            msg.innerHTML = '<strong>Payment received.</strong> Your full examiner report is being generated - it will arrive in your inbox within 2 minutes.';
+          },
+          prefill: { email: email },
+          theme: { color: '#1e40af' },
+          modal: { ondismiss: function() { msg.textContent = 'Payment cancelled.'; } }
+        };
+        var rzp = new Razorpay(options);
+        rzp.open();
+      }
+    } catch (err) {
+      msg.textContent = 'Error: ' + (err.message || 'unknown');
+    }
+  };
+
+  // Session 44-B: fetch the local price on load
+  window.__ibgPrice = { amount_local: 99, currency: 'INR', display: 'Rs 99' };
+  (async function() {
+    try {
+      var r = await fetch('/api/public/price/ielts_band_report');
+      var j = await r.json();
+      if (j.status === 'success') {
+        var symbol = { 'INR': 'Rs ', 'USD': '$', 'EUR': '€', 'GBP': '£', 'AED': 'AED ', 'SGD': 'S$', 'AUD': 'A$', 'CAD': 'C$', 'JPY': '¥', 'CNY': '¥' }[j.currency] || (j.currency + ' ');
+        window.__ibgPrice = {
+          amount_local: j.amount_local,
+          currency: j.currency,
+          gateway: j.gateway,
+          display: symbol + (Number.isInteger(j.amount_local) ? j.amount_local : j.amount_local.toFixed(2))
+        };
+      }
+    } catch (e) {
+      // silent fail
+    }
+  })();
+
+  window.ibgShare = function(channel) {
+    var text = "I just scored an estimated IELTS Speaking band of " + (document.querySelector('.ibg-band-big') ? document.querySelector('.ibg-band-big').textContent.replace('/ 9','') : '') + "/9 on Charvak. Check yours free:";
+    var url = window.location.origin + '/ielts-band-guess';
+    if (channel === 'whatsapp') {
+      window.open('https://wa.me/?text=' + encodeURIComponent(text + ' ' + url), '_blank');
+    } else if (channel === 'linkedin') {
+      window.open('https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(url), '_blank');
+    }
+  };
+
+  // Character count
+  document.addEventListener('DOMContentLoaded', function() {
+    var ta = document.getElementById('ibgTranscript');
+    var counter = document.getElementById('ibgCount');
+    if (ta && counter) {
+      ta.addEventListener('input', function() {
+        var n = ta.value.length;
+        counter.textContent = n + ' chars';
+        counter.style.color = n < 50 ? '#dc2626' : '';
+      });
+    }
+    document.getElementById('ibgModeText').classList.add('active');
+  });
+})();
+</script>
+{% endblock %}
