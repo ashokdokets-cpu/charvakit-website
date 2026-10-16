@@ -1,5 +1,52 @@
 # Charvak — Commitment Tracker
 
+## Session 44-A1 - Public AI Slop Checker - COMPLETE (2026-10-16)
+
+The first of the four immediate revenue initiatives is live and verified.
+
+**Free tier:**
+- `POST /api/public/ai-slop/quick-scan`
+- Rate-limited 3/hour per real client IP (Cloudflare-aware)
+- Returns score, verdict, top 3 issues with severity + fix
+- Zero auth, zero credits charged
+- Page: `/slop-check` (public, no login)
+
+**Paid tier (Rs 199):**
+- `POST /api/public/ai-slop/create-order` - creates Razorpay order
+- Webhook branch routes on `tool == 'ai_slop_report'`
+- Reuses `premium_report_engine` (new `ai_slop` REPORT_TYPES entry)
+- Reuses `pdf_engine.render_premium_report_pdf`
+- Delivered via `enhanced_email.send_premium_report_email` (SendGrid)
+
+**Discovery:** AI Tools nav dropdown -> 'Free AI Slop Checker' (highlighted)
+
+**Bug found and fixed in prod (commit 48298e1):**
+The Razorpay webhook has an initial guard:
+```
+if not payment_id or not plan or not email:
+    return {'status': 'ignored', 'message': 'missing data'}
+```
+Our `ai_slop_report` orders weren't setting a `plan` key, so the guard
+rejected the webhook before reaching the tool-specific branch. Fixed by
+adding `"plan": "ai_slop_report"` to the notes dict.
+
+**Verified end-to-end on prod:**
+- Free scan: score 60/100, 5 issues, real AI analysis
+- Rs 199 payment captured (Razorpay live keys)
+- Report generated: scan SLOP-CDE1EB71 -> report PR-34DF3743E6EE2C25
+- PDF 47,619 bytes -> email delivered successfully
+- Next paid order will route automatically through the fixed webhook
+
+**Third live revenue line** after A1.6 (AI Tools) and A1.7 (IELTS).
+
+**Next initiatives in order:**
+1. Session 44-A2: IELTS Band Guesser (30-sec voice, Rs 99 diagnostic)
+2. Session 44-A3: Localized Exam Funnels (10 state-PSC pages)
+3. Session 44-A4: Resume Roaster Teaser (free preview + share loop)
+
+---
+
+
 ## Track F - Verified Remote Jobs Board - FLAGGED (2026-10-16)
 
 A remote jobs board, but VERIFIED-ONLY (not scraped/aggregated).
