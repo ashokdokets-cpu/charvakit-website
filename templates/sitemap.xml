@@ -13,7 +13,7 @@
     <url><loc>https://www.charvakit.com/readiness-check</loc><priority>0.9</priority><changefreq>weekly</changefreq></url>
     <url><loc>https://www.charvakit.com/placement-prep-2026</loc><priority>0.9</priority><changefreq>weekly</changefreq></url>
 
-    <!-- State-PSC free mock funnels (Session 44-A3) -->
+    <!-- State-PSC free mock funnels (Session 44-A3, extended 2026-10-16) -->
     <url><loc>https://www.charvakit.com/free-mock/uppsc_pcs</loc><priority>0.8</priority><changefreq>weekly</changefreq></url>
     <url><loc>https://www.charvakit.com/free-mock/mpsc_rajyaseva</loc><priority>0.8</priority><changefreq>weekly</changefreq></url>
     <url><loc>https://www.charvakit.com/free-mock/rpsc_ras</loc><priority>0.8</priority><changefreq>weekly</changefreq></url>
@@ -24,6 +24,18 @@
     <url><loc>https://www.charvakit.com/free-mock/gpsc_class12</loc><priority>0.8</priority><changefreq>weekly</changefreq></url>
     <url><loc>https://www.charvakit.com/free-mock/apsc_cce</loc><priority>0.8</priority><changefreq>weekly</changefreq></url>
     <url><loc>https://www.charvakit.com/free-mock/kpsc_kerala</loc><priority>0.8</priority><changefreq>weekly</changefreq></url>
+    <url><loc>https://www.charvakit.com/free-mock/opsc_ocs</loc><priority>0.7</priority><changefreq>weekly</changefreq></url>
+    <url><loc>https://www.charvakit.com/free-mock/cgpsc_sse</loc><priority>0.7</priority><changefreq>weekly</changefreq></url>
+    <url><loc>https://www.charvakit.com/free-mock/jpsc_ccs</loc><priority>0.7</priority><changefreq>weekly</changefreq></url>
+    <url><loc>https://www.charvakit.com/free-mock/ukpsc_pcs</loc><priority>0.7</priority><changefreq>weekly</changefreq></url>
+    <url><loc>https://www.charvakit.com/free-mock/hpsc_hcs</loc><priority>0.7</priority><changefreq>weekly</changefreq></url>
+    <url><loc>https://www.charvakit.com/free-mock/ppsc_pcs</loc><priority>0.7</priority><changefreq>weekly</changefreq></url>
+    <url><loc>https://www.charvakit.com/free-mock/mpsc_manipur</loc><priority>0.6</priority><changefreq>weekly</changefreq></url>
+    <url><loc>https://www.charvakit.com/free-mock/jkpsc_kas</loc><priority>0.6</priority><changefreq>weekly</changefreq></url>
+    <url><loc>https://www.charvakit.com/free-mock/tnpsc_group2</loc><priority>0.6</priority><changefreq>weekly</changefreq></url>
+    <url><loc>https://www.charvakit.com/free-mock/tpsc_tcs</loc><priority>0.6</priority><changefreq>weekly</changefreq></url>
+
+    <!-- State-PSC free mock funnels (Session 44-A3) -->
 
     <!-- About & Company -->
     <url><loc>https://www.charvakit.com/team</loc><priority>0.7</priority></url>
