@@ -1,5 +1,71 @@
 # Charvak — Commitment Tracker
 
+## Track F - Verified Remote Jobs Board - FLAGGED (2026-10-16)
+
+A remote jobs board, but VERIFIED-ONLY (not scraped/aggregated).
+
+### Why verified-only, not aggregated
+
+Aggregating/scraping LinkedIn, WWR, Wellfound, etc.:
+- Legal exposure (ToS violations, cease-and-desist risk)
+- IP blocks affect the whole platform
+- Ongoing maintenance (RSS feeds die, APIs change)
+- Spam/scam moderation burden
+- Google Jobs already aggregates better
+
+Verified-only posting:
+- Zero legal risk (employers post directly)
+- Zero spam (verification gate)
+- Defensible trust signal
+- Reuses 100% of existing infra (charvak_jobs, job_board_engine,
+  /job-board, /career-center/jobs, admin moderation)
+
+### What already exists
+
+- charvak_jobs table + job_board_engine
+- /job-board public page + /career-center/jobs
+- /api/jobs/unified (Session 31)
+- Admin moderation patterns (Session 24/25)
+- Resume + ATS integration
+- DoketsRB bidirectional sync (api_sync.py)
+
+### What needs to be built
+
+- F1: Verified employer signup + verification flow (2 sessions)
+- F2: Verified posting UI + admin moderation (1-2 sessions)
+- F3: Verified-only /job-board UI (1 session)
+- F4: Optional: public API aggregation (Remotive, Arbeitnow)
+      as "From Around the Web" section (1 session)
+- F5: Paid tiers for employers (Rs 499/job, Rs 4,999/mo unlimited) (1 session)
+
+Total: ~6-7 sessions.
+
+### Alternative considered & rejected
+
+A Python scraper agent pulling from LinkedIn / Wellfound / Remote.co / WWR:
+- REJECTED: legal risk, IP bans, maintenance burden, zero differentiation.
+
+### Legal-legitimate sources (if aggregation is pursued)
+
+- Remotive API (attribution required, allows redistribution)
+- Arbeitnow API (public, allows redistribution)
+- Himalayas API (limited, requires key)
+- GitHub Jobs archive (MIT-licensed dataset, no new jobs)
+
+All require attribution. None include Indian remote jobs.
+
+### Trigger to start
+
+- After Track A reaches steady state (A2.3 i18n shipped)
+- After Amrita pilot is running (Week 2+, so we know demand from
+  student population for remote opportunities)
+- After 3+ employers organically ask about posting
+
+### Verdict
+
+FLAGGED. Track F. Ship after Track A + Track C, before Track B
+if employer demand is confirmed.
+
 ## Immediate Revenue Initiatives - FLAGGED (2026-10-16)
 
 Four customer-facing revenue initiatives proposed at end of Session 43-A3.4/A4.
