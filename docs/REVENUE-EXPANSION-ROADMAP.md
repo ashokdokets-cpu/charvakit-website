@@ -180,3 +180,46 @@ See COMMITMENT.md "Deep-Dive Revenue Analysis" section.
 | 51 | Campus Employability Index (Track C) |
 
 **Realistic Year-1 revenue from new streams: Rs 50-80L**
+
+---
+
+## Self-Sustaining Flywheel - Strategic Design (2026-10-17)
+
+Deep design document. Full text in the session notes. Summary:
+
+**Thesis:** Viral loops alone decay. Compound data + viral loops win.
+Charvak must build both.
+
+**Seven-layer flywheel:**
+
+1. **Identity Layer** (3 sessions) — Passport page, handle, verification API
+2. **Match Layer** (4 sessions) — Skill quests, bounty board, auto-match
+3. **Learn Layer** (3 sessions) — Daily drills, streaks, leagues, cohort mode
+4. **Prove Layer** (3-4 sessions) — Skill Twin challenges, leaderboards, badges
+5. **Signal Layer** (4 sessions) — Composite Charvak Score, benchmarks, integrity passport
+6. **Employer Loop** (5 sessions) — Employer dashboard, "Require Passport", trusted badge
+7. **Data Flywheel** (4 sessions) — Public reports, Trust API, benchmark moats
+
+**Total: ~25 sessions (~3-4 months)**
+
+**Five advanced additions beyond standard viral playbook:**
+
+1. Career Passport Growth Curve (personal commitment loop)
+2. Cohort Effect (batch-engineered virality)
+3. Employer-Pull Loop (employers bring candidates, not just consume)
+4. Public Data Flywheel (media magnets via benchmark reports)
+5. Trust API (Charvak as infrastructure layer)
+
+**Five-session waves:**
+
+- **Wave 1 (Sessions 45-49):** Passport + Skill Twin + Daily Drills + Cohort
+- **Wave 2 (Sessions 50-54):** Employer dashboard + composite score + benchmarks
+- **Wave 3 (Sessions 55-59):** Public reports + Trust API + bounty board
+
+**Each wave is independently valuable.**
+
+**Revenue potential at flywheel maturity (Year 2): Rs 5-15Cr/year.**
+
+**Companion to REVENUE-EXPANSION-ROADMAP.md.**
+
+**Verdict:** FLAGGED. Wave 1 begins Session 46 (after Resume Roaster Teaser in Session 45).
