@@ -139,3 +139,44 @@ partnerships person to handle the distribution side.
 ---
 
 **Keep this doc in sync as streams ship.**
+
+---
+
+## Deep-Dive Addendum - 15 Additional Ideas Assessed (2026-10-17)
+
+See COMMITMENT.md "Deep-Dive Revenue Analysis" section.
+
+**Added to Tier 1 (build next):**
+- Voice-Biometric AI Invigilator (3-4 sessions)
+- Proof-of-Fluency Passport (2 sessions)
+- Proof-of-Truth Resume Ledger (3 sessions)
+- Live Speech Cleanup v1 (2 sessions)
+- Campus Employability Index (2 sessions with Track C)
+
+**Added to Tier 2 (build when triggered):**
+- Live Speech Red-Teaming (voice AI startup market)
+- AI Agent Proxy Bounty Pools (new business model territory)
+- Skill-Twin Competitive League (needs 10K+ users)
+
+**Skipped (with rationale in COMMITMENT.md):**
+- Full accent converter (competitive, hard)
+- Secondary device detection (unreliable)
+- Standalone accreditation reports (bundled)
+- Live human marketplace (services)
+- Global ATS (30+ sessions)
+- AI Career Twin (legal risk)
+- Staked deposits (gambling regs)
+
+**Revised build order (Sessions 45-51):**
+
+| Session | Stream |
+|---|---|
+| 45 | Resume Roaster Teaser (already planned) |
+| 46 | Voice-Biometric Invigilator |
+| 47 | Proof-of-Fluency Passport |
+| 48 | Institutional Credit Bundles |
+| 49 | Proof-of-Truth Resume Ledger |
+| 50 | Live Speech Cleanup v1 |
+| 51 | Campus Employability Index (Track C) |
+
+**Realistic Year-1 revenue from new streams: Rs 50-80L**

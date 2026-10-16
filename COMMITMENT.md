@@ -1,3 +1,73 @@
+## Deep-Dive Revenue Analysis - 15 New Ideas Assessed (2026-10-17)
+
+Full analysis of 3 documents containing ~20 new revenue ideas. Split
+into actionable tiers.
+
+**Worth building now (Sessions 46-51):**
+
+1. **Voice-Biometric AI Invigilator** (~3-4 sessions, Rs 2.4Cr/yr ceiling)
+   - Reuses integrity_engine + Versant voice pipeline
+   - Add voice-print + webcam eye-tracking
+   - Sell per-candidate anti-impersonation certificate ($29-99 each)
+   - Buyers: US tech recruiters, offshore agencies
+
+2. **Proof-of-Fluency Passport** (~2 sessions, Rs 48L/yr ceiling)
+   - 5-minute speaking + writing assessment
+   - Cryptographically signed "Verified Band Passport"
+   - $9.99 per cert (B2C) + $29 employer lookups (B2B)
+   - Buyers: ESL job seekers, nursing candidates, remote workers
+
+3. **Institutional Credit Bundles** (~1 session, Rs 18L/yr)
+   - Already recommended in prior list
+   - Bulk credits + voucher codes for coaching centers
+
+4. **Proof-of-Truth Resume Ledger** (~3 sessions, Rs 48L/yr)
+   - Verify resume claims vs GitHub commits + Versant recordings
+   - $5-15 unlock fee + $100-500/month recruiter API
+   - Buyers: HR tech platforms, US recruiters, tech professionals
+
+5. **Live Speech Cleanup (v1)** (~2 sessions, Rs 12L/yr)
+   - Browser extension: noise removal + clarity
+   - Skip accent smoothing (competitive space)
+   - $15-49/month B2C, $100/seat/month B2B
+
+6. **Campus Employability Index** (~2 sessions on Track C, Rs 75L/yr)
+   - Real-time university department dashboard
+   - Already planned as Track C session
+   - $5K-25K/year institutional license
+
+**Flagged for later (build when triggered):**
+
+- Live Speech Red-Teaming (voice AI stress tester) — trigger: voice AI startups become common (2028)
+- AI Agent Proxy Bounty Pools — trigger: AI+human org pattern proven elsewhere
+- Code & Slop Quarantine Subscription — merge with Continuous Compliance
+- Skill-Twin Competitive League — trigger: 10K+ active users
+- Legacy-Shift One-Click for SMBs — trigger: marketing channel ready
+
+**Not building (skipped with rationale):**
+
+- Full real-time accent converter (competitive, hard)
+- Secondary device detection (unreliable)
+- Standalone accreditation report generator (bundled in license)
+- Live human expert marketplace (services, not SaaS)
+- Global Talent ATS (30+ sessions)
+- AI Career Twin auto-outreach (ToS violation)
+- Staked deposits (gambling regs risk)
+
+**Strategic observation:** every idea reduces to assess/verify/match/transform
+- you already do all four. The bottleneck is distribution, not engineering.
+
+**Recommended sequencing:**
+- Session 45: Resume Roaster Teaser (already planned)
+- Session 46: Voice-Biometric Invigilator
+- Session 47: Proof-of-Fluency Passport
+- Session 48: Institutional Credit Bundles
+- Session 49: Proof-of-Truth Resume Ledger
+- Session 50: Live Speech Cleanup v1
+- Session 51: Campus Employability Index (Track C)
+
+**Total new revenue potential (realistic year 1): Rs 50-80L**
+
 ## Revenue Expansion Roadmap - FLAGGED (2026-10-17)
 
 Deep-dive analysis complete. 15 candidate revenue streams assessed by
