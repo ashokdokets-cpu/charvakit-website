@@ -325,7 +325,7 @@
   window.__slopPrice = { amount_local: 199, currency: 'INR', display: 'Rs 199' };
   (async function() {
     try {
-         var _cp = new URLSearchParams(window.location.search).get('country');
+      var _cp = new URLSearchParams(window.location.search).get('country');
       var _url = '/api/public/price/ai_slop_report' + (_cp ? '?country=' + encodeURIComponent(_cp) : '');
       var r = await fetch(_url);
       var j = await r.json();
