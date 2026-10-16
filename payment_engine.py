@@ -92,6 +92,164 @@ class PaymentEngine:
             "paypal_mode": getattr(self, "paypal_mode", "live"),
         }
 
+    # ============================================================
+    # Session 44-B: Global public pricing helper
+    # ============================================================
+    # Single source of truth for public-facing product prices across
+    # countries and currencies. Used by A1 (AI Slop), A2 (IELTS Band),
+    # and future public products.
+    #
+    # The pricing mirrors ielts_deep_report_engine.DEEP_REPORT_PRICE_TABLE
+    # and tool_payment_engine's tier structure.
+    # ============================================================
+
+    PUBLIC_PRICE_TABLE = {
+        # key -> {"INR_t1": paise_or_currency_amount, ...}
+        "ai_slop_report": {
+            ("INR", "tier_1"): 199,
+            ("INR", "tier_2"): 299,
+            ("INR", "tier_3"): 499,
+            ("USD", "tier_1"): 2.99,
+            ("USD", "tier_2"): 3.99,
+            ("USD", "tier_3"): 4.99,
+            ("EUR", "tier_1"): 2.99,
+            ("EUR", "tier_2"): 3.99,
+            ("EUR", "tier_3"): 4.49,
+            ("GBP", "tier_1"): 2.49,
+            ("GBP", "tier_2"): 3.49,
+            ("GBP", "tier_3"): 3.99,
+            ("AUD", "tier_1"): 4.49,
+            ("AUD", "tier_2"): 5.99,
+            ("AUD", "tier_3"): 6.99,
+            ("CAD", "tier_1"): 3.99,
+            ("CAD", "tier_2"): 4.99,
+            ("CAD", "tier_3"): 5.99,
+            ("SGD", "tier_1"): 3.99,
+            ("SGD", "tier_2"): 4.99,
+            ("SGD", "tier_3"): 5.99,
+            ("AED", "tier_1"): 11,
+            ("AED", "tier_2"): 15,
+            ("AED", "tier_3"): 19,
+            ("JPY", "tier_1"): 450,
+            ("JPY", "tier_2"): 550,
+            ("JPY", "tier_3"): 700,
+            ("CNY", "tier_1"): 21,
+            ("CNY", "tier_2"): 28,
+            ("CNY", "tier_3"): 35,
+        },
+        "ielts_band_report": {
+            ("INR", "tier_1"): 99,
+            ("INR", "tier_2"): 149,
+            ("INR", "tier_3"): 299,
+            ("USD", "tier_1"): 1.99,
+            ("USD", "tier_2"): 2.99,
+            ("USD", "tier_3"): 3.99,
+            ("EUR", "tier_1"): 1.99,
+            ("EUR", "tier_2"): 2.99,
+            ("EUR", "tier_3"): 3.49,
+            ("GBP", "tier_1"): 1.49,
+            ("GBP", "tier_2"): 2.49,
+            ("GBP", "tier_3"): 2.99,
+            ("AUD", "tier_1"): 2.99,
+            ("AUD", "tier_2"): 4.49,
+            ("AUD", "tier_3"): 4.99,
+            ("CAD", "tier_1"): 2.49,
+            ("CAD", "tier_2"): 3.49,
+            ("CAD", "tier_3"): 3.99,
+            ("SGD", "tier_1"): 2.49,
+            ("SGD", "tier_2"): 3.49,
+            ("SGD", "tier_3"): 3.99,
+            ("AED", "tier_1"): 7,
+            ("AED", "tier_2"): 11,
+            ("AED", "tier_3"): 14,
+            ("JPY", "tier_1"): 300,
+            ("JPY", "tier_2"): 400,
+            ("JPY", "tier_3"): 500,
+            ("CNY", "tier_1"): 14,
+            ("CNY", "tier_2"): 20,
+            ("CNY", "tier_3"): 27,
+        },
+    }
+
+    def resolve_public_price(self, key: str, country_code: str) -> Dict:
+        """
+        Resolve a public-facing price for a given key and country.
+
+        Returns:
+            {status, key, country_code, currency, tier,
+             amount_local, amount_inr, gateway,
+             razorpay_paise (if INR), paypal_amount (if not)}
+        """
+        table = self.PUBLIC_PRICE_TABLE.get(key)
+        if not table:
+            return {"status": "error", "message": f"Unknown price key: {key}"}
+
+        cc = (country_code or "IN").strip().upper()
+        # Normalize to 2-letter ISO
+        if len(cc) != 2:
+            _name_to_iso = {
+                "INDIA": "IN", "UNITED STATES": "US", "USA": "US",
+                "UNITED KINGDOM": "GB", "UK": "GB", "GERMANY": "DE",
+                "FRANCE": "FR", "CANADA": "CA", "AUSTRALIA": "AU",
+                "SINGAPORE": "SG", "JAPAN": "JP", "CHINA": "CN",
+                "UNITED ARAB EMIRATES": "AE", "UAE": "AE",
+            }
+            cc = _name_to_iso.get(cc, "IN")
+
+        # Determine currency
+        try:
+            from global_config import COUNTRY_TO_CURRENCY
+            currency = COUNTRY_TO_CURRENCY.get(cc, "USD")
+        except Exception:
+            currency = "INR" if cc == "IN" else "USD"
+
+        # Determine tier
+        try:
+            from global_config import PRICING_TIERS
+            tier = "tier_3"
+            for tname, tdata in PRICING_TIERS.items():
+                if cc in tdata.get("countries", []):
+                    tier = tname
+                    break
+        except Exception:
+            tier = "tier_3" if cc != "IN" else "tier_1"
+
+        # Look up price
+        price = table.get((currency, tier))
+        if price is None:
+            # Fallback to USD tier_3
+            price = table.get(("USD", "tier_3"))
+            currency = "USD"
+            tier = "tier_3"
+
+        # Convert to dict shape
+        result = {
+            "status": "success",
+            "key": key,
+            "country_code": cc,
+            "currency": currency,
+            "tier": tier,
+            "amount_local": price,
+        }
+
+        # Gateway: Razorpay for INR, PayPal for everything else
+        if currency == "INR":
+            result["gateway"] = "razorpay"
+            result["razorpay_paise"] = int(price * 100)
+            result["amount_inr"] = price
+        else:
+            result["gateway"] = "paypal"
+            result["paypal_amount"] = price
+            # Convert to INR for internal tracking using INR_RATES
+            try:
+                from payment_engine import payment_engine
+                rate = payment_engine.INR_RATES.get(currency, 1.0)
+                result["amount_inr"] = int(round(price / rate)) if rate else int(price)
+            except Exception:
+                result["amount_inr"] = int(price)
+
+        return result
+
     def create_razorpay_order(self, amount_inr: int, receipt: str, notes: Dict = None) -> Dict:
         """Create a Razorpay order."""
         if not self.razorpay_key_id:

@@ -3506,6 +3506,123 @@ async def razorpay_webhook(request: Request):
                 logger.error(f"Razorpay webhook: ai_course branch failed: {ce}", exc_info=True)
                 return JSONResponse({"status": "error", "message": "course processing failed"}, status_code=200)
 
+        # --- Session 44-A2: ielts_band_report branch ---
+        # Rs 99 payment for the IELTS Band Report PDF.
+        # Idempotent on share_id.
+        if tool == "ielts_band_report":
+            try:
+                share_id = (notes.get("share_id") or "").strip()
+                if not share_id:
+                    logger.warning("Razorpay webhook: ielts_band_report missing share_id")
+                    return JSONResponse({"status": "ignored", "message": "missing share_id"})
+
+                # Verify amount: Rs 99 = 9900 paise
+                got = int(payment_entity.get("amount") or 0)
+                if got != 9900:
+                    logger.warning(f"webhook ielts_band amount mismatch: got {got}, expected 9900")
+                    return JSONResponse({"status": "ignored", "message": "amount mismatch"})
+
+                from database import db
+                conn = db.get_connection()
+                cur = conn.cursor()
+
+                # Idempotency: one report per share_id (paid)
+                cur.execute("""
+                    SELECT paid, razorpay_payment_id FROM charvak_ielts_band_guesses
+                    WHERE share_id = %s LIMIT 1
+                """, (share_id,))
+                row = cur.fetchone()
+                if not row:
+                    cur.close(); conn.close()
+                    logger.warning(f"ielts_band_report: guess {share_id} not found")
+                    return JSONResponse({"status": "ignored", "message": "guess not found"})
+
+                already_paid, existing_payment_id = row
+                if already_paid and existing_payment_id:
+                    cur.close(); conn.close()
+                    logger.info(f"ielts_band_report already delivered for {share_id}")
+                    return JSONResponse({"status": "success", "payment_id": existing_payment_id, "share_id": share_id, "already_delivered": True})
+
+                # Mark as paid, bind email + payment_id
+                cur.execute("""
+                    UPDATE charvak_ielts_band_guesses
+                    SET paid = TRUE, email = %s, razorpay_payment_id = %s
+                    WHERE share_id = %s
+                """, (email, payment_id, share_id))
+                conn.commit()
+
+                # Fetch the transcript + evaluation
+                cur.execute("""
+                    SELECT transcript, topic, preview_band, evaluation_json
+                    FROM charvak_ielts_band_guesses WHERE share_id = %s LIMIT 1
+                """, (share_id,))
+                guess_row = cur.fetchone()
+                cur.close(); conn.close()
+
+                if not guess_row:
+                    logger.warning(f"ielts_band_report: guess row disappeared for {share_id}")
+                    return JSONResponse({"status": "error", "message": "guess row missing"}, status_code=200)
+
+                transcript, topic, preview_band, evaluation_json = guess_row
+                evaluation = evaluation_json if isinstance(evaluation_json, dict) else json.loads(evaluation_json or "{}")
+
+                # Generate the full report via premium_report_engine
+                from premium_report_engine import premium_report_engine
+                report = premium_report_engine.generate_report({
+                    "email": email,
+                    "report_type": "ielts_band",
+                    "source_id": share_id,
+                    "source_data": {
+                        "share_id": share_id,
+                        "topic": topic,
+                        "transcript": transcript,
+                        "preview_band": float(preview_band) if preview_band else None,
+                        "fluency_coherence": evaluation.get("fluency_coherence"),
+                        "lexical_resource": evaluation.get("lexical_resource"),
+                        "grammatical_range": evaluation.get("grammatical_range"),
+                        "pronunciation": evaluation.get("pronunciation"),
+                        "verdict": evaluation.get("feedback"),
+                        "razorpay_payment_id": payment_id,
+                    },
+                })
+
+                if report.get("status") != "success":
+                    logger.error(f"ielts_band_report generate failed: {report}")
+                    return JSONResponse({"status": "error", "message": report.get("message", "generate failed")}, status_code=200)
+
+                # Generate the PDF (reuse the premium report PDF renderer)
+                pdf_bytes = None
+                try:
+                    from pdf_engine import render_premium_report_pdf
+                    pdf_bytes = render_premium_report_pdf(report["content"])
+                except Exception as pdf_e:
+                    logger.error(f"ielts_band_report PDF render failed: {pdf_e}")
+
+                # Email the PDF
+                if pdf_bytes:
+                    try:
+                        from enhanced_email import enhanced_email
+                        enhanced_email.send_premium_report_email(
+                            email=email,
+                            report_title="IELTS Speaking Band Report",
+                            report_id=report["report_id"],
+                            pdf_bytes=pdf_bytes,
+                        )
+                    except Exception as em_e:
+                        logger.error(f"ielts_band_report email failed: {em_e}")
+
+                logger.info(f"ielts_band_report delivered: {report['report_id']} for {email}")
+                return JSONResponse({
+                    "status": "success",
+                    "payment_id": payment_id,
+                    "report_id": report["report_id"],
+                    "share_id": share_id,
+                })
+
+            except Exception as se:
+                logger.error(f"Razorpay webhook: ielts_band_report branch failed: {se}", exc_info=True)
+                return JSONResponse({"status": "error", "message": str(se)}, status_code=200)
+
         # --- Session 44-A1: ai_slop_report branch ---
         # Rs 199 payment for the full AI-Slop PDF report.
         # Idempotent on scan_id (one report per scan).
@@ -5410,6 +5527,259 @@ async def api_silent_killer_delete(request: Request, watch_id: str, email: str =
 # Full report is a Rs 199 PDF, delivered via the standard
 # Razorpay order flow + webhook, reusing premium_report_engine.
 
+@app.post("/api/public/ai-slop/confirm-paypal")
+@limiter.limit("20/minute")
+async def api_public_ai_slop_confirm_paypal(request: Request):
+    """
+    Client-confirm for PayPal flow (Session 44-B).
+    Frontend calls this after PayPal capture succeeds.
+    Backend verifies the PayPal order, then generates + emails the PDF.
+    """
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "Invalid JSON"})
+
+    scan_id = (data.get("scan_id") or "").strip()
+    email = (data.get("email") or "").strip().lower()
+    paypal_order_id = (data.get("paypal_order_id") or "").strip()
+
+    if not scan_id or not email or not paypal_order_id:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "scan_id, email, paypal_order_id required"})
+
+    # Verify the PayPal capture server-side
+    try:
+        from payment_engine import payment_engine
+        verify = payment_engine.fetch_paypal_order(paypal_order_id)
+    except Exception as e:
+        logger.error(f"ai_slop confirm-paypal: verify failed: {e}")
+        return JSONResponse(status_code=500, content={"status": "error", "message": "PayPal verification failed"})
+
+    if verify.get("status") != "COMPLETED":
+        return JSONResponse(status_code=402, content={"status": "error", "message": "PayPal payment not completed"})
+
+    # Idempotency — fetch the guess scan
+    try:
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT result_data FROM charvak_product_results
+            WHERE result_data->>'scan_id' = %s
+            ORDER BY created_at DESC LIMIT 1
+        """, (scan_id,))
+        row = cur.fetchone()
+        cur.close(); conn.close()
+    except Exception as e:
+        logger.error(f"ai_slop confirm-paypal: lookup failed: {e}")
+        return JSONResponse(status_code=500, content={"status": "error", "message": "Lookup failed"})
+
+    if not row:
+        return JSONResponse(status_code=404, content={"status": "error", "message": "Scan not found"})
+
+    scan_result = row[0] if isinstance(row[0], dict) else json.loads(row[0] or "{}")
+
+    # Idempotency: one report per scan_id
+    try:
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT report_id FROM charvak_premium_reports
+            WHERE report_type = 'ai_slop' AND source_id = %s LIMIT 1
+        """, (scan_id,))
+        existing = cur.fetchone()
+        cur.close(); conn.close()
+        if existing:
+            return {"status": "success", "report_id": existing[0], "already_delivered": True}
+    except Exception:
+        pass
+
+    # Generate the report
+    try:
+        from premium_report_engine import premium_report_engine
+        report = premium_report_engine.generate_report({
+            "email": email,
+            "report_type": "ai_slop",
+            "source_id": scan_id,
+            "source_data": {
+                "scan_id": scan_id,
+                "cleanliness_score": scan_result.get("cleanliness_score"),
+                "issue_count": scan_result.get("issue_count"),
+                "verdict": scan_result.get("verdict"),
+                "issues_found": scan_result.get("issues_found", []),
+                "top_issues": scan_result.get("top_issues", []),
+                "refactored_suggestions": scan_result.get("refactored_suggestions", []),
+                "language": scan_result.get("language", "JavaScript"),
+                "paypal_order_id": paypal_order_id,
+                "payment_gateway": "paypal",
+            },
+        })
+        if report.get("status") != "success":
+            logger.error(f"ai_slop confirm-paypal generate failed: {report}")
+            return JSONResponse(status_code=500, content={"status": "error", "message": "Report generation failed"})
+
+        # PDF
+        pdf_bytes = None
+        try:
+            from pdf_engine import render_premium_report_pdf
+            pdf_bytes = render_premium_report_pdf(report["content"])
+        except Exception as pdf_e:
+            logger.error(f"ai_slop confirm-paypal PDF failed: {pdf_e}")
+
+        # Email
+        if pdf_bytes:
+            try:
+                from enhanced_email import enhanced_email
+                enhanced_email.send_premium_report_email(
+                    email=email,
+                    report_title="AI Slop Analysis Report",
+                    report_id=report["report_id"],
+                    pdf_bytes=pdf_bytes,
+                )
+            except Exception as em_e:
+                logger.error(f"ai_slop confirm-paypal email failed: {em_e}")
+
+        logger.info(f"ai_slop_report (paypal) delivered: {report['report_id']} for {email}")
+        return {"status": "success", "report_id": report["report_id"]}
+
+    except Exception as e:
+        logger.error(f"ai_slop confirm-paypal failed: {e}", exc_info=True)
+        return JSONResponse(status_code=500, content={"status": "error", "message": "Report generation failed"})
+
+
+@app.post("/api/public/ielts/confirm-paypal")
+@limiter.limit("20/minute")
+async def api_public_ielts_confirm_paypal(request: Request):
+    """
+    Client-confirm for PayPal flow (Session 44-B). IELTS Band Report.
+    """
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "Invalid JSON"})
+
+    share_id = (data.get("share_id") or "").strip()
+    email = (data.get("email") or "").strip().lower()
+    paypal_order_id = (data.get("paypal_order_id") or "").strip()
+
+    if not share_id or not email or not paypal_order_id:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "share_id, email, paypal_order_id required"})
+
+    # Verify PayPal
+    try:
+        from payment_engine import payment_engine
+        verify = payment_engine.fetch_paypal_order(paypal_order_id)
+    except Exception as e:
+        logger.error(f"ielts band confirm-paypal: verify failed: {e}")
+        return JSONResponse(status_code=500, content={"status": "error", "message": "PayPal verification failed"})
+
+    if verify.get("status") != "COMPLETED":
+        return JSONResponse(status_code=402, content={"status": "error", "message": "PayPal payment not completed"})
+
+    # Idempotency + fetch
+    try:
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT transcript, topic, preview_band, evaluation_json, paid, razorpay_payment_id
+            FROM charvak_ielts_band_guesses WHERE share_id = %s LIMIT 1
+        """, (share_id,))
+        row = cur.fetchone()
+        if not row:
+            cur.close(); conn.close()
+            return JSONResponse(status_code=404, content={"status": "error", "message": "Guess session not found"})
+
+        transcript, topic, preview_band, evaluation_json, already_paid, existing_payment = row
+        if already_paid and existing_payment:
+            cur.close(); conn.close()
+            return {"status": "success", "share_id": share_id, "already_delivered": True}
+
+        cur.execute("""
+            UPDATE charvak_ielts_band_guesses
+            SET paid = TRUE, email = %s, razorpay_payment_id = %s
+            WHERE share_id = %s
+        """, (email, paypal_order_id, share_id))
+        conn.commit()
+        cur.close(); conn.close()
+    except Exception as e:
+        logger.error(f"ielts band confirm-paypal: db failed: {e}")
+        return JSONResponse(status_code=500, content={"status": "error", "message": "Lookup failed"})
+
+    evaluation = evaluation_json if isinstance(evaluation_json, dict) else json.loads(evaluation_json or "{}")
+
+    # Generate
+    try:
+        from premium_report_engine import premium_report_engine
+        report = premium_report_engine.generate_report({
+            "email": email,
+            "report_type": "ielts_band",
+            "source_id": share_id,
+            "source_data": {
+                "share_id": share_id,
+                "topic": topic,
+                "transcript": transcript,
+                "preview_band": float(preview_band) if preview_band else None,
+                "fluency_coherence": evaluation.get("fluency_coherence"),
+                "lexical_resource": evaluation.get("lexical_resource"),
+                "grammatical_range": evaluation.get("grammatical_range"),
+                "pronunciation": evaluation.get("pronunciation"),
+                "verdict": evaluation.get("feedback"),
+                "paypal_order_id": paypal_order_id,
+                "payment_gateway": "paypal",
+            },
+        })
+        if report.get("status") != "success":
+            logger.error(f"ielts band confirm-paypal generate failed: {report}")
+            return JSONResponse(status_code=500, content={"status": "error", "message": "Report generation failed"})
+
+        pdf_bytes = None
+        try:
+            from pdf_engine import render_premium_report_pdf
+            pdf_bytes = render_premium_report_pdf(report["content"])
+        except Exception as pdf_e:
+            logger.error(f"ielts band confirm-paypal PDF failed: {pdf_e}")
+
+        if pdf_bytes:
+            try:
+                from enhanced_email import enhanced_email
+                enhanced_email.send_premium_report_email(
+                    email=email,
+                    report_title="IELTS Speaking Band Report",
+                    report_id=report["report_id"],
+                    pdf_bytes=pdf_bytes,
+                )
+            except Exception as em_e:
+                logger.error(f"ielts band confirm-paypal email failed: {em_e}")
+
+        logger.info(f"ielts_band_report (paypal) delivered: {report['report_id']} for {email}")
+        return {"status": "success", "report_id": report["report_id"], "share_id": share_id}
+
+    except Exception as e:
+        logger.error(f"ielts band confirm-paypal failed: {e}", exc_info=True)
+        return JSONResponse(status_code=500, content={"status": "error", "message": "Report generation failed"})
+
+
+@app.get("/api/public/price/{key}")
+@limiter.limit("60/minute")
+async def api_public_price(request: Request, key: str):
+    """
+    Public price resolution for a given product key.
+    Detects country from IP (Cloudflare-aware), returns the local price.
+    No auth. Used by frontend templates to display prices in the user's currency.
+    """
+    try:
+        from improved_ip_detection import improved_ip_detector
+        _loc = improved_ip_detector.detect_from_request(request) or {}
+        country_code = _loc.get("country_code") or _loc.get("country") or "IN"
+    except Exception:
+        country_code = "IN"
+
+    from payment_engine import payment_engine
+    return payment_engine.resolve_public_price(key.strip().lower(), country_code)
+
+
 @app.post("/api/public/ai-slop/quick-scan")
 @limiter.limit("3/hour")
 async def api_public_ai_slop_quick_scan(request: Request):
@@ -5510,31 +5880,289 @@ async def api_public_ai_slop_create_order(request: Request):
     if not row:
         return JSONResponse(status_code=404, content={"status": "error", "message": "Scan not found. Run a fresh scan first."})
 
-    # Create Razorpay order for Rs 199 (19900 paise)
+    # Session 44-B: currency-aware order creation
+    country_code = ""
+    try:
+        from improved_ip_detection import improved_ip_detector
+        _loc = improved_ip_detector.detect_from_request(request) or {}
+        country_code = _loc.get("country_code") or _loc.get("country") or "IN"
+    except Exception:
+        country_code = "IN"
+
     try:
         from payment_engine import payment_engine
-        order = payment_engine.create_razorpay_order(
-            amount_inr=19900,  # paise
-            receipt=f"rcpt_slop_{scan_id[-8:]}",
-            notes={
-                "tool": "ai_slop_report",
-                "plan": "ai_slop_report",
-                "email": email,
-                "scan_id": scan_id,
-                "amount_inr": 199,
-            },
-        )
-        return {
-            "status": "success",
-            "order_id": order.get("order_id"),
-            "key_id": order.get("key_id"),
-            "amount": order.get("amount"),
-            "currency": order.get("currency", "INR"),
+        price = payment_engine.resolve_public_price("ai_slop_report", country_code)
+        if price.get("status") != "success":
+            return JSONResponse(status_code=500, content={"status": "error", "message": "Could not resolve price"})
+
+        gateway = price["gateway"]
+        notes = {
+            "tool": "ai_slop_report",
+            "plan": "ai_slop_report",
+            "email": email,
+            "scan_id": scan_id,
+            "country_code": price["country_code"],
+            "amount_local": str(price["amount_local"]),
+            "currency": price["currency"],
+            "amount_inr": str(price["amount_inr"]),
+            "gateway": gateway,
         }
+
+        if gateway == "razorpay":
+            order = payment_engine.create_razorpay_order(
+                amount_inr=price["razorpay_paise"],
+                receipt=f"rcpt_slop_{scan_id[-8:]}",
+                notes=notes,
+            )
+            return {
+                "status": "success",
+                "gateway": "razorpay",
+                "order_id": order.get("order_id"),
+                "key_id": order.get("key_id"),
+                "amount": order.get("amount"),
+                "currency": "INR",
+                "amount_local": price["amount_local"],
+                "display_currency": price["currency"],
+            }
+        else:
+            order = payment_engine.create_paypal_order(
+                amount_inr=price["amount_inr"],
+                target_currency=price["currency"],
+                description=f"AI Slop Report ({scan_id})",
+            )
+            # PayPal order returned with id — client captures via SDK
+            return {
+                "status": "success",
+                "gateway": "paypal",
+                "order_id": order.get("order_id") or order.get("id"),
+                "client_id": payment_engine.paypal_client_id if hasattr(payment_engine, "paypal_client_id") else "",
+                "amount": price["amount_local"],
+                "currency": price["currency"],
+                "amount_local": price["amount_local"],
+                "display_currency": price["currency"],
+            }
     except Exception as e:
         logger.error(f"ai_slop create-order failed: {e}")
         return JSONResponse(status_code=500, content={"status": "error", "message": "Could not create order"})
 
+
+
+# ============================================================
+# Session 44-A2: Public IELTS Band Guesser (free teaser + Rs 99 PDF)
+# ============================================================
+# Anonymous 30-second IELTS Speaking teaser.
+# Free: single-part transcript -> preview band + verdict + share_id
+# Paid: Rs 99 -> full examiner report PDF, delivered via webhook
+
+@app.post("/api/public/ielts/band-guess")
+@limiter.limit("5/hour")
+async def api_public_ielts_band_guess(request: Request):
+    """
+    Public, no-auth, rate-limited IELTS Speaking band guess.
+    Body: {transcript: "...", topic: "optional"}
+    Returns: {status, share_id, preview_band, sub_bands, verdict, share_text}
+    """
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "Invalid JSON"})
+
+    transcript = (data.get("transcript") or "").strip()
+    topic = (data.get("topic") or "Describe a place you've visited that left a strong impression on you").strip()
+
+    if not transcript:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "Please provide a transcript."})
+    if len(transcript) < 50:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "Please provide at least 50 characters."})
+
+    # Cap length for the free tier
+    truncated = False
+    if len(transcript) > 1500:
+        transcript = transcript[:1500]
+        truncated = True
+
+    try:
+        from ielts_engine import ielts_engine as _ie
+        responses = [{"part": 2, "question": topic, "transcript": transcript}]
+        result = _ie.evaluate_speaking(responses, topic=topic, email=None)
+    except Exception as e:
+        logger.error(f"public ielts band-guess failed: {e}")
+        return JSONResponse(status_code=500, content={"status": "error", "message": "Scoring failed. Try again."})
+
+    if result.get("status") != "success":
+        return JSONResponse(status_code=500, content={"status": "error", "message": result.get("message", "Scoring failed")})
+
+    evaluation = result.get("evaluation", {})
+    overall = evaluation.get("overall_band", 0.0)
+
+    # Generate a share_id (used to bind the paid order to the transcript)
+    share_id = "IBG-" + secrets.token_hex(6).upper()
+
+    # Persist the transcript + evaluation for later retrieval when the user pays
+    try:
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS charvak_ielts_band_guesses (
+                share_id       TEXT PRIMARY KEY,
+                transcript     TEXT NOT NULL,
+                topic          TEXT,
+                preview_band   NUMERIC,
+                evaluation_json JSONB,
+                email          TEXT,
+                paid           BOOLEAN DEFAULT FALSE,
+                razorpay_payment_id TEXT,
+                created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        cur.execute("""
+            INSERT INTO charvak_ielts_band_guesses
+                (share_id, transcript, topic, preview_band, evaluation_json)
+            VALUES (%s, %s, %s, %s, %s::jsonb)
+        """, (share_id, transcript, topic, overall, json.dumps(evaluation)))
+        conn.commit()
+        cur.close(); conn.close()
+    except Exception as e:
+        logger.error(f"ielts band-guess persist failed: {e}")
+        # Continue anyway — we still return the preview
+
+    # Build the preview response
+    verdict = evaluation.get("feedback", "")[:300]
+    relevance = evaluation.get("topical_relevance", True)
+
+    return {
+        "status": "success",
+        "share_id": share_id,
+        "preview_band": overall,
+        "topical_relevance": relevance,
+        "relevance_note": evaluation.get("relevance_note", ""),
+        "sub_bands": {
+            "fluency_coherence": evaluation.get("fluency_coherence"),
+            "lexical_resource": evaluation.get("lexical_resource"),
+            "grammatical_range": evaluation.get("grammatical_range"),
+            "pronunciation": evaluation.get("pronunciation"),
+        },
+        "verdict": verdict,
+        "truncated_input": truncated,
+        "upgrade": {
+            "message": "Unlock your full examiner-grade report with grammar corrections, vocabulary upgrades, a Band 8+ model rewrite, and 5 personalized next steps.",
+            "price_inr": 99,
+            "cta_url": "/ielts-band-guess",
+        },
+    }
+
+
+@app.post("/api/public/ielts/create-order")
+@limiter.limit("10/minute")
+async def api_public_ielts_create_order(request: Request):
+    """
+    Create a Razorpay order for the IELTS Band Report PDF (Rs 99).
+    Body: {share_id, email}
+    Returns: {status, order_id, key_id, amount, currency}
+    Webhook branch handles PDF generation + email delivery.
+    """
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "Invalid JSON"})
+
+    share_id = (data.get("share_id") or "").strip()
+    email = (data.get("email") or "").strip().lower()
+
+    if not share_id or not email:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "share_id and email required"})
+    if "@" not in email:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "Invalid email"})
+
+    # Verify the guess exists
+    try:
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT share_id FROM charvak_ielts_band_guesses
+            WHERE share_id = %s
+            LIMIT 1
+        """, (share_id,))
+        row = cur.fetchone()
+        cur.close(); conn.close()
+    except Exception as e:
+        logger.error(f"ielts band create-order lookup failed: {e}")
+        return JSONResponse(status_code=500, content={"status": "error", "message": "Lookup failed"})
+
+    if not row:
+        return JSONResponse(status_code=404, content={"status": "error", "message": "Guess session not found. Run a fresh guess first."})
+
+    # Session 44-B: currency-aware order creation
+    country_code = ""
+    try:
+        from improved_ip_detection import improved_ip_detector
+        _loc = improved_ip_detector.detect_from_request(request) or {}
+        country_code = _loc.get("country_code") or _loc.get("country") or "IN"
+    except Exception:
+        country_code = "IN"
+
+    try:
+        from payment_engine import payment_engine
+        price = payment_engine.resolve_public_price("ielts_band_report", country_code)
+        if price.get("status") != "success":
+            return JSONResponse(status_code=500, content={"status": "error", "message": "Could not resolve price"})
+
+        gateway = price["gateway"]
+        notes = {
+            "tool": "ielts_band_report",
+            "plan": "ielts_band_report",
+            "email": email,
+            "share_id": share_id,
+            "country_code": price["country_code"],
+            "amount_local": str(price["amount_local"]),
+            "currency": price["currency"],
+            "amount_inr": str(price["amount_inr"]),
+            "gateway": gateway,
+        }
+
+        if gateway == "razorpay":
+            order = payment_engine.create_razorpay_order(
+                amount_inr=price["razorpay_paise"],
+                receipt=f"rcpt_ibg_{share_id[-8:]}",
+                notes=notes,
+            )
+            return {
+                "status": "success",
+                "gateway": "razorpay",
+                "order_id": order.get("order_id"),
+                "key_id": order.get("key_id"),
+                "amount": order.get("amount"),
+                "currency": "INR",
+                "amount_local": price["amount_local"],
+                "display_currency": price["currency"],
+            }
+        else:
+            order = payment_engine.create_paypal_order(
+                amount_inr=price["amount_inr"],
+                target_currency=price["currency"],
+                description=f"IELTS Band Report ({share_id})",
+            )
+            return {
+                "status": "success",
+                "gateway": "paypal",
+                "order_id": order.get("order_id") or order.get("id"),
+                "client_id": payment_engine.paypal_client_id if hasattr(payment_engine, "paypal_client_id") else "",
+                "amount": price["amount_local"],
+                "currency": price["currency"],
+                "amount_local": price["amount_local"],
+                "display_currency": price["currency"],
+            }
+    except Exception as e:
+        logger.error(f"ielts band create-order failed: {e}")
+        return JSONResponse(status_code=500, content={"status": "error", "message": "Could not create order"})
+
+
+@app.get("/ielts-band-guess", response_class=HTMLResponse)
+async def ielts_band_guess_page(request: Request):
+    """Public IELTS Band Guesser page."""
+    return template_response("ielts-band-guess.html", request, "IELTS Band Guesser - Free 30-Second Check")
 
 @app.post("/api/products/ai-slop/scan")
 @limiter.limit("60/minute")

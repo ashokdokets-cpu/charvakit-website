@@ -209,12 +209,13 @@
     }
 
     if (total > issues.length || (j.total_issues_available && j.cleanliness_score < 100)) {
+      var p = window.__slopPrice || { amount_local: 199, currency: 'INR', display: 'Rs 199' };
       html += '<div class="slop-paywall">';
-      html += '<h3>Unlock the full report for Rs 199</h3>';
+      html += '<h3>Unlock the full report for ' + esc(p.display) + '</h3>';
       html += '<p>You will receive a PDF with all ' + total + ' issues, root-cause analysis, refactored suggestions, industry benchmarks, and a prioritized action roadmap.</p>';
       html += '<div class="d-flex flex-wrap gap-2 align-items-center">';
       html += '<input type="email" id="slopEmail" class="form-control" placeholder="you@example.com" style="max-width:280px;">';
-      html += '<button type="button" class="btn-buy" onclick="slopBuy()">Get full report — Rs 199</button>';
+      html += '<button type="button" class="btn-buy" onclick="slopBuy()">Get full report - ' + esc(p.display) + '</button>';
       html += '</div>';
       html += '<div id="slopBuyMsg" class="small mt-2" style="color:#78350f;"></div>';
       html += '</div>';
@@ -255,30 +256,90 @@
         return;
       }
 
-      var options = {
-        key: j.key_id,
-        amount: j.amount,
-        currency: j.currency || 'INR',
-        name: 'Charvak IT Consulting',
-        description: 'AI Slop Analysis Report',
-        order_id: j.order_id,
-        handler: function(resp) {
-          msg.innerHTML = '<strong>Payment received.</strong> Your full report is being generated — it will arrive in your inbox within 2 minutes.';
-        },
-        prefill: { email: email },
-        theme: { color: '#3ba591' },
-        modal: {
-          ondismiss: function() {
-            msg.textContent = 'Payment cancelled.';
-          }
+      if (j.gateway === 'paypal') {
+        // PayPal client-confirm flow
+        if (typeof paypal === 'undefined') {
+          msg.textContent = 'PayPal not loaded. Please refresh.';
+          return;
         }
-      };
-      var rzp = new Razorpay(options);
-      rzp.open();
+        msg.textContent = 'Opening PayPal...';
+        var container = document.getElementById('slopPaypalContainer');
+        if (!container) {
+          container = document.createElement('div');
+          container.id = 'slopPaypalContainer';
+          container.style.cssText = 'margin-top:12px;';
+          msg.parentElement.appendChild(container);
+        }
+        container.innerHTML = '';
+        paypal.Buttons({
+          createOrder: function() { return j.order_id; },
+          onApprove: async function(data) {
+            msg.textContent = 'Confirming payment...';
+            // Client-confirm: server verifies PayPal capture
+            var conf = await fetch('/api/public/ai-slop/confirm-paypal', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ scan_id: scanId, email: email, paypal_order_id: data.orderID })
+            });
+            var cj = await conf.json();
+            if (cj.status === 'success') {
+              msg.innerHTML = '<strong>Payment received.</strong> Your full report is being generated - it will arrive in your inbox within 2 minutes.';
+              container.innerHTML = '';
+            } else {
+              msg.textContent = cj.message || 'PayPal capture failed.';
+            }
+          },
+          onError: function(err) {
+            msg.textContent = 'PayPal error: ' + (err && err.message ? err.message : 'unknown');
+          }
+        }).render('#slopPaypalContainer');
+      } else {
+        // Razorpay flow (existing)
+        var options = {
+          key: j.key_id,
+          amount: j.amount,
+          currency: j.currency || 'INR',
+          name: 'Charvak IT Consulting',
+          description: 'AI Slop Analysis Report',
+          order_id: j.order_id,
+          handler: function(resp) {
+            msg.innerHTML = '<strong>Payment received.</strong> Your full report is being generated - it will arrive in your inbox within 2 minutes.';
+          },
+          prefill: { email: email },
+          theme: { color: '#3ba591' },
+          modal: {
+            ondismiss: function() {
+              msg.textContent = 'Payment cancelled.';
+            }
+          }
+        };
+        var rzp = new Razorpay(options);
+        rzp.open();
+      }
     } catch (err) {
       msg.textContent = 'Error: ' + (err.message || 'unknown');
     }
   };
+
+  // Session 44-B: fetch the local price on load and store in window.__slopPrice
+  window.__slopPrice = { amount_local: 199, currency: 'INR', display: 'Rs 199' };
+  (async function() {
+    try {
+      var r = await fetch('/api/public/price/ai_slop_report');
+      var j = await r.json();
+      if (j.status === 'success') {
+        var symbol = { 'INR': 'Rs ', 'USD': '$', 'EUR': '€', 'GBP': '£', 'AED': 'AED ', 'SGD': 'S$', 'AUD': 'A$', 'CAD': 'C$', 'JPY': '¥', 'CNY': '¥' }[j.currency] || (j.currency + ' ');
+        window.__slopPrice = {
+          amount_local: j.amount_local,
+          currency: j.currency,
+          gateway: j.gateway,
+          display: symbol + (Number.isInteger(j.amount_local) ? j.amount_local : j.amount_local.toFixed(2))
+        };
+      }
+    } catch (e) {
+      // silent fail: keep INR default
+    }
+  })();
 
   // Character count live
   document.addEventListener('DOMContentLoaded', function() {
