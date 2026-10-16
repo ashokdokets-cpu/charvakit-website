@@ -1,3 +1,31 @@
+## A1.2 - PAYPAL_MODE=live explicit on Render - CLOSED (2026-10-17)
+
+Verified via `GET https://www.charvakit.com/api/payment/status`:
+
+    {
+      "razorpay": true,
+      "paypal": true,
+      "upi": true,
+      "razorpay_key_id": "rzp_live_...",
+      "paypal_client_id": "Aaj...",
+      "paypal_mode": "live"
+    }
+
+`paypal_mode: "live"` is explicit - the flag from Session 9 is closed.
+Production was already safe (the code defaults to "live" when the env
+var is unset), but explicit is clearer for ops.
+
+**Flag duration:** ~38 days carried (Session 9 -> Session 44-A3e).
+
+**What changed:** `PAYPAL_MODE=live` added to the Render service
+environment variables. No code change required.
+
+**Verified:**
+- `GET /api/payment/status` returns `paypal_mode: "live"` on prod
+- Razorpay (`rzp_live_...`) and PayPal (`Aaj...`) live keys both active
+- UPI flag also returned (informational - Razorpay handles UPI natively)
+
+---
 ---
 
 ## Session 44-A3c/d/e - Background seed + dynamic catalog + dynamic sitemap - COMPLETE (2026-10-17)
