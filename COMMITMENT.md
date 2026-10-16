@@ -1,3 +1,65 @@
+---
+
+## Session 44-A3b - Lazy Seeding - COMPLETE (2026-10-16)
+
+Follow-on to 44-A3. Closes the "empty bank" gap for all 138 exams in
+the catalog, not just the 20 state-PSC exams.
+
+**The problem:** ~45 of 138 exams had zero questions in the bank. Any
+user visiting those exams got an error page. Pre-seeding everything
+was going to take ~22 hours of AI generation.
+
+**The solution:** lazy seeding — the first request to an empty exam
+generates questions on demand, caches them, and serves them. Every
+subsequent request is instant.
+
+**How it works:**
+
+1. `get_free_mock_questions` tries the bank as before
+2. If the bank is empty, it acquires a per-exam in-memory lock
+   (`_LAZY_LOCKS` — TTL 180s, guards against concurrent generation)
+3. Generates 20 questions per section via `generate_questions`
+   (which already persists to the bank)
+4. Re-fetches from the bank (now populated)
+5. Returns `warming_up` if still empty (parallel request held the lock)
+
+**First-request cost:** ~30-60s (AI generation of ~60 questions).
+**Subsequent requests:** instant.
+**Ongoing cost:** zero until an exam gets its first visitor.
+
+**UX handling:**
+
+- Route returns HTTP 202 with `{status: warming_up, retry_after: 15}`
+- `templates/free-mock.html` retries with backoff: 5s → 10s → 20s
+  → 30s → 45s (5 attempts max)
+- Friendly "Preparing questions..." spinner during retries
+- Falls back to "refresh in a minute / browse other exams" after
+  max retries
+
+**Verified E2E:**
+
+- Local test on `afcat` (empty bank): first call 44s → success;
+  second call 0s → success; bank filled with 58 rows
+- HTTP test on `opsc_ocs` via `/api/exam/free-mock/opsc_ocs/start`:
+  first call 39.3s → success; second call 0.3s → success; bank
+  filled with 57 rows
+
+**Follow-ups flagged (not blocking):**
+
+- **Synchronous seeding UX:** the first visitor waits 30-60s.
+  Acceptable for now (one-time per exam), but should eventually move
+  to background generation. Client polling already supports it.
+- **Not in the funnel:** the free-mock route only serves the 20
+  state-PSC exams. Other categories (defense, banking, etc.) would
+  need their IDs added to `SUPPORTED_EXAMS`. The lazy-seed engine
+  itself is generic.
+
+**Also shipped this session:**
+
+- Local dev: `.env.local` now has `OPENAI_API_KEY` so lazy-seed
+  paths can be tested without hitting prod.
+
+
 ## Session 44-A3 - State-PSC Free-Mock Funnels - COMPLETE (2026-10-16)
 
 **Update (same day):** Extended from 10 to all 20 state-PSC exams after
