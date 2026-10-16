@@ -168,6 +168,9 @@
   function show(id) { document.getElementById(id).classList.remove("fm-hidden"); }
   function hide(id) { document.getElementById(id).classList.add("fm-hidden"); }
 
+  let _retryAttempt = 0;
+  const _retryDelays = [5, 10, 20, 30, 45];
+
   async function fmStart() {
     try {
       const res = await fetch(`/api/exam/free-mock/${EXAM_ID}/start`, {
@@ -176,6 +179,29 @@
         body: "{}",
       });
       const data = await res.json();
+
+      // Session 44-A3b: 202 = lazy seeding in progress; retry with backoff.
+      if (res.status === 202 || data.status === "warming_up") {
+        if (_retryAttempt >= _retryDelays.length) {
+          hide("fmLoader");
+          document.getElementById("fmErrorMsg").innerHTML =
+            "Questions for this exam are taking longer than usual to prepare. " +
+            "Please <a href=\"javascript:location.reload()\" style=\"color:#0a8a75;font-weight:600;\">refresh in a minute</a> " +
+            "or <a href=\"/exam-prep\" style=\"color:#0a8a75;font-weight:600;\">browse other exams</a>.";
+          show("fmError");
+          return;
+        }
+        const wait = _retryDelays[_retryAttempt];
+        _retryAttempt++;
+        document.getElementById("fmLoader").innerHTML =
+          `<div class="fm-spinner"></div>` +
+          `<div>Preparing questions for this exam...</div>` +
+          `<div style="font-size:13px;color:#94a3b8;margin-top:6px;">Retrying in ${wait} seconds (attempt ${_retryAttempt}/${_retryDelays.length})</div>`;
+        show("fmLoader");
+        setTimeout(fmStart, wait * 1000);
+        return;
+      }
+
       if (data.status !== "success") {
         hide("fmLoader");
         document.getElementById("fmErrorMsg").textContent = data.message || "Could not load the free mock.";
