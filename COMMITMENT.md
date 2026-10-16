@@ -1,5 +1,53 @@
 # Charvak — Commitment Tracker
 
+## Immediate Revenue Initiatives - FLAGGED (2026-10-16)
+
+Four customer-facing revenue initiatives proposed at end of Session 43-A3.4/A4.
+Deep-dive analysis complete. Priority order below.
+
+### Priority 1 - AI Slop Public Widget (3-4 hrs)
+
+Free public URL scanner (no login) + Rs 199 PDF blueprint paywall.
+
+- Reuses: `products_engine.ai_slop_scan` (already shipped)
+- New: public anonymous endpoint + single-URL frontend
+- Payment: existing Razorpay flow + `pdf_engine` for PDF
+- Revenue model: Rs 199 impulse buy, lead-gen side effect
+- Effort: 3-4 hrs (one focused session)
+- Strategic value: B2B lead magnet, agency-shareable
+
+### Priority 2 - IELTS/Versant Band Guesser (4-6 hrs)
+
+30-second voice snippet -> band estimate -> shareable report card.
+Unlock full diagnostic for Rs 99 (reuses IELTS Deep Report).
+
+- Reuses: `ielts_engine.evaluate_speaking` + IELTS Deep Report paywall
+- New: teaser mode (30 sec), shareable scorecard graphic
+- Viral loop: share-for-credits (needs `charvak_share_rewards` table)
+- Effort: 4-6 hrs
+
+### Priority 3 - Localized Exam Funnels (6-8 hrs + SEO time)
+
+10 state-PSC landing pages with 5 free questions + Rs 49 unlock.
+
+- Reuses: `exam_prep_engine` (138 exams, 34 languages)
+- New: `/free-mock/{exam_id}` route + template + rate-limited free endpoint
+- Highest ceiling (Rs 20-50K/mo potential) but needs organic SEO time
+- Effort: 6-8 hrs + 30 days SEO
+
+### Priority 4 - Resume Roaster Teaser (4-5 hrs)
+
+Free one-line teaser + Rs 99 full report + share-for-credits loop.
+
+- Reuses: `tools_engine.resume_roast` (already paid, Rs 99)
+- New: free preview mode + share unlock
+- Effort: 4-5 hrs
+
+---
+
+**Next session: pick one and ship it end-to-end.** Priority 1 recommended
+for fastest time-to-revenue (3-4 hrs) with least risk.
+
 **Last updated:** 2026-10-12
 **Purpose:** Track every planned-but-not-completed item.
 
