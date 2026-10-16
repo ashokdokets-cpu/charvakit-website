@@ -11071,10 +11071,40 @@ async def internship_progress(request: Request, enrollment_id: str):
 @app.get("/sitemap.xml")
 @app.head("/sitemap.xml")
 async def sitemap():
+    """
+    Session 44-A3e: dynamic sitemap.
+
+    Reads the static sitemap.xml (core pages), then auto-generates
+    free-mock URLs for every exam in the catalog. Any exam added to
+    the catalog is immediately discoverable by search engines.
+    """
     sitemap_path = "templates/sitemap.xml"
-    if os.path.exists(sitemap_path):
+    if not os.path.exists(sitemap_path):
+        return JSONResponse({"error": "Sitemap not found"}, status_code=404)
+
+    try:
+        with open(sitemap_path, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        # Generate free-mock URLs for every exam in the catalog
+        from exam_prep_engine import exam_prep_engine
+        free_mock_urls = []
+        for cat in exam_prep_engine.exams.values():
+            for exam in cat["exams"]:
+                eid = exam["id"]
+                free_mock_urls.append(
+                    f'    <url><loc>https://www.charvakit.com/free-mock/{eid}</loc>'
+                    f'<priority>0.7</priority><changefreq>weekly</changefreq></url>'
+                )
+
+        injected = "\n".join(free_mock_urls)
+        content = content.replace("</urlset>", f"\n{injected}\n</urlset>")
+
+        return PlainTextResponse(content, media_type="application/xml")
+    except Exception as e:
+        # Fallback: serve the static file as-is if generation fails
+        logger.warning(f"sitemap generation failed, serving static: {e}")
         return FileResponse(sitemap_path, media_type="application/xml")
-    return JSONResponse({"error": "Sitemap not found"}, status_code=404)
 
 
 @app.get("/robots.txt")
