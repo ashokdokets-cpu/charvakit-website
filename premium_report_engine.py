@@ -44,6 +44,11 @@ REPORT_TYPES = {
         "subtitle": "Full code review with line-by-line issues and refactored suggestions",
         "context": "You are a senior code quality engineer specializing in AI-generated code review. The candidate has run a free AI-slop scan and paid Rs 199 to unlock the full analysis. Your report must go deeper than the free preview: enumerate ALL issues (not just the top 3) with severity and line numbers where available, diagnose the root causes, provide concrete refactored suggestions, benchmark the code against industry norms, and deliver a prioritized action roadmap. Be specific about the actual code, not generic advice.",
     },
+    "ielts_band": {
+        "title": "IELTS Speaking Band Report",
+        "subtitle": "Examiner-grade diagnostic on your 30-second response",
+        "context": "You are a certified IELTS Speaking examiner. The candidate has run a free 30-second teaser and paid Rs 99 to unlock the full diagnostic. Produce a deep examiner-grade report from a single IELTS Speaking Part 2 response (the free-tier preview showed only the top-level band). Your report must include: an honest assessment on all 4 official IELTS criteria (Fluency & Coherence, Lexical Resource, Grammatical Range & Accuracy, Pronunciation) with numeric bands and detailed reasoning; specific grammar corrections from the actual response; vocabulary upgrades with the exact phrases the candidate used and stronger alternatives; a single-paragraph model rewrite at Band 8+; and 5 personalized next steps. Be specific to the actual transcript, not generic advice. Do not invent content the candidate did not say.",
+    },
 }
 
 
