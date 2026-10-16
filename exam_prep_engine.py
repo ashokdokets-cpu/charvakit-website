@@ -13,6 +13,10 @@ from global_config import OPENAI_MODEL
 
 logger = logging.getLogger("charvakit.exam_prep")
 
+# Session 44-A3b: in-memory lock table for lazy seeding.
+# Maps exam_id -> unix-epoch timestamp when the lock expires.
+_LAZY_LOCKS = {}
+
 # Language section hints — used by _generate_via_ai to force correct
 # script when topic matches a language name (e.g., WBPSC 'Bengali' section).
 LANGUAGE_HINTS = {
@@ -301,6 +305,37 @@ class ExamPrepEngine:
             total_exams += len(cat_data["exams"])
         return {"status": "success", "total_categories": len(categories), "total_exams": total_exams, "categories": categories}
 
+    def _acquire_lazy_lock(self, exam_id: str, ttl: int = 180) -> bool:
+        """
+        Session 44-A3b: in-memory per-exam lock so two concurrent requests
+        don't both trigger AI generation. Returns True if we acquired it.
+
+        TTL guards against a crashed request leaving the lock stuck.
+        """
+        import time as _t
+        now = _t.time()
+        expires = _LAZY_LOCKS.get(exam_id)
+        if expires and expires > now:
+            return False
+        _LAZY_LOCKS[exam_id] = now + ttl
+        return True
+
+    def _release_lazy_lock(self, exam_id: str) -> None:
+        """Release a lazy-seed lock so the next request can acquire it."""
+        _LAZY_LOCKS.pop(exam_id, None)
+
+    def _lazy_seed_bank(self, exam_id: str, section_list: list, questions_per_section: int = 20) -> None:
+        """
+        Session 44-A3b: generate & persist questions for an empty exam.
+        Called from get_free_mock_questions when the bank returns nothing.
+        Silent on failure — the caller handles the empty state.
+        """
+        for sec in section_list:
+            try:
+                self.generate_questions(exam_id, sec, count=questions_per_section)
+                logger.info(f"lazy seed OK: {exam_id}/{sec}")
+            except Exception as e:
+                logger.warning(f"lazy seed failed: {exam_id}/{sec}: {e}")
     def get_free_mock_questions(self, exam_id: str, sections: int = 3, per_section: int = 5) -> Dict:
         """
         Session 44-A3: Fetch a small free-tier mock for a state-PSC exam.
@@ -345,13 +380,40 @@ class ExamPrepEngine:
                     "topic": sec,
                 })
 
+        # Session 44-A3b: lazy seeding on empty bank.
+        # The first request for an empty exam triggers AI generation
+        # for its sections, caches them in the bank, and re-fetches.
+        # A per-exam lock prevents concurrent requests from double-generating.
+        if not questions and self._acquire_lazy_lock(exam_id):
+            try:
+                logger.info(f"lazy seed triggered for {exam_id} sections={section_list}")
+                self._lazy_seed_bank(exam_id, section_list, questions_per_section=20)
+                # Re-fetch now that the bank has fresh rows
+                try:
+                    bank_rows = self._fetch_bank_multi(exam_id, section_list, per_section) or {}
+                except Exception as e:
+                    logger.error(f"lazy seed re-fetch failed: {e}")
+                    bank_rows = {}
+                for sec in section_list:
+                    for row in (bank_rows.get(sec) or [])[:per_section]:
+                        questions.append({
+                            "question_text": row.get("question_text") or row.get("question") or "",
+                            "options": row.get("options") or [],
+                            "correct_index": int(row.get("correct_index") or 0),
+                            "topic": sec,
+                        })
+            finally:
+                self._release_lazy_lock(exam_id)
+
         if not questions:
+            # Either seeding is in progress in another request, or it failed.
             return {
-                "status": "error",
+                "status": "warming_up",
                 "message": (
-                    f"No bank questions available for {exam_id}. "
-                    "The question bank may be empty for this exam — try again later."
+                    "Questions for this exam are being prepared. "
+                    "This can take up to a minute on the very first request."
                 ),
+                "retry_after": 15,
             }
 
         return {

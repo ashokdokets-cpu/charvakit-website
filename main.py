@@ -8595,6 +8595,9 @@ async def api_free_mock_start(request: Request, exam_id: str):
     try:
         import state_psc_funnel_engine as spfe
         result = spfe.get_free_questions(exam_id)
+        # Session 44-A3b: 202 Accepted when lazy seeding is in progress
+        if result.get("status") == "warming_up":
+            return JSONResponse(status_code=202, content=result)
         if result.get("status") != "success":
             return JSONResponse(status_code=400, content=result)
         return result

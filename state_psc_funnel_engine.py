@@ -127,6 +127,9 @@ def get_free_questions(exam_id: str) -> Dict:
         return {"status": "error", "message": "Exam not supported for free mock"}
 
     fetch = exam_prep_engine.get_free_mock_questions(exam_id, sections=3, per_section=5)
+    # Session 44-A3b: pass through warming_up status (lazy seeding in progress)
+    if fetch.get("status") in ("error", "warming_up"):
+        return fetch
     if fetch.get("status") != "success":
         return fetch
 
@@ -152,6 +155,9 @@ def get_free_questions(exam_id: str) -> Dict:
 def score_free_answers(exam_id: str, answers: list) -> Dict:
     """Score the free-tier answers. Answers is a list of selected indexes."""
     fetch = exam_prep_engine.get_free_mock_questions(exam_id, sections=3, per_section=5)
+    # Session 44-A3b: pass through warming_up status (lazy seeding in progress)
+    if fetch.get("status") in ("error", "warming_up"):
+        return fetch
     if fetch.get("status") != "success":
         return fetch
 
