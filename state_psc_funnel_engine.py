@@ -32,9 +32,13 @@ SECRET_KEY = os.getenv("SECRET_KEY", "dev-only-not-secret-not-used-for-prod")
 
 # The 10 supported state-PSC exams for the free funnel
 SUPPORTED_EXAMS = {
+    # Tier 1 (shipped 2026-10-16 in Session 44-A3)
     "uppsc_pcs", "mpsc_rajyaseva", "rpsc_ras", "wbpsc_wbcs",
     "tnpsc_group1", "kpsc_kas", "mppsc_sse", "gpsc_class12",
     "apsc_cce", "kpsc_kerala",
+    # Tier 2 (extended 2026-10-16 after bank seeding verified)
+    "opsc_ocs", "cgpsc_sse", "jpsc_ccs", "ukpsc_pcs", "hpsc_hcs",
+    "ppsc_pcs", "mpsc_manipur", "jkpsc_kas", "tnpsc_group2", "tpsc_tcs",
 }
 
 # Full mock size (questions)
