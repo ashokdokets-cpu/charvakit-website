@@ -5885,13 +5885,15 @@ async def api_public_ai_slop_create_order(request: Request):
         return JSONResponse(status_code=404, content={"status": "error", "message": "Scan not found. Run a fresh scan first."})
 
     # Session 44-B: currency-aware order creation
-    country_code = ""
-    try:
-        from improved_ip_detection import improved_ip_detector
-        _loc = improved_ip_detector.detect_from_request(request) or {}
-        country_code = _loc.get("country_code") or _loc.get("country") or "IN"
-    except Exception:
-        country_code = "IN"
+    # Session 44-B followup: accept optional country_code override for testing
+    country_code = (data.get("country_code") or "").strip().upper()
+    if not country_code:
+        try:
+            from improved_ip_detection import improved_ip_detector
+            _loc = improved_ip_detector.detect_from_request(request) or {}
+            country_code = _loc.get("country_code") or _loc.get("country") or "IN"
+        except Exception:
+            country_code = "IN"
 
     try:
         from payment_engine import payment_engine
@@ -6099,13 +6101,15 @@ async def api_public_ielts_create_order(request: Request):
         return JSONResponse(status_code=404, content={"status": "error", "message": "Guess session not found. Run a fresh guess first."})
 
     # Session 44-B: currency-aware order creation
-    country_code = ""
-    try:
-        from improved_ip_detection import improved_ip_detector
-        _loc = improved_ip_detector.detect_from_request(request) or {}
-        country_code = _loc.get("country_code") or _loc.get("country") or "IN"
-    except Exception:
-        country_code = "IN"
+    # Session 44-B followup: accept optional country_code override for testing
+    country_code = (data.get("country_code") or "").strip().upper()
+    if not country_code:
+        try:
+            from improved_ip_detection import improved_ip_detector
+            _loc = improved_ip_detector.detect_from_request(request) or {}
+            country_code = _loc.get("country_code") or _loc.get("country") or "IN"
+        except Exception:
+            country_code = "IN"
 
     try:
         from payment_engine import payment_engine
