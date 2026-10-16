@@ -1,0 +1,418 @@
+{% extends "base.html" %}
+
+{% block title %}{{ exam.name or exam_id }} - Free Mock Test | Charvak{% endblock %}
+
+{% block meta %}
+<meta name="description" content="Take a free 15-question mock test for {{ exam.full_name or exam.name }}. No login required. Real practice questions for state PSC exams in India.">
+<meta name="keywords" content="{{ exam.name }}, free mock test, {{ exam.name }} practice, state PSC, {{ exam.sections|join(', ') if exam.sections else '' }}">
+<meta property="og:title" content="{{ exam.name }} Free Mock Test - Charvak">
+<meta property="og:description" content="15 free practice questions for {{ exam.full_name or exam.name }}. No login, no signup. Test yourself now.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://www.charvakit.com/free-mock/{{ exam_id }}">
+{% endblock %}
+
+{% block content %}
+<style>
+  .fm-wrap { max-width: 860px; margin: 0 auto; padding: 32px 16px 80px; }
+  .fm-hero { text-align: center; margin-bottom: 32px; }
+  .fm-badge { display: inline-block; padding: 4px 12px; background: #e6f7f4; color: #0a8a75; border-radius: 999px; font-size: 13px; font-weight: 600; margin-bottom: 12px; }
+  .fm-hero h1 { font-size: 30px; font-weight: 800; color: #0f172a; margin: 8px 0; }
+  .fm-hero p { color: #475569; font-size: 16px; max-width: 560px; margin: 0 auto; }
+
+  .fm-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 24px; box-shadow: 0 2px 6px rgba(15,23,42,0.04); }
+  .fm-card + .fm-card { margin-top: 20px; }
+
+  .fm-q { border-bottom: 1px solid #eef2f7; padding: 18px 0; }
+  .fm-q:last-child { border-bottom: 0; padding-bottom: 4px; }
+  .fm-q-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 10px; }
+  .fm-q-num { font-weight: 700; color: #0f172a; font-size: 15px; }
+  .fm-q-topic { font-size: 12px; color: #64748b; background: #f1f5f9; padding: 2px 8px; border-radius: 6px; }
+  .fm-q-text { color: #1e293b; font-size: 15px; line-height: 1.55; margin-bottom: 12px; }
+  .fm-opts { display: grid; gap: 8px; }
+  .fm-opt { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border: 1px solid #e2e8f0; border-radius: 10px; cursor: pointer; transition: all 0.15s; font-size: 14px; color: #334155; }
+  .fm-opt:hover { border-color: #0a8a75; background: #f8fdfc; }
+  .fm-opt input { margin-top: 3px; accent-color: #0a8a75; }
+  .fm-opt.fm-selected { border-color: #0a8a75; background: #e6f7f4; }
+  .fm-opt.fm-correct { border-color: #10b981; background: #ecfdf5; }
+  .fm-opt.fm-wrong { border-color: #ef4444; background: #fef2f2; }
+
+  .fm-btn { display: inline-block; padding: 12px 24px; border-radius: 10px; border: 0; font-weight: 600; font-size: 15px; cursor: pointer; transition: all 0.15s; }
+  .fm-btn-primary { background: #0a8a75; color: #fff; }
+  .fm-btn-primary:hover { background: #086f5f; }
+  .fm-btn-primary:disabled { background: #94a3b8; cursor: not-allowed; }
+  .fm-btn-ghost { background: #f1f5f9; color: #0f172a; }
+  .fm-btn-ghost:hover { background: #e2e8f0; }
+
+  .fm-result { text-align: center; padding: 24px; }
+  .fm-score-ring { width: 140px; height: 140px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 40px; font-weight: 800; color: #0a8a75; background: conic-gradient(#0a8a75 var(--pct, 0%), #e6f7f4 0); position: relative; }
+  .fm-score-ring::before { content: ''; position: absolute; inset: 8px; background: #fff; border-radius: 50%; }
+  .fm-score-ring span { position: relative; z-index: 1; }
+
+  .fm-unlock { background: linear-gradient(135deg, #0a8a75 0%, #086f5f 100%); color: #fff; padding: 24px; border-radius: 14px; text-align: center; margin-top: 24px; }
+  .fm-unlock h3 { font-size: 20px; margin: 0 0 8px; }
+  .fm-unlock p { margin: 0 0 16px; opacity: 0.95; font-size: 14px; }
+  .fm-unlock-btn { background: #fff; color: #0a8a75; padding: 12px 28px; border-radius: 10px; border: 0; font-weight: 700; font-size: 15px; cursor: pointer; }
+  .fm-unlock-btn:hover { background: #f0fdfa; }
+
+  .fm-topic-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eef2f7; font-size: 14px; color: #334155; }
+  .fm-topic-row:last-child { border-bottom: 0; }
+
+  .fm-loader { text-align: center; padding: 60px 20px; color: #64748b; }
+  .fm-spinner { display: inline-block; width: 32px; height: 32px; border: 3px solid #e2e8f0; border-top-color: #0a8a75; border-radius: 50%; animation: fm-spin 0.8s linear infinite; margin-bottom: 12px; }
+  @keyframes fm-spin { to { transform: rotate(360deg); } }
+
+  .fm-hidden { display: none !important; }
+  .fm-error { padding: 20px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; color: #991b1b; font-size: 14px; text-align: center; }
+</style>
+
+<div class="fm-wrap">
+  <div class="fm-hero">
+    <span class="fm-badge">Free - No login required</span>
+    <h1>{{ exam.name or exam_id }} Free Mock Test</h1>
+    <p>
+      {{ exam.full_name or exam.name }} - 15 real practice questions across
+      {% if exam.sections %}{{ exam.sections|length }}{% else %}all{% endif %} sections. Takes 10 minutes.
+      {% if exam.duration %}Full exam duration: {{ exam.duration }}.{% endif %}
+    </p>
+  </div>
+
+  <!-- LOADING STATE -->
+  <div id="fmLoader" class="fm-card fm-loader">
+    <div class="fm-spinner"></div>
+    <div>Loading your free mock...</div>
+  </div>
+
+  <!-- ERROR STATE -->
+  <div id="fmError" class="fm-card fm-hidden">
+    <div class="fm-error" id="fmErrorMsg">Could not load the free mock. Please try again.</div>
+    <div style="text-align:center;margin-top:16px;">
+      <button class="fm-btn fm-btn-ghost" onclick="location.reload()">Retry</button>
+      <a class="fm-btn fm-btn-ghost" href="/exam-prep" style="text-decoration:none;margin-left:8px;">Browse exams</a>
+    </div>
+  </div>
+
+  <!-- QUESTIONS STATE -->
+  <div id="fmQuestions" class="fm-hidden">
+    <div class="fm-card">
+      <div id="fmQList"></div>
+      <div style="margin-top:20px;text-align:right;">
+        <button id="fmSubmitBtn" class="fm-btn fm-btn-primary" onclick="fmSubmit()" disabled>
+          Submit answers
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULT STATE -->
+  <div id="fmResult" class="fm-hidden">
+    <div class="fm-card fm-result">
+      <div class="fm-score-ring" id="fmScoreRing">
+        <span id="fmScoreVal">0%</span>
+      </div>
+      <h2 id="fmResultHead" style="font-size:22px;color:#0f172a;margin:0 0 6px;">Well done</h2>
+      <p id="fmResultSub" style="color:#475569;font-size:15px;margin:0 0 20px;">You got N out of 15 correct.</p>
+    </div>
+
+    <div class="fm-card">
+      <h3 style="font-size:16px;color:#0f172a;margin:0 0 12px;">Per-section breakdown</h3>
+      <div id="fmTopicRows"></div>
+    </div>
+
+    <div class="fm-unlock" id="fmUnlockCard">
+      <h3>Ready for the full challenge?</h3>
+      <p id="fmUnlockPriceLine">Unlock 100 questions + timed full mock + full analysis.</p>
+      <button class="fm-unlock-btn" id="fmUnlockBtn" onclick="fmStartUnlock()">
+        Unlock full mock - <span id="fmUnlockPrice">Rs 49</span>
+      </button>
+      <p style="font-size:12px;margin-top:14px;opacity:0.85;">
+        Instant delivery. Same exam pattern. No subscription.
+      </p>
+    </div>
+
+    <div style="text-align:center;margin-top:24px;">
+      <a href="/exam-prep" style="color:#64748b;font-size:14px;text-decoration:none;">
+        &larr; Browse more exams
+      </a>
+    </div>
+  </div>
+
+  <!-- UNLOCKED STATE (full mock) -->
+  <div id="fmFullMock" class="fm-hidden">
+    <div class="fm-card">
+      <div style="background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;padding:12px 16px;border-radius:10px;font-size:14px;margin-bottom:20px;">
+        ✅ Unlocked. This is the full mock with <strong id="fmFullCount">100</strong> questions.
+      </div>
+      <div id="fmFullQList"></div>
+      <div style="margin-top:20px;text-align:right;">
+        <button class="fm-btn fm-btn-primary" onclick="fmFinishFull()">
+          Finish mock
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const EXAM_ID = "{{ exam_id }}";
+  let freeToken = null;
+  let questions = [];
+  let userAnswers = [];
+  let unlockOffer = null;
+  let pendingUnlock = null;
+
+  const fmt = (s) => (s || "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
+
+  function esc(s) { return fmt(s); }
+
+  function show(id) { document.getElementById(id).classList.remove("fm-hidden"); }
+  function hide(id) { document.getElementById(id).classList.add("fm-hidden"); }
+
+  async function fmStart() {
+    try {
+      const res = await fetch(`/api/exam/free-mock/${EXAM_ID}/start`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}",
+      });
+      const data = await res.json();
+      if (data.status !== "success") {
+        hide("fmLoader");
+        document.getElementById("fmErrorMsg").textContent = data.message || "Could not load the free mock.";
+        show("fmError");
+        return;
+      }
+      freeToken = data.free_token;
+      questions = data.questions || [];
+      userAnswers = new Array(questions.length).fill(null);
+      hide("fmLoader");
+      renderQuestions();
+      show("fmQuestions");
+    } catch (e) {
+      hide("fmLoader");
+      document.getElementById("fmErrorMsg").textContent = "Network error. Please try again.";
+      show("fmError");
+    }
+  }
+
+  function renderQuestions() {
+    const list = document.getElementById("fmQList");
+    let html = "";
+    questions.forEach((q, i) => {
+      const opts = (q.options || []).map((opt, oi) => `
+        <label class="fm-opt" data-q="${i}" data-o="${oi}">
+          <input type="radio" name="q${i}" value="${oi}" onchange="fmPick(${i}, ${oi}, this)">
+          <span>${esc(opt)}</span>
+        </label>
+      `).join("");
+      html += `
+        <div class="fm-q">
+          <div class="fm-q-head">
+            <span class="fm-q-num">Q${i + 1}</span>
+            <span class="fm-q-topic">${esc(q.topic || "General")}</span>
+          </div>
+          <div class="fm-q-text">${esc(q.question_text || "")}</div>
+          <div class="fm-opts">${opts}</div>
+        </div>
+      `;
+    });
+    list.innerHTML = html;
+  }
+
+  window.fmPick = function(qi, oi, el) {
+    userAnswers[qi] = oi;
+    document.querySelectorAll(`.fm-opt[data-q="${qi}"]`).forEach(n => n.classList.remove("fm-selected"));
+    el.closest(".fm-opt").classList.add("fm-selected");
+    const allDone = userAnswers.every(a => a !== null);
+    document.getElementById("fmSubmitBtn").disabled = !allDone;
+  };
+
+  window.fmSubmit = async function() {
+    const btn = document.getElementById("fmSubmitBtn");
+    btn.disabled = true;
+    btn.textContent = "Scoring...";
+    try {
+      const res = await fetch(`/api/exam/free-mock/${EXAM_ID}/submit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ free_token: freeToken, answers: userAnswers }),
+      });
+      const data = await res.json();
+      if (data.status !== "success") {
+        alert(data.message || "Could not score your answers.");
+        btn.disabled = false;
+        btn.textContent = "Submit answers";
+        return;
+      }
+      unlockOffer = data.unlock_offer || null;
+      renderResult(data);
+      hide("fmQuestions");
+      show("fmResult");
+    } catch (e) {
+      alert("Network error. Please try again.");
+      btn.disabled = false;
+      btn.textContent = "Submit answers";
+    }
+  };
+
+  function renderResult(data) {
+    const pct = data.score_pct || 0;
+    document.getElementById("fmScoreRing").style.setProperty("--pct", pct + "%");
+    document.getElementById("fmScoreVal").textContent = pct + "%";
+    document.getElementById("fmResultHead").textContent =
+      pct >= 80 ? "Excellent" : pct >= 60 ? "Well done" : pct >= 40 ? "Keep going" : "Time to practice";
+    document.getElementById("fmResultSub").textContent =
+      `You got ${data.correct} out of ${data.total} correct.`;
+
+    const rows = document.getElementById("fmTopicRows");
+    let html = "";
+    Object.entries(data.per_topic || {}).forEach(([topic, t]) => {
+      html += `<div class="fm-topic-row"><span>${esc(topic)}</span><span><strong>${t.correct}</strong> / ${t.total}</span></div>`;
+    });
+    rows.innerHTML = html || '<div style="color:#94a3b8;font-size:14px;">No breakdown available.</div>';
+
+    if (unlockOffer) {
+      const sym = ({INR:"Rs ", USD:"$", EUR:"€", GBP:"£", AUD:"A$", CAD:"C$", SGD:"S$", AED:"AED ", JPY:"¥", CNY:"¥"})[unlockOffer.currency] || "";
+      document.getElementById("fmUnlockPrice").textContent = sym + unlockOffer.amount_local;
+      document.getElementById("fmUnlockPriceLine").textContent =
+        "Unlock the full " + (data.total > 0 ? 100 : 100) + "-question mock + timed mode + full analysis.";
+    }
+  }
+
+  window.fmStartUnlock = async function() {
+    const btn = document.getElementById("fmUnlockBtn");
+    const email = (localStorage.getItem("userEmail") || "").trim();
+    if (!email || !email.includes("@")) {
+      alert("Please log in or enter an email first (we'll show a prompt next).");
+      // Simple inline prompt for demo purposes; replace with a proper modal in production
+      const entered = prompt("Enter your email to receive the full mock:");
+      if (!entered || !entered.includes("@")) return;
+      localStorage.setItem("userEmail", entered.trim().toLowerCase());
+    }
+    btn.disabled = true;
+    btn.textContent = "Opening payment...";
+    try {
+      const res = await fetch(`/api/exam/free-mock/${EXAM_ID}/unlock-order`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: localStorage.getItem("userEmail") }),
+      });
+      const data = await res.json();
+      if (data.status !== "success") {
+        alert(data.message || "Could not create the order.");
+        btn.disabled = false;
+        btn.textContent = "Retry unlock";
+        return;
+      }
+      pendingUnlock = data;
+      if (data.gateway === "razorpay") {
+        await openRazorpay(data);
+      } else if (data.gateway === "paypal") {
+        await openPayPal(data);
+      } else {
+        alert("Unknown gateway: " + data.gateway);
+        btn.disabled = false;
+      }
+    } catch (e) {
+      alert("Network error. Please try again.");
+      btn.disabled = false;
+    }
+  };
+
+  async function ensureRazorpayLoaded() {
+    if (window.Razorpay) return;
+    await new Promise((resolve, reject) => {
+      const s = document.createElement("script");
+      s.src = "https://checkout.razorpay.com/v1/checkout.js";
+      s.onload = resolve;
+      s.onerror = reject;
+      document.head.appendChild(s);
+    });
+  }
+
+  async function openRazorpay(order) {
+    await ensureRazorpayLoaded();
+    const email = localStorage.getItem("userEmail");
+    const rzp = new window.Razorpay({
+      key: order.razorpay_key_id,
+      amount: order.amount_paise,
+      currency: order.currency,
+      name: "Charvak",
+      description: "Full mock unlock - " + EXAM_ID,
+      order_id: order.razorpay_order_id,
+      prefill: { email: email },
+      handler: async function(response) {
+        await confirmUnlock({
+          gateway: "razorpay",
+          razorpay_payment_id: response.razorpay_payment_id,
+          razorpay_order_id: response.razorpay_order_id,
+          razorpay_signature: response.razorpay_signature,
+        });
+      },
+      modal: { ondismiss: () => {
+        document.getElementById("fmUnlockBtn").disabled = false;
+        document.getElementById("fmUnlockBtn").textContent = "Retry unlock";
+      }},
+    });
+    rzp.open();
+  }
+
+  async function openPayPal(order) {
+    alert("PayPal flow - to be wired in the same pattern as the IELTS deep report. Gateway: " + order.gateway);
+    document.getElementById("fmUnlockBtn").disabled = false;
+  }
+
+  async function confirmUnlock(payload) {
+    try {
+      const res = await fetch(`/api/exam/free-mock/${EXAM_ID}/unlock-run`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(Object.assign({ email: localStorage.getItem("userEmail") }, payload)),
+      });
+      const data = await res.json();
+      if (data.status !== "success") {
+        alert(data.message || "Payment confirmed but unlocking failed. Please contact support.");
+        return;
+      }
+      renderFullMock(data);
+      hide("fmResult");
+      show("fmFullMock");
+    } catch (e) {
+      alert("Network error while unlocking.");
+    }
+  }
+
+  function renderFullMock(data) {
+    document.getElementById("fmFullCount").textContent = data.total;
+    const list = document.getElementById("fmFullQList");
+    let html = "";
+    (data.questions || []).forEach((q, i) => {
+      const opts = (q.options || []).map((opt, oi) => `
+        <label class="fm-opt" data-fq="${i}" data-fo="${oi}">
+          <input type="radio" name="fq${i}" value="${oi}">
+          <span>${esc(opt)}</span>
+        </label>
+      `).join("");
+      html += `
+        <div class="fm-q">
+          <div class="fm-q-head">
+            <span class="fm-q-num">Q${i + 1}</span>
+            <span class="fm-q-topic">${esc(q.topic || "General")}</span>
+          </div>
+          <div class="fm-q-text">${esc(q.question_text || "")}</div>
+          <div class="fm-opts">${opts}</div>
+        </div>
+      `;
+    });
+    list.innerHTML = html;
+  }
+
+  window.fmFinishFull = function() {
+    alert("Full-mock scoring is coming in the next release. Your answers are saved locally.");
+  };
+
+  // Kick off on load
+  fmStart();
+})();
+</script>
+{% endblock %}
