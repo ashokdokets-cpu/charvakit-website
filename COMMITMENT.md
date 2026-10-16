@@ -1,3 +1,40 @@
+## Revenue Expansion Roadmap - FLAGGED (2026-10-17)
+
+Deep-dive analysis complete. 15 candidate revenue streams assessed by
+(a) reusability of existing infrastructure, (b) revenue ceiling,
+(c) probability of success. Ranked list:
+
+**Tier 1 - Build in next 4 sessions:**
+1. Institutional Credit Bundles (1 session, Rs 1.5L/mo potential)
+2. Verified Work Certificate (2 sessions, Rs 75K/mo)
+3. Telegram Micro-Assessment Bot (2 sessions, Rs 20K/mo)
+4. Voice-to-Web Website Bundles (2 sessions + designer partner, Rs 2.3L/mo)
+
+**Tier 2 - Build when demand justifies:**
+5. Continuous Compliance Subscriptions (needs 3+ customers)
+6. Pay-per-Interview Screening Rooms (needs employer demand)
+7. Campus Readiness Stakes (legal review required)
+8. Mock Drive Battlegrounds (needs critical mass)
+9. University Talent Index (Track C)
+
+**Tier 3 - Multi-month or blocked:**
+- EaaS White-Label API (needs partner)
+- WhatsApp Bot (Meta approval)
+- Employer ATS-lite (out of scope)
+- AI Career Twin (legal risk)
+- Human Expert Marketplace (services business)
+
+**Full analysis:** See REVENUE-EXPANSION-ROADMAP.md (to be created).
+
+**Recommended execution order:**
+- Session 45: Resume Roaster Teaser (already planned)
+- Session 46: Institutional Credit Bundles
+- Session 47: Verified Work Certificate
+- Session 48: Telegram Bot v1
+- Session 49: Voice-to-Web Bundles
+
+**Verdict:** FLAGGED for sequential build, one per session.
+
 ## A1.2 - PAYPAL_MODE=live explicit on Render - CLOSED (2026-10-17)
 
 Verified via `GET https://www.charvakit.com/api/payment/status`:
