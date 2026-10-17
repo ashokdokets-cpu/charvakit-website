@@ -79,6 +79,7 @@ scripts/*
 !scripts/seed_ielts_reading.py
 !scripts/ai_verify_questions.py
 !scripts/test_ielts_relevance.py
+!scripts/run_migrations.py
 requirements.txt.bak
 runtime.txt.bak
 
