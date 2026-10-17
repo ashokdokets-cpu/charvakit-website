@@ -3013,13 +3013,17 @@ async def api_share_track(request: Request):
         try:
             conn = db.get_connection()
             cur = conn.cursor()
+            # Session 45-A4 security: capture sharer IP for self-claim prevention
+            owner_ip = _share_claim_ip_hash(request)
             cur.execute("""
-                INSERT INTO charvak_share_rewards (reward_id, share_id, owner_email, owner_token, tool_name, clicks)
-                VALUES (%s, %s, %s, %s, %s, 1)
+                INSERT INTO charvak_share_rewards
+                  (reward_id, share_id, owner_email, owner_token, tool_name, clicks, owner_ip_hash)
+                VALUES (%s, %s, %s, %s, %s, 1, %s)
                 ON CONFLICT (share_id) DO UPDATE
                   SET clicks = charvak_share_rewards.clicks + 1,
+                      owner_ip_hash = COALESCE(charvak_share_rewards.owner_ip_hash, EXCLUDED.owner_ip_hash),
                       updated_at = NOW()
-            """, (reward_id, share_id, owner_email, owner_token, tool_name))
+            """, (reward_id, share_id, owner_email, owner_token, tool_name, owner_ip))
             conn.commit()
             cur.close(); conn.close()
         except Exception as e:
@@ -3033,44 +3037,193 @@ async def api_share_track(request: Request):
         return handle_error(e, "share track")
 
 
+# Session 45-A4 security constants for share reward abuse prevention
+SHARE_CLAIM_MAX_PER_IP_PER_HOUR = 5
+SHARE_CLAIM_MAX_PER_SHARE_LIFETIME = 10
+SHARE_CLAIM_MAX_CREDITS_PER_SHARE = 50
+SHARE_CLAIM_WINDOW_HOURS = 24
+
+
+def _share_claim_ip_hash(request: Request) -> str:
+    """Stable IP hash for share-claim deduplication."""
+    import hashlib
+    ip = ""
+    try:
+        ip = request.headers.get("cf-connecting-ip") or \
+             request.headers.get("x-forwarded-for", "").split(",")[0].strip() or \
+             (request.client.host if request.client else "")
+    except Exception:
+        ip = "unknown"
+    return hashlib.sha256(f"share-claim|{ip}|{os.getenv('SECRET_KEY', 'dev')[:8]}".encode()).hexdigest()[:16]
+
+
 @app.post("/api/share/claim")
-@limiter.limit("30/minute")
+@limiter.limit("5/minute")
 async def api_share_claim(request: Request):
-    """Called when a friend completes an assessment via a shared teaser."""
+    """
+    Called when a friend completes an assessment via a shared teaser.
+
+    Layer-1 abuse defenses:
+      - Same IP cannot claim the same share twice
+      - Per-IP rate limit: 5/min (via @limiter)
+      - Per-share lifetime cap: 10 completions
+      - Per-share credits cap: 50
+      - 24-hour claim window
+      - Self-claim prevention (sharer IP == claimer IP -> skip, log)
+    """
     try:
         data = await request.json()
         share_id = (data.get("share_id") or "").strip()
         if not share_id:
             return JSONResponse(status_code=400, content={"status": "error", "message": "share_id required"})
 
-        from database import db
         import secrets as _secrets
+        from database import db
+        claimer_ip = _share_claim_ip_hash(request)
+
+        conn = db.get_connection()
+        cur = conn.cursor()
+
         try:
-            conn = db.get_connection()
-            cur = conn.cursor()
-            # Session 45-A4 follow-up: upsert so claim works even if the sharer
-            # never hit /api/share/track (a friend can complete before that).
+            # --- DEFENSE 1: Deduplicate (share_id, claimer_ip) ---
             cur.execute("""
-                INSERT INTO charvak_share_rewards
-                  (reward_id, share_id, tool_name, clicks, completions, credits_earned)
-                VALUES (%s, %s, 'resume_roast_teaser', 0, 1, 5)
-                ON CONFLICT (share_id) DO UPDATE
-                  SET completions = charvak_share_rewards.completions + 1,
-                      credits_earned = (charvak_share_rewards.completions + 1) * 5 + 5,
-                      updated_at = NOW()
-                RETURNING completions, credits_earned
-            """, (f"SR-{_secrets.token_hex(8).upper()}", share_id))
-            row = cur.fetchone()
+                SELECT 1 FROM charvak_share_claims
+                WHERE share_id = %s AND ip_hash = %s
+                LIMIT 1
+            """, (share_id, claimer_ip))
+            if cur.fetchone():
+                cur.close(); conn.close()
+                return {
+                    "status": "duplicate",
+                    "message": "This device has already claimed credit for this share.",
+                    "completions": 0,
+                    "credits_earned": 0,
+                }
+
+            # --- DEFENSE 2: Rate limit by IP (5 claims per hour) ---
+            cur.execute("""
+                SELECT COUNT(*) FROM charvak_share_claims
+                WHERE ip_hash = %s AND claimed_at > NOW() - INTERVAL '1 hour'
+            """, (claimer_ip,))
+            ip_count = cur.fetchone()[0]
+            if ip_count >= SHARE_CLAIM_MAX_PER_IP_PER_HOUR:
+                cur.close(); conn.close()
+                return JSONResponse(
+                    status_code=429,
+                    content={"status": "error", "message": "Claim rate limit reached. Try again later."},
+                )
+
+            # --- DEFENSE 3: Per-share lifetime cap ---
+            cur.execute("""
+                SELECT completions, credits_earned, claim_window_start, last_claimed_at, owner_ip_hash
+                FROM charvak_share_rewards WHERE share_id = %s
+                FOR UPDATE
+            """, (share_id,))
+            existing = cur.fetchone()
+
+            if existing:
+                ex_completions, ex_credits, ex_window, ex_last, ex_owner_ip = existing
+
+                # --- DEFENSE 3-pre: self-claim prevention ---
+                if ex_owner_ip and ex_owner_ip == claimer_ip:
+                    cur.close(); conn.close()
+                    logger.info(f"share_claim: self-claim blocked share={share_id} ip={claimer_ip[:8]}")
+                    return {
+                        "status": "self_claim",
+                        "message": "You cannot claim credits for your own share.",
+                        "completions": ex_completions,
+                        "credits_earned": ex_credits,
+                    }
+                # 3a - lifetime completions cap
+                if ex_completions >= SHARE_CLAIM_MAX_PER_SHARE_LIFETIME:
+                    cur.close(); conn.close()
+                    return {
+                        "status": "capped",
+                        "message": "This share has reached its lifetime cap.",
+                        "completions": ex_completions,
+                        "credits_earned": ex_credits,
+                    }
+                # 3b - credits cap
+                if ex_credits >= SHARE_CLAIM_MAX_CREDITS_PER_SHARE:
+                    cur.close(); conn.close()
+                    return {
+                        "status": "capped",
+                        "message": "This share has earned the maximum credits.",
+                        "completions": ex_completions,
+                        "credits_earned": ex_credits,
+                    }
+                # 3c - claim window
+                if ex_window:
+                    cur.execute("SELECT %s::timestamptz < NOW() - INTERVAL '%s hours'", (ex_window, SHARE_CLAIM_WINDOW_HOURS))
+                    if cur.fetchone()[0]:
+                        cur.close(); conn.close()
+                        return {
+                            "status": "expired",
+                            "message": "The claim window for this share has expired.",
+                            "completions": ex_completions,
+                            "credits_earned": ex_credits,
+                        }
+            else:
+                # First claim: create the reward row fresh
+                cur.execute("""
+                    INSERT INTO charvak_share_rewards
+                      (reward_id, share_id, tool_name, clicks, completions, credits_earned,
+                       owner_ip_hash, last_claimed_at, claim_window_start)
+                    VALUES (%s, %s, 'resume_roast_teaser', 0, 0, 0, NULL, NULL, NOW())
+                    ON CONFLICT (share_id) DO NOTHING
+                """, (f"SR-{_secrets.token_hex(8).upper()}", share_id))
+
+            # --- DEFENSE 4: Re-read the row FOR UPDATE, then update ---
+            cur.execute("""
+                SELECT completions, credits_earned FROM charvak_share_rewards
+                WHERE share_id = %s FOR UPDATE
+            """, (share_id,))
+            cur_row = cur.fetchone()
+            if not cur_row:
+                cur.close(); conn.close()
+                return JSONResponse(status_code=500, content={"status": "error", "message": "Could not lock row"})
+            cur_completions, cur_credits = cur_row
+
+            new_completions = cur_completions + 1
+            # Increment credits by 5 for the first completion, then 5 each subsequent (bonus 5 once)
+            new_credits = cur_credits + 5
+            if cur_completions == 0:
+                new_credits += 5  # sharer bonus
+
+            cur.execute("""
+                UPDATE charvak_share_rewards
+                SET completions = %s,
+                    credits_earned = %s,
+                    last_claimed_at = NOW(),
+                    updated_at = NOW()
+                WHERE share_id = %s
+            """, (new_completions, new_credits, share_id))
+
+            # Log the claim for deduplication
+            cur.execute("""
+                INSERT INTO charvak_share_claims
+                  (claim_id, share_id, ip_hash, user_email)
+                VALUES (%s, %s, %s, NULL)
+            """, (f"SC-{_secrets.token_hex(8).upper()}", share_id, claimer_ip))
+
             conn.commit()
             cur.close(); conn.close()
-        except Exception as e:
-            logger.warning(f"share claim failed: {e}")
+
+            logger.info(f"share_claim: share_id={share_id} ip_hash={claimer_ip[:8]} completions={new_completions} credits={new_credits}")
+            return {
+                "status": "success",
+                "completions": new_completions,
+                "credits_earned": new_credits,
+            }
+        except Exception as inner_e:
+            try:
+                conn.rollback()
+                cur.close()
+                conn.close()
+            except Exception:
+                pass
+            logger.warning(f"share claim inner failed: {inner_e}")
             return JSONResponse(status_code=500, content={"status": "error", "message": "Could not claim"})
-
-        if not row:
-            return JSONResponse(status_code=404, content={"status": "error", "message": "Share reward not found"})
-
-        return {"status": "success", "completions": row[0], "credits_earned": row[1]}
     except HTTPException:
         raise
     except Exception as e:

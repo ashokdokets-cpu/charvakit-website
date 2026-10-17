@@ -238,10 +238,17 @@
   async function trackShare(channel) {
     if (!currentShareId) return;
     try {
+      // Session 45-A4 security: pass the sharer's email so future deposits know where to land
+      const ownerEmail = (localStorage.getItem("userEmail") || "").trim() || null;
       await fetch("/api/share/track", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ share_id: currentShareId, channel, tool_name: "resume_roast_teaser" }),
+        body: JSON.stringify({
+          share_id: currentShareId,
+          channel,
+          tool_name: "resume_roast_teaser",
+          owner_email: ownerEmail,
+        }),
       });
       try { charvakTrack && charvakTrack("resume_teaser_shared", {channel, share_id: currentShareId}); } catch(e) {}
     } catch(e) {}
