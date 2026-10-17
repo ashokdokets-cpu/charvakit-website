@@ -253,8 +253,9 @@ def create_unlock_order(exam_id: str, email: str, country_code: str) -> Dict:
     # Reuse the existing payment engines
     try:
         if gateway == "razorpay":
+            # Session 45-A4: pass PAISE, not rupees
             order = payment_engine.create_razorpay_order(
-                amount_inr=amount_inr,
+                amount_inr=amount_paise,
                 receipt=f"spsc_{secrets.token_hex(6)}",
                 notes={
                     "plan": "state_psc_full_mock",
@@ -366,8 +367,9 @@ def verify_and_serve(exam_id: str, email: str, gateway: str,
         else:
             if not (razorpay_payment_id and razorpay_order_id and razorpay_signature):
                 return {"status": "error", "message": "Missing Razorpay fields"}
+            # Session 45-A4: pass in the correct arg order (payment_id, order_id, signature)
             verify = payment_engine.verify_razorpay_payment(
-                razorpay_order_id, razorpay_payment_id, razorpay_signature
+                razorpay_payment_id, razorpay_order_id, razorpay_signature
             )
             if not verify.get("verified"):
                 return {"status": "error", "message": "Signature verification failed"}
