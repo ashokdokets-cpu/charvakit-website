@@ -3235,42 +3235,82 @@ async def api_share_claim(request: Request):
 # ============================================================
 
 
-@app.get("/passport/me")
+@app.get("/passport/me", response_class=HTMLResponse)
 async def passport_me(request: Request):
-    """Redirect authenticated user to their own passport, or to /passport/create."""
-    # Session 46: catch auth failure and redirect to login instead of 401
-    try:
-        caller = require_auth(request)
-    except HTTPException:
-        return RedirectResponse(url="/login?next=/passport/me", status_code=302)
+    """
+    Session 46: JS-driven redirect.
 
-    try:
-        caller_email = (caller.get("email") or "").strip().lower()
-        import passport_engine as pe
-        result = pe.get_passport_by_email(caller_email)
-        if result.get("status") == "success":
-            return RedirectResponse(url=f"/passport/{result['handle']}", status_code=302)
-        return RedirectResponse(url="/passport/create", status_code=302)
-    except Exception as e:
-        return handle_error(e, "passport me")
+    Browsers don't send Bearer headers on navigation, so we cannot
+    use require_auth() here. Instead, render a tiny page that reads
+    the token from localStorage, calls /api/passport/create (idempotent),
+    and redirects to /passport/{handle}.
+    """
+    html = """<!DOCTYPE html>
+<html><head>
+<meta charset="UTF-8">
+<title>Redirecting to your passport...</title>
+<style>
+  body { font-family: system-ui, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: #f8fafc; color: #0f172a; }
+  .box { text-align: center; padding: 32px; }
+  .spinner { display: inline-block; width: 32px; height: 32px; border: 3px solid #e2e8f0; border-top-color: #0a8a75; border-radius: 50%; animation: sp 0.8s linear infinite; margin-bottom: 16px; }
+  @keyframes sp { to { transform: rotate(360deg); } }
+  .msg { font-size: 14px; color: #64748b; margin-top: 8px; }
+  .cta { display: inline-block; margin-top: 16px; padding: 10px 20px; background: #0a8a75; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600; }
+</style>
+</head><body>
+<div class="box">
+  <div class="spinner"></div>
+  <div><strong>Loading your passport...</strong></div>
+  <div class="msg" id="ppStatus">Looking up your account</div>
+  <a href="/login?next=/passport/me" class="cta" id="ppLoginBtn" style="display:none;">Log in to view your passport</a>
+</div>
+<script>
+(async function() {
+  var statusEl = document.getElementById("ppStatus");
+  var loginBtn = document.getElementById("ppLoginBtn");
+  var token = localStorage.getItem("auth_token") || localStorage.getItem("charvak_token") || "";
+  if (!token) {
+    statusEl.textContent = "You need to be logged in to view your passport.";
+    loginBtn.style.display = "inline-block";
+    return;
+  }
+  try {
+    var res = await fetch("/api/passport/create", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+      },
+      body: "{}"
+    });
+    var data = await res.json();
+    if (data.status === "success" && data.handle) {
+      window.location.replace("/passport/" + data.handle);
+      return;
+    }
+    statusEl.textContent = "Could not find your passport. Redirecting to create page...";
+    setTimeout(function() {
+      window.location.replace("/passport/create");
+    }, 1500);
+  } catch (e) {
+    statusEl.textContent = "Network error. Please try again.";
+    loginBtn.style.display = "inline-block";
+  }
+})();
+</script>
+</body></html>"""
+    return HTMLResponse(content=html)
 
 
 @app.get("/passport/create", response_class=HTMLResponse)
 async def passport_create_page(request: Request):
-    """Authenticated page to create a passport."""
-    # Session 46: explicit auth check + redirect (avoids relying on exception handlers)
-    token = request.headers.get("Authorization", "").replace("Bearer ", "").strip()
-    if not token:
-        # Allow the auth cookie variant too (charvak_admin_token for admin flow)
-        token = request.cookies.get("charvak_admin_token", "").strip()
-    if not token:
-        return RedirectResponse(url="/login?next=/passport/create", status_code=302)
+    """
+    Session 46: JS-gated create page.
 
-    try:
-        require_auth(request)
-    except HTTPException:
-        return RedirectResponse(url="/login?next=/passport/create", status_code=302)
-
+    Server-side auth check would fail because browsers don't send
+    Bearer tokens on navigation. Instead, always render the page;
+    a small JS bootstrap redirects anonymous users to /login.
+    """
     return template_response(
         "passport.html", request,
         "Create Your Passport - Charvak",
@@ -11850,7 +11890,28 @@ async def sitemap():
                     f'<priority>0.7</priority><changefreq>weekly</changefreq></url>'
                 )
 
-        injected = "\n".join(free_mock_urls)
+        # Session 46: public passports (only those with meaningful activity)
+        passport_urls = []
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT handle, updated_at FROM charvak_passports
+                WHERE is_public = TRUE AND charvak_score > 0
+                ORDER BY updated_at DESC LIMIT 5000
+            """)
+            for row in cur.fetchall():
+                handle = row[0]
+                passport_urls.append(
+                    f'    <url><loc>https://www.charvakit.com/passport/{handle}</loc>'
+                    f'<priority>0.6</priority><changefreq>weekly</changefreq></url>'
+                )
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.warning(f"passport sitemap failed: {e}")
+
+        injected = "\n".join(free_mock_urls + passport_urls)
         content = content.replace("</urlset>", f"\n{injected}\n</urlset>")
 
         return PlainTextResponse(content, media_type="application/xml")
