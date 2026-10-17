@@ -3452,6 +3452,136 @@ async def passport_page(request: Request, handle: str):
         return handle_error(e, "passport page")
 
 
+# ============================================================
+# Session 46-B: Skill Twin Challenges (viral loop)
+# ============================================================
+
+@app.post("/api/skill-twin/create")
+@limiter.limit("10/minute")
+async def api_skill_twin_create(request: Request):
+    """Owner creates a shareable challenge from their passport."""
+    try:
+        caller = require_auth(request)
+        caller_email = (caller.get("email") or "").strip().lower()
+        try:
+            data = await request.json()
+        except Exception:
+            data = {}
+        role = (data.get("role") or "").strip()[:80]
+        industry = (data.get("industry") or "").strip()[:80]
+        level = (data.get("level") or "").strip()[:20]
+        import skill_twin_engine as ste
+        result = ste.create_challenge(caller_email, role, industry, level)
+        if result.get("status") != "success":
+            return JSONResponse(status_code=400, content=result)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "skill-twin create")
+
+
+@app.get("/api/skill-twin/{challenge_id}")
+@limiter.limit("120/minute")
+async def api_skill_twin_get(request: Request, challenge_id: str):
+    """Public JSON: challenge state."""
+    try:
+        import skill_twin_engine as ste
+        result = ste.get_challenge(challenge_id, count_click=False)
+        if result.get("status") != "success":
+            return JSONResponse(status_code=404, content=result)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "skill-twin get")
+
+
+@app.post("/api/skill-twin/start")
+@limiter.limit("10/minute")
+async def api_skill_twin_start(request: Request):
+    """Challenger starts the 10-question assessment."""
+    try:
+        data = await request.json()
+        challenge_id = (data.get("challenge_id") or "").strip()
+        challenger_email = (data.get("challenger_email") or "").strip().lower()
+        if not challenge_id:
+            return JSONResponse(status_code=400, content={"status": "error", "message": "challenge_id required"})
+        import skill_twin_engine as ste
+        result = ste.start_challenger_assessment(challenge_id, challenger_email)
+        if result.get("status") != "success":
+            return JSONResponse(status_code=400, content=result)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "skill-twin start")
+
+
+@app.post("/api/skill-twin/submit")
+@limiter.limit("10/minute")
+async def api_skill_twin_submit(request: Request):
+    """Challenger submits answers, gets compared to owner."""
+    try:
+        data = await request.json()
+        challenge_id = (data.get("challenge_id") or "").strip()
+        assessment_id = (data.get("assessment_id") or "").strip()
+        challenger_email = (data.get("challenger_email") or "").strip().lower()
+        answers = data.get("answers") or []
+        if not challenge_id or not assessment_id:
+            return JSONResponse(status_code=400, content={"status": "error", "message": "challenge_id and assessment_id required"})
+        import skill_twin_engine as ste
+        result = ste.submit_challenger(challenge_id, assessment_id, challenger_email, answers)
+        if result.get("status") != "success":
+            return JSONResponse(status_code=400, content=result)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "skill-twin submit")
+
+
+@app.get("/api/skill-twin/owner/{email}")
+@limiter.limit("30/minute")
+async def api_skill_twin_list(request: Request, email: str):
+    """Owner sees their challenge history."""
+    try:
+        require_auth_for_email(request, email)
+        import skill_twin_engine as ste
+        return ste.list_challenges(email)
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "skill-twin list")
+
+
+@app.get("/skill-twin/{challenge_id}", response_class=HTMLResponse)
+@limiter.limit("120/minute")
+async def skill_twin_challenge_page(request: Request, challenge_id: str):
+    """Public challenge landing page (Session 46-B)."""
+    try:
+        import skill_twin_engine as ste
+        result = ste.get_challenge(challenge_id, count_click=True)
+        if result.get("status") != "success":
+            return template_response(
+                "skill-twin-challenge.html", request,
+                "Challenge Not Found - Charvak",
+                challenge=None, challenge_id=challenge_id,
+                error=result.get("message", "Not found"),
+            )
+        challenge = result["challenge"]
+        owner = challenge.get("owner_handle", "a candidate")
+        title = f"Can you beat {owner}'s score? - Charvak Skill Twin"
+        return template_response(
+            "skill-twin-challenge.html", request, title,
+            challenge=challenge, challenge_id=challenge_id, error=None,
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "skill-twin page")
+
+
 @app.post("/api/tools/ghost-bounty")
 @limiter.limit("60/minute")
 async def api_ghost_bounty(request: Request):

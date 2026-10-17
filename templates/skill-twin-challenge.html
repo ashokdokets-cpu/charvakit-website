@@ -1,0 +1,311 @@
+{% extends "base.html" %}
+
+{% block title %}{% if challenge %}Can you beat {{ challenge.owner_handle }}'s score? - Charvak{% else %}Challenge Not Found - Charvak{% endif %}{% endblock %}
+
+{% block head %}
+{% if challenge %}
+<meta name="description" content="{{ challenge.owner_handle }} scored {{ challenge.owner_score }}/1000 on Charvak. Can you beat it? Take the 10-question challenge — no login required.">
+<meta property="og:title" content="Can you beat {{ challenge.owner_handle }}'s score?">
+<meta property="og:description" content="Charvak Skill Twin challenge. {{ challenge.owner_score }}/1000 to beat. Free, 60 seconds.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://www.charvakit.com/skill-twin/{{ challenge_id }}">
+<meta property="og:image" content="https://www.charvakit.com/passport/{{ challenge.owner_handle }}/badge.svg">
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<style>
+  .stc-wrap { max-width: 720px; margin: 0 auto; padding: 32px 16px 80px; }
+  .stc-hero { text-align: center; margin-bottom: 32px; }
+  .stc-badge { display: inline-block; padding: 4px 12px; background: #e6f7f4; color: #0a8a75; border-radius: 999px; font-size: 13px; font-weight: 600; margin-bottom: 12px; }
+  .stc-hero h1 { font-size: 32px; font-weight: 800; color: #0f172a; margin: 8px 0; }
+  .stc-hero p { color: #475569; font-size: 16px; max-width: 520px; margin: 0 auto; }
+
+  /* Owner card */
+  .stc-owner-card { background: linear-gradient(135deg, #0a8a75 0%, #086f5f 100%); color: #fff; border-radius: 18px; padding: 32px; text-align: center; margin-bottom: 24px; position: relative; overflow: hidden; }
+  .stc-owner-card::after { content: ''; position: absolute; top: -30%; right: -20%; width: 300px; height: 300px; background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%); border-radius: 50%; }
+  .stc-owner-inner { position: relative; z-index: 1; }
+  .stc-owner-name { font-size: 22px; font-weight: 700; margin: 0 0 4px; }
+  .stc-owner-label { font-size: 13px; opacity: 0.85; margin: 0 0 12px; }
+  .stc-owner-score { font-size: 72px; font-weight: 800; line-height: 1; }
+  .stc-owner-denom { font-size: 22px; opacity: 0.7; }
+  .stc-owner-tier { display: inline-block; padding: 4px 14px; background: rgba(255,255,255,0.2); border-radius: 999px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 8px; }
+
+  /* CTA */
+  .stc-cta-block { text-align: center; margin: 32px 0; }
+  .stc-btn { display: inline-block; padding: 16px 40px; background: #0a8a75; color: #fff; border-radius: 12px; font-weight: 700; font-size: 17px; border: 0; cursor: pointer; text-decoration: none; }
+  .stc-btn:hover { background: #086f5f; color: #fff; }
+  .stc-btn:disabled { background: #94a3b8; cursor: not-allowed; }
+  .stc-btn-secondary { background: #f1f5f9; color: #0f172a; }
+  .stc-btn-secondary:hover { background: #e2e8f0; color: #0f172a; }
+
+  .stc-how-it-works { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 24px; margin-top: 32px; }
+  .stc-how-it-works h3 { font-size: 16px; color: #0f172a; margin: 0 0 16px; }
+  .stc-step { display: flex; gap: 12px; margin-bottom: 14px; font-size: 14px; color: #334155; }
+  .stc-step:last-child { margin-bottom: 0; }
+  .stc-step-num { background: #e6f7f4; color: #0a8a75; font-weight: 700; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 13px; }
+
+  /* Question form */
+  .stc-questions { display: none; }
+  .stc-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 24px; box-shadow: 0 2px 8px rgba(15,23,42,0.04); margin-bottom: 16px; }
+  .stc-q-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 10px; }
+  .stc-q-num { font-weight: 700; color: #0f172a; font-size: 15px; }
+  .stc-q-text { color: #1e293b; font-size: 15px; line-height: 1.55; margin-bottom: 12px; }
+  .stc-opts { display: grid; gap: 8px; }
+  .stc-opt { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border: 1px solid #e2e8f0; border-radius: 10px; cursor: pointer; font-size: 14px; color: #334155; }
+  .stc-opt:hover { border-color: #0a8a75; background: #f8fdfc; }
+  .stc-opt input { margin-top: 3px; accent-color: #0a8a75; }
+  .stc-opt.stc-selected { border-color: #0a8a75; background: #e6f7f4; }
+
+  /* Result */
+  .stc-result { display: none; }
+  .stc-result-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 18px; padding: 32px; text-align: center; box-shadow: 0 4px 16px rgba(15,23,42,0.06); }
+  .stc-result-banner { font-size: 24px; font-weight: 800; margin-bottom: 24px; }
+  .stc-result-winner { color: #10b981; }
+  .stc-result-loser { color: #dc2626; }
+  .stc-result-tie { color: #f59e0b; }
+  .stc-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+  .stc-compare-col { padding: 20px; border-radius: 12px; background: #f8fafc; }
+  .stc-compare-col.stc-winner-col { background: #ecfdf5; border: 2px solid #10b981; }
+  .stc-compare-name { font-size: 13px; color: #64748b; margin-bottom: 4px; }
+  .stc-compare-score { font-size: 42px; font-weight: 800; color: #0f172a; line-height: 1; }
+  .stc-compare-denom { font-size: 16px; color: #94a3b8; }
+  .stc-credits-badge { display: inline-block; padding: 6px 14px; background: #fef3c7; color: #92400e; border-radius: 999px; font-size: 13px; font-weight: 700; margin-top: 8px; }
+
+  /* Loading */
+  .stc-loading { text-align: center; padding: 40px; }
+  .stc-spinner { display: inline-block; width: 32px; height: 32px; border: 3px solid #e2e8f0; border-top-color: #0a8a75; border-radius: 50%; animation: stc-spin 0.8s linear infinite; margin-bottom: 12px; }
+  @keyframes stc-spin { to { transform: rotate(360deg); } }
+
+  .stc-hidden { display: none !important; }
+  .stc-error { padding: 20px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; color: #991b1b; font-size: 14px; text-align: center; }
+</style>
+
+<div class="stc-wrap">
+{% if challenge %}
+  {% if challenge.challenge_status == 'pending' and not challenge.is_expired %}
+    <!-- PENDING STATE -->
+    <div class="stc-hero">
+      <span class="stc-badge">Charvak Skill Twin Challenge</span>
+      <h1>Can you beat this score?</h1>
+      <p>Take a free 10-question challenge. No login required.</p>
+    </div>
+
+    <div class="stc-owner-card">
+      <div class="stc-owner-inner">
+        <div class="stc-owner-label">{{ challenge.owner_handle }} scored</div>
+        <div class="stc-owner-score">{{ challenge.owner_score }}<span class="stc-owner-denom">/1000</span></div>
+        {% if challenge.role %}
+          <div style="font-size:13px;opacity:0.85;margin-top:6px;">{{ challenge.role }}{% if challenge.level %} · {{ challenge.level }}{% endif %}</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="stc-cta-block" id="stcStartBlock">
+      <button class="stc-btn" onclick="stcStart()">Take the challenge →</button>
+      <div style="font-size:13px;color:#94a3b8;margin-top:12px;">10 questions · ~2 minutes · free</div>
+    </div>
+
+    <div id="stcLoadingBlock" class="stc-loading stc-hidden">
+      <div class="stc-spinner"></div>
+      <div style="color:#64748b;">Loading your challenge...</div>
+    </div>
+
+    <!-- QUESTIONS STATE -->
+    <div id="stcQuestionsBlock" class="stc-questions">
+      <div id="stcQuestionList"></div>
+      <div style="text-align:right;margin-top:20px;">
+        <button class="stc-btn" id="stcSubmitBtn" onclick="stcSubmit()" disabled>Submit answers</button>
+      </div>
+    </div>
+
+    <div class="stc-how-it-works">
+      <h3>How it works</h3>
+      <div class="stc-step"><div class="stc-step-num">1</div><div>Answer 10 quick questions on the same topic.</div></div>
+      <div class="stc-step"><div class="stc-step-num">2</div><div>We compare your score to {{ challenge.owner_handle }}'s score.</div></div>
+      <div class="stc-step"><div class="stc-step-num">3</div><div>Winner gets +5 credits toward assessments. Ties give both sides +3.</div></div>
+    </div>
+
+  {% elif challenge.challenge_status == 'completed' %}
+    <!-- COMPLETED STATE -->
+    <div class="stc-hero">
+      <span class="stc-badge">Challenge Complete</span>
+      <h1>Score Comparison</h1>
+    </div>
+
+    <div class="stc-result">
+      <div class="stc-result-card">
+        {% if challenge.winner == 'challenger' %}
+          <div class="stc-result-banner stc-result-winner">🏆 You won!</div>
+        {% elif challenge.winner == 'owner' %}
+          <div class="stc-result-banner stc-result-loser">{{ challenge.owner_handle }} wins</div>
+        {% else %}
+          <div class="stc-result-banner stc-result-tie">It's a tie</div>
+        {% endif %}
+
+        <div class="stc-compare">
+          <div class="stc-compare-col {% if challenge.winner == 'owner' %}stc-winner-col{% endif %}">
+            <div class="stc-compare-name">{{ challenge.owner_handle }}</div>
+            <div class="stc-compare-score">{{ challenge.owner_score }}</div>
+            <div class="stc-compare-denom">/1000</div>
+            {% if challenge.winner == 'owner' %}
+              <div class="stc-credits-badge">+5 credits</div>
+            {% endif %}
+          </div>
+          <div class="stc-compare-col {% if challenge.winner == 'challenger' %}stc-winner-col{% endif %}">
+            <div class="stc-compare-name">You (challenger)</div>
+            <div class="stc-compare-score">{{ challenge.challenger_score or 0 }}</div>
+            <div class="stc-compare-denom">/1000 · {{ challenge.challenger_pct or 0 }}%</div>
+            {% if challenge.winner == 'challenger' %}
+              <div class="stc-credits-badge">+5 credits</div>
+            {% elif challenge.winner == 'tie' %}
+              <div class="stc-credits-badge">+3 credits</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <p style="color:#64748b;font-size:14px;margin:24px 0;">Play again or create your own passport to be the one setting the challenge.</p>
+
+        <a href="/passport/create" class="stc-btn stc-btn-secondary">Create your passport</a>
+      </div>
+    </div>
+
+  {% else %}
+    <!-- EXPIRED -->
+    <div class="stc-hero">
+      <span class="stc-badge">Challenge Expired</span>
+      <h1>This challenge has ended</h1>
+      <p>Challenges expire after 7 days. But you can still create your own passport!</p>
+    </div>
+    <div class="stc-cta-block">
+      <a href="/passport/create" class="stc-btn">Create your passport →</a>
+    </div>
+  {% endif %}
+
+{% else %}
+  <!-- NOT FOUND -->
+  <div class="stc-hero">
+    <h1>Challenge not found</h1>
+    <p>{{ error or "This challenge link is invalid or has been deleted." }}</p>
+  </div>
+  <div class="stc-cta-block">
+    <a href="/passport/create" class="stc-btn">Create your own passport →</a>
+  </div>
+{% endif %}
+</div>
+
+{% if challenge and challenge.challenge_status == 'pending' and not challenge.is_expired %}
+<script>
+(function() {
+  const CHALLENGE_ID = "{{ challenge_id }}";
+  let assessmentId = null;
+  let attemptEmail = null;
+  let questions = [];
+  let userAnswers = [];
+  let freeToken = null;  // Not used in this flow
+
+  function esc(s) { return (s || "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c])); }
+  function show(id) { document.getElementById(id).classList.remove("stc-hidden"); }
+  function hide(id) { document.getElementById(id).classList.add("stc-hidden"); }
+
+  window.stcStart = async function() {
+    hide("stcStartBlock");
+    show("stcLoadingBlock");
+    try {
+      const res = await fetch("/api/skill-twin/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ challenge_id: CHALLENGE_ID })
+      });
+      const data = await res.json();
+      if (data.status !== "success") {
+        alert(data.message || "Could not start the challenge.");
+        show("stcStartBlock");
+        hide("stcLoadingBlock");
+        return;
+      }
+      assessmentId = data.assessment_id;
+      attemptEmail = data.attempt_email;
+      questions = data.questions || [];
+      userAnswers = new Array(questions.length).fill(null);
+      hide("stcLoadingBlock");
+      renderQuestions();
+      document.getElementById("stcQuestionsBlock").style.display = "block";
+      try { charvakTrack && charvakTrack("skill_twin_started", { challenge_id: CHALLENGE_ID }); } catch(e) {}
+    } catch (e) {
+      alert("Network error. Please try again.");
+      show("stcStartBlock");
+      hide("stcLoadingBlock");
+    }
+  };
+
+  function renderQuestions() {
+    const list = document.getElementById("stcQuestionList");
+    let html = "";
+    questions.forEach((q, i) => {
+      const opts = (q.options || []).map((opt, oi) => `
+        <label class="stc-opt" data-q="${i}" data-o="${oi}">
+          <input type="radio" name="q${i}" value="${oi}" onchange="stcPick(${i}, ${oi}, this)">
+          <span>${esc(opt)}</span>
+        </label>
+      `).join("");
+      html += `
+        <div class="stc-card">
+          <div class="stc-q-head">
+            <span class="stc-q-num">Q${i + 1}</span>
+          </div>
+          <div class="stc-q-text">${esc(q.question_text || q.question || "")}</div>
+          <div class="stc-opts">${opts}</div>
+        </div>
+      `;
+    });
+    list.innerHTML = html;
+  }
+
+  window.stcPick = function(qi, oi, el) {
+    userAnswers[qi] = oi;
+    document.querySelectorAll(`.stc-opt[data-q="${qi}"]`).forEach(n => n.classList.remove("stc-selected"));
+    el.closest(".stc-opt").classList.add("stc-selected");
+    const allDone = userAnswers.every(a => a !== null);
+    document.getElementById("stcSubmitBtn").disabled = !allDone;
+  };
+
+  window.stcSubmit = async function() {
+    const btn = document.getElementById("stcSubmitBtn");
+    btn.disabled = true;
+    btn.textContent = "Scoring...";
+    try {
+      const res = await fetch("/api/skill-twin/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          challenge_id: CHALLENGE_ID,
+          assessment_id: assessmentId,
+          answers: userAnswers
+        })
+      });
+      const data = await res.json();
+      if (data.status !== "success") {
+        alert(data.message || "Could not score your answers.");
+        btn.disabled = false;
+        btn.textContent = "Submit answers";
+        return;
+      }
+      try { charvakTrack && charvakTrack("skill_twin_completed", {
+        challenge_id: CHALLENGE_ID,
+        winner: data.winner,
+        owner_score: data.owner_score,
+        challenger_score: data.challenger_score
+      }); } catch(e) {}
+      // Reload to show comparison
+      window.location.reload();
+    } catch (e) {
+      alert("Network error. Please try again.");
+      btn.disabled = false;
+      btn.textContent = "Submit answers";
+    }
+  };
+})();
+</script>
+{% endif %}
+{% endblock %}
