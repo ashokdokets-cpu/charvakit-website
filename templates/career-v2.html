@@ -18,6 +18,19 @@
         <h2 class="as-h4 mb-0">Your activity</h2>
         <a href="/career-engine" class="small me-3">See the 7-step journey &rarr;</a> <a href="/career-center/jobs" class="small me-3">View all openings &rarr;</a> <a href="#" class="small" onclick="loadUnifiedProfile(); return false;">Refresh</a>
     </div>
+
+    <!-- Session 47: Today's Drill -->
+    <div class="card border-0 shadow-sm mb-3" id="drillCard" style="display:none;border-left:4px solid #10b981 !important;">
+      <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+          <div class="fw-bold mb-1">⚡ Today's Drill</div>
+          <div class="small text-muted">5 questions · 60 seconds · role-calibrated</div>
+          <div class="small mt-1" id="drillStreakLine"></div>
+        </div>
+        <a href="/drills" class="btn btn-success" id="drillCTA">Take today's drill →</a>
+      </div>
+    </div>
+
     <div class="row g-3" id="unifiedCards">
         <!-- cards injected by JS -->
     </div>
@@ -303,7 +316,50 @@ function renderUnifiedPanel(data) {
 // Kick off the panel load when the page is ready
 document.addEventListener('DOMContentLoaded', function() {
     loadUnifiedProfile();
+    loadDrillCard();
 });
+
+// Session 47: Load today's drill streak on Career Center
+async function loadDrillCard() {
+    try {
+        var token = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+        if (!token) return;
+        var res = await fetch('/api/drills/streak', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!res.ok) return;
+        var data = await res.json();
+        if (data.status !== 'success') return;
+
+        var streak = data.streak || {};
+        var card = document.getElementById('drillCard');
+        var line = document.getElementById('drillStreakLine');
+        var cta = document.getElementById('drillCTA');
+        if (card) card.style.display = 'block';
+
+        if (streak.current_streak > 0) {
+            line.innerHTML = '🔥 <strong>' + streak.current_streak + '-day streak</strong> · longest ' + streak.longest_streak;
+        } else {
+            line.textContent = 'Start your streak today';
+        }
+
+        // Check if drill already done today
+        try {
+            var todayRes = await fetch('/api/drills/today', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (todayRes.ok) {
+                var todayData = await todayRes.json();
+                if (todayData.status === 'success' && todayData.completed) {
+                    if (cta) {
+                        cta.textContent = '✅ Done today · view history';
+                        cta.className = 'btn btn-outline-success';
+                    }
+                }
+            }
+        } catch(e) {}
+    } catch(e) {}
+}
 
 
 // Session 43-D (A5): DoketsRB sync status loader

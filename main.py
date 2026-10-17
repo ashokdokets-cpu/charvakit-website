@@ -3582,6 +3582,80 @@ async def skill_twin_challenge_page(request: Request, challenge_id: str):
         return handle_error(e, "skill-twin page")
 
 
+# ============================================================
+# Session 47: Daily Drills + Streaks (habit loop)
+# ============================================================
+
+@app.get("/api/drills/today")
+@limiter.limit("30/minute")
+async def api_drills_today(request: Request):
+    """Get (or generate) today's drill for the authed user."""
+    try:
+        caller = require_auth(request)
+        caller_email = (caller.get("email") or "").strip().lower()
+        import drills_engine as de
+        result = de.get_or_create_today_drill(caller_email)
+        if result.get("status") != "success":
+            return JSONResponse(status_code=400, content=result)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "drills today")
+
+
+@app.post("/api/drills/submit")
+@limiter.limit("30/minute")
+async def api_drills_submit(request: Request):
+    """Submit answers for a drill. Updates streak + credits."""
+    try:
+        caller = require_auth(request)
+        caller_email = (caller.get("email") or "").strip().lower()
+        data = await request.json()
+        drill_id = (data.get("drill_id") or "").strip()
+        answers = data.get("answers") or []
+        if not drill_id:
+            return JSONResponse(status_code=400, content={"status": "error", "message": "drill_id required"})
+        import drills_engine as de
+        result = de.submit_drill(caller_email, drill_id, answers)
+        if result.get("status") != "success":
+            return JSONResponse(status_code=400, content=result)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "drills submit")
+
+
+@app.get("/api/drills/streak")
+@limiter.limit("60/minute")
+async def api_drills_streak(request: Request):
+    """Current streak + recent drill history."""
+    try:
+        caller = require_auth(request)
+        caller_email = (caller.get("email") or "").strip().lower()
+        import drills_engine as de
+        result = de.get_streak_stats(caller_email)
+        if result.get("status") != "success":
+            return JSONResponse(status_code=400, content=result)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "drills streak")
+
+
+@app.get("/drills", response_class=HTMLResponse)
+@limiter.limit("60/minute")
+async def drills_page(request: Request):
+    """Daily drill page. JS-gated (browsers don't send Bearer headers)."""
+    return template_response(
+        "drills.html", request,
+        "Daily Drill - Charvak",
+        drill=None, streak=None, error=None,
+    )
+
+
 @app.post("/api/tools/ghost-bounty")
 @limiter.limit("60/minute")
 async def api_ghost_bounty(request: Request):
