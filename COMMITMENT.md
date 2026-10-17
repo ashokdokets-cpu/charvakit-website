@@ -1,3 +1,46 @@
+### Session 45-A4 security hardening - COMPLETE (2026-10-17)
+
+After the initial share claim loop shipped, abuse vectors were
+identified and blocked in the same session.
+
+**New migration: migrations/20261017_share_claims.sql**
+- charvak_share_claims table (dedup log)
+- charvak_share_rewards gains: owner_ip_hash, last_claimed_at, claim_window_start
+
+**Hardened /api/share/claim (6 defense layers):**
+
+1. **IP dedup** - one claim per (share_id, claimer_ip). A given device
+   cannot claim the same share more than once.
+2. **Rate limit** - 5/minute per IP (tightened from 30/minute).
+3. **Per-share lifetime cap** - max 10 completions per share ever.
+4. **Per-share credits cap** - max 50 credits per share.
+5. **24-hour claim window** - shares expire their claim eligibility
+   after 24h to prevent long-tail replay attacks.
+6. **Self-claim prevention** - if the sharer's IP matches the claimer's
+   IP, the claim is rejected with status=self_claim.
+
+Plus: `/api/share/track` now captures owner_ip_hash so the self-claim
+check has data to compare against. Frontend sends owner_email on track
+so a future deposit flow can route earned credits correctly.
+
+**Attacker test result:**
+- 15 consecutive claim attempts from same IP on same share:
+  - 1 success (legitimate first claim)
+  - 4 duplicates (blocked by IP dedup)
+  - 10 rate-limited (blocked by 5/min limit)
+- 0 illegitimate credits earned.
+
+**Deferred to Session 46:**
+- Deposit flow: charvak_share_rewards.credits_earned is tracked but
+  not yet transferred to charvak_user_credits. Requires a cron job
+  or a claim-on-next-login trigger. This is a payment-side task, not
+  a prevention-side task.
+
+**Files changed:**
+- migrations/20261017_share_claims.sql (new)
+- main.py (rewritten /api/share/claim, patched /api/share/track)
+- templates/tools/resume-roast.html (pass owner_email on track)
+
 
 ### Session 45-A4 follow-ups - COMPLETE (same day)
 
