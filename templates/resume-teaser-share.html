@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}{% if teaser %}My resume scored {{ teaser.score }}/100 - Charvak{% else %}Resume Teaser Not Found - Charvak{% endif %}{% endblock %}
+
+{% block head %}
+{% if teaser %}
+<meta name="description" content="My resume scored {{ teaser.score }}/100 on Charvak's AI resume scanner. See what yours scores - free, no login.">
+<meta property="og:title" content="My resume scored {{ teaser.score }}/100 - what does yours score?">
+<meta property="og:description" content="{{ teaser.headline or 'Check your resume against ATS standards in 30 seconds. Free.' }}">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://www.charvakit.com/resume-teaser/{{ share_id }}">
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<style>
+  .rt-wrap { max-width: 640px; margin: 0 auto; padding: 48px 16px 80px; }
+  .rt-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 40px 32px; box-shadow: 0 4px 16px rgba(15,23,42,0.06); text-align: center; }
+  .rt-score { font-size: 96px; font-weight: 800; line-height: 1; color: #0a8a75; margin: 16px 0 8px; }
+  .rt-score-bad { color: #dc2626; }
+  .rt-score-mid { color: #f59e0b; }
+  .rt-score-good { color: #10b981; }
+  .rt-label { font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; font-weight: 600; }
+  .rt-headline { font-size: 20px; font-weight: 600; color: #0f172a; margin: 12px 0; line-height: 1.4; }
+  .rt-issue { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; border-radius: 8px; text-align: left; margin: 24px 0; font-size: 14px; color: #78350f; }
+  .rt-issue-label { font-weight: 700; display: block; margin-bottom: 4px; color: #92400e; }
+  .rt-cta { display: inline-block; padding: 14px 32px; background: #0a8a75; color: #fff; border-radius: 10px; font-weight: 600; font-size: 16px; text-decoration: none; margin-top: 8px; }
+  .rt-cta:hover { background: #086f5f; color: #fff; }
+  .rt-sub { font-size: 13px; color: #64748b; margin-top: 16px; }
+  .rt-not-found { padding: 40px; text-align: center; color: #64748b; }
+  .rt-not-found h2 { color: #0f172a; margin-bottom: 12px; }
+</style>
+
+<div class="rt-wrap">
+  {% if teaser %}
+    <div class="rt-card">
+      <div class="rt-label">Charvak Resume Score</div>
+      <div class="rt-score {% if teaser.score < 50 %}rt-score-bad{% elif teaser.score < 75 %}rt-score-mid{% else %}rt-score-good{% endif %}">
+        {{ teaser.score }}<span style="font-size:32px;color:#94a3b8;">/100</span>
+      </div>
+      {% if teaser.headline %}
+        <div class="rt-headline">{{ teaser.headline }}</div>
+      {% endif %}
+      {% if teaser.one_issue %}
+        <div class="rt-issue">
+          <span class="rt-issue-label">The #1 fix:</span>
+          {{ teaser.one_issue }}
+        </div>
+      {% endif %}
+      <a href="/tools/resume-roast" class="rt-cta">Check my resume - free</a>
+      <div class="rt-sub">30 seconds. No login. See your score + the one fix that matters most.</div>
+    </div>
+  {% else %}
+    <div class="rt-card">
+      <div class="rt-not-found">
+        <h2>This teaser link has expired or was never created</h2>
+        <p>But you can still check your own resume - free, no login, 30 seconds.</p>
+        <a href="/tools/resume-roast" class="rt-cta">Check my resume</a>
+      </div>
+    </div>
+  {% endif %}
+</div>
+
+<script>
+// Session 45-A4: GA4 tracking when someone lands here from a share
+(function() {
+  try {
+    if (typeof charvakTrack === "function") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("utm_source") || document.referrer) {
+        charvakTrack("resume_teaser_view_from_share", {
+          share_id: "{{ share_id }}",
+          score: {{ teaser.score if teaser else 'null' }},
+          source: params.get("utm_source") || "referrer",
+        });
+      }
+    }
+  } catch (e) {}
+})();
+</script>
+{% endblock %}

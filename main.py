@@ -2659,6 +2659,417 @@ async def api_resume_roast(request: Request):
     except Exception as e:
         return handle_error(e, "resume roast")
 
+
+# ============================================================
+# Session 45-A4: Resume Roaster Teaser (free tier + Rs 99 unlock + share loop)
+# ============================================================
+
+def _teaser_ip_hash(request: Request) -> str:
+    """Stable-ish hash of client IP for rate-limiting anonymous teasers."""
+    import hashlib
+    ip = ""
+    try:
+        ip = request.headers.get("cf-connecting-ip") or \
+             request.headers.get("x-forwarded-for", "").split(",")[0].strip() or \
+             (request.client.host if request.client else "")
+    except Exception:
+        ip = "unknown"
+    return hashlib.sha256(f"resume-teaser|{ip}|{os.getenv('SECRET_KEY', 'dev')[:8]}".encode()).hexdigest()[:16]
+
+
+@app.post("/api/tools/resume-roast/teaser")
+@limiter.limit("3/hour")
+async def api_resume_roast_teaser(request: Request):
+    """
+    Free-tier teaser. No auth, no credits.
+    Rate-limited 3/hour per real client IP (Cloudflare-aware).
+
+    Body: {resume: str, job_title?: str}
+    Returns: {status, teaser: {score, headline, one_issue}, share_id, share_url}
+    """
+    try:
+        data = await request.json()
+        resume = (data.get("resume") or "").strip()
+        job_title = (data.get("job_title") or "").strip()
+
+        if not resume:
+            return JSONResponse(status_code=400, content={"status": "error", "message": "Resume text required"})
+        if len(resume) < 50:
+            return JSONResponse(status_code=400, content={"status": "error", "message": "Resume too short (min 50 chars)"})
+        if len(resume) > 10000:
+            return JSONResponse(status_code=400, content={"status": "error", "message": "Resume too long (max 10,000 chars)"})
+
+        # Rate-limit by IP hash
+        import secrets as _secrets
+        from database import db
+        ip_hash = _teaser_ip_hash(request)
+        try:
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT COUNT(*) FROM charvak_resume_teasers
+                WHERE ip_hash = %s AND created_at > NOW() - INTERVAL '1 hour'
+            """, (ip_hash,))
+            recent = cur.fetchone()[0]
+            cur.close(); conn.close()
+            if recent >= 3:
+                return JSONResponse(
+                    status_code=429,
+                    content={"status": "error", "message": "Free teaser limit reached (3/hour). Try again in an hour, or unlock the full report."}
+                )
+        except Exception as e:
+            logger.warning(f"teaser rate-limit check failed: {e}")
+
+        # Generate the teaser
+        from tools_ai_backend import resume_teaser_ai
+        teaser = await resume_teaser_ai(resume, job_title)
+
+        # Persist
+        teaser_id = f"RT-{_secrets.token_hex(8).upper()}"
+        share_id = _secrets.token_urlsafe(12)
+        try:
+            import json as _json
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                INSERT INTO charvak_resume_teasers
+                  (teaser_id, share_id, ip_hash, resume_preview, job_title, score, one_issue, teaser_json)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """, (teaser_id, share_id, ip_hash, resume[:500], job_title,
+                  int(teaser.get("score", 0)), teaser.get("one_issue", ""),
+                  _json.dumps(teaser)))
+            conn.commit()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.error(f"teaser persist failed: {e}")
+
+        site = os.getenv("SITE_URL", "https://www.charvakit.com").rstrip("/")
+
+        return {
+            "status": "success",
+            "teaser_id": teaser_id,
+            "share_id": share_id,
+            "share_url": f"{site}/resume-teaser/{share_id}",
+            "teaser": teaser,
+            "unlock_offer": {
+                "key": "resume_roast_teaser",
+                "label": "Unlock the full resume roast",
+                "preview": "Full analysis: buzzwords, missing skills, ATS tips + PDF",
+            },
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "resume teaser")
+
+
+@app.post("/api/tools/resume-roast/unlock-order")
+@limiter.limit("10/minute")
+async def api_resume_roast_unlock_order(request: Request):
+    """Create a Razorpay or PayPal order for the Rs 99 full-roast unlock."""
+    try:
+        data = await request.json()
+        share_id = (data.get("share_id") or "").strip()
+        email = (data.get("email") or "").strip().lower()
+        if not share_id or not email or "@" not in email:
+            return JSONResponse(status_code=400, content={"status": "error", "message": "share_id and valid email required"})
+
+        from database import db
+        try:
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("SELECT teaser_id, unlocked FROM charvak_resume_teasers WHERE share_id = %s", (share_id,))
+            row = cur.fetchone()
+            cur.close(); conn.close()
+        except Exception as e:
+            return JSONResponse(status_code=500, content={"status": "error", "message": f"DB error: {e}"})
+
+        if not row:
+            return JSONResponse(status_code=404, content={"status": "error", "message": "Teaser not found"})
+        if row[1]:
+            return {"status": "exists", "already_unlocked": True, "message": "This teaser is already unlocked."}
+
+        country_code = (data.get("country_code") or "").strip().upper()
+        if not country_code:
+            try:
+                from improved_ip_detection import improved_ip_detector
+                _loc = improved_ip_detector.detect_from_request(request) or {}
+                country_code = _loc.get("country_code") or _loc.get("country") or "IN"
+            except Exception:
+                country_code = "IN"
+
+        if len(country_code) != 2:
+            _NAME_TO_ISO_RT = {
+                "INDIA": "IN", "UNITED STATES": "US", "USA": "US",
+                "UNITED KINGDOM": "GB", "UK": "GB", "GERMANY": "DE",
+                "FRANCE": "FR", "CANADA": "CA", "AUSTRALIA": "AU",
+                "SINGAPORE": "SG", "JAPAN": "JP", "CHINA": "CN",
+                "UNITED ARAB EMIRATES": "AE", "UAE": "AE",
+            }
+            country_code = _NAME_TO_ISO_RT.get(country_code.upper(), "IN")
+
+        price = payment_engine.resolve_public_price("resume_roast_teaser", country_code)
+        if price.get("status") != "success":
+            return JSONResponse(status_code=500, content=price)
+
+        gateway = price.get("gateway")
+        currency = price.get("currency")
+        amount_local = price.get("amount_local")
+        amount_inr = price.get("amount_inr", 0)
+        amount_paise = price.get("razorpay_paise", 0)
+
+        import secrets as _secrets
+        if gateway == "razorpay":
+            order = payment_engine.create_razorpay_order(
+                amount_inr=amount_inr,
+                receipt=f"rt_{_secrets.token_hex(6)}",
+                notes={
+                    "plan": "resume_roast_teaser",
+                    "tool": "resume_roast_teaser",
+                    "email": email,
+                    "share_id": share_id,
+                    "amount_inr": amount_inr,
+                },
+            )
+            if order.get("status") != "success":
+                return JSONResponse(status_code=400, content=order)
+            return {
+                "status": "success",
+                "gateway": "razorpay",
+                "currency": currency,
+                "amount_local": amount_local,
+                "amount_paise": amount_paise,
+                "razorpay_order_id": order.get("order_id"),
+                "razorpay_key_id": order.get("key_id"),
+                "share_id": share_id,
+            }
+        elif gateway == "paypal":
+            order = payment_engine.create_paypal_order(
+                amount=amount_local,
+                currency=currency,
+                custom_id=f"resume_roast|{email}|{share_id}",
+            )
+            if order.get("status") != "success":
+                return JSONResponse(status_code=400, content=order)
+            return {
+                "status": "success",
+                "gateway": "paypal",
+                "currency": currency,
+                "amount_local": amount_local,
+                "paypal_order_id": order.get("paypal_order_id"),
+                "share_id": share_id,
+            }
+        else:
+            return JSONResponse(status_code=500, content={"status": "error", "message": f"Unknown gateway: {gateway}"})
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "resume unlock-order")
+
+
+@app.post("/api/tools/resume-roast/unlock-run")
+@limiter.limit("10/minute")
+async def api_resume_roast_unlock_run(request: Request):
+    """Verify payment + generate + return the full resume roast."""
+    try:
+        data = await request.json()
+        share_id = (data.get("share_id") or "").strip()
+        email = (data.get("email") or "").strip().lower()
+        gateway = (data.get("gateway") or "").strip().lower()
+        if not share_id or not email or not gateway:
+            return JSONResponse(status_code=400, content={"status": "error", "message": "share_id, email, gateway required"})
+
+        from database import db
+        try:
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT teaser_id, resume_preview, job_title, unlocked, email
+                FROM charvak_resume_teasers WHERE share_id = %s
+            """, (share_id,))
+            row = cur.fetchone()
+            cur.close(); conn.close()
+        except Exception as e:
+            return JSONResponse(status_code=500, content={"status": "error", "message": f"DB error: {e}"})
+
+        if not row:
+            return JSONResponse(status_code=404, content={"status": "error", "message": "Teaser not found"})
+
+        teaser_id, resume_preview, job_title, already_unlocked, existing_email = row
+
+        if already_unlocked and existing_email and existing_email != email:
+            return JSONResponse(status_code=403, content={"status": "error", "message": "This teaser is already unlocked by another account."})
+
+        if not already_unlocked:
+            if gateway == "razorpay":
+                payment_id = (data.get("razorpay_payment_id") or "").strip()
+                order_id = (data.get("razorpay_order_id") or "").strip()
+                signature = (data.get("razorpay_signature") or "").strip()
+                if not (payment_id and order_id and signature):
+                    return JSONResponse(status_code=400, content={"status": "error", "message": "Missing Razorpay fields"})
+                verify = payment_engine.verify_razorpay_payment(order_id, payment_id, signature)
+                if not verify.get("verified"):
+                    return JSONResponse(status_code=402, content={"status": "error", "message": "Signature verification failed"})
+            elif gateway == "paypal":
+                pp_order = (data.get("paypal_order_id") or "").strip()
+                if not pp_order:
+                    return JSONResponse(status_code=400, content={"status": "error", "message": "Missing PayPal order id"})
+                fetched = payment_engine.fetch_paypal_order(pp_order)
+                if fetched.get("status_field") != "COMPLETED":
+                    return JSONResponse(status_code=402, content={"status": "error", "message": "PayPal payment not completed"})
+            else:
+                return JSONResponse(status_code=400, content={"status": "error", "message": f"Unknown gateway: {gateway}"})
+
+            try:
+                conn = db.get_connection()
+                cur = conn.cursor()
+                cur.execute("""
+                    UPDATE charvak_resume_teasers
+                    SET unlocked = TRUE, unlocked_at = NOW(), email = %s, gateway = %s
+                    WHERE share_id = %s
+                """, (email, gateway, share_id))
+                conn.commit()
+                cur.close(); conn.close()
+            except Exception as e:
+                logger.error(f"unlock persist failed: {e}")
+
+        from tools_ai_backend import resume_roast_ai
+        resume_text = resume_preview or ""
+        full = await resume_roast_ai(resume_text, job_title or "a general role")
+
+        return {
+            "status": "success",
+            "share_id": share_id,
+            "email": email,
+            "full_roast": full,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "resume unlock-run")
+
+
+@app.get("/resume-teaser/{share_id}", response_class=HTMLResponse)
+async def resume_teaser_share_page(request: Request, share_id: str):
+    """Public share landing page for a resume teaser."""
+    from database import db
+    try:
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT score, one_issue, teaser_json, job_title
+            FROM charvak_resume_teasers WHERE share_id = %s
+        """, (share_id,))
+        row = cur.fetchone()
+        cur.close(); conn.close()
+    except Exception:
+        row = None
+
+    if not row:
+        return template_response("resume-teaser-share.html", request,
+                                 "Resume Teaser Not Found - Charvak",
+                                 share_id=share_id, teaser=None, job_title="")
+
+    import json as _json
+    teaser_json = row[2] if row[2] else {}
+    if isinstance(teaser_json, str):
+        try:
+            teaser_json = _json.loads(teaser_json)
+        except Exception:
+            teaser_json = {}
+
+    teaser = {
+        "score": row[0],
+        "one_issue": row[1],
+        "headline": (teaser_json or {}).get("headline", ""),
+    }
+    return template_response(
+        "resume-teaser-share.html", request,
+        f"Resume score: {row[0]}/100 - Charvak",
+        share_id=share_id, teaser=teaser, job_title=row[3] or "",
+    )
+
+
+@app.post("/api/share/track")
+@limiter.limit("60/minute")
+async def api_share_track(request: Request):
+    """Record that a user shared a teaser."""
+    try:
+        data = await request.json()
+        share_id = (data.get("share_id") or "").strip()
+        tool_name = (data.get("tool_name") or "resume_roast_teaser").strip()
+        owner_email = (data.get("owner_email") or "").strip().lower() or None
+        owner_token = (data.get("owner_token") or "").strip() or None
+        channel = (data.get("channel") or "other").strip().lower()
+
+        if not share_id:
+            return JSONResponse(status_code=400, content={"status": "error", "message": "share_id required"})
+
+        import secrets as _secrets
+        from database import db
+        reward_id = f"SR-{_secrets.token_hex(8).upper()}"
+        try:
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                INSERT INTO charvak_share_rewards (reward_id, share_id, owner_email, owner_token, tool_name, clicks)
+                VALUES (%s, %s, %s, %s, %s, 1)
+                ON CONFLICT (share_id) DO UPDATE
+                  SET clicks = charvak_share_rewards.clicks + 1,
+                      updated_at = NOW()
+            """, (reward_id, share_id, owner_email, owner_token, tool_name))
+            conn.commit()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.warning(f"share track failed: {e}")
+            return JSONResponse(status_code=500, content={"status": "error", "message": "Could not record share"})
+
+        return {"status": "success", "share_id": share_id, "channel": channel}
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "share track")
+
+
+@app.post("/api/share/claim")
+@limiter.limit("30/minute")
+async def api_share_claim(request: Request):
+    """Called when a friend completes an assessment via a shared teaser."""
+    try:
+        data = await request.json()
+        share_id = (data.get("share_id") or "").strip()
+        if not share_id:
+            return JSONResponse(status_code=400, content={"status": "error", "message": "share_id required"})
+
+        from database import db
+        try:
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                UPDATE charvak_share_rewards
+                SET completions = completions + 1,
+                    credits_earned = completions * 5 + 5,
+                    updated_at = NOW()
+                WHERE share_id = %s
+                RETURNING completions, credits_earned
+            """, (share_id,))
+            row = cur.fetchone()
+            conn.commit()
+            cur.close(); conn.close()
+        except Exception as e:
+            logger.warning(f"share claim failed: {e}")
+            return JSONResponse(status_code=500, content={"status": "error", "message": "Could not claim"})
+
+        if not row:
+            return JSONResponse(status_code=404, content={"status": "error", "message": "Share reward not found"})
+
+        return {"status": "success", "completions": row[0], "credits_earned": row[1]}
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "share claim")
+
+
 @app.post("/api/tools/ghost-bounty")
 @limiter.limit("60/minute")
 async def api_ghost_bounty(request: Request):
