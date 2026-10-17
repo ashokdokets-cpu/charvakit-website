@@ -1665,3 +1665,48 @@ The mapping (in mock-result.html) is:
 
 The readiness check's own ?role= handling pre-selects the dropdown
 after page load.
+
+<!-- BEGIN WAVE-1-FLYWHEEL -->
+
+## Wave 1 Flywheel (Sessions 46-48, completed 2026-10-18)
+
+The four-layer flywheel converts casual users into compounding participants.
+
+### The four layers
+
+| Layer | Feature | Purpose | Tables |
+|---|---|---|---|
+| Identity | Career Passport | Public identity artifact, composite score 0-1000 | charvak_passports |
+| Viral | Skill Twin Challenges | Shareable "beat my score" links | charvak_skill_twin_challenges |
+| Habit | Daily Drills + Streaks | 60-second daily engagement | charvak_daily_drills, charvak_user_streaks |
+| Batch | Cohort Mode | Private batch leaderboards | charvak_cohorts, charvak_cohort_members, charvak_cohort_leaderboard |
+
+### How they connect
+
+Every drill updates current_streak.
+Every challenge accepts/compares passport composite scores.
+Every cohort leaderboard reads passport.charvak_score directly.
+Every share drives new users into the passport funnel.
+
+### Composite score formula (passport)
+
+Weighted blend of 4 signals:
+- 40% best readiness cert score
+- 25% best career assessment score
+- 15% breadth (distinct assessment count, capped at 10)
+- 20% integrity cleanliness (100 if clean)
+
+### Cohort leaderboard composite
+
+composite = passport.charvak_score * 0.6 + min(streak * 5, 100) + min(weekly_drills * 10, 150)
+
+Cache: weekly ISO-week (Monday reset), lazy refresh on read.
+
+### Design principles
+
+- Read-only aggregation on passport side
+- Section-isolated (one failure doesn't break others)
+- Silent-fail on frontend (never breaks a page)
+- Self-healing DDL (tables created on first use)
+
+<!-- END WAVE-1-FLYWHEEL -->

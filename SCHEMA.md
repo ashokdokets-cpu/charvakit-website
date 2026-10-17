@@ -3644,3 +3644,107 @@ Re-generate with: `python scripts/regenerate_schema.py`
 - `idx_v2w_updates_site`
 
 ---
+
+<!-- BEGIN WAVE-1-TABLES -->
+
+## Wave 1 Tables (Sessions 46-48)
+
+### charvak_passports
+
+Public identity artifact. One row per user.
+
+- passport_id TEXT PK
+- handle TEXT UNIQUE (URL-safe identifier)
+- email TEXT UNIQUE
+- display_name TEXT
+- headline TEXT
+- charvak_score INTEGER (0-1000 composite)
+- score_tier TEXT (foundation/developing/solid/strong/elite)
+- score_updated_at TIMESTAMP
+- is_public BOOLEAN default TRUE
+- created_at TIMESTAMP
+- updated_at TIMESTAMP
+
+### charvak_skill_twin_challenges
+
+Shareable "beat my score" links.
+
+- challenge_id TEXT PK
+- challenger_email TEXT
+- challenge_code TEXT UNIQUE
+- role TEXT
+- industry TEXT
+- level TEXT
+- challenger_score INTEGER
+- challenger_attempt_email TEXT
+- accepted BOOLEAN
+- created_at TIMESTAMP
+- expires_at TIMESTAMP
+
+### charvak_daily_drills
+
+One drill row per (email, date).
+
+- drill_id TEXT PK
+- email TEXT
+- drill_date DATE
+- topic TEXT
+- questions_json JSONB
+- completed BOOLEAN
+- score INTEGER
+- correct_count INTEGER
+- total_questions INTEGER default 5
+- created_at TIMESTAMP
+- UNIQUE(email, drill_date)
+
+### charvak_user_streaks
+
+One row per user, tracks streak data.
+
+- email TEXT PK
+- current_streak INTEGER
+- longest_streak INTEGER
+- last_drill_date DATE
+- total_drills INTEGER
+- total_correct INTEGER
+- total_questions INTEGER
+- streak_credits INTEGER
+- updated_at TIMESTAMP
+
+### charvak_cohorts
+
+Private batch leaderboards.
+
+- cohort_id TEXT PK
+- name TEXT
+- description TEXT
+- join_code TEXT UNIQUE (8-char, no ambiguous chars)
+- created_by TEXT (email of owner)
+- member_count INTEGER
+- is_public BOOLEAN
+- created_at TIMESTAMP
+- last_refresh TIMESTAMP
+
+### charvak_cohort_members
+
+Membership table.
+
+- cohort_id TEXT PK part
+- member_email TEXT PK part
+- role TEXT (owner/admin/member)
+- joined_at TIMESTAMP
+- PK(cohort_id, member_email)
+
+### charvak_cohort_leaderboard
+
+Weekly cache.
+
+- cohort_id TEXT PK part
+- member_email TEXT PK part
+- week_start DATE PK part (ISO Monday)
+- composite_score INTEGER
+- rank INTEGER
+- refreshed_at TIMESTAMP
+- PK(cohort_id, member_email, week_start)
+
+<!-- END WAVE-1-TABLES -->

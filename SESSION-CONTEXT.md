@@ -2225,3 +2225,41 @@ open to:
 - Career Assessment Phase 2b (coding + SQL via Judge0 sandbox)
 - Or a doc pass on the remaining stale files
 - Or a security sweep (Session 14 style)
+
+<!-- BEGIN SESSION-48 -->
+
+## Session 48 Close-Out (2026-10-18)
+
+**HEAD:** 1399073 (feat(cohorts): Session 48 - Cohort Mode)
+**Wave 1:** 100% complete
+
+### Session 48 Shipped
+
+- Cohort Mode: batch leaderboards
+- cohorts_engine.py (5 methods)
+- 3 tables + 8 routes + 2 templates
+- base.html + passport.html integration
+
+### Session 47.5 Shipped (same week)
+
+- scripts/run_migrations.py (idempotent runner)
+- Wired into Render start command
+- Fixed 3 migration warnings
+- 89 migrations clean on prod
+
+### Wave 1 Arc Complete
+
+Sessions 46-A, 46-B, 47, 48 all shipped. All four flywheel layers live on prod.
+
+### Fresh Chat Resume Prompt
+
+Paste this when starting Session 49:
+
+Resume from 1399073. Session 48 (Cohort Mode) closed clean.
+Wave 1 complete: Passport, Skill Twin, Daily Drills, Cohort Mode.
+All 4 live on prod. HEAD=origin/main=1399073. Tree clean.
+Prod healthy, 89 migrations applied.
+
+Session 49 plan: [OPTION A/B/C/D from COMMITMENT.md]
+
+<!-- END SESSION-48 -->

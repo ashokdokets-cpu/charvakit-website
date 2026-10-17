@@ -440,3 +440,26 @@ Active roadmap for the current work: see `TRACK-A-B-PLAN.md`.
 ### Track B pending (after A2)
 
 - B1-B4: CSR skilling business model - see TRACK-A-B-PLAN.md
+
+<!-- BEGIN SESSION-48 -->
+
+## Session 48 Additions - Cohort Mode
+
+| Template | Route | Purpose | Auth? |
+|---|---|---|---|
+| cohorts.html | /cohorts | Landing with create/join modals + my-cohorts list | Yes (JS-gated) |
+| cohort-detail.html | /cohorts/{cohort_id} | Leaderboard + share code + refresh | Yes (JS-gated) |
+
+### Notes
+
+- /cohorts/join/{join_code} is a 302 redirect to /cohorts?join={code}
+- The ?join= parameter auto-opens the join modal with code pre-filled
+- Passport page (/passport/{handle}) has a new "My Cohorts" section
+  visible only to the authenticated owner
+
+### Nav integration
+
+- Dropdown: "My Cohorts" between "My Career Center" and "Job Board"
+- Footer: "My Cohorts" link in Quick Links section
+
+<!-- END SESSION-48 -->
