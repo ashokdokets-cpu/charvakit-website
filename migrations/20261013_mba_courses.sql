@@ -5,6 +5,34 @@
 -- the courses MBA students need for placement season — case study,
 -- consulting math, business communication, and more.
 
+-- Session 47.5: ensure generated-course columns exist before the INSERT.
+-- These are normally added by ai_courses._ensure_tables() at runtime on
+-- prod, but on a fresh DB they may be missing. All adds are idempotent.
+
+DO $mba$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                   WHERE table_schema='public' AND table_name='charvak_courses'
+                     AND column_name='is_custom') THEN
+        ALTER TABLE charvak_courses ADD COLUMN is_custom BOOLEAN DEFAULT FALSE;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                   WHERE table_schema='public' AND table_name='charvak_courses'
+                     AND column_name='generated_for_email') THEN
+        ALTER TABLE charvak_courses ADD COLUMN generated_for_email TEXT;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                   WHERE table_schema='public' AND table_name='charvak_courses'
+                     AND column_name='generated_from_topic') THEN
+        ALTER TABLE charvak_courses ADD COLUMN generated_from_topic TEXT;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                   WHERE table_schema='public' AND table_name='charvak_courses'
+                     AND column_name='generated_at') THEN
+        ALTER TABLE charvak_courses ADD COLUMN generated_at TIMESTAMP;
+    END IF;
+END $mba$;
+
 INSERT INTO charvak_courses
     (course_id, course_name, category, level, description, price_inr, duration_weeks, status, is_custom)
 VALUES
@@ -38,4 +66,4 @@ VALUES
     ('CRS-MBA-0010', 'Business Ethics & Compliance', 'Business', 'Beginner',
      'Understand corporate governance, compliance frameworks, and ethical decision-making. Prepares for compliance rounds at MNCs and financial services firms.',
      1999, 3, 'active', FALSE)
-ON CONFLICT (course_id) DO NOTHING;
+ON CONFLICT DO NOTHING;
