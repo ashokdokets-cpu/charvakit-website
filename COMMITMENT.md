@@ -1,3 +1,61 @@
+## Session 45-A4 - Resume Roaster Teaser - COMPLETE (2026-10-17)
+
+Free-tier resume scanner + Rs 99 currency-aware unlock + share-for-credits
+loop. The last remaining revenue initiative in the immediate series.
+
+**What shipped:**
+
+- `resume_teaser_ai()` in `tools_ai_backend.py` - one-line score + one critical issue
+- `POST /api/tools/resume-roast/teaser` - free tier, no auth, 3/hour rate limit
+- `POST /api/tools/resume-roast/unlock-order` - Rs 99 currency-aware
+- `POST /api/tools/resume-roast/unlock-run` - verify payment + full roast
+- `GET /resume-teaser/{share_id}` - public share landing page
+- `POST /api/share/track` - records shares
+- `POST /api/share/claim` - increments completions
+- New tables: `charvak_resume_teasers`, `charvak_share_rewards`
+- Rewritten `templates/tools/resume-roast.html`
+- New `templates/resume-teaser-share.html`
+
+**Payment-layer bugs found and fixed (commit ece34f9):**
+
+1. **Rupee/paise confusion** - create_razorpay_order takes paise, not
+   rupees. Two call sites (resume-roaster, state_psc) passed rupees.
+   Razorpay rejected as "amount below minimum".
+
+2. **Silent Razorpay API errors** - create_razorpay_order returned
+   {status: success, order_id: null} when Razorpay rejected the request.
+   Now surfaces the error and short-circuits before DB insert.
+
+3. **Swapped arg order in verify_razorpay_payment** - function is
+   (payment_id, order_id, signature), two call sites passed
+   (order_id, payment_id, signature). Masked in test mode; would fail
+   HMAC in live mode. Fixed at both call sites.
+
+Plus two defensive guards:
+- create_razorpay_order rejects amounts < 100 paise
+- verify_razorpay_payment auto-detects swapped args by prefix
+
+**Impact:** State-PSC full-mock unlock has been silently non-functional
+on prod since 2026-10-16 (session 44-A3). Fixed in passing during this
+session's payment bug investigation. No lost revenue (nobody paid) but
+the feature was broken.
+
+**Verified:**
+- Teaser: real AI analysis, 55/100 score
+- Share landing: renders with OG meta tags
+- Unlock order (resume-roaster): real Razorpay order_ToxNRemZW1u0nt, ₹99
+- Unlock order (state-PSC): real Razorpay order_ToxOCngO1N1Ciy, ₹49
+- DB persistence: teaser saved to charvak_resume_teasers
+
+**Revenue line #6** in the series.
+
+**Remaining small follow-up:**
+- Share claim wiring: /api/share/claim exists but nothing calls it yet.
+  Need the share landing page to trigger the claim on first visit if
+  the friend then completes a teaser.
+
+**Effort:** ~5 hrs + ~2 hrs spent on payment bug investigation.
+
 ## Deep-Dive Revenue Analysis - 15 New Ideas Assessed (2026-10-17)
 
 Full analysis of 3 documents containing ~20 new revenue ideas. Split
