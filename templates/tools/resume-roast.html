@@ -1,162 +1,351 @@
 {% extends "base.html" %}
-{% block title %}Resume Roast - Charvak AI Tools{% endblock %}
+
+{% block title %}Resume Roast - Free AI Resume Scanner | Charvak{% endblock %}
+
+{% block head %}
+<meta name="description" content="Paste your resume. Get an instant AI score + the #1 fix that matters most. Free, no login. Unlock the full report for Rs 99.">
+<meta property="og:title" content="Free AI Resume Scanner - Charvak">
+<meta property="og:description" content="Score your resume in 30 seconds. Free teaser, no login.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://www.charvakit.com/tools/resume-roast">
+{% endblock %}
+
 {% block content %}
-<div class="page-hero bg-gradient-primary text-white py-5">
-    <div class="container py-4">
-        <span class="badge bg-primary text-white mb-2 px-3 py-2">5 credits per run</span>
-        <h1 class="display-4 fw-bold">Resume Roast</h1>
-        <p class="lead">Upload your resume. Get a brutally honest AI roast + ATS match score.</p>
+<style>
+  .rr-wrap { max-width: 720px; margin: 0 auto; padding: 40px 16px 80px; }
+  .rr-hero { text-align: center; margin-bottom: 32px; }
+  .rr-badge { display: inline-block; padding: 4px 12px; background: #e6f7f4; color: #0a8a75; border-radius: 999px; font-size: 13px; font-weight: 600; margin-bottom: 12px; }
+  .rr-hero h1 { font-size: 32px; font-weight: 800; color: #0f172a; margin: 8px 0; }
+  .rr-hero p { color: #475569; font-size: 16px; max-width: 520px; margin: 0 auto; }
+
+  .rr-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 28px; box-shadow: 0 2px 8px rgba(15,23,42,0.04); }
+  .rr-label { font-size: 13px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; display: block; margin-bottom: 8px; }
+  .rr-input { width: 100%; padding: 12px 14px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; font-family: inherit; }
+  .rr-input:focus { outline: none; border-color: #0a8a75; box-shadow: 0 0 0 3px rgba(10,138,117,0.1); }
+  .rr-textarea { min-height: 220px; resize: vertical; font-family: 'Courier New', monospace; }
+
+  .rr-btn { display: inline-block; padding: 14px 28px; border-radius: 10px; border: 0; font-weight: 600; font-size: 15px; cursor: pointer; transition: all 0.15s; }
+  .rr-btn-primary { background: #0a8a75; color: #fff; }
+  .rr-btn-primary:hover { background: #086f5f; }
+  .rr-btn-primary:disabled { background: #94a3b8; cursor: not-allowed; }
+  .rr-btn-ghost { background: #f1f5f9; color: #0f172a; }
+  .rr-btn-ghost:hover { background: #e2e8f0; }
+
+  .rr-spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: rr-spin 0.7s linear infinite; margin-right: 8px; vertical-align: middle; }
+  @keyframes rr-spin { to { transform: rotate(360deg); } }
+
+  .rr-score-hero { text-align: center; padding: 24px 0; }
+  .rr-score { font-size: 80px; font-weight: 800; line-height: 1; color: #0a8a75; }
+  .rr-score.rr-bad { color: #dc2626; }
+  .rr-score.rr-mid { color: #f59e0b; }
+  .rr-score.rr-good { color: #10b981; }
+  .rr-score-sub { color: #94a3b8; font-size: 18px; font-weight: 500; }
+  .rr-headline { font-size: 18px; font-weight: 600; color: #0f172a; margin: 8px 0; line-height: 1.4; }
+  .rr-issue { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; border-radius: 8px; text-align: left; margin: 20px 0; font-size: 14px; color: #78350f; }
+  .rr-issue strong { display: block; margin-bottom: 4px; color: #92400e; }
+
+  .rr-unlock { background: linear-gradient(135deg, #0a8a75 0%, #086f5f 100%); color: #fff; padding: 24px; border-radius: 14px; margin-top: 24px; text-align: center; }
+  .rr-unlock h3 { margin: 0 0 8px; font-size: 20px; }
+  .rr-unlock p { margin: 0 0 16px; opacity: 0.95; font-size: 14px; }
+  .rr-unlock-btn { background: #fff; color: #0a8a75; padding: 12px 32px; border-radius: 10px; border: 0; font-weight: 700; font-size: 15px; cursor: pointer; }
+  .rr-unlock-btn:hover { background: #f0fdfa; }
+
+  .rr-share { text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eef2f7; }
+  .rr-share p { font-size: 13px; color: #64748b; margin-bottom: 12px; }
+  .rr-share-btn { display: inline-block; padding: 10px 20px; border-radius: 8px; font-weight: 600; font-size: 14px; text-decoration: none; margin: 0 4px; }
+  .rr-share-wa { background: #25d366; color: #fff; }
+  .rr-share-wa:hover { background: #128c7e; color: #fff; }
+  .rr-share-li { background: #0a66c2; color: #fff; }
+  .rr-share-li:hover { background: #084a8f; color: #fff; }
+
+  .rr-full { background: #f8fafc; border-radius: 12px; padding: 20px; margin-top: 20px; }
+  .rr-full h3 { color: #0f172a; font-size: 16px; margin: 16px 0 8px; }
+  .rr-full h3:first-child { margin-top: 0; }
+  .rr-full ul { margin: 0 0 12px; padding-left: 20px; color: #334155; font-size: 14px; line-height: 1.6; }
+  .rr-full p { color: #334155; font-size: 14px; line-height: 1.6; }
+
+  .rr-hidden { display: none !important; }
+  .rr-error { padding: 16px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; color: #991b1b; font-size: 14px; }
+</style>
+
+<div class="rr-wrap">
+  <div class="rr-hero">
+    <span class="rr-badge">Free - No login required</span>
+    <h1>Resume Roast</h1>
+    <p>Paste your resume. Get an honest AI score + the single most critical fix. Takes 30 seconds.</p>
+  </div>
+
+  <!-- INPUT STATE -->
+  <div id="rrInput" class="rr-card">
+    <label class="rr-label" for="rrJobTitle">Target role (optional, helps accuracy)</label>
+    <input type="text" id="rrJobTitle" class="rr-input" placeholder="e.g., Data Scientist, Product Manager" style="margin-bottom:20px;">
+
+    <label class="rr-label" for="rrResume">Paste your resume</label>
+    <textarea id="rrResume" class="rr-input rr-textarea" placeholder="Paste your resume text here..." maxlength="10000"></textarea>
+
+    <div style="margin-top:20px; text-align:right;">
+      <button id="rrSubmit" class="rr-btn rr-btn-primary" onclick="rrSubmit()">
+        Scan my resume - free
+      </button>
     </div>
+    <div style="font-size:12px;color:#94a3b8;margin-top:12px;text-align:center;">
+      Free tier: 3 scans per hour. Paid: Rs 99 for the full report.
+    </div>
+  </div>
+
+  <!-- LOADING STATE -->
+  <div id="rrLoading" class="rr-card rr-hidden" style="text-align:center;padding:40px;">
+    <div style="display:inline-block;width:32px;height:32px;border:3px solid #e2e8f0;border-top-color:#0a8a75;border-radius:50%;animation:rr-spin 0.8s linear infinite;"></div>
+    <div style="margin-top:12px;color:#64748b;">Analyzing your resume...</div>
+  </div>
+
+  <!-- TEASER RESULT -->
+  <div id="rrTeaser" class="rr-card rr-hidden">
+    <div class="rr-score-hero">
+      <div id="rrScore" class="rr-score">--<span class="rr-score-sub">/100</span></div>
+      <div id="rrHeadline" class="rr-headline"></div>
+    </div>
+
+    <div id="rrIssue" class="rr-issue"></div>
+
+    <div class="rr-unlock">
+      <h3>Unlock the full roast</h3>
+      <p>Get buzzwords, missing skills, ATS optimization tips + full report.</p>
+      <button class="rr-unlock-btn" onclick="rrUnlock()">
+        Unlock full report - Rs 99
+      </button>
+    </div>
+
+    <div class="rr-share">
+      <p>Or share your score to help a friend:</p>
+      <a id="rrShareWA" class="rr-share-btn rr-share-wa" target="_blank" href="#">Share on WhatsApp</a>
+      <a id="rrShareLI" class="rr-share-btn rr-share-li" target="_blank" href="#">Share on LinkedIn</a>
+    </div>
+  </div>
+
+  <!-- FULL REPORT -->
+  <div id="rrFull" class="rr-card rr-hidden">
+    <div class="rr-score-hero">
+      <div id="rrFullScore" class="rr-score">--</div>
+      <div class="rr-score-sub">Full Report</div>
+    </div>
+    <div id="rrFullContent" class="rr-full"></div>
+    <div style="text-align:center; margin-top:20px;">
+      <button class="rr-btn rr-btn-ghost" onclick="location.reload()">Scan another resume</button>
+    </div>
+  </div>
+
+  <!-- ERROR STATE -->
+  <div id="rrError" class="rr-card rr-hidden">
+    <div class="rr-error" id="rrErrorMsg"></div>
+    <div style="text-align:center;margin-top:16px;">
+      <button class="rr-btn rr-btn-ghost" onclick="location.reload()">Try again</button>
+    </div>
+  </div>
 </div>
 
-<div class="container py-5"><div class="row"><div class="col-lg-7 mx-auto">
-    <div class="card border-0 shadow-lg p-4 mb-4"><div class="card-body">
-        <h4>Paste Your Resume</h4>
-        <div class="mb-3">
-            <textarea class="form-control" id="resumeText" maxlength="10000" rows="8" placeholder="Paste your resume text here..."></textarea>
-        </div>
-        <div class="mb-3">
-            <input type="text" class="form-control" id="jobTitle" maxlength="200" placeholder="Target Job Title (e.g., Senior React Developer)">
-        </div>
-        <button class="btn btn-primary btn-lg w-100 mt-3" id="runBtn" onclick="runTool()">
-            Run (5 credits)
-        </button>
-        <div id="toolError" class="alert alert-danger mt-3 d-none"></div>
-    </div></div>
-
-    <div class="card border-0 shadow-lg p-4 d-none" id="resultCard" style="border-left:5px solid #0ea5e9;">
-        <div class="card-body" id="resultBody"></div>
-    </div>
-</div></div></div>
-
 <script>
-const TOOL_NAME = 'Resume Roast';
-const TOOL_COST = 5;
-const TOOL_ENDPOINT = '/api/tools/resume-roast';
+(function() {
+  let currentShareId = null;
+  let currentShareUrl = null;
+  let pendingOrder = null;
 
-function esc(s) {
-    return String(s == null ? '' : s)
-        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-}
+  function show(id) { document.getElementById(id).classList.remove("rr-hidden"); }
+  function hide(id) { document.getElementById(id).classList.add("rr-hidden"); }
+  function esc(s) { return (s || "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c])); }
 
-function renderValue(v, depth) {
-    depth = depth || 0;
-    if (v === null || v === undefined) return '<span class="text-muted">-</span>';
-    if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') return esc(v);
-    if (Array.isArray(v))
-        return '<ul class="mb-0">' + v.map(x => '<li>' + renderValue(x, depth+1) + '</li>').join('') + '</ul>';
-    if (typeof v === 'object') {
-        return '<ul class="mb-0">' + Object.keys(v).map(k =>
-            '<li><strong>' + esc(k) + ':</strong> ' + renderValue(v[k], depth+1) + '</li>'
-        ).join('') + '</ul>';
+  window.rrSubmit = async function() {
+    const resume = (document.getElementById("rrResume").value || "").trim();
+    const jobTitle = (document.getElementById("rrJobTitle").value || "").trim();
+    if (!resume || resume.length < 50) {
+      alert("Please paste at least 50 characters of your resume.");
+      return;
     }
-    return esc(v);
-}
-
-function renderResult(data) {
-    const body = document.getElementById('resultBody');
-    let html = '<h3>' + esc(TOOL_NAME) + ' Result</h3>';
-    if (data.message) html += '<p class="text-muted">' + esc(data.message) + '</p>';
-    for (const key of Object.keys(data)) {
-        if (key === 'status' || key === 'message' || key === '_http_status') continue;
-        html += '<div class="mb-3"><strong>' + esc(key.replace(/_/g, ' ')) + ':</strong> '
-              + '<div>' + renderValue(data[key]) + '</div></div>';
-    }
-    body.innerHTML = html;
-}
-
-async function runTool() {
-    const btn = document.getElementById('runBtn');
-    const errEl = document.getElementById('toolError');
-    errEl.classList.add('d-none');
-
-    const authToken = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
-    const email = localStorage.getItem('userEmail') || '';
-    if (!authToken || !email) {
-        alert('Please log in to use this tool.');
-        window.location.href = '/login?next=' + window.location.pathname;
-        return;
-    }
-
-    // ---- INPUT COLLECTION ----
-    const resume = document.getElementById('resumeText').value.trim();
-    if (!resume) { alert('Paste your resume first.'); return; }
-    const payload = { email: email, resume: resume, job_title: document.getElementById('jobTitle').value.trim() || 'General' };
-
-    btn.disabled = true;
-    const originalText = btn.textContent;
-    btn.textContent = 'Running...';
-
+    hide("rrInput");
+    show("rrLoading");
     try {
-        const r = await fetch(TOOL_ENDPOINT, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + authToken
-            },
-            body: JSON.stringify(payload)
-        });
-        const j = await r.json();
-
-        if (!r.ok) {
-            btn.disabled = false;
-            btn.textContent = originalText;
-            if (r.status === 401) { alert(j.message || 'Please log in again.'); window.location.href = '/login?next=' + window.location.pathname; return; }
-            if (r.status === 402) { alert(j.message || 'Insufficient credits.'); window.location.href = '/ai-credits-pricing'; return; }
-            errEl.textContent = j.message || 'Request failed.';
-            errEl.classList.remove('d-none');
-            return;
-        }
-
-        renderResult(j);
-        document.getElementById('resultCard').classList.remove('d-none');
-        document.getElementById('resultCard').scrollIntoView({behavior:'smooth'});
-        btn.disabled = false;
-        btn.textContent = originalText;
-    } catch (e) {
-        console.error('tool failed', e);
-        errEl.textContent = 'Network error - please try again.';
-        errEl.classList.remove('d-none');
-        btn.disabled = false;
-        btn.textContent = originalText;
-    }
-}
-
-</script>
-
-<!-- Session 43-A1.6: one-off paid path -->
-<script src="/static/js/tool-pay.js?v=1"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    if (typeof ToolPay === 'undefined') {
-        console.warn('ToolPay helper not loaded');
+      const res = await fetch("/api/tools/resume-roast/teaser", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resume, job_title: jobTitle }),
+      });
+      const data = await res.json();
+      if (res.status === 429) {
+        hide("rrLoading");
+        document.getElementById("rrErrorMsg").textContent = data.message || "Rate limit reached. Try again in an hour.";
+        show("rrError");
         return;
+      }
+      if (data.status !== "success") {
+        hide("rrLoading");
+        document.getElementById("rrErrorMsg").textContent = data.message || "Could not analyze resume.";
+        show("rrError");
+        return;
+      }
+      currentShareId = data.share_id;
+      currentShareUrl = data.share_url;
+      renderTeaser(data.teaser, data.unlock_offer);
+      hide("rrLoading");
+      show("rrTeaser");
+      try { charvakTrack && charvakTrack("resume_teaser_complete", {score: data.teaser.score}); } catch(e) {}
+    } catch (e) {
+      hide("rrLoading");
+      document.getElementById("rrErrorMsg").textContent = "Network error. Please try again.";
+      show("rrError");
     }
-    ToolPay.init({
-        toolSlug: 'resume_roast',
-        toolName: 'Resume Roast',
-        collectInput: function () {
-            return {
-                resume: document.getElementById('resumeText').value.trim(),
-                job_title: document.getElementById('jobTitle').value.trim() || 'General'
-            };
-        },
-        renderResult: function (result) {
-            // Reuse the page's existing renderResult
-            if (typeof renderResult === 'function') {
-                renderResult(result);
-            } else {
-                var body = document.getElementById('resultBody');
-                if (body) body.innerHTML = '<pre>' + JSON.stringify(result, null, 2) + '</pre>';
-            }
-            var card = document.getElementById('resultCard');
-            if (card) {
-                card.classList.remove('d-none');
-                card.scrollIntoView({ behavior: 'smooth' });
-            }
-        }
+  };
+
+  function renderTeaser(teaser, offer) {
+    const score = teaser.score || 0;
+    const el = document.getElementById("rrScore");
+    el.innerHTML = score + '<span class="rr-score-sub">/100</span>';
+    el.className = "rr-score " + (score < 50 ? "rr-bad" : score < 75 ? "rr-mid" : "rr-good");
+    document.getElementById("rrHeadline").textContent = teaser.headline || "";
+
+    const issueEl = document.getElementById("rrIssue");
+    issueEl.innerHTML = '<strong>The #1 fix:</strong>' + esc(teaser.one_issue || "");
+
+    // Share buttons
+    const shareText = `My resume scored ${score}/100 on Charvak's AI scanner. What does yours score?`;
+    const waUrl = `https://wa.me/?text=${encodeURIComponent(shareText + " " + currentShareUrl)}`;
+    const liUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(currentShareUrl)}`;
+    document.getElementById("rrShareWA").href = waUrl;
+    document.getElementById("rrShareLI").href = liUrl;
+
+    // Track shares when clicked
+    document.getElementById("rrShareWA").addEventListener("click", () => trackShare("whatsapp"));
+    document.getElementById("rrShareLI").addEventListener("click", () => trackShare("linkedin"));
+  }
+
+  async function trackShare(channel) {
+    if (!currentShareId) return;
+    try {
+      await fetch("/api/share/track", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ share_id: currentShareId, channel, tool_name: "resume_roast_teaser" }),
+      });
+      try { charvakTrack && charvakTrack("resume_teaser_shared", {channel, share_id: currentShareId}); } catch(e) {}
+    } catch(e) {}
+  }
+
+  window.rrUnlock = async function() {
+    if (!currentShareId) { alert("No teaser found. Please scan your resume first."); return; }
+    const email = (localStorage.getItem("userEmail") || "").trim();
+    let useEmail = email;
+    if (!useEmail || !useEmail.includes("@")) {
+      const entered = prompt("Enter your email to receive the full report:");
+      if (!entered || !entered.includes("@")) return;
+      useEmail = entered.trim().toLowerCase();
+      localStorage.setItem("userEmail", useEmail);
+    }
+    try {
+      const res = await fetch("/api/tools/resume-roast/unlock-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ share_id: currentShareId, email: useEmail }),
+      });
+      const data = await res.json();
+      if (data.status === "exists") {
+        alert("This teaser is already unlocked. Reloading the report...");
+        await rrUnlockConfirm({ gateway: "razorpay" });
+        return;
+      }
+      if (data.status !== "success") {
+        alert(data.message || "Could not create order.");
+        return;
+      }
+      pendingOrder = data;
+      if (data.gateway === "razorpay") {
+        await openRazorpay(data, useEmail);
+      } else {
+        alert("PayPal flow - " + (data.gateway || "unknown") + " (to be wired in v2)");
+      }
+    } catch(e) {
+      alert("Network error while creating order.");
+    }
+  };
+
+  async function ensureRazorpayLoaded() {
+    if (window.Razorpay) return;
+    await new Promise((resolve, reject) => {
+      const s = document.createElement("script");
+      s.src = "https://checkout.razorpay.com/v1/checkout.js";
+      s.onload = resolve;
+      s.onerror = reject;
+      document.head.appendChild(s);
     });
-});
+  }
+
+  async function openRazorpay(order, email) {
+    await ensureRazorpayLoaded();
+    const rzp = new window.Razorpay({
+      key: order.razorpay_key_id,
+      amount: order.amount_paise,
+      currency: order.currency,
+      name: "Charvak",
+      description: "Resume Roast - Full Report",
+      order_id: order.razorpay_order_id,
+      prefill: { email },
+      handler: async function(response) {
+        await rrUnlockConfirm({
+          gateway: "razorpay",
+          razorpay_payment_id: response.razorpay_payment_id,
+          razorpay_order_id: response.razorpay_order_id,
+          razorpay_signature: response.razorpay_signature,
+        });
+      },
+    });
+    rzp.open();
+  }
+
+  async function rrUnlockConfirm(payload) {
+    const email = localStorage.getItem("userEmail");
+    try {
+      const res = await fetch("/api/tools/resume-roast/unlock-run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(Object.assign({ share_id: currentShareId, email }, payload)),
+      });
+      const data = await res.json();
+      if (data.status !== "success") {
+        alert(data.message || "Unlocking failed.");
+        return;
+      }
+      renderFull(data.full_roast);
+      hide("rrTeaser");
+      show("rrFull");
+      try { charvakTrack && charvakTrack("resume_roast_unlocked", {share_id: currentShareId}); } catch(e) {}
+    } catch(e) {
+      alert("Network error while unlocking.");
+    }
+  }
+
+  function renderFull(full) {
+    const score = full.match_score || 0;
+    const el = document.getElementById("rrFullScore");
+    el.innerHTML = score + '<span class="rr-score-sub">/100</span>';
+    el.className = "rr-score " + (score < 50 ? "rr-bad" : score < 75 ? "rr-mid" : "rr-good");
+
+    let html = "";
+    if (full.roast) {
+      html += `<h3>The Roast</h3><p>${esc(full.roast)}</p>`;
+    }
+    if (full.buzzwords && full.buzzwords.length) {
+      html += "<h3>Buzzwords to Remove</h3><ul>";
+      full.buzzwords.forEach(b => { html += "<li>" + esc(b) + "</li>"; });
+      html += "</ul>";
+    }
+    if (full.missing_skills && full.missing_skills.length) {
+      html += "<h3>Missing Skills</h3><ul>";
+      full.missing_skills.forEach(s => { html += "<li>" + esc(s) + "</li>"; });
+      html += "</ul>";
+    }
+    if (full.ats_tips) {
+      html += "<h3>ATS Optimization</h3><p>" + esc(full.ats_tips) + "</p>";
+    }
+    document.getElementById("rrFullContent").innerHTML = html || "<p>Full report ready.</p>";
+  }
+})();
 </script>
 {% endblock %}
