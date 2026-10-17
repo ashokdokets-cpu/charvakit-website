@@ -2820,8 +2820,9 @@ async def api_resume_roast_unlock_order(request: Request):
 
         import secrets as _secrets
         if gateway == "razorpay":
+            # Session 45-A4: pass PAISE, not rupees (create_razorpay_order requires paise)
             order = payment_engine.create_razorpay_order(
-                amount_inr=amount_inr,
+                amount_inr=amount_paise,
                 receipt=f"rt_{_secrets.token_hex(6)}",
                 notes={
                     "plan": "resume_roast_teaser",
@@ -2907,7 +2908,8 @@ async def api_resume_roast_unlock_run(request: Request):
                 signature = (data.get("razorpay_signature") or "").strip()
                 if not (payment_id and order_id and signature):
                     return JSONResponse(status_code=400, content={"status": "error", "message": "Missing Razorpay fields"})
-                verify = payment_engine.verify_razorpay_payment(order_id, payment_id, signature)
+                # Session 45-A4: pass in the correct arg order (payment_id, order_id, signature)
+                verify = payment_engine.verify_razorpay_payment(payment_id, order_id, signature)
                 if not verify.get("verified"):
                     return JSONResponse(status_code=402, content={"status": "error", "message": "Signature verification failed"})
             elif gateway == "paypal":

@@ -315,9 +315,38 @@ class PaymentEngine:
         return result
 
     def create_razorpay_order(self, amount_inr: int, receipt: str, notes: Dict = None) -> Dict:
-        """Create a Razorpay order."""
+        """
+        Create a Razorpay order.
+
+        IMPORTANT: `amount_inr` is a legacy parameter name - the value
+        must be in PAISE (INR * 100), which is what Razorpay's API
+        expects. Passing rupees here results in a rejected order.
+
+        Guards:
+          - Rejects amounts < 100 paise (Razorpay minimum is ₹1)
+          - Surfaces Razorpay API errors instead of silently returning
+            null order_id (Session 45-A4 bug fix)
+        """
         if not self.razorpay_key_id:
             return {"status": "error", "message": "Razorpay not configured"}
+
+        # Session 45-A4: guard against rupee-vs-paise mixup
+        try:
+            amount_paise_check = int(amount_inr)
+        except (TypeError, ValueError):
+            return {
+                "status": "error",
+                "message": f"Invalid amount: {amount_inr!r} (must be integer paise)"
+            }
+        if amount_paise_check < 100:
+            return {
+                "status": "error",
+                "message": (
+                    f"Invalid amount: {amount_paise_check} paise (min 100). "
+                    f"Did you pass rupees instead of paise? "
+                    f"Multiply by 100 before calling."
+                )
+            }
 
         if self.mode == "test":
             order_id = f"order_test_{secrets.token_hex(8)}"
@@ -348,6 +377,17 @@ class PaymentEngine:
                 json={"amount": amount_inr, "currency": "INR", "receipt": receipt, "notes": notes or {}}
             )
             data = response.json()
+
+            # Session 45-A4: surface Razorpay API errors instead of silent success
+            if not data.get("id"):
+                err_desc = (data.get("error") or {}).get("description") or "Razorpay order creation failed"
+                logger.error(f"Razorpay order API error: {data}")
+                return {
+                    "status": "error",
+                    "message": err_desc,
+                    "razorpay_response": data,
+                }
+
             self._save_payment({
                 "order_id": data.get("id"),
                 "amount": amount_inr,
@@ -364,7 +404,23 @@ class PaymentEngine:
             return {"status": "error", "message": str(e)}
 
     def verify_razorpay_payment(self, payment_id: str, order_id: str, signature: str) -> Dict:
-        """Verify Razorpay payment signature."""
+        """
+        Verify Razorpay payment signature.
+
+        Session 45-A4: signature is (payment_id, order_id, signature) to match
+        Razorpay's own terminology. Two call sites were historically passing
+        args in the wrong order; this function now detects swapped args by
+        prefix and auto-corrects, so future caller bugs cannot bypass HMAC
+        verification.
+        """
+        # Defensive: detect swapped args by canonical prefixes
+        if payment_id and order_id and payment_id.startswith("order_") and order_id.startswith("pay_"):
+            logger.warning(
+                f"verify_razorpay_payment: swapped args detected (payment_id={payment_id[:12]}..., "
+                f"order_id={order_id[:12]}...). Auto-correcting."
+            )
+            payment_id, order_id = order_id, payment_id
+
         if self.mode == "test":
             self._update_payment(order_id, "completed", payment_id)
             return {"status": "success", "verified": True}
