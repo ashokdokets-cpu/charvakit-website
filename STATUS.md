@@ -100,3 +100,37 @@ See TRACK-A-B-PLAN.md for the full sequence.
 - B4: First paid contract
 
 **Estimate:** Track A ~6-7 weeks. Track B ~4-5 months.
+
+<!-- BEGIN SESSION-48 -->
+
+## Session 2026-10-18 - Session 48 (Cohort Mode)
+
+**HEAD:** 1399073
+**Wave 1:** 100% complete
+
+### Shipped
+
+- Cohort Mode (batch leaderboards)
+- 8 routes, 3 tables, 2 templates
+- base.html nav + footer links
+- passport.html "My Cohorts" section
+
+### Verified
+
+- /cohorts returns 200 on prod
+- /cohorts/{id} returns 200 on prod
+- /passport/{handle} renders "My Cohorts" for owner
+- Migration 20261018_cohorts.sql applied automatically
+- Pre-push hook passes 14/14
+
+### Site Health
+
+- All Wave 1 API endpoints returning 200
+- Payment API returns live credentials
+- 89 migrations clean on prod
+
+### Next
+
+See COMMITMENT.md "Session 49 candidates" for options A/B/C/D.
+
+<!-- END SESSION-48 -->

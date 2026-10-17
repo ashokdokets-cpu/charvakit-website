@@ -297,3 +297,52 @@ prod, not localhost. Localhost can differ (see V4/V5 in KNOWN-ISSUES).
 - Check `.env` for new secrets not in MASTER-REFERENCE.md
 - Verify prod still uses live PayPal (`paypal_client_id` starts with
   "Aaj..." not the sandbox prefix)
+
+<!-- BEGIN SESSION-48-GOTCHAS -->
+
+## Session 48 - New PowerShell Gotchas
+
+Four gotchas discovered during Sessions 46-48 (Wave 1 build).
+
+### 1. $$ expands in PowerShell here-strings
+
+PowerShell's $$ is an automatic variable (last token of previous command).
+Inside a here-string, DO $$ ... $$ in SQL gets silently mangled to DO $ ... $
+and Postgres throws "syntax error at or near $"'.
+
+Fix: use a named dollar tag.
+
+BAD: $sql = "DO $$ BEGIN ... END $$;"
+GOOD: $sql = "DO `$mba`$ BEGIN ... END `$mba`$;"
+
+Or write the SQL into a file with [System.IO.File]::WriteAllText and read it back.
+
+### 2. .env.local credential drift
+
+If the pre-push hook (or any script) reports "password authentication failed
+for user postgres", check .env.local:
+
+Get-Content .env.local | Select-String "DATABASE_URL"
+
+Expected: DATABASE_URL=postgresql://postgres:dev@localhost:5432/vouchai
+
+If it points at a different DB or password, that's the bug.
+
+### 3. OPENAI_API_KEY empty blocks pre-push hook
+
+The pre-push hook runs scripts/test_ielts_relevance.py which calls OpenAI.
+If OPENAI_API_KEY is empty in .env.local, the test fails 3/14 with
+"AI scoring unavailable / None" and the push is blocked.
+
+Fix: ensure .env.local has a real OPENAI_API_KEY (copy from .env if needed).
+
+### 4. Verify migrations after writing with here-strings
+
+For any migration file, after writing check:
+
+Get-Content migrations/FILENAME.sql | Select-String 'DO \$'
+
+If you see "DO $" (single dollar) instead of "DO $tag$", the here-string
+collapsed the dollars. Re-write with [System.IO.File]::WriteAllText.
+
+<!-- END SESSION-48-GOTCHAS -->

@@ -5510,3 +5510,59 @@ Set OPENAI_MODEL=<new model> on Render. Test every feature E2E.
 - Jan 14, 2027: models retired
 
 **Verdict:** FLAGGED. Plan and work shortly.
+
+<!-- BEGIN WAVE-1-COMPLETE -->
+
+## Wave 1 - COMPLETE (2026-10-18)
+
+All four flywheel layers live on prod as of commit 1399073.
+
+| Layer | Session | Status |
+|---|---|---|
+| Identity (Career Passport) | 46-A | DONE |
+| Viral (Skill Twin Challenges) | 46-B | DONE |
+| Habit (Daily Drills + Streaks) | 47 | DONE |
+| Batch (Cohort Mode) | 48 | DONE |
+
+### Session 48 - Cohort Mode specifics
+
+- Backend: 5 methods in cohorts_engine.py
+- Tables: 3 (charvak_cohorts, charvak_cohort_members, charvak_cohort_leaderboard)
+- Routes: 8 (3 pages, 1 redirect, 5 API)
+- Templates: 2 new + 2 patched
+- Composite: passport*0.6 + streak*5 + weekly*10
+
+### Session 49 candidates (ranked by leverage)
+
+A) Polish Cohort Mode (~3-4 hrs, highest priority)
+   - Members can't leave cohort
+   - Owner can't rename
+   - Owner can't delete
+   - No promote-admin UI
+   - No public discovery (only join-by-code)
+   These are real product gaps that block adoption.
+
+B) Trust Score Public API (~2-3 hrs)
+   - GET /api/passport/{handle}/verify - employer-facing
+   - Reuses existing integrity + HMAC infrastructure
+   - Opens B2B verification revenue line
+
+C) Passport Share Integration (~1-2 hrs)
+   - One-click LinkedIn badge add
+   - og:image auto-generated
+   - Email passport to recruiter
+   - Improves viral coefficient measurement
+
+D) Real usage analytics (~2-3 hrs)
+   - Track view/share count on passports
+   - Surface to admin dashboard
+   - Closes loop on "did anyone share"
+
+### Still-open long-tail flags
+
+- Render Postgres password rotation (Session 19)
+- /api/lms/progress/{enrollment_id} ownership check (Session 14)
+- PayPal capture route for A1.6 tools (Razorpay verified only)
+- CI hook for IELTS relevance test (pre-push hook works, CI is separate)
+
+<!-- END WAVE-1-COMPLETE -->

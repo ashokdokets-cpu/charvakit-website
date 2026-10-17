@@ -597,3 +597,54 @@ Write-Host "`nMarkers:" -ForegroundColor Cyan
 
 - `/admin/client-roles` -> 302 (redirect to login = gate works)
 - Old `/cbrex-package` route -> 401 (retired)
+
+<!-- BEGIN SESSION-48 -->
+
+## SESSION 2026-10-18 - Session 48 (Cohort Mode - Wave 1 Complete)
+
+**Commit:** 1399073
+
+### Shipped
+
+- Cohort Mode (batch leaderboards for college cohorts, coaching groups, training batches)
+- cohorts_engine.py: 5 methods (create, join, leaderboard, mine, refresh)
+- 3 new tables: charvak_cohorts, charvak_cohort_members, charvak_cohort_leaderboard
+- 8 new routes: /cohorts, /cohorts/{id}, /cohorts/join/{code} + 5 API
+- 2 new templates: cohorts.html, cohort-detail.html
+- base.html: nav + footer "My Cohorts" links
+- passport.html: "My Cohorts" section for owner
+
+### Composite Score Formula (Cohort Leaderboard)
+
+composite = passport.charvak_score * 0.6 + min(current_streak * 5, 100) + min(weekly_drills * 10, 150)
+
+### Session 47.5 - Migration Pipeline (same week)
+
+- scripts/run_migrations.py shipped and wired into Render start command
+- 3 non-blocking migration warnings fixed (skill_twin_badge, assessment_integrity, mba_courses)
+- 89 migrations clean on prod (failed_or_already_exists=0)
+
+### Wave 1 - Complete
+
+| Layer | Session | Table(s) |
+|---|---|---|
+| Identity (Passport) | 46-A | charvak_passports |
+| Viral (Challenges) | 46-B | charvak_skill_twin_challenges |
+| Habit (Drills + Streaks) | 47 | charvak_daily_drills, charvak_user_streaks |
+| Batch (Cohorts) | 48 | charvak_cohorts, charvak_cohort_members, charvak_cohort_leaderboard |
+
+### Verified E2E on Prod
+
+- /cohorts returns 200, renders correctly
+- /cohorts/COH-{id} returns 200, leaderboard computes
+- /passport/{handle} shows "My Cohorts" section for owner
+- Migration 20261018_cohorts.sql applied automatically on deploy
+
+### Next Session Candidates
+
+- A) Polish Cohort Mode (~3-4 hrs): leave, rename, delete, promote admin, public discovery
+- B) Trust Score Public API (~2-3 hrs): employer verification endpoint
+- C) Passport Share Integration (~1-2 hrs): one-click LinkedIn badge, og:image
+- D) Real usage analytics (~2-3 hrs): view count, share count tracking
+
+<!-- END SESSION-48 -->

@@ -503,3 +503,31 @@ Commits:
 - 3fd8ad7 — FYP discipline-aware topic generation
 
 HEAD: 3fd8ad7
+
+<!-- BEGIN SESSION-48 -->
+
+## Wave 1 - COMPLETE (2026-10-18)
+
+All four Wave 1 layers are live on prod as of commit 1399073.
+
+- Career Passport (Session 46-A) - DONE
+- Skill Twin Challenges (Session 46-B) - DONE
+- Daily Drills + Streaks (Session 47) - DONE
+- Cohort Mode (Session 48) - DONE
+
+### New items added by Session 48
+
+- Cohort Mode MVP polish: members can't leave, owner can't rename/delete,
+  no promote-admin UI, no public discovery (~3-4 hrs)
+- Trust Score public API for employer verification (~2-3 hrs)
+- Passport share integration: LinkedIn one-click, og:image (~1-2 hrs)
+- Real usage analytics on passports (~2-3 hrs)
+
+### Still-open flags carried forward
+
+- Render Postgres password rotation (Session 19)
+- /api/lms/progress ownership check (Session 14)
+- PayPal capture for A1.6 tools (Razorpay verified only)
+- CI hook for IELTS relevance test
+
+<!-- END SESSION-48 -->
