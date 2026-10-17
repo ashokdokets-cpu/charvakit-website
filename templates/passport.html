@@ -297,6 +297,35 @@
 </div>
 
 <script>
+// Session 46: passport GA4 instrumentation
+(function() {
+  try {
+    if (typeof charvakTrack !== "function") return;
+    {% if passport %}
+    // Page view
+    charvakTrack("passport_viewed", {
+      handle: "{{ passport.handle }}",
+      score: {{ passport.charvak_score or 0 }},
+      tier: "{{ passport.score_tier or 'foundation' }}",
+      certs: {{ passport.certificates|length if passport.certificates else 0 }},
+      assessments: {{ (passport.career_assessments|length if passport.career_assessments else 0) + (passport.other_assessments|length if passport.other_assessments else 0) }}
+    });
+    // Share click tracking
+    document.querySelectorAll(".pp-share-wa, .pp-share-li, .pp-share-copy").forEach(el => {
+      el.addEventListener("click", function() {
+        var ch = el.classList.contains("pp-share-wa") ? "whatsapp"
+               : el.classList.contains("pp-share-li") ? "linkedin" : "copy";
+        charvakTrack("passport_shared", {
+          handle: "{{ passport.handle }}",
+          channel: ch,
+          score: {{ passport.charvak_score or 0 }}
+        });
+      });
+    });
+    {% endif %}
+  } catch (e) { /* silent */ }
+})();
+
 function ppCopyLink(url) {
   navigator.clipboard.writeText(url).then(() => {
     alert("Link copied to clipboard!");
@@ -305,6 +334,20 @@ function ppCopyLink(url) {
   });
 }
 
+// Session 46: JS auth gate — if not logged in, redirect to login once.
+(function() {
+  try {
+    if ({% if create_mode %}true{% else %}false{% endif %}) {
+      var token = localStorage.getItem("auth_token")
+                || localStorage.getItem("charvak_token")
+                || "";
+      if (!token) {
+        window.location.replace("/login?next=/passport/create");
+      }
+    }
+  } catch (e) { /* silent */ }
+})();
+
 async function ppCreatePassport(ev) {
   ev.preventDefault();
   const displayName = (document.getElementById("ppDisplayName").value || "").trim();
@@ -312,7 +355,10 @@ async function ppCreatePassport(ev) {
   const msg = document.getElementById("ppCreateMsg");
   msg.textContent = "Creating your passport...";
   try {
-    const token = localStorage.getItem("authToken");
+    // Session 46: fix token key (authToken -> auth_token / charvak_token)
+    const token = localStorage.getItem("auth_token")
+                || localStorage.getItem("charvak_token")
+                || "";
     if (!token) {
       window.location.href = "/login?next=/passport/create";
       return;
@@ -327,6 +373,14 @@ async function ppCreatePassport(ev) {
     });
     const data = await res.json();
     if (data.status === "success") {
+      try {
+        if (typeof charvakTrack === "function") {
+          charvakTrack("passport_created", {
+            handle: data.handle,
+            created: data.created,
+          });
+        }
+      } catch (e) {}
       window.location.href = data.passport_url;
     } else {
       msg.textContent = "Error: " + (data.message || "Could not create passport.");
