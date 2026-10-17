@@ -285,6 +285,69 @@
   </div>
   {% endif %}
 
+  <!-- MY COHORTS (Session 48) -->
+  <div class="pp-section" id="ppCohortsSection" style="display:none;">
+    <h2>🏆 My Cohorts</h2>
+    <div id="ppCohortsList"></div>
+    <div style="margin-top: 1rem; text-align: center;">
+      <a href="/cohorts" class="pp-cta">View all cohorts →</a>
+    </div>
+  </div>
+
+  <script>
+  (function() {
+      // Only show for the passport owner
+      const userEmail = (localStorage.getItem('userEmail') || '').toLowerCase();
+      const passportEmail = "{{ passport.email|default('') }}".toLowerCase();
+      if (!userEmail || !passportEmail || userEmail !== passportEmail) {
+          return;
+      }
+
+      const token = localStorage.getItem('auth_token');
+      if (!token) return;
+
+      const section = document.getElementById('ppCohortsSection');
+      const listEl = document.getElementById('ppCohortsList');
+
+      fetch('/api/cohorts/mine', {
+          headers: { 'Authorization': 'Bearer ' + token }
+      })
+      .then(r => r.json())
+      .then(data => {
+          if (data.status !== 'success' || !data.cohorts || !data.cohorts.length) {
+              return;
+          }
+          const html = data.cohorts.map(c => `
+              <a href="/cohorts/${escapeAttr(c.cohort_id)}" class="text-decoration-none" style="display:block;">
+                  <div style="display:flex;justify-content:space-between;align-items:center;padding:.75rem 1rem;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:.5rem;transition:all .15s;">
+                      <div>
+                          <div style="font-weight:600;color:#111827;">${escapeHtml(c.name)}</div>
+                          <div style="color:#6b7280;font-size:.875rem;margin-top:.25rem;">${c.member_count} members${c.role === 'owner' ? ' · <span style="color:#d97706;">Owner</span>' : ''}</div>
+                      </div>
+                      <div style="text-align:right;">
+                          ${c.my_rank ? `<div style="font-weight:700;color:#0d9488;font-size:1.1rem;">#${c.my_rank}</div>` : ''}
+                          ${c.my_score !== null && c.my_score !== undefined ? `<div style="color:#6b7280;font-size:.875rem;">${c.my_score} pts</div>` : ''}
+                      </div>
+                  </div>
+              </a>
+          `).join('');
+          listEl.innerHTML = html;
+          section.style.display = '';
+      })
+      .catch(() => {
+          // Silent fail — never break the passport page
+      });
+
+      function escapeHtml(s) {
+          if (!s) return '';
+          return String(s).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+      }
+      function escapeAttr(s) {
+          return String(s || '').replace(/[^a-zA-Z0-9\-_]/g, '');
+      }
+  })();
+  </script>
+
 {% elif error %}
   <!-- NOT FOUND -->
   <div class="pp-state">
