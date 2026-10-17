@@ -215,6 +215,24 @@
     // Track shares when clicked
     document.getElementById("rrShareWA").addEventListener("click", () => trackShare("whatsapp"));
     document.getElementById("rrShareLI").addEventListener("click", () => trackShare("linkedin"));
+
+    // Session 45-A4 follow-up: if we arrived via a shared teaser (?ref=),
+    // credit the sharer with +5 credits for this completion.
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const refShare = params.get("ref");
+      if (refShare && refShare.length > 6) {
+        fetch("/api/share/claim", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ share_id: refShare }),
+        }).then(r => r.json()).then(d => {
+          if (d.status === "success") {
+            try { charvakTrack && charvakTrack("share_claim_fired", {ref_share_id: refShare, completions: d.completions}); } catch(e) {}
+          }
+        }).catch(() => {});
+      }
+    } catch (e) {}
   }
 
   async function trackShare(channel) {

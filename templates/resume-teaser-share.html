@@ -47,7 +47,7 @@
           {{ teaser.one_issue }}
         </div>
       {% endif %}
-      <a href="/tools/resume-roast" class="rt-cta">Check my resume - free</a>
+      <a href="/tools/resume-roast?ref={{ share_id }}" class="rt-cta">Check my resume - free</a>
       <div class="rt-sub">30 seconds. No login. See your score + the one fix that matters most.</div>
     </div>
   {% else %}
@@ -55,7 +55,7 @@
       <div class="rt-not-found">
         <h2>This teaser link has expired or was never created</h2>
         <p>But you can still check your own resume - free, no login, 30 seconds.</p>
-        <a href="/tools/resume-roast" class="rt-cta">Check my resume</a>
+        <a href="/tools/resume-roast?ref={{ share_id }}" class="rt-cta">Check my resume</a>
       </div>
     </div>
   {% endif %}
