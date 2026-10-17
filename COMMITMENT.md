@@ -1,3 +1,33 @@
+
+### Session 45-A4 follow-ups - COMPLETE (same day)
+
+Two small additions shipped immediately after the main build:
+
+1. **Share claim wiring** - the viral loop now closes end-to-end:
+   - Share landing CTAs pass `?ref={share_id}`
+   - Resume-roast reads `?ref=` on teaser complete and fires `/api/share/claim`
+   - `/api/share/claim` uses INSERT ... ON CONFLICT (upsert) so it works
+     even if the sharer never hit `/api/share/track` first
+   - Credits formula fixed: `(completions + 1) * 5 + 5`
+   - Verified: 1 completion = 5 credits, 2 completions = 15 credits
+
+2. **Nav + sitemap**
+   - Resume Roaster added to the AI Tools nav dropdown (highlighted)
+   - Sitemap already included `/tools/resume-roast` from a prior session
+
+**Verified E2E:**
+- Fresh teaser: score 55, real AI analysis
+- First claim: {status: success, completions: 1, credits_earned: 5}
+- Second claim: {status: success, completions: 2, credits_earned: 15}
+
+**Remaining known minor items (flagged, not blocking):**
+
+- The rate limit is 3/hour per IP. For local testing, clear via:
+    DELETE FROM charvak_resume_teasers WHERE created_at > NOW() - INTERVAL '1 hour'
+- Credits earned by sharers are recorded in `charvak_share_rewards.credits_earned`
+  but are not yet deposited into `charvak_user_credits`. Wiring that requires:
+  (a) sharer email captured on track, (b) a claim → deposit flow.
+  Deferred to Session 46 (Wave 1 passport build reuses the same credits infra).
 ## Session 45-A4 - Resume Roaster Teaser - COMPLETE (2026-10-17)
 
 Free-tier resume scanner + Rs 99 currency-aware unlock + share-for-credits
