@@ -1,0 +1,339 @@
+{% extends "base.html" %}
+
+{% block title %}{% if passport %}{{ passport.display_name or passport.email.split("@")[0] }} - Charvak Passport{% else %}{{ "Passport Not Found" if error else "Create Your Passport" }} - Charvak{% endif %}{% endblock %}
+
+{% block head %}
+{% if passport %}
+<meta name="description" content="{{ passport.display_name or 'Charvak user' }} - Charvak Score {{ passport.charvak_score }}/1000 ({{ passport.score_tier }}). Verified assessments, certificates, and integrity.">
+<meta property="og:title" content="{{ passport.display_name or passport.handle }} - Charvak Score {{ passport.charvak_score }}/1000">
+<meta property="og:description" content="Verified passport on Charvak. {{ passport.certificates|length }} certs, {{ passport.career_assessments|length + passport.other_assessments|length }} assessments.">
+<meta property="og:type" content="profile">
+<meta property="og:url" content="https://www.charvakit.com/passport/{{ passport.handle }}">
+<meta property="og:image" content="https://www.charvakit.com/passport/{{ passport.handle }}/badge.svg">
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<style>
+  .pp-wrap { max-width: 960px; margin: 0 auto; padding: 32px 16px 80px; }
+
+  /* Score hero */
+  .pp-hero { background: linear-gradient(135deg, #0a8a75 0%, #086f5f 100%); border-radius: 20px; padding: 40px 32px; color: #fff; position: relative; overflow: hidden; }
+  .pp-hero::after { content: ''; position: absolute; top: -50%; right: -20%; width: 400px; height: 400px; background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%); border-radius: 50%; }
+  .pp-hero-content { position: relative; z-index: 1; }
+  .pp-name { font-size: 32px; font-weight: 800; margin: 0 0 6px; }
+  .pp-headline { font-size: 16px; opacity: 0.9; margin: 0 0 20px; }
+  .pp-score-row { display: flex; align-items: baseline; gap: 20px; flex-wrap: wrap; }
+  .pp-score-num { font-size: 72px; font-weight: 800; line-height: 1; }
+  .pp-score-denom { font-size: 22px; opacity: 0.7; }
+  .pp-tier { display: inline-block; padding: 6px 16px; background: rgba(255,255,255,0.2); border-radius: 999px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+  .pp-tier-elite { background: #7c3aed; }
+  .pp-tier-strong { background: #059669; }
+  .pp-tier-solid { background: #0a8a75; }
+  .pp-tier-developing { background: #d97706; }
+  .pp-tier-foundation { background: rgba(255,255,255,0.2); }
+
+  .pp-badge-embed { margin-top: 20px; padding: 12px; background: rgba(255,255,255,0.1); border-radius: 10px; font-size: 13px; }
+  .pp-badge-embed code { background: rgba(0,0,0,0.2); padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+  .pp-badge-preview { margin-top: 12px; }
+
+  /* Breakdown grid */
+  .pp-breakdown { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 24px 0 0; }
+  .pp-breakdown-item { background: rgba(255,255,255,0.1); border-radius: 10px; padding: 14px; }
+  .pp-bd-label { font-size: 11px; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+  .pp-bd-value { font-size: 20px; font-weight: 700; margin-top: 4px; }
+
+  /* Sections */
+  .pp-section { margin-top: 32px; }
+  .pp-section h2 { font-size: 20px; font-weight: 700; color: #0f172a; margin: 0 0 16px; display: flex; align-items: center; gap: 8px; }
+  .pp-section h2 .pp-count { font-size: 14px; color: #64748b; font-weight: 500; }
+
+  .pp-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .pp-card:hover { border-color: #0a8a75; box-shadow: 0 2px 8px rgba(10,138,117,0.06); }
+  .pp-card-main { flex: 1; min-width: 0; }
+  .pp-card-title { font-weight: 600; color: #0f172a; font-size: 15px; margin: 0 0 4px; }
+  .pp-card-sub { font-size: 13px; color: #64748b; margin: 0; }
+  .pp-card-score { text-align: right; flex-shrink: 0; }
+  .pp-score-num-sm { font-size: 22px; font-weight: 700; color: #0a8a75; line-height: 1; }
+  .pp-score-num-sm.bad { color: #dc2626; }
+  .pp-score-num-sm.mid { color: #f59e0b; }
+  .pp-score-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-left: 8px; }
+  .pp-badge-green { background: #d1fae5; color: #065f46; }
+  .pp-badge-blue { background: #dbeafe; color: #1e40af; }
+  .pp-badge-gray { background: #f1f5f9; color: #475569; }
+
+  .pp-integrity { background: #f0fdf4; border: 1px solid #86efac; border-radius: 12px; padding: 16px; display: flex; align-items: center; gap: 12px; }
+  .pp-integrity.elevated { background: #fef2f2; border-color: #fecaca; }
+  .pp-integrity.moderate { background: #fef3c7; border-color: #fcd34d; }
+  .pp-integrity.minor { background: #eff6ff; border-color: #93c5fd; }
+  .pp-integrity-icon { font-size: 24px; }
+  .pp-integrity-text { flex: 1; }
+  .pp-integrity-title { font-weight: 700; color: #0f172a; font-size: 15px; margin: 0 0 2px; }
+  .pp-integrity-sub { color: #475569; font-size: 13px; margin: 0; }
+
+  .pp-empty { text-align: center; padding: 40px 20px; color: #64748b; }
+  .pp-empty p { margin: 0 0 12px; }
+
+  .pp-cta { display: inline-block; padding: 12px 24px; background: #0a8a75; color: #fff; border-radius: 10px; font-weight: 600; text-decoration: none; }
+  .pp-cta:hover { background: #086f5f; color: #fff; }
+
+  .pp-share-row { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+  .pp-share-btn { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; text-decoration: none; color: #fff; }
+  .pp-share-wa { background: #25d366; }
+  .pp-share-wa:hover { background: #128c7e; color: #fff; }
+  .pp-share-li { background: #0a66c2; }
+  .pp-share-li:hover { background: #084a8f; color: #fff; }
+  .pp-share-copy { background: #f1f5f9; color: #0f172a; cursor: pointer; border: 0; }
+  .pp-share-copy:hover { background: #e2e8f0; }
+
+  /* Not found / create states */
+  .pp-state { text-align: center; padding: 60px 20px; background: #fff; border-radius: 16px; border: 1px solid #e5e7eb; }
+  .pp-state h1 { font-size: 28px; font-weight: 800; color: #0f172a; margin: 0 0 12px; }
+  .pp-state p { color: #475569; font-size: 15px; max-width: 480px; margin: 0 auto 24px; }
+
+  .pp-create-form { max-width: 400px; margin: 0 auto; text-align: left; }
+  .pp-create-form label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px; }
+  .pp-create-form input { width: 100%; padding: 10px 14px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; margin-bottom: 16px; }
+  .pp-create-form input:focus { outline: none; border-color: #0a8a75; box-shadow: 0 0 0 3px rgba(10,138,117,0.1); }
+</style>
+
+<div class="pp-wrap">
+{% if passport %}
+  <!-- SCORE HERO -->
+  <div class="pp-hero">
+    <div class="pp-hero-content">
+      <h1 class="pp-name">{{ passport.display_name or passport.email.split("@")[0] }}</h1>
+      {% if passport.headline %}
+        <p class="pp-headline">{{ passport.headline }}</p>
+      {% endif %}
+
+      <div class="pp-score-row">
+        <div>
+          <span class="pp-score-num">{{ passport.charvak_score or 0 }}</span>
+          <span class="pp-score-denom">/1000</span>
+        </div>
+        <span class="pp-tier pp-tier-{{ passport.score_tier or 'foundation' }}">{{ passport.score_tier or 'Foundation' }}</span>
+      </div>
+
+      {% if passport.score_breakdown %}
+      <div class="pp-breakdown">
+        <div class="pp-breakdown-item">
+          <div class="pp-bd-label">Readiness</div>
+          <div class="pp-bd-value">{{ passport.score_breakdown.readiness }}/100</div>
+        </div>
+        <div class="pp-breakdown-item">
+          <div class="pp-bd-label">Career</div>
+          <div class="pp-bd-value">{{ passport.score_breakdown.career }}/100</div>
+        </div>
+        <div class="pp-breakdown-item">
+          <div class="pp-bd-label">Breadth</div>
+          <div class="pp-bd-value">{{ passport.score_breakdown.breadth }}/100</div>
+        </div>
+        <div class="pp-breakdown-item">
+          <div class="pp-bd-label">Integrity</div>
+          <div class="pp-bd-value">{{ passport.score_breakdown.integrity }}/100</div>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="pp-badge-embed">
+        <strong>Embed this badge</strong> on LinkedIn or your portfolio:
+        <div class="pp-badge-preview">
+          <img src="/passport/{{ passport.handle }}/badge.svg" alt="Charvak Passport Badge" style="max-width:100%;">
+        </div>
+        <code>&lt;a href="https://www.charvakit.com/passport/{{ passport.handle }}"&gt;&lt;img src="https://www.charvakit.com/passport/{{ passport.handle }}/badge.svg" alt="Charvak Passport"&gt;&lt;/a&gt;</code>
+      </div>
+
+      <div class="pp-share-row">
+        <a class="pp-share-btn pp-share-wa" target="_blank" href="https://wa.me/?text={{ 'My Charvak Passport: Score ' + (passport.charvak_score|string) + '/1000. See it: https://www.charvakit.com/passport/' + passport.handle }}">Share on WhatsApp</a>
+        <a class="pp-share-btn pp-share-li" target="_blank" href="https://www.linkedin.com/sharing/share-offsite/?url={{ 'https://www.charvakit.com/passport/' + passport.handle }}">Share on LinkedIn</a>
+        <button class="pp-share-btn pp-share-copy" onclick="ppCopyLink('https://www.charvakit.com/passport/{{ passport.handle }}')">Copy link</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CERTIFICATES -->
+  {% if passport.certificates %}
+  <div class="pp-section">
+    <h2>Readiness Certificates <span class="pp-count">{{ passport.certificates|length }}</span></h2>
+    {% for cert in passport.certificates %}
+    <div class="pp-card">
+      <div class="pp-card-main">
+        <p class="pp-card-title">{{ cert.role }} <span class="pp-card-sub">· {{ cert.industry }} · {{ cert.level }}</span></p>
+        <p class="pp-card-sub">{{ cert.verdict or 'Verified' }} · Issued {{ cert.issued_at[:10] if cert.issued_at else 'N/A' }}</p>
+      </div>
+      <div class="pp-card-score">
+        <div class="pp-score-num-sm">{{ cert.score }}</div>
+        <div style="font-size:11px;color:#94a3b8;margin-top:2px;">/100</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- CAREER ASSESSMENTS -->
+  {% if passport.career_assessments %}
+  <div class="pp-section">
+    <h2>Career Assessments <span class="pp-count">{{ passport.career_assessments|length }}</span></h2>
+    {% for ca in passport.career_assessments %}
+    <div class="pp-card">
+      <div class="pp-card-main">
+        <p class="pp-card-title">{{ ca.role }} <span class="pp-card-sub">· {{ ca.format }} · {{ ca.level }}</span></p>
+        <p class="pp-card-sub">{{ ca.completed_at[:10] if ca.completed_at else 'N/A' }}</p>
+      </div>
+      <div class="pp-card-score">
+        <div class="pp-score-num-sm {% if ca.score < 50 %}bad{% elif ca.score < 75 %}mid{% endif %}">{{ ca.score }}</div>
+        {% if ca.passed %}
+          <span class="pp-score-badge pp-badge-green">Passed</span>
+        {% else %}
+          <span class="pp-score-badge pp-badge-gray">—</span>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- OTHER ASSESSMENTS -->
+  {% if passport.other_assessments %}
+  <div class="pp-section">
+    <h2>Other Assessments <span class="pp-count">{{ passport.other_assessments|length }}</span></h2>
+    {% for oa in passport.other_assessments %}
+    <div class="pp-card">
+      <div class="pp-card-main">
+        <p class="pp-card-title">{{ oa.name }}</p>
+        <p class="pp-card-sub">{{ oa.type }} · {{ oa.completed_at[:10] if oa.completed_at else 'N/A' }}</p>
+      </div>
+      <div class="pp-card-score">
+        <div class="pp-score-num-sm {% if oa.score < 50 %}bad{% elif oa.score < 75 %}mid{% endif %}">{{ oa.score|round(1) }}</div>
+        {% if oa.passed %}
+          <span class="pp-score-badge pp-badge-green">Passed</span>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- COURSES -->
+  {% if passport.courses %}
+  <div class="pp-section">
+    <h2>Course Certificates <span class="pp-count">{{ passport.courses|length }}</span></h2>
+    {% for c in passport.courses %}
+    <div class="pp-card">
+      <div class="pp-card-main">
+        <p class="pp-card-title">{{ c.course_name }}</p>
+        <p class="pp-card-sub">{{ c.duration_weeks }} weeks · Issued {{ c.issued_at[:10] if c.issued_at else 'N/A' }}</p>
+      </div>
+      <div class="pp-card-score">
+        <span class="pp-score-badge pp-badge-green">Certified</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- INTEGRITY -->
+  {% if passport.integrity %}
+  {% set risk = passport.integrity.risk_level %}
+  <div class="pp-section">
+    <h2>Assessment Integrity</h2>
+    <div class="pp-integrity {{ risk }}">
+      <div class="pp-integrity-icon">
+        {% if risk == 'clean' %}✅{% elif risk == 'minor' %}ℹ️{% elif risk == 'moderate' %}⚠️{% else %}🚩{% endif %}
+      </div>
+      <div class="pp-integrity-text">
+        <p class="pp-integrity-title">
+          {% if risk == 'clean' %}Clean record
+          {% elif risk == 'minor' %}Minor signals recorded
+          {% elif risk == 'moderate' %}Moderate signals recorded
+          {% else %}Elevated signals recorded{% endif %}
+        </p>
+        <p class="pp-integrity-sub">
+          {{ passport.integrity.total_events }} environment events captured across all assessments.
+        </p>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- EMPTY STATE -->
+  {% if not passport.certificates and not passport.career_assessments and not passport.other_assessments %}
+  <div class="pp-section">
+    <div class="pp-empty">
+      <p>This passport has no verified assessments yet.</p>
+      <a href="/readiness-check" class="pp-cta">Take a free readiness check</a>
+    </div>
+  </div>
+  {% endif %}
+
+{% elif error %}
+  <!-- NOT FOUND -->
+  <div class="pp-state">
+    <h1>Passport not found</h1>
+    <p>The handle "{{ handle }}" doesn't match any Charvak passport. Passports are public, so if you typed the URL directly, check the spelling.</p>
+    <a href="/passport/create" class="pp-cta">Create your own passport</a>
+  </div>
+
+{% elif create_mode %}
+  <!-- CREATE MODE -->
+  <div class="pp-state">
+    <h1>Claim your Charvak Passport</h1>
+    <p>One public URL that aggregates your verified skills, certificates, and scores. Recruiters can verify everything in one click.</p>
+    <form class="pp-create-form" onsubmit="ppCreatePassport(event)">
+      <label for="ppDisplayName">Display name (optional)</label>
+      <input type="text" id="ppDisplayName" placeholder="e.g., Priya Sharma" maxlength="80">
+
+      <label for="ppHeadline">Headline (optional)</label>
+      <input type="text" id="ppHeadline" placeholder="e.g., Data Scientist · Bengaluru" maxlength="120">
+
+      <button type="submit" class="pp-cta" style="width:100%;border:0;cursor:pointer;">
+        Create my passport
+      </button>
+    </form>
+    <div id="ppCreateMsg" style="margin-top:16px;color:#64748b;font-size:13px;"></div>
+  </div>
+{% endif %}
+</div>
+
+<script>
+function ppCopyLink(url) {
+  navigator.clipboard.writeText(url).then(() => {
+    alert("Link copied to clipboard!");
+  }).catch(() => {
+    prompt("Copy this link:", url);
+  });
+}
+
+async function ppCreatePassport(ev) {
+  ev.preventDefault();
+  const displayName = (document.getElementById("ppDisplayName").value || "").trim();
+  const headline = (document.getElementById("ppHeadline").value || "").trim();
+  const msg = document.getElementById("ppCreateMsg");
+  msg.textContent = "Creating your passport...";
+  try {
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      window.location.href = "/login?next=/passport/create";
+      return;
+    }
+    const res = await fetch("/api/passport/create", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token,
+      },
+      body: JSON.stringify({ display_name: displayName, headline }),
+    });
+    const data = await res.json();
+    if (data.status === "success") {
+      window.location.href = data.passport_url;
+    } else {
+      msg.textContent = "Error: " + (data.message || "Could not create passport.");
+    }
+  } catch (e) {
+    msg.textContent = "Network error. Please try again.";
+  }
+}
+</script>
+{% endblock %}
