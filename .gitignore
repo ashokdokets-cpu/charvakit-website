@@ -154,3 +154,10 @@ static/fonts/*.woff
 static/fonts/*.woff2
 # OpenAI migration backups (2026-10-15)
 *.bak_openai_*
+
+# Session 47-48 test artifacts (never commit)
+_token.txt
+_body.json
+_cohort_test.json
+_t.py
+_commit_msg.txt

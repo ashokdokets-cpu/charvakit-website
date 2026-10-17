@@ -3656,6 +3656,130 @@ async def drills_page(request: Request):
     )
 
 
+
+# ============================================================
+# Session 48: Cohort Mode routes (batch virality)
+# ============================================================
+
+@app.get("/cohorts", response_class=HTMLResponse)
+@limiter.limit("60/minute")
+async def cohorts_page(request: Request):
+    """Cohort landing page. JS-gated."""
+    return template_response(
+        "cohorts.html", request,
+        "Cohorts - Charvak", error=None,
+    )
+
+
+@app.get("/cohorts/{cohort_id}", response_class=HTMLResponse)
+@limiter.limit("60/minute")
+async def cohort_detail_page(request: Request, cohort_id: str):
+    """Cohort leaderboard page. JS-gated."""
+    return template_response(
+        "cohort-detail.html", request,
+        "Cohort Leaderboard - Charvak",
+        cohort_id=cohort_id, error=None,
+    )
+
+
+@app.get("/cohorts/join/{join_code}")
+async def cohort_join_redirect(request: Request, join_code: str):
+    """Redirect to /cohorts?join=CODE (login gate handled by frontend)."""
+    return RedirectResponse(url=f"/cohorts?join={join_code}", status_code=302)
+
+
+@app.post("/api/cohorts/create")
+@limiter.limit("10/minute")
+async def api_cohorts_create(request: Request):
+    try:
+        caller = require_auth(request)
+        caller_email = (caller.get("email") or "").strip().lower()
+        data = await request.json()
+        name = (data.get("name") or "").strip()
+        description = (data.get("description") or "").strip()
+        import cohorts_engine as ce
+        result = ce.create_cohort(caller_email, name, description)
+        if result.get("status") != "success":
+            return JSONResponse(status_code=400, content=result)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "cohorts create")
+
+
+@app.post("/api/cohorts/join")
+@limiter.limit("20/minute")
+async def api_cohorts_join(request: Request):
+    try:
+        caller = require_auth(request)
+        caller_email = (caller.get("email") or "").strip().lower()
+        data = await request.json()
+        join_code = (data.get("join_code") or "").strip().upper()
+        if not join_code:
+            return JSONResponse(status_code=400, content={"status": "error", "message": "join_code required"})
+        import cohorts_engine as ce
+        result = ce.join_by_code(join_code, caller_email)
+        if result.get("status") != "success":
+            status = 404 if result.get("code") == "invalid_code" else 400
+            return JSONResponse(status_code=status, content=result)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "cohorts join")
+
+
+@app.get("/api/cohorts/{cohort_id}/leaderboard")
+@limiter.limit("120/minute")
+async def api_cohorts_leaderboard(request: Request, cohort_id: str):
+    try:
+        import cohorts_engine as ce
+        result = ce.get_leaderboard(cohort_id)
+        if result.get("status") != "success":
+            status = 404 if result.get("code") == "not_found" else 400
+            return JSONResponse(status_code=status, content=result)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "cohorts leaderboard")
+
+
+@app.get("/api/cohorts/mine")
+@limiter.limit("60/minute")
+async def api_cohorts_mine(request: Request):
+    try:
+        caller = require_auth(request)
+        caller_email = (caller.get("email") or "").strip().lower()
+        import cohorts_engine as ce
+        result = ce.list_my_cohorts(caller_email)
+        if result.get("status") != "success":
+            return JSONResponse(status_code=400, content=result)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "cohorts mine")
+
+
+@app.post("/api/cohorts/{cohort_id}/refresh")
+@limiter.limit("10/minute")
+async def api_cohorts_refresh(request: Request, cohort_id: str):
+    try:
+        caller = require_auth(request)
+        caller_email = (caller.get("email") or "").strip().lower()
+        import cohorts_engine as ce
+        result = ce.refresh_leaderboard(cohort_id, caller_email)
+        if result.get("status") != "success":
+            status = 403 if result.get("code") == "forbidden" else 400
+            return JSONResponse(status_code=status, content=result)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "cohorts refresh")
+
 @app.post("/api/tools/ghost-bounty")
 @limiter.limit("60/minute")
 async def api_ghost_bounty(request: Request):
