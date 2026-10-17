@@ -3230,6 +3230,188 @@ async def api_share_claim(request: Request):
         return handle_error(e, "share claim")
 
 
+# ============================================================
+# Session 46: Career Passport v1 (Wave 1 of the flywheel)
+# ============================================================
+
+
+@app.get("/passport/me")
+async def passport_me(request: Request):
+    """Redirect authenticated user to their own passport, or to /passport/create."""
+    # Session 46: catch auth failure and redirect to login instead of 401
+    try:
+        caller = require_auth(request)
+    except HTTPException:
+        return RedirectResponse(url="/login?next=/passport/me", status_code=302)
+
+    try:
+        caller_email = (caller.get("email") or "").strip().lower()
+        import passport_engine as pe
+        result = pe.get_passport_by_email(caller_email)
+        if result.get("status") == "success":
+            return RedirectResponse(url=f"/passport/{result['handle']}", status_code=302)
+        return RedirectResponse(url="/passport/create", status_code=302)
+    except Exception as e:
+        return handle_error(e, "passport me")
+
+
+@app.get("/passport/create", response_class=HTMLResponse)
+async def passport_create_page(request: Request):
+    """Authenticated page to create a passport."""
+    # Session 46: explicit auth check + redirect (avoids relying on exception handlers)
+    token = request.headers.get("Authorization", "").replace("Bearer ", "").strip()
+    if not token:
+        # Allow the auth cookie variant too (charvak_admin_token for admin flow)
+        token = request.cookies.get("charvak_admin_token", "").strip()
+    if not token:
+        return RedirectResponse(url="/login?next=/passport/create", status_code=302)
+
+    try:
+        require_auth(request)
+    except HTTPException:
+        return RedirectResponse(url="/login?next=/passport/create", status_code=302)
+
+    return template_response(
+        "passport.html", request,
+        "Create Your Passport - Charvak",
+        passport=None, handle=None, error=None, create_mode=True,
+    )
+
+
+@app.post("/api/passport/create")
+@limiter.limit("5/minute")
+async def api_passport_create(request: Request):
+    """Create a passport for the authed user."""
+    try:
+        caller = require_auth(request)
+        # require_auth returns the full user dict {email, role, ...} - extract the email
+        caller_email = (caller.get("email") or "").strip().lower()
+        data = await request.json()
+        display_name = (data.get("display_name") or "").strip()[:80]
+        headline = (data.get("headline") or "").strip()[:120]
+        import passport_engine as pe
+        result = pe.create_or_get_passport(caller_email, display_name, headline)
+        if result.get("status") in ("created", "exists"):
+            passport = result["passport"]
+            return {
+                "status": "success",
+                "created": result["status"] == "created",
+                "handle": passport["handle"],
+                "passport_url": f"/passport/{passport['handle']}",
+                "share_url": f"{os.getenv('SITE_URL', 'https://www.charvakit.com').rstrip('/')}/passport/{passport['handle']}",
+            }
+        return JSONResponse(status_code=400, content=result)
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "passport create")
+
+
+@app.get("/api/passport/{handle}")
+@limiter.limit("120/minute")
+async def api_passport_get(request: Request, handle: str):
+    """Public JSON verification API for a passport."""
+    try:
+        import passport_engine as pe
+        result = pe.get_passport_by_handle(handle)
+        if result.get("status") != "success":
+            return JSONResponse(status_code=404, content=result)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "passport api")
+
+
+@app.get("/passport/{handle}/badge.svg")
+@limiter.limit("120/minute")
+async def passport_badge_svg(request: Request, handle: str):
+    """Dynamic SVG badge for LinkedIn / portfolios."""
+    try:
+        import passport_engine as pe
+        result = pe.get_passport_by_handle(handle, include_score=True)
+        if result.get("status") != "success":
+            return Response(content=_passport_badge_svg_placeholder(), media_type="image/svg+xml")
+
+        passport = result["passport"]
+        svg = _passport_badge_svg_render(
+            score=passport.get("charvak_score", 0),
+            tier=passport.get("score_tier", "foundation"),
+            handle=passport.get("handle", handle),
+        )
+        return Response(
+            content=svg,
+            media_type="image/svg+xml",
+            headers={"Cache-Control": "public, max-age=300"},
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "passport badge")
+
+
+def _passport_badge_svg_placeholder() -> str:
+    return (
+        '<svg xmlns="http://www.w3.org/2000/svg" width="220" height="40" '
+        'role="img" aria-label="Charvak Passport (not found)">'
+        '<rect width="220" height="40" rx="6" fill="#e5e7eb"/>'
+        '<text x="16" y="26" font-family="system-ui,sans-serif" font-size="13" '
+        'font-weight="600" fill="#6b7280">Charvak Passport - Not Found</text>'
+        '</svg>'
+    )
+
+
+def _passport_badge_svg_render(score: int, tier: str, handle: str) -> str:
+    palette = {
+        "elite":      ("#7c3aed", "Elite"),
+        "strong":     ("#059669", "Strong"),
+        "solid":      ("#0a8a75", "Solid"),
+        "developing": ("#d97706", "Developing"),
+        "foundation": ("#64748b", "Foundation"),
+    }
+    color, label = palette.get(tier, palette["foundation"])
+    return (
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="240" height="40" '
+        f'role="img" aria-label="Charvak Passport: {label} {score}/1000">'
+        f'<rect width="240" height="40" rx="6" fill="{color}"/>'
+        f'<rect x="120" width="120" height="40" fill="#ffffff" fill-opacity="0.15"/>'
+        f'<text x="14" y="25" font-family="system-ui,sans-serif" font-size="11" '
+        f'font-weight="600" fill="#ffffff" opacity="0.9">CHARVAK PASSPORT</text>'
+        f'<text x="132" y="25" font-family="system-ui,sans-serif" font-size="13" '
+        f'font-weight="700" fill="#ffffff">{label} - {score}/1000</text>'
+        f'</svg>'
+    )
+
+
+# IMPORTANT: The generic /passport/{handle} route MUST come AFTER the specific
+# routes (/passport/create, /passport/me, /passport/{handle}/badge.svg) to
+# avoid shadowing. FastAPI matches in registration order.
+@app.get("/passport/{handle}", response_class=HTMLResponse)
+@limiter.limit("120/minute")
+async def passport_page(request: Request, handle: str):
+    """Public passport page. No auth required."""
+    try:
+        import passport_engine as pe
+        result = pe.get_passport_by_handle(handle)
+        if result.get("status") != "success":
+            return template_response(
+                "passport.html", request,
+                "Passport Not Found - Charvak",
+                passport=None, handle=handle, error=result.get("message", "Not found"),
+            )
+        passport = result["passport"]
+        display = passport.get("display_name") or passport["email"].split("@")[0]
+        title = f"{display} - Charvak Passport (Score {passport.get('charvak_score', 0)}/1000)"
+        return template_response(
+            "passport.html", request, title,
+            passport=passport, handle=handle, error=None,
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "passport page")
+
+
 @app.post("/api/tools/ghost-bounty")
 @limiter.limit("60/minute")
 async def api_ghost_bounty(request: Request):
