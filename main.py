@@ -3044,17 +3044,22 @@ async def api_share_claim(request: Request):
             return JSONResponse(status_code=400, content={"status": "error", "message": "share_id required"})
 
         from database import db
+        import secrets as _secrets
         try:
             conn = db.get_connection()
             cur = conn.cursor()
+            # Session 45-A4 follow-up: upsert so claim works even if the sharer
+            # never hit /api/share/track (a friend can complete before that).
             cur.execute("""
-                UPDATE charvak_share_rewards
-                SET completions = completions + 1,
-                    credits_earned = completions * 5 + 5,
-                    updated_at = NOW()
-                WHERE share_id = %s
+                INSERT INTO charvak_share_rewards
+                  (reward_id, share_id, tool_name, clicks, completions, credits_earned)
+                VALUES (%s, %s, 'resume_roast_teaser', 0, 1, 5)
+                ON CONFLICT (share_id) DO UPDATE
+                  SET completions = charvak_share_rewards.completions + 1,
+                      credits_earned = (charvak_share_rewards.completions + 1) * 5 + 5,
+                      updated_at = NOW()
                 RETURNING completions, credits_earned
-            """, (share_id,))
+            """, (f"SR-{_secrets.token_hex(8).upper()}", share_id))
             row = cur.fetchone()
             conn.commit()
             cur.close(); conn.close()
