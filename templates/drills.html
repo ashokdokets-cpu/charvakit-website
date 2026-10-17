@@ -1,0 +1,384 @@
+{% extends "base.html" %}
+
+{% block title %}Daily Drill - Charvak{% endblock %}
+
+{% block head %}
+<meta name="description" content="Take your daily 60-second Charvak drill. 5 questions calibrated to your role. Keep your streak alive.">
+<meta property="og:title" content="Daily Drill - Charvak">
+<meta property="og:description" content="5 questions a day. Build your streak. Grow your passport.">
+<meta property="og:type" content="website">
+{% endblock %}
+
+{% block content %}
+<style>
+  .drl-wrap { max-width: 720px; margin: 0 auto; padding: 32px 16px 80px; }
+
+  /* Loading / error states */
+  .drl-state { text-align: center; padding: 60px 24px; background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; }
+  .drl-state h1 { font-size: 24px; font-weight: 800; color: #0f172a; margin: 0 0 12px; }
+  .drl-state p { color: #475569; font-size: 15px; margin: 0 0 20px; }
+
+  .drl-btn { display: inline-block; padding: 14px 32px; background: #0a8a75; color: #fff; border-radius: 10px; font-weight: 700; font-size: 16px; border: 0; cursor: pointer; text-decoration: none; }
+  .drl-btn:hover { background: #086f5f; color: #fff; }
+  .drl-btn:disabled { background: #94a3b8; cursor: not-allowed; }
+  .drl-btn-secondary { background: #f1f5f9; color: #0f172a; }
+  .drl-btn-secondary:hover { background: #e2e8f0; color: #0f172a; }
+
+  /* Header */
+  .drl-header { text-align: center; margin-bottom: 24px; }
+  .drl-badge { display: inline-block; padding: 4px 14px; background: #fef3c7; color: #92400e; border-radius: 999px; font-size: 13px; font-weight: 700; margin-bottom: 12px; }
+  .drl-header h1 { font-size: 28px; font-weight: 800; color: #0f172a; margin: 6px 0; }
+  .drl-header p { color: #64748b; font-size: 14px; margin: 0; }
+
+  /* Progress bar */
+  .drl-progress { height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; margin: 16px 0 24px; }
+  .drl-progress-bar { height: 100%; background: #0a8a75; transition: width 0.3s; }
+
+  /* Question card */
+  .drl-q-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 28px; box-shadow: 0 4px 12px rgba(15,23,42,0.06); }
+  .drl-q-meta { display: flex; justify-content: space-between; margin-bottom: 14px; font-size: 13px; color: #64748b; }
+  .drl-q-num { font-weight: 700; color: #0f172a; }
+  .drl-q-text { color: #1e293b; font-size: 17px; line-height: 1.55; margin-bottom: 20px; font-weight: 500; }
+  .drl-opts { display: grid; gap: 10px; }
+  .drl-opt { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border: 1px solid #e2e8f0; border-radius: 12px; cursor: pointer; font-size: 15px; color: #334155; transition: all 0.15s; }
+  .drl-opt:hover { border-color: #0a8a75; background: #f8fdfc; }
+  .drl-opt input { margin-top: 3px; accent-color: #0a8a75; }
+  .drl-opt.drl-selected { border-color: #0a8a75; background: #e6f7f4; }
+
+  /* Streak display during drill */
+  .drl-streak-banner { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 16px; font-size: 14px; color: #92400e; font-weight: 600; }
+
+  /* Result */
+  .drl-result { text-align: center; padding: 40px 28px; background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; box-shadow: 0 4px 12px rgba(15,23,42,0.06); }
+  .drl-score { font-size: 88px; font-weight: 800; line-height: 1; color: #0a8a75; margin: 8px 0; }
+  .drl-score-sub { font-size: 20px; color: #94a3b8; }
+  .drl-result-title { font-size: 22px; font-weight: 700; color: #0f172a; margin: 0 0 8px; }
+  .drl-result-sub { font-size: 15px; color: #64748b; margin: 0 0 20px; }
+
+  .drl-streak-pill { display: inline-block; padding: 10px 20px; background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%); color: #0f172a; border-radius: 999px; font-weight: 700; font-size: 17px; margin: 12px 0; }
+  .drl-credits-row { display: flex; justify-content: center; gap: 20px; margin: 20px 0 28px; flex-wrap: wrap; }
+  .drl-credit-item { padding: 14px 20px; background: #f8fafc; border-radius: 10px; }
+  .drl-credit-label { font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+  .drl-credit-value { font-size: 22px; font-weight: 800; color: #0f172a; margin-top: 4px; }
+  .drl-bonus-tag { color: #dc2626; font-size: 12px; font-weight: 700; margin-top: 2px; }
+
+  /* Already done */
+  .drl-already-done { text-align: center; padding: 40px 28px; background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; }
+  .drl-already-done h2 { font-size: 22px; font-weight: 700; color: #0f172a; margin: 0 0 12px; }
+  .drl-already-done p { color: #475569; font-size: 15px; margin: 0 0 20px; }
+  .drl-tomorrow { display: inline-block; padding: 8px 20px; background: #f1f5f9; color: #0f172a; border-radius: 999px; font-size: 13px; font-weight: 600; }
+
+  /* Recent drills */
+  .drl-recent { margin-top: 32px; }
+  .drl-recent h3 { font-size: 16px; font-weight: 700; color: #0f172a; margin: 0 0 12px; }
+  .drl-recent-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; margin-bottom: 8px; font-size: 14px; }
+  .drl-recent-date { color: #64748b; font-size: 13px; }
+  .drl-recent-topic { color: #334155; font-weight: 600; }
+  .drl-recent-score { font-weight: 700; color: #0a8a75; }
+  .drl-recent-empty { text-align: center; padding: 20px; color: #94a3b8; font-size: 14px; background: #f8fafc; border-radius: 10px; }
+
+  .drl-hidden { display: none !important; }
+</style>
+
+<div class="drl-wrap">
+
+  <!-- LOADING -->
+  <div id="drlLoading" class="drl-state">
+    <div style="display:inline-block;width:32px;height:32px;border:3px solid #e2e8f0;border-top-color:#0a8a75;border-radius:50%;animation:drl-spin 0.8s linear infinite;margin-bottom:12px;"></div>
+    <p>Loading today's drill...</p>
+  </div>
+  <style>@keyframes drl-spin { to { transform: rotate(360deg); } }</style>
+
+  <!-- ERROR -->
+  <div id="drlError" class="drl-state drl-hidden">
+    <h1>Could not load drill</h1>
+    <p id="drlErrorMsg">Please try again.</p>
+    <a href="/drills" class="drl-btn">Retry</a>
+  </div>
+
+  <!-- NO AUTH -->
+  <div id="drlNoAuth" class="drl-state drl-hidden">
+    <h1>Log in to start your drill</h1>
+    <p>Daily drills are personalized to your role and skill gaps.</p>
+    <a href="/login?next=/drills" class="drl-btn">Log in</a>
+  </div>
+
+  <!-- ALREADY COMPLETED TODAY -->
+  <div id="drlAlreadyDone" class="drl-already-done drl-hidden">
+    <h2>✅ Today's drill is done</h2>
+    <p id="drlAlreadyMsg">You scored XX/100 on today's drill.</p>
+    <div class="drl-streak-pill" id="drlAlreadyStreak">🔥 0-day streak</div>
+    <p style="margin-top:20px;">
+      <span class="drl-tomorrow">Come back tomorrow for the next one</span>
+    </p>
+    <div style="margin-top:24px;">
+      <a href="/passport/me" class="drl-btn drl-btn-secondary">View my passport</a>
+    </div>
+  </div>
+
+  <!-- DRILL IN PROGRESS -->
+  <div id="drlQuestion" class="drl-hidden">
+    <div class="drl-header">
+      <span class="drl-badge" id="drlTopicBadge">Drill</span>
+      <h1>Today's Drill</h1>
+      <p>5 questions · ~60 seconds</p>
+    </div>
+
+    <div class="drl-progress">
+      <div class="drl-progress-bar" id="drlProgressBar" style="width: 20%;"></div>
+    </div>
+
+    <div class="drl-q-card">
+      <div class="drl-q-meta">
+        <span class="drl-q-num" id="drlQNum">Question 1 of 5</span>
+      </div>
+      <div class="drl-q-text" id="drlQText"></div>
+      <div class="drl-opts" id="drlOpts"></div>
+    </div>
+
+    <div style="text-align:right;margin-top:20px;">
+      <button class="drl-btn" id="drlNextBtn" onclick="drlNext()" disabled>Next →</button>
+    </div>
+
+    <div class="drl-streak-banner" id="drlStreakBanner" style="display:none;">
+      🔥 <span id="drlStreakText">Keep your streak alive</span>
+    </div>
+  </div>
+
+  <!-- RESULT -->
+  <div id="drlResult" class="drl-hidden">
+    <div class="drl-result">
+      <div class="drl-result-title" id="drlResultTitle">Well done</div>
+      <div class="drl-score" id="drlScore">--<span class="drl-score-sub">%</span></div>
+      <div class="drl-result-sub" id="drlResultSub">You got 0 out of 5 correct.</div>
+
+      <div class="drl-streak-pill" id="drlResultStreak">🔥 1-day streak</div>
+
+      <div class="drl-credits-row">
+        <div class="drl-credit-item">
+          <div class="drl-credit-label">Credits</div>
+          <div class="drl-credit-value" id="drlCreditsEarned">+2</div>
+          <div class="drl-bonus-tag" id="drlBonusTag" style="display:none;"></div>
+        </div>
+        <div class="drl-credit-item">
+          <div class="drl-credit-label">Longest</div>
+          <div class="drl-credit-value" id="drlLongest">1</div>
+        </div>
+      </div>
+
+      <div>
+        <a href="/passport/me" class="drl-btn">View my passport</a>
+        <a href="/drills" class="drl-btn drl-btn-secondary" style="margin-left:8px;">See history</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- RECENT HISTORY -->
+  <div class="drl-recent" id="drlRecentSection" style="display:none;">
+    <h3>Recent drills</h3>
+    <div id="drlRecentList"></div>
+  </div>
+
+</div>
+
+<script>
+(function() {
+  let currentDrill = null;
+  let currentIndex = 0;
+  let userAnswers = [];
+  let token = localStorage.getItem("auth_token") || localStorage.getItem("charvak_token") || "";
+
+  function show(id) { document.getElementById(id).classList.remove("drl-hidden"); }
+  function hide(id) { document.getElementById(id).classList.add("drl-hidden"); }
+  function esc(s) { return (s || "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c])); }
+
+  async function loadToday() {
+    if (!token) {
+      hide("drlLoading");
+      show("drlNoAuth");
+      return;
+    }
+    try {
+      const res = await fetch("/api/drills/today", {
+        headers: { "Authorization": "Bearer " + token }
+      });
+      if (res.status === 401) {
+        hide("drlLoading");
+        show("drlNoAuth");
+        return;
+      }
+      const data = await res.json();
+      if (data.status !== "success") {
+        hide("drlLoading");
+        document.getElementById("drlErrorMsg").textContent = data.message || "Could not load drill.";
+        show("drlError");
+        return;
+      }
+      currentDrill = data.drill;
+      hide("drlLoading");
+
+      if (data.completed) {
+        // Already completed today
+        document.getElementById("drlAlreadyMsg").textContent =
+          "You scored " + (data.score || 0) + "/100 on today's drill (" + (data.correct_count || 0) + "/" + (data.drill.total_questions || 5) + " correct).";
+        show("drlAlreadyDone");
+        loadStreakDisplay();
+        return;
+      }
+
+      // Render the drill
+      renderQuestion(0);
+      show("drlQuestion");
+      try { charvakTrack && charvakTrack("drill_started", {topic: currentDrill.topic}); } catch(e) {}
+    } catch (e) {
+      hide("drlLoading");
+      document.getElementById("drlErrorMsg").textContent = "Network error. Please try again.";
+      show("drlError");
+    }
+  }
+
+  function renderQuestion(idx) {
+    const q = (currentDrill.questions || [])[idx];
+    if (!q) return;
+    document.getElementById("drlTopicBadge").textContent = currentDrill.topic || "Drill";
+    document.getElementById("drlQNum").textContent = "Question " + (idx + 1) + " of " + currentDrill.total_questions;
+    document.getElementById("drlQText").textContent = q.q || "";
+
+    const opts = document.getElementById("drlOpts");
+    opts.innerHTML = (q.options || []).map((opt, oi) =>
+      `<label class="drl-opt" data-q="${idx}" data-o="${oi}">
+        <input type="radio" name="opt${idx}" value="${oi}" onchange="drlPick(${idx}, ${oi}, this)">
+        <span>${esc(opt)}</span>
+      </label>`
+    ).join("");
+
+    document.getElementById("drlProgressBar").style.width = (((idx + 1) / currentDrill.total_questions) * 100) + "%";
+    document.getElementById("drlNextBtn").disabled = true;
+    document.getElementById("drlNextBtn").textContent = (idx === currentDrill.total_questions - 1) ? "Submit →" : "Next →";
+  }
+
+  window.drlPick = function(qi, oi, el) {
+    userAnswers[qi] = oi;
+    document.querySelectorAll(`.drl-opt[data-q="${qi}"]`).forEach(n => n.classList.remove("drl-selected"));
+    el.closest(".drl-opt").classList.add("drl-selected");
+    document.getElementById("drlNextBtn").disabled = false;
+  };
+
+  window.drlNext = function() {
+    if (currentIndex < currentDrill.total_questions - 1) {
+      currentIndex++;
+      renderQuestion(currentIndex);
+    } else {
+      submitDrill();
+    }
+  };
+
+  async function submitDrill() {
+    document.getElementById("drlNextBtn").disabled = true;
+    document.getElementById("drlNextBtn").textContent = "Scoring...";
+    try {
+      const res = await fetch("/api/drills/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + token
+        },
+        body: JSON.stringify({
+          drill_id: currentDrill.drill_id,
+          answers: userAnswers
+        })
+      });
+      const data = await res.json();
+      if (data.status !== "success") {
+        alert(data.message || "Could not submit drill.");
+        document.getElementById("drlNextBtn").disabled = false;
+        document.getElementById("drlNextBtn").textContent = "Submit →";
+        return;
+      }
+      showResult(data);
+      try { charvakTrack && charvakTrack("drill_completed", {
+        topic: currentDrill.topic,
+        score: data.score,
+        streak: data.streak,
+        milestone: data.milestone_bonus > 0
+      }); } catch(e) {}
+    } catch (e) {
+      alert("Network error. Please try again.");
+      document.getElementById("drlNextBtn").disabled = false;
+      document.getElementById("drlNextBtn").textContent = "Submit →";
+    }
+  }
+
+  function showResult(data) {
+    const pct = data.score || 0;
+    document.getElementById("drlScore").innerHTML = pct + '<span class="drl-score-sub">%</span>';
+    document.getElementById("drlResultTitle").textContent =
+      pct >= 80 ? "🔥 Excellent" : pct >= 60 ? "Well done" : pct >= 40 ? "Keep going" : "Practice needed";
+    document.getElementById("drlResultSub").textContent =
+      "You got " + (data.correct_count || 0) + " out of " + (data.total_questions || 5) + " correct.";
+    document.getElementById("drlResultStreak").textContent = "🔥 " + (data.streak || 0) + "-day streak";
+    document.getElementById("drlCreditsEarned").textContent = "+" + (data.credits_earned || 2);
+    document.getElementById("drlLongest").textContent = (data.longest_streak || 0);
+
+    if (data.milestone_bonus > 0) {
+      const tag = document.getElementById("drlBonusTag");
+      tag.textContent = "🎉 +" + data.milestone_bonus + " streak bonus!";
+      tag.style.display = "block";
+    }
+
+    hide("drlQuestion");
+    show("drlResult");
+    document.getElementById("drlRecentSection").style.display = "block";
+    loadHistory();
+  }
+
+  async function loadStreakDisplay() {
+    try {
+      const res = await fetch("/api/drills/streak", {
+        headers: { "Authorization": "Bearer " + token }
+      });
+      const data = await res.json();
+      if (data.status === "success") {
+        const streak = data.streak || {};
+        document.getElementById("drlAlreadyStreak").textContent = "🔥 " + (streak.current_streak || 0) + "-day streak";
+        renderHistory(data.recent_drills || []);
+      }
+    } catch (e) {}
+  }
+
+  async function loadHistory() {
+    try {
+      const res = await fetch("/api/drills/streak", {
+        headers: { "Authorization": "Bearer " + token }
+      });
+      const data = await res.json();
+      if (data.status === "success") {
+        renderHistory(data.recent_drills || []);
+      }
+    } catch (e) {}
+  }
+
+  function renderHistory(drills) {
+    const section = document.getElementById("drlRecentSection");
+    const list = document.getElementById("drlRecentList");
+    section.style.display = "block";
+    if (!drills || !drills.length) {
+      list.innerHTML = '<div class="drl-recent-empty">No drills yet. Start your streak today!</div>';
+      return;
+    }
+    list.innerHTML = drills.map(d => `
+      <div class="drl-recent-row">
+        <div>
+          <div class="drl-recent-topic">${esc(d.topic || "Drill")}</div>
+          <div class="drl-recent-date">${esc((d.drill_date || "").slice(0, 10))}</div>
+        </div>
+        <div class="drl-recent-score">${d.completed ? (d.score || 0) + "%" : "—"}</div>
+      </div>
+    `).join("");
+  }
+
+  // Kick off
+  loadToday();
+})();
+</script>
+{% endblock %}
