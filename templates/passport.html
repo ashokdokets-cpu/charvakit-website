@@ -149,6 +149,15 @@
         <a class="pp-share-btn pp-share-li" target="_blank" href="https://www.linkedin.com/sharing/share-offsite/?url={{ 'https://www.charvakit.com/passport/' + passport.handle }}">Share on LinkedIn</a>
         <button class="pp-share-btn pp-share-copy" onclick="ppCopyLink('https://www.charvakit.com/passport/{{ passport.handle }}')">Copy link</button>
       </div>
+
+      <!-- Session 46-B: Create Skill Twin Challenge -->
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.2);">
+        <div style="font-size:13px;opacity:0.85;margin-bottom:8px;">Challenge a friend — they'll try to beat your score</div>
+        <button class="pp-share-btn" style="background:#ffc107;color:#0f172a;font-weight:700;" onclick="ppCreateChallenge('{{ passport.role if passport.role else 'Backend Engineer' }}')">
+          ⚔️ Create Challenge Link
+        </button>
+        <div id="ppChallengeMsg" style="font-size:13px;margin-top:8px;opacity:0.9;"></div>
+      </div>
     </div>
   </div>
 
@@ -347,6 +356,49 @@ function ppCopyLink(url) {
     }
   } catch (e) { /* silent */ }
 })();
+
+async function ppCreateChallenge(role) {
+  const msg = document.getElementById("ppChallengeMsg");
+  const token = localStorage.getItem("auth_token") || localStorage.getItem("charvak_token") || "";
+  if (!token) {
+    msg.innerHTML = 'Please <a href="/login?next=/passport/me" style="color:#ffe082;">log in</a> to create a challenge.';
+    return;
+  }
+  msg.textContent = "Creating challenge...";
+  try {
+    const res = await fetch("/api/skill-twin/create", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+      },
+      body: JSON.stringify({
+        role: role || "",
+        industry: "",
+        level: ""
+      })
+    });
+    const data = await res.json();
+    if (data.status !== "success") {
+      msg.textContent = "Error: " + (data.message || "Could not create challenge");
+      return;
+    }
+    const url = data.challenge_url;
+    // Show the URL + copy + share buttons
+    msg.innerHTML = `
+      <div style="background:rgba(0,0,0,0.2);padding:12px;border-radius:8px;margin-top:8px;">
+        <div style="font-weight:600;margin-bottom:6px;">✅ Challenge ready!</div>
+        <div style="font-size:12px;word-break:break-all;margin-bottom:8px;">${url}</div>
+        <a href="https://wa.me/?text=${encodeURIComponent('Can you beat my Charvak score of ' + {{ passport.charvak_score or 0 }} + '? ' + url)}" target="_blank" class="pp-share-btn pp-share-wa" style="padding:6px 12px;font-size:12px;">WhatsApp</a>
+        <a href="https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}" target="_blank" class="pp-share-btn pp-share-li" style="padding:6px 12px;font-size:12px;margin-left:6px;">LinkedIn</a>
+        <button onclick="ppCopyLink('${url}')" class="pp-share-btn pp-share-copy" style="padding:6px 12px;font-size:12px;margin-left:6px;">Copy</button>
+      </div>
+    `;
+    try { charvakTrack && charvakTrack("skill_twin_created", {owner_handle: "{{ passport.handle }}", score: {{ passport.charvak_score or 0 }}}); } catch(e) {}
+  } catch (e) {
+    msg.textContent = "Network error. Please try again.";
+  }
+}
 
 async function ppCreatePassport(ev) {
   ev.preventDefault();
