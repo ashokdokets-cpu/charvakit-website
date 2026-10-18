@@ -2,11 +2,11 @@
 ## Charvak IT Consulting Pvt Ltd
 ### Last updated: October 16, 2026 (Session 43-A3.4 + A4 - FYP features + personalized training)
 
-**HEAD:** 4c2ef76
+**HEAD:** 1902eb7
 **Live:** https://www.charvakit.com
 **Resume here:** see `SESSION-CONTEXT.md` and `TRACK-A-B-PLAN.md`
 **Backlog:** see `OUTSTANDING-WORK-INVENTORY.md` (master list of remaining work)
-**Version:** v3.5-session-51-20261019
+**Version:** v3.5-session-52-20261019
 
 ### Reference Documents
 
@@ -20,6 +20,37 @@
 
 ---
 
+## SESSION 2026-10-19 - Session 52 (Certificate-as-a-Service)
+
+**Commit:** `1902eb7`
+
+### Shipped
+
+- Certificate-as-a-Service — bulk verification API for universities
+- `cas_engine.py` (new, ~16 KB): verify_certificate_by_hash,
+  verify_batch, request_api_key, approve_api_key, check_api_key,
+  list_api_keys. SHA-256 API key storage, approval-gated.
+- 3 new routes: `POST /api/cas/verify-batch`,
+  `POST /api/cas/request-key`, `GET /employer/cas`
+- New template `employer-cas.html` (hero, 4 pricing tiers, API docs,
+  request form)
+- New migration `20261019_cas_api_keys.sql`
+- CTA in `employer-dashboard.html` hero → /employer/cas
+
+### Wave 2 status: 100% COMPLETE
+
+Trust Score API (S50) + Employer Dashboard (S51) + CAS (S52).
+Three B2B products live. Track C (Amrita pilot) technically unblocked.
+
+### Prod verified (2026-10-19)
+
+- `GET /employer/cas` -> 200
+- `POST /api/cas/verify-batch` (no key) -> 401
+- `GET /employer/dashboard` -> 200
+- Engine smoke test: 10/10 checks pass (single, batch, approval
+  gate, quota, missing key, not-found, cleanup)
+
+---
 ## SESSION 2026-10-19 - Session 51 (Employer Dashboard)
 
 **Commit:** `4c2ef76`
