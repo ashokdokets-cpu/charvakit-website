@@ -1,5 +1,57 @@
 # Session Context - Charvak
 
+**HEAD:** b84fb12
+**Live:** https://www.charvakit.com
+**Updated:** 2026-10-19 (Session 54 closed — Track D Phase A flagged)
+**Next up:** Session 55 — JD parser engine (Track D Phase A, item A)
+
+---
+
+## Session 2026-10-19 (evening) — Track D Phase Split
+
+Decision: don't wait for Amrita to start Track D. Split into two phases:
+
+**Phase A (Build now, Sessions 55-57):**
+- A: JD parser engine (`jd_parser_engine.py`) — NEXT SESSION
+- B: `/jd-assessment` MVP (frontend only)
+- C: Wire JD parser into Career Assessment
+
+**Phase B (Blocked on Amrita Week 2):**
+- D-H: Assessment designer, score normalizer, dashboard, outcomes, attribution
+
+**Full plan:** TRACK-D-JD2P-PLAN.md "Session 2026-10-19 — Split into Buildable + Blocked Phases"
+
+---
+
+## Session 55 Plan (next)
+
+**Goal:** `jd_parser_engine.py` — paste a JD → structured data
+
+**Deliverable:** `parse_jd(jd_text) -> Dict` with 11 fields:
+title, company, seniority, domain, skills_required, skills_nice_to_have,
+experience_years_min, experience_years_max, responsibilities,
+success_signals, assessment_relevance (topics, formats, difficulty)
+
+**Test with:** NCS roles (AI Engineer, ML Engineer, Platform Engineer),
+LENZE (Lead Firmware, App Engineer), Middle East (STP Mechanical),
+plus 2-3 synthetic (accountant, designer, sales)
+
+**Tech:** `openai_compat.build_payload()` (Phase 3b gave us this for free).
+Cost ~$0.002 per parse. Rate limit 5/min per IP.
+
+**No new tables.** Pure parsing function.
+
+---
+
+## Still Open (10 min total, do this week)
+
+1. Send Amrita reply to Prof. Raj
+2. Rotate Render Postgres password (dashboard)
+
+---
+
+# Session Context - Charvak
+
 **HEAD:** 1902eb7
 **Live:** https://www.charvakit.com
 **Updated:** 2026-10-19 (Session 52 closed)

@@ -5857,3 +5857,27 @@ F) **GPT-4o-mini Phase 2** (evaluate successor) - due Oct 27
 - chatbot_engine.py (1)
 
 **Phase 2 STATUS: COMPLETE 2026-10-19**
+
+## Session 2026-10-19 (evening) - Track D Phase Split Flagged
+
+**Decision:** Don't wait for Amrita to start Track D. Split into buildable and blocked phases.
+
+**Build now (Sessions 55-57, ~3 sessions):**
+- A: JD parser engine (jd_parser_engine.py) — Session 55
+- B: /jd-assessment MVP (paste -> parse -> show structured data) — Session 56
+- C: Wire JD parser into Career Assessment dropdowns — Session 57
+
+**Blocked on Amrita (no session scheduled):**
+- D-H: Assessment designer, score normalizer, dashboard, outcomes, attribution
+
+**Rationale:** JD parser is genuinely reusable (job boards, recruiters, LinkedIn) and works even if Amrita says no. The 3-session MVP is the lowest-risk buildable slice of Track D. Serves as a stronger Amrita demo than a promise.
+
+**Full phase split:** See TRACK-D-JD2P-PLAN.md Session 2026-10-19
+
+**Session 55 candidates (revised):**
+1. JD parser engine (Track D Phase A, item A) — RECOMMENDED
+2. Phase 3c GPT-4o-mini env flip — target Nov 3
+3. Certificate i18n (Hindi + Telugu) — 1-2 hrs
+
+**Remaining flags: 1**
+- Render Postgres password rotation (Session 19, ~30 sessions, 5-min)
