@@ -2,11 +2,11 @@
 ## Charvak IT Consulting Pvt Ltd
 ### Last updated: October 16, 2026 (Session 43-A3.4 + A4 - FYP features + personalized training)
 
-**HEAD:** 13dad7b
+**HEAD:** 4c2ef76
 **Live:** https://www.charvakit.com
 **Resume here:** see `SESSION-CONTEXT.md` and `TRACK-A-B-PLAN.md`
 **Backlog:** see `OUTSTANDING-WORK-INVENTORY.md` (master list of remaining work)
-**Version:** v3.5-session-43-a3a4-20261016
+**Version:** v3.5-session-51-20261019
 
 ### Reference Documents
 
@@ -20,6 +20,29 @@
 
 ---
 
+## SESSION 2026-10-19 - Session 51 (Employer Dashboard)
+
+**Commit:** `4c2ef76`
+
+### Shipped
+
+- Employer Dashboard — B2B product surface for the Trust Score API
+- `passport_engine.list_public_passports()` engine method
+- 3 new routes: `/api/passport/public/list`, `/employer/dashboard`,
+  `/employer/verify/{handle}`
+- 2 new templates + "For Employers" nav link
+- Bug fix: raw JSON button href set at render time (was JS race)
+
+### Wave 2 status: 66% (Certificate-as-a-Service remains — Session 52)
+
+### Prod verified (2026-10-19)
+
+- `/employer/dashboard` -> 200, renders @hr-6201 (442, developing)
+- `/employer/verify/hr-6201` -> 200, component bars 43/50/30/50,
+  integrity "elevated", 7 certs, hash `5af408b282c9e447`
+- `/api/passport/public/list` -> valid JSON with correct shape
+
+---
 ## SESSION 2026-10-16 - Session 43-A3.4 + A4
 
 **Commits:** `4e8148a`, `d13d2be`, `69f09d0`, `a4f6354`, `d2531de`, `3b5dc0d`, `13dad7b`

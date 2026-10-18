@@ -463,3 +463,42 @@ Active roadmap for the current work: see `TRACK-A-B-PLAN.md`.
 - Footer: "My Cohorts" link in Quick Links section
 
 <!-- END SESSION-48 -->
+
+## Employer Portal (Session 51, 2026-10-19)
+
+The B2B verification surface. Public, no auth required.
+
+| Template | Route | Purpose | Auth? |
+|---|---|---|---|
+| `employer-dashboard.html` | `/employer/dashboard` | B2B portal: quick-verify input + browse public passports with tier filters + pagination | No (public) |
+| `employer-verify.html` | `/employer/verify/{handle}` | Single-passport verification card: score + tier + component bars + integrity badge + hash copy + raw JSON link | No (public) |
+
+**Backing API:**
+
+- `GET /api/passport/public/list` - paginated public passport list (60/min, public)
+  - Query: `?tier=<foundation|developing|solid|strong|elite>&limit=20&offset=0`
+  - Response: `{status, passports: [...], total, page, pages, tier}`
+  - No PII - aggregates only (handle, charvak_score, score_tier, display_name, score_updated_at)
+
+**Nav integration:**
+
+- "For Employers" link in top nav (`base.html` line 344), teal CTA
+  styling matching Exam Prep / Readiness Check / Open Roles
+
+**Engine:**
+
+- `passport_engine.list_public_passports(tier, limit, offset)` - filters
+  by `is_public = TRUE`, ordered by `charvak_score DESC`
+
+**Verified on prod (2026-10-19):**
+
+- `/employer/dashboard` -> 200, renders @hr-6201 (442, developing)
+- `/employer/verify/hr-6201` -> 200, full card with real data
+- `/api/passport/public/list` -> correct JSON shape
+
+**Discovery funnel:**
+
+- Employer lands on dashboard
+- Quick-verify by handle OR browse public talent pool
+- Click card -> full verify page with cryptographic proof
+- Share verify URL with team (or open raw JSON for API integration)
