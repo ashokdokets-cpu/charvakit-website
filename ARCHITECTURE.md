@@ -1,7 +1,7 @@
 # Charvak Architecture
 
-**Last updated:** 2026-10-03
-**Version:** v3.5-session-13-20261003
+**Last updated:** 2026-10-19
+**Version:** v3.5-session-54-20261019
 
 ---
 
@@ -883,6 +883,121 @@ To test the PayPal flow locally without real money:
    is gitignored
 
 ---
+
+
+
+## Wave 2 Flywheel (Sessions 50-52, completed 2026-10-19)
+
+Three B2B verification products. Turns readiness certificates into
+institutional revenue infrastructure.
+
+### Trust Score Public API (Session 50 + 50.5)
+
+Endpoint: `GET /api/passport/{handle}/verify`
+Returns: score, tier, component_breakdown, integrity_risk, verify_hash
+Public, no auth, no PII — aggregate signals only.
+
+### Employer Dashboard (Session 51)
+
+Routes:
+- `GET  /employer/dashboard` — browse public passports + verify
+- `GET  /employer/verify/{handle}` — single-passport verification card
+- `GET  /api/passport/public/list` — paginated, filterable JSON
+
+Templates: `employer-dashboard.html`, `employer-verify.html`
+
+### Certificate-as-a-Service (Session 52)
+
+Routes:
+- `POST /api/cas/verify-batch` — bulk verify up to 100 cert hashes
+- `POST /api/cas/request-key` — university requests API key
+- `GET  /employer/cas` — landing page with pricing + docs + form
+
+Engine: `cas_engine.py` (verify_certificate_by_hash, verify_batch,
+request_api_key, approve_api_key, check_api_key, list_api_keys)
+Table: `charvak_cas_api_keys` (SHA-256 hashed, approval-gated)
+
+CAS Admin UI (Session 53):
+- `GET  /admin/cas-keys` — admin approval page
+- `GET  /api/admin/cas-keys/list` — all keys (pending + active)
+- `POST /api/admin/cas-keys/{key_id}/approve`
+- `POST /api/admin/cas-keys/{key_id}/deactivate`
+
+Pricing tiers:
+- Pilot: free (500 verifications, 1 batch, 4-week window)
+- Department: Rs 49,999/yr (5,000 verifications)
+- Campus: Rs 1,99,999/yr (50,000 verifications)
+- University: Rs 4,99,999/yr (unlimited)
+
+
+## GPT-4o-mini Retirement Migration (Sessions 52-54, 2026-10-19)
+
+Preemptive migration to OpenAI's GPT-5.x series before the Jan 14, 2027
+retirement deadline.
+
+### Phase 1: Centralize (Session 43-A1.4)
+
+`global_config.py` reads model names from env vars:
+- `OPENAI_MODEL` = default (currently `gpt-4o-mini`)
+- `OPENAI_MODEL_CHEAP` = falls back to `OPENAI_MODEL`
+- `OPENAI_MODEL_SMART` = higher quality (currently `gpt-4o`)
+
+### Phase 2: Evaluate (Session 54)
+
+Tested 5 candidates on 10 representative prompts:
+
+| Model | Latency | Cost (10 calls) | JSON |
+|---|---|---|---|
+| gpt-4o-mini (baseline) | 3,394ms | $0.00183 | 8/8 |
+| gpt-4.1-mini | 1,960ms | $0.00396 | 8/8 |
+| gpt-5.4-mini | 1,779ms | $0.01185 | 8/8 |
+| gpt-5.4-nano | 2,634ms | $0.00168 | 8/8 |
+| gpt-5.5 | n/a | n/a | (rejects temp=0.7) |
+
+Decision: split-tier migration
+- `OPENAI_MODEL = gpt-5.4-nano` (8% cheaper, 22% faster)
+- `OPENAI_MODEL_SMART = gpt-5.4-mini` (3x cheaper than gpt-4o)
+
+### Phase 3a: Shim + first file (Session 53)
+
+`openai_compat.py` — model-aware compatibility shim:
+- `build_payload()` — builds payload with `max_completion_tokens`
+  (gpt-5.x) or `max_tokens` (gpt-4o-mini) based on model name
+- `translate_kwargs()` — kwargs dict for openai.OpenAI client
+- `call_openai_raw()` — full httpx helper for direct use
+
+Migrated `ai_service.py` (7 call sites).
+
+### Phase 3b: All remaining files (Session 54)
+
+Migrated 9 more engines — every OpenAI call site now goes through
+the shim:
+- `final_year_project_engine.py`, `ielts_engine.py`,
+  `ai_bridge_engine.py`, `ielts_deep_report_engine.py`,
+  `ai_courses.py`, `interview_prep_engine.py`, `cbat_engine.py`,
+  `chatbot_engine.py`, `complete_mock_drive.py`
+
+Total: 10 files, 36 max_tokens sites, 11 helper patches.
+
+### Phase 3c: Env var flip (pending, target Nov 3)
+
+- Set `OPENAI_MODEL=gpt-5.4-nano` and `OPENAI_MODEL_SMART=gpt-5.4-mini`
+  on Render
+- Watch logs for 24 hours
+- Rollback = env var revert if any regression
+
+Deadline: Jan 14, 2027
+
+
+## Employer Dashboard Polish (Session 54)
+
+- Sort dropdown: score (default) / recent / handle
+- CSV export: `/api/passport/public/list.csv` (up to 1,000 rows)
+- Empty state CTA: links to `/readiness-check` when 0 candidates
+- `passport_engine.list_public_passports(sort=...)` with whitelist
+  validation prevents SQL injection
+
+REFERENCE: COMMITMENT.md "Session 52/53/54" + "Phase 2 Evaluation — RESULT"
 
 Keep in sync with MASTER-REFERENCE.md.
 
