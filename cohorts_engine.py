@@ -225,6 +225,12 @@ def join_by_code(join_code: str, member_email: str) -> Dict:
             WHERE cohort_id = %s
         """, (cohort_id,))
 
+        # Session 49: invalidate leaderboard cache so new member appears immediately
+        cur.execute("""
+            DELETE FROM charvak_cohort_leaderboard
+            WHERE cohort_id = %s AND week_start = %s
+        """, (cohort_id, _week_start_iso()))
+
         conn.commit()
         cur.close()
 
@@ -358,7 +364,7 @@ def get_leaderboard(cohort_id: str, limit: int = 100) -> Dict:
         cur2.close()
 
         if cached:
-            # Cache hit: enrich with display info
+            # Cache hit: enrich with display info + role (Session 49 fix)
             entries = []
             cur3 = conn.cursor()
             for email, composite, rank in cached:
@@ -373,6 +379,13 @@ def get_leaderboard(cohort_id: str, limit: int = 100) -> Dict:
                 """, (email,))
                 s = cur3.fetchone()
                 streak = s[0] if s else 0
+                # Session 49: fetch role from membership table
+                cur3.execute("""
+                    SELECT COALESCE(role, 'member') FROM charvak_cohort_members
+                    WHERE cohort_id = %s AND member_email = %s
+                """, (cohort_id, email))
+                r_row = cur3.fetchone()
+                member_role = r_row[0] if r_row else 'member'
                 entries.append({
                     "email": email,
                     "handle": handle,
@@ -380,6 +393,7 @@ def get_leaderboard(cohort_id: str, limit: int = 100) -> Dict:
                     "composite_score": composite,
                     "streak": int(streak),
                     "rank": rank,
+                    "role": member_role,
                 })
             cur3.close()
 
@@ -557,3 +571,297 @@ def refresh_leaderboard(cohort_id: str, caller_email: str) -> Dict:
                 conn.close()
             except Exception:
                 pass
+
+
+# ---------------------------------------------------------------
+# Session 49 - CRUD operations (leave, rename, delete, promote, demote, discover)
+# ---------------------------------------------------------------
+
+def _get_member_role(cur, cohort_id: str, email: str) -> str:
+    """Return 'owner'/'admin'/'member'/'' (empty if not a member)."""
+    cur.execute("""
+        SELECT role FROM charvak_cohort_members
+        WHERE cohort_id = %s AND member_email = %s
+    """, (cohort_id, email))
+    row = cur.fetchone()
+    return (row[0] if row else "") or ""
+
+
+def leave_cohort(cohort_id: str, member_email: str) -> Dict:
+    """A member leaves a cohort. Owners cannot leave (must delete or transfer)."""
+    cohort_id = (cohort_id or "").strip()
+    member_email = (member_email or "").strip().lower()
+
+    if not cohort_id or not member_email:
+        return {"status": "error", "message": "cohort_id and member_email required"}
+
+    _ensure_tables()
+
+    conn = None
+    try:
+        conn = db.get_connection()
+        cur = conn.cursor()
+
+        role = _get_member_role(cur, cohort_id, member_email)
+        if not role:
+            cur.close()
+            return {"status": "error", "message": "Not a member of this cohort", "code": "not_member"}
+        if role == "owner":
+            cur.close()
+            return {"status": "error", "message": "Owners cannot leave. Delete the cohort or demote yourself first.", "code": "is_owner"}
+
+        cur.execute("""
+            DELETE FROM charvak_cohort_members
+            WHERE cohort_id = %s AND member_email = %s
+        """, (cohort_id, member_email))
+
+        cur.execute("""
+            UPDATE charvak_cohorts
+            SET member_count = GREATEST(0, member_count - 1)
+            WHERE cohort_id = %s
+        """, (cohort_id,))
+
+        # Session 49: invalidate leaderboard cache so departed member disappears immediately
+        cur.execute("""
+            DELETE FROM charvak_cohort_leaderboard
+            WHERE cohort_id = %s AND week_start = %s
+        """, (cohort_id, _week_start_iso()))
+
+        conn.commit()
+        cur.close()
+        return {"status": "success", "left": True}
+    except Exception as e:
+        if conn:
+            try: conn.rollback()
+            except Exception: pass
+        logger.warning(f"leave_cohort: {e}")
+        return {"status": "error", "message": str(e)}
+    finally:
+        if conn:
+            try: conn.close()
+            except Exception: pass
+
+
+def rename_cohort(cohort_id: str, caller_email: str, new_name: str) -> Dict:
+    """Owner-only: rename a cohort. Validates 3-80 chars."""
+    cohort_id = (cohort_id or "").strip()
+    caller_email = (caller_email or "").strip().lower()
+    new_name = (new_name or "").strip()
+
+    if not cohort_id or not caller_email:
+        return {"status": "error", "message": "cohort_id and caller_email required"}
+    if len(new_name) < 3:
+        return {"status": "error", "message": "Name must be at least 3 characters"}
+    if len(new_name) > 80:
+        return {"status": "error", "message": "Name must be 80 characters or less"}
+
+    _ensure_tables()
+
+    conn = None
+    try:
+        conn = db.get_connection()
+        cur = conn.cursor()
+
+        role = _get_member_role(cur, cohort_id, caller_email)
+        if role != "owner":
+            cur.close()
+            return {"status": "error", "message": "Owner only", "code": "forbidden"}
+
+        cur.execute("""
+            UPDATE charvak_cohorts SET name = %s WHERE cohort_id = %s
+        """, (new_name, cohort_id))
+        conn.commit()
+        cur.close()
+        return {"status": "success", "name": new_name}
+    except Exception as e:
+        if conn:
+            try: conn.rollback()
+            except Exception: pass
+        logger.warning(f"rename_cohort: {e}")
+        return {"status": "error", "message": str(e)}
+    finally:
+        if conn:
+            try: conn.close()
+            except Exception: pass
+
+
+def delete_cohort(cohort_id: str, caller_email: str) -> Dict:
+    """Owner-only: delete a cohort and cascade members + leaderboard."""
+    cohort_id = (cohort_id or "").strip()
+    caller_email = (caller_email or "").strip().lower()
+
+    if not cohort_id or not caller_email:
+        return {"status": "error", "message": "cohort_id and caller_email required"}
+
+    _ensure_tables()
+
+    conn = None
+    try:
+        conn = db.get_connection()
+        cur = conn.cursor()
+
+        role = _get_member_role(cur, cohort_id, caller_email)
+        if role != "owner":
+            cur.close()
+            return {"status": "error", "message": "Owner only", "code": "forbidden"}
+
+        cur.execute("DELETE FROM charvak_cohort_leaderboard WHERE cohort_id = %s", (cohort_id,))
+        cur.execute("DELETE FROM charvak_cohort_members WHERE cohort_id = %s", (cohort_id,))
+        cur.execute("DELETE FROM charvak_cohorts WHERE cohort_id = %s", (cohort_id,))
+
+        conn.commit()
+        cur.close()
+        return {"status": "success", "deleted": True}
+    except Exception as e:
+        if conn:
+            try: conn.rollback()
+            except Exception: pass
+        logger.warning(f"delete_cohort: {e}")
+        return {"status": "error", "message": str(e)}
+    finally:
+        if conn:
+            try: conn.close()
+            except Exception: pass
+
+
+def promote_admin(cohort_id: str, caller_email: str, target_email: str) -> Dict:
+    """Owner-only: promote a member to admin."""
+    cohort_id = (cohort_id or "").strip()
+    caller_email = (caller_email or "").strip().lower()
+    target_email = (target_email or "").strip().lower()
+
+    if not cohort_id or not caller_email or not target_email:
+        return {"status": "error", "message": "cohort_id, caller_email, target_email required"}
+
+    _ensure_tables()
+
+    conn = None
+    try:
+        conn = db.get_connection()
+        cur = conn.cursor()
+
+        role = _get_member_role(cur, cohort_id, caller_email)
+        if role != "owner":
+            cur.close()
+            return {"status": "error", "message": "Owner only", "code": "forbidden"}
+
+        target_role = _get_member_role(cur, cohort_id, target_email)
+        if not target_role:
+            cur.close()
+            return {"status": "error", "message": "Target is not a member", "code": "not_member"}
+        if target_role != "member":
+            cur.close()
+            return {"status": "error", "message": f"Target is already {target_role}"}
+
+        cur.execute("""
+            UPDATE charvak_cohort_members SET role = 'admin'
+            WHERE cohort_id = %s AND member_email = %s
+        """, (cohort_id, target_email))
+
+        conn.commit()
+        cur.close()
+        return {"status": "success", "promoted": target_email}
+    except Exception as e:
+        if conn:
+            try: conn.rollback()
+            except Exception: pass
+        logger.warning(f"promote_admin: {e}")
+        return {"status": "error", "message": str(e)}
+    finally:
+        if conn:
+            try: conn.close()
+            except Exception: pass
+
+
+def demote_admin(cohort_id: str, caller_email: str, target_email: str) -> Dict:
+    """Owner-only: demote an admin to member."""
+    cohort_id = (cohort_id or "").strip()
+    caller_email = (caller_email or "").strip().lower()
+    target_email = (target_email or "").strip().lower()
+
+    if not cohort_id or not caller_email or not target_email:
+        return {"status": "error", "message": "cohort_id, caller_email, target_email required"}
+
+    _ensure_tables()
+
+    conn = None
+    try:
+        conn = db.get_connection()
+        cur = conn.cursor()
+
+        role = _get_member_role(cur, cohort_id, caller_email)
+        if role != "owner":
+            cur.close()
+            return {"status": "error", "message": "Owner only", "code": "forbidden"}
+
+        target_role = _get_member_role(cur, cohort_id, target_email)
+        if not target_role:
+            cur.close()
+            return {"status": "error", "message": "Target is not a member", "code": "not_member"}
+        if target_role == "owner":
+            cur.close()
+            return {"status": "error", "message": "Cannot demote the owner"}
+        if target_role != "admin":
+            cur.close()
+            return {"status": "error", "message": "Target is not an admin"}
+
+        cur.execute("""
+            UPDATE charvak_cohort_members SET role = 'member'
+            WHERE cohort_id = %s AND member_email = %s
+        """, (cohort_id, target_email))
+
+        conn.commit()
+        cur.close()
+        return {"status": "success", "demoted": target_email}
+    except Exception as e:
+        if conn:
+            try: conn.rollback()
+            except Exception: pass
+        logger.warning(f"demote_admin: {e}")
+        return {"status": "error", "message": str(e)}
+    finally:
+        if conn:
+            try: conn.close()
+            except Exception: pass
+
+
+def list_public_cohorts(limit: int = 50) -> Dict:
+    """Return cohorts with is_public=TRUE, ordered by member_count DESC."""
+    _ensure_tables()
+
+    limit = max(1, min(int(limit or 50), 200))
+
+    conn = None
+    try:
+        conn = db.get_connection()
+        cur = conn.cursor()
+
+        cur.execute("""
+            SELECT cohort_id, name, description, join_code, member_count, created_at
+            FROM charvak_cohorts
+            WHERE is_public = TRUE
+            ORDER BY member_count DESC, created_at DESC
+            LIMIT %s
+        """, (limit,))
+        rows = cur.fetchall()
+        cur.close()
+
+        cohorts = []
+        for cohort_id, name, description, join_code, member_count, created_at in rows:
+            cohorts.append({
+                "cohort_id": cohort_id,
+                "name": name,
+                "description": description,
+                "join_code": join_code,
+                "member_count": member_count,
+                "created_at": created_at.isoformat() if created_at else None,
+            })
+
+        return {"status": "success", "cohorts": cohorts}
+    except Exception as e:
+        logger.warning(f"list_public_cohorts: {e}")
+        return {"status": "error", "message": str(e)}
+    finally:
+        if conn:
+            try: conn.close()
+            except Exception: pass

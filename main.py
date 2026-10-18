@@ -3780,6 +3780,124 @@ async def api_cohorts_refresh(request: Request, cohort_id: str):
     except Exception as e:
         return handle_error(e, "cohorts refresh")
 
+
+
+# ============================================================
+# Session 49: Cohort RBAC + Discovery routes
+# ============================================================
+
+@app.get("/api/cohorts/public")
+@limiter.limit("60/minute")
+async def api_cohorts_public(request: Request):
+    try:
+        import cohorts_engine as ce
+        result = ce.list_public_cohorts(limit=100)
+        if result.get("status") != "success":
+            return JSONResponse(status_code=400, content=result)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "cohorts public")
+
+
+@app.post("/api/cohorts/{cohort_id}/leave")
+@limiter.limit("20/minute")
+async def api_cohorts_leave(request: Request, cohort_id: str):
+    try:
+        caller = require_auth(request)
+        caller_email = (caller.get("email") or "").strip().lower()
+        import cohorts_engine as ce
+        result = ce.leave_cohort(cohort_id, caller_email)
+        if result.get("status") != "success":
+            return JSONResponse(status_code=400, content=result)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "cohorts leave")
+
+
+@app.post("/api/cohorts/{cohort_id}/rename")
+@limiter.limit("10/minute")
+async def api_cohorts_rename(request: Request, cohort_id: str):
+    try:
+        caller = require_auth(request)
+        caller_email = (caller.get("email") or "").strip().lower()
+        data = await request.json()
+        new_name = (data.get("name") or "").strip()
+        import cohorts_engine as ce
+        result = ce.rename_cohort(cohort_id, caller_email, new_name)
+        if result.get("status") != "success":
+            status = 403 if result.get("code") == "forbidden" else 400
+            return JSONResponse(status_code=status, content=result)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "cohorts rename")
+
+
+@app.delete("/api/cohorts/{cohort_id}")
+@limiter.limit("5/minute")
+async def api_cohorts_delete(request: Request, cohort_id: str):
+    try:
+        caller = require_auth(request)
+        caller_email = (caller.get("email") or "").strip().lower()
+        import cohorts_engine as ce
+        result = ce.delete_cohort(cohort_id, caller_email)
+        if result.get("status") != "success":
+            status = 403 if result.get("code") == "forbidden" else 400
+            return JSONResponse(status_code=status, content=result)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "cohorts delete")
+
+
+@app.post("/api/cohorts/{cohort_id}/promote")
+@limiter.limit("10/minute")
+async def api_cohorts_promote(request: Request, cohort_id: str):
+    try:
+        caller = require_auth(request)
+        caller_email = (caller.get("email") or "").strip().lower()
+        data = await request.json()
+        target_email = (data.get("email") or "").strip().lower()
+        if not target_email:
+            return JSONResponse(status_code=400, content={"status": "error", "message": "email required"})
+        import cohorts_engine as ce
+        result = ce.promote_admin(cohort_id, caller_email, target_email)
+        if result.get("status") != "success":
+            status = 403 if result.get("code") == "forbidden" else 400
+            return JSONResponse(status_code=status, content=result)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "cohorts promote")
+
+
+@app.post("/api/cohorts/{cohort_id}/demote")
+@limiter.limit("10/minute")
+async def api_cohorts_demote(request: Request, cohort_id: str):
+    try:
+        caller = require_auth(request)
+        caller_email = (caller.get("email") or "").strip().lower()
+        data = await request.json()
+        target_email = (data.get("email") or "").strip().lower()
+        if not target_email:
+            return JSONResponse(status_code=400, content={"status": "error", "message": "email required"})
+        import cohorts_engine as ce
+        result = ce.demote_admin(cohort_id, caller_email, target_email)
+        if result.get("status") != "success":
+            status = 403 if result.get("code") == "forbidden" else 400
+            return JSONResponse(status_code=status, content=result)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "cohorts demote")
 @app.post("/api/tools/ghost-bounty")
 @limiter.limit("60/minute")
 async def api_ghost_bounty(request: Request):
