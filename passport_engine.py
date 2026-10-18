@@ -436,19 +436,29 @@ def get_public_verification(handle: str) -> Dict:
         cert_row = cur.fetchone()
         cert_count = int(cert_row[0]) if cert_row else 0
 
-        # Component breakdown (best-effort from aggregate data)
+        cur.close()
+
+        # Component breakdown — from _compute_charvak_score().components
         breakdown = {"readiness": 0, "career": 0, "breadth": 0, "integrity": 100}
+        try:
+            score_result = _compute_charvak_score(email)
+            if score_result and isinstance(score_result, dict):
+                comps = score_result.get("components", {}) or {}
+                breakdown["readiness"] = int(comps.get("readiness", 0) or 0)
+                breakdown["career"] = int(comps.get("career", 0) or 0)
+                breakdown["breadth"] = int(comps.get("breadth", 0) or 0)
+                breakdown["integrity"] = int(comps.get("integrity", 100) or 100)
+        except Exception as e:
+            logger.warning(f"breakdown compute failed: {e}")
+
+        # Integrity risk — from _get_aggregate_data().integrity.risk_level
+        integrity_risk = "clean"
         try:
             agg = _get_aggregate_data(email)
             if agg and isinstance(agg, dict):
-                breakdown["readiness"] = int(agg.get("readiness_pct", 0) or 0)
-                breakdown["career"] = int(agg.get("career_pct", 0) or 0)
-                breakdown["breadth"] = int(agg.get("breadth_pct", 0) or 0)
-                breakdown["integrity"] = int(agg.get("integrity_pct", 100) or 100)
-        except Exception:
-            pass  # non-fatal
-
-        cur.close()
+                integrity_risk = (agg.get("integrity") or {}).get("risk_level", "clean") or "clean"
+        except Exception as e:
+            logger.warning(f"integrity risk compute failed: {e}")
 
         # HMAC verify_hash (matches Session 45 share/reward signature pattern)
         import os
@@ -468,7 +478,7 @@ def get_public_verification(handle: str) -> Dict:
             "score_tier": score_tier or "foundation",
             "certificate_count": cert_count,
             "component_breakdown": breakdown,
-            "integrity_risk": "unknown",
+            "integrity_risk": integrity_risk,
             "issued_at": created_at.isoformat() if created_at else None,
             "score_updated_at": score_updated_at.isoformat() if score_updated_at else None,
             "verify_hash": verify_hash,
