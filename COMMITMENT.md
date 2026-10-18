@@ -5755,3 +5755,105 @@ E) **Send Amrita reply to Prof. Raj** (5 min — draft exists in context)
    - Includes /employer/cas link + pricing tiers
 
 F) **GPT-4o-mini Phase 2** (evaluate successor) - due Oct 27
+
+### Phase 2 Evaluation — RESULT (2026-10-19)
+
+**Chosen successors (split-tier migration):**
+
+    OPENAI_MODEL       = "gpt-5.4-nano"    # default (cheaper + faster than gpt-4o-mini)
+    OPENAI_MODEL_CHEAP = "gpt-5.4-nano"    # same (already cheapest)
+    OPENAI_MODEL_SMART = "gpt-5.4-mini"    # premium features (better reasoning)
+
+**Evaluation results (10 representative Charvak prompts):**
+
+| Model | Avg Latency | Cost (10 calls) | JSON | Errors |
+|---|---|---|---|---|
+| gpt-4o-mini (current) | 3,394 ms | $0.00183 | 8/8 | 0 |
+| gpt-4.1-mini (prior gen) | 1,960 ms | $0.00396 | 8/8 | 0 |
+| gpt-5.4-mini (SMART target) | 1,779 ms | $0.01185 | 8/8 | 0 |
+| gpt-5.4-nano (DEFAULT target) | 2,634 ms | $0.00168 | 8/8 | 0 |
+| gpt-5.5 (SKIP — see below) | FAILED / huge reasoning | — | — | — |
+
+**Key findings:**
+
+1. `gpt-5.4-nano` is **8% cheaper and 22% faster** than `gpt-4o-mini`
+   while matching JSON reliability. Migration is a cost improvement.
+
+2. `gpt-5.4-mini` is **3× cheaper than current `gpt-4o` (SMART) tier**
+   while producing higher-quality reasoning (scenario-based MCQs vs
+   factual recall).
+
+3. `gpt-5.5` is **not viable** for Charvak's workload:
+   - Rejects non-default temperature (breaks all custom temp calls)
+   - Consumes hundreds of hidden reasoning tokens per call
+   - Actual effective cost 30-50× gpt-4o-mini, not 13×
+   - Skip entirely.
+
+4. **API breaking change discovered early:**
+   - GPT-5.x requires `max_completion_tokens=` not `max_tokens=`
+   - Audit found **32 call sites across 10 files**
+   - Not a 1-env-var migration — needs a compat shim
+
+**Migration plan (revised):**
+
+- **Phase 3a** (Session 53): Create `openai_compat.py` shim +
+  migrate `ai_service.py` (7 calls, most central). Test.
+- **Phase 3b** (Session 54): Migrate remaining 9 files in batches
+  of 2-3. Test each.
+- **Phase 3c** (Session 55): Set env vars on Render, watch logs
+  for 24 hrs, rollback if any regression.
+- **Absolute latest start:** Dec 15, 2026 (well ahead)
+- **Hard deadline:** Jan 14, 2027 (85 days away)
+
+**Compat shim design (Phase 3a):**
+
+    # openai_compat.py
+    def create_completion(model=None, messages=None, max_tokens=None,
+                          temperature=0.7, response_format=None, **kwargs):
+        if model is None:
+            model = global_config.OPENAI_MODEL
+        kwargs.update({"model": model, "messages": messages})
+        # Skip temperature for gpt-5.5+ (they reject custom temp)
+        if not model.startswith("gpt-5.5"):
+            kwargs["temperature"] = temperature
+        # Model-aware token param
+        if max_tokens is not None:
+            if model.startswith("gpt-5"):
+                kwargs["max_completion_tokens"] = max_tokens
+            else:
+                kwargs["max_tokens"] = max_tokens
+        if response_format:
+            kwargs["response_format"] = response_format
+        return client.chat.completions.create(**kwargs)
+
+**Audit result (call sites needing migration):**
+
+| File | `max_tokens=` count |
+|---|---|
+| `final_year_project_engine.py` | 10 |
+| `ai_service.py` | 7 |
+| `ielts_engine.py` | 4 |
+| `ai_bridge_engine.py` | 3 |
+| `ielts_deep_report_engine.py` | 2 |
+| `ai_courses.py` | 2 |
+| `interview_prep_engine.py` | 1 |
+| `cbat_engine.py` | 1 |
+| `chatbot_engine.py` | 1 |
+| `complete_mock_drive.py` | 1 |
+| **Total** | **32** |
+
+**Files that already use `openai.OpenAI` directly (need refactor to use shim):**
+
+- products_engine.py (8 clients)
+- ielts_deep_report_engine.py (4)
+- main.py (2)
+- marketing_ai_engine.py (2)
+- complete_mock_drive.py (2)
+- bridge_engine.py (2)
+- cbt_versant.py (1)
+- ai_bridge_engine.py (1)
+- final_year_project_engine.py (1)
+- ielts_engine.py (1)
+- chatbot_engine.py (1)
+
+**Phase 2 STATUS: COMPLETE 2026-10-19**
