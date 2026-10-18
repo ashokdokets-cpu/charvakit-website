@@ -700,15 +700,37 @@ flag was filed, but the tracker was never updated.
 **Verdict:** RESOLVED - docs-only close-out.
 
 
-### FLAGGED - A1.7 PayPal capture route may not exist (2026-10-13)
+### RESOLVED - A1.7 PayPal capture route (2026-10-19, verified)
 
-`static/js/ielts-deep-report.js._unlockViaPayPal` calls
-`/api/payment/paypal/capture`. This route may or may not exist in
-main.py. It only fires for non-INR users (paypal gateway), so India
-E2E tested fine.
+**Verified 2026-10-19.** Fully implemented in Session 43-A1.7:
+- Route: `main.py:15136` - `@app.post("/api/payment/paypal/capture")`
+- Handler: `api_paypal_capture` at `main.py:15138`
+- Engine: `payment_engine.py:799` - `capture_paypal_order()` (78 lines, full impl, idempotent)
+- Frontend callers: `static/js/ielts-deep-report.js:323`, `static/js/tool-pay.js:263`
 
-**Fix:** verify the route exists; if not, implement client-side capture
-via PayPal's `actions.order.capture()` (the A1.6 pattern) or add a
-server-side capture route.
+**Verdict:** RESOLVED - docs-only close-out. No code change needed.
 
-**Verdict:** SCHEDULED - A1.7b, only matters for non-INR users
+### FLAGGED - deploy.yml uses Python 3.9 while prod is 3.11 (2026-10-19)
+
+**Discovered:** 2026-10-19 during Session 52 flag cleanup.
+
+`.github/workflows/deploy.yml` sets `python-version: '3.9'` while
+`.github/workflows/test.yml` and `runtime.txt` both use 3.11. Production
+uses 3.11 (per `runtime.txt` and Render's build config).
+
+**Current impact:** zero. The `deploy.yml` "Run tests" step is a
+placeholder (`python -m pytest || echo "No tests yet"`) that doesn't
+run anything meaningful. Render's own build (`pip install -r
+requirements.txt` + `uvicorn main:app`) is the actual deploy path.
+
+**Real risk if unaddressed:** if `deploy.yml` ever gains real pre-deploy
+tests, they'd run on 3.9 and could pass while prod (3.11) fails - masking
+Python 3.10/3.11-only syntax issues.
+
+**Fix:** bump `python-version: '3.9'` -> `'3.11'` in `deploy.yml` (line 15).
+
+**Effort:** 5 seconds. **Priority:** low (cosmetic until deploy.yml gets
+real tests).
+
+**Verdict:** FLAGGED - fix opportunistically when deploy.yml gets real
+pre-deploy validation.
