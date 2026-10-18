@@ -176,3 +176,91 @@ talent journey we've been building for.
 ---
 
 **Keep this file in sync. This is the strategic arc of the platform.**
+
+## Session 2026-10-19 — Split into Buildable + Blocked Phases
+
+**Decision:** Don't build all 6-7 sessions of JD2P blindly. Split into
+two phases:
+
+### Phase A — BUILD NOW (no Amrita dependency, 3 sessions)
+
+Three components, all reusable even if Amrita says no or goes silent:
+
+| # | Item | Effort | Value even without Amrita |
+|---|---|---|---|
+| A | JD parser engine (`jd_parser_engine.py`) | 1 session | Reusable for any customer with a JD (job boards, recruiters, LinkedIn) |
+| B | Standalone `/jd-assessment` MVP (paste → parse → show structured data) | 1 session | Proof-of-concept demo asset for Amrita, employers, recruiters |
+| C | Wiring into existing Career Assessment (JD → prepopulate role/industry/level) | 1 session | Faster flow for any user with a JD |
+
+**Effort: ~3 sessions (planned sessions 55, 56, 57).**
+**No dependency on Amrita. No wasted work — the parser serves
+everyone, not just Amrita.**
+
+### Phase B — BLOCKED until Amrita pilot Week 2 data
+
+Five items that need real user data to build correctly:
+
+| # | Item | Why wait |
+|---|---|---|
+| D | Assessment designer (JD → formats/topics/difficulty) | Needs Amrita's actual format requirements |
+| E | Score normalizer (user vs JD benchmark) | Needs real user benchmark data |
+| F | Progression dashboard | Needs users with ≥2 assessments |
+| G | Placement outcome recording | Needs real placements |
+| H | Success attribution | Needs placement data across a cohort |
+
+**Trigger to unblock Phase B:**
+- Amrita pilot Week 2 data shows users want specific prep → proceed
+- OR 5+ days of no Amrita response → Phase B stays blocked, but Phase A
+  is live and serving users independently
+
+### Session Plan
+
+| Session | What | Status |
+|---|---|---|
+| 55 | JD parser engine (`jd_parser_engine.py`) | NEXT |
+| 56 | `/jd-assessment` MVP (frontend-only, no new tables) | Pending |
+| 57 | Wire JD parser into Career Assessment flow | Pending |
+| TBD | Phase B items (D-H) | Blocked on Amrita signal |
+
+### Design Principles for Phase A
+
+- **Reusable core first:** JD parser serves any user, not just Amrita
+- **No new tables for MVP:** the parser is a function, not a database
+- **Demo-ready:** at the end of Session 56, you can paste any JD and
+  show structured extraction
+- **Stronger Amrita pitch:** "we already built the parser" is better
+  than "we could build it if you want"
+
+---
+
+## Session 2026-10-19 (evening) - Track D Phase Split Flagged
+
+**Decision:** Don't wait for Amrita to start Track D. Split into buildable
+and blocked phases.
+
+**Build now (Sessions 55-57, ~3 sessions):**
+- A: JD parser engine (`jd_parser_engine.py`) — Session 55
+- B: `/jd-assessment` MVP (paste → parse → show structured data) — Session 56
+- C: Wire JD parser into Career Assessment dropdowns — Session 57
+
+**Blocked on Amrita (no session scheduled):**
+- D-H: Assessment designer, score normalizer, dashboard, outcomes,
+  attribution
+
+**Rationale:** JD parser is genuinely reusable (job boards, recruiters,
+LinkedIn) and works even if Amrita says no. The 3-session MVP is the
+lowest-risk buildable slice of Track D. Serves as a stronger Amrita
+demo than a promise.
+
+**Full phase split:** See TRACK-D-JD2P.md "Session 2026-10-19 — Split
+into Buildable + Blocked Phases"
+
+**Session 55 candidates (revised):**
+1. **JD parser engine** (Track D Phase A, item A) — RECOMMENDED
+2. Phase 3c GPT-4o-mini env flip — target Nov 3
+3. Certificate i18n (Hindi + Telugu) — 1-2 hrs
+4. Employer Dashboard → support JD extraction from passport
+
+**Remaining flags: 1**
+- Render Postgres password rotation (Session 19, ~30 sessions, 5-min)
+
