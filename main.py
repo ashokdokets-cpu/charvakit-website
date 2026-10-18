@@ -3379,6 +3379,27 @@ async def api_passport_verify(request: Request, handle: str):
     except Exception as e:
         return handle_error(e, "passport verify")
 
+
+@app.get("/employer/dashboard", response_class=HTMLResponse)
+@limiter.limit("60/minute")
+async def employer_dashboard_page(request: Request):
+    """Session 51: Employer Portal - browse and verify public passports."""
+    return template_response(
+        "employer-dashboard.html", request,
+        "Employer Portal - Charvak",
+        error=None,
+    )
+
+
+@app.get("/employer/verify/{handle}", response_class=HTMLResponse)
+@limiter.limit("60/minute")
+async def employer_verify_page(request: Request, handle: str):
+    """Session 51: Employer Portal - single-passport verification card."""
+    return template_response(
+        "employer-verify.html", request,
+        "Verify Passport - Charvak",
+        handle=handle, error=None,
+    )
 @app.get("/passport/{handle}/badge.svg")
 @limiter.limit("120/minute")
 async def passport_badge_svg(request: Request, handle: str):
@@ -3934,6 +3955,26 @@ async def api_cohorts_visibility(request: Request, cohort_id: str):
         raise
     except Exception as e:
         return handle_error(e, "cohorts visibility")
+
+@app.get("/api/passport/public/list")
+@limiter.limit("60/minute")
+async def api_passport_public_list(
+    request: Request,
+    tier: str = "",
+    limit: int = 20,
+    offset: int = 0,
+):
+    """Session 51: Employer Dashboard - paginated public passport list."""
+    try:
+        import passport_engine as pe
+        result = pe.list_public_passports(tier=tier, limit=limit, offset=offset)
+        if result.get("status") != "success":
+            return JSONResponse(status_code=400, content=result)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "passport public list")
 @app.post("/api/tools/ghost-bounty")
 @limiter.limit("60/minute")
 async def api_ghost_bounty(request: Request):

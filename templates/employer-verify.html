@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+{% block title %}Verify Passport - Charvak{% endblock %}
+
+{% block content %}
+<style>
+.verify-hero { background: linear-gradient(135deg, #0f766e 0%, #0d9488 100%);
+    color: white; padding: 2.5rem 1.5rem; border-radius: 12px; margin-bottom: 2rem; }
+.verify-hero h1 { font-size: 1.8rem; margin-bottom: .5rem; font-weight: 700; }
+.verify-hero .handle { font-family: monospace; opacity: .85; font-size: 1rem; }
+.verify-card { background: white; border: 1px solid #e5e7eb; border-radius: 12px;
+    padding: 2rem; margin-bottom: 1.5rem; }
+.score-panel { display: flex; justify-content: space-between; align-items: center;
+    padding: 1.5rem; background: #f0fdfa; border-radius: 10px; margin-bottom: 1.5rem; }
+.score-big { font-size: 3rem; font-weight: 800; color: #0d9488; line-height: 1; }
+.score-unit { font-size: 1rem; color: #6b7280; font-weight: 400; }
+.tier-badge { display: inline-block; padding: .3rem .8rem; border-radius: 20px;
+    font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+.tier-foundation { background: #fee2e2; color: #991b1b; }
+.tier-developing { background: #fed7aa; color: #9a3412; }
+.tier-solid { background: #fef3c7; color: #92400e; }
+.tier-strong { background: #d1fae5; color: #065f46; }
+.tier-elite { background: #ddd6fe; color: #5b21b6; }
+.component-row { margin-bottom: 1rem; }
+.component-row .label { display: flex; justify-content: space-between; margin-bottom: .35rem;
+    font-size: .9rem; color: #374151; font-weight: 500; }
+.component-row .bar-track { height: 10px; background: #e5e7eb; border-radius: 5px; overflow: hidden; }
+.component-row .bar-fill { height: 100%; background: linear-gradient(90deg, #0f766e 0%, #0d9488 100%);
+    border-radius: 5px; transition: width .4s ease; }
+.integrity-badge { display: inline-block; padding: .35rem .9rem; border-radius: 20px;
+    font-size: .85rem; font-weight: 600; }
+.integrity-clean { background: #d1fae5; color: #065f46; }
+.integrity-minor { background: #fef3c7; color: #92400e; }
+.integrity-moderate { background: #fed7aa; color: #9a3412; }
+.integrity-elevated { background: #fee2e2; color: #991b1b; }
+.integrity-unknown { background: #e5e7eb; color: #6b7280; }
+.hash-display { font-family: monospace; font-size: .9rem; background: #f9fafb;
+    padding: .75rem 1rem; border-radius: 8px; border: 1px solid #e5e7eb;
+    display: flex; justify-content: space-between; align-items: center; }
+.verify-meta { color: #6b7280; font-size: .85rem; }
+.verify-meta strong { color: #111827; font-weight: 600; }
+.error-state { text-align: center; padding: 3rem 1rem; }
+.error-state .icon { font-size: 4rem; opacity: .4; }
+</style>
+
+<div class="container py-4">
+    <div class="mb-3">
+        <a href="/employer/dashboard" class="btn btn-sm btn-outline-secondary">← Back to Dashboard</a>
+    </div>
+
+    <div id="loading" class="text-center py-5">
+        <div class="spinner-border text-success" role="status"></div>
+        <p class="mt-3 text-muted">Verifying passport...</p>
+    </div>
+
+    <div id="error" class="error-state" style="display:none;">
+        <div class="icon">❌</div>
+        <h4>Passport not found</h4>
+        <p class="text-muted" id="errorMsg"></p>
+        <a href="/employer/dashboard" class="btn btn-success mt-3">Back to Dashboard</a>
+    </div>
+
+    <div id="content" style="display:none;">
+        <div class="verify-hero">
+            <h1>✅ Verified Passport</h1>
+            <div class="handle" id="heroHandle"></div>
+        </div>
+
+        <div class="verify-card">
+            <div class="score-panel">
+                <div>
+                    <div class="text-muted small">Charvak Score</div>
+                    <div class="score-big" id="scoreValue">0<span class="score-unit"> / 1000</span></div>
+                </div>
+                <div class="text-end">
+                    <span class="tier-badge" id="tierBadge"></span>
+                    <div class="mt-2 text-muted small" id="certCount"></div>
+                </div>
+            </div>
+
+            <h5 class="mb-3">Component Breakdown</h5>
+            <div id="componentBars"></div>
+
+            <hr class="my-4">
+
+            <h5 class="mb-3">Assessment Integrity</h5>
+            <div class="d-flex align-items-center gap-3">
+                <span class="integrity-badge" id="integrityBadge"></span>
+                <span class="text-muted small" id="integrityNote"></span>
+            </div>
+
+            <hr class="my-4">
+
+            <h5 class="mb-3">Cryptographic Verification</h5>
+            <div class="hash-display">
+                <span id="hashValue">----------------</span>
+                <button class="btn btn-sm btn-outline-success" onclick="copyHash()">📋 Copy</button>
+            </div>
+            <div class="verify-meta mt-3">
+                <div><strong>Issued:</strong> <span id="issuedAt"></span></div>
+                <div><strong>Score updated:</strong> <span id="scoreUpdatedAt"></span></div>
+                <div><strong>Issuer:</strong> Charvak IT Consulting Pvt Ltd</div>
+            </div>
+
+            <div class="mt-4">
+                <a href="/api/passport/{{ handle }}/verify" id="rawApiLink" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-success">View Raw JSON →</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    const handle = "{{ handle }}".toLowerCase().trim();
+
+    function escapeHtml(s) {
+        if (!s) return '';
+        return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    async function loadVerification() {
+        try {
+            const r = await fetch('/api/passport/' + encodeURIComponent(handle) + '/verify');
+            const data = await r.json();
+
+            if (data.status !== 'success') {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('errorMsg').textContent = data.message || 'Not found';
+                document.getElementById('error').style.display = '';
+                return;
+            }
+
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('content').style.display = '';
+
+            document.getElementById('heroHandle').textContent = '@' + data.handle;
+            document.getElementById('scoreValue').innerHTML = data.charvak_score + '<span class="score-unit"> / 1000</span>';
+            document.getElementById('certCount').textContent = data.certificate_count + ' certificate' + (data.certificate_count === 1 ? '' : 's') + ' issued';
+
+            const tierBadge = document.getElementById('tierBadge');
+            tierBadge.textContent = data.score_tier;
+            tierBadge.className = 'tier-badge tier-' + data.score_tier;
+
+            // Component bars
+            const breakdown = data.component_breakdown || {};
+            const components = [
+                { key: 'readiness', label: 'Readiness', value: breakdown.readiness || 0 },
+                { key: 'career', label: 'Career Assessment', value: breakdown.career || 0 },
+                { key: 'breadth', label: 'Breadth', value: breakdown.breadth || 0 },
+                { key: 'integrity', label: 'Integrity', value: breakdown.integrity || 100 },
+            ];
+            document.getElementById('componentBars').innerHTML = components.map(c => `
+                <div class="component-row">
+                    <div class="label"><span>${c.label}</span><span>${c.value} / 100</span></div>
+                    <div class="bar-track"><div class="bar-fill" style="width: ${c.value}%"></div></div>
+                </div>
+            `).join('');
+
+            // Integrity badge
+            const risk = data.integrity_risk || 'unknown';
+            const riskLabels = {
+                'clean': '✅ Clean record',
+                'minor': '⚠️ Minor signals',
+                'moderate': '🟠 Moderate signals',
+                'elevated': '🚩 Elevated signals',
+                'unknown': 'ℹ️ Not available',
+            };
+            const integrityBadge = document.getElementById('integrityBadge');
+            integrityBadge.textContent = riskLabels[risk] || riskLabels['unknown'];
+            integrityBadge.className = 'integrity-badge integrity-' + risk;
+
+            const notes = {
+                'clean': 'No meaningful environment signals recorded.',
+                'minor': 'Some signals recorded — score stands.',
+                'moderate': 'Multiple signals — verify in interview.',
+                'elevated': 'Elevated signal pattern — interview verification recommended.',
+                'unknown': 'Integrity data not available for this passport.',
+            };
+            document.getElementById('integrityNote').textContent = notes[risk] || '';
+
+            // Verify hash
+            document.getElementById('hashValue').textContent = data.verify_hash || '';
+
+            // Timestamps
+            document.getElementById('issuedAt').textContent = data.issued_at || '—';
+            document.getElementById('scoreUpdatedAt').textContent = data.score_updated_at || '—';
+
+            // Raw API link
+            document.getElementById('rawApiLink').href = '/api/passport/' + encodeURIComponent(handle) + '/verify';
+        } catch (e) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('errorMsg').textContent = 'Network error';
+            document.getElementById('error').style.display = '';
+        }
+    }
+
+    window.copyHash = function() {
+        const h = document.getElementById('hashValue').textContent;
+        if (!h) return;
+        navigator.clipboard.writeText(h).then(() => {
+            const btn = event.target;
+            const orig = btn.textContent;
+            btn.textContent = '✅ Copied';
+            setTimeout(() => btn.textContent = orig, 1500);
+        });
+    };
+
+    loadVerification();
+})();
+</script>
+{% endblock %}
