@@ -71,10 +71,22 @@
 
             <h4 class="mb-3">My Cohorts</h4>
             <div id="myCohortsList"></div>
+
+            <h4 class="mb-3 mt-4">Discover Public Cohorts</h4>
+            <p class="text-muted small mb-3">Join an open cohort by clicking any card below. Your school, coaching center, or training group might already be here.</p>
+            <div id="publicCohortsList">
+                <div class="text-center py-3">
+                    <div class="spinner-border spinner-border-sm text-success" role="status"></div>
+                    <span class="text-muted small ms-2">Loading public cohorts...</span>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
+{% endblock %}
+
+{% block modal %}
 <!-- Create Modal -->
 <div class="modal fade" id="createCohortModal" tabindex="-1">
     <div class="modal-dialog">
@@ -280,7 +292,63 @@
     if (!token) {
         showState('login');
     } else {
-        loadCohorts();
+        // ============================================================
+    // Session 49: Public cohort discovery
+    // ============================================================
+
+    async function loadPublicCohorts() {
+        const container = document.getElementById('publicCohortsList');
+        if (!container) return;
+        try {
+            const r = await fetch('/api/cohorts/public');
+            const data = await r.json();
+            if (data.status !== 'success' || !data.cohorts || !data.cohorts.length) {
+                container.innerHTML = '<p class="text-muted small text-center py-3">No public cohorts yet. Be the first to make yours public.</p>';
+                return;
+            }
+            container.innerHTML = data.cohorts.map(c => `
+                <div class="cohort-card" style="margin-bottom: .75rem; cursor: pointer;" onclick="joinPublicCohort('${escapeHtml(c.join_code)}')">
+                    <div class="cohort-card-header">
+                        <div>
+                            <h3>${escapeHtml(c.name)}</h3>
+                            ${c.description ? `<div class="meta mt-1">${escapeHtml(c.description)}</div>` : ''}
+                        </div>
+                        <button class="btn btn-sm btn-success">Join →</button>
+                    </div>
+                    <div class="d-flex gap-3 mt-2">
+                        <div class="meta"><strong>${c.member_count}</strong> members</div>
+                    </div>
+                </div>
+            `).join('');
+        } catch (e) {
+            container.innerHTML = '<p class="text-muted small text-center py-3">Could not load public cohorts. Try refreshing the page.</p>';
+        }
+    }
+
+    window.joinPublicCohort = async function(joinCode) {
+        if (!token) {
+            window.location.href = '/login?next=/cohorts';
+            return;
+        }
+        try {
+            const r = await fetch('/api/cohorts/join', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                body: JSON.stringify({ join_code: joinCode })
+            });
+            const d = await r.json();
+            if (d.status === 'success') {
+                window.location.href = '/cohorts/' + d.cohort_id;
+            } else {
+                alert(d.message || 'Join failed');
+            }
+        } catch (e) {
+            alert('Network error');
+        }
+    };
+
+    loadPublicCohorts();
+    loadCohorts();
     }
 
     // Handle ?join=CODE from /cohorts/join/{code} redirect

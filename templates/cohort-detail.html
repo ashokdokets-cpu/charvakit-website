@@ -43,6 +43,10 @@
                 <p class="mb-0 mt-2" style="opacity: .85; font-size: .9rem;">
                     <span id="memberCount"></span> members · Resets every Monday
                 </p>
+                <div class="mt-3" id="ownerActions" style="display:none;">
+                    <button class="btn btn-sm btn-light" onclick="showRenameModal()">✏️ Rename</button>
+                    <button class="btn btn-sm btn-light" onclick="confirmDelete()">🗑️ Delete</button>
+                </div>
             </div>
 
             <div class="share-box" id="shareBox">
@@ -57,6 +61,14 @@
                         <button class="btn btn-outline-primary" onclick="shareLinkedIn()">🔗 LinkedIn</button>
                     </div>
                 </div>
+                <div class="mt-3" id="leaveWrap" style="display:none;">
+                    <button class="btn btn-sm btn-outline-danger" onclick="doLeave()">Leave this cohort</button>
+                </div>
+            </div>
+
+            <div id="memberListSection" style="display:none; margin-bottom: 2rem;">
+                <h4 class="mb-3">Members</h4>
+                <div id="memberListBody"></div>
             </div>
 
             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -169,6 +181,20 @@
         if (myEntry && myEntry.role === 'owner') {
             document.getElementById('refreshBtn').style.display = '';
         }
+
+        // Session 49: show/hide owner actions + leave button + member list
+        if (myEntry) {
+            const myRole = myEntry.role || 'member';
+            const ownerActions = document.getElementById('ownerActions');
+            if (ownerActions) {
+                ownerActions.style.display = (myRole === 'owner') ? '' : 'none';
+            }
+            const leaveWrap = document.getElementById('leaveWrap');
+            if (leaveWrap) {
+                leaveWrap.style.display = (myRole !== 'owner') ? '' : 'none';
+            }
+            loadMembers(data);
+        }
     }
 
     window.copyJoinCode = function() {
@@ -222,7 +248,215 @@
         }
     };
 
+    // ============================================================
+    // Session 49: Owner actions + leave + member list
+    // ============================================================
+
+    async function loadMembers(data) {
+        // Show member list if user is owner or admin
+        if (!data || !userEmail) return;
+        const members = data.entries || [];
+        const myEntry = members.find(e => e.email && e.email.toLowerCase() === userEmail.toLowerCase());
+        if (!myEntry) return;
+
+        const role = myEntry.role || 'member';
+        const listSection = document.getElementById('memberListSection');
+        const listBody = document.getElementById('memberListBody');
+        if (!listSection || !listBody) return;
+
+        const isPrivileged = (role === 'owner' || role === 'admin');
+        const canPromote = (role === 'owner');
+
+        let html = '';
+        for (const m of members) {
+            const mRole = m.role || 'member';
+            const roleBadge = mRole === 'owner'
+                ? '<span class="badge bg-warning text-dark">Owner</span>'
+                : mRole === 'admin'
+                    ? '<span class="badge bg-info text-dark">Admin</span>'
+                    : '';
+            const actions = [];
+            if (canPromote && mRole === 'member') {
+                actions.push(`<button class="btn btn-sm btn-outline-success ms-1" onclick="doPromote('${escapeHtml(m.email)}')">Promote</button>`);
+            }
+            if (canPromote && mRole === 'admin') {
+                actions.push(`<button class="btn btn-sm btn-outline-secondary ms-1" onclick="doDemote('${escapeHtml(m.email)}')">Demote</button>`);
+            }
+            html += `
+                <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+                    <div>
+                        <strong>${escapeHtml(m.display_name || m.email)}</strong>
+                        ${roleBadge}
+                    </div>
+                    <div>${actions.join('')}</div>
+                </div>
+            `;
+        }
+        listBody.innerHTML = html || '<p class="text-muted">No members yet.</p>';
+        listSection.style.display = '';
+    }
+
+    window.showRenameModal = function() {
+        if (!currentData) return;
+        const modal = new bootstrap.Modal(document.getElementById('renameModal'));
+        document.getElementById('renameInput').value = currentData.name || '';
+        document.getElementById('renameError').style.display = 'none';
+        modal.show();
+    };
+
+    window.doRename = async function() {
+        const name = (document.getElementById('renameInput').value || '').trim();
+        const err = document.getElementById('renameError');
+        if (name.length < 3) {
+            err.textContent = 'Name must be at least 3 characters';
+            err.style.display = '';
+            return;
+        }
+        try {
+            const r = await fetch('/api/cohorts/' + cohortId + '/rename', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                body: JSON.stringify({ name: name })
+            });
+            const d = await r.json();
+            if (d.status === 'success') {
+                window.location.reload();
+            } else {
+                err.textContent = d.message || 'Rename failed';
+                err.style.display = '';
+            }
+        } catch (e) {
+            err.textContent = 'Network error';
+            err.style.display = '';
+        }
+    };
+
+    window.confirmDelete = function() {
+        const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        document.getElementById('deleteError').style.display = 'none';
+        modal.show();
+    };
+
+    window.doDelete = async function() {
+        try {
+            const r = await fetch('/api/cohorts/' + cohortId, {
+                method: 'DELETE',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            const d = await r.json();
+            if (d.status === 'success') {
+                window.location.href = '/cohorts';
+            } else {
+                const err = document.getElementById('deleteError');
+                err.textContent = d.message || 'Delete failed';
+                err.style.display = '';
+            }
+        } catch (e) {
+            const err = document.getElementById('deleteError');
+            err.textContent = 'Network error';
+            err.style.display = '';
+        }
+    };
+
+    window.doLeave = async function() {
+        if (!confirm('Leave this cohort? You can rejoin later with the same code.')) return;
+        try {
+            const r = await fetch('/api/cohorts/' + cohortId + '/leave', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            const d = await r.json();
+            if (d.status === 'success') {
+                window.location.href = '/cohorts';
+            } else {
+                alert(d.message || 'Leave failed');
+            }
+        } catch (e) {
+            alert('Network error');
+        }
+    };
+
+    window.doPromote = async function(email) {
+        if (!confirm('Promote ' + email + ' to admin?')) return;
+        try {
+            const r = await fetch('/api/cohorts/' + cohortId + '/promote', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                body: JSON.stringify({ email: email })
+            });
+            const d = await r.json();
+            if (d.status === 'success') {
+                window.location.reload();
+            } else {
+                alert(d.message || 'Promote failed');
+            }
+        } catch (e) {
+            alert('Network error');
+        }
+    };
+
+    window.doDemote = async function(email) {
+        if (!confirm('Demote ' + email + ' to member?')) return;
+        try {
+            const r = await fetch('/api/cohorts/' + cohortId + '/demote', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                body: JSON.stringify({ email: email })
+            });
+            const d = await r.json();
+            if (d.status === 'success') {
+                window.location.reload();
+            } else {
+                alert(d.message || 'Demote failed');
+            }
+        } catch (e) {
+            alert('Network error');
+        }
+    };
+
     loadLeaderboard();
 })();
 </script>
+{% endblock %}
+{% block modal %}
+<!-- Rename Modal -->
+<div class="modal fade" id="renameModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Rename Cohort</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <label class="form-label">New name</label>
+                <input type="text" class="form-control" id="renameInput" maxlength="80" placeholder="e.g. Amrita CSE Batch 2026">
+                <div class="text-danger small mt-2" id="renameError" style="display:none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-success" onclick="doRename()">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete Cohort?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>This will permanently delete the cohort, all members, and the leaderboard. This cannot be undone.</p>
+                <div class="text-danger small" id="deleteError" style="display:none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-danger" onclick="doDelete()">Delete forever</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
