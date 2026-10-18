@@ -1,3 +1,58 @@
+# Charvak IT Consulting - Project Status
+
+**Last updated:** 2026-10-19 (Session 54 - Phase 3b + dashboard polish)
+**Version:** v3.5-session-54-20261019
+**Live:** https://www.charvakit.com
+**HEAD:** 853f7a5 + pending commit
+
+## Session 2026-10-19 - Sessions 52-54 Complete
+
+### Wave 2 Complete (Sessions 50-52)
+
+- Trust Score Public API (`/api/passport/{handle}/verify`)
+- Employer Dashboard (`/employer/dashboard`, `/employer/verify/{handle}`)
+- Certificate-as-a-Service (`/employer/cas`, `/api/cas/verify-batch`)
+- CAS Admin UI (Session 53: `/admin/cas-keys`)
+
+### GPT-4o-mini Migration (Sessions 53-54)
+
+- Phase 1: Centralized in global_config (S43)
+- Phase 2: Evaluated 5 candidates, chose gpt-5.4-nano + gpt-5.4-mini
+- Phase 3a: openai_compat shim + ai_service.py (S53)
+- Phase 3b: All 10 files migrated (S54) — 36 call sites total
+- Phase 3c: Env var flip (pending, target Nov 3)
+
+### Employer Dashboard Polish (Session 54)
+
+- Sort dropdown (score/recent/handle)
+- CSV export (up to 1,000 rows)
+- Empty-state CTA to /readiness-check
+
+### Wave 1 Complete (Sessions 46-48)
+
+- Career Passport, Skill Twin Challenges, Daily Drills, Cohort Mode
+
+### Site Health
+
+- Prod: all endpoints 200
+- 192 tables live
+- 89+ migrations clean
+- Pre-push hook: 14/14 IELTS relevance checks
+- Zero open bugs
+- 2 cosmetic flags (deploy.yml Python version, Render password)
+
+### Remaining Work
+
+**Immediate (5 min each):**
+- Send Amrita reply to Prof. Raj
+- Rotate Render Postgres password
+- Fix deploy.yml Python 3.9 -> 3.11
+
+**Next Session:**
+- Phase 3c: Flip env vars on Render (Nov 3 target)
+- Track D (JD2P) — after Amrita pilot Week 2
+
+---
 ## Session 2026-10-13 - A1.8 + A1.9
 
 ### Shipped

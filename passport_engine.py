@@ -607,16 +607,30 @@ def __getattr__(name):
     import sys
     return sys.modules[__name__]
 
-def list_public_passports(tier: str = "", limit: int = 20, offset: int = 0) -> Dict:
+def list_public_passports(tier: str = "", limit: int = 20, offset: int = 0,
+                          sort: str = "score") -> Dict:
     """
-    Session 51: Paginated public passport list for the Employer Dashboard.
+    Session 51 + 54: Paginated public passport list for the Employer Dashboard.
 
     Returns aggregates only. No PII.
     Optional tier filter ('' = all, or foundation/developing/solid/strong/elite).
+    Sort options: score (default), recent, handle.
     """
     tier = (tier or "").strip().lower()
     limit = max(1, min(int(limit or 20), 100))
     offset = max(0, int(offset or 0))
+
+    # Session 54: sort whitelist
+    sort_key = (sort or "score").strip().lower()
+    if sort_key not in ("score", "recent", "handle"):
+        sort_key = "score"
+
+    order_clauses = {
+        "score": "charvak_score DESC NULLS LAST, handle ASC",
+        "recent": "score_updated_at DESC NULLS LAST, handle ASC",
+        "handle": "handle ASC",
+    }
+    order_by = order_clauses[sort_key]
 
     conn = None
     try:
@@ -630,12 +644,12 @@ def list_public_passports(tier: str = "", limit: int = 20, offset: int = 0) -> D
             """, (tier,))
             total = int(cur.fetchone()[0] or 0)
 
-            cur.execute("""
+            cur.execute(f"""
                 SELECT handle, charvak_score, score_tier,
                        display_name, score_updated_at
                 FROM charvak_passports
                 WHERE is_public = TRUE AND score_tier = %s
-                ORDER BY charvak_score DESC NULLS LAST, handle ASC
+                ORDER BY {order_by}
                 LIMIT %s OFFSET %s
             """, (tier, limit, offset))
         else:
@@ -644,12 +658,12 @@ def list_public_passports(tier: str = "", limit: int = 20, offset: int = 0) -> D
             """)
             total = int(cur.fetchone()[0] or 0)
 
-            cur.execute("""
+            cur.execute(f"""
                 SELECT handle, charvak_score, score_tier,
                        display_name, score_updated_at
                 FROM charvak_passports
                 WHERE is_public = TRUE
-                ORDER BY charvak_score DESC NULLS LAST, handle ASC
+                ORDER BY {order_by}
                 LIMIT %s OFFSET %s
             """, (limit, offset))
 
@@ -678,6 +692,7 @@ def list_public_passports(tier: str = "", limit: int = 20, offset: int = 0) -> D
             "page": page,
             "pages": pages,
             "tier": tier,
+            "sort": sort_key,
         }
     except Exception as e:
         logger.warning(f"list_public_passports: {e}")

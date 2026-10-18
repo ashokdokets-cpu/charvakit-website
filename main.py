@@ -4107,11 +4107,12 @@ async def api_passport_public_list(
     tier: str = "",
     limit: int = 20,
     offset: int = 0,
+    sort: str = "score",
 ):
-    """Session 51: Employer Dashboard - paginated public passport list."""
+    """Session 51 + 54: Employer Dashboard - paginated public passport list."""
     try:
         import passport_engine as pe
-        result = pe.list_public_passports(tier=tier, limit=limit, offset=offset)
+        result = pe.list_public_passports(tier=tier, limit=limit, offset=offset, sort=sort)
         if result.get("status") != "success":
             return JSONResponse(status_code=400, content=result)
         return result
@@ -4119,6 +4120,49 @@ async def api_passport_public_list(
         raise
     except Exception as e:
         return handle_error(e, "passport public list")
+
+
+@app.get("/api/passport/public/list.csv")
+@limiter.limit("20/minute")
+async def api_passport_public_csv(
+    request: Request,
+    tier: str = "",
+    sort: str = "score",
+):
+    """Session 54: CSV export of public passports (up to 1000)."""
+    try:
+        import passport_engine as pe
+        import csv
+        import io
+        result = pe.list_public_passports(tier=tier, limit=1000, offset=0, sort=sort)
+        if result.get("status") != "success":
+            return JSONResponse(status_code=400, content=result)
+
+        # Build CSV in memory
+        buf = io.StringIO()
+        writer = csv.writer(buf)
+        writer.writerow(["handle", "charvak_score", "score_tier", "display_name", "score_updated_at"])
+        for p in result.get("passports", []):
+            writer.writerow([
+                p.get("handle", ""),
+                p.get("charvak_score", 0),
+                p.get("score_tier", ""),
+                p.get("display_name", ""),
+                p.get("score_updated_at", "") or "",
+            ])
+        csv_content = buf.getvalue()
+
+        from fastapi.responses import Response as FastAPIResponse
+        filename = f"charvak_passports_{tier or 'all'}_{sort}.csv"
+        return FastAPIResponse(
+            content=csv_content,
+            media_type="text/csv",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "passport public csv")
 @app.post("/api/tools/ghost-bounty")
 @limiter.limit("60/minute")
 async def api_ghost_bounty(request: Request):

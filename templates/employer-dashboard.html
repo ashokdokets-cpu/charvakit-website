@@ -62,18 +62,31 @@
         <small class="text-muted d-block mt-2">The handle is on every Charvak certificate and passport link.</small>
     </div>
 
-    <!-- Tier Filter -->
+    <!-- Tier Filter + Sort + CSV -->
     <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
         <h4 class="mb-0">Public Talent Pool</h4>
         <small class="text-muted" id="poolStats"></small>
     </div>
-    <div class="tier-filter" id="tierFilter">
-        <button data-tier="" class="active">All</button>
-        <button data-tier="foundation">Foundation</button>
-        <button data-tier="developing">Developing</button>
-        <button data-tier="solid">Solid</button>
-        <button data-tier="strong">Strong</button>
-        <button data-tier="elite">Elite</button>
+    <div class="d-flex align-items-center gap-2 flex-wrap mb-3">
+        <div class="tier-filter" id="tierFilter" style="margin-bottom:0;">
+            <button data-tier="" class="active">All</button>
+            <button data-tier="foundation">Foundation</button>
+            <button data-tier="developing">Developing</button>
+            <button data-tier="solid">Solid</button>
+            <button data-tier="strong">Strong</button>
+            <button data-tier="elite">Elite</button>
+        </div>
+        <div class="ms-auto d-flex align-items-center gap-2">
+            <label for="sortSelect" class="text-muted small mb-0">Sort:</label>
+            <select id="sortSelect" class="form-select form-select-sm" style="width:auto;">
+                <option value="score">Score (high to low)</option>
+                <option value="recent">Recently updated</option>
+                <option value="handle">Handle (A-Z)</option>
+            </select>
+            <a href="#" id="csvExportBtn" class="btn btn-sm btn-outline-success" title="Download filtered results as CSV">
+                📥 Export CSV
+            </a>
+        </div>
     </div>
 
     <!-- Passports Grid -->
@@ -98,6 +111,7 @@
 (function() {
     let currentTier = '';
     let currentPage = 1;
+    let currentSort = 'score';
     const pageSize = 20;
     let totalPages = 0;
 
@@ -125,7 +139,15 @@
         const passports = data.passports || [];
 
         if (!passports.length) {
-            container.innerHTML = '<div class="empty-state"><div class="icon">🔍</div><p>No public passports found' + (currentTier ? ' for tier "' + escapeHtml(currentTier) + '"' : '') + '.</p></div>';
+            const tierMsg = currentTier ? ' for tier "' + escapeHtml(currentTier) + '"' : '';
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="icon">🔍</div>
+                    <p class="mb-2">No public passports found${tierMsg}.</p>
+                    <p class="text-muted small mb-3">Candidates can create a public passport at Readiness Check — it's free and takes 5 minutes.</p>
+                    <a href="/readiness-check" class="btn btn-success btn-sm">Try the free readiness check →</a>
+                </div>
+            `;
             document.getElementById('pagination').style.display = 'none';
             document.getElementById('poolStats').textContent = '0 candidates';
             return;
@@ -172,6 +194,7 @@
         if (currentTier) params.set('tier', currentTier);
         params.set('limit', pageSize);
         params.set('offset', (currentPage - 1) * pageSize);
+        params.set('sort', currentSort);
 
         try {
             const r = await fetch('/api/passport/public/list?' + params.toString());
@@ -211,6 +234,22 @@
             currentPage = 1;
             loadPassports();
         });
+    });
+
+    // Sort dropdown
+    document.getElementById('sortSelect').addEventListener('change', function() {
+        currentSort = this.value;
+        currentPage = 1;
+        loadPassports();
+    });
+
+    // CSV export — downloads filtered results
+    document.getElementById('csvExportBtn').addEventListener('click', function(e) {
+        e.preventDefault();
+        const params = new URLSearchParams();
+        if (currentTier) params.set('tier', currentTier);
+        params.set('sort', currentSort);
+        window.location.href = '/api/passport/public/list.csv?' + params.toString();
     });
 
     loadPassports();
