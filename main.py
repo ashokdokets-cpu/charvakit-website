@@ -11569,6 +11569,13 @@ async def api_unlock_full(request: Request):
 
     result["credits_charged"] = 150
     return result
+
+
+@app.get("/jd-assessment", response_class=HTMLResponse)
+async def jd_assessment_page(request: Request):
+    """Session 56: JD Scanner landing page."""
+    return template_response("jd-assessment.html", request, "JD Scanner - Charvak")
+
 @app.get("/ai-assessment", response_class=HTMLResponse)
 async def ai_assessment(request: Request):
     return template_response("ai-assessment.html", request, "AI Career Assessment - Charvak IT Consulting")

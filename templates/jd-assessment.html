@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+{% block title %}JD Scanner - Charvak{% endblock %}
+
+{% block head %}
+<meta name="description" content="Paste any job description and instantly see what we extract — role, skills, seniority, and the assessment formats that matter. Free, no signup.">
+<meta property="og:title" content="JD Scanner - Charvak">
+<meta property="og:description" content="Paste any JD, see it in structured form. Take a free assessment calibrated to it.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://www.charvakit.com/jd-assessment">
+{% endblock %}
+
+{% block content %}
+<style>
+.jd-hero { background: linear-gradient(135deg, #0f766e 0%, #0d9488 100%);
+    color: white; padding: 2.5rem 1.5rem; border-radius: 12px; margin-bottom: 2rem; }
+.jd-hero h1 { font-size: 2rem; margin-bottom: .6rem; font-weight: 700; }
+.jd-hero p { font-size: 1.05rem; opacity: .95; max-width: 720px; margin: 0; }
+.jd-input-box { background: white; border: 2px solid #0d9488; border-radius: 10px;
+    padding: 1.5rem; margin-bottom: 1.5rem; }
+.jd-input-box label { font-weight: 600; margin-bottom: .5rem; display: block; color: #111827; }
+.jd-textarea { width: 100%; min-height: 200px; padding: .75rem;
+    border: 1px solid #d1d5db; border-radius: 6px; font-family: 'Consolas', 'Monaco', monospace;
+    font-size: .9rem; resize: vertical; }
+.jd-textarea:focus { outline: none; border-color: #0d9488; box-shadow: 0 0 0 3px rgba(13,148,136,.1); }
+.jd-counter { font-size: .8rem; color: #6b7280; margin-top: .35rem; }
+.jd-btn-analyze { background: #0d9488; color: white; border: none;
+    padding: .8rem 1.75rem; border-radius: 6px; font-weight: 600; font-size: 1rem;
+    cursor: pointer; margin-top: .75rem; }
+.jd-btn-analyze:hover { background: #0f766e; }
+.jd-btn-analyze:disabled { opacity: .6; cursor: not-allowed; }
+.jd-spinner { display: inline-block; width: 16px; height: 16px;
+    border: 2px solid #ffffff80; border-top-color: #fff; border-radius: 50%;
+    animation: jd-spin .6s linear infinite; margin-right: .5rem; vertical-align: -2px; }
+@keyframes jd-spin { to { transform: rotate(360deg); } }
+.jd-result { background: white; border: 1px solid #e5e7eb; border-radius: 10px;
+    padding: 1.75rem; margin-top: 1.5rem; }
+.jd-result h3 { color: #0d9488; font-size: 1.2rem; font-weight: 700; margin-bottom: 1.25rem; }
+.jd-field { margin-bottom: 1.25rem; }
+.jd-field-label { font-size: .8rem; color: #6b7280; text-transform: uppercase;
+    letter-spacing: .03em; margin-bottom: .3rem; font-weight: 600; }
+.jd-field-value { font-size: 1rem; color: #111827; }
+.jd-pill-row { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .3rem; }
+.jd-pill { display: inline-block; padding: .3rem .7rem; border-radius: 12px;
+    font-size: .85rem; font-weight: 500; background: #d1fae5; color: #065f46; }
+.jd-pill.nice { background: #f3f4f6; color: #374151; }
+.jd-pill.format { background: #ddd6fe; color: #5b21b6; }
+.jd-pill.difficulty { background: #fef3c7; color: #92400e; }
+.jd-cta-box { background: #f0fdfa; border: 1px solid #0d9488; border-radius: 10px;
+    padding: 1.5rem; margin-top: 1.5rem; text-align: center; }
+.jd-cta-box h4 { color: #0d9488; font-weight: 700; margin-bottom: .5rem; }
+.jd-cta-btn { background: #0d9488; color: white; padding: .75rem 1.5rem;
+    border-radius: 6px; font-weight: 600; text-decoration: none; display: inline-block;
+    margin-top: .75rem; }
+.jd-cta-btn:hover { background: #0f766e; color: white; }
+.jd-error { background: #fee2e2; color: #991b1b; padding: 1rem 1.25rem;
+    border-radius: 8px; border: 1px solid #fca5a5; margin-top: 1rem; }
+.jd-empty { text-align: center; padding: 2rem; color: #6b7280; }
+.jd-empty .icon { font-size: 3rem; opacity: .4; margin-bottom: .75rem; }
+</style>
+
+<div class="container py-4">
+    <div class="jd-hero">
+        <h1>🎯 JD Scanner</h1>
+        <p>Paste any job description. See instantly what we extract — title, skills, seniority, and the assessment formats that actually matter for that role. Free, no signup.</p>
+    </div>
+
+    <div class="jd-input-box">
+        <label for="jdTextarea">Job Description</label>
+        <textarea id="jdTextarea" class="jd-textarea"
+            placeholder="Paste a job description here. Any length between 50 and 20,000 characters."></textarea>
+        <div class="jd-counter" id="jdCounter">0 characters</div>
+        <button id="jdAnalyzeBtn" class="jd-btn-analyze" onclick="jdAnalyze()">
+            🔍 Analyze JD
+        </button>
+    </div>
+
+    <div id="jdError" class="jd-error" style="display:none;"></div>
+
+    <div id="jdLoading" style="display:none;" class="jd-empty">
+        <div class="spinner-border text-success" role="status" style="width:3rem;height:3rem;"></div>
+        <p class="mt-3">Analyzing... (typically 4-5 seconds)</p>
+    </div>
+
+    <div id="jdResult" style="display:none;"></div>
+
+    <div id="jdEmptyState" class="jd-empty">
+        <div class="icon">📋</div>
+        <p>Paste a JD above to get started.</p>
+        <p class="text-muted small">Or try one of our sample JDs:</p>
+        <div class="mt-2">
+            <button class="btn btn-sm btn-outline-success me-2" onclick="loadSample('swe')">Software Engineer</button>
+            <button class="btn btn-sm btn-outline-success me-2" onclick="loadSample('da')">Data Analyst</button>
+            <button class="btn btn-sm btn-outline-success" onclick="loadSample('pm')">Product Manager</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    function esc(s) {
+        if (!s) return '';
+        return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    const SAMPLES = {
+        swe: "We are hiring a Software Engineer with 3-5 years of experience building web applications. Required skills: Python, JavaScript, React, REST APIs, PostgreSQL, Git. Nice to have: AWS, Docker, Kubernetes. You will design and build scalable backend services, collaborate with the product team, and mentor junior engineers. Strong communication and problem-solving skills required.",
+        da: "Data Analyst position for a FinTech company. 2-4 years experience with SQL, Python, Excel, and Power BI. Must have strong analytical skills and experience with A/B testing and statistical analysis. You will build dashboards, run experiments, and drive data-driven decisions across the business.",
+        pm: "Product Manager for B2B SaaS. 5+ years experience in product management. Must have: experience with agile methodologies, user research, roadmap planning, cross-functional leadership, stakeholder management. Nice to have: technical background, experience with analytics tools (Amplitude, Mixpanel). You will own the product roadmap, work closely with engineering and design, and drive adoption of new features."
+    };
+
+    window.loadSample = function(key) {
+        const ta = document.getElementById('jdTextarea');
+        ta.value = SAMPLES[key] || '';
+        updateCounter();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    function updateCounter() {
+        const ta = document.getElementById('jdTextarea');
+        const n = ta.value.length;
+        document.getElementById('jdCounter').textContent = n + ' characters';
+    }
+
+    function hideAll() {
+        document.getElementById('jdResult').style.display = 'none';
+        document.getElementById('jdLoading').style.display = 'none';
+        document.getElementById('jdError').style.display = 'none';
+    }
+
+    window.jdAnalyze = async function() {
+        const ta = document.getElementById('jdTextarea');
+        const jdText = (ta.value || '').trim();
+
+        hideAll();
+
+        if (jdText.length < 50) {
+            document.getElementById('jdError').textContent = 'Please paste a longer job description (at least 50 characters).';
+            document.getElementById('jdError').style.display = '';
+            return;
+        }
+        if (jdText.length > 20000) {
+            document.getElementById('jdError').textContent = 'Job description is too long (max 20,000 characters). Please trim it.';
+            document.getElementById('jdError').style.display = '';
+            return;
+        }
+
+        // Hide empty state, show loading
+        document.getElementById('jdEmptyState').style.display = 'none';
+        document.getElementById('jdLoading').style.display = '';
+        const btn = document.getElementById('jdAnalyzeBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="jd-spinner"></span>Analyzing...';
+
+        try {
+            const r = await fetch('/api/jd/parse', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({jd_text: jdText}),
+            });
+            const data = await r.json();
+
+            document.getElementById('jdLoading').style.display = 'none';
+
+            if (data.status !== 'success') {
+                document.getElementById('jdError').textContent = data.message || 'Failed to analyze JD. Please try again.';
+                document.getElementById('jdError').style.display = '';
+                document.getElementById('jdEmptyState').style.display = '';
+                return;
+            }
+
+            renderResult(data.parsed);
+        } catch (err) {
+            document.getElementById('jdLoading').style.display = 'none';
+            document.getElementById('jdError').textContent = 'Network error. Please check your connection and try again.';
+            document.getElementById('jdError').style.display = '';
+            document.getElementById('jdEmptyState').style.display = '';
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '🔍 Analyze JD';
+        }
+    };
+
+    function renderResult(p) {
+        const skillsRequired = (p.skills_required || []).map(s =>
+            `<span class="jd-pill">${esc(s)}</span>`).join('');
+        const skillsNice = (p.skills_nice_to_have || []).map(s =>
+            `<span class="jd-pill nice">${esc(s)}</span>`).join('');
+        const formats = (p.assessment_relevance?.formats || []).map(f =>
+            `<span class="jd-pill format">${esc(f)}</span>`).join('');
+        const years = (p.experience_years_min != null || p.experience_years_max != null)
+            ? `${p.experience_years_min ?? '?'} - ${p.experience_years_max ?? '?'} years`
+            : 'not specified';
+        const title = p.title || 'Untitled role';
+        const difficulty = p.assessment_relevance?.difficulty || 'mid';
+        const seniority = p.seniority || 'mid';
+
+        // Build CTA prefill URL (Session 57 wires the actual prefill; today it just links)
+        const ctaUrl = '/ai-assessment';
+
+        document.getElementById('jdResult').innerHTML = `
+            <div class="jd-result">
+                <h3>✅ Extracted Data</h3>
+
+                <div class="jd-field">
+                    <div class="jd-field-label">Role Title</div>
+                    <div class="jd-field-value" style="font-size:1.15rem;font-weight:600;">${esc(title)}</div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                    <div class="jd-field">
+                        <div class="jd-field-label">Seniority</div>
+                        <div class="jd-field-value"><span class="jd-pill difficulty">${esc(seniority)}</span></div>
+                    </div>
+                    <div class="jd-field">
+                        <div class="jd-field-label">Experience</div>
+                        <div class="jd-field-value">${esc(years)}</div>
+                    </div>
+                </div>
+
+                ${p.domain ? `
+                <div class="jd-field">
+                    <div class="jd-field-label">Domain</div>
+                    <div class="jd-field-value">${esc(p.domain)}</div>
+                </div>` : ''}
+
+                ${skillsRequired ? `
+                <div class="jd-field">
+                    <div class="jd-field-label">Required Skills (${(p.skills_required || []).length})</div>
+                    <div class="jd-pill-row">${skillsRequired}</div>
+                </div>` : ''}
+
+                ${skillsNice ? `
+                <div class="jd-field">
+                    <div class="jd-field-label">Nice to Have (${(p.skills_nice_to_have || []).length})</div>
+                    <div class="jd-pill-row">${skillsNice}</div>
+                </div>` : ''}
+
+                <div class="jd-field">
+                    <div class="jd-field-label">Suggested Assessment Formats</div>
+                    <div class="jd-pill-row">${formats}</div>
+                </div>
+
+                <div class="jd-field">
+                    <div class="jd-field-label">Difficulty</div>
+                    <div class="jd-field-value"><span class="jd-pill difficulty">${esc(difficulty)}</span></div>
+                </div>
+            </div>
+
+            <div class="jd-cta-box">
+                <h4>Ready to test yourself?</h4>
+                <p class="text-muted mb-0" style="font-size:.95rem;">Take a free assessment calibrated to <strong>${esc(title)}</strong>.</p>
+                <a href="${esc(ctaUrl)}" class="jd-cta-btn">Take a free assessment →</a>
+            </div>
+        `;
+        document.getElementById('jdResult').style.display = '';
+        window.scrollTo({ top: document.getElementById('jdResult').offsetTop - 80, behavior: 'smooth' });
+    }
+
+    // Wire up textarea counter
+    document.getElementById('jdTextarea').addEventListener('input', updateCounter);
+})();
+</script>
+{% endblock %}
