@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+{% block title %}CAS API Keys - Admin{% endblock %}
+
+{% block content %}
+<style>
+.cas-admin-header { background: linear-gradient(135deg, #0f766e 0%, #0d9488 100%);
+    color: white; padding: 2rem 1.5rem; border-radius: 12px; margin-bottom: 2rem; }
+.cas-admin-header h1 { font-size: 1.8rem; margin-bottom: .5rem; font-weight: 700; }
+.cas-card { background: white; border: 1px solid #e5e7eb; border-radius: 10px;
+    padding: 1.5rem; margin-bottom: 1.25rem; }
+.cas-card h4 { font-weight: 700; margin-bottom: 1rem; color: #111827; }
+.cas-key-row { display: grid; grid-template-columns: 1fr 1.2fr 1fr 100px 130px;
+    gap: 1rem; align-items: center; padding: .85rem; border-bottom: 1px solid #f3f4f6;
+    font-size: .9rem; }
+.cas-key-row:hover { background: #f9fafb; }
+.cas-key-row.header { background: #f3f4f6; font-weight: 700; font-size: .85rem;
+    text-transform: uppercase; letter-spacing: .03em; color: #374151; border-radius: 6px; }
+.cas-key-row:last-child { border-bottom: none; }
+.institution { font-weight: 600; color: #111827; }
+.email { color: #6b7280; font-size: .85rem; }
+.tier-badge { display: inline-block; padding: .2rem .6rem; border-radius: 12px;
+    font-size: .75rem; font-weight: 600; text-transform: uppercase; }
+.tier-pilot { background: #fef3c7; color: #92400e; }
+.tier-department { background: #dbeafe; color: #1e40af; }
+.tier-campus { background: #e9d5ff; color: #6b21a8; }
+.tier-university { background: #d1fae5; color: #065f46; }
+.status-badge { display: inline-block; padding: .2rem .55rem; border-radius: 10px;
+    font-size: .75rem; font-weight: 600; margin-left: .35rem; }
+.status-active { background: #d1fae5; color: #065f46; }
+.status-pending { background: #fef3c7; color: #92400e; }
+.btn-approve { background: #0d9488; color: white; border: none; padding: .45rem .9rem;
+    border-radius: 6px; font-weight: 600; font-size: .85rem; cursor: pointer; }
+.btn-approve:hover { background: #0f766e; }
+.btn-approve:disabled { opacity: .5; cursor: not-allowed; }
+.btn-deactivate { background: #fff; color: #dc2626; border: 1px solid #dc2626;
+    padding: .45rem .9rem; border-radius: 6px; font-weight: 600; font-size: .85rem;
+    cursor: pointer; }
+.btn-deactivate:hover { background: #fef2f2; }
+.empty-state { text-align: center; padding: 2rem; color: #6b7280; font-size: .9rem; }
+.stats-strip { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+.stat-card { flex: 1; min-width: 140px; background: white; border: 1px solid #e5e7eb;
+    border-radius: 10px; padding: 1rem 1.25rem; }
+.stat-card .value { font-size: 1.75rem; font-weight: 800; color: #0d9488; line-height: 1; }
+.stat-card .label { font-size: .8rem; color: #6b7280; text-transform: uppercase;
+    letter-spacing: .03em; margin-top: .35rem; }
+.copy-cell { font-family: monospace; font-size: .75rem; color: #6b7280; }
+.copy-btn { background: #f3f4f6; border: 1px solid #d1d5db; padding: .25rem .5rem;
+    border-radius: 4px; cursor: pointer; font-size: .75rem; margin-left: .25rem; }
+.copy-btn:hover { background: #e5e7eb; }
+</style>
+
+<div class="container py-4">
+    <div class="cas-admin-header">
+        <h1>🔑 CAS API Keys</h1>
+        <p class="mb-0">Approve pending institutions and manage active API keys.</p>
+    </div>
+
+    <div class="stats-strip">
+        <div class="stat-card">
+            <div class="value" id="statActive">0</div>
+            <div class="label">Active Keys</div>
+        </div>
+        <div class="stat-card">
+            <div class="value" id="statPending">0</div>
+            <div class="label">Pending Approval</div>
+        </div>
+        <div class="stat-card">
+            <div class="value" id="statTotal">0</div>
+            <div class="label">Total Keys</div>
+        </div>
+        <div class="stat-card">
+            <div class="value" id="statCalls">0</div>
+            <div class="label">Calls This Month</div>
+        </div>
+    </div>
+
+    <div class="cas-card">
+        <h4>⏳ Pending Approval</h4>
+        <div id="pendingList">
+            <div class="empty-state">Loading...</div>
+        </div>
+    </div>
+
+    <div class="cas-card">
+        <h4>✅ Active Keys</h4>
+        <div id="activeList">
+            <div class="empty-state">Loading...</div>
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <button class="btn btn-outline-secondary btn-sm" onclick="loadKeys()">↻ Refresh</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    function esc(s) {
+        if (!s) return '';
+        return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function authHeaders() {
+        const token = localStorage.getItem('auth_token') || '';
+        return {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token};
+    }
+
+    function renderRow(k, isPending) {
+        const tierClass = 'tier-' + esc(k.tier);
+        const calls = k.calls_this_month || 0;
+        const quota = k.monthly_quota || 0;
+        const quotaDisplay = quota > 0 ? `${calls}/${quota}` : `${calls}/unlimited`;
+        const actions = isPending
+            ? `<button class="btn-approve" onclick="approveKey('${esc(k.key_id)}', this)">Approve</button>`
+            : `<button class="btn-deactivate" onclick="deactivateKey('${esc(k.key_id)}', this)">Deactivate</button>`;
+
+        return `
+            <div class="cas-key-row">
+                <div>
+                    <div class="institution">${esc(k.institution_name)}</div>
+                    <div class="email">${esc(k.contact_email || '')}</div>
+                </div>
+                <div>
+                    <span class="tier-badge ${tierClass}">${esc(k.tier)}</span>
+                    <span class="status-badge ${isPending ? 'status-pending' : 'status-active'}">
+                        ${isPending ? 'PENDING' : 'ACTIVE'}
+                    </span>
+                </div>
+                <div class="copy-cell">
+                    ${esc(k.key_id)}
+                    <button class="copy-btn" onclick="copyText('${esc(k.key_id)}', this)">📋</button>
+                </div>
+                <div style="text-align:right;font-size:.8rem;color:#6b7280;">${quotaDisplay}</div>
+                <div style="text-align:right;">${actions}</div>
+            </div>
+        `;
+    }
+
+    function renderList(container, items, isPending) {
+        if (!items.length) {
+            container.innerHTML = `<div class="empty-state">No ${isPending ? 'pending' : 'active'} keys.</div>`;
+            return;
+        }
+        const header = `
+            <div class="cas-key-row header">
+                <div>Institution / Contact</div>
+                <div>Tier / Status</div>
+                <div>Key ID</div>
+                <div style="text-align:right;">Calls</div>
+                <div style="text-align:right;">Actions</div>
+            </div>
+        `;
+        container.innerHTML = header + items.map(k => renderRow(k, isPending)).join('');
+    }
+
+    window.loadKeys = async function() {
+        try {
+            const r = await fetch('/api/admin/cas-keys/list', {headers: authHeaders()});
+            if (r.status === 401 || r.status === 403) {
+                document.getElementById('pendingList').innerHTML = '<div class="empty-state">Admin login required.</div>';
+                document.getElementById('activeList').innerHTML = '';
+                return;
+            }
+            const data = await r.json();
+            if (data.status !== 'success') {
+                document.getElementById('pendingList').innerHTML = '<div class="empty-state">Failed to load.</div>';
+                return;
+            }
+            renderList(document.getElementById('pendingList'), data.pending || [], true);
+            renderList(document.getElementById('activeList'), data.active || [], false);
+            document.getElementById('statActive').textContent = (data.active || []).length;
+            document.getElementById('statPending').textContent = (data.pending || []).length;
+            document.getElementById('statTotal').textContent = data.total || 0;
+            const totalCalls = (data.active || []).reduce((s, k) => s + (k.calls_this_month || 0), 0);
+            document.getElementById('statCalls').textContent = totalCalls;
+        } catch (e) {
+            document.getElementById('pendingList').innerHTML = '<div class="empty-state">Network error.</div>';
+        }
+    };
+
+    window.approveKey = async function(keyId, btn) {
+        btn.disabled = true;
+        btn.textContent = 'Approving...';
+        try {
+            const r = await fetch(`/api/admin/cas-keys/${encodeURIComponent(keyId)}/approve`, {
+                method: 'POST', headers: authHeaders(),
+            });
+            const data = await r.json();
+            if (data.status === 'success') { await loadKeys(); }
+            else { alert('Failed: ' + (data.message || 'unknown')); btn.disabled = false; btn.textContent = 'Approve'; }
+        } catch (e) { alert('Network error'); btn.disabled = false; btn.textContent = 'Approve'; }
+    };
+
+    window.deactivateKey = async function(keyId, btn) {
+        if (!confirm('Deactivate this key? The institution will lose API access immediately.')) return;
+        btn.disabled = true;
+        btn.textContent = 'Deactivating...';
+        try {
+            const r = await fetch(`/api/admin/cas-keys/${encodeURIComponent(keyId)}/deactivate`, {
+                method: 'POST', headers: authHeaders(),
+            });
+            const data = await r.json();
+            if (data.status === 'success') { await loadKeys(); }
+            else { alert('Failed: ' + (data.message || 'unknown')); btn.disabled = false; btn.textContent = 'Deactivate'; }
+        } catch (e) { alert('Network error'); btn.disabled = false; btn.textContent = 'Deactivate'; }
+    };
+
+    window.copyText = function(text, btn) {
+        navigator.clipboard.writeText(text).then(() => {
+            const orig = btn.textContent;
+            btn.textContent = '✅';
+            setTimeout(() => btn.textContent = orig, 1200);
+        });
+    };
+
+    loadKeys();
+    window.loadKeys = loadKeys;
+    window.approveKey = approveKey;
+    window.deactivateKey = deactivateKey;
+    window.copyText = copyText;
+})();
+</script>
+{% endblock %}
