@@ -1,5 +1,51 @@
 # Session Context - Charvak
 
+**HEAD:** 4c2ef76
+**Live:** https://www.charvakit.com
+**Updated:** 2026-10-19 (Session 51 closed)
+**Next up:** Session 52 (Certificate-as-a-Service - completes Wave 2)
+
+---
+
+## Session 51 CLOSED (2026-10-19) - Employer Dashboard
+
+Turns the Trust Score API into a browsable, filterable B2B product.
+This is the first real B2B product surface on the platform.
+
+**Commit:** 4c2ef76
+**Wave 2:** 66% complete (Trust API done, Employer Dashboard done, CAS pending)
+
+### Live URLs
+
+- https://www.charvakit.com/employer/dashboard
+- https://www.charvakit.com/employer/verify/hr-6201
+- https://www.charvakit.com/api/passport/public/list
+
+### Verified on prod
+
+- Dashboard renders @hr-6201 (442, developing, 7 certs)
+- Verify page shows component bars (43/50/30/50), integrity badge
+  "Elevated signals" (correct), hash 5af408b282c9e447, raw JSON opens
+- Nav link "For Employers" live on all pages
+
+### Files touched
+
+- passport_engine.py (list_public_passports method)
+- main.py (3 routes)
+- templates/base.html (nav link, line 344)
+- templates/employer-dashboard.html (new, ~9.9 KB)
+- templates/employer-verify.html (new, ~10 KB)
+
+### Session 52 plan
+
+Certificate-as-a-Service - completes Wave 2. See COMMITMENT.md
+"Session 52 candidates" option A.
+
+First read TRACK-C-B2B-PLAN.md (defines the university pilot this
+product unblocks), then COMMITMENT.md Session 52 candidates.
+
+---
+
 **HEAD:** f2dbf00
 **Live:** https://www.charvakit.com
 **Updated:** 2026-10-16 (Session 44-A3 closed)

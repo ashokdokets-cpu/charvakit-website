@@ -5626,3 +5626,71 @@ D) Docs sync + retrospective - update remaining docs, plan Wave 2 in detail
 - Amrita CDC reply to Prof. Raj (draft ready, not sent)
 
 <!-- END SESSION-49-WAVE-1-POLISH -->
+
+## Session 51 CLOSED (2026-10-19) - Employer Dashboard (Wave 2 product)
+
+**Commit:** 4c2ef76
+**Wave 2:** 66% complete (Trust API done, Employer Dashboard done, CAS pending)
+
+Turns the Trust Score Public Verification API from a raw endpoint into
+a browsable, filterable B2B product.
+
+### Shipped
+
+**Backend:**
+- `passport_engine.list_public_passports(tier, limit, offset)`
+- `GET /api/passport/public/list` (public, 60/min rate limit)
+- `GET /employer/dashboard` (page)
+- `GET /employer/verify/{handle}` (page)
+
+**Frontend:**
+- `templates/employer-dashboard.html` (~9.9 KB)
+  Hero + quick-verify input + tier filter (All / Foundation /
+  Developing / Solid / Strong / Elite) + passport grid + pagination
+- `templates/employer-verify.html` (~10 KB)
+  Verify card with component bars, integrity badge, copy-hash button,
+  raw JSON link, back to dashboard
+- `base.html` line 344: "For Employers" nav link, teal CTA styling
+  matching the other standalone CTAs (Exam Prep, Readiness Check,
+  Open Roles)
+
+### Prod verification (2026-10-19)
+
+- `GET /employer/dashboard` -> 200
+- `GET /employer/verify/hr-6201` -> 200
+- `GET /api/passport/public/list` -> `{"total":1,"passports":[{handle:"hr-6201","charvak_score":442,"score_tier":"developing"}]}`
+- Browser: dashboard renders @hr-6201 (442, developing)
+- Verify page: component bars show real values 43/50/30/50,
+  integrity badge "Elevated signals" (correct for this passport),
+  7 certificates issued, hash `5af408b282c9e447` displayed, raw JSON
+  opens in new tab
+- Nav link "For Employers" visible on all pages
+
+### Bug fixed during session
+
+Raw JSON button initially had `href="#"` set via JS after render, so
+fast clicks fired the anchor instead of the fetch handler. Fixed by
+setting `href` at Jinja render time:
+`href="/api/passport/{{ handle }}/verify"` + `rel="noopener noreferrer"`.
+
+### Session 52 candidates
+
+A) **Certificate-as-a-Service** (recommended, ~2-3 sessions)
+   - `POST /api/cas/verify-batch` (up to 100 certs per call)
+   - `charvak_cas_api_keys` table
+   - `templates/employer-cas.html` (landing + API docs + request form)
+   - Unblocks Track C (Amrita CDC pilot)
+   - Completes Wave 2
+
+B) Employer Dashboard polish (~1 session)
+   - Empty-state CTA ("create your passport at /readiness-check")
+   - Sort by score / recency
+   - CSV export of filtered list
+
+C) Pay down 4 long-carried flags (~45 min)
+   - Render Postgres password rotation (Session 19)
+   - `/api/lms/progress` ownership check (Session 14)
+   - PayPal capture route for A1.6 tools (A1.7b)
+   - CI hook for `scripts/test_ielts_relevance.py`
+
+D) GPT-4o-mini Phase 2 (evaluate successor) - due Oct 27
