@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+{% block title %}Employer Portal - Charvak{% endblock %}
+
+{% block content %}
+<style>
+.emp-hero { background: linear-gradient(135deg, #0f766e 0%, #0d9488 100%);
+    color: white; padding: 3rem 1.5rem; border-radius: 12px; margin-bottom: 2rem; }
+.emp-hero h1 { font-size: 2.2rem; margin-bottom: .75rem; font-weight: 700; }
+.emp-hero p { font-size: 1.1rem; opacity: .95; max-width: 720px; margin: 0; }
+.verify-box { background: white; border: 2px solid #0d9488; border-radius: 12px;
+    padding: 1.5rem; margin-bottom: 2rem; }
+.verify-box label { font-weight: 600; margin-bottom: .5rem; display: block; }
+.verify-input-group { display: flex; gap: .75rem; }
+.verify-input-group input { flex: 1; font-size: 1.05rem; padding: .75rem; }
+.tier-filter { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+.tier-filter button { padding: .5rem 1rem; border: 1px solid #d1d5db; background: white;
+    border-radius: 20px; font-size: .9rem; cursor: pointer; transition: all .15s; }
+.tier-filter button:hover { border-color: #0d9488; color: #0d9488; }
+.tier-filter button.active { background: #0d9488; color: white; border-color: #0d9488; }
+.passport-card { background: white; border: 1px solid #e5e7eb; border-radius: 10px;
+    padding: 1.25rem; margin-bottom: 1rem; transition: all .15s; cursor: pointer; }
+.passport-card:hover { border-color: #0d9488; box-shadow: 0 4px 12px rgba(13,148,136,.15); }
+.passport-card-header { display: flex; justify-content: space-between; align-items: start; }
+.passport-handle { font-family: monospace; font-size: 1.1rem; font-weight: 600; color: #111827; }
+.passport-display-name { color: #6b7280; font-size: .9rem; margin-top: .25rem; }
+.score-badge { font-size: 1.75rem; font-weight: 700; color: #0d9488; text-align: right; }
+.score-label { font-size: .75rem; color: #6b7280; text-transform: uppercase; letter-spacing: .05em; }
+.tier-badge { display: inline-block; padding: .2rem .6rem; border-radius: 12px;
+    font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
+.tier-foundation { background: #fee2e2; color: #991b1b; }
+.tier-developing { background: #fed7aa; color: #9a3412; }
+.tier-solid { background: #fef3c7; color: #92400e; }
+.tier-strong { background: #d1fae5; color: #065f46; }
+.tier-elite { background: #ddd6fe; color: #5b21b6; }
+.empty-state { text-align: center; padding: 3rem 1rem; color: #6b7280; }
+.empty-state .icon { font-size: 4rem; opacity: .4; }
+.pagination { display: flex; justify-content: center; align-items: center; gap: .5rem;
+    margin-top: 2rem; }
+.pagination button { padding: .5rem 1rem; border: 1px solid #d1d5db; background: white;
+    border-radius: 6px; cursor: pointer; }
+.pagination button:hover:not(:disabled) { border-color: #0d9488; color: #0d9488; }
+.pagination button:disabled { opacity: .4; cursor: not-allowed; }
+.pagination .page-info { padding: .5rem 1rem; color: #6b7280; font-size: .9rem; }
+</style>
+
+<div class="container py-4">
+    <div class="emp-hero">
+        <h1>🏢 Employer Portal</h1>
+        <p>Verify candidate credentials in seconds. Search by passport handle, or browse our public talent pool. Every score is cryptographically signed and independently verifiable.</p>
+    </div>
+
+    <!-- Quick Verify -->
+    <div class="verify-box">
+        <label for="verifyHandle">Verify a candidate passport</label>
+        <div class="verify-input-group">
+            <input type="text" id="verifyHandle" class="form-control" placeholder="Enter passport handle, e.g. hr-6201" autocomplete="off">
+            <button class="btn btn-success" onclick="goVerify()">🔍 Verify</button>
+        </div>
+        <small class="text-muted d-block mt-2">The handle is on every Charvak certificate and passport link.</small>
+    </div>
+
+    <!-- Tier Filter -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
+        <h4 class="mb-0">Public Talent Pool</h4>
+        <small class="text-muted" id="poolStats"></small>
+    </div>
+    <div class="tier-filter" id="tierFilter">
+        <button data-tier="" class="active">All</button>
+        <button data-tier="foundation">Foundation</button>
+        <button data-tier="developing">Developing</button>
+        <button data-tier="solid">Solid</button>
+        <button data-tier="strong">Strong</button>
+        <button data-tier="elite">Elite</button>
+    </div>
+
+    <!-- Passports Grid -->
+    <div id="passportList">
+        <div class="text-center py-5">
+            <div class="spinner-border text-success" role="status"></div>
+            <p class="mt-3 text-muted">Loading talent pool...</p>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" id="pagination" style="display:none;">
+        <button id="prevBtn" onclick="prevPage()">← Previous</button>
+        <span class="page-info" id="pageInfo"></span>
+        <button id="nextBtn" onclick="nextPage()">Next →</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    let currentTier = '';
+    let currentPage = 1;
+    const pageSize = 20;
+    let totalPages = 0;
+
+    function escapeHtml(s) {
+        if (!s) return '';
+        return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    window.goVerify = function() {
+        const h = (document.getElementById('verifyHandle').value || '').trim().toLowerCase();
+        if (!h) {
+            alert('Enter a passport handle first');
+            return;
+        }
+        window.location.href = '/employer/verify/' + encodeURIComponent(h);
+    };
+
+    // Allow Enter key in input
+    document.getElementById('verifyHandle').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') window.goVerify();
+    });
+
+    function renderPassports(data) {
+        const container = document.getElementById('passportList');
+        const passports = data.passports || [];
+
+        if (!passports.length) {
+            container.innerHTML = '<div class="empty-state"><div class="icon">🔍</div><p>No public passports found' + (currentTier ? ' for tier "' + escapeHtml(currentTier) + '"' : '') + '.</p></div>';
+            document.getElementById('pagination').style.display = 'none';
+            document.getElementById('poolStats').textContent = '0 candidates';
+            return;
+        }
+
+        container.innerHTML = passports.map(p => `
+            <div class="passport-card" onclick="window.location.href='/employer/verify/${encodeURIComponent(p.handle)}'">
+                <div class="passport-card-header">
+                    <div>
+                        <div class="passport-handle">@${escapeHtml(p.handle)}</div>
+                        <div class="passport-display-name">${escapeHtml(p.display_name || '')}</div>
+                        <div class="mt-2">
+                            <span class="tier-badge tier-${escapeHtml(p.score_tier)}">${escapeHtml(p.score_tier)}</span>
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <div class="score-label">Charvak Score</div>
+                        <div class="score-badge">${p.charvak_score}</div>
+                        <small class="text-muted">out of 1000</small>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        document.getElementById('poolStats').textContent = data.total + ' candidate' + (data.total === 1 ? '' : 's');
+
+        // Pagination
+        totalPages = data.pages || 0;
+        if (totalPages > 1) {
+            document.getElementById('pagination').style.display = 'flex';
+            document.getElementById('pageInfo').textContent = 'Page ' + data.page + ' of ' + totalPages;
+            document.getElementById('prevBtn').disabled = (currentPage <= 1);
+            document.getElementById('nextBtn').disabled = (currentPage >= totalPages);
+        } else {
+            document.getElementById('pagination').style.display = 'none';
+        }
+    }
+
+    async function loadPassports() {
+        const container = document.getElementById('passportList');
+        container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-success" role="status"></div><p class="mt-3 text-muted">Loading talent pool...</p></div>';
+
+        const params = new URLSearchParams();
+        if (currentTier) params.set('tier', currentTier);
+        params.set('limit', pageSize);
+        params.set('offset', (currentPage - 1) * pageSize);
+
+        try {
+            const r = await fetch('/api/passport/public/list?' + params.toString());
+            const data = await r.json();
+            if (data.status !== 'success') {
+                container.innerHTML = '<div class="alert alert-danger">Failed to load talent pool</div>';
+                return;
+            }
+            renderPassports(data);
+        } catch (e) {
+            container.innerHTML = '<div class="alert alert-danger">Network error loading talent pool</div>';
+        }
+    }
+
+    window.prevPage = function() {
+        if (currentPage > 1) {
+            currentPage--;
+            loadPassports();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    };
+
+    window.nextPage = function() {
+        if (currentPage < totalPages) {
+            currentPage++;
+            loadPassports();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    };
+
+    // Tier filter buttons
+    document.querySelectorAll('#tierFilter button').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('#tierFilter button').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            currentTier = this.dataset.tier || '';
+            currentPage = 1;
+            loadPassports();
+        });
+    });
+
+    loadPassports();
+})();
+</script>
+{% endblock %}

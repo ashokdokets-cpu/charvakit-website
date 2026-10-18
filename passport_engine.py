@@ -606,3 +606,83 @@ def __getattr__(name):
     """Lazy compat for singleton-style imports."""
     import sys
     return sys.modules[__name__]
+
+def list_public_passports(tier: str = "", limit: int = 20, offset: int = 0) -> Dict:
+    """
+    Session 51: Paginated public passport list for the Employer Dashboard.
+
+    Returns aggregates only. No PII.
+    Optional tier filter ('' = all, or foundation/developing/solid/strong/elite).
+    """
+    tier = (tier or "").strip().lower()
+    limit = max(1, min(int(limit or 20), 100))
+    offset = max(0, int(offset or 0))
+
+    conn = None
+    try:
+        conn = db.get_connection()
+        cur = conn.cursor()
+
+        if tier:
+            cur.execute("""
+                SELECT COUNT(*) FROM charvak_passports
+                WHERE is_public = TRUE AND score_tier = %s
+            """, (tier,))
+            total = int(cur.fetchone()[0] or 0)
+
+            cur.execute("""
+                SELECT handle, charvak_score, score_tier,
+                       display_name, score_updated_at
+                FROM charvak_passports
+                WHERE is_public = TRUE AND score_tier = %s
+                ORDER BY charvak_score DESC NULLS LAST, handle ASC
+                LIMIT %s OFFSET %s
+            """, (tier, limit, offset))
+        else:
+            cur.execute("""
+                SELECT COUNT(*) FROM charvak_passports WHERE is_public = TRUE
+            """)
+            total = int(cur.fetchone()[0] or 0)
+
+            cur.execute("""
+                SELECT handle, charvak_score, score_tier,
+                       display_name, score_updated_at
+                FROM charvak_passports
+                WHERE is_public = TRUE
+                ORDER BY charvak_score DESC NULLS LAST, handle ASC
+                LIMIT %s OFFSET %s
+            """, (limit, offset))
+
+        rows = cur.fetchall()
+        cur.close()
+
+        passports = []
+        for handle, score, tier_val, display_name, updated_at in rows:
+            passports.append({
+                "handle": handle,
+                "charvak_score": int(score or 0),
+                "score_tier": tier_val or "foundation",
+                "display_name": display_name or handle,
+                "score_updated_at": updated_at.isoformat() if updated_at else None,
+            })
+
+        pages = (total + limit - 1) // limit if limit else 0
+        page = (offset // limit) + 1 if limit else 1
+
+        return {
+            "status": "success",
+            "passports": passports,
+            "total": total,
+            "limit": limit,
+            "offset": offset,
+            "page": page,
+            "pages": pages,
+            "tier": tier,
+        }
+    except Exception as e:
+        logger.warning(f"list_public_passports: {e}")
+        return {"status": "error", "message": str(e)}
+    finally:
+        if conn:
+            try: conn.close()
+            except Exception: pass
