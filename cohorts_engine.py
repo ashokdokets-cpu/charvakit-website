@@ -112,7 +112,7 @@ def _generate_cohort_id() -> str:
 # Public API
 # ---------------------------------------------------------------
 
-def create_cohort(creator_email: str, name: str, description: str = "") -> Dict:
+def create_cohort(creator_email: str, name: str, description: str = "", is_public: bool = False) -> Dict:
     """Create a cohort. Creator becomes the owner + first member."""
     creator_email = (creator_email or "").strip().lower()
     name = (name or "").strip()[:80]
@@ -137,9 +137,9 @@ def create_cohort(creator_email: str, name: str, description: str = "") -> Dict:
 
         cur.execute("""
             INSERT INTO charvak_cohorts
-                (cohort_id, name, description, join_code, created_by, member_count)
-            VALUES (%s, %s, %s, %s, %s, 1)
-        """, (cohort_id, name, description, join_code, creator_email))
+                (cohort_id, name, description, join_code, created_by, member_count, is_public)
+            VALUES (%s, %s, %s, %s, %s, 1, %s)
+        """, (cohort_id, name, description, join_code, creator_email, is_public))
 
         cur.execute("""
             INSERT INTO charvak_cohort_members (cohort_id, member_email, role)
@@ -155,6 +155,7 @@ def create_cohort(creator_email: str, name: str, description: str = "") -> Dict:
             "join_code": join_code,
             "join_url": f"/cohorts/join/{join_code}",
             "cohort_url": f"/cohorts/{cohort_id}",
+            "is_public": is_public,
         }
     except Exception as e:
         if conn:
@@ -341,7 +342,7 @@ def get_leaderboard(cohort_id: str, limit: int = 100) -> Dict:
 
         # Fetch cohort meta
         cur.execute("""
-            SELECT name, description, join_code, member_count, created_by
+            SELECT name, description, join_code, member_count, created_by, is_public
             FROM charvak_cohorts WHERE cohort_id = %s
         """, (cohort_id,))
         row = cur.fetchone()
@@ -349,7 +350,7 @@ def get_leaderboard(cohort_id: str, limit: int = 100) -> Dict:
             cur.close()
             return {"status": "error", "message": "Cohort not found", "code": "not_found"}
 
-        name, description, join_code, member_count, created_by = row
+        name, description, join_code, member_count, created_by, is_public = row
         cur.close()
 
         # Try cache
@@ -404,6 +405,7 @@ def get_leaderboard(cohort_id: str, limit: int = 100) -> Dict:
                 "description": description,
                 "join_code": join_code,
                 "member_count": member_count,
+                "is_public": bool(is_public),
                 "week_start": week_start.isoformat(),
                 "cached": True,
                 "entries": entries[:limit],
@@ -446,6 +448,7 @@ def get_leaderboard(cohort_id: str, limit: int = 100) -> Dict:
             "description": description,
             "join_code": join_code,
             "member_count": member_count,
+            "is_public": bool(is_public),
             "week_start": week_start.isoformat(),
             "cached": False,
             "entries": members[:limit],
@@ -860,6 +863,43 @@ def list_public_cohorts(limit: int = 50) -> Dict:
         return {"status": "success", "cohorts": cohorts}
     except Exception as e:
         logger.warning(f"list_public_cohorts: {e}")
+        return {"status": "error", "message": str(e)}
+    finally:
+        if conn:
+            try: conn.close()
+            except Exception: pass
+def set_cohort_visibility(cohort_id: str, caller_email: str, is_public: bool) -> Dict:
+    """Owner-only: toggle a cohort's public visibility. Session 49.5."""
+    cohort_id = (cohort_id or "").strip()
+    caller_email = (caller_email or "").strip().lower()
+
+    if not cohort_id or not caller_email:
+        return {"status": "error", "message": "cohort_id and caller_email required"}
+
+    _ensure_tables()
+
+    conn = None
+    try:
+        conn = db.get_connection()
+        cur = conn.cursor()
+
+        role = _get_member_role(cur, cohort_id, caller_email)
+        if role != "owner":
+            cur.close()
+            return {"status": "error", "message": "Owner only", "code": "forbidden"}
+
+        cur.execute("""
+            UPDATE charvak_cohorts SET is_public = %s WHERE cohort_id = %s
+        """, (bool(is_public), cohort_id))
+
+        conn.commit()
+        cur.close()
+        return {"status": "success", "is_public": bool(is_public)}
+    except Exception as e:
+        if conn:
+            try: conn.rollback()
+            except Exception: pass
+        logger.warning(f"set_cohort_visibility: {e}")
         return {"status": "error", "message": str(e)}
     finally:
         if conn:
