@@ -86,12 +86,11 @@ class FinalYearProjectEngine:
                 print("[FYP] OpenAI key missing at call time — falling back")
                 return None
             client = openai.OpenAI(api_key=_key)
+            from openai_compat import translate_kwargs
             response = client.chat.completions.create(
                 model=OPENAI_MODEL,
                 messages=[{"role": "user", "content": prompt}],
-                max_tokens=max_tokens,
-                temperature=temperature,
-                response_format={"type": "json_object"},
+                **translate_kwargs(OPENAI_MODEL, max_tokens=max_tokens, temperature=temperature, json_mode=True),
             )
             content = response.choices[0].message.content or ""
             # Defensive: strip accidental markdown fences even in JSON mode

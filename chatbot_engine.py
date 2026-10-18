@@ -203,13 +203,14 @@ class ChatbotEngine:
         try:
             import openai
             client = openai.OpenAI(api_key=OPENAI_API_KEY)
+            from openai_compat import translate_kwargs
             response = client.chat.completions.create(
                 model=OPENAI_MODEL,
                 messages=[
                     {"role": "system", "content": "You are Charvak's AI assistant. Keep responses under 3 sentences. Be helpful and friendly. If you don't know, suggest contacting hr@charvakit.com."},
                     {"role": "user", "content": message},
                 ],
-                max_tokens=150,
+                **translate_kwargs(OPENAI_MODEL, max_tokens=150, temperature=0.7, json_mode=False),
             )
             return response.choices[0].message.content.strip()
         except Exception as e:

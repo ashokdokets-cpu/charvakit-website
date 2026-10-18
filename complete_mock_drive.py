@@ -689,15 +689,14 @@ class CompleteMockDrive:
                     "Questions:\n" + _json.dumps(payload, indent=2)
                 )
 
+                from openai_compat import translate_kwargs
                 resp = client.chat.completions.create(
                     model=OPENAI_MODEL,
                     messages=[
                         {"role": "system", "content": "You are an expert exam coach. Return JSON only. Never skip items."},
                         {"role": "user", "content": prompt},
                     ],
-                    response_format={"type": "json_object"},
-                    max_tokens=8000,
-                    temperature=0.3,
+                    **translate_kwargs(OPENAI_MODEL, max_tokens=8000, temperature=0.3, json_mode=True),
                 )
                 raw = resp.choices[0].message.content
                 parsed = _json.loads(raw)

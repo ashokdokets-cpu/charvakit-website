@@ -70,22 +70,14 @@ class InterviewPrepEngine:
         if not OPENAI_API_KEY:
             return None
         try:
+            from openai_compat import build_payload
             response = requests.post(
                 "https://api.openai.com/v1/chat/completions",
                 headers={
                     "Authorization": f"Bearer {OPENAI_API_KEY}",
                     "Content-Type": "application/json"
                 },
-                json={
-                    "model": OPENAI_MODEL,
-                    "messages": [
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_prompt}
-                    ],
-                    "temperature": 0.7,
-                    "max_tokens": max_tokens,
-                    "response_format": {"type": "json_object"}
-                },
+                json=build_payload(OPENAI_MODEL, [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}], max_tokens=max_tokens, temperature=0.7, json_mode=True),
                 timeout=30
             )
             data = response.json()

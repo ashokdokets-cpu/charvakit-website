@@ -200,19 +200,14 @@ class AICourseSystem:
         if not self.openai_api_key:
             return None
         try:
+            from openai_compat import build_payload
             response = requests.post(
                 "https://api.openai.com/v1/chat/completions",
                 headers={
                     "Authorization": f"Bearer {self.openai_api_key}",
                     "Content-Type": "application/json"
                 },
-                json={
-                    "model": OPENAI_MODEL,
-                    "messages": [{"role": "user", "content": prompt}],
-                    "temperature": 0.7,
-                    "max_tokens": max_tokens,
-                    "response_format": {"type": "json_object"}
-                },
+                json=build_payload(OPENAI_MODEL, [{"role": "user", "content": prompt}], max_tokens=max_tokens, temperature=0.7, json_mode=True),
                 timeout=30
             )
             data = response.json()
@@ -226,18 +221,14 @@ class AICourseSystem:
         if not self.openai_api_key:
             return None
         try:
+            from openai_compat import build_payload
             response = requests.post(
                 "https://api.openai.com/v1/chat/completions",
                 headers={
                     "Authorization": f"Bearer {self.openai_api_key}",
                     "Content-Type": "application/json"
                 },
-                json={
-                    "model": OPENAI_MODEL,
-                    "messages": [{"role": "user", "content": prompt}],
-                    "temperature": 0.7,
-                    "max_tokens": max_tokens
-                },
+                json=build_payload(OPENAI_MODEL, [{"role": "user", "content": prompt}], max_tokens=max_tokens, temperature=0.7, json_mode=False),
                 timeout=25
             )
             data = response.json()

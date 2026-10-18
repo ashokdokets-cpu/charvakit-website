@@ -112,12 +112,11 @@ class AIBridgeEngine:
             return None
         try:
             client = openai.OpenAI(api_key=OPENAI_API_KEY)
+            from openai_compat import translate_kwargs
             response = client.chat.completions.create(
                 model=OPENAI_MODEL,
                 messages=[{"role": "user", "content": prompt}],
-                max_tokens=max_tokens,
-                temperature=temperature,
-                response_format={"type": "json_object"},
+                **translate_kwargs(OPENAI_MODEL, max_tokens=max_tokens, temperature=temperature, json_mode=True),
             )
             content = (response.choices[0].message.content or "").strip()
             if content.startswith("```"):

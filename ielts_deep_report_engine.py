@@ -374,15 +374,14 @@ Rules:
 """
 
     try:
+        from openai_compat import translate_kwargs
         resp = client.chat.completions.create(
             model=OPENAI_MODEL,
             messages=[
                 {"role": "system", "content": "You are a senior IELTS examiner producing a JSON deep-diagnostic report."},
                 {"role": "user", "content": prompt_text},
             ],
-            response_format={"type": "json_object"},
-            max_tokens=4000,
-            temperature=0.3,
+            **translate_kwargs(OPENAI_MODEL, max_tokens=4000, temperature=0.3, json_mode=True),
         )
         raw = resp.choices[0].message.content
         report = json.loads(raw)
@@ -458,15 +457,14 @@ Rules:
 """
 
     try:
+        from openai_compat import translate_kwargs
         resp = client.chat.completions.create(
             model=OPENAI_MODEL,
             messages=[
                 {"role": "system", "content": "You are a senior IELTS examiner producing a JSON deep-diagnostic report."},
                 {"role": "user", "content": prompt_text},
             ],
-            response_format={"type": "json_object"},
-            max_tokens=4000,
-            temperature=0.3,
+            **translate_kwargs(OPENAI_MODEL, max_tokens=4000, temperature=0.3, json_mode=True),
         )
         raw = resp.choices[0].message.content
         report = json.loads(raw)

@@ -144,17 +144,12 @@ class CBATEngine:
             return None
         try:
             import requests
+            from openai_compat import build_payload
             response = requests.post(
                 "https://api.openai.com/v1/chat/completions",
                 headers={"Authorization": f"Bearer {self.openai_api_key}",
                          "Content-Type": "application/json"},
-                json={
-                    "model": OPENAI_MODEL,
-                    "messages": [{"role": "user", "content": prompt}],
-                    "temperature": temperature,
-                    "max_tokens": max_tokens,
-                    "response_format": {"type": "json_object"},
-                },
+                json=build_payload(OPENAI_MODEL, [{"role": "user", "content": prompt}], max_tokens=max_tokens, temperature=temperature, json_mode=True),
                 timeout=60,
             )
             response.raise_for_status()
