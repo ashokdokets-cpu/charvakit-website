@@ -7,6 +7,8 @@ import json
 import httpx
 from typing import Optional, Dict, List
 
+from openai_compat import build_payload
+
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_BASE = "https://api.openai.com/v1"
 
@@ -46,14 +48,17 @@ async def call_openai(prompt: str, model: str = None, max_tokens: int = 2000, te
     if not OPENAI_API_KEY:
         return None
 
-    payload = {
-        "model": model,
-        "messages": [{"role": "user", "content": prompt}],
-        "max_tokens": max_tokens,
-        "temperature": temperature,
-    }
-    if json_mode:
-        payload["response_format"] = {"type": "json_object"}
+    # Model-aware payload building via openai_compat shim
+    # (handles max_tokens vs max_completion_tokens per model;
+    #  see COMMITMENT.md Phase 2 result for the model selection)
+    messages = [{"role": "user", "content": prompt}]
+    payload = build_payload(
+        model=model,
+        messages=messages,
+        max_tokens=max_tokens,
+        temperature=temperature,
+        json_mode=json_mode,
+    )
 
     try:
         async with httpx.AsyncClient(timeout=60.0) as client:

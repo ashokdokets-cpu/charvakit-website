@@ -4006,6 +4006,91 @@ async def api_cas_request_key(request: Request):
         return handle_error(e, "cas request key")
 
 
+
+# ============================================================
+# CAS Admin UI routes - Session 53
+# ============================================================
+
+@app.get("/admin/cas-keys", response_class=HTMLResponse)
+async def admin_cas_keys_page(request: Request):
+    """Session 53: Admin UI to list, approve, and manage CAS API keys."""
+    require_admin(request)
+    return template_response(
+        "admin-cas-keys.html", request,
+        "CAS API Keys - Admin",
+        error=None,
+    )
+
+
+@app.get("/api/admin/cas-keys/list")
+async def admin_cas_keys_list(request: Request):
+    """Session 53: List all CAS API keys (active + pending)."""
+    try:
+        require_admin(request)
+        import cas_engine
+        active = cas_engine.list_api_keys(active_only=True)
+        pending = cas_engine.list_api_keys(active_only=False)
+        pending = [k for k in pending if not k.get("is_active")]
+        return {
+            "status": "success",
+            "active": active,
+            "pending": pending,
+            "total": len(active) + len(pending),
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "admin cas keys list")
+
+
+@app.post("/api/admin/cas-keys/{key_id}/approve")
+async def admin_cas_keys_approve(request: Request, key_id: str):
+    """Session 53: Approve a pending CAS API key."""
+    try:
+        require_admin(request)
+        import cas_engine
+        result = cas_engine.approve_api_key(key_id)
+        if result.get("status") != "success":
+            return JSONResponse(status_code=400, content=result)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "admin cas keys approve")
+
+
+@app.post("/api/admin/cas-keys/{key_id}/deactivate")
+async def admin_cas_keys_deactivate(request: Request, key_id: str):
+    """Session 53: Deactivate a CAS API key."""
+    try:
+        require_admin(request)
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            UPDATE charvak_cas_api_keys
+            SET is_active = FALSE
+            WHERE key_id = %s
+            RETURNING key_id, institution_name
+        """, (key_id,))
+        row = cur.fetchone()
+        conn.commit()
+        cur.close()
+        conn.close()
+        if not row:
+            return JSONResponse(status_code=404, content={
+                "status": "error", "message": "Key not found"
+            })
+        return {
+            "status": "success",
+            "key_id": row[0],
+            "institution_name": row[1],
+            "message": "Key deactivated.",
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "admin cas keys deactivate")
 @app.get("/employer/cas", response_class=HTMLResponse)
 @limiter.limit("60/minute")
 async def employer_cas_page(request: Request):
