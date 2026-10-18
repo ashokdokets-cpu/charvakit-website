@@ -4100,6 +4100,25 @@ async def employer_cas_page(request: Request):
         "Certificate-as-a-Service - Charvak",
         error=None,
     )
+
+
+@app.post("/api/jd/parse")
+@limiter.limit("5/minute")
+async def api_jd_parse(request: Request):
+    """Session 55: Parse a job description into structured data."""
+    try:
+        body = await request.json()
+        jd_text = body.get("jd_text", "")
+        import jd_parser_engine
+        result = jd_parser_engine.parse_jd(jd_text)
+        if result.get("status") != "success":
+            return JSONResponse(status_code=400, content=result)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "jd parse")
+
 @app.get("/api/passport/public/list")
 @limiter.limit("60/minute")
 async def api_passport_public_list(
