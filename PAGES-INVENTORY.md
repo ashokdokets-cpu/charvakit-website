@@ -502,3 +502,77 @@ The B2B verification surface. Public, no auth required.
 - Quick-verify by handle OR browse public talent pool
 - Click card -> full verify page with cryptographic proof
 - Share verify URL with team (or open raw JSON for API integration)
+
+## Certificate-as-a-Service (Session 52, 2026-10-19)
+
+Bulk verification API for institutional buyers (universities, placement
+cells, coaching centers). Completes Wave 2.
+
+| Template | Route | Purpose | Auth? |
+|---|---|---|---|
+| `employer-cas.html` | `/employer/cas` | Landing page: hero, 4 pricing tiers, API docs, request form | No (public) |
+
+**Backing API:**
+
+- `POST /api/cas/verify-batch` - bulk verify up to 100 certificate hashes
+  - Header: `X-CAS-Key: cas_<32-hex>`
+  - Body: `{"certificate_hashes": ["hash1", "hash2", ...]}`
+  - Returns: `{status, total, valid, invalid, results: [...]}`
+  - Rate limit: 60/min per IP
+  - Quota per tier: 500 / 5,000 / 50,000 / unlimited (monthly)
+
+- `POST /api/cas/request-key` - university requests API key
+  - Body: `{institution_name, contact_name, contact_email}`
+  - Returns: `{status: "pending", key_id, message}`
+  - Rate limit: 5/min per IP
+  - Admin must approve before key works
+
+**Engine (`cas_engine.py`, new):**
+
+- `verify_certificate_by_hash(hash)` - single cert via HMAC
+- `verify_batch(hashes, api_key)` - up to 100, quota-checked
+- `request_api_key(institution, contact_name, contact_email)`
+- `approve_api_key(key_id)` - admin action
+- `check_api_key(raw_key)` - validates + rate-checks
+- `list_api_keys(active_only=True)` - admin view
+- SHA-256 hashed API key storage, approval-gated (is_active=FALSE default)
+- Self-healing DDL for `charvak_cas_api_keys`
+
+**Table (`charvak_cas_api_keys`):**
+
+- key_id (TEXT PK, format `KEY-XXXXXXXXXXXXXXXX`)
+- institution_name, contact_name, contact_email
+- api_key_hash (SHA-256 hex, UNIQUE)
+- tier (pilot / department / campus / university)
+- monthly_quota (500/5000/50000/0)
+- calls_this_month, last_call_at
+- is_active (FALSE until admin approves)
+- created_at, approved_at, expires_at
+
+**Pricing tiers (as of Session 52):**
+
+| Tier | Price | Verifications/year |
+|---|---|---|
+| Pilot | Free | 500 (1 batch) |
+| Department | Rs 49,999 | 5,000 |
+| Campus | Rs 1,99,999 | 50,000 |
+| University | Rs 4,99,999 | Unlimited |
+
+**Discovery funnel:**
+
+- Employer lands on `/employer/dashboard` (Session 51)
+- Sees CTA "Are you a university? Get bulk verification" (line 51)
+- Lands on `/employer/cas` - sees pricing + API docs + request form
+- Submits request -> `KEY-XXXX` reference shown
+- Admin approves (currently via DB, Session 53 will add `/admin/cas-keys`)
+- University uses API key in `POST /api/cas/verify-batch`
+
+**Verified on prod (2026-10-19):**
+
+- `GET /employer/cas` -> 200
+- `POST /api/cas/verify-batch` (no key) -> 401
+- Engine smoke test: 10/10 checks pass
+- Request form submits successfully (verified locally)
+
+**Unblocks:** Track C (Amrita CDC pilot) - Prof. Raj can request key,
+admin approves, Amrita batch-verifies 500 students in one call.

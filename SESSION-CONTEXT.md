@@ -1,5 +1,57 @@
 # Session Context - Charvak
 
+**HEAD:** 1902eb7
+**Live:** https://www.charvakit.com
+**Updated:** 2026-10-19 (Session 52 closed)
+**Wave 2:** 100% COMPLETE
+**Next up:** Session 53 (CAS admin UI, or Send Amrita reply, or pay down flags)
+
+---
+
+## Session 52 CLOSED (2026-10-19) - Certificate-as-a-Service
+
+Completes Wave 2. Bulk verification API for institutional buyers.
+
+**Commit:** 1902eb7
+
+### Live URLs
+
+- https://www.charvakit.com/employer/cas (landing page + request form)
+- https://www.charvakit.com/employer/dashboard (unchanged, now links to CAS)
+- https://www.charvakit.com/api/cas/verify-batch (POST, X-CAS-Key header)
+- https://www.charvakit.com/api/cas/request-key (POST, self-serve)
+
+### Verified on prod
+
+- GET /employer/cas -> 200, renders hero + 4 pricing tiers + docs + form
+- POST /api/cas/verify-batch (no key) -> 401 "X-CAS-Key header required"
+- POST /api/cas/request-key -> 200, pending record created (verified locally)
+- GET /employer/dashboard -> 200 (CTA link present at line 51 of template)
+
+### Files touched
+
+- cas_engine.py (new, ~16 KB, 7 public methods)
+- migrations/20261019_cas_api_keys.sql (new)
+- main.py (3 routes)
+- templates/employer-cas.html (new, ~11 KB)
+- templates/employer-dashboard.html (CTA added)
+
+### Session 53 candidates
+
+A) CAS admin UI (~1 session) - /admin/cas-keys page, approve button
+B) CAS usage tracking (~1 session) - monthly quota reset cron
+C) Employer Dashboard polish (~1 session) - empty state, sort, CSV
+D) Pay down 4 long-carried flags (~45 min) - Render pwd, LMS, PayPal, IELTS CI
+E) Send Amrita reply to Prof. Raj (5 min - draft exists in context)
+F) GPT-4o-mini Phase 2 - due Oct 27
+
+### Recommendation
+
+Option E first (5 min, high leverage - unlocks Track C pilot), then
+Option A (CAS admin UI) or Option D (flag cleanup) depending on time.
+
+---
+
 **HEAD:** 4c2ef76
 **Live:** https://www.charvakit.com
 **Updated:** 2026-10-19 (Session 51 closed)

@@ -5694,3 +5694,80 @@ C) Pay down 4 long-carried flags (~45 min)
    - CI hook for `scripts/test_ielts_relevance.py`
 
 D) GPT-4o-mini Phase 2 (evaluate successor) - due Oct 27
+
+## Session 52 CLOSED (2026-10-19) - Certificate-as-a-Service (Wave 2 COMPLETE)
+
+**Commit:** 1902eb7
+**Wave 2:** 100% complete (Trust API + Employer Dashboard + CAS all shipped)
+
+Turns single-certificate verification into a bulk API for institutional
+buyers. Completes Wave 2. Unblocks Track C (Amrita CDC pilot).
+
+### Shipped
+
+**New file:** `cas_engine.py` (~16 KB, 7 public methods)
+- `verify_certificate_by_hash(hash)` - single cert via HMAC
+- `verify_batch(hashes, api_key)` - up to 100, quota-checked
+- `request_api_key` / `approve_api_key` / `check_api_key` / `list_api_keys`
+- SHA-256 API key storage, approval-gated (is_active=FALSE default)
+- Self-healing DDL for charvak_cas_api_keys
+
+**New migration:** `migrations/20261019_cas_api_keys.sql`
+
+**New routes (main.py):**
+- `POST /api/cas/verify-batch` - bulk verify, X-CAS-Key header, 100 max
+- `POST /api/cas/request-key` - university request, admin approves
+- `GET  /employer/cas` - landing page
+
+**New template:** `templates/employer-cas.html` (~11 KB)
+- Hero, 4 pricing tiers (Pilot free / Department Rs 49,999 /
+  Campus Rs 1,99,999 / University Rs 4,99,999)
+- API docs with curl examples
+- Request form with success/error feedback
+
+**Modified:** `templates/employer-dashboard.html` - CTA to /employer/cas in hero
+
+### Prod verified (2026-10-19)
+
+- `GET /employer/cas` -> 200
+- `POST /api/cas/verify-batch` (no key) -> 401 with "X-CAS-Key header required"
+- `GET /employer/dashboard` -> 200
+- Browser: request form submits, shows KEY-XXXX reference
+
+### Engine smoke test (10/10 pass)
+
+All 10 checks green: single verify, not-found, request key, reject before
+approval, approve, accept after approval, batch verify, reject missing
+key, cleanup.
+
+### Session 53 candidates
+
+A) **CAS admin UI** (~1 session)
+   - `/admin/cas-keys` page: list pending + active keys, approve button
+   - Email notification on approval
+   - Closes the current "manual DB update" gap for approving keys
+   - For Amrita pilot: you still approve manually via DB, but this
+     automates it for the next 10 universities
+
+B) **CAS usage tracking** (~1 session)
+   - Daily quota reset cron (calls_this_month -> 0 on 1st of month)
+   - Quota warning email at 80%
+   - Admin dashboard: which institutions used how many calls
+
+C) **Employer Dashboard polish** (~1 session)
+   - Empty-state CTA on dashboard
+   - Sort by score / recency
+   - CSV export of filtered list
+
+D) **Pay down 4 long-carried flags** (~45 min)
+   - Render Postgres password rotation (Session 19)
+   - `/api/lms/progress` ownership check (Session 14)
+   - PayPal capture route for A1.6 tools (A1.7b)
+   - CI hook for scripts/test_ielts_relevance.py
+
+E) **Send Amrita reply to Prof. Raj** (5 min — draft exists in context)
+   - CAS is now shippable to Amrita as a real product
+   - "We now offer bulk verification API. Would you like a free pilot?"
+   - Includes /employer/cas link + pricing tiers
+
+F) **GPT-4o-mini Phase 2** (evaluate successor) - due Oct 27
