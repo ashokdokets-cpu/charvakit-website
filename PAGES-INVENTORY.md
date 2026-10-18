@@ -1,7 +1,7 @@
 # Charvak — Pages Inventory
 
-**Last updated:** 2026-10-03
-**Version:** v3.5-session-15-20261003
+**Last updated:** 2026-10-19
+**Version:** v3.5-session-52-20261019
 **Delta section:** see "Recent Additions & Updates" at the bottom for the Sessions 8-15 changes.
 
 Every template in `templates/`. Grouped by purpose.

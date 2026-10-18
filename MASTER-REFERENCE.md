@@ -1,8 +1,8 @@
 # CHARVAKIT.COM - MASTER REFERENCE
 ## Charvak IT Consulting Pvt Ltd
-### Last updated: October 16, 2026 (Session 43-A3.4 + A4 - FYP features + personalized training)
+### Last updated: October 19, 2026 (Session 52 - Certificate-as-a-Service)
 
-**HEAD:** 1902eb7
+**HEAD:** 8075f4e
 **Live:** https://www.charvakit.com
 **Resume here:** see `SESSION-CONTEXT.md` and `TRACK-A-B-PLAN.md`
 **Backlog:** see `OUTSTANDING-WORK-INVENTORY.md` (master list of remaining work)

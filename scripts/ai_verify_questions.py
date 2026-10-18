@@ -39,7 +39,8 @@ import requests
 
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
-MODEL = "gpt-4o-mini"
+from global_config import OPENAI_MODEL
+MODEL = OPENAI_MODEL
 
 
 def db():
