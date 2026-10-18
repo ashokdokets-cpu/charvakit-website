@@ -105,6 +105,13 @@
                     <label class="form-label">Description (optional)</label>
                     <textarea class="form-control" id="cohortDesc" maxlength="300" rows="2" placeholder="e.g. Placement prep group for TCS/Infosys season"></textarea>
                 </div>
+                <div class="mb-3 form-check">
+                    <input type="checkbox" class="form-check-input" id="cohortIsPublic">
+                    <label class="form-check-label" for="cohortIsPublic">
+                        Make this cohort public
+                    </label>
+                    <small class="text-muted d-block">Public cohorts appear on the Discover page so other students can browse and join.</small>
+                </div>
                 <div id="createError" class="alert alert-danger" style="display:none;"></div>
             </div>
             <div class="modal-footer">
@@ -207,6 +214,8 @@
     window.showCreateModal = function() {
         document.getElementById('cohortName').value = '';
         document.getElementById('cohortDesc').value = '';
+        const cb = document.getElementById('cohortIsPublic');
+        if (cb) cb.checked = false;
         document.getElementById('createError').style.display = 'none';
         new bootstrap.Modal(document.getElementById('createCohortModal')).show();
     };
@@ -232,10 +241,11 @@
         btn.disabled = true;
         btn.textContent = 'Creating...';
         try {
+            const isPublic = !!(document.getElementById('cohortIsPublic') && document.getElementById('cohortIsPublic').checked);
             const r = await fetch('/api/cohorts/create', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-                body: JSON.stringify({ name: name, description: desc })
+                body: JSON.stringify({ name: name, description: desc, is_public: isPublic })
             });
             const data = await r.json();
             if (data.status === 'success') {

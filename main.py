@@ -3697,8 +3697,9 @@ async def api_cohorts_create(request: Request):
         data = await request.json()
         name = (data.get("name") or "").strip()
         description = (data.get("description") or "").strip()
+        is_public = bool(data.get("is_public", False))
         import cohorts_engine as ce
-        result = ce.create_cohort(caller_email, name, description)
+        result = ce.create_cohort(caller_email, name, description, is_public=is_public)
         if result.get("status") != "success":
             return JSONResponse(status_code=400, content=result)
         return result
@@ -3898,6 +3899,25 @@ async def api_cohorts_demote(request: Request, cohort_id: str):
         raise
     except Exception as e:
         return handle_error(e, "cohorts demote")
+
+@app.post("/api/cohorts/{cohort_id}/visibility")
+@limiter.limit("10/minute")
+async def api_cohorts_visibility(request: Request, cohort_id: str):
+    try:
+        caller = require_auth(request)
+        caller_email = (caller.get("email") or "").strip().lower()
+        data = await request.json()
+        is_public = bool(data.get("is_public", False))
+        import cohorts_engine as ce
+        result = ce.set_cohort_visibility(cohort_id, caller_email, is_public)
+        if result.get("status") != "success":
+            status = 403 if result.get("code") == "forbidden" else 400
+            return JSONResponse(status_code=status, content=result)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "cohorts visibility")
 @app.post("/api/tools/ghost-bounty")
 @limiter.limit("60/minute")
 async def api_ghost_bounty(request: Request):
