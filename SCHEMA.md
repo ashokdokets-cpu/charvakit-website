@@ -1,7 +1,7 @@
 # Charvak Database Schema
 
-**Generated:** 2026-10-03
-**Total tables:** 164
+**Generated:** 2026-10-19
+**Total tables:** 192
 
 **Purpose:** Complete snapshot of every `charvak_*` table.
 Re-generate with: `python scripts/regenerate_schema.py`
@@ -24,6 +24,7 @@ Re-generate with: `python scripts/regenerate_schema.py`
 - [charvak_aiqg_question_cache](#charvak-aiqg-question-cache)
 - [charvak_alumni_connections](#charvak-alumni-connections)
 - [charvak_applications](#charvak-applications)
+- [charvak_assessment_integrity_events](#charvak-assessment-integrity-events)
 - [charvak_assessment_reports](#charvak-assessment-reports)
 - [charvak_assessment_results](#charvak-assessment-results)
 - [charvak_ats_integrations](#charvak-ats-integrations)
@@ -38,6 +39,8 @@ Re-generate with: `python scripts/regenerate_schema.py`
 - [charvak_brands](#charvak-brands)
 - [charvak_bridge_premium_reports](#charvak-bridge-premium-reports)
 - [charvak_bridge_sessions](#charvak-bridge-sessions)
+- [charvak_candidate_consents](#charvak-candidate-consents)
+- [charvak_candidate_documents](#charvak-candidate-documents)
 - [charvak_candidates](#charvak-candidates)
 - [charvak_career_assessment_answers](#charvak-career-assessment-answers)
 - [charvak_career_assessments](#charvak-career-assessments)
@@ -47,19 +50,26 @@ Re-generate with: `python scripts/regenerate_schema.py`
 - [charvak_career_offers](#charvak-career-offers)
 - [charvak_career_salary_reports](#charvak-career-salary-reports)
 - [charvak_career_saved_jobs](#charvak-career-saved-jobs)
+- [charvak_cas_api_keys](#charvak-cas-api-keys)
 - [charvak_cbat_answers](#charvak-cbat-answers)
 - [charvak_cbat_sessions](#charvak-cbat-sessions)
 - [charvak_certificates](#charvak-certificates)
 - [charvak_chatbot_sessions](#charvak-chatbot-sessions)
+- [charvak_client_roles](#charvak-client-roles)
+- [charvak_cohort_leaderboard](#charvak-cohort-leaderboard)
+- [charvak_cohort_members](#charvak-cohort-members)
+- [charvak_cohorts](#charvak-cohorts)
 - [charvak_company_content_progress](#charvak-company-content-progress)
 - [charvak_content_used_content](#charvak-content-used-content)
 - [charvak_course_installments](#charvak-course-installments)
 - [charvak_course_lessons](#charvak-course-lessons)
+- [charvak_course_levels](#charvak-course-levels)
 - [charvak_course_payments](#charvak-course-payments)
 - [charvak_course_prices](#charvak-course-prices)
 - [charvak_courses](#charvak-courses)
 - [charvak_credit_purchases](#charvak-credit-purchases)
 - [charvak_credit_usage_history](#charvak-credit-usage-history)
+- [charvak_daily_drills](#charvak-daily-drills)
 - [charvak_doketsrb_bundle_subs](#charvak-doketsrb-bundle-subs)
 - [charvak_doketsrb_score_events](#charvak-doketsrb-score-events)
 - [charvak_doketsrb_score_tokens](#charvak-doketsrb-score-tokens)
@@ -89,6 +99,12 @@ Re-generate with: `python scripts/regenerate_schema.py`
 - [charvak_fyp_subscriptions](#charvak-fyp-subscriptions)
 - [charvak_geo_compliance_contracts](#charvak-geo-compliance-contracts)
 - [charvak_geo_compliance_hiring](#charvak-geo-compliance-hiring)
+- [charvak_ielts_deep_reports](#charvak-ielts-deep-reports)
+- [charvak_ielts_listening_attempts](#charvak-ielts-listening-attempts)
+- [charvak_ielts_listening_sections](#charvak-ielts-listening-sections)
+- [charvak_ielts_reading_attempts](#charvak-ielts-reading-attempts)
+- [charvak_ielts_reading_passages](#charvak-ielts-reading-passages)
+- [charvak_ielts_sessions](#charvak-ielts-sessions)
 - [charvak_interview_answers](#charvak-interview-answers)
 - [charvak_interview_sessions](#charvak-interview-sessions)
 - [charvak_jobs](#charvak-jobs)
@@ -141,17 +157,25 @@ Re-generate with: `python scripts/regenerate_schema.py`
 - [charvak_outreach_cold_emails](#charvak-outreach-cold-emails)
 - [charvak_outreach_email_syncs](#charvak-outreach-email-syncs)
 - [charvak_outreach_premium_users](#charvak-outreach-premium-users)
+- [charvak_passports](#charvak-passports)
 - [charvak_payment_log](#charvak-payment-log)
+- [charvak_premium_reports](#charvak-premium-reports)
 - [charvak_product_results](#charvak-product-results)
+- [charvak_readiness_certificates](#charvak-readiness-certificates)
 - [charvak_referral_bounties](#charvak-referral-bounties)
 - [charvak_referral_clicks](#charvak-referral-clicks)
 - [charvak_referrals](#charvak-referrals)
+- [charvak_resume_teasers](#charvak-resume-teasers)
 - [charvak_reverse_staffing_subscriptions](#charvak-reverse-staffing-subscriptions)
 - [charvak_role_manager_custom_roles](#charvak-role-manager-custom-roles)
+- [charvak_role_screening_answers](#charvak-role-screening-answers)
+- [charvak_role_screening_questions](#charvak-role-screening-questions)
+- [charvak_share_claims](#charvak-share-claims)
+- [charvak_share_rewards](#charvak-share-rewards)
 - [charvak_silent_killer_scans](#charvak-silent-killer-scans)
 - [charvak_silent_killer_watches](#charvak-silent-killer-watches)
 - [charvak_skill_gaps](#charvak-skill-gaps)
-- [charvak_skill_twin_results](#charvak-skill-twin-results)
+- [charvak_skill_twin_challenges](#charvak-skill-twin-challenges)
 - [charvak_student_suite_subscriptions](#charvak-student-suite-subscriptions)
 - [charvak_student_suite_usage](#charvak-student-suite-usage)
 - [charvak_synced_applications](#charvak-synced-applications)
@@ -159,6 +183,7 @@ Re-generate with: `python scripts/regenerate_schema.py`
 - [charvak_team_members](#charvak-team-members)
 - [charvak_team_subscriptions](#charvak-team-subscriptions)
 - [charvak_teams](#charvak-teams)
+- [charvak_tool_purchases](#charvak-tool-purchases)
 - [charvak_tool_results](#charvak-tool-results)
 - [charvak_training_courses](#charvak-training-courses)
 - [charvak_training_enrollments](#charvak-training-enrollments)
@@ -169,6 +194,9 @@ Re-generate with: `python scripts/regenerate_schema.py`
 - [charvak_university_subscriptions](#charvak-university-subscriptions)
 - [charvak_user_ability](#charvak-user-ability)
 - [charvak_user_credits](#charvak-user-credits)
+- [charvak_user_streaks](#charvak-user-streaks)
+- [charvak_versant_answers](#charvak-versant-answers)
+- [charvak_versant_sessions](#charvak-versant-sessions)
 - [charvak_voice_to_web_domains](#charvak-voice-to-web-domains)
 - [charvak_voice_to_web_seo](#charvak-voice-to-web-seo)
 - [charvak_voice_to_web_sites](#charvak-voice-to-web-sites)
@@ -441,10 +469,36 @@ Re-generate with: `python scripts/regenerate_schema.py`
 | applied_at | text | YES | ''::text |
 | status | text | YES | 'applied'::text |
 | created_at | timestamp without time zone | YES | CURRENT_TIMESTAMP |
+| client_role_id | text | YES |  |
+| certificate_id | text | YES |  |
+| readiness_score | integer | YES |  |
+| submission_status | text | YES | 'pending'::text |
+| submitted_at | timestamp without time zone | YES |  |
+| submission_notes | text | YES |  |
+| recruiter_notes | text | YES |  |
 
 **Indexes:**
 
 - `charvak_applications_pkey`
+
+---
+
+## charvak_assessment_integrity_events
+
+| Column | Type | Nullable | Default |
+|---|---|---|---|
+| event_id | text | NO |  |
+| assessment_id | text | NO |  |
+| email | text | NO |  |
+| event_type | text | NO |  |
+| metadata | jsonb | YES | '{}'::jsonb |
+| occurred_at | timestamp without time zone | YES | CURRENT_TIMESTAMP |
+
+**Indexes:**
+
+- `charvak_assessment_integrity_events_pkey`
+- `idx_integrity_events_assessment`
+- `idx_integrity_events_email`
 
 ---
 
@@ -651,6 +705,8 @@ Re-generate with: `python scripts/regenerate_schema.py`
 **Indexes:**
 
 - `charvak_booking_requests_pkey`
+- `idx_booking_requests_host`
+- `idx_booking_requests_slug`
 
 ---
 
@@ -739,6 +795,7 @@ Re-generate with: `python scripts/regenerate_schema.py`
 **Indexes:**
 
 - `charvak_bridge_premium_reports_pkey`
+- `idx_bridge_premium_email`
 
 ---
 
@@ -758,6 +815,50 @@ Re-generate with: `python scripts/regenerate_schema.py`
 
 - `charvak_bridge_sessions_pkey`
 - `idx_bridge_started`
+
+---
+
+## charvak_candidate_consents
+
+| Column | Type | Nullable | Default |
+|---|---|---|---|
+| consent_id | text | NO |  |
+| candidate_id | text | NO |  |
+| email | text | NO |  |
+| role_id | text | NO |  |
+| vendor | text | YES |  |
+| consent_method | text | YES |  |
+| consented_at | timestamp without time zone | YES | CURRENT_TIMESTAMP |
+| ip_address | text | YES |  |
+| user_agent | text | YES |  |
+| consent_proof_doc_id | text | YES |  |
+
+**Indexes:**
+
+- `charvak_candidate_consents_candidate_id_role_id_key`
+- `charvak_candidate_consents_pkey`
+
+---
+
+## charvak_candidate_documents
+
+| Column | Type | Nullable | Default |
+|---|---|---|---|
+| document_id | text | NO |  |
+| candidate_id | text | NO |  |
+| email | text | YES |  |
+| document_type | text | NO |  |
+| filename | text | NO |  |
+| content_type | text | YES |  |
+| size_bytes | integer | YES |  |
+| storage_path | text | YES |  |
+| content_base64 | text | YES |  |
+| uploaded_at | timestamp without time zone | YES | CURRENT_TIMESTAMP |
+
+**Indexes:**
+
+- `charvak_candidate_documents_pkey`
+- `idx_cand_docs_candidate`
 
 ---
 
@@ -799,6 +900,21 @@ Re-generate with: `python scripts/regenerate_schema.py`
 | placement | jsonb | YES |  |
 | registered_at | timestamp without time zone | YES | CURRENT_TIMESTAMP |
 | updated_at | timestamp without time zone | YES | CURRENT_TIMESTAMP |
+| first_name | text | YES |  |
+| last_name | text | YES |  |
+| additional_email | text | YES |  |
+| additional_phone | text | YES |  |
+| current_company | text | YES |  |
+| current_salary_inr | numeric | YES |  |
+| current_salary_currency | text | YES | 'INR'::text |
+| relevant_experience_years | integer | YES |  |
+| expected_hike_percent | integer | YES |  |
+| variable_component | text | YES |  |
+| other_benefits | text | YES |  |
+| serving_notice_last_day | date | YES |  |
+| notice_period | text | YES |  |
+| candidate_summary | text | YES |  |
+| country | text | YES | 'India'::text |
 
 **Indexes:**
 
@@ -826,9 +942,6 @@ Re-generate with: `python scripts/regenerate_schema.py`
 | selected_index | integer | YES |  |
 | is_correct | boolean | YES |  |
 | answered_at | timestamp without time zone | YES | CURRENT_TIMESTAMP |
-| answer_text | text | YES |  |
-| ai_score | integer | YES |  |
-| ai_feedback | text | YES |  |
 
 **Indexes:**
 
@@ -858,6 +971,7 @@ Re-generate with: `python scripts/regenerate_schema.py`
 | started_at | timestamp without time zone | YES | CURRENT_TIMESTAMP |
 | completed_at | timestamp without time zone | YES |  |
 | learning_path_json | jsonb | YES |  |
+| integrity_summary | jsonb | YES | '{}'::jsonb |
 
 **Indexes:**
 
@@ -976,6 +1090,33 @@ Re-generate with: `python scripts/regenerate_schema.py`
 
 ---
 
+## charvak_cas_api_keys
+
+| Column | Type | Nullable | Default |
+|---|---|---|---|
+| key_id | text | NO |  |
+| institution_name | text | NO |  |
+| contact_name | text | YES |  |
+| contact_email | text | NO |  |
+| api_key_hash | text | NO |  |
+| tier | text | YES | 'pilot'::text |
+| monthly_quota | integer | YES | 500 |
+| calls_this_month | integer | YES | 0 |
+| last_call_at | timestamp without time zone | YES |  |
+| is_active | boolean | YES | false |
+| created_at | timestamp without time zone | YES | CURRENT_TIMESTAMP |
+| approved_at | timestamp without time zone | YES |  |
+| expires_at | timestamp without time zone | YES |  |
+
+**Indexes:**
+
+- `charvak_cas_api_keys_api_key_hash_key`
+- `charvak_cas_api_keys_pkey`
+- `idx_cas_keys_active`
+- `idx_cas_keys_hash`
+
+---
+
 ## charvak_cbat_answers
 
 | Column | Type | Nullable | Default |
@@ -1031,6 +1172,7 @@ Re-generate with: `python scripts/regenerate_schema.py`
 | course_name | text | NO |  |
 | duration_weeks | integer | YES |  |
 | issued_at | timestamp without time zone | YES | CURRENT_TIMESTAMP |
+| recipient_name | text | YES |  |
 
 **Indexes:**
 
@@ -1052,6 +1194,100 @@ Re-generate with: `python scripts/regenerate_schema.py`
 - `charvak_chatbot_sessions_pkey`
 - `idx_chatbot_created`
 - `idx_chatbot_updated`
+
+---
+
+## charvak_client_roles
+
+| Column | Type | Nullable | Default |
+|---|---|---|---|
+| role_id | text | NO |  |
+| client_name | text | NO |  |
+| client_type | text | YES | 'direct'::text |
+| vendor_portal | text | YES |  |
+| vendor_role_ref | text | YES |  |
+| title | text | NO |  |
+| location | text | YES |  |
+| experience_min_years | integer | YES |  |
+| experience_max_years | integer | YES |  |
+| skills_required | text | YES |  |
+| budget_min_inr | integer | YES |  |
+| budget_max_inr | integer | YES |  |
+| job_type | text | YES | 'Permanent'::text |
+| submission_deadline | date | YES |  |
+| priority | text | YES | 'normal'::text |
+| status | text | YES | 'sourcing'::text |
+| source | text | YES | 'email'::text |
+| source_email_ref | text | YES |  |
+| jd_text | text | YES |  |
+| posted_by | text | YES | 'charvak-staffing'::text |
+| created_by | text | YES |  |
+| created_at | timestamp without time zone | YES | CURRENT_TIMESTAMP |
+| updated_at | timestamp without time zone | YES | CURRENT_TIMESTAMP |
+
+**Indexes:**
+
+- `charvak_client_roles_pkey`
+- `idx_client_roles_client`
+- `idx_client_roles_status`
+
+---
+
+## charvak_cohort_leaderboard
+
+| Column | Type | Nullable | Default |
+|---|---|---|---|
+| cohort_id | text | NO |  |
+| member_email | text | NO |  |
+| composite_score | integer | NO |  |
+| rank | integer | NO |  |
+| week_start | date | NO |  |
+| refreshed_at | timestamp without time zone | NO | CURRENT_TIMESTAMP |
+
+**Indexes:**
+
+- `charvak_cohort_leaderboard_pkey`
+- `idx_cohort_lb_week`
+
+---
+
+## charvak_cohort_members
+
+| Column | Type | Nullable | Default |
+|---|---|---|---|
+| cohort_id | text | NO |  |
+| member_email | text | NO |  |
+| role | text | NO | 'member'::text |
+| joined_at | timestamp without time zone | NO | CURRENT_TIMESTAMP |
+
+**Indexes:**
+
+- `charvak_cohort_members_pkey`
+- `idx_cohort_members_email`
+
+---
+
+## charvak_cohorts
+
+| Column | Type | Nullable | Default |
+|---|---|---|---|
+| cohort_id | text | NO |  |
+| name | text | NO |  |
+| description | text | YES | ''::text |
+| join_code | text | NO |  |
+| created_by | text | NO |  |
+| member_count | integer | NO | 1 |
+| is_public | boolean | NO | false |
+| created_at | timestamp without time zone | NO | CURRENT_TIMESTAMP |
+| last_refresh | timestamp without time zone | YES |  |
+
+**Indexes:**
+
+- `charvak_cohorts_join_code_key`
+- `charvak_cohorts_pkey`
+- `idx_cohorts_creator`
+- `idx_cohorts_join_code`
+- `idx_cohorts_public`
 
 ---
 
@@ -1107,11 +1343,17 @@ Re-generate with: `python scripts/regenerate_schema.py`
 | paid_at | timestamp without time zone | YES |  |
 | payment_id | text | YES |  |
 | created_at | timestamp without time zone | YES | CURRENT_TIMESTAMP |
+| last_reminder_stage | text | YES |  |
+| last_access_reminder_at | timestamp without time zone | YES |  |
 
 **Indexes:**
 
 - `charvak_course_installments_enrollment_id_installment_num_key`
 - `charvak_course_installments_pkey`
+- `idx_course_installments_email`
+- `idx_course_installments_reminder`
+- `idx_course_installments_status`
+- `uq_course_installment_paid`
 
 ---
 
@@ -1131,6 +1373,25 @@ Re-generate with: `python scripts/regenerate_schema.py`
 
 - `charvak_course_lessons_enrollment_id_week_num_key`
 - `charvak_course_lessons_pkey`
+
+---
+
+## charvak_course_levels
+
+| Column | Type | Nullable | Default |
+|---|---|---|---|
+| course_name | text | NO |  |
+| level | text | NO |  |
+| price_inr | integer | NO |  |
+| duration_weeks | integer | NO |  |
+| description | text | YES | ''::text |
+| status | text | NO | 'active'::text |
+| created_at | timestamp without time zone | YES | CURRENT_TIMESTAMP |
+
+**Indexes:**
+
+- `charvak_course_levels_pkey`
+- `idx_course_levels_level`
 
 ---
 
@@ -1159,6 +1420,9 @@ Re-generate with: `python scripts/regenerate_schema.py`
 
 - `charvak_course_payments_pkey`
 - `charvak_course_payments_razorpay_payment_id_key`
+- `idx_course_payments_email`
+- `idx_course_payments_enrollment`
+- `idx_course_payments_rzp`
 
 ---
 
@@ -1176,6 +1440,7 @@ Re-generate with: `python scripts/regenerate_schema.py`
 **Indexes:**
 
 - `charvak_course_prices_pkey`
+- `idx_course_prices_country`
 
 ---
 
@@ -1193,11 +1458,16 @@ Re-generate with: `python scripts/regenerate_schema.py`
 | icon | text | YES | ''::text |
 | status | text | YES | 'active'::text |
 | created_at | timestamp without time zone | YES | CURRENT_TIMESTAMP |
+| is_custom | boolean | YES | false |
+| generated_for_email | text | YES |  |
+| generated_from_topic | text | YES |  |
+| generated_at | timestamp without time zone | YES |  |
 
 **Indexes:**
 
 - `charvak_courses_course_name_key`
 - `charvak_courses_pkey`
+- `idx_courses_generated_for`
 
 ---
 
@@ -1236,6 +1506,35 @@ Re-generate with: `python scripts/regenerate_schema.py`
 
 - `charvak_credit_usage_history_pkey`
 - `idx_charvak_usage_email`
+
+---
+
+## charvak_daily_drills
+
+| Column | Type | Nullable | Default |
+|---|---|---|---|
+| drill_id | text | NO |  |
+| email | text | NO |  |
+| drill_date | date | NO |  |
+| topic | text | NO |  |
+| role_context | text | YES |  |
+| industry_context | text | YES |  |
+| level_context | text | YES |  |
+| questions_json | jsonb | NO |  |
+| answers_json | jsonb | YES |  |
+| score | integer | YES |  |
+| correct_count | integer | YES |  |
+| total_questions | integer | NO | 5 |
+| completed | boolean | NO | false |
+| completed_at | timestamp without time zone | YES |  |
+| created_at | timestamp without time zone | NO | CURRENT_TIMESTAMP |
+
+**Indexes:**
+
+- `charvak_daily_drills_email_drill_date_key`
+- `charvak_daily_drills_pkey`
+- `idx_drills_completed`
+- `idx_drills_email_date`
 
 ---
 
@@ -1353,10 +1652,15 @@ Re-generate with: `python scripts/regenerate_schema.py`
 | status | text | YES | 'active'::text |
 | started_at | timestamp without time zone | YES | CURRENT_TIMESTAMP |
 | completed_at | timestamp without time zone | YES |  |
+| recipient_name | text | YES |  |
+| paid_unlock | boolean | YES | false |
 
 **Indexes:**
 
 - `charvak_enrollments_pkey`
+- `idx_charvak_enrollments_course`
+- `idx_charvak_enrollments_email`
+- `idx_course_enrollments_pending`
 
 ---
 
@@ -1567,6 +1871,10 @@ Re-generate with: `python scripts/regenerate_schema.py`
 **Indexes:**
 
 - `charvak_escrow_transactions_pkey`
+- `idx_escrow_client_email`
+- `idx_escrow_payout`
+- `idx_escrow_status`
+- `idx_escrow_vendor_email`
 
 ---
 
@@ -1826,6 +2134,7 @@ Re-generate with: `python scripts/regenerate_schema.py`
 **Indexes:**
 
 - `charvak_geo_compliance_contracts_pkey`
+- `idx_geo_contracts_email`
 
 ---
 
@@ -1843,6 +2152,152 @@ Re-generate with: `python scripts/regenerate_schema.py`
 **Indexes:**
 
 - `charvak_geo_compliance_hiring_pkey`
+- `idx_geo_hiring_email`
+
+---
+
+## charvak_ielts_deep_reports
+
+| Column | Type | Nullable | Default |
+|---|---|---|---|
+| report_id | text | NO |  |
+| session_id | text | NO |  |
+| email | text | NO |  |
+| test_type | text | NO |  |
+| currency | text | NO | 'INR'::text |
+| amount_local | numeric | NO | 99 |
+| tier | text | YES |  |
+| gateway | text | NO |  |
+| razorpay_order_id | text | YES |  |
+| razorpay_payment_id | text | YES |  |
+| paypal_order_id | text | YES |  |
+| status | text | NO | 'pending'::text |
+| report_json | jsonb | YES |  |
+| pdf_generated_at | timestamp without time zone | YES |  |
+| email_sent_at | timestamp without time zone | YES |  |
+| error_message | text | YES |  |
+| created_at | timestamp without time zone | YES | CURRENT_TIMESTAMP |
+| completed_at | timestamp without time zone | YES |  |
+
+**Indexes:**
+
+- `charvak_ielts_deep_reports_paypal_order_id_key`
+- `charvak_ielts_deep_reports_pkey`
+- `charvak_ielts_deep_reports_razorpay_order_id_key`
+- `charvak_ielts_deep_reports_razorpay_payment_id_key`
+- `idx_ielts_deep_reports_email`
+- `idx_ielts_deep_reports_payment`
+- `idx_ielts_deep_reports_session`
+
+---
+
+## charvak_ielts_listening_attempts
+
+| Column | Type | Nullable | Default |
+|---|---|---|---|
+| attempt_id | bigint | NO | nextval('charvak_ielts_listening_atte... |
+| section_id | text | NO |  |
+| email | text | NO |  |
+| answers_json | jsonb | NO | '[]'::jsonb |
+| correct_count | integer | NO | 0 |
+| total_questions | integer | NO | 0 |
+| band_score | numeric | YES |  |
+| attempted_at | timestamp without time zone | YES | CURRENT_TIMESTAMP |
+
+**Indexes:**
+
+- `charvak_ielts_listening_attempts_pkey`
+- `idx_ielts_listening_attempts_email`
+
+---
+
+## charvak_ielts_listening_sections
+
+| Column | Type | Nullable | Default |
+|---|---|---|---|
+| section_id | text | NO |  |
+| section_num | integer | NO |  |
+| title | text | NO | ''::text |
+| topic | text | NO | ''::text |
+| transcript | text | NO | ''::text |
+| duration_sec | integer | YES | 180 |
+| questions_json | jsonb | NO | '[]'::jsonb |
+| use_count | integer | NO | 0 |
+| last_used_at | timestamp without time zone | YES |  |
+| created_at | timestamp without time zone | YES | CURRENT_TIMESTAMP |
+
+**Indexes:**
+
+- `charvak_ielts_listening_sections_pkey`
+- `idx_ielts_listening_sections_num`
+
+---
+
+## charvak_ielts_reading_attempts
+
+| Column | Type | Nullable | Default |
+|---|---|---|---|
+| attempt_id | bigint | NO | nextval('charvak_ielts_reading_attemp... |
+| passage_id | text | NO |  |
+| email | text | NO |  |
+| answers_json | jsonb | NO | '[]'::jsonb |
+| correct_count | integer | NO | 0 |
+| total_questions | integer | NO | 0 |
+| band_score | numeric | YES |  |
+| attempted_at | timestamp without time zone | YES | CURRENT_TIMESTAMP |
+
+**Indexes:**
+
+- `charvak_ielts_reading_attempts_pkey`
+- `idx_ielts_reading_attempts_email`
+
+---
+
+## charvak_ielts_reading_passages
+
+| Column | Type | Nullable | Default |
+|---|---|---|---|
+| passage_id | text | NO |  |
+| passage_num | integer | NO |  |
+| title | text | NO | ''::text |
+| topic | text | NO | ''::text |
+| content | text | NO | ''::text |
+| word_count | integer | YES | 0 |
+| questions_json | jsonb | NO | '[]'::jsonb |
+| use_count | integer | NO | 0 |
+| last_used_at | timestamp without time zone | YES |  |
+| created_at | timestamp without time zone | YES | CURRENT_TIMESTAMP |
+
+**Indexes:**
+
+- `charvak_ielts_reading_passages_pkey`
+- `idx_ielts_reading_passages_num`
+
+---
+
+## charvak_ielts_sessions
+
+| Column | Type | Nullable | Default |
+|---|---|---|---|
+| session_id | text | NO |  |
+| email | text | NO |  |
+| test_type | text | NO |  |
+| content_ref | text | YES |  |
+| status | text | NO | 'in_progress'::text |
+| band_score | numeric | YES |  |
+| details_json | jsonb | NO | '{}'::jsonb |
+| started_at | timestamp without time zone | YES | CURRENT_TIMESTAMP |
+| completed_at | timestamp without time zone | YES |  |
+| integrity_summary | jsonb | YES | '{}'::jsonb |
+| responses_json | jsonb | YES |  |
+
+**Indexes:**
+
+- `charvak_ielts_sessions_pkey`
+- `idx_ielts_sessions_email`
+- `idx_ielts_sessions_started`
+- `idx_ielts_sessions_status`
+- `idx_ielts_sessions_type`
 
 ---
 
@@ -1933,6 +2388,8 @@ Re-generate with: `python scripts/regenerate_schema.py`
 **Indexes:**
 
 - `charvak_kyc_partners_pkey`
+- `idx_kyc_partners_email`
+- `idx_kyc_partners_status`
 
 ---
 
@@ -1964,6 +2421,10 @@ Re-generate with: `python scripts/regenerate_schema.py`
 **Indexes:**
 
 - `charvak_kyc_verifications_pkey`
+- `idx_kyc_verif_assigned`
+- `idx_kyc_verif_email`
+- `idx_kyc_verif_status`
+- `idx_kyc_verif_type`
 
 ---
 
@@ -1983,6 +2444,7 @@ Re-generate with: `python scripts/regenerate_schema.py`
 
 - `charvak_kyc_verified_users_badge_id_key`
 - `charvak_kyc_verified_users_pkey`
+- `idx_kyc_verified_badge`
 
 ---
 
@@ -2045,6 +2507,7 @@ Re-generate with: `python scripts/regenerate_schema.py`
 **Indexes:**
 
 - `charvak_legacy_shift_reports_pkey`
+- `idx_legacy_shift_email`
 
 ---
 
@@ -2062,6 +2525,7 @@ Re-generate with: `python scripts/regenerate_schema.py`
 **Indexes:**
 
 - `charvak_lms_certificates_pkey`
+- `idx_lms_certs_student`
 
 ---
 
@@ -2080,6 +2544,7 @@ Re-generate with: `python scripts/regenerate_schema.py`
 **Indexes:**
 
 - `charvak_lms_discussions_pkey`
+- `idx_lms_disc_course`
 
 ---
 
@@ -2100,6 +2565,8 @@ Re-generate with: `python scripts/regenerate_schema.py`
 
 - `charvak_lms_enrollments_email_course_id_key`
 - `charvak_lms_enrollments_pkey`
+- `idx_lms_enrollments_course`
+- `idx_lms_enrollments_email`
 
 ---
 
@@ -2117,6 +2584,8 @@ Re-generate with: `python scripts/regenerate_schema.py`
 **Indexes:**
 
 - `charvak_lms_lesson_progress_pkey`
+- `idx_lms_progress_enrollment`
+- `idx_lms_progress_lesson`
 
 ---
 
@@ -2134,6 +2603,8 @@ Re-generate with: `python scripts/regenerate_schema.py`
 **Indexes:**
 
 - `charvak_lms_lessons_pkey`
+- `idx_lms_lessons_course`
+- `idx_lms_lessons_order`
 
 ---
 
@@ -2143,13 +2614,15 @@ Re-generate with: `python scripts/regenerate_schema.py`
 |---|---|---|---|
 | payout_id | text | NO |  |
 | trainer_email | text | NO |  |
-| amount | numeric | YES | 0 |
+| amount | numeric | NO | 0 |
 | status | text | YES | 'pending'::text |
 | requested_at | timestamp without time zone | YES | CURRENT_TIMESTAMP |
 
 **Indexes:**
 
 - `charvak_lms_payouts_pkey`
+- `idx_lms_payouts_status`
+- `idx_lms_payouts_trainer`
 
 ---
 
@@ -2161,13 +2634,16 @@ Re-generate with: `python scripts/regenerate_schema.py`
 | quiz_id | text | YES |  |
 | course_id | text | YES |  |
 | student_email | text | NO |  |
-| score | integer | YES | 0 |
+| score | integer | NO | 0 |
 | passed | boolean | YES | false |
 | attempted_at | timestamp without time zone | YES | CURRENT_TIMESTAMP |
 
 **Indexes:**
 
 - `charvak_lms_quiz_attempts_pkey`
+- `idx_lms_attempts_course`
+- `idx_lms_attempts_quiz`
+- `idx_lms_attempts_student`
 
 ---
 
@@ -2184,6 +2660,7 @@ Re-generate with: `python scripts/regenerate_schema.py`
 **Indexes:**
 
 - `charvak_lms_quizzes_pkey`
+- `idx_lms_quizzes_course`
 
 ---
 
@@ -2201,6 +2678,8 @@ Re-generate with: `python scripts/regenerate_schema.py`
 **Indexes:**
 
 - `charvak_lms_ratings_pkey`
+- `idx_lms_ratings_course`
+- `idx_lms_ratings_student`
 
 ---
 
@@ -2250,6 +2729,8 @@ Re-generate with: `python scripts/regenerate_schema.py`
 **Indexes:**
 
 - `charvak_marketing_booking_kits_pkey`
+- `idx_booking_kits_slug`
+- `idx_marketing_booking_kits_email`
 
 ---
 
@@ -2377,6 +2858,8 @@ Re-generate with: `python scripts/regenerate_schema.py`
 **Indexes:**
 
 - `charvak_micro_applications_pkey`
+- `idx_micro_apps_email`
+- `idx_micro_apps_project`
 
 ---
 
@@ -2398,6 +2881,7 @@ Re-generate with: `python scripts/regenerate_schema.py`
 **Indexes:**
 
 - `charvak_micro_clients_pkey`
+- `idx_micro_clients_email`
 
 ---
 
@@ -2433,6 +2917,10 @@ Re-generate with: `python scripts/regenerate_schema.py`
 **Indexes:**
 
 - `charvak_micro_projects_pkey`
+- `idx_micro_projects_category`
+- `idx_micro_projects_client`
+- `idx_micro_projects_escrow`
+- `idx_micro_projects_status`
 
 ---
 
@@ -2459,6 +2947,8 @@ Re-generate with: `python scripts/regenerate_schema.py`
 **Indexes:**
 
 - `charvak_micro_squad_leads_pkey`
+- `idx_micro_squad_leads_email`
+- `idx_micro_squad_leads_status`
 
 ---
 
@@ -2477,6 +2967,7 @@ Re-generate with: `python scripts/regenerate_schema.py`
 
 - `charvak_mock_answers_pkey`
 - `charvak_mock_answers_session_id_section_name_question_id_key`
+- `idx_mock_answers_session`
 
 ---
 
@@ -2501,6 +2992,8 @@ Re-generate with: `python scripts/regenerate_schema.py`
 **Indexes:**
 
 - `charvak_mock_sessions_pkey`
+- `idx_mock_sessions_email`
+- `idx_mock_sessions_status`
 
 ---
 
@@ -2944,9 +3437,9 @@ Re-generate with: `python scripts/regenerate_schema.py`
 
 **Indexes:**
 
-- `charvak_outreach_email_syncs_email_key`
 - `charvak_outreach_email_syncs_pkey`
 - `idx_outreach_syncs_email`
+- `uq_outreach_email_syncs_email`
 
 ---
 
@@ -2963,10 +3456,38 @@ Re-generate with: `python scripts/regenerate_schema.py`
 
 **Indexes:**
 
-- `charvak_outreach_premium_users_email_key`
 - `charvak_outreach_premium_users_pkey`
 - `idx_outreach_premium_email`
 - `idx_outreach_premium_plan`
+- `uq_outreach_premium_users_email`
+
+---
+
+## charvak_passports
+
+| Column | Type | Nullable | Default |
+|---|---|---|---|
+| passport_id | text | NO |  |
+| handle | text | NO |  |
+| email | text | NO |  |
+| display_name | text | YES |  |
+| headline | text | YES |  |
+| charvak_score | integer | YES | 0 |
+| score_tier | text | YES | 'foundation'::text |
+| score_updated_at | timestamp without time zone | YES |  |
+| is_public | boolean | YES | true |
+| created_at | timestamp without time zone | YES | CURRENT_TIMESTAMP |
+| updated_at | timestamp without time zone | YES | CURRENT_TIMESTAMP |
+
+**Indexes:**
+
+- `charvak_passports_email_key`
+- `charvak_passports_handle_key`
+- `charvak_passports_pkey`
+- `idx_passports_email`
+- `idx_passports_handle`
+- `idx_passports_public`
+- `idx_passports_score`
 
 ---
 
@@ -2989,6 +3510,29 @@ Re-generate with: `python scripts/regenerate_schema.py`
 
 ---
 
+## charvak_premium_reports
+
+| Column | Type | Nullable | Default |
+|---|---|---|---|
+| report_id | text | NO |  |
+| email | text | NO |  |
+| report_type | text | NO |  |
+| source_id | text | YES |  |
+| source_data | jsonb | NO | '{}'::jsonb |
+| title | text | YES |  |
+| subtitle | text | YES |  |
+| content_json | jsonb | NO | '{}'::jsonb |
+| credits_used | integer | NO | 400 |
+| created_at | timestamp without time zone | YES | CURRENT_TIMESTAMP |
+
+**Indexes:**
+
+- `charvak_premium_reports_pkey`
+- `idx_premium_reports_email`
+- `idx_premium_reports_type`
+
+---
+
 ## charvak_product_results
 
 | Column | Type | Nullable | Default |
@@ -3006,6 +3550,38 @@ Re-generate with: `python scripts/regenerate_schema.py`
 - `idx_product_results_created`
 - `idx_product_results_email`
 - `idx_product_results_type`
+
+---
+
+## charvak_readiness_certificates
+
+| Column | Type | Nullable | Default |
+|---|---|---|---|
+| certificate_id | text | NO |  |
+| assessment_id | text | NO |  |
+| email | text | NO |  |
+| display_name | text | YES |  |
+| role | text | NO |  |
+| industry | text | NO |  |
+| level | text | NO |  |
+| readiness_score | integer | NO |  |
+| percentile | integer | YES |  |
+| benchmark_score | integer | YES |  |
+| verdict | text | YES |  |
+| payload_json | jsonb | YES |  |
+| certificate_hash | text | NO |  |
+| source | text | NO | 'written'::text |
+| created_at | timestamp without time zone | YES | CURRENT_TIMESTAMP |
+| supersedes | text | YES |  |
+| superseded_by | text | YES |  |
+
+**Indexes:**
+
+- `charvak_readiness_certificates_pkey`
+- `idx_rdc_assessment`
+- `idx_rdc_email`
+- `idx_rdc_hash`
+- `idx_rdc_supersedes`
 
 ---
 
@@ -3065,6 +3641,37 @@ Re-generate with: `python scripts/regenerate_schema.py`
 
 ---
 
+## charvak_resume_teasers
+
+| Column | Type | Nullable | Default |
+|---|---|---|---|
+| teaser_id | text | NO |  |
+| share_id | text | NO |  |
+| ip_hash | text | YES |  |
+| resume_preview | text | YES |  |
+| job_title | text | YES |  |
+| score | integer | YES |  |
+| one_issue | text | YES |  |
+| teaser_json | jsonb | YES |  |
+| email | text | YES |  |
+| unlocked | boolean | YES | false |
+| unlocked_at | timestamp without time zone | YES |  |
+| unlock_payment_id | text | YES |  |
+| gateway | text | YES |  |
+| currency | text | YES |  |
+| amount_local | numeric | YES |  |
+| created_at | timestamp without time zone | YES | CURRENT_TIMESTAMP |
+
+**Indexes:**
+
+- `charvak_resume_teasers_pkey`
+- `charvak_resume_teasers_share_id_key`
+- `idx_resume_teasers_email`
+- `idx_resume_teasers_ip_date`
+- `idx_resume_teasers_share`
+
+---
+
 ## charvak_reverse_staffing_subscriptions
 
 | Column | Type | Nullable | Default |
@@ -3080,6 +3687,7 @@ Re-generate with: `python scripts/regenerate_schema.py`
 **Indexes:**
 
 - `charvak_reverse_staffing_subscriptions_pkey`
+- `idx_rev_staff_subs_expires`
 
 ---
 
@@ -3101,6 +3709,97 @@ Re-generate with: `python scripts/regenerate_schema.py`
 - `charvak_role_manager_custom_roles_pkey`
 - `idx_rm_roles_category`
 - `idx_rm_roles_status`
+
+---
+
+## charvak_role_screening_answers
+
+| Column | Type | Nullable | Default |
+|---|---|---|---|
+| answer_id | text | NO |  |
+| role_id | text | NO |  |
+| candidate_id | text | NO |  |
+| question_id | text | NO |  |
+| answer_text | text | YES |  |
+| answered_by | text | YES |  |
+| answered_at | timestamp without time zone | YES | CURRENT_TIMESTAMP |
+
+**Indexes:**
+
+- `charvak_role_screening_answers_candidate_id_question_id_key`
+- `charvak_role_screening_answers_pkey`
+- `idx_screening_answers_cand`
+
+---
+
+## charvak_role_screening_questions
+
+| Column | Type | Nullable | Default |
+|---|---|---|---|
+| question_id | text | NO |  |
+| role_id | text | NO |  |
+| question_num | integer | NO |  |
+| question_text | text | NO |  |
+| answer_type | text | NO |  |
+| choices_json | jsonb | YES |  |
+| fill_source | text | NO | 'candidate'::text |
+| required | boolean | YES | true |
+| sort_order | integer | YES |  |
+| created_at | timestamp without time zone | YES | CURRENT_TIMESTAMP |
+
+**Indexes:**
+
+- `charvak_role_screening_questions_pkey`
+- `idx_screening_questions_role`
+
+---
+
+## charvak_share_claims
+
+| Column | Type | Nullable | Default |
+|---|---|---|---|
+| claim_id | text | NO |  |
+| share_id | text | NO |  |
+| ip_hash | text | YES |  |
+| user_email | text | YES |  |
+| claimed_at | timestamp without time zone | YES | CURRENT_TIMESTAMP |
+
+**Indexes:**
+
+- `charvak_share_claims_pkey`
+- `idx_share_claims_ip_date`
+- `idx_share_claims_share`
+- `idx_share_claims_share_ip`
+
+---
+
+## charvak_share_rewards
+
+| Column | Type | Nullable | Default |
+|---|---|---|---|
+| reward_id | text | NO |  |
+| share_id | text | NO |  |
+| owner_email | text | YES |  |
+| owner_token | text | YES |  |
+| tool_name | text | NO |  |
+| clicks | integer | YES | 0 |
+| completions | integer | YES | 0 |
+| credits_earned | integer | YES | 0 |
+| claimed | boolean | YES | false |
+| claimed_at | timestamp without time zone | YES |  |
+| created_at | timestamp without time zone | YES | CURRENT_TIMESTAMP |
+| updated_at | timestamp without time zone | YES | CURRENT_TIMESTAMP |
+| owner_ip_hash | text | YES |  |
+| last_claimed_at | timestamp without time zone | YES |  |
+| claim_window_start | timestamp without time zone | YES |  |
+
+**Indexes:**
+
+- `charvak_share_rewards_pkey`
+- `charvak_share_rewards_share_id_key`
+- `idx_share_rewards_owner`
+- `idx_share_rewards_share`
+- `idx_share_rewards_token`
 
 ---
 
@@ -3166,32 +3865,36 @@ Re-generate with: `python scripts/regenerate_schema.py`
 
 ---
 
-## charvak_skill_twin_results
+## charvak_skill_twin_challenges
 
 | Column | Type | Nullable | Default |
 |---|---|---|---|
-| check_id | text | NO |  |
-| email | text | NO |  |
-| twin_id | text | YES |  |
-| skills_json | jsonb | YES |  |
-| experience | integer | YES |  |
-| self_rating | numeric | YES |  |
-| verified_score | integer | YES |  |
-| gap | numeric | YES |  |
-| skill_level | text | YES |  |
-| badge_eligible | boolean | YES | false |
-| badge_issued | boolean | YES | false |
-| badge_id | text | YES |  |
-| result_json | jsonb | YES |  |
+| challenge_id | text | NO |  |
+| owner_email | text | NO |  |
+| owner_handle | text | NO |  |
+| owner_score | integer | NO |  |
+| role | text | YES |  |
+| industry | text | YES |  |
+| level | text | YES |  |
+| status | text | NO | 'pending'::text |
+| challenger_email | text | YES |  |
+| challenger_score | integer | YES |  |
+| challenger_pct | integer | YES |  |
+| challenger_assessment_id | text | YES |  |
+| winner | text | YES |  |
+| credits_owner | integer | NO | 0 |
+| credits_challenger | integer | NO | 0 |
 | created_at | timestamp without time zone | YES | CURRENT_TIMESTAMP |
-| badge_issued_at | timestamp without time zone | YES |  |
+| accepted_at | timestamp without time zone | YES |  |
+| expires_at | timestamp without time zone | YES |  |
+| clicked_count | integer | NO | 0 |
 
 **Indexes:**
 
-- `charvak_skill_twin_results_pkey`
-- `idx_skill_twin_badge_eligible`
-- `idx_skill_twin_badge_id`
-- `idx_skill_twin_email`
+- `charvak_skill_twin_challenges_pkey`
+- `idx_skill_twin_handle`
+- `idx_skill_twin_owner`
+- `idx_skill_twin_status`
 
 ---
 
@@ -3330,6 +4033,34 @@ Re-generate with: `python scripts/regenerate_schema.py`
 
 ---
 
+## charvak_tool_purchases
+
+| Column | Type | Nullable | Default |
+|---|---|---|---|
+| purchase_id | text | NO |  |
+| email | text | YES |  |
+| tool_slug | text | NO |  |
+| tool_name | text | YES |  |
+| amount_inr | integer | NO | 99 |
+| currency | text | NO | 'INR'::text |
+| razorpay_order_id | text | YES |  |
+| razorpay_payment_id | text | YES |  |
+| status | text | NO | 'pending'::text |
+| result_json | jsonb | YES |  |
+| error_message | text | YES |  |
+| created_at | timestamp without time zone | YES | CURRENT_TIMESTAMP |
+| completed_at | timestamp without time zone | YES |  |
+
+**Indexes:**
+
+- `charvak_tool_purchases_pkey`
+- `charvak_tool_purchases_razorpay_order_id_key`
+- `charvak_tool_purchases_razorpay_payment_id_key`
+- `idx_tool_purchases_email`
+- `idx_tool_purchases_tool`
+
+---
+
 ## charvak_tool_results
 
 | Column | Type | Nullable | Default |
@@ -3345,6 +4076,9 @@ Re-generate with: `python scripts/regenerate_schema.py`
 **Indexes:**
 
 - `charvak_tool_results_pkey`
+- `idx_tool_results_email`
+- `idx_tool_results_email_created`
+- `idx_tool_results_email_tool`
 
 ---
 
@@ -3371,6 +4105,10 @@ Re-generate with: `python scripts/regenerate_schema.py`
 **Indexes:**
 
 - `charvak_training_courses_pkey`
+- `idx_training_courses_category`
+- `idx_training_courses_skills_gin`
+- `idx_training_courses_status`
+- `idx_training_courses_trainer`
 
 ---
 
@@ -3391,6 +4129,9 @@ Re-generate with: `python scripts/regenerate_schema.py`
 **Indexes:**
 
 - `charvak_training_enrollments_pkey`
+- `idx_training_enrollments_course`
+- `idx_training_enrollments_payment`
+- `idx_training_enrollments_student`
 
 ---
 
@@ -3511,6 +4252,7 @@ Re-generate with: `python scripts/regenerate_schema.py`
 
 - `charvak_user_ability_pkey`
 - `idx_user_ability_email`
+- `idx_user_ability_score`
 - `idx_user_ability_skill`
 
 ---
@@ -3533,6 +4275,71 @@ Re-generate with: `python scripts/regenerate_schema.py`
 **Indexes:**
 
 - `charvak_user_credits_pkey`
+
+---
+
+## charvak_user_streaks
+
+| Column | Type | Nullable | Default |
+|---|---|---|---|
+| email | text | NO |  |
+| current_streak | integer | NO | 0 |
+| longest_streak | integer | NO | 0 |
+| last_drill_date | date | YES |  |
+| total_drills | integer | NO | 0 |
+| total_correct | integer | NO | 0 |
+| total_questions | integer | NO | 0 |
+| streak_credits | integer | NO | 0 |
+| updated_at | timestamp without time zone | NO | CURRENT_TIMESTAMP |
+
+**Indexes:**
+
+- `charvak_user_streaks_pkey`
+- `idx_streaks_current`
+
+---
+
+## charvak_versant_answers
+
+| Column | Type | Nullable | Default |
+|---|---|---|---|
+| answer_id | bigint | NO | nextval('charvak_versant_answers_answ... |
+| session_id | text | NO |  |
+| section_id | text | NO |  |
+| question_id | text | NO |  |
+| question_text | text | YES |  |
+| answer_text | text | YES |  |
+| transcript | text | YES |  |
+| answered_at | timestamp without time zone | YES | CURRENT_TIMESTAMP |
+
+**Indexes:**
+
+- `charvak_versant_answers_pkey`
+- `charvak_versant_answers_unique`
+- `idx_versant_answers_session`
+
+---
+
+## charvak_versant_sessions
+
+| Column | Type | Nullable | Default |
+|---|---|---|---|
+| session_id | text | NO |  |
+| email | text | NO |  |
+| status | text | NO | 'in_progress'::text |
+| details_json | jsonb | NO | '{}'::jsonb |
+| overall_score | numeric | YES |  |
+| started_at | timestamp without time zone | YES | CURRENT_TIMESTAMP |
+| completed_at | timestamp without time zone | YES |  |
+| integrity_summary | jsonb | YES | '{}'::jsonb |
+| passed | boolean | YES | false |
+
+**Indexes:**
+
+- `charvak_versant_sessions_pkey`
+- `idx_versant_sessions_email`
+- `idx_versant_sessions_started`
+- `idx_versant_sessions_status`
 
 ---
 
@@ -3644,107 +4451,3 @@ Re-generate with: `python scripts/regenerate_schema.py`
 - `idx_v2w_updates_site`
 
 ---
-
-<!-- BEGIN WAVE-1-TABLES -->
-
-## Wave 1 Tables (Sessions 46-48)
-
-### charvak_passports
-
-Public identity artifact. One row per user.
-
-- passport_id TEXT PK
-- handle TEXT UNIQUE (URL-safe identifier)
-- email TEXT UNIQUE
-- display_name TEXT
-- headline TEXT
-- charvak_score INTEGER (0-1000 composite)
-- score_tier TEXT (foundation/developing/solid/strong/elite)
-- score_updated_at TIMESTAMP
-- is_public BOOLEAN default TRUE
-- created_at TIMESTAMP
-- updated_at TIMESTAMP
-
-### charvak_skill_twin_challenges
-
-Shareable "beat my score" links.
-
-- challenge_id TEXT PK
-- challenger_email TEXT
-- challenge_code TEXT UNIQUE
-- role TEXT
-- industry TEXT
-- level TEXT
-- challenger_score INTEGER
-- challenger_attempt_email TEXT
-- accepted BOOLEAN
-- created_at TIMESTAMP
-- expires_at TIMESTAMP
-
-### charvak_daily_drills
-
-One drill row per (email, date).
-
-- drill_id TEXT PK
-- email TEXT
-- drill_date DATE
-- topic TEXT
-- questions_json JSONB
-- completed BOOLEAN
-- score INTEGER
-- correct_count INTEGER
-- total_questions INTEGER default 5
-- created_at TIMESTAMP
-- UNIQUE(email, drill_date)
-
-### charvak_user_streaks
-
-One row per user, tracks streak data.
-
-- email TEXT PK
-- current_streak INTEGER
-- longest_streak INTEGER
-- last_drill_date DATE
-- total_drills INTEGER
-- total_correct INTEGER
-- total_questions INTEGER
-- streak_credits INTEGER
-- updated_at TIMESTAMP
-
-### charvak_cohorts
-
-Private batch leaderboards.
-
-- cohort_id TEXT PK
-- name TEXT
-- description TEXT
-- join_code TEXT UNIQUE (8-char, no ambiguous chars)
-- created_by TEXT (email of owner)
-- member_count INTEGER
-- is_public BOOLEAN
-- created_at TIMESTAMP
-- last_refresh TIMESTAMP
-
-### charvak_cohort_members
-
-Membership table.
-
-- cohort_id TEXT PK part
-- member_email TEXT PK part
-- role TEXT (owner/admin/member)
-- joined_at TIMESTAMP
-- PK(cohort_id, member_email)
-
-### charvak_cohort_leaderboard
-
-Weekly cache.
-
-- cohort_id TEXT PK part
-- member_email TEXT PK part
-- week_start DATE PK part (ISO Monday)
-- composite_score INTEGER
-- rank INTEGER
-- refreshed_at TIMESTAMP
-- PK(cohort_id, member_email, week_start)
-
-<!-- END WAVE-1-TABLES -->
