@@ -112,3 +112,45 @@ async def call_openai_raw(model: str, messages: list, **kwargs) -> dict:
             return response.json()
     except Exception as e:
         return {"error": f"{type(e).__name__}: {e}"}
+
+def translate_kwargs(model: str, max_tokens: int = None,
+                      temperature: float = 0.7, json_mode: bool = False,
+                      **extra) -> dict:
+    """
+    Translate caller kwargs into model-appropriate OpenAI SDK kwargs.
+
+    Designed for use with the `openai` Python SDK (>= 1.0):
+        from openai_compat import translate_kwargs
+        response = client.chat.completions.create(
+            model=model, messages=messages,
+            **translate_kwargs(model, max_tokens=500, temperature=0.7, json_mode=True)
+        )
+
+    Handles:
+    - gpt-5.x    -> max_completion_tokens
+    - gpt-4o-*   -> max_tokens (backward compat)
+    - gpt-5.5+   -> skips temperature (rejects non-default)
+    - json_mode  -> response_format json_object
+    """
+    kwargs = {}
+
+    # Token param: GPT-5.x requires max_completion_tokens
+    if max_tokens is not None:
+        if _is_gpt5(model):
+            kwargs["max_completion_tokens"] = max_tokens
+        else:
+            kwargs["max_tokens"] = max_tokens
+
+    # Temperature: GPT-5.5+ only accepts default (1.0)
+    if not _is_gpt55_plus(model):
+        kwargs["temperature"] = temperature
+
+    # JSON mode
+    if json_mode:
+        kwargs["response_format"] = {"type": "json_object"}
+
+    # Extra kwargs pass-through (tools, stop, seed, etc.)
+    for k, v in extra.items():
+        kwargs[k] = v
+
+    return kwargs
