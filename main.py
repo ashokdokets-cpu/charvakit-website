@@ -3363,6 +3363,22 @@ async def api_passport_get(request: Request, handle: str):
         return handle_error(e, "passport api")
 
 
+@app.get("/api/passport/{handle}/verify")
+@limiter.limit("30/minute")
+async def api_passport_verify(request: Request, handle: str):
+    """Session 50: Public Trust Score Verification API (employer-facing). No auth required."""
+    try:
+        import passport_engine as pe
+        result = pe.get_public_verification(handle)
+        if result.get("status") != "success":
+            status = 404 if result.get("code") == "not_found" else 400
+            return JSONResponse(status_code=status, content=result)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "passport verify")
+
 @app.get("/passport/{handle}/badge.svg")
 @limiter.limit("120/minute")
 async def passport_badge_svg(request: Request, handle: str):

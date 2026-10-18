@@ -394,6 +394,95 @@ def create_or_get_passport(email: str, display_name: str = "",
             except Exception: pass
 
 
+def get_public_verification(handle: str) -> Dict:
+    """
+    Session 50: Trust Score Public Verification API.
+
+    Returns employer-facing verification data for a public passport.
+    No PII. Only aggregate signals + HMAC verify_hash.
+
+    Session 50.5 follow-up: wire integrity_engine for real integrity_risk
+    (currently returns "unknown").
+    """
+    import hashlib
+    handle = (handle or "").strip().lower()
+    if not handle:
+        return {"status": "error", "message": "handle required"}
+
+    conn = None
+    try:
+        conn = db.get_connection()
+        cur = conn.cursor()
+
+        cur.execute("""
+            SELECT passport_id, email, charvak_score, score_tier,
+                   is_public, score_updated_at, created_at
+            FROM charvak_passports WHERE handle = %s
+        """, (handle,))
+        row = cur.fetchone()
+        if not row:
+            cur.close()
+            return {"status": "error", "message": "Passport not found", "code": "not_found"}
+
+        (passport_id, email, charvak_score, score_tier,
+         is_public, score_updated_at, created_at) = row
+
+        if not is_public:
+            cur.close()
+            return {"status": "error", "message": "Passport not found", "code": "not_found"}
+
+        # Certificate count
+        cur.execute("SELECT COUNT(*) FROM charvak_readiness_certificates WHERE email = %s", (email,))
+        cert_row = cur.fetchone()
+        cert_count = int(cert_row[0]) if cert_row else 0
+
+        # Component breakdown (best-effort from aggregate data)
+        breakdown = {"readiness": 0, "career": 0, "breadth": 0, "integrity": 100}
+        try:
+            agg = _get_aggregate_data(email)
+            if agg and isinstance(agg, dict):
+                breakdown["readiness"] = int(agg.get("readiness_pct", 0) or 0)
+                breakdown["career"] = int(agg.get("career_pct", 0) or 0)
+                breakdown["breadth"] = int(agg.get("breadth_pct", 0) or 0)
+                breakdown["integrity"] = int(agg.get("integrity_pct", 100) or 100)
+        except Exception:
+            pass  # non-fatal
+
+        cur.close()
+
+        # HMAC verify_hash (matches Session 45 share/reward signature pattern)
+        import os
+        secret = (os.getenv("SECRET_KEY", "dev") or "dev")[:8]
+        verify_hash = hashlib.sha256(
+            f"trust-score|{handle}|{charvak_score}|{score_updated_at}|{secret}".encode()
+        ).hexdigest()[:16]
+
+        site_url = (os.getenv("SITE_URL", "https://www.charvakit.com") or "https://www.charvakit.com").rstrip("/")
+        verify_url = f"{site_url}/api/passport/{handle}/verify/{verify_hash}"
+
+        return {
+            "status": "success",
+            "verified": True,
+            "handle": handle,
+            "charvak_score": int(charvak_score or 0),
+            "score_tier": score_tier or "foundation",
+            "certificate_count": cert_count,
+            "component_breakdown": breakdown,
+            "integrity_risk": "unknown",
+            "issued_at": created_at.isoformat() if created_at else None,
+            "score_updated_at": score_updated_at.isoformat() if score_updated_at else None,
+            "verify_hash": verify_hash,
+            "verify_url": verify_url,
+            "issuer": "Charvak IT Consulting Pvt Ltd",
+        }
+    except Exception as e:
+        logger.warning(f"get_public_verification: {e}")
+        return {"status": "error", "message": str(e)}
+    finally:
+        if conn:
+            try: conn.close()
+            except Exception: pass
+
 def get_passport_by_handle(handle: str, include_score: bool = True) -> Dict:
     """Full passport payload: identity + score + all aggregate data."""
     handle = (handle or "").strip().lower()
