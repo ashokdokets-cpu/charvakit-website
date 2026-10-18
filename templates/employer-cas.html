@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+{% block title %}Certificate-as-a-Service - Charvak{% endblock %}
+
+{% block content %}
+<style>
+.cas-hero { background: linear-gradient(135deg, #0f766e 0%, #0d9488 100%);
+    color: white; padding: 3rem 1.5rem; border-radius: 12px; margin-bottom: 2rem; }
+.cas-hero h1 { font-size: 2.2rem; margin-bottom: .75rem; font-weight: 700; }
+.cas-hero .tagline { font-size: 1.2rem; opacity: .95; margin-bottom: 1.25rem; }
+.cas-hero .cta-row { display: flex; gap: .75rem; flex-wrap: wrap; }
+.cas-hero .btn-light { font-weight: 600; }
+.cas-pricing { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem; margin-bottom: 2rem; }
+.cas-tier { background: white; border: 1px solid #e5e7eb; border-radius: 10px; padding: 1.5rem;
+    transition: all .15s; }
+.cas-tier:hover { border-color: #0d9488; box-shadow: 0 4px 12px rgba(13,148,136,.15); }
+.cas-tier h4 { font-size: 1.1rem; font-weight: 700; margin-bottom: .5rem; color: #111827; }
+.cas-tier .price { font-size: 2rem; font-weight: 800; color: #0d9488; margin-bottom: .5rem; }
+.cas-tier .price small { font-size: .85rem; color: #6b7280; font-weight: 400; }
+.cas-tier ul { list-style: none; padding: 0; margin: .75rem 0 0 0; font-size: .9rem; color: #374151; }
+.cas-tier li { padding: .25rem 0; }
+.cas-tier li::before { content: "✓ "; color: #0d9488; font-weight: 700; }
+.cas-section { background: white; border: 1px solid #e5e7eb; border-radius: 10px;
+    padding: 2rem; margin-bottom: 1.5rem; }
+.cas-section h3 { color: #111827; font-weight: 700; margin-bottom: 1rem; }
+.code-block { background: #1f2937; color: #f9fafb; padding: 1rem 1.25rem; border-radius: 8px;
+    font-family: 'Consolas', 'Monaco', monospace; font-size: .85rem; overflow-x: auto;
+    line-height: 1.5; margin-bottom: 1rem; }
+.code-block .comment { color: #9ca3af; }
+.code-block .string { color: #a7f3d0; }
+.form-row { display: grid; gap: 1rem; grid-template-columns: 1fr 1fr; margin-bottom: 1rem; }
+.form-row.full { grid-template-columns: 1fr; }
+.form-row label { font-weight: 600; font-size: .9rem; margin-bottom: .35rem; display: block;
+    color: #111827; }
+.form-row input, .form-row textarea { width: 100%; padding: .6rem; border: 1px solid #d1d5db;
+    border-radius: 6px; font-size: .95rem; }
+.form-row input:focus, .form-row textarea:focus { outline: none; border-color: #0d9488;
+    box-shadow: 0 0 0 3px rgba(13,148,136,.1); }
+.alert-cas { padding: 1rem 1.25rem; border-radius: 8px; margin-top: 1rem; font-size: .95rem; }
+.alert-success { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
+.alert-error { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+.alert-info { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
+</style>
+
+<div class="container py-4">
+    <div class="cas-hero">
+        <h1>🎓 Certificate-as-a-Service</h1>
+        <p class="tagline">Verify an entire graduating batch with one API call. Built for universities, colleges, and placement cells.</p>
+        <div class="cta-row">
+            <a href="#request" class="btn btn-light">Request API Key</a>
+            <a href="#docs" class="btn btn-outline-light">View API Docs</a>
+        </div>
+    </div>
+
+    <!-- Pricing -->
+    <h3 class="mb-3">Pricing</h3>
+    <div class="cas-pricing">
+        <div class="cas-tier">
+            <h4>Pilot</h4>
+            <div class="price">Free<small> / 1 batch</small></div>
+            <ul>
+                <li>Up to 500 verifications</li>
+                <li>1 batch per day</li>
+                <li>Email support</li>
+                <li>4-week pilot window</li>
+            </ul>
+        </div>
+        <div class="cas-tier">
+            <h4>Department</h4>
+            <div class="price">₹49,999<small> / year</small></div>
+            <ul>
+                <li>5,000 verifications/year</li>
+                <li>Unlimited batches</li>
+                <li>Priority email support</li>
+                <li>1 department</li>
+            </ul>
+        </div>
+        <div class="cas-tier">
+            <h4>Campus</h4>
+            <div class="price">₹1,99,999<small> / year</small></div>
+            <ul>
+                <li>50,000 verifications/year</li>
+                <li>Unlimited batches</li>
+                <li>Slack + phone support</li>
+                <li>Co-branded certificates</li>
+            </ul>
+        </div>
+        <div class="cas-tier">
+            <h4>University</h4>
+            <div class="price">₹4,99,999<small> / year</small></div>
+            <ul>
+                <li>Unlimited verifications</li>
+                <li>All campuses + departments</li>
+                <li>Dedicated account manager</li>
+                <li>Custom integration support</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- API Docs -->
+    <div class="cas-section" id="docs">
+        <h3>API Documentation</h3>
+        <p>Verify up to 100 certificate hashes per request. All endpoints return JSON.</p>
+
+        <h5 class="mt-4">1. Batch verify certificates</h5>
+        <div class="code-block">
+POST /api/cas/verify-batch
+Header: <span class="string">X-CAS-Key: cas_&lt;your_api_key&gt;</span>
+Content-Type: application/json
+
+{
+  <span class="string">"certificate_hashes"</span>: [
+    <span class="string">"3b8dddf71c2a37b6"</span>,
+    <span class="string">"eeb2390f55e93db0"</span>
+  ]
+}
+        </div>
+        <p class="text-muted small">Response (200 OK):</p>
+        <div class="code-block">
+{
+  <span class="string">"status"</span>: <span class="string">"success"</span>,
+  <span class="string">"total"</span>: 2,
+  <span class="string">"valid"</span>: 1,
+  <span class="string">"invalid"</span>: 1,
+  <span class="string">"results"</span>: [
+    {
+      <span class="string">"hash"</span>: <span class="string">"3b8dddf71c2a37b6"</span>,
+      <span class="string">"valid"</span>: true,
+      <span class="string">"certificate_id"</span>: <span class="string">"RDC-XXXXXXXXXXXX"</span>,
+      <span class="string">"candidate_name"</span>: <span class="string">"Jane Doe"</span>,
+      <span class="string">"role"</span>: <span class="string">"Data Analyst"</span>,
+      <span class="string">"industry"</span>: <span class="string">"HealthTech"</span>,
+      <span class="string">"level"</span>: <span class="string">"mid"</span>,
+      <span class="string">"readiness_score"</span>: 78,
+      <span class="string">"verdict"</span>: <span class="string">"above_benchmark"</span>,
+      <span class="string">"issued_at"</span>: <span class="string">"2026-10-15T10:30:00"</span>
+    },
+    {
+      <span class="string">"hash"</span>: <span class="string">"eeb2390f55e93db0"</span>,
+      <span class="string">"valid"</span>: false,
+      <span class="string">"reason"</span>: <span class="string">"not_found"</span>
+    }
+  ]
+}
+        </div>
+
+        <h5 class="mt-4">2. Where do certificate hashes come from?</h5>
+        <p>Every Charvak readiness certificate (issued at <code>/readiness-check</code>) includes a verify URL. The hash is the last segment of that URL:</p>
+        <div class="code-block">
+<span class="comment"># Example certificate</span>
+https://www.charvakit.com/readiness/RDC-abc123def456
+
+<span class="comment"># Its verify URL contains the hash</span>
+https://www.charvakit.com/api/readiness/verify/<span class="string">3b8dddf71c2a37b6</span>
+                                          <span class="comment">└─ this is the certificate_hash</span>
+        </div>
+
+        <h5 class="mt-4">3. Rate limits</h5>
+        <ul>
+            <li><strong>Batch endpoint:</strong> 60/min per IP, 100 hashes per request</li>
+            <li><strong>Monthly quota:</strong> depends on tier (500 / 5,000 / 50,000 / unlimited)</li>
+            <li><strong>Quota exceeded:</strong> HTTP 400 with <code>reason: "quota_exceeded"</code></li>
+        </ul>
+    </div>
+
+    <!-- Request form -->
+    <div class="cas-section" id="request">
+        <h3>Request API Access</h3>
+        <p>Fill this in. We review every application within 24 hours (pilot fast-track: same day).</p>
+
+        <form id="casRequestForm">
+            <div class="form-row">
+                <div>
+                    <label for="institution_name">Institution Name *</label>
+                    <input type="text" id="institution_name" required placeholder="Amrita Vishwa Vidyapeetham">
+                </div>
+                <div>
+                    <label for="contact_name">Your Name</label>
+                    <input type="text" id="contact_name" placeholder="Prof. Raj">
+                </div>
+            </div>
+            <div class="form-row full">
+                <div>
+                    <label for="contact_email">Email *</label>
+                    <input type="email" id="contact_email" required placeholder="raj@university.edu">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-success" id="casSubmitBtn">Request API Key</button>
+        </form>
+
+        <div id="casResult"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    function esc(s) {
+        if (!s) return '';
+        return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    const form = document.getElementById('casRequestForm');
+    const btn = document.getElementById('casSubmitBtn');
+    const resultDiv = document.getElementById('casResult');
+
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        btn.disabled = true;
+        btn.textContent = 'Submitting...';
+        resultDiv.innerHTML = '';
+
+        const payload = {
+            institution_name: document.getElementById('institution_name').value.trim(),
+            contact_name: document.getElementById('contact_name').value.trim(),
+            contact_email: document.getElementById('contact_email').value.trim(),
+        };
+
+        try {
+            const r = await fetch('/api/cas/request-key', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload),
+            });
+            const data = await r.json();
+
+            if (data.status === 'pending') {
+                resultDiv.innerHTML = `
+                    <div class="alert-cas alert-success">
+                        <strong>✅ Request received.</strong><br>
+                        Reference: <code>${esc(data.key_id)}</code><br>
+                        ${esc(data.message)}
+                    </div>
+                `;
+                form.reset();
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="alert-cas alert-error">
+                        <strong>❌ ${esc(data.message || 'Request failed')}</strong>
+                    </div>
+                `;
+            }
+        } catch (err) {
+            resultDiv.innerHTML = `
+                <div class="alert-cas alert-error">
+                    <strong>❌ Network error.</strong> Please try again.
+                </div>
+            `;
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Request API Key';
+        }
+    });
+})();
+</script>
+{% endblock %}

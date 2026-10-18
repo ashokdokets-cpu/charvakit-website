@@ -3956,6 +3956,65 @@ async def api_cohorts_visibility(request: Request, cohort_id: str):
     except Exception as e:
         return handle_error(e, "cohorts visibility")
 
+
+# ============================================================
+# CAS (Certificate-as-a-Service) routes - Session 52
+# ============================================================
+
+@app.post("/api/cas/verify-batch")
+@limiter.limit("60/minute")
+async def api_cas_verify_batch(request: Request):
+    """Batch verify up to 100 readiness certificates. Requires X-CAS-Key header."""
+    try:
+        import cas_engine
+        body = await request.json()
+        hashes = body.get("certificate_hashes", [])
+        api_key = request.headers.get("X-CAS-Key", "")
+        if not api_key:
+            return JSONResponse(status_code=401, content={
+                "status": "error",
+                "message": "X-CAS-Key header required",
+            })
+        result = cas_engine.verify_batch(hashes, api_key)
+        if result.get("status") != "success":
+            return JSONResponse(status_code=400, content=result)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "cas verify batch")
+
+
+@app.post("/api/cas/request-key")
+@limiter.limit("5/minute")
+async def api_cas_request_key(request: Request):
+    """University requests an API key. Pending until admin approval."""
+    try:
+        import cas_engine
+        body = await request.json()
+        result = cas_engine.request_api_key(
+            institution_name=body.get("institution_name", ""),
+            contact_name=body.get("contact_name", ""),
+            contact_email=body.get("contact_email", ""),
+        )
+        if result.get("status") != "pending":
+            return JSONResponse(status_code=400, content=result)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "cas request key")
+
+
+@app.get("/employer/cas", response_class=HTMLResponse)
+@limiter.limit("60/minute")
+async def employer_cas_page(request: Request):
+    """CAS landing page - pricing, API docs, request form."""
+    return template_response(
+        "employer-cas.html", request,
+        "Certificate-as-a-Service - Charvak",
+        error=None,
+    )
 @app.get("/api/passport/public/list")
 @limiter.limit("60/minute")
 async def api_passport_public_list(
