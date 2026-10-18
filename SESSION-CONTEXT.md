@@ -2404,6 +2404,6 @@ Recommended: A (Trust Score Public API - GET /api/passport/{handle}/verify)
 
 - Amrita CDC reply to Prof. Raj (draft exists in this session's context)
 - Render Postgres password rotation (Session 19 flag)
-- /api/lms/progress ownership check (Session 14 flag)
+- ~~/api/lms/progress ownership check~~ RESOLVED 2026-10-19 (main.py:8844-8857)
 
 <!-- END SESSION-49 -->

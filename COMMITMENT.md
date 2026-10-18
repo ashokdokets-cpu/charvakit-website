@@ -4679,30 +4679,14 @@ Verdict: RESOLVED
 
 ---
 
-### FLAGGED Ã¢â‚¬â€ LMS progress ownership check (2026-10-03, Session 14 security sweep)
+### RESOLVED - LMS progress ownership check (2026-10-19, verified)
 
-`/api/lms/progress/{enrollment_id}` was fully open (any caller could
-read any enrollment's progress). Session 14 added `require_auth(request)`
-so it now requires a logged-in user.
+**Verified 2026-10-19.** Fully implemented in Session 14:
+- Route: `main.py:8844-8857` - `require_auth(request)` + `lms_engine.get_enrollment_owner(enrollment_id)`
+- If `owner != caller_email` and caller not in `ADMIN_EMAILS`, returns 403
+- Engine helper `lms_engine.get_enrollment_owner` exists at `lms_engine.py:410`
 
-**Still missing:** ownership check. Any logged-in user can read any
-enrollment's progress by ID. The enrollment_id may not be guessable in
-practice, and the data returned is minimal (percentage only), so this
-is Medium priority.
-
-**Fix:** add ownership verification. Requires `lms_engine.get_progress`
-to expose the enrollment's owner email, OR a new helper
-`lms_engine.get_enrollment_owner(enrollment_id)`. Then:
-
-    require_auth_for_request(request)  # returns caller
-    owner = lms_engine.get_enrollment_owner(enrollment_id)
-    if owner != caller_email and not is_admin:
-        return 403
-
-**Est:** ~30 min (engine change + route change + E2E)
-
-**Verdict:** SCHEDULED Ã¢â‚¬â€ Session 15 or 16
-
+**Verdict:** RESOLVED - docs-only close-out. No code change needed.
 ---
 
 ### RESOLVED Ã¢â‚¬â€ Rotated PayPal client secret (2026-10-03)
@@ -5166,7 +5150,7 @@ the event even though the API returns 404.
 
 - **rdOpenShare()** in readiness.html is now unused (anchors navigate
   directly via href). Left in place for a future cleanup pass.
-- **PayPal capture for A1.6 tools** Ã¢â‚¬â€ the route now exists but hasn't
+- ~~**PayPal capture for A1.6 tools**~~ RESOLVED 2026-10-19 (route at main.py:15136, engine at payment_engine.py:799)
   been E2E tested with real PayPal sandbox flow. Razorpay (India) is
   verified.
 
@@ -5561,8 +5545,8 @@ D) Real usage analytics (~2-3 hrs)
 ### Still-open long-tail flags
 
 - Render Postgres password rotation (Session 19)
-- /api/lms/progress/{enrollment_id} ownership check (Session 14)
-- PayPal capture route for A1.6 tools (Razorpay verified only)
+- ~~/api/lms/progress/{enrollment_id} ownership check~~ RESOLVED 2026-10-19 (main.py:8844-8857)
+- ~~PayPal capture route for A1.6 tools~~ RESOLVED 2026-10-19 (main.py:15136, payment_engine.py:799)
 - CI hook for IELTS relevance test (pre-push hook works, CI is separate)
 
 <!-- END WAVE-1-COMPLETE -->
@@ -5620,8 +5604,8 @@ D) Docs sync + retrospective - update remaining docs, plan Wave 2 in detail
 ### Still-open flags carried forward
 
 - Render Postgres password rotation (Session 19)
-- /api/lms/progress ownership check (Session 14)
-- PayPal capture route for A1.6 tools (Razorpay verified only)
+- ~~/api/lms/progress ownership check~~ RESOLVED 2026-10-19 (main.py:8844-8857)
+- ~~PayPal capture route for A1.6 tools~~ RESOLVED 2026-10-19 (main.py:15136, payment_engine.py:799)
 - CI hook for IELTS relevance test
 - Amrita CDC reply to Prof. Raj (draft ready, not sent)
 
@@ -5690,7 +5674,7 @@ B) Employer Dashboard polish (~1 session)
 C) Pay down 4 long-carried flags (~45 min)
    - Render Postgres password rotation (Session 19)
    - `/api/lms/progress` ownership check (Session 14)
-   - PayPal capture route for A1.6 tools (A1.7b)
+- ~~PayPal capture route for A1.6 tools~~ RESOLVED 2026-10-19 (main.py:15136, payment_engine.py:799)
    - CI hook for `scripts/test_ielts_relevance.py`
 
 D) GPT-4o-mini Phase 2 (evaluate successor) - due Oct 27
@@ -5762,8 +5746,8 @@ C) **Employer Dashboard polish** (~1 session)
 D) **Pay down 4 long-carried flags** (~45 min)
    - Render Postgres password rotation (Session 19)
    - `/api/lms/progress` ownership check (Session 14)
-   - PayPal capture route for A1.6 tools (A1.7b)
-   - CI hook for scripts/test_ielts_relevance.py
+- ~~PayPal capture route for A1.6 tools~~ RESOLVED 2026-10-19 (main.py:15136, payment_engine.py:799)
+- ~~CI hook for scripts/test_ielts_relevance.py~~ RESOLVED 2026-10-19 (.github/workflows/test.yml + pre-push hook)
 
 E) **Send Amrita reply to Prof. Raj** (5 min — draft exists in context)
    - CAS is now shippable to Amrita as a real product
