@@ -648,3 +648,73 @@ composite = passport.charvak_score * 0.6 + min(current_streak * 5, 100) + min(we
 - D) Real usage analytics (~2-3 hrs): view count, share count tracking
 
 <!-- END SESSION-48 -->
+
+<!-- BEGIN SESSION-49-49.5 -->
+
+## SESSION 2026-10-19 - Session 49 + 49.5 (Cohort RBAC + Public Toggle)
+
+**Commit:** 5525cd7 (Session 49) + d3de41b (Session 49.5)
+**Wave 1:** Complete with production-quality polish
+
+### Session 49 - Cohort RBAC + Discovery polish (commit 5525cd7)
+
+Closes 5 product gaps identified at Session 48 close-out.
+
+Backend (cohorts_engine.py):
+- leave_cohort(cohort_id, member_email) - member leaves, owners blocked
+- rename_cohort(cohort_id, caller_email, new_name) - owner only
+- delete_cohort(cohort_id, caller_email) - owner only, cascade
+- promote_admin(cohort_id, caller_email, target_email) - owner only
+- demote_admin(cohort_id, caller_email, target_email) - owner only
+- list_public_cohorts(limit=50) - discovery
+
+Routes (main.py): 6 new endpoints
+- GET    /api/cohorts/public
+- POST   /api/cohorts/{id}/leave
+- POST   /api/cohorts/{id}/rename
+- DELETE /api/cohorts/{id}
+- POST   /api/cohorts/{id}/promote
+- POST   /api/cohorts/{id}/demote
+
+Frontend: owner actions menu, member list with role badges,
+leave button for non-owners, rename/delete confirmation modals,
+promote/demote inline actions, public discovery section.
+
+### Session 49.5 - Public cohort toggle (commit d3de41b)
+
+Closes the last Wave 1 gap - public discovery section was unusable
+because no UI existed to make cohorts public.
+
+- create_cohort() accepts is_public kwarg
+- set_cohort_visibility(cohort_id, caller_email, is_public) - owner only
+- POST /api/cohorts/{id}/visibility route
+- "Make this cohort public" checkbox in create modal
+- "Make Public" / "Make Private" toggle button in owner actions
+- is_public now returned in get_leaderboard (both cache paths)
+
+### Critical fixes discovered during E2E
+
+1. Role field missing from leaderboard cache-hit path
+   (Session 49's promote/member list depended on it)
+2. Cache not invalidated on join/leave (stale leaderboard)
+3. Create/join modals trapped in {% block content %} (faded backdrop)
+   Moved to {% block modal %} slot per Session 24 lesson
+4. is_public missing from leaderboard API response (label stuck at default)
+
+### Wave 1 - Complete with polish
+
+| Layer | Session | Status |
+|---|---|---|
+| Identity (Career Passport) | 46-A | DONE |
+| Viral (Skill Twin Challenges) | 46-B | DONE |
+| Habit (Daily Drills + Streaks) | 47 | DONE |
+| Batch (Cohort Mode) | 48 + 49 + 49.5 | DONE + POLISHED |
+
+### Session 50 candidates
+
+- A) Trust Score Public API (~2-3 hrs) - employer verification endpoint
+- B) Employer Dashboard (~4-5 hrs) - browse verified candidates
+- C) Certificate-as-a-Service (~2-3 hrs) - bulk verify for universities
+- D) Docs sync + retrospective (~30 min)
+
+<!-- END SESSION-49-49.5 -->
