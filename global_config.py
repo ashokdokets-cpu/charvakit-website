@@ -95,6 +95,11 @@ COUNTRY_TO_CURRENCY = {
 #   OPENAI_MODEL_SMART     - higher quality for complex tasks (e.g. deep reports)
 #   OPENAI_EMBEDDING_MODEL - embedding model for vector search
 import os as _os
+# Phase 2 evaluation (2026-10-19): target migration is gpt-5.4-nano for
+# OPENAI_MODEL / OPENAI_MODEL_CHEAP and gpt-5.4-mini for OPENAI_MODEL_SMART.
+# Actual swap happens in Phase 3c (Nov 2026) after openai_compat.py shim
+# handles the max_tokens -> max_completion_tokens API change.
+# See COMMITMENT.md "Phase 2 Evaluation — RESULT (2026-10-19)".
 OPENAI_MODEL           = _os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 OPENAI_MODEL_CHEAP     = _os.getenv("OPENAI_MODEL_CHEAP", OPENAI_MODEL)
 OPENAI_MODEL_SMART     = _os.getenv("OPENAI_MODEL_SMART", "gpt-4o")
