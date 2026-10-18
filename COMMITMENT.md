@@ -5566,3 +5566,63 @@ D) Real usage analytics (~2-3 hrs)
 - CI hook for IELTS relevance test (pre-push hook works, CI is separate)
 
 <!-- END WAVE-1-COMPLETE -->
+
+<!-- BEGIN SESSION-49-WAVE-1-POLISH -->
+
+## Session 49 + 49.5 - Cohort RBAC and Public Toggle - COMPLETE (2026-10-19)
+
+**Commits:** 5525cd7 (Session 49) + d3de41b (Session 49.5)
+
+### What shipped
+
+**Session 49 (5525cd7):** 6 backend methods + 6 routes + full frontend
+CRUD (leave, rename, delete, promote, demote, public discovery) + 3
+critical fixes (role in cache path, cache invalidation on join/leave,
+modal block placement). 731 lines added.
+
+**Session 49.5 (d3de41b):** Public cohort toggle. Backend adds is_public
+to create_cohort signature + new set_cohort_visibility method +
+POST /api/cohorts/{id}/visibility route + is_public in get_leaderboard
+response. Frontend adds "Make this cohort public" checkbox to create
+modal and "Make Public / Make Private" toggle to owner actions menu.
+119 lines added.
+
+### Wave 1 - Complete with polish
+
+All 4 flywheel layers shipped and polished:
+- Identity: Career Passport (46-A)
+- Viral: Skill Twin Challenges (46-B)
+- Habit: Daily Drills + Streaks (47)
+- Batch: Cohort Mode (48 + 49 + 49.5)
+
+### Bugs caught by browser E2E (not code review)
+
+- Role missing from cache hit path (Session 48 bug, surfaced Session 49)
+- Cache not invalidated on join/leave (stale leaderboard)
+- Modals trapped in <main> stacking context (Session 48 bug, fixed 49)
+- is_public missing from API response (Session 49.5 bug, fixed same session)
+
+### Session 50 candidates
+
+A) Trust Score Public API - GET /api/passport/{handle}/verify for employers
+   Reuses integrity + HMAC infrastructure. Opens B2B verification line.
+   ~2-3 hrs.
+
+B) Employer Dashboard - browse verified candidates, filter by skill/role
+   Depends on Trust API. ~4-5 hrs.
+
+C) Certificate-as-a-Service - bulk verify endpoint for universities
+   For Track C pilot. ~2-3 hrs.
+
+D) Docs sync + retrospective - update remaining docs, plan Wave 2 in detail
+   ~30 min.
+
+### Still-open flags carried forward
+
+- Render Postgres password rotation (Session 19)
+- /api/lms/progress ownership check (Session 14)
+- PayPal capture route for A1.6 tools (Razorpay verified only)
+- CI hook for IELTS relevance test
+- Amrita CDC reply to Prof. Raj (draft ready, not sent)
+
+<!-- END SESSION-49-WAVE-1-POLISH -->

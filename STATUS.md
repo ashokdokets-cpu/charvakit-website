@@ -134,3 +134,51 @@ See TRACK-A-B-PLAN.md for the full sequence.
 See COMMITMENT.md "Session 49 candidates" for options A/B/C/D.
 
 <!-- END SESSION-48 -->
+
+<!-- BEGIN SESSION-49 -->
+
+## Session 2026-10-19 - Session 49 + 49.5 (Cohort Polish)
+
+**HEAD:** d3de41b
+**Wave 1:** 100% complete with production polish
+
+### Shipped
+
+**Session 49 (5525cd7):**
+- 6 new engine methods (leave, rename, delete, promote, demote, discover)
+- 6 new API routes
+- Owner actions menu + member list + leave button + 3 modals + public discovery
+- 3 critical fixes: role cache path, cache invalidation, modal placement
+
+**Session 49.5 (d3de41b):**
+- Public cohort toggle (checkbox in create modal, button in owner actions)
+- is_public in create_cohort + set_cohort_visibility + get_leaderboard
+- POST /api/cohorts/{id}/visibility route
+
+### Verified
+
+- /cohorts returns 200 on prod
+- /api/cohorts/public returns 200, correct empty shape
+- 14/14 pre-push checks passing (both commits)
+- Full browser E2E: create, promote, demote, leave, delete, toggle visibility
+
+### Bugs caught by E2E (not code review)
+
+- Role missing from cache hit path (would break promote/member list)
+- Cache not invalidated on join/leave (stale member count/leaderboard)
+- Modals trapped in <main> (faded backdrop, would block create flow)
+- is_public missing from API response (toggle label stuck at default)
+
+### Site Health
+
+- All Wave 1 API endpoints returning 200
+- Prod healthy after both deploys
+- Zero regressions on existing features
+- 89 migrations applied cleanly (no new migrations this session)
+
+### Next
+
+See COMMITMENT.md "Session 50 candidates" for options A/B/C/D.
+Recommended: A (Trust Score Public API) opens Wave 2.
+
+<!-- END SESSION-49 -->

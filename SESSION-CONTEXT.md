@@ -2263,3 +2263,49 @@ Prod healthy, 89 migrations applied.
 Session 49 plan: [OPTION A/B/C/D from COMMITMENT.md]
 
 <!-- END SESSION-48 -->
+
+<!-- BEGIN SESSION-49 -->
+
+## Session 49 + 49.5 Close-Out (2026-10-19)
+
+**HEAD:** d3de41b (feat(cohorts): Session 49.5 - public cohort toggle)
+**Wave 1:** 100% complete with production polish
+
+### Session 49 Shipped (commit 5525cd7)
+
+- Cohort RBAC: leave, rename, delete, promote, demote
+- Discovery: list_public_cohorts + public discovery section
+- Owner actions menu + member list with role badges
+- 3 critical fixes: role in cache path, cache invalidation on join/leave,
+  modals moved to {% block modal %} slot
+
+### Session 49.5 Shipped (commit d3de41b)
+
+- Public cohort toggle (checkbox in create modal + button in owner actions)
+- is_public in get_leaderboard response (both cache paths)
+- New POST /api/cohorts/{id}/visibility route
+
+### Wave 1 Arc Complete + Polished
+
+Sessions 46-A, 46-B, 47, 48, 49, 49.5 all shipped.
+All four flywheel layers live and polished on prod.
+
+### Fresh Chat Resume Prompt
+
+Paste this when starting Session 50:
+
+Resume from d3de41b. Session 49.5 (cohort polish) closed clean.
+Wave 1 complete with production polish.
+HEAD=origin/main=d3de41b. Tree clean. 89 migrations applied.
+Prod healthy.
+
+Session 50 plan: [OPTION A/B/C/D from COMMITMENT.md]
+Recommended: A (Trust Score Public API - GET /api/passport/{handle}/verify)
+
+### Also pending
+
+- Amrita CDC reply to Prof. Raj (draft exists in this session's context)
+- Render Postgres password rotation (Session 19 flag)
+- /api/lms/progress ownership check (Session 14 flag)
+
+<!-- END SESSION-49 -->

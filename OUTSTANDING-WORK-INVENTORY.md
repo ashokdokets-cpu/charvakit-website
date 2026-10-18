@@ -531,3 +531,44 @@ All four Wave 1 layers are live on prod as of commit 1399073.
 - CI hook for IELTS relevance test
 
 <!-- END SESSION-48 -->
+
+<!-- BEGIN SESSION-49 -->
+
+## Session 49 + 49.5 - Cohort Polish - COMPLETE (2026-10-19)
+
+### Items closed
+
+- ✅ Members can leave cohort (Session 49)
+- ✅ Owner rename (Session 49)
+- ✅ Owner delete (Session 49, cascade verified)
+- ✅ Promote/demote admin (Session 49)
+- ✅ Public discovery section (Session 49, backend + UI)
+- ✅ Public cohort toggle - checkbox + button (Session 49.5)
+- ✅ Role missing from cache hit path (Session 49 fix)
+- ✅ Cache invalidation on join/leave (Session 49 fix)
+- ✅ Modals trapped in <main> stacking context (Session 49 fix)
+- ✅ is_public missing from get_leaderboard response (Session 49.5 fix)
+
+### New items flagged from Session 49 + 49.5 E2E
+
+- **Cohort analytics** - track view count, join velocity, engagement
+  Defer until real usage data. ~2-3 hrs.
+
+- **Bulk member invite via CSV** - for Track C University pilots
+  Defer until a university pilot needs it. ~1 session.
+
+- **Public cohort search filters** - filter by college, size, activity
+  Defer until 5+ public cohorts exist. ~2 hrs.
+
+- **Owner transfer** - transfer ownership to another admin
+  Defer until requested. ~1 hr.
+
+### Still-open flags (carried forward, unchanged)
+
+- Render Postgres password rotation (Session 19)
+- /api/lms/progress ownership check (Session 14)
+- PayPal capture route for A1.6 tools (Razorpay verified only)
+- CI hook for IELTS relevance test
+- Amrita CDC reply to Prof. Raj (draft exists)
+
+<!-- END SESSION-49 -->
