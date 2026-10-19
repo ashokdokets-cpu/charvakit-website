@@ -1,5 +1,100 @@
 # Session Context - Charvak
 
+**HEAD:** 2cff7e2
+**Live:** https://www.charvakit.com
+**Updated:** 2026-10-20 (Sessions 63-64b closed - Track D Phase A + CAS Admin UI complete)
+**Next up:** 2 five-min tasks (Amrita email + Render password), then Wave 3 decision
+
+---
+
+## Two 5-Min Tasks Pending
+
+1. **Send Amrita reply to Prof. Raj** - 5 min, unlocks Track C (university pilot revenue line)
+2. **Rotate Render Postgres password** - 5 min, closes last security flag
+
+Both are dashboard work, not code. After these, entire P0 backlog is empty.
+
+---
+
+## Sessions 63 + 64 + 64b Closed
+
+**Commits:** `bb0ecea` (S63), `ef5974f` (S64), `2cff7e2` (S64b)
+
+### S63 - Track D Phase A 100%
+
+- "I have a JD" toggle on /ai-assessment
+- Paste JD → parse via /api/jd/parse → auto-fill role/industry/level
+- /jd-assessment CTA carries ?role=&industry=&level= prefill params
+- carApplyUrlPrefill() reads URL params on load
+
+### S64 - CAS Admin UI backend
+
+- cas_engine.list_api_keys() gets search + sort params
+- /api/admin/cas-keys/list accepts ?search=&sort=
+- NEW: /api/admin/cas-keys/list.csv (CSV export)
+
+### S64b - CAS Admin UI frontend
+
+- 6 gated patches (P1-P6), each with Jinja + node --check gate
+- Toolbar: search input + sort dropdown + Export CSV button
+- Bulk selection: checkboxes on pending rows + bulk approve
+- Zero corruption. All gates passed.
+
+### Process lesson
+
+Earlier patch attempt corrupted admin-cas-keys.html by matching
+`window.loadKeys = async function()` (doesn't exist - functions use
+`async function loadKeys()` with `window.X = X` exports at bottom).
+
+Fixed by: line-range anchors + unique full-line matches + node --check
+gate + auto-revert on failure. See KNOWN-ISSUES.md.
+
+---
+
+## Platform State (all at 100%)
+
+| Area | Status |
+|---|---|
+| Wave 1 (Identity, Viral, Habit, Batch) | ✅ |
+| Wave 2 (Trust API, Employer Dashboard, CAS) | ✅ |
+| Track D Phase A | ✅ |
+| UI Modernization (7 phases) | ✅ |
+| Session 64 CAS backend | ✅ |
+| Session 64b CAS frontend | ✅ |
+| GPT-4o-mini Phase 1-3b | ✅ |
+| Open bugs | ✅ Zero |
+| Broken features | ✅ Zero |
+
+## Scheduled
+
+- **Nov 3:** Phase 3c GPT-4o-mini env flip (5-min on Render dashboard)
+  Set `OPENAI_MODEL=gpt-5.4-nano`, `OPENAI_MODEL_SMART=gpt-5.4-mini`
+
+## Session 65 Candidates
+
+A) **Wave 3 continued build** (recommended)
+   - Interview Prep AI depth (~2 sessions) - highest differentiation
+   - AI Tutor in courses (~2 sessions) - high perceived value
+   - Career Assessment certifications (~1 session) - feeds readiness loop
+
+B) **Close remaining flags first**
+   - Amrita email + Render password + Phase 3c env flip = 15 min total
+   - Then clean slate for Wave 3
+
+C) **Pause for external signal**
+   - Wait for Amrita response before more builds
+   - Meanwhile polish any specific surface
+
+---
+
+**Recommended flow for Session 65:**
+1. First 15 min: Amrita email + Render password + Phase 3c env flip
+2. Then: Wave 3 first build (Interview Prep AI depth is best default)
+
+---
+
+# Session Context - Charvak
+
 **HEAD:** a73aaf1
 **Live:** https://www.charvakit.com
 **Updated:** 2026-10-20 (Sessions 60-62 closed - UI Modernization COMPLETE)

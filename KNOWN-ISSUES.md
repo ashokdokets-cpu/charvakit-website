@@ -734,3 +734,57 @@ real tests).
 
 **Verdict:** FLAGGED - fix opportunistically when deploy.yml gets real
 pre-deploy validation.
+
+### RESOLVED - admin-cas-keys.html patch corruption (2026-10-20, 2cff7e2)
+
+**Incident:** During Session 64b first attempt, a 6-part mega-patch
+corrupted `templates/admin-cas-keys.html`. The file ended up with
+`renderRow`'s return template spliced inside `loadKeys`, an orphan
+`<div></div>` inside `deactivateKey`, and an `else` clause attached to
+nothing. Browser console showed:
+- `Uncaught SyntaxError: Unexpected token 'catch'`
+- `Uncaught ReferenceError: loadKeys is not defined`
+
+**Root cause:** The patch anchored on `window.loadKeys = async function()`.
+That string does NOT exist in the clean file. The functions use bare
+declarations (`async function loadKeys()`) with `window.loadKeys = loadKeys`
+exports at the bottom of the IIFE. My grep matched `fetch('/api/admin/cas-keys/list'`
+as a substring — which occurs in both `loadKeys` AND `approveKey` — and the
+insert landed in the wrong function.
+
+**Fix applied in the retry (Session 64b successful run):**
+- Restored from clean backup (225 lines)
+- Applied 6 gated patches (P1-P6)
+- Each patch: Jinja render + `node --check` on the extracted inline
+  `<script>` + auto-revert on failure
+- Line-range anchors + unique full-line string matches (verified via
+  occurrence count before edit)
+
+**Zero corruption on the retry.** All 6 patches passed their gates.
+
+**Process rules for future template patches:**
+
+1. **Dump the exact structure first.** A 30-second `ReadAllLines` +
+   line-number walk eliminates hours of debugging.
+
+2. **Anchor on full lines, not substrings.** `fetch('/api/admin/cas-keys/list'`
+   matches twice. `const r = await fetch('/api/admin/cas-keys/list', {headers: authHeaders()});`
+   matches once.
+
+3. **Verify occurrence count before every edit.** If > 1, use brace-balance
+   or line-range scope, never the substring.
+
+4. **Gate every patch with `node --check`.** Static checks (grep for element
+   presence, Jinja render) do NOT catch JS syntax errors inside template
+   literals. Only a real parser does.
+
+5. **Auto-revert on gate failure.** Per-patch backups (`p1.bak` through
+   `pN.bak`) + `Copy-Item $path.bak $path` on failure. Zero time lost.
+
+6. **Split multi-part patches.** A 6-part mega-patch ran in bottom-up order
+   but each step re-searched the file for its anchor — after step N, the
+   line numbers had shifted, so step N+1's anchor pointed at a different
+   location. Split into 6 separate patches, verify each, then proceed.
+
+**Verdict:** RESOLVED. Session 64b shipped cleanly with the corrected
+methodology. Rules documented above.

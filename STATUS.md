@@ -1,10 +1,42 @@
 # Charvak IT Consulting - Project Status
 
-**Last updated:** 2026-10-19 (Session 54 - Phase 3b + dashboard polish)
-**Version:** v3.5-session-54-20261019
+**Last updated:** 2026-10-20 (Sessions 63-64b - Track D + CAS complete)
+**Version:** v3.5-session-64b-20261020
 **Live:** https://www.charvakit.com
-**HEAD:** 853f7a5 + pending commit
+**HEAD:** 2cff7e2
 
+## Session 2026-10-20 - Sessions 63-64b Complete
+
+**Commits:** `bb0ecea` (S63), `ef5974f` (S64), `2cff7e2` (S64b)
+**31 commits shipped today across sessions 51-64b.**
+
+### Sessions Closed
+
+- **S63 - Track D Phase A 100%:** JD parser wired into Career Assessment
+  ("I have a JD" toggle + fuzzy-match prefill + CTA URL params)
+- **S64 - CAS Admin UI backend:** list_api_keys gets search + sort;
+  /api/admin/cas-keys/list accepts params; new /list.csv route
+- **S64b - CAS Admin UI frontend:** Toolbar (search + sort + CSV),
+  bulk selection + approve, 6 gated patches with node --check
+
+### Platform Status
+
+- Wave 1: 100%
+- Wave 2: 100%
+- Track D Phase A: 100%
+- UI Modernization: 100%
+- CAS backend + frontend: 100%
+- GPT-4o-mini Phase 1-3b: 100%
+- Zero open bugs
+- Zero broken features
+
+### Remaining (all 5-min tasks)
+
+- Amrita reply to Prof. Raj
+- Rotate Render Postgres password
+- Phase 3c env flip (Nov 3 target)
+
+---
 ## Session 2026-10-19 - Sessions 52-54 Complete
 
 ### Wave 2 Complete (Sessions 50-52)

@@ -1,12 +1,12 @@
 # CHARVAKIT.COM - MASTER REFERENCE
 ## Charvak IT Consulting Pvt Ltd
-### Last updated: October 20, 2026 (Sessions 60-62 - UI Modernization COMPLETE)
+### Last updated: October 20, 2026 (Sessions 63-64b - CAS Admin UI COMPLETE)
 
-**HEAD:** a73aaf1
+**HEAD:** 2cff7e2
 **Live:** https://www.charvakit.com
 **Resume here:** see `SESSION-CONTEXT.md` and `TRACK-A-B-PLAN.md`
 **Backlog:** see `OUTSTANDING-WORK-INVENTORY.md` (master list of remaining work)
-**Version:** v3.5-session-62-20261020
+**Version:** v3.5-session-64b-20261020
 
 ### Reference Documents
 
@@ -22,6 +22,58 @@
 
 
 
+## SESSION 2026-10-20 - Sessions 63 + 64 + 64b (Track D Phase A 100%, CAS Admin UI complete)
+
+**Commits:** `bb0ecea` (S63), `ef5974f` (S64), `2cff7e2` (S64b)
+**HEAD:** 2cff7e2
+
+### Session 63 - Track D Phase A complete (bb0ecea)
+
+Wired JD parser into Career Assessment. Full loop closed:
+- `/ai-assessment` gets "I have a JD" toggle (checkbox + textarea)
+- `carAnalyzeJd()` calls `/api/jd/parse`, fuzzy-matches role/industry/level
+  against catalog, auto-fills 3 dropdowns
+- `carApplyUrlPrefill()` reads `?role=&industry=&level=` from URL on load
+- `/jd-assessment` CTA carries prefill params
+
+Track D Phase A now 100% (parser + MVP + wire-in).
+
+### Session 64 - CAS Admin UI backend (ef5974f)
+
+- `cas_engine.list_api_keys()` gets `search` + `sort` params
+  - search: ILIKE across institution_name, contact_email, key_id, contact_name
+  - sort whitelist: created_desc (default), created_asc, institution_asc,
+    calls_desc, tier_asc
+- `/api/admin/cas-keys/list` accepts `?search=` and `?sort=`
+- NEW: `/api/admin/cas-keys/list.csv` — full CSV export with same filters
+
+### Session 64b - CAS Admin UI frontend (2cff7e2)
+
+Applied as 6 gated patches (P1-P6), each verified with Jinja + `node --check`
+before proceeding:
+- P1: CSS for toolbar/checkbox/bulk; grid-template-columns 5→6 cols
+- P2: Toolbar HTML (search, sort, CSV button) + bulk actions bar
+- P3: Empty checkbox column in renderList header
+- P4: Checkbox input in renderRow template (pending rows only)
+- P5: loadKeys reads search + sort from toolbar inputs, appends to fetch URL
+- P6: Selection helpers (toggleSelection, clearSelection, updateBulkBar,
+  bulkApproveSelected, exportKeysCsv)
+
+Verified: zero console errors, search filters, sort re-orders, CSV downloads,
+bulk bar correctly hidden at 0 rows.
+
+### Process lesson (logged in KNOWN-ISSUES)
+
+Earlier attempt to patch admin-cas-keys.html corrupted the file by matching
+`window.loadKeys = async function()` — that string doesn't exist in the clean
+file (functions use `async function loadKeys()` with `window.loadKeys = loadKeys`
+exports at the bottom). The wrong anchor caused the insert to land on a
+`renderRow` return template, splicing three functions together.
+
+Session 64b fix: line-range anchors + unique full-line string matches +
+`node --check` gate + auto-revert on failure. Zero corruption.
+
+---
 ## SESSION 2026-10-19 - Sessions 55-56 (Track D Phase A)
 
 **Commits:** `e8488f6` (parser), `50fa546` (MVP), `2c0451c` (cards)
