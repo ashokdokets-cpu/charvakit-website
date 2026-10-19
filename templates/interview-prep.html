@@ -40,6 +40,30 @@
                             </div>
                         </div>
 
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Interview Mode</label>
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <div class="form-check p-3 border rounded" style="cursor:pointer;" onclick="document.getElementById('modeStatic').checked=true;">
+                                        <input class="form-check-input" type="radio" name="ipMode" id="modeStatic" value="static" checked>
+                                        <label class="form-check-label" for="modeStatic">
+                                            <strong>📋 Quick Practice</strong>
+                                            <div class="small text-muted">8 questions, static Q&amp;A flow</div>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check p-3 border rounded" style="cursor:pointer;" onclick="document.getElementById('modeConversational').checked=true;">
+                                        <input class="form-check-input" type="radio" name="ipMode" id="modeConversational" value="conversational">
+                                        <label class="form-check-label" for="modeConversational">
+                                            <strong>🎤 Full Mock Interview</strong>
+                                            <div class="small text-muted">Real follow-up questions, adaptive, ~12 turns</div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <div class="alert alert-info d-flex justify-content-between align-items-center">
                             <div>
                                 <strong>Cost:</strong> 8 AI credits per session
@@ -132,7 +156,9 @@ async function startSession(e) {
     msg.style.display = 'none';
 
     try {
-        const r = await fetch('/api/interview-prep/start', {
+        const selectedMode = (document.querySelector('input[name="ipMode"]:checked') || {}).value || 'static';
+        const startEndpoint = selectedMode === 'conversational' ? '/api/interview-prep/start-conversational' : '/api/interview-prep/start';
+        const r = await fetch(startEndpoint, {
             method: 'POST',
             headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '')},
             body: JSON.stringify({email: (localStorage.getItem('userEmail') || ''), 

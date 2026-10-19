@@ -30,6 +30,40 @@
         <a href="/interview-prep" class="btn btn-primary mt-3">Start New Session</a>
     </div>
 
+    <div id="chatArea" style="display:none;">
+        <div class="row mb-3">
+            <div class="col-lg-8 mx-auto">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="badge bg-info" id="turnIndicator">Turn 1 of 12</span>
+                    <button class="btn btn-sm btn-outline-danger" id="endBtn" onclick="endConversation()" style="display:none;">
+                        End interview
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-lg-8 mx-auto">
+                <div id="chatTranscript" style="max-height: 500px; overflow-y: auto;"></div>
+            </div>
+        </div>
+
+        <div class="row" id="chatInputArea">
+            <div class="col-lg-8 mx-auto">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <h3 class="as-h5 mb-3" id="chatQuestion">Loading question...</h3>
+                        <textarea class="form-control" id="chatAnswer" rows="5"
+                                  placeholder="Type your answer. Be specific, use examples."></textarea>
+                        <button class="btn btn-success btn-lg w-100 mt-3" id="chatSubmitBtn" onclick="submitTurn()">
+                            Submit Answer & Get Next Question
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="sessionArea" style="display:none;">
         <!-- Question Card -->
         <div class="row mb-4">
@@ -94,6 +128,7 @@
 const sessionId = window.location.pathname.split('/').pop();
 let currentSession = null;
 let currentAnswerId = null;
+let isConversational = false;  // Session 65b: hoisted for cross-function access
 
 async function loadSession() {
     try {
@@ -102,6 +137,7 @@ async function loadSession() {
         if (d.status !== 'success') throw new Error(d.message || 'Session not found');
 
         currentSession = d.session;
+        isConversational = (currentSession.mode === 'conversational');
         document.getElementById('sessionHeader').textContent =
             currentSession.role + ' • ' + currentSession.difficulty;
 
@@ -123,6 +159,7 @@ async function loadSession() {
 
 function renderCurrentQuestion() {
     const next = currentSession.next_question;
+    if (isConversational) { renderConversational(); return; }
     if (!next) {
         // All answered — go to results
         window.location.href = '/interview-results/' + sessionId;
@@ -205,6 +242,120 @@ async function loadNextQuestion() {
 
 function escapeHtml(s) {
     return String(s || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+// ============================================================
+// Session 65b: Conversational mode functions
+// ============================================================
+
+function renderConversational() {
+    const next = currentSession.next_question;
+    if (!next) {
+        window.location.href = '/interview-results/' + sessionId;
+        return;
+    }
+
+    currentAnswerId = next.answer_id;
+
+    // Show chat area, hide static area
+    document.getElementById('sessionArea').style.display = 'none';
+    document.getElementById('chatArea').style.display = 'block';
+
+    // Update turn indicator
+    const turn = currentSession.turn_count || 1;
+    const maxT = currentSession.max_turns || 12;
+    document.getElementById('turnIndicator').textContent = 'Turn ' + turn + ' of ' + maxT;
+
+    // Show End button after turn 3
+    if (turn >= 3) {
+        document.getElementById('endBtn').style.display = 'inline-block';
+    }
+
+    // Render chat transcript (all previous Q&A)
+    const transcript = (currentSession.answers || []).filter(function(a) {
+        return a.user_answer && a.user_answer.trim();
+    });
+    const transcriptHtml = transcript.map(function(a) {
+        const scoreColor = a.ai_score >= 70 ? 'success' : (a.ai_score >= 50 ? 'warning' : 'danger');
+        return `
+            <div class="card border-0 shadow-sm mb-2" style="background:#f8fafc;">
+                <div class="card-body p-3">
+                    <div class="small text-muted mb-1">🤖 AI asked:</div>
+                    <p class="mb-2 fw-semibold">${escapeHtml(a.question_text)}</p>
+                    <div class="small text-muted mb-1">👤 Your answer:</div>
+                    <p class="mb-2" style="white-space:pre-wrap;">${escapeHtml(a.user_answer)}</p>
+                    <span class="badge bg-${scoreColor}">${a.ai_score || 0}/100</span>
+                </div>
+            </div>
+        `;
+    }).join('');
+    document.getElementById('chatTranscript').innerHTML = transcriptHtml;
+
+    // Current question
+    document.getElementById('chatQuestion').textContent = next.question_text;
+    document.getElementById('chatAnswer').value = '';
+    document.getElementById('chatSubmitBtn').disabled = false;
+    document.getElementById('chatSubmitBtn').textContent = 'Submit Answer & Get Next Question';
+    document.getElementById('chatInputArea').style.display = 'block';
+
+    // Scroll transcript to bottom
+    const transcriptEl = document.getElementById('chatTranscript');
+    transcriptEl.scrollTop = transcriptEl.scrollHeight;
+
+    window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+async function submitTurn() {
+    const answer = document.getElementById('chatAnswer').value.trim();
+    if (!answer || answer.split(' ').length < 3) {
+        alert('Please write a longer answer.');
+        return;
+    }
+
+    const btn = document.getElementById('chatSubmitBtn');
+    btn.disabled = true;
+    btn.textContent = '🤖 Generating next question...';
+
+    try {
+        const r = await fetch('/api/interview-prep/submit-turn', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '')},
+            body: JSON.stringify({
+                session_id: sessionId,
+                answer_id: currentAnswerId,
+                answer: answer
+            })
+        });
+        const d = await r.json();
+
+        if (d.status !== 'success') throw new Error(d.message || 'Scoring failed');
+
+        if (d.done) {
+            window.location.href = '/interview-results/' + sessionId;
+            return;
+        }
+
+        // Reload session to get updated state
+        await loadSession();
+    } catch (e) {
+        alert('Error: ' + e.message);
+        btn.disabled = false;
+        btn.textContent = 'Submit Answer & Get Next Question';
+    }
+}
+
+async function endConversation() {
+    if (!confirm('End this interview? You will see results for the turns you completed.')) return;
+    try {
+        await fetch('/api/interview-prep/complete-conversational', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '')},
+            body: JSON.stringify({session_id: sessionId})
+        });
+        window.location.href = '/interview-results/' + sessionId;
+    } catch (e) {
+        alert('Error ending interview: ' + e.message);
+    }
 }
 
 loadSession();
