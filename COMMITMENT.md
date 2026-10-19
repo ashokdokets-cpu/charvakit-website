@@ -5996,3 +5996,65 @@ A) Track D Phase A, item C - wire JD parser into Career Assessment (~1 session)
 B) Wave 3 planning - Track D Phase B or Track E or Track F
 C) Phase 3c GPT-4o-mini env flip - Nov 3 target (5-min task)
 D) Docs sync + retrospective for UI arc (~30 min)
+
+---
+
+## Session 64 + 64b - CAS Admin UI COMPLETE (2026-10-20)
+
+**Commits:** `ef5974f` (S64 backend) + `2cff7e2` (S64b frontend)
+
+The CAS Admin UI is now a full-featured tool. Backend search/sort/CSV
+shipped in Session 64; frontend toolbar + bulk selection + CSV button
+shipped in Session 64b as 6 gated patches.
+
+### S64 Backend
+
+- `cas_engine.list_api_keys(active_only, search, sort)` 
+- `/api/admin/cas-keys/list?search=&sort=`
+- NEW `/api/admin/cas-keys/list.csv?search=&sort=`
+
+### S64b Frontend (6 gated patches)
+
+- P1: CSS + grid columns 5→6
+- P2: Toolbar HTML + bulk bar
+- P3: Header checkbox column
+- P4: Row checkbox template
+- P5: loadKeys search+sort params
+- P6: Selection helpers
+
+Each patch verified with Jinja render + `node --check` on the extracted
+inline `<script>` + auto-revert on failure.
+
+### Process Lesson
+
+Earlier patch attempt corrupted admin-cas-keys.html by matching
+`window.loadKeys = async function()`. That string doesn't exist in
+the clean file (functions use `async function loadKeys()` with
+`window.X = X` exports at the bottom). The wrong anchor caused the
+insert to land on a `renderRow` return template, splicing three
+functions together.
+
+Fix: line-range anchors + unique full-line matches + node --check
+gate + auto-revert. Documented in KNOWN-ISSUES.md.
+
+### Wave 3 Candidates (post-S64b)
+
+A) **Wave 3 continued build:**
+   - Interview Prep AI depth (~2 sessions)
+   - AI Tutor in courses (~2 sessions)
+   - Career Assessment certifications (~1 session)
+
+B) **Dashboard tasks (5 min each):**
+   - Amrita reply
+   - Render password rotation
+   - Phase 3c env flip (Nov 3)
+
+### Still Pending (unchanged)
+
+- Amrita email (5 min, highest leverage)
+- Render Postgres password rotation (Session 19 flag)
+- Phase 3c GPT-4o-mini env flip (Nov 3 target)
+- Track D Phase B (blocked on Amrita)
+- Track E Behavioral (blocked on Amrita)
+- Track F Verified Jobs (blocked on 3+ employer demand)
+- Certificate i18n (deferred, no deadline)

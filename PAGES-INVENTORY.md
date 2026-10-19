@@ -652,3 +652,36 @@ Seven-phase UI overhaul across the platform. Every assessment page now shares th
 
 - All animations respect @media (prefers-reduced-motion: reduce) - animations disabled entirely
 - Score still displays correctly with animations off
+
+## CAS Admin UI (Sessions 53-64b, 2026-10-20)
+
+Admin interface for managing Certificate-as-a-Service API keys.
+Full CRUD + bulk approve + CSV export.
+
+| Template | Route | Purpose | Auth? |
+|---|---|---|---|
+| `admin-cas-keys.html` | `/admin/cas-keys` | Manage CAS API keys: search, sort, approve, deactivate, bulk approve, CSV export | admin_auth_guard |
+
+**Backend routes:**
+- `GET  /admin/cas-keys` - page
+- `GET  /api/admin/cas-keys/list?search=&sort=` - JSON list
+- `GET  /api/admin/cas-keys/list.csv?search=&sort=` - CSV download
+- `POST /api/admin/cas-keys/{key_id}/approve` - approve one
+- `POST /api/admin/cas-keys/{key_id}/deactivate` - deactivate one
+
+**UI Features:**
+- Search input (filters by institution, contact, email, key_id)
+- Sort dropdown (5 modes: newest, oldest, institution A-Z, calls, tier)
+- Export CSV button (respects active search + sort)
+- Checkbox per pending row (bulk selection)
+- Bulk actions bar (Approve Selected, Clear) - shows when rows selected
+- Individual Approve/Deactivate buttons per row
+- Stats strip (Active / Pending / Total / Calls)
+
+**Engine:** `cas_engine.py` (verify_certificate_by_hash, verify_batch,
+request_api_key, approve_api_key, check_api_key, list_api_keys with
+search + sort)
+
+**Pricing tiers:** Pilot (free, 500/yr) / Department (Rs 49,999/yr,
+5,000) / Campus (Rs 1,99,999/yr, 50,000) / University (Rs 4,99,999/yr,
+unlimited)
