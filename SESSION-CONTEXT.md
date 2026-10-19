@@ -1,5 +1,50 @@
 # Session Context - Charvak
 
+**HEAD:** 2c0451c
+**Live:** https://www.charvakit.com
+**Updated:** 2026-10-19 (Sessions 55-56 closed - Track D Phase A 67%)
+**Next up:** Session 57 (wire JD parser into Career Assessment)
+
+---
+
+## Sessions 55-56 CLOSED - Track D Phase A
+
+**Commits:** `e8488f6` (parser), `50fa546` (MVP), `2c0451c` (what-next cards)
+
+### Live URLs
+
+- https://www.charvakit.com/jd-assessment (JD Scanner)
+- https://www.charvakit.com/api/jd/parse (API, 5/min)
+- https://www.charvakit.com/ai-assessment (with What-next cards now)
+
+### Verified on prod
+
+- 7/7 real JDs parsed (all client staffing roles)
+- /jd-assessment 200
+- Nav link "JD Scanner" live in teal CTA row
+- What-next cards render on /ai-assessment result
+
+### Track D Phase A status
+
+- ✅ Item A (parser engine) — Session 55
+- ✅ Item B (/jd-assessment MVP) — Session 56
+- ⏳ Item C (wire into Career Assessment) — Session 57
+
+### Session 57 plan
+
+1. `templates/ai-assessment.html`: "I have a JD" toggle + textarea
+2. Parse via `/api/jd/parse`, prefill dropdowns
+3. `templates/jd-assessment.html`: CTA carry prefill URL params
+4. `templates/ai-assessment.html`: read ?role=&industry=&level= on load
+
+### Remaining flags (2 five-min tasks)
+
+1. Rotate Render Postgres password
+2. Send Amrita reply to Prof. Raj
+
+---
+
+
 **HEAD:** b84fb12
 **Live:** https://www.charvakit.com
 **Updated:** 2026-10-19 (Session 54 closed — Track D Phase A flagged)

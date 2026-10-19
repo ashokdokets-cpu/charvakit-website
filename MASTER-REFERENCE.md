@@ -1,12 +1,12 @@
 # CHARVAKIT.COM - MASTER REFERENCE
 ## Charvak IT Consulting Pvt Ltd
-### Last updated: October 19, 2026 (Session 52 - Certificate-as-a-Service)
+### Last updated: October 19, 2026 (Sessions 55-56 - Track D Phase A)
 
-**HEAD:** 8075f4e
+**HEAD:** 2c0451c
 **Live:** https://www.charvakit.com
 **Resume here:** see `SESSION-CONTEXT.md` and `TRACK-A-B-PLAN.md`
 **Backlog:** see `OUTSTANDING-WORK-INVENTORY.md` (master list of remaining work)
-**Version:** v3.5-session-52-20261019
+**Version:** v3.5-session-56-20261019
 
 ### Reference Documents
 
@@ -19,6 +19,29 @@
 - **`TIER3-PERSISTENCE-PROJECT.md`** — Persistence tracking for the 62-engine project.
 
 ---
+
+
+
+## SESSION 2026-10-19 - Sessions 55-56 (Track D Phase A)
+
+**Commits:** `e8488f6` (parser), `50fa546` (MVP), `2c0451c` (cards)
+
+### Shipped
+- `jd_parser_engine.py` — JD → 11-field structured output
+- `POST /api/jd/parse` — public, 5/min rate limit
+- `templates/jd-assessment.html` — JD Scanner landing page
+- `GET /jd-assessment` — public route
+- `🎯 JD Scanner` nav link (teal CTA row)
+- What-next cards on /ai-assessment result (4 cards)
+
+### Verified
+- 7/7 real JDs parsed (NCS, LENZE, Middle East)
+- /jd-assessment 200 on prod
+- API endpoint tested with SWE + PM
+- Cards render on prod result page
+
+### Track D Phase A: 67% (2 of 3 items)
+Item C (wire into Career Assessment) = Session 57
 
 ## SESSION 2026-10-19 - Session 52 (Certificate-as-a-Service)
 
