@@ -72,9 +72,17 @@
             <div class="col-lg-8 mx-auto text-center">
                 <div class="card border-0 shadow-lg">
                     <div class="card-body p-5">
-                        <div id="resultIcon" style="font-size: 64px;" class="mb-3">-</div>
+                        <div class="as-score-gauge" style="margin: 0 auto 1rem;">
+                            <svg viewBox="0 0 200 200" class="as-gauge-svg">
+                                <circle cx="100" cy="100" r="90" class="as-gauge-track"/>
+                                <circle cx="100" cy="100" r="90" class="as-gauge-fill" id="cbatGaugeCircle" style="stroke-dashoffset: 565.48;"/>
+                            </svg>
+                            <div class="as-gauge-content">
+                                <div class="as-score-value" id="resultScore">0</div>
+                                <div class="as-text-muted" style="font-size: 0.75rem; margin-top: 0.1rem;">%</div>
+                            </div>
+                        </div>
                         <h2 class="mb-3" id="resultTitle">Session Complete</h2>
-                        <div class="display-3 fw-bold text-primary mb-3" id="resultScore">-</div>
                         <p class="lead mb-4" id="resultSubtitle">-</p>
 
                         <div class="row text-center mb-4">
@@ -341,9 +349,26 @@
             return;
         }
 
-        qs('resultIcon').textContent = j.passed ? 'PASS' : 'TRY AGAIN';
+        var _cbatScore = j.score || 0;
+        var _cbatEl = qs('resultScore');
+        var _cbatGauge = qs('cbatGaugeCircle');
+        var _cbatTs = null;
+        function _cbatTick(ts) {
+            if (!_cbatTs) _cbatTs = ts;
+            var p = Math.min((ts - _cbatTs) / 1200, 1);
+            _cbatEl.textContent = Math.round(_cbatScore * p);
+            if (p < 1) requestAnimationFrame(_cbatTick);
+        }
+        requestAnimationFrame(_cbatTick);
+        if (_cbatGauge) {
+            _cbatGauge.classList.remove('as-gauge-fill-pass', 'as-gauge-fill-warn', 'as-gauge-fill-fail');
+            var _cbatClass = j.passed ? 'as-gauge-fill-pass' : (_cbatScore >= 50 ? 'as-gauge-fill-warn' : 'as-gauge-fill-fail');
+            _cbatGauge.classList.add(_cbatClass);
+            var _cbatOffset = 565.48 * (1 - _cbatScore / 100);
+            setTimeout(function() { _cbatGauge.style.strokeDashoffset = _cbatOffset; }, 50);
+        }
         qs('resultTitle').textContent = j.passed ? 'Passed!' : 'Below Threshold';
-        qs('resultScore').textContent = j.score + '%';
+
         qs('resultSubtitle').textContent = 'You scored ' + j.correct + ' out of ' + j.total_questions + '.';
         qs('resultCorrect').textContent = j.correct;
         qs('resultTotal').textContent = j.total_questions;
