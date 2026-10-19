@@ -918,3 +918,91 @@ p, h1, h2, h3, h4, h5, h6, li, span, a {
     .as-gauge-svg { width: 160px; height: 160px; }
     .as-gauge-content .as-score-value { font-size: 2.1rem; }
 }
+/* ============================================
+   SESSION 62 — MICRO-INTERACTIONS (Phase 7 final)
+   Button press, page-load fade-in, confetti on pass, skeleton
+   ============================================ */
+
+/* 1. Page-load fade-in (every page) */
+main > .container:first-child,
+main > .container-fluid:first-child {
+    animation: as-page-in 0.35s ease-out;
+}
+@keyframes as-page-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* 2. Result reveal fade-in (JS adds .as-revealed) */
+.as-revealed {
+    animation: as-fade-in 0.4s ease-out;
+}
+
+/* 3. Button press feedback */
+.as-btn:active,
+.md-btn-primary:active,
+.rc-btn:active,
+.mr-verdict:active {
+    transform: scale(0.97);
+    transition: transform 0.06s ease;
+}
+
+/* 4. Confetti overlay (JS appends <div class="as-confetti">) */
+.as-confetti {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9999;
+    overflow: hidden;
+}
+.as-confetti::before,
+.as-confetti::after {
+    content: '';
+    position: absolute;
+    top: -10%;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    animation: as-confetti-fall 2.5s ease-in forwards;
+}
+.as-confetti::before {
+    left: 20%;
+    background: #3ba591;
+    box-shadow:
+        30vw 0 0 #e94d65,
+        60vw 0 0 #3ba591,
+        90vw 0 0 #f59e0b;
+}
+.as-confetti::after {
+    left: 40%;
+    background: #f59e0b;
+    box-shadow:
+        30vw 0 0 #3ba591,
+        60vw 0 0 #e94d65,
+        90vw 0 0 #3ba591;
+    animation-delay: 0.3s;
+}
+@keyframes as-confetti-fall {
+    0%   { transform: translateY(0) rotate(0deg);   opacity: 1; }
+    100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+}
+
+/* 5. Loading skeleton (complements existing .as-skeleton) */
+.as-loading-skeleton {
+    background: linear-gradient(90deg, var(--light-gray) 25%, #f3f4f6 50%, var(--light-gray) 75%);
+    background-size: 200% 100%;
+    animation: as-shimmer 1.5s infinite;
+    border-radius: 8px;
+    min-height: 20px;
+}
+
+/* ---------- Responsive ---------- */
+@media (prefers-reduced-motion: reduce) {
+    .as-revealed,
+    .as-confetti::before,
+    .as-confetti::after,
+    main > .container:first-child,
+    main > .container-fluid:first-child {
+        animation: none !important;
+    }
+}

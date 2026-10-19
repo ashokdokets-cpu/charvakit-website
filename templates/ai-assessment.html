@@ -689,9 +689,11 @@ function renderResult(j) {
     document.getElementById('carStep1').classList.add('d-none');
     document.getElementById('carStep2').classList.add('d-none');
     document.getElementById('carStep3').classList.remove('d-none');
+    document.getElementById('carStep3').classList.add('as-revealed');
 
     var passed = j.passed === true;
     var score = j.score || 0;
+    if (passed && typeof _showConfetti === 'function') _showConfetti();
     var badgeClass = passed ? 'as-verdict-pass' : (score >= 50 ? 'as-verdict-warn' : 'as-verdict-fail');
     var badgeText = passed ? 'READY' : (score >= 50 ? 'NEEDS PRACTICE' : 'KEEP GOING');
     var badge = '<span class="as-verdict ' + badgeClass + '">' + badgeText + '</span>';
@@ -1284,6 +1286,7 @@ async function loadHistory(ev) {
         html += '</tbody></table></div></div></div>';
         document.getElementById('carHistoryPanel').innerHTML = html;
         document.getElementById('carStep3').classList.remove('d-none');
+    document.getElementById('carStep3').classList.add('as-revealed');
         document.getElementById('carHistoryPanel').scrollIntoView({ behavior: 'smooth' });
     } catch (e) {
         alert('Network error: ' + e.message);
@@ -1391,6 +1394,15 @@ function _carInitIntegrity() {
             return a.assessment_id;
         }
     });
+}
+
+function _showConfetti() {
+    try {
+        var div = document.createElement('div');
+        div.className = 'as-confetti';
+        document.body.appendChild(div);
+        setTimeout(function(){ if (div.parentNode) div.parentNode.removeChild(div); }, 3000);
+    } catch (e) {}
 }
 
 if (document.readyState === 'loading') {

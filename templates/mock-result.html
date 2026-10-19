@@ -208,7 +208,7 @@ style="text-decoration:none; color:inherit; display:block; padding:18px; backgro
       var r = data.result;
 
       loadingEl.style.display = "none";
-      contentEl.style.display = "block";
+      contentEl.style.display = "block";`n      contentEl.classList.add("as-revealed");
 
       var cp = (r.company || "Mock Drive") + " — " + (r.pattern || "Result");
       document.getElementById("mrCompanyPattern").textContent = cp;
@@ -237,6 +237,7 @@ style="text-decoration:none; color:inherit; display:block; padding:18px; backgro
           _mrGaugeClass = (scoreRounded >= 50) ? "as-gauge-fill-warn" : "as-gauge-fill-fail";
         }
         gaugeEl.classList.add(_mrGaugeClass);
+        if (r.passed && typeof _showConfetti === 'function') _showConfetti();
         var _mrCirc = 565.48;
         var _mrOffset = _mrCirc * (1 - scoreRounded / 100);
         setTimeout(function() { gaugeEl.style.strokeDashoffset = _mrOffset; }, 50);
@@ -343,5 +344,15 @@ document.addEventListener('DOMContentLoaded', function() {
     charvakTrackShareLanding('mock_result');
   }
 });
+
+function _showConfetti() {
+    try {
+        var div = document.createElement('div');
+        div.className = 'as-confetti';
+        document.body.appendChild(div);
+        setTimeout(function(){ if (div.parentNode) div.parentNode.removeChild(div); }, 3000);
+    } catch (e) {}
+}
+
 </script>
 {% endblock %}

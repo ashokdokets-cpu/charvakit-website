@@ -328,7 +328,7 @@
 
   function renderCertificate(c) {
     document.getElementById("rdLoading").style.display = "none";
-    document.getElementById("rdContent").style.display = "block";
+    document.getElementById("rdContent").style.display = "block";`n    document.getElementById("rdContent").classList.add("as-revealed");
 
     document.getElementById("rdCandidate").textContent = c.candidate_display || "Verified Candidate";
     document.getElementById("rdContext").textContent =
@@ -359,6 +359,7 @@
         if (score < 50 || _rdVerdictClass === "below") _rdGaugeClass = "as-gauge-fill-fail";
         else if (score < 70 || _rdVerdictClass === "near") _rdGaugeClass = "as-gauge-fill-warn";
         _rdGaugeEl.classList.add(_rdGaugeClass);
+        if (_rdGaugeClass === 'as-gauge-fill-pass' && typeof _showConfetti === 'function') _showConfetti();
         var _rdCirc = 565.48;
         var _rdOffset = _rdCirc * (1 - score / 100);
         setTimeout(function() { _rdGaugeEl.style.strokeDashoffset = _rdOffset; }, 50);
@@ -710,5 +711,15 @@ document.addEventListener('DOMContentLoaded', function() {
   var m = path.match(/\/readiness\/(RDC-[A-Z0-9]+)/i);
   if (m && m[1]) rdLoadIntegrity(m[1]);
 });
+
+function _showConfetti() {
+    try {
+        var div = document.createElement('div');
+        div.className = 'as-confetti';
+        document.body.appendChild(div);
+        setTimeout(function(){ if (div.parentNode) div.parentNode.removeChild(div); }, 3000);
+    } catch (e) {}
+}
+
 </script>
 {% endblock %}
