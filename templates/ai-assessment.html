@@ -1,73 +1,81 @@
 {% extends "base.html" %}
 {% block title %}AI Career Assessment - Charvak IT Consulting{% endblock %}
 {% block content %}
-<div class="page-hero bg-gradient-primary text-white py-5">
-    <div class="container py-4 text-center">
-        <span class="badge bg-success mb-2 px-3 py-2">Live &middot; Role-Calibrated MCQ Assessments</span>
-        <h1 class="display-4 fw-bold">AI Career Assessment</h1>
-        <p class="lead">Practice the exact kind of questions a real interviewer will ask for your target role.</p>
-        <p class="mb-0 text-white-50 small">106 roles &middot; 66 industries &middot; 7 experience levels</p>
-    </div>
-</div>
 
 <div class="container py-5">
 
     <!-- ============================================================ -->
     <!-- STEP 1 - Picker -->
     <!-- ============================================================ -->
-    <div id="carStep1" class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h2 class="as-h4 mb-0">Step 1 &mdash; Choose your target</h2>
-                        <a href="#" id="carHistoryLink" class="small" onclick="loadHistory(event); return false;">My past assessments</a>
+    <div id="carStep1" class="container py-4">
+        <!-- Hero -->
+        <div class="as-hero mb-4">
+            <h1 class="as-h2">AI Career Assessment</h1>
+            <p>Practice the exact questions a real interviewer will ask for your target role. 106 roles × 66 industries × 7 levels. Takes 5-20 minutes depending on size.</p>
+        </div>
+
+        <!-- Progress indicator -->
+        <div class="d-flex justify-content-center mb-4">
+            <div class="as-steps">
+                <span class="as-step as-step-active">1. Choose Target</span>
+                <span class="as-step">2. Answer Questions</span>
+                <span class="as-step">3. Get Report</span>
+            </div>
+        </div>
+
+        <!-- Card -->
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="as-card">
+                    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                        <h2 class="as-h4 mb-0">Choose your target</h2>
+                        <a href="#" id="carHistoryLink" class="small text-decoration-none" onclick="loadHistory(event); return false;">📋 My past assessments</a>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Target Role</label>
-                        <select class="form-select" id="carRoleSelect">
+                    <div class="as-field">
+                        <label class="as-label" for="carRoleSelect">Target Role</label>
+                        <select class="as-select" id="carRoleSelect">
                             <option value="">Loading roles...</option>
                         </select>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Industry</label>
-                        <select class="form-select" id="carIndustrySelect">
+                    <div class="as-field">
+                        <label class="as-label" for="carIndustrySelect">Industry</label>
+                        <select class="as-select" id="carIndustrySelect">
                             <option value="">Loading industries...</option>
                         </select>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Experience Level</label>
-                        <select class="form-select" id="carLevelSelect">
+                    <div class="as-field">
+                        <label class="as-label" for="carLevelSelect">Experience Level</label>
+                        <select class="as-select" id="carLevelSelect">
                             <option value="">Loading levels...</option>
                         </select>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Format</label>
-                        <select class="form-select" id="carFormatSelect" onchange="updateSizeLabels()">
+                    <div class="as-field">
+                        <label class="as-label" for="carFormatSelect">Format</label>
+                        <select class="as-select" id="carFormatSelect" onchange="updateSizeLabels()">
                             <option value="">Loading formats...</option>
                         </select>
-                        <div class="form-text" id="carFormatHint"></div>
+                        <div class="as-field-hint" id="carFormatHint"></div>
                     </div>
 
                     <div id="carAdaptiveBadge" class="alert alert-info py-2 px-3 mb-3 d-none">
-                        <small><strong>Adapted to your last performance.</strong> <span id="carAdaptiveText"></span></small>
+                        <small><strong>🎯 Adapted to your last performance.</strong> <span id="carAdaptiveText"></span></small>
                     </div>
 
-                    <div class="mb-4">
-                        <label class="form-label">Assessment Size</label>
-                        <select class="form-select" id="carSizeSelect">
-                            <option value="quick" selected>Quick &middot; 10 questions</option>
-                            <option value="standard">Standard &middot; 15 questions</option>
-                            <option value="full">Full &middot; 20 questions</option>
+                    <div class="as-field mb-4">
+                        <label class="as-label" for="carSizeSelect">Assessment Size</label>
+                        <select class="as-select" id="carSizeSelect">
+                            <option value="quick" selected>Quick · 10 questions</option>
+                            <option value="standard">Standard · 15 questions</option>
+                            <option value="full">Full · 20 questions</option>
                         </select>
-                        <div class="form-text" id="carSizeHint">Choose a format to see credit cost.</div>
+                        <div class="as-field-hint" id="carSizeHint">Choose a format to see credit cost.</div>
                     </div>
 
-                    <button class="btn btn-primary btn-lg w-100" id="carStartBtn" onclick="startAssessment()" disabled>
+                    <button class="as-btn as-btn-primary as-btn-lg w-100" id="carStartBtn" onclick="startAssessment()" disabled>
                         Loading catalog...
                     </button>
                     <div id="carError1" class="alert alert-danger mt-3 d-none"></div>
@@ -80,24 +88,41 @@
     <!-- STEP 2 - Questions -->
     <!-- ============================================================ -->
     <div id="carStep2" class="d-none">
-        <div class="row justify-content-center">
-            <div class="col-lg-9">
-                <div class="card border-0 shadow-sm mb-4">
-                    <div class="card-body p-4">
-                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+        <div class="container py-4">
+            <!-- Step breadcrumb (Step 2 active) -->
+            <div class="d-flex justify-content-center mb-4">
+                <div class="as-steps">
+                    <span class="as-step as-step-done">1. Choose Target</span>
+                    <span class="as-step as-step-active">2. Answer Questions</span>
+                    <span class="as-step">3. Get Report</span>
+                </div>
+            </div>
+
+            <div class="row justify-content-center">
+                <div class="col-lg-9">
+                    <!-- Persistent progress header -->
+                    <div class="as-progress-wrap mb-4">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
                             <div>
                                 <h2 class="as-h4 mb-1" id="carHeadline">Assessment</h2>
                                 <p class="text-muted mb-0 small" id="carSubhead"></p>
                             </div>
-                            <span class="badge bg-primary" id="carProgressBadge">0 / 0</span>
+                            <span class="as-progress-badge" id="carProgressBadge">0 / 0</span>
+                        </div>
+                        <div class="as-progress">
+                            <div class="as-progress-bar" id="carProgressBar" style="width: 0%;"></div>
                         </div>
                     </div>
+
+                    <div id="carQuestions"></div>
+
+                    <div class="d-flex gap-2 mb-5 mt-4">
+                        <button class="as-btn as-btn-primary as-btn-lg" id="carSubmitBtn" onclick="submitAssessment()">Submit Answers for Scoring</button>
+                        <button class="as-btn as-btn-outline as-btn-lg" onclick="resetToStep1()">Cancel</button>
+                    </div>
                 </div>
-                <div id="carQuestions"></div>
-                <div class="d-flex gap-2 mb-5">
-                    <button class="btn btn-primary btn-lg" id="carSubmitBtn" onclick="submitAssessment()">Submit Answers for Scoring</button>
-                    <button class="btn btn-outline-secondary btn-lg" onclick="resetToStep1()">Cancel</button>
-                </div>
+            </div>
+        </div>
                 <div id="carError2" class="alert alert-danger d-none"></div>
             </div>
         </div>
@@ -107,21 +132,44 @@
     <!-- STEP 3 - Result -->
     <!-- ============================================================ -->
     <div id="carStep3" class="d-none">
-        <div class="row justify-content-center">
-            <div class="col-lg-7">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-body p-5 text-center">
-                        <div id="carResultBadge"></div>
-                        <h2 class="display-3 fw-bold mb-2" id="carResultScore">0%</h2>
-                        <p class="text-muted mb-4" id="carResultDetail"></p>
-                        <div id="carResultMeta" class="text-muted small mb-4"></div>
-                        <div class="d-flex gap-2 justify-content-center flex-wrap">
-                            <button class="btn btn-primary" onclick="resetToStep1()">Take Another Assessment</button>
-                            <a href="/my-results" class="btn btn-outline-secondary">View All Results</a>
+        <div class="container py-4">
+            <!-- Step breadcrumb (Step 3 active) -->
+            <div class="d-flex justify-content-center mb-4">
+                <div class="as-steps">
+                    <span class="as-step as-step-done">1. Choose Target</span>
+                    <span class="as-step as-step-done">2. Answer Questions</span>
+                    <span class="as-step as-step-active">3. Get Report</span>
+                </div>
+            </div>
+
+            <div class="row justify-content-center">
+                <div class="col-lg-9">
+                    <!-- Result hero with SVG score gauge -->
+                    <div class="as-result-hero">
+                        <div class="as-score-gauge">
+                            <svg viewBox="0 0 200 200" class="as-gauge-svg">
+                                <circle cx="100" cy="100" r="90" class="as-gauge-track"/>
+                                <circle cx="100" cy="100" r="90" class="as-gauge-fill" id="carGaugeCircle"
+                                        style="stroke-dashoffset: 565.48;"/>
+                            </svg>
+                            <div class="as-gauge-content">
+                                <div class="as-score-value" id="carResultScore">0%</div>
+                            </div>
+                        </div>
+                        <div id="carResultBadge" class="mt-3"></div>
+                        <p class="as-text-muted mt-2 mb-0 small" id="carResultDetail"></p>
+                        <div id="carResultMeta" class="as-text-muted small mt-2 mb-0"></div>
+                        <div class="d-flex gap-2 justify-content-center flex-wrap mt-4">
+                            <button class="as-btn as-btn-primary" onclick="resetToStep1()">Take Another Assessment</button>
+                            <a href="/my-results" class="as-btn as-btn-outline">View All Results</a>
                         </div>
                     </div>
+
+                    <!-- Additional content injected by renderResult -->
+                    <div id="carResultContent"></div>
+
+                    <div id="carHistoryPanel" class="mt-4"></div>
                 </div>
-                <div id="carHistoryPanel" class="mt-4"></div>
             </div>
         </div>
     </div>
@@ -389,6 +437,8 @@ function renderQuestions(assessment) {
         assessment.questions.length + ' questions \u00b7 passing: ' + (assessment.passing_score || 70) + '%';
     document.getElementById('carProgressBadge').textContent =
         '0 / ' + assessment.questions.length;
+    var _initBar = document.getElementById('carProgressBar');
+    if (_initBar) _initBar.style.width = '0%';
 
     var html = '';
     var qs = assessment.questions || [];
@@ -530,6 +580,11 @@ function updateProgress() {
     }
     document.getElementById('carProgressBadge').textContent =
         answered + ' / ' + a.questions.length;
+    var _progBar = document.getElementById('carProgressBar');
+    if (_progBar && a.questions.length > 0) {
+        var _pct = Math.round((answered / a.questions.length) * 100);
+        _progBar.style.width = _pct + '%';
+    }
 }
 
 async function submitAssessment() {
@@ -636,12 +691,36 @@ function renderResult(j) {
     document.getElementById('carStep3').classList.remove('d-none');
 
     var passed = j.passed === true;
-    var badge = passed
-        ? '<span class="badge bg-success mb-3 px-3 py-2 fs-6">READY</span>'
-        : '<span class="badge bg-warning text-dark mb-3 px-3 py-2 fs-6">NEEDS PRACTICE</span>';
+    var score = j.score || 0;
+    var badgeClass = passed ? 'as-verdict-pass' : (score >= 50 ? 'as-verdict-warn' : 'as-verdict-fail');
+    var badgeText = passed ? 'READY' : (score >= 50 ? 'NEEDS PRACTICE' : 'KEEP GOING');
+    var badge = '<span class="as-verdict ' + badgeClass + '">' + badgeText + '</span>';
     document.getElementById('carResultBadge').innerHTML = badge;
 
-    document.getElementById('carResultScore').textContent = j.score + '%';
+    // Session 57: animate score counter 0 -> actual
+    var _scoreEl = document.getElementById('carResultScore');
+    var _targetScore = score;
+    var _startTs = null;
+    var _duration = 1200;
+    function _tickScore(ts) {
+        if (!_startTs) _startTs = ts;
+        var progress = Math.min((ts - _startTs) / _duration, 1);
+        var current = Math.round(_targetScore * progress);
+        _scoreEl.textContent = current + '%';
+        if (progress < 1) requestAnimationFrame(_tickScore);
+    }
+    requestAnimationFrame(_tickScore);
+
+    // Session 57: animate SVG gauge fill (stroke-dashoffset from 565.48 -> target)
+    var _gauge = document.getElementById('carGaugeCircle');
+    if (_gauge) {
+        _gauge.classList.remove('as-gauge-fill-pass', 'as-gauge-fill-warn', 'as-gauge-fill-fail');
+        _gauge.classList.add(passed ? 'as-gauge-fill-pass' : (score >= 50 ? 'as-gauge-fill-warn' : 'as-gauge-fill-fail'));
+        var _circumference = 565.48;
+        var _offset = _circumference * (1 - score / 100);
+        // Delay by 50ms so browser sees the transition
+        setTimeout(function() { _gauge.style.strokeDashoffset = _offset; }, 50);
+    }
     document.getElementById('carResultDetail').textContent =
         (j.correct_count != null ? j.correct_count : ((window.__lastAssessment || {}).correct_count || 0)) + ' of ' + (j.total_questions || (window.__lastAssessment || {}).total_questions || (window.__lastAssessment || {}).num_questions || '?') + ' correct \u00b7 passing: ' + (j.passing_score || (window.__lastAssessment || {}).passing_score || (window.__lastAssessment || {}).passing || 70) + '%';
     var _a = window.__lastAssessment || _carCurrentAssessment || {};
@@ -673,7 +752,7 @@ function renderResult(j) {
             bhtml += '</div></details>';
         }
         bhtml += '</div></div>';
-        document.getElementById('carResultMeta').innerHTML += bhtml;
+        document.getElementById('carResultContent').innerHTML += bhtml;
     }
 
     // Skill gap bars
@@ -684,14 +763,22 @@ function renderResult(j) {
         ghtml += '<p class="text-muted small mb-3">Performance by topic. Weakest first.</p>';
         for (var k = 0; k < gap.length; k++) {
             var g = gap[k];
-            var barClass = g.status === 'strong' ? 'bg-success' : (g.status === 'mixed' ? 'bg-warning' : 'bg-danger');
-            ghtml += '<div class="mb-2">';
-            ghtml += '<div class="d-flex justify-content-between small mb-1"><span>' + _esc(g.topic) + '</span><span>' + g.pct + '%</span></div>';
-            ghtml += '<div class="progress" style="height: 8px;"><div class="progress-bar ' + barClass + '" role="progressbar" style="width: ' + g.pct + '%;"></div></div>';
+            var barClass = g.status === 'strong' ? 'as-gap-fill-strong' : (g.status === 'mixed' ? 'as-gap-fill-mixed' : 'as-gap-fill-weak');
+            ghtml += '<div class="as-gap-block">';
+            ghtml += '<div class="as-gap-block-label"><strong>' + _esc(g.topic) + '</strong><span>' + g.pct + '%</span></div>';
+            ghtml += '<div class="as-gap-track"><div class="as-gap-fill ' + barClass + '" style="width: 0%;"></div></div>';
             ghtml += '</div>';
         }
         ghtml += '</div></div>';
-        document.getElementById('carResultMeta').innerHTML += ghtml;
+        document.getElementById('carResultContent').innerHTML += ghtml;
+        // Session 57: animate gap bar widths
+        setTimeout(function() {
+            var fills = document.querySelectorAll('#carResultContent .as-gap-fill');
+            for (var fi = 0; fi < fills.length; fi++) {
+                var pctVal = gap[fi] ? gap[fi].pct : 0;
+                fills[fi].style.width = pctVal + '%';
+            }
+        }, 100);
     }
 
     // Learning path CTA
@@ -734,7 +821,7 @@ function renderResult(j) {
     lhtml += '  </div>';
     lhtml += '</div>';
     lhtml += '</div></div>';
-    document.getElementById('carResultMeta').innerHTML += lhtml;
+    document.getElementById('carResultContent').innerHTML += lhtml;
 
     if (window.__fromReadinessCheck) {
         var isAnonNow = _isAnonMode() && _anonToken() && _anonAid();

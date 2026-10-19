@@ -758,3 +758,163 @@ p, h1, h2, h3, h4, h5, h6, li, span, a {
     .as-gap-label { min-width: 120px; font-size: 0.8rem; }
     .as-whatnext-grid { grid-template-columns: 1fr; }
 }
+/* ============================================
+   SESSION 57 — UI PHASE 2: Form, Steps, Score Gauge
+   Extends existing design system. Uses --primary (#3ba591),
+   --orange (#e94d65), --dark (#15161a), Poppins only.
+   ============================================ */
+
+/* ---------- Form fields ---------- */
+.as-field { margin-bottom: 1rem; }
+.as-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--dark);
+    margin-bottom: 0.35rem;
+}
+.as-select, .as-input {
+    width: 100%;
+    padding: 0.65rem 0.9rem;
+    border: 1px solid var(--light-gray);
+    border-radius: 8px;
+    font-family: var(--font);
+    font-size: 0.95rem;
+    color: var(--dark);
+    background: #fff;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.as-select:focus, .as-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(59,165,145,0.12);
+}
+.as-field-hint {
+    font-size: 0.8rem;
+    color: var(--gray);
+    margin-top: 0.3rem;
+}
+
+/* ---------- Step indicator (breadcrumb) ---------- */
+.as-steps {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+.as-step {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.4rem 0.9rem;
+    background: var(--light-gray);
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--gray);
+}
+.as-step-active {
+    background: var(--primary);
+    color: #fff;
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(59,165,145,0.25);
+}
+.as-step-done {
+    background: rgba(59,165,145,0.15);
+    color: var(--primary-dark);
+    font-weight: 600;
+}
+
+/* ---------- Persistent progress bar wrapper ---------- */
+.as-progress-wrap {
+    background: #fff;
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    border: 1px solid var(--light-gray);
+    margin-bottom: 1.25rem;
+}
+.as-progress-badge {
+    display: inline-block;
+    padding: 0.4rem 0.9rem;
+    background: var(--primary);
+    color: #fff;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+/* ---------- Result hero + SVG score gauge ---------- */
+.as-result-hero {
+    text-align: center;
+    padding: 2rem 1rem 1.5rem;
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid var(--light-gray);
+    margin-bottom: 1.5rem;
+}
+.as-score-gauge {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    margin: 0 auto 1rem;
+}
+.as-gauge-svg {
+    width: 200px;
+    height: 200px;
+    transform: rotate(-90deg);
+}
+.as-gauge-track {
+    fill: none;
+    stroke: var(--light-gray);
+    stroke-width: 14;
+}
+.as-gauge-fill {
+    fill: none;
+    stroke: var(--primary);
+    stroke-width: 14;
+    stroke-linecap: round;
+    stroke-dasharray: 565.48;
+    stroke-dashoffset: 565.48;
+    transition: stroke-dashoffset 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.as-gauge-fill-fail { stroke: var(--orange); }
+.as-gauge-fill-warn { stroke: #f59e0b; }
+.as-gauge-fill-pass { stroke: var(--primary); }
+.as-gauge-content {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    pointer-events: none;
+}
+.as-gauge-content .as-score-value {
+    font-size: 2.75rem;
+    font-weight: 800;
+    color: var(--primary);
+    line-height: 1;
+    font-family: var(--font);
+}
+
+/* ---------- Vertical gap bars (result page) ---------- */
+.as-gap-block { margin-bottom: 0.85rem; }
+.as-gap-block-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.35rem;
+    font-size: 0.9rem;
+    color: var(--dark);
+}
+.as-gap-block-label strong { font-weight: 600; }
+.as-gap-block-label span { color: var(--gray); font-size: 0.85rem; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 640px) {
+    .as-steps { gap: 0.4rem; }
+    .as-step { padding: 0.3rem 0.65rem; font-size: 0.75rem; }
+    .as-score-gauge { width: 160px; height: 160px; }
+    .as-gauge-svg { width: 160px; height: 160px; }
+    .as-gauge-content .as-score-value { font-size: 2.1rem; }
+}
