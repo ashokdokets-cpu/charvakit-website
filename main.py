@@ -6663,6 +6663,82 @@ async def get_prep_session(session_id: str):
     """Get session details."""
     return interview_prep_engine.get_session(session_id)
 
+
+
+# Session 65a: Conversational interview mode
+@app.post("/api/interview-prep/start-conversational")
+async def interview_start_conversational(request: Request):
+    """Start a chat-style interview. First question returned, credits deducted after AI success."""
+    try:
+        data = await request.json()
+    except Exception:
+        return {"status": "error", "message": "Invalid JSON body"}
+
+    email = (data.get("candidate_email") or "").strip().lower()
+    if not email:
+        raise HTTPException(status_code=400, detail="candidate_email required")
+
+    try:
+        require_auth_for_email(request, email)
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "interview start conversational auth")
+
+    try:
+        import interview_prep_engine
+        result = interview_prep_engine.start_conversational(data)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "interview start conversational")
+
+
+@app.post("/api/interview-prep/submit-turn")
+async def interview_submit_turn(request: Request):
+    """Submit one turn in conversational mode. Returns score + next question."""
+    try:
+        data = await request.json()
+    except Exception:
+        return {"status": "error", "message": "Invalid JSON body"}
+
+    session_id = data.get("session_id")
+    if not session_id:
+        raise HTTPException(status_code=400, detail="session_id required")
+
+    try:
+        import interview_prep_engine
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT candidate_email FROM charvak_interview_sessions WHERE session_id = %s", (session_id,))
+        row = cur.fetchone()
+        cur.close(); conn.close()
+        if not row:
+            return {"status": "error", "message": "Session not found"}
+        owner_email = row[0]
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "interview submit turn ownership check")
+
+    try:
+        require_auth_for_email(request, owner_email)
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "interview submit turn auth")
+
+    try:
+        result = interview_prep_engine.submit_turn(data)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "interview submit turn")
+
+
 # ============================================================
 # PRODUCTS API ENDPOINTS
 # ============================================================

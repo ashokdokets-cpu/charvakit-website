@@ -59,6 +59,18 @@ class InterviewPrepEngine:
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
+            cur.execute("""
+                ALTER TABLE charvak_interview_sessions
+                    ADD COLUMN IF NOT EXISTS mode TEXT DEFAULT 'static'
+            """)
+            cur.execute("""
+                ALTER TABLE charvak_interview_sessions
+                    ADD COLUMN IF NOT EXISTS turn_count INTEGER DEFAULT 0
+            """)
+            cur.execute("""
+                ALTER TABLE charvak_interview_sessions
+                    ADD COLUMN IF NOT EXISTS max_turns INTEGER DEFAULT 12
+            """)
             conn.commit()
             cur.close()
             conn.close()
@@ -392,6 +404,329 @@ Return JSON:
         except Exception as e:
             logger.error(f"submit_answer failed: {e}")
             return {"status": "error", "message": str(e)}
+
+    # ============================================================
+    # Session 65a: Conversational interview mode
+    # ============================================================
+
+    def _generate_next_turn(self, role: str, difficulty: str,
+                             previous_question: str, previous_answer: str,
+                             turn_num: int, max_turns: int) -> Dict:
+        """Generate the next question — either a follow-up or a new topic."""
+        if not OPENAI_API_KEY:
+            return {"question": f"Tell me about your experience with {role}.", "is_followup": False, "category": "General"}
+
+        system_prompt = f"""You are a senior technical interviewer conducting a {role} interview at {difficulty} level.
+
+CONTEXT: You are on turn {turn_num} of a maximum {max_turns}-turn interview.
+
+DECISION RULES:
+- If the previous answer was vague, shallow, or avoided the question: ask ONE probing follow-up.
+- If the answer was strong or complete: move to a new topic at {difficulty} level.
+- If turn_num is a multiple of 3 (turn 3, 6, 9): FORCE a new topic to prevent rabbit-holing.
+- NEVER ask more than 2 follow-ups in a row on the same topic.
+
+TONE: Professional, warm, curious. Like a good interviewer, not a robot.
+
+Output JSON ONLY:
+{{"question": "<the question text>", "is_followup": true_or_false, "category": "<topic>"}}"""
+
+        user_prompt = f"""Previous question: {previous_question}
+
+Candidate's answer: {previous_answer}
+
+Generate the next turn."""
+
+        result = self._call_openai(system_prompt, user_prompt, max_tokens=400)
+        if not result or "question" not in result:
+            return {"question": f"Can you share another example from your {role} experience?", "is_followup": False, "category": "General"}
+
+        return {
+            "question": result.get("question", f"Tell me more about your {role} experience."),
+            "is_followup": bool(result.get("is_followup", False)),
+            "category": result.get("category", "General"),
+        }
+
+    def start_conversational(self, data: Dict) -> Dict:
+        """Start a conversational interview. First question generated, credits NOT yet deducted."""
+        email = (data.get("candidate_email") or "").strip().lower()
+        role = (data.get("role") or "Software Developer").strip()
+        difficulty = (data.get("difficulty") or "Intermediate").strip()
+        max_turns = int(data.get("max_turns") or 12)
+
+        if not email:
+            return {"status": "error", "message": "Email required"}
+
+        # Pre-check credit balance (no deduction yet)
+        try:
+            from ai_credit_engine import ai_credit_engine
+            credits_info = ai_credit_engine.get_user_credits(email)
+            if credits_info.get("status") == "error":
+                return {"status": "error", "message": credits_info.get("message", "Credit check failed")}
+            remaining = credits_info.get("credits_remaining", 0)
+            if remaining < CREDITS_PER_SESSION and email not in (credits_info.get("admin_emails") or []):
+                # Non-admin without enough credits
+                from database import db
+                user = db.get_user_by_email(email)
+                from main import ADMIN_EMAILS as _admin_set
+                if email not in _admin_set:
+                    return {
+                        "status": "error",
+                        "message": "Insufficient credits",
+                        "credits_needed": CREDITS_PER_SESSION,
+                        "top_up_url": "/pricing"
+                    }
+        except Exception as e:
+            logger.error(f"Credit pre-check failed: {e}")
+
+        # Generate FIRST question only (no batch)
+        try:
+            first_q = self._generate_questions(role, difficulty)
+            first_question = first_q[0] if first_q else {"question": f"Tell me about your {role} experience.", "category": "General"}
+        except Exception as e:
+            logger.error(f"First question gen failed: {e}")
+            return {"status": "error", "message": "AI generation failed"}
+
+        # Deduct credits NOW (after AI success)
+        try:
+            from ai_credit_engine import ai_credit_engine
+            credit_result = ai_credit_engine.check_and_deduct(email, "interview_prep")
+            if credit_result.get("status") != "success":
+                return {
+                    "status": "error",
+                    "message": credit_result.get("message", "Insufficient credits"),
+                    "credits_needed": CREDITS_PER_SESSION,
+                    "top_up_url": "/pricing"
+                }
+        except Exception as e:
+            logger.error(f"Credit deduction failed: {e}")
+            return {"status": "error", "message": "Credit system error"}
+
+        session_id = f"IPC-{secrets.token_hex(4).upper()}"
+
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                INSERT INTO charvak_interview_sessions
+                    (session_id, candidate_email, role, difficulty, credits_charged,
+                     questions_count, max_score, status, mode, turn_count, max_turns)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, 'in_progress', 'conversational', 1, %s)
+            """, (
+                session_id, email, role, difficulty, CREDITS_PER_SESSION,
+                1, max_turns * 100, max_turns
+            ))
+
+            answer_id = f"ANS-{secrets.token_hex(4).upper()}"
+            cur.execute("""
+                INSERT INTO charvak_interview_answers
+                    (answer_id, session_id, question_num, question_text, category)
+                VALUES (%s, %s, 1, %s, %s)
+            """, (answer_id, session_id, first_question.get("question", ""), first_question.get("category", "General")))
+
+            conn.commit()
+            cur.close()
+            conn.close()
+        except Exception as e:
+            logger.error(f"Conversational session creation failed: {e}")
+            return {"status": "error", "message": str(e)}
+
+        logger.info(f"Conversational session started: {session_id} for {email} ({role}, {difficulty}, max_turns={max_turns})")
+
+        return {
+            "status": "success",
+            "session_id": session_id,
+            "mode": "conversational",
+            "credits_charged": CREDITS_PER_SESSION,
+            "turn": 1,
+            "max_turns": max_turns,
+            "first_question": {
+                "answer_id": answer_id,
+                "question_num": 1,
+                "question_text": first_question.get("question", ""),
+                "category": first_question.get("category", "General"),
+            },
+            "message": f"Session started! {CREDITS_PER_SESSION} credits charged."
+        }
+
+    def submit_turn(self, data: Dict) -> Dict:
+        """Submit answer for current turn. AI scores it, generates next question."""
+        session_id = data.get("session_id")
+        answer_id = data.get("answer_id")
+        user_answer = (data.get("answer") or "").strip()
+
+        if not session_id or not answer_id or not user_answer:
+            return {"status": "error", "message": "session_id, answer_id, answer required"}
+
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+
+            # Get session + current answer row
+            cur.execute("""
+                SELECT a.question_text, s.role, s.difficulty, s.turn_count, s.max_turns, s.mode
+                FROM charvak_interview_answers a
+                JOIN charvak_interview_sessions s ON a.session_id = s.session_id
+                WHERE a.answer_id = %s AND a.session_id = %s
+            """, (answer_id, session_id))
+            row = cur.fetchone()
+            if not row:
+                cur.close(); conn.close()
+                return {"status": "error", "message": "Answer row not found"}
+            question_text, role, difficulty, turn_count, max_turns, mode = row
+
+            if mode != "conversational":
+                cur.close(); conn.close()
+                return {"status": "error", "message": "Not a conversational session"}
+
+            # Score the answer
+            evaluation = self._score_answer(question_text, user_answer, role, difficulty)
+            score = evaluation.get("score", 0)
+            feedback = evaluation.get("feedback", "")
+            strengths = evaluation.get("strengths", [])
+            improvements = evaluation.get("improvements", [])
+
+            feedback_full = json.dumps({
+                "text": feedback,
+                "strengths": strengths,
+                "improvements": improvements
+            })
+
+            cur.execute("""
+                UPDATE charvak_interview_answers
+                SET user_answer = %s, ai_score = %s, ai_feedback = %s
+                WHERE answer_id = %s
+            """, (user_answer, score, feedback_full, answer_id))
+
+            cur.execute("""
+                UPDATE charvak_interview_sessions
+                SET total_score = total_score + %s
+                WHERE session_id = %s
+            """, (score, session_id))
+
+            # Check if this is the last turn
+            done = turn_count >= max_turns
+
+            next_question = None
+            next_answer_id = None
+            if not done:
+                # Generate next question
+                try:
+                    nq = self._generate_next_turn(role, difficulty, question_text, user_answer, turn_count + 1, max_turns)
+                except Exception as e:
+                    logger.error(f"Next turn gen failed: {e}")
+                    nq = {"question": f"Can you give another example from your {role} experience?", "is_followup": False, "category": "General"}
+
+                next_answer_id = f"ANS-{secrets.token_hex(4).upper()}"
+                cur.execute("""
+                    INSERT INTO charvak_interview_answers
+                        (answer_id, session_id, question_num, question_text, category)
+                    VALUES (%s, %s, %s, %s, %s)
+                """, (next_answer_id, session_id, turn_count + 1, nq.get("question", ""), nq.get("category", "General")))
+
+                cur.execute("""
+                    UPDATE charvak_interview_sessions
+                    SET turn_count = turn_count + 1, questions_count = questions_count + 1
+                    WHERE session_id = %s
+                """, (session_id,))
+
+                next_question = {
+                    "answer_id": next_answer_id,
+                    "question_num": turn_count + 1,
+                    "question_text": nq.get("question", ""),
+                    "category": nq.get("category", "General"),
+                    "is_followup": nq.get("is_followup", False),
+                }
+            else:
+                # Mark session complete
+                cur.execute("""
+                    UPDATE charvak_interview_sessions
+                    SET status = 'completed', completed_at = CURRENT_TIMESTAMP
+                    WHERE session_id = %s
+                """, (session_id,))
+
+            conn.commit()
+            cur.close()
+            conn.close()
+
+            return {
+                "status": "success",
+                "score": score,
+                "feedback": feedback,
+                "strengths": strengths,
+                "improvements": improvements,
+                "next_question": next_question,
+                "done": done,
+                "turn": turn_count,
+                "max_turns": max_turns,
+            }
+        except Exception as e:
+            logger.error(f"submit_turn failed: {e}")
+            return {"status": "error", "message": str(e)}
+
+    def complete_conversational(self, session_id: str) -> Dict:
+        """Force-complete a conversational session (user clicked End interview)."""
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+
+            cur.execute("""
+                SELECT total_score, max_score, questions_count, candidate_email, role, difficulty
+                FROM charvak_interview_sessions
+                WHERE session_id = %s
+            """, (session_id,))
+            row = cur.fetchone()
+            if not row:
+                cur.close(); conn.close()
+                return {"status": "error", "message": "Session not found"}
+            total_score, max_score, questions_count, email, role, difficulty = row
+
+            cur.execute("""
+                UPDATE charvak_interview_sessions
+                SET status = 'completed', completed_at = CURRENT_TIMESTAMP
+                WHERE session_id = %s
+            """, (session_id,))
+
+            cur.execute("""
+                SELECT question_num, question_text, user_answer, ai_score, ai_feedback
+                FROM charvak_interview_answers
+                WHERE session_id = %s AND user_answer IS NOT NULL
+                ORDER BY question_num
+            """, (session_id,))
+            answers = cur.fetchall()
+            transcript = [
+                {
+                    "question_num": a[0],
+                    "question_text": a[1],
+                    "user_answer": a[2],
+                    "ai_score": a[3],
+                    "ai_feedback": json.loads(a[4]) if a[4] else {},
+                }
+                for a in answers
+            ]
+
+            conn.commit()
+            cur.close()
+            conn.close()
+
+            answered_count = len(transcript)
+            avg_score = round(total_score / answered_count, 1) if answered_count > 0 else 0
+
+            return {
+                "status": "success",
+                "overall_score": avg_score,
+                "total_score": total_score,
+                "max_score": max_score,
+                "questions_answered": answered_count,
+                "transcript": transcript,
+            }
+        except Exception as e:
+            logger.error(f"complete_conversational failed: {e}")
+            return {"status": "error", "message": str(e)}
+
 
     def get_dashboard(self, email: str) -> Dict:
         """Get user's interview prep history."""
