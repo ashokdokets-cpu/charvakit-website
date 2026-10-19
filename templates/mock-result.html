@@ -44,7 +44,16 @@
   <div id="mrContent" style="display:none;">
     <div class="mr-card">
       <div style="font-size: 0.9rem; color: #6b7280; margin-bottom: 6px;" id="mrCompanyPattern">—</div>
-      <div class="mr-num" id="mrScore">—<span class="mr-of"> / 100</span></div>
+      <div class="as-score-gauge" style="margin: 0 auto 1rem;">
+        <svg viewBox="0 0 200 200" class="as-gauge-svg">
+          <circle cx="100" cy="100" r="90" class="as-gauge-track"/>
+          <circle cx="100" cy="100" r="90" class="as-gauge-fill" id="mrGaugeCircle" style="stroke-dashoffset: 565.48;"/>
+        </svg>
+        <div class="as-gauge-content">
+          <div class="as-score-value" id="mrScore">0</div>
+          <div class="as-text-muted" style="font-size: 0.8rem; margin-top: 0.2rem;">/ 100</div>
+        </div>
+      </div>
       <div id="mrVerdict" class="mr-verdict">—</div>
       <div style="margin-top: 24px;">
         <div class="mr-row"><span>Correct answers</span><strong id="mrCorrect">—</strong></div>
@@ -206,8 +215,32 @@ style="text-decoration:none; color:inherit; display:block; padding:18px; backgro
 
       var scoreEl = document.getElementById("mrScore");
       var scoreRounded = Math.round(r.score || 0);
-      scoreEl.className = "mr-num " + (r.passed ? "pass" : "fail");
-      scoreEl.innerHTML = scoreRounded + '<span class="mr-of"> / 100</span>';
+      var gaugeEl = document.getElementById("mrGaugeCircle");
+
+      // Session 59: animate score counter (0 -> score)
+      var _mrStartTs = null;
+      var _mrDuration = 1200;
+      function _mrTickScore(ts) {
+        if (!_mrStartTs) _mrStartTs = ts;
+        var p = Math.min((ts - _mrStartTs) / _mrDuration, 1);
+        var cur = Math.round(scoreRounded * p);
+        scoreEl.textContent = cur;
+        if (p < 1) requestAnimationFrame(_mrTickScore);
+      }
+      requestAnimationFrame(_mrTickScore);
+
+      // Session 59: animate gauge fill + color
+      if (gaugeEl) {
+        gaugeEl.classList.remove("as-gauge-fill-pass", "as-gauge-fill-warn", "as-gauge-fill-fail");
+        var _mrGaugeClass = "as-gauge-fill-pass";
+        if (!r.passed) {
+          _mrGaugeClass = (scoreRounded >= 50) ? "as-gauge-fill-warn" : "as-gauge-fill-fail";
+        }
+        gaugeEl.classList.add(_mrGaugeClass);
+        var _mrCirc = 565.48;
+        var _mrOffset = _mrCirc * (1 - scoreRounded / 100);
+        setTimeout(function() { gaugeEl.style.strokeDashoffset = _mrOffset; }, 50);
+      }
 
       var verdictEl = document.getElementById("mrVerdict");
       verdictEl.className = "mr-verdict " + (r.passed ? "pass" : "fail");
