@@ -600,3 +600,55 @@ Middle East Group).
 Session 56 addendum: /ai-assessment result page now shows 4 what-next
 cards (mock drive, courses, JD scan, readiness cert). Now consistent
 across all 3 result pages.
+
+## UI/UX Modernization Arc (Sessions 56-62, 2026-10-20)
+
+Seven-phase UI overhaul across the platform. Every assessment page now shares the same visual language.
+
+### Impact by page
+
+| Page | Hero (teal) | SVG Gauge | Confetti | Reveal Fade-in |
+|---|---|---|---|---|
+| /ai-assessment | yes | yes (score pct) | pass | yes |
+| /readiness-check | yes | (form only) | - | - |
+| /readiness/{id} | yes | yes (readiness pct) | pass | yes |
+| /mock-drive | yes (was purple) | - | - | - |
+| /mock-result/{id} | yes | yes (score pct) | pass | yes |
+| /ielts-writing | yes (was blue) | yes (band 1-9) | - | - |
+| /ielts-reading | yes (was blue) | yes (band 1-9) | - | - |
+| /ielts-listening | yes (was blue) | yes (band 1-9) | - | - |
+| /ielts-speaking | yes (was none) | yes (band 1-9) | - | - |
+| /versant | yes (was purple) | yes (score 0-80) | - | - |
+| /cbat | yes | yes (score pct) | pass | yes |
+| /jd-assessment | yes | - | - | - |
+| /employer/dashboard | yes | - | - | - |
+| /employer/cas | yes | - | - | - |
+| /admin/cas-keys | (admin UI) | - | - | - |
+
+### Shared components (style.css)
+
+- .as-hero - teal gradient hero wrapper
+- .as-score-gauge + .as-gauge-svg + .as-gauge-track + .as-gauge-fill (with pass/warn/fail variants)
+- .as-gauge-content + .as-score-value - overlay for score inside gauge
+- .as-verdict-pass/warn/fail - verdict pills
+- .as-btn + .as-btn-primary + .as-btn-outline + .as-btn-lg + .as-btn-sm - buttons
+- .as-card + .as-card-elevated - cards
+- .as-progress + .as-progress-bar - progress bars
+- .as-gap-bar + .as-gap-fill-strong/mixed/weak - skill gap visualizations
+- .as-whatnext + .as-whatnext-grid + .as-wn-tile + .as-wn-icon + .as-wn-cta - next-step cards
+- .as-steps + .as-step + .as-step-active + .as-step-done - breadcrumb steps
+- .as-field + .as-label + .as-select - form fields
+- .as-skeleton + .as-loading-skeleton - loading shimmer
+- .as-revealed - fade-in on reveal
+- .as-confetti - pass celebration
+- .as-fade-in - generic fade
+
+### JS helpers
+
+- _tickScore() (per-page variants) - animates score counter from 0 to actual
+- _showConfetti() (per-page) - creates + removes .as-confetti overlay after 3s
+
+### Accessibility
+
+- All animations respect @media (prefers-reduced-motion: reduce) - animations disabled entirely
+- Score still displays correctly with animations off
