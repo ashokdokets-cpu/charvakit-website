@@ -251,7 +251,8 @@ Return JSON:
 
             cur.execute("""
                 SELECT session_id, candidate_email, role, difficulty, credits_charged,
-                       total_score, max_score, questions_count, status, started_at, completed_at
+                       total_score, max_score, questions_count, status, started_at, completed_at,
+                       mode, turn_count, max_turns
                 FROM charvak_interview_sessions WHERE session_id = %s
             """, (session_id,))
             row = cur.fetchone()
@@ -272,6 +273,9 @@ Return JSON:
                 "status": row[8],
                 "started_at": row[9].isoformat() if row[9] else None,
                 "completed_at": row[10].isoformat() if row[10] else None,
+                "mode": row[11] if row[11] else "static",
+                "turn_count": row[12] if row[12] is not None else 0,
+                "max_turns": row[13] if row[13] is not None else 12,
             }
 
             cur.execute("""

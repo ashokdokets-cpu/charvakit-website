@@ -54,6 +54,7 @@
 
 <script>
 const sessionId = window.location.pathname.split('/').pop();
+let isConversational = false;  // Session 65b: hoisted
 
 async function loadResults() {
     try {
@@ -62,16 +63,39 @@ async function loadResults() {
         if (d.status !== 'success') throw new Error(d.message || 'Not found');
 
         const s = d.session;
+        isConversational = (s.mode === 'conversational');
         document.getElementById('loading').style.display = 'none';
         document.getElementById('resultsArea').style.display = 'block';
 
         document.getElementById('resultsHeader').textContent = s.role + ' • ' + s.difficulty;
         document.getElementById('roleBadge').textContent = s.role;
         document.getElementById('difficultyBadge').textContent = s.difficulty;
-        document.getElementById('totalScore').textContent = s.total_score;
-        document.getElementById('maxScore').textContent = s.max_score;
+        // Session 65b: for conversational, show average-per-turn instead of total/max
+        // Session 65b: partial-session indicator
+        if (isConversational) {
+            const answeredCount = (s.answers || []).filter(function(a) { return a.user_answer && a.user_answer.trim(); }).length;
+            const totalTurns = s.max_turns || 12;
+            if (answeredCount < totalTurns) {
+                const partialDiv = document.createElement('div');
+                partialDiv.className = 'alert alert-info mt-3';
+                partialDiv.innerHTML = '<strong>Partial session:</strong> You answered ' + answeredCount + ' of ' + totalTurns + ' turns. The score reflects what you answered.';
+                const scoreCard = document.querySelector('.card-body.p-5');
+                if (scoreCard) scoreCard.appendChild(partialDiv);
+            }
+        }
+        let displayScore, displayMax;
+        if (isConversational) {
+            const answered = (s.answers || []).filter(function(a) { return a.user_answer && a.user_answer.trim(); }).length || 1;
+            displayScore = Math.round(s.total_score / answered);
+            displayMax = 100;
+        } else {
+            displayScore = s.total_score;
+            displayMax = s.max_score;
+        }
+        document.getElementById('totalScore').textContent = displayScore;
+        document.getElementById('maxScore').textContent = displayMax;
 
-        const pct = s.max_score > 0 ? (s.total_score / s.max_score * 100) : 0;
+        const pct = displayMax > 0 ? (displayScore / displayMax * 100) : 0;
         let label, emoji;
         if (pct >= 80) { label = '🏆 Excellent!'; emoji = '🏆'; }
         else if (pct >= 60) { label = '👍 Good — keep improving'; emoji = '👍'; }
@@ -81,7 +105,11 @@ async function loadResults() {
         document.getElementById('scoreEmoji').textContent = emoji;
 
         const qList = document.getElementById('questionList');
-        qList.innerHTML = (s.answers || []).map((a, i) => renderAnswer(a, i + 1)).join('');
+        if (isConversational) {
+            renderConversationalTranscript(s);
+        } else {
+            qList.innerHTML = (s.answers || []).map((a, i) => renderAnswer(a, i + 1)).join('');
+        }
     } catch (e) {
         document.getElementById('loading').style.display = 'none';
         document.getElementById('errorState').style.display = 'block';
@@ -115,6 +143,46 @@ function renderAnswer(a, num) {
             </div>
         </div>
     `;
+}
+
+function renderConversationalTranscript(s) {
+    const qList = document.getElementById('questionList');
+    const answered = (s.answers || []).filter(function(a) {
+        return a.user_answer && a.user_answer.trim();
+    });
+
+    if (answered.length === 0) {
+        qList.innerHTML = '<div class="alert alert-info">No turns completed. <a href="/interview-prep" class="alert-link">Start a new interview</a>.</div>';
+        return;
+    }
+
+    const cardsHtml = answered.map(function(a) {
+        let fb = {};
+        try { fb = JSON.parse(a.ai_feedback || '{}'); } catch(e) { fb = {text: a.ai_feedback || ''}; }
+        const scoreColor = a.ai_score >= 70 ? 'success' : (a.ai_score >= 50 ? 'warning' : 'danger');
+
+        return `
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <span class="badge bg-secondary">Turn ${a.question_num}</span>
+                        <span class="badge bg-${scoreColor} fs-6">${a.ai_score || 0}/100</span>
+                    </div>
+                    <div class="mb-3">
+                        <div class="small text-muted mb-1">AI asked:</div>
+                        <p class="mb-0 fw-semibold">${escapeHtml(a.question_text)}</p>
+                    </div>
+                    <div class="mb-3">
+                        <div class="small text-muted mb-1">Your answer:</div>
+                        <p class="mb-0" style="white-space:pre-wrap;">${escapeHtml(a.user_answer)}</p>
+                    </div>
+                    ${fb.text ? '<div class="alert alert-light border mb-0 py-2"><strong>AI Feedback:</strong> ' + escapeHtml(fb.text) + '</div>' : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    qList.innerHTML = '<div class="mb-3"><h4 class="as-h5">Turn-by-Turn Transcript</h4><p class="text-muted small">Each turn shows the AI question, your answer, and the AI feedback.</p></div>' + cardsHtml;
 }
 
 function escapeHtml(s) {

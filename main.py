@@ -6686,7 +6686,6 @@ async def interview_start_conversational(request: Request):
         return handle_error(e, "interview start conversational auth")
 
     try:
-        import interview_prep_engine
         result = interview_prep_engine.start_conversational(data)
         return result
     except HTTPException:
@@ -6708,7 +6707,6 @@ async def interview_submit_turn(request: Request):
         raise HTTPException(status_code=400, detail="session_id required")
 
     try:
-        import interview_prep_engine
         from database import db
         conn = db.get_connection()
         cur = conn.cursor()
@@ -6737,6 +6735,51 @@ async def interview_submit_turn(request: Request):
         raise
     except Exception as e:
         return handle_error(e, "interview submit turn")
+
+
+
+
+@app.post("/api/interview-prep/complete-conversational")
+async def interview_complete_conversational(request: Request):
+    """Force-complete a conversational interview session."""
+    try:
+        data = await request.json()
+    except Exception:
+        return {"status": "error", "message": "Invalid JSON body"}
+
+    session_id = data.get("session_id")
+    if not session_id:
+        raise HTTPException(status_code=400, detail="session_id required")
+
+    try:
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT candidate_email FROM charvak_interview_sessions WHERE session_id = %s", (session_id,))
+        row = cur.fetchone()
+        cur.close(); conn.close()
+        if not row:
+            return {"status": "error", "message": "Session not found"}
+        owner_email = row[0]
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "interview complete conv ownership")
+
+    try:
+        require_auth_for_email(request, owner_email)
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "interview complete conv auth")
+
+    try:
+        result = interview_prep_engine.complete_conversational(session_id)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "interview complete conv")
 
 
 # ============================================================
