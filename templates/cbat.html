@@ -364,6 +364,7 @@
             _cbatGauge.classList.remove('as-gauge-fill-pass', 'as-gauge-fill-warn', 'as-gauge-fill-fail');
             var _cbatClass = j.passed ? 'as-gauge-fill-pass' : (_cbatScore >= 50 ? 'as-gauge-fill-warn' : 'as-gauge-fill-fail');
             _cbatGauge.classList.add(_cbatClass);
+            if (j.passed && typeof _showConfetti === 'function') _showConfetti();
             var _cbatOffset = 565.48 * (1 - _cbatScore / 100);
             setTimeout(function() { _cbatGauge.style.strokeDashoffset = _cbatOffset; }, 50);
         }
@@ -374,6 +375,8 @@
         qs('resultTotal').textContent = j.total_questions;
 
         show('screen-result');
+        var _cbatResultScreen = document.getElementById('screen-result');
+        if (_cbatResultScreen) _cbatResultScreen.classList.add('as-revealed');
 
         // Session 39-7c: render the Trust Score badge via the shared helper
         try {
@@ -424,5 +427,13 @@
         _cbatInitIntegrity();
     }
 })();
+function _showConfetti() {
+    try {
+        var div = document.createElement('div');
+        div.className = 'as-confetti';
+        document.body.appendChild(div);
+        setTimeout(function(){ if (div.parentNode) div.parentNode.removeChild(div); }, 3000);
+    } catch (e) {}
+}
 </script>
 {% endblock %}
