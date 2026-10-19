@@ -121,7 +121,16 @@
 
     <!-- Score card -->
     <div class="rd-score-card">
-      <div class="rd-score-num" id="rdScore">--<span class="rd-of"> / 100</span></div>
+      <div class="as-score-gauge" style="margin: 0 auto 1rem;">
+        <svg viewBox="0 0 200 200" class="as-gauge-svg">
+          <circle cx="100" cy="100" r="90" class="as-gauge-track"/>
+          <circle cx="100" cy="100" r="90" class="as-gauge-fill" id="rdGaugeCircle" style="stroke-dashoffset: 565.48;"/>
+        </svg>
+        <div class="as-gauge-content">
+          <div class="as-score-value" id="rdScore">0</div>
+          <div class="as-text-muted" style="font-size: 0.8rem; margin-top: 0.2rem;">/ 100</div>
+        </div>
+      </div>
       <div id="rdVerdict" class="rd-verdict near">--</div>
       <!-- Session 43 — Integrity Snapshot (facts, not verdicts) -->
       <div id="rdIntegrity" class="rd-integrity-card" style="display:none;">
@@ -326,8 +335,34 @@
       c.role + " - " + c.industry + " - " + capitalize(c.level);
 
     var score = c.readiness_score || 0;
-    var scoreHtml = score + '<span class="rd-of"> / 100</span>';
-    document.getElementById("rdScore").innerHTML = scoreHtml;
+
+    // Session 58: animate score counter (0 -> score)
+    var _rdScoreEl = document.getElementById("rdScore");
+    var _rdGaugeEl = document.getElementById("rdGaugeCircle");
+    var _rdTargetScore = score;
+    var _rdStartTs = null;
+    var _rdDuration = 1200;
+    function _rdTickScore(ts) {
+        if (!_rdStartTs) _rdStartTs = ts;
+        var p = Math.min((ts - _rdStartTs) / _rdDuration, 1);
+        var cur = Math.round(_rdTargetScore * p);
+        _rdScoreEl.textContent = cur;
+        if (p < 1) requestAnimationFrame(_rdTickScore);
+    }
+    requestAnimationFrame(_rdTickScore);
+
+    // Session 58: animate gauge fill + color
+    if (_rdGaugeEl) {
+        _rdGaugeEl.classList.remove("as-gauge-fill-pass", "as-gauge-fill-warn", "as-gauge-fill-fail");
+        var _rdVerdictClass = verdictClass(score, c.benchmark || 0);
+        var _rdGaugeClass = "as-gauge-fill-pass";
+        if (score < 50 || _rdVerdictClass === "below") _rdGaugeClass = "as-gauge-fill-fail";
+        else if (score < 70 || _rdVerdictClass === "near") _rdGaugeClass = "as-gauge-fill-warn";
+        _rdGaugeEl.classList.add(_rdGaugeClass);
+        var _rdCirc = 565.48;
+        var _rdOffset = _rdCirc * (1 - score / 100);
+        setTimeout(function() { _rdGaugeEl.style.strokeDashoffset = _rdOffset; }, 50);
+    }
     document.getElementById("rdBenchmark").textContent = c.benchmark || "--";
     document.getElementById("rdYourScore").textContent = (score !== undefined && score !== null) ? score : "--";
     var delta = (score - (c.benchmark || 0));
