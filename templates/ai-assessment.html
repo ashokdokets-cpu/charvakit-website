@@ -700,6 +700,39 @@ function renderResult(j) {
     lhtml += '<p class="text-muted small mb-3">Get a curated plan with courses, resources, and a weekly roadmap for your weak areas.</p>';
     lhtml += '<button class="btn btn-primary" id="carLearningPathBtn" onclick="loadLearningPath()">Get My Learning Path</button>';
     lhtml += '<div id="carLearningPathResult" class="mt-3"></div>';
+
+    // Session 56: "What next?" cards — same pattern as /readiness + /mock-result
+    // Deep-links to the products a candidate should consider after seeing their gap
+    lhtml += '<div class="as-whatnext mt-4">';
+    lhtml += '  <h3 class="as-h5 mb-1">What next?</h3>';
+    lhtml += '  <p class="text-muted small mb-3">Choose your next step based on your gap.</p>';
+    lhtml += '  <div class="as-whatnext-grid">';
+    lhtml += '    <a class="as-wn-tile" href="/mock-drive">';
+    lhtml += '      <div class="as-wn-icon">🎯</div>';
+    lhtml += '      <h4>Practice with a Mock Drive</h4>';
+    lhtml += '      <p>Take a company-pattern mock drive to see how you perform under timed pressure.</p>';
+    lhtml += '      <span class="as-wn-cta">Try a mock drive &rarr;</span>';
+    lhtml += '    </a>';
+    lhtml += '    <a class="as-wn-tile" href="/ai-courses">';
+    lhtml += '      <div class="as-wn-icon">🎓</div>';
+    lhtml += '      <h4>Deepen your weakest topics</h4>';
+    lhtml += '      <p>Browse AI courses or design a custom one for your gaps.</p>';
+    lhtml += '      <span class="as-wn-cta">Explore courses &rarr;</span>';
+    lhtml += '    </a>';
+    lhtml += '    <a class="as-wn-tile" href="/jd-assessment">';
+    lhtml += '      <div class="as-wn-icon">🔍</div>';
+    lhtml += '      <h4>Scan a target JD</h4>';
+    lhtml += '      <p>Paste the JD of a role you are targeting and see if you are ready for it.</p>';
+    lhtml += '      <span class="as-wn-cta">Analyze a JD &rarr;</span>';
+    lhtml += '    </a>';
+    lhtml += '    <a class="as-wn-tile" href="/readiness-check">';
+    lhtml += '      <div class="as-wn-icon">📋</div>';
+    lhtml += '      <h4>Get a shareable certificate</h4>';
+    lhtml += '      <p>Take the free Role Readiness Check and get a verified certificate employers can trust.</p>';
+    lhtml += '      <span class="as-wn-cta">Get certified &rarr;</span>';
+    lhtml += '    </a>';
+    lhtml += '  </div>';
+    lhtml += '</div>';
     lhtml += '</div></div>';
     document.getElementById('carResultMeta').innerHTML += lhtml;
 
