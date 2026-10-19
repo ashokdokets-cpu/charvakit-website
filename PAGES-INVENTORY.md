@@ -576,3 +576,27 @@ cells, coaching centers). Completes Wave 2.
 
 **Unblocks:** Track C (Amrita CDC pilot) - Prof. Raj can request key,
 admin approves, Amrita batch-verifies 500 students in one call.
+
+## JD Scanner (Sessions 55-56, 2026-10-19)
+
+First user-facing product of Track D Phase A.
+
+| Template | Route | Auth | Purpose |
+|---|---|---|---|
+| jd-assessment.html | /jd-assessment | No | Paste JD to see structured extraction |
+
+Backing API: POST /api/jd/parse (5/min rate limit, ~0.002 USD per call).
+
+Engine: jd_parser_engine.py (new). parse_jd(jd_text) returns 11 fields: 
+title, company, seniority, domain, skills_required, skills_nice_to_have,
+experience_years_min, experience_years_max, responsibilities,
+success_signals, assessment_relevance (topics, formats, difficulty).
+
+Nav: JD Scanner link in teal CTA row (base.html ~line 344).
+
+Verified: 7 of 7 real client JDs parsed successfully (NCS, LENZE,
+Middle East Group).
+
+Session 56 addendum: /ai-assessment result page now shows 4 what-next
+cards (mock drive, courses, JD scan, readiness cert). Now consistent
+across all 3 result pages.

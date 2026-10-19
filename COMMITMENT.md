@@ -5881,3 +5881,37 @@ F) **GPT-4o-mini Phase 2** (evaluate successor) - due Oct 27
 
 **Remaining flags: 1**
 - Render Postgres password rotation (Session 19, ~30 sessions, 5-min)
+
+## Session 55 + 56 CLOSED (2026-10-19) - Track D Phase A
+
+Commits: e8488f6 (parser), 50fa546 (MVP), 2c0451c (what-next cards).
+
+Track D Phase A: 67 percent complete (parser + MVP done; wiring in Session 57).
+
+Session 55 - jd_parser_engine (item A):
+- New engine jd_parser_engine.py (~9.4 KB)
+- parse_jd(jd_text) returns 11 structured fields
+- Uses openai_compat.build_payload (Phase 3b)
+- Safe on garbage input (never raises)
+- New route POST /api/jd/parse (5/min rate limit)
+- Verified: 7 of 7 real client JDs parsed successfully (NCS, LENZE, Middle East Group)
+
+Session 56 - /jd-assessment MVP (item B):
+- New template templates/jd-assessment.html (~13.6 KB)
+- Public route GET /jd-assessment (no auth)
+- Nav link added to teal CTA row in base.html
+- Verified on prod: 200, API works, nav visible, E2E sample parse works
+
+Session 56 addendum - what-next cards on /ai-assessment:
+- Commit 2c0451c
+- 4 cards added at bottom of result page
+- Now consistent across /readiness, /mock-result, /ai-assessment
+
+Session 57 (next):
+- Add I-have-a-JD toggle to /ai-assessment Step 1
+- Prefill role/industry/level from parsed data
+- Update /jd-assessment CTA to carry prefill URL params
+
+Remaining flags (2 five-min tasks):
+- Render Postgres password rotation
+- Send Amrita reply to Prof. Raj
