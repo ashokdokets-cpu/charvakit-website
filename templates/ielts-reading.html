@@ -2,7 +2,7 @@
 {% block title %}IELTS Reading Practice{% endblock %}
 {% block content %}
 <style>
-  .ir-hero { background: linear-gradient(135deg, #1e40af 0%, #3730a3 100%); color: #fff; padding: 48px 0 32px; }
+  .ir-hero { background: linear-gradient(135deg, #3ba591 0%, #2a8070 100%); color: #fff; padding: 48px 0 32px; }
   .ir-hero h1 { font-weight: 800; margin-bottom: 6px; }
   .ir-hero p { opacity: 0.9; margin: 0; }
   .ir-wrap { max-width: 1000px; margin: 0 auto; padding: 32px 16px; }
@@ -123,7 +123,16 @@
     </div>
     <div class="text-center mb-4">
       <div class="text-uppercase small text-muted mb-1">Band Score</div>
-      <div class="ir-band-big" id="bandValue">&mdash;</div>
+          <div class="as-score-gauge" style="margin: 0 auto 1rem;">
+            <svg viewBox="0 0 200 200" class="as-gauge-svg">
+              <circle cx="100" cy="100" r="90" class="as-gauge-track"/>
+              <circle cx="100" cy="100" r="90" class="as-gauge-fill" id="irGaugeCircle" style="stroke-dashoffset: 565.48;"/>
+            </svg>
+            <div class="as-gauge-content">
+              <div class="as-score-value" id="bandValue">0</div>
+              <div class="as-text-muted" style="font-size: 0.8rem; margin-top: 0.2rem;">/ 9.0</div>
+            </div>
+          </div>
       <div class="text-muted mt-2"><span id="correctCount">0</span> / <span id="totalQuestions">10</span> correct</div>
     </div>
 
@@ -281,7 +290,24 @@ async function submitAnswers() {
 }
 
 function renderScorecard(j, partial, answeredCount, totalCount) {
-  document.getElementById('bandValue').textContent = (j.band_score || 0).toFixed(1);
+  var _irBand = j.band_score || 0;
+var _irEl = document.getElementById('bandValue');
+var _irGauge = document.getElementById('irGaugeCircle');
+var _irTs = null;
+function _irTick(ts) {
+    if (!_irTs) _irTs = ts;
+    var p = Math.min((ts - _irTs) / 1200, 1);
+    _irEl.textContent = (_irBand * p).toFixed(1);
+    if (p < 1) requestAnimationFrame(_irTick);
+}
+requestAnimationFrame(_irTick);
+if (_irGauge) {
+    _irGauge.classList.remove('as-gauge-fill-pass', 'as-gauge-fill-warn', 'as-gauge-fill-fail');
+    var _irClass = _irBand >= 7 ? 'as-gauge-fill-pass' : (_irBand >= 5.5 ? 'as-gauge-fill-warn' : 'as-gauge-fill-fail');
+    _irGauge.classList.add(_irClass);
+    var _irOffset = 565.48 * (1 - _irBand / 9.0);
+    setTimeout(function() { _irGauge.style.strokeDashoffset = _irOffset; }, 50);
+}
   document.getElementById('correctCount').textContent = j.correct_count;
   document.getElementById('totalQuestions').textContent = j.total_questions;
 

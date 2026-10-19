@@ -1,6 +1,14 @@
 {% extends "base.html" %}
 {% block title %}IELTS Speaking Practice{% endblock %}
 {% block content %}
+
+<div class="as-hero mb-4">
+  <div class="container">
+    <h1 class="as-h2">IELTS Speaking</h2>
+    <p>Practice IELTS speaking with AI evaluation. Band 1.0-9.0 scale. Real exam format with parts 1, 2, and 3.</p>
+  </div>
+</div>
+
 <div class="container py-4" style="max-width:900px">
 
   <div class="text-center mb-4">
@@ -79,7 +87,16 @@
     <div class="card-body p-4">
       <h4 class="mb-3">Your Speaking Band Score</h4>
       <div class="text-center mb-4">
-        <div class="display-1 fw-bold text-primary" id="overallBand">—</div>
+      <div class="as-score-gauge" style="margin: 0 auto 1rem;">
+        <svg viewBox="0 0 200 200" class="as-gauge-svg">
+          <circle cx="100" cy="100" r="90" class="as-gauge-track"/>
+          <circle cx="100" cy="100" r="90" class="as-gauge-fill" id="isGaugeCircle" style="stroke-dashoffset: 565.48;"/>
+        </svg>
+        <div class="as-gauge-content">
+          <div class="as-score-value" id="overallBand">0</div>
+          <div class="as-text-muted" style="font-size: 0.8rem; margin-top: 0.2rem;">/ 9.0</div>
+        </div>
+      </div>
         <div class="text-muted">Overall Band</div>
       </div>
       <div class="row g-3 mb-4" id="subBands"></div>
@@ -292,7 +309,7 @@ function skipQuestion() {
 async function finishSession() {
   hide('flow');
   show('result');
-  document.getElementById('overallBand').textContent = '…';
+  document.getElementById('overallBand').textContent = '0.0';
 
 
   const responses = SPEAKING_STATE.responses.filter(Boolean);
@@ -339,7 +356,24 @@ async function finishSession() {
       partialBanner.style.display = 'none';
     }
     const ev = j.evaluation || {};
-    document.getElementById('overallBand').textContent = (ev.overall_band || '—').toFixed ? ev.overall_band : ev.overall_band;
+    var _isBand = parseFloat(ev.overall_band) || 0;
+var _isEl = document.getElementById('overallBand');
+var _isGauge = document.getElementById('isGaugeCircle');
+var _isTs = null;
+function _isTick(ts) {
+    if (!_isTs) _isTs = ts;
+    var p = Math.min((ts - _isTs) / 1200, 1);
+    _isEl.textContent = (_isBand * p).toFixed(1);
+    if (p < 1) requestAnimationFrame(_isTick);
+}
+requestAnimationFrame(_isTick);
+if (_isGauge) {
+    _isGauge.classList.remove('as-gauge-fill-pass', 'as-gauge-fill-warn', 'as-gauge-fill-fail');
+    var _isClass = _isBand >= 7 ? 'as-gauge-fill-pass' : (_isBand >= 5.5 ? 'as-gauge-fill-warn' : 'as-gauge-fill-fail');
+    _isGauge.classList.add(_isClass);
+    var _isOffset = 565.48 * (1 - _isBand / 9.0);
+    setTimeout(function() { _isGauge.style.strokeDashoffset = _isOffset; }, 50);
+}
     const subs = [
       ['Fluency & Coherence', ev.fluency_coherence],
       ['Lexical Resource', ev.lexical_resource],
