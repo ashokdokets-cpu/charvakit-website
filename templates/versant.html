@@ -2,7 +2,7 @@
 {% block title %}Versant English Assessment{% endblock %}
 {% block content %}
 <style>
-  .vs-hero { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; padding: 40px 0; }
+  .vs-hero { background: linear-gradient(135deg, #3ba591 0%, #2a8070 100%); color: #fff; padding: 40px 0; }
   .vs-hero h1 { font-weight: 700; }
   .vs-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
   .vs-section-chip { display: inline-block; background: #f0faf8; color: #3ba591; border: 1px solid #d3efe9; border-radius: 999px; padding: 4px 12px; font-size: 0.85rem; font-weight: 600; }
@@ -112,7 +112,15 @@
     </div>
     <div class="vs-card text-center mb-4">
       <div class="text-uppercase small text-muted mb-2">Overall Score</div>
-      <div class="vs-score-big" id="scoreBig">&mdash;</div>
+      <div class="as-score-gauge" style="margin: 0 auto 0.5rem;">
+        <svg viewBox="0 0 200 200" class="as-gauge-svg">
+          <circle cx="100" cy="100" r="90" class="as-gauge-track"/>
+          <circle cx="100" cy="100" r="90" class="as-gauge-fill" id="vsGaugeCircle" style="stroke-dashoffset: 565.48;"/>
+        </svg>
+        <div class="as-gauge-content">
+          <div class="as-score-value" id="scoreBig">0</div>
+        </div>
+      </div>
       <div class="text-muted mt-2" id="scoreLabel">out of 80</div>
     </div>
     <div class="vs-card mb-4">
@@ -441,7 +449,24 @@ function showScorecard(scoring, partial, answeredCount, totalCount) {
   } else if (partialBanner) {
     partialBanner.style.display = 'none';
   }
-  document.getElementById('scoreBig').textContent = scoring.overall_score || '-';
+  var _vsScore = scoring.overall_score || 0;
+var _vsEl = document.getElementById('scoreBig');
+var _vsGauge = document.getElementById('vsGaugeCircle');
+var _vsTs = null;
+function _vsTick(ts) {
+    if (!_vsTs) _vsTs = ts;
+    var p = Math.min((ts - _vsTs) / 1200, 1);
+    _vsEl.textContent = Math.round(_vsScore * p);
+    if (p < 1) requestAnimationFrame(_vsTick);
+}
+requestAnimationFrame(_vsTick);
+if (_vsGauge) {
+    _vsGauge.classList.remove('as-gauge-fill-pass', 'as-gauge-fill-warn', 'as-gauge-fill-fail');
+    var _vsClass = _vsScore >= 60 ? 'as-gauge-fill-pass' : (_vsScore >= 45 ? 'as-gauge-fill-warn' : 'as-gauge-fill-fail');
+    _vsGauge.classList.add(_vsClass);
+    var _vsOffset = 565.48 * (1 - _vsScore / 80);
+    setTimeout(function() { _vsGauge.style.strokeDashoffset = _vsOffset; }, 50);
+}
   var criteria = [
     ['Pronunciation', scoring.pronunciation],
     ['Fluency', scoring.fluency],
