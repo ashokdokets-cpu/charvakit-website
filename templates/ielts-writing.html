@@ -2,7 +2,7 @@
 {% block title %}IELTS Writing Practice{% endblock %}
 {% block content %}
 <style>
-  .iw-hero { background: linear-gradient(135deg, #1e40af 0%, #3730a3 100%); color: #fff; padding: 48px 0 32px; }
+  .iw-hero { background: linear-gradient(135deg, #3ba591 0%, #2a8070 100%); color: #fff; padding: 48px 0 32px; }
   .iw-hero h1 { font-weight: 800; margin-bottom: 6px; }
   .iw-hero p { opacity: 0.9; margin: 0; }
   .iw-wrap { max-width: 900px; margin: 0 auto; padding: 32px 16px; }
@@ -130,7 +130,16 @@
     </div>
     <div class="text-center mb-4">
       <div class="text-uppercase small text-muted mb-1">Overall Band</div>
-      <div class="iw-score-big" id="overallBand">&mdash;</div>
+      <div class="as-score-gauge" style="margin: 0 auto 1rem;">
+        <svg viewBox="0 0 200 200" class="as-gauge-svg">
+          <circle cx="100" cy="100" r="90" class="as-gauge-track"/>
+          <circle cx="100" cy="100" r="90" class="as-gauge-fill" id="iwGaugeCircle" style="stroke-dashoffset: 565.48;"/>
+        </svg>
+        <div class="as-gauge-content">
+          <div class="as-score-value" id="overallBand">0</div>
+          <div class="as-text-muted" style="font-size: 0.8rem; margin-top: 0.2rem;">/ 9.0</div>
+        </div>
+      </div>
     </div>
 
     <div id="subBands" class="mb-4"></div>
@@ -292,7 +301,25 @@ async function submitEssay() {
 function renderScorecard(j, partial, wordCount, minWords, topicalRelevance, relevanceNote) {
   // Accept multiple response shapes defensively
   var ev = j.evaluation || j;
-  document.getElementById('overallBand').textContent = formatBand(ev.overall_band);
+  var _iwBand = ev.overall_band || 0;
+var _iwTarget = typeof _iwBand === 'number' ? _iwBand : 0;
+var _iwEl = document.getElementById('overallBand');
+var _iwGauge = document.getElementById('iwGaugeCircle');
+var _iwTs = null;
+function _iwTick(ts) {
+    if (!_iwTs) _iwTs = ts;
+    var p = Math.min((ts - _iwTs) / 1200, 1);
+    _iwEl.textContent = (_iwTarget * p).toFixed(1);
+    if (p < 1) requestAnimationFrame(_iwTick);
+}
+requestAnimationFrame(_iwTick);
+if (_iwGauge) {
+    _iwGauge.classList.remove('as-gauge-fill-pass', 'as-gauge-fill-warn', 'as-gauge-fill-fail');
+    var _iwClass = _iwTarget >= 7 ? 'as-gauge-fill-pass' : (_iwTarget >= 5.5 ? 'as-gauge-fill-warn' : 'as-gauge-fill-fail');
+    _iwGauge.classList.add(_iwClass);
+    var _iwOffset = 565.48 * (1 - _iwTarget / 9.0);
+    setTimeout(function() { _iwGauge.style.strokeDashoffset = _iwOffset; }, 50);
+}
 
   var bands = [
     ['Task Response', ev.task_achievement_or_response ?? ev.task_response],
