@@ -823,6 +823,19 @@ function renderResult(j) {
     lhtml += '</div></div>';
     document.getElementById('carResultContent').innerHTML += lhtml;
 
+    // Session 57 addendum: certificate path for direct assessments
+    // Users from /readiness-check already see the inline "Get My Certificate"
+    // CTA at line ~830. Users who came direct to /ai-assessment get this
+    // clear path to a shareable certificate.
+    if (!window.__fromReadinessCheck) {
+        var certCtaHtml = '';
+        certCtaHtml += '<div class="as-card mt-4" style="background: linear-gradient(135deg, #f0fdf9 0%, #dcfce7 100%); border-color: #a7f3d0;">';
+        certCtaHtml += '  <h3 class="as-h5 mb-2">📋 Want a shareable certificate?</h3>';
+        certCtaHtml += '  <p class="text-muted small mb-3">Take the free 10-question Readiness Check to get a verified, LinkedIn-ready certificate with your score, role, and integrity facts. Takes 5 minutes.</p>';
+        certCtaHtml += '  <a href="/readiness-check" class="as-btn as-btn-primary">Get My Readiness Certificate &rarr;</a>';
+        certCtaHtml += '</div>';
+        document.getElementById('carResultContent').innerHTML += certCtaHtml;
+    }
     if (window.__fromReadinessCheck) {
         var isAnonNow = _isAnonMode() && _anonToken() && _anonAid();
         var certHtml = '<div class="card border-0 shadow-sm mt-4" style="background: linear-gradient(135deg, #f0fdf9 0%, #dcfce7 100%);">';
