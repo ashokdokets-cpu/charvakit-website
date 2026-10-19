@@ -32,6 +32,21 @@
                         <a href="#" id="carHistoryLink" class="small text-decoration-none" onclick="loadHistory(event); return false;">📋 My past assessments</a>
                     </div>
 
+                    <!-- Session 63: JD pre-fill toggle -->
+                    <div class="as-jd-toggle-wrap mb-3">
+                        <label class="as-jd-toggle-label" for="carJdToggle">
+                            <input type="checkbox" id="carJdToggle" onchange="toggleJdInput()">
+                            <span>📋 I have a job description — use it to pre-fill the fields below</span>
+                        </label>
+                    </div>
+
+                    <div id="carJdPanel" class="as-jd-panel mb-4" style="display:none;">
+                        <label class="as-label" for="carJdText">Paste the job description</label>
+                        <textarea id="carJdText" class="as-select" rows="6" placeholder="Paste any JD here. We will extract the role, industry, and level automatically."></textarea>
+                        <button type="button" class="as-btn as-btn-outline as-btn-sm mt-2" id="carJdAnalyzeBtn" onclick="carAnalyzeJd()">Analyze JD</button>
+                        <div id="carJdResult" class="mt-2"></div>
+                    </div>
+
                     <div class="as-field">
                         <label class="as-label" for="carRoleSelect">Target Role</label>
                         <select class="as-select" id="carRoleSelect">
@@ -298,6 +313,141 @@ function populateSelects() {
         fmtSel.appendChild(fo);
     }
 }
+
+// ============================================================
+// Session 63: "I have a JD" prefill logic
+// ============================================================
+
+function toggleJdInput() {
+    var toggle = document.getElementById('carJdToggle');
+    var panel = document.getElementById('carJdPanel');
+    if (toggle && panel) {
+        panel.style.display = toggle.checked ? 'block' : 'none';
+    }
+}
+
+function _carFuzzyMatch(value, options) {
+    if (!value || !options || !options.length) return null;
+    if (options.indexOf(value) !== -1) return value;
+    var lower = String(value).toLowerCase();
+    for (var i = 0; i < options.length; i++) {
+        if (String(options[i]).toLowerCase() === lower) return options[i];
+    }
+    for (var i = 0; i < options.length; i++) {
+        var ol = String(options[i]).toLowerCase();
+        if (ol.indexOf(lower) !== -1 || lower.indexOf(ol) !== -1) return options[i];
+    }
+    var words = lower.split(/\s+/).filter(function(w) { return w.length > 3; });
+    for (var i = 0; i < options.length; i++) {
+        var ol2 = String(options[i]).toLowerCase();
+        for (var j = 0; j < words.length; j++) {
+            if (ol2.indexOf(words[j]) !== -1) return options[i];
+        }
+    }
+    return null;
+}
+
+function _carGetAllRoles() {
+    if (!_carCatalog || !_carCatalog.roles) return [];
+    var all = [];
+    for (var cat in _carCatalog.roles) {
+        all = all.concat(_carCatalog.roles[cat]);
+    }
+    return all;
+}
+
+async function carAnalyzeJd() {
+    var text = (document.getElementById('carJdText') || {}).value || '';
+    text = text.trim();
+    var result = document.getElementById('carJdResult');
+    if (text.length < 50) {
+        result.innerHTML = '<div class="alert alert-warning py-2 px-3 mb-0 small">Please paste at least 50 characters.</div>';
+        return;
+    }
+    var btn = document.getElementById('carJdAnalyzeBtn');
+    btn.disabled = true;
+    btn.textContent = 'Analyzing...';
+    result.innerHTML = '<div class="text-muted small">Parsing your JD...</div>';
+    try {
+        var r = await fetch('/api/jd/parse', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ jd_text: text }),
+        });
+        var j = await r.json();
+        if (j.status !== 'success' || !j.parsed) {
+            result.innerHTML = '<div class="alert alert-danger py-2 px-3 mb-0 small">' + (j.message || 'Failed to parse JD') + '</div>';
+            btn.disabled = false;
+            btn.textContent = 'Analyze JD';
+            return;
+        }
+        var p = j.parsed;
+        var roleOptions = _carGetAllRoles();
+        var industryOptions = _carCatalog.industries || [];
+        var levelOptions = (_carCatalog.levels || []).map(function(l) { return l.key; });
+        var matchedRole = _carFuzzyMatch(p.title || '', roleOptions);
+        var matchedIndustry = _carFuzzyMatch(p.domain || '', industryOptions);
+        var matchedLevel = _carFuzzyMatch(p.seniority || '', levelOptions);
+        var filled = [];
+        if (matchedRole) {
+            document.getElementById('carRoleSelect').value = matchedRole;
+            filled.push('role: ' + matchedRole);
+        }
+        if (matchedIndustry) {
+            document.getElementById('carIndustrySelect').value = matchedIndustry;
+            filled.push('industry: ' + matchedIndustry);
+        }
+        if (matchedLevel) {
+            document.getElementById('carLevelSelect').value = matchedLevel;
+            filled.push('level: ' + matchedLevel);
+        }
+        if (filled.length > 0) {
+            result.innerHTML = '<div class="alert alert-success py-2 px-3 mb-0 small"><strong>✓ Auto-filled from your JD:</strong><br>' + filled.map(function(f) { return '&nbsp;&nbsp;• ' + f; }).join('<br>') + '<br><span class="text-muted">Check the dropdowns below and adjust if needed.</span></div>';
+        } else {
+            result.innerHTML = '<div class="alert alert-info py-2 px-3 mb-0 small">JD parsed (title: <strong>' + (p.title || '?') + '</strong>) but no catalog match. Please select manually below.</div>';
+        }
+    } catch (e) {
+        result.innerHTML = '<div class="alert alert-danger py-2 px-3 mb-0 small">Network error: ' + e.message + '</div>';
+    }
+    btn.disabled = false;
+    btn.textContent = 'Analyze JD';
+}
+
+// Session 63: prefill from URL params (jd-assessment CTA passes them)
+function carApplyUrlPrefill() {
+    try {
+        var params = new URLSearchParams(window.location.search);
+        var role = params.get('role');
+        var industry = params.get('industry');
+        var level = params.get('level');
+        if (!role && !industry && !level) return;
+        var tries = 0;
+        var interval = setInterval(function() {
+            tries++;
+            if (_carCatalog) {
+                clearInterval(interval);
+                var roleOptions = _carGetAllRoles();
+                var industryOptions = _carCatalog.industries || [];
+                var levelOptions = (_carCatalog.levels || []).map(function(l) { return l.key; });
+                var mRole = role ? _carFuzzyMatch(role, roleOptions) : null;
+                var mInd = industry ? _carFuzzyMatch(industry, industryOptions) : null;
+                var mLvl = level ? _carFuzzyMatch(level, levelOptions) : null;
+                if (mRole) document.getElementById('carRoleSelect').value = mRole;
+                if (mInd) document.getElementById('carIndustrySelect').value = mInd;
+                if (mLvl) document.getElementById('carLevelSelect').value = mLvl;
+                var card = document.querySelector('.as-card');
+                if (card && (mRole || mInd || mLvl)) {
+                    var badge = document.createElement('div');
+                    badge.className = 'alert alert-success py-2 px-3 mb-3 small';
+                    badge.innerHTML = '<strong>✓ Pre-filled from your JD analysis.</strong> Adjust if needed.';
+                    card.insertBefore(badge, card.children[1] || null);
+                }
+            }
+            if (tries > 40) clearInterval(interval);
+        }, 100);
+    } catch (e) {}
+}
+
 
 function updateSizeLabels() {
     var fmt = document.getElementById('carFormatSelect').value;
@@ -1294,6 +1444,8 @@ async function loadHistory(ev) {
 }
 
 document.addEventListener('DOMContentLoaded', loadCatalog);
+// Session 63: prefill from ?role=/&industry=/&level= URL params (from jd-assessment CTA)
+document.addEventListener('DOMContentLoaded', function() { setTimeout(carApplyUrlPrefill, 300); });
 
 // Session 43-A1.5b.4: if we just came back from registration
 // with ?claim=1, run the claim + certificate flow.
