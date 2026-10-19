@@ -417,29 +417,46 @@ def approve_api_key(key_id: str) -> Dict:
             except Exception: pass
 
 
-def list_api_keys(active_only: bool = True) -> List[Dict]:
-    """Admin view of all API keys (masked hashes)."""
+def list_api_keys(active_only: bool = True, search: str = "", sort: str = "created_desc") -> List[Dict]:
+    """Admin view of all API keys (masked hashes).
+
+    Session 64: added search (institution/contact/key_id/email) and sort.
+    sort whitelist: created_desc, created_asc, institution_asc, calls_desc, tier_asc.
+    """
+    # Whitelist sort
+    sort_map = {
+        "created_desc": "created_at DESC NULLS LAST",
+        "created_asc": "created_at ASC NULLS LAST",
+        "institution_asc": "institution_name ASC",
+        "calls_desc": "calls_this_month DESC",
+        "tier_asc": "tier ASC",
+    }
+    order_by = sort_map.get((sort or "").strip().lower(), "created_at DESC NULLS LAST")
+
+    # Build WHERE clause
+    where_parts = []
+    params = []
+    if active_only:
+        where_parts.append("is_active = TRUE")
+    if search:
+        pattern = "%" + search.strip() + "%"
+        where_parts.append("(institution_name ILIKE %s OR contact_email ILIKE %s OR key_id ILIKE %s OR COALESCE(contact_name, '') ILIKE %s)")
+        params.extend([pattern, pattern, pattern, pattern])
+
+    where_sql = " AND ".join(where_parts) if where_parts else "TRUE"
+
     conn = None
     try:
         conn = db.get_connection()
         cur = conn.cursor()
-        if active_only:
-            cur.execute("""
-                SELECT key_id, institution_name, contact_name, contact_email,
-                       tier, monthly_quota, calls_this_month, is_active,
-                       created_at, approved_at, expires_at
-                FROM charvak_cas_api_keys
-                WHERE is_active = TRUE
-                ORDER BY created_at DESC
-            """)
-        else:
-            cur.execute("""
-                SELECT key_id, institution_name, contact_name, contact_email,
-                       tier, monthly_quota, calls_this_month, is_active,
-                       created_at, approved_at, expires_at
-                FROM charvak_cas_api_keys
-                ORDER BY created_at DESC
-            """)
+        cur.execute(f"""
+            SELECT key_id, institution_name, contact_name, contact_email,
+                   tier, monthly_quota, calls_this_month, is_active,
+                   created_at, approved_at, expires_at
+            FROM charvak_cas_api_keys
+            WHERE {where_sql}
+            ORDER BY {order_by}
+        """, params)
         rows = cur.fetchall()
         cur.close()
 
@@ -468,5 +485,3 @@ def list_api_keys(active_only: bool = True) -> List[Dict]:
             except Exception: pass
 
 
-# Auto-init tables on import
-_ensure_tables()

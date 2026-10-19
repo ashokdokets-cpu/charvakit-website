@@ -4023,24 +4023,76 @@ async def admin_cas_keys_page(request: Request):
 
 
 @app.get("/api/admin/cas-keys/list")
-async def admin_cas_keys_list(request: Request):
-    """Session 53: List all CAS API keys (active + pending)."""
+async def admin_cas_keys_list(request: Request, search: str = "", sort: str = "created_desc"):
+    """Session 53 + 64: List all CAS API keys with search + sort."""
     try:
         require_admin(request)
         import cas_engine
-        active = cas_engine.list_api_keys(active_only=True)
-        pending = cas_engine.list_api_keys(active_only=False)
+        active = cas_engine.list_api_keys(active_only=True, search=search, sort=sort)
+        pending = cas_engine.list_api_keys(active_only=False, search=search, sort=sort)
         pending = [k for k in pending if not k.get("is_active")]
         return {
             "status": "success",
             "active": active,
             "pending": pending,
             "total": len(active) + len(pending),
+            "search": search,
+            "sort": sort,
         }
     except HTTPException:
         raise
     except Exception as e:
         return handle_error(e, "admin cas keys list")
+
+
+@app.get("/api/admin/cas-keys/list.csv")
+async def admin_cas_keys_csv(request: Request, search: str = "", sort: str = "created_desc"):
+    """Session 64: CSV export of CAS API keys with search + sort."""
+    try:
+        require_admin(request)
+        import cas_engine
+        import csv
+        import io
+        from fastapi.responses import Response as FastAPIResponse
+
+        active = cas_engine.list_api_keys(active_only=True, search=search, sort=sort)
+        pending = cas_engine.list_api_keys(active_only=False, search=search, sort=sort)
+        pending = [k for k in pending if not k.get("is_active")]
+        all_keys = pending + active
+
+        buf = io.StringIO()
+        writer = csv.writer(buf)
+        writer.writerow([
+            "key_id", "institution_name", "contact_name", "contact_email",
+            "tier", "monthly_quota", "calls_this_month", "is_active",
+            "created_at", "approved_at", "expires_at",
+        ])
+        for k in all_keys:
+            writer.writerow([
+                k.get("key_id", ""),
+                k.get("institution_name", ""),
+                k.get("contact_name", ""),
+                k.get("contact_email", ""),
+                k.get("tier", ""),
+                k.get("monthly_quota", 0),
+                k.get("calls_this_month", 0),
+                "yes" if k.get("is_active") else "no",
+                k.get("created_at", "") or "",
+                k.get("approved_at", "") or "",
+                k.get("expires_at", "") or "",
+            ])
+
+        return FastAPIResponse(
+            content=buf.getvalue(),
+            media_type="text/csv",
+            headers={"Content-Disposition": 'attachment; filename="charvak_cas_keys.csv"'},
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "admin cas keys csv")
+
+
 
 
 @app.post("/api/admin/cas-keys/{key_id}/approve")
