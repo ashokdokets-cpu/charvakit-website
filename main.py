@@ -15377,6 +15377,104 @@ async def evaluate_answer(request: Request):
     )
 
 
+
+
+# Session 67a: New AI Tutor routes (persistent + course context)
+@app.post("/api/ai-tutor/ask")
+@limiter.limit("30/minute")
+async def ai_tutor_ask(request: Request):
+    """Ask the AI tutor a question. Creates session if none provided."""
+    try:
+        data = await request.json()
+    except Exception:
+        return {"status": "error", "message": "Invalid JSON body"}
+
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        raise HTTPException(status_code=401, detail="email required")
+
+    try:
+        require_auth_for_email(request, email)
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "ai-tutor-ask auth")
+
+    session_id = data.get("session_id")
+    question = (data.get("question") or "").strip()
+
+    if not question:
+        return {"status": "error", "message": "question required"}
+
+    try:
+        if not session_id:
+            # Create new session
+            course_name = data.get("course_name") or "a course"
+            enrollment_id = data.get("enrollment_id")
+            week_num = data.get("week_num")
+            try:
+                week_num = int(week_num) if week_num is not None else None
+            except (ValueError, TypeError):
+                week_num = None
+
+            create_result = interactive_tutor.start_tutoring_session(
+                email=email,
+                course_name=course_name,
+                topic=data.get("topic") or "",
+                user_level=data.get("user_level") or "beginner",
+                enrollment_id=enrollment_id,
+                week_num=week_num,
+            )
+            if create_result.get("status") != "success":
+                return create_result
+            session_id = create_result["session_id"]
+
+        # Now ask the question
+        result = interactive_tutor.chat_with_tutor(session_id, question)
+        if result.get("status") == "success":
+            result["session_id"] = session_id
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "ai-tutor-ask")
+
+
+@app.get("/api/ai-tutor/session/{session_id}")
+async def ai_tutor_get_session(session_id: str, request: Request):
+    """Load existing tutor session with all messages (for UI resume)."""
+    try:
+        # Load to check ownership
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("SELECT email FROM charvak_tutor_sessions WHERE session_id = %s", (session_id,))
+            row = cur.fetchone()
+            cur.close(); conn.close()
+            if not row:
+                return {"status": "error", "message": "Session not found"}
+            owner_email = row[0]
+        except HTTPException:
+            raise
+        except Exception as e:
+            return handle_error(e, "ai-tutor-get-session lookup")
+
+        try:
+            require_auth_for_email(request, owner_email)
+        except HTTPException:
+            raise
+        except Exception as e:
+            return handle_error(e, "ai-tutor-get-session auth")
+
+        result = interactive_tutor.get_session_messages(session_id)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "ai-tutor-get-session")
+
+
 # ============================================================
 # Session M-1 - IELTS Academic routes
 # ============================================================
