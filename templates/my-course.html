@@ -165,6 +165,10 @@ const enrollmentId = window.location.pathname.split('/my-course/')[1] || '';
 function _userEmail() {
     return localStorage.getItem('userEmail') || '';
 }
+
+function _token() {
+    return localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+}
 function _authToken() {
     return localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
 }
@@ -724,5 +728,343 @@ function escapeHtml(s) {
 }
 
 loadEnrollment();
+
+// ============================================================
+// Session 67b: AI Tutor chat panel
+// ============================================================
+var _tutorSessionId = null;
+var _tutorBusy = false;
+
+function _tutorStorageKey() {
+    return 'charvak_tutor_session_' + (enrollmentId || 'default');
+}
+
+function toggleTutorPanel() {
+    var panel = document.getElementById('tutorPanel');
+    if (!panel) return;
+    panel.classList.toggle('open');
+    if (panel.classList.contains('open')) {
+        _maybeLoadTutorSession();
+        setTimeout(function() {
+            var ta = document.getElementById('tutorInput');
+            if (ta) ta.focus();
+        }, 300);
+    }
+}
+
+function appendTutorMessage(role, content) {
+    var msgs = document.getElementById('tutorMessages');
+    if (!msgs) return;
+    var div = document.createElement('div');
+    div.className = 'tutor-msg tutor-msg-' + (role === 'assistant' ? 'assistant' : (role === 'system' ? 'system' : 'user'));
+    div.textContent = content;
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+}
+
+function _setTutorContext(label) {
+    var el = document.getElementById('tutorContextLabel');
+    if (el) el.textContent = label;
+}
+
+async function _maybeLoadTutorSession() {
+    if (_tutorSessionId) return;  // already loaded
+    var savedSession = localStorage.getItem(_tutorStorageKey());
+    if (!savedSession) {
+        _setTutorContext('New conversation · Ask anything about this lesson');
+        return;
+    }
+    try {
+        var r = await fetch('/api/ai-tutor/session/' + encodeURIComponent(savedSession), {
+            headers: {'Authorization': 'Bearer ' + _token()}
+        });
+        var d = await r.json();
+        if (d.status !== 'success' || !d.session) {
+            localStorage.removeItem(_tutorStorageKey());
+            return;
+        }
+        _tutorSessionId = savedSession;
+        _setTutorContext(d.session.course_name + ' · Week ' + (d.session.week_num || '—'));
+        // Clear initial system message
+        var msgs = document.getElementById('tutorMessages');
+        if (msgs) msgs.innerHTML = '';
+        (d.messages || []).forEach(function(m) {
+            appendTutorMessage(m.role, m.content);
+        });
+    } catch (e) {
+        console.warn('Tutor session load failed', e);
+    }
+}
+
+async function sendTutorMessage() {
+    if (_tutorBusy) return;
+    var input = document.getElementById('tutorInput');
+    var btn = document.getElementById('tutorSendBtn');
+    if (!input || !btn) return;
+
+    var question = (input.value || '').trim();
+    if (!question) return;
+
+    if (!_userEmail()) {
+        appendTutorMessage('system', 'Please log in to chat with the tutor.');
+        return;
+    }
+
+    _tutorBusy = true;
+    input.value = '';
+    btn.disabled = true;
+    btn.textContent = 'Thinking...';
+    appendTutorMessage('user', question);
+
+    // Show typing indicator
+    var typing = document.createElement('div');
+    typing.className = 'tutor-msg tutor-msg-assistant tutor-typing';
+    typing.id = 'tutorTyping';
+    typing.textContent = 'AI is typing...';
+    var msgs = document.getElementById('tutorMessages');
+    if (msgs) { msgs.appendChild(typing); msgs.scrollTop = msgs.scrollHeight; }
+
+    try {
+        var payload = {
+            email: _userEmail(),
+            question: question,
+        };
+        if (_tutorSessionId) {
+            payload.session_id = _tutorSessionId;
+        } else {
+            payload.course_name = (enrollment && enrollment.course_name) || 'this course';
+            payload.enrollment_id = enrollmentId || null;
+            payload.week_num = (window._currentWeek || 1);
+        }
+
+        var r = await fetch('/api/ai-tutor/ask', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + _token(),
+            },
+            body: JSON.stringify(payload),
+        });
+        var d = await r.json();
+
+        var t = document.getElementById('tutorTyping');
+        if (t) t.remove();
+
+        if (d.status === 'success') {
+            if (d.session_id) {
+                _tutorSessionId = d.session_id;
+                localStorage.setItem(_tutorStorageKey(), d.session_id);
+            }
+            var answer = d.ai_response || d.answer || d.message || '(no response)';
+            appendTutorMessage('assistant', answer);
+            if (!document.getElementById('tutorContextLabel').textContent.includes('Week')) {
+                _setTutorContext('Conversation in progress');
+            }
+        } else {
+            appendTutorMessage('system', '⚠️ ' + (d.message || 'Could not get an answer. Please try again.'));
+        }
+    } catch (e) {
+        var t = document.getElementById('tutorTyping');
+        if (t) t.remove();
+        appendTutorMessage('system', '⚠️ Network error: ' + e.message);
+    } finally {
+        _tutorBusy = false;
+        btn.disabled = false;
+        btn.textContent = 'Send';
+    }
+}
+
 </script>
+
+<!-- Session 67b: AI Tutor floating panel -->
+<style>
+    #tutorFab {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: #3ba591;
+        color: #fff;
+        border: none;
+        font-size: 26px;
+        box-shadow: 0 4px 14px rgba(59, 165, 145, 0.4);
+        cursor: pointer;
+        z-index: 1040;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    #tutorFab:hover {
+        transform: scale(1.05);
+        box-shadow: 0 6px 20px rgba(59, 165, 145, 0.55);
+    }
+    #tutorPanel {
+        position: fixed !important;
+        top: 100px !important;
+        right: 0 !important;
+        width: 400px !important;
+        max-width: 100vw !important;
+        height: calc(100vh - 100px) !important;
+        background: #fff !important;
+        box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15) !important;
+        transform: translateX(100%);
+        transition: transform 0.3s ease !important;
+        z-index: 1050 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        pointer-events: none;
+    }
+    #tutorPanel.open {
+        transform: translateX(0);
+        pointer-events: auto;
+    }
+    .tutor-header {
+        background: #3ba591 !important;
+        color: #fff !important;
+        padding: 16px 60px 16px 20px !important;
+        min-height: 64px !important;
+        box-sizing: border-box !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        flex-direction: row !important;
+        position: relative !important;
+        z-index: 100 !important;
+        border-bottom: 2px solid rgba(255,255,255,0.2) !important;
+        flex-shrink: 0 !important;
+    }
+    .tutor-header h3 {
+        margin: 0;
+        font-size: 1.05rem;
+        font-weight: 600;
+    }
+    .tutor-close {
+        background: #ffffff !important;
+        color: #3ba591 !important;
+        border: none !important;
+        width: 36px !important;
+        height: 36px !important;
+        border-radius: 50% !important;
+        font-size: 22px !important;
+        font-weight: 700 !important;
+        cursor: pointer !important;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.25) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        line-height: 1 !important;
+        flex-shrink: 0 !important;
+        padding: 0 !important;
+        font-family: Arial, sans-serif !important;
+    }
+    .tutor-close:hover {
+        background: #f0f0f0 !important;
+    }
+    .tutor-context {
+        padding: 10px 20px !important;
+        background: #f0fdfa !important;
+        border-bottom: 1px solid #e5e7eb !important;
+        font-size: 0.8rem !important;
+        color: #6b7280 !important;
+        flex-shrink: 0 !important;
+    }
+    #tutorMessages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px;
+        background: #f8fafc;
+    }
+    .tutor-msg {
+        margin-bottom: 12px;
+        padding: 10px 14px;
+        border-radius: 12px;
+        max-width: 85%;
+        font-size: 0.92rem;
+        line-height: 1.45;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    }
+    .tutor-msg-user {
+        background: #3ba591;
+        color: #fff;
+        margin-left: auto;
+        border-bottom-right-radius: 4px;
+    }
+    .tutor-msg-assistant {
+        background: #fff;
+        color: #1f2937;
+        border: 1px solid #e5e7eb;
+        border-bottom-left-radius: 4px;
+    }
+    .tutor-msg-system {
+        background: #fef3c7;
+        color: #92400e;
+        text-align: center;
+        margin: 0 auto 12px;
+        max-width: 90%;
+        font-size: 0.8rem;
+        padding: 6px 12px;
+        border-radius: 6px;
+    }
+    .tutor-input-area {
+        padding: 12px 16px;
+        border-top: 1px solid #e5e7eb;
+        background: #fff;
+    }
+    .tutor-input-area textarea {
+        width: 100%;
+        resize: none;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        padding: 10px 12px;
+        font-size: 0.92rem;
+        font-family: inherit;
+    }
+    .tutor-input-area textarea:focus {
+        outline: none;
+        border-color: #3ba591;
+        box-shadow: 0 0 0 3px rgba(59, 165, 145, 0.15);
+    }
+    .tutor-input-area button {
+        margin-top: 8px;
+        width: 100%;
+        background: #3ba591;
+        color: #fff;
+        border: none;
+        padding: 10px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    .tutor-input-area button:disabled {
+        background: #9ca3af;
+        cursor: not-allowed;
+    }
+    .tutor-typing {
+        color: #9ca3af;
+        font-style: italic;
+        font-size: 0.85rem;
+    }
+    @media (max-width: 576px) {
+        #tutorPanel { width: 100vw; }
+    }
+</style>
+
+<button id="tutorFab" onclick="toggleTutorPanel()" title="Ask your AI Tutor">💡</button>
+
+<div id="tutorPanel">
+    <div class="tutor-header" style="position:relative !important; display:flex !important; align-items:center !important; justify-content:space-between !important; padding:14px 18px !important; padding-right:52px !important; background:#3ba591 !important; color:#fff !important;">
+        <h3>💡 AI Tutor</h3>
+        <button type="button" class="tutor-close" onclick="toggleTutorPanel()" aria-label="Close tutor" title="Close">×</button>
+    </div>
+    <div class="tutor-context" id="tutorContextLabel">Loading course context...</div>
+    <div id="tutorMessages">
+        <div class="tutor-msg tutor-msg-system">Ask anything about this lesson — your tutor knows the course content.</div>
+    </div>
+    <div class="tutor-input-area">
+        <textarea id="tutorInput" rows="2" placeholder="Ask a question..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendTutorMessage();}"></textarea>
+        <button id="tutorSendBtn" onclick="sendTutorMessage()">Send</button>
+    </div>
+</div>
+
 {% endblock %}
