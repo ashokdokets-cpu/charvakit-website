@@ -1,5 +1,108 @@
 # Session Context - Charvak
 
+**HEAD:** a016814
+**Live:** https://www.charvakit.com
+**Updated:** 2026-10-20 (Session 70 closed — Wave 3 100% COMPLETE)
+**Next up:** 3 five-min dashboard tasks only
+
+---
+
+## 🎯 WAVE 3 IS 100% COMPLETE
+
+All three Wave 3 features shipped today:
+- A — Interview Prep conversational (S65)
+- B — AI Tutor backend + frontend (S67a + S67b)
+- C — Career Certifications (S69)
+
+## Exactly 3 Items Left (all 5-min dashboard tasks)
+
+1. **Send Amrita reply to Prof. Raj** — unlocks Track C (university pilot)
+2. **Rotate Render Postgres password** — closes last security flag
+3. **Phase 3c env flip** — Nov 3 target (GPT-4o-mini retirement risk eliminated)
+
+**After these 3: platform has zero unblocked work.**
+
+## Platform State — All 100%
+
+| Area | Status |
+|---|---|
+| Wave 1 + Wave 2 | ✅ |
+| Track D Phase A | ✅ |
+| UI Modernization (7/7) | ✅ |
+| Interview Prep conversational | ✅ |
+| AI Tutor (backend + frontend) | ✅ |
+| Career Certifications | ✅ |
+| GPT-4o-mini Phase 1-3b | ✅ |
+| Open bugs | ✅ Zero |
+| Broken features | ✅ Zero |
+
+---
+
+## Session 70 Closed (a016814)
+
+**AI Tutor frontend chat panel shipped. Wave 3 100%.**
+
+### What works E2E
+- Floating 💡 button opens slide-in chat panel (positioned below site nav)
+- Panel slides in from right (0.3s ease), × closes it
+- First message creates session via `/api/ai-tutor/ask`
+- Course context injected (course_name, enrollment_id, week_num)
+- AI response references actual `charvak_course_lessons` content
+- Session persists in localStorage across reload
+
+### Verified chat example
+User: "what week 1 covers"
+AI: "Week 1 covers the following key areas: 1. Introduction to Data
+Engineering, 2. Key Responsibilities, 3. Data Types, 4. Data Pipelines,
+5. Basic Database Operations, 6. Data Warehousing, 7. Examples and
+Exercises, 8. Key Takeaways..." — matched actual lesson content
+
+### 7 real bugs caught and fixed during S67b
+1. `_token()` undefined (was only in interview-session.html)
+2. `visibility` toggle during transition → off-screen flash
+3. `!important` specificity conflict on transform
+4. Panel inline rendering (fixed via `position: fixed !important`)
+5. × invisible (forced 36px white circle)
+6. Panel at `top:0` overlapped site nav (moved to `top:100px`)
+7. Currency selector in nav stacked on × (z-index: 9999 → 1050)
+
+**Key process lesson:** for "invisible but exists" buttons, run
+`document.elementFromPoint(x, y)` in browser console. Reveals what's
+actually at that position.
+
+---
+
+## Tomorrow's Plan (Session 71)
+
+1. **Send Amrita reply** (5 min, highest leverage)
+2. **Rotate Render Postgres password** (5 min, last flag)
+3. **Phase 3c env flip** (5 min, Nov 3 target)
+
+After these 3: **platform has zero unblocked work.**
+
+Everything remaining is blocked on external signal:
+- Amrita signing → Track C pilot + Track D Phase B + Track E Behavioral
+- Employer demand (3+) → Track F Verified Jobs
+- Multi-institution demand → CAS expansion
+
+---
+
+## Today's Commits (Session 70)
+
+- `a016814` S67b AI Tutor frontend
+- `b14e454` Session 69 close (docs)
+- `766fb6b` S69 Career Certifications
+- `581a8f9` S67a AI Tutor backend
+- `336afbb` S65b Interview Prep frontend
+- `2d1f1a4` S65a Interview Prep backend
+- Plus 32 earlier commits from Sessions 51-64b
+
+**Total: 38 commits. Zero regressions. All 14/14 pre-push.**
+
+---
+
+# Session Context - Charvak
+
 **HEAD:** 766fb6b
 **Live:** https://www.charvakit.com
 **Updated:** 2026-10-20 (Session 69 closed - Wave 3 at 2.5/3, only S67b remains)
