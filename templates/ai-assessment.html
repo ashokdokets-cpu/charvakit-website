@@ -848,6 +848,57 @@ function renderResult(j) {
     var badgeText = passed ? 'READY' : (score >= 50 ? 'NEEDS PRACTICE' : 'KEEP GOING');
     var badge = '<span class="as-verdict ' + badgeClass + '">' + badgeText + '</span>';
     document.getElementById('carResultBadge').innerHTML = badge;
+    // Session 69: certification CTA (only if score >= 70)
+    try {
+        var _carScore = (j && (j.score !== undefined ? j.score : (j.assessment && j.assessment.score))) || 0;
+        var _carAid = (j && (j.assessment_id || (j.assessment && j.assessment.assessment_id))) || (window._carCurrentAssessment && window._carCurrentAssessment.assessment_id) || "";
+        var _carEmail = (localStorage.getItem("userEmail") || "").toLowerCase();
+
+        if (_carScore >= 70 && _carAid) {
+            var _tierLabel = _carScore >= 95 ? "Elite" : (_carScore >= 90 ? "Expert" : "Certified");
+            var _tierColor = _carScore >= 95 ? "#a78bfa" : (_carScore >= 90 ? "#f59e0b" : "#3b82f6");
+            var _tierIcon = _carScore >= 95 ? "💎" : (_carScore >= 90 ? "🥇" : "🏆");
+            var _isFree = _carScore >= 85;
+            var _creditText = _isFree ? "Free" : "5 credits";
+            var _ctaHtml = '<div class="alert alert-success mt-3 d-flex flex-wrap justify-content-between align-items-center gap-2" style="border-left: 4px solid ' + _tierColor + '">'
+                + '<div>'
+                + '<div style="font-size: 1.5rem; margin-bottom: 4px;">' + _tierIcon + '</div>'
+                + '<strong>You qualified for ' + _tierLabel + ' Certification!</strong>'
+                + '<div class="small text-muted">Score ' + _carScore + '/100 · Verified credential · ' + _creditText + '</div>'
+                + '</div>'
+                + '<button class="btn btn-success" onclick="getCareerCertification(' + JSON.stringify(_carAid) + ', this)">Get Certified →</button>'
+                + '</div>';
+            document.getElementById("carResultBadge").innerHTML = badge + _ctaHtml;
+        }
+    } catch (e) { console.warn("cert CTA render failed", e); }
+
+    async function getCareerCertification(aid, btn) {
+        if (!aid) return;
+        btn.disabled = true;
+        btn.textContent = "Issuing...";
+        try {
+            var _email = (localStorage.getItem("userEmail") || "").toLowerCase();
+            var _tok = localStorage.getItem("auth_token") || localStorage.getItem("charvak_token") || "";
+            var _r = await fetch("/api/career-assessment/certify", {
+                method: "POST",
+                headers: {"Content-Type": "application/json", "Authorization": "Bearer " + _tok},
+                body: JSON.stringify({email: _email, assessment_id: aid})
+            });
+            var _d = await _r.json();
+            if (_d.status === "success" && _d.cert_id) {
+                if (typeof charvakTrack === "function") charvakTrack("career_cert_issued", {cert_id: _d.cert_id, tier: _d.badge_tier});
+                window.location.href = "/career-certification/" + encodeURIComponent(_d.cert_id);
+                return;
+            }
+            alert("Could not issue certification: " + (_d.message || "Unknown error"));
+            btn.disabled = false;
+            btn.textContent = "Get Certified →";
+        } catch (err) {
+            alert("Error: " + err.message);
+            btn.disabled = false;
+            btn.textContent = "Get Certified →";
+        }
+    }
 
     // Session 57: animate score counter 0 -> actual
     var _scoreEl = document.getElementById('carResultScore');

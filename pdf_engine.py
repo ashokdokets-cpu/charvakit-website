@@ -378,11 +378,23 @@ def render_simple_pdf(title: str, body_lines: List[str],
     return bytes(pdf.output())
 
 
-def render_readiness_certificate_pdf(cert: Dict) -> bytes:
+def render_readiness_certificate_pdf(cert: Dict, report_type: str = "readiness") -> bytes:
     """
     Render a Role Readiness Certificate as a branded, framed PDF.
     cert = certificate dict from /api/readiness/{id}.
     """
+    # Session 69: report_type-based branding
+    if report_type == "career_certification":
+        _branding_title_line = "Verified Career Assessment  ·  Independently Benchmarked"
+        _branding_cert_line = "Certificate of Expertise"
+        _branding_demonstrate = "has demonstrated proven expertise in"
+        _branding_report_title = "Career Assessment Certification"
+    else:
+        _branding_title_line = "Verified Role Readiness  ·  Independently Benchmarked"
+        _branding_cert_line = "Certificate of Readiness"
+        _branding_demonstrate = "has demonstrated readiness for the role of"
+        _branding_report_title = "Role Readiness Certificate"
+
     import os as _os
     site = _os.getenv("SITE_URL", "https://www.charvakit.com").rstrip("/")
 
@@ -396,7 +408,7 @@ def render_readiness_certificate_pdf(cert: Dict) -> bytes:
     TEAL_LIGHT = (240, 253, 249)
 
     pdf = CharvakReportPDF(
-        report_title="Role Readiness Certificate",
+        report_title=_branding_report_title,
         user_email=cert.get("email"),
     )
     # Single-page certificate — disable auto page break entirely so
@@ -487,13 +499,13 @@ def render_readiness_certificate_pdf(cert: Dict) -> bytes:
     pdf.set_xy(0, 52)
     pdf.set_font("DejaVu", "I", size=10)
     pdf.set_text_color(*MUTED)
-    pdf.cell(W, 5, "Verified Role Readiness  ·  Independently Benchmarked", align="C")
+    pdf.cell(W, 5, _branding_title_line, align="C")
 
     # --- Title ---
     pdf.set_xy(0, 62)
     pdf.set_font("DejaVu", "B", size=30)
     pdf.set_text_color(*INK)
-    pdf.cell(W, 14, "Certificate of Readiness", align="C")
+    pdf.cell(W, 14, _branding_cert_line, align="C")
 
     # --- Ornamental divider (short teal line centered) ---
     pdf.set_draw_color(*TEAL)
@@ -527,7 +539,7 @@ def render_readiness_certificate_pdf(cert: Dict) -> bytes:
     pdf.set_xy(0, 124)
     pdf.set_font("DejaVu", size=11)
     pdf.set_text_color(*MUTED)
-    pdf.cell(W, 6, "has demonstrated readiness for the role of", align="C")
+    pdf.cell(W, 6, _branding_demonstrate, align="C")
 
     # --- Role ---
     role = str(cert.get("role") or "")
@@ -615,7 +627,8 @@ def render_readiness_certificate_pdf(cert: Dict) -> bytes:
     pdf.set_xy(0, 234)
     pdf.cell(W, 5, "Issued:  " + (issued or "N/A"), align="C")
 
-    verify_url = site + "/api/readiness/verify/" + str(cert.get("certificate_hash") or "")
+    verify_path = cert.get("verify_url_path") or "/api/readiness/verify/"
+    verify_url = site + verify_path + str(cert.get("certificate_hash") or "")
     pdf.set_xy(0, 240)
     pdf.set_font("DejaVu", size=7)
     pdf.set_text_color(*MUTED)
