@@ -6217,3 +6217,57 @@ After that:
 - The platform is at "everything buildable is built"
 - Documentation is fully synced
 - Zero open technical debt
+
+## Session 72 CLOSED (2026-10-21) - DoketsRB bidirectional sync COMPLETE
+
+Commits: bcccee1 (skills fix) + 7fa6f89 (pull route)
+
+All 4 sync directions operational on prod:
+
+- DoketsRB -> Charvak: POST /api/sync/resume (working)
+- DoketsRB -> Charvak: POST /api/sync/application (working)
+- DoketsRB -> Charvak: POST /api/sync/skills (FIXED this session)
+- Charvak -> DoketsRB: POST /api/sync/pull/{user_id} (NEW this session)
+
+### Skills fix (bcccee1)
+
+DoketsRB sent skill_gaps as List[str] but model required List[dict].
+Result: 422 with 2 validation errors on every call.
+
+Fixed by:
+- skill_gaps: List[dict] -> List[Any]
+- Handler normalizes strings to {topic: str} on write
+- Added tolerant extras: doketsrb_id, matched_skills, score, source
+- Config extra=allow so future additions do not 422
+
+### Pull route (7fa6f89)
+
+New handle_pull(user_id, request) in api_sync.py:
+- Calls https://www.doketsrb.com/api/public?action=profile&user_id=X
+- Calls https://www.doketsrb.com/api/public?action=applications&user_id=X
+- Upserts into charvak_synced_users + charvak_synced_applications
+- Idempotent via ON CONFLICT DO UPDATE
+- Returns {status, user_id, profile_synced, applications_synced, errors}
+
+New route in main.py: POST /api/sync/pull/{user_id}
+
+### Verified E2E on prod
+
+Test user: bb864eb3-3232-4b09-926a-ce7baaadc93f (contact@dokets.com)
+
+Skills push: HTTP 200, gaps_count=2
+Pull: HTTP 200, {profile_synced: true, applications_synced: 1, errors: []}
+
+DB confirmed: 1 profile row (Admin/contact@dokets.com) + 1 app row (Wipro/applied)
+
+### Follow-ups (non-blocking)
+
+- /api/sync/user-info?email=X endpoint needed for Sync Now button (~10 lines)
+- Signed-pull-for-browser route needed (Bearer auth, skip HMAC)
+- Sync Now button on /career-center (~30 lines JS) - reverted this session
+
+### 3 Session 70 flags still pending
+
+1. Amrita email to Prof. Raj (5 min)
+2. Rotate Render Postgres password (5 min)
+3. Phase 3c GPT-4o-mini env flip (5 min)

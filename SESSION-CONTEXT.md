@@ -1,5 +1,54 @@
 # Session Context - Charvak
 
+**HEAD:** 7fa6f89
+**Live:** https://www.charvakit.com
+**Updated:** 2026-10-21 (Session 72 closed - DoketsRB bidirectional sync COMPLETE)
+**Next up:** 3 five-min dashboard tasks only
+
+---
+
+## Session 72 CLOSED - DoketsRB Bidirectional Sync Complete
+
+All 4 sync directions operational on prod.
+
+| Direction | Endpoint | Status |
+|---|---|---|
+| DoketsRB -> Charvak | POST /api/sync/resume | DONE |
+| DoketsRB -> Charvak | POST /api/sync/application | DONE |
+| DoketsRB -> Charvak | POST /api/sync/skills | DONE (fixed) |
+| Charvak -> DoketsRB | POST /api/sync/pull/{user_id} | DONE (new) |
+
+### Commits
+
+- bcccee1: fix(sync) - accept string skill_gaps + tolerant extras
+- 7fa6f89: feat(sync) - add /api/sync/pull route
+
+### Verified E2E on prod
+
+Test user bb864eb3-3232-4b09-926a-ce7baaadc93f (contact@dokets.com)
+- Skills push: 200, gaps_count=2
+- Pull: 200, {profile_synced:true, applications_synced:1, errors:[]}
+
+### Optional follow-up (~1 hr)
+
+- /api/sync/user-info endpoint (10 lines)
+- Signed-pull-for-browser route (15 lines)
+- Sync Now button on /career-center (30 lines JS) - reverted this session
+
+---
+
+## The 3 five-minute flags (from Session 70)
+
+1. Send Amrita email to Prof. Raj - unlocks Track C
+2. Rotate Render Postgres password - last security flag
+3. Phase 3c env flip (GPT-4o-mini migration, Nov 3 target)
+
+After these 3: platform has zero unblocked work.
+
+---
+
+# Session Context - Charvak
+
 **HEAD:** a016814
 **Live:** https://www.charvakit.com
 **Updated:** 2026-10-20 (Session 70 closed — Wave 3 100% COMPLETE)
