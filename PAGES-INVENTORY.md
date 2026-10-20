@@ -685,3 +685,79 @@ search + sort)
 **Pricing tiers:** Pilot (free, 500/yr) / Department (Rs 49,999/yr,
 5,000) / Campus (Rs 1,99,999/yr, 50,000) / University (Rs 4,99,999/yr,
 unlimited)
+
+## Career Certifications (Session 69, 2026-10-20)
+
+Standalone B2C-first credential for high-scoring Career Assessments.
+Tiered by score, priced (free ≥85, 5 credits for 70-84), verifiable via
+HMAC hash.
+
+| Template | Route | Purpose | Auth? |
+|---|---|---|---|
+| `career-certification.html` | `/career-certification/{cert_id}` | Public cert view: badge, role, score, verify URL, PDF download, share buttons | No (public) |
+| `my-certifications.html` | `/my-certifications` | User's career cert dashboard with tier filter | Yes (JS-gated by auth token) |
+
+**Backing API:**
+- `POST /api/career-assessment/certify` — auth + email match, issue cert
+- `GET /api/career-certification/{cert_id}` — public JSON read
+- `GET /api/career-certification/{cert_id}/pdf` — public PDF download
+- `GET /api/career-certification/verify/{cert_hash}` — public HMAC verify
+- `GET /api/career-certification/list/{email}` — auth, user's certs
+
+**Engine:** `career_assessment_engine.py`
+- `issue_certification()` — idempotent per assessment_id, deducts credits
+  for 70-84 tier, stores integrity_summary from assessment
+- `get_certification()` / `verify_certification()` / `list_certifications()`
+- `_compute_tier()` — 85+ Certified / 90+ Expert / 95+ Elite
+- `_compute_cert_hash()` — HMAC-SHA256 (reuses READINESS_HMAC_KEY ||
+  SECRET_KEY pattern from existing readiness certs)
+
+**Table:** `charvak_career_certifications` (13 cols, 4 indexes)
+
+**Pricing:**
+- Certified (70-89): 5 credits
+- Expert (90-94): Free
+- Elite (95-100): Free
+
+**CTA integration:** `/ai-assessment` result page shows "🏆 You qualified
+for {Tier} Certification!" button when score ≥ 70.
+
+**PDF:** Full Career Assessment branding (via `report_type="career_certification"`
+param on `render_readiness_certificate_pdf`). Correct QR verify URL.
+"Certificate of Expertise" heading.
+
+**Verified on prod (2026-10-20):**
+- Certify CCERT-82D0A951260A (score 91, Expert tier, free)
+- HMAC verify returns {valid: true}
+- Idempotent re-certify returns {already_existed: true}
+- PDF downloads with full branding
+- Dashboard renders with filter + copy link
+
+## AI Tutor (Sessions 67a + upcoming S67b, 2026-10-20)
+
+Persistent AI tutor with course context injection. Backend complete;
+frontend chat panel (S67b) pending.
+
+**Backend (Session 67a — complete):**
+- `interactive_tutor.py` rewrote from in-memory to DB-backed
+- `_load_course_context()` loads lesson content + curriculum outline
+  from `charvak_course_lessons` + `charvak_enrollments`
+- `_call_ai()` uses `openai_compat.build_payload` (GPT-5 ready)
+- New route `POST /api/ai-tutor/ask` (accepts enrollment_id + week_num
+  for full context, or just course_name for generic)
+- New route `GET /api/ai-tutor/session/{session_id}` (resume UI)
+- Preserved `/api/tutor/*` routes (backward compatible)
+
+**Tables:**
+- `charvak_tutor_sessions` (session_id, email, course_name,
+  enrollment_id, week_num, topic, user_level, turn_count, status)
+- `charvak_tutor_messages` (message_id, session_id, role, content)
+
+**Frontend (S67b — pending):**
+- Floating "💡 Ask Tutor" button on `my-course.html`
+- Slide-in chat panel reusing S65's chat CSS
+- localStorage to remember session per enrollment
+
+**Verified persistence (2026-10-20):**
+- Session survives uvicorn restart
+- turn_count continues (2 → 3) across restart

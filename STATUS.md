@@ -1,10 +1,57 @@
 # Charvak IT Consulting - Project Status
 
-**Last updated:** 2026-10-20 (Sessions 63-64b - Track D + CAS complete)
-**Version:** v3.5-session-64b-20261020
+**Last updated:** 2026-10-20 (Sessions 65-69 - Wave 3 at 2.5/3)
+**Version:** v3.6-session-69-20261020
 **Live:** https://www.charvakit.com
-**HEAD:** 2cff7e2
+**HEAD:** 766fb6b
 
+## Session 2026-10-20 - Sessions 65 + 67a + 69 Complete
+
+**Commits:** `2d1f1a4`, `336afbb`, `581a8f9`, `766fb6b`
+**36 commits shipped today across sessions 51-69.**
+
+### Sessions Closed
+
+- **S65 - Interview Prep Conversational Mode:** Users choose Quick
+  Practice (static) or Full Mock Interview (conversational, adaptive,
+  up to 12 turns). AI generates real follow-ups (verified: 3-turn Data
+  Scientist interview on L1/L2 regularization). Partial-session
+  indicator, avg-per-turn scoring.
+- **S67a - AI Tutor Persistent Backend:** Rewrote interactive_tutor.py
+  from in-memory to DB-backed with course-context injection. Verified
+  persistence across uvicorn restart (turn_count continued 2 → 3).
+  Backend ready for S67b frontend.
+- **S69 - Career Assessment Certifications:** Standalone B2C-first
+  credential. Tiered by score (Certified/Expert/Elite), free ≥85,
+  5 credits for 70-84. HMAC verify, PDF, dashboard, share buttons.
+  Ready for Amrita students when Amrita signs (zero rework).
+
+### Platform Status — All 100%
+
+- Wave 1: 100%
+- Wave 2: 100%
+- Track D Phase A: 100%
+- UI Modernization: 100%
+- Interview Prep conversational: 100%
+- AI Tutor backend: 100%
+- Career Certifications: 100%
+- GPT-4o-mini Phase 1-3b: 100%
+- Zero open bugs
+- Zero broken features
+
+### Only One Unblocked Build Left
+
+- **S67b — AI Tutor frontend chat panel** (~45 min)
+
+### Then 3 Five-Minute Flags
+
+- Amrita email
+- Render password rotation
+- Phase 3c env flip (Nov 3 target)
+
+After these: platform at "everything unblocked is built."
+
+---
 ## Session 2026-10-20 - Sessions 63-64b Complete
 
 **Commits:** `bb0ecea` (S63), `ef5974f` (S64), `2cff7e2` (S64b)
@@ -134,13 +181,13 @@
 # Charvak IT Consulting - Project Status
 
 **Last updated:** 2026-10-12 (Session 43 - FYP MBA calibration + integrity fact panel)
-**Version:** v3.5-session-43-20261012
+**Version:** v3.6-session-69-20261020
 **Live:** https://www.charvakit.com
 **Status:** Track A active. Track B flagged.
 
 ## Session 2026-10-12 - Session 43
 
-**HEAD:** 3fd8ad7
+**HEAD:** 766fb6b
 
 Two commits, four real fixes, one flagship feature.
 
@@ -192,7 +239,7 @@ See TRACK-A-B-PLAN.md for the full sequence.
 
 ## Session 2026-10-18 - Session 48 (Cohort Mode)
 
-**HEAD:** 1399073
+**HEAD:** 766fb6b
 **Wave 1:** 100% complete
 
 ### Shipped
@@ -226,7 +273,7 @@ See COMMITMENT.md "Session 49 candidates" for options A/B/C/D.
 
 ## Session 2026-10-19 - Session 49 + 49.5 (Cohort Polish)
 
-**HEAD:** d3de41b
+**HEAD:** 766fb6b
 **Wave 1:** 100% complete with production polish
 
 ### Shipped

@@ -782,3 +782,54 @@ Effort: 4-6 sessions.
 **Trigger:** after Amrita pilot Week 2.
 
 **Verdict:** FLAGGED — full detail in COMMITMENT.md.
+
+## Session 2026-10-20 (evening) - Wave 3 at 2.5/3
+
+Wave 3 = the product-depth wave after Wave 1 (flywheel) and Wave 2
+(B2B trust). Three features:
+
+| Feature | Status | Commit(s) |
+|---|---|---|
+| A - Interview Prep AI depth | Complete | 2d1f1a4 + 336afbb |
+| B - AI Tutor backend | Complete | 581a8f9 |
+| B - AI Tutor frontend | S67b pending (~45 min) | - |
+| C - Career Certifications | Complete | 766fb6b |
+
+Only S67b remains. Reuses S65's chat pattern - 45 min clean build.
+After S67b: platform has zero unblocked work.
+
+### What Wave 3 Shipped
+
+A - Interview Prep (S65):
+- Conversational mode: Full Mock Interview (12 turns, adaptive)
+- AI reads answers, generates real follow-ups
+- 3-turn Data Scientist interview verified E2E (L1/L2 regularization
+  topic, AI's Turn 2 references Turn 1)
+- Partial-session indicator + avg-per-turn scoring
+
+B - AI Tutor (S67a + S67b):
+- Backend: persistent sessions + course context injection
+- Verified across uvicorn restart (turn_count 2 -> 3)
+- Frontend (S67b): floating chat panel on lesson player
+
+C - Career Certifications (S69):
+- Standalone tiered credential (Certified 70-89 / Expert 90-94 /
+  Elite 95-100)
+- Free >= 85, 5 credits for 70-84
+- HMAC verify URL, PDF, dashboard, share buttons
+- Privacy-safe email masking
+- Ready for Amrita students when Amrita signs (zero rework)
+
+### After Wave 3 - What's Left
+
+3 five-min dashboard tasks:
+1. Send Amrita email (unlocks Track C)
+2. Rotate Render Postgres password
+3. Phase 3c env flip (Nov 3, GPT-4o-mini migration complete)
+
+Blocked on external signal:
+- Track D Phase B (Amrita pilot Week 2)
+- Track E Behavioral (Amrita signs)
+- Track F Verified Jobs (3+ employer demand)
+
+Status: All buildable work complete once S67b + 3 flags close.

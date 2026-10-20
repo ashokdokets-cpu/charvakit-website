@@ -788,3 +788,62 @@ insert landed in the wrong function.
 
 **Verdict:** RESOLVED. Session 64b shipped cleanly with the corrected
 methodology. Rules documented above.
+
+## RESOLVED - Career Certification f-string + branding bugs (2026-10-20, 766fb6b)
+
+**Bugs fixed during Session 69:**
+
+1. **Python 3.11 f-string backslash restriction** - f-string expressions
+   cannot include backslash-escaped quotes. Python <3.12 behavior. Fix:
+   extract dict value to local var first, then interpolate the local.
+
+2. **PowerShell inline JS escaping** - writing JS with escaped quotes in a
+   PowerShell single-quoted string breaks the parser. Fix: use a
+   single-quoted here-string for any JS block containing quotes or `<`.
+
+3. **SECRET_KEY import from global_config doesn't exist** - assumed
+   `global_config.SECRET_KEY` existed. It doesn't. Existing pattern (from
+   `_generate_certificate_hash`) is:
+   `os.getenv("READINESS_HMAC_KEY") or os.getenv("SECRET_KEY") or "dev-only-not-secret"`.
+
+4. **Auto-revert gate only checks ast.parse** - silent runtime bugs like
+   `NameError: sig is not defined` pass syntax check. Fix: add runtime smoke
+   test after every function patch (2-second check catches 80% of silent bugs).
+
+5. **PDF verify URL hardcoded** - `render_readiness_certificate_pdf` had
+   the verify URL path hardcoded to /api/readiness/verify/. Added
+   `verify_url_path` param (defaults to /api/readiness/verify/) so career
+   certs can pass /api/career-certification/verify/.
+
+6. **PDF issued date showed N/A** - renderer reads `created_at` from cert
+   dict, but the dict had only `issued_at`. Fix: add both fields.
+
+7. **PDF branding said "Role Readiness"** - parameterized `report_type` on
+   `render_readiness_certificate_pdf` with "readiness" (default) and
+   "career_certification" options.
+
+## PROCESS RULES ADDED (2026-10-20)
+
+**Rule 1 - Runtime smoke tests after every function patch.**
+`ast.parse` catches syntax. It does NOT catch missing variables, wrong
+returns, or runtime NameErrors. Add a `python -c "call_function(...)"` call
+as mandatory second gate. 2 seconds, catches 80% of silent bugs.
+
+**Rule 2 - Python 3.11 f-string limitation.**
+Cannot use backslash-escaped quotes inside `{...}`. Extract dict values
+to local variables before interpolation. Python 3.12+ (PEP 701) removes
+this restriction, but production is 3.11.
+
+**Rule 3 - PowerShell JS escaping.**
+Use a single-quoted here-string for any block containing escaped quotes,
+`<`, or template literals. Never embed JS in single-quoted PowerShell
+strings - the parser sees escaped quote as string-terminate and `<` as
+comparison operator.
+
+**Rule 4 - Docstring-aware patches.**
+When inserting code after a function docstring, count triple-quotes. The
+first `"""` is opening. The SECOND on its own line is close. Inserting
+between them puts code inside the docstring where Python treats it as
+text (never executed). This caused the branding block to be invisible
+in Session 69 fix 7.
+

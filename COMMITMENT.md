@@ -6058,3 +6058,96 @@ B) **Dashboard tasks (5 min each):**
 - Track E Behavioral (blocked on Amrita)
 - Track F Verified Jobs (blocked on 3+ employer demand)
 - Certificate i18n (deferred, no deadline)
+
+---
+
+## Session 2026-10-20 (evening) - Wave 3 at 2.5/3
+
+**36 commits shipped today. Wave 2 100%. Wave 3 at 2.5/3. Only S67b remains.**
+
+### Sessions Closed
+
+- **S65** — Interview Prep conversational mode (backend + frontend)
+  * Commit `2d1f1a4` (backend) + `336afbb` (frontend)
+  * Users choose Quick Practice vs Full Mock Interview
+  * AI generates real follow-ups based on user answers
+  * 3-turn Data Scientist interview verified E2E (L1/L2 regularization
+    topic, AI's Turn 2 references Turn 1)
+  * Partial-session indicator ("2 of 12 turns answered")
+  * Avg-per-turn scoring for fair display
+
+- **S67a** — AI Tutor persistent backend
+  * Commit `581a8f9`
+  * Rewrote interactive_tutor.py from in-memory dict to DB-backed
+  * Course context injection: loads lesson content + curriculum outline
+  * 4 OpenAI calls migrated to openai_compat.build_payload (GPT-5 ready)
+  * Persistence verified: session survives uvicorn restart,
+    turn_count continues (2 → 3)
+
+- **S69** — Career Assessment Certifications
+  * Commit `766fb6b`
+  * Standalone B2C-first credential, tiered by score
+  * Free ≥ 85, 5 credits for 70-84
+  * HMAC verify URL, PDF download, dashboard, share buttons
+  * Privacy-safe email masking (h***@example.com)
+  * PDF branded as "Career Assessment Certification" (via new
+    report_type param on render_readiness_certificate_pdf)
+  * Ready for Amrita students when Amrita signs (zero rework)
+
+### Wave 3 Status
+
+| Feature | Status | Commit |
+|---|---|---|
+| A - Interview Prep AI depth | ✅ Complete | `2d1f1a4` + `336afbb` |
+| B - AI Tutor backend | ✅ Complete | `581a8f9` |
+| B - AI Tutor frontend | ⏳ S67b (~45 min) | — |
+| C - Career Certifications | ✅ Complete | `766fb6b` |
+
+### Only One Unblocked Build Left
+
+**S67b - AI Tutor Frontend Chat Panel** (~45 min)
+- Floating "💡 Ask Tutor" button on `/my-course/{enrollment_id}`
+- Slide-in chat panel reusing S65's chat CSS
+- localStorage to remember session per enrollment
+- Backend ready: `/api/ai-tutor/ask` + `/api/ai-tutor/session/{id}`
+- Zero new backend work required
+
+### Remaining 3 Five-Minute Flags
+
+1. Send Amrita reply to Prof. Raj (unlocks Track C)
+2. Rotate Render Postgres password (last security flag)
+3. Phase 3c env flip (Nov 3, kills Jan 14 2027 risk)
+
+### 7 Real Bugs Fixed Today (with auto-revert gates)
+
+1. Python 3.11 f-string backslash restriction in logger.info
+2. PowerShell inline JS escaping breaks parsing
+3. SECRET_KEY import from global_config doesn't exist
+4. First fix attempt lost `sig = hmac.new(...)` line — auto-revert gate
+   only checks `ast.parse`, not runtime; added runtime smoke test
+5. PDF verify URL hardcoded `/api/readiness/verify/`
+6. PDF issued date showed "N/A" (renderer reads `created_at`)
+7. PDF branding said "Role Readiness" (parameterized report_type)
+
+### Process Rules Added
+
+- **Runtime smoke tests** after every function patch, not just `ast.parse`
+- **Python 3.11 f-string restriction:** extract dict values before
+  interpolating: `tier_key = tier["key"]; f"...{tier_key}..."`
+- **Docstring-aware patches:** count triple-quotes to find the SECOND
+  `"""` on its own line, not the first (which is the opening)
+- **PowerShell inline JS escaping:** use here-string `@'...'@` for any
+  block containing `\'` or template literals
+
+### What's Next
+
+**Session 70 (recommended):** S67b (45 min) + close the 3 five-min
+flags. Then platform at "everything unblocked is built."
+
+**After that:** Everything is blocked on external response:
+- Amrita signing → Track C / Track D Phase B / Track E Behavioral
+- Employer demand (3+) → Track F Verified Jobs Board
+- Multi-institution demand → Certificate-as-a-Service expansion
+
+**Alternative if energy is low:** Close today at 36 commits. Resume
+with S67b tomorrow. All flags remain for a single-session close.
