@@ -30,7 +30,7 @@ from slowapi.errors import RateLimitExceeded
 
 from api_sync import (
     handle_resume_sync, handle_application_sync, handle_get_jobs,
-    handle_skill_sync, handle_get_status, api_health,
+    handle_skill_sync, handle_get_status, handle_pull, api_health,
     ResumeSync, ApplicationSync, SkillGapSync, verify_api_key
 )
 from auth import register_user, login_user, logout_user, logout_all_sessions, verify_token, get_current_user
@@ -1411,6 +1411,11 @@ async def sync_get_jobs(request: Request, auth=Depends(verify_api_key)):
 @app.post("/api/sync/skills")
 async def sync_skills(data: SkillGapSync, request: Request, auth=Depends(verify_api_key)):
     return await handle_skill_sync(data, request)
+
+@app.post("/api/sync/pull/{user_id}")
+async def sync_pull(user_id: str, request: Request, auth=Depends(verify_api_key)):
+    'User-triggered: pull latest profile + applications from DoketsRB.'
+    return await handle_pull(user_id, request)
 
 @app.get("/api/sync/status/{user_id}")
 async def sync_get_status(user_id: str, request: Request, auth=Depends(verify_api_key)):
