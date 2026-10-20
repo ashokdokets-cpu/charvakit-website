@@ -847,3 +847,105 @@ between them puts code inside the docstring where Python treats it as
 text (never executed). This caused the branding block to be invisible
 in Session 69 fix 7.
 
+## RESOLVED - AI Tutor frontend nav overlap (Session 70, a016814)
+
+7 bugs found and fixed during S67b build. All related to CSS/JS
+integration of the tutor panel into my-course.html.
+
+### Bug 1 - _token() undefined
+Chat tried to call _token() but that function only existed in
+interview-session.html (from S65), not my-course.html.
+Fix: added _token() helper (5 lines).
+
+### Bug 2 - visibility toggle broke slide-in
+Panel used visibility hidden to visible toggle in .open class, but
+visibility is not transitionable. Result: panel became visible while
+still at translateX(100%) (off-screen), appearing to flash and
+disappear. Fix: removed visibility toggle, use pointer-events none
+to auto instead.
+
+### Bug 3 - !important specificity conflict
+Base #tutorPanel transform !important won over #tutorPanel.open
+transform without !important. Fix: removed !important from base
+transform; specificity handles it correctly (110 > 100).
+
+### Bug 4 - Panel rendered inline (not fixed)
+Panel was rendering as a normal block element at bottom of page
+instead of a fixed right-side drawer. Fix: forced position fixed
+important on the div.
+
+### Bug 5 - Close button invisible
+The close X was rendered but visually hard to spot. Fix: forced
+36x36 circle, white background, teal X, box shadow.
+
+### Bug 6 - Panel overlapped by site nav
+Panel at top 0 placed the close button at y 8, inside the site nav
+fixed zone (y 32-98). The nav currency selector covered the close
+button. Fix: moved panel to top 100px, height calc(100vh - 100px).
+
+### Bug 7 - Currency selector stacked on close button
+Both the currency selector and close button had z-index 9999.
+Clicks landed on the currency dropdown instead of the close button.
+Fix: reduced panel z-index to 1050, header to 100.
+
+### The Debugging Pattern (worth remembering)
+
+SYMPTOM: button exists in DOM but clicking does nothing
+
+DIAGNOSTIC: In browser console, run elementFromPoint at the button
+center coordinates. If it returns a different element, that element
+is the true blocker.
+
+    var btn = document.querySelector('.target-button');
+    var rect = btn.getBoundingClientRect();
+    var elementAt = document.elementFromPoint(
+        rect.x + rect.width/2,
+        rect.y + rect.height/2
+    );
+    console.log('Same?', btn === elementAt);
+
+If Same? is false, the returned element is what is receiving clicks.
+For this bug, elementFromPoint returned the currency select element,
+revealing the z-index overlap immediately.
+
+This is faster than inspecting CSS cascade or DevTools positioning
+because it tells you what the click will ACTUALLY hit.
+
+### Rule added to process memory
+
+When a button exists but appears non-interactive:
+1. First check document.elementFromPoint(x, y) at its center
+2. If a different element is returned, that is the true blocker
+3. Common culprits: fixed nav bars, sticky headers, overlays
+4. Fix is usually a z-index + position adjustment, not CSS rewrite
+## RESOLVED - AI Tutor frontend nav overlap (Session 70, a016814)
+
+7 bugs found and fixed during S67b. All CSS/JS integration issues.
+
+### Bug 1 - _token() undefined
+_token() only existed in interview-session.html, not my-course.html.
+Fix: added _token() helper.
+
+### Bug 2 - visibility toggle broke slide-in
+visibility is not transitionable. Fix: removed visibility, use
+pointer-events none to auto.
+
+### Bug 3 - !important specificity conflict
+Fix: removed !important from base transform.
+
+### Bug 4 - Panel rendered inline
+Fix: position fixed important on div.
+
+### Bug 5 - Close button invisible
+Fix: 36x36 circle, white bg, teal X.
+
+### Bug 6 - Panel overlapped by site nav
+Fix: moved panel to top 100px, height calc(100vh - 100px).
+
+### Bug 7 - Currency selector stacked on close
+Fix: reduced panel z-index 9999 to 1050.
+
+### Debugging Pattern
+For invisible buttons: run document.elementFromPoint(x, y) at button
+center. If it returns a different element, that is the true blocker.
+For this bug, it returned the currency SELECT element.

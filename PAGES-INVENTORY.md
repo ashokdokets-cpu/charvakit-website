@@ -761,3 +761,50 @@ frontend chat panel (S67b) pending.
 **Verified persistence (2026-10-20):**
 - Session survives uvicorn restart
 - turn_count continues (2 → 3) across restart
+
+## AI Tutor Chat Panel (Session 67a + 67b, 2026-10-20)
+
+Persistent AI tutor with course-context injection. Available as a
+floating panel on `/my-course/{enrollment_id}`.
+
+**Frontend widget (in templates/my-course.html):**
+- Floating "💡 Ask Tutor" FAB button (bottom-right, fixed position)
+- Slide-in chat panel (#tutorPanel, 400px, right-side drawer)
+- Positioned `top: 100px` (below site nav, avoids overlay)
+- z-index: 1050 (above content, below nav @9999)
+- Header: teal, white circular × close button (36px)
+- Message bubbles (user teal, assistant white, system yellow)
+- Textarea + Send (Enter to send)
+- localStorage session persistence per enrollment_id
+
+**Backend API:**
+- `POST /api/ai-tutor/ask` (auth-gated)
+  - Payload: `{email, question, session_id (optional), course_name, enrollment_id, week_num}`
+  - Returns: `{status, session_id, ai_response, turn}`
+- `GET /api/ai-tutor/session/{session_id}` (auth, ownership)
+  - Returns: `{status, session: {course_name, week_num, ...}, messages: [...]}`
+
+**Engine (`interactive_tutor.py`, 479 lines):**
+- `_ensure_tables()` — self-healing DDL
+- `_load_course_context(enrollment_id, week_num)` — loads lesson content
+  + curriculum outline from `charvak_course_lessons` + `charvak_enrollments`
+- `_build_system_context()` — injects lesson + outline into prompt
+- `_call_ai()` — uses `openai_compat.build_payload` (GPT-5 ready)
+- `start_tutoring_session()` — accepts enrollment_id + week_num, persists
+- `chat_with_tutor()` — loads history, calls AI with context, saves
+- `get_session_messages()` — UI resume
+- Backward compatible with existing `/api/tutor/*` routes
+
+**Tables:**
+- `charvak_tutor_sessions` (session_id, email, course_name,
+  enrollment_id, week_num, topic, user_level, turn_count, status)
+- `charvak_tutor_messages` (message_id, session_id, role, content)
+
+**Verified E2E:**
+- Session persists across uvicorn restart (turn_count continues 2 → 3)
+- Course context: "what week 1 covers" → 8-point response with real
+  topic names from `charvak_course_lessons`
+- Panel opens/closes cleanly (rect.x=561 open, rect.x=961 closed)
+
+**S67b bug fixes documented in KNOWN-ISSUES:** see "AI Tutor frontend
+nav overlap" entry for the elementFromPoint debugging pattern.
