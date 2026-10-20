@@ -1,12 +1,12 @@
 # CHARVAKIT.COM - MASTER REFERENCE
 ## Charvak IT Consulting Pvt Ltd
-### Last updated: October 20, 2026 (Sessions 63-64b - CAS Admin UI COMPLETE)
+### Last updated: October 20, 2026 (Sessions 65-69 - Wave 3 nearly complete)
 
-**HEAD:** 2cff7e2
+**HEAD:** 766fb6b
 **Live:** https://www.charvakit.com
 **Resume here:** see `SESSION-CONTEXT.md` and `TRACK-A-B-PLAN.md`
 **Backlog:** see `OUTSTANDING-WORK-INVENTORY.md` (master list of remaining work)
-**Version:** v3.5-session-64b-20261020
+**Version:** v3.6-session-69-20261020
 
 ### Reference Documents
 
@@ -22,10 +22,94 @@
 
 
 
+## SESSION 2026-10-20 - Sessions 65 + 67a + 69 (Wave 3)
+
+**Commits:** `2d1f1a4` (S65a), `336afbb` (S65b), `581a8f9` (S67a), `766fb6b` (S69)
+**HEAD:** 766fb6b
+
+### S65 - Interview Prep Conversational Mode
+
+The single biggest feature shipped today. Users can now choose between
+"Quick Practice" (static, 8 questions) and "Full Mock Interview"
+(conversational, adaptive, up to 12 turns) on `/interview-prep`.
+
+- Backend: `_generate_next_turn`, `start_conversational`, `submit_turn`,
+  `complete_conversational` methods (+335 lines)
+- Frontend: chat UI with turn indicator, transcript, per-turn scoring
+- AI reads answers, generates real follow-ups (verified: 3-turn Data
+  Scientist interview on L1/L2 regularization; AI's Turn 2 references
+  Turn 1's content)
+- Score display: avg-per-turn for conversational, partial-session indicator
+- Migration: 3 columns on `charvak_interview_sessions`
+
+### S67a - AI Tutor Persistent Backend
+
+Rewrites `interactive_tutor.py` from in-memory to DB-backed with real
+course context injection.
+
+- Before: `self.sessions = {}` dict (lost on reload)
+- After: `charvak_tutor_sessions` + `charvak_tutor_messages` tables
+- `_load_course_context()` injects current lesson content + curriculum
+  outline from `charvak_course_lessons` + `charvak_enrollments`
+- Migrated 4 OpenAI calls to `openai_compat.build_payload` (GPT-5 ready)
+- New routes: `POST /api/ai-tutor/ask`, `GET /api/ai-tutor/session/{id}`
+- Existing `/api/tutor/*` routes preserved (backward compatible)
+- **Verified persistence**: session survives uvicorn restart, turn_count
+  continues from 2 → 3 across restart
+
+### S69 - Career Assessment Certifications
+
+Standalone B2C-first certification. Tiered by score (Certified 70-89 /
+Expert 90-94 / Elite 95-100), pricing (free ≥85, 5 credits for 70-84).
+Distinct from readiness certificates (benchmarked) — this is earned expertise.
+
+- Migration: `charvak_career_certifications` (13 cols + 4 indexes)
+- 7 new engine methods: `issue_certification`, `get_certification`,
+  `verify_certification`, `list_certifications`, `_compute_tier`,
+  `_generate_cert_id`, `_compute_cert_hash`, `_mask_email`
+- 7 new routes: certify, get, verify, list, pdf, view page, dashboard
+- Templates: `career-certification.html` (~250 lines),
+  `my-certifications.html` (~200 lines)
+- CTA on `/ai-assessment` result page (score ≥ 70 shows "Get Certified")
+- PDF: full Career Assessment branding (via new `report_type` param on
+  `render_readiness_certificate_pdf`)
+- HMAC verification, idempotent issuance, privacy-safe email masking
+- **Verified E2E**: certify 91/100 → CCERT issued as Expert tier (free),
+  HMAC verify works, PDF downloads with correct branding + correct QR URL
+
+### Wave 3 Status: 2.5 / 3 complete
+
+| Feature | Status |
+|---|---|
+| A - Interview Prep AI depth | ✅ Complete (S65) |
+| B - AI Tutor backend | ✅ Complete (S67a) |
+| B - AI Tutor frontend | ⏳ S67b (~45 min) |
+| C - Career Certifications | ✅ Complete (S69) |
+
+### Bugs Fixed During Sessions 65-69 (7 real bugs, all with auto-revert gates)
+
+1. Python 3.11 f-string backslash restriction in `logger.info`
+2. PowerShell inline JS escaping breaks parsing (used here-string)
+3. `SECRET_KEY` import from `global_config` doesn't exist
+   (matches existing `_generate_certificate_hash` pattern:
+   `os.getenv("READINESS_HMAC_KEY") or os.getenv("SECRET_KEY")`)
+4. First fix attempt lost `sig = hmac.new(...)` line — auto-revert gate
+   only checks `ast.parse`, not runtime; **added runtime smoke test**
+5. PDF verify URL hardcoded `/api/readiness/verify/` → added
+   `verify_url_path` param to renderer
+6. PDF issued date showed "N/A" → renderer reads `created_at`
+7. PDF branding said "Role Readiness" → parameterized `report_type`
+
+**Process rule added:** When inserting code after a function docstring,
+count triple-quotes — you need the SECOND `"""` on its own line, not the
+first. First attempt put branding block inside the docstring where Python
+treats it as text.
+
+---
 ## SESSION 2026-10-20 - Sessions 63 + 64 + 64b (Track D Phase A 100%, CAS Admin UI complete)
 
 **Commits:** `bb0ecea` (S63), `ef5974f` (S64), `2cff7e2` (S64b)
-**HEAD:** 2cff7e2
+**HEAD:** 766fb6b
 
 ### Session 63 - Track D Phase A complete (bb0ecea)
 

@@ -1,5 +1,125 @@
 # Session Context - Charvak
 
+**HEAD:** 766fb6b
+**Live:** https://www.charvakit.com
+**Updated:** 2026-10-20 (Session 69 closed - Wave 3 at 2.5/3, only S67b remains)
+**Next up:** S67b (AI Tutor frontend) - last unblocked build
+
+---
+
+## 🎯 Only One Unblocked Build Remains
+
+**S67b — AI Tutor frontend chat panel** (~45 min)
+- Floating "💡 Ask Tutor" button on `my-course.html`
+- Slide-in chat panel reusing S65's chat CSS
+- localStorage to remember session per enrollment
+- Backend ready: `/api/ai-tutor/ask` + `/api/ai-tutor/session/{id}`
+
+## Then Close 3 Remaining Flags
+
+1. **Send Amrita reply to Prof. Raj** (5 min, unlocks Track C)
+2. **Rotate Render Postgres password** (5 min, last security flag)
+3. **Phase 3c env flip** (5 min, Nov 3 target, kills Jan 14 2027 risk)
+
+After these: **platform has zero unblocked work.**
+
+## Platform State — All at 100%
+
+| Area | Status |
+|---|---|
+| Wave 1 + Wave 2 | ✅ |
+| Track D Phase A | ✅ |
+| UI Modernization | ✅ |
+| Interview Prep conversational | ✅ `2d1f1a4` + `336afbb` |
+| AI Tutor backend | ✅ `581a8f9` |
+| Career Certifications | ✅ `766fb6b` |
+| GPT-4o-mini Phase 1-3b | ✅ |
+| Open bugs | ✅ Zero |
+
+---
+
+## Session 69 Closed (766fb6b)
+
+**Career Assessment Certifications shipped end-to-end.**
+
+### Live routes
+- `POST /api/career-assessment/certify` (auth)
+- `GET /api/career-certification/{cert_id}` (public)
+- `GET /api/career-certification/{cert_id}/pdf` (public)
+- `GET /api/career-certification/verify/{cert_hash}` (public)
+- `GET /api/career-certification/list/{email}` (auth)
+- `GET /career-certification/{cert_id}` (HTML)
+- `GET /my-certifications` (HTML dashboard)
+
+### What works
+- Score ≥ 85: free cert, auto-tiered (Certified/Expert/Elite)
+- Score 70-84: cert for 5 credits
+- HMAC-verified public URL
+- Privacy-safe (email masked)
+- Idempotent issuance
+- Full PDF branding as Career Assessment Certification
+- QR code scans to correct verify URL
+
+### The Amrita angle
+When Amrita signs, their students take assessments through their
+portal. Every score ≥ 85 auto-issues a cert. Their CDC dashboard
+shows certified students. **Zero rework** — the same code path
+serves B2C users today and institutional cohorts tomorrow.
+
+---
+
+## Session 67a Closed (581a8f9)
+
+**AI Tutor backend is now persistent + context-aware.**
+
+- Rewrote `interactive_tutor.py` from in-memory to DB-backed
+- New tables: `charvak_tutor_sessions` + `charvak_tutor_messages`
+- Loads current lesson content + curriculum outline for context
+- Migrated 4 OpenAI calls to `openai_compat` (GPT-5 ready)
+- **Verified persistence**: session survives uvicorn restart,
+  turn_count continues across restart (was 2, resumed as 3)
+
+S67b (frontend chat panel) is next.
+
+---
+
+## Session 65 Closed (2d1f1a4 + 336afbb)
+
+**Interview Prep conversational mode shipped.**
+
+- "Quick Practice" (static) vs "Full Mock Interview" (conversational)
+- AI reads answers, generates real follow-ups (verified: 3-turn Data
+  Scientist interview on L1/L2 regularization)
+- Turn-by-turn transcript with per-answer scoring
+- Partial-session indicator (e.g., "2 of 12 turns answered")
+- Avg-per-turn scoring for fair display
+- Static mode preserved (regression passes)
+
+---
+
+## Tomorrow's First Move
+
+1. **S67b** — AI Tutor frontend chat panel (~45 min)
+2. **Amrita email** (5 min, highest leverage)
+3. **Render password rotation** (5 min, last flag)
+4. **Phase 3c env flip** (5 min, Nov 3 target)
+
+After that: platform has zero unblocked work. Everything else is
+blocked on Amrita signing or employer demand.
+
+---
+
+**Today's commits:** 36 total
+- `766fb6b` S69 Career Certifications
+- `581a8f9` S67a AI Tutor backend
+- `336afbb` S65b Interview Prep frontend
+- `2d1f1a4` S65a Interview Prep backend
+- Plus 32 earlier commits (Wave 1, Wave 2, Track D, UI arc, GPT migration)
+
+---
+
+# Session Context - Charvak
+
 **HEAD:** 2cff7e2
 **Live:** https://www.charvakit.com
 **Updated:** 2026-10-20 (Sessions 63-64b closed - Track D Phase A + CAS Admin UI complete)
