@@ -8,13 +8,22 @@ Preserves all original function signatures — main.py unchanged.
 from fastapi import Request, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Any, Optional, List
 from datetime import datetime
 import hashlib
 import hmac
 import json
 import logging
 import os
+
+# Load .env early so API_KEY/API_SECRET resolve regardless of import order
+try:
+    from dotenv import load_dotenv
+    load_dotenv('.env.local', override=True)
+    load_dotenv()
+except Exception:
+    pass
+
 
 logger = logging.getLogger("charvakit.api_sync")
 
@@ -60,8 +69,16 @@ class ApplicationSync(BaseModel):
 
 class SkillGapSync(BaseModel):
     user_id: str
-    skill_gaps: List[dict]
+    skill_gaps: List[Any] = []
     recommended_courses: Optional[List[str]] = []
+    # Tolerant extras (added 2026-10-21 for DoketsRB integration)
+    doketsrb_id: Optional[str] = None
+    matched_skills: Optional[List[str]] = []
+    score: Optional[int] = None
+    source: str = 'doketsrb'
+
+    class Config:
+        extra = 'allow'
 
 
 class StatusRequest(BaseModel):
@@ -281,6 +298,18 @@ async def handle_skill_sync(data: SkillGapSync, request: Request):
     signature = request.headers.get("X-Signature", "")
     if signature:
         verify_signature(body, signature)
+
+    # Normalize skill_gaps: accept strings OR dicts, canonicalize to dicts (added 2026-10-21)
+    if data.skill_gaps:
+        normalized = []
+        for g in data.skill_gaps:
+            if isinstance(g, dict):
+                normalized.append(g)
+            elif isinstance(g, str):
+                normalized.append({'topic': g})
+            else:
+                normalized.append({'topic': str(g)})
+        data.skill_gaps = normalized
 
     try:
         from database import db
