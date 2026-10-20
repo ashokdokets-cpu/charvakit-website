@@ -1023,3 +1023,56 @@ because no UI existed to make cohorts public.
 - D) Docs sync + retrospective (~30 min)
 
 <!-- END SESSION-49-49.5 -->
+
+## DoketsRB Bidirectional Sync (Session 72, 2026-10-21) - COMPLETE
+
+All 4 sync directions operational on prod. Do not re-flag.
+
+### Charvak endpoints (DoketsRB calls)
+
+- POST /api/sync/resume - push user profile
+- POST /api/sync/application - push application event
+- POST /api/sync/skills - push skill gaps (List[str] or List[dict])
+- GET /api/sync/jobs - pull Charvak job listings
+- GET /api/sync/status/{user_id} - sync status
+- GET /api/sync/health - health check
+
+### Charvak calls DoketsRB (pull)
+
+- POST /api/sync/pull/{user_id} - user-triggered pull
+
+### Auth
+
+X-API-Key + X-Signature (HMAC-SHA256, hex, body bytes).
+
+Two SEPARATE secrets:
+- SYNC_API_KEY (43 chars) - identifier, sent in X-API-Key header
+- SYNC_API_SECRET (64 chars) - HMAC signing key, NEVER sent as header
+
+### Tables
+
+- charvak_synced_users
+- charvak_synced_applications
+- charvak_skill_gaps
+- charvak_ats_sync_log
+
+### DoketsRB endpoints relied on
+
+- GET https://www.doketsrb.com/api/public?action=profile&user_id=X
+- GET https://www.doketsrb.com/api/public?action=applications&user_id=X
+
+### Docs
+
+Full spec: docs/doketsrb-integration.md
+
+### Verified E2E
+
+Test user bb864eb3-3232-4b09-926a-ce7baaadc93f, all 4 directions 200.
+
+### Deferred (non-blocking)
+
+Sync Now button on /career-center - backend API complete, frontend button
+reverted this session. Rebuild with /api/sync/user-info endpoint +
+signed-pull-for-browser route when needed (~1 hr).
+
+---

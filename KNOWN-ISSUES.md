@@ -949,3 +949,58 @@ Fix: reduced panel z-index 9999 to 1050.
 For invisible buttons: run document.elementFromPoint(x, y) at button
 center. If it returns a different element, that is the true blocker.
 For this bug, it returned the currency SELECT element.
+
+### RESOLVED - /api/sync/skills returns 422 with List[str] payload (2026-10-21, bcccee1)
+
+DoketsRB was sending skill_gaps as ["Python","AWS"] but SkillGapSync
+required List[dict]. Every call returned 422 with 2 validation errors.
+
+Fix: skill_gaps -> List[Any]. Handler normalizes strings to
+{topic: str} before INSERT. Also added tolerant extras.
+
+Verified: original DoketsRB payload returns 200, gaps_count=2.
+
+---
+
+### RESOLVED - Early .env load in api_sync.py (2026-10-21, bcccee1)
+
+api_sync.py was imported by main.py (line 31) before database.py
+(line 37) loaded .env. API_KEY and API_SECRET evaluated as empty
+strings at import time. All auth failed on local uvicorn --reload.
+
+Fix: Added load_dotenv() directly in api_sync.py right after import os.
+Module now self-sufficient regardless of import order.
+
+Verified: no startup warning. All tests return 200 locally.
+
+---
+
+### RESOLVED - /api/sync/pull route missing (2026-10-21, 7fa6f89)
+
+DoketsRB built their pull endpoints in Session 72. Charvak had no
+route to call them.
+
+Fix: New handle_pull(user_id, request) + POST /api/sync/pull/{user_id}.
+Idempotent via ON CONFLICT DO UPDATE.
+
+Verified: HTTP 200 on prod with bb864eb3,
+{profile_synced:true, applications_synced:1, errors:[]}.
+
+---
+
+### FLAGGED - Sync Now button on /career-center (2026-10-21)
+
+Button was inserted into career-v2.html but reverted because it
+called two missing endpoints:
+- /api/sync/user-info?email=X (never built)
+- /api/sync/pull/{user_id} (exists but requires HMAC; browser cannot
+  compute HMAC without exposing SYNC_API_SECRET)
+
+To build properly:
+1. Add /api/sync/user-info?email=X endpoint (10 lines)
+2. Add signed-pull-for-browser route (Bearer auth, skip HMAC, 15 lines)
+3. Insert button + JS in career-v2.html (30 lines)
+
+Total: ~1 hr. Defer until user demand.
+
+Verdict: FLAGGED - non-blocking, backend API is complete.

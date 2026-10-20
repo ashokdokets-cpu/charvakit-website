@@ -572,3 +572,23 @@ All four Wave 1 layers are live on prod as of commit 1399073.
 - Amrita CDC reply to Prof. Raj (draft exists)
 
 <!-- END SESSION-49 -->
+
+## Session 72 CLOSURE - DoketsRB Bidirectional Sync (2026-10-21)
+
+Status: COMPLETE. All 4 sync directions operational on prod.
+
+### Closed
+
+- DoketsRB-side coordination: RESOLVED (team wired their push + pull endpoints)
+- Charvak-side pull route: SHIPPED (7fa6f89)
+- /api/sync/skills 422 shape mismatch: FIXED (bcccee1)
+
+### New follow-ups (non-blocking, ~1 hr total)
+
+- /api/sync/user-info?email=X endpoint (~10 lines)
+- Signed-pull-for-browser route (~15 lines, Bearer auth + skip HMAC)
+- Sync Now button on /career-center (~30 lines JS, reverted this session)
+
+### Still-open DoketsRB items
+
+None. Integration is done.
