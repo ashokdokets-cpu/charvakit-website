@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block title %}My Certifications - Charvak{% endblock %}
+{% block content %}
+<div class="as-hero">
+    <div class="container py-5 text-center text-white">
+        <h1 class="display-5 fw-bold mb-2">My Certifications</h1>
+        <p class="lead mb-0">Your earned Career Assessment credentials</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div id="loading" class="text-center py-5">
+        <div class="spinner-border text-primary"></div>
+        <p class="mt-3 text-muted">Loading certifications...</p>
+    </div>
+
+    <div id="emptyState" class="text-center py-5" style="display:none;">
+        <div style="font-size: 4rem;" class="mb-3">🎯</div>
+        <h2 class="as-h3 mb-2">No certifications yet</h2>
+        <p class="text-muted mb-4">Take a Career Assessment and score 70+ to earn your first certification.</p>
+        <a href="/ai-assessment" class="btn btn-primary btn-lg">Take an Assessment</a>
+    </div>
+
+    <div id="certsArea" style="display:none;">
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <h2 class="as-h3 mb-1" id="certsCount">0 certifications</h2>
+                        <p class="text-muted mb-0">Verified credentials you've earned</p>
+                    </div>
+                    <div>
+                        <select class="form-select form-select-sm" id="filterTier" onchange="filterCerts()">
+                            <option value="all">All tiers</option>
+                            <option value="elite">Elite</option>
+                            <option value="expert">Expert</option>
+                            <option value="certified">Certified</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4" id="certsGrid"></div>
+    </div>
+</div>
+
+<script>
+const email = (localStorage.getItem('userEmail') || '').toLowerCase();
+const token = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+let allCerts = [];
+
+function tierColor(tier) {
+    if (tier === 'elite') return {bg: '#a78bfa', text: 'white', icon: '💎'};
+    if (tier === 'expert') return {bg: '#f59e0b', text: 'white', icon: '🥇'};
+    return {bg: '#3b82f6', text: 'white', icon: '🏆'};
+}
+
+async function loadCerts() {
+    if (!email || !token) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('emptyState').style.display = 'block';
+        document.getElementById('emptyState').querySelector('h2').textContent = 'Login required';
+        return;
+    }
+
+    try {
+        const r = await fetch('/api/career-certification/list/' + encodeURIComponent(email), {
+            headers: {'Authorization': 'Bearer ' + token}
+        });
+        const d = await r.json();
+
+        if (d.status !== 'success' || !d.certifications || d.certifications.length === 0) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('emptyState').style.display = 'block';
+            return;
+        }
+
+        allCerts = d.certifications;
+        renderCerts();
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('certsArea').style.display = 'block';
+    } catch (e) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('emptyState').style.display = 'block';
+        console.error(e);
+    }
+}
+
+function renderCerts() {
+    const tierFilter = document.getElementById('filterTier').value;
+    const filtered = tierFilter === 'all'
+        ? allCerts
+        : allCerts.filter(c => c.badge_tier === tierFilter);
+
+    document.getElementById('certsCount').textContent = filtered.length + ' certification' + (filtered.length === 1 ? '' : 's');
+
+    const grid = document.getElementById('certsGrid');
+    if (filtered.length === 0) {
+        grid.innerHTML = '<div class="col-12 text-center text-muted py-4">No certifications match this filter.</div>';
+        return;
+    }
+
+    grid.innerHTML = filtered.map(cert => {
+        const tier = tierColor(cert.badge_tier);
+        const issued = cert.issued_at ? new Date(cert.issued_at).toLocaleDateString('en-US', {year: 'numeric', month: 'short', day: 'numeric'}) : '—';
+        return `
+            <div class="col-md-6 col-lg-4">
+                <div class="card border-0 shadow-sm h-100" style="border-top: 4px solid ${tier.bg} !important;">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <span style="font-size: 2.5rem;">${tier.icon}</span>
+                            <span class="badge" style="background: ${tier.bg}; color: ${tier.text};">${escapeHtml(cert.badge_label || 'Certified')}</span>
+                        </div>
+                        <h3 class="as-h5 mb-1">${escapeHtml(cert.role)}</h3>
+                        <p class="text-muted small mb-3">${escapeHtml((cert.level || '').toUpperCase())} · ${escapeHtml(cert.industry || '')}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fs-3 fw-bold text-success">${cert.score}<span class="fs-6 text-muted">/100</span></div>
+                                <p class="text-muted small mb-0">Issued ${issued}</p>
+                            </div>
+                        </div>
+                        <hr class="my-3">
+                        <div class="d-grid gap-2">
+                            <a href="/career-certification/${encodeURIComponent(cert.cert_id)}" class="btn btn-sm btn-primary">View Certificate</a>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="copyVerifyLink('${cert.certification_hash}', this)">Copy Verify Link</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function filterCerts() {
+    renderCerts();
+}
+
+function copyVerifyLink(hash, btn) {
+    const url = window.location.origin + '/api/career-certification/verify/' + hash;
+    navigator.clipboard.writeText(url).then(() => {
+        const orig = btn.textContent;
+        btn.textContent = '✓ Copied';
+        setTimeout(() => btn.textContent = orig, 1500);
+    });
+}
+
+function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+loadCerts();
+</script>
+{% endblock %}

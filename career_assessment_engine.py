@@ -2246,6 +2246,303 @@ class CareerAssessmentEngine:
         return {"status": "success", "assessment_id": assessment_id,
                 "question_index": q_index, "recorded": True}
 
+    # ============================================================
+    # Session 69: Career Assessment Certifications
+    # ============================================================
+
+    def _compute_tier(self, score: int) -> Dict:
+        """Compute badge tier from score."""
+        if score >= 95:
+            return {"key": "elite", "label": "Elite", "color": "#a78bfa", "credits": 0}
+        if score >= 90:
+            return {"key": "expert", "label": "Expert", "color": "#f59e0b", "credits": 0}
+        if score >= 85:
+            return {"key": "certified", "label": "Certified", "color": "#3b82f6", "credits": 0}
+        if score >= 70:
+            return {"key": "certified", "label": "Certified", "color": "#3b82f6", "credits": 5}
+        return None
+
+    def _generate_cert_id(self) -> str:
+        """Generate a unique certification ID."""
+        import secrets
+        return f"CCERT-{secrets.token_hex(6).upper()}"
+
+    def _compute_cert_hash(self, cert_id: str, email: str, assessment_id: str, score: int) -> str:
+        """HMAC-SHA256 hash for public verification. Truncated to 32 chars."""
+        import hmac
+        import hashlib
+        import os
+        payload = f"{cert_id}|{email}|{assessment_id}|{score}"
+        key = (
+            os.getenv("READINESS_HMAC_KEY")
+            or os.getenv("SECRET_KEY")
+            or "dev-only-not-secret"
+        )
+        sig = hmac.new(key.encode(), payload.encode(), hashlib.sha256).hexdigest()
+        return sig[:32]
+
+    def issue_certification(self, data: Dict) -> Dict:
+        """Issue a Career Assessment certification. Idempotent per assessment_id."""
+        email = (data.get("email") or "").strip().lower()
+        assessment_id = data.get("assessment_id")
+        if not email or not assessment_id:
+            return {"status": "error", "message": "email and assessment_id required"}
+
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+
+            # Check if cert already exists (idempotent)
+            cur.execute("""
+                SELECT cert_id, badge_tier, certification_hash, score, credits_charged, issued_at
+                FROM charvak_career_certifications
+                WHERE assessment_id = %s AND revoked_at IS NULL
+            """, (assessment_id,))
+            existing = cur.fetchone()
+            if existing:
+                cur.close()
+                conn.close()
+                return {
+                    "status": "success",
+                    "cert_id": existing[0],
+                    "badge_tier": existing[1],
+                    "certification_hash": existing[2],
+                    "score": existing[3],
+                    "credits_charged": existing[4],
+                    "issued_at": existing[5].isoformat() if existing[5] else None,
+                    "already_existed": True,
+                    "cert_url": f"/career-certification/{existing[0]}",
+                    "verify_url": f"/api/career-certification/verify/{existing[2]}",
+                }
+
+            # Load the assessment
+            cur.execute("""
+                SELECT email, role, industry, level, score, passed, status, integrity_summary
+                FROM charvak_career_assessments
+                WHERE assessment_id = %s
+            """, (assessment_id,))
+            a_row = cur.fetchone()
+            if not a_row:
+                cur.close()
+                conn.close()
+                return {"status": "error", "message": "Assessment not found"}
+
+            a_email, role, industry, level, score, passed, status, integrity = a_row
+
+            if a_email.lower() != email:
+                cur.close()
+                conn.close()
+                return {"status": "error", "message": "Not your assessment"}
+
+            if status != "completed":
+                cur.close()
+                conn.close()
+                return {"status": "error", "message": "Assessment not completed"}
+
+            if score < 70:
+                cur.close()
+                conn.close()
+                return {"status": "error", "message": f"Score {score} is below the 70 minimum for certification", "score": score}
+
+            tier = self._compute_tier(score)
+            if not tier:
+                cur.close()
+                conn.close()
+                return {"status": "error", "message": "Score does not qualify for certification"}
+
+            # Deduct credits if needed (paid tier for 70-84)
+            credits_needed = tier["credits"]
+            if credits_needed > 0:
+                try:
+                    from ai_credit_engine import ai_credit_engine
+                    credit_result = ai_credit_engine.check_and_deduct(email, "career_certification")
+                    if credit_result.get("status") != "success":
+                        cur.close()
+                        conn.close()
+                        return {"status": "error", "message": credit_result.get("message", "Insufficient credits"), "credits_needed": credits_needed}
+                except Exception as e:
+                    cur.close()
+                    conn.close()
+                    logger.error(f"Certification credit deduction failed: {e}")
+                    return {"status": "error", "message": "Credit system error"}
+
+            # Generate cert
+            cert_id = self._generate_cert_id()
+            cert_hash = self._compute_cert_hash(cert_id, email, assessment_id, score)
+
+            # Integrity summary from assessment (already stored as JSONB)
+            import json as _json
+            integrity_json = _json.dumps(integrity) if integrity else "{}"
+
+            cur.execute("""
+                INSERT INTO charvak_career_certifications
+                    (cert_id, email, assessment_id, role, industry, level, score,
+                     badge_tier, certification_hash, credits_charged, integrity_summary)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb)
+            """, (cert_id, email, assessment_id, role, industry, level, score,
+                  tier["key"], cert_hash, credits_needed, integrity_json))
+
+            conn.commit()
+            cur.close()
+            conn.close()
+
+            tier_key = tier["key"]
+            logger.info(f"Career cert issued: {cert_id} for {email} ({role}, {level}, score={score}, tier={tier_key})")
+
+            return {
+                "status": "success",
+                "cert_id": cert_id,
+                "badge_tier": tier["key"],
+                "badge_label": tier["label"],
+                "badge_color": tier["color"],
+                "certification_hash": cert_hash,
+                "score": score,
+                "credits_charged": credits_needed,
+                "cert_url": f"/career-certification/{cert_id}",
+                "verify_url": f"/api/career-certification/verify/{cert_hash}",
+            }
+        except Exception as e:
+            logger.error(f"issue_certification failed: {e}")
+            return {"status": "error", "message": str(e)}
+
+    def get_certification(self, cert_id: str) -> Dict:
+        """Load a certification by ID (public read)."""
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT cert_id, email, assessment_id, role, industry, level,
+                       score, badge_tier, certification_hash, credits_charged,
+                       integrity_summary, issued_at, revoked_at
+                FROM charvak_career_certifications
+                WHERE cert_id = %s
+            """, (cert_id,))
+            row = cur.fetchone()
+            cur.close()
+            conn.close()
+            if not row:
+                return {"status": "error", "message": "Certification not found"}
+
+            tier = self._compute_tier(row[6])
+            tier_label = tier["label"] if tier else row[7].title()
+            tier_color = tier["color"] if tier else "#6b7280"
+
+            return {
+                "status": "success",
+                "certification": {
+                    "cert_id": row[0],
+                    "email_masked": self._mask_email(row[1]),
+                    "assessment_id": row[2],
+                    "role": row[3],
+                    "industry": row[4],
+                    "level": row[5],
+                    "score": row[6],
+                    "badge_tier": row[7],
+                    "badge_label": tier_label,
+                    "badge_color": tier_color,
+                    "certification_hash": row[8],
+                    "integrity_summary": row[10] or {},
+                    "issued_at": row[11].isoformat() if row[11] else None,
+                    "revoked_at": row[12].isoformat() if row[12] else None,
+                    "is_valid": row[12] is None,
+                },
+            }
+        except Exception as e:
+            logger.error(f"get_certification failed: {e}")
+            return {"status": "error", "message": str(e)}
+
+    def verify_certification(self, cert_hash: str) -> Dict:
+        """Verify a certification by its HMAC hash (public)."""
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT cert_id, email, role, industry, level, score,
+                       badge_tier, issued_at, revoked_at
+                FROM charvak_career_certifications
+                WHERE certification_hash = %s
+            """, (cert_hash,))
+            row = cur.fetchone()
+            cur.close()
+            conn.close()
+            if not row:
+                return {"valid": False, "message": "Certificate not found"}
+
+            if row[8] is not None:
+                return {"valid": False, "message": "Certificate has been revoked"}
+
+            tier = self._compute_tier(row[5])
+            tier_label = tier["label"] if tier else row[6].title()
+
+            return {
+                "valid": True,
+                "cert_id": row[0],
+                "candidate_display": self._mask_email(row[1]),
+                "role": row[2],
+                "industry": row[3],
+                "level": row[4],
+                "score": row[5],
+                "badge_tier": row[6],
+                "badge_label": tier_label,
+                "issued_at": row[7].isoformat() if row[7] else None,
+            }
+        except Exception as e:
+            logger.error(f"verify_certification failed: {e}")
+            return {"valid": False, "message": str(e)}
+
+    def list_certifications(self, email: str) -> Dict:
+        """List all certifications for a user."""
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT cert_id, role, industry, level, score, badge_tier,
+                       certification_hash, issued_at
+                FROM charvak_career_certifications
+                WHERE email = %s AND revoked_at IS NULL
+                ORDER BY issued_at DESC
+            """, (email.lower(),))
+            rows = cur.fetchall()
+            cur.close()
+            conn.close()
+
+            certs = []
+            for r in rows:
+                tier = self._compute_tier(r[4])
+                tier_label = tier["label"] if tier else r[5].title()
+                certs.append({
+                    "cert_id": r[0],
+                    "role": r[1],
+                    "industry": r[2],
+                    "level": r[3],
+                    "score": r[4],
+                    "badge_tier": r[5],
+                    "badge_label": tier_label,
+                    "certification_hash": r[6],
+                    "issued_at": r[7].isoformat() if r[7] else None,
+                    "cert_url": f"/career-certification/{r[0]}",
+                    "verify_url": f"/api/career-certification/verify/{r[6]}",
+                })
+
+            return {"status": "success", "certifications": certs, "count": len(certs)}
+        except Exception as e:
+            logger.error(f"list_certifications failed: {e}")
+            return {"status": "error", "message": str(e)}
+
+    def _mask_email(self, email: str) -> str:
+        """Mask an email for public display."""
+        if not email or "@" not in email:
+            return "Anonymous"
+        local, domain = email.split("@", 1)
+        if len(local) <= 2:
+            return local[:1] + "***@" + domain
+        return local[0] + "***" + local[-1] + "@" + domain
+
+
     def complete_assessment(self, data: Dict) -> Dict:
         """
         Score the assessment and persist to charvak_assessment_results.

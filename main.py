@@ -10699,6 +10699,147 @@ async def api_readiness_generate(request: Request):
     return result
 
 
+
+
+# Session 69: Career Assessment Certifications
+@app.post("/api/career-assessment/certify")
+@limiter.limit("10/minute")
+async def api_career_certify(request: Request):
+    """Issue a Career Assessment certification for a completed assessment."""
+    try:
+        data = await request.json()
+    except Exception:
+        return {"status": "error", "message": "Invalid JSON body"}
+
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        raise HTTPException(status_code=401, detail="email required")
+
+    try:
+        require_auth_for_email(request, email)
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "career certify auth")
+
+    try:
+        from career_assessment_engine import career_assessment_engine
+        result = career_assessment_engine.issue_certification({
+            "email": email,
+            "assessment_id": data.get("assessment_id"),
+        })
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "career certify")
+
+
+@app.get("/api/career-certification/{cert_id}")
+async def api_career_cert_get(cert_id: str):
+    """Get a certification by ID (public read)."""
+    try:
+        from career_assessment_engine import career_assessment_engine
+        return career_assessment_engine.get_certification(cert_id)
+    except Exception as e:
+        return handle_error(e, "career cert get")
+
+
+
+@app.get("/api/career-certification/{cert_id}/pdf")
+async def api_career_cert_pdf(cert_id: str):
+    """Download a career certification as PDF (adapted from readiness certificate)."""
+    try:
+        from career_assessment_engine import career_assessment_engine
+        cert_result = career_assessment_engine.get_certification(cert_id)
+        if cert_result.get("status") != "success":
+            return JSONResponse(status_code=404, content={"status": "error", "message": "Certification not found"})
+
+        cert_data = cert_result["certification"]
+        if cert_data.get("revoked_at"):
+            return JSONResponse(status_code=410, content={"status": "error", "message": "Certification revoked"})
+
+        from pdf_engine import render_readiness_certificate_pdf
+        from fastapi.responses import Response as FastAPIResponse
+
+        badge_label = cert_data.get("badge_label", "Certified")
+        display = cert_data.get("email_masked", "Anonymous").replace("***", "")
+
+        pdf_cert = {
+            "certificate_id": cert_data.get("cert_id"),
+            "certificate_hash": cert_data.get("certification_hash"),
+            "role": cert_data.get("role"),
+            "level": cert_data.get("level"),
+            "readiness_score": cert_data.get("score"),
+            "display_name": display,
+            "verdict": badge_label + " — Career Assessment",
+            "issued": (cert_data.get("issued_at") or "")[:10],  # YYYY-MM-DD
+            "verify_url_path": "/api/career-certification/verify/",
+            "issued_at": cert_data.get("issued_at"),
+            "created_at": cert_data.get("issued_at"),  # renderer looks for this
+        }
+
+        try:
+            pdf_bytes = render_readiness_certificate_pdf(pdf_cert, report_type="career_certification")
+        except Exception as pdf_err:
+            import logging
+            logging.getLogger("charvakit").error(f"Career cert PDF render failed: {pdf_err}")
+            return JSONResponse(status_code=500, content={"status": "error", "message": f"PDF generation failed: {str(pdf_err)}"})
+
+        filename = "charvak-cert-" + cert_id + ".pdf"
+        return FastAPIResponse(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={"Content-Disposition": 'attachment; filename="' + filename + '"'},
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "career cert pdf")
+
+@app.get("/api/career-certification/verify/{cert_hash}")
+async def api_career_cert_verify(cert_hash: str):
+    """Verify a certification by HMAC hash (public)."""
+    try:
+        from career_assessment_engine import career_assessment_engine
+        return career_assessment_engine.verify_certification(cert_hash)
+    except Exception as e:
+        return handle_error(e, "career cert verify")
+
+
+@app.get("/api/career-certification/list/{email}")
+async def api_career_cert_list(request: Request, email: str):
+    """List all certifications for a user (auth-gated)."""
+    try:
+        email = email.strip().lower()
+        require_auth_for_email(request, email)
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "career cert list auth")
+
+    try:
+        from career_assessment_engine import career_assessment_engine
+        return career_assessment_engine.list_certifications(email)
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "career cert list")
+
+
+# Session 69: Career Certification page + dashboard
+@app.get("/career-certification/{cert_id}", response_class=HTMLResponse)
+async def career_certification_page(cert_id: str, request: Request):
+    """Public career certification view page."""
+    return template_response("career-certification.html", request, "Career Certification - Charvak")
+
+
+@app.get("/my-certifications", response_class=HTMLResponse)
+async def my_certifications_page(request: Request):
+    """User career certifications dashboard."""
+    return template_response("my-certifications.html", request, "My Certifications - Charvak")
+
+
 @app.get("/api/readiness/verify/{certificate_hash}")
 @limiter.limit("60/minute")
 async def api_readiness_verify(request: Request, certificate_hash: str):
