@@ -530,14 +530,25 @@ class UpdateInvoiceRequest(BaseModel):
 # ============================================================
 
 def require_auth(request: Request) -> Dict:
-    """Authenticate user from Bearer token. Raises 401 if invalid."""
-    token = request.headers.get("Authorization", "").replace("Bearer ", "")
-    if not token:
-        raise HTTPException(status_code=401, detail="Authorization header required")
-    user = get_current_user(token)
-    if not user:
-        raise HTTPException(status_code=401, detail="Invalid or expired token")
-    return user
+    """Authenticate user from Bearer token OR cookie. Raises 401 if invalid."""
+    # 1. Try Bearer token from Authorization header first
+    token = request.headers.get("Authorization", "").replace("Bearer ", "").strip()
+    if token:
+        user = get_current_user(token)
+        if user:
+            return user
+
+    # 2. Fall back to charvak_admin_token cookie (admin/cookie-based login)
+    cookie_token = request.cookies.get("charvak_admin_token") or request.cookies.get("auth_token")
+    if cookie_token:
+        user = get_current_user(cookie_token)
+        if user:
+            return user
+
+    # 3. Nothing authenticated — reject with clear message
+    if not token and not cookie_token:
+        raise HTTPException(status_code=401, detail="Authorization required (Bearer token or session cookie)")
+    raise HTTPException(status_code=401, detail="Invalid or expired credentials")
 
 
 def require_auth_for_email(request: Request, email: str) -> Dict:
