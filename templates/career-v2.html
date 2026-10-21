@@ -450,6 +450,7 @@ window.doketsrbSyncNow = async function() {
             headers: infoHeaders,
             credentials: "include"
         });
+        var info = await infoResp.json();
         if (info.status === "not_linked") {
             alert("No DoketsRB account linked to " + email + ".\n\nIf you have a DoketsRB account with a DIFFERENT email:\n1. Update DoketsRB to use " + email + ", OR\n2. Contact support to link the accounts manually.\n\nOtherwise visit doketsrb.com to create one with this email.");
             btn.innerHTML = origText;
@@ -467,6 +468,7 @@ window.doketsrbSyncNow = async function() {
             headers: pullHeaders,
             credentials: "include"
         });
+        var pull = await pullResp.json();
         if (pull.status === "success" || pull.status === "partial") {
             btn.innerHTML = "&#x2713; Synced";
             if (window.doketsrbSyncLoad) {
