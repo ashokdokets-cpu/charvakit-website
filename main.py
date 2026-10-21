@@ -2782,13 +2782,16 @@ async def api_resume_roast_teaser(request: Request):
     Free-tier teaser. No auth, no credits.
     Rate-limited 3/hour per real client IP (Cloudflare-aware).
 
-    Body: {resume: str, job_title?: str}
+    Body: {resume: str, job_title?: str, intensity?: "clean"|"mild"|"savage"}
     Returns: {status, teaser: {score, headline, one_issue}, share_id, share_url}
     """
     try:
         data = await request.json()
         resume = (data.get("resume") or "").strip()
         job_title = (data.get("job_title") or "").strip()
+        intensity = (data.get("intensity") or "mild").strip().lower()
+        if intensity not in ("clean", "mild", "savage"):
+            intensity = "mild"
 
         if not resume:
             return JSONResponse(status_code=400, content={"status": "error", "message": "Resume text required"})
@@ -2820,7 +2823,7 @@ async def api_resume_roast_teaser(request: Request):
 
         # Generate the teaser
         from tools_ai_backend import resume_teaser_ai
-        teaser = await resume_teaser_ai(resume, job_title)
+        teaser = await resume_teaser_ai(resume, job_title, intensity)
 
         # Persist
         teaser_id = f"RT-{_secrets.token_hex(8).upper()}"
@@ -2831,11 +2834,11 @@ async def api_resume_roast_teaser(request: Request):
             cur = conn.cursor()
             cur.execute("""
                 INSERT INTO charvak_resume_teasers
-                  (teaser_id, share_id, ip_hash, resume_preview, job_title, score, one_issue, teaser_json)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                  (teaser_id, share_id, ip_hash, resume_preview, job_title, score, one_issue, teaser_json, intensity)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (teaser_id, share_id, ip_hash, resume[:500], job_title,
                   int(teaser.get("score", 0)), teaser.get("one_issue", ""),
-                  _json.dumps(teaser)))
+                  _json.dumps(teaser), intensity))
             conn.commit()
             cur.close(); conn.close()
         except Exception as e:

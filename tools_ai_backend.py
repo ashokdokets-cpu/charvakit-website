@@ -59,17 +59,31 @@ async def resume_roast_ai(resume_text: str, job_title: str) -> Dict:
         except: pass
     return {"match_score": 65, "roast": "Your resume is a buzzword bingo card.", "buzzwords": ["synergy", "team player"], "missing_skills": ["Add metrics"], "ats_tips": "Add numbers and keywords."}
 
-async def resume_teaser_ai(resume_text: str, job_title: str = "") -> Dict:
+async def resume_teaser_ai(resume_text: str, job_title: str = "", intensity: str = "mild") -> Dict:
     """
     Session 45-A4: Free-tier resume teaser.
+    Session 72+: Added intensity levels (clean/mild/savage).
 
     Returns a one-line score + ONE most-critical issue. Cheap call.
     The user then unlocks the full resume_roast_ai() for Rs 99.
 
-    Response: {score, one_issue, headline}
+    Response: {score, one_issue, headline, intensity}
     """
+    intensity = (intensity or "mild").strip().lower()
+    if intensity not in ("clean", "mild", "savage"):
+        intensity = "mild"
+
+    tone_map = {
+        "clean": "Constructive tough-love. Honest about flaws but professional and encouraging. No sarcasm, no humor. Like a senior mentor.",
+        "mild": "Playful roast. Point out flaws with light humor and friendly sarcasm. Like a friend teasing you at a coffee shop.",
+        "savage": "Full brutal roast. Cutting, funny, merciless. Think Gordon Ramsay reviewing a souffle. Fun but honest.",
+    }
+    tone = tone_map[intensity]
+
     jt = (job_title or "").strip() or "a general role"
-    prompt = f"""You are a resume critic. Analyze this resume for {jt}.
+    prompt = f"""You are a resume critic with a {intensity.upper()} tone: {tone}
+
+Analyze this resume for {jt}.
 
 Resume:
 {resume_text[:1500]}
@@ -77,7 +91,7 @@ Resume:
 Return ONLY valid JSON with these EXACT keys:
 {{
   "score": (integer 0-100, honest ATS match),
-  "headline": "(one punchy sentence, max 90 chars, summarizing the verdict)",
+  "headline": "(one punchy sentence, max 90 chars, matching the {intensity} tone)",
   "one_issue": "(the single most impactful issue the candidate must fix first, max 180 chars, actionable)"
 }}"""
 
@@ -85,20 +99,21 @@ Return ONLY valid JSON with these EXACT keys:
     if result:
         try:
             parsed = json.loads(result)
-            # Normalize + guard
             return {
                 "score": int(parsed.get("score", 60)),
                 "headline": (parsed.get("headline") or "Needs work.")[:200],
                 "one_issue": (parsed.get("one_issue") or "Add measurable achievements.")[:300],
+                "intensity": intensity,
             }
         except Exception:
             pass
-    # Fallback
     return {
         "score": 62,
         "headline": "Your resume has solid bones but a weak first impression.",
         "one_issue": "Your summary wastes 2 sentences on buzzwords. Replace with one measurable achievement.",
+        "intensity": intensity,
     }
+
 async def ghost_bounty_ai(challenge_type: str) -> Dict:
     """GhostBounty AI - Generate real challenge questions"""
     prompt = f"""Generate a 60-second assessment challenge for {challenge_type}.

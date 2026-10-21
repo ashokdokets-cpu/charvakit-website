@@ -66,6 +66,30 @@
 
   .rr-hidden { display: none !important; }
   .rr-error { padding: 16px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; color: #991b1b; font-size: 14px; }
+
+  .rr-intensity { margin-top: 20px; padding: 16px; background: #f8fafc; border-radius: 12px; border: 1px solid #e5e7eb; }
+  .rr-intensity-label { font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+  .rr-intensity-btns { display: flex; gap: 8px; }
+  .rr-intensity-btn {
+    flex: 1;
+    padding: 10px 12px;
+    border: 2px solid #e5e7eb;
+    background: #fff;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.15s;
+    color: #334155;
+  }
+  .rr-intensity-btn:hover { border-color: #0a8a75; background: #f0fdfa; }
+  .rr-intensity-btn.active {
+    border-color: #0a8a75;
+    background: #e6f7f4;
+    color: #0a8a75;
+    font-weight: 700;
+  }
+  .rr-intensity-desc { font-size: 12px; color: #64748b; margin-top: 8px; text-align: center; min-height: 16px; }
 </style>
 
 <div class="rr-wrap">
@@ -82,6 +106,17 @@
 
     <label class="rr-label" for="rrResume">Paste your resume</label>
     <textarea id="rrResume" class="rr-input rr-textarea" placeholder="Paste your resume text here..." maxlength="10000"></textarea>
+
+    <!-- INTENSITY SELECTOR -->
+    <div class="rr-intensity">
+      <div class="rr-intensity-label">🎚️ Roast Intensity</div>
+      <div class="rr-intensity-btns">
+        <button type="button" class="rr-intensity-btn" data-intensity="clean" onclick="rrSetIntensity('clean')">😇 Clean</button>
+        <button type="button" class="rr-intensity-btn active" data-intensity="mild" onclick="rrSetIntensity('mild')">😏 Mild</button>
+        <button type="button" class="rr-intensity-btn" data-intensity="savage" onclick="rrSetIntensity('savage')">💀 Savage</button>
+      </div>
+      <div class="rr-intensity-desc" id="rrIntensityDesc">Friend-level roast. Mild heat.</div>
+    </div>
 
     <div style="margin-top:20px; text-align:right;">
       <button id="rrSubmit" class="rr-btn rr-btn-primary" onclick="rrSubmit()">
@@ -149,10 +184,25 @@
   let currentShareId = null;
   let currentShareUrl = null;
   let pendingOrder = null;
+  let currentIntensity = "mild";
 
   function show(id) { document.getElementById(id).classList.remove("rr-hidden"); }
   function hide(id) { document.getElementById(id).classList.add("rr-hidden"); }
   function esc(s) { return (s || "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c])); }
+
+  window.rrSetIntensity = function(level) {
+    currentIntensity = level;
+    document.querySelectorAll(".rr-intensity-btn").forEach(btn => {
+      btn.classList.toggle("active", btn.dataset.intensity === level);
+    });
+    const desc = document.getElementById("rrIntensityDesc");
+    const descriptions = {
+      clean: "Constructive tough-love. Like a senior mentor.",
+      mild: "Friend-level roast. Mild heat.",
+      savage: "Full Gordon Ramsay. Fun but brutal."
+    };
+    if (desc) desc.textContent = descriptions[level] || "";
+  };
 
   window.rrSubmit = async function() {
     const resume = (document.getElementById("rrResume").value || "").trim();
@@ -167,7 +217,7 @@
       const res = await fetch("/api/tools/resume-roast/teaser", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resume, job_title: jobTitle }),
+        body: JSON.stringify({ resume, job_title: jobTitle, intensity: currentIntensity }),
       });
       const data = await res.json();
       if (res.status === 429) {
