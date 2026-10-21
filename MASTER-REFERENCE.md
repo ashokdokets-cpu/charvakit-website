@@ -1076,3 +1076,12 @@ reverted this session. Rebuild with /api/sync/user-info endpoint +
 signed-pull-for-browser route when needed (~1 hr).
 
 ---
+
+## Session 73 FLAGGED (2026-10-22) - Coding/SQL Certificate Extension
+
+Extends Career Certifications to coding and SQL formats.
+Effort: 2 sessions, ~4.25 hrs. Blocker: none.
+
+Full plan in TRACK-A-B-PLAN.md "Batch A8".
+
+---

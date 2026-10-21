@@ -1,5 +1,31 @@
 # Session Context - Charvak
 
+**HEAD:** e1abd8c
+**Live:** https://www.charvakit.com
+**Updated:** 2026-10-22 (Session 73 flagged)
+
+---
+
+## Current State
+
+DoketsRB bidirectional sync: 100% COMPLETE on prod (Session 72).
+SendGrid billing: Free tier confirmed ($0/mo).
+
+## 3 Urgent Flags (15 min total)
+
+1. Rotate Render Postgres password (Session 19)
+2. Send Amrita email to Prof. Raj (draft ready)
+3. GPT-4o-mini env flip (Jan 2027 deadline)
+
+## Next Feature (flagged, buildable)
+
+Session 73+: Coding/SQL Certificate Extension (2 sessions, ~4.25 hrs)
+See COMMITMENT.md, TRACK-A-B-PLAN.md Batch A8 for full plan.
+
+---
+
+# Session Context - Charvak
+
 **HEAD:** 7fa6f89
 **Live:** https://www.charvakit.com
 **Updated:** 2026-10-21 (Session 72 closed - DoketsRB bidirectional sync COMPLETE)
