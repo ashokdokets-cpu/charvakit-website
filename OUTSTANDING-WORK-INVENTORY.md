@@ -592,3 +592,71 @@ Status: COMPLETE. All 4 sync directions operational on prod.
 ### Still-open DoketsRB items
 
 None. Integration is done.
+
+## Session 72 CLOSURE - DoketsRB Bidirectional Sync (2026-10-21)
+
+Status: COMPLETE. All 4 sync directions operational on prod.
+
+Closed:
+- DoketsRB to Charvak: resume, application, skills (all working)
+- Charvak to DoketsRB: pull (HMAC) + pull-for-browser (Bearer)
+- Auto-pull on login
+- Sync Now button on /career-center
+- require_auth cookie fallback
+- Pooled connections in pull flow
+
+New follow-ups (non-blocking, ~1 hr):
+- /api/sync/user-info could fall back to alternate email lookup
+- base.html 401 redirect should exclude /api/sync/* routes
+- [bg-pull] prints could become logger.info
+
+---
+
+## Session 73 FLAGGED - Coding/SQL Certificate Extension (2026-10-22)
+
+Status: BUILDABLE NOW (not blocked). Non-urgent priority.
+
+Extends Career Certifications to coding and SQL formats.
+Currently 8 formats exist, but coding/sql CTA is hidden in frontend.
+
+Two-phase scope:
+
+Phase A (2 sessions, ~4.25 hrs) - Base certification
+- Schema: add format, language, database_name, task_classes, runtime_info
+- New table: charvak_cert_task_classes
+- Seed 30+ coding classes and 20+ SQL classes
+- Engine: _compute_task_classes, _compute_runtime_info
+- Frontend: unhide CTA, template renderer, PDF renderer
+- E2E test: coding + SQL certifications
+
+Phase B (future sessions) - Environment expansion
+- Real Postgres sandbox for SQL (4-6 hrs)
+- TypeScript/Ruby/PHP support (45 min)
+- MySQL/MSSQL sandbox (6-8 hrs)
+- Defer until customer demand justifies
+
+Priority: AFTER the 3 remaining flags (Postgres rotation, Amrita email, GPT-4o flip).
+Rationale: uniform certification system, stronger hire signal, no external blocker.
+
+---
+
+## Additional flags identified 2026-10-22 (deep audit)
+
+### Deferred (build when demand exists)
+
+- Email mismatch auto-link flow (needs DoketsRB lookup-email endpoint)
+- DoketsRB /api/public?action=lookup-email endpoint (DoketsRB side)
+- SendGrid -> Resend migration (avoid card dependency, not needed now)
+- Certificate benchmark data (needs 200+ certs to be meaningful)
+
+### Technical debt (cosmetic)
+
+- deploy.yml uses Python 3.9 while prod is 3.11
+- [bg-pull] prints could become logger.info
+- base.html global 401 handler may redirect on sync 401
+- _DOKETSRB_HANDOFF.local.txt exists on disk (gitignored, safe)
+
+### Integration tests to add
+
+- Automated test for sync button (user-info + pull-for-browser)
+- Automated test for coding/sql certificate issuance

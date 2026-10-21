@@ -898,3 +898,47 @@ Once external signal fires:
 - 3+ employers ask about jobs: Track F (~4 sessions)
 
 Until then: platform at "everything buildable is built."
+
+## Batch A8 - Coding/SQL Certificate Extension (flagged 2026-10-22)
+
+Extends the existing Career Certification system to coding and SQL
+formats. Currently 8 formats exist but coding/sql CTA is hidden.
+
+### Effort: 2 sessions, ~4.25 hours
+
+| Phase | What | Effort |
+|---|---|---|
+| 1 | Schema + task class catalog | 30 min |
+| 2 | Seed task classes | 30 min |
+| 3 | Engine methods | 30 min |
+| 4 | Frontend CTA fix | 15 min |
+| 5 | Certificate template | 30 min |
+| 6 | PDF renderer | 30 min |
+| 7 | API responses | 15 min |
+| 8 | E2E test | 30 min |
+| 9 | Language extension (defer) | 45 min |
+
+### Environment matrix
+
+v1 (SQLite): SQLite certifiable; PostgreSQL/MySQL/MSSQL approximate
+v2 (Postgres sandbox): Real PostgreSQL (4-6 hrs)
+v3 (MySQL/MSSQL sandbox): Full DB coverage (6-8 hrs)
+
+Languages v1: Python, JavaScript, Java, Go, C++ (Judge0 CE support)
+Languages v2: + TypeScript, Ruby, PHP
+Languages v3: + Rust, Kotlin, C#, Swift (only if Judge0 improves)
+
+### Priority
+
+AFTER the 3 flags (Postgres rotation, Amrita email, GPT-4o flip).
+Non-blocking. Genuinely buildable now. Uniform certification story.
+
+### Prerequisites
+
+None. All dependencies exist:
+- Career assessment engine (Session 10)
+- Certification system (Session 69)
+- Judge0 client (Session 28)
+- PDF engine
+
+---

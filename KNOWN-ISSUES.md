@@ -1004,3 +1004,67 @@ To build properly:
 Total: ~1 hr. Defer until user demand.
 
 Verdict: FLAGGED - non-blocking, backend API is complete.
+
+### RESOLVED - authToken missing from localStorage (2026-10-21, c4ae9c1)
+
+Login stored token as auth_token and charvak_token, but button read
+authToken (camelCase). Result: token always null. Button fell back to
+cookie auth, which failed for non-admin users.
+
+Fix: fallback chain authToken -> auth_token -> charvak_token -> empty.
+Verified: Sync Now button works end-to-end on prod.
+
+---
+
+### RESOLVED - require_auth rejected cookie auth (2026-10-21, ac5647a)
+
+require_auth only checked Authorization: Bearer. Cookie-based sessions
+failed with 401 even when logged in.
+
+Fix: try Bearer first, fall back to charvak_admin_token / auth_token
+cookies. Verified: works with either auth method.
+
+---
+
+### RESOLVED - Duplicate doketsrb_id rows (2026-10-21)
+
+Production DB had two rows for contact@dokets.com with different
+doketsrb_id values. user-info endpoint used LIMIT 1, returned wrong one.
+
+Fix: deleted stale 4c792e8d row + added UNIQUE constraint on email.
+Verified: user-info now returns correct bb864eb3 doketsrb_id.
+
+---
+
+### RESOLVED - info/pull parse statements missing (2026-10-21, 78fbc4e)
+
+Earlier patch overwrote var info = await infoResp.json() and
+var pull = await pullResp.json(). Button threw ReferenceError.
+
+Fix: restored both parse statements after fetch calls.
+Verified: JS syntax OK via node --check, button works on prod.
+
+---
+
+### FLAGGED - Coding/SQL certificates missing (2026-10-22)
+
+Career Assessment supports 8 formats (mcq, coding, sql, short_answer,
+numeracy, SJT, behavioral, system_design, debugging, case_study). But
+certifications only issue for MCQ and AI-scored formats. Coding and sql
+CTA is hidden in ai-assessment.html.
+
+Fix: Session 73+. Schema migration + task class catalog + engine changes
++ template renderer + PDF renderer. ~4.25 hrs across 2 sessions.
+
+Verdict: FLAGGED - buildable now, deferred pending 3 flags.
+
+---
+
+### FLAGGED - base.html 401 redirect affects sync endpoints (2026-10-22)
+
+base.html line 926 redirects to /login on any 401. If /api/sync/*
+returns 401 (e.g., user session expired), page redirects instead of
+showing sync error.
+
+Fix: exclude /api/sync/* from the global 401 handler.
+Verdict: FLAGGED - 10 min fix, non-urgent.
