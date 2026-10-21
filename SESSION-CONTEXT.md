@@ -11,6 +11,20 @@
 DoketsRB bidirectional sync: 100% COMPLETE on prod (Session 72).
 SendGrid billing: Free tier confirmed ($0/mo).
 
+## Strategic Expansion Roadmap (flagged 2026-10-22)
+
+Four vertical extensions identified for future. Do NOT build until Amrita pays.
+
+| Vertical | When | Effort |
+|---|---|---|
+| BSc/BCom/BA colleges | Q1 2027 | 2-3 sessions |
+| Coaching centers (JEE/NEET) | Q3 2027 | 5-6 sessions |
+| Junior colleges (MPC/BiPC) | 2028 | 6-8 sessions |
+| K-12 boards | 2029+ | Do not build now |
+
+Full plan: COMMITMENT.md "Strategic Expansion Roadmap"
+
+---
 ## 3 Urgent Flags (15 min total)
 
 1. Rotate Render Postgres password (Session 19)
