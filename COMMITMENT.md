@@ -6271,3 +6271,17 @@ DB confirmed: 1 profile row (Admin/contact@dokets.com) + 1 app row (Wipro/applie
 1. Amrita email to Prof. Raj (5 min)
 2. Rotate Render Postgres password (5 min)
 3. Phase 3c GPT-4o-mini env flip (5 min)
+
+## Session 73 FLAGGED (2026-10-22) - Coding/SQL Certificate Extension
+
+Extends Career Certifications to coding and SQL formats.
+Currently 8 formats exist but coding/sql CTA is hidden in frontend.
+
+Effort: 2 sessions, ~4.25 hrs
+Blocker: None
+Priority: AFTER 3 remaining flags (Postgres rotation, Amrita email, GPT-4o flip)
+
+Full plan in TRACK-A-B-PLAN.md "Batch A8" and CAREER-ASSESSMENT-PLAN.md
+"Phase 4 Addition"
+
+---
