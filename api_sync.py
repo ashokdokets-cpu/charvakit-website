@@ -354,7 +354,7 @@ import requests as _requests
 DOKETSRB_PULL_BASE = os.getenv("DOKETSRB_PULL_BASE", "https://www.doketsrb.com")
 
 
-async def handle_pull(user_id: str, request: Request):
+async def handle_pull(user_id: str, request: Request = None):
     """Pull user profile + applications from DoketsRB, merge into Charvak tables."""
     result = {
         "status": "success",
@@ -378,34 +378,38 @@ async def handle_pull(user_id: str, request: Request):
             profile = r.json() or {}
             if profile.get("user_id"):
                 from database import db
-                conn = db.get_connection()
-                cur = conn.cursor()
-                cur.execute("""
-                    INSERT INTO charvak_synced_users
-                        (user_id, doketsrb_id, name, email, phone,
-                         resume_data, skills, experience, education, synced_at)
-                    VALUES (%s, %s, %s, %s, %s, %s::jsonb, %s::jsonb, %s::jsonb, %s::jsonb, CURRENT_TIMESTAMP)
-                    ON CONFLICT (user_id) DO UPDATE SET
-                        name = EXCLUDED.name,
-                        email = EXCLUDED.email,
-                        phone = EXCLUDED.phone,
-                        resume_data = EXCLUDED.resume_data,
-                        skills = EXCLUDED.skills,
-                        experience = EXCLUDED.experience,
-                        education = EXCLUDED.education,
-                        synced_at = CURRENT_TIMESTAMP
-                """, (
-                    profile.get("user_id"),
-                    profile.get("user_id"),
-                    profile.get("name", ""),
-                    profile.get("email", ""),
-                    profile.get("phone", ""),
-                    json.dumps(profile.get("resume_data", {})),
-                    json.dumps(profile.get("skills", [])),
-                    json.dumps(profile.get("experience", [])),
-                    json.dumps(profile.get("education", [])),
-                ))
-                conn.commit(); cur.close(); conn.close()
+                conn = db.get_pooled_connection()
+                try:
+                    cur = conn.cursor()
+                    cur.execute("""
+                        INSERT INTO charvak_synced_users
+                            (user_id, doketsrb_id, name, email, phone,
+                             resume_data, skills, experience, education, synced_at)
+                        VALUES (%s, %s, %s, %s, %s, %s::jsonb, %s::jsonb, %s::jsonb, %s::jsonb, CURRENT_TIMESTAMP)
+                        ON CONFLICT (user_id) DO UPDATE SET
+                            name = EXCLUDED.name,
+                            email = EXCLUDED.email,
+                            phone = EXCLUDED.phone,
+                            resume_data = EXCLUDED.resume_data,
+                            skills = EXCLUDED.skills,
+                            experience = EXCLUDED.experience,
+                            education = EXCLUDED.education,
+                            synced_at = CURRENT_TIMESTAMP
+                    """, (
+                        profile.get("user_id"),
+                        profile.get("user_id"),
+                        profile.get("name", ""),
+                        profile.get("email", ""),
+                        profile.get("phone", ""),
+                        json.dumps(profile.get("resume_data", {})),
+                        json.dumps(profile.get("skills", [])),
+                        json.dumps(profile.get("experience", [])),
+                        json.dumps(profile.get("education", [])),
+                    ))
+                    conn.commit()
+                    cur.close()
+                finally:
+                    db.release_pooled_connection(conn)
                 result["profile_synced"] = True
                 logger.info(f"Pull: profile synced for {user_id}")
             else:
@@ -428,37 +432,41 @@ async def handle_pull(user_id: str, request: Request):
             apps = r.json() or []
             if isinstance(apps, list):
                 from database import db
-                conn = db.get_connection()
-                cur = conn.cursor()
-                count = 0
-                for a in apps:
-                    if not isinstance(a, dict):
-                        continue
-                    app_id = a.get("application_id") or f"APP-{secrets_token()}"
-                    cur.execute("""
-                        INSERT INTO charvak_synced_applications
-                            (application_id, user_id, job_title, company, job_url,
-                             status, applied_date, source, notes, last_updated)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP)
-                        ON CONFLICT (application_id) DO UPDATE SET
-                            job_title = EXCLUDED.job_title,
-                            company = EXCLUDED.company,
-                            status = EXCLUDED.status,
-                            applied_date = EXCLUDED.applied_date,
-                            last_updated = CURRENT_TIMESTAMP
-                    """, (
-                        app_id,
-                        user_id,
-                        a.get("job_title", ""),
-                        a.get("company", ""),
-                        a.get("job_url", ""),
-                        a.get("status", "applied"),
-                        a.get("applied_date", ""),
-                        a.get("source", "doketsrb"),
-                        a.get("notes", ""),
-                    ))
-                    count += 1
-                conn.commit(); cur.close(); conn.close()
+                conn = db.get_pooled_connection()
+                try:
+                    cur = conn.cursor()
+                    count = 0
+                    for a in apps:
+                        if not isinstance(a, dict):
+                            continue
+                        app_id = a.get("application_id") or f"APP-{secrets_token()}"
+                        cur.execute("""
+                            INSERT INTO charvak_synced_applications
+                                (application_id, user_id, job_title, company, job_url,
+                                 status, applied_date, source, notes, last_updated)
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP)
+                            ON CONFLICT (application_id) DO UPDATE SET
+                                job_title = EXCLUDED.job_title,
+                                company = EXCLUDED.company,
+                                status = EXCLUDED.status,
+                                applied_date = EXCLUDED.applied_date,
+                                last_updated = CURRENT_TIMESTAMP
+                        """, (
+                            app_id,
+                            user_id,
+                            a.get("job_title", ""),
+                            a.get("company", ""),
+                            a.get("job_url", ""),
+                            a.get("status", "applied"),
+                            a.get("applied_date", ""),
+                            a.get("source", "doketsrb"),
+                            a.get("notes", ""),
+                        ))
+                        count += 1
+                    conn.commit()
+                    cur.close()
+                finally:
+                    db.release_pooled_connection(conn)
                 result["applications_synced"] = count
                 logger.info(f"Pull: {count} applications synced for {user_id}")
             else:
