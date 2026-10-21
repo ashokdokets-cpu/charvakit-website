@@ -820,3 +820,49 @@ Dependencies confirmed:
 Open question deferred to Session 14: should the topic vocabulary be
 tunable per industry (e.g. HealthTech Data Scientist vs FinTech Data
 Scientist), or keep it role-only? Recommendation: role-only for now.
+
+---
+
+## Phase 4 Addition - Coding/SQL Certificate Extension (2026-10-22)
+
+Extends the certification system from Phase 4 (Career Certifications,
+Session 69) to cover the two formats that currently do not issue certs:
+coding and SQL.
+
+### Why this was missing
+
+Session 69 shipped Career Certifications for MCQ, behavioral,
+system_design, etc. (AI-scored formats). Coding and SQL formats already
+work for assessment scoring, but the "Get Certified" CTA was hidden in
+the frontend for these two formats.
+
+### What needs to change
+
+1. **Certificate metadata** - include language (for coding), database
+   (for sql), task classes tested, runtime info
+2. **Task class catalog** - new table mapping format/language/db ->
+   testable skill classes (arrays, algorithms, window_fns, etc.)
+3. **Frontend CTA** - unhide "Get Certified" button for coding/sql
+4. **Certificate template** - render format-specific sections (task
+   classes + runtime environment)
+5. **PDF renderer** - new layout for coding/sql certs
+6. **Language support** - Judge0 CE supports Python, JS, Java, Go, C++
+   today; add TypeScript, Ruby, PHP in Phase 9
+
+### Environment honesty
+
+SQL certification in v1 is SQLite-based (Judge0 limitation). PostgreSQL,
+MySQL, MSSQL will be labeled "SQLite-approximate" (honest disclosure).
+v2 adds real PostgreSQL sandbox (4-6 hrs). v3 adds MySQL/MSSQL (6-8 hrs).
+
+### Effort
+
+Phase A (v1): 2 sessions, ~4.25 hrs
+Phase B (v2): 1 session, ~4-6 hrs (Postgres sandbox)
+Phase C (v3): 1-2 sessions, ~6-8 hrs (MySQL/MSSQL)
+
+### Priority
+
+Non-urgent. Build after the 3 remaining flags close. No external block.
+
+---
