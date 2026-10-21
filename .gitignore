@@ -80,6 +80,8 @@ scripts/*
 !scripts/ai_verify_questions.py
 !scripts/test_ielts_relevance.py
 !scripts/run_migrations.py
+!scripts/pdf_reports/
+!scripts/pdf_reports/*.py
 requirements.txt.bak
 runtime.txt.bak
 
@@ -166,3 +168,6 @@ _commit_msg.txt
 _DOKETSRB_HANDOFF.local.txt
 *_HANDOFF*.txt
 *.local.txt
+
+# Generated PDF reports (regenerate with scripts)
+reports/
