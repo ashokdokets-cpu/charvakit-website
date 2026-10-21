@@ -433,7 +433,7 @@ window.doketsrbSyncNow = async function() {
     if (!btn || btn.disabled) return;
 
     var email = localStorage.getItem("userEmail") || "";
-    var token = localStorage.getItem("authToken") || "";
+    var token = localStorage.getItem("authToken") || localStorage.getItem("auth_token") || localStorage.getItem("charvak_token") || "";
     if (!email) {
         alert("Please sign in to sync.");
         return;
@@ -451,7 +451,7 @@ window.doketsrbSyncNow = async function() {
             credentials: "include"
         });
         if (info.status === "not_linked") {
-            alert("No DoketsRB account linked to " + email + ".\\nVisit doketsrb.com to create one first.");
+            alert("No DoketsRB account linked to " + email + ".\n\nIf you have a DoketsRB account with a DIFFERENT email:\n1. Update DoketsRB to use " + email + ", OR\n2. Contact support to link the accounts manually.\n\nOtherwise visit doketsrb.com to create one with this email.");
             btn.innerHTML = origText;
             btn.disabled = false;
             return;
