@@ -6,6 +6,8 @@ import hashlib
 import secrets
 import hmac
 from datetime import datetime, timedelta
+import threading
+import asyncio
 from typing import Optional
 from database import db
 
@@ -172,6 +174,41 @@ def register_user(email: str, password: str, name: str, role: str = "candidate",
     return result
 
 
+def _background_doketsrb_pull(email: str):
+    """Fire-and-forget pull of latest DoketsRB data. Never raises."""
+    conn = None
+    _t_start = __import__("time").time(); print(f"[bg-pull] {email}: start", flush=True)
+    try:
+        from database import db
+        conn = db.get_pooled_connection()
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT doketsrb_id FROM charvak_synced_users WHERE email = %s AND doketsrb_id IS NOT NULL LIMIT 1",
+            (email,)
+        )
+        row = cur.fetchone()
+        cur.close()
+        db.release_pooled_connection(conn)
+        conn = None
+        if not row or not row[0]:
+            return
+        from api_sync import handle_pull
+        _t_db_done = __import__("time").time(); print(f"[bg-pull] {email}: DB lookup took {(_t_db_done - _t_start)*1000:.0f}ms", flush=True)
+        asyncio.run(handle_pull(row[0], None))
+    except Exception as e:
+        try:
+            print(f"[background_doketsrb_pull] {email}: {e}")
+        except Exception:
+            pass
+    finally:
+        if conn is not None:
+            try:
+                from database import db as _db
+                _db.release_pooled_connection(conn)
+            except Exception:
+                pass
+
+
 def login_user(email: str, password: str):
     """Login with password verification."""
     user = db.get_user_by_email(email)
@@ -193,6 +230,15 @@ def login_user(email: str, password: str):
         "created_at": datetime.now().isoformat()
     }
     _persist_token(token, user["user_id"], email, role, expires_at)
+    # Session 72+: background DoketsRB pull (fire-and-forget, never blocks login)
+    try:
+        threading.Thread(
+            target=_background_doketsrb_pull,
+            args=(email,),
+            daemon=True
+        ).start()
+    except Exception:
+        pass  # Background thread failure must never break login
     return {"status": "success", "token": token, "user": user}
 
 
