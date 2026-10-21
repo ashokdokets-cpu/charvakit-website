@@ -161,3 +161,8 @@ _body.json
 _cohort_test.json
 _t.py
 _commit_msg.txt
+
+# Local credential handoff files - NEVER commit
+_DOKETSRB_HANDOFF.local.txt
+*_HANDOFF*.txt
+*.local.txt
