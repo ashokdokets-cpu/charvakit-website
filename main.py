@@ -1426,9 +1426,91 @@ async def sync_health():
     return await api_health()
 
 
+@app.get("/api/sync/user-info")
+async def sync_user_info(request: Request, email: str = ""):
+    """Return DoketsRB user_id linked to the caller email (browser-facing).
+    Requires valid Bearer token; caller can only query their own email (admin exception).
+    """
+    try:
+        caller = require_auth(request)
+        caller_email = (caller.get("email") or "").strip().lower()
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "sync_user_info auth")
+
+    target_email = (email or caller_email).strip().lower()
+    if target_email != caller_email and caller_email not in ADMIN_EMAILS:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    try:
+        from database import db
+        conn = db.get_pooled_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT doketsrb_id FROM charvak_synced_users WHERE email = %s AND doketsrb_id IS NOT NULL LIMIT 1",
+                (target_email,)
+            )
+            row = cur.fetchone()
+            cur.close()
+        finally:
+            db.release_pooled_connection(conn)
+        if not row or not row[0]:
+            return {"status": "not_linked", "email": target_email}
+        return {"status": "success", "email": target_email, "user_id": row[0]}
+    except HTTPException:
+        raise
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
 # ============================================================
 # AUTH ROUTES (WITH INPUT VALIDATION)
 # ============================================================
+
+
+@app.post("/api/sync/pull-for-browser/{user_id}")
+async def sync_pull_for_browser(user_id: str, request: Request):
+    """Browser-safe pull: same as /api/sync/pull but uses Bearer auth instead of HMAC.
+    Verifies caller owns the user_id before pulling. No HMAC because the user is
+    already authenticated via session token.
+    """
+    try:
+        caller = require_auth(request)
+        caller_email = (caller.get("email") or "").strip().lower()
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "sync_pull_for_browser auth")
+
+    # Verify the caller owns this DoketsRB user_id
+    try:
+        from database import db
+        conn = db.get_pooled_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT email FROM charvak_synced_users WHERE user_id = %s LIMIT 1",
+                (user_id,)
+            )
+            row = cur.fetchone()
+            cur.close()
+        finally:
+            db.release_pooled_connection(conn)
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "sync_pull_for_browser lookup")
+
+    if not row or not row[0]:
+        raise HTTPException(status_code=404, detail="User not found")
+    owner_email = (row[0] or "").strip().lower()
+    if owner_email != caller_email and caller_email not in ADMIN_EMAILS:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    # Now call the real pull (no request → no HMAC check, already authenticated)
+    return await handle_pull(user_id, None)
 
 @app.post("/api/auth/register")
 @limiter.limit("10/hour")

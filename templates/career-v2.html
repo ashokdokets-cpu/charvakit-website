@@ -40,7 +40,7 @@
         <div id="doketsrbSyncSection" class="mt-4 pt-4" style="border-top:1px solid #e5e7eb;">
             <div class="d-flex justify-content-between align-items-center mb-2">
                 <h3 class="as-h5 mb-0">DoketsRB sync</h3>
-                <span class="badge" id="doketsrbSyncBadge" style="background:#e5e7eb;color:#6b7280;">Checking...</span>
+                <span class="badge" id="doketsrbSyncBadge" style="background:#e5e7eb;color:#6b7280;">Checking...</span> <button type="button" id="doketsrbSyncNowBtn" onclick="doketsrbSyncNow()" style="background:#3ba591;color:white;border:none;border-radius:4px;padding:3px 10px;font-size:11px;margin-left:8px;cursor:pointer;">&#x21BB; Sync now</button>
             </div>
             <p class="small text-muted mb-2" id="doketsrbSyncDesc">Connecting your DoketsRB resume with Charvak's job matching.</p>
             <div class="row g-2" id="doketsrbSyncStats"></div>
@@ -403,6 +403,7 @@ async function loadDrillCard() {
             console.warn('DoketsRB sync load failed:', e);
         }
     }
+    window.doketsrbSyncLoad = load;
 
     function _ago(ts) {
         try {
@@ -424,5 +425,64 @@ async function loadDrillCard() {
         load();
     }
 })();
+
+
+// Session 72+ (2026-10-21): User-triggered DoketsRB sync
+window.doketsrbSyncNow = async function() {
+    var btn = document.getElementById("doketsrbSyncNowBtn");
+    if (!btn || btn.disabled) return;
+
+    var email = localStorage.getItem("userEmail") || "";
+    var token = localStorage.getItem("authToken") || "";
+    if (!email || !token) {
+        alert("Please sign in to sync.");
+        return;
+    }
+
+    btn.disabled = true;
+    var origText = btn.innerHTML;
+    btn.innerHTML = "&#x21BB; Syncing...";
+
+    try {
+        var infoResp = await fetch("/api/sync/user-info?email=" + encodeURIComponent(email), {
+            headers: { "Authorization": "Bearer " + token }
+        });
+        var info = await infoResp.json();
+
+        if (info.status === "not_linked") {
+            alert("No DoketsRB account linked to " + email + ".\\nVisit doketsrb.com to create one first.");
+            btn.innerHTML = origText;
+            btn.disabled = false;
+            return;
+        }
+        if (info.status !== "success" || !info.user_id) {
+            throw new Error(info.message || "Could not look up account");
+        }
+
+        var pullResp = await fetch("/api/sync/pull-for-browser/" + encodeURIComponent(info.user_id), {
+            method: "POST",
+            headers: { "Authorization": "Bearer " + token }
+        });
+        var pull = await pullResp.json();
+
+        if (pull.status === "success" || pull.status === "partial") {
+            btn.innerHTML = "&#x2713; Synced";
+            if (window.doketsrbSyncLoad) {
+                window.doketsrbSyncLoad();
+            }
+        } else {
+            btn.innerHTML = "Sync failed";
+            console.warn("Pull failed:", pull);
+        }
+    } catch (e) {
+        console.error("Sync error:", e);
+        btn.innerHTML = "Error";
+    } finally {
+        setTimeout(function() {
+            btn.innerHTML = origText;
+            btn.disabled = false;
+        }, 3000);
+    }
+};
 </script>
 {% endblock %}
