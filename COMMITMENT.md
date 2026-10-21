@@ -6285,3 +6285,191 @@ Full plan in TRACK-A-B-PLAN.md "Batch A8" and CAREER-ASSESSMENT-PLAN.md
 "Phase 4 Addition"
 
 ---
+
+## FLAGGED (2026-10-22) - Strategic Expansion Roadmap (4 Vertical Extensions)
+
+Charvak currently serves engineering colleges + tech-enabled placement.
+Four expansion verticals identified. All flagged. None to build
+until Amrita signs as first paying customer.
+
+Governing principle: Do NOT expand until Phase 0 (Amrita) is a paid
+customer. Expanding to 4 audiences without one paying customer
+dilutes focus and ships nothing well.
+
+Sequencing rule (adjacent expansion):
+1. Close Amrita (engineer colleges, current segment)
+2. BSc/BCom/BA colleges (80% reused product)
+3. Coaching centers (50% reused product)
+4. Junior/Intermediate colleges (30% reused product)
+5. K-12 boards (10% reused product, different company)
+
+---
+
+### Vertical 1 - Non-Engineering Bachelor Colleges (BSc/BCom/BA/BEd)
+
+WHEN: Q1 2027 (after Amrita pays)
+EFFORT: 2-3 sessions
+REVENUE CEILING: Rs 3L-15L/year per institution
+REALISTIC YEAR 1: Rs 3-8L (3-5 institutions)
+PRODUCT READINESS: ~80% built (career assessment already supports 106 roles)
+
+What exists:
+- Career Assessment (106 roles, 66 industries, 7 levels)
+- Interview Prep (works for any role)
+- Career Certifications
+- Cohorts (batch management)
+
+What is missing:
+- 40 non-tech roles calibrated (HR, Sales, Content, Finance, Ops, Analyst)
+- Degree Readiness certificate branding
+- Aggregate college dashboard
+- Bulk enrollment onboarding flow
+- BSc-specific interview prep scenarios
+
+Pricing model:
+- Small (<=500 students): Rs 49,999/year
+- Mid (<=2,000 students): Rs 1,99,999/year
+- Large (<=5,000 students): Rs 4,99,999/year
+
+Verdict: BUILDABLE (2-3 sessions). Low risk. Start here after Amrita.
+
+---
+
+### Vertical 2 - Coaching Centers (JEE, NEET, Maths, Physics, Chemistry)
+
+WHEN: Q3 2027 (after BSc/BA colleges prove the model)
+EFFORT: 5-6 sessions
+REVENUE CEILING: Rs 15L-35L/year (10 coaching centers)
+REALISTIC YEAR 1: Rs 5-15L (3-5 centers)
+PRODUCT READINESS: ~50% built (exam prep exists, but JEE/NEET needs more)
+
+What exists:
+- Exam prep engine (138 exams incl. JEE, NEET)
+- MCQ bank (12,500 questions)
+- Free mock funnel (/free-mock/{exam_id})
+- Cohort batches
+- Credit system
+
+What is missing (technical):
+- Negative marking support (JEE/NEET: -1 for wrong)
+- Formula entry (Physics numericals, Chemistry equations)
+- Diagram-based questions (optics, circuits, biology diagrams)
+- Batch management for coaching centers (create batch, invite students)
+- Parent portal (progress report to parent email/SMS)
+- Offline access (limited-device students)
+
+Pricing model:
+- Tier 1 Basic (200 students): Rs 15,000/month
+- Tier 2 Standard (1,000 students): Rs 40,000/month
+- Tier 3 Premium (unlimited + white-label): Rs 80,000/month
+
+Verdict: BUILDABLE (5-6 sessions). Higher complexity. Defer to Q3 2027.
+
+---
+
+### Vertical 3 - Junior/Intermediate Colleges (MPC, BiPC, CEC, HEC, MEC)
+
+WHEN: 2028 (after coaching centers prove the model)
+EFFORT: 6-8 sessions + 3-4 weeks content work
+REVENUE CEILING: Rs 25L/year (10 colleges x 500 students)
+REALISTIC YEAR 1: Rs 2-5L (5-10 colleges ramping)
+PRODUCT READINESS: ~30% built (only MCQ exam prep)
+
+What exists:
+- Some state board exam prep
+- MCQ question banks
+
+What is missing (blocker: content sourcing):
+- AP/TS Intermediate curriculum mapping
+- Chapter-wise question banks (Maths A/B, Physics, Chemistry, Bio, Commerce)
+- Board-pattern mock exams (each board has specific marking)
+- Semester vs year-based structures
+- K-12 parent engagement (different psychology from adult learners)
+
+CONTENT SOURCING IS THE KILLER: needs 3-4 weeks of data work +
+past paper sourcing + ongoing syllabus updates. Not a code problem.
+
+Pricing model:
+- Rs 150-300/student/year
+- 500-1,500 students per college
+- Annual contracts, renewed
+
+Verdict: HIGH RISK (content sourcing bottleneck). Defer to 2028.
+
+---
+
+### Vertical 4 - K-12 Secondary Education Boards (10th standard)
+
+WHEN: 2029+ (needs compliance runway + funding + board relationships)
+EFFORT: 10-15 sessions + 12-18 months compliance/board relations
+REVENUE CEILING: Rs 50L-2Cr/year at scale
+REALISTIC YEAR 1: Rs 0 (12+ month sales cycle)
+PRODUCT READINESS: ~10% built
+
+What is missing (blockers: compliance + relationships):
+- K-12 curriculum knowledge (CBSE/ICSE/state boards)
+- Board-approved content (if schools use, must be rigorous)
+- Parent mandatory consent systems (K-12 legal requirement)
+- Teacher oversight dashboard
+- RTE + board compliance review
+- Board approval relationships (12-18 months of relationship building)
+- Sales cycles tied to school calendar (April-June only)
+
+Verdict: DO NOT BUILD NOW. 12+ month horizon. Defer 18+ months.
+Requires funded position or 100+ paying institutions.
+
+---
+
+### Realistic Revenue Projection - 24-Month View
+
+| Timeline | What is Live | Cumulative Revenue |
+|---|---|---|
+| Q4 2026 | Amrita pilot (free) | Rs 0 |
+| Q1 2027 | Amrita paid + 2 BSc colleges | Rs 1.5L |
+| Q2 2027 | +3 BSc colleges | Rs 4L |
+| Q3 2027 | +2 coaching centers (basic) | Rs 7L |
+| Q4 2027 | +3 more coaching centers | Rs 12L |
+| Q1 2028 | +2 junior colleges | Rs 15L |
+| Q2 2028 | Growth in all segments | Rs 21L |
+| Q3 2028 | +5 more institutions | Rs 29L |
+| Q4 2028 | Full growth across 3 segments | Rs 39L |
+
+Year 1 (2027): ~Rs 12L
+Year 2 (2028): ~Rs 27L
+Year 3 (2029, with K-12 if funded): Rs 50L-1Cr
+
+---
+
+### Key Principle - Adjacent Expansion Rule
+
+Each new vertical must be a natural extension of the previous:
+
+- Engineering colleges -> BSc/BA colleges: 80% product reuse (same career
+  assessment, same certs, different role calibration)
+- BSc/BA colleges -> coaching centers: 50% reuse (assessment engine,
+  cohort, dashboards; need new content + batch mgmt + parent portal)
+- Coaching centers -> junior colleges: 30% reuse (exam prep exists, need
+  entire curriculum sourcing)
+- Junior colleges -> K-12 boards: 10% reuse (different company,
+  different compliance, different sales cycle)
+
+Jumping straight to K-12 without establishing the previous layers will
+dilute focus, ship half-products, and burn runway.
+
+---
+
+### The Sub-Brand Strategy (future, not now)
+
+When each vertical launches, consider sub-brands to avoid diluting
+engineering identity:
+
+- Charvak Tech (engineers) - current product
+- Charvak Business (BSc/BCom/BA) - Q1 2027
+- Charvak Prep (coaching centers) - Q3 2027
+- Charvak Academy (junior colleges) - 2028
+- Charvak School (K-12) - 2029+
+
+Same infrastructure, different go-to-market. Do NOT rebrand Charvak
+to try to serve all 5 with one brand.
+
+---

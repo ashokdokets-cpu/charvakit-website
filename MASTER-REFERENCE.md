@@ -1085,3 +1085,22 @@ Effort: 2 sessions, ~4.25 hrs. Blocker: none.
 Full plan in TRACK-A-B-PLAN.md "Batch A8".
 
 ---
+
+## Strategic Expansion Roadmap (Session 73 flag, 2026-10-22)
+
+Four vertical extensions identified for future. Do NOT build until
+Amrita signs as first paying customer.
+
+| Vertical | When | Effort | Year 1 Revenue | Verdict |
+|---|---|---|---|---|
+| BSc/BCom/BA colleges | Q1 2027 | 2-3 sessions | Rs 3-8L | Buildable |
+| Coaching centers (JEE/NEET) | Q3 2027 | 5-6 sessions | Rs 5-15L | Defer |
+| Junior colleges (MPC/BiPC) | 2028 | 6-8 sessions | Rs 2-5L | Defer (content) |
+| K-12 boards (10th std) | 2029+ | 10-15 sessions | Rs 0 year 1 | Do not build now |
+
+Governing principle: adjacent expansion only. Do not jump segments.
+
+Full details in COMMITMENT.md "Strategic Expansion Roadmap"
+(4 verticals, revenue math, sequencing rules).
+
+---

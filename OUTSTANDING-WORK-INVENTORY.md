@@ -660,3 +660,44 @@ Rationale: uniform certification system, stronger hire signal, no external block
 
 - Automated test for sync button (user-info + pull-for-browser)
 - Automated test for coding/sql certificate issuance
+
+## FLAGGED - Strategic Expansion (2026-10-22)
+
+Four vertical extensions identified. None to build until Amrita signs.
+Full plan in COMMITMENT.md "Strategic Expansion Roadmap".
+
+### #39 - Non-Engineering Bachelor Colleges (BSc/BCom/BA/BEd)
+- WHEN: Q1 2027 (after Amrita pays)
+- EFFORT: 2-3 sessions
+- REVENUE: Rs 3-8L year 1, Rs 15L ceiling
+- BUILD: 40 non-tech roles, aggregate dashboard, bulk enrollment
+- VERDICT: BUILDABLE (closest to current product)
+
+### #40 - Coaching Centers (JEE/NEET)
+- WHEN: Q3 2027 (after BSc colleges prove model)
+- EFFORT: 5-6 sessions
+- REVENUE: Rs 5-15L year 1, Rs 35L ceiling
+- BUILD: negative marking, formulas, diagrams, batch mgmt, parent portal
+- VERDICT: BUILDABLE (medium complexity, defer)
+
+### #41 - Junior/Intermediate Colleges (MPC/BiPC/CEC/HEC/MEC)
+- WHEN: 2028 (after coaching proves model)
+- EFFORT: 6-8 sessions + 3-4 weeks content sourcing
+- REVENUE: Rs 2-5L year 1, Rs 25L ceiling
+- BLOCKER: curriculum sourcing (not engineering)
+- VERDICT: HIGH RISK (defer to 2028)
+
+### #42 - K-12 Secondary Boards (10th standard)
+- WHEN: 2029+ (funding + compliance + board relationships)
+- EFFORT: 10-15 sessions + 12-18 months compliance
+- REVENUE: Rs 0 year 1, Rs 50L-2Cr ceiling
+- BLOCKER: board approval, RTE compliance, sales cycle
+- VERDICT: DO NOT BUILD NOW (defer 18+ months)
+
+### Sequencing principle
+
+Do not expand to any new vertical until current segment (engineering
+colleges) has at least ONE paying customer. Expanding to 4 audiences
+without one paying customer dilutes focus and burns runway.
+
+Order: Amrita -> BSc/BA -> coaching -> junior colleges -> K-12
