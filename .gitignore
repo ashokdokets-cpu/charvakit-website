@@ -171,3 +171,7 @@ _DOKETSRB_HANDOFF.local.txt
 
 # Generated PDF reports (regenerate with scripts)
 reports/
+
+# Local dev launcher (Session 73)
+run.py
+start-dev.ps1

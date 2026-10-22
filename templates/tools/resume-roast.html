@@ -11,92 +11,34 @@
 {% endblock %}
 
 {% block content %}
-<style>
-  .rr-wrap { max-width: 720px; margin: 0 auto; padding: 40px 16px 80px; }
-  .rr-hero { text-align: center; margin-bottom: 32px; }
-  .rr-badge { display: inline-block; padding: 4px 12px; background: #e6f7f4; color: #0a8a75; border-radius: 999px; font-size: 13px; font-weight: 600; margin-bottom: 12px; }
-  .rr-hero h1 { font-size: 32px; font-weight: 800; color: #0f172a; margin: 8px 0; }
-  .rr-hero p { color: #475569; font-size: 16px; max-width: 520px; margin: 0 auto; }
-
-  .rr-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 28px; box-shadow: 0 2px 8px rgba(15,23,42,0.04); }
-  .rr-label { font-size: 13px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; display: block; margin-bottom: 8px; }
-  .rr-input { width: 100%; padding: 12px 14px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; font-family: inherit; }
-  .rr-input:focus { outline: none; border-color: #0a8a75; box-shadow: 0 0 0 3px rgba(10,138,117,0.1); }
-  .rr-textarea { min-height: 220px; resize: vertical; font-family: 'Courier New', monospace; }
-
-  .rr-btn { display: inline-block; padding: 14px 28px; border-radius: 10px; border: 0; font-weight: 600; font-size: 15px; cursor: pointer; transition: all 0.15s; }
-  .rr-btn-primary { background: #0a8a75; color: #fff; }
-  .rr-btn-primary:hover { background: #086f5f; }
-  .rr-btn-primary:disabled { background: #94a3b8; cursor: not-allowed; }
-  .rr-btn-ghost { background: #f1f5f9; color: #0f172a; }
-  .rr-btn-ghost:hover { background: #e2e8f0; }
-
-  .rr-spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: rr-spin 0.7s linear infinite; margin-right: 8px; vertical-align: middle; }
-  @keyframes rr-spin { to { transform: rotate(360deg); } }
-
-  .rr-score-hero { text-align: center; padding: 24px 0; }
-  .rr-score { font-size: 80px; font-weight: 800; line-height: 1; color: #0a8a75; }
-  .rr-score.rr-bad { color: #dc2626; }
-  .rr-score.rr-mid { color: #f59e0b; }
-  .rr-score.rr-good { color: #10b981; }
-  .rr-score-sub { color: #94a3b8; font-size: 18px; font-weight: 500; }
-  .rr-headline { font-size: 18px; font-weight: 600; color: #0f172a; margin: 8px 0; line-height: 1.4; }
-  .rr-issue { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; border-radius: 8px; text-align: left; margin: 20px 0; font-size: 14px; color: #78350f; }
-  .rr-issue strong { display: block; margin-bottom: 4px; color: #92400e; }
-
-  .rr-unlock { background: linear-gradient(135deg, #0a8a75 0%, #086f5f 100%); color: #fff; padding: 24px; border-radius: 14px; margin-top: 24px; text-align: center; }
-  .rr-unlock h3 { margin: 0 0 8px; font-size: 20px; }
-  .rr-unlock p { margin: 0 0 16px; opacity: 0.95; font-size: 14px; }
-  .rr-unlock-btn { background: #fff; color: #0a8a75; padding: 12px 32px; border-radius: 10px; border: 0; font-weight: 700; font-size: 15px; cursor: pointer; }
-  .rr-unlock-btn:hover { background: #f0fdfa; }
-
-  .rr-share { text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eef2f7; }
-  .rr-share p { font-size: 13px; color: #64748b; margin-bottom: 12px; }
-  .rr-share-btn { display: inline-block; padding: 10px 20px; border-radius: 8px; font-weight: 600; font-size: 14px; text-decoration: none; margin: 0 4px; }
-  .rr-share-wa { background: #25d366; color: #fff; }
-  .rr-share-wa:hover { background: #128c7e; color: #fff; }
-  .rr-share-li { background: #0a66c2; color: #fff; }
-  .rr-share-li:hover { background: #084a8f; color: #fff; }
-
-  .rr-full { background: #f8fafc; border-radius: 12px; padding: 20px; margin-top: 20px; }
-  .rr-full h3 { color: #0f172a; font-size: 16px; margin: 16px 0 8px; }
-  .rr-full h3:first-child { margin-top: 0; }
-  .rr-full ul { margin: 0 0 12px; padding-left: 20px; color: #334155; font-size: 14px; line-height: 1.6; }
-  .rr-full p { color: #334155; font-size: 14px; line-height: 1.6; }
-
-  .rr-hidden { display: none !important; }
-  .rr-error { padding: 16px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; color: #991b1b; font-size: 14px; }
-
-  .rr-intensity { margin-top: 20px; padding: 16px; background: #f8fafc; border-radius: 12px; border: 1px solid #e5e7eb; }
-  .rr-intensity-label { font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
-  .rr-intensity-btns { display: flex; gap: 8px; }
-  .rr-intensity-btn {
-    flex: 1;
-    padding: 10px 12px;
-    border: 2px solid #e5e7eb;
-    background: #fff;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 13px;
-    font-weight: 500;
-    transition: all 0.15s;
-    color: #334155;
-  }
-  .rr-intensity-btn:hover { border-color: #0a8a75; background: #f0fdfa; }
-  .rr-intensity-btn.active {
-    border-color: #0a8a75;
-    background: #e6f7f4;
-    color: #0a8a75;
-    font-weight: 700;
-  }
-  .rr-intensity-desc { font-size: 12px; color: #64748b; margin-top: 8px; text-align: center; min-height: 16px; }
-</style>
+  <link rel="stylesheet" href="/static/css/resume-roast.css?v=1">
 
 <div class="rr-wrap">
   <div class="rr-hero">
-    <span class="rr-badge">Free - No login required</span>
-    <h1>Resume Roast</h1>
-    <p>Paste your resume. Get an honest AI score + the single most critical fix. Takes 30 seconds.</p>
+    <span class="rr-warning">⚡ Recruiters see the problem in 6 seconds ⚡</span>
+    <h1>Do You?</h1>
+    <p class="rr-hero-sub">Your resume, roasted by AI — with <em>fixes that actually land interviews</em>.</p>
+    <div class="rr-stats">
+      <div class="rr-stat-item">
+        <div class="rr-stat-value">2</div>
+        <div class="rr-stat-label">Free Scans</div>
+      </div>
+      <div class="rr-stat-item">
+        <div class="rr-stat-value">3</div>
+        <div class="rr-stat-label">Intensity</div>
+      </div>
+      <div class="rr-stat-item">
+        <div class="rr-stat-value">34</div>
+        <div class="rr-stat-label">Languages</div>
+      </div>
+      <div class="rr-stat-item">
+        <div class="rr-stat-value" id="rrHeroPrice">Rs 99</div>
+        <div class="rr-stat-label">Full Fix Report</div>
+      </div>
+    </div>
+    <p class="rr-social-proof">
+      Trusted by <span id="rrStatCounter">5,000</span>+ candidates &middot; No signup &middot; 30-second scan
+    </p>
   </div>
 
   <!-- INPUT STATE -->
@@ -147,7 +89,7 @@
       <h3>Unlock the full roast</h3>
       <p>Get buzzwords, missing skills, ATS optimization tips + full report.</p>
       <button class="rr-unlock-btn" onclick="rrUnlock()">
-        Unlock full report - Rs 99
+        Unlock full report - <span id="rrUnlockPrice">Rs 99</span>
       </button>
     </div>
 
@@ -420,6 +362,70 @@
       html += "<h3>ATS Optimization</h3><p>" + esc(full.ats_tips) + "</p>";
     }
     document.getElementById("rrFullContent").innerHTML = html || "<p>Full report ready.</p>";
+  }
+})();
+
+// ========== SESSION 73+: Dynamic currency pricing ==========
+(function() {
+  var priceCache = null;
+
+  function applyPrice(display) {
+    var heroEl = document.getElementById("rrHeroPrice");
+    if (heroEl) heroEl.textContent = display;
+    // Update unlock button price if it exists (may be added later)
+    var unlockEl = document.getElementById("rrUnlockPrice");
+    if (unlockEl) unlockEl.textContent = display;
+  }
+
+  function fetchPrice() {
+    if (priceCache) { applyPrice(priceCache); return; }
+    fetch("/api/public/price/resume_roast_teaser", { credentials: "include" })
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d && d.status !== "error" && d.amount_local != null) {
+          var cur = (d.currency || "INR").toUpperCase();
+          var symbol = {
+            "INR": "Rs ", "USD": "$", "GBP": "\u00a3", "EUR": "\u20ac",
+            "AUD": "A$", "CAD": "C$", "SGD": "S$", "AED": "AED ",
+            "JPY": "\u00a5", "CNY": "\u00a5"
+          }[cur] || (cur + " ");
+          // Round appropriately: no decimals for INR/JPY/CNY, 2 decimals for others
+          var amount = d.amount_local;
+          var decimals = (cur === "INR" || cur === "JPY" || cur === "CNY") ? 0 : 2;
+          var display = symbol + Number(amount).toFixed(decimals);
+          priceCache = display;
+          applyPrice(display);
+        }
+      })
+      .catch(function(e) {
+        // Silent fail - keep "Rs 99" default
+        console.warn("Price fetch failed:", e);
+      });
+  }
+
+  // Fetch on page load
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", fetchPrice);
+  } else {
+    fetchPrice();
+  }
+
+  // Also re-apply price when unlock button is created (after roast result)
+  var origRenderTeaser = window.renderTeaser;
+  // Since renderTeaser is inside an IIFE, we can't override directly.
+  // Instead, use MutationObserver to catch when the unlock button is added.
+  var observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(m) {
+      if (m.addedNodes && m.addedNodes.length > 0) {
+        var unlockEl = document.getElementById("rrUnlockPrice");
+        if (unlockEl && priceCache) {
+          unlockEl.textContent = priceCache;
+        }
+      }
+    });
+  });
+  if (document.body) {
+    observer.observe(document.body, { childList: true, subtree: true });
   }
 })();
 </script>
