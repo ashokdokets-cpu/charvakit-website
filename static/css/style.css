@@ -1,3 +1,56 @@
+/* ============================================================
+   SESSION 74 CRITICAL FIX
+   Restore Bootstrap's dropdown-hide behavior.
+   Without this, every dropdown in the nav renders open by
+   default, breaking the header layout across all pages.
+   ============================================================ */
+
+/* Hidden by default (closed state) */
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 1000;
+    min-width: 160px;
+    padding: 0.5rem 0;
+    margin: 0.125rem 0 0;
+    font-size: 1rem;
+    color: #212529;
+    text-align: left;
+    background-color: #fff;
+    background-clip: padding-box;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 0.25rem;
+}
+
+/* Shown when activated (open state) */
+.dropdown-menu.show {
+    display: block;
+}
+
+/* Ensure dropdown items are block-level */
+.dropdown-item {
+    display: block;
+    width: 100%;
+    padding: 0.25rem 1rem;
+    clear: both;
+    font-weight: 400;
+    color: #212529;
+    text-align: inherit;
+    text-decoration: none;
+    white-space: nowrap;
+    background-color: transparent;
+    border: 0;
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+    color: #1e2125;
+    background-color: #e9ecef;
+}
+
+/* ============================================================ */
 :root {
     --primary: #3ba591;
     --primary-dark: #2e8a78;
