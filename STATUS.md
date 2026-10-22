@@ -1,5 +1,51 @@
 # Charvak IT Consulting - Project Status
 
+**Last updated:** October 22, 2026 (Session 74 extended — revenue CTAs + Azure role)
+**Version:** v3.7-session-74-extended-20261022
+**Live:** https://www.charvakit.com
+**HEAD:** 6535cec
+
+## Session 74 Extended — COMPLETE (2026-10-22)
+
+### Production Status (verified)
+
+- Homepage: 200 (0.42s)
+- Cert page: 200 (0.39s)
+- Azure role: 200 (0.25s)
+- Open roles: 200 (0.36s)
+- Resume Roast: 200 (0.28s)
+- Razorpay: live, working
+
+### What Shipped Today
+
+Bug Fixes:
+- Production CSS layout failure (missing .dropdown-menu rule)
+- Pre-existing backtick-n JS syntax error in readiness.html
+
+Features:
+- Certificate page CTAs (2 HTML-only links)
+
+Business:
+- Azure & Hybrid Infrastructure Engineer role posted
+- 12 screening questions configured
+
+### Backup Created
+
+- C:\projects\Charvak_Complete_Backup_20261022_235656.zip
+- 48.20 MB (677 files + 197 DB tables)
+- Contains .env + .env.local (sensitive — do not share)
+
+### Session 75 Ready
+
+Read SESSION-CONTEXT.md for full state. Priorities:
+1. Homepage CTA to /ai-assessment
+2. Email capture before cert download
+3. Nav Phase 2 (VS Code direct edit)
+
+---
+
+# Charvak IT Consulting - Project Status
+
 **Last updated:** 2026-10-20 (Session 70 — Wave 3 100% COMPLETE)
 **Version:** v3.7-session-70-20261020
 **Live:** https://www.charvakit.com

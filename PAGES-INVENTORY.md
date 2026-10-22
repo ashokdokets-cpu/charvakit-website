@@ -808,3 +808,26 @@ floating panel on `/my-course/{enrollment_id}`.
 
 **S67b bug fixes documented in KNOWN-ISSUES:** see "AI Tutor frontend
 nav overlap" entry for the elementFromPoint debugging pattern.
+
+
+## Session 74 Extended (2026-10-22) - Revenue CTAs + Azure Role
+
+### New Role (dynamic from DB)
+
+Template: (from DB) | Route: /open-roles/ROLE-7B9405A1 | Purpose: Senior Azure and Hybrid Infrastructure Engineer | Auth: No (public apply)
+
+### Certificate Page Updates
+
+templates/readiness.html (Session 74 extended):
+- Added 2 conversion CTAs below "what next?" funnel
+- "Retake with role focus" -> /ai-assessment
+- "See recommended courses" -> /ai-courses
+- Both are pure HTML a href links — no JS dependency
+
+### Nav Updates (Session 74 Phase 1)
+
+templates/base.html:
+- Auth CTAs moved to global bar: Sign In + Get Started ->
+- Auth dropdown removed from main nav (14 items -> 13 + auth in top bar)
+- checkLoginState() extended to toggle #topAuthOut / #topAuthIn
+
