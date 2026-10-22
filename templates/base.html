@@ -159,6 +159,50 @@ window.addEventListener('charvak:mainready', function() {
         background: #2d8a7a;
     }
 }
+/* Session 76: Nav Phase 2 - mega-menu styles */
+.navbar-dark .navbar-nav .dropdown-menu {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.15) !important;
+    padding: 8px !important;
+    margin-top: 8px !important;
+}
+
+.navbar-dark .navbar-nav .dropdown-menu .dropdown-header {
+    color: #3ba591 !important;
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    letter-spacing: 1px !important;
+    text-transform: uppercase !important;
+    padding: 8px 12px 4px !important;
+}
+
+.navbar-dark .navbar-nav .dropdown-menu .dropdown-item {
+    color: #0f172a !important;
+    font-size: 14px !important;
+    padding: 8px 12px !important;
+    border-radius: 6px !important;
+    transition: all 0.15s ease !important;
+}
+
+.navbar-dark .navbar-nav .dropdown-menu .dropdown-item:hover,
+.navbar-dark .navbar-nav .dropdown-menu .dropdown-item:focus {
+    background: #e2e8f0 !important;
+    color: #0a8a75 !important;
+}
+
+.navbar-dark .navbar-nav .dropdown-menu .dropdown-divider {
+    margin: 6px 0 !important;
+    border-color: #e2e8f0 !important;
+}
+
+@media (max-width: 991.98px) {
+    .navbar-dark .navbar-nav .dropdown-menu {
+        min-width: 100% !important;
+        max-width: 100% !important;
+    }
+}
 </style>
         
     <!-- Google Analytics -->
@@ -311,90 +355,98 @@ window.addEventListener('charvak:mainready', function() {
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav me-auto ms-3">
-                <li class="nav-item"><a class="nav-link" href="/" data-i18n="nav.home">Home</a></li>
+                        <ul class="navbar-nav me-auto ms-3">
+                <li class="nav-item">
+                    <a class="nav-link" href="/" data-i18n="nav.home"><i class="bi bi-house-door me-1"></i>Home</a>
+                </li>
+
+                <!-- 1. LEARN -->
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="/assessments" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        🎯 Assessments
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-mortarboard me-1"></i>Learn
                     </a>
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="/assessments">All Assessments</a></li>
+                        <li><h6 class="dropdown-header">Practice &amp; Exam Prep</h6></li>
+                        <li><a class="dropdown-item" style="color:#3ba591;font-weight:600;" href="/exam-prep" data-i18n="nav.exam_prep_short">Exam Prep (138+)</a></li>
+                        <li><a class="dropdown-item" style="color:#3ba591;font-weight:600;" href="/readiness-check">Readiness Check (Free)</a></li>
+                        <li><a class="dropdown-item" style="color:#3ba591;font-weight:600;" href="/ielts-band-guess">Free IELTS Band Guesser</a></li>
                         <li><hr class="dropdown-divider"></li>
+                        <li><h6 class="dropdown-header">Assessments</h6></li>
+                        <li><a class="dropdown-item" href="/assessments">All Assessments</a></li>
+                        <li><a class="dropdown-item" href="/ai-assessment" data-i18n="nav_resources.ai_assessment">Career Assessment</a></li>
+                        <li><a class="dropdown-item" href="/mock-drive" data-i18n="nav.mock_drives">Mock Drives</a></li>
                         <li><a class="dropdown-item" href="/ielts">IELTS (All Sections)</a></li>
                         <li><a class="dropdown-item" href="/ielts-speaking">IELTS Speaking</a></li>
-                        <li><a class="dropdown-item" href="/ielts-band-guess" style="color:#3ba591;font-weight:600;">Free IELTS Band Guesser</a></li>
                         <li><a class="dropdown-item" href="/versant">Versant English</a></li>
                         <li><a class="dropdown-item" href="/advanced-assessment">Advanced Assessment</a></li>
-                    </ul>
-                </li>
-                <li class="nav-item"><a class="nav-link" href="/mock-drive" data-i18n="nav.mock_drives">Mock Drives</a></li>
-                <li class="nav-item"><a class="nav-link" href="/training" data-i18n="nav.training">📚 Training</a></li>
-                <li class="nav-item"><a class="nav-link" href="/ai-courses" data-i18n="nav.ai_courses">🤖 AI Courses</a></li>
-                
-                <li class="nav-item dropdown">
-    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Services</a>
-    <ul class="dropdown-menu">
-        <li><a class="dropdown-item" href="/services/web-design" data-i18n="nav_services.web_design">Web Designing</a></li>
-        <li><a class="dropdown-item" href="/services/staff-augmentation" data-i18n="nav_services.staff_augmentation">Staff Augmentation</a></li>
-        <li><a class="dropdown-item" href="/na-bench-staffing" data-i18n="nav_services.na_bench_staffing">🇺🇸 NA Bench Staffing</a></li>
-        <li><hr class="dropdown-divider"></li>
-        <li><a class="dropdown-item" href="/career-engine" data-i18n="nav_services.career_engine">Career Engine</a></li>
-        <li><a class="dropdown-item" href="/career-center" data-i18n="nav_services.career_center">My Career Center</a></li>
-        <li><a class="dropdown-item" href="/cohorts" data-i18n="nav_services.cohorts">🏆 My Cohorts</a></li>
-        <li><a class="dropdown-item" href="/job-board" data-i18n="nav_services.job_board">Job Board</a></li>
-        <li><a class="dropdown-item" href="/training-engine" data-i18n="nav_services.training_engine">Training Engine</a></li>
-        <li><hr class="dropdown-divider"></li>
-        <li><a class="dropdown-item" href="/micro-internship" data-i18n="nav_services.micro_internship">🎓 Micro-Internship</a></li>
-        <li><a class="dropdown-item" href="/post-job" data-i18n="nav_services.post_job">📋 Post a Job</a></li>
-        <li><a class="dropdown-item" href="/post-micro-project" data-i18n="nav_services.post_micro_project">📋 Post Micro Project</a></li>
-        <li><hr class="dropdown-divider"></li>
-        <li><a class="dropdown-item" href="/candidate/signup" data-i18n="nav_services.join_talent_pool">👤 Join Talent Pool</a></li>
-        <li><a class="dropdown-item" href="/hire-talent" data-i18n="nav_services.hire_talent">🏢 Hire Talent</a></li>
-        <li><a class="dropdown-item" href="/na-client-signup" data-i18n="nav_services.na_client_signup">🏢 NA Client Signup</a></li>
-    </ul>
-</li>
-                
-                <li class="nav-item">
-                    <a class="nav-link" href="/exam-prep" style="color:#3ba591; font-weight:600;" data-i18n="nav.exam_prep_short"> Exam Prep</a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link" href="/readiness-check" style="color:#3ba591; font-weight:600;">Readiness Check</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/open-roles" style="color:#3ba591; font-weight:600;">Open Roles</a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link" href="/jd-assessment" style="color:#3ba591; font-weight:600;">🎯 JD Scanner</a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link" href="/employer/dashboard" style="color:#3ba591; font-weight:600;">🏢 For Employers</a>
-                </li>
-                
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">AI Tools</a>
-                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/indian-language-ai" data-i18n="nav_resources.indian_language_ai">Indian Language AI</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><h6 class="dropdown-header">Courses &amp; Training</h6></li>
+                        <li><a class="dropdown-item" href="/ai-courses" data-i18n="nav.ai_courses">AI Courses</a></li>
+                        <li><a class="dropdown-item" href="/training" data-i18n="nav.training">Training</a></li>
+                        <li><a class="dropdown-item" href="/training-engine" data-i18n="nav_services.training_engine">Training Engine</a></li>
+                        <li><a class="dropdown-item" href="/lms" data-i18n="nav_resources.lms">LMS</a></li>
                         <li><a class="dropdown-item" href="/student-suite" data-i18n="nav_tools.student_suite">Student Suite</a></li>
-                        <li><a class="dropdown-item" href="/ai-credits-pricing" data-i18n="nav_tools.ai_credits">AI Credits</a></li>
-                        <li><a class="dropdown-item" href="/ai-internship" style="color:#3ba591; font-weight:600;" data-i18n="nav.ai_internship_short">AI Internship</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="/tools" data-i18n="nav_tools.ai_tools_suite">AI Tools Suite</a></li>
-                        <li><a class="dropdown-item" href="/my-tools">My Tools History</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="/slop-check" style="color:#3ba591; font-weight:600;">Free AI Slop Checker</a></li>
-                        <li><a class="dropdown-item" href="/tools/resume-roast" style="color:#3ba591; font-weight:600;">Free Resume Roaster</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="/voice-to-web" data-i18n="nav_tools.voice_to_web">Voice-to-Web</a></li>
-                        <li><a class="dropdown-item" href="/neural-wireframe" data-i18n="nav_tools.neural_wireframe">Neural Wireframe</a></li>
-                        <li><a class="dropdown-item" href="/outreach" data-i18n="nav_tools.outreach_tools">Outreach Tools</a></li>
                     </ul>
                 </li>
-                
+
+                <!-- 2. PROVE -->
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Products</a>
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-patch-check me-1"></i>Prove
+                    </a>
                     <ul class="dropdown-menu">
+                        <li><h6 class="dropdown-header">Certificates</h6></li>
+                        <li><a class="dropdown-item" style="color:#3ba591;font-weight:600;" href="/readiness-check">Readiness Check (Free)</a></li>
+                        <li><a class="dropdown-item" href="/my-results">My Results</a></li>
+                        <li><a class="dropdown-item" href="/my-reports">My Reports</a></li>
+                        <li><a class="dropdown-item" href="/passport/me">My Passport</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><h6 class="dropdown-header">Progress</h6></li>
+                        <li><a class="dropdown-item" href="/cohorts" data-i18n="nav_services.cohorts">My Cohorts</a></li>
+                        <li><a class="dropdown-item" href="/my-applications">My Applications</a></li>
+                        <li><a class="dropdown-item" href="/profile" data-i18n="nav.dashboard">My Profile</a></li>
+                    </ul>
+                </li>
+
+                <!-- 3. GET HIRED -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-briefcase me-1"></i>Get Hired
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><h6 class="dropdown-header">Find Opportunities</h6></li>
+                        <li><a class="dropdown-item" style="color:#3ba591;font-weight:600;" href="/jd-assessment">JD Scanner</a></li>
+                        <li><a class="dropdown-item" style="color:#3ba591;font-weight:600;" href="/open-roles">Open Roles</a></li>
+                        <li><a class="dropdown-item" href="/job-board" data-i18n="nav_services.job_board">Job Board</a></li>
+                        <li><a class="dropdown-item" href="/micro-internship" data-i18n="nav_services.micro_internship">Micro-Internship</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><h6 class="dropdown-header">Career Tools</h6></li>
+                        <li><a class="dropdown-item" href="/career-engine" data-i18n="nav_services.career_engine">Career Engine</a></li>
+                        <li><a class="dropdown-item" href="/career-center" data-i18n="nav_services.career_center">My Career Center</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><h6 class="dropdown-header">For Employers</h6></li>
+                        <li><a class="dropdown-item" style="color:#3ba591;font-weight:600;" href="/employer/dashboard">Employer Dashboard</a></li>
+                        <li><a class="dropdown-item" href="/post-job" data-i18n="nav_services.post_job">Post a Job</a></li>
+                        <li><a class="dropdown-item" href="/post-micro-project" data-i18n="nav_services.post_micro_project">Post Micro Project</a></li>
+                        <li><a class="dropdown-item" href="/hire-talent" data-i18n="nav_services.hire_talent">Hire Talent</a></li>
+                    </ul>
+                </li>
+
+                <!-- 4. FOR BUSINESS -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-building me-1"></i>For Business
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><h6 class="dropdown-header">Services</h6></li>
+                        <li><a class="dropdown-item" href="/services/web-design" data-i18n="nav_services.web_design">Web Designing</a></li>
+                        <li><a class="dropdown-item" href="/services/staff-augmentation" data-i18n="nav_services.staff_augmentation">Staff Augmentation</a></li>
+                        <li><a class="dropdown-item" href="/na-bench-staffing" data-i18n="nav_services.na_bench_staffing">NA Bench Staffing</a></li>
+                        <li><a class="dropdown-item" href="/na-client-signup" data-i18n="nav_services.na_client_signup">NA Client Signup</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><h6 class="dropdown-header">AI Products</h6></li>
+                        <li><a class="dropdown-item" href="/products" data-i18n="nav_products.view_all">View All Products</a></li>
                         <li><a class="dropdown-item" href="/products/dokets-vouchai">Dokets VouchAI</a></li>
                         <li><a class="dropdown-item" href="/doketsrb">DoketsRB Suite</a></li>
                         <li><a class="dropdown-item" href="/lock-in-breaker">Lock-In Breaker</a></li>
@@ -402,47 +454,53 @@ window.addEventListener('charvak:mainready', function() {
                         <li><a class="dropdown-item" href="/skill-twin">Skill-Twin</a></li>
                         <li><a class="dropdown-item" href="/micro-squads">Micro-Squads</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="/products" data-i18n="nav_products.view_all">View All Products →</a></li>
+                        <li><h6 class="dropdown-header">Company</h6></li>
+                        <li><a class="dropdown-item" href="/about" data-i18n="nav_resources.about">About</a></li>
+                        <li><a class="dropdown-item" href="/team" data-i18n="nav_resources.our_team">Our Team</a></li>
+                        <li><a class="dropdown-item" href="/contact" data-i18n="nav_resources.contact">Contact</a></li>
                     </ul>
                 </li>
-                
-                <li class="nav-item dropdown">
-    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Resources</a>
-    <ul class="dropdown-menu" style="min-width:500px; max-height:400px; overflow-y:auto; columns:2; column-gap:10px;">
-        <li><strong class="dropdown-header text-white-50 px-3 py-2" style="font-size:11px; letter-spacing:1px;">📚 LEARNING</strong></li>
-        <li><a class="dropdown-item" href="/blog" data-i18n="nav_resources.blog">Blog</a></li>
-        <li><a class="dropdown-item" href="/case-studies" data-i18n="nav_resources.case_studies">Case Studies</a></li>
 
+                <!-- 5. RESOURCES -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-collection me-1"></i>Resources
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><h6 class="dropdown-header">AI Tools</h6></li>
+                        <li><a class="dropdown-item" href="/tools" data-i18n="nav_tools.ai_tools_suite">All AI Tools Suite</a></li>
+                        <li><a class="dropdown-item" style="color:#3ba591;font-weight:600;" href="/tools/resume-roast">Free Resume Roaster</a></li>
+                        <li><a class="dropdown-item" style="color:#3ba591;font-weight:600;" href="/slop-check">Free AI Slop Checker</a></li>
+                        <li><a class="dropdown-item" href="/my-tools">My Tools History</a></li>
+                        <li><a class="dropdown-item" href="/ai-credits-pricing" data-i18n="nav_tools.ai_credits">AI Credits</a></li>
+                        <li><a class="dropdown-item" style="color:#3ba591;font-weight:600;" href="/ai-internship" data-i18n="nav.ai_internship_short">AI Internship</a></li>
+                        <li><a class="dropdown-item" href="/voice-to-web" data-i18n="nav_tools.voice_to_web">Voice-to-Web</a></li>
+                        <li><a class="dropdown-item" href="/neural-wireframe" data-i18n="nav_tools.neural_wireframe">Neural Wireframe</a></li>
+                        <li><a class="dropdown-item" href="/outreach" data-i18n="nav_tools.outreach_tools">Outreach Tools</a></li>
+                        <li><a class="dropdown-item" href="/marketing-ai" data-i18n="nav_resources.marketing_ai">Marketing AI</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><h6 class="dropdown-header">Content</h6></li>
+                        <li><a class="dropdown-item" href="/blog" data-i18n="nav_resources.blog">Blog</a></li>
+                        <li><a class="dropdown-item" href="/case-studies" data-i18n="nav_resources.case_studies">Case Studies</a></li>
                         <li><a class="dropdown-item" href="/testimonials" data-i18n="nav_resources.testimonials">Testimonials</a></li>
-        <li><a class="dropdown-item" href="/events" data-i18n="nav_resources.events">Events</a></li>
-        <li><a class="dropdown-item" href="/companies" data-i18n="nav_resources.companies">Companies</a></li>
-        <li><a class="dropdown-item" href="/how-it-works" data-i18n="nav_resources.how_it_works">How It Works</a></li>
-        
-        <li><strong class="dropdown-header text-white-50 px-3 py-2" style="font-size:11px; letter-spacing:1px;">🎓 EDUCATION</strong></li>
-        <li><a class="dropdown-item" href="/lms" data-i18n="nav_resources.lms">LMS</a></li>
-        <li><a class="dropdown-item" href="/ai-assessment" data-i18n="nav_resources.ai_assessment">AI Assessment</a></li>
-        <li><a class="dropdown-item" href="/university" data-i18n="nav_resources.university_portal">University Portal</a></li>
-        <li><a class="dropdown-item" href="/marketing-ai" data-i18n="nav_resources.marketing_ai">Marketing AI</a></li>
-        
-        <li><strong class="dropdown-header text-white-50 px-3 py-2" style="font-size:11px; letter-spacing:1px;">🔧 TOOLS</strong></li>
-        <li><a class="dropdown-item" href="/ats" data-i18n="nav_resources.ats_integration">ATS Integration</a></li>
-        <li><a class="dropdown-item" href="/indian-language-ai" data-i18n="nav_resources.indian_language_ai">Indian Language AI</a></li>
-        <li><a class="dropdown-item" href="/reports" data-i18n="nav_resources.reports">Reports</a></li>
-        <li><a class="dropdown-item" href="/payments" data-i18n="nav_resources.payments">Payments</a></li>
-        
-        <li><strong class="dropdown-header text-white-50 px-3 py-2" style="font-size:11px; letter-spacing:1px;">👤 USER</strong></li>
-        <li><a class="dropdown-item" href="/profile-network" data-i18n="nav_resources.profile_network">Profile & Network</a></li>
-        <li><a class="dropdown-item" href="/team-dashboard" data-i18n="nav_resources.team_dashboard">Team Dashboard</a></li>
-        
-        <li><strong class="dropdown-header text-white-50 px-3 py-2" style="font-size:11px; letter-spacing:1px;">ABOUT</strong></li>
-        <li><a class="dropdown-item" href="/about" data-i18n="nav_resources.about">About</a></li>
-        <li><a class="dropdown-item" href="/team" data-i18n="nav_resources.our_team">Our Team</a></li>
-        <li><a class="dropdown-item" href="/careers" data-i18n="nav_resources.careers">Careers</a></li>
-        <li><a class="dropdown-item" href="/pricing" data-i18n="nav_resources.pricing">Pricing</a></li>
-        <li><a class="dropdown-item" href="/capabilities" data-i18n="nav_resources.capabilities">Capabilities</a></li>
-        <li><a class="dropdown-item" href="/contact" data-i18n="nav_resources.contact">Contact</a></li>
-    </ul>
-</li>
+                        <li><a class="dropdown-item" href="/events" data-i18n="nav_resources.events">Events</a></li>
+                        <li><a class="dropdown-item" href="/companies" data-i18n="nav_resources.companies">Companies</a></li>
+                        <li><a class="dropdown-item" href="/how-it-works" data-i18n="nav_resources.how_it_works">How It Works</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><h6 class="dropdown-header">Education</h6></li>
+                        <li><a class="dropdown-item" href="/university" data-i18n="nav_resources.university_portal">University Portal</a></li>
+                        <li><a class="dropdown-item" href="/careers" data-i18n="nav_resources.careers">Careers at Charvak</a></li>
+                        <li><a class="dropdown-item" href="/pricing" data-i18n="nav_resources.pricing">Pricing</a></li>
+                        <li><a class="dropdown-item" href="/capabilities" data-i18n="nav_resources.capabilities">Capabilities</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><h6 class="dropdown-header">Account Tools</h6></li>
+                        <li><a class="dropdown-item" href="/ats" data-i18n="nav_resources.ats_integration">ATS Integration</a></li>
+                        <li><a class="dropdown-item" href="/reports" data-i18n="nav_resources.reports">Reports</a></li>
+                        <li><a class="dropdown-item" href="/payments" data-i18n="nav_resources.payments">Payments</a></li>
+                        <li><a class="dropdown-item" href="/profile-network" data-i18n="nav_resources.profile_network">Profile &amp; Network</a></li>
+                        <li><a class="dropdown-item" href="/team-dashboard" data-i18n="nav_resources.team_dashboard">Team Dashboard</a></li>
+                    </ul>
+                </li>
             </ul>
             
             <div class="d-flex align-items-center">
