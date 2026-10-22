@@ -366,13 +366,16 @@
 })();
 
 // ========== SESSION 73+: Dynamic currency pricing ==========
+// Fetches price on page load, updates hero + unlock button text directly.
+// No MutationObserver (was causing infinite loop on .textContent changes).
+// The #rrUnlockPrice span exists in static HTML, so no DOM injection needed.
+
 (function() {
   var priceCache = null;
 
   function applyPrice(display) {
     var heroEl = document.getElementById("rrHeroPrice");
     if (heroEl) heroEl.textContent = display;
-    // Update unlock button price if it exists (may be added later)
     var unlockEl = document.getElementById("rrUnlockPrice");
     if (unlockEl) unlockEl.textContent = display;
   }
@@ -389,43 +392,23 @@
             "AUD": "A$", "CAD": "C$", "SGD": "S$", "AED": "AED ",
             "JPY": "\u00a5", "CNY": "\u00a5"
           }[cur] || (cur + " ");
-          // Round appropriately: no decimals for INR/JPY/CNY, 2 decimals for others
           var amount = d.amount_local;
           var decimals = (cur === "INR" || cur === "JPY" || cur === "CNY") ? 0 : 2;
           var display = symbol + Number(amount).toFixed(decimals);
           priceCache = display;
+          window.__rrPriceDisplay = display;
           applyPrice(display);
         }
       })
       .catch(function(e) {
-        // Silent fail - keep "Rs 99" default
         console.warn("Price fetch failed:", e);
       });
   }
 
-  // Fetch on page load
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", fetchPrice);
   } else {
     fetchPrice();
-  }
-
-  // Also re-apply price when unlock button is created (after roast result)
-  var origRenderTeaser = window.renderTeaser;
-  // Since renderTeaser is inside an IIFE, we can't override directly.
-  // Instead, use MutationObserver to catch when the unlock button is added.
-  var observer = new MutationObserver(function(mutations) {
-    mutations.forEach(function(m) {
-      if (m.addedNodes && m.addedNodes.length > 0) {
-        var unlockEl = document.getElementById("rrUnlockPrice");
-        if (unlockEl && priceCache) {
-          unlockEl.textContent = priceCache;
-        }
-      }
-    });
-  });
-  if (document.body) {
-    observer.observe(document.body, { childList: true, subtree: true });
   }
 })();
 </script>
