@@ -382,7 +382,7 @@
 
   function fetchPrice() {
     if (priceCache) { applyPrice(priceCache); return; }
-    fetch("/api/public/price/resume_roast_teaser", { credentials: "include" })
+    fetch("/api/public/price/resume_roast_teaser" + window.location.search, { credentials: "include" })
       .then(function(r) { return r.json(); })
       .then(function(d) {
         if (d && d.status !== "error" && d.amount_local != null) {
