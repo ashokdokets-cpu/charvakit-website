@@ -203,6 +203,20 @@ window.addEventListener('charvak:mainready', function() {
         max-width: 100% !important;
     }
 }
+
+        
+        /* Session 77C: Properly position nav below the 41px strip with 12px gap */
+        nav.navbar.fixed-top {
+            top: 53px !important;
+        }
+
+        
+        /* Mobile: strip may wrap taller, so give extra room */
+        @media (max-width: 768px) {
+            nav.navbar.fixed-top {
+                top: 60px !important;
+            }
+        }
 </style>
         
     <!-- Google Analytics -->
