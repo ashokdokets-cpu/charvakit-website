@@ -214,64 +214,89 @@ window.addEventListener('charvak:mainready', function() {
     <!-- Global Bar -->
     <div class="global-bar bg-dark text-white py-1 fixed-top" style="z-index:1040;">
         <div class="container">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <small class="me-3"><i class="bi bi-globe me-1"></i> <span class="d-none d-md-inline" data-i18n="topbar.global_platform">Global Platform</span><span class="d-md-none"></span></small>
-                    <small class="me-3"><i class="bi bi-translate me-1"></i> <span class="d-none d-md-inline" data-i18n="topbar.languages_count">34 Languages</span><span class="d-md-none">34</span></small>
-                    <small><i class="bi bi-cash-coin me-1"></i> <span class="d-none d-md-inline" data-i18n="topbar.currencies_count">13 Currencies</span><span class="d-md-none">13</span></small>
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <!-- LEFT: Language + Currency pickers -->
+                <div class="d-flex align-items-center gap-2">
+                    <small class="d-none d-lg-inline-block me-2"><i class="bi bi-globe me-1"></i><span data-i18n="topbar.global_platform">Global Platform</span></small>
+                    <select class="form-select form-select-sm d-inline-block w-auto bg-dark text-white border-secondary" id="langSelector" onchange="changeLanguage(this.value)" aria-label="Select language" style="max-width:140px;">
+                                                        <option value="en">English</option>
+                            <option value="hi">हिन्दी</option>
+                            <option value="te">తెలుగు</option>
+                            <option value="ta">தமிழ்</option>
+                            <option value="kn">ಕನ್ನಡ</option>
+                            <option value="ml">മലയാളം</option>
+                            <option value="mr">मराठी</option>
+                            <option value="bn">বাংলা</option>
+                            <option value="gu">ગુજરાતી</option>
+                            <option value="pa">ਪੰਜਾਬੀ</option>
+                            <option value="es">Español</option>
+                            <option value="fr">Français</option>
+                            <option value="de">Deutsch</option>
+                            <option value="pt">Português</option>
+                            <option value="it">Italiano</option>
+                            <option value="nl">Nederlands</option>
+                            <option value="ru">Русский</option>
+                            <option value="ar">العربية</option>
+                            <option value="zh">中文</option>
+                            <option value="ja">日本語</option>
+                            <option value="ko">한국어</option>
+                            <option value="tr">Türkçe</option>
+                            <option value="vi">Tiếng Việt</option>
+                            <option value="th">ไทย</option>
+                            <option value="id">Bahasa Indonesia</option>
+                            <option value="ms">Bahasa Melayu</option>
+                            <option value="fil">Filipino</option>
+                            <option value="sw">Kiswahili</option>
+                            <option value="am">አማርኛ</option>
+                            <option value="ha">Hausa</option>
+                            <option value="yo">Yorùbá</option>
+                            <option value="ig">Igbo</option>
+                            <option value="zu">isiZulu</option>
+                            <option value="so">Soomaali</option></select>
+                    <select class="form-select form-select-sm d-inline-block w-auto bg-dark text-white border-secondary" id="currencySelector" onchange="changeCurrency(this.value)" aria-label="Select currency" style="max-width:100px;">
+                                                        <option value="INR" selected>₹ INR</option>
+                            <option value="USD">$ USD</option>
+                            <option value="EUR">€ EUR</option>
+                            <option value="GBP">£ GBP</option>
+                            <option value="AED">Ø¯.Ø¥ AED</option>
+                            <option value="SGD">S$ SGD</option>
+                            <option value="AUD">A$ AUD</option>
+                            <option value="CAD">C$ CAD</option>
+                            <option value="JPY">¥ JPY</option>
+                            <option value="CNY">¥ CNY</option>
+                            <option value="BRL">R$ BRL</option>
+                            <option value="NGN">₦ NGN</option>
+                            <option value="ZAR">R ZAR</option></select>
                 </div>
-                <div class="col-md-6 text-end">
-                    <select class="form-select form-select-sm d-inline-block w-auto me-2 bg-dark text-white border-secondary" id="langSelector" onchange="changeLanguage(this.value)" aria-label="Select language">
-    <option value="en">English</option>
-    <option value="hi">हिन्दी</option>
-    <option value="te">తెలుగు</option>
-    <option value="ta">தமிழ்</option>
-    <option value="kn">ಕನ್ನಡ</option>
-    <option value="ml">മലയാളം</option>
-    <option value="mr">मराठी</option>
-    <option value="bn">বাংলা</option>
-    <option value="gu">ગુજરાતી</option>
-    <option value="pa">ਪੰਜਾਬੀ</option>
-    <option value="es">Español</option>
-    <option value="fr">Français</option>
-    <option value="de">Deutsch</option>
-    <option value="pt">Português</option>
-    <option value="it">Italiano</option>
-    <option value="nl">Nederlands</option>
-    <option value="ru">Русский</option>
-    <option value="ar">العربية</option>
-    <option value="zh">中文</option>
-    <option value="ja">日本語</option>
-    <option value="ko">한국어</option>
-    <option value="tr">Türkçe</option>
-    <option value="vi">Tiếng Việt</option>
-    <option value="th">ไทย</option>
-    <option value="id">Bahasa Indonesia</option>
-    <option value="ms">Bahasa Melayu</option>
-    <option value="fil">Filipino</option>
-    <option value="sw">Kiswahili</option>
-    <option value="am">አማርኛ</option>
-    <option value="ha">Hausa</option>
-    <option value="yo">Yorùbá</option>
-    <option value="ig">Igbo</option>
-    <option value="zu">isiZulu</option>
-    <option value="so">Soomaali</option>
-</select>
-                    <select class="form-select form-select-sm d-inline-block w-auto bg-dark text-white border-secondary" id="currencySelector" onchange="changeCurrency(this.value)" aria-label="Select currency">
-    <option value="INR" selected>₹ INR</option>
-    <option value="USD">$ USD</option>
-    <option value="EUR">€ EUR</option>
-    <option value="GBP">£ GBP</option>
-    <option value="AED">Ø¯.Ø¥ AED</option>
-    <option value="SGD">S$ SGD</option>
-    <option value="AUD">A$ AUD</option>
-    <option value="CAD">C$ CAD</option>
-    <option value="JPY">¥ JPY</option>
-    <option value="CNY">¥ CNY</option>
-    <option value="BRL">R$ BRL</option>
-    <option value="NGN">₦ NGN</option>
-    <option value="ZAR">R ZAR</option>
-</select>
+                <!-- RIGHT: Auth CTAs -->
+                <div class="d-flex align-items-center gap-3">
+                    <!-- Logged out CTAs (shown by default, hidden by JS when authed) -->
+                    <div id="topAuthOut" class="d-flex align-items-center gap-3">
+                        <a href="/login" class="text-white text-decoration-none small" style="opacity:0.85;">Sign In</a>
+                        <a href="/register" class="btn btn-sm" style="background:#3ba591; color:#fff; font-weight:600; padding:4px 14px; border-radius:6px; white-space:nowrap;">Get Started →</a>
+                    </div>
+                    <!-- Logged in: auth dropdown (hidden by default, shown by JS) -->
+                    <div class="dropdown d-none" id="topAuthIn">
+                        <button class="btn btn-outline-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" id="userMenuButton" aria-label="User account menu">
+                            <i class="bi bi-person-circle me-1"></i><span id="userMenuLabel">Login</span>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end p-3" style="width:280px;">
+                            <div id="loggedInMenu" style="display:none;">
+                                <h3 class="text-white h6">My Account</h3>
+                                <p class="text-white-50 small mb-2" id="loggedInEmail"></p>
+                                <a href="/passport/me" class="btn btn-outline-warning btn-sm w-100 mb-2" style="border-color:#ffc107;color:#ffc107;font-weight:600;">🏛️ My Passport</a>
+                                <a href="/credit-dashboard" class="btn btn-outline-success btn-sm w-100 mb-2" data-i18n="nav.dashboard">Dashboard</a>
+                                <a href="/profile" class="btn btn-outline-info btn-sm w-100 mb-2">My Profile</a>
+                                <a href="/my-applications" class="btn btn-outline-info btn-sm w-100 mb-2">My Applications</a>
+                                <a href="/my-results" class="btn btn-outline-warning btn-sm w-100 mb-2">My Results</a>
+                                <a href="/my-reports" class="btn btn-outline-info btn-sm w-100 mb-2">My Reports</a>
+                                <a href="/readiness-check" class="btn btn-outline-info btn-sm w-100 mb-2">My Certificates</a>
+                                <a href="/exam-prep" class="btn btn-outline-primary btn-sm w-100 mb-2" data-i18n="nav.exam_prep_short">Exam Prep</a>
+                                <a href="/ai-internship" class="btn btn-outline-info btn-sm w-100 mb-2" data-i18n="nav.ai_internship_short">AI Internship</a>
+                                <button class="btn btn-danger btn-sm w-100" onclick="logoutUser()">Logout</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -424,38 +449,6 @@ window.addEventListener('charvak:mainready', function() {
                 <a href="/credit-dashboard" class="btn btn-sm btn-outline-success me-2 d-none d-lg-inline-block" title="My Credits">
                     <span id="nav-credits-display">Credits</span>
                 </a>
-                <div class="dropdown">
-    <button class="btn btn-outline-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" id="userMenuButton" aria-label="User account menu">
-    <i class="bi bi-person-circle me-1"></i><span id="userMenuLabel">Login</span>
-</button>
-    <div class="dropdown-menu dropdown-menu-end p-3" style="width:280px;">
-        <!-- Logged Out Menu -->
-        <div id="loggedOutMenu">
-            <h3 class="text-white h6">Quick Login</h3>
-            <a href="/login" class="btn btn-primary btn-sm w-100 mb-2" data-i18n="nav.login_with_email">Login with Email</a>
-            <!-- Session 42-13b: three dead SSO buttons removed. Google SSO coming in a future session. -->
-            <hr>
-            <small class="text-white d-block text-center mt-2">No account? <a href="/register" class="text-decoration-none text-warning" data-i18n="nav.register">Register</a></small>
-            <small class="text-white d-block text-center mt-1"><a href="/forgot-password" class="text-decoration-none text-info" data-i18n="nav.forgot_password">Forgot password?</a></small>
-        </div>
-        
-        <!-- Logged In Menu -->
-        <div id="loggedInMenu" style="display:none;">
-            <h3 class="text-white h6">My Account</h3>
-            <p class="text-white-50 small mb-2" id="loggedInEmail"></p>
-            <a href="/passport/me" class="btn btn-outline-warning btn-sm w-100 mb-2" style="border-color:#ffc107;color:#ffc107;font-weight:600;">🏛️ My Passport</a>
-            <a href="/credit-dashboard" class="btn btn-outline-success btn-sm w-100 mb-2" data-i18n="nav.dashboard">Dashboard</a>
-            <a href="/profile" class="btn btn-outline-info btn-sm w-100 mb-2">My Profile</a>
-            <a href="/my-applications" class="btn btn-outline-info btn-sm w-100 mb-2">My Applications</a>
-            <a href="/my-results" class="btn btn-outline-warning btn-sm w-100 mb-2">My Results</a>
-            <a href="/my-reports" class="btn btn-outline-info btn-sm w-100 mb-2">My Reports</a>
-            <a href="/readiness-check" class="btn btn-outline-info btn-sm w-100 mb-2">My Certificates</a>
-            <a href="/exam-prep" class="btn btn-outline-primary btn-sm w-100 mb-2" data-i18n="nav.exam_prep_short">Exam Prep</a>
-            <a href="/ai-internship" class="btn btn-outline-info btn-sm w-100 mb-2" data-i18n="nav.ai_internship_short">AI Internship</a>
-            <button class="btn btn-danger btn-sm w-100" onclick="logoutUser()">Logout</button>
-        </div>
-    </div>
-</div>
             </div>
         </div>
     </div>
@@ -836,6 +829,15 @@ function checkLoginState() {
         
         console.log('User not logged in');
     }
+        
+        // Session 74: Toggle top-bar auth CTAs (global bar)
+        try {
+            var topAuthOut = document.getElementById('topAuthOut');
+            var topAuthIn = document.getElementById('topAuthIn');
+            var isLoggedIn = loggedInMenu && loggedInMenu.style.display === 'block';
+            if (topAuthOut) topAuthOut.style.display = isLoggedIn ? 'none' : 'flex';
+            if (topAuthIn) topAuthIn.classList.toggle('d-none', !isLoggedIn);
+        } catch (e) { /* silent - never break login flow */ }
 }
 
 // Run checkLoginState on page load
