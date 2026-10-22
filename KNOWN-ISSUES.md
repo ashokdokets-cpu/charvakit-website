@@ -1068,3 +1068,57 @@ showing sync error.
 
 Fix: exclude /api/sync/* from the global 401 handler.
 Verdict: FLAGGED - 10 min fix, non-urgent.
+
+### RESOLVED - ?country= query param ignored in resume-roast (2026-10-22, d1b5b8c)
+
+The fetch call was:
+    fetch("/api/public/price/resume_roast_teaser", { credentials: "include" })
+Missing the query string. So ?country=US on the page URL never reached
+the API. API fell back to IP detection -> IN default -> INR 99 for
+everyone.
+
+Fix: one-line
+    fetch("/api/public/price/resume_roast_teaser" + window.location.search, { ... })
+
+**Debugging lesson:** the MutationObserver hotfix (14f0368) accidentally
+stripped this during the IIFE rewrite. The bug was masked by our
+diagnostic:
+
+    html.includes("MutationObserver") -> true
+
+which matched the WORD inside a comment ("// No MutationObserver...").
+Not a real observer. We chased the phantom for ~30 min.
+
+**Verification method (best):**
+
+In DevTools Console, run BOTH:
+    fetch("/api/public/price/resume_roast_teaser").then(r=>r.json()).then(d=>console.log(d))
+    fetch("/api/public/price/resume_roast_teaser" + window.location.search).then(r=>r.json()).then(d=>console.log(d))
+
+If they return different countries -> bug is in fetch URL, not API.
+
+### RESOLVED - MutationObserver + textContent infinite loop (2026-10-22, 14f0368)
+
+Never use MutationObserver with { childList: true, subtree: true } on
+document.body when the callback calls .textContent = value. The
+textContent write removes + adds a text node, which IS a childList
+mutation, which retriggers the observer -> infinite loop.
+
+Fix: don't use MutationObserver for state that can be computed at render
+time. Update the target element directly once, or bake values into
+template strings at render time.
+
+### RESOLVED - Dynamic currency display in resume-roast (2026-10-22, 1c1707c + d1b5b8c)
+
+Resume Roast now fetches local price on page load:
+    fetch("/api/public/price/resume_roast_teaser" + window.location.search)
+
+Renders hero (#rrHeroPrice) + unlock button (#rrUnlockPrice) in the
+visitor's currency. Verified on prod:
+    IN -> Rs 99
+    US -> \.99
+    GB -> £2.99
+    AE -> AED 14
+    JP -> JPY 500
+    (all 13 currencies via payment_engine.PUBLIC_PRICE_TABLE)
+
