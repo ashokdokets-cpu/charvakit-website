@@ -293,6 +293,77 @@
         </div>
     </div>
 
+
+<!-- Session 75: Email capture modal -->
+<div id="rdEmailModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.6); z-index:9999; align-items:center; justify-content:center; padding:20px;">
+  <div style="background:#fff; border-radius:16px; max-width:460px; width:100%; padding:32px; box-shadow:0 20px 50px rgba(0,0,0,0.3);">
+    <div style="text-align:center; margin-bottom:20px;">
+      <div style="font-size:2rem; margin-bottom:8px;">📄</div>
+      <h3 style="font-size:1.3rem; font-weight:800; color:#0f172a; margin-bottom:6px;">Where should we send it?</h3>
+      <p style="color:#64748b; font-size:0.95rem; margin:0;">Get your certificate PDF plus tips on using it on LinkedIn and your resume.</p>
+    </div>
+    <input type="email" id="rdEmailInput" placeholder="your@email.com" style="width:100%; padding:12px 16px; border:1.5px solid #e2e8f0; border-radius:8px; font-size:15px; margin-bottom:12px; font-family:inherit;" />
+    <button id="rdEmailSubmitBtn" onclick="rdSubmitEmailDownload()" style="width:100%; padding:12px; background:#0a8a75; color:#fff; border:none; border-radius:8px; font-weight:700; font-size:15px; cursor:pointer; margin-bottom:8px;">Email my certificate →</button>
+    <button onclick="rdSkipEmailDownload()" style="width:100%; padding:8px; background:transparent; color:#64748b; border:none; font-size:13px; cursor:pointer;">Skip — just download PDF</button>
+  </div>
+</div>
+<script>
+(function() {
+  var _rdPendingDownload = null;
+
+  window.rdSubmitEmailDownload = function() {
+    var input = document.getElementById('rdEmailInput');
+    var email = (input && input.value || '').trim().toLowerCase();
+    if (!email || email.indexOf('@') < 0 || email.indexOf('.') < 0) {
+      alert('Please enter a valid email.');
+      return;
+    }
+    var btn = document.getElementById('rdEmailSubmitBtn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Sending...'; }
+
+    var cert = window.__rdCert || {};
+    var certId = cert.certificate_id || '';
+
+    fetch('/api/readiness/email-certificate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, certificate_id: certId })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d && d.status === 'success') {
+        localStorage.setItem('userEmail', email);
+        if (typeof charvakTrack === 'function') {
+          charvakTrack('readiness_email_captured', { cert_id: certId, source: 'download_modal' });
+        }
+      }
+    })
+    .catch(function() {})
+    .finally(function() {
+      document.getElementById('rdEmailModal').style.display = 'none';
+      if (_rdPendingDownload) { _rdPendingDownload(); _rdPendingDownload = null; }
+    });
+  };
+
+  window.rdSkipEmailDownload = function() {
+    document.getElementById('rdEmailModal').style.display = 'none';
+    if (typeof charvakTrack === 'function') {
+      charvakTrack('readiness_email_skipped', { cert_id: (window.__rdCert && window.__rdCert.certificate_id) || '' });
+    }
+    if (_rdPendingDownload) { _rdPendingDownload(); _rdPendingDownload = null; }
+  };
+
+  window.rdShowEmailModalAndDownload = function(doDownload) {
+    _rdPendingDownload = doDownload;
+    var m = document.getElementById('rdEmailModal');
+    if (!m) { doDownload(); return; }
+    m.style.display = 'flex';
+    var input = document.getElementById('rdEmailInput');
+    if (input) setTimeout(function() { input.focus(); }, 100);
+  };
+})();
+</script>
+
     <!-- Bottom CTA -->
     <div class="rd-cta">
       <h3>Get Your Own Free Readiness Score</h3>
@@ -640,16 +711,28 @@
     ev.preventDefault();
     var c = window.__rdCert;
     if (!c || !c.certificate_id) { alert('Certificate not loaded yet.'); return; }
-    var email = localStorage.getItem('userEmail') || '';
-    var token = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
-    var url = '/api/readiness/' + encodeURIComponent(c.certificate_id) + '/download';
-    var params = [];
-    if (email) params.push('email=' + encodeURIComponent(email));
-    if (token) params.push('token=' + encodeURIComponent(token));
-    if (params.length) url += '?' + params.join('&');
-    // Fallback: if no email/token (anonymous), hit the public route
-    window.location.href = url;
+
+    // Session 75: If no email captured yet, prompt for it before download
+    var existingEmail = localStorage.getItem('userEmail') || '';
+    if (!existingEmail) {
+      // Show email capture modal, then download after
+      if (typeof window.rdShowEmailModalAndDownload === 'function') {
+        window.rdShowEmailModalAndDownload(function() {
+          _rdDoActualDownload(c);
+        });
+        return;
+      }
+    }
+    _rdDoActualDownload(c);
   };
+
+  function _rdDoActualDownload(c) {
+    // Session 75: Public download — no email/token in URL.
+    // Email capture (rdEmailModal) is for retargeting only, not authorization.
+    // Sending a mismatched email would 403 and block public certificate downloads.
+    var url = '/api/readiness/' + encodeURIComponent(c.certificate_id) + '/download';
+    window.location.href = url;
+  }
 
 })();
 

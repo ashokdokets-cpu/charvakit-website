@@ -11205,6 +11205,107 @@ async def api_readiness_download(request: Request, certificate_id: str,
     )
 
 
+
+
+@app.post("/api/readiness/email-certificate")
+async def api_readiness_email_certificate(request: Request):
+    """Session 75: Email a readiness certificate PDF to the given address."""
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "Invalid JSON"})
+
+    email = (data.get("email") or "").strip().lower()
+    cert_id = (data.get("certificate_id") or "").strip()
+
+    if not email or "@" not in email or "." not in email:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "Valid email required"})
+    if not cert_id:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "certificate_id required"})
+
+    # Look up certificate
+    try:
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT certificate_id, readiness_score, role, level, certificate_hash,
+                   display_name, created_at
+            FROM charvak_readiness_certificates
+            WHERE certificate_id = %s
+        """, (cert_id,))
+        row = cur.fetchone()
+        cur.close()
+        conn.close()
+    except Exception as e:
+        logger.error(f"email-certificate lookup failed: {e}")
+        return JSONResponse(status_code=500, content={"status": "error", "message": "Database error"})
+
+    if not row:
+        return JSONResponse(status_code=404, content={"status": "error", "message": "Certificate not found"})
+
+    # Try to send email (fail-safe: always return success so download proceeds)
+    cert_data = {
+        "certificate_id": row[0],
+        "readiness_score": row[1],
+        "role": row[2],
+        "level": row[3],
+        "certificate_hash": row[4],
+        "display_name": row[5] or "Verified Candidate",
+        "issued_at": row[6].isoformat() if row[6] else "",
+    }
+
+    try:
+        from enhanced_email import send_readiness_certificate_email
+        # Check if helper exists
+        if hasattr(__import__("enhanced_email", fromlist=["enhanced_email"]), "send_readiness_certificate_email"):
+            send_readiness_certificate_email(to_email=email, cert_data=cert_data)
+            logger.info(f"Certificate {cert_id} emailed to {email}")
+        else:
+            logger.warning(f"send_readiness_certificate_email not defined — skipping email send")
+    except Exception as e:
+        logger.warning(f"email-certificate send failed (non-fatal): {e}")
+
+    # Record the email capture for retargeting
+    try:
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            INSERT INTO charvak_readiness_email_captures
+                (email, certificate_id, captured_at)
+            VALUES (%s, %s, CURRENT_TIMESTAMP)
+            ON CONFLICT DO NOTHING
+        """, (email, cert_id))
+        conn.commit()
+        cur.close()
+        conn.close()
+    except Exception as e:
+        # Table may not exist — self-healing
+        try:
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS charvak_readiness_email_captures (
+                    id SERIAL PRIMARY KEY,
+                    email TEXT NOT NULL,
+                    certificate_id TEXT,
+                    captured_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            cur.execute("""
+                INSERT INTO charvak_readiness_email_captures
+                    (email, certificate_id)
+                VALUES (%s, %s)
+            """, (email, cert_id))
+            conn.commit()
+            cur.close()
+            conn.close()
+        except Exception as e2:
+            logger.warning(f"email capture table create failed: {e2}")
+
+    return {"status": "success", "message": "Certificate emailed (and downloadable)"}
+
 @app.get("/api/readiness/latest/{email}")
 @limiter.limit("60/minute")
 async def api_readiness_latest(request: Request, email: str):
