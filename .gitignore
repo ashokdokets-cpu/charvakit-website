@@ -175,3 +175,6 @@ reports/
 # Local dev launcher (Session 73)
 run.py
 start-dev.ps1
+
+# Session 74 recovery backups
+backups/
