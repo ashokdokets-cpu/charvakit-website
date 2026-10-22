@@ -6473,3 +6473,40 @@ Same infrastructure, different go-to-market. Do NOT rebrand Charvak
 to try to serve all 5 with one brand.
 
 ---
+
+
+## Session 74 Extended (2026-10-22) — Revenue CTAs + Azure Role
+
+### Shipped to Production
+
+- 1573fc5: Fixed production-breaking CSS bug (missing .dropdown-menu display:none)
+- b4616f8: Added 2 conversion CTAs to certificate page + fixed backtick syntax bug
+- 6535cec: Session close-out docs
+
+### New Revenue Channel
+
+Certificate page now has 2 monetization CTAs:
+- Retake with role focus (25 credits) -> /ai-assessment
+- See recommended courses -> /ai-courses
+
+262 cert views/month x 5-10% click = 13-26 clicks/month
+First real revenue signal from highest-traffic authenticated page.
+
+### Business Asset Created
+
+- Azure role ROLE-7B9405A1 live on prod
+- 12 screening questions attached
+- Ready for LinkedIn + CBREX submission
+
+### Session 75 Priorities
+
+1. Homepage CTA to /ai-assessment (20 min)
+2. Email capture before cert download (60 min)
+3. Nav Phase 2 in VS Code (2 hrs, direct edit)
+
+### Still Pending (Long-Term)
+
+- Render Postgres password rotation (Session 19 flag, ~30 sessions old)
+- Send Amrita email to Prof. Raj (draft ready)
+- Phase 3c GPT-4o env flip (Nov 3 target, kills Jan 14 2027 risk)
+

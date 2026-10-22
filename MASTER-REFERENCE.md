@@ -1,12 +1,12 @@
 # CHARVAKIT.COM - MASTER REFERENCE
 ## Charvak IT Consulting Pvt Ltd
-### Last updated: October 20, 2026 (Session 70 - Wave 3 100% COMPLETE)
+### Last updated: October 22, 2026 (Session 74 extended — revenue CTAs + Azure role)
 
-**HEAD:** a016814
+**HEAD:** 6535cec
 **Live:** https://www.charvakit.com
 **Resume here:** see `SESSION-CONTEXT.md` and `TRACK-A-B-PLAN.md`
 **Backlog:** see `OUTSTANDING-WORK-INVENTORY.md` (master list of remaining work)
-**Version:** v3.7-session-70-20261020
+**Version:** v3.7-session-74-extended-20261022
 
 ### Reference Documents
 
@@ -25,7 +25,7 @@
 ## SESSION 2026-10-20 (Session 70) - Wave 3 100% Complete
 
 **Commit:** `a016814` (S67b AI Tutor frontend)
-**HEAD:** a016814
+**HEAD:** 6535cec
 **Wave 3 status:** 100% complete (all 3 features shipped)
 
 ### S67b — AI Tutor Frontend Chat Panel
@@ -117,7 +117,7 @@ is blocked on Amrita signing or employer demand.
 ## SESSION 2026-10-20 - Sessions 65 + 67a + 69 (Wave 3)
 
 **Commits:** `2d1f1a4` (S65a), `336afbb` (S65b), `581a8f9` (S67a), `766fb6b` (S69)
-**HEAD:** a016814
+**HEAD:** 6535cec
 
 ### S65 - Interview Prep Conversational Mode
 
@@ -201,7 +201,7 @@ treats it as text.
 ## SESSION 2026-10-20 - Sessions 63 + 64 + 64b (Track D Phase A 100%, CAS Admin UI complete)
 
 **Commits:** `bb0ecea` (S63), `ef5974f` (S64), `2cff7e2` (S64b)
-**HEAD:** a016814
+**HEAD:** 6535cec
 
 ### Session 63 - Track D Phase A complete (bb0ecea)
 
