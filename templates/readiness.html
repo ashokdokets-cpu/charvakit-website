@@ -272,6 +272,27 @@
       </div>
     </div>
 
+
+    <!-- SESSION 75: Minimal conversion CTAs (HTML only) -->
+    <div style="margin-top: 32px; padding: 24px; background: linear-gradient(135deg, #f0fdfa 0%, #ecfdf5 100%); border: 1px solid #a7f3d0; border-radius: 16px; text-align: center;">
+        <h3 style="font-size: 20px; font-weight: 800; color: #065f46; margin-bottom: 8px;">
+            Ready to take the next step?
+        </h3>
+        <p style="color: #047857; margin-bottom: 20px;">
+            Turn this free score into a job-ready credential.
+        </p>
+        <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+            <a href="/ai-assessment"
+               style="display: inline-block; padding: 14px 28px; background: #0a8a75; color: #fff; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 15px;">
+                Retake with role focus →
+            </a>
+            <a href="/ai-courses"
+               style="display: inline-block; padding: 14px 28px; background: #fff; color: #0a8a75; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 15px; border: 2px solid #0a8a75;">
+                See recommended courses →
+            </a>
+        </div>
+    </div>
+
     <!-- Bottom CTA -->
     <div class="rd-cta">
       <h3>Get Your Own Free Readiness Score</h3>
@@ -328,7 +349,8 @@
 
   function renderCertificate(c) {
     document.getElementById("rdLoading").style.display = "none";
-    document.getElementById("rdContent").style.display = "block";`n    document.getElementById("rdContent").classList.add("as-revealed");
+    document.getElementById("rdContent").style.display = "block";
+    document.getElementById("rdContent").classList.add("as-revealed");
 
     document.getElementById("rdCandidate").textContent = c.candidate_display || "Verified Candidate";
     document.getElementById("rdContext").textContent =
