@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block title %}Sign Up - For Employers - Charvak{% endblock %}
+
+{% block content %}
+<style>
+  .signup-hero { background: linear-gradient(135deg, #3ba591 0%, #1a1a2e 100%); color: white; padding: 60px 0 50px; }
+  .signup-hero h1 { font-size: 2.4rem; font-weight: 800; margin-bottom: 8px; }
+  .signup-hero p { font-size: 1.1rem; opacity: 0.9; }
+  .signup-card { background: white; border-radius: 16px; padding: 40px; box-shadow: 0 8px 32px rgba(0,0,0,0.1); margin: -40px auto 40px; max-width: 720px; position: relative; z-index: 10; }
+  .form-label { font-weight: 600; }
+  .form-control:focus, .form-select:focus { border-color: #3ba591; box-shadow: 0 0 0 3px rgba(59,165,145,0.15); }
+  .toast-success { position: fixed; top: 100px; right: 20px; background: #3ba591; color: white; padding: 16px 24px; border-radius: 10px; font-weight: 600; z-index: 9999; box-shadow: 0 8px 24px rgba(0,0,0,0.2); animation: slideIn 0.3s; }
+  @keyframes slideIn { from { transform: translateX(400px); } to { transform: translateX(0); } }
+</style>
+
+<div class="signup-hero">
+  <div class="container text-center">
+    <h1>Sign up to hire from Charvak</h1>
+    <p>Free to list your first 3 roles. Verified candidates. 48-hour shortlists.</p>
+  </div>
+</div>
+
+<div class="container">
+  <div class="signup-card">
+    <h3 style="margin-bottom: 24px;">Tell us about your company</h3>
+
+    <form id="signupForm" onsubmit="submitSignup(event)">
+      <!-- Honeypot -->
+      <div style="position: absolute; left: -9999px;" aria-hidden="true">
+        <input type="text" name="website_url" id="hpField" tabindex="-1" autocomplete="off" />
+      </div>
+
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Company name *</label>
+          <input type="text" id="companyName" class="form-control" required />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Your name *</label>
+          <input type="text" id="contactName" class="form-control" required />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Work email *</label>
+          <input type="email" id="contactEmail" class="form-control" required />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Phone</label>
+          <input type="tel" id="contactPhone" class="form-control" />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Website</label>
+          <input type="url" id="website" class="form-control" placeholder="https://" />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Industry</label>
+          <select id="industry" class="form-select">
+            <option value="">Select...</option>
+            <option>IT / Tech</option>
+            <option>SaaS / B2B Software</option>
+            <option>FinTech / Payments</option>
+            <option>HealthTech</option>
+            <option>Manufacturing</option>
+            <option>Industrial Automation</option>
+            <option>Consulting</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Company size</label>
+          <select id="companySize" class="form-select">
+            <option value="">Select...</option>
+            <option>1-10</option>
+            <option>11-50</option>
+            <option>51-200</option>
+            <option>201-500</option>
+            <option>500+</option>
+          </select>
+        </div>
+        <div class="col-12">
+          <label class="form-label">Roles you're hiring for</label>
+          <textarea id="hiringRoles" class="form-control" rows="2" placeholder="e.g. 2 Software Engineers, 1 Data Analyst"></textarea>
+        </div>
+        <div class="col-12">
+          <label class="form-label">Anything else? (optional)</label>
+          <textarea id="message" class="form-control" rows="3" placeholder="Timeline, specific requirements, etc."></textarea>
+        </div>
+      </div>
+
+      <button type="submit" id="submitBtn" class="btn btn-success btn-lg w-100 mt-4 fw-semibold">
+        Submit application →
+      </button>
+
+      <p style="text-align: center; color: #6b7280; font-size: 0.85rem; margin-top: 16px;">
+        We review every application manually. Expect a response within 24 hours.
+      </p>
+    </form>
+  </div>
+</div>
+
+<script>
+function submitSignup(ev) {
+  ev.preventDefault();
+  var btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Submitting...';
+
+  var data = {
+    company_name: document.getElementById('companyName').value.trim(),
+    contact_name: document.getElementById('contactName').value.trim(),
+    contact_email: document.getElementById('contactEmail').value.trim(),
+    contact_phone: document.getElementById('contactPhone').value.trim(),
+    website: document.getElementById('website').value.trim(),
+    industry: document.getElementById('industry').value,
+    company_size: document.getElementById('companySize').value,
+    hiring_roles: document.getElementById('hiringRoles').value.trim(),
+    message: document.getElementById('message').value.trim(),
+    website_url: document.getElementById('hpField').value  // honeypot
+  };
+
+  fetch('/api/employer/signup', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    if (d.status === 'success') {
+      showToast('✓ Application received! Check your email.');
+      setTimeout(function() { window.location.href = '/employers'; }, 3000);
+    } else {
+      showToast('Error: ' + (d.message || 'Submission failed'), true);
+      btn.disabled = false;
+      btn.textContent = 'Submit application →';
+    }
+  })
+  .catch(function(e) {
+    showToast('Network error: ' + e.message, true);
+    btn.disabled = false;
+    btn.textContent = 'Submit application →';
+  });
+}
+
+function showToast(msg, isError) {
+  var t = document.createElement('div');
+  t.className = 'toast-success';
+  if (isError) t.style.background = '#dc2626';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(function() { if (t.parentNode) t.parentNode.removeChild(t); }, 5000);
+}
+</script>
+{% endblock %}

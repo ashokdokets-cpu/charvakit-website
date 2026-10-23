@@ -3525,6 +3525,19 @@ async def employer_refer_page(request: Request, role_id: str):
     )
 
 
+
+@app.get("/employer/signup", response_class=HTMLResponse)
+async def employer_signup_page(request: Request):
+    """Public signup page for employers."""
+    return template_response("employer-signup.html", request, "Sign Up - For Employers - Charvak")
+
+
+@app.get("/admin/employer-accounts", response_class=HTMLResponse)
+async def admin_employer_accounts_page(request: Request):
+    """Admin page for approving/rejecting employer accounts."""
+    return template_response("admin-employer-accounts.html", request, "Employer Accounts - Admin")
+
+
 @app.get("/employer/verify/{handle}", response_class=HTMLResponse)
 @limiter.limit("60/minute")
 async def employer_verify_page(request: Request, handle: str):
@@ -9134,6 +9147,406 @@ async def submit_referral(request: Request):
         }
     except Exception as e:
         logger.error(f"submit_referral failed: {e}", exc_info=True)
+        return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
+
+
+
+# =============================================================================
+# Session 81 A1 v0.3 — Employer Self-Signup + Admin Approval
+# =============================================================================
+
+@app.post("/api/employer/signup")
+@limiter.limit("5/minute")
+async def employer_signup(request: Request):
+    """Public endpoint: employer submits application to hire from Charvak."""
+    import hashlib
+    import secrets
+
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "Invalid JSON"})
+
+    # Honeypot check
+    if data.get("website_url") or data.get("hp_field"):
+        return {"status": "success", "message": "Received"}  # silent bot rejection
+
+    company_name = (data.get("company_name") or "").strip()[:200]
+    contact_name = (data.get("contact_name") or "").strip()[:200]
+    contact_email = (data.get("contact_email") or "").strip().lower()[:200]
+    contact_phone = (data.get("contact_phone") or "").strip()[:50]
+    website = (data.get("website") or "").strip()[:300]
+    industry = (data.get("industry") or "").strip()[:100]
+    company_size = (data.get("company_size") or "").strip()[:50]
+    hiring_roles = (data.get("hiring_roles") or "").strip()[:2000]
+    message = (data.get("message") or "").strip()[:2000]
+
+    if not company_name or not contact_name or not contact_email:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "Company, contact name, and email are required"})
+
+    if "@" not in contact_email or "." not in contact_email:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "Invalid email address"})
+
+    ip = ""
+    try:
+        ip = (request.headers.get("CF-Connecting-IP")
+              or request.headers.get("X-Forwarded-For", "").split(",")[0].strip()
+              or (request.client.host if request.client else ""))
+    except Exception:
+        pass
+    ip_hash = hashlib.sha256(ip.encode()).hexdigest()[:32] if ip else None
+
+    try:
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+
+        # Check email exists
+        cur.execute("SELECT account_id, status FROM charvak_employer_accounts WHERE contact_email = %s", (contact_email,))
+        existing = cur.fetchone()
+        if existing:
+            cur.close(); conn.close()
+            return JSONResponse(status_code=409, content={
+                "status": "error",
+                "message": "This email is already registered. Status: " + existing[1]
+            })
+
+        account_id = f"EMP-{secrets.token_hex(6).upper()}"
+        cur.execute("""
+            INSERT INTO charvak_employer_accounts
+                (account_id, company_name, contact_name, contact_email, contact_phone,
+                 website, industry, company_size, hiring_roles, message,
+                 status, ip_hash, created_at, updated_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                    'pending', %s, NOW(), NOW())
+        """, (account_id, company_name, contact_name, contact_email, contact_phone,
+              website, industry, company_size, hiring_roles, message, ip_hash))
+        conn.commit()
+
+        # Notify admin
+        try:
+            from email_engine import email_engine as _ee
+            admin_html = f"""
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #3ba591;">New Employer Signup</h2>
+                <table style="border-collapse: collapse; width: 100%; margin: 16px 0;">
+                    <tr style="background: #f8fafc;"><td style="padding: 8px; font-weight: 600;">Company:</td><td style="padding: 8px;">{company_name}</td></tr>
+                    <tr><td style="padding: 8px; font-weight: 600;">Contact:</td><td style="padding: 8px;">{contact_name} &lt;{contact_email}&gt;</td></tr>
+                    <tr style="background: #f8fafc;"><td style="padding: 8px; font-weight: 600;">Phone:</td><td style="padding: 8px;">{contact_phone or '-'}</td></tr>
+                    <tr><td style="padding: 8px; font-weight: 600;">Website:</td><td style="padding: 8px;">{website or '-'}</td></tr>
+                    <tr style="background: #f8fafc;"><td style="padding: 8px; font-weight: 600;">Industry:</td><td style="padding: 8px;">{industry or '-'}</td></tr>
+                    <tr><td style="padding: 8px; font-weight: 600;">Size:</td><td style="padding: 8px;">{company_size or '-'}</td></tr>
+                    <tr style="background: #f8fafc;"><td style="padding: 8px; font-weight: 600;">Hiring roles:</td><td style="padding: 8px;">{hiring_roles or '-'}</td></tr>
+                    <tr><td style="padding: 8px; font-weight: 600;">Message:</td><td style="padding: 8px;">{message or '-'}</td></tr>
+                    <tr style="background: #f8fafc;"><td style="padding: 8px; font-weight: 600;">Account ID:</td><td style="padding: 8px;">{account_id}</td></tr>
+                </table>
+                <p style="margin-top: 20px;">
+                    <a href="https://www.charvakit.com/admin/employer-accounts" style="background: #3ba591; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 600;">Review in Admin</a>
+                </p>
+            </div>
+            """
+            _ee.send_email("hr@charvakit.com", f"New Employer Signup: {company_name}", admin_html)
+        except Exception as e:
+            logger.warning(f"Employer signup admin notification failed: {e}")
+
+        # Confirm to employer
+        try:
+            from email_engine import email_engine as _ee
+            employer_html = f"""
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h2 style="color: #3ba591;">Thanks for signing up, {contact_name}!</h2>
+                <p>We received your application to hire from Charvak's verified talent pool.</p>
+                <p>Our team will review it and get back to you within 24 hours at <strong>{contact_email}</strong>.</p>
+                <p>In the meantime, you can browse our open roles at <a href="https://www.charvakit.com/employers">charvakit.com/employers</a>.</p>
+                <p style="margin-top: 30px; color: #6b7280; font-size: 14px;">Reference: {account_id}</p>
+            </div>
+            """
+            _ee.send_email(contact_email, "Charvak Employer Application Received", employer_html)
+        except Exception as e:
+            logger.warning(f"Employer confirmation email failed: {e}")
+
+        cur.close()
+        conn.close()
+
+        return {
+            "status": "success",
+            "account_id": account_id,
+            "message": "Application received. We'll review it and reach out within 24 hours."
+        }
+    except Exception as e:
+        logger.error(f"employer_signup failed: {e}", exc_info=True)
+        return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
+
+
+@app.get("/api/admin/employer-accounts/list")
+async def admin_list_employer_accounts(request: Request, status: str = "all"):
+    """Admin: list employer signup applications."""
+    try:
+        require_admin(request)
+    except Exception:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Admin auth required"})
+
+    try:
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+
+        if status in ("pending", "approved", "rejected"):
+            cur.execute("""
+                SELECT account_id, company_name, contact_name, contact_email, contact_phone,
+                       website, industry, company_size, hiring_roles, message,
+                       status, approved_by, approved_at, rejection_reason, created_at
+                FROM charvak_employer_accounts
+                WHERE status = %s
+                ORDER BY created_at DESC
+            """, (status,))
+        else:
+            cur.execute("""
+                SELECT account_id, company_name, contact_name, contact_email, contact_phone,
+                       website, industry, company_size, hiring_roles, message,
+                       status, approved_by, approved_at, rejection_reason, created_at
+                FROM charvak_employer_accounts
+                ORDER BY CASE status WHEN 'pending' THEN 0 WHEN 'approved' THEN 1 ELSE 2 END,
+                         created_at DESC
+            """)
+
+        rows = cur.fetchall()
+        accounts = []
+        for r in rows:
+            accounts.append({
+                "account_id": r[0], "company_name": r[1], "contact_name": r[2],
+                "contact_email": r[3], "contact_phone": r[4], "website": r[5],
+                "industry": r[6], "company_size": r[7], "hiring_roles": r[8],
+                "message": r[9], "status": r[10],
+                "approved_by": r[11],
+                "approved_at": r[12].isoformat() if r[12] else None,
+                "rejection_reason": r[13],
+                "created_at": r[14].isoformat() if r[14] else None,
+            })
+
+        cur.close()
+        conn.close()
+        return {"status": "success", "accounts": accounts, "count": len(accounts)}
+    except Exception as e:
+        logger.error(f"admin_list_employer_accounts failed: {e}")
+        return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
+
+
+@app.post("/api/admin/employer-accounts/{account_id}/approve")
+async def admin_approve_employer_account(request: Request, account_id: str):
+    """Admin: approve employer application."""
+    try:
+        require_admin(request)
+    except Exception:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Admin auth required"})
+
+    try:
+        data = await request.json()
+    except Exception:
+        data = {}
+    approver = (data.get("approved_by") or "admin").strip()[:100]
+
+    try:
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+
+        cur.execute("""
+            UPDATE charvak_employer_accounts
+            SET status = 'approved', approved_by = %s, approved_at = NOW(), updated_at = NOW()
+            WHERE account_id = %s AND status = 'pending'
+            RETURNING contact_email, contact_name, company_name
+        """, (approver, account_id))
+        row = cur.fetchone()
+        conn.commit()
+
+        if not row:
+            cur.close(); conn.close()
+            return JSONResponse(status_code=404, content={"status": "error", "message": "Account not found or already processed"})
+
+        contact_email, contact_name, company_name = row
+
+        # Notify employer
+        try:
+            from email_engine import email_engine as _ee
+            html = f"""
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h2 style="color: #3ba591;">Welcome to Charvak, {contact_name}!</h2>
+                <p>Your employer account for <strong>{company_name}</strong> has been approved.</p>
+                <p>You can now:</p>
+                <ul>
+                    <li>Browse verified candidate passports at <a href="https://www.charvakit.com/employer/dashboard">charvakit.com/employer/dashboard</a></li>
+                    <li>Refer candidates to your open roles</li>
+                    <li>Receive verified shortlists within 48 hours</li>
+                </ul>
+                <p>Our team will reach out within 24 hours to schedule a kickoff call.</p>
+                <p style="margin-top: 30px; color: #6b7280; font-size: 14px;">Charvak IT Consulting | hr@charvakit.com</p>
+            </div>
+            """
+            _ee.send_email(contact_email, "Welcome to Charvak — Your Employer Account is Approved", html)
+        except Exception as e:
+            logger.warning(f"Approval email failed: {e}")
+
+        cur.close()
+        conn.close()
+        return {"status": "success", "message": "Account approved"}
+    except Exception as e:
+        logger.error(f"admin_approve_employer_account failed: {e}")
+        return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
+
+
+@app.post("/api/admin/employer-accounts/{account_id}/reject")
+async def admin_reject_employer_account(request: Request, account_id: str):
+    """Admin: reject employer application."""
+    try:
+        require_admin(request)
+    except Exception:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Admin auth required"})
+
+    try:
+        data = await request.json()
+    except Exception:
+        data = {}
+    reason = (data.get("reason") or "").strip()[:500]
+
+    try:
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+
+        cur.execute("""
+            UPDATE charvak_employer_accounts
+            SET status = 'rejected', rejection_reason = %s, updated_at = NOW()
+            WHERE account_id = %s AND status = 'pending'
+            RETURNING contact_email, contact_name, company_name
+        """, (reason, account_id))
+        row = cur.fetchone()
+        conn.commit()
+
+        if not row:
+            cur.close(); conn.close()
+            return JSONResponse(status_code=404, content={"status": "error", "message": "Account not found or already processed"})
+
+        contact_email, contact_name, company_name = row
+
+        try:
+            from email_engine import email_engine as _ee
+            html = f"""
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h2 style="color: #3ba591;">Re: Your Charvak Employer Application</h2>
+                <p>Hi {contact_name},</p>
+                <p>Thank you for your interest in hiring through Charvak for <strong>{company_name}</strong>.</p>
+                <p>After review, we're unable to approve your application at this time.</p>
+                {('<p><strong>Reason:</strong> ' + reason + '</p>') if reason else ''}
+                <p>If you believe this is an error or would like to reapply, please contact us at hr@charvakit.com.</p>
+            </div>
+            """
+            _ee.send_email(contact_email, "Update on Your Charvak Employer Application", html)
+        except Exception as e:
+            logger.warning(f"Rejection email failed: {e}")
+
+        cur.close()
+        conn.close()
+        return {"status": "success", "message": "Account rejected"}
+    except Exception as e:
+        logger.error(f"admin_reject_employer_account failed: {e}")
+        return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
+
+
+@app.post("/api/admin/employer-referrals/{referral_id}/update-status")
+async def admin_update_referral_status(request: Request, referral_id: str):
+    """Admin: update referral status (pending → sent_to_employer → shortlisted → hired → rejected)."""
+    try:
+        require_admin(request)
+    except Exception:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Admin auth required"})
+
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "Invalid JSON"})
+
+    new_status = (data.get("status") or "").strip()
+    notes = (data.get("notes") or "").strip()[:1000]
+
+    valid_statuses = ["pending", "sent_to_employer", "shortlisted", "hired", "rejected"]
+    if new_status not in valid_statuses:
+        return JSONResponse(status_code=400, content={"status": "error", "message": f"Invalid status. Must be one of: {valid_statuses}"})
+
+    try:
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+
+        cur.execute("""
+            UPDATE charvak_employer_referrals
+            SET status = %s, status_notes = %s, status_updated_at = NOW(), status_updated_by = 'admin', updated_at = NOW()
+            WHERE referral_id = %s
+            RETURNING referral_id, status
+        """, (new_status, notes or None, referral_id))
+        row = cur.fetchone()
+        conn.commit()
+
+        if not row:
+            cur.close(); conn.close()
+            return JSONResponse(status_code=404, content={"status": "error", "message": "Referral not found"})
+
+        cur.close()
+        conn.close()
+        return {"status": "success", "referral_id": row[0], "new_status": row[1]}
+    except Exception as e:
+        logger.error(f"admin_update_referral_status failed: {e}")
+        return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
+
+
+@app.get("/api/admin/employer-referrals/list")
+async def admin_list_referrals(request: Request, status: str = "all"):
+    """Admin: list all referrals with candidate/role details."""
+    try:
+        require_admin(request)
+    except Exception:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Admin auth required"})
+
+    try:
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+
+        if status in ("pending", "sent_to_employer", "shortlisted", "hired", "rejected"):
+            cur.execute("""
+                SELECT referral_id, role_id, candidate_handle, candidate_name,
+                       candidate_score, candidate_tier, referred_by, referrer_type,
+                       notes, status, created_at, status_updated_at
+                FROM charvak_employer_referrals
+                WHERE status = %s
+                ORDER BY created_at DESC
+            """, (status,))
+        else:
+            cur.execute("""
+                SELECT referral_id, role_id, candidate_handle, candidate_name,
+                       candidate_score, candidate_tier, referred_by, referrer_type,
+                       notes, status, created_at, status_updated_at
+                FROM charvak_employer_referrals
+                ORDER BY CASE status WHEN 'pending' THEN 0 WHEN 'sent_to_employer' THEN 1 ELSE 2 END,
+                         created_at DESC
+            """)
+
+        referrals = []
+        for r in cur.fetchall():
+            referrals.append({
+                "referral_id": r[0], "role_id": r[1], "candidate_handle": r[2],
+                "candidate_name": r[3], "candidate_score": r[4], "candidate_tier": r[5],
+                "referred_by": r[6], "referrer_type": r[7],
+                "notes": r[8], "status": r[9],
+                "created_at": r[10].isoformat() if r[10] else None,
+                "status_updated_at": r[11].isoformat() if r[11] else None,
+            })
+
+        cur.close()
+        conn.close()
+        return {"status": "success", "referrals": referrals, "count": len(referrals)}
+    except Exception as e:
+        logger.error(f"admin_list_referrals failed: {e}")
         return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
 
 
