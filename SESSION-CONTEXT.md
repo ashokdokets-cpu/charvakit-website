@@ -104,3 +104,20 @@ to institutions:
 Unblocks every TPO conversation.
 
 **Do not skip Phase A.** Phase B and C are blocked on Phase A capability.
+
+---
+
+## Dean Report Frontend — FLAGGED (2026-10-24)
+
+Backend complete + live on prod. Frontend deferred.
+
+**What's shipped:**
+- Dean report API on prod
+- 3 PDFs downloaded to Desktop (`Charvak_Dean_Reports_20261024/`)
+
+**What's pending:**
+- Dashboard UI, login, signed URLs
+
+**Trigger to build:** first paying client OR 5+ reports/month.
+
+**Full plan:** `DEAN_REPORT_FRONTEND_FLAG.md`
