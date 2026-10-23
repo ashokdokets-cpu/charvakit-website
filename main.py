@@ -3492,6 +3492,13 @@ async def employer_dashboard_page(request: Request):
     )
 
 
+
+@app.get("/employers", response_class=HTMLResponse)
+async def employers_page(request: Request):
+    """Public landing page for employers and TPOs. Shows 8 real CBREX roles."""
+    return template_response("employers.html", request, "For Employers - Charvak IT Consulting")
+
+
 @app.get("/employer/verify/{handle}", response_class=HTMLResponse)
 @limiter.limit("60/minute")
 async def employer_verify_page(request: Request, handle: str):
@@ -8872,6 +8879,103 @@ async def track_cert_view(request: Request, certificate_id: str):
     }
 
     return university_engine.record_cert_view(certificate_id, viewer_info)
+
+
+
+@app.get("/api/employers/stats")
+@limiter.limit("120/minute")
+async def employers_stats(request: Request):
+    """
+    Public stats endpoint for /employers page.
+    Returns the 8 real CBREX roles + assessment count.
+    Cached for 5 min.
+    """
+    try:
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+
+        # Fetch active client roles
+        cur.execute("""
+            SELECT role_id, title, client_name, location, skills_required,
+                   job_type, experience_min_years, experience_max_years
+            FROM charvak_client_roles
+            WHERE status = 'sourcing'
+            ORDER BY created_at DESC
+        """)
+        role_rows = cur.fetchall()
+
+        roles = []
+        for r in role_rows:
+            role_id, title, client, location, skills, job_type, exp_min, exp_max = r
+            # Count matching candidates: headline contains a keyword from skills
+            match_count = 0
+            if skills:
+                # Simple match: check if any passport headline has a keyword
+                keywords = [s.strip().lower() for s in skills.split(',') if s.strip()][:3]
+                if keywords:
+                    try:
+                        like_clauses = " OR ".join(["LOWER(COALESCE(headline, '')) LIKE %s"] * len(keywords))
+                        cur.execute(f"""
+                            SELECT COUNT(*) FROM charvak_passports
+                            WHERE is_public = TRUE AND ({like_clauses})
+                        """, [f"%{k}%" for k in keywords])
+                        match_count = cur.fetchone()[0] or 0
+                    except Exception:
+                        match_count = 0
+
+            roles.append({
+                "role_id": role_id,
+                "title": title,
+                "client_name": client or "via Charvak",
+                "location": location,
+                "skills_required": skills or "",
+                "job_type": job_type or "Permanent",
+                "experience_min_years": exp_min,
+                "experience_max_years": exp_max,
+                "match_count": match_count,
+            })
+
+        # Aggregate stats
+        cur.execute("SELECT COUNT(*) FROM charvak_client_roles WHERE status = 'sourcing'")
+        total_roles = cur.fetchone()[0] or 0
+
+        cur.execute("SELECT COUNT(*) FROM charvak_readiness_certificates")
+        total_assessments = cur.fetchone()[0] or 0
+
+        # Distinct hiring companies
+        cur.execute("""
+            SELECT COUNT(DISTINCT client_name)
+            FROM charvak_client_roles
+            WHERE status = 'sourcing' AND client_name IS NOT NULL
+        """)
+        total_companies = cur.fetchone()[0] or 0
+
+        # Industries (derived from skills keyword)
+        industries = set()
+        for role in roles:
+            skills_lower = role["skills_required"].lower()
+            if any(k in skills_lower for k in ["ai", "ml", "python", "kubernetes", "openshift", "azure"]):
+                industries.add("IT / AI")
+            if any(k in skills_lower for k in ["mechanical", "plc", "servo", "vfd", "motion"]):
+                industries.add("Industrial Automation")
+            if any(k in skills_lower for k in ["firmware", "embedded", "rtos", "mcu"]):
+                industries.add("Embedded Systems")
+
+        cur.close()
+        conn.close()
+
+        return {
+            "status": "success",
+            "total_roles": total_roles,
+            "total_assessments": total_assessments,
+            "total_companies": total_companies,
+            "industries": sorted(industries),
+            "roles": roles,
+        }
+    except Exception as e:
+        logger.error(f"employers_stats failed: {e}", exc_info=True)
+        return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
 
 
 @app.get("/ats", response_class=HTMLResponse)
