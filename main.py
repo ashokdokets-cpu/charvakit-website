@@ -3499,6 +3499,32 @@ async def employers_page(request: Request):
     return template_response("employers.html", request, "For Employers - Charvak IT Consulting")
 
 
+
+@app.get("/employer/refer/{role_id}", response_class=HTMLResponse)
+async def employer_refer_page(request: Request, role_id: str):
+    """Public page to refer a candidate to a specific role."""
+    # Validate role exists (quick check)
+    try:
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT role_id, title FROM charvak_client_roles WHERE role_id = %s LIMIT 1", (role_id,))
+        row = cur.fetchone()
+        cur.close()
+        conn.close()
+        if not row:
+            return HTMLResponse(content="<h1>Role not found</h1><p><a href='/employers'>Back to all roles</a></p>", status_code=404)
+        role_title = row[1]
+    except Exception as e:
+        logger.error(f"employer_refer_page role lookup failed: {e}")
+        return HTMLResponse(content="<h1>Error loading role</h1>", status_code=500)
+
+    return templates.TemplateResponse(
+        "employer-refer.html",
+        {"request": request, "role_id": role_id, "role": {"title": role_title}}
+    )
+
+
 @app.get("/employer/verify/{handle}", response_class=HTMLResponse)
 @limiter.limit("60/minute")
 async def employer_verify_page(request: Request, handle: str):
@@ -8975,6 +9001,139 @@ async def employers_stats(request: Request):
         }
     except Exception as e:
         logger.error(f"employers_stats failed: {e}", exc_info=True)
+        return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
+
+
+
+@app.post("/api/employer/refer")
+@limiter.limit("10/minute")
+async def submit_referral(request: Request):
+    """
+    Public referral endpoint. Client (TPO or admin) refers a candidate to a role.
+    Idempotent per (role_id, candidate_handle).
+    """
+    import hashlib
+    import secrets
+    from datetime import datetime as _dt
+
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "Invalid JSON"})
+
+    role_id = (data.get("role_id") or "").strip()
+    candidate_handle = (data.get("candidate_handle") or "").strip().lstrip("@")
+    referrer_email = (data.get("referrer_email") or "").strip().lower()
+    notes = (data.get("notes") or "").strip()[:1000]
+
+    if not role_id or not candidate_handle:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "role_id and candidate_handle required"})
+
+    if referrer_email and ("@" not in referrer_email or "." not in referrer_email):
+        return JSONResponse(status_code=400, content={"status": "error", "message": "Invalid referrer email"})
+
+    # Collect IP
+    ip = ""
+    try:
+        ip = (request.headers.get("CF-Connecting-IP")
+              or request.headers.get("X-Forwarded-For", "").split(",")[0].strip()
+              or (request.client.host if request.client else ""))
+    except Exception:
+        pass
+    ip_hash = hashlib.sha256(ip.encode()).hexdigest()[:32] if ip else None
+
+    try:
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+
+        # Validate role
+        cur.execute("""
+            SELECT role_id, title, client_name FROM charvak_client_roles
+            WHERE role_id = %s AND status = 'sourcing' LIMIT 1
+        """, (role_id,))
+        role_row = cur.fetchone()
+        if not role_row:
+            cur.close(); conn.close()
+            return JSONResponse(status_code=404, content={"status": "error", "message": "Role not found or not active"})
+        role_title, role_client = role_row[1], role_row[2]
+
+        # Validate candidate
+        cur.execute("""
+            SELECT handle, email, display_name, charvak_score, score_tier
+            FROM charvak_passports WHERE handle = %s LIMIT 1
+        """, (candidate_handle,))
+        cand_row = cur.fetchone()
+        if not cand_row:
+            cur.close(); conn.close()
+            return JSONResponse(status_code=404, content={"status": "error", "message": "Candidate not found"})
+
+        candidate_email = cand_row[1]
+        candidate_name = cand_row[2]
+        candidate_score = cand_row[3]
+        candidate_tier = cand_row[4]
+
+        # Insert (idempotent on role+candidate)
+        referral_id = f"REF-{secrets.token_hex(6).upper()}"
+        try:
+            cur.execute("""
+                INSERT INTO charvak_employer_referrals
+                    (referral_id, role_id, candidate_handle, candidate_email, candidate_name,
+                     candidate_score, candidate_tier, referred_by, referrer_type,
+                     referrer_ip_hash, notes, status, created_at, updated_at)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'pending', NOW(), NOW())
+                ON CONFLICT (role_id, candidate_handle) DO UPDATE SET
+                    notes = EXCLUDED.notes,
+                    updated_at = NOW()
+                RETURNING referral_id
+            """, (referral_id, role_id, candidate_handle, candidate_email, candidate_name,
+                  candidate_score, candidate_tier, referrer_email or None,
+                  'public' if referrer_email else 'admin',
+                  ip_hash, notes or None))
+            actual_referral_id = cur.fetchone()[0]
+            conn.commit()
+        except Exception as e:
+            cur.close(); conn.close()
+            logger.error(f"Referral insert failed: {e}")
+            return JSONResponse(status_code=500, content={"status": "error", "message": "Database error"})
+
+        # Send notification email to admin (fire-and-forget, non-blocking)
+        try:
+            from email_engine import email_engine as _ee
+            admin_html = f"""
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #3ba591;">New Candidate Referral</h2>
+                <table style="border-collapse: collapse; width: 100%; margin: 16px 0;">
+                    <tr style="background: #f8fafc;"><td style="padding: 8px; font-weight: 600;">Role:</td><td style="padding: 8px;">{role_title} ({role_client})</td></tr>
+                    <tr><td style="padding: 8px; font-weight: 600;">Candidate:</td><td style="padding: 8px;">@{candidate_handle} — {candidate_name or 'Anonymous'}</td></tr>
+                    <tr style="background: #f8fafc;"><td style="padding: 8px; font-weight: 600;">Score:</td><td style="padding: 8px;">{candidate_score} ({candidate_tier})</td></tr>
+                    <tr><td style="padding: 8px; font-weight: 600;">Referred by:</td><td style="padding: 8px;">{referrer_email or 'Anonymous (public form)'}</td></tr>
+                    <tr style="background: #f8fafc;"><td style="padding: 8px; font-weight: 600;">Notes:</td><td style="padding: 8px;">{notes or '(none)'}</td></tr>
+                    <tr><td style="padding: 8px; font-weight: 600;">Referral ID:</td><td style="padding: 8px;">{actual_referral_id}</td></tr>
+                </table>
+                <p style="margin-top: 20px;">
+                    <a href="https://www.charvakit.com/employer/dashboard" style="background: #3ba591; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 600;">Review in Dashboard</a>
+                </p>
+            </div>
+            """
+            _ee.send_email("hr@charvakit.com", f"New Referral: {candidate_name or candidate_handle} → {role_title}", admin_html)
+            cur.execute("UPDATE charvak_employer_referrals SET admin_notified_at = NOW() WHERE referral_id = %s", (actual_referral_id,))
+            conn.commit()
+        except Exception as e:
+            logger.warning(f"Referral admin notification failed (non-fatal): {e}")
+
+        cur.close()
+        conn.close()
+
+        return {
+            "status": "success",
+            "referral_id": actual_referral_id,
+            "role_title": role_title,
+            "candidate_handle": candidate_handle,
+            "message": "Referral received. Our team will reach out within 48 hours."
+        }
+    except Exception as e:
+        logger.error(f"submit_referral failed: {e}", exc_info=True)
         return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
 
 
