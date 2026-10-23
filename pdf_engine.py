@@ -1189,5 +1189,8 @@ def render_dean_report_pdf(data: dict) -> bytes:
         "For questions or a follow-up discussion, contact Charvak IT Consulting at "
         "hr@charvakit.com or +91 799 7871 701.")
 
-    return pdf.output(dest="S").encode("latin-1")
+    _out = pdf.output(dest="S")
+    if isinstance(_out, (bytes, bytearray)):
+        return bytes(_out)
+    return _out.encode("latin-1")
 
