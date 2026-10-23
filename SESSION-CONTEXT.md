@@ -84,3 +84,23 @@ Scripts saved in `_amrita_followups.txt`
 1. Homepage Career Assessment CTA
 2. Email capture before cert download
 3. Nav Phase 2 (fresh approach, VS Code)
+---
+
+## Institutional Expansion (New — 2026-10-24)
+
+See `INSTITUTIONAL-ROADMAP.md` for the complete Phase A/B/C roadmap.
+
+**TL;DR:** Four TPO objections must be solved before Charvak sells
+to institutions:
+1. "We have an LMS" → A4 LMS Bridge (5 sessions)
+2. "Students are lazy" → A3 Engagement Engine (5 sessions)
+3. "Where are the placements?" → A1 Employer Network (6 sessions)
+4. "How do I prove ROI to my Dean?" → A2 Proof Dashboard (5 sessions)
+
+**Phase A total:** 21 sessions. Ships Charvak from "assessment tool" to
+"placement operating system."
+
+**Recommended first build:** A2 — Proof Dashboard (5 sessions).
+Unblocks every TPO conversation.
+
+**Do not skip Phase A.** Phase B and C are blocked on Phase A capability.
