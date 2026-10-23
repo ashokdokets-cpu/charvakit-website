@@ -2,10 +2,10 @@
 
 ## Charvak IT Consulting Pvt Ltd
 
-### Last updated: October 22, 2026 (Session 74 extended — revenue CTAs + Azure role)
+### Last updated: October 24, 2026 (Sessions 79-80 - enterprise package + 3-pillar homepage)
 
 
-**HEAD:** db6978b
+**HEAD:** 707996c
 
 **Live:** https://www.charvakit.com
 
@@ -51,7 +51,7 @@
 
 **Commit:** `a016814` (S67b AI Tutor frontend)
 
-**HEAD:** db6978b
+**HEAD:** 707996c
 
 **Wave 3 status:** 100% complete (all 3 features shipped)
 
@@ -235,7 +235,7 @@ is blocked on Amrita signing or employer demand.
 
 **Commits:** `2d1f1a4` (S65a), `336afbb` (S65b), `581a8f9` (S67a), `766fb6b` (S69)
 
-**HEAD:** db6978b
+**HEAD:** 707996c
 
 
 
@@ -403,7 +403,7 @@ treats it as text.
 
 **Commits:** `bb0ecea` (S63), `ef5974f` (S64), `2cff7e2` (S64b)
 
-**HEAD:** db6978b
+**HEAD:** 707996c
 
 
 
