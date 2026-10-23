@@ -1,5 +1,42 @@
 # Charvak IT Consulting - Project Status
 
+**Last updated:** 2026-10-23 (Session 78 - email gate + nav redesign live)
+**Version:** v3.8-session-78-20261023
+**Live:** https://www.charvakit.com
+**HEAD:** db6978b
+
+## Session 2026-10-23 (Sessions 76/77/78) - Nav redesign + email gate COMPLETE
+
+### Shipped (verified on prod)
+
+**Session 76 (`e6af6b0`): Nav Phase 2**
+- 14 flat nav items to 5 story-driven dropdowns:
+  Learn / Prove / Get Hired / For Business / Resources
+- All existing links preserved
+- Mega-menu CSS inline in base.html
+
+**Session 77 (`cea4e69`): Nav gap fix**
+- 12px real gap between Global Platform strip and main nav
+- Nav positioned at top:53px (was overlapping strip by 9px)
+- Responsive: mobile nav at top:60px
+
+**Session 78 (`db6978b`): Email gate**
+- Anonymous visitors to /readiness/{cert_id} prompted for email
+- Emails stored + PDF sent via SendGrid
+- Skip works (soft gate), authed users bypass
+- Fixed 2 bugs: modal trapped in #rdContent + cross-IIFE ReferenceError
+
+### Session 79 plan
+1. Flag 1: Amrita email to Prof. Raj
+2. Flag 3: GPT-4o env flip on Render
+3. Flag 2: Rotate Render Postgres password
+
+After these 3: zero unblocked work remains.
+
+---
+
+# Charvak IT Consulting - Project Status
+
 **Last updated:** October 22, 2026 (Session 74 extended — revenue CTAs + Azure role)
 **Version:** v3.7-session-74-extended-20261022
 **Live:** https://www.charvakit.com
