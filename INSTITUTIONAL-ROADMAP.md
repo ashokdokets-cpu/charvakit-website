@@ -355,3 +355,32 @@ we build the next one.
 **Re-read at the start of every session that touches university sales.**
 
 **Last updated:** 2026-10-24 (Sessions 79-80 close-out)
+---
+
+## A2 — Proof Dashboard — UPDATE (2026-10-24)
+
+**Backend:** ✅ COMPLETE + LIVE ON PROD
+- Table: `charvak_certificate_views`
+- Engine: `university_engine.get_proof_dashboard()`, `record_cert_view()`
+- Routes: `/api/proof-dashboard/{id}`, `/api/proof-dashboard/{id}/pdf`, `/api/certificate/{id}/track-view`
+- PDF: `pdf_engine.render_dean_report_pdf()` (4 pages, branded)
+- Seeded: 3 institutions (Amrita, VIT, NIT Trichy), 150 students, 222 certs, 207 views
+- Verified: PDFs downloaded to Desktop for all 3 institutions
+
+**Frontend:** ⏸ FLAGGED — deferred
+- No dashboard UI
+- No signed URLs (reverted)
+- No login page
+- Manual PDF email is the current workflow
+- Full build plan in `DEAN_REPORT_FRONTEND_FLAG.md`
+- **Trigger to build:** first paying client OR 5+ manual reports/month
+
+**Decision doc:** `DEAN_REPORT_DECISION.md` (committed 489ed68)
+
+**Files:**
+- `university_engine.py` (extends with 2 new methods)
+- `pdf_engine.py` (extends with render_dean_report_pdf)
+- `migrations/20261024_proof_dashboard.sql` (new)
+- `scripts/seed_proof_dashboard.py` (new)
+
+**Impact:** Solves "How do I prove ROI to my Dean?" — the #1 TPO objection.
