@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% block title %}Refer Candidates - {{ role.title if role else "Role" }}{% endblock %}
+
+{% block content %}
+<style>
+  .ref-hero { background: linear-gradient(135deg, #3ba591 0%, #1a1a2e 100%); color: white; padding: 60px 0 40px; }
+  .ref-hero h1 { font-size: 2.4rem; font-weight: 800; margin-bottom: 8px; }
+  .ref-hero .role-meta { font-size: 1.1rem; opacity: 0.9; }
+  .ref-card { background: white; border-radius: 14px; padding: 32px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); margin: -40px auto 40px; max-width: 1000px; position: relative; z-index: 10; }
+  .cand-card { border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; margin-bottom: 12px; transition: all 0.15s; }
+  .cand-card:hover { border-color: #3ba591; box-shadow: 0 4px 12px rgba(59,165,145,0.1); }
+  .cand-card.selected { border-color: #3ba591; background: #f0fdfa; }
+  .cand-score { font-size: 1.5rem; font-weight: 800; color: #3ba591; }
+  .cand-tier { font-size: 0.75rem; text-transform: uppercase; color: #6b7280; font-weight: 600; }
+  .ref-form { background: #f8fafc; border-radius: 12px; padding: 20px; margin-top: 20px; }
+  .chip { display: inline-block; background: #f0fdfa; color: #0a8a75; padding: 4px 12px; border-radius: 12px; font-size: 0.75rem; margin: 2px 6px 2px 0; font-weight: 600; }
+  .toast { position: fixed; top: 100px; right: 20px; background: #3ba591; color: white; padding: 16px 24px; border-radius: 10px; font-weight: 600; z-index: 9999; box-shadow: 0 8px 24px rgba(0,0,0,0.2); animation: slideIn 0.3s ease; }
+  @keyframes slideIn { from { transform: translateX(400px); } to { transform: translateX(0); } }
+</style>
+
+<div class="ref-hero">
+  <div class="container">
+    <h1 id="roleTitle">Loading role...</h1>
+    <div class="role-meta" id="roleMeta"></div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="ref-card">
+    <h3 style="margin-bottom: 16px;">Required skills</h3>
+    <div id="skillsChips" style="margin-bottom: 24px;"></div>
+
+    <h3 style="margin-bottom: 16px;">Available candidates</h3>
+    <p style="color: #6b7280; margin-bottom: 20px;">Select one candidate to refer. Our team will coordinate with the employer.</p>
+
+    <div id="candidatesList">
+      <div class="text-center py-4">
+        <div class="spinner-border text-success"></div>
+        <p class="mt-2 text-muted">Loading candidates...</p>
+      </div>
+    </div>
+
+    <div class="ref-form" id="referralForm" style="display: none;">
+      <h4 style="margin-bottom: 12px;">Refer @<span id="selectedHandle"></span></h4>
+
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Your email (for follow-up)</label>
+        <input type="email" id="referrerEmail" class="form-control" placeholder="you@university.edu" />
+        <small class="text-muted">Optional — helps us follow up with you</small>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Why this candidate? (optional)</label>
+        <textarea id="referralNotes" class="form-control" rows="3" placeholder="e.g. Strong in DSA, has Azure cert, top quartile"></textarea>
+      </div>
+
+      <button onclick="submitReferral()" id="submitBtn" class="btn btn-success btn-lg w-100 fw-semibold">
+        Submit referral →
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var roleId = '{{ role_id }}';
+  var selectedHandle = null;
+
+  function esc(s) {
+    if (!s) return '';
+    return String(s).replace(/[&<>"']/g, function(c) {
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  // Fetch role + candidates
+  fetch('/api/employers/stats')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.status !== 'success') throw new Error(d.message);
+      var role = (d.roles || []).find(function(r) { return r.role_id === roleId; });
+      if (!role) throw new Error('Role not found');
+
+      document.getElementById('roleTitle').textContent = role.title;
+      document.getElementById('roleMeta').textContent = (role.client_name || 'via Charvak') + ' · ' + (role.location || 'Location TBD');
+
+      // Skills chips
+      var chips = document.getElementById('skillsChips');
+      var skills = (role.skills_required || '').split(',').slice(0, 8);
+      chips.innerHTML = skills.map(function(s) {
+        return '<span class="chip">' + esc(s.trim()) + '</span>';
+      }).join('');
+
+      // Load candidates
+      loadCandidates(role);
+    })
+    .catch(function(e) {
+      document.getElementById('roleTitle').textContent = 'Error';
+      document.getElementById('roleMeta').textContent = e.message;
+      document.getElementById('candidatesList').innerHTML = '<div class="alert alert-danger">' + esc(e.message) + '</div>';
+    });
+
+  function loadCandidates(role) {
+    fetch('/api/passport/public/list?limit=30')
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        var passports = d.passports || [];
+        var list = document.getElementById('candidatesList');
+
+        if (passports.length === 0) {
+          list.innerHTML = '<div class="alert alert-warning">No public candidates available yet.</div>';
+          return;
+        }
+
+        list.innerHTML = passports.map(function(p) {
+          return '<div class="cand-card" data-handle="' + esc(p.handle) + '" onclick="selectCandidate(this, \'' + esc(p.handle) + '\')">' +
+            '<div class="d-flex justify-content-between align-items-start">' +
+              '<div>' +
+                '<div style="font-size: 1.1rem; font-weight: 700;">@' + esc(p.handle) + '</div>' +
+                '<div style="color: #6b7280; font-size: 0.9rem;">' + esc(p.display_name || p.headline || 'Candidate') + '</div>' +
+                '<div style="color: #9ca3af; font-size: 0.8rem; margin-top: 4px;">' + esc(p.headline || '') + '</div>' +
+              '</div>' +
+              '<div class="text-end">' +
+                '<div class="cand-score">' + (p.charvak_score || 0) + '</div>' +
+                '<div class="cand-tier">' + esc(p.score_tier || '') + '</div>' +
+              '</div>' +
+            '</div>' +
+          '</div>';
+        }).join('');
+      })
+      .catch(function(e) {
+        document.getElementById('candidatesList').innerHTML = '<div class="alert alert-danger">Failed to load candidates: ' + esc(e.message) + '</div>';
+      });
+  }
+
+  window.selectCandidate = function(el, handle) {
+    document.querySelectorAll('.cand-card').forEach(function(c) { c.classList.remove('selected'); });
+    el.classList.add('selected');
+    selectedHandle = handle;
+    document.getElementById('selectedHandle').textContent = handle;
+    document.getElementById('referralForm').style.display = 'block';
+    window.scrollTo({ top: document.getElementById('referralForm').offsetTop - 100, behavior: 'smooth' });
+  };
+
+  window.submitReferral = function() {
+    if (!selectedHandle) { alert('Please select a candidate first'); return; }
+
+    var btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Submitting...';
+
+    var email = (document.getElementById('referrerEmail').value || '').trim();
+    var notes = (document.getElementById('referralNotes').value || '').trim();
+
+    fetch('/api/employer/refer', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        role_id: roleId,
+        candidate_handle: selectedHandle,
+        referrer_email: email,
+        notes: notes
+      })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.status === 'success') {
+        showToast('✓ Referral submitted — we\'ll be in touch within 48 hours');
+        setTimeout(function() { window.location.href = '/employers'; }, 2500);
+      } else {
+        showToast('Error: ' + (d.message || 'Failed'), true);
+        btn.disabled = false;
+        btn.textContent = 'Submit referral →';
+      }
+    })
+    .catch(function(e) {
+      showToast('Network error: ' + e.message, true);
+      btn.disabled = false;
+      btn.textContent = 'Submit referral →';
+    });
+  };
+
+  function showToast(msg, isError) {
+    var t = document.createElement('div');
+    t.className = 'toast';
+    if (isError) t.style.background = '#dc2626';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(function() { if (t.parentNode) t.parentNode.removeChild(t); }, 4000);
+  }
+})();
+</script>
+{% endblock %}
