@@ -3829,6 +3829,86 @@ async def api_drills_streak(request: Request):
         return handle_error(e, "drills streak")
 
 
+
+# =============================================================================
+# Session 81 A3 — Engagement Dashboard
+# =============================================================================
+
+@app.get("/student/engagement", response_class=HTMLResponse)
+async def student_engagement_page(request: Request):
+    """Unified student engagement dashboard."""
+    return template_response("student-engagement.html", request, "My Progress - Charvak")
+
+
+@app.get("/api/student/engagement/{email}")
+async def api_student_engagement(request: Request, email: str):
+    """Full engagement dashboard data."""
+    try:
+        require_auth_for_email(request, email)
+    except HTTPException:
+        raise
+    except Exception:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Unauthorized"})
+    try:
+        import engagement_engine as ee
+        return ee.get_student_dashboard(email)
+    except Exception as e:
+        return handle_error(e, "student engagement")
+
+
+@app.get("/api/student/leaderboard")
+@limiter.limit("60/minute")
+async def api_global_leaderboard(request: Request, limit: int = 20):
+    """Public global leaderboard."""
+    try:
+        import engagement_engine as ee
+        lb = ee.get_global_leaderboard(limit=min(100, limit))
+        return {"status": "success", "leaderboard": lb}
+    except Exception as e:
+        return handle_error(e, "leaderboard")
+
+
+@app.get("/api/student/preferences/{email}")
+async def api_get_preferences(request: Request, email: str):
+    """Get preferences."""
+    try:
+        require_auth_for_email(request, email)
+    except HTTPException:
+        raise
+    except Exception:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Unauthorized"})
+    try:
+        import engagement_engine as ee
+        return {"status": "success", "preferences": ee.get_or_create_preferences(email)}
+    except Exception as e:
+        return handle_error(e, "preferences")
+
+
+@app.post("/api/student/preferences/{email}")
+async def api_update_preferences(request: Request, email: str):
+    """Update preferences."""
+    try:
+        require_auth_for_email(request, email)
+    except HTTPException:
+        raise
+    except Exception:
+        return JSONResponse(status_code=401, content={"status": "error", "message": "Unauthorized"})
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "Invalid JSON"})
+    try:
+        import engagement_engine as ee
+        prefs = ee.update_preferences(
+            email,
+            email_enabled=data.get("email_enabled"),
+            in_app_enabled=data.get("in_app_enabled")
+        )
+        return {"status": "success", "preferences": prefs}
+    except Exception as e:
+        return handle_error(e, "update preferences")
+
+
 @app.get("/drills", response_class=HTMLResponse)
 @limiter.limit("60/minute")
 async def drills_page(request: Request):
