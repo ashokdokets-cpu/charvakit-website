@@ -178,3 +178,13 @@ start-dev.ps1
 
 # Session 74 recovery backups
 backups/
+
+# Session 79 — private attachments and logs
+Amrita_*.pdf
+Charvak_*.pdf
+_amrita_email_log.txt
+_amrita_followups.txt
+enterprise/*.pdf
+
+# Session close-out notes (local only unless explicitly committed)
+_session*_closeout.md
