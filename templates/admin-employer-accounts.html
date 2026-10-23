@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% block title %}Employer Accounts - Admin{% endblock %}
+
+{% block content %}
+<style>
+  .ea-hero { background: linear-gradient(135deg, #0f172a 0%, #1e40af 100%); color: white; padding: 48px 0 32px; }
+  .ea-hero h1 { font-weight: 800; margin-bottom: 6px; }
+  .ea-wrap { max-width: 1400px; margin: 0 auto; padding: 32px 16px 60px; }
+  .ea-tabs { display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 2px solid #e5e7eb; }
+  .ea-tab { padding: 10px 20px; cursor: pointer; font-weight: 600; border-bottom: 3px solid transparent; margin-bottom: -2px; color: #6b7280; }
+  .ea-tab.active { color: #3ba591; border-bottom-color: #3ba591; }
+  .ea-tab-badge { display: inline-block; background: #ef4444; color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 10px; margin-left: 6px; }
+  .ea-card { background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; margin-bottom: 12px; }
+  .ea-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+  .ea-card-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px; }
+  .ea-company { font-size: 1.15rem; font-weight: 700; color: #0f172a; }
+  .ea-meta { font-size: 0.85rem; color: #6b7280; }
+  .ea-status { font-size: 0.75rem; padding: 4px 10px; border-radius: 12px; font-weight: 700; text-transform: uppercase; }
+  .ea-status.pending { background: #fef3c7; color: #92400e; }
+  .ea-status.approved { background: #d1fae5; color: #065f46; }
+  .ea-status.rejected { background: #fee2e2; color: #991b1b; }
+  .ea-btn { padding: 6px 14px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.85rem; }
+  .ea-btn-approve { background: #10b981; color: white; }
+  .ea-btn-approve:hover { background: #059669; }
+  .ea-btn-reject { background: #ef4444; color: white; }
+  .ea-btn-reject:hover { background: #dc2626; }
+  .ea-empty { text-align: center; padding: 60px 20px; color: #9ca3af; }
+  .ea-details { background: #f8fafc; border-radius: 8px; padding: 12px; margin-top: 10px; font-size: 0.85rem; }
+  .ea-details strong { color: #374151; }
+</style>
+
+<div class="ea-hero">
+  <div class="container">
+    <h1>Employer Accounts</h1>
+    <p>Approve or reject employer signup applications</p>
+  </div>
+</div>
+
+<div class="ea-wrap">
+
+  <div class="ea-tabs">
+    <div class="ea-tab active" data-status="pending" onclick="loadTab('pending')">
+      Pending <span class="ea-tab-badge" id="pendingBadge" style="display:none;">0</span>
+    </div>
+    <div class="ea-tab" data-status="approved" onclick="loadTab('approved')">Approved</div>
+    <div class="ea-tab" data-status="rejected" onclick="loadTab('rejected')">Rejected</div>
+    <div class="ea-tab" data-status="all" onclick="loadTab('all')">All</div>
+  </div>
+
+  <div id="accountsList">
+    <div class="ea-empty">Loading...</div>
+  </div>
+
+</div>
+
+<script>
+var currentTab = 'pending';
+
+function authHeaders() {
+  var t = localStorage.getItem('authToken') || localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+  return { 'Authorization': 'Bearer ' + t, 'Content-Type': 'application/json' };
+}
+
+function loadTab(status) {
+  currentTab = status;
+  document.querySelectorAll('.ea-tab').forEach(function(el) { el.classList.remove('active'); });
+  var tab = document.querySelector('.ea-tab[data-status="' + status + '"]');
+  if (tab) tab.classList.add('active');
+
+  document.getElementById('accountsList').innerHTML = '<div class="ea-empty">Loading...</div>';
+
+  fetch('/api/admin/employer-accounts/list?status=' + status, { headers: authHeaders() })
+    .then(function(r) {
+      if (r.status === 401) { window.location.href = '/admin-login'; throw new Error('Unauthorized'); }
+      return r.json();
+    })
+    .then(function(d) {
+      if (d.status !== 'success') throw new Error(d.message);
+      renderAccounts(d.accounts);
+
+      if (status === 'pending' || status === 'all') {
+        var pendingCount = d.accounts.filter(function(a) { return a.status === 'pending'; }).length;
+        var badge = document.getElementById('pendingBadge');
+        if (pendingCount > 0) {
+          badge.textContent = pendingCount;
+          badge.style.display = 'inline-block';
+        } else {
+          badge.style.display = 'none';
+        }
+      }
+    })
+    .catch(function(e) {
+      document.getElementById('accountsList').innerHTML = '<div class="ea-empty" style="color:#dc2626;">Error: ' + esc(e.message) + '</div>';
+    });
+}
+
+function renderAccounts(accounts) {
+  var list = document.getElementById('accountsList');
+  if (!accounts || accounts.length === 0) {
+    list.innerHTML = '<div class="ea-empty">No ' + currentTab + ' accounts</div>';
+    return;
+  }
+
+  list.innerHTML = accounts.map(function(a) {
+    var actions = '';
+    if (a.status === 'pending') {
+      actions = '<div class="d-flex gap-2">' +
+        '<button class="ea-btn ea-btn-approve" onclick="approveAccount(\'' + esc(a.account_id) + '\')">✓ Approve</button>' +
+        '<button class="ea-btn ea-btn-reject" onclick="rejectAccount(\'' + esc(a.account_id) + '\')">✗ Reject</button>' +
+        '</div>';
+    }
+
+    return '<div class="ea-card">' +
+      '<div class="ea-card-header">' +
+        '<div>' +
+          '<div class="ea-company">' + esc(a.company_name) + '</div>' +
+          '<div class="ea-meta">' + esc(a.contact_name) + ' &lt;' + esc(a.contact_email) + '&gt;</div>' +
+        '</div>' +
+        '<div class="d-flex flex-column align-items-end gap-2">' +
+          '<span class="ea-status ' + esc(a.status) + '">' + esc(a.status) + '</span>' +
+          actions +
+        '</div>' +
+      '</div>' +
+      '<div class="ea-details">' +
+        '<div><strong>Phone:</strong> ' + esc(a.contact_phone || '-') + '</div>' +
+        '<div><strong>Website:</strong> ' + (a.website ? '<a href="' + esc(a.website) + '" target="_blank" rel="noopener">' + esc(a.website) + '</a>' : '-') + '</div>' +
+        '<div><strong>Industry:</strong> ' + esc(a.industry || '-') + '</div>' +
+        '<div><strong>Size:</strong> ' + esc(a.company_size || '-') + '</div>' +
+        '<div><strong>Hiring:</strong> ' + esc(a.hiring_roles || '-') + '</div>' +
+        '<div><strong>Message:</strong> ' + esc(a.message || '-') + '</div>' +
+        '<div style="margin-top: 8px; color: #6b7280;"><small>ID: ' + esc(a.account_id) + ' · Submitted ' + fmtDate(a.created_at) + '</small></div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function approveAccount(accountId) {
+  if (!confirm('Approve this employer? They\'ll receive a welcome email.')) return;
+  fetch('/api/admin/employer-accounts/' + accountId + '/approve', {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ approved_by: localStorage.getItem('userEmail') || 'admin' })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    if (d.status === 'success') { alert('Approved!'); loadTab(currentTab); }
+    else alert('Error: ' + d.message);
+  })
+  .catch(function(e) { alert('Network error: ' + e.message); });
+}
+
+function rejectAccount(accountId) {
+  var reason = prompt('Reason for rejection (optional):');
+  if (reason === null) return;  // user cancelled
+  fetch('/api/admin/employer-accounts/' + accountId + '/reject', {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ reason: reason })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    if (d.status === 'success') { alert('Rejected.'); loadTab(currentTab); }
+    else alert('Error: ' + d.message);
+  })
+  .catch(function(e) { alert('Network error: ' + e.message); });
+}
+
+function fmtDate(iso) {
+  if (!iso) return '-';
+  try { return new Date(iso).toLocaleString(); } catch(e) { return iso; }
+}
+
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/[&<>"']/g, function(c) {
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+
+loadTab('pending');
+</script>
+{% endblock %}
