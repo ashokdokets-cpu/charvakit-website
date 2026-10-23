@@ -384,3 +384,31 @@ we build the next one.
 - `scripts/seed_proof_dashboard.py` (new)
 
 **Impact:** Solves "How do I prove ROI to my Dean?" — the #1 TPO objection.
+
+---
+
+## Phase A Progress (2026-10-24 update)
+
+| Item | Sessions Planned | Status | Notes |
+|---|---|---|---|
+| **A1 — Employer Network** | 6 | **v0.3 SHIPPED** | Public page + referral + signup + admin approval |
+| **A2 — Proof Dashboard** | 5 | **Backend 100%** | Dean PDF live; frontend deferred |
+| **A3 — Engagement Engine** | 5 | **v1.0 SHIPPED** | Dashboard + badges + leaderboard; SMS/WhatsApp deferred |
+| **A4 — LMS Bridge** | 5 | Not started | Next phase |
+
+### A1 remaining (v0.4+)
+- Employer dashboard enhancements (filtered views, saved candidates)
+- Referral status update UI in admin
+- Automated status notifications
+
+### A3 remaining (v0.2+)
+- Twilio SMS integration
+- WhatsApp Business API integration
+- Weekly level-up cron
+- Cohort leaderboard surfaced on engagement dashboard
+
+### A2 remaining
+- Dean frontend UI (see DEAN_REPORT_FRONTEND_FLAG.md)
+- Trigger: first paying client OR 5+ reports/month
+
+---

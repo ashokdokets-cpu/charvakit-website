@@ -1,5 +1,56 @@
 # Charvak IT Consulting - Project Status
 
+**Last updated:** 2026-10-24 (Sessions 79-81 — 3 Phase A products shipped)
+**Version:** v3.10-session-81-20261024
+**Live:** https://www.charvakit.com
+**HEAD:** 3243675
+
+## Session 81 — COMPLETE (2026-10-24)
+
+### Phase A items shipped
+
+**A1 — Employer Network v0.3**
+- Public `/employers` page showing 8 real CBREX roles (NCS, LENZE, Middle East Group, via Charvak)
+- `/employer/signup` self-service form
+- `/employer/refer/{role_id}` candidate referral
+- `/admin/employer-accounts` admin approval queue
+- `charvak_employer_accounts` + `charvak_employer_referrals` tables
+- Email notifications via email_engine
+
+**A2 — Proof Dashboard (Backend 100%)**
+- `charvak_certificate_views` table
+- `university_engine.get_proof_dashboard()` full aggregation
+- `pdf_engine.render_dean_report_pdf()` — 4-page Dean-ready PDF
+- `/api/proof-dashboard/{id}` + `/api/proof-dashboard/{id}/pdf`
+- 3 institutions seeded: Amrita, VIT, NIT Trichy
+- Frontend UI deferred (see DEAN_REPORT_FRONTEND_FLAG.md)
+
+**A3 — Engagement Dashboard v1.0**
+- `engagement_engine.py` (13.6 KB) — unified aggregation
+- `/student/engagement` full dashboard (streak, badges, leaderboard)
+- 9 badge types with milestone auto-award
+- `charvak_student_preferences` + `charvak_student_badges` + `charvak_engagement_events` tables
+- Global leaderboard using real passport scores
+- Email nudges ready via `send_engagement_nudge`
+
+### Live URLs
+- `/employers`, `/employer/signup`, `/employer/refer/{role_id}`
+- `/admin/employer-accounts`
+- `/student/engagement`
+- `/api/proof-dashboard/{id}`, `/api/proof-dashboard/{id}/pdf`
+- `/api/employers/stats`, `/api/student/leaderboard`
+
+### Database additions
+6 new tables, 3 extended tables
+
+### Monday priorities
+1. Rotate Render Postgres password
+2. Send Amrita follow-up with 3 artifacts
+3. Next: A4 LMS Bridge OR polish A1 v0.4 OR Dean frontend
+
+---
+# Charvak IT Consulting - Project Status
+
 **Last updated:** 2026-10-24 (Sessions 79-80 — enterprise sales package + 3-pillar homepage)
 **Version:** v3.9-session-80-20261024
 **Live:** https://www.charvakit.com
