@@ -11,6 +11,17 @@
   .form-control:focus, .form-select:focus { border-color: #3ba591; box-shadow: 0 0 0 3px rgba(59,165,145,0.15); }
   .toast-success { position: fixed; top: 100px; right: 20px; background: #3ba591; color: white; padding: 16px 24px; border-radius: 10px; font-weight: 600; z-index: 9999; box-shadow: 0 8px 24px rgba(0,0,0,0.2); animation: slideIn 0.3s; }
   @keyframes slideIn { from { transform: translateX(400px); } to { transform: translateX(0); } }
+
+  /* Session 81 A1: Mobile responsive fixes */
+  @media (max-width: 640px) {
+    .signup-hero { padding: 40px 0 30px !important; }
+    .signup-hero h1 { font-size: 1.6rem !important; }
+    .signup-hero p { font-size: 0.95rem !important; }
+    .signup-card { padding: 24px 16px !important; margin-top: -20px !important; border-radius: 12px !important; }
+    .signup-card h3 { font-size: 1.15rem !important; }
+    .toast-success { top: 80px !important; right: 10px !important; left: 10px !important; }
+  }
+
 </style>
 
 <div class="signup-hero">

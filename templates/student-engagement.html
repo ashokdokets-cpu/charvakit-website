@@ -23,6 +23,30 @@
   .en-toggle { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f3f4f6; }
   .en-progress { height: 10px; background: #e5e7eb; border-radius: 5px; overflow: hidden; margin: 8px 0; }
   .en-progress-bar { height: 100%; background: #3ba591; transition: width 0.3s; }
+
+  /* Session 81 A3: Mobile responsive fixes */
+  @media (max-width: 640px) {
+    .en-hero h1 { font-size: 1.5rem !important; }
+    .en-hero .streak-big { font-size: 2.5rem !important; }
+    .en-wrap { padding: 24px 12px 40px !important; }
+    .en-card { padding: 16px !important; margin-bottom: 14px !important; }
+    .en-kpi { padding: 14px 8px !important; }
+    .en-kpi-value { font-size: 1.5rem !important; }
+    .en-lb-row { flex-wrap: wrap; gap: 4px; font-size: 0.85rem !important; }
+  }
+  
+  @media (max-width: 480px) {
+    .en-hero .streak-big { font-size: 2rem !important; }
+    .en-day { width: 40px !important; height: 40px !important; font-size: 0.8rem !important; margin: 0 2px !important; }
+    .en-badge { padding: 10px !important; gap: 8px !important; }
+    .en-badge-icon { font-size: 1.5rem !important; }
+    .en-toggle { flex-direction: column; align-items: flex-start !important; gap: 8px; }
+  }
+  
+  @media (max-width: 380px) {
+    .en-day { width: 34px !important; height: 34px !important; font-size: 0.7rem !important; }
+  }
+
 </style>
 
 <div class="en-hero">
