@@ -494,6 +494,7 @@ class UniversityEngine:
 
     def record_cert_view(self, certificate_id: str, viewer_info: Dict) -> Dict:
         """Record a view of a readiness certificate. Idempotent per (cert, ip, 5-min)."""
+        from database import db
         import hashlib
         import secrets
 
@@ -561,6 +562,7 @@ class UniversityEngine:
 
     def get_proof_dashboard(self, university_id: str) -> Dict:
         """Comprehensive proof dashboard for a university."""
+        from database import db
         uni = self._find_university(university_id)
         if not uni:
             return {"status": "error", "message": "University not found"}
