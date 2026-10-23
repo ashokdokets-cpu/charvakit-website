@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+{% block title %}My Progress - Charvak{% endblock %}
+{% block content %}
+<style>
+  .en-hero { background: linear-gradient(135deg, #3ba591 0%, #1a1a2e 100%); color: white; padding: 60px 0 40px; }
+  .en-hero h1 { font-size: 2.4rem; font-weight: 800; }
+  .en-hero .streak-big { font-size: 3.5rem; font-weight: 900; }
+  .en-wrap { max-width: 1100px; margin: 0 auto; padding: 32px 16px 60px; }
+  .en-card { background: white; border: 1px solid #e5e7eb; border-radius: 14px; padding: 24px; margin-bottom: 20px; }
+  .en-card h3 { font-size: 1.15rem; font-weight: 700; margin-bottom: 16px; }
+  .en-kpi { text-align: center; padding: 20px; border-radius: 12px; background: #f8fafc; }
+  .en-kpi-value { font-size: 2rem; font-weight: 800; color: #3ba591; }
+  .en-kpi-label { font-size: 0.75rem; text-transform: uppercase; color: #6b7280; letter-spacing: 0.5px; }
+  .en-day { width: 60px; height: 60px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin: 0 4px; font-weight: 700; }
+  .en-day.done { background: #10b981; color: white; }
+  .en-day.missed { background: #e5e7eb; color: #9ca3af; }
+  .en-day.today { background: #f59e0b; color: white; border: 2px solid #d97706; }
+  .en-badge { display: flex; gap: 12px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 10px; margin-bottom: 8px; }
+  .en-badge-icon { font-size: 2rem; }
+  .en-lb-row { display: flex; justify-content: space-between; padding: 10px 12px; border-bottom: 1px solid #f3f4f6; font-size: 0.9rem; }
+  .en-lb-row.you { background: #f0fdfa; font-weight: 700; }
+  .en-lb-rank { display: inline-block; width: 30px; color: #6b7280; font-weight: 700; }
+  .en-toggle { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f3f4f6; }
+  .en-progress { height: 10px; background: #e5e7eb; border-radius: 5px; overflow: hidden; margin: 8px 0; }
+  .en-progress-bar { height: 100%; background: #3ba591; transition: width 0.3s; }
+</style>
+
+<div class="en-hero">
+  <div class="container text-center">
+    <div style="font-size: 0.9rem; opacity: 0.85; margin-bottom: 8px;">YOUR CURRENT STREAK</div>
+    <div class="streak-big" id="streakBig">🔥 0</div>
+    <div style="font-size: 1rem; opacity: 0.9;">days in a row</div>
+    <h1 class="mt-3" style="font-size: 1.6rem;">My Progress</h1>
+  </div>
+</div>
+
+<div class="en-wrap">
+
+  <div class="row g-3 mb-3">
+    <div class="col-md-3">
+      <div class="en-kpi">
+        <div class="en-kpi-value" id="kpiStreak">0</div>
+        <div class="en-kpi-label">Current Streak</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="en-kpi">
+        <div class="en-kpi-value" id="kpiDrills">0</div>
+        <div class="en-kpi-label">Total Drills</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="en-kpi">
+        <div class="en-kpi-value" id="kpiBadges">0</div>
+        <div class="en-kpi-label">Badges</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="en-kpi">
+        <div class="en-kpi-value" id="kpiRank">-</div>
+        <div class="en-kpi-label">Global Rank</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="en-card">
+    <h3>📅 Last 7 Days</h3>
+    <div id="weekStrip" style="text-align: center;">Loading...</div>
+  </div>
+
+  <div class="en-card" id="milestoneCard" style="display:none;">
+    <h3>🎯 Next Milestone</h3>
+    <div id="milestoneContent"></div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-6">
+      <div class="en-card">
+        <h3>🏆 Recent Badges</h3>
+        <div id="badgesList">Loading...</div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="en-card">
+        <h3>🌍 Global Leaderboard</h3>
+        <div id="leaderboard">Loading...</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="en-card">
+    <h3>⚙️ Notifications</h3>
+    <div class="en-toggle">
+      <div>
+        <div style="font-weight: 600;">Email reminders</div>
+        <div style="font-size: 0.85rem; color: #6b7280;">Streak reminders, milestone emails</div>
+      </div>
+      <input type="checkbox" id="prefEmail" onchange="togglePref('email_enabled', this.checked)" style="width: 44px; height: 24px;" />
+    </div>
+    <div class="en-toggle">
+      <div>
+        <div style="font-weight: 600;">In-app notifications</div>
+        <div style="font-size: 0.85rem; color: #6b7280;">Banner nudges when you visit</div>
+      </div>
+      <input type="checkbox" id="prefInApp" onchange="togglePref('in_app_enabled', this.checked)" style="width: 44px; height: 24px;" />
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function() {
+  var token = localStorage.getItem('authToken') || localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+  var email = localStorage.getItem('userEmail') || '';
+
+  if (!email || !token) {
+    window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname);
+    return;
+  }
+
+  function esc(s) {
+    if (!s) return '';
+    return String(s).replace(/[&<>"']/g, function(c) {
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  function authHeaders() {
+    return { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
+  }
+
+  // Load dashboard
+  fetch('/api/student/engagement/' + encodeURIComponent(email), { headers: authHeaders() })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.status !== 'success') throw new Error(d.message || 'Failed');
+
+      // Hero + KPIs
+      document.getElementById('streakBig').textContent = '🔥 ' + (d.streak.current || 0);
+      document.getElementById('kpiStreak').textContent = d.streak.current || 0;
+      document.getElementById('kpiDrills').textContent = d.streak.total_drills || 0;
+      document.getElementById('kpiBadges').textContent = (d.badges || []).length;
+      document.getElementById('kpiRank').textContent = d.passport.rank_global ? '#' + d.passport.rank_global : '-';
+
+      // Week strip
+      renderWeekStrip(d.recent_drills_7d || []);
+
+      // Milestone
+      if (d.next_milestone) {
+        document.getElementById('milestoneCard').style.display = 'block';
+        var pct = (d.next_milestone.current / d.next_milestone.target) * 100;
+        document.getElementById('milestoneContent').innerHTML =
+          '<div style="display: flex; justify-content: space-between; margin-bottom: 8px;">' +
+            '<div><strong>' + esc(d.next_milestone.badge.icon) + ' ' + esc(d.next_milestone.badge.name) + '</strong></div>' +
+            '<div>' + d.next_milestone.current + ' / ' + d.next_milestone.target + '</div>' +
+          '</div>' +
+          '<div class="en-progress"><div class="en-progress-bar" style="width: ' + pct + '%;"></div></div>' +
+          '<div style="font-size: 0.85rem; color: #6b7280; margin-top: 4px;">' + esc(d.next_milestone.badge.desc) + '</div>';
+      }
+
+      // Badges
+      var bl = document.getElementById('badgesList');
+      if (!d.badges || d.badges.length === 0) {
+        bl.innerHTML = '<p style="color:#6b7280;">No badges yet. Complete drills to earn your first!</p>';
+      } else {
+        bl.innerHTML = d.badges.slice(0, 6).map(function(b) {
+          return '<div class="en-badge"><div class="en-badge-icon">' + esc(b.icon) + '</div>' +
+            '<div><div style="font-weight: 700;">' + esc(b.name) + '</div>' +
+            '<div style="font-size: 0.8rem; color: #6b7280;">' + esc(b.description) + '</div></div></div>';
+        }).join('');
+      }
+
+      // Leaderboard
+      var lb = document.getElementById('leaderboard');
+      if (!d.global_leaderboard || d.global_leaderboard.length === 0) {
+        lb.innerHTML = '<p style="color:#6b7280;">No leaderboard data yet.</p>';
+      } else {
+        lb.innerHTML = d.global_leaderboard.slice(0, 10).map(function(e, i) {
+          var isYou = e.handle === d.passport.handle;
+          return '<div class="en-lb-row' + (isYou ? ' you' : '') + '">' +
+            '<div><span class="en-lb-rank">#' + (i + 1) + '</span>@' + esc(e.handle) + ' ' + (isYou ? '(you)' : '') + '</div>' +
+            '<div><strong>' + (e.score || 0) + '</strong></div></div>';
+        }).join('');
+      }
+
+      // Preferences
+      if (d.preferences) {
+        document.getElementById('prefEmail').checked = d.preferences.email_enabled !== false;
+        document.getElementById('prefInApp').checked = d.preferences.in_app_enabled !== false;
+      }
+    })
+    .catch(function(e) {
+      console.error('Dashboard load failed:', e);
+      document.querySelector('.en-wrap').insertAdjacentHTML('afterbegin',
+        '<div class="alert alert-danger">Error: ' + esc(e.message) + '</div>');
+    });
+
+  function renderWeekStrip(drills) {
+    var strip = document.getElementById('weekStrip');
+    var days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    var today = new Date();
+    var todayStr = today.toISOString().split('T')[0];
+
+    // Build map of drill dates
+    var drillMap = {};
+    (drills || []).forEach(function(d) { drillMap[d.date] = d; });
+
+    var html = '';
+    for (var i = 6; i >= 0; i--) {
+      var d = new Date(today);
+      d.setDate(d.getDate() - i);
+      var dateStr = d.toISOString().split('T')[0];
+      var isToday = dateStr === todayStr;
+      var isDone = !!drillMap[dateStr];
+
+      var cls = 'en-day';
+      if (isToday) cls += ' today';
+      else if (isDone) cls += ' done';
+      else cls += ' missed';
+
+      var icon = isDone ? '✓' : (isToday ? '●' : '·');
+      html += '<div class="' + cls + '" title="' + days[d.getDay()] + '">' + icon + '</div>';
+    }
+    strip.innerHTML = html;
+  }
+
+  window.togglePref = function(key, value) {
+    var body = {};
+    body[key] = value;
+    fetch('/api/student/preferences/' + encodeURIComponent(email), {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify(body)
+    }).catch(function(e) { console.error('Pref update failed:', e); });
+  };
+})();
+</script>
+{% endblock %}

@@ -120,3 +120,9 @@ class EmailEngine:
 
 
 email_engine = EmailEngine()
+
+
+def send_engagement_nudge(to_email: str, subject: str, html_body: str) -> dict:
+    """Send engagement-related email (nudges, milestones, weekly summaries)."""
+    return email_engine.send_email(to_email, subject, html_body, is_html=True)
+
