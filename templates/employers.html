@@ -20,7 +20,8 @@
   .role-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 8px; color: #0f172a; }
   .role-location { font-size: 0.9rem; color: #6b7280; margin-bottom: 12px; }
   .role-skills { margin-bottom: 16px; flex-grow: 1; }
-  .role-skill { display: inline-block; background: #f0fdfa; color: #0a8a75; padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; margin: 2px 4px 2px 0; font-weight: 600; }
+  .role-skill { display: inline-block; background: #f0fdfa; color: #0a8a75; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; margin: 3px 6px 3px 0; font-weight: 600; line-height: 1.4; }
+  .role-skills { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; flex-grow: 1; }
   .role-cta { background: #3ba591; color: #fff; padding: 10px 20px; border-radius: 8px; text-decoration: none; text-align: center; font-weight: 600; font-size: 0.9rem; }
   .role-cta:hover { background: #2a8070; color: #fff; }
   .step-num { display: inline-block; width: 44px; height: 44px; border-radius: 50%; background: #3ba591; color: #fff; font-size: 1.3rem; font-weight: 800; line-height: 44px; text-align: center; margin-bottom: 16px; }
@@ -139,9 +140,24 @@
       }
       
       d.roles.forEach(function(role) {
-        var skills = (role.skills_required || '').split(',').slice(0, 4).map(function(s) {
-          return s.trim();
-        }).filter(Boolean);
+        // Better parsing: split on commas at top level only (not inside parens)
+        var skillsStr = (role.skills_required || '');
+        var skills = [];
+        var depth = 0;
+        var current = '';
+        for (var i = 0; i < skillsStr.length; i++) {
+          var ch = skillsStr[i];
+          if (ch === '(') depth++;
+          else if (ch === ')') depth--;
+          else if (ch === ',' && depth === 0) {
+            if (current.trim()) skills.push(current.trim());
+            current = '';
+            continue;
+          }
+          current += ch;
+        }
+        if (current.trim()) skills.push(current.trim());
+        skills = skills.slice(0, 4);
         
         var skillsHtml = skills.map(function(s) {
           return '<span class="role-skill">' + escHtml(s) + '</span>';
