@@ -421,7 +421,19 @@
     }
     window.__rdCert = data.certificate;
     if (typeof charvakTrack === 'function') { var _c = data.certificate; charvakTrack('readiness_complete', { role: _c.role, score: _c.readiness_score }); }
-    renderCertificate(data.certificate);
+    // Session 81: fire cert view tracking (fire-and-forget, non-blocking)
+      try {
+        var _cv_certId = data.certificate && data.certificate.certificate_id;
+        if (_cv_certId) {
+          fetch('/api/certificate/' + encodeURIComponent(_cv_certId) + '/track-view', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({viewer_type: 'anonymous'})
+          }).catch(function(){});
+        }
+      } catch (e) {}
+
+      renderCertificate(data.certificate);
   })
   .catch(function(err) {
     document.getElementById("rdLoading").style.display = "none";

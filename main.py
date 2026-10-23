@@ -8805,6 +8805,75 @@ async def record_outcome(request: Request):
 async def university_stats():
     return university_engine.get_stats()
 
+# =============================================================================
+# Session 81 — Proof Dashboard routes (added 2026-10-24)
+# =============================================================================
+
+@app.get("/api/proof-dashboard/{university_id}")
+async def proof_dashboard_json(request: Request, university_id: str):
+    """JSON payload for the proof dashboard."""
+    return university_engine.get_proof_dashboard(university_id)
+
+
+@app.get("/api/proof-dashboard/{university_id}/pdf")
+async def proof_dashboard_pdf(request: Request, university_id: str):
+    """Dean-ready PDF report. Streams as application/pdf."""
+    from fastapi.responses import Response
+
+    data = university_engine.get_proof_dashboard(university_id)
+    if data.get("status") != "success":
+        return JSONResponse(
+            status_code=404,
+            content={"status": "error", "message": data.get("message", "Not found")}
+        )
+
+    try:
+        from pdf_engine import render_dean_report_pdf
+        pdf_bytes = render_dean_report_pdf(data)
+    except Exception as e:
+        logger.error(f"Dean report PDF generation failed: {e}", exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={"status": "error", "message": f"PDF generation failed: {e}"}
+        )
+
+    from datetime import datetime as _dt
+    filename = f"Dean_Report_{university_id}_{_dt.now().strftime('%Y%m%d')}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+
+@app.post("/api/certificate/{certificate_id}/track-view")
+@limiter.limit("30/minute")
+async def track_cert_view(request: Request, certificate_id: str):
+    """Public endpoint: track a certificate view (called from /readiness/{id})."""
+    try:
+        data = await request.json()
+    except Exception:
+        data = {}
+
+    ip = ""
+    try:
+        ip = (request.headers.get("CF-Connecting-IP")
+              or request.headers.get("X-Forwarded-For", "").split(",")[0].strip()
+              or (request.client.host if request.client else ""))
+    except Exception:
+        pass
+
+    viewer_info = {
+        "ip": ip,
+        "user_agent": request.headers.get("User-Agent", "")[:500],
+        "referrer": request.headers.get("Referer", "")[:500],
+        "viewer_type": data.get("viewer_type", "anonymous"),
+        "viewer_email": data.get("viewer_email"),
+    }
+
+    return university_engine.record_cert_view(certificate_id, viewer_info)
+
+
 @app.get("/ats", response_class=HTMLResponse)
 async def ats_page(request: Request):
     return template_response("ats.html", request, "ATS Integration - Charvak IT Consulting")
