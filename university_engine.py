@@ -487,4 +487,238 @@ class UniversityEngine:
             return None
 
 
+
+    # ==========================================================================
+    # Session 81 — Proof Dashboard methods (added 2026-10-24)
+    # ==========================================================================
+
+    def record_cert_view(self, certificate_id: str, viewer_info: Dict) -> Dict:
+        """Record a view of a readiness certificate. Idempotent per (cert, ip, 5-min)."""
+        import hashlib
+        import secrets
+
+        viewer_ip = (viewer_info.get("ip") or "").strip()
+        ip_hash = hashlib.sha256(viewer_ip.encode()).hexdigest()[:32] if viewer_ip else None
+
+        viewer_type = (viewer_info.get("viewer_type") or "anonymous").strip().lower()
+        if viewer_type not in ("anonymous", "employer", "dean", "admin"):
+            viewer_type = "anonymous"
+
+        viewer_email = (viewer_info.get("viewer_email") or "").strip().lower() or None
+        user_agent = (viewer_info.get("user_agent") or "")[:500]
+        referrer = (viewer_info.get("referrer") or "")[:500]
+
+        university_id = None
+        try:
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT c.email, us.university_id
+                FROM charvak_readiness_certificates c
+                LEFT JOIN charvak_university_students us
+                  ON LOWER(us.email) = LOWER(c.email)
+                WHERE c.certificate_id = %s
+                LIMIT 1
+            """, (certificate_id,))
+            row = cur.fetchone()
+            if row:
+                university_id = row[1]
+            cur.close()
+            conn.close()
+        except Exception as e:
+            logger.debug(f"record_cert_view cert lookup failed: {e}")
+
+        try:
+            conn = db.get_connection()
+            cur = conn.cursor()
+            if ip_hash:
+                cur.execute("""
+                    SELECT view_id FROM charvak_certificate_views
+                    WHERE certificate_id = %s AND viewer_ip_hash = %s
+                      AND viewed_at > NOW() - INTERVAL '5 minutes'
+                    LIMIT 1
+                """, (certificate_id, ip_hash))
+                if cur.fetchone():
+                    cur.close()
+                    conn.close()
+                    return {"status": "deduplicated"}
+
+            view_id = f"CV-{secrets.token_hex(6).upper()}"
+            cur.execute("""
+                INSERT INTO charvak_certificate_views
+                (view_id, certificate_id, viewer_ip_hash, viewer_type,
+                 viewer_email, user_agent, referrer, university_id)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """, (view_id, certificate_id, ip_hash, viewer_type,
+                  viewer_email, user_agent, referrer, university_id))
+            conn.commit()
+            cur.close()
+            conn.close()
+            return {"status": "success", "view_id": view_id}
+        except Exception as e:
+            logger.warning(f"record_cert_view insert failed: {e}")
+            return {"status": "error", "message": str(e)}
+
+    def get_proof_dashboard(self, university_id: str) -> Dict:
+        """Comprehensive proof dashboard for a university."""
+        uni = self._find_university(university_id)
+        if not uni:
+            return {"status": "error", "message": "University not found"}
+
+        try:
+            conn = db.get_connection()
+            cur = conn.cursor()
+
+            cur.execute("""
+                SELECT COUNT(*) FROM charvak_university_students
+                WHERE university_id = %s
+            """, (university_id,))
+            cohort_size = cur.fetchone()[0] or 0
+
+            cur.execute("""
+                SELECT email FROM charvak_university_students
+                WHERE university_id = %s AND email IS NOT NULL
+            """, (university_id,))
+            cohort_emails = [r[0].lower() for r in cur.fetchall() if r[0]]
+
+            certs = []
+            if cohort_emails:
+                placeholders = ",".join(["%s"] * len(cohort_emails))
+                cur.execute(
+                    "SELECT certificate_id, email, display_name, role, "
+                    "readiness_score, created_at, payload_json "
+                    "FROM charvak_readiness_certificates "
+                    "WHERE LOWER(email) IN (" + placeholders + ") "
+                    "ORDER BY created_at DESC",
+                    cohort_emails
+                )
+                certs = cur.fetchall()
+
+            certified_count = len(certs)
+            cert_rate = round(certified_count * 100.0 / cohort_size, 1) if cohort_size else 0.0
+
+            scores = [c[4] for c in certs if c[4] is not None]
+            avg_score = round(sum(scores) / len(scores), 1) if scores else 0.0
+            median_score = sorted(scores)[len(scores)//2] if scores else 0
+            top_quartile = sorted(scores)[int(len(scores) * 0.75)] if scores else 0
+
+            dept_map = {}
+            for c in certs:
+                role = c[3] or "Unknown"
+                if role not in dept_map:
+                    dept_map[role] = {"count": 0, "total_score": 0}
+                dept_map[role]["count"] += 1
+                dept_map[role]["total_score"] += c[4] or 0
+
+            dept_breakdown = []
+            for role, data in dept_map.items():
+                dept_breakdown.append({
+                    "department": role,
+                    "students": data["count"],
+                    "avg_score": round(data["total_score"] / data["count"], 1) if data["count"] else 0
+                })
+            dept_breakdown.sort(key=lambda x: x["avg_score"], reverse=True)
+
+            trend = []
+            if cohort_emails:
+                cur.execute(
+                    "SELECT TO_CHAR(created_at, 'YYYY-MM') AS month, "
+                    "COUNT(*) AS certs, ROUND(AVG(readiness_score)::numeric, 1) AS avg_score "
+                    "FROM charvak_readiness_certificates "
+                    "WHERE LOWER(email) IN (" + placeholders + ") "
+                    "AND created_at > NOW() - INTERVAL '90 days' "
+                    "GROUP BY 1 ORDER BY 1",
+                    cohort_emails
+                )
+                trend = [{"month": r[0], "certs": r[1], "avg_score": float(r[2]) if r[2] else 0}
+                         for r in cur.fetchall()]
+
+            top_students = []
+            for c in certs[:10]:
+                top_students.append({
+                    "certificate_id": c[0],
+                    "email": c[1],
+                    "name": c[2] or "Anonymous",
+                    "role": c[3],
+                    "score": c[4],
+                    "date": c[5].isoformat() if c[5] else None
+                })
+
+            cur.execute("""
+                SELECT
+                    COUNT(*) AS total_views,
+                    COUNT(DISTINCT viewer_ip_hash) AS unique_viewers,
+                    COUNT(DISTINCT certificate_id) AS unique_certs_viewed,
+                    COUNT(*) FILTER (WHERE viewer_type = 'employer') AS employer_views,
+                    COUNT(*) FILTER (WHERE viewer_type = 'dean') AS dean_views
+                FROM charvak_certificate_views
+                WHERE university_id = %s
+            """, (university_id,))
+            vrow = cur.fetchone()
+            cert_views = {
+                "total_views": vrow[0] or 0,
+                "unique_viewers": vrow[1] or 0,
+                "unique_certs_viewed": vrow[2] or 0,
+                "employer_views": vrow[3] or 0,
+                "dean_views": vrow[4] or 0,
+                "view_rate_pct": round((vrow[2] or 0) * 100.0 / certified_count, 1) if certified_count else 0.0
+            }
+
+            cur.execute("""
+                WITH peer_avgs AS (
+                    SELECT us.university_id, AVG(c.readiness_score) AS avg_score
+                    FROM charvak_university_students us
+                    JOIN charvak_readiness_certificates c
+                      ON LOWER(c.email) = LOWER(us.email)
+                    WHERE us.university_id != %s
+                    GROUP BY us.university_id
+                )
+                SELECT AVG(avg_score), COUNT(*) FROM peer_avgs
+            """, (university_id,))
+            peer_row = cur.fetchone()
+            peer_avg = round(float(peer_row[0]), 1) if peer_row[0] else 0.0
+            peer_count = peer_row[1] or 0
+
+            peer_percentile = 50
+            if avg_score and peer_avg and peer_avg > 0:
+                peer_percentile = min(99, int((avg_score / peer_avg) * 50))
+
+            cur.close()
+            conn.close()
+
+            from datetime import datetime as _dt
+            return {
+                "status": "success",
+                "university": {
+                    "university_id": uni.get("university_id"),
+                    "name": uni.get("name"),
+                    "location": uni.get("location"),
+                    "type": uni.get("type"),
+                },
+                "cohort": {
+                    "total_students": cohort_size,
+                    "certified_students": certified_count,
+                    "cert_rate_pct": cert_rate,
+                },
+                "readiness": {
+                    "avg_score": avg_score,
+                    "median_score": median_score,
+                    "top_quartile": top_quartile,
+                },
+                "departments": dept_breakdown,
+                "trend_90d": trend,
+                "top_students": top_students,
+                "certificate_views": cert_views,
+                "peer_benchmark": {
+                    "peer_avg_score": peer_avg,
+                    "peer_institution_count": peer_count,
+                    "percentile": peer_percentile,
+                },
+                "generated_at": _dt.now().isoformat(),
+            }
+
+        except Exception as e:
+            logger.error(f"get_proof_dashboard failed: {e}", exc_info=True)
+            return {"status": "error", "message": str(e)}
+
 university_engine = UniversityEngine()
