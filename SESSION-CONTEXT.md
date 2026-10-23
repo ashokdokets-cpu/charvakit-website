@@ -121,3 +121,61 @@ Backend complete + live on prod. Frontend deferred.
 **Trigger to build:** first paying client OR 5+ reports/month.
 
 **Full plan:** `DEAN_REPORT_FRONTEND_FLAG.md`
+
+---
+
+## Session 81 — COMPLETE (2026-10-24)
+
+**HEAD:** 3243675
+**Commits today:** 20+ across sessions 79-81
+**Working tree:** clean
+
+### Phase A items shipped
+
+| Item | Status |
+|---|---|
+| **A1 — Employer Network** | v0.3 (public page, referral, signup, admin approval) |
+| **A2 — Proof Dashboard** | Backend 100%, Dean PDF live, frontend deferred |
+| **A3 — Engagement Dashboard** | v1.0 (streaks, badges, leaderboard, preferences) |
+| **A4 — LMS Bridge** | Not started |
+
+### Live URLs
+
+- `/employers` — 8 real CBREX roles
+- `/employer/signup` — employer self-signup
+- `/employer/refer/{role_id}` — candidate referral
+- `/admin/employer-accounts` — admin approval queue
+- `/student/engagement` — engagement dashboard
+- `/api/proof-dashboard/{id}` — cohort analytics
+- `/api/proof-dashboard/{id}/pdf` — Dean-ready PDF
+- `/api/employers/stats` — public roles API
+
+### Database (6 new tables)
+
+- `charvak_employer_accounts` (17 cols)
+- `charvak_employer_referrals` (19 cols)
+- `charvak_certificate_views` (9 cols)
+- `charvak_student_preferences` (5 cols)
+- `charvak_student_badges` (8 cols)
+- `charvak_engagement_events` (6 cols)
+
+### Next Session Priority
+
+**Option 1 — A4 LMS Bridge** (5 sessions): Moodle plugin, Google SSO, CSV bridge
+**Option 2 — Polish A1 v0.4** (1-2 sessions): referral status UI, employer dashboard enhancements
+**Option 3 — Build Dean frontend UI** (2-3 sessions): signed URLs, client login, auth dashboard
+
+**Trigger for Option 3:** first paying client OR 5+ monthly reports
+
+### Pending Flags
+
+- **Flag 2** — Render Postgres password rotation (Monday, 2 min)
+- **Dean Frontend** — flagged in DEAN_REPORT_FRONTEND_FLAG.md
+
+### Monday Actions
+
+1. Rotate Render Postgres password
+2. Send Amrita follow-up with Dean PDF + `/employers` link + `/student/engagement`
+3. Pick next priority (A4 LMS Bridge / Polish A1 / Dean frontend)
+
+---
