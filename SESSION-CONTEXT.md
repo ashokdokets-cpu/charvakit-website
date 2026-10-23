@@ -179,3 +179,29 @@ Backend complete + live on prod. Frontend deferred.
 3. Pick next priority (A4 LMS Bridge / Polish A1 / Dean frontend)
 
 ---
+
+---
+
+## PLG SaaS Transformation — FLAGGED (2026-10-24)
+
+Full strategic roadmap saved to `PLG_SAAS_ROADMAP.md`.
+
+**What it contains:**
+- Honest 60% readiness assessment
+- Three revenue streams scored (B2B University = best ROI)
+- 20-session roadmap to full PLG readiness
+- Skip list (don't waste effort on low-ROI features)
+- 6 trigger conditions to unfreeze
+
+**Do NOT start** until at least one trigger fires:
+1. Amrita signs paid pilot
+2. 5+ paying customers
+3. ₹50K+ marketing budget
+4. 6+ months runway
+5. Sales team/partner available
+6. First 3 college contracts signed
+
+**Read this when:** You hit a trigger and want the exact plan.
+**Don't read this to decide what to build tomorrow.**
+
+`PLG_SAAS_ROADMAP.md` is the strategy. `INSTITUTIONAL-ROADMAP.md` is the operational plan.

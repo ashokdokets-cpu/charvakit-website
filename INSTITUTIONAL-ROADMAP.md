@@ -412,3 +412,26 @@ we build the next one.
 - Trigger: first paying client OR 5+ reports/month
 
 ---
+
+---
+
+## PLG SaaS Transformation (FLAGGED 2026-10-24)
+
+Full strategic plan at `PLG_SAAS_ROADMAP.md`.
+
+**Summary:** Platform is 60% ready for self-driven SaaS revenue. Missing
+pieces are ~20 sessions. Best path is B2B University SaaS (10-20x ROI
+vs B2C).
+
+**Do not build speculatively.** Unfreeze only when:
+- Amrita signs OR
+- 5+ paying customers OR
+- ₹50K+ marketing budget OR
+- 6+ months runway
+
+**Worst-case scenario for building too early:** You burn 20 sessions
+building paywalls for 674 users and still have 674 users.
+
+**Worst-case scenario for waiting:** You sign 3 universities and
+*then* need to build infrastructure under pressure. Better problem
+than the first.
