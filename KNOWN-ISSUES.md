@@ -1,5 +1,56 @@
 # Charvak - Known Issues Registry
 
+**Last updated:** 2026-10-24 (Sessions 79-80 closed)
+
+### RESOLVED - Homepage positioning was exam-prep-only (2026-10-24, 707996c)
+
+The homepage hero read "Practice smarter. Score higher." — positioning
+Charvak as a B2C exam-prep app. Enterprise buyers (universities, employers)
+had no entry path from the homepage.
+
+**Fix:** Full 3-pillar rewrite. Hero: "The AI Verification Layer for Global
+Talent." Three pillar cards: For Learners / For Universities / For Employers.
+Each with 5 feature bullets + 2 CTAs. Proof bar + featured products added.
+
+**Verified on prod:** all 7 structural markers present.
+
+---
+
+### RESOLVED - Softened 48-hour placement claim (2026-10-24, 707996c)
+
+The homepage claimed "Hire verified. Deploy in 48 hours." — an aggressive
+SLA we couldn't guarantee without 20+ engineers ready to interview.
+
+**Fix:** Softened 4 locations:
+- "Hire verified. Deploy in 48 hours." → "Hire verified. Match in 48 hours."
+- "48-hour engineer placement SLA" → "48-hour candidate shortlist"
+- "AI-verified remote engineers placed in 48 hours" → "...shortlisted in 48 hours"
+
+**Rationale:** What we can defend is 3 candidates within 48 hours, not a
+guaranteed start date. Match is achievable; deploy requires the candidate
+to accept an offer, resign, and start — outside our control.
+
+---
+
+### RESOLVED - GPT-4o model retirement (Jan 14, 2027) (2026-10-23)
+
+GPT-4o-mini and GPT-4o were being retired Jan 14, 2027. The migration
+plan (Phase 1-3b) completed in Session 54, but the Render env vars were
+never set. The code was still defaulting to `gpt-4o-mini` (retiring).
+
+**Fix (Session 79):**
+- Set `OPENAI_MODEL=gpt-5.4-nano` on Render
+- Set `OPENAI_MODEL_CHEAP=gpt-5.4-nano`
+- Set `OPENAI_MODEL_SMART=gpt-5.4-mini`
+- Verified 7/7 tests: JD parse (8 skills extracted), auth gate (401), 6 endpoints
+
+**Deadline eliminated.**
+
+---
+
+
+# Charvak - Known Issues Registry
+
 **Last updated:** 2026-10-23 (Sessions 76/77/78 closed)
 
 ### RESOLVED - Email gate modal trapped in hidden parent (2026-10-23, db6978b)

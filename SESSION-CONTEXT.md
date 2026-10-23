@@ -1,34 +1,46 @@
 # Session Context - Charvak
 
-**HEAD:** db6978b
+**HEAD:** 707996c
 **Live:** https://www.charvakit.com
-**Updated:** 2026-10-23 (Session 78 closed)
+**Updated:** 2026-10-24 (Sessions 79-80 closed)
 
 ---
 
 ## Latest State
 
-**Sessions 76/77/78 shipped (2026-10-23):**
+**Sessions 76-80 shipped in 24 hours (2026-10-24):**
 
-- **S76** (`e6af6b0`): Nav Phase 2 - 14 flat items to 5 story-driven dropdowns
-  (Learn / Prove / Get Hired / For Business / Resources)
+- **S76** (`e6af6b0`): Nav Phase 2 — 14 flat items → 5 story-driven dropdowns
 - **S77** (`cea4e69`): 12px gap between Global Platform strip and main nav
-- **S78** (`db6978b`): Email gate on `/readiness/{cert_id}` for anonymous visitors
+- **S78** (`db6978b`): Email gate on /readiness cert page for anonymous visitors
+- **S79** (`6c95809`, `2dad2ed`): Flag 1+3 closed, Amrita email sent, GPT-5.4 verified
+- **S80** (`707996c`): 3-pillar homepage + 5 enterprise one-pagers
 
-**Prod verified:** all three live. Homepage 200, all nav markers present,
-email gate functional (modal appears for new visitors, skip works, authed
-users bypass).
+### Flags Status
+| Flag | Status |
+|---|---|
+| Flag 1 — Amrita email | ✅ Sent Oct 23, 19:54 (3 PDFs attached) |
+| Flag 2 — Render password | 📅 **Monday** (2 min) |
+| Flag 3 — GPT-4o env flip | ✅ Verified 7/7 tests |
+| Flag B — 5 enterprise one-pagers | ✅ Done (Desktop folder) |
+| Flag D — 3-pillar homepage | ✅ Live on prod |
 
-### Session 79 Plan (next session)
-1. Flag 1: Amrita email to Prof. Raj (5 min human action)
-2. Flag 3: GPT-4o env flip on Render (5 min, closes Jan 14 2027 deadline)
-3. Flag 2: Rotate Render Postgres password (5 min, brief downtime)
+### Amrita Follow-Up Schedule
+- Wed Oct 28: follow-up #1
+- Fri Nov 1: final nudge
+- Nov 15: re-engage (if new angle)
 
-After these 3: **all carried flags closed. Platform has zero unblocked work.**
+Scripts saved in `_amrita_followups.txt`
 
-### Still pending (post-flags)
-- Homepage CTA to /ai-assessment (~20 min)
-- Wave 3+, Track C/D/E/F - blocked on Amrita / employer demand
+### Next Session (Monday)
+1. Rotate Render Postgres password (2 min)
+2. Verify homepage 200
+3. Then: send 5 one-pagers to 5 universities (outbound)
+
+### Head State
+- HEAD: `707996c`
+- Working tree: clean
+- Prod: 200, all features live
 
 ---
 

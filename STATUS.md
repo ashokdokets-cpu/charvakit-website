@@ -1,5 +1,53 @@
 # Charvak IT Consulting - Project Status
 
+**Last updated:** 2026-10-24 (Sessions 79-80 — enterprise sales package + 3-pillar homepage)
+**Version:** v3.9-session-80-20261024
+**Live:** https://www.charvakit.com
+**HEAD:** 707996c
+
+## Sessions 79-80 — COMPLETE (2026-10-24)
+
+### Flags Closed
+- ✅ Flag 1: Amrita email sent to Prof. Raj Oct 23 19:54 (3 PDFs attached)
+- ✅ Flag 3: GPT-4o env flip verified (7/7 tests, JD parse + auth gate + 6 endpoints)
+- 📅 Flag 2: Render Postgres password rotation (Monday)
+
+### Track A: 5 Enterprise One-Pagers
+Location: `C:\Users\lenovo\OneDrive\Desktop\Charvak_Enterprise_Package_20261023\`
+- 01-university-portal.pdf (4 KB)
+- 02-cas-api.pdf (3.7 KB)
+- 03-trust-score-api.pdf (3.6 KB)
+- 04-staff-augmentation.pdf (3.8 KB)
+- 05-b2c-enterprise-license.pdf (3.5 KB)
+- Charvak_Enterprise_Package.pdf (17 KB — 10 pages, all 5 combined)
+
+### Track B: 3-Pillar Homepage Rewrite
+Commit: `707996c` (136 insertions, 106 deletions)
+- Hero: "The AI Verification Layer for Global Talent"
+- 3 pillars: For Learners / For Universities / For Employers (color-coded)
+- Each pillar: 5 feature bullets + 2 CTAs
+- Proof bar: 138 exams, 12.5K questions, 34 languages, 8 AI engines
+- Featured products: Career Assessment, CAS API, Staff Augmentation
+- Softened "48-hour placement" → "48-hour match/shortlist" (defensible claim)
+
+### Track C: Docs Sync
+Commits: `6c95809` (gitignore), `2dad2ed` (session 79 close-out)
+
+### Prod State
+- Cert RDC-DEMO2026SAMPLE (Priya S., 78/100, full skill breakdown)
+- 21 public passports seeded (source=demo_sample)
+- Homepage live with 3-pillar layout
+- GPT-5.4-nano + gpt-5.4-mini serving all AI
+
+### Monday To-Do (2 min)
+1. Rotate Render Postgres password
+2. Verify homepage 200
+3. Send 5 one-pagers to 5 universities (outbound)
+
+---
+
+# Charvak IT Consulting - Project Status
+
 **Last updated:** 2026-10-23 (Session 78 - email gate + nav redesign live)
 **Version:** v3.8-session-78-20261023
 **Live:** https://www.charvakit.com
