@@ -2145,3 +2145,38 @@ Tested order creation on prod with live keys:
 Confirmed: Razorpay is NOT the blocker for zero revenue. The issue is
 conversion (users don't click "buy"). Certificate CTAs aim to fix this.
 
+
+---
+
+### RESOLVED - G6 Google OAuth end-to-end (2026-10-25, c793fed + aadb13d)
+
+Google OAuth now works end-to-end on prod. Six auth bugs found and fixed plus one 401 redirect bug.
+
+Bugs fixed:
+1. require_auth() didn't read charvak_auth_token cookie
+2. /api/auth/login only set cookie for admins
+3. checkLoginState() only read localStorage
+4. find_or_create_user didn't set verified=TRUE on link
+5. Google consent screen missing 2024+ required fields
+6. Stale browser cookies masking state
+7. 401 handler redirecting homepage visitors
+
+Fix summary:
+- require_auth() reads charvak_auth_token
+- /api/auth/login sets charvak_auth_token for all users
+- checkLoginState() falls back to /api/auth/me with credentials:include
+- find_or_create_user sets verified=TRUE on link
+- Google consent screen fully configured
+- 401 handler skips redirect for /api/auth/me
+
+Verified on prod: password login works, Google OAuth works, user record shows auth_provider=google + verified=True + google_oauth_id set, homepage accessible to anonymous visitors.
+
+Verdict: RESOLVED.
+
+---
+
+### RESOLVED - W1 homepage Placement OS reframe (2026-10-25, aadb13d)
+
+Homepage now positions Charvak as 'The Placement Operating System for Indian Colleges' via a green strip above the existing hero. Full product suite has a home in the More from Charvak section below the 3 pillars.
+
+Closes W1 from GAPS_AND_WEAKNESSES_MASTER.md.

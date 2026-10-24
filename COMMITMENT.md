@@ -6583,3 +6583,70 @@ First real revenue signal from highest-traffic authenticated page.
 - Send Amrita email to Prof. Raj (draft ready)
 - Phase 3c GPT-4o env flip (Nov 3 target, kills Jan 14 2027 risk)
 
+
+---
+
+## Session 82 Extended - G6 + W1 + 401 Fix COMPLETE (2026-10-25)
+
+Three deliverables shipped end-to-end on prod.
+
+### G6 - Google OAuth - CLOSED
+
+Full OAuth 2.0 flow live on /login and /register.
+
+Backend:
+- users.google_oauth_id + users.auth_provider columns
+- google_oauth_engine.py (build_authorization_url, exchange_code_for_token, get_user_info, find_or_create_user, verify_state)
+- 3 routes: start, callback, unlink
+- charvak_auth_token cookie (30-day, HttpOnly, Secure, SameSite=Lax)
+
+Frontend:
+- Sign in with Google button on /login + /register
+- checkLoginState() cookie-session fallback
+
+Cookie unification (c793fed):
+- /api/auth/login sets charvak_auth_token for ALL users
+- require_auth() reads charvak_auth_token in cookie lookup chain
+
+Google Cloud Console (2024+ compliance):
+- Application home page: https://www.charvakit.com
+- Privacy policy: https://www.charvakit.com/privacy
+- Terms of service: https://www.charvakit.com/terms
+- Authorized domains: charvakit.com
+- Test users: charvakit@gmail.com
+
+Verified on prod: password login works, Google OAuth works, user record shows auth_provider=google, verified=True, google_oauth_id set.
+
+### W1 - Homepage Reframe - SHIPPED
+
+- Placement OS positioning strip above hero
+- Assess -> Prove -> Place tagline
+- More from Charvak section (4 cards)
+
+Impact: Every visitor sees the placement positioning. Full product suite has a home on the homepage.
+
+### 401 Redirect Fix - SHIPPED
+
+Bug: Every anonymous visitor to / was auto-redirected to /login?next=/ because /api/auth/me returning 401 (expected) was treated as session expired.
+
+Fix: base.html 401 handler skips redirect when URL contains /api/auth/me.
+
+Verified: Fresh Incognito to https://www.charvakit.com/ stays on /, no redirect.
+
+### Bugs Fixed
+
+7 auth bugs total (6 auth + 1 redirect).
+
+### Commits
+
+- aec9c96 - feat(auth): Google OAuth sign-in (G6)
+- c793fed - fix(auth): cookie sessions work end-to-end
+- 59caf2c - chore: gitignore Session 82 debug artifacts
+- 208f9bb - chore(migrations): formalize users table legacy columns
+- aadb13d - feat(homepage): W1 + 401 redirect fix
+
+### Next Session
+
+1. Send 5 university one-pagers (drafts ready)
+2. Render password rotation (Session 19 flag, 2 min)
+3. Send Amrita follow-up #1 (Wed Oct 28)
