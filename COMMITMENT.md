@@ -6650,3 +6650,16 @@ Verified: Fresh Incognito to https://www.charvakit.com/ stays on /, no redirect.
 1. Send 5 university one-pagers (drafts ready)
 2. Render password rotation (Session 19 flag, 2 min)
 3. Send Amrita follow-up #1 (Wed Oct 28)
+---
+
+## Two Features Queued for Immediate Next Session (2026-10-25)
+
+Both unblocked. See NEXT-SESSION-PLAN.md for full details.
+
+### Feature 1 - Email Mismatch Auto-Link Flow (~2 hrs)
+- Build FIRST (smaller, self-contained)
+- No DoketsRB-side changes required for MVP
+
+### Feature 2 - Coding/SQL Certifications (~3.5 hrs)
+- Build SECOND (bigger, needs more testing)
+- Closes Tier 2 gap (Session 73 flag)
