@@ -1661,6 +1661,145 @@ async def api_login(request: Request, data: LoginRequest):
             status_code=401
         )
 
+
+# =============================================================================
+# Session 82 — Google OAuth routes
+# =============================================================================
+
+@app.get("/api/auth/google/start")
+async def google_oauth_start(request: Request, next: str = "/"):
+    """Redirects user to Google consent screen."""
+    try:
+        import google_oauth_engine as goe
+        if not goe.is_configured():
+            return JSONResponse(
+                status_code=503,
+                content={"status": "error", "message": "Google OAuth not configured."}
+            )
+        if not next.startswith("/") or next.startswith("//"):
+            next = "/"
+        auth_url = goe.build_authorization_url(next_url=next)
+        return RedirectResponse(url=auth_url, status_code=302)
+    except Exception as e:
+        logger.error(f"google_oauth_start failed: {e}", exc_info=True)
+        return RedirectResponse(url="/login?error=oauth_start_failed", status_code=302)
+
+
+@app.get("/api/auth/google/callback")
+async def google_oauth_callback(request: Request, code: str = "", state: str = "", error: str = ""):
+    """Handles Google's redirect. Creates/logs-in user, sets session cookie."""
+    try:
+        if error:
+            logger.info(f"Google OAuth denied: {error}")
+            return RedirectResponse(url="/login?error=access_denied", status_code=302)
+
+        if not code or not state:
+            logger.warning("Google callback missing code or state")
+            return RedirectResponse(url="/login?error=missing_params", status_code=302)
+
+        import google_oauth_engine as goe
+        import secrets as _secrets
+
+        try:
+            state_data = goe.verify_state(state)
+            next_url = state_data.get("next_url") or "/"
+        except ValueError as e:
+            logger.warning(f"Invalid state: {e}")
+            return RedirectResponse(url="/login?error=invalid_state", status_code=302)
+
+        try:
+            token_data = goe.exchange_code_for_token(code)
+            access_token = token_data.get("access_token")
+            if not access_token:
+                raise ValueError("No access_token")
+        except ValueError as e:
+            logger.warning(f"Token exchange failed: {e}")
+            return RedirectResponse(url="/login?error=token_exchange", status_code=302)
+
+        try:
+            user_info = goe.get_user_info(access_token)
+        except ValueError as e:
+            logger.warning(f"Userinfo fetch failed: {e}")
+            return RedirectResponse(url="/login?error=userinfo_failed", status_code=302)
+
+        try:
+            user = goe.find_or_create_user(user_info)
+        except ValueError as e:
+            logger.error(f"User creation failed: {e}")
+            return RedirectResponse(url="/login?error=user_create_failed", status_code=302)
+
+        try:
+            from auth import _persist_token
+            from datetime import datetime as _dt, timedelta as _td
+            session_token = _secrets.token_hex(32)
+            expires_at = _dt.utcnow() + _td(days=30)
+            _persist_token(
+                token=session_token,
+                user_id=user["user_id"],
+                email=user["email"],
+                role=user["role"],
+                expires_at=expires_at,
+            )
+        except Exception as e:
+            logger.error(f"Session token creation failed: {e}", exc_info=True)
+            return RedirectResponse(url="/login?error=session_failed", status_code=302)
+
+        response = RedirectResponse(url=next_url, status_code=302)
+        response.set_cookie(
+            "charvak_auth_token",
+            session_token,
+            max_age=30 * 24 * 60 * 60,
+            httponly=True,
+            secure=True,
+            samesite="lax",
+            path="/",
+        )
+
+        logger.info(f"Google OAuth login: {user['email']} (new={user['is_new']})")
+        return response
+
+    except Exception as e:
+        logger.error(f"google_oauth_callback failed: {e}", exc_info=True)
+        return RedirectResponse(url="/login?error=oauth_exception", status_code=302)
+
+
+@app.post("/api/auth/google/unlink")
+async def google_oauth_unlink(request: Request):
+    """Disconnect Google from the user's account (requires password set)."""
+    try:
+        token = request.cookies.get("charvak_auth_token") or ""
+        if not token:
+            return JSONResponse(status_code=401, content={"status": "error", "message": "Not logged in"})
+
+        from auth import verify_token
+        user = verify_token(token)
+        if not user:
+            return JSONResponse(status_code=401, content={"status": "error", "message": "Invalid session"})
+
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT password_hash FROM users WHERE user_id = %s", (user["user_id"],))
+        row = cur.fetchone()
+        if not row or not row[0]:
+            cur.close(); conn.close()
+            return JSONResponse(
+                status_code=400,
+                content={"status": "error", "message": "Cannot unlink — no password set. Set a password first."}
+            )
+
+        cur.execute(
+            "UPDATE users SET google_oauth_id = NULL, auth_provider = 'password' WHERE user_id = %s",
+            (user["user_id"],),
+        )
+        conn.commit()
+        cur.close(); conn.close()
+        return {"status": "success", "message": "Google account unlinked"}
+    except Exception as e:
+        logger.error(f"google_oauth_unlink failed: {e}", exc_info=True)
+        return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
+
+
 @app.post("/api/auth/logout")
 async def api_logout(data: LogoutRequest):
     try:
