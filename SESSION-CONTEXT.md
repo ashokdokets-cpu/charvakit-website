@@ -60,6 +60,16 @@ Bugs fixed (6 auth bugs):
 - Local DB: synced with prod (98/99 migrations, 11 users columns)
 - New migration: 20261025_users_legacy_columns.sql
 
+### IMMEDIATE NEXT SESSION — Two Features Queued
+
+**See NEXT-SESSION-PLAN.md for full details.**
+
+Build in this order:
+1. **Email Mismatch Auto-Link Flow** (~2 hrs) — unblocks DoketsRB sync UX
+2. **Coding/SQL Certifications** (~3.5 hrs) — closes Tier 2 gap
+
+Both unblocked. Diagnostics in the plan file.
+
 ### Next Session Priorities (Monday Oct 26)
 
 1. Send 5 university one-pagers (drafts ready in chat)
