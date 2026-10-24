@@ -539,7 +539,7 @@ def require_auth(request: Request) -> Dict:
             return user
 
     # 2. Fall back to charvak_admin_token cookie (admin/cookie-based login)
-    cookie_token = request.cookies.get("charvak_admin_token") or request.cookies.get("auth_token")
+    cookie_token = request.cookies.get("charvak_admin_token") or request.cookies.get("charvak_auth_token") or request.cookies.get("auth_token")
     if cookie_token:
         user = get_current_user(cookie_token)
         if user:
@@ -1632,13 +1632,25 @@ async def api_login(request: Request, data: LoginRequest):
         if isinstance(result.get("user"), dict) and "password_hash" in result["user"]:
             result["user"] = {k: v for k, v in result["user"].items() if k != "password_hash"}
 
-        # Set admin cookie for admin users so /admin* pages can load
-        if result.get("status") == "success":
+        # Set session cookie for ALL successful logins
+        if result.get("status") == "success" and result.get("token"):
             email = (data.email or "").lower()
             role = (result.get("user") or {}).get("role", "")
             is_admin = email in ("charvakit@gmail.com", "hr@charvakit.com")
-            if is_admin and result.get("token"):
-                resp = JSONResponse(result)
+
+            resp = JSONResponse(result)
+            # Universal session cookie (read by require_auth)
+            resp.set_cookie(
+                key="charvak_auth_token",
+                value=result["token"],
+                httponly=True,
+                secure=True,
+                samesite="lax",
+                max_age=30 * 24 * 60 * 60,
+                path="/",
+            )
+            # Admin cookie (read by admin_auth_guard middleware)
+            if is_admin:
                 resp.set_cookie(
                     key="charvak_admin_token",
                     value=result["token"],
@@ -1648,8 +1660,10 @@ async def api_login(request: Request, data: LoginRequest):
                     max_age=86400 * 7,
                     path="/",
                 )
-                logger.info(f"Admin cookie set for {email}")
-                return resp
+                logger.info(f"Admin + auth cookies set for {email}")
+            else:
+                logger.info(f"Auth cookie set for {email}")
+            return resp
 
         return JSONResponse(result)
     except HTTPException:

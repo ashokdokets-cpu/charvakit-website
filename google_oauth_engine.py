@@ -184,7 +184,7 @@ def find_or_create_user(google_user: Dict) -> Dict:
         existing_google_id = row[4]
         if not existing_google_id and google_id:
             cur.execute(
-                "UPDATE users SET google_oauth_id = %s, auth_provider = 'google' WHERE user_id = %s",
+                "UPDATE users SET google_oauth_id = %s, auth_provider = 'google', verified = TRUE WHERE user_id = %s",
                 (google_id, existing_user_id),
             )
             conn.commit()

@@ -865,53 +865,84 @@ async function logoutUser() {
 // Check login state on page load
 function checkLoginState() {
     // Check all possible token storage keys
-    var token = localStorage.getItem('auth_token') || 
-                localStorage.getItem('charvak_token') || 
+    var token = localStorage.getItem('auth_token') ||
+                localStorage.getItem('charvak_token') ||
                 localStorage.getItem('token') ||
                 sessionStorage.getItem('auth_token');
-    
-    var email = localStorage.getItem('userEmail') || 
+
+    var email = localStorage.getItem('userEmail') ||
                 localStorage.getItem('email') ||
                 localStorage.getItem('user_email');
-    
-    var userName = localStorage.getItem('userName') || 
+
+    var userName = localStorage.getItem('userName') ||
                    localStorage.getItem('name') ||
                    (email ? email.split('@')[0] : '');
-    
+
     console.log('Login check - Token:', !!token, 'Email:', email);
-    
+
     if (token && email) {
-        var loggedInMenu = document.getElementById('loggedInMenu');
-        var loggedOutMenu = document.getElementById('loggedOutMenu');
-        var userMenuLabel = document.getElementById('userMenuLabel');
-        var loggedInEmail = document.getElementById('loggedInEmail');
-        
-        if (loggedInMenu) loggedInMenu.style.display = 'block';
-        if (loggedOutMenu) loggedOutMenu.style.display = 'none';
-        if (userMenuLabel) userMenuLabel.textContent = userName || email.split('@')[0];
-        if (loggedInEmail) loggedInEmail.textContent = email;
-        
-        console.log('User logged in:', userName);
-    } else {
-        var loggedInMenu = document.getElementById('loggedInMenu');
-        var loggedOutMenu = document.getElementById('loggedOutMenu');
-        var userMenuLabel = document.getElementById('userMenuLabel');
-        
-        if (loggedInMenu) loggedInMenu.style.display = 'none';
-        if (loggedOutMenu) loggedOutMenu.style.display = 'block';
-        if (userMenuLabel) userMenuLabel.textContent = 'Login';
-        
-        console.log('User not logged in');
+        _renderLoggedInState(email, userName);
+        return;
     }
-        
-        // Session 74: Toggle top-bar auth CTAs (global bar)
-        try {
-            var topAuthOut = document.getElementById('topAuthOut');
-            var topAuthIn = document.getElementById('topAuthIn');
-            var isLoggedIn = loggedInMenu && loggedInMenu.style.display === 'block';
-            if (topAuthOut) topAuthOut.style.display = isLoggedIn ? 'none' : 'flex';
-            if (topAuthIn) topAuthIn.classList.toggle('d-none', !isLoggedIn);
-        } catch (e) { /* silent - never break login flow */ }
+
+    // Cookie-session fallback: check /api/auth/me when localStorage is empty
+    fetch('/api/auth/me', { credentials: 'include' })
+        .then(function(r) {
+            if (r.status !== 200) return null;
+            return r.json();
+        })
+        .then(function(d) {
+            if (d && d.status === 'success' && d.user && d.user.email) {
+                // Hydrate localStorage from cookie session
+                localStorage.setItem('auth_token', 'cookie-session');
+                localStorage.setItem('charvak_token', 'cookie-session');
+                localStorage.setItem('userEmail', d.user.email);
+                localStorage.setItem('userName', d.user.name || d.user.email.split('@')[0]);
+                localStorage.setItem('userRole', d.user.role || 'candidate');
+                _renderLoggedInState(d.user.email, d.user.name || d.user.email.split('@')[0]);
+            } else {
+                _renderLoggedOutState();
+            }
+        })
+        .catch(function() {
+            _renderLoggedOutState();
+        });
+}
+
+function _renderLoggedInState(email, userName) {
+    var loggedInMenu = document.getElementById('loggedInMenu');
+    var loggedOutMenu = document.getElementById('loggedOutMenu');
+    var userMenuLabel = document.getElementById('userMenuLabel');
+    var loggedInEmail = document.getElementById('loggedInEmail');
+
+    if (loggedInMenu) loggedInMenu.style.display = 'block';
+    if (loggedOutMenu) loggedOutMenu.style.display = 'none';
+    if (userMenuLabel) userMenuLabel.textContent = userName || email.split('@')[0];
+    if (loggedInEmail) loggedInEmail.textContent = email;
+
+    try {
+        var topAuthOut = document.getElementById('topAuthOut');
+        var topAuthIn = document.getElementById('topAuthIn');
+        if (topAuthOut) topAuthOut.style.display = 'none';
+        if (topAuthIn) topAuthIn.classList.remove('d-none');
+    } catch (e) {}
+}
+
+function _renderLoggedOutState() {
+    var loggedInMenu = document.getElementById('loggedInMenu');
+    var loggedOutMenu = document.getElementById('loggedOutMenu');
+    var userMenuLabel = document.getElementById('userMenuLabel');
+
+    if (loggedInMenu) loggedInMenu.style.display = 'none';
+    if (loggedOutMenu) loggedOutMenu.style.display = 'block';
+    if (userMenuLabel) userMenuLabel.textContent = 'Login';
+
+    try {
+        var topAuthOut = document.getElementById('topAuthOut');
+        var topAuthIn = document.getElementById('topAuthIn');
+        if (topAuthOut) topAuthOut.style.display = 'flex';
+        if (topAuthIn) topAuthIn.classList.add('d-none');
+    } catch (e) {}
 }
 
 // Run checkLoginState on page load
