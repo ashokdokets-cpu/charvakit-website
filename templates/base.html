@@ -1035,6 +1035,10 @@ window.addEventListener('charvak:401', function(e) {
     var p = window.location.pathname;
     if (p === '/login' || p === '/register' || p === '/forgot-password'
         || p === '/reset-password' || p === '/verify-email') return;
+    // /api/auth/me returns 401 for logged-out users. Expected, not "session expired".
+    // Without this check, every anonymous visit to a public page redirects to /login.
+    var reqUrl = d.url || '';
+    if (reqUrl.indexOf('/api/auth/me') !== -1) return;
     var next = encodeURIComponent(window.location.pathname + window.location.search);
     window.location.href = d.login_url ? d.login_url : ('/login?next=' + next);
 });
