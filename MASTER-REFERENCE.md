@@ -2,10 +2,10 @@
 
 ## Charvak IT Consulting Pvt Ltd
 
-### Last updated: October 24, 2026 (Sessions 79-80 - enterprise package + 3-pillar homepage)
+### Last updated: October 25, 2026 (Session 82 extended - G6 + W1 + 401 fix)
 
 
-**HEAD:** 707996c
+**HEAD:** aadb13d
 
 **Live:** https://www.charvakit.com
 
@@ -13,7 +13,7 @@
 
 **Backlog:** see `OUTSTANDING-WORK-INVENTORY.md` (master list of remaining work)
 
-**Version:** v3.7-session-74-extended-20261022
+**Version:** v3.11-session-82-extended-20261025
 
 
 
@@ -51,7 +51,7 @@
 
 **Commit:** `a016814` (S67b AI Tutor frontend)
 
-**HEAD:** 707996c
+**HEAD:** aadb13d
 
 **Wave 3 status:** 100% complete (all 3 features shipped)
 
@@ -235,7 +235,7 @@ is blocked on Amrita signing or employer demand.
 
 **Commits:** `2d1f1a4` (S65a), `336afbb` (S65b), `581a8f9` (S67a), `766fb6b` (S69)
 
-**HEAD:** 707996c
+**HEAD:** aadb13d
 
 
 
@@ -403,7 +403,7 @@ treats it as text.
 
 **Commits:** `bb0ecea` (S63), `ef5974f` (S64), `2cff7e2` (S64b)
 
-**HEAD:** 707996c
+**HEAD:** aadb13d
 
 
 
@@ -906,6 +906,16 @@ where the full flow can be watched.
 - #6 PayPal credits webhook safety net
 
 - #3 PayPal credits capture test (live $2.39 + refund)
+
+## Session 82 Extended (2026-10-25) - G6 + W1 + 401 Fix
+
+- G6 Google OAuth - CLOSED (Tier 2 gap)
+- W1 homepage "Placement OS" reframe - SHIPPED
+- 401 redirect fix - anonymous visitors can see homepage
+- 5 commits: aec9c96 -> c793fed -> 59caf2c -> 208f9bb -> aadb13d
+- 7 bugs fixed (6 auth + 1 redirect)
+
+---
 
 ## SYSTEM OVERVIEW
 
