@@ -188,3 +188,12 @@ enterprise/*.pdf
 
 # Session close-out notes (local only unless explicitly committed)
 _session*_closeout.md
+
+# Session 82 debug backups
+*.bak_*
+
+# Session 82 debug backups
+*.bak_*
+
+# Local DB backups folder
+backups/
