@@ -1,4 +1,4 @@
-﻿
+
 # Charvak Rate Card (INTERNAL - share only on request)
 
 **Do NOT include in the capability deck or cover email.**
@@ -79,7 +79,7 @@
 - Micro-internship: 100% upfront in escrow
 - Contract: Monthly (net 30)
 
-**Payment methods:** Razorpay, PayPal, NEFT/RTGS, Wire transfer
+**Payment methods:** Payment processor, International wallet, NEFT/RTGS, Wire transfer
 
 ---
 
