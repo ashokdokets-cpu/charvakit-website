@@ -6701,3 +6701,43 @@ First of 8 enterprise features from ENTERPRISE-ROADMAP-FLAG.md.
 
 **Demo URLs saved:**
 C:\\Users\\lenovo\\OneDrive\\Desktop\\Charvak_Sales_Package_20261025\\SCORECARD_DEMO_URLS.txt
+---
+
+## Session 83 — F2 Compliance Page — SHIPPED (2026-10-26)
+
+Second of 8 enterprise features from ENTERPRISE-ROADMAP-FLAG.md.
+Zero code, pure content. Closes enterprise procurement questions.
+
+**Live on prod:** https://www.charvakit.com/compliance
+
+**What shipped:**
+- templates/compliance.html (189 lines)
+- Route: GET /compliance
+- Footer link under Legal: 'Trust & Compliance'
+
+**Content:**
+- Hero: Trust, Compliance & Responsible AI
+- 5 badges: GDPR, DPDP, NYC 144, EU AI Act, SOC 2
+- 3 trust pillars: Audit Trail, Explainable Scoring, Human Oversight
+- 4 compliance standards: EU AI Act, NYC Law 144, India DPDP, GDPR
+- 3 infrastructure cards: SOC 2 roadmap, Data residency, Candidate rights
+- Green CTA: 'Request the trust package' → trust@charvakit.com
+
+**Beats VIVA360:**
+- Both have NYC 144 + EU AI Act alignment
+- Charvak adds India DPDP specifically
+- Charvak has explicit Trust package CTA
+- Charvak publishes SOC 2 target date
+
+**Commits:**
+- dcc7cd5 feat(compliance): F2 public trust & compliance page
+
+**Verified on prod:**
+- 200 status, 71KB content
+- All 6 content checks pass (Trust, NYC, DPDP, SOC 2, Audit Trail, Human Oversight)
+- Footer link visible on homepage
+
+**Enterprise sales impact:**
+- Adds second URL to every enterprise email
+- Prep for procurement reviews (SOC 2, DPAs)
+- Signals enterprise-readiness beyond assessment capability

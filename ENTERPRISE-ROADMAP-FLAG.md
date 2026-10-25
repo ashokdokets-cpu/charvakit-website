@@ -29,7 +29,11 @@
 - New: scorecard_engine.py, templates/scorecard.html, charvak_scorecards table
 - Beats VIVA: HMAC-verifiable (not just explainable) + ties to trial
 
-**F2 — Enterprise Compliance Page** [0.5 session, writing only]
+**F2 — Enterprise Compliance Page** [0.5 session, writing only] ✅ SHIPPED 2026-10-26
+
+**Status:** LIVE on prod — https://www.charvakit.com/compliance
+**Files:** templates/compliance.html (189 lines), main.py route, base.html footer link
+**Beats VIVA360:** India DPDP specifically, Trust package CTA, SOC 2 target date published
 - /compliance route
 - Content: audit trail, explainable scoring, bias audit, NYC Law 144, EU AI Act, India DPDP, GDPR, SOC 2 roadmap, data residency
 - Beats VIVA: India-specific (DPDP, DigiLocker) + Aadhaar-lite
