@@ -232,13 +232,23 @@ class ScorecardEngine:
         }
 
         # Load certificate if exists
-        cur.execute("""
-            SELECT cert_id, badge_tier, certification_hash, issued_at
-            FROM charvak_career_certifications
-            WHERE assessment_id = %s AND revoked_at IS NULL
-            LIMIT 1
-        """, (assessment_id,))
-        cert_row = cur.fetchone()
+        # Table may not exist on some environments (older DBs) — handle gracefully
+        cert_row = None
+        try:
+            cur.execute("""
+                SELECT cert_id, badge_tier, certification_hash, issued_at
+                FROM charvak_career_certifications
+                WHERE assessment_id = %s AND revoked_at IS NULL
+                LIMIT 1
+            """, (assessment_id,))
+            cert_row = cur.fetchone()
+        except Exception as _cert_err:
+            logger.debug(f"Certificate lookup skipped (table may not exist): {_cert_err}")
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+            cert_row = None
 
         # Build skill breakdown
         breakdown = self._compute_skill_breakdown(assessment["questions"])
