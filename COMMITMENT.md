@@ -6741,3 +6741,52 @@ Zero code, pure content. Closes enterprise procurement questions.
 - Adds second URL to every enterprise email
 - Prep for procurement reviews (SOC 2, DPAs)
 - Signals enterprise-readiness beyond assessment capability
+---
+
+## Session 83 — F3 Screen Agent Backend — SHIPPED (2026-10-26)
+
+Third of 8 enterprise features from ENTERPRISE-ROADMAP-FLAG.md.
+Session 1: full backend, verified end-to-end on prod.
+
+**Live demo URL:**
+https://www.charvakit.com/screen/xXTqnvovU7kZPox_m-4jRedfRB9uf7XW
+
+**What shipped (backend):**
+- 5 DB tables: charvak_screen_sessions, _candidates, _messages, _schedules, _events
+- recruiter_screen_engine.py (~1300 lines, 15 methods)
+- 11 API routes
+- templates/screen_chat.html (candidate UI)
+- Multi-language ready (en v1, hi v2)
+
+**Verified E2E on prod:**
+- Session created: SCREEN-DEEA5647B79B
+- Role extracted: 'Senior Backend Engineer' (JD parser works)
+- Company extracted: 'Acme'
+- Candidate invited with full token
+- Candidate page renders 200 OK with all content
+- Disqualification gate works (35L > 28L budget)
+- Full 12-field capture works
+- 3 schedule slots proposed (Tue/Wed/Thu)
+
+**Bugs fixed during build:**
+1. .env.local overrides .env in database.py
+2. OPENAI_MODEL missing in env files (added gpt-5.4-nano)
+3. _extract_field returned None — AI returns {field_name: value} not {value: value}
+4. JD parser wrapper not unwrapped — returns {status, parsed} not flat dict
+5. PowerShell multi-line commit messages fail (use here-string)
+
+**Beats VIVA360:**
+- 34 languages (v2) vs English only
+- India-specific fields (notice period, work auth, CTC)
+- 2-phase flow: 3 questions for disqualifications (not 12)
+- Ties to scorecard + compliance + micro-internship trial
+
+**Session 2 scope (next time, ~4 hrs):**
+- Full recruiter dashboard UI
+- Candidate chat UI polish
+- Hindi language toggle
+- ATS webhook dispatch
+- Bulk CSV upload
+
+**Commits:**
+- 3721c3e feat(screen): F3 backend
