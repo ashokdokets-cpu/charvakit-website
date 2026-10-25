@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+{% block title %}{{ scorecard.payload.assessment.role }} — Charvak Scorecard{% endblock %}
+
+{% block content %}
+<style>
+.sc-wrap { max-width: 900px; margin: 40px auto; padding: 0 20px; }
+.sc-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 32px; box-shadow: 0 4px 24px rgba(0,0,0,0.06); }
+.sc-header { border-bottom: 3px solid #3ba591; padding-bottom: 20px; margin-bottom: 24px; }
+.sc-title { font-size: 1.5rem; font-weight: 800; color: #1a1a2e; margin: 0 0 4px; }
+.sc-subtitle { font-size: 1rem; color: #3ba591; font-weight: 700; margin: 0 0 12px; text-transform: uppercase; letter-spacing: 1px; }
+.sc-meta { color: #6b7280; font-size: 0.9rem; }
+.sc-meta span { margin-right: 16px; }
+.sc-score-hero { background: linear-gradient(135deg, #3ba591 0%, #2a8070 100%); color: #fff; border-radius: 12px; padding: 32px; text-align: center; margin-bottom: 24px; }
+.sc-score-value { font-size: 4rem; font-weight: 900; line-height: 1; margin: 0; }
+.sc-score-max { font-size: 1.5rem; opacity: 0.7; }
+.sc-score-label { font-size: 0.9rem; opacity: 0.9; text-transform: uppercase; letter-spacing: 1px; margin-top: 8px; }
+.sc-score-meta { display: flex; justify-content: center; gap: 32px; margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.2); }
+.sc-score-meta-item { font-size: 0.9rem; }
+.sc-score-meta-item strong { display: block; font-size: 1.2rem; }
+.sc-verdict { display: inline-block; padding: 6px 16px; border-radius: 20px; font-weight: 700; font-size: 0.85rem; margin-top: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+.sc-verdict-pass { background: #10b981; color: #fff; }
+.sc-verdict-fail { background: #ef4444; color: #fff; }
+.sc-section { margin-bottom: 24px; }
+.sc-section-title { font-size: 0.85rem; color: #6b7280; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; margin-bottom: 12px; }
+.sc-skill { display: flex; align-items: center; margin-bottom: 12px; }
+.sc-skill-name { flex: 0 0 180px; font-weight: 600; color: #1a1a2e; font-size: 0.95rem; }
+.sc-skill-bar { flex: 1; height: 12px; background: #e2e8f0; border-radius: 6px; overflow: hidden; margin: 0 16px; }
+.sc-skill-fill { height: 100%; border-radius: 6px; }
+.sc-skill-fill-strong { background: #10b981; }
+.sc-skill-fill-mixed { background: #f59e0b; }
+.sc-skill-fill-weak { background: #ef4444; }
+.sc-skill-score { flex: 0 0 60px; text-align: right; font-weight: 700; font-size: 0.9rem; color: #1a1a2e; }
+.sc-integrity { background: #f0fdf4; border: 1px solid #86efac; border-radius: 10px; padding: 16px; }
+.sc-integrity-minor { background: #fefce8; border-color: #fde047; }
+.sc-integrity-moderate { background: #fff7ed; border-color: #fdba74; }
+.sc-integrity-elevated { background: #fef2f2; border-color: #fca5a5; }
+.sc-integrity-title { font-weight: 700; margin-bottom: 4px; }
+.sc-integrity-note { font-size: 0.9rem; color: #6b7280; }
+.sc-cert { background: #eff6ff; border: 1px solid #93c5fd; border-radius: 10px; padding: 16px; }
+.sc-cert-title { font-weight: 700; color: #1e40af; margin-bottom: 6px; }
+.sc-cert-meta { font-family: monospace; font-size: 0.85rem; color: #475569; }
+.sc-cert-verify { display: inline-block; margin-top: 8px; padding: 6px 12px; background: #3ba591; color: #fff; border-radius: 6px; font-size: 0.85rem; text-decoration: none; font-weight: 600; }
+.sc-cert-verify:hover { background: #2a8070; color: #fff; }
+.sc-recommendation { background: #f8fafc; border-left: 4px solid #3ba591; padding: 16px; border-radius: 0 8px 8px 0; font-size: 0.95rem; line-height: 1.6; color: #1a1a2e; }
+.sc-share { display: flex; gap: 12px; justify-content: center; margin-top: 24px; padding-top: 24px; border-top: 1px solid #e2e8f0; flex-wrap: wrap; }
+.sc-share-btn { padding: 10px 20px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; text-decoration: none; border: 1px solid #e2e8f0; background: #fff; color: #1a1a2e; cursor: pointer; }
+.sc-share-btn:hover { background: #f8fafc; border-color: #3ba591; color: #3ba591; }
+.sc-share-btn-primary { background: #3ba591; color: #fff; border-color: #3ba591; }
+.sc-share-btn-primary:hover { background: #2a8070; color: #fff; }
+.sc-footer { text-align: center; color: #6b7280; font-size: 0.85rem; margin-top: 32px; padding-top: 16px; border-top: 1px solid #e2e8f0; }
+.sc-footer a { color: #3ba591; }
+@media (max-width: 640px) {
+  .sc-skill { flex-direction: column; align-items: flex-start; }
+  .sc-skill-name { flex: none; margin-bottom: 4px; }
+  .sc-skill-bar { width: 100%; margin: 4px 0; }
+  .sc-skill-score { flex: none; }
+  .sc-score-meta { flex-direction: column; gap: 12px; }
+}
+</style>
+
+<div class="sc-wrap">
+  <div class="sc-card">
+
+    <div class="sc-header">
+      <div class="sc-subtitle">Charvak Verified Scorecard</div>
+      <h1 class="sc-title">{{ scorecard.payload.assessment.role }}</h1>
+      <div class="sc-meta">
+        <span><strong>{{ scorecard.payload.assessment.industry }}</strong></span>
+        <span><strong>{{ scorecard.payload.assessment.level | title }}</strong> level</span>
+        <span>{{ scorecard.payload.assessment.format | upper }} format</span>
+        <span>{{ scorecard.payload.assessment.num_questions }} questions</span>
+      </div>
+    </div>
+
+    <!-- Overall score -->
+    <div class="sc-score-hero">
+      <div class="sc-score-label">Overall Score</div>
+      <div><span class="sc-score-value">{{ scorecard.overall_score }}</span><span class="sc-score-max">/100</span></div>
+      {% if scorecard.passed %}
+        <div class="sc-verdict sc-verdict-pass">Passed</div>
+      {% else %}
+        <div class="sc-verdict sc-verdict-fail">Below Threshold</div>
+      {% endif %}
+      <div class="sc-score-meta">
+        <div class="sc-score-meta-item">
+          <strong>{{ scorecard.overall_percentile }}<sup>th</sup></strong>
+          percentile
+        </div>
+        <div class="sc-score-meta-item">
+          <strong>{{ scorecard.payload.scores.correct_count }}/{{ scorecard.payload.scores.total_questions }}</strong>
+          correct answers
+        </div>
+        <div class="sc-score-meta-item">
+          <strong>{{ scorecard.views_count }}</strong>
+          views
+        </div>
+      </div>
+    </div>
+
+    <!-- Skill breakdown -->
+    {% if scorecard.payload.skills and scorecard.payload.skills|length > 0 %}
+    <div class="sc-section">
+      <div class="sc-section-title">Skill Breakdown by Topic</div>
+      {% for skill in scorecard.payload.skills %}
+      <div class="sc-skill">
+        <div class="sc-skill-name">{{ skill.topic }}</div>
+        <div class="sc-skill-bar">
+          <div class="sc-skill-fill sc-skill-fill-{{ skill.status }}" style="width: {{ skill.score }}%"></div>
+        </div>
+        <div class="sc-skill-score">{{ skill.score }}%</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Integrity -->
+    <div class="sc-section">
+      <div class="sc-section-title">Integrity</div>
+      <div class="sc-integrity sc-integrity-{{ scorecard.integrity_risk }}">
+        <div class="sc-integrity-title">
+          {% if scorecard.integrity_risk == "clean" %}No concerns detected{% elif scorecard.integrity_risk == "minor" %}Minor signals only{% elif scorecard.integrity_risk == "moderate" %}Review recommended{% else %}Elevated signals{% endif %}
+        </div>
+        <div class="sc-integrity-note">{{ scorecard.payload.integrity.note }}</div>
+      </div>
+    </div>
+
+    <!-- Certificate -->
+    {% if scorecard.certificate_id %}
+    <div class="sc-section">
+      <div class="sc-section-title">Verified Certificate</div>
+      <div class="sc-cert">
+        <div class="sc-cert-title">Certificate of {{ scorecard.payload.certificate.tier | title }}</div>
+        <div class="sc-cert-meta">
+          ID: {{ scorecard.certificate_id }}<br>
+          Issued: {{ scorecard.payload.certificate.issued_at[:10] }}
+        </div>
+        {% if scorecard.certificate_verify_hash %}
+        <a class="sc-cert-verify" href="/api/career-certification/verify/{{ scorecard.certificate_verify_hash }}" target="_blank" rel="noopener">
+          Verify this certificate →
+        </a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Recommendation -->
+    <div class="sc-section">
+      <div class="sc-section-title">Hiring Recommendation</div>
+      <div class="sc-recommendation">{{ scorecard.payload.recommendation }}</div>
+    </div>
+
+    <!-- Share buttons -->
+    <div class="sc-share">
+      <a class="sc-share-btn sc-share-btn-primary" href="https://wa.me/?text={{ ("Verified scorecard for " + scorecard.payload.assessment.role + " — " + scorecard.overall_score|string + "/100. Verify: https://www.charvakit.com/scorecard/" + scorecard.scorecard_id)|urlencode }}" target="_blank" rel="noopener" onclick="charvakTrackShare(&quot;whatsapp&quot;)">
+        Share via WhatsApp
+      </a>
+      <a class="sc-share-btn" href="https://www.linkedin.com/sharing/share-offsite/?url={{ ("https://www.charvakit.com/scorecard/" + scorecard.scorecard_id)|urlencode }}" target="_blank" rel="noopener" onclick="charvakTrackShare(&quot;linkedin&quot;)">
+        Share on LinkedIn
+      </a>
+      <button class="sc-share-btn" onclick="charvakCopyLink()">
+        Copy link
+      </button>
+      <button class="sc-share-btn" onclick="window.print()">
+        Download / Print PDF
+      </button>
+    </div>
+
+    <div class="sc-footer">
+      Verified by Charvak IT Consulting Pvt Ltd<br>
+      <a href="https://www.charvakit.com">www.charvakit.com</a> · 
+      Public JSON: <a href="/api/scorecard/{{ scorecard.scorecard_id }}">/api/scorecard/{{ scorecard.scorecard_id }}</a>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function charvakCopyLink() {
+  var url = window.location.href;
+  navigator.clipboard.writeText(url).then(function() {
+    alert("Scorecard link copied: " + url);
+  }).catch(function() {
+    prompt("Copy this link:", url);
+  });
+}
+function charvakTrackShare(channel) {
+  try {
+    fetch("/api/scorecard/{{ scorecard.scorecard_id }}/share", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({channel: channel})
+    });
+  } catch(e) {}
+}
+window.addEventListener("load", function() {
+  try {
+    fetch("/api/scorecard/{{ scorecard.scorecard_id }}/share", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({channel: "view"})
+    });
+  } catch(e) {}
+});
+</script>
+
+{% endblock %}

@@ -867,6 +867,7 @@ function renderResult(j) {
                 + '<div class="small text-muted">Score ' + _carScore + '/100 · Verified credential · ' + _creditText + '</div>'
                 + '</div>'
                 + '<button class="btn btn-success" onclick="getCareerCertification(' + JSON.stringify(_carAid) + ', this)">Get Certified →</button>'
+      + '<button class="btn btn-outline-primary ms-2" onclick="createScorecard(' + JSON.stringify(_carAid) + ', this)">Create Shareable Scorecard →</button>'
                 + '</div>';
             document.getElementById("carResultBadge").innerHTML = badge + _ctaHtml;
         }
@@ -1076,6 +1077,51 @@ function renderResult(j) {
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+
+
+      async function createScorecard(assessmentId, btn) {
+        var originalText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = "Creating...";
+        try {
+          var token = localStorage.getItem("auth_token") || localStorage.getItem("charvak_token") || "";
+          var r = await fetch("/api/scorecard/create", {
+            method: "POST",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer " + token
+            },
+            body: JSON.stringify({assessment_id: assessmentId})
+          });
+          var d = await r.json();
+          if (d.status === "success") {
+            var url = window.location.origin + d.public_url;
+            var share = confirm("Scorecard created!\n\n" + url + "\n\nCopy this link and share with hiring managers.\n\nClick OK to copy, or Cancel to open."); 
+            if (share) {
+              try {
+                await navigator.clipboard.writeText(url);
+                alert("Copied to clipboard: " + url);
+              } catch(e) {
+                prompt("Copy this link:", url);
+              }
+            } else {
+              window.open(d.public_url, "_blank");
+            }
+            btn.textContent = "View Scorecard →";
+            btn.onclick = function() { window.open(d.public_url, "_blank"); };
+            btn.disabled = false;
+          } else {
+            alert("Could not create scorecard: " + (d.message || "Unknown error"));
+            btn.textContent = originalText;
+            btn.disabled = false;
+          }
+        } catch(e) {
+          alert("Scorecard creation failed: " + e.message);
+          btn.textContent = originalText;
+          btn.disabled = false;
+        }
+      }
 
 async function upgradeToStandard() {
     var a = window.__lastAssessment || _carCurrentAssessment;
