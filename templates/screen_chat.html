@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}Screen Call — {{ session_info.role_title }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 720px; margin: 40px auto; padding: 24px; font-family: -apple-system, sans-serif;">
+  <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 32px; box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
+    <h1 style="font-size: 1.5rem; color: #1a1a2e; margin: 0 0 8px;">Quick screen for {{ session_info.role_title }}</h1>
+    <p style="color: #6b7280; margin: 0 0 24px;">{{ session_info.company_name }}</p>
+    <div id="consentBox" style="background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 16px; margin-bottom: 20px; font-size: 0.9rem; color: #166534;">
+      <strong>Before we begin:</strong> {{ session_info.consent_text }}
+    </div>
+    <button id="startBtn" style="background: #3ba591; color: white; padding: 12px 24px; border: none; border-radius: 8px; font-weight: 600; font-size: 1rem; cursor: pointer;">I consent, start the screen</button>
+    <div id="chatArea" style="display: none; margin-top: 24px;">
+      <div id="messages" style="max-height: 400px; overflow-y: auto; margin-bottom: 16px; padding: 16px; background: #f8fafc; border-radius: 8px;"></div>
+      <div style="display: flex; gap: 8px;">
+        <input id="answerInput" type="text" placeholder="Type your answer..." style="flex: 1; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 1rem;">
+        <button id="sendBtn" style="background: #3ba591; color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">Send</button>
+      </div>
+    </div>
+    <div id="doneArea" style="display: none; margin-top: 24px;"></div>
+  </div>
+</div>
+
+<script>
+var TOKEN = {{ token|tojson }};
+var currentQuestion = null;
+
+function appendMessage(role, text) {
+  var m = document.getElementById('messages');
+  var div = document.createElement('div');
+  div.style.cssText = 'margin-bottom: 12px; padding: 10px 14px; border-radius: 8px; ' + 
+    (role === 'ai' ? 'background: #eff6ff; color: #1e40af;' : 'background: #f0fdf4; color: #166534; margin-left: 40px;');
+  div.textContent = text;
+  m.appendChild(div);
+  m.scrollTop = m.scrollHeight;
+}
+
+async function startChat() {
+  document.getElementById('startBtn').style.display = 'none';
+  document.getElementById('consentBox').style.display = 'none';
+  document.getElementById('chatArea').style.display = 'block';
+  try {
+    var r = await fetch('/api/screen/start', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({token: TOKEN})
+    });
+    var d = await r.json();
+    if (d.status === 'success' && d.question) {
+      currentQuestion = d.question;
+      appendMessage('ai', d.question);
+    }
+  } catch (e) { alert('Error starting: ' + e.message); }
+}
+
+async function sendAnswer() {
+  var input = document.getElementById('answerInput');
+  var answer = input.value.trim();
+  if (!answer) return;
+  appendMessage('candidate', answer);
+  input.value = '';
+  document.getElementById('sendBtn').disabled = true;
+  try {
+    var r = await fetch('/api/screen/answer', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({token: TOKEN, answer: answer})
+    });
+    var d = await r.json();
+    if (d.done) {
+      document.getElementById('chatArea').style.display = 'none';
+      var done = document.getElementById('doneArea');
+      done.style.display = 'block';
+      if (d.disqualified) {
+        done.innerHTML = '<h2 style="color: #dc2626;">Thank you for your time</h2><p>' + (d.message || '') + '</p>';
+      } else if (d.proposed_slots && d.proposed_slots.length) {
+        var html = '<h2 style="color: #16a34a;">Great, we would like to schedule a call!</h2><p>Please pick a slot:</p>';
+        d.proposed_slots.forEach(function(slot, i) {
+          html += '<button onclick="pickSlot(' + i + ')" style="display:block; width:100%; margin:8px 0; padding:12px; border:1px solid #3ba591; border-radius:8px; background:white; color:#3ba591; font-weight:600; cursor:pointer;">' + slot.display + '</button>';
+        });
+        done.innerHTML = html;
+        window.__slots = d.proposed_slots;
+        window.__candidateId = null;
+      } else {
+        done.innerHTML = '<h2>Thank you!</h2><p>The recruiter will be in touch.</p>';
+      }
+    } else if (d.next_field) {
+      currentQuestion = d.question;
+      appendMessage('ai', d.question);
+    }
+  } catch (e) { alert('Error: ' + e.message); }
+  document.getElementById('sendBtn').disabled = false;
+}
+
+function pickSlot(idx) {
+  var slot = window.__slots[idx];
+  var msg = 'You selected: ' + slot.display + '. The recruiter will send a calendar invite shortly. Thank you!';
+  document.getElementById('doneArea').innerHTML = '<h2 style="color: #16a34a;">Confirmed</h2><p>' + msg + '</p>';
+}
+
+document.getElementById('startBtn').addEventListener('click', startChat);
+document.getElementById('sendBtn').addEventListener('click', sendAnswer);
+document.getElementById('answerInput').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') sendAnswer();
+});
+</script>
+{% endblock %}
