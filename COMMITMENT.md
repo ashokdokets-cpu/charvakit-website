@@ -6663,3 +6663,41 @@ Both unblocked. See NEXT-SESSION-PLAN.md for full details.
 ### Feature 2 - Coding/SQL Certifications (~3.5 hrs)
 - Build SECOND (bigger, needs more testing)
 - Closes Tier 2 gap (Session 73 flag)
+---
+
+## Session 83 — F1 Scorecard Artifact — SHIPPED (2026-10-26)
+
+First of 8 enterprise features from ENTERPRISE-ROADMAP-FLAG.md.
+
+**What shipped:**
+- scorecard_engine.py (466 lines) — create/get/list/track_share + percentile + skill breakdown + integrity normalization + recommendation
+- 5 new routes: /scorecard/{id}, /api/scorecard/{id}, /api/scorecard/create, /api/scorecard/{id}/share, /api/scorecard/list/{email}
+- templates/scorecard.html (206 lines) — full UI with score hero, skill bars, integrity, certificate section, share buttons
+- migrations/20261026_scorecards.sql — charvak_scorecards table (20 cols)
+- 'Create Shareable Scorecard' button on /ai-assessment result page
+
+**Live on prod:**
+- https://www.charvakit.com/scorecard/SC-2780FC46D5E0 (87/100, Senior Backend Engineer)
+- https://www.charvakit.com/scorecard/SC-07CF13C2A0F6 (78/100, Full-Stack Engineer)
+- https://www.charvakit.com/scorecard/SC-AE61E212BFE2 (72/100, Data Scientist)
+
+**Beats VIVA360 (viva.studio/reports/match/INT-M001):**
+- HMAC-verifiable credential vs their 'explainable score'
+- Full skill breakdown by topic vs their 6 axes
+- Integrity status shown (clean/minor/moderate/elevated)
+- Public JSON API for HM automation
+- No login required, shareable URL
+
+**Debugging notes:**
+- Two hidden bugs during shipping:
+  1. .env.local silently overrides .env in database.py — caused seed script to write to local DB instead of prod
+  2. charvak_career_certifications missing on prod DB — made cert lookup crash create_scorecard()
+- Fix: disable .env.local during prod seeding + defensive try/except around cert SELECT
+
+**Follow-up items:**
+- Add charvak_career_certifications migration to prod (5 min)
+- Document .env.local disable pattern in DEV-SETUP.md
+- Add CAR-DEMO*/CAR-TESTCERT001 rows cleanup script for later
+
+**Demo URLs saved:**
+C:\\Users\\lenovo\\OneDrive\\Desktop\\Charvak_Sales_Package_20261025\\SCORECARD_DEMO_URLS.txt
