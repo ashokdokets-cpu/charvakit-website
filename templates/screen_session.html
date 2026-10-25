@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}{{ session_data.role_title }} — Screen Session{% endblock %}
+
+{% block content %}
+<style>
+.ss-wrap { max-width: 1200px; margin: 32px auto; padding: 0 20px; }
+.ss-hero { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 32px; margin-bottom: 24px; }
+.ss-hero h1 { font-size: 1.8rem; font-weight: 800; color: #1a1a2e; margin: 0 0 4px; }
+.ss-hero .company { color: #6b7280; font-size: 1rem; margin-bottom: 16px; }
+.ss-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; margin-top: 20px; }
+.ss-stat { background: #f8fafc; border-radius: 8px; padding: 16px; text-align: center; }
+.ss-stat-value { font-size: 1.8rem; font-weight: 800; color: #3ba591; }
+.ss-stat-label { font-size: 0.75rem; color: #6b7280; text-transform: uppercase; }
+.ss-actions { display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
+.ss-btn { padding: 10px 20px; border-radius: 8px; font-weight: 600; text-decoration: none; }
+.ss-btn-primary { background: #3ba591; color: #fff; }
+.ss-btn-primary:hover { background: #2a8070; color: #fff; }
+.ss-btn-outline { border: 1px solid #e2e8f0; color: #1a1a2e; background: #fff; }
+.ss-btn-outline:hover { border-color: #3ba591; color: #3ba591; }
+.ss-candidates-title { font-size: 1.2rem; font-weight: 700; margin: 24px 0 12px; }
+.ss-table { width: 100%; background: #fff; border-collapse: collapse; border-radius: 12px; overflow: hidden; }
+.ss-table th { background: #f8fafc; padding: 12px 16px; text-align: left; font-size: 0.85rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e2e8f0; }
+.ss-table td { padding: 12px 16px; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; }
+.ss-table tr:hover td { background: #f8fafc; }
+.ss-badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
+.ss-badge-invited { background: #dbeafe; color: #1e40af; }
+.ss-badge-chatting { background: #fef3c7; color: #92400e; }
+.ss-badge-completed { background: #dcfce7; color: #166534; }
+.ss-badge-qualified { background: #dcfce7; color: #166534; }
+.ss-badge-disqualified { background: #fee2e2; color: #991b1b; }
+.ss-badge-escalated { background: #fef3c7; color: #92400e; }
+.ss-badge-no_response { background: #f1f5f9; color: #475569; }
+.ss-empty { background: #f8fafc; border: 1px dashed #cbd5e0; border-radius: 12px; padding: 40px; text-align: center; color: #6b7280; }
+</style>
+
+<div class="ss-wrap">
+  <div class="ss-hero">
+    <h1>{{ session_data.role_title }}</h1>
+    <div class="company">{{ session_data.company_name or '—' }}</div>
+    <div class="ss-stats">
+      <div class="ss-stat">
+        <div class="ss-stat-value">{{ session_data.candidates_invited or 0 }}</div>
+        <div class="ss-stat-label">Invited</div>
+      </div>
+      <div class="ss-stat">
+        <div class="ss-stat-value">{{ session_data.candidates_responded or 0 }}</div>
+        <div class="ss-stat-label">Responded</div>
+      </div>
+      <div class="ss-stat">
+        <div class="ss-stat-value">{{ session_data.candidates_qualified or 0 }}</div>
+        <div class="ss-stat-label">Qualified</div>
+      </div>
+      <div class="ss-stat">
+        <div class="ss-stat-value">{% if session_data.budget_max_inr %}₹{{ (session_data.budget_max_inr / 100000)|round(1) }}L{% else %}—{% endif %}</div>
+        <div class="ss-stat-label">Budget</div>
+      </div>
+    </div>
+    <div class="ss-actions">
+      <a href="/screen/dashboard" class="ss-btn ss-btn-outline">← Back to Dashboard</a>
+      <a href="/api/screen/session/{{ session_id }}" class="ss-btn ss-btn-outline">View JSON</a>
+    </div>
+  </div>
+
+  <div class="ss-candidates-title">Candidates ({{ session_data.candidates|length }})</div>
+
+  {% if session_data.candidates and session_data.candidates|length > 0 %}
+  <table class="ss-table">
+    <thead>
+      <tr>
+        <th>Candidate</th>
+        <th>Status</th>
+        <th>Score</th>
+        <th>Experience</th>
+        <th>Current CTC</th>
+        <th>Expected CTC</th>
+        <th>Notice</th>
+        <th>Invited</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in session_data.candidates %}
+      <tr>
+        <td>
+          <strong>{{ c.name or 'Anonymous' }}</strong><br>
+          <small style="color:#6b7280">{{ c.email_masked }}</small>
+        </td>
+        <td><span class="ss-badge ss-badge-{{ c.status or 'invited' }}">{{ c.status or 'invited' }}</span></td>
+        <td>
+          {% if c.qualification_score is not none %}
+            <strong>{{ c.qualification_score }}</strong>/100
+          {% else %}—{% endif %}
+        </td>
+        <td>
+          {% if c.captured_data and c.captured_data.total_experience_years %}
+            {{ c.captured_data.total_experience_years }} yrs
+          {% else %}—{% endif %}
+        </td>
+        <td>
+          {% if c.captured_data and c.captured_data.current_ctc_inr %}
+            ₹{{ (c.captured_data.current_ctc_inr / 100000)|round(1) }}L
+          {% else %}—{% endif %}
+        </td>
+        <td>
+          {% if c.captured_data and c.captured_data.expected_ctc_inr %}
+            ₹{{ (c.captured_data.expected_ctc_inr / 100000)|round(1) }}L
+          {% else %}—{% endif %}
+        </td>
+        <td>
+          {% if c.captured_data and c.captured_data.notice_period_days %}
+            {{ c.captured_data.notice_period_days }}d
+          {% else %}—{% endif %}
+        </td>
+        <td><small style="color:#6b7280">{{ (c.invited_at or '')[:10] }}</small></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="ss-empty">
+    <strong>No candidates yet</strong><br>
+    <small>Invite candidates via the API: POST /api/screen/session/{{ session_id }}/invite</small>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

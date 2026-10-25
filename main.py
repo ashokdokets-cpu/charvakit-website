@@ -18159,6 +18159,49 @@ async def f3_close(request: Request, session_id: str):
         return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
 
 
+# F3 Session 2 moved above /screen/{token} (route ordering fix)
+# =============================================================================
+# F3 Session 2 — Screen dashboard routes
+# =============================================================================
+
+@app.get("/screen/dashboard", response_class=HTMLResponse)
+async def screen_dashboard_page(request: Request):
+    """Recruiter dashboard for screen sessions."""
+    return template_response("screen_dashboard.html", request, "Screen Dashboard - Charvak")
+
+
+@app.get("/screen/session/{session_id}", response_class=HTMLResponse)
+async def screen_session_page(request: Request, session_id: str):
+    """Single screen session detail (candidates + stats)."""
+    try:
+        from recruiter_screen_engine import recruiter_screen_engine
+        result = recruiter_screen_engine.get_session(session_id, include_candidates=True)
+        if result.get("status") != "success":
+            return HTMLResponse(
+                "<html><body style='font-family:sans-serif;padding:40px'>"
+                "<h1>Session not found</h1>"
+                "<p>This screen session doesn't exist or was deleted.</p>"
+                "<a href='/screen/dashboard' style='color:#3ba591'>← Back to dashboard</a>"
+                "</body></html>",
+                status_code=404
+            )
+        return templates.TemplateResponse("screen_session.html", {
+            "request": request,
+            "session_data": result.get("session", {}),
+            "session_id": session_id,
+        })
+    except Exception as e:
+        logger.error("screen_session_page failed: " + str(e), exc_info=True)
+        return HTMLResponse("<h1>Error loading session</h1>", status_code=500)
+
+
+@app.get("/screen/new", response_class=HTMLResponse)
+async def screen_new_page(request: Request):
+    """Create a new screen session form."""
+    return template_response("screen_new.html", request, "New Screen Session - Charvak")
+
+# === END F3 SESSION 2 ROUTES ===
+
 @app.get("/screen/{token}", response_class=HTMLResponse)
 async def f3_candidate_page(request: Request, token: str):
     """Candidate chat UI (v1 — minimal polling UI)."""
@@ -18272,3 +18315,6 @@ async def f3_export_candidate(request: Request, candidate_screen_id: str):
         return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
 
 # === END F3 ROUTES ===
+
+
+
