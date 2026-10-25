@@ -644,7 +644,7 @@ class RecruiterScreenEngine:
         except (ValueError, TypeError):
             return (True, "")
         if expected_val > budget_max * 1.05:
-            return (False, "Expected CTC exceeds the role budget.")
+            return (False, "Considering your experience and our current budget for this role, this particular opportunity may not be the best match. We will keep your profile on file for future roles that align more closely with your compensation range.")
         return (True, "")
 
     # =====================================================

@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% block title %}Screen Dashboard — Charvak{% endblock %}
+
+{% block content %}
+<style>
+.sd-wrap { max-width: 1200px; margin: 32px auto; padding: 0 20px; }
+.sd-hero { background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%); color: #fff; padding: 40px; border-radius: 16px; margin-bottom: 32px; }
+.sd-hero h1 { font-size: 2rem; font-weight: 800; margin: 0 0 12px; }
+.sd-hero p { font-size: 1.1rem; opacity: 0.9; margin: 0 0 20px; }
+.sd-hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.sd-hero-btn { padding: 10px 22px; border-radius: 8px; font-weight: 600; font-size: 0.95rem; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+.sd-hero-btn-primary { background: #fff; color: #1e40af; }
+.sd-hero-btn-primary:hover { background: #f3f4f6; color: #1e40af; }
+.sd-hero-btn-outline { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,0.4); }
+.sd-hero-btn-outline:hover { background: rgba(255,255,255,0.1); color: #fff; }
+.sd-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 32px; }
+.sd-kpi { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; }
+.sd-kpi-label { font-size: 0.85rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.sd-kpi-value { font-size: 2rem; font-weight: 800; color: #1a1a2e; }
+.sd-section-title { font-size: 1.3rem; font-weight: 700; color: #1a1a2e; margin: 32px 0 16px; }
+.sd-sessions { display: flex; flex-direction: column; gap: 12px; }
+.sd-session { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; display: flex; justify-content: space-between; align-items: center; gap: 20px; transition: all 0.15s; }
+.sd-session:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.06); border-color: #3ba591; }
+.sd-session-left { flex: 1; }
+.sd-session-title { font-size: 1.1rem; font-weight: 700; color: #1a1a2e; margin-bottom: 4px; }
+.sd-session-meta { font-size: 0.85rem; color: #6b7280; }
+.sd-session-meta span { margin-right: 16px; }
+.sd-session-stats { display: flex; gap: 20px; text-align: center; }
+.sd-session-stat-value { font-size: 1.5rem; font-weight: 800; color: #3ba591; }
+.sd-session-stat-label { font-size: 0.75rem; color: #6b7280; text-transform: uppercase; }
+.sd-session-actions { display: flex; gap: 8px; }
+.sd-session-actions a { padding: 8px 16px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; text-decoration: none; }
+.sd-btn-primary { background: #3ba591; color: #fff; }
+.sd-btn-primary:hover { background: #2a8070; color: #fff; }
+.sd-btn-outline { border: 1px solid #e2e8f0; color: #1a1a2e; background: #fff; }
+.sd-btn-outline:hover { border-color: #3ba591; color: #3ba591; }
+.sd-empty { background: #f8fafc; border: 1px dashed #cbd5e0; border-radius: 12px; padding: 60px 20px; text-align: center; color: #6b7280; }
+.sd-empty h3 { color: #1a1a2e; margin-bottom: 8px; }
+.sd-empty a { display: inline-block; margin-top: 16px; padding: 10px 24px; background: #3ba591; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600; }
+.sd-empty a:hover { background: #2a8070; color: #fff; }
+.sd-status { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
+.sd-status-active { background: #dcfce7; color: #166534; }
+.sd-status-paused { background: #fef3c7; color: #92400e; }
+.sd-status-closed { background: #f1f5f9; color: #475569; }
+@media (max-width: 768px) {
+  .sd-session { flex-direction: column; align-items: stretch; }
+  .sd-session-stats { justify-content: space-around; }
+  .sd-hero h1 { font-size: 1.5rem; }
+}
+</style>
+
+<div class="sd-wrap">
+  <div class="sd-hero">
+    <h1>AI Screen Dashboard</h1>
+    <p>Manage all your candidate screen sessions. Create a new screen from a JD, invite candidates, track responses.</p>
+    <div class="sd-hero-actions">
+      <a href="/screen/new" class="sd-hero-btn sd-hero-btn-primary">+ New Screen Session</a>
+      <a href="/employer/dashboard" class="sd-hero-btn sd-hero-btn-outline">← Back to Employer</a>
+    </div>
+  </div>
+
+  <div class="sd-kpis" id="sdKpis">
+    <div class="sd-kpi">
+      <div class="sd-kpi-label">Total Sessions</div>
+      <div class="sd-kpi-value" id="sdKpiSessions">—</div>
+    </div>
+    <div class="sd-kpi">
+      <div class="sd-kpi-label">Candidates Invited</div>
+      <div class="sd-kpi-value" id="sdKpiInvited">—</div>
+    </div>
+    <div class="sd-kpi">
+      <div class="sd-kpi-label">Responded</div>
+      <div class="sd-kpi-value" id="sdKpiResponded">—</div>
+    </div>
+    <div class="sd-kpi">
+      <div class="sd-kpi-label">Qualified</div>
+      <div class="sd-kpi-value" id="sdKpiQualified">—</div>
+    </div>
+  </div>
+
+  <div class="sd-section-title">Your Screen Sessions</div>
+  <div id="sdSessions" class="sd-sessions">
+    <div class="sd-empty">
+      <h3>Loading...</h3>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  function _token() {
+    return localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+  }
+
+  function esc(s) {
+    return String(s || '').replace(/[&<>"']/g, function(c) {
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  async function loadDashboard() {
+    var token = _token();
+    if (!token) {
+      document.getElementById('sdSessions').innerHTML =
+        '<div class="sd-empty"><h3>Please sign in</h3><p>You need to be logged in to see your screen sessions.</p><a href="/login?next=/screen/dashboard">Sign in</a></div>';
+      return;
+    }
+
+    try {
+      var r = await fetch('/api/screen/sessions', {
+        headers: {'Authorization': 'Bearer ' + token}
+      });
+      var d = await r.json();
+
+      if (d.status !== 'success') {
+        document.getElementById('sdSessions').innerHTML =
+          '<div class="sd-empty"><h3>Error loading sessions</h3><p>' + esc(d.message || 'Unknown error') + '</p></div>';
+        return;
+      }
+
+      var sessions = d.sessions || [];
+      var totals = {invited: 0, responded: 0, qualified: 0};
+      sessions.forEach(function(s) {
+        totals.invited += s.candidates_invited || 0;
+        totals.responded += s.candidates_responded || 0;
+        totals.qualified += s.candidates_qualified || 0;
+      });
+
+      document.getElementById('sdKpiSessions').textContent = sessions.length;
+      document.getElementById('sdKpiInvited').textContent = totals.invited;
+      document.getElementById('sdKpiResponded').textContent = totals.responded;
+      document.getElementById('sdKpiQualified').textContent = totals.qualified;
+
+      if (sessions.length === 0) {
+        document.getElementById('sdSessions').innerHTML =
+          '<div class="sd-empty"><h3>No screen sessions yet</h3><p>Create your first screen session by pasting a job description.</p><a href="/screen/new">+ Create your first session</a></div>';
+        return;
+      }
+
+      var html = '';
+      sessions.forEach(function(s) {
+        var statusClass = 'sd-status-active';
+        if (s.status === 'paused') statusClass = 'sd-status-paused';
+        else if (s.status === 'closed') statusClass = 'sd-status-closed';
+
+        html += '<div class="sd-session">'
+          + '<div class="sd-session-left">'
+          +   '<div class="sd-session-title">' + esc(s.role_title || 'Untitled Role') + '</div>'
+          +   '<div class="sd-session-meta">'
+          +     '<span>🏢 ' + esc(s.company_name || 'Company') + '</span>'
+          +     '<span class="sd-status ' + statusClass + '">' + esc(s.status) + '</span>'
+          +   '</div>'
+          + '</div>'
+          + '<div class="sd-session-stats">'
+          +   '<div><div class="sd-session-stat-value">' + (s.candidates_invited || 0) + '</div><div class="sd-session-stat-label">Invited</div></div>'
+          +   '<div><div class="sd-session-stat-value">' + (s.candidates_responded || 0) + '</div><div class="sd-session-stat-label">Responded</div></div>'
+          +   '<div><div class="sd-session-stat-value">' + (s.candidates_qualified || 0) + '</div><div class="sd-session-stat-label">Qualified</div></div>'
+          + '</div>'
+          + '<div class="sd-session-actions">'
+          +   '<a href="/screen/session/' + esc(s.session_id) + '" class="sd-btn-primary">View</a>'
+          + '</div>'
+          + '</div>';
+      });
+      document.getElementById('sdSessions').innerHTML = html;
+
+    } catch(e) {
+      document.getElementById('sdSessions').innerHTML =
+        '<div class="sd-empty"><h3>Network error</h3><p>' + esc(e.message) + '</p></div>';
+    }
+  }
+
+  loadDashboard();
+})();
+</script>
+{% endblock %}

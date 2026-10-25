@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}New Screen Session — Charvak{% endblock %}
+
+{% block content %}
+<style>
+.sn-wrap { max-width: 800px; margin: 32px auto; padding: 0 20px; }
+.sn-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 32px; }
+.sn-card h1 { font-size: 1.8rem; font-weight: 800; color: #1a1a2e; margin-bottom: 8px; }
+.sn-card p { color: #6b7280; margin-bottom: 24px; }
+.sn-label { display: block; font-weight: 600; color: #1a1a2e; margin-bottom: 6px; font-size: 0.95rem; }
+.sn-hint { font-size: 0.8rem; color: #6b7280; margin-bottom: 8px; }
+.sn-input { width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 1rem; }
+.sn-input:focus { outline: none; border-color: #3ba591; }
+.sn-textarea { min-height: 240px; resize: vertical; font-family: inherit; }
+.sn-btn { padding: 12px 28px; background: #3ba591; color: #fff; border: none; border-radius: 8px; font-weight: 700; font-size: 1rem; cursor: pointer; margin-top: 8px; }
+.sn-btn:hover { background: #2a8070; }
+.sn-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.sn-msg { margin-top: 16px; padding: 12px 16px; border-radius: 8px; font-size: 0.9rem; display: none; }
+.sn-msg-success { background: #dcfce7; color: #166534; }
+.sn-msg-error { background: #fee2e2; color: #991b1b; }
+.sn-budget-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 640px) { .sn-budget-row { grid-template-columns: 1fr; } }
+</style>
+
+<div class="sn-wrap">
+  <div class="sn-card">
+    <h1>New Screen Session</h1>
+    <p>Paste a job description. Charvak will parse it, extract budget and role details, and prepare a candidate screen flow.</p>
+
+    <label class="sn-label">Job Description *</label>
+    <div class="sn-hint">Paste the full JD. AI will extract role, company, skills, seniority, and budget.</div>
+    <textarea id="snJd" class="sn-input sn-textarea" placeholder="e.g. Senior Backend Engineer at Acme Corp. 5+ years Python/Go. Salary 20-28 LPA. Remote-friendly. Must know distributed systems, PostgreSQL, Kubernetes."></textarea>
+
+    <div class="sn-budget-row" style="margin-top:16px;">
+      <div>
+        <label class="sn-label">Max Budget (INR)</label>
+        <div class="sn-hint">Optional. Overrides auto-detected budget.</div>
+        <input type="number" id="snBudget" class="sn-input" placeholder="e.g. 2800000">
+      </div>
+      <div>
+        <label class="sn-label">Language</label>
+        <div class="sn-hint">Screen language for candidates.</div>
+        <select id="snLang" class="sn-input">
+          <option value="en">English</option>
+          <option value="hi">हिन्दी (Hindi) — coming soon</option>
+        </select>
+      </div>
+    </div>
+
+    <button id="snCreateBtn" class="sn-btn" onclick="createScreenSession()">Create Session →</button>
+    <div id="snMsg" class="sn-msg"></div>
+  </div>
+</div>
+
+<script>
+function snToken() {
+  return localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+}
+
+async function createScreenSession() {
+  var jd = document.getElementById('snJd').value.trim();
+  var budget = document.getElementById('snBudget').value.trim();
+  var lang = document.getElementById('snLang').value;
+  var msg = document.getElementById('snMsg');
+  var btn = document.getElementById('snCreateBtn');
+
+  if (!jd || jd.length < 30) {
+    msg.className = 'sn-msg sn-msg-error';
+    msg.textContent = 'Please paste a job description (at least 30 characters).';
+    msg.style.display = 'block';
+    return;
+  }
+
+  var token = snToken();
+  if (!token) {
+    window.location.href = '/login?next=/screen/new';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Creating...';
+  msg.style.display = 'none';
+
+  try {
+    var body = {jd_text: jd, language: lang};
+    if (budget) body.budget_max_inr = parseInt(budget, 10);
+
+    var r = await fetch('/api/screen/create-session', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
+      body: JSON.stringify(body)
+    });
+    var d = await r.json();
+
+    if (d.status === 'success') {
+      msg.className = 'sn-msg sn-msg-success';
+      msg.innerHTML = '✅ Session created! <a href="/screen/session/' + d.session_id + '" style="color:#166534;font-weight:700;text-decoration:underline">View session →</a>';
+      msg.style.display = 'block';
+      btn.textContent = 'Created!';
+      setTimeout(function() {
+        window.location.href = '/screen/session/' + d.session_id;
+      }, 1000);
+    } else {
+      msg.className = 'sn-msg sn-msg-error';
+      msg.textContent = 'Error: ' + (d.message || 'Unknown error');
+      msg.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Create Session →';
+    }
+  } catch (e) {
+    msg.className = 'sn-msg sn-msg-error';
+    msg.textContent = 'Network error: ' + e.message;
+    msg.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Create Session →';
+  }
+}
+</script>
+{% endblock %}
