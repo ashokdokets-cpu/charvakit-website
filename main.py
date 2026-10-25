@@ -17994,3 +17994,281 @@ async def api_reset_password(request: Request):
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
+
+# =============================================================================
+# F3 — SCREEN AGENT ROUTES (Session 83)
+# =============================================================================
+
+from pydantic import BaseModel as _F3BaseModel
+from typing import Optional as _F3Optional, List as _F3List
+
+class _F3CreateSessionRequest(_F3BaseModel):
+    jd_text: str
+    budget_max_inr: _F3Optional[int] = None
+    role_id: _F3Optional[str] = None
+    language: _F3Optional[str] = "en"
+    consent_text: _F3Optional[str] = None
+    expiry_days: _F3Optional[int] = 7
+
+class _F3InviteRequest(_F3BaseModel):
+    candidates: _F3List[dict]
+
+class _F3StartChatRequest(_F3BaseModel):
+    token: str
+
+class _F3AnswerRequest(_F3BaseModel):
+    token: str
+    answer: str
+
+class _F3ConfirmScheduleRequest(_F3BaseModel):
+    candidate_screen_id: str
+    selected_slot: dict
+    recruiter_notes: _F3Optional[str] = None
+
+
+@app.post("/api/screen/create-session")
+async def f3_create_session(request: Request, data: _F3CreateSessionRequest):
+    """Create a screen session from a JD."""
+    try:
+        try:
+            user = require_auth(request)
+        except HTTPException:
+            raise
+        email = user.get("email")
+        if not email:
+            return JSONResponse({"status": "error", "message": "Missing email"}, status_code=401)
+        from recruiter_screen_engine import recruiter_screen_engine
+        result = recruiter_screen_engine.create_screen_session(
+            recruiter_email=email,
+            jd_text=data.jd_text,
+            budget_max_inr=data.budget_max_inr,
+            role_id=data.role_id,
+            language=data.language or "en",
+            consent_text=data.consent_text,
+            expiry_days=data.expiry_days or 7,
+        )
+        return JSONResponse(result)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("f3_create_session failed: " + str(e), exc_info=True)
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+
+@app.get("/api/screen/sessions")
+async def f3_list_sessions(request: Request, status: str = ""):
+    """List recruiter's sessions."""
+    try:
+        try:
+            user = require_auth(request)
+        except HTTPException:
+            raise
+        email = user.get("email")
+        if not email:
+            return JSONResponse({"status": "error", "message": "Missing email"}, status_code=401)
+        from recruiter_screen_engine import recruiter_screen_engine
+        sessions = recruiter_screen_engine.list_sessions(email, status or None)
+        return JSONResponse({"status": "success", "count": len(sessions), "sessions": sessions})
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("f3_list_sessions failed: " + str(e), exc_info=True)
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+
+@app.get("/api/screen/session/{session_id}")
+async def f3_get_session(request: Request, session_id: str):
+    try:
+        try:
+            user = require_auth(request)
+        except HTTPException:
+            raise
+        email = user.get("email")
+        from recruiter_screen_engine import recruiter_screen_engine
+        result = recruiter_screen_engine.get_session(session_id, include_candidates=True)
+        if result.get("status") == "success":
+            sess_email = result["session"].get("recruiter_email", "")
+            is_admin = email.lower() in ("charvakit@gmail.com", "hr@charvakit.com")
+            if sess_email.lower() != email.lower() and not is_admin:
+                return JSONResponse({"status": "error", "message": "Not authorized"}, status_code=403)
+        return JSONResponse(result)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("f3_get_session failed: " + str(e), exc_info=True)
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+
+@app.post("/api/screen/session/{session_id}/invite")
+async def f3_invite(request: Request, session_id: str, data: _F3InviteRequest):
+    try:
+        try:
+            user = require_auth(request)
+        except HTTPException:
+            raise
+        email = user.get("email")
+        from recruiter_screen_engine import recruiter_screen_engine
+        sess = recruiter_screen_engine.get_session(session_id, include_candidates=False)
+        if sess.get("status") != "success":
+            return JSONResponse({"status": "error", "message": "Session not found"}, status_code=404)
+        sess_email = sess["session"].get("recruiter_email", "")
+        is_admin = email.lower() in ("charvakit@gmail.com", "hr@charvakit.com")
+        if sess_email.lower() != email.lower() and not is_admin:
+            return JSONResponse({"status": "error", "message": "Not authorized"}, status_code=403)
+        result = recruiter_screen_engine.invite_batch(session_id, data.candidates)
+        return JSONResponse(result)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("f3_invite failed: " + str(e), exc_info=True)
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+
+@app.post("/api/screen/session/{session_id}/pause")
+async def f3_pause(request: Request, session_id: str):
+    try:
+        try:
+            user = require_auth(request)
+        except HTTPException:
+            raise
+        email = user.get("email")
+        from recruiter_screen_engine import recruiter_screen_engine
+        result = recruiter_screen_engine.pause_session(session_id, email)
+        return JSONResponse(result)
+    except HTTPException:
+        raise
+    except Exception as e:
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+
+@app.post("/api/screen/session/{session_id}/close")
+async def f3_close(request: Request, session_id: str):
+    try:
+        try:
+            user = require_auth(request)
+        except HTTPException:
+            raise
+        email = user.get("email")
+        from recruiter_screen_engine import recruiter_screen_engine
+        result = recruiter_screen_engine.close_session(session_id, email)
+        return JSONResponse(result)
+    except HTTPException:
+        raise
+    except Exception as e:
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+
+@app.get("/screen/{token}", response_class=HTMLResponse)
+async def f3_candidate_page(request: Request, token: str):
+    """Candidate chat UI (v1 — minimal polling UI)."""
+    try:
+        from recruiter_screen_engine import recruiter_screen_engine
+        result = recruiter_screen_engine.get_candidate_by_token(token)
+        if result.get("status") != "success":
+            return HTMLResponse(
+                "<html><body><h1>Invalid or expired screen link</h1>"
+                "<p>Please check the link in your email or contact the recruiter.</p></body></html>",
+                status_code=404
+            )
+        return templates.TemplateResponse("screen_chat.html", {
+            "request": request,
+            "candidate": result.get("candidate", {}),
+            "session_info": result.get("session", {}),
+            "token": token,
+        })
+    except Exception as e:
+        logger.error("f3_candidate_page failed: " + str(e), exc_info=True)
+        return HTMLResponse("<h1>Error loading screen</h1>", status_code=500)
+
+
+@app.post("/api/screen/start")
+async def f3_start_chat(request: Request, data: _F3StartChatRequest):
+    """Candidate starts chat. Consent is captured on first call."""
+    try:
+        ip = request.client.host if request.client else "unknown"
+        ua = request.headers.get("user-agent", "unknown")
+        from recruiter_screen_engine import recruiter_screen_engine
+        result = recruiter_screen_engine.start_chat(data.token, ip=ip, ua=ua)
+        return JSONResponse(result)
+    except Exception as e:
+        logger.error("f3_start_chat failed: " + str(e), exc_info=True)
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+
+@app.post("/api/screen/answer")
+async def f3_answer(request: Request, data: _F3AnswerRequest):
+    try:
+        ip = request.client.host if request.client else "unknown"
+        ua = request.headers.get("user-agent", "unknown")
+        from recruiter_screen_engine import recruiter_screen_engine
+        result = recruiter_screen_engine.submit_answer(data.token, data.answer, ip=ip, ua=ua)
+        return JSONResponse(result)
+    except Exception as e:
+        logger.error("f3_answer failed: " + str(e), exc_info=True)
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+
+@app.post("/api/screen/schedule/confirm")
+async def f3_confirm_schedule(request: Request, data: _F3ConfirmScheduleRequest):
+    try:
+        try:
+            user = require_auth(request)
+        except HTTPException:
+            raise
+        from recruiter_screen_engine import recruiter_screen_engine
+        result = recruiter_screen_engine.confirm_schedule(
+            data.candidate_screen_id, data.selected_slot, data.recruiter_notes
+        )
+        return JSONResponse(result)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("f3_confirm_schedule failed: " + str(e), exc_info=True)
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+
+@app.get("/api/screen/candidate/{candidate_screen_id}/export")
+async def f3_export_candidate(request: Request, candidate_screen_id: str):
+    """Export one candidate's full screen as JSON."""
+    try:
+        try:
+            user = require_auth(request)
+        except HTTPException:
+            raise
+        from recruiter_screen_engine import recruiter_screen_engine
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT c.*, s.role_title, s.company_name FROM charvak_screen_candidates c "
+            "JOIN charvak_screen_sessions s ON c.session_id = s.session_id "
+            "WHERE c.candidate_screen_id = %s",
+            (candidate_screen_id,)
+        )
+        row = cur.fetchone()
+        if not row:
+            cur.close(); conn.close()
+            return JSONResponse({"status": "error", "message": "Not found"}, status_code=404)
+        cur.execute(
+            "SELECT role, content, field_name, field_value, created_at "
+            "FROM charvak_screen_messages WHERE candidate_screen_id = %s ORDER BY created_at",
+            (candidate_screen_id,)
+        )
+        messages = [
+            {"role": m[0], "content": m[1], "field": m[2], "value": m[3],
+             "at": m[4].isoformat() if m[4] else None}
+            for m in cur.fetchall()
+        ]
+        cur.close(); conn.close()
+        return JSONResponse({
+            "status": "success",
+            "candidate_screen_id": candidate_screen_id,
+            "messages": messages,
+        })
+    except HTTPException:
+        raise
+    except Exception as e:
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+# === END F3 ROUTES ===
