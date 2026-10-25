@@ -651,6 +651,56 @@ def template_response(template_name: str, request: Request, title: str, **extra_
 async def home(request: Request):
     return template_response("index.html", request, "Charvak IT Consulting Pvt Ltd - Web Designing | Staff Augmentation")
 
+# === TEMP DIAGNOSTIC ROUTE — REMOVE AFTER DEBUGGING ===
+@app.get("/api/__diag/routes")
+async def __diag_routes():
+    """Dump all registered routes to check scorecard registration."""
+    all_routes = []
+    for r in app.routes:
+        path = getattr(r, "path", "")
+        methods = list(getattr(r, "methods", set()))
+        all_routes.append({"path": path, "methods": methods})
+    scorecard_routes = [r for r in all_routes if "scorecard" in r["path"].lower()]
+    return JSONResponse({
+        "total_routes": len(all_routes),
+        "scorecard_routes": scorecard_routes,
+        "first_10_routes": all_routes[:10],
+    })
+
+@app.get("/api/__diag/scorecard/{scorecard_id}")
+async def __diag_scorecard_test(scorecard_id: str):
+    """Test get_scorecard() directly — reveals what's failing."""
+    try:
+        from scorecard_engine import scorecard_engine
+        result = scorecard_engine.get_scorecard(scorecard_id, track_view=False)
+        return JSONResponse({"result": result})
+    except Exception as e:
+        import traceback
+        return JSONResponse({
+            "error": str(e),
+            "traceback": traceback.format_exc(),
+        }, status_code=500)
+
+@app.get("/api/__diag/scorecards")
+async def __diag_scorecards_list():
+    """List all scorecards in prod DB."""
+    try:
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT scorecard_id, role, overall_score, public FROM charvak_scorecards ORDER BY created_at DESC")
+        rows = [{"id": r[0], "role": r[1], "score": r[2], "public": r[3]} for r in cur.fetchall()]
+        cur.close(); conn.close()
+        return JSONResponse({"count": len(rows), "scorecards": rows})
+    except Exception as e:
+        import traceback
+        return JSONResponse({
+            "error": str(e),
+            "traceback": traceback.format_exc(),
+        }, status_code=500)
+
+# === END DIAGNOSTIC ===
+
 @app.get("/about", response_class=HTMLResponse)
 async def about(request: Request):
     return template_response("about.html", request, "About Charvak IT Consulting Pvt Ltd")
