@@ -796,6 +796,12 @@ async def privacy(request: Request):
 async def integrity(request: Request):
     return template_response("integrity.html", request, "Assessment Integrity - Charvak")
 
+
+@app.get("/compliance", response_class=HTMLResponse)
+async def compliance_page(request: Request):
+    """Public compliance & trust page. Enterprise procurement."""
+    return template_response("compliance.html", request, "Trust & Compliance - Charvak")
+
 @app.get("/refund", response_class=HTMLResponse)
 async def refund(request: Request):
     return template_response("refund.html", request, "Refund & Cancellation Policy")

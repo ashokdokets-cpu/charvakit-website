@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% block title %}Trust & Compliance — Charvak{% endblock %}
+{% block meta_description %}Charvak trust and compliance: audit trails, explainable scoring, GDPR, DPDP, EU AI Act, NYC Law 144, SOC 2 roadmap, and data residency.{% endblock %}
+
+{% block content %}
+<style>
+.cmp-wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+.cmp-hero { background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%); color: #fff; padding: 60px 20px 50px; text-align: center; border-radius: 0 0 16px 16px; margin-bottom: 40px; }
+.cmp-hero h1 { font-size: 2.4rem; font-weight: 800; margin-bottom: 12px; }
+.cmp-hero p { font-size: 1.15rem; opacity: 0.92; max-width: 760px; margin: 0 auto; }
+.cmp-badges { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 24px; }
+.cmp-badge { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: #fff; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
+.cmp-section { margin-bottom: 48px; }
+.cmp-section h2 { font-size: 1.6rem; font-weight: 800; color: #1a1a2e; margin-bottom: 20px; padding-bottom: 8px; border-bottom: 3px solid #3ba591; display: inline-block; }
+.cmp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+.cmp-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; }
+.cmp-card h3 { font-size: 1.1rem; font-weight: 700; color: #1a1a2e; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.cmp-card p { color: #4b5563; font-size: 0.95rem; margin: 0; line-height: 1.6; }
+.cmp-card ul { margin: 8px 0 0; padding-left: 18px; color: #4b5563; font-size: 0.9rem; line-height: 1.7; }
+.cmp-icon { display: inline-block; width: 24px; height: 24px; background: #3ba591; color: #fff; border-radius: 50%; text-align: center; line-height: 24px; font-size: 0.8rem; font-weight: 700; }
+.cmp-cta { background: #f0fdf4; border: 1px solid #86efac; border-radius: 12px; padding: 32px; text-align: center; margin-top: 40px; }
+.cmp-cta h3 { font-size: 1.4rem; color: #1a1a2e; margin-bottom: 12px; }
+.cmp-cta p { color: #4b5563; margin-bottom: 20px; }
+.cmp-cta a { display: inline-block; background: #3ba591; color: #fff; padding: 12px 28px; border-radius: 8px; font-weight: 600; text-decoration: none; }
+.cmp-cta a:hover { background: #2a8070; color: #fff; }
+@media (max-width: 640px) {
+  .cmp-hero h1 { font-size: 1.8rem; }
+  .cmp-hero p { font-size: 1rem; }
+  .cmp-section h2 { font-size: 1.3rem; }
+}
+</style>
+
+<div class="cmp-hero">
+  <div class="cmp-wrap">
+    <h1>Trust, Compliance & Responsible AI</h1>
+    <p>Every assessment is auditable. Every score is explainable. Every hiring decision is defensible — to candidates, to regulators, and to your board.</p>
+    <div class="cmp-badges">
+      <span class="cmp-badge">✓ GDPR</span>
+      <span class="cmp-badge">✓ India DPDP</span>
+      <span class="cmp-badge">✓ NYC Law 144</span>
+      <span class="cmp-badge">✓ EU AI Act</span>
+      <span class="cmp-badge">SOC 2 — Q3 2027</span>
+    </div>
+  </div>
+</div>
+
+<div class="cmp-wrap">
+
+<!-- 3 PILLARS -->
+<div class="cmp-section">
+  <h2>How Charvak builds trust</h2>
+  <div class="cmp-grid">
+
+    <div class="cmp-card">
+      <h3><span class="cmp-icon">1</span> Audit Trail</h3>
+      <p>Every assessment is logged, timestamped, and reproducible. Full event history for any candidate, any assessment, any time.</p>
+      <ul>
+        <li>Immutable event log per assessment</li>
+        <li>Timestamp + signature on every submission</li>
+        <li>Evidence trail for every score</li>
+      </ul>
+    </div>
+
+    <div class="cmp-card">
+      <h3><span class="cmp-icon">2</span> Explainable Scoring</h3>
+      <p>No black boxes. Every score is traceable to specific answers, test cases, or behavioral signals.</p>
+      <ul>
+        <li>Per-question breakdown</li>
+        <li>Per-skill topic scoring</li>
+        <li>Written rationale for AI judgments</li>
+      </ul>
+    </div>
+
+    <div class="cmp-card">
+      <h3><span class="cmp-icon">3</span> Human Oversight</h3>
+      <p>AI recommendations are advisory. Final hiring decisions always belong to you.</p>
+      <ul>
+        <li>No automated rejections</li>
+        <li>Human review at every stage</li>
+        <li>Override any score</li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<!-- COMPLIANCE STANDARDS -->
+<div class="cmp-section">
+  <h2>Compliance standards</h2>
+  <div class="cmp-grid">
+
+    <div class="cmp-card">
+      <h3>EU AI Act</h3>
+      <p>Aligned to transparency, human oversight, and risk classification requirements for AI hiring systems.</p>
+      <ul>
+        <li>Transparency: every score traceable to evidence</li>
+        <li>Human oversight: decisions remain yours</li>
+        <li>Bias monitoring: statistical fairness checks</li>
+        <li>Data governance: retention policies enforced</li>
+      </ul>
+    </div>
+
+    <div class="cmp-card">
+      <h3>NYC Local Law 144</h3>
+      <p>Aligned to NYC automated employment decision tool requirements for bias audits and candidate notice.</p>
+      <ul>
+        <li>Bias audit available on request</li>
+        <li>Adverse impact ratio published per year</li>
+        <li>Candidate notice provided at assessment start</li>
+        <li>Data retention within NYC-mandated limits</li>
+      </ul>
+    </div>
+
+    <div class="cmp-card">
+      <h3>India DPDP Act</h3>
+      <p>Aligned to India Digital Personal Data Protection Act for consent, purpose limitation, and data principal rights.</p>
+      <ul>
+        <li>Explicit consent captured before assessment</li>
+        <li>Purpose limitation: data used only for hiring</li>
+        <li>Right to access, correct, and erase</li>
+        <li>Data stored in India-region database</li>
+      </ul>
+    </div>
+
+    <div class="cmp-card">
+      <h3>GDPR</h3>
+      <p>Aligned to EU General Data Protection Regulation for data subject rights, transfers, and transparency.</p>
+      <ul>
+        <li>Right to access, erasure, portability</li>
+        <li>Data processing agreements available</li>
+        <li>EU-region data residency on request</li>
+        <li>72-hour breach notification</li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<!-- SOC 2 + RESIDENCY -->
+<div class="cmp-section">
+  <h2>Infrastructure &amp; security</h2>
+  <div class="cmp-grid">
+
+    <div class="cmp-card">
+      <h3>SOC 2 (roadmap)</h3>
+      <p>Target: <strong>Q3 2027</strong>. In progress. Request the readiness report for your procurement cycle.</p>
+      <ul>
+        <li>Encryption at rest and in transit</li>
+        <li>Access controls: role-based, 2FA on admin</li>
+        <li>Logging: full audit trail of admin actions</li>
+        <li>Backup: daily, retained 30 days</li>
+      </ul>
+    </div>
+
+    <div class="cmp-card">
+      <h3>Data residency</h3>
+      <p>Available on request. India-region by default; EU and US regions available for enterprise contracts.</p>
+      <ul>
+        <li>India: default (nearest region)</li>
+        <li>EU region: available on enterprise contract</li>
+        <li>US region: available on enterprise contract</li>
+        <li>Data processing agreements available</li>
+      </ul>
+    </div>
+
+    <div class="cmp-card">
+      <h3>Candidate rights</h3>
+      <p>Candidates have full control over their assessment data. Rights are enforced, not just promised.</p>
+      <ul>
+        <li>Access: download all assessment data</li>
+        <li>Erasure: delete account and all data</li>
+        <li>Portability: export in machine-readable format</li>
+        <li>Correction: fix any inaccurate data</li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<!-- CTA -->
+<div class="cmp-cta">
+  <h3>Need a compliance review for your procurement?</h3>
+  <p>Request the full trust package: SOC 2 roadmap, DPA template, bias audit summary, and data residency options.</p>
+  <a href="mailto:trust@charvakit.com?subject=Charvak Compliance Package Request">Request the trust package</a>
+</div>
+
+</div>
+
+{% endblock %}
