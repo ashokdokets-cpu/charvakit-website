@@ -11886,6 +11886,110 @@ async def api_career_cert_verify(cert_hash: str):
         return handle_error(e, "career cert verify")
 
 
+
+# =============================================================================
+# Session 82+ -- F1: Public Scorecard Routes
+# =============================================================================
+
+from pydantic import BaseModel
+
+class ScorecardCreateRequest(BaseModel):
+    assessment_id: str
+
+class ScorecardShareTrackRequest(BaseModel):
+    channel: str = "link"
+
+
+@app.get("/scorecard/{scorecard_id}", response_class=HTMLResponse)
+async def scorecard_public_page(request: Request, scorecard_id: str):
+    """Public shareable scorecard page. No login required."""
+    try:
+        from scorecard_engine import scorecard_engine
+        result = scorecard_engine.get_scorecard(scorecard_id, track_view=True)
+        if result.get("status") != "success":
+            return HTMLResponse(
+                content=f"<html><body><h1>Scorecard not found</h1><p>This scorecard may have been removed.</p></body></html>",
+                status_code=404
+            )
+        return templates.TemplateResponse(
+            "scorecard.html",
+            {"request": request, "scorecard": result}
+        )
+    except Exception as e:
+        logger.error(f"scorecard_public_page failed: {e}", exc_info=True)
+        return HTMLResponse(content="<h1>Error loading scorecard</h1>", status_code=500)
+
+
+@app.get("/api/scorecard/{scorecard_id}")
+async def scorecard_api(scorecard_id: str):
+    """Public JSON API."""
+    try:
+        from scorecard_engine import scorecard_engine
+        result = scorecard_engine.get_scorecard(scorecard_id, track_view=False)
+        if result.get("status") != "success":
+            return JSONResponse(result, status_code=404)
+        return JSONResponse(result)
+    except Exception as e:
+        logger.error(f"scorecard_api failed: {e}", exc_info=True)
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+
+@app.post("/api/scorecard/create")
+async def scorecard_create(request: Request, data: ScorecardCreateRequest):
+    """Create or update a scorecard for a completed assessment. Auth-gated."""
+    try:
+        from scorecard_engine import scorecard_engine
+        # Auth: caller must own the assessment
+        try:
+            user = require_auth(request)
+        except HTTPException:
+            raise
+        except Exception:
+            return JSONResponse({"status": "error", "message": "Not authenticated"}, status_code=401)
+        email = user.get("email")
+        if not email:
+            return JSONResponse({"status": "error", "message": "Missing email in session"}, status_code=401)
+        
+        result = scorecard_engine.create_scorecard(data.assessment_id, email)
+        if result.get("status") != "success":
+            return JSONResponse(result, status_code=400)
+        return JSONResponse(result)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"scorecard_create failed: {e}", exc_info=True)
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+
+@app.post("/api/scorecard/{scorecard_id}/share")
+async def scorecard_share_track(scorecard_id: str, data: ScorecardShareTrackRequest):
+    """Track a share event."""
+    try:
+        from scorecard_engine import scorecard_engine
+        result = scorecard_engine.track_share(scorecard_id, data.channel)
+        return JSONResponse(result)
+    except Exception as e:
+        logger.error(f"scorecard_share_track failed: {e}", exc_info=True)
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+
+@app.get("/api/scorecard/list/{email}")
+async def scorecard_list_for_email(request: Request, email: str):
+    """List scorecards for the authenticated user."""
+    try:
+        try:
+            require_auth_for_email(request, email)
+        except HTTPException:
+            raise
+        from scorecard_engine import scorecard_engine
+        results = scorecard_engine.list_scorecards_for_email(email)
+        return JSONResponse({"status": "success", "scorecards": results, "count": len(results)})
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"scorecard_list_for_email failed: {e}", exc_info=True)
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
 @app.get("/api/career-certification/list/{email}")
 async def api_career_cert_list(request: Request, email: str):
     """List all certifications for a user (auth-gated)."""
