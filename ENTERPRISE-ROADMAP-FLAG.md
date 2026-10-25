@@ -11,7 +11,19 @@
 
 ### Tier 1 — CRITICAL (build first)
 
-**F1 — Verified Scorecard Artifact** [1 session]
+**F1 — Verified Scorecard Artifact** [1 session] ✅ SHIPPED 2026-10-26
+
+**Status:** LIVE on prod with 3 demo scorecards
+**Live URLs:**
+- https://www.charvakit.com/scorecard/SC-2780FC46D5E0 (87/100, Senior Backend)
+- https://www.charvakit.com/scorecard/SC-07CF13C2A0F6 (78/100, Full-Stack)
+- https://www.charvakit.com/scorecard/SC-AE61E212BFE2 (72/100, Data Scientist)
+**Public API:** /api/scorecard/{id} (returns JSON, no auth)
+**Candidate flow:** "Create Shareable Scorecard" button on /ai-assessment result page
+**Files:** scorecard_engine.py (466 lines), templates/scorecard.html (206 lines), migrations/20261026_scorecards.sql
+**Commits:** fa117b5 (initial), {current hash} (defensive cert + diag cleanup)
+**Demo URLs saved:** Desktop/Charvak_Sales_Package_20261025/SCORECARD_DEMO_URLS.txt
+**Follow-up:** charvak_career_certifications table missing on prod — add migration for cert display in future
 - Public, shareable, no-login candidate scorecard URL
 - Structure: overall score + 5-axis skill breakdown + work sample + integrity + credential + HMAC verify link + trial recommendation
 - New: scorecard_engine.py, templates/scorecard.html, charvak_scorecards table

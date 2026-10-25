@@ -6,6 +6,43 @@
 
 ---
 
+## Session 83 — F1 Scorecard Artifact SHIPPED (2026-10-26)
+
+**F1 of 8 enterprise features from ENTERPRISE-ROADMAP-FLAG.md — LIVE on prod.**
+
+### 3 demo scorecards live:
+- https://www.charvakit.com/scorecard/SC-2780FC46D5E0 (87/100, Senior Backend Engineer)
+- https://www.charvakit.com/scorecard/SC-07CF13C2A0F6 (78/100, Full-Stack Engineer)
+- https://www.charvakit.com/scorecard/SC-AE61E212BFE2 (72/100, Data Scientist)
+
+### Shipped
+- scorecard_engine.py (466 lines)
+- 5 routes (/scorecard/{id}, /api/scorecard/{id}, /api/scorecard/create, /api/scorecard/{id}/share, /api/scorecard/list/{email})
+- templates/scorecard.html (206 lines)
+- migrations/20261026_scorecards.sql
+- "Create Shareable Scorecard" button on /ai-assessment result page
+
+### Beats VIVA360
+- HMAC-verifiable credential vs their "explainable"
+- Full skill breakdown vs their 6 axes
+- Integrity status shown
+- Public JSON API
+- No login required
+
+### Debugging lessons
+1. .env.local OVERRIDES .env — must disable for prod seeding
+2. Verify data via deployed /api endpoints, not just local script
+
+### Follow-ups (not blocking)
+- Add charvak_career_certifications migration to prod
+- Document .env.local disable pattern in DEV-SETUP.md
+
+### Next in roadmap
+- F2 Compliance Page (~30 min, writing only)
+- F3 Screen Agent (2 sessions)
+
+---
+
 ## Session 82 Extended - G6 + W1 + 401 Fix CLOSED (2026-10-25)
 
 Three major deliverables shipped and verified on prod.
