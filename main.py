@@ -1217,10 +1217,9 @@ async def for_employers(request: Request):
     return template_response("for-employers.html", request, "For Employers - Charvak IT Consulting")
 
 @app.get("/demo", response_class=HTMLResponse)
-async def demo_page(request: Request):
-    # Fixed: Now points to a proper demo template if it exists, otherwise employers page
-    return template_response("for-employers.html", request, "Demo - Charvak IT Consulting")
-
+async def demo_showcase_page(request: Request):
+    """Live demo showcase — 5 working URLs."""
+    return template_response("demo.html", request, "See Charvak in Action - Live Demos")
 @app.get("/for-candidates", response_class=HTMLResponse)
 async def for_candidates(request: Request):
     return template_response("for-candidates.html", request, "For Candidates - Charvak IT Consulting")
@@ -11942,6 +11941,12 @@ class ScorecardCreateRequest(BaseModel):
 class ScorecardShareTrackRequest(BaseModel):
     channel: str = "link"
 
+
+
+@app.get("/scorecards", response_class=HTMLResponse)
+async def scorecards_list_page(request: Request):
+    """List user's scorecards."""
+    return template_response("scorecards.html", request, "My Scorecards - Charvak")
 
 @app.get("/scorecard/{scorecard_id}", response_class=HTMLResponse)
 async def scorecard_public_page(request: Request, scorecard_id: str):
