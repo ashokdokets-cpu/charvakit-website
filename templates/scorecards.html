@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}My Scorecards — Charvak{% endblock %}
+
+{% block content %}
+<style>
+.scl-wrap { max-width: 1000px; margin: 32px auto; padding: 0 20px; }
+.scl-hero { background: linear-gradient(135deg, #3ba591 0%, #2a8070 100%); color: #fff; padding: 32px; border-radius: 16px; margin-bottom: 24px; }
+.scl-hero h1 { font-size: 1.8rem; font-weight: 800; margin: 0 0 8px; }
+.scl-hero p { margin: 0; opacity: 0.9; }
+.scl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.scl-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; transition: all 0.15s; }
+.scl-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); border-color: #3ba591; }
+.scl-role { font-size: 1.1rem; font-weight: 700; color: #1a1a2e; margin-bottom: 4px; }
+.scl-meta { font-size: 0.85rem; color: #6b7280; margin-bottom: 12px; }
+.scl-score { font-size: 1.8rem; font-weight: 800; color: #3ba591; }
+.scl-actions { margin-top: 12px; display: flex; gap: 8px; }
+.scl-btn { padding: 6px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; text-decoration: none; }
+.scl-btn-primary { background: #3ba591; color: #fff; }
+.scl-btn-primary:hover { background: #2a8070; color: #fff; }
+.scl-btn-outline { border: 1px solid #e2e8f0; color: #1a1a2e; background: #fff; }
+.scl-btn-outline:hover { border-color: #3ba591; color: #3ba591; }
+.scl-empty { background: #f8fafc; border: 1px dashed #cbd5e0; border-radius: 12px; padding: 60px 20px; text-align: center; color: #6b7280; }
+.scl-empty a { display: inline-block; margin-top: 16px; padding: 10px 24px; background: #3ba591; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600; }
+</style>
+
+<div class="scl-wrap">
+  <div class="scl-hero">
+    <h1>My Scorecards</h1>
+    <p>Every assessment generates a shareable, HMAC-verifiable scorecard. Share with hiring managers — no login required for them to view.</p>
+  </div>
+  <div id="scorecardList" class="scl-grid"></div>
+</div>
+
+<script>
+(async function() {
+  var token = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+  var email = localStorage.getItem('userEmail') || '';
+  var container = document.getElementById('scorecardList');
+
+  if (!token || !email) {
+    container.innerHTML = '<div class="scl-empty"><h3>Please sign in</h3><p>You need to be logged in to see your scorecards.</p><a href="/login?next=/scorecards">Sign in</a></div>';
+    return;
+  }
+
+  try {
+    // Get scorecards via the list endpoint
+    var r = await fetch('/api/scorecard/list/' + encodeURIComponent(email), {
+      headers: {'Authorization': 'Bearer ' + token}
+    });
+    var d = await r.json();
+
+    if (d.status !== 'success') {
+      container.innerHTML = '<div class="scl-empty"><h3>Error loading scorecards</h3><p>' + (d.message || 'Unknown') + '</p></div>';
+      return;
+    }
+
+    var scorecards = d.scorecards || [];
+    if (scorecards.length === 0) {
+      container.innerHTML = '<div class="scl-empty"><h3>No scorecards yet</h3><p>Take a Career Assessment to generate your first scorecard.</p><a href="/ai-assessment">Take an assessment →</a></div>';
+      return;
+    }
+
+    var html = '';
+    scorecards.forEach(function(s) {
+      html += '<div class="scl-card">'
+        + '<div class="scl-role">' + (s.role || 'Role') + '</div>'
+        + '<div class="scl-meta">' + (s.level || '') + ' · ' + (s.integrity_risk || 'clean') + ' integrity · ' + (s.views_count || 0) + ' views</div>'
+        + '<div class="scl-score">' + (s.overall_score || 0) + '<span style="font-size:1rem;color:#6b7280">/100</span></div>'
+        + '<div class="scl-actions">'
+        +   '<a href="/scorecard/' + s.scorecard_id + '" class="scl-btn scl-btn-primary">View</a>'
+        +   '<button onclick="copyLink(\'' + s.scorecard_id + '\')" class="scl-btn scl-btn-outline">Copy link</button>'
+        + '</div>'
+        + '</div>';
+    });
+    container.innerHTML = html;
+
+  } catch(e) {
+    container.innerHTML = '<div class="scl-empty"><h3>Network error</h3><p>' + e.message + '</p></div>';
+  }
+
+  window.copyLink = function(id) {
+    var url = window.location.origin + '/scorecard/' + id;
+    navigator.clipboard.writeText(url).then(function() {
+      alert('Copied: ' + url);
+    }).catch(function() {
+      prompt('Copy:', url);
+    });
+  };
+})();
+</script>
+{% endblock %}

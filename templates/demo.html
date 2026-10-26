@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}See Charvak in Action — Live Demos{% endblock %}
+
+{% block content %}
+<div style="max-width: 1100px; margin: 32px auto; padding: 0 20px;">
+  <div style="background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%); color: #fff; padding: 48px 32px; border-radius: 16px; margin-bottom: 32px;">
+    <h1 style="font-size: 2.2rem; font-weight: 800; margin: 0 0 12px;">See Charvak in Action</h1>
+    <p style="font-size: 1.1rem; opacity: 0.92; margin: 0;">Five live demos. All working. All on production. No setup needed.</p>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+
+    <a href="/scorecard/SC-2780FC46D5E0" style="text-decoration: none; display: block; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; transition: all 0.2s;">
+      <div style="font-size: 2.5rem; margin-bottom: 12px;">📊</div>
+      <h3 style="font-size: 1.15rem; font-weight: 700; color: #1a1a2e; margin: 0 0 8px;">1. Verified Candidate Scorecard</h3>
+      <p style="color: #6b7280; font-size: 0.9rem; margin: 0 0 12px;">87/100 candidate profile with skill breakdown, integrity status, HMAC-verifiable credential. No login required.</p>
+      <span style="color: #3ba591; font-weight: 600;">View live scorecard →</span>
+    </a>
+
+    <a href="/compliance" style="text-decoration: none; display: block; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px;">
+      <div style="font-size: 2.5rem; margin-bottom: 12px;">🔒</div>
+      <h3 style="font-size: 1.15rem; font-weight: 700; color: #1a1a2e; margin: 0 0 8px;">2. Compliance & Trust</h3>
+      <p style="color: #6b7280; font-size: 0.9rem; margin: 0 0 12px;">GDPR, India DPDP, NYC Law 144, EU AI Act aligned. SOC 2 roadmap. Candidate rights.</p>
+      <span style="color: #3ba591; font-weight: 600;">View compliance page →</span>
+    </a>
+
+    <a href="/screen/xXTqnvovU7kZPox_m-4jRedfRB9uf7XW" style="text-decoration: none; display: block; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px;">
+      <div style="font-size: 2.5rem; margin-bottom: 12px;">💬</div>
+      <h3 style="font-size: 1.15rem; font-weight: 700; color: #1a1a2e; margin: 0 0 8px;">3. Live AI Screen Agent</h3>
+      <p style="color: #6b7280; font-size: 0.9rem; margin: 0 0 12px;">Try a real candidate screen for "Senior Backend Engineer at Acme." Answers are captured. Chat with the AI.</p>
+      <span style="color: #3ba591; font-weight: 600;">Start screening →</span>
+    </a>
+
+    <a href="/screen/dashboard" style="text-decoration: none; display: block; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px;">
+      <div style="font-size: 2.5rem; margin-bottom: 12px;">📋</div>
+      <h3 style="font-size: 1.15rem; font-weight: 700; color: #1a1a2e; margin: 0 0 8px;">4. Recruiter Dashboard</h3>
+      <p style="color: #6b7280; font-size: 0.9rem; margin: 0 0 12px;">All your screen sessions at a glance. KPI cards, candidate table, invite links. Sign in required.</p>
+      <span style="color: #3ba591; font-weight: 600;">Open dashboard →</span>
+    </a>
+
+    <a href="/screen/session/SCREEN-AB1039F0565E" style="text-decoration: none; display: block; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px;">
+      <div style="font-size: 2.5rem; margin-bottom: 12px;">🎯</div>
+      <h3 style="font-size: 1.15rem; font-weight: 700; color: #1a1a2e; margin: 0 0 8px;">5. Session Detail</h3>
+      <p style="color: #6b7280; font-size: 0.9rem; margin: 0 0 12px;">Single session deep-dive. Candidates, status, scores, CTC, notice period. Full pipeline view.</p>
+      <span style="color: #3ba591; font-weight: 600;">View session →</span>
+    </a>
+
+  </div>
+
+  <div style="background: #f0fdf4; border: 1px solid #86efac; border-radius: 12px; padding: 28px; margin-top: 40px; text-align: center;">
+    <h3 style="margin: 0 0 8px; color: #1a1a2e;">Want a 20-minute walkthrough?</h3>
+    <p style="color: #4b5563; margin: 0 0 16px;">Reply to any of our emails, or book a demo call.</p>
+    <a href="mailto:hr@charvakit.com?subject=Charvak Demo Request" style="display: inline-block; padding: 12px 28px; background: #3ba591; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600;">Request a demo →</a>
+  </div>
+</div>
+{% endblock %}
