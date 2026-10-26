@@ -1329,8 +1329,21 @@ class CareerAssessmentEngine:
             f"- Return exactly {count} case studies.\n\n"
             f'Return JSON: {{"questions": [{{"scenario": "...", "questions": ["...","..."], "rubric": ["...","..."], "topics": ["...", "..."]}}]}}'
         )
-    def _prompt_coding(self, role, industry, level_label, level_blurb, count, difficulty_hint='baseline'):
-        """Coding problems with real test cases. Python-only for now (Judge0 language_id=71)."""
+    def _prompt_coding(self, role, industry, level_label, level_blurb, count, difficulty_hint='baseline', language='python'):
+        """Coding problems with real test cases. Language-aware via Judge0."""
+        # Human-readable language name + version
+        _lang_display = {
+            "python": "Python 3",
+            "javascript": "JavaScript (Node.js 12)",
+            "java": "Java 17",
+            "typescript": "TypeScript (compiled to JS)",
+        }.get(language, language)
+        _starter_hint = {
+            "python": "# read input from stdin\n# your code here\n",
+            "javascript": "// read input from stdin\n// your code here\n",
+            "java": "// read input from stdin\n// your code here\n",
+            "typescript": "// read input from stdin\n// your code here\n",
+        }.get(language, "# read input from stdin\n# your code here\n")
         ctx = self._context_header(role, industry, level_label, level_blurb, difficulty_hint)
         topics = _topic_vocabulary_for_role(role)
         return (
@@ -1338,7 +1351,7 @@ class CareerAssessmentEngine:
             f"Generate {count} coding problems for a {role} in {industry} at {level_label} level.\n"
             f"Focus on topics: {', '.join(topics[:5])}\n\n"
             f"STRICT RULES:\n"
-            f"- Language is Python 3.\n"
+            f"- Language is {_lang_display}.\n"
             f"- Each problem reads input from stdin and writes output to stdout.\n"
             f"- Each problem has exactly 3 test cases with valid stdin and the exact expected stdout.\n"
             f"- Output must match EXACTLY (including trailing newline via print()).\n"
@@ -1350,8 +1363,8 @@ class CareerAssessmentEngine:
             f"Return STRICT JSON: {{\"questions\": [\n"
             f"  {{\n"
             f"    \"problem\": \"one paragraph describing what to write, with clear input/output spec\",\n"
-            f"    \"starter_code\": \"# read input from stdin\\n# your code here\\n\",\n"
-            f"    \"language\": \"python\",\n"
+            f"    \"starter_code\": \"{_starter_hint.replace(chr(10), chr(92) + 'n')}\",\n"
+            f"    \"language\": \"{language}\",\n"
             f"    \"test_cases\": [\n"
             f"      {{\"stdin\": \"2 3\\n\", \"expected_output\": \"5\\n\"}},\n"
             f"      {{\"stdin\": \"10 -4\\n\", \"expected_output\": \"6\\n\"}},\n"
@@ -1455,7 +1468,7 @@ class CareerAssessmentEngine:
     def _generate_one_batch(
         self, format_key: str, role: str, industry: str,
         level_key: str, level_label: str, level_blurb: str, count: int,
-        difficulty_hint: str = "baseline"
+        difficulty_hint: str = "baseline", language: str = "python"
     ) -> List[Dict]:
         """Single OpenAI call for a batch of questions in the given format."""
         import os as _os
@@ -1469,6 +1482,7 @@ class CareerAssessmentEngine:
             role=role, industry=industry,
             level_label=level_label, level_blurb=level_blurb, count=count,
             difficulty_hint=difficulty_hint,
+            language=language,
         )
 
         try:
@@ -1729,10 +1743,13 @@ class CareerAssessmentEngine:
                 return None
             # Cap test cases at 5 to bound Judge0 call cost per question
             test_cases = test_cases[:5]
+            # Accept any language Judge0 has a language_id for
+            from judge0_client import LANGUAGE_IDS
+            allowed_langs = set(LANGUAGE_IDS.keys())
             return {
                 "problem": problem,
                 "starter_code": starter or "# read input from stdin\n# your code here\n",
-                "language": lang if lang in ("python",) else "python",
+                "language": lang if lang in allowed_langs else "python",
                 "test_cases": test_cases,
                 "topics": self._normalize_topics_for_question(raw_q.get("topics")),
             }
