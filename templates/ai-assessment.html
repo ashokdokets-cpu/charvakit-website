@@ -76,6 +76,17 @@
                         <div class="as-field-hint" id="carFormatHint"></div>
                     </div>
 
+                    <div id="carLanguageRow" class="mb-3 d-none">
+                        <label class="as-label" for="carLanguageSelect">Language</label>
+                        <select class="as-select" id="carLanguageSelect">
+                            <option value="python" selected>Python 3.11</option>
+                            <option value="javascript">JavaScript (Node.js)</option>
+                            <option value="java">Java 17</option>
+                            <option value="typescript">TypeScript</option>
+                        </select>
+                        <div class="as-field-hint">Real code execution via Judge0 CE — test cases run against your submission.</div>
+                    </div>
+
                     <div id="carAdaptiveBadge" class="alert alert-info py-2 px-3 mb-3 d-none">
                         <small><strong>🎯 Adapted to your last performance.</strong> <span id="carAdaptiveText"></span></small>
                     </div>
@@ -455,6 +466,16 @@ function updateSizeLabels() {
     var hintEl = document.getElementById('carSizeHint');
     var fmtHint = document.getElementById('carFormatHint');
 
+    // Show/hide language row when format=coding
+    var langRow = document.getElementById('carLanguageRow');
+    if (langRow) {
+        if (fmt === 'coding') {
+            langRow.classList.remove('d-none');
+        } else {
+            langRow.classList.add('d-none');
+        }
+    }
+
     if (!fmt || !_carCatalog || !_carCatalog.formats[fmt]) {
         hintEl.textContent = 'Choose a format to see credit cost.';
         fmtHint.textContent = '';
@@ -496,6 +517,8 @@ async function startAssessment() {
     var level = document.getElementById('carLevelSelect').value;
     var size = document.getElementById('carSizeSelect').value;
     var format = document.getElementById('carFormatSelect').value;
+    var languageEl = document.getElementById('carLanguageSelect');
+    var language = (format === 'coding' && languageEl) ? languageEl.value : '';
 
     if (!role || !industry || !level || !format) {
         alert('Please choose a role, industry, level, and format.');
@@ -521,7 +544,7 @@ async function startAssessment() {
             headers: _authHeaders(),
             body: JSON.stringify({
                 email: email, role: role, industry: industry,
-                level: level, size: size, format: format
+                level: level, size: size, format: format, language: language
             })
         });
         if (r.status === 401) { window.location.href = '/login?next=/ai-assessment'; return; }
@@ -672,7 +695,15 @@ function renderQuestionBody(fmt, i, q) {
         var lang = q.language || 'python';
         html += '<p class="mb-2 small text-muted">Language: ' + _esc(lang) + '</p>';
         html += '<p class="mb-3" style="white-space:pre-wrap;">' + _esc(q.problem || '') + '</p>';
-        html += '<p class="small text-muted mb-2">Read input from stdin (use <code>input()</code> or <code>sys.stdin</code>). Print the exact expected output.</p>';
+        // Language-aware stdin hint
+        var stdinHint = (lang === 'python')
+            ? 'Read input from stdin (use <code>input()</code> or <code>sys.stdin</code>). Print the exact expected output.'
+            : (lang === 'javascript' || lang === 'typescript')
+                ? 'Read input from stdin (use <code>process.stdin</code> or <code>fs.readFileSync(0)</code>). Print the exact expected output.'
+                : (lang === 'java')
+                    ? 'Read input from stdin (use <code>Scanner(System.in)</code> or <code>BufferedReader</code>). Print the exact expected output.'
+                    : 'Read input from stdin. Print the exact expected output.';
+        html += '<p class="small text-muted mb-2">' + stdinHint + '</p>';
         var starter = q.starter_code || '';
         if (starter) {
             html += '<p class="small text-muted mb-1">Starter:</p>';
@@ -681,7 +712,9 @@ function renderQuestionBody(fmt, i, q) {
         html += '<label class="small fw-semibold mb-1" for="car-q' + i + '-txt">Your solution:</label>';
         html += '<textarea class="form-control" rows="10" id="car-q' + i + '-txt" spellcheck="false" ';
         html += 'style="font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px;" ';
-        html += 'placeholder="# read input from stdin\n# your code here" ';
+        // Language-aware placeholder (comment style differs by language)
+        var commentChar = (lang === 'python') ? '#' : '//';
+        html += 'placeholder="' + commentChar + ' read input from stdin\n' + commentChar + ' your code here" ';
         html += 'onchange="updateProgress()"></textarea>';
     } else if (fmt === 'sql') {
         // SQL: show schema + task + query textarea
