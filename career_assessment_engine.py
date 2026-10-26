@@ -897,6 +897,14 @@ class CareerAssessmentEngine:
         level_key = (data.get("level") or "mid").strip().lower()
         size_key = (data.get("size") or "quick").strip().lower()
         fmt = (data.get("format") or "mcq").strip().lower()
+        # Language (coding) or database (sql); defaults to python/sqlite
+        language_in = (data.get("language") or "").strip().lower()
+        if fmt == "coding" and language_in not in ("python", "javascript", "java", "typescript"):
+            language_in = "python"
+        if fmt == "sql" and language_in not in ("sqlite", "postgres", "mysql"):
+            language_in = "sqlite"
+        if not language_in:
+            language_in = "python" if fmt == "coding" else ("sqlite" if fmt == "sql" else "")
 
         if not email:
             return {"status": "error", "message": "email required"}
@@ -936,13 +944,14 @@ class CareerAssessmentEngine:
         baseline = self._baseline_hint(email, role, industry, fmt)
         difficulty_hint = baseline.get("hint", "baseline")
 
-        # Generate questions (format-aware, adaptive-hint aware)
+        # Generate questions (format-aware, adaptive-hint aware, language-aware)
         questions = self._generate_questions(
             format_key=fmt,
             role=role, industry=industry,
             level_key=level_key, level_label=level_label,
             level_blurb=level_blurb, num_questions=num_questions,
             difficulty_hint=difficulty_hint,
+            language=language_in,
         )
         if not questions:
             return {"status": "error", "message": "Could not generate questions. Please try again."}
@@ -956,10 +965,10 @@ class CareerAssessmentEngine:
             cur.execute("""
                 INSERT INTO charvak_career_assessments
                     (assessment_id, email, role, industry, level, format,
-                     size, num_questions, questions_json, status)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb, 'in_progress')
+                     size, num_questions, questions_json, status, language)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb, 'in_progress', %s)
             """, (assessment_id, email, role, industry, level_key, fmt,
-                  size_key, num_questions, json.dumps(questions)))
+                  size_key, num_questions, json.dumps(questions), language_in))
             conn.commit()
             cur.close(); conn.close()
         except Exception as e:
@@ -1115,7 +1124,7 @@ class CareerAssessmentEngine:
     def _build_prompt_for_format(
         self, format_key: str, role: str, industry: str,
         level_label: str, level_blurb: str, count: int,
-        difficulty_hint: str = "baseline"
+        difficulty_hint: str = "baseline", language: str = "python"
     ) -> str:
         """Dispatch to the format-specific prompt builder."""
         builders = {
@@ -1132,8 +1141,15 @@ class CareerAssessmentEngine:
         }
         builder = builders.get(format_key)
         if not builder:
-            # Fallback to MCQ
             return self._prompt_mcq(role, industry, level_label, level_blurb, count, difficulty_hint)
+        # coding accepts language kwarg; sql accepts database_name kwarg
+        if format_key == "coding":
+            return builder(role, industry, level_label, level_blurb, count,
+                          difficulty_hint, language=language)
+        if format_key == "sql":
+            db = language if language in ("sqlite", "postgres", "mysql") else "sqlite"
+            return builder(role, industry, level_label, level_blurb, count,
+                          difficulty_hint, database_name=db)
         return builder(role, industry, level_label, level_blurb, count, difficulty_hint)
 
     def _baseline_hint(self, email: str, role: str, industry: str, fmt: str) -> Dict:
@@ -1381,8 +1397,14 @@ class CareerAssessmentEngine:
     # Question generation
     # ------------------------------------------------------------
 
-    def _prompt_sql(self, role, industry, level_label, level_blurb, count, difficulty_hint='baseline'):
-        """SQL problems with SQLite schema + task + expected output (Judge0 language_id=82)."""
+    def _prompt_sql(self, role, industry, level_label, level_blurb, count, difficulty_hint='baseline', database_name='sqlite'):
+        """SQL problems with {database_name} schema + task + expected output (Judge0 language_id=82)."""
+        # Dialect-specific labels
+        _db_display = {
+            "sqlite": "SQLite 3",
+            "postgres": "PostgreSQL 15",
+            "mysql": "MySQL 8",
+        }.get(database_name, "SQLite 3")
         ctx = self._context_header(role, industry, level_label, level_blurb, difficulty_hint)
         topics = _topic_vocabulary_for_role(role)
         return (
@@ -1390,7 +1412,7 @@ class CareerAssessmentEngine:
             f"Generate {count} SQL problems for a {role} in {industry} at {level_label} level.\n"
             f"Focus on topics: {', '.join(topics[:5])}\n\n"
             f"STRICT RULES:\n"
-            f"- Dialect: SQLite 3 (language_id=82).\n"
+            f"- Dialect: {_db_display} (language_id=82).\n"
             f"- Each problem has a schema (CREATE TABLE + INSERT rows) and a task (SELECT query to write).\n"
             f"- The candidate writes ONE SELECT query. Do NOT write it for them in starter_code.\n"
             f"- Keep schemas small: 1-2 tables, 2-5 rows each.\n"
@@ -1423,7 +1445,7 @@ class CareerAssessmentEngine:
     def _generate_questions(
         self, format_key: str, role: str, industry: str, level_key: str,
         level_label: str, level_blurb: str, num_questions: int,
-        difficulty_hint: str = "baseline"
+        difficulty_hint: str = "baseline", language: str = "python"
     ) -> List[Dict]:
         """
         Generate questions for the given format via OpenAI.
@@ -1450,6 +1472,7 @@ class CareerAssessmentEngine:
                 level_key=level_key, level_label=level_label,
                 level_blurb=level_blurb, count=batch_size,
                 difficulty_hint=difficulty_hint,
+                language=language,
             )
             if not batch:
                 return []
@@ -2391,9 +2414,9 @@ class CareerAssessmentEngine:
                     "verify_url": f"/api/career-certification/verify/{existing[2]}",
                 }
 
-            # Load the assessment (with format for coding/sql extension)
+            # Load the assessment (with format + language for coding/sql extension)
             cur.execute("""
-                SELECT email, role, industry, level, score, passed, status, integrity_summary, format
+                SELECT email, role, industry, level, score, passed, status, integrity_summary, format, language
                 FROM charvak_career_assessments
                 WHERE assessment_id = %s
             """, (assessment_id,))
@@ -2403,8 +2426,9 @@ class CareerAssessmentEngine:
                 conn.close()
                 return {"status": "error", "message": "Assessment not found"}
 
-            a_email, role, industry, level, score, passed, status, integrity, assessment_format = a_row
+            a_email, role, industry, level, score, passed, status, integrity, assessment_format, assessment_language = a_row
             assessment_format = assessment_format or "mcq"
+            assessment_language = (assessment_language or "").strip().lower()
 
             if a_email.lower() != email:
                 cur.close()
@@ -2451,14 +2475,14 @@ class CareerAssessmentEngine:
             import json as _json
             integrity_json = _json.dumps(integrity) if integrity else "{}"
 
-            # Coding/SQL extension: detect language/db, compute task classes + runtime
+            # Coding/SQL extension: use stored language, compute task classes + runtime
             import json as _json
             language = None
             database_name = None
             if assessment_format == "coding":
-                language = "python"   # v1 default; will extract from questions_json later
+                language = assessment_language if assessment_language in ("python", "javascript", "java", "typescript") else "python"
             elif assessment_format == "sql":
-                database_name = "sqlite"  # Judge0 SQLite (approximate to Postgres/MySQL)
+                database_name = assessment_language if assessment_language in ("sqlite", "postgres", "mysql") else "sqlite"
 
             try:
                 _task_classes_list = _compute_task_classes(
