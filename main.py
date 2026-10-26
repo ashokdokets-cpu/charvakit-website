@@ -11898,6 +11898,12 @@ async def api_career_cert_pdf(cert_id: str):
             "verify_url_path": "/api/career-certification/verify/",
             "issued_at": cert_data.get("issued_at"),
             "created_at": cert_data.get("issued_at"),  # renderer looks for this
+            # Coding/SQL extension (Session 73 / Batch A8)
+            "format": cert_data.get("format"),
+            "language": cert_data.get("language"),
+            "database_name": cert_data.get("database_name"),
+            "task_classes": cert_data.get("task_classes"),
+            "runtime_info": cert_data.get("runtime_info"),
         }
 
         try:
