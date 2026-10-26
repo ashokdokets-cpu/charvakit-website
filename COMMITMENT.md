@@ -6861,3 +6861,35 @@ Full F4 arc shipped in one session. 5 of 8 enterprise features now live.
 **Remaining flags:**
 - Render Postgres password rotation (Session 19, ~40 sessions old)
 - Amrita follow-up #1 to Prof. Raj (Wed Oct 28)
+---
+
+## Session 84d — Coding/SQL Certifications Complete (2026-10-26)
+
+**Tier 2 gap closed.** Session 73's Batch A8 shipped end-to-end.
+
+**What shipped:**
+- Backend: _compute_task_classes + _compute_runtime_info (module-level)
+- Engine: issue_certification writes format/language/database_name/task_classes/runtime_info
+- Schema: charvak_cert_task_classes + 5 new columns on charvak_career_certifications
+- Migration: 20261026_cert_coding_sql.sql (idempotent, seeds 19 task classes)
+- Prod realignment: 20261026_cert_rebuild.sql (0 rows lost, aligned legacy to canonical)
+- API: get_certification returns 5 new fields
+- Web: 'Technical Environment Tested' section with [real execution] badge
+- PDF: Same section rendered in downloadable cert
+
+**Verified E2E:**
+- Coding: CCERT-77FD86F57E8A (85/100, python, 10 task classes)
+- SQL: CCERT-B8E1821A7EBC (78/100, sqlite, 9 task classes)
+- Both web + PDF render correctly
+- MCQ certs unaffected (no section shown)
+
+**Positioning decision (documented in commit):**
+- Judge0 CE named openly — commodity infra, not a moat
+- Moat is deterministic test-case scoring + task class taxonomy
+- '[real execution]' badge signals determinism vs VIVA360's AI-only
+
+**Commits:** 3612280 (backend), 471b7c2 (frontend), 4f224ff (PDF route fix)
+
+**Remaining Tier 1/2 gaps:**
+- F5 AI Communication (last buildable-now feature)
+- F6/F7/F8 (demand-triggered)
