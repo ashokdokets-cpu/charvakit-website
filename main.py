@@ -18169,6 +18169,110 @@ async def f3_close(request: Request, session_id: str):
 # F3 Session 2 — Screen dashboard routes
 # =============================================================================
 
+
+# ============================================================
+# F4 Recruiter Dashboard — v1
+# ============================================================
+
+@app.get("/recruiter/dashboard", response_class=HTMLResponse)
+async def recruiter_dashboard_page(request: Request):
+    """F4: unified recruiter pipeline dashboard."""
+    return template_response("recruiter-dashboard.html", request,
+                             "Recruiter Pipeline - Charvak")
+
+
+@app.get("/api/recruiter/pipeline")
+async def api_recruiter_pipeline(
+    request: Request,
+    source: str = None,
+    stage: str = None,
+    role_id: str = None,
+    min_score: int = None,
+    q: str = None,
+):
+    """F4: unified pipeline JSON."""
+    from recruiter_dashboard_engine import recruiter_dashboard_engine
+    try:
+        user = require_auth(request)
+    except HTTPException:
+        raise
+    email = (user or {}).get("email", "") if isinstance(user, dict) else (user or "")
+    if not email:
+        return JSONResponse({"status": "error", "message": "unauthenticated"}, status_code=401)
+
+    filters = {}
+    if source:     filters["source"] = source
+    if stage:      filters["stage"] = stage
+    if role_id:    filters["role_id"] = role_id
+    if min_score is not None: filters["min_score"] = min_score
+    if q:          filters["q"] = q
+
+    try:
+        result = recruiter_dashboard_engine.list_pipeline(email, filters)
+        return JSONResponse(result)
+    except Exception as e:
+        return JSONResponse({"status": "error", "message": str(e)},
+                            status_code=500)
+
+
+@app.get("/api/recruiter/kpis")
+async def api_recruiter_kpis(request: Request):
+    """F4: top-of-page KPI cards."""
+    from recruiter_dashboard_engine import recruiter_dashboard_engine
+    try:
+        user = require_auth(request)
+    except HTTPException:
+        raise
+    email = (user or {}).get("email", "") if isinstance(user, dict) else (user or "")
+    if not email:
+        return JSONResponse({"status": "error", "message": "unauthenticated"}, status_code=401)
+
+    try:
+        return JSONResponse(recruiter_dashboard_engine.get_pipeline_kpis(email))
+    except Exception as e:
+        return JSONResponse({"status": "error", "message": str(e)},
+                            status_code=500)
+
+
+@app.get("/api/recruiter/pipeline.csv")
+async def api_recruiter_pipeline_csv(
+    request: Request,
+    source: str = None,
+    stage: str = None,
+    role_id: str = None,
+    min_score: int = None,
+    q: str = None,
+):
+    """F4: CSV export of filtered pipeline."""
+    from recruiter_dashboard_engine import recruiter_dashboard_engine
+    from fastapi.responses import Response
+    try:
+        user = require_auth(request)
+    except HTTPException:
+        raise
+    email = (user or {}).get("email", "") if isinstance(user, dict) else (user or "")
+    if not email:
+        return JSONResponse({"status": "error", "message": "unauthenticated"}, status_code=401)
+
+    filters = {}
+    if source:     filters["source"] = source
+    if stage:      filters["stage"] = stage
+    if role_id:    filters["role_id"] = role_id
+    if min_score is not None: filters["min_score"] = min_score
+    if q:          filters["q"] = q
+
+    try:
+        csv_data = recruiter_dashboard_engine.export_pipeline_csv(email, filters)
+        return Response(
+            content=csv_data,
+            media_type="text/csv",
+            headers={"Content-Disposition": 'attachment; filename="pipeline.csv"'},
+        )
+    except Exception as e:
+        return JSONResponse({"status": "error", "message": str(e)},
+                            status_code=500)
+
+
 @app.get("/screen/dashboard", response_class=HTMLResponse)
 async def screen_dashboard_page(request: Request):
     """Recruiter dashboard for screen sessions."""
