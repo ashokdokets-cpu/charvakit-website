@@ -76,7 +76,34 @@
 
 ### Tier 2 — IMPORTANT (2-3 sessions)
 
-**F4 — Enterprise Recruiter Dashboard** [1 session]
+**F4 — Enterprise Recruiter Dashboard** [3 sessions, v1+v2+v3] ✅ SHIPPED 2026-10-26
+
+**Status:** LIVE on prod — https://www.charvakit.com/recruiter/dashboard
+**Commits:** c569a5d (v1) + f3e0315 (v2) + 954c122 (v3)
+**Engine:** recruiter_dashboard_engine.py (11 methods)
+**Routes:** 9 new in main.py
+**Template:** templates/recruiter-dashboard.html (~700 lines)
+
+**Delivered (all 3 versions):**
+- v1: Unified pipeline across screen + applications + referrals
+- v2: Level tabs, Chart.js doughnut+bar, grouped views, PDF export
+- v3: Mark Hired modal, Recent Hires panel, hire stats
+
+**Beats VIVA360:**
+- Single unified dashboard (they have separate tools)
+- 4 sources aggregated + deduped (they have one source)
+- Hires panel with avg CTC tracking (they don't have)
+- Multi-level tabs + grouped views + PDF export
+- Charts showing source mix + stage funnel
+
+**Follow-ups (non-blocking):**
+- Filter hired candidates out of pipeline table (v3.5 polish)
+- Add "Hired" filter stage dropdown
+
+**Commits:**
+- c569a5d: v1 (backend + basic UI)
+- f3e0315: v2 (charts + tabs + groups + PDF)
+- 954c122: v3 (hires + fix silent mark_hired bug)
 - Single dashboard for all roles/pipelines/analytics
 - Multi-level view (freshers + laterals)
 - Bulk actions, CSV/PDF export

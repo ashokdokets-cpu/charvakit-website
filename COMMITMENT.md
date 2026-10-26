@@ -6790,3 +6790,74 @@ https://www.charvakit.com/screen/xXTqnvovU7kZPox_m-4jRedfRB9uf7XW
 
 **Commits:**
 - 3721c3e feat(screen): F3 backend
+---
+
+## Sessions 84b-84c — F4 Recruiter Dashboard Complete (2026-10-26)
+
+Full F4 arc shipped in one session. 5 of 8 enterprise features now live.
+
+**Commits:**
+- c569a5d — F4 v1 (unified pipeline)
+- f3e0315 — F4 v2 (charts, tabs, groups, PDF)
+- 954c122 — F4 v3 (hire tracking)
+
+**Schema (one migration):**
+- migrations/20261026_f4_recruiter_dashboard.sql
+- charvak_client_roles.level (for v2 multi-level view)
+- charvak_applications.candidate_email + candidate_name
+- charvak_applications.hired_at/company/ctc_inr (for v3)
+- charvak_career_certifications restored (Session 69 F1 follow-up)
+
+**Engine (recruiter_dashboard_engine.py, 11 methods):**
+- v1: list_pipeline, get_pipeline_kpis, export_pipeline_csv
+- v2: get_level_breakdown, get_source_mix, get_stage_funnel,
+      list_pipeline_grouped, export_pipeline_pdf
+- v3: mark_hired, list_hires, get_hire_stats
+
+**Routes (9 new in main.py):**
+- GET /recruiter/dashboard (page)
+- GET /api/recruiter/pipeline (JSON)
+- GET /api/recruiter/kpis
+- GET /api/recruiter/pipeline.csv
+- GET /api/recruiter/levels
+- GET /api/recruiter/charts
+- GET /api/recruiter/pipeline/grouped
+- GET /api/recruiter/pipeline.pdf
+- POST /api/recruiter/mark-hired
+- GET /api/recruiter/hires
+
+**Frontend (recruiter-dashboard.html, ~700 lines):**
+- KPI strip (Total/Screened/Qualified/Hired/Avg Score)
+- Level tabs (All + 7 levels)
+- Chart.js doughnut (source mix) + bar (stage funnel)
+- Filter bar (source/stage/role/score/search)
+- View toggle (Flat / By Source / By Role / By Level)
+- Pipeline table with source pills + score coloring
+- Bulk selection + CSV export (all or selected)
+- Export PDF (from hero)
+- Hire button per row + Mark Hired modal
+- Recent Hires panel + 3 hire stat cards
+
+**Verified E2E on prod:**
+- /recruiter/dashboard: 200, 101131 bytes
+- Hire button, Hires panel, Mark Hired modal, Recent Hires heading all render
+- POST /api/recruiter/mark-hired: success + application_id
+- GET /api/recruiter/hires: total=1, avg_ctc=₹25L, top=Acme Corp
+- Charts render correctly (17.6k / 7.0k pixel canvases)
+
+**One bug found and fixed mid-session:**
+- Original mark_hired() swallowed INSERT exceptions silently.
+  Fix: added explicit [mark_hired] FATAL: logging + proper
+  connection cleanup on error path.
+
+**Enterprise features: 5 of 8 shipped**
+- F1 Scorecard ✅
+- F2 Compliance ✅
+- F3 Screen agent ✅
+- F3 Discoverability ✅
+- F4 Recruiter dashboard ✅
+- F5-F8 remaining (demand-triggered)
+
+**Remaining flags:**
+- Render Postgres password rotation (Session 19, ~40 sessions old)
+- Amrita follow-up #1 to Prof. Raj (Wed Oct 28)
