@@ -56,7 +56,29 @@ var CharvakCurrency = {
     },
 
     detectLocation: async function() {
-        // Try saved preference first
+        // URL override takes priority over everything (?country=US forces US)
+        var urlParams = new URLSearchParams(window.location.search);
+        var forceCountry = urlParams.get('country');
+        
+        if (forceCountry) {
+            try {
+                var forceUrl = '/api/region?country=' + encodeURIComponent(forceCountry);
+                var forceRes = await fetch(forceUrl);
+                var forceData = await forceRes.json();
+                if (forceData && forceData.currency && this.rates[forceData.currency]) {
+                    this.current = forceData.currency;
+                    localStorage.setItem('charvak_currency', forceData.currency);
+                    this.updateSelector();
+                    this.updateAllPrices();
+                    return forceData.currency;
+                }
+            } catch (e) {
+                console.warn('URL country override failed:', e);
+            }
+            // If override failed, fall through to saved preference
+        }
+
+        // Try saved preference next
         var saved = localStorage.getItem('charvak_currency');
         if (saved && this.rates[saved]) {
             this.current = saved;
@@ -64,12 +86,10 @@ var CharvakCurrency = {
             this.updateAllPrices();
             return saved;
         }
-        // Fetch region from server (with dev override support)
+
+        // Finally, ask the server
         try {
-            var urlParams = new URLSearchParams(window.location.search);
-            var forceCountry = urlParams.get('country');
-            var regionUrl = '/api/region' + (forceCountry ? ('?country=' + encodeURIComponent(forceCountry)) : '');
-            var res = await fetch(regionUrl);
+            var res = await fetch('/api/region');
             var data = await res.json();
             if (data && data.currency && this.rates[data.currency]) {
                 this.current = data.currency;
@@ -94,11 +114,27 @@ var CharvakCurrency = {
     updateAllPrices: function() {
         var symbol = this.getSymbol();
         var rate = this.getRate();
+        var currency = this.current;
         document.querySelectorAll('[data-inr]').forEach(function(el) {
             var inrAmount = parseFloat(el.getAttribute('data-inr'));
             if (inrAmount && rate) {
+                // Prefer explicit per-currency data attributes if present
+                var explicit = el.getAttribute('data-' + currency.toLowerCase());
+                if (explicit) {
+                    el.textContent = symbol + explicit;
+                    return;
+                }
+                // Fallback: convert from INR
                 var converted = inrAmount * rate;
-                el.textContent = symbol + Math.round(converted);
+                // High-rate currencies (JPY, INR, NGN, ZAR) show integers
+                // Low-rate currencies (USD, EUR, GBP) show 2 decimals
+                if (rate >= 10) {
+                    el.textContent = symbol + Math.round(converted).toLocaleString();
+                } else if (rate >= 1) {
+                    el.textContent = symbol + Math.round(converted).toLocaleString();
+                } else {
+                    el.textContent = symbol + converted.toFixed(2);
+                }
             }
         });
     }
@@ -107,6 +143,10 @@ var CharvakCurrency = {
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     CharvakCurrency.init();
+    // Detect region (respects ?country= URL override, then localStorage, then /api/region)
+    CharvakCurrency.detectLocation().catch(function(e) {
+        console.warn('Region detection skipped:', e);
+    });
 });
 
 // Listen for currency changes
