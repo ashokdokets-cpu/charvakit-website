@@ -6893,3 +6893,32 @@ Full F4 arc shipped in one session. 5 of 8 enterprise features now live.
 **Remaining Tier 1/2 gaps:**
 - F5 AI Communication (last buildable-now feature)
 - F6/F7/F8 (demand-triggered)
+---
+
+## FLAGGED — Language/Environment Extension (2026-10-26)
+
+Current: coding=python, sql=sqlite. Extending based on demand.
+
+**Tier 1 — Build before demand (~1 session for all 3):**
+- JavaScript/Node.js (Judge0 lang_id 63)
+- Java 17 (Judge0 lang_id 62)
+- TypeScript (same runtime as JS, just seed new task classes)
+
+**Tier 2 — Demand-triggered:**
+- PostgreSQL real sandbox (4-6 hrs) — when customer says SQLite isn't representative
+- MySQL 8 sandbox (6-8 hrs)
+- C++ (Judge0 lang_id 54)
+- Go (Judge0 lang_id 60)
+- Ruby, PHP, C#, Kotlin (1-2 sessions each)
+
+**Tier 3 — Never unless explicitly paid:**
+- Rust, Swift, Scala, R, COBOL
+- Assembly/embedded
+
+**Implementation pattern (each language):**
+1. Seed 10-12 task classes in charvak_cert_task_classes
+2. Add to LANGUAGE map in career_assessment_engine
+3. Update coding prompt to include target_language
+4. Test one cert per language
+
+Estimated effort: ~1 session for Tier 1, ~30 min/language for Tier 2 seed-only

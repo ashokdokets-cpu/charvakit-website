@@ -115,7 +115,14 @@
 - Feeds into scorecard
 - Beats VIVA: voice-based (they're text-only)
 
-**F6 — Advanced Integrity (Biometric)** [1-2 sessions]
+**F6 — Advanced Integrity (Biometric)** [1-2 sessions] ⏸ FLAGGED (demand-triggered)
+
+**Trigger:**
+- Legal review complete for biometric data retention
+- AND first customer asks for camera-based proctoring
+- AND DigiLocker partnership confirmed
+
+**Do not build speculatively.**
 - DigiLocker ID verify (India-specific)
 - Liveness detection (camera-based)
 - Video proctoring for coding rounds
@@ -124,12 +131,24 @@
 
 ### Tier 3 — STRATEGIC (after first enterprise client)
 
-**F7 — Multi-Region Data Residency** [2-3 sessions]
+**F7 — Multi-Region Data Residency** [2-3 sessions] ⏸ FLAGGED (demand-triggered)
+
+**Trigger:**
+- First EU or UK enterprise client requests data residency
+- OR first India client requests separate Singapore region
+
+**Do not build until a paying customer asks.**
 - EU, UK Postgres deployments
 - Region-aware routing
 - Trigger: first EU/UK enterprise client
 
-**F8 — ATS Integrations (Greenhouse, Lever, Workable)** [2-3 sessions each]
+**F8 — ATS Integrations (Greenhouse, Lever, Workable)** [2-3 sessions each] ⏸ FLAGGED (demand-triggered)
+
+**Trigger:**
+- First enterprise client asks for their ATS
+- OR first customer whose hiring flow runs through one of these
+
+**Do not build until a paying customer asks.**
 - Bidirectional webhook sync
 - Trigger: first enterprise client asks
 
