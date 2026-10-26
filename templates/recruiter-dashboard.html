@@ -1,0 +1,381 @@
+{% extends "base.html" %}
+{% block title %}Recruiter Pipeline — Charvak{% endblock %}
+
+{% block content %}
+<style>
+.rd-wrap { max-width: 1400px; margin: 24px auto; padding: 0 20px; }
+.rd-hero { background: linear-gradient(135deg, #3ba591 0%, #2a8070 100%); color: #fff; padding: 32px; border-radius: 16px; margin-bottom: 24px; }
+.rd-hero h1 { font-size: 1.9rem; font-weight: 800; margin: 0 0 8px; }
+.rd-hero p { margin: 0 0 20px; opacity: 0.92; }
+.rd-hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.rd-hero-actions a { padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; }
+.rd-hero-primary { background: #fff; color: #2a8070; }
+.rd-hero-outline { background: transparent; color: #fff; border: 2px solid rgba(255,255,255,0.6); }
+
+.rd-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.rd-kpi { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.15s; }
+.rd-kpi:hover { border-color: #3ba591; box-shadow: 0 2px 8px rgba(59,165,145,0.12); }
+.rd-kpi-label { font-size: 0.8rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+.rd-kpi-value { font-size: 2rem; font-weight: 800; color: #1a1a2e; }
+.rd-kpi-total .rd-kpi-value { color: #3ba591; }
+
+.rd-filters { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; align-items: end; }
+.rd-filters label { display: block; font-size: 0.75rem; color: #6b7280; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+.rd-filters input, .rd-filters select { width: 100%; padding: 8px 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 0.9rem; }
+.rd-filters button { padding: 8px 16px; background: #3ba591; color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; }
+.rd-filters button:hover { background: #2a8070; }
+.rd-filters .rd-clear { background: transparent; color: #6b7280; border: 1px solid #cbd5e0; }
+
+.rd-table-wrap { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; }
+.rd-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.rd-table th { background: #f8fafc; padding: 12px 10px; text-align: left; font-weight: 700; color: #4b5563; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #e2e8f0; }
+.rd-table td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; }
+.rd-table tr:hover td { background: #f8fafc; }
+.rd-source-pill { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
+.rd-src-screen { background: #dbeafe; color: #1e40af; }
+.rd-src-application { background: #fef3c7; color: #92400e; }
+.rd-src-referral { background: #e0e7ff; color: #4338ca; }
+.rd-score { font-weight: 800; }
+.rd-score-high { color: #059669; }
+.rd-score-mid { color: #d97706; }
+.rd-score-low { color: #dc2626; }
+.rd-stage-pill { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 0.72rem; font-weight: 700; background: #f1f5f9; color: #475569; }
+.rd-btn { padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; text-decoration: none; display: inline-block; }
+.rd-btn-view { background: #3ba591; color: #fff; }
+.rd-btn-view:hover { background: #2a8070; color: #fff; }
+.rd-empty { padding: 60px 20px; text-align: center; color: #6b7280; }
+.rd-empty-icon { font-size: 3rem; margin-bottom: 12px; }
+.rd-bulk { background: #eff6ff; border: 1px solid #93c5fd; border-radius: 8px; padding: 12px 16px; margin-bottom: 12px; display: none; align-items: center; gap: 12px; }
+.rd-bulk.show { display: flex; }
+.rd-bulk button { padding: 6px 14px; background: #1e40af; color: #fff; border: none; border-radius: 6px; font-size: 0.85rem; cursor: pointer; font-weight: 600; }
+</style>
+
+<div class="rd-wrap">
+  <div class="rd-hero">
+    <h1>Recruiter Pipeline</h1>
+    <p>Every candidate across screen sessions, applications, and referrals — in one view.</p>
+    <div class="rd-hero-actions">
+      <a href="/screen/new" class="rd-hero-primary">+ New Screen Session</a>
+      <a href="/screen/dashboard" class="rd-hero-outline">Screen-only view</a>
+      <a href="#" id="rdExportAllBtn" class="rd-hero-outline">⬇ Export CSV</a>
+    </div>
+  </div>
+
+  <div class="rd-kpis" id="rdKpis">
+    <div class="rd-kpi rd-kpi-total" data-filter="all"><div class="rd-kpi-label">Total</div><div class="rd-kpi-value">—</div></div>
+    <div class="rd-kpi" data-filter="screened"><div class="rd-kpi-label">Screened</div><div class="rd-kpi-value">—</div></div>
+    <div class="rd-kpi" data-filter="qualified"><div class="rd-kpi-label">Qualified</div><div class="rd-kpi-value">—</div></div>
+    <div class="rd-kpi" data-filter="hired"><div class="rd-kpi-label">Hired</div><div class="rd-kpi-value">—</div></div>
+    <div class="rd-kpi"><div class="rd-kpi-label">Avg Score</div><div class="rd-kpi-value">—</div></div>
+  </div>
+
+  <div class="rd-filters">
+    <div>
+      <label for="rdSource">Source</label>
+      <select id="rdSource">
+        <option value="">All</option>
+        <option value="screen">Screen</option>
+        <option value="application">Application</option>
+        <option value="referral">Referral</option>
+      </select>
+    </div>
+    <div>
+      <label for="rdStage">Stage</label>
+      <select id="rdStage">
+        <option value="">All</option>
+        <option value="invited">Invited</option>
+        <option value="screened">Screened</option>
+        <option value="scheduled">Scheduled</option>
+        <option value="applied">Applied</option>
+        <option value="referred">Referred</option>
+        <option value="hired">Hired</option>
+      </select>
+    </div>
+    <div>
+      <label for="rdRole">Role</label>
+      <select id="rdRole"><option value="">All</option></select>
+    </div>
+    <div>
+      <label for="rdMinScore">Min Score</label>
+      <input id="rdMinScore" type="number" min="0" max="100" placeholder="0">
+    </div>
+    <div>
+      <label for="rdSearch">Search</label>
+      <input id="rdSearch" type="text" placeholder="Name, email, role…">
+    </div>
+    <div>
+      <button id="rdApply">Apply</button>
+    </div>
+    <div>
+      <button id="rdClear" class="rd-clear">Clear</button>
+    </div>
+  </div>
+
+  <div class="rd-bulk" id="rdBulk">
+    <span><strong id="rdBulkCount">0</strong> selected</span>
+    <button id="rdBulkExport">Export selected (CSV)</button>
+    <button id="rdBulkClear" style="background:#6b7280;">Clear</button>
+  </div>
+
+  <div class="rd-table-wrap">
+    <table class="rd-table" id="rdTable">
+      <thead>
+        <tr>
+          <th style="width:30px;"><input type="checkbox" id="rdSelectAll"></th>
+          <th>Candidate</th>
+          <th>Source</th>
+          <th>Role</th>
+          <th>Score</th>
+          <th>Stage</th>
+          <th>CTC</th>
+          <th>Notice</th>
+          <th>Last Activity</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="rdBody">
+        <tr><td colspan="10" class="rd-empty">Loading…</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+(function() {
+  var state = { pipeline: [], filters: {}, selected: new Set() };
+
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function fmtCTC(ctc) {
+    if (!ctc) return '—';
+    var n = Number(ctc);
+    if (n >= 10000000) return '₹' + (n/10000000).toFixed(1) + 'Cr';
+    if (n >= 100000) return '₹' + (n/100000).toFixed(1) + 'L';
+    return '₹' + n.toLocaleString('en-IN');
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return '—';
+    try {
+      var d = new Date(iso);
+      var diff = (Date.now() - d.getTime()) / 1000;
+      if (diff < 60) return 'just now';
+      if (diff < 3600) return Math.floor(diff/60) + 'm ago';
+      if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
+      if (diff < 604800) return Math.floor(diff/86400) + 'd ago';
+      return d.toLocaleDateString();
+    } catch(e) { return iso; }
+  }
+
+  function scoreClass(s) {
+    if (s >= 70) return 'rd-score-high';
+    if (s >= 40) return 'rd-score-mid';
+    return 'rd-score-low';
+  }
+
+  function token() {
+    return localStorage.getItem('auth_token')
+        || localStorage.getItem('charvak_token')
+        || localStorage.getItem('authToken')
+        || '';
+  }
+
+  function buildQuery() {
+    var p = [];
+    if (state.filters.source) p.push('source=' + encodeURIComponent(state.filters.source));
+    if (state.filters.stage) p.push('stage=' + encodeURIComponent(state.filters.stage));
+    if (state.filters.role_id) p.push('role_id=' + encodeURIComponent(state.filters.role_id));
+    if (state.filters.min_score) p.push('min_score=' + encodeURIComponent(state.filters.min_score));
+    if (state.filters.q) p.push('q=' + encodeURIComponent(state.filters.q));
+    return p.join('&');
+  }
+
+  async function loadKpis() {
+    try {
+      var r = await fetch('/api/recruiter/kpis', {
+        headers: { 'Authorization': 'Bearer ' + token() }
+      });
+      if (r.status === 401) { window.location = '/login?next=/recruiter/dashboard'; return; }
+      var d = await r.json();
+      if (d.status !== 'success') return;
+      var cards = document.querySelectorAll('.rd-kpi');
+      cards[0].querySelector('.rd-kpi-value').textContent = d.total;
+      cards[1].querySelector('.rd-kpi-value').textContent = d.screened;
+      cards[2].querySelector('.rd-kpi-value').textContent = d.qualified;
+      cards[3].querySelector('.rd-kpi-value').textContent = d.hired;
+      cards[4].querySelector('.rd-kpi-value').textContent = d.avg_score;
+    } catch(e) {}
+  }
+
+  function renderRows() {
+    var body = document.getElementById('rdBody');
+    var rows = state.pipeline;
+
+    if (rows.length === 0) {
+      body.innerHTML = '<tr><td colspan="10" class="rd-empty">' +
+        '<div class="rd-empty-icon">📋</div>' +
+        '<h3>No candidates yet</h3>' +
+        '<p>Once screen sessions, applications, or referrals come in, they\'ll appear here.</p>' +
+        '<a href="/screen/new" style="display:inline-block;margin-top:12px;padding:10px 20px;background:#3ba591;color:#fff;border-radius:8px;text-decoration:none;font-weight:600;">Create a screen session →</a>' +
+        '</td></tr>';
+      return;
+    }
+
+    var html = '';
+    rows.forEach(function(r) {
+      var checked = state.selected.has(r.candidate_key) ? 'checked' : '';
+      var sourcePill = 'rd-src-' + r.source;
+      html += '<tr>' +
+        '<td><input type="checkbox" data-ck="' + esc(r.candidate_key) + '" ' + checked + '></td>' +
+        '<td><strong>' + esc(r.name) + '</strong><br><small style="color:#6b7280">' + esc(r.email) + '</small></td>' +
+        '<td><span class="rd-source-pill ' + sourcePill + '">' + esc(r.source) + '</span></td>' +
+        '<td>' + esc(r.role_title) + '</td>' +
+        '<td>' + (r.score == null ? '<span style="color:#94a3b8">—</span>' : '<span class="rd-score ' + scoreClass(r.score) + '">' + r.score + '</span>') + '</td>' +
+        '<td><span class="rd-stage-pill">' + esc(r.stage) + '</span></td>' +
+        '<td>' + fmtCTC(r.ctc_inr) + '</td>' +
+        '<td>' + (r.notice_days ? r.notice_days + 'd' : '—') + '</td>' +
+        '<td>' + fmtDate(r.last_activity) + '</td>' +
+        '<td><a href="' + esc(r.detail_url) + '" class="rd-btn rd-btn-view">View</a></td>' +
+        '</tr>';
+    });
+    body.innerHTML = html;
+
+    // wire selection checkboxes
+    body.querySelectorAll('input[type=checkbox]').forEach(function(cb) {
+      cb.addEventListener('change', function() {
+        var ck = this.getAttribute('data-ck');
+        if (this.checked) state.selected.add(ck); else state.selected.delete(ck);
+        updateBulk();
+      });
+    });
+    updateBulk();
+  }
+
+  function updateBulk() {
+    var bar = document.getElementById('rdBulk');
+    var cnt = state.selected.size;
+    if (cnt > 0) {
+      bar.classList.add('show');
+      document.getElementById('rdBulkCount').textContent = cnt;
+    } else {
+      bar.classList.remove('show');
+    }
+  }
+
+  async function loadPipeline() {
+    document.getElementById('rdBody').innerHTML = '<tr><td colspan="10" class="rd-empty">Loading…</td></tr>';
+    try {
+      var qs = buildQuery();
+      var url = '/api/recruiter/pipeline' + (qs ? '?' + qs : '');
+      var r = await fetch(url, {
+        headers: { 'Authorization': 'Bearer ' + token() }
+      });
+      if (r.status === 401) { window.location = '/login?next=/recruiter/dashboard'; return; }
+      var d = await r.json();
+      if (d.status !== 'success') {
+        document.getElementById('rdBody').innerHTML = '<tr><td colspan="10" class="rd-empty">Error: ' + esc(d.message || 'unknown') + '</td></tr>';
+        return;
+      }
+      state.pipeline = d.pipeline || [];
+      renderRows();
+    } catch(e) {
+      document.getElementById('rdBody').innerHTML = '<tr><td colspan="10" class="rd-empty">Network error: ' + esc(e.message) + '</td></tr>';
+    }
+  }
+
+  function applyFilters() {
+    state.filters = {
+      source: document.getElementById('rdSource').value || '',
+      stage: document.getElementById('rdStage').value || '',
+      role_id: document.getElementById('rdRole').value || '',
+      min_score: document.getElementById('rdMinScore').value || '',
+      q: document.getElementById('rdSearch').value.trim() || '',
+    };
+    state.selected.clear();
+    loadPipeline();
+  }
+
+  function clearFilters() {
+    document.getElementById('rdSource').value = '';
+    document.getElementById('rdStage').value = '';
+    document.getElementById('rdRole').value = '';
+    document.getElementById('rdMinScore').value = '';
+    document.getElementById('rdSearch').value = '';
+    state.filters = {};
+    state.selected.clear();
+    loadPipeline();
+  }
+
+  function exportCsv(selectedOnly) {
+    var qs = buildQuery();
+    var url = '/api/recruiter/pipeline.csv' + (qs ? '?' + qs : '');
+    // Use an anchor with Authorization via fetch + blob
+    fetch(url, { headers: { 'Authorization': 'Bearer ' + token() } })
+      .then(function(r) {
+        if (r.status === 401) { window.location = '/login?next=/recruiter/dashboard'; return null; }
+        return r.blob();
+      })
+      .then(function(blob) {
+        if (!blob) return;
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'pipeline-' + new Date().toISOString().slice(0,10) + '.csv';
+        a.click();
+        setTimeout(function() { URL.revokeObjectURL(a.href); }, 1000);
+      });
+  }
+
+  // populate role dropdown from pipeline roles
+  function populateRoles() {
+    var sel = document.getElementById('rdRole');
+    var seen = {};
+    state.pipeline.forEach(function(r) {
+      if (r.role_id && !seen[r.role_id]) {
+        seen[r.role_id] = true;
+        var opt = document.createElement('option');
+        opt.value = r.role_id;
+        opt.textContent = r.role_title;
+        sel.appendChild(opt);
+      }
+    });
+  }
+
+  // wire events
+  document.getElementById('rdApply').addEventListener('click', applyFilters);
+  document.getElementById('rdClear').addEventListener('click', clearFilters);
+  document.getElementById('rdExportAllBtn').addEventListener('click', function(e) {
+    e.preventDefault(); exportCsv(false);
+  });
+  document.getElementById('rdBulkExport').addEventListener('click', function() {
+    exportCsv(true);
+  });
+  document.getElementById('rdBulkClear').addEventListener('click', function() {
+    state.selected.clear();
+    renderRows();
+  });
+  document.getElementById('rdSelectAll').addEventListener('change', function() {
+    if (this.checked) {
+      state.pipeline.forEach(function(r) { state.selected.add(r.candidate_key); });
+    } else {
+      state.selected.clear();
+    }
+    renderRows();
+  });
+  document.getElementById('rdSearch').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') applyFilters();
+  });
+
+  // Initial load
+  (async function init() {
+    if (!token()) { window.location = '/login?next=/recruiter/dashboard'; return; }
+    await loadKpis();
+    await loadPipeline();
+    populateRoles();
+  })();
+})();
+</script>
+{% endblock %}
