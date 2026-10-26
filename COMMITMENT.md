@@ -6994,3 +6994,29 @@ one risks 1-2 sessions of work that might be wrong if built blind.
 
 When triggered, the build plan is documented above. Zero surprise
 engineering.
+---
+
+## Session 88 — CLOSED (2026-10-27)
+
+Homepage hero globally framed. Zero India-only signals remaining on any leading surface.
+
+**Commit:** 23e3d6b — 'Indian Colleges' -> 'Any University · Any Employer · Any Jurisdiction'
+
+**All 7 'India-only signals' fixed across Sessions 87-88:**
+1. /compliance hero — jurisdiction tabs
+2. Data residency — 4 named regions + Q3 2027
+3. SOC 2 — Type I/II timeline + procurement deliverables
+4. Payment UX — ?country= override
+5. Pricing display — currency-utils swap
+6. /pricing page — data-inr swap
+7. Homepage hero — Any University · Any Employer · Any Jurisdiction
+
+**India anchoring preserved:** 'Built for India, ready for the world' section intact (line 234).
+
+**Platform ready for Wednesday's global email blast.**
+
+**Wednesday priorities (20 min):**
+1. Rotate Render Postgres password (Session 19 flag)
+2. Amrita follow-up #1
+3. 10 warm emails with /demo URL
+4. Optional LinkedIn post
