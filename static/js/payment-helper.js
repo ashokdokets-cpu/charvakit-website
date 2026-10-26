@@ -12,6 +12,15 @@ function processCharvakPayment(email, amount, featureName, callback) {
 }
 
 function showPaymentMethodSelection(email, amount, featureName, callback) {
+    // Session 86: support ?country= URL override for testing + shared links
+    var urlParams = new URLSearchParams(window.location.search);
+    var overrideCountry = (urlParams.get('country') || '').toUpperCase();
+    if (overrideCountry) {
+        var overrideIsIndia = (overrideCountry === 'IN');
+        renderPaymentModal(email, amount, featureName, callback, overrideIsIndia);
+        return;
+    }
+
     // Session G6: fetch region to recommend gateway
     var fallback = function () {
         renderPaymentModal(email, amount, featureName, callback, true);
