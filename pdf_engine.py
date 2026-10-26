@@ -599,6 +599,67 @@ def render_readiness_certificate_pdf(cert: Dict, report_type: str = "readiness")
     if parts:
         pdf.cell(W, 5, "   |   ".join(parts), align="C")
 
+    # --- Technical Environment (coding/sql only) ---
+    if cert.get("format") in ("coding", "sql"):
+        fmt_box_y = 196
+        fmt_box_h = 22
+        # Green box background + border
+        pdf.set_fill_color(240, 253, 244)
+        pdf.set_draw_color(134, 239, 172)
+        pdf.set_line_width(0.4)
+        pdf.rect(25, fmt_box_y, 160, fmt_box_h, style="DF")
+        # Header
+        pdf.set_xy(28, fmt_box_y + 1)
+        pdf.set_font("DejaVu", "B", 7)
+        pdf.set_text_color(22, 101, 52)
+        pdf.cell(154, 4, "TECHNICAL ENVIRONMENT TESTED", align="L")
+        # Line 1: Language / Database + Runtime
+        fmt_parts = []
+        _lang = cert.get("language")
+        _db = cert.get("database_name")
+        if _lang:
+            fmt_parts.append("Language: " + str(_lang))
+        if _db:
+            fmt_parts.append("Database: " + str(_db))
+        _rt = cert.get("runtime_info")
+        if _rt:
+            fmt_parts.append("Runtime: " + str(_rt))
+        if fmt_parts:
+            pdf.set_xy(28, fmt_box_y + 6)
+            pdf.set_font("DejaVu", size=7)
+            pdf.set_text_color(17, 24, 39)
+            pdf.cell(154, 3, "  |  ".join(fmt_parts), align="L")
+        # Line 2: Test coverage
+        pdf.set_xy(28, fmt_box_y + 10)
+        pdf.set_font("DejaVu", size=7)
+        pdf.set_text_color(17, 24, 39)
+        pdf.cell(154, 3, "Test Coverage:  Deterministic \u00b7 3 test cases per problem", align="L")
+        # Line 3: Task classes (comma-joined)
+        _tc = cert.get("task_classes") or []
+        if isinstance(_tc, str):
+            try:
+                import json as _json
+                _tc = _json.loads(_tc)
+            except Exception:
+                _tc = []
+        if isinstance(_tc, list) and _tc:
+            _labels = []
+            for _c in _tc:
+                if isinstance(_c, dict):
+                    _labels.append(str(_c.get("label") or _c.get("key") or ""))
+                else:
+                    _labels.append(str(_c))
+            _task_str = "Task Classes:  " + " \u00b7 ".join(_labels)
+            pdf.set_xy(28, fmt_box_y + 14)
+            pdf.set_font("DejaVu", size=6)
+            pdf.set_text_color(22, 101, 52)
+            # Use multi_cell to allow wrapping
+            try:
+                pdf.multi_cell(154, 3, _task_str, align="L")
+            except Exception:
+                pdf.cell(154, 3, _task_str, align="L")
+
+
     # --- Verification divider ---
     pdf.set_draw_color(*SOFT)
     pdf.set_line_width(0.3)
