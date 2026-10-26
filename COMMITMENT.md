@@ -6922,3 +6922,75 @@ Current: coding=python, sql=sqlite. Extending based on demand.
 4. Test one cert per language
 
 Estimated effort: ~1 session for Tier 1, ~30 min/language for Tier 2 seed-only
+---
+
+## FLAGGED — Global Readiness Tiers T4/T5/T6 (2026-10-27)
+
+**Status: DEMAND-TRIGGERED. Do not build until triggered.**
+
+Session 86 shipped Tiers 1-3 (payment UX, compliance tabs, data residency + SOC 2 disclosure).
+The remaining three tiers are explicitly deferred until a customer asks.
+
+### T4 — ATS Integrations (Greenhouse, Lever, Workable)
+
+**Effort:** 2 sessions for Greenhouse v1; ~1 session each for Lever/Workable afterward
+
+**What it delivers:**
+- Charvak → ATS: push verified candidates (name, email, score, cert link) into a specific job
+- ATS → Charvak: pull open jobs to assign assessments
+- OAuth 2.0 flow (customer authorizes once)
+
+**Trigger to build (any one):**
+- First enterprise client says 'we need this in Greenhouse' (highest probability)
+- First US mid-market client (Greenhouse is the default ATS for 40%+ of US startups)
+- First staffing agency with an ATS-driven pipeline
+
+**Do NOT build speculatively.** The /compliance page already discloses
+ATS integrations as 'on request' — enterprise buyers tolerate manual
+candidate copy-paste until they're actually paying.
+
+### T5 — SOC 2 Type II Certification Process
+
+**Effort:** 6-12 months elapsed + ~-90K total (vendor + audit)
+
+**Process (already disclosed on /compliance):**
+1. Month 1-2: Vendor selection (Vanta or Drata, ~-15K/yr)
+2. Month 2-5: Controls implementation, evidence collection
+3. Month 5-6: Type I audit (~-25K)
+4. Month 6-12: Type II observation window + final audit (~-50K)
+
+**Trigger to build (any one):**
+- First deal > ACV says 'SOC 2 required to sign'
+- 3-5 paying enterprise customers (standard procurement gate)
+- Investor or partner requires it
+
+**Do NOT start the process speculatively.** Type II observation clock
+starts once you have the controls; better to have revenue generating
+the cash to fund the audit.
+
+### T6 — Multi-Language Screening Chat
+
+**Effort:** 1 session
+
+**What it delivers:**
+- Language field on create_screen_session()
+- AI prompt becomes language-aware
+- v1 languages: English (default), Hindi, Telugu, Tamil, Arabic, Mandarin
+- Reuses same pattern as coding language support
+
+**Trigger to build (any one):**
+- First non-English candidate complaint
+- First GCC or SEA enterprise deal
+- First Hindi-medium college signs (Track C pilot)
+
+**Do NOT build speculatively.** English-only chat is fine for the
+overwhelming majority of paid use cases until a specific buyer asks.
+
+### Summary: Why these stay flagged
+
+The pattern across all three: **demand-triggered features are built
+when a paying customer asks, not when the roadmap says so.** Each
+one risks 1-2 sessions of work that might be wrong if built blind.
+
+When triggered, the build plan is documented above. Zero surprise
+engineering.
