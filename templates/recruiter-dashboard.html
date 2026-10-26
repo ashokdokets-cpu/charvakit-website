@@ -65,6 +65,36 @@
 
 .rd-group-header { background: #f8fafc; padding: 12px 16px; font-weight: 700; font-size: 0.9rem; color: #3ba591; border-bottom: 2px solid #3ba591; text-transform: uppercase; letter-spacing: 0.4px; margin-top: 16px; }
 
+.rd-btn-hire { background: #f59e0b; color: #fff; }
+.rd-btn-hire:hover { background: #d97706; color: #fff; }
+
+.rd-hires-panel { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; margin-top: 24px; overflow: hidden; }
+.rd-hires-header { background: linear-gradient(135deg, #3ba591 0%, #2a8070 100%); color: #fff; padding: 20px 24px; }
+.rd-hires-header h2 { margin: 0 0 4px; font-size: 1.2rem; font-weight: 800; }
+.rd-hires-header p { margin: 0; opacity: 0.9; font-size: 0.9rem; }
+
+.rd-hires-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 20px 24px 0; }
+.rd-hires-stat { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; }
+.rd-hires-stat-label { font-size: 0.72rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.rd-hires-stat-value { font-size: 1.4rem; font-weight: 800; color: #1a1a2e; }
+
+.rd-hires-list { padding: 20px 24px 24px; }
+.rd-hire-row { display: grid; grid-template-columns: 2fr 2fr 2fr 1.5fr 1.5fr; gap: 12px; padding: 12px 0; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; align-items: center; }
+.rd-hire-row:last-child { border-bottom: none; }
+.rd-hire-empty { text-align: center; padding: 40px 20px; color: #94a3b8; }
+
+#rdMarkHiredModal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 9999; align-items: center; justify-content: center; }
+#rdMarkHiredModal.show { display: flex; }
+.rd-mh-box { background: #fff; border-radius: 12px; padding: 28px; max-width: 440px; width: 90%; }
+.rd-mh-box h3 { margin: 0 0 20px; font-size: 1.2rem; }
+.rd-mh-field { margin-bottom: 16px; }
+.rd-mh-field label { display: block; font-size: 0.82rem; font-weight: 600; color: #4b5563; margin-bottom: 6px; }
+.rd-mh-field input { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 0.95rem; }
+.rd-mh-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+.rd-mh-actions button { padding: 10px 20px; border-radius: 6px; border: none; font-weight: 600; cursor: pointer; }
+.rd-mh-cancel { background: #f1f5f9; color: #4b5563; }
+.rd-mh-confirm { background: #3ba591; color: #fff; }
+
 @media (max-width: 768px) {
   .rd-charts { grid-template-columns: 1fr; }
 }
@@ -191,6 +221,54 @@
   </div>
 </div>
 
+  <div class="rd-hires-panel" id="rdHiresPanel">
+    <div class="rd-hires-header">
+      <h2>Recent Hires</h2>
+      <p>Every successful placement tracked from this pipeline.</p>
+    </div>
+    <div class="rd-hires-stats" id="rdHiresStats">
+      <div class="rd-hires-stat">
+        <div class="rd-hires-stat-label">Total Hires</div>
+        <div class="rd-hires-stat-value" id="rdHireTotal">—</div>
+      </div>
+      <div class="rd-hires-stat">
+        <div class="rd-hires-stat-label">Avg CTC</div>
+        <div class="rd-hires-stat-value" id="rdHireAvgCtc">—</div>
+      </div>
+      <div class="rd-hires-stat">
+        <div class="rd-hires-stat-label">Top Company</div>
+        <div class="rd-hires-stat-value" id="rdHireTopCompany">—</div>
+      </div>
+    </div>
+    <div class="rd-hires-list" id="rdHiresList">
+      <div class="rd-hire-empty">No hires yet. Mark a candidate as hired to see them here.</div>
+    </div>
+  </div>
+
+</div>
+
+<div id="rdMarkHiredModal">
+  <div class="rd-mh-box">
+    <h3>Mark Candidate Hired</h3>
+    <div class="rd-mh-field">
+      <label>Candidate</label>
+      <input id="rdMhCandidate" type="text" readonly style="background:#f8fafc;">
+    </div>
+    <div class="rd-mh-field">
+      <label>Hiring Company</label>
+      <input id="rdMhCompany" type="text" placeholder="e.g., Acme Corp">
+    </div>
+    <div class="rd-mh-field">
+      <label>CTC (INR per year)</label>
+      <input id="rdMhCtc" type="number" placeholder="e.g., 2500000">
+    </div>
+    <div class="rd-mh-actions">
+      <button id="rdMhCancel" class="rd-mh-cancel">Cancel</button>
+      <button id="rdMhConfirm" class="rd-mh-confirm">Confirm Hire</button>
+    </div>
+  </div>
+</div>
+
 <script>
 (function() {
   var state = { pipeline: [], filters: {}, selected: new Set() };
@@ -290,7 +368,7 @@
         '<td>' + fmtCTC(r.ctc_inr) + '</td>' +
         '<td>' + (r.notice_days ? r.notice_days + 'd' : '—') + '</td>' +
         '<td>' + fmtDate(r.last_activity) + '</td>' +
-        '<td><a href="' + esc(r.detail_url) + '" class="rd-btn rd-btn-view">View</a></td>' +
+        '<td><a href="' + esc(r.detail_url) + '" class="rd-btn rd-btn-view">View</a> <button class="rd-btn rd-btn-hire" data-email="' + esc(r.email) + '" data-name="' + esc(r.name) + '">Hire</button></td>' +
         '</tr>';
     });
     body.innerHTML = html;
@@ -639,7 +717,7 @@
             '<td>' + fmtCTC(r.ctc_inr) + '</td>' +
             '<td>' + (r.notice_days ? r.notice_days + 'd' : '—') + '</td>' +
             '<td>' + fmtDate(r.last_activity) + '</td>' +
-            '<td><a href="' + esc(r.detail_url) + '" class="rd-btn rd-btn-view">View</a></td>' +
+            '<td><a href="' + esc(r.detail_url) + '" class="rd-btn rd-btn-view">View</a> <button class="rd-btn rd-btn-hire" data-email="' + esc(r.email) + '" data-name="' + esc(r.name) + '">Hire</button></td>' +
             '</tr>';
         });
       });
@@ -672,6 +750,117 @@
     e.preventDefault(); exportPdf();
   });
 
+  // === v3: hire tracking ===
+  var pendingHireEmail = '';
+  var pendingHireName = '';
+
+  function openHireModal(email, name) {
+    pendingHireEmail = email;
+    pendingHireName = name;
+    document.getElementById('rdMhCandidate').value = name + ' (' + email + ')';
+    document.getElementById('rdMhCompany').value = '';
+    document.getElementById('rdMhCtc').value = '';
+    document.getElementById('rdMarkHiredModal').classList.add('show');
+  }
+
+  function closeHireModal() {
+    document.getElementById('rdMarkHiredModal').classList.remove('show');
+  }
+
+  async function submitHire() {
+    var company = document.getElementById('rdMhCompany').value.trim();
+    var ctc = parseInt(document.getElementById('rdMhCtc').value, 10) || 0;
+    if (!company) {
+      alert('Please enter the hiring company');
+      return;
+    }
+    if (!ctc) {
+      alert('Please enter the CTC');
+      return;
+    }
+    try {
+      var r = await fetch('/api/recruiter/mark-hired', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + token(),
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          candidate_email: pendingHireEmail,
+          company: company,
+          ctc_inr: ctc
+        })
+      });
+      var d = await r.json();
+      if (d.status !== 'success') {
+        alert('Failed: ' + (d.message || 'unknown'));
+        return;
+      }
+      closeHireModal();
+      await loadHires();
+      await loadPipeline();
+    } catch(e) {
+      alert('Network error: ' + e.message);
+    }
+  }
+
+  async function loadHires() {
+    try {
+      var r = await fetch('/api/recruiter/hires', {
+        headers: { 'Authorization': 'Bearer ' + token() }
+      });
+      var d = await r.json();
+      if (d.status !== 'success') return;
+
+      var stats = d.stats || {};
+      document.getElementById('rdHireTotal').textContent = stats.total_hires || 0;
+      document.getElementById('rdHireAvgCtc').textContent = stats.avg_ctc_inr
+        ? '₹' + (stats.avg_ctc_inr >= 100000
+            ? (stats.avg_ctc_inr/100000).toFixed(1) + 'L'
+            : stats.avg_ctc_inr.toLocaleString('en-IN'))
+        : '—';
+      document.getElementById('rdHireTopCompany').textContent = stats.top_company || '—';
+
+      var list = document.getElementById('rdHiresList');
+      if (!d.hires || d.hires.length === 0) {
+        list.innerHTML = '<div class="rd-hire-empty">No hires yet. Mark a candidate as hired to see them here.</div>';
+        return;
+      }
+      var html = '';
+      d.hires.forEach(function(h) {
+        var ctcText = h.hired_ctc_inr
+          ? (h.hired_ctc_inr >= 100000
+              ? '₹' + (h.hired_ctc_inr/100000).toFixed(1) + 'L'
+              : '₹' + h.hired_ctc_inr.toLocaleString('en-IN'))
+          : '—';
+        var dateText = h.hired_at ? h.hired_at.slice(0, 10) : '—';
+        html += '<div class="rd-hire-row">' +
+          '<strong>' + esc(h.candidate_name || h.candidate_email) + '</strong>' +
+          '<span style="color:#6b7280">' + esc(h.candidate_email || '') + '</span>' +
+          '<span>' + esc(h.role_title || '—') + '</span>' +
+          '<span>' + esc(h.hired_company || '—') + '</span>' +
+          '<span style="color:#3ba591;font-weight:700">' + ctcText + '</span>' +
+          '</div>';
+      });
+      list.innerHTML = html;
+    } catch(e) {}
+  }
+
+  // Wire modal controls
+  document.getElementById('rdMhCancel').addEventListener('click', closeHireModal);
+  document.getElementById('rdMhConfirm').addEventListener('click', submitHire);
+  document.getElementById('rdMarkHiredModal').addEventListener('click', function(e) {
+    if (e.target === this) closeHireModal();
+  });
+
+  // Delegate hire-button clicks from any row
+  document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('rd-btn-hire')) {
+      e.preventDefault();
+      openHireModal(e.target.getAttribute('data-email'), e.target.getAttribute('data-name'));
+    }
+  });
+
   // Initial load
   (async function init() {
     if (!token()) { window.location = '/login?next=/recruiter/dashboard'; return; }
@@ -681,6 +870,7 @@
     loadCharts();
     wireLevelTabs();
     wireViewToggle();
+    loadHires();
   })();
 })();
 </script>

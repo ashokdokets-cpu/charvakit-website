@@ -448,4 +448,156 @@ class RecruiterDashboardEngine:
             return b""
 
 
+
+
+    # ─── v3: hire tracking ─────────────────────────────
+    def mark_hired(self, recruiter_email: str, candidate_email: str,
+                   company: str, ctc_inr: int) -> Dict:
+        """
+        Mark a candidate as hired. Updates charvak_applications.
+        If no application exists, inserts a new one (auto-create).
+        Returns {status, application_id, action: 'updated'|'created'}.
+        """
+        if not candidate_email:
+            return {"status": "error", "message": "candidate_email required"}
+        candidate_email = candidate_email.strip().lower()
+
+        conn = None
+        try:
+            conn = self._conn()
+            cur = conn.cursor()
+
+            # Step 1: try UPDATE existing application
+            cur.execute("""
+                UPDATE charvak_applications
+                SET status = 'hired',
+                    hired_at = CURRENT_TIMESTAMP,
+                    hired_company = %s,
+                    hired_ctc_inr = %s
+                WHERE LOWER(COALESCE(candidate_email, user_id)) = %s
+                RETURNING application_id
+            """, (company, int(ctc_inr), candidate_email))
+            updated = cur.fetchall()
+            conn.commit()
+
+            if updated:
+                app_id = updated[0][0]
+                cur.close()
+                return {"status": "success", "application_id": app_id, "action": "updated"}
+
+            # Step 2: no existing application — look up display name
+            display_name = None
+            try:
+                cur.execute("""
+                    SELECT candidate_name
+                    FROM charvak_screen_candidates
+                    WHERE LOWER(candidate_email) = %s
+                      AND candidate_name IS NOT NULL
+                    LIMIT 1
+                """, (candidate_email,))
+                row = cur.fetchone()
+                if row:
+                    display_name = row[0]
+            except Exception as e:
+                print(f"[mark_hired] display_name lookup warn: {e}")
+                conn.rollback()
+                conn = self._conn()
+                cur = conn.cursor()
+
+            if not display_name:
+                display_name = candidate_email.split("@")[0]
+
+            # Step 3: INSERT new application
+            import secrets
+            app_id = "APP-" + secrets.token_hex(6).upper()
+            cur.execute("""
+                INSERT INTO charvak_applications (
+                    application_id, job_id, user_id, candidate_email,
+                    candidate_name, status, applied_at, created_at,
+                    hired_at, hired_company, hired_ctc_inr
+                ) VALUES (
+                    %s, 'DIRECT-HIRE', %s, %s, %s, 'hired',
+                    %s, CURRENT_TIMESTAMP,
+                    CURRENT_TIMESTAMP, %s, %s
+                )
+            """, (
+                app_id, candidate_email, candidate_email,
+                display_name,
+                datetime.utcnow().isoformat(),
+                company, int(ctc_inr),
+            ))
+            conn.commit()
+            cur.close()
+            return {"status": "success", "application_id": app_id, "action": "created"}
+        except Exception as e:
+            print(f"[mark_hired] FATAL: {type(e).__name__}: {e}")
+            if conn:
+                try:
+                    conn.rollback()
+                    conn.close()
+                except Exception:
+                    pass
+            return {"status": "error", "message": f"{type(e).__name__}: {e}"}
+
+    def list_hires(self, recruiter_email: str) -> Dict:
+        """All hired candidates with role/company/CTC/date."""
+        self._ensure_schema()
+        try:
+            conn = self._conn()
+            cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute("""
+                SELECT
+                    a.application_id,
+                    COALESCE(a.candidate_email, a.user_id) AS candidate_email,
+                    COALESCE(a.candidate_name,
+                             a.candidate_email,
+                             a.user_id) AS candidate_name,
+                    COALESCE(cr.title, '—') AS role_title,
+                    COALESCE(a.hired_company, '—') AS hired_company,
+                    a.hired_ctc_inr,
+                    a.hired_at
+                FROM charvak_applications a
+                LEFT JOIN charvak_client_roles cr ON cr.role_id = a.client_role_id
+                WHERE a.status = 'hired'
+                  AND a.hired_at IS NOT NULL
+                ORDER BY a.hired_at DESC
+                LIMIT 100
+            """)
+            hires = []
+            for r in cur.fetchall():
+                d = dict(r)
+                if isinstance(d.get("hired_at"), datetime):
+                    d["hired_at"] = d["hired_at"].isoformat()
+                hires.append(d)
+            cur.close()
+            conn.close()
+            return {"status": "success", "hires": hires, "total": len(hires)}
+        except Exception as e:
+            return {"status": "error", "message": str(e), "hires": [], "total": 0}
+
+    def get_hire_stats(self, recruiter_email: str) -> Dict:
+        """Aggregated hire metrics: total, avg CTC, by company."""
+        res = self.list_hires(recruiter_email)
+        hires = res.get("hires", [])
+        ctc_values = [h["hired_ctc_inr"] for h in hires if h.get("hired_ctc_inr")]
+        avg_ctc = sum(ctc_values) / len(ctc_values) if ctc_values else 0
+
+        by_company = {}
+        for h in hires:
+            co = h.get("hired_company") or "Unknown"
+            by_company[co] = by_company.get(co, 0) + 1
+
+        top_company = ""
+        if by_company:
+            top_company = max(by_company.items(), key=lambda x: x[1])[0]
+
+        return {
+            "status": "success",
+            "total_hires": len(hires),
+            "avg_ctc_inr": int(avg_ctc),
+            "by_company": by_company,
+            "top_company": top_company,
+        }
+
+
 recruiter_dashboard_engine = RecruiterDashboardEngine()

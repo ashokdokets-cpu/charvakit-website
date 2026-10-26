@@ -18388,6 +18388,69 @@ async def api_recruiter_pipeline_pdf(
 
 
 
+
+@app.post("/api/recruiter/mark-hired")
+async def api_recruiter_mark_hired(request: Request):
+    """F4 v3: mark a candidate as hired."""
+    from recruiter_dashboard_engine import recruiter_dashboard_engine
+    try:
+        user = require_auth(request)
+    except HTTPException:
+        raise
+    email = (user or {}).get("email", "") if isinstance(user, dict) else (user or "")
+    if not email:
+        return JSONResponse({"status": "error", "message": "unauthenticated"}, status_code=401)
+
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse({"status": "error", "message": "invalid JSON"}, status_code=400)
+
+    candidate_email = (data.get("candidate_email") or "").strip()
+    company = (data.get("company") or "").strip()
+    ctc_inr = data.get("ctc_inr") or 0
+    if not candidate_email:
+        return JSONResponse({"status": "error", "message": "candidate_email required"}, status_code=400)
+    if not company:
+        return JSONResponse({"status": "error", "message": "company required"}, status_code=400)
+    try:
+        ctc_inr = int(ctc_inr)
+    except Exception:
+        ctc_inr = 0
+
+    try:
+        result = recruiter_dashboard_engine.mark_hired(email, candidate_email, company, ctc_inr)
+        return JSONResponse(result)
+    except Exception as e:
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+
+@app.get("/api/recruiter/hires")
+async def api_recruiter_hires(request: Request):
+    """F4 v3: list hires + stats."""
+    from recruiter_dashboard_engine import recruiter_dashboard_engine
+    try:
+        user = require_auth(request)
+    except HTTPException:
+        raise
+    email = (user or {}).get("email", "") if isinstance(user, dict) else (user or "")
+    if not email:
+        return JSONResponse({"status": "error", "message": "unauthenticated"}, status_code=401)
+
+    try:
+        hires = recruiter_dashboard_engine.list_hires(email)
+        stats = recruiter_dashboard_engine.get_hire_stats(email)
+        return JSONResponse({
+            "status": "success",
+            "hires": hires.get("hires", []),
+            "total": hires.get("total", 0),
+            "stats": stats,
+        })
+    except Exception as e:
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+
+
 @app.get("/screen/dashboard", response_class=HTMLResponse)
 async def screen_dashboard_page(request: Request):
     """Recruiter dashboard for screen sessions."""
