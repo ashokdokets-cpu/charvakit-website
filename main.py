@@ -18273,6 +18273,121 @@ async def api_recruiter_pipeline_csv(
                             status_code=500)
 
 
+
+@app.get("/api/recruiter/levels")
+async def api_recruiter_levels(request: Request):
+    """F4 v2: experience-level breakdown for level tabs."""
+    from recruiter_dashboard_engine import recruiter_dashboard_engine
+    try:
+        user = require_auth(request)
+    except HTTPException:
+        raise
+    email = (user or {}).get("email", "") if isinstance(user, dict) else (user or "")
+    if not email:
+        return JSONResponse({"status": "error", "message": "unauthenticated"}, status_code=401)
+    try:
+        return JSONResponse(recruiter_dashboard_engine.get_level_breakdown(email))
+    except Exception as e:
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+
+@app.get("/api/recruiter/charts")
+async def api_recruiter_charts(request: Request):
+    """F4 v2: source mix + stage funnel chart data."""
+    from recruiter_dashboard_engine import recruiter_dashboard_engine
+    try:
+        user = require_auth(request)
+    except HTTPException:
+        raise
+    email = (user or {}).get("email", "") if isinstance(user, dict) else (user or "")
+    if not email:
+        return JSONResponse({"status": "error", "message": "unauthenticated"}, status_code=401)
+    try:
+        return JSONResponse({
+            "status": "success",
+            "source_mix": recruiter_dashboard_engine.get_source_mix(email).get("mix", {}),
+            "stage_funnel": recruiter_dashboard_engine.get_stage_funnel(email).get("funnel", {}),
+        })
+    except Exception as e:
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+
+@app.get("/api/recruiter/pipeline/grouped")
+async def api_recruiter_pipeline_grouped(
+    request: Request,
+    by: str = "source",
+    source: str = None,
+    stage: str = None,
+    role_id: str = None,
+    min_score: int = None,
+    q: str = None,
+):
+    """F4 v2: grouped pipeline view."""
+    from recruiter_dashboard_engine import recruiter_dashboard_engine
+    try:
+        user = require_auth(request)
+    except HTTPException:
+        raise
+    email = (user or {}).get("email", "") if isinstance(user, dict) else (user or "")
+    if not email:
+        return JSONResponse({"status": "error", "message": "unauthenticated"}, status_code=401)
+
+    filters = {}
+    if source:     filters["source"] = source
+    if stage:      filters["stage"] = stage
+    if role_id:    filters["role_id"] = role_id
+    if min_score is not None: filters["min_score"] = min_score
+    if q:          filters["q"] = q
+
+    try:
+        return JSONResponse(
+            recruiter_dashboard_engine.list_pipeline_grouped(email, by=by, filters=filters)
+        )
+    except Exception as e:
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+
+@app.get("/api/recruiter/pipeline.pdf")
+async def api_recruiter_pipeline_pdf(
+    request: Request,
+    source: str = None,
+    stage: str = None,
+    role_id: str = None,
+    min_score: int = None,
+    q: str = None,
+):
+    """F4 v2: PDF export of filtered pipeline."""
+    from recruiter_dashboard_engine import recruiter_dashboard_engine
+    from fastapi.responses import Response
+    try:
+        user = require_auth(request)
+    except HTTPException:
+        raise
+    email = (user or {}).get("email", "") if isinstance(user, dict) else (user or "")
+    if not email:
+        return JSONResponse({"status": "error", "message": "unauthenticated"}, status_code=401)
+
+    filters = {}
+    if source:     filters["source"] = source
+    if stage:      filters["stage"] = stage
+    if role_id:    filters["role_id"] = role_id
+    if min_score is not None: filters["min_score"] = min_score
+    if q:          filters["q"] = q
+
+    try:
+        pdf_bytes = recruiter_dashboard_engine.export_pipeline_pdf(email, filters)
+        if not pdf_bytes:
+            return JSONResponse({"status": "error", "message": "PDF generation failed"}, status_code=500)
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={"Content-Disposition": 'attachment; filename="pipeline.pdf"'},
+        )
+    except Exception as e:
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+
+
 @app.get("/screen/dashboard", response_class=HTMLResponse)
 async def screen_dashboard_page(request: Request):
     """Recruiter dashboard for screen sessions."""

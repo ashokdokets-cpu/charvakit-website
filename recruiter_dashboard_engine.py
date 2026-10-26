@@ -290,4 +290,162 @@ class RecruiterDashboardEngine:
         return buf.getvalue()
 
 
+
+
+    # ─── v2: level + grouping + analytics ──────────────
+    def get_level_breakdown(self, recruiter_email: str) -> Dict:
+        """
+        Counts by experience level, per client_roles.level.
+        Rows without a matching role are bucketed as 'unassigned'.
+        """
+        res = self.list_pipeline(recruiter_email)
+        pipe = res.get("pipeline", [])
+
+        # Fetch role_id → level map
+        levels_map = {}
+        try:
+            conn = self._conn()
+            cur = conn.cursor()
+            cur.execute("SELECT role_id, COALESCE(level, 'mid') FROM charvak_client_roles")
+            for role_id, level in cur.fetchall():
+                levels_map[role_id] = level
+            cur.close()
+            conn.close()
+        except Exception as e:
+            print(f"[recruiter_dashboard] levels map warn: {e}")
+
+        buckets = {"fresher": 0, "junior": 0, "mid": 0,
+                   "senior": 0, "staff": 0, "manager": 0,
+                   "executive": 0, "unassigned": 0}
+        for r in pipe:
+            lv = levels_map.get(r.get("role_id"))
+            if lv in buckets:
+                buckets[lv] += 1
+            else:
+                buckets["unassigned"] += 1
+
+        return {"status": "success", "levels": buckets, "total": sum(buckets.values())}
+
+    def get_source_mix(self, recruiter_email: str) -> Dict:
+        """Chart data: candidate counts by source."""
+        res = self.list_pipeline(recruiter_email)
+        mix = {}
+        for r in res.get("pipeline", []):
+            s = r.get("source") or "unknown"
+            mix[s] = mix.get(s, 0) + 1
+        return {"status": "success", "mix": mix}
+
+    def get_stage_funnel(self, recruiter_email: str) -> Dict:
+        """Chart data: candidate counts by stage (ordered funnel)."""
+        res = self.list_pipeline(recruiter_email)
+        order = ["invited", "chatting", "screened", "scheduled",
+                 "applied", "referred", "hired", "disqualified"]
+        counts = {}
+        for r in res.get("pipeline", []):
+            s = (r.get("stage") or "unknown").lower()
+            counts[s] = counts.get(s, 0) + 1
+        # Return in funnel order, only non-zero
+        ordered = {k: counts[k] for k in order if k in counts}
+        # Append any unlisted stages at the end
+        for k in counts:
+            if k not in ordered:
+                ordered[k] = counts[k]
+        return {"status": "success", "funnel": ordered}
+
+    def list_pipeline_grouped(self, recruiter_email: str,
+                               by: str = "source",
+                               filters: Optional[Dict] = None) -> Dict:
+        """
+        Grouped view. by = source | role | level
+        Returns {group_key: [rows], ..., _meta: {...}}
+        """
+        res = self.list_pipeline(recruiter_email, filters)
+        pipe = res.get("pipeline", [])
+
+        # For level grouping, resolve role → level
+        levels_map = {}
+        if by == "level":
+            try:
+                conn = self._conn()
+                cur = conn.cursor()
+                cur.execute("SELECT role_id, COALESCE(level, 'mid') FROM charvak_client_roles")
+                for role_id, level in cur.fetchall():
+                    levels_map[role_id] = level
+                cur.close()
+                conn.close()
+            except Exception:
+                pass
+
+        groups = {}
+        for r in pipe:
+            if by == "role":
+                key = r.get("role_title") or "Unassigned Role"
+            elif by == "level":
+                key = levels_map.get(r.get("role_id"), "unassigned")
+            else:
+                key = r.get("source") or "unknown"
+            groups.setdefault(key, []).append(r)
+
+        # Sort keys so charts/tables are stable
+        sorted_groups = {}
+        for k in sorted(groups.keys()):
+            sorted_groups[k] = groups[k]
+
+        return {
+            "status": "success",
+            "grouped_by": by,
+            "groups": sorted_groups,
+            "total": len(pipe),
+        }
+
+    def export_pipeline_pdf(self, recruiter_email: str,
+                            filters: Optional[Dict] = None) -> bytes:
+        """PDF export of the filtered pipeline."""
+        res = self.list_pipeline(recruiter_email, filters)
+        pipe = res.get("pipeline", [])
+
+        try:
+            from pdf_engine import CharvakReportPDF
+        except Exception as e:
+            print(f"[recruiter_dashboard] pdf_engine unavailable: {e}")
+            return b""
+
+        try:
+            pdf = CharvakReportPDF(
+                title="Recruiter Pipeline",
+                user_email=recruiter_email,
+                report_title="Recruiter Pipeline Export",
+            )
+            pdf.add_page()
+            pdf.set_font("Helvetica", "B", 14)
+            pdf.cell(0, 10, f"Candidate Pipeline ({len(pipe)} total)", ln=True)
+            pdf.set_font("Helvetica", "", 9)
+            pdf.ln(4)
+
+            # Column header
+            pdf.set_font("Helvetica", "B", 8)
+            pdf.cell(45, 6, "Name", border=0)
+            pdf.cell(45, 6, "Email", border=0)
+            pdf.cell(20, 6, "Source", border=0)
+            pdf.cell(25, 6, "Score", border=0)
+            pdf.cell(20, 6, "Stage", border=0)
+            pdf.ln(6)
+            pdf.set_font("Helvetica", "", 8)
+
+            for r in pipe:
+                name = (r.get("name") or "")[:28]
+                email = (r.get("email") or "")[:35]
+                pdf.cell(45, 5, name, border=0)
+                pdf.cell(45, 5, email, border=0)
+                pdf.cell(20, 5, str(r.get("source") or ""), border=0)
+                pdf.cell(25, 5, str(r.get("score") if r.get("score") is not None else "—"), border=0)
+                pdf.cell(20, 5, str(r.get("stage") or ""), border=0)
+                pdf.ln(5)
+
+            return pdf.output(dest="S").encode("latin-1") if hasattr(pdf.output(dest="S"), "encode") else pdf.output(dest="S")
+        except Exception as e:
+            print(f"[recruiter_dashboard] PDF export error: {e}")
+            return b""
+
+
 recruiter_dashboard_engine = RecruiterDashboardEngine()

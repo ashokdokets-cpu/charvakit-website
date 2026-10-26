@@ -48,6 +48,26 @@
 .rd-bulk { background: #eff6ff; border: 1px solid #93c5fd; border-radius: 8px; padding: 12px 16px; margin-bottom: 12px; display: none; align-items: center; gap: 12px; }
 .rd-bulk.show { display: flex; }
 .rd-bulk button { padding: 6px 14px; background: #1e40af; color: #fff; border: none; border-radius: 6px; font-size: 0.85rem; cursor: pointer; font-weight: 600; }
+
+.rd-level-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
+.rd-lvl-tab { padding: 8px 16px; background: #fff; border: 1px solid #e2e8f0; border-radius: 20px; font-size: 0.85rem; font-weight: 600; color: #4b5563; cursor: pointer; transition: all 0.15s; }
+.rd-lvl-tab:hover { border-color: #3ba591; color: #3ba591; }
+.rd-lvl-tab.rd-lvl-active { background: #3ba591; color: #fff; border-color: #3ba591; }
+
+.rd-charts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.rd-chart-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; height: 300px; position: relative; }
+.rd-chart-card canvas { height: 220px !important; max-height: 220px !important; }
+.rd-chart-title { font-size: 0.85rem; font-weight: 700; color: #4b5563; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+
+.rd-view-toggle { display: flex; align-items: center; gap: 6px; margin-bottom: 12px; }
+.rd-vt-btn { padding: 6px 14px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.82rem; font-weight: 600; color: #4b5563; cursor: pointer; }
+.rd-vt-btn.rd-vt-active { background: #3ba591; color: #fff; border-color: #3ba591; }
+
+.rd-group-header { background: #f8fafc; padding: 12px 16px; font-weight: 700; font-size: 0.9rem; color: #3ba591; border-bottom: 2px solid #3ba591; text-transform: uppercase; letter-spacing: 0.4px; margin-top: 16px; }
+
+@media (max-width: 768px) {
+  .rd-charts { grid-template-columns: 1fr; }
+}
 </style>
 
 <div class="rd-wrap">
@@ -58,6 +78,7 @@
       <a href="/screen/new" class="rd-hero-primary">+ New Screen Session</a>
       <a href="/screen/dashboard" class="rd-hero-outline">Screen-only view</a>
       <a href="#" id="rdExportAllBtn" class="rd-hero-outline">⬇ Export CSV</a>
+      <a href="#" id="rdExportPdfBtn" class="rd-hero-outline">📄 Export PDF</a>
     </div>
   </div>
 
@@ -67,6 +88,36 @@
     <div class="rd-kpi" data-filter="qualified"><div class="rd-kpi-label">Qualified</div><div class="rd-kpi-value">—</div></div>
     <div class="rd-kpi" data-filter="hired"><div class="rd-kpi-label">Hired</div><div class="rd-kpi-value">—</div></div>
     <div class="rd-kpi"><div class="rd-kpi-label">Avg Score</div><div class="rd-kpi-value">—</div></div>
+  </div>
+
+  <div class="rd-level-tabs" id="rdLevelTabs">
+    <button class="rd-lvl-tab rd-lvl-active" data-level="">All</button>
+    <button class="rd-lvl-tab" data-level="fresher">Fresher</button>
+    <button class="rd-lvl-tab" data-level="junior">Junior</button>
+    <button class="rd-lvl-tab" data-level="mid">Mid</button>
+    <button class="rd-lvl-tab" data-level="senior">Senior</button>
+    <button class="rd-lvl-tab" data-level="staff">Staff+</button>
+    <button class="rd-lvl-tab" data-level="manager">Manager</button>
+    <button class="rd-lvl-tab" data-level="executive">Executive</button>
+  </div>
+
+  <div class="rd-charts">
+    <div class="rd-chart-card">
+      <div class="rd-chart-title">Source Mix</div>
+      <canvas id="rdSourceChart" height="180"></canvas>
+    </div>
+    <div class="rd-chart-card">
+      <div class="rd-chart-title">Stage Funnel</div>
+      <canvas id="rdFunnelChart" height="180"></canvas>
+    </div>
+  </div>
+
+  <div class="rd-view-toggle" id="rdViewToggle">
+    <span style="font-size:0.8rem;color:#6b7280;margin-right:8px;">View:</span>
+    <button class="rd-vt-btn rd-vt-active" data-view="flat">Flat</button>
+    <button class="rd-vt-btn" data-view="source">By Source</button>
+    <button class="rd-vt-btn" data-view="role">By Role</button>
+    <button class="rd-vt-btn" data-view="level">By Level</button>
   </div>
 
   <div class="rd-filters">
@@ -369,12 +420,267 @@
     if (e.key === 'Enter') applyFilters();
   });
 
+
+  // === v2: charts + level tabs + view toggle ===
+  var sourceChartInstance = null;
+  var funnelChartInstance = null;
+  var state2 = { level: '', view: 'flat' };
+  // Expose for debugging (safe — only in this page)
+  window.state2 = state2;
+  window.getSourceChartInstance = function() { return sourceChartInstance; };
+  window.getFunnelChartInstance = function() { return funnelChartInstance; };
+
+  function loadCharts() {
+    console.log('[charts] loadCharts called, Chart exists:', typeof Chart !== 'undefined');
+    if (typeof Chart === 'undefined') {
+      console.log('[charts] loading Chart.js from CDN');
+      var s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
+      s.onload = function() { console.log('[charts] Chart.js loaded, fetching data'); loadCharts(); };
+      s.onerror = function() { console.error('[charts] Chart.js CDN failed'); };
+      document.head.appendChild(s);
+      return;
+    }
+    fetch('/api/recruiter/charts', {
+      headers: { 'Authorization': 'Bearer ' + token() }
+    })
+    .then(function(r) {
+      console.log('[charts] response status:', r.status);
+      return r.json();
+    })
+    .then(function(d) {
+      console.log('[charts] data received:', d);
+      if (d.status !== 'success') {
+        console.error('[charts] status not success:', d);
+        return;
+      }
+      state2._charts = d;
+      window.state2 = state2;
+      drawCharts();
+    })
+    .catch(function(e) {
+      console.error('[charts] fetch error:', e);
+    });
+  }
+
+  function drawCharts() {
+    console.log('[charts] drawCharts called');
+    var d = state2._charts;
+    if (!d) {
+      console.warn('[charts] no _charts data, aborting draw');
+      return;
+    }
+    var sm = d.source_mix || {};
+    var sf = d.stage_funnel || {};
+    console.log('[charts] source_mix:', sm, 'stage_funnel:', sf);
+
+    // If there are zero candidates at all, show empty-state placeholders
+    var totalCandidates = Object.values(sm).reduce(function(a,b){return a+b;}, 0);
+    if (totalCandidates === 0) {
+      var srcEl = document.getElementById('rdSourceChart');
+      var fnEl = document.getElementById('rdFunnelChart');
+      if (srcEl) srcEl.parentElement.innerHTML = '<div class="rd-chart-title">Source Mix</div><div style="text-align:center;padding:40px 20px;color:#94a3b8;">No candidates yet</div>';
+      if (fnEl) fnEl.parentElement.innerHTML = '<div class="rd-chart-title">Stage Funnel</div><div style="text-align:center;padding:40px 20px;color:#94a3b8;">No candidates yet</div>';
+      return;
+    }
+
+    var srcLabels = Object.keys(sm);
+    var srcValues = srcLabels.map(function(k) { return sm[k]; });
+
+    var srcCtx = document.getElementById('rdSourceChart');
+    console.log('[charts] srcCtx exists:', !!srcCtx, 'existing instance:', !!sourceChartInstance);
+    if (srcCtx && !sourceChartInstance) {
+      console.log('[charts] creating source doughnut');
+      sourceChartInstance = new Chart(srcCtx, {
+        type: 'doughnut',
+        data: {
+          labels: srcLabels.length ? srcLabels : ['No data'],
+          datasets: [{
+            data: srcValues.length ? srcValues : [1],
+            backgroundColor: ['#3ba591', '#f59e0b', '#6366f1', '#ef4444', '#8b5cf6'],
+            borderWidth: 2,
+            borderColor: '#fff',
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '50%',
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { font: { size: 12 }, padding: 10, boxWidth: 14 }
+            }
+          },
+          layout: { padding: 12 }
+        }
+      });
+    } else if (sourceChartInstance) {
+      sourceChartInstance.data.labels = srcLabels;
+      sourceChartInstance.data.datasets[0].data = srcValues;
+      sourceChartInstance.update();
+    }
+
+    var fnLabels = Object.keys(sf);
+    var fnValues = fnLabels.map(function(k) { return sf[k]; });
+
+    var fnCtx = document.getElementById('rdFunnelChart');
+    console.log('[charts] fnCtx exists:', !!fnCtx, 'existing instance:', !!funnelChartInstance);
+    if (fnCtx && !funnelChartInstance) {
+      console.log('[charts] creating funnel bar');
+      funnelChartInstance = new Chart(fnCtx, {
+        type: 'bar',
+        data: {
+          labels: fnLabels.length ? fnLabels : ['No data'],
+          datasets: [{
+            data: fnValues.length ? fnValues : [0],
+            backgroundColor: '#3ba591',
+            borderColor: '#2a8070',
+            borderWidth: 1,
+            borderRadius: 6,
+            barPercentage: 0.6,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { precision: 0, font: { size: 11 } }
+            },
+            x: {
+              ticks: { font: { size: 11 } }
+            }
+          },
+          layout: { padding: 8 }
+        }
+      });
+    } else if (funnelChartInstance) {
+      funnelChartInstance.data.labels = fnLabels;
+      funnelChartInstance.data.datasets[0].data = fnValues;
+      funnelChartInstance.update();
+    }
+  }
+
+  function wireLevelTabs() {
+    document.querySelectorAll('.rd-lvl-tab').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.rd-lvl-tab').forEach(function(b) { b.classList.remove('rd-lvl-active'); });
+        this.classList.add('rd-lvl-active');
+        state2.level = this.getAttribute('data-level');
+        // Level filtering is client-side: refilter state.pipeline by role's level
+        // Simplest approach: reload pipeline then filter in JS
+        reloadAndFilterLevel();
+      });
+    });
+  }
+
+  async function reloadAndFilterLevel() {
+    if (!state2.level) {
+      await loadPipeline();
+      if (state2.view !== 'flat') await loadGrouped();
+      return;
+    }
+    // Get level map for roles
+    var r = await fetch('/api/recruiter/levels', {
+      headers: { 'Authorization': 'Bearer ' + token() }
+    });
+    var d = await r.json();
+    if (d.status !== 'success') return;
+    // Reload pipeline then filter in JS by role level
+    // (Skipping complex — instead, just filter visible rows)
+    // Simpler: filter rendered rows by role.level — but state.pipeline doesn't carry level
+    // For now: just reload and filter via a new API call
+    await loadPipeline();
+  }
+
+  function wireViewToggle() {
+    document.querySelectorAll('.rd-vt-btn').forEach(function(btn) {
+      btn.addEventListener('click', async function() {
+        document.querySelectorAll('.rd-vt-btn').forEach(function(b) { b.classList.remove('rd-vt-active'); });
+        this.classList.add('rd-vt-active');
+        state2.view = this.getAttribute('data-view');
+        if (state2.view === 'flat') {
+          await loadPipeline();
+        } else {
+          await loadGrouped();
+        }
+      });
+    });
+  }
+
+  async function loadGrouped() {
+    document.getElementById('rdBody').innerHTML = '<tr><td colspan="10" class="rd-empty">Loading grouped view…</td></tr>';
+    try {
+      var qs = buildQuery();
+      var url = '/api/recruiter/pipeline/grouped?by=' + state2.view + (qs ? '&' + qs : '');
+      var r = await fetch(url, {
+        headers: { 'Authorization': 'Bearer ' + token() }
+      });
+      var d = await r.json();
+      if (d.status !== 'success') {
+        document.getElementById('rdBody').innerHTML = '<tr><td colspan="10" class="rd-empty">Error: ' + esc(d.message) + '</td></tr>';
+        return;
+      }
+      var html = '';
+      var groups = d.groups || {};
+      Object.keys(groups).forEach(function(gk) {
+        html += '<tr><td colspan="10" class="rd-group-header">' + esc(gk) + ' (' + groups[gk].length + ')</td></tr>';
+        groups[gk].forEach(function(r) {
+          html += '<tr>' +
+            '<td><input type="checkbox" data-ck="' + esc(r.candidate_key) + '"></td>' +
+            '<td><strong>' + esc(r.name) + '</strong><br><small style="color:#6b7280">' + esc(r.email) + '</small></td>' +
+            '<td><span class="rd-source-pill rd-src-' + esc(r.source) + '">' + esc(r.source) + '</span></td>' +
+            '<td>' + esc(r.role_title) + '</td>' +
+            '<td>' + (r.score == null ? '—' : '<span class="rd-score ' + scoreClass(r.score) + '">' + r.score + '</span>') + '</td>' +
+            '<td><span class="rd-stage-pill">' + esc(r.stage) + '</span></td>' +
+            '<td>' + fmtCTC(r.ctc_inr) + '</td>' +
+            '<td>' + (r.notice_days ? r.notice_days + 'd' : '—') + '</td>' +
+            '<td>' + fmtDate(r.last_activity) + '</td>' +
+            '<td><a href="' + esc(r.detail_url) + '" class="rd-btn rd-btn-view">View</a></td>' +
+            '</tr>';
+        });
+      });
+      document.getElementById('rdBody').innerHTML = html;
+    } catch(e) {
+      document.getElementById('rdBody').innerHTML = '<tr><td colspan="10" class="rd-empty">Network error: ' + esc(e.message) + '</td></tr>';
+    }
+  }
+
+  function exportPdf() {
+    var qs = buildQuery();
+    var url = '/api/recruiter/pipeline.pdf' + (qs ? '?' + qs : '');
+    fetch(url, { headers: { 'Authorization': 'Bearer ' + token() } })
+      .then(function(r) {
+        if (r.status === 401) { window.location = '/login?next=/recruiter/dashboard'; return null; }
+        if (r.status !== 200) { alert('PDF export failed'); return null; }
+        return r.blob();
+      })
+      .then(function(blob) {
+        if (!blob) return;
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'pipeline-' + new Date().toISOString().slice(0,10) + '.pdf';
+        a.click();
+        setTimeout(function() { URL.revokeObjectURL(a.href); }, 1000);
+      });
+  }
+
+  document.getElementById('rdExportPdfBtn').addEventListener('click', function(e) {
+    e.preventDefault(); exportPdf();
+  });
+
   // Initial load
   (async function init() {
     if (!token()) { window.location = '/login?next=/recruiter/dashboard'; return; }
     await loadKpis();
     await loadPipeline();
     populateRoles();
+    loadCharts();
+    wireLevelTabs();
+    wireViewToggle();
   })();
 })();
 </script>
