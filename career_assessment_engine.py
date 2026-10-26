@@ -332,6 +332,64 @@ def _topic_vocabulary_for_role(role: str) -> List[str]:
 PASSING_SCORE = 70
 
 
+def _compute_task_classes(format_key, language=None, database_name=None):
+    """Look up task classes for a given format+language/db combo."""
+    try:
+        import os
+        import psycopg2
+        from dotenv import load_dotenv
+        # Try .env.local first (may be .off), then .env
+        load_dotenv(".env.local", override=False)
+        load_dotenv()
+        url = os.getenv("DATABASE_URL")
+        if not url:
+            print("[task_classes] DATABASE_URL not set")
+            return []
+        conn = psycopg2.connect(url)
+        cur = conn.cursor()
+        if format_key == "coding":
+            cur.execute("""
+                SELECT class_key, class_label, description
+                FROM charvak_cert_task_classes
+                WHERE format='coding' AND (language IS NULL OR language=%s)
+                ORDER BY class_key
+            """, (language,))
+        elif format_key == "sql":
+            cur.execute("""
+                SELECT class_key, class_label, description
+                FROM charvak_cert_task_classes
+                WHERE format='sql' AND (database_name IS NULL OR database_name=%s)
+                ORDER BY class_key
+            """, (database_name,))
+        else:
+            cur.close()
+            conn.close()
+            return []
+        rows = [{"key": r[0], "label": r[1], "description": r[2]} for r in cur.fetchall()]
+        cur.close()
+        conn.close()
+        return rows
+    except Exception as e:
+        print(f"[task_classes] warn: {e}")
+        return []
+
+
+def _compute_runtime_info(format_key, language=None, database_name=None):
+    """Return human-readable runtime description for certificate display."""
+    if format_key == "coding":
+        lang = language or "python"
+        lang_display = {"python": "Python 3.11", "javascript": "Node.js 18",
+                        "java": "Java 17", "go": "Go 1.21", "cpp": "C++ 17"}.get(lang, lang)
+        return f"Judge0 CE execution sandbox \u00b7 {lang_display}"
+    if format_key == "sql":
+        db = database_name or "sqlite"
+        db_display = {"sqlite": "SQLite (approximate to PostgreSQL/MySQL)",
+                      "postgres": "PostgreSQL 15",
+                      "mysql": "MySQL 8"}.get(db, db)
+        return f"Judge0 CE execution \u00b7 {db_display}"
+    return None
+
+
 class CareerAssessmentEngine:
     """Career readiness assessments calibrated to role x industry x level."""
 
@@ -2316,9 +2374,9 @@ class CareerAssessmentEngine:
                     "verify_url": f"/api/career-certification/verify/{existing[2]}",
                 }
 
-            # Load the assessment
+            # Load the assessment (with format for coding/sql extension)
             cur.execute("""
-                SELECT email, role, industry, level, score, passed, status, integrity_summary
+                SELECT email, role, industry, level, score, passed, status, integrity_summary, format
                 FROM charvak_career_assessments
                 WHERE assessment_id = %s
             """, (assessment_id,))
@@ -2328,7 +2386,8 @@ class CareerAssessmentEngine:
                 conn.close()
                 return {"status": "error", "message": "Assessment not found"}
 
-            a_email, role, industry, level, score, passed, status, integrity = a_row
+            a_email, role, industry, level, score, passed, status, integrity, assessment_format = a_row
+            assessment_format = assessment_format or "mcq"
 
             if a_email.lower() != email:
                 cur.close()
@@ -2375,13 +2434,41 @@ class CareerAssessmentEngine:
             import json as _json
             integrity_json = _json.dumps(integrity) if integrity else "{}"
 
+            # Coding/SQL extension: detect language/db, compute task classes + runtime
+            import json as _json
+            language = None
+            database_name = None
+            if assessment_format == "coding":
+                language = "python"   # v1 default; will extract from questions_json later
+            elif assessment_format == "sql":
+                database_name = "sqlite"  # Judge0 SQLite (approximate to Postgres/MySQL)
+
+            try:
+                _task_classes_list = _compute_task_classes(
+                    assessment_format, language, database_name
+                )
+                _runtime_info = _compute_runtime_info(
+                    assessment_format, language, database_name
+                )
+            except Exception as _tc_err:
+                logger.warning(f"task_classes/runtime_info warn: {_tc_err}")
+                _task_classes_list = []
+                _runtime_info = None
+
             cur.execute("""
                 INSERT INTO charvak_career_certifications
                     (cert_id, email, assessment_id, role, industry, level, score,
-                     badge_tier, certification_hash, credits_charged, integrity_summary)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb)
+                     passed, badge_tier, certification_hash, credits_charged,
+                     integrity_summary, issued_at,
+                     format, language, database_name, task_classes, runtime_info)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                        %s::jsonb, CURRENT_TIMESTAMP,
+                        %s, %s, %s, %s::jsonb, %s)
             """, (cert_id, email, assessment_id, role, industry, level, score,
-                  tier["key"], cert_hash, credits_needed, integrity_json))
+                  passed, tier["key"], cert_hash, credits_needed,
+                  integrity_json,
+                  assessment_format, language, database_name,
+                  _json.dumps(_task_classes_list), _runtime_info))
 
             conn.commit()
             cur.close()
