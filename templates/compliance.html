@@ -23,6 +23,13 @@
 .cmp-cta p { color: #4b5563; margin-bottom: 20px; }
 .cmp-cta a { display: inline-block; background: #3ba591; color: #fff; padding: 12px 28px; border-radius: 8px; font-weight: 600; text-decoration: none; }
 .cmp-cta a:hover { background: #2a8070; color: #fff; }
+.cmp-jurisdiction-selector { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
+.cmp-jur-btn { padding: 8px 16px; background: #fff; border: 1px solid #e2e8f0; border-radius: 20px; font-size: 0.85rem; font-weight: 600; color: #4b5563; cursor: pointer; transition: all 0.15s; }
+.cmp-jur-btn:hover { border-color: #3ba591; color: #3ba591; }
+.cmp-jur-btn.cmp-jur-active { background: #3ba591; color: #fff; border-color: #3ba591; }
+.cmp-card[data-jur] { transition: opacity 0.2s; }
+.cmp-card.cmp-filtered-out { opacity: 0.35; }
+
 @media (max-width: 640px) {
   .cmp-hero h1 { font-size: 1.8rem; }
   .cmp-hero p { font-size: 1rem; }
@@ -33,11 +40,13 @@
 <div class="cmp-hero">
   <div class="cmp-wrap">
     <h1>Trust, Compliance & Responsible AI</h1>
-    <p>Every assessment is auditable. Every score is explainable. Every hiring decision is defensible — to candidates, to regulators, and to your board.</p>
+    <p>Every assessment is auditable. Every score is explainable. Every hiring decision is defensible — to candidates, to regulators, and to your board. <strong>In any jurisdiction.</strong></p>
     <div class="cmp-badges">
-      <span class="cmp-badge">✓ GDPR</span>
+      <span class="cmp-badge">✓ GDPR (EU)</span>
+      <span class="cmp-badge">✓ NYC Law 144 (US)</span>
+      <span class="cmp-badge">✓ PIPL (China)</span>
+      <span class="cmp-badge">✓ PDPA (Singapore)</span>
       <span class="cmp-badge">✓ India DPDP</span>
-      <span class="cmp-badge">✓ NYC Law 144</span>
       <span class="cmp-badge">✓ EU AI Act</span>
       <span class="cmp-badge">SOC 2 — Q3 2027</span>
     </div>
@@ -86,10 +95,20 @@
 
 <!-- COMPLIANCE STANDARDS -->
 <div class="cmp-section">
-  <h2>Compliance standards</h2>
-  <div class="cmp-grid">
+  <h2>Compliance standards by jurisdiction</h2>
+  
+  <div class="cmp-jurisdiction-selector" id="cmpJSelector">
+    <button class="cmp-jur-btn cmp-jur-active" data-jur="all">🌍 All</button>
+    <button class="cmp-jur-btn" data-jur="eu">🇪🇺 EU</button>
+    <button class="cmp-jur-btn" data-jur="us">🇺🇸 US</button>
+    <button class="cmp-jur-btn" data-jur="in">🇮🇳 India</button>
+    <button class="cmp-jur-btn" data-jur="cn">🇨🇳 China</button>
+    <button class="cmp-jur-btn" data-jur="sg">🇸🇬 Singapore</button>
+  </div>
+  
+  <div class="cmp-grid" id="cmpStandardsGrid">
 
-    <div class="cmp-card">
+    <div class="cmp-card" data-jur="eu">
       <h3>EU AI Act</h3>
       <p>Aligned to transparency, human oversight, and risk classification requirements for AI hiring systems.</p>
       <ul>
@@ -100,7 +119,7 @@
       </ul>
     </div>
 
-    <div class="cmp-card">
+    <div class="cmp-card" data-jur="us">
       <h3>NYC Local Law 144</h3>
       <p>Aligned to NYC automated employment decision tool requirements for bias audits and candidate notice.</p>
       <ul>
@@ -111,7 +130,7 @@
       </ul>
     </div>
 
-    <div class="cmp-card">
+    <div class="cmp-card" data-jur="in">
       <h3>India DPDP Act</h3>
       <p>Aligned to India Digital Personal Data Protection Act for consent, purpose limitation, and data principal rights.</p>
       <ul>
@@ -122,7 +141,7 @@
       </ul>
     </div>
 
-    <div class="cmp-card">
+    <div class="cmp-card" data-jur="eu">
       <h3>GDPR</h3>
       <p>Aligned to EU General Data Protection Regulation for data subject rights, transfers, and transparency.</p>
       <ul>
@@ -130,6 +149,28 @@
         <li>Data processing agreements available</li>
         <li>EU-region data residency on request</li>
         <li>72-hour breach notification</li>
+      </ul>
+    </div>
+
+    <div class="cmp-card" data-jur="cn">
+      <h3>PIPL (China)</h3>
+      <p>Aligned to China's Personal Information Protection Law for consent, cross-border transfer, and data localization.</p>
+      <ul>
+        <li>Separate consent for sensitive personal info</li>
+        <li>Cross-border transfer impact assessments</li>
+        <li>Data localization available on request</li>
+        <li>Individual rights: access, correct, delete</li>
+      </ul>
+    </div>
+
+    <div class="cmp-card" data-jur="sg">
+      <h3>PDPA (Singapore)</h3>
+      <p>Aligned to Singapore's Personal Data Protection Act for consent, purpose limitation, and DNC registry compliance.</p>
+      <ul>
+        <li>Consent captured before assessment</li>
+        <li>Do Not Call registry alignment for outreach</li>
+        <li>Data breach notification within 3 days</li>
+        <li>Data Protection Officer contact available</li>
       </ul>
     </div>
 
@@ -185,5 +226,43 @@
 </div>
 
 </div>
+
+<script>
+(function() {
+    var selector = document.getElementById('cmpJSelector');
+    if (!selector) return;
+    var cards = document.querySelectorAll('#cmpStandardsGrid .cmp-card');
+    
+    function filterBy(jur) {
+        cards.forEach(function(card) {
+            var cardJur = card.getAttribute('data-jur') || '';
+            if (jur === 'all' || cardJur === jur) {
+                card.classList.remove('cmp-filtered-out');
+            } else {
+                card.classList.add('cmp-filtered-out');
+            }
+        });
+    }
+    
+    selector.querySelectorAll('.cmp-jur-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            selector.querySelectorAll('.cmp-jur-btn').forEach(function(b) { b.classList.remove('cmp-jur-active'); });
+            btn.classList.add('cmp-jur-active');
+            filterBy(btn.getAttribute('data-jur'));
+        });
+    });
+    
+    // Auto-detect from ?country= or /api/region
+    var urlCountry = (new URLSearchParams(window.location.search).get('country') || '').toUpperCase();
+    if (urlCountry) {
+        var jurMap = { 'IN': 'in', 'US': 'us', 'GB': 'eu', 'DE': 'eu', 'FR': 'eu', 'NL': 'eu', 'ES': 'eu', 'IT': 'eu', 'AE': 'eu', 'SG': 'sg', 'CN': 'cn' };
+        var jur = jurMap[urlCountry];
+        if (jur) {
+            var targetBtn = selector.querySelector('[data-jur="' + jur + '"]');
+            if (targetBtn) targetBtn.click();
+        }
+    }
+})();
+</script>
 
 {% endblock %}
