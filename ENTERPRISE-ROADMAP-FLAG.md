@@ -38,7 +38,37 @@
 - Content: audit trail, explainable scoring, bias audit, NYC Law 144, EU AI Act, India DPDP, GDPR, SOC 2 roadmap, data residency
 - Beats VIVA: India-specific (DPDP, DigiLocker) + Aadhaar-lite
 
-**F3 — Recruiter Screen Agent** [2 sessions]
+**F3 — Recruiter Screen Agent** [2 sessions] ✅ SHIPPED 2026-10-26
+
+**Status:** LIVE on prod (backend + frontend complete)
+**Session 1 (backend):** 5 DB tables, engine (1300 lines), 11 API routes
+**Session 2 (frontend):** 3 dashboard templates + chat UI polish + softened copy
+**Live URLs:**
+- https://www.charvakit.com/screen/dashboard (recruiter dashboard)
+- https://www.charvakit.com/screen/new (create session from JD)
+- https://www.charvakit.com/screen/session/SCREEN-DEEA5647B79B (session detail)
+- https://www.charvakit.com/screen/xXTqnvovU7kZPox_m-4jRedfRB9uf7XW (live candidate chat)
+
+**Route ordering fix:** /screen/{token} catch-all must come AFTER specific /screen/* routes (documented in COMMITMENT.md).
+
+**Session 2 features:**
+- Recruiter dashboard with KPI cards + session list
+- Session detail with candidate table (status, score, exp, CTC, notice)
+- New session form (paste JD → auto-parse → create)
+- Chat UI with typing indicator + message bubbles + slot picker
+- Softened disqualification message (respectful, not blunt)
+
+**Beats VIVA360:**
+- 34 languages (v2) vs English-only
+- India-specific fields (notice period, work auth, current CTC)
+- Two-phase flow (3 questions → disqualify at Phase 1, not 12)
+- Full audit trail (5 tables)
+- Ties to scorecard (HMAC verifiable) + compliance page + micro-internship trial
+
+**Commits:**
+- 3721c3e: Session 1 (backend)
+- 7e41160: Session 2 (frontend)
+
 - Recruiter pastes JD -> auto-outreach -> chat captures notice/CTC/auth -> auto-schedule
 - New: recruiter_screen_engine.py, charvak_screen_sessions, charvak_screen_conversations, templates/screen-*.html
 - Build on: chatbot_engine, jd_parser_engine
