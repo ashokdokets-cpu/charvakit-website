@@ -1099,7 +1099,7 @@ class CareerAssessmentEngine:
                 "question_shape": "{problem, starter_code, language, test_cases}",
                 "answer_kind": "code",
                 "credit_multiplier": 1.33,
-                "description": "Real code, tested against cases (Python only)",
+                "description": "Real code, tested against cases. 4 languages: Python, JavaScript, Java, TypeScript.",
             },
             "sql": {
                 "label": "SQL",
