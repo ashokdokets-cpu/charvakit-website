@@ -378,8 +378,14 @@ def _compute_runtime_info(format_key, language=None, database_name=None):
     """Return human-readable runtime description for certificate display."""
     if format_key == "coding":
         lang = language or "python"
-        lang_display = {"python": "Python 3.11", "javascript": "Node.js 18",
-                        "java": "Java 17", "go": "Go 1.21", "cpp": "C++ 17"}.get(lang, lang)
+        lang_display = {
+            "python": "Python 3.11",
+            "javascript": "Node.js 18",
+            "typescript": "TypeScript (compiled to Node.js)",
+            "java": "Java 17",
+            "go": "Go 1.21",
+            "cpp": "C++ 17",
+        }.get(lang, lang)
         return f"Judge0 CE execution sandbox \u00b7 {lang_display}"
     if format_key == "sql":
         db = database_name or "sqlite"
