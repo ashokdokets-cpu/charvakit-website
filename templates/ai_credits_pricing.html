@@ -57,6 +57,9 @@
         align-items: center;
         padding: 16px 20px;
         border-bottom: 1px solid #eee;
+        position: relative;
+        z-index: 10001;  /* sit above PayPal iframe */
+        background: #fff;
     }
     .ck-modal-title {
         margin: 0;
@@ -72,6 +75,15 @@
         gap: 8px;
         padding: 16px 20px;
         border-top: 1px solid #eee;
+        position: relative;
+        z-index: 10001;
+        background: #fff;
+    }
+    /* PayPal iframe should not exceed modal body z-index */
+    #payment-details .paypal-buttons,
+    #payment-details iframe {
+        position: relative !important;
+        z-index: 1 !important;
     }
 </style>
 
@@ -111,13 +123,13 @@
     <div class="ck-modal-box">
         <div class="ck-modal-header">
             <h3 class="as-h5 ck-modal-title">Subscribe to Plan</h3>
-            <button type="button" class="btn-close" onclick="closePaymentModal()"></button>
+            <button type="button" class="btn-close" onclick="closeCreditsPaymentModal()"></button>
         </div>
         <div class="ck-modal-body">
             <div id="payment-details"></div>
         </div>
         <div class="ck-modal-footer">
-            <button type="button" class="btn btn-secondary" onclick="closePaymentModal()">Cancel</button>
+            <button type="button" class="btn btn-secondary" onclick="closeCreditsPaymentModal()">Cancel</button>
             <button type="button" class="btn btn-success" id="confirm-pay-btn" onclick="processSubscription()">Confirm & Pay</button>
         </div>
     </div>
@@ -260,7 +272,8 @@ async function loadPlans() {
 
                                 const modalEl = document.getElementById('payment-modal');
         modalEl.classList.add('open');
-        modalEl.style.display = 'flex';
+        modalEl.style.setProperty('display', 'flex', 'important');
+        modalEl.style.setProperty('pointer-events', 'auto', 'important');
 
         // Reset Confirm & Pay button
         const payBtn = document.getElementById('confirm-pay-btn');
@@ -373,7 +386,7 @@ async function loadPlans() {
 
                             const data = await purchaseResponse.json();
                             alert(data.message || 'Credits purchased!');
-                            closePaymentModal();
+                            closeCreditsPaymentModal();
                             loadBalance();
                         } else {
                             alert('Payment verification failed. Please contact support.');
@@ -396,7 +409,7 @@ async function loadPlans() {
             };
 
             const rzp = new Razorpay(options);
-            closePaymentModal();
+            closeCreditsPaymentModal();
             setTimeout(function() {
                 rzp.open();
             }, 200);
@@ -430,6 +443,7 @@ async function loadPlans() {
                 <p class="mb-0 text-muted small">You'll be charged approximately <strong>${approxText}</strong>.</p>
             </div>
             <p class="mb-2"><strong>Choose your payment method</strong></p>
+            <p class="text-muted small mb-3">Click the payment method below. The "Confirm & Pay" button at the bottom is for the Razorpay path only.</p>
             <div class="d-grid gap-2">
                 <button class="btn btn-warning" onclick="payWithPayPalFlow(allPlans[selectedPlan], '${currency}')">
                     Pay with PayPal (${currency})
@@ -437,7 +451,7 @@ async function loadPlans() {
                 <button class="btn btn-outline-primary" onclick="payWithRazorpayFlow(allPlans[selectedPlan])">
                     Pay with Razorpay (INR Rs.${plan.price})
                 </button>
-                <button class="btn btn-link btn-sm text-muted" onclick="closePaymentModal()">Cancel</button>
+                <button class="btn btn-link btn-sm text-muted" onclick="closeCreditsPaymentModal()">Cancel</button>
             </div>
             <p class="text-muted small mt-2 mb-0">International cards that work with Razorpay will still be accepted. PayPal is usually the faster path.</p>
         `;
@@ -511,7 +525,7 @@ async function loadPlans() {
                     const purchaseData = await purchaseRes.json();
                     if (purchaseData.status === 'success' || purchaseData.already_credited) {
                         alert(purchaseData.message || 'Credits purchased!');
-                        closePaymentModal();
+                        closeCreditsPaymentModal();
                         if (typeof loadBalance === 'function') loadBalance();
                     } else {
                         alert('Payment captured but crediting failed: ' + (purchaseData.message || 'unknown'));
@@ -531,11 +545,37 @@ async function loadPlans() {
         }).render('#paypal-inline-container');
     }
 
-        function closePaymentModal() {
+        function closeCreditsPaymentModal() {
         const modalEl = document.getElementById('payment-modal');
+        if (!modalEl) return;
+        // Clear PayPal iframe (prevents overlay interception on next open)
+        const details = document.getElementById('payment-details');
+        if (details) details.innerHTML = '';
+        // Remove open class + hide (use setProperty to force !important)
         modalEl.classList.remove('open');
-        modalEl.style.display = 'none';
+        modalEl.style.setProperty('display', 'none', 'important');
+        modalEl.style.setProperty('pointer-events', 'none', 'important');
+        // Reset confirm button (stale from previous attempts)
+        const payBtn = document.getElementById('confirm-pay-btn');
+        if (payBtn) {
+            payBtn.disabled = false;
+            payBtn.textContent = 'Confirm & Pay';
+        }
+        // Defensive: re-apply hide after microtask in case something re-shows
+        setTimeout(function() {
+            if (modalEl && !modalEl.classList.contains('open')) {
+                modalEl.style.setProperty('display', 'none', 'important');
+            }
+        }, 0);
     }
+
+    // Backdrop click closes modal (proper listener, not inline onclick)
+    document.addEventListener('click', function(e) {
+        const modalEl = document.getElementById('payment-modal');
+        if (modalEl && e.target === modalEl) {
+            closeCreditsPaymentModal();
+        }
+    });
 
     async function activateFreePlan() {
         try {
@@ -553,6 +593,11 @@ async function loadPlans() {
     }
 
         document.addEventListener('DOMContentLoaded', function() {
+    // Modal reparented to body (bypass <main> stacking context)
+    var _paymentModal = document.getElementById('payment-modal');
+    if (_paymentModal && _paymentModal.parentElement && _paymentModal.parentElement.tagName === 'MAIN') {
+        document.body.appendChild(_paymentModal);
+    }
         // Clean any stale modal state (backdrops, show class, body lock)
         // that might be left over from a previous page or cached session.
                 // Ensure our modal starts hidden
