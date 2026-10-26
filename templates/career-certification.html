@@ -40,6 +40,20 @@
                             <p class="text-muted" id="certLevel">—</p>
                         </div>
 
+                        <!-- Coding/SQL Specifics (hidden for MCQ) -->
+                        <div id="certFormatSection" style="display:none;" class="mb-4">
+                            <div class="p-4 rounded" style="background:#f0fdf4;border:1px solid #86efac;">
+                                <h4 class="fw-bold mb-3" style="font-size:1.05rem;color:#166534;">
+                                    Technical Environment Tested
+                                </h4>
+                                <div class="row g-3 mb-3" id="certEnvGrid"></div>
+                                <div>
+                                    <div class="fw-bold mb-2" style="font-size:0.9rem;">Task Classes Tested</div>
+                                    <div id="certTaskClasses" class="d-flex flex-wrap gap-2"></div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="row text-center g-3 my-4">
                             <div class="col-6">
                                 <div class="p-3 bg-light rounded">
@@ -135,6 +149,43 @@ async function loadCert() {
         if (certData.issued_at) {
             const dt = new Date(certData.issued_at);
             document.getElementById('certIssued').textContent = dt.toLocaleDateString('en-US', {year: 'numeric', month: 'short', day: 'numeric'});
+
+    // Coding/SQL specific section (hidden for MCQ)
+    if (certData.format === 'coding' || certData.format === 'sql') {
+        var envGrid = document.getElementById('certEnvGrid');
+        var envHtml = '';
+        if (certData.language) {
+            envHtml += '<div class="col-md-6"><div class="text-muted small text-uppercase">Language</div><div class="fw-bold fs-5">' + _certEscape(certData.language) + ' <span class="badge bg-success text-white" style="font-size:0.7rem;">real execution</span></div></div>';
+        }
+        if (certData.database_name) {
+            envHtml += '<div class="col-md-6"><div class="text-muted small text-uppercase">Database</div><div class="fw-bold fs-5">' + _certEscape(certData.database_name) + '</div></div>';
+        }
+        if (certData.runtime_info) {
+            envHtml += '<div class="col-md-6"><div class="text-muted small text-uppercase">Runtime</div><div class="fw-semibold">' + _certEscape(certData.runtime_info) + '</div></div>';
+        }
+        envHtml += '<div class="col-md-6"><div class="text-muted small text-uppercase">Test Coverage</div><div class="fw-semibold">Deterministic · 3 test cases per problem</div></div>';
+        envGrid.innerHTML = envHtml;
+        var tc = certData.task_classes || [];
+        if (typeof tc === 'string') { try { tc = JSON.parse(tc); } catch(e) { tc = []; } }
+        if (Array.isArray(tc) && tc.length > 0) {
+            var chips = '';
+            tc.forEach(function(c) {
+                var lbl = (c && c.label) ? c.label : String(c);
+                chips += '<span class="badge bg-success-subtle text-success-emphasis px-3 py-2" style="font-weight:600;font-size:0.85rem;">' + _certEscape(lbl) + '</span>';
+            });
+            document.getElementById('certTaskClasses').innerHTML = chips;
+        } else {
+            document.getElementById('certTaskClasses').innerHTML = '<span class="text-muted small">No task classes recorded</span>';
+        }
+        document.getElementById('certFormatSection').style.display = 'block';
+    }
+
+    function _certEscape(s) {
+        return String(s == null ? '' : s)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
         }
 
         // Tier badge + icon + card border

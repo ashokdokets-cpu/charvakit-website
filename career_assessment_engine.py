@@ -2502,7 +2502,8 @@ class CareerAssessmentEngine:
             cur.execute("""
                 SELECT cert_id, email, assessment_id, role, industry, level,
                        score, badge_tier, certification_hash, credits_charged,
-                       integrity_summary, issued_at, revoked_at
+                       integrity_summary, issued_at, revoked_at,
+                       format, language, database_name, task_classes, runtime_info
                 FROM charvak_career_certifications
                 WHERE cert_id = %s
             """, (cert_id,))
@@ -2529,6 +2530,11 @@ class CareerAssessmentEngine:
                     "badge_tier": row[7],
                     "badge_label": tier_label,
                     "badge_color": tier_color,
+                    "format": row[13] or "mcq",
+                    "language": row[14],
+                    "database_name": row[15],
+                    "task_classes": (row[16] if isinstance(row[16], list) else (json.loads(row[16]) if row[16] else [])),
+                    "runtime_info": row[17],
                     "certification_hash": row[8],
                     "integrity_summary": row[10] or {},
                     "issued_at": row[11].isoformat() if row[11] else None,
