@@ -163,6 +163,32 @@ class RecruiterDashboardEngine:
             print(f"[recruiter_dashboard] list_pipeline error: {e}")
             return {"status": "error", "message": str(e), "pipeline": [], "total": 0}
 
+        # ---- exclude hired by default (they live in the Hires panel) ----
+        # NOTE: a candidate can be in screen_candidates (stage='chatting') AND
+        # applications (status='hired'). We must exclude them if ANY source
+        # shows them as hired.
+        if filters.get("stage") != "hired":
+            hired_emails = set()
+            try:
+                conn2 = self._conn()
+                cur2 = conn2.cursor()
+                cur2.execute("""
+                    SELECT LOWER(COALESCE(candidate_email, user_id))
+                    FROM charvak_applications
+                    WHERE status = 'hired' AND hired_at IS NOT NULL
+                """)
+                for (em,) in cur2.fetchall():
+                    if em:
+                        hired_emails.add(em)
+                cur2.close()
+                conn2.close()
+            except Exception as e:
+                print(f"[pipeline] hired_emails lookup warn: {e}")
+
+            rows = [r for r in rows
+                    if r.get("stage") != "hired"
+                    and (r.get("email") or "").strip().lower() not in hired_emails]
+
         # ---- apply filters ----
         def _matches(r):
             if filters.get("source") and r.get("source") != filters["source"]:
@@ -237,8 +263,10 @@ class RecruiterDashboardEngine:
 
     def get_pipeline_kpis(self, recruiter_email: str) -> Dict:
         """Top-of-page KPI cards + (v2) source mix + stage funnel."""
-        res = self.list_pipeline(recruiter_email)
-        pipe = res.get("pipeline", [])
+        # Fetch both non-hired and hired, then merge for full counts
+        res_all = self.list_pipeline(recruiter_email)
+        res_hired = self.list_pipeline(recruiter_email, {"stage": "hired"})
+        pipe = res_all.get("pipeline", []) + res_hired.get("pipeline", [])
 
         total = len(pipe)
         screened = sum(1 for r in pipe if r.get("stage") == "screened")
