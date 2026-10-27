@@ -83,10 +83,6 @@ scripts/*
 !scripts/pdf_reports/
 !scripts/pdf_reports/*.py
 
-# One-pager PDF generators (Asset 3 + 4 - production scripts)
-!scripts/_pdf_helpers.py
-!scripts/generate_employer_onepager.py
-!scripts/generate_institution_onepager.py
 requirements.txt.bak
 runtime.txt.bak
 
@@ -202,3 +198,9 @@ _session*_closeout.md
 
 # Local DB backups folder
 backups/
+
+# One-pager PDF generators (Asset 3 + 4 - production scripts)
+# Placed at END so they override earlier wildcards like _*.py and scripts/*
+!scripts/_pdf_helpers.py
+!scripts/generate_employer_onepager.py
+!scripts/generate_institution_onepager.py
