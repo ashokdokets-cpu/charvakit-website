@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+{% block title %}Payouts — Charvak Admin{% endblock %}
+{% block content %}
+<style>
+.ap-wrap { max-width: 1200px; margin: 0 auto; padding: 24px 20px; }
+.ap-hero { background: #1a1a2e; color: #fff; padding: 28px 32px; border-radius: 12px; margin-bottom: 24px; }
+.ap-hero h1 { font-size: 1.6rem; font-weight: 800; margin: 0 0 6px; }
+.ap-hero p { margin: 0; opacity: 0.8; font-size: 0.9rem; }
+
+.ap-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+.ap-tab { padding: 8px 16px; background: #fff; border: 1px solid #e2e8f0; border-radius: 20px; font-size: 0.85rem; font-weight: 600; color: #4b5563; cursor: pointer; }
+.ap-tab.active { background: #3ba591; color: #fff; border-color: #3ba591; }
+
+.ap-table-wrap { background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; }
+.ap-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.ap-table th { text-align: left; padding: 12px; background: #f8fafc; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; color: #6b7280; border-bottom: 1px solid #e2e8f0; }
+.ap-table td { padding: 12px; border-bottom: 1px solid #f1f5f9; }
+.ap-status { display: inline-block; padding: 2px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; }
+.ap-status-requested { background: #fef3c7; color: #92400e; }
+.ap-status-approved { background: #dbeafe; color: #1e40af; }
+.ap-status-paid { background: #d1fae5; color: #065f46; }
+.ap-status-rejected { background: #fee2e2; color: #991b1b; }
+.ap-btn { padding: 6px 14px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; cursor: pointer; border: none; }
+.ap-btn-approve { background: #3ba591; color: #fff; }
+.ap-btn-pay { background: #10b981; color: #fff; }
+.ap-btn-reject { background: #ef4444; color: #fff; }
+.ap-empty { padding: 40px; text-align: center; color: #94a3b8; }
+
+.ap-modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 99999; align-items: center; justify-content: center; }
+.ap-modal.show { display: flex; }
+.ap-modal-box { background: #fff; border-radius: 12px; padding: 28px; max-width: 500px; width: 90%; }
+.ap-modal-box h3 { margin: 0 0 12px; font-size: 1.2rem; }
+.ap-modal-box label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; margin-top: 12px; }
+.ap-modal-box input, .ap-modal-box textarea { width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 0.9rem; }
+.ap-modal-actions { margin-top: 20px; display: flex; gap: 8px; justify-content: flex-end; }
+</style>
+
+<div class="ap-wrap">
+    <div class="ap-hero">
+        <h1>Payout Queue</h1>
+        <p>Approve payout requests, mark paid with UTR references, or reject with reason.</p>
+    </div>
+
+    <div class="ap-tabs" id="apTabs">
+        <button class="ap-tab active" data-status="">All</button>
+        <button class="ap-tab" data-status="requested">Requested</button>
+        <button class="ap-tab" data-status="approved">Approved (ready to pay)</button>
+        <button class="ap-tab" data-status="paid">Paid</button>
+        <button class="ap-tab" data-status="rejected">Rejected</button>
+    </div>
+
+    <div class="ap-table-wrap">
+        <table class="ap-table">
+            <thead>
+                <tr>
+                    <th>Payout ID</th>
+                    <th>Referrer</th>
+                    <th>Amount</th>
+                    <th>Method</th>
+                    <th>Status</th>
+                    <th>Requested</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="apBody">
+                <tr><td colspan="7" class="ap-empty">Loading...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="ap-modal" id="markPaidModal">
+    <div class="ap-modal-box">
+        <h3>Mark payout as paid</h3>
+        <p style="color:#6b7280;font-size:0.9rem;" id="mpInfo"></p>
+        <label>Payment reference (UTR / transaction ID)</label>
+        <input type="text" id="mpRef" placeholder="e.g., UTR1234567890">
+        <label>Admin notes (optional)</label>
+        <textarea id="mpNotes" rows="2" placeholder="Additional context"></textarea>
+        <div class="ap-modal-actions">
+            <button class="ap-btn ap-btn-reject" onclick="closeMarkPaid()">Cancel</button>
+            <button class="ap-btn ap-btn-pay" id="mpSubmit" onclick="submitMarkPaid()">Mark as paid</button>
+        </div>
+    </div>
+</div>
+
+<script>
+var _currentPayoutId = null;
+
+function _token() {
+    return localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+}
+
+async function loadPayouts(status) {
+    var url = '/api/admin/payouts/list' + (status ? '?status=' + status : '');
+    try {
+        var r = await fetch(url, {
+            headers: {'Authorization': 'Bearer ' + _token()}
+        });
+        var d = await r.json();
+        var body = document.getElementById('apBody');
+        
+        if (d.status !== 'success' || !d.payouts || d.payouts.length === 0) {
+            body.innerHTML = '<tr><td colspan="7" class="ap-empty">No payouts in this category</td></tr>';
+            return;
+        }
+        
+        body.innerHTML = d.payouts.map(function(p) {
+            var amt = (p.amount_inr || 0) / 100;
+            var date = (p.requested_at || '').slice(0, 10);
+            var statusClass = 'ap-status-' + p.status;
+            var actions = '';
+            
+            if (p.status === 'requested') {
+                actions = '<button class="ap-btn ap-btn-approve" onclick="approvePayout(\'' + p.payout_id + '\')">Approve</button>' +
+                         ' <button class="ap-btn ap-btn-reject" onclick="rejectPayout(\'' + p.payout_id + '\')">Reject</button>';
+            } else if (p.status === 'approved') {
+                actions = '<button class="ap-btn ap-btn-pay" onclick="openMarkPaid(\'' + p.payout_id + '\', ' + amt + ', \'' + (p.referrer_email || '') + '\')">Mark paid</button>';
+            } else if (p.status === 'paid') {
+                actions = '<span style="font-family:monospace;font-size:0.8rem;color:#6b7280;">' + (p.payment_reference || '—') + '</span>';
+            }
+            
+            return '<tr>' +
+                '<td style="font-family:monospace;font-size:0.85rem;">' + p.payout_id + '</td>' +
+                '<td>' + (p.referrer_email || '') + '</td>' +
+                '<td><strong>₹' + amt.toFixed(2) + '</strong></td>' +
+                '<td>' + (p.payout_method || '').replace(/_/g, ' ') + '</td>' +
+                '<td><span class="ap-status ' + statusClass + '">' + p.status + '</span></td>' +
+                '<td>' + date + '</td>' +
+                '<td>' + actions + '</td>' +
+                '</tr>';
+        }).join('');
+    } catch(e) {
+        console.error(e);
+    }
+}
+
+async function approvePayout(payoutId) {
+    if (!confirm('Approve payout ' + payoutId + '? This marks it ready for manual transfer.')) return;
+    try {
+        var r = await fetch('/api/admin/payouts/' + payoutId + '/approve', {
+            method: 'POST',
+            headers: {'Authorization': 'Bearer ' + _token(), 'Content-Type': 'application/json'},
+            body: '{}'
+        });
+        var d = await r.json();
+        if (d.status === 'success') {
+            alert('✓ Approved. Now transfer ₹' + (d.amount_inr/100).toFixed(2) + ' manually, then click "Mark paid".');
+            loadPayouts(document.querySelector('.ap-tab.active').dataset.status);
+        } else {
+            alert('Failed: ' + (d.message || 'unknown'));
+        }
+    } catch(e) {
+        alert('Network error: ' + e.message);
+    }
+}
+
+function openMarkPaid(payoutId, amount, email) {
+    _currentPayoutId = payoutId;
+    document.getElementById('mpInfo').textContent = 'Payout ' + payoutId + ' · ₹' + amount.toFixed(2) + ' to ' + email;
+    document.getElementById('mpRef').value = '';
+    document.getElementById('mpNotes').value = '';
+    document.getElementById('markPaidModal').classList.add('show');
+}
+
+function closeMarkPaid() {
+    document.getElementById('markPaidModal').classList.remove('show');
+    _currentPayoutId = null;
+}
+
+async function submitMarkPaid() {
+    var ref = document.getElementById('mpRef').value.trim();
+    var notes = document.getElementById('mpNotes').value.trim();
+    if (!ref) {
+        alert('Payment reference required');
+        return;
+    }
+    document.getElementById('mpSubmit').disabled = true;
+    try {
+        var r = await fetch('/api/admin/payouts/' + _currentPayoutId + '/mark-paid', {
+            method: 'POST',
+            headers: {'Authorization': 'Bearer ' + _token(), 'Content-Type': 'application/json'},
+            body: JSON.stringify({payment_reference: ref, admin_notes: notes})
+        });
+        var d = await r.json();
+        if (d.status === 'success') {
+            alert('✓ Marked as paid. Reference: ' + ref);
+            closeMarkPaid();
+            loadPayouts(document.querySelector('.ap-tab.active').dataset.status);
+        } else {
+            alert('Failed: ' + (d.message || 'unknown'));
+        }
+    } catch(e) {
+        alert('Network error: ' + e.message);
+    } finally {
+        document.getElementById('mpSubmit').disabled = false;
+    }
+}
+
+async function rejectPayout(payoutId) {
+    var reason = prompt('Rejection reason:');
+    if (!reason) return;
+    try {
+        var r = await fetch('/api/admin/payouts/' + payoutId + '/reject', {
+            method: 'POST',
+            headers: {'Authorization': 'Bearer ' + _token(), 'Content-Type': 'application/json'},
+            body: JSON.stringify({reason: reason})
+        });
+        var d = await r.json();
+        if (d.status === 'success') {
+            alert('✓ Rejected');
+            loadPayouts(document.querySelector('.ap-tab.active').dataset.status);
+        } else {
+            alert('Failed: ' + (d.message || 'unknown'));
+        }
+    } catch(e) {
+        alert('Network error: ' + e.message);
+    }
+}
+
+// Tab wiring
+document.querySelectorAll('.ap-tab').forEach(function(tab) {
+    tab.addEventListener('click', function() {
+        document.querySelectorAll('.ap-tab').forEach(function(t) { t.classList.remove('active'); });
+        tab.classList.add('active');
+        loadPayouts(tab.dataset.status);
+    });
+});
+
+loadPayouts('');
+</script>
+{% endblock %}

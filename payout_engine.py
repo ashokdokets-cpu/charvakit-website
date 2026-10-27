@@ -238,4 +238,162 @@ class PayoutEngine:
             return {"status": "error", "message": str(e)}
 
 
+
+    # ---------- Admin methods ----------
+    def list_all_payouts(self, status_filter: str = None, limit: int = 100) -> dict:
+        """Admin: list all payout requests."""
+        try:
+            conn = self._conn()
+            cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            query = """
+                SELECT p.payout_id, p.referrer_id, p.amount_inr, p.currency,
+                       p.payout_method, p.status, p.requested_at, p.paid_at,
+                       p.payment_reference, p.admin_notes,
+                       r.email AS referrer_email, r.name AS referrer_name, r.tier
+                FROM charvak_payout_requests p
+                LEFT JOIN charvak_referrer_accounts r ON r.referrer_id = p.referrer_id
+            """
+            if status_filter:
+                query += " WHERE p.status = %s"
+                query += " ORDER BY p.requested_at DESC LIMIT %s"
+                cur.execute(query, (status_filter, limit))
+            else:
+                query += " ORDER BY p.requested_at DESC LIMIT %s"
+                cur.execute(query, (limit,))
+            rows = [dict(r) for r in cur.fetchall()]
+            cur.close()
+            conn.close()
+            return {"status": "success", "payouts": rows, "total": len(rows)}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+    def get_payout(self, payout_id: str) -> dict:
+        """Admin: get one payout with full details."""
+        try:
+            conn = self._conn()
+            cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute("""
+                SELECT p.*, r.email AS referrer_email, r.name AS referrer_name,
+                       r.tier, r.payout_country
+                FROM charvak_payout_requests p
+                LEFT JOIN charvak_referrer_accounts r ON r.referrer_id = p.referrer_id
+                WHERE p.payout_id = %s
+            """, (payout_id,))
+            row = cur.fetchone()
+            cur.close()
+            conn.close()
+            if not row:
+                return {"status": "error", "message": "payout not found"}
+            return {"status": "success", "payout": dict(row)}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+    def approve_payout(self, payout_id: str, admin_email: str) -> dict:
+        """Admin: approve a payout (ready for manual transfer)."""
+        try:
+            conn = self._conn()
+            cur = conn.cursor()
+            cur.execute("""
+                UPDATE charvak_payout_requests
+                SET status = 'approved',
+                    approved_by = %s,
+                    approved_at = NOW()
+                WHERE payout_id = %s
+                  AND status = 'requested'
+                RETURNING payout_id, amount_inr
+            """, (admin_email, payout_id))
+            row = cur.fetchone()
+            conn.commit()
+            cur.close()
+            conn.close()
+            if not row:
+                return {"status": "error", "message": "payout not found or already processed"}
+            return {"status": "success", "payout_id": row[0], "amount_inr": row[1]}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+    def mark_paid(self, payout_id: str, payment_reference: str, admin_notes: str = None) -> dict:
+        """Admin: mark payout as paid with UTR/transaction reference."""
+        if not payment_reference:
+            return {"status": "error", "message": "payment reference required"}
+        try:
+            conn = self._conn()
+            cur = conn.cursor()
+            
+            # Mark payout as paid
+            cur.execute("""
+                UPDATE charvak_payout_requests
+                SET status = 'paid',
+                    paid_at = NOW(),
+                    payment_reference = %s,
+                    admin_notes = COALESCE(%s, admin_notes)
+                WHERE payout_id = %s
+                  AND status IN ('approved', 'processing')
+                RETURNING referrer_id, amount_inr
+            """, (payment_reference, admin_notes, payout_id))
+            row = cur.fetchone()
+            
+            if not row:
+                conn.rollback()
+                cur.close()
+                conn.close()
+                return {"status": "error", "message": "payout not found or not in approved state"}
+            
+            referrer_id, amount = row
+            
+            # Mark all eligible conversions as paid
+            cur.execute("""
+                UPDATE charvak_referral_conversions
+                SET status = 'paid',
+                    paid_at = NOW(),
+                    payment_reference = %s
+                WHERE referrer_id = %s
+                  AND status = 'pending'
+                  AND (hold_until IS NULL OR hold_until <= NOW())
+                  AND commission_amount_inr > 0
+            """, (payment_reference, referrer_id))
+            
+            # Update referrer total_paid
+            cur.execute("""
+                UPDATE charvak_referrer_accounts
+                SET total_commissions_paid_inr = total_commissions_paid_inr + %s,
+                    updated_at = NOW()
+                WHERE referrer_id = %s
+            """, (amount, referrer_id))
+            
+            conn.commit()
+            cur.close()
+            conn.close()
+            return {"status": "success", "payout_id": payout_id, "amount_inr": amount, "reference": payment_reference}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+    def reject_payout(self, payout_id: str, reason: str, admin_email: str = None) -> dict:
+        """Admin: reject a payout with reason."""
+        if not reason:
+            return {"status": "error", "message": "reason required"}
+        try:
+            conn = self._conn()
+            cur = conn.cursor()
+            cur.execute("""
+                UPDATE charvak_payout_requests
+                SET status = 'rejected',
+                    rejection_reason = %s,
+                    approved_by = %s,
+                    approved_at = NOW()
+                WHERE payout_id = %s
+                  AND status IN ('requested', 'approved')
+                RETURNING payout_id
+            """, (reason, admin_email, payout_id))
+            row = cur.fetchone()
+            conn.commit()
+            cur.close()
+            conn.close()
+            if not row:
+                return {"status": "error", "message": "payout not found or already processed"}
+            return {"status": "success", "payout_id": payout_id, "reason": reason}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+
 payout_engine = PayoutEngine()
