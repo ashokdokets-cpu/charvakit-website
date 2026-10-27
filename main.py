@@ -4897,6 +4897,17 @@ async def affiliate_apply_page(request: Request):
                              "Apply - Charvak Affiliate")
 
 
+
+# ============================================================
+# Referral landing pages (Session 96)
+# ============================================================
+
+@app.get("/referral", response_class=HTMLResponse)
+async def referral_landing_page(request: Request):
+    """Public referral program landing hub with 4 audience paths."""
+    return template_response("referral.html", request,
+                             "Referral Program - Charvak")
+
 @app.post("/api/affiliate/apply")
 async def api_affiliate_apply(request: Request):
     """Submit affiliate application."""

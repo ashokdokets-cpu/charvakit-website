@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block title %}Referral Program — Charvak{% endblock %}
+{% block description %}Refer a friend, a college, or an employer to Charvak. Earn credits, commission, or recurring revenue. Open globally.{% endblock %}
+
+{% block content %}
+<style>
+.rl-wrap { max-width: 1100px; margin: 0 auto; padding: 32px 20px; }
+.rl-hero { background: linear-gradient(135deg, #3ba591 0%, #2a8070 100%); color: #fff; padding: 64px 32px; border-radius: 16px; margin-bottom: 40px; text-align: center; }
+.rl-hero h1 { font-size: 2.6rem; font-weight: 800; margin: 0 0 16px; line-height: 1.15; }
+.rl-hero p { font-size: 1.15rem; opacity: 0.94; max-width: 640px; margin: 0 auto; }
+.rl-hero .rl-sub { margin-top: 24px; font-size: 0.95rem; opacity: 0.82; }
+
+.rl-paths { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 48px; }
+.rl-path { background: #fff; border: 2px solid #e2e8f0; border-radius: 14px; padding: 28px 24px; transition: all 0.18s; }
+.rl-path:hover { border-color: #3ba591; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(59,165,145,0.12); }
+.rl-path-icon { font-size: 2rem; margin-bottom: 12px; }
+.rl-path h2 { font-size: 1.2rem; font-weight: 800; color: #1a1a2e; margin: 0 0 10px; }
+.rl-path p { color: #6b7280; font-size: 0.92rem; line-height: 1.55; margin: 0 0 16px; min-height: 44px; }
+.rl-path .rl-earn { display: inline-block; background: #f0fdf4; color: #166534; padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; font-weight: 700; margin-bottom: 16px; }
+.rl-path .rl-cta { display: inline-block; color: #3ba591; font-weight: 700; font-size: 0.9rem; text-decoration: none; }
+.rl-path .rl-cta:hover { text-decoration: underline; }
+
+.rl-how { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 40px 32px; margin-bottom: 40px; }
+.rl-how h2 { font-size: 1.6rem; font-weight: 800; color: #1a1a2e; margin: 0 0 8px; }
+.rl-how > p { color: #6b7280; margin: 0 0 32px; font-size: 1rem; }
+.rl-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px; }
+.rl-step { text-align: center; }
+.rl-step-num { display: inline-block; width: 44px; height: 44px; line-height: 44px; background: #3ba591; color: #fff; border-radius: 50%; font-weight: 800; font-size: 1.1rem; margin-bottom: 12px; }
+.rl-step h3 { font-size: 1rem; font-weight: 700; color: #1a1a2e; margin: 0 0 6px; }
+.rl-step p { color: #6b7280; font-size: 0.85rem; margin: 0; }
+
+.rl-faq { background: #f8fafc; border-radius: 14px; padding: 32px; margin-bottom: 32px; }
+.rl-faq h2 { font-size: 1.3rem; font-weight: 800; color: #1a1a2e; margin: 0 0 20px; }
+.rl-faq details { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 18px; margin-bottom: 10px; }
+.rl-faq summary { cursor: pointer; font-weight: 600; color: #1a1a2e; font-size: 0.95rem; }
+.rl-faq details p { margin: 10px 0 0; color: #4b5563; font-size: 0.9rem; line-height: 1.55; }
+
+.rl-cta-final { background: #1a1a2e; color: #fff; border-radius: 14px; padding: 40px 32px; text-align: center; }
+.rl-cta-final h2 { font-size: 1.6rem; margin: 0 0 10px; }
+.rl-cta-final p { opacity: 0.82; margin: 0 0 24px; font-size: 1rem; }
+.rl-cta-final a { display: inline-block; background: #3ba591; color: #fff; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 1rem; margin: 4px; }
+.rl-cta-final a:hover { background: #2a8070; }
+.rl-cta-final a.secondary { background: transparent; border: 2px solid rgba(255,255,255,0.4); }
+.rl-cta-final a.secondary:hover { background: rgba(255,255,255,0.1); }
+
+@media (max-width: 640px) {
+    .rl-hero h1 { font-size: 1.8rem; }
+    .rl-hero p { font-size: 1rem; }
+    .rl-how { padding: 28px 20px; }
+}
+</style>
+
+<div class="rl-wrap">
+    <div class="rl-hero">
+        <h1>Refer anyone. Earn credits, commission, or recurring revenue.</h1>
+        <p>Four paths. One program. Open globally. Every referral is tracked, every commission is paid, every payout is reviewed.</p>
+        <div class="rl-sub">Bronze affiliates auto-approve in 30 seconds. Silver+ reviewed within 2 business days.</div>
+    </div>
+
+    <div class="rl-paths">
+        <div class="rl-path">
+            <div class="rl-path-icon">🎓</div>
+            <h2>Refer a friend</h2>
+            <p>Student-to-student. Earn credits for every signup, cert, and second-degree referral.</p>
+            <span class="rl-earn">50 credits + 100 per cert</span><br>
+            <a href="/referral/student" class="rl-cta">Student program →</a>
+        </div>
+
+        <div class="rl-path">
+            <div class="rl-path-icon">🏫</div>
+            <h2>Refer a college</h2>
+            <p>Know a TPO or Dean? Earn 10-20% of the annual contract value per institution.</p>
+            <span class="rl-earn">10-20% · ₹5,000-1,00,000</span><br>
+            <a href="/referral/institution" class="rl-cta">Institution program →</a>
+        </div>
+
+        <div class="rl-path">
+            <div class="rl-path-icon">💼</div>
+            <h2>Refer an employer</h2>
+            <p>Know a hiring manager? Earn 15-25% of their subscription, recurring, for as long as they stay.</p>
+            <span class="rl-earn">15-25% recurring forever</span><br>
+            <a href="/referral/employer" class="rl-cta">Employer program →</a>
+        </div>
+
+        <div class="rl-path">
+            <div class="rl-path-icon">🤝</div>
+            <h2>Become an affiliate</h2>
+            <p>Agencies, consultants, recruiters, coaches. Higher rates, co-branded assets, custom landing pages.</p>
+            <span class="rl-earn">20-30% + recurring</span><br>
+            <a href="/affiliate" class="rl-cta">Affiliate program →</a>
+        </div>
+    </div>
+
+    <div class="rl-how">
+        <h2>How every path works</h2>
+        <p>Same four steps. Different reward.</p>
+        <div class="rl-steps">
+            <div class="rl-step">
+                <div class="rl-step-num">1</div>
+                <h3>Get your link</h3>
+                <p>Your unique referral code, generated in 5 seconds.</p>
+            </div>
+            <div class="rl-step">
+                <div class="rl-step-num">2</div>
+                <h3>Share it</h3>
+                <p>WhatsApp, LinkedIn, email, or in person. Every click is tracked.</p>
+            </div>
+            <div class="rl-step">
+                <div class="rl-step-num">3</div>
+                <h3>They convert</h3>
+                <p>They sign up, enroll, or subscribe. Attribution is 90-day first-touch.</p>
+            </div>
+            <div class="rl-step">
+                <div class="rl-step-num">4</div>
+                <h3>You earn</h3>
+                <p>Credits instantly. Commission after 30-day fraud hold. Payouts via UPI/bank/PayPal.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="rl-faq">
+        <h2>Frequently asked</h2>
+
+        <details>
+            <summary>How do I get my referral link?</summary>
+            <p>Sign in and visit <a href="/referral-dashboard" style="color:#3ba591;font-weight:600;">/referral-dashboard</a>. Your unique code (e.g., CHV-A1B2C3D4) is generated automatically. Add <code>?ref=YOUR_CODE</code> to any Charvak URL to start tracking.</p>
+        </details>
+
+        <details>
+            <summary>How long does attribution last?</summary>
+            <p>90 days from first click (first-touch attribution). If someone you referred visits Charvak and converts within 90 days of their first click on your link, you earn commission.</p>
+        </details>
+
+        <details>
+            <summary>When do I get paid?</summary>
+            <p>Credits (student referrals): instant to your credit balance. Commission (institution/employer): 30-day fraud hold, then approved. Payouts: minimum ₹1,000, processed weekly via UPI/bank/PayPal.</p>
+        </details>
+
+        <details>
+            <summary>What's the anti-fraud policy?</summary>
+            <p>Self-referrals are blocked (email + IP match). Volume anomalies trigger manual review. Refunded deals claw back commission. Accounts can be suspended or banned for abuse. All legitimate referrals are fully protected.</p>
+        </details>
+
+        <details>
+            <summary>Is this open globally?</summary>
+            <p>Yes. Payouts via Razorpay (INR) or PayPal (USD, GBP, EUR, AED, SGD, AUD, JPY). No geographic restrictions. Tier thresholds scale by country.</p>
+        </details>
+
+        <details>
+            <summary>Can I be in multiple programs?</summary>
+            <p>Yes. A student referrer can also refer institutions and become an affiliate. Each program has its own dashboard view — all under the same account.</p>
+        </details>
+    </div>
+
+    <div class="rl-cta-final">
+        <h2>Pick your path</h2>
+        <p>Every program is live. Every reward is real. Start in under 60 seconds.</p>
+        <a href="/referral/student">Student</a>
+        <a href="/referral/institution" class="secondary">Institution</a>
+        <a href="/referral/employer" class="secondary">Employer</a>
+        <a href="/affiliate" class="secondary">Affiliate</a>
+    </div>
+</div>
+{% endblock %}
