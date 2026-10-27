@@ -4704,6 +4704,99 @@ async def api_referral_conversions(request: Request, limit: int = 20):
     return JSONResponse({"status": "success", "conversions": conversions})
 
 
+
+# ============================================================
+# Payout Routes (Session 94b)
+# ============================================================
+
+@app.post("/api/payout/method")
+async def api_payout_set_method(request: Request):
+    """Save or update the referrer's payout method."""
+    try:
+        user = require_auth(request)
+    except HTTPException:
+        raise
+    email = (user or {}).get("email", "") if isinstance(user, dict) else (user or "")
+    if not email:
+        return JSONResponse({"status": "error", "message": "unauthenticated"}, status_code=401)
+    
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse({"status": "error", "message": "invalid json"}, status_code=400)
+    
+    method = data.get("method", "")
+    details = data.get("details", {})
+    country = data.get("country", "IN")
+    
+    from referral_engine_v2 import referral_engine
+    from payout_engine import payout_engine
+    
+    # Get or create referrer
+    acc = referral_engine.create_or_get_referrer(email=email, program_type="student")
+    if acc.get("status") != "success":
+        return JSONResponse(acc, status_code=500)
+    
+    result = payout_engine.set_payout_method(
+        referrer_id=acc["referrer"]["referrer_id"],
+        method=method,
+        details=details,
+        country=country,
+    )
+    return JSONResponse(result)
+
+
+@app.post("/api/payout/request")
+async def api_payout_request(request: Request):
+    """Request a payout (validates eligibility)."""
+    try:
+        user = require_auth(request)
+    except HTTPException:
+        raise
+    email = (user or {}).get("email", "") if isinstance(user, dict) else (user or "")
+    if not email:
+        return JSONResponse({"status": "error", "message": "unauthenticated"}, status_code=401)
+    
+    from referral_engine_v2 import referral_engine
+    from payout_engine import payout_engine
+    
+    acc = referral_engine.create_or_get_referrer(email=email, program_type="student")
+    if acc.get("status") != "success":
+        return JSONResponse(acc, status_code=500)
+    
+    result = payout_engine.request_payout(acc["referrer"]["referrer_id"])
+    return JSONResponse(result)
+
+
+@app.get("/api/payout/status")
+async def api_payout_status(request: Request):
+    """Get current referrer's eligibility + payout history."""
+    try:
+        user = require_auth(request)
+    except HTTPException:
+        raise
+    email = (user or {}).get("email", "") if isinstance(user, dict) else (user or "")
+    if not email:
+        return JSONResponse({"status": "error", "message": "unauthenticated"}, status_code=401)
+    
+    from referral_engine_v2 import referral_engine
+    from payout_engine import payout_engine
+    
+    acc = referral_engine.create_or_get_referrer(email=email, program_type="student")
+    if acc.get("status") != "success":
+        return JSONResponse(acc, status_code=500)
+    
+    ref_id = acc["referrer"]["referrer_id"]
+    elig = payout_engine.compute_eligibility(ref_id)
+    history = payout_engine.list_payouts(ref_id)
+    
+    return JSONResponse({
+        "status": "success",
+        "eligibility": elig,
+        "history": history.get("payouts", []),
+    })
+
+
 @app.get("/api/passport/public/list")
 @limiter.limit("60/minute")
 async def api_passport_public_list(
