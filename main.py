@@ -4768,6 +4768,13 @@ async def api_payout_request(request: Request):
     return JSONResponse(result)
 
 
+    
+    # Session 98: agreement acceptance gate
+    from payout_engine import payout_engine as _pe
+    _agreement = referral_engine.require_agreement(acc["referrer"]["referrer_id"])
+    if _agreement.get("status") != "success":
+        return JSONResponse(_agreement, status_code=402)
+    
 @app.get("/api/payout/status")
 async def api_payout_status(request: Request):
     """Get current referrer's eligibility + payout history."""
@@ -5044,6 +5051,70 @@ async def referral_employer_page(request: Request):
     """Employer referral program — recurring commission."""
     return template_response("referral-employer.html", request,
                              "Employer Referral Program - Charvak")
+
+
+@app.get("/referral/agreement", response_class=HTMLResponse)
+async def referral_agreement_page(request: Request):
+    """Referral Program Agreement — Version 1.0."""
+    return template_response("referral-agreement.html", request,
+                             "Referral Program Agreement - Charvak")
+
+
+@app.post("/api/referral/accept-agreement")
+async def api_accept_agreement(request: Request):
+    """Record acceptance of the referral agreement."""
+    try:
+        user = require_auth(request)
+    except HTTPException:
+        raise
+    email = (user or {}).get("email", "") if isinstance(user, dict) else (user or "")
+    if not email:
+        return JSONResponse({"status": "error", "message": "unauthenticated"}, status_code=401)
+    
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse({"status": "error", "message": "invalid json"}, status_code=400)
+    
+    version = (data.get("version") or "1.0").strip()
+    
+    # Extract IP
+    ip = request.client.host if request.client else ""
+    cf_ip = request.headers.get("CF-Connecting-IP")
+    if cf_ip:
+        ip = cf_ip
+    
+    from referral_engine_v2 import referral_engine
+    acc = referral_engine.create_or_get_referrer(email=email, program_type="student")
+    if acc.get("status") != "success":
+        return JSONResponse(acc, status_code=500)
+    
+    result = referral_engine.accept_agreement(
+        referrer_id=acc["referrer"]["referrer_id"],
+        version=version,
+        ip=ip,
+    )
+    return JSONResponse(result)
+
+
+@app.get("/api/referral/agreement-status")
+async def api_agreement_status(request: Request):
+    """Check current user's agreement acceptance status."""
+    try:
+        user = require_auth(request)
+    except HTTPException:
+        raise
+    email = (user or {}).get("email", "") if isinstance(user, dict) else (user or "")
+    if not email:
+        return JSONResponse({"status": "error", "message": "unauthenticated"}, status_code=401)
+    
+    from referral_engine_v2 import referral_engine
+    acc = referral_engine.create_or_get_referrer(email=email, program_type="student")
+    if acc.get("status") != "success":
+        return JSONResponse(acc, status_code=500)
+    
+    return JSONResponse(referral_engine.get_agreement_status(acc["referrer"]["referrer_id"]))
+
 
 @app.post("/api/affiliate/apply")
 async def api_affiliate_apply(request: Request):
