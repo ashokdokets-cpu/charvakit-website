@@ -443,4 +443,274 @@ class ReferralEngine:
             return {"status": "error", "message": str(e)}
 
 
+
+    # ---------- Session 97: Admin reporting ----------
+    def admin_get_report_summary(self, period_days: int = 30) -> dict:
+        """
+        Get admin KPIs across all referrers for the given period.
+        period_days: 7, 30, 90, 365 (or 0 for all-time)
+        """
+        try:
+            conn = self._conn()
+            cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            
+            where_clause = ""
+            params = []
+            if period_days > 0:
+                where_clause = "AND created_at >= NOW() - INTERVAL '%s days'"
+                params = [period_days]
+            
+            # Total referrers (all-time, not period-bound)
+            cur.execute("SELECT COUNT(*) as c FROM charvak_referrer_accounts WHERE status = 'active'")
+            total_referrers = cur.fetchone()["c"]
+            
+            # Conversions in period
+            cur.execute(f"""
+                SELECT
+                    COUNT(*) as total_conversions,
+                    COUNT(DISTINCT referrer_id) as active_referrers,
+                    COUNT(DISTINCT referred_email) as unique_referees,
+                    COALESCE(SUM(conversion_value_inr), 0) as total_revenue_inr,
+                    COALESCE(SUM(commission_amount_inr), 0) as total_commission_inr,
+                    COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_count,
+                    COUNT(CASE WHEN status = 'approved' THEN 1 END) as approved_count,
+                    COUNT(CASE WHEN status = 'paid' THEN 1 END) as paid_count,
+                    COUNT(CASE WHEN status = 'fraud_blocked' THEN 1 END) as fraud_blocked_count
+                FROM charvak_referral_conversions
+                WHERE 1=1 {where_clause}
+            """, params)
+            row = dict(cur.fetchone())
+            
+            # Payout totals
+            cur.execute(f"""
+                SELECT
+                    COALESCE(SUM(CASE WHEN status = 'paid' THEN amount_inr ELSE 0 END), 0) as total_paid_inr,
+                    COALESCE(SUM(CASE WHEN status IN ('requested', 'approved', 'processing') THEN amount_inr ELSE 0 END), 0) as total_pending_payout_inr,
+                    COUNT(CASE WHEN status IN ('requested', 'approved', 'processing') THEN 1 END) as pending_payout_count
+                FROM charvak_payout_requests
+                WHERE 1=1 {"AND requested_at >= NOW() - INTERVAL '%s days'" if period_days > 0 else ""}
+            """, params)
+            payout_row = dict(cur.fetchone())
+            
+            # Recurring commission (employer/affiliate)
+            cur.execute(f"""
+                SELECT
+                    COALESCE(SUM(commission_amount_inr), 0) as total_recurring_inr,
+                    COUNT(*) as recurring_count
+                FROM charvak_recurring_commissions
+                WHERE status = 'paid'
+                {"AND paid_at >= NOW() - INTERVAL '%s days'" if period_days > 0 else ""}
+            """, params)
+            recurring_row = dict(cur.fetchone())
+            
+            cur.close()
+            conn.close()
+            
+            # Serialize
+            for k, v in row.items():
+                if hasattr(v, "isoformat"):
+                    row[k] = v.isoformat()
+                elif not isinstance(v, (int, float, str, bool, type(None))):
+                    row[k] = float(v) if hasattr(v, "__float__") else str(v)
+            for k, v in payout_row.items():
+                if not isinstance(v, (int, float, str, bool, type(None))):
+                    payout_row[k] = float(v) if hasattr(v, "__float__") else str(v)
+            for k, v in recurring_row.items():
+                if not isinstance(v, (int, float, str, bool, type(None))):
+                    recurring_row[k] = float(v) if hasattr(v, "__float__") else str(v)
+            
+            return {
+                "status": "success",
+                "period_days": period_days,
+                "total_referrers": total_referrers,
+                "conversions": row,
+                "payouts": payout_row,
+                "recurring": recurring_row,
+            }
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+    def admin_get_commissions_by_referrer(self, period_days: int = 30, limit: int = 100) -> dict:
+        """Get commission totals grouped by referrer."""
+        try:
+            conn = self._conn()
+            cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            
+            where_clause = ""
+            params = []
+            if period_days > 0:
+                where_clause = "AND c.created_at >= NOW() - INTERVAL '%s days'"
+                params.append(period_days)
+            params.append(limit)
+            
+            cur.execute(f"""
+                SELECT
+                    r.referrer_id,
+                    r.email,
+                    r.name,
+                    r.tier,
+                    r.program_type,
+                    COUNT(c.conversion_id) as conversion_count,
+                    COALESCE(SUM(c.conversion_value_inr), 0) as revenue_inr,
+                    COALESCE(SUM(c.commission_amount_inr), 0) as commission_inr,
+                    COALESCE(SUM(CASE WHEN c.status = 'paid' THEN c.commission_amount_inr ELSE 0 END), 0) as paid_inr,
+                    COALESCE(SUM(CASE WHEN c.status = 'pending' THEN c.commission_amount_inr ELSE 0 END), 0) as pending_inr
+                FROM charvak_referrer_accounts r
+                LEFT JOIN charvak_referral_conversions c ON c.referrer_id = r.referrer_id
+                WHERE r.status = 'active' {where_clause}
+                GROUP BY r.referrer_id, r.email, r.name, r.tier, r.program_type
+                HAVING COUNT(c.conversion_id) > 0
+                ORDER BY commission_inr DESC
+                LIMIT %s
+            """, params)
+            
+            rows = []
+            for row in cur.fetchall():
+                d = dict(row)
+                for k, v in d.items():
+                    if hasattr(v, "isoformat"):
+                        d[k] = v.isoformat()
+                    elif not isinstance(v, (int, float, str, bool, type(None))):
+                        d[k] = float(v) if hasattr(v, "__float__") else str(v)
+                rows.append(d)
+            
+            cur.close()
+            conn.close()
+            return {"status": "success", "referrers": rows, "total": len(rows)}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+    def admin_get_commissions_by_month(self, months_back: int = 12) -> dict:
+        """Get monthly commission trend."""
+        try:
+            conn = self._conn()
+            cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute("""
+                SELECT
+                    TO_CHAR(created_at, 'YYYY-MM') as month,
+                    COUNT(*) as conversion_count,
+                    COALESCE(SUM(conversion_value_inr), 0) as revenue_inr,
+                    COALESCE(SUM(commission_amount_inr), 0) as commission_inr
+                FROM charvak_referral_conversions
+                WHERE created_at >= NOW() - INTERVAL '%s months'
+                  AND status != 'fraud_blocked'
+                GROUP BY TO_CHAR(created_at, 'YYYY-MM')
+                ORDER BY month DESC
+            """, (months_back,))
+            
+            rows = []
+            for row in cur.fetchall():
+                d = dict(row)
+                for k, v in d.items():
+                    if not isinstance(v, (int, float, str, bool, type(None))):
+                        d[k] = float(v) if hasattr(v, "__float__") else str(v)
+                rows.append(d)
+            
+            cur.close()
+            conn.close()
+            return {"status": "success", "months": rows}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+    def admin_export_commissions_csv(self, period_days: int = 30) -> dict:
+        """Get all commission rows for CSV export."""
+        try:
+            conn = self._conn()
+            cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            
+            where_clause = ""
+            params = []
+            if period_days > 0:
+                where_clause = "AND c.created_at >= NOW() - INTERVAL '%s days'"
+                params.append(period_days)
+            
+            cur.execute(f"""
+                SELECT
+                    c.conversion_id,
+                    c.created_at,
+                    r.email as referrer_email,
+                    r.name as referrer_name,
+                    r.tier as referrer_tier,
+                    c.referred_email,
+                    c.conversion_type,
+                    c.conversion_value_inr,
+                    c.commission_rate,
+                    c.commission_amount_inr,
+                    c.status,
+                    c.hold_until,
+                    c.paid_at,
+                    c.payment_reference
+                FROM charvak_referral_conversions c
+                JOIN charvak_referrer_accounts r ON r.referrer_id = c.referrer_id
+                WHERE 1=1 {where_clause}
+                ORDER BY c.created_at DESC
+            """, params)
+            
+            rows = []
+            for row in cur.fetchall():
+                d = dict(row)
+                for k, v in d.items():
+                    if hasattr(v, "isoformat"):
+                        d[k] = v.isoformat()
+                    elif not isinstance(v, (int, float, str, bool, type(None))):
+                        d[k] = float(v) if hasattr(v, "__float__") else str(v)
+                rows.append(d)
+            
+            cur.close()
+            conn.close()
+            return {"status": "success", "rows": rows, "total": len(rows)}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+    def admin_export_payouts_csv(self, period_days: int = 90) -> dict:
+        """Get all payout rows for CSV export."""
+        try:
+            conn = self._conn()
+            cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            
+            where_clause = ""
+            params = []
+            if period_days > 0:
+                where_clause = "AND p.requested_at >= NOW() - INTERVAL '%s days'"
+                params.append(period_days)
+            
+            cur.execute(f"""
+                SELECT
+                    p.payout_id,
+                    p.requested_at,
+                    p.paid_at,
+                    r.email as referrer_email,
+                    r.name as referrer_name,
+                    r.tier as referrer_tier,
+                    p.amount_inr,
+                    p.currency,
+                    p.payout_method,
+                    p.status,
+                    p.payment_reference,
+                    p.approved_by,
+                    p.admin_notes,
+                    p.rejection_reason
+                FROM charvak_payout_requests p
+                JOIN charvak_referrer_accounts r ON r.referrer_id = p.referrer_id
+                WHERE 1=1 {where_clause}
+                ORDER BY p.requested_at DESC
+            """, params)
+            
+            rows = []
+            for row in cur.fetchall():
+                d = dict(row)
+                for k, v in d.items():
+                    if hasattr(v, "isoformat"):
+                        d[k] = v.isoformat()
+                    elif not isinstance(v, (int, float, str, bool, type(None))):
+                        d[k] = float(v) if hasattr(v, "__float__") else str(v)
+                rows.append(d)
+            
+            cur.close()
+            conn.close()
+            return {"status": "success", "rows": rows, "total": len(rows)}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+
 referral_engine = ReferralEngine()
