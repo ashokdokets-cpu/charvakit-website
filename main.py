@@ -797,6 +797,12 @@ async def integrity(request: Request):
     return template_response("integrity.html", request, "Assessment Integrity - Charvak")
 
 
+@app.get("/faq", response_class=HTMLResponse)
+async def faq_page(request: Request):
+    """Master FAQ — 30 answers across 4 audiences."""
+    return template_response("faq.html", request, "FAQ - Charvak")
+
+
 @app.get("/changelog", response_class=HTMLResponse)
 async def changelog_page(request: Request):
     """Public changelog — every feature shipped, reverse chronological."""
