@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+{% block title %}FAQ — Charvak{% endblock %}
+{% block description %}Answers to the 30 most common questions about Charvak — for individuals, employers, institutions, and technical teams.{% endblock %}
+
+{% block content %}
+<style>
+.faq-wrap { max-width: 900px; margin: 0 auto; padding: 32px 20px; }
+.faq-hero { background: linear-gradient(135deg, #3ba591 0%, #2a8070 100%); color: #fff; padding: 48px 24px; border-radius: 16px; margin-bottom: 32px; text-align: center; }
+.faq-hero h1 { font-size: 2.2rem; font-weight: 800; margin: 0 0 12px; }
+.faq-hero p { font-size: 1.1rem; opacity: 0.92; margin: 0 auto; max-width: 640px; }
+
+.faq-tabs { display: flex; gap: 8px; margin-bottom: 32px; flex-wrap: wrap; justify-content: center; }
+.faq-tab { padding: 10px 20px; background: #fff; border: 1px solid #e2e8f0; border-radius: 24px; font-weight: 600; color: #4b5563; cursor: pointer; font-size: 0.9rem; transition: all 0.15s; }
+.faq-tab:hover { border-color: #3ba591; color: #3ba591; }
+.faq-tab.active { background: #3ba591; color: #fff; border-color: #3ba591; }
+
+.faq-group { margin-bottom: 32px; }
+.faq-group h2 { font-size: 1.5rem; font-weight: 800; color: #1a1a2e; margin: 0 0 8px; padding-bottom: 8px; border-bottom: 2px solid #3ba591; display: inline-block; }
+.faq-group p.faq-group-intro { color: #6b7280; font-size: 0.95rem; margin: 8px 0 20px; }
+
+.faq-item { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 12px; overflow: hidden; }
+.faq-item summary { padding: 18px 20px; font-weight: 600; color: #1a1a2e; font-size: 1rem; cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+.faq-item summary::-webkit-details-marker { display: none; }
+.faq-item summary::after { content: '+'; font-size: 1.4rem; color: #3ba591; font-weight: 300; transition: transform 0.15s; }
+.faq-item[open] summary::after { transform: rotate(45deg); }
+.faq-item summary:hover { background: #f8fafc; }
+.faq-item .faq-answer { padding: 0 20px 18px; color: #4b5563; line-height: 1.65; font-size: 0.95rem; }
+.faq-item .faq-answer a { color: #3ba591; text-decoration: none; font-weight: 600; }
+.faq-item .faq-answer a:hover { text-decoration: underline; }
+.faq-item .faq-answer code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 0.85rem; }
+
+.faq-cta { background: #f0fdf4; border: 1px solid #86efac; border-radius: 12px; padding: 32px; margin-top: 40px; text-align: center; }
+.faq-cta h3 { font-size: 1.3rem; color: #1a1a2e; margin: 0 0 12px; }
+.faq-cta p { color: #4b5563; margin: 0 0 20px; }
+.faq-cta a.btn-cta { display: inline-block; background: #3ba591; color: #fff; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; margin: 4px; }
+.faq-cta a.btn-cta:hover { background: #2a8070; }
+.faq-cta a.btn-outline { display: inline-block; background: transparent; color: #3ba591; border: 2px solid #3ba591; padding: 10px 26px; border-radius: 8px; text-decoration: none; font-weight: 600; margin: 4px; }
+.faq-cta a.btn-outline:hover { background: #3ba591; color: #fff; }
+
+@media (max-width: 640px) {
+    .faq-hero h1 { font-size: 1.6rem; }
+    .faq-item summary { padding: 14px 16px; font-size: 0.95rem; }
+}
+</style>
+
+<div class="faq-wrap">
+    <div class="faq-hero">
+        <h1>Frequently asked questions</h1>
+        <p>30 answers across the 4 audiences Charvak serves: individuals, employers, institutions, and technical teams.</p>
+    </div>
+
+    <div class="faq-tabs" id="faqTabs">
+        <button class="faq-tab active" data-group="all">All</button>
+        <button class="faq-tab" data-group="individuals">For Individuals</button>
+        <button class="faq-tab" data-group="employers">For Employers</button>
+        <button class="faq-tab" data-group="institutions">For Institutions</button>
+        <button class="faq-tab" data-group="general">General / Technical</button>
+    </div>
+
+    <!-- ============================ FOR INDIVIDUALS ============================ -->
+    <div class="faq-group" data-group="individuals">
+        <h2>For Individuals</h2>
+        <p class="faq-group-intro">Students, freshers, and professionals looking to prove their skills.</p>
+
+        <details class="faq-item"><summary>Do I need to sign up to try Charvak?</summary><div class="faq-answer">
+            No. Most demos at <a href="/demo">/demo</a> work without login. You can take a free Career Assessment at <a href="/ai-assessment">/ai-assessment</a> without signing up. Login is only required to save results or claim a certificate.
+        </div></details>
+
+        <details class="faq-item"><summary>Can I take an assessment in my target role?</summary><div class="faq-answer">
+            Yes. Charvak supports 106 roles × 66 industries × 7 experience levels. Pick your target role (e.g., "Backend Engineer"), industry (e.g., "SaaS / B2B Software"), and level (e.g., "Mid-Level") — questions are calibrated to that specific combination.
+        </div></details>
+
+        <details class="faq-item"><summary>What formats can I be assessed on?</summary><div class="faq-answer">
+            Eight formats: MCQ, coding (Python, JS, Java, TypeScript), SQL (SQLite), short-answer, numeracy, situational judgment, behavioral (STAR), system design, debugging, case study. Coding assessments are tested against deterministic test cases, not AI opinions.
+        </div></details>
+
+        <details class="faq-item"><summary>How much does a certificate cost?</summary><div class="faq-answer">
+            Free for scores 85+. For scores 70-84, the certificate is 5 credits (~$1.99 USD or ₹199 INR). Below 70, you can retake the assessment for free in a different format. <a href="/pricing">See full pricing →</a>
+        </div></details>
+
+        <details class="faq-item"><summary>Can I verify my certificate if I lose the link?</summary><div class="faq-answer">
+            Yes. Every certificate has a public URL and a cryptographic hash. If you lose your link, log into your account and download the certificate again. Employers can verify independently at the public URL — no login required on their end.
+        </div></details>
+
+        <details class="faq-item"><summary>Do certificates expire?</summary><div class="faq-answer">
+            No. Every certificate is issued once and stays verifiable forever at the HMAC-hashed URL. There's no renewal fee, no annual cost, no expiration date.
+        </div></details>
+
+        <details class="faq-item"><summary>What if I score below 70?</summary><div class="faq-answer">
+            No certificate — but the assessment isn't wasted. You'll see a full skill-gap analysis showing exactly which topics you need to strengthen. Charvak recommends specific courses to fill those gaps, or designs a custom course for you. You can retake the assessment in 30 days for free.
+        </div></details>
+
+        <details class="faq-item"><summary>How do I share my certificate with employers?</summary><div class="faq-answer">
+            Every certificate has a public URL like <code>charvakit.com/career-certification/CCERT-XXXX</code>. Share it in LinkedIn posts, resumes, or emails — employers open it in 5 seconds, no login required. You can also download the PDF: <a href="/career-certification/CCERT-D580C393BDAF">see example →</a>
+        </div></details>
+    </div>
+
+    <!-- ============================ FOR EMPLOYERS ============================ -->
+    <div class="faq-group" data-group="employers">
+        <h2>For Employers</h2>
+        <p class="faq-group-intro">Hiring managers, recruiters, and staffing agencies.</p>
+
+        <details class="faq-item"><summary>How do I find verified candidates?</summary><div class="faq-answer">
+            Two paths: (1) browse the public passport directory at <a href="/employer/dashboard">/employer/dashboard</a> — filter by tier, score, and integrity status; (2) run a JD through the AI screen agent to auto-generate a pipeline. Both feed into the recruiter dashboard at <a href="/recruiter/dashboard">/recruiter/dashboard</a>.
+        </div></details>
+
+        <details class="faq-item"><summary>How does the code execution scoring work?</summary><div class="faq-answer">
+            Every coding problem has 3 test cases (real stdin + expected stdout). Candidates submit code, Judge0 CE executes it against each test case, and the score is (passed cases / total cases) × 100. A score of 85 means 85% of test cases passed — not "AI gave them 85."
+        </div></details>
+
+        <details class="faq-item"><summary>Can I verify a candidate's certificate independently?</summary><div class="faq-answer">
+            Yes — no login required. Every cert has a public verify URL: <code>charvakit.com/api/career-certification/verify/{hash}</code>. Paste the hash, get back verified status + score + issued date. Try it with a real cert: <a href="/career-certification/CCERT-D580C393BDAF">see example →</a>
+        </div></details>
+
+        <details class="faq-item"><summary>What languages are supported?</summary><div class="faq-answer">
+            4 coding languages: Python 3.11, JavaScript (Node.js), Java 17, TypeScript. Plus SQL (SQLite, honestly labeled approximate to PostgreSQL/MySQL). Each cert names the exact task classes tested — no vague "programming" category.
+        </div></details>
+
+        <details class="faq-item"><summary>How does the AI screen agent work?</summary><div class="faq-answer">
+            Automated 2-phase chat. Phase 1: 3 disqualification questions (years, salary range, work auth). Phase 2 (if qualified): 9 more questions capturing notice period, current CTC, expected CTC, and specific skills. Feeds into your pipeline automatically. <a href="/screen/xXTqnvovU7kZPox_m-4jRedfRB9uf7XW">Try it live →</a>
+        </div></details>
+
+        <details class="faq-item"><summary>Can I integrate with my ATS?</summary><div class="faq-answer">
+            Greenhouse, Lever, and Workable integrations are on the roadmap (Q1 2027). Until then, candidates can be exported as CSV or PDF from the recruiter dashboard, then imported into any ATS. If your ATS is a blocker, reply to any email we send — we prioritize integration by active demand.
+        </div></details>
+
+        <details class="faq-item"><summary>What are the pricing tiers?</summary><div class="faq-answer">
+            Free: 5 verified candidates/month. Growth: $199/mo for 50 candidates, unlimited roles, and pipeline dashboard. Enterprise: custom — unlimited, ATS integration, SLA. Payments in USD, GBP, EUR, AED, SGD, AUD, JPY, INR. <a href="/pricing">See full pricing →</a>
+        </div></details>
+
+        <details class="faq-item"><summary>What compliance coverages do you have?</summary><div class="faq-answer">
+            6 jurisdictions: India DPDP, GDPR (EU), NYC Local Law 144 (US), EU AI Act, PIPL (China), PDPA (Singapore). Plus 4 data residency regions (SG default, US/EU/UK on request). SOC 2 Type II roadmap published (Q3 2027). <a href="/compliance">See full compliance →</a>
+        </div></details>
+    </div>
+
+    <!-- ============================ FOR INSTITUTIONS ============================ -->
+    <div class="faq-group" data-group="institutions">
+        <h2>For Institutions</h2>
+        <p class="faq-group-intro">Universities, colleges, and coaching centers.</p>
+
+        <details class="faq-item"><summary>What's included in the free 4-week pilot?</summary><div class="faq-answer">
+            Full portal access for 1 department (100-500 students). Includes: cohort readiness dashboard, per-student assessments, HMAC-verifiable certificates for qualified students, Dean-ready signed PDF (cohort score + dept heatmap + 3-month trend), engagement dashboards (streaks, leaderboards), and 1 week of dedicated onboarding support. No contract, no cost, no login required from your side.
+        </div></details>
+
+        <details class="faq-item"><summary>How do I onboard a batch?</summary><div class="faq-answer">
+            Send us the batch size + graduation year. We provision the portal in 24 hours. Students log in with their college email — zero friction. Attendance-linked completion trackers available. First assessments start Week 1.
+        </div></details>
+
+        <details class="faq-item"><summary>What does the Dean-ready report contain?</summary><div class="faq-answer">
+            Signed PDF with: cohort readiness score, department heatmap (which depts are weakest), 3-month trend (showing improvement), % of students certified, % of certificates viewed by employers, top 10 students with placement-ready status. Delivered Week 2 and Week 4. <a href="/compliance">See sample →</a>
+        </div></details>
+
+        <details class="faq-item"><summary>How do certificates benefit my students?</summary><div class="faq-answer">
+            Every qualified student gets an HMAC-verifiable certificate with real code execution proof. Employers verify the score in 5 seconds at a public URL — no phone calls, no PDFs, no "trust me." This is what makes your placement claims defensible to recruiters and audit-proof to the board.
+        </div></details>
+
+        <details class="faq-item"><summary>Can I white-label the portal?</summary><div class="faq-answer">
+            Co-branding available on Campus tier and above: institutional logo on certificates, custom landing page per institution, custom email sender ("from your CDC"), themed student dashboard. Full white-label rollout is Q2 2027.
+        </div></details>
+
+        <details class="faq-item"><summary>What languages are supported for exams?</summary><div class="faq-answer">
+            34 written languages (all Indian languages + major global) and 138 company exam patterns (TCS, Infosys, Wipro, Amazon, Google, etc.). The Career Assessment and Exam Prep modules both support these languages. Coding assessments are English-only (as in real interviews).
+        </div></details>
+
+        <details class="faq-item"><summary>What's the pricing after the pilot?</summary><div class="faq-answer">
+            Pilot (100-500 students): free, 4 weeks. Department (≤500): ₹49,999/yr. Campus (≤5,000): ₹1,99,999/yr. University (unlimited): ₹4,99,999/yr. Add-ons: SSO integration (₹1,00,000 one-time), custom branding (₹25,000/yr). Payments in INR, USD, GBP, EUR, AED.
+        </div></details>
+
+        <details class="faq-item"><summary>How do I measure placement outcomes?</summary><div class="faq-answer">
+            Two dashboards: (1) readiness dashboard — cohort score, engagement %, % certified; (2) outcome tracker — offers received, avg package, top recruiters. Both exportable as PDF for board reviews. Longitudinal tracking (1-year, 2-year) available for enterprise contracts.
+        </div></details>
+    </div>
+
+    <!-- ============================ GENERAL / TECHNICAL ============================ -->
+    <div class="faq-group" data-group="general">
+        <h2>General / Technical</h2>
+        <p class="faq-group-intro">For procurement teams, security reviewers, and engineers integrating with Charvak.</p>
+
+        <details class="faq-item"><summary>What compliance jurisdictions do you cover?</summary><div class="faq-answer">
+            6 jurisdictions: India DPDP, GDPR (EU), NYC Local Law 144 (US), EU AI Act, PIPL (China), PDPA (Singapore). <a href="/compliance">Full compliance page →</a>
+        </div></details>
+
+        <details class="faq-item"><summary>Where is my data stored?</summary><div class="faq-answer">
+            Default: Singapore (Render SG) — lowest latency for India, GCC, SEA, APAC. Additional regions available on request: US-East (Virginia), EU-West (Frankfurt), UK (London). Multi-region self-serve rollout: Q3 2027. <a href="/compliance">See data residency →</a>
+        </div></details>
+
+        <details class="faq-item"><summary>Is there an API?</summary><div class="faq-answer">
+            Yes. Several public APIs: <code>/api/passport/{handle}/verify</code> (single candidate verification), <code>/api/cas/verify-batch</code> (bulk verification for universities), <code>/api/jobs/unified</code> (aggregated jobs feed), <code>/api/career-certification/verify/{hash}</code> (cert verification). All rate-limited, all documented on request.
+        </div></details>
+
+        <details class="faq-item"><summary>What's your uptime?</summary><div class="faq-answer">
+            SLA committed at 99.9% for Enterprise tier. Current measured uptime: 99.95% (last 90 days). Post-incident reports available on request. Backups: daily encrypted, 30-day retention, quarterly restore drills.
+        </div></details>
+
+        <details class="faq-item"><summary>How do I contact support?</summary><div class="faq-answer">
+            Email <a href="mailto:hr@charvakit.com">hr@charvakit.com</a> — we respond within 2 business days for standard queries, same day for paying customers. Phone: +91 799 7871 701. For enterprise contracts, a dedicated CSM is assigned.
+        </div></details>
+
+        <details class="faq-item"><summary>Can I request a custom feature?</summary><div class="faq-answer">
+            Yes. Custom features prioritized by active demand. Reply with your specific requirement — we evaluate against roadmap quarterly. Custom integrations (ATS, LMS, SSO) available as add-ons on Enterprise tier.
+        </div></details>
+    </div>
+
+    <!-- ============================ CTA ============================ -->
+    <div class="faq-cta">
+        <h3>Can't find your answer?</h3>
+        <p>Reply to any email we've sent, or email us directly. We respond within 2 business days.</p>
+        <a href="mailto:hr@charvakit.com?subject=Charvak FAQ Question" class="btn-cta">Email us</a>
+        <a href="/demo" class="btn-outline">See it live →</a>
+    </div>
+</div>
+
+<script>
+(function() {
+    var tabs = document.querySelectorAll('.faq-tab');
+    var groups = document.querySelectorAll('.faq-group');
+    tabs.forEach(function(tab) {
+        tab.addEventListener('click', function() {
+            var target = tab.getAttribute('data-group');
+            tabs.forEach(function(t) { t.classList.remove('active'); });
+            tab.classList.add('active');
+            groups.forEach(function(g) {
+                if (target === 'all' || g.getAttribute('data-group') === target) {
+                    g.style.display = 'block';
+                } else {
+                    g.style.display = 'none';
+                }
+            });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    });
+})();
+</script>
+{% endblock %}
