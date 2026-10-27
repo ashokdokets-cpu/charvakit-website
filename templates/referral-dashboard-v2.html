@@ -145,6 +145,13 @@
             </p>
         </div>
 
+        <div class="rd-section">
+            <h2>Request Payout</h2>
+            <div id="payoutStatus">
+                <p>Loading payout status...</p>
+            </div>
+        </div>
+
         <div class="rd-cta">
             <a href="/referral">Referral Program Details</a>
             <a href="/faq" class="secondary">FAQ</a>
@@ -268,6 +275,170 @@ function copyRefLink() {
     setTimeout(function() { btn.textContent = original; }, 2000);
 }
 
+// Load payout section (Session 94b)
+async function loadPayoutStatus() {
+    var token = _token();
+    if (!token) return;
+    
+    try {
+        var r = await fetch('/api/payout/status', {
+            headers: {'Authorization': 'Bearer ' + token}
+        });
+        var data = await r.json();
+        if (data.status !== 'success') return;
+        
+        var elig = data.eligibility || {};
+        var history = data.history || [];
+        var method = elig.payout_method || '';
+        
+        // Render payout method UI
+        var methodEl = document.getElementById('payoutMethod');
+        if (methodEl) {
+            if (method) {
+                var d = {};
+                try { d = typeof method === 'string' ? {} : method; } catch(e) {}
+                methodEl.innerHTML = '<div style="padding:12px;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;">' +
+                    '<div style="font-weight:700;color:#166534;">✓ Payout method saved</div>' +
+                    '<div style="font-size:0.9rem;color:#4b5563;margin-top:4px;">Method: <strong>' + method.replace(/_/g, ' ') + '</strong></div>' +
+                    '<button onclick="showPayoutMethodForm()" style="margin-top:12px;padding:6px 14px;background:#3ba591;color:#fff;border:none;border-radius:6px;font-size:0.85rem;cursor:pointer;">Update method</button>' +
+                    '</div>';
+            } else {
+                methodEl.innerHTML = '<div class="rd-empty">' +
+                    '<div class="rd-empty-icon">💳</div>' +
+                    '<p>Add a payout method to receive commissions.</p>' +
+                    '<button onclick="showPayoutMethodForm()" style="margin-top:12px;padding:10px 20px;background:#3ba591;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;">Add payout method</button>' +
+                    '</div>';
+            }
+        }
+        
+        // Render payout status
+        var statusEl = document.getElementById('payoutStatus');
+        if (statusEl) {
+            var available = (elig.amount_available_inr || 0) / 100;
+            var canRequest = elig.eligible === true;
+            var reasons = elig.reasons || [];
+            
+            var html = '<div style="padding:16px;background:' + (canRequest ? '#f0fdf4;border:1px solid #86efac' : '#fef3c7;border:1px solid #fcd34d') + ';border-radius:8px;margin-bottom:16px;">' +
+                '<div style="font-size:0.8rem;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Available for payout</div>' +
+                '<div style="font-size:2rem;font-weight:800;color:' + (canRequest ? '#166534' : '#92400e') + ';">₹' + available.toFixed(2) + '</div>';
+            
+            if (canRequest) {
+                html += '<button onclick="requestPayout()" style="margin-top:12px;padding:10px 24px;background:#3ba591;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;">Request payout of ₹' + available.toFixed(2) + '</button>';
+            } else if (reasons.length > 0) {
+                html += '<ul style="margin-top:8px;padding-left:20px;font-size:0.85rem;color:#92400e;">';
+                reasons.forEach(function(r) { html += '<li>' + r + '</li>'; });
+                html += '</ul>';
+            }
+            html += '</div>';
+            
+            // Payout history
+            if (history.length > 0) {
+                html += '<h3 style="font-size:1rem;font-weight:700;margin:16px 0 8px;">Payout history</h3>';
+                html += '<table style="width:100%;border-collapse:collapse;font-size:0.9rem;">';
+                html += '<thead><tr style="background:#f8fafc;"><th style="text-align:left;padding:8px;font-size:0.75rem;text-transform:uppercase;color:#6b7280;">Date</th><th style="text-align:left;padding:8px;font-size:0.75rem;text-transform:uppercase;color:#6b7280;">Amount</th><th style="text-align:left;padding:8px;font-size:0.75rem;text-transform:uppercase;color:#6b7280;">Method</th><th style="text-align:left;padding:8px;font-size:0.75rem;text-transform:uppercase;color:#6b7280;">Status</th><th style="text-align:left;padding:8px;font-size:0.75rem;text-transform:uppercase;color:#6b7280;">Reference</th></tr></thead><tbody>';
+                history.forEach(function(p) {
+                    var date = (p.requested_at || '').slice(0, 10);
+                    var amt = (p.amount_inr || 0) / 100;
+                    var statusColor = p.status === 'paid' ? 'color:#065f46;font-weight:700;' : (p.status === 'rejected' ? 'color:#991b1b;' : 'color:#92400e;');
+                    html += '<tr style="border-bottom:1px solid #f1f5f9;">' +
+                        '<td style="padding:8px;">' + date + '</td>' +
+                        '<td style="padding:8px;">₹' + amt.toFixed(2) + '</td>' +
+                        '<td style="padding:8px;">' + (p.payout_method || '').replace(/_/g, ' ') + '</td>' +
+                        '<td style="padding:8px;' + statusColor + '">' + (p.status || '') + '</td>' +
+                        '<td style="padding:8px;font-family:monospace;font-size:0.8rem;">' + (p.payment_reference || '—') + '</td>' +
+                        '</tr>';
+                });
+                html += '</tbody></table>';
+            }
+            
+            statusEl.innerHTML = html;
+        }
+    } catch(e) {
+        console.error(e);
+    }
+}
+
+function showPayoutMethodForm() {
+    var method = prompt('Payout method (type one):\n- razorpay_upi (for India)\n- razorpay_bank (for India)\n- paypal (international)\n- wire (international)');
+    if (!method) return;
+    
+    method = method.trim().toLowerCase();
+    var details = {};
+    
+    if (method === 'razorpay_upi') {
+        details.upi_id = prompt('Your UPI ID (e.g., yourname@ybl):');
+        if (!details.upi_id) return;
+    } else if (method === 'razorpay_bank') {
+        details.account_holder = prompt('Account holder name:');
+        details.account_number = prompt('Bank account number:');
+        details.ifsc = prompt('IFSC code:');
+        if (!details.account_number || !details.ifsc) return;
+    } else if (method === 'paypal') {
+        details.paypal_email = prompt('Your PayPal email:');
+        if (!details.paypal_email) return;
+    } else if (method === 'wire') {
+        details.beneficiary_name = prompt('Beneficiary name:');
+        details.bank_name = prompt('Bank name:');
+        details.account_number = prompt('Account number:');
+        details.swift = prompt('SWIFT code:');
+        if (!details.account_number || !details.swift) return;
+    } else {
+        alert('Unknown method. Please enter one of: razorpay_upi, razorpay_bank, paypal, wire');
+        return;
+    }
+    
+    (async function() {
+        try {
+            var r = await fetch('/api/payout/method', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + _token(),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    method: method,
+                    details: details,
+                    country: 'IN'
+                })
+            });
+            var data = await r.json();
+            if (data.status === 'success') {
+                alert('✓ Payout method saved');
+                loadPayoutStatus();
+            } else {
+                alert('Failed: ' + (data.message || 'unknown error'));
+            }
+        } catch(e) {
+            alert('Network error: ' + e.message);
+        }
+    })();
+}
+
+async function requestPayout() {
+    if (!confirm('Request payout for all eligible conversions? This will create a payout request that an admin reviews within 24-48 hours.')) return;
+    
+    try {
+        var r = await fetch('/api/payout/request', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + _token(),
+                'Content-Type': 'application/json'
+            },
+            body: '{}'
+        });
+        var data = await r.json();
+        if (data.status === 'success') {
+            alert('✓ Payout requested: ' + data.payout.payout_id + '\nAmount: ₹' + (data.payout.amount_inr/100).toFixed(2) + '\n\nYou will receive an email when the payout is processed.');
+            loadPayoutStatus();
+        } else {
+            alert('Failed: ' + (data.message || JSON.stringify(data.reasons || [])));
+        }
+    } catch(e) {
+        alert('Network error: ' + e.message);
+    }
+}
+
 loadDashboard();
+loadPayoutStatus();
 </script>
 {% endblock %}
