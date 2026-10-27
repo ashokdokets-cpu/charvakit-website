@@ -4908,6 +4908,20 @@ async def referral_landing_page(request: Request):
     return template_response("referral.html", request,
                              "Referral Program - Charvak")
 
+
+@app.get("/referral/student", response_class=HTMLResponse)
+async def referral_student_page(request: Request):
+    """Student referral program — credit rewards + social share."""
+    return template_response("referral-student.html", request,
+                             "Student Referral Program - Charvak")
+
+
+@app.get("/referral/institution", response_class=HTMLResponse)
+async def referral_institution_page(request: Request):
+    """Institution referral program — tiered commission."""
+    return template_response("referral-institution.html", request,
+                             "Institution Referral Program - Charvak")
+
 @app.post("/api/affiliate/apply")
 async def api_affiliate_apply(request: Request):
     """Submit affiliate application."""

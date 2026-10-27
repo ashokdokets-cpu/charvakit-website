@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% block title %}Student Referral Program — Charvak{% endblock %}
+{% block description %}Refer a friend to Charvak, earn credits instantly. 50 credits per signup + 100 per paid cert + depth-2 bonuses + milestone rewards.{% endblock %}
+
+{% block content %}
+<style>
+.rs-wrap { max-width: 960px; margin: 0 auto; padding: 32px 20px; }
+.rs-hero { background: linear-gradient(135deg, #3ba591 0%, #2a8070 100%); color: #fff; padding: 56px 32px; border-radius: 16px; margin-bottom: 32px; text-align: center; }
+.rs-hero h1 { font-size: 2.3rem; font-weight: 800; margin: 0 0 14px; line-height: 1.15; }
+.rs-hero p { font-size: 1.1rem; opacity: 0.94; max-width: 600px; margin: 0 auto 24px; }
+.rs-hero .rs-cta { display: inline-block; background: #fff; color: #2a8070; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 1.05rem; margin: 4px; }
+.rs-hero .rs-cta:hover { background: #f0fdf4; }
+
+.rs-rewards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 40px; }
+.rs-reward { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; text-align: center; }
+.rs-reward-icon { font-size: 2rem; margin-bottom: 8px; }
+.rs-reward-value { font-size: 2rem; font-weight: 800; color: #3ba591; line-height: 1; margin-bottom: 6px; }
+.rs-reward-label { font-size: 0.9rem; font-weight: 600; color: #1a1a2e; margin-bottom: 4px; }
+.rs-reward-detail { font-size: 0.8rem; color: #6b7280; }
+
+.rs-table { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; margin-bottom: 40px; }
+.rs-table table { width: 100%; border-collapse: collapse; }
+.rs-table th { text-align: left; padding: 14px 20px; background: #f8fafc; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280; border-bottom: 1px solid #e2e8f0; }
+.rs-table td { padding: 16px 20px; border-bottom: 1px solid #f1f5f9; font-size: 0.92rem; color: #4b5563; }
+.rs-table td:first-child { font-weight: 600; color: #1a1a2e; }
+.rs-table td:last-child { font-weight: 700; color: #3ba591; }
+.rs-table tr:last-child td { border-bottom: none; }
+
+.rs-section { margin-bottom: 40px; }
+.rs-section h2 { font-size: 1.5rem; font-weight: 800; color: #1a1a2e; margin: 0 0 16px; }
+.rs-section p { color: #6b7280; line-height: 1.6; margin-bottom: 16px; }
+
+.rs-share-box { background: #f0fdf4; border: 2px solid #86efac; border-radius: 14px; padding: 32px; text-align: center; }
+.rs-share-box h3 { font-size: 1.3rem; color: #166534; margin: 0 0 8px; }
+.rs-share-box p { color: #4b5563; margin-bottom: 20px; font-size: 0.95rem; }
+.rs-share-btns { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.rs-share-btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.95rem; border: none; cursor: pointer; }
+.rs-share-wa { background: #25D366; color: #fff; }
+.rs-share-li { background: #0A66C2; color: #fff; }
+.rs-share-em { background: #3ba591; color: #fff; }
+.rs-share-copy { background: #1a1a2e; color: #fff; }
+.rs-share-btn:hover { opacity: 0.9; }
+
+.rs-faq { background: #f8fafc; border-radius: 12px; padding: 32px; margin-bottom: 32px; }
+.rs-faq h2 { font-size: 1.25rem; font-weight: 800; color: #1a1a2e; margin: 0 0 20px; }
+.rs-faq details { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; margin-bottom: 8px; }
+.rs-faq summary { cursor: pointer; font-weight: 600; color: #1a1a2e; font-size: 0.9rem; }
+.rs-faq details p { margin: 8px 0 0; color: #4b5563; font-size: 0.88rem; line-height: 1.55; }
+
+.rs-cta-final { background: #1a1a2e; color: #fff; border-radius: 14px; padding: 36px 32px; text-align: center; }
+.rs-cta-final h2 { font-size: 1.5rem; margin: 0 0 8px; }
+.rs-cta-final p { opacity: 0.85; margin: 0 0 20px; }
+.rs-cta-final a { display: inline-block; background: #3ba591; color: #fff; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: 700; margin: 4px; }
+.rs-cta-final a:hover { background: #2a8070; }
+
+@media (max-width: 640px) {
+    .rs-hero h1 { font-size: 1.6rem; }
+    .rs-share-btn { width: 100%; justify-content: center; }
+}
+</style>
+
+<div class="rs-wrap">
+    <div class="rs-hero">
+        <h1>Refer a friend. Earn credits instantly.</h1>
+        <p>50 credits when they sign up. 100 more when they pay for a cert. 25 more when they refer someone else. Plus milestone bonuses.</p>
+        <a href="/referral-dashboard" class="rs-cta">Get my referral link →</a>
+    </div>
+
+    <div class="rs-rewards">
+        <div class="rs-reward">
+            <div class="rs-reward-icon">🎉</div>
+            <div class="rs-reward-value">50</div>
+            <div class="rs-reward-label">Friend signs up</div>
+            <div class="rs-reward-detail">You + friend both get 50 credits</div>
+        </div>
+        <div class="rs-reward">
+            <div class="rs-reward-icon">🎓</div>
+            <div class="rs-reward-value">+100</div>
+            <div class="rs-reward-label">Friend pays for a cert</div>
+            <div class="rs-reward-detail">Credits unlock assessments + courses</div>
+        </div>
+        <div class="rs-reward">
+            <div class="rs-reward-icon">🔗</div>
+            <div class="rs-reward-value">+25</div>
+            <div class="rs-reward-label">Depth-2 referral</div>
+            <div class="rs-reward-detail">When your friend refers someone</div>
+        </div>
+        <div class="rs-reward">
+            <div class="rs-reward-icon">🏆</div>
+            <div class="rs-reward-value">+200/+500</div>
+            <div class="rs-reward-label">Milestone bonuses</div>
+            <div class="rs-reward-detail">At 5 and 10 total referrals</div>
+        </div>
+    </div>
+
+    <div class="rs-section">
+        <h2>Full credit table</h2>
+        <div class="rs-table">
+            <table>
+                <thead>
+                    <tr><th>Action</th><th>What happens</th><th>You earn</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Friend signs up</td>
+                        <td>They create a Charvak account via your link</td>
+                        <td>50 credits</td>
+                    </tr>
+                    <tr>
+                        <td>Friend pays for a cert</td>
+                        <td>Any paid career or readiness certificate</td>
+                        <td>+100 credits</td>
+                    </tr>
+                    <tr>
+                        <td>Friend refers someone (depth-2)</td>
+                        <td>Your friend's referral signs up</td>
+                        <td>+25 credits</td>
+                    </tr>
+                    <tr>
+                        <td>Milestone: 5 referrals</td>
+                        <td>One-time bonus</td>
+                        <td>+200 credits</td>
+                    </tr>
+                    <tr>
+                        <td>Milestone: 10 referrals</td>
+                        <td>One-time bonus</td>
+                        <td>+500 credits</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="rs-share-box">
+        <h3>Share your link</h3>
+        <p>Visit your dashboard to get your unique referral code, then share it anywhere.</p>
+        <div class="rs-share-btns">
+            <a href="/referral-dashboard" class="rs-share-btn rs-share-copy">📋 Get my link</a>
+            <a href="https://wa.me/?text=Check%20out%20Charvak%20%E2%80%94%20AI-verified%20skill%20certifications.%20Get%20your%20free%20readiness%20check%3A%20https%3A%2F%2Fwww.charvakit.com%2Freadiness-check" target="_blank" class="rs-share-btn rs-share-wa">💬 Share on WhatsApp</a>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fwww.charvakit.com" target="_blank" class="rs-share-btn rs-share-li">💼 Share on LinkedIn</a>
+            <a href="mailto:?subject=Charvak%20%E2%80%94%20AI-verified%20skill%20certifications&body=Hey%2C%20check%20this%20out%3A%20https%3A%2F%2Fwww.charvakit.com" class="rs-share-btn rs-share-em">✉️ Email a friend</a>
+        </div>
+    </div>
+
+    <div class="rs-faq" style="margin-top:32px;">
+        <h2>Student FAQ</h2>
+        <details>
+            <summary>When do credits land?</summary>
+            <p>Signup credits: instant. Cert credits: within 24 hours of payment confirmation. Milestones: within 24 hours of trigger. All credits appear in your credit dashboard.</p>
+        </details>
+        <details>
+            <summary>What can I use credits for?</summary>
+            <p>Any paid AI tool (career assessments, IELTS deep reports, resume roast), mock drives, AI courses, and readiness certificates. 100 credits ≈ ₹50 in value.</p>
+        </details>
+        <details>
+            <summary>What counts as a "paid cert"?</summary>
+            <p>Any certificate from Charvak that costs credits: career certifications (5 credits for 70-84 score tier), readiness checks (25 credits), IELTS deep reports (99 credits at 400 credits value), or FYP certifications.</p>
+        </details>
+        <details>
+            <summary>How does depth-2 work?</summary>
+            <p>If your friend (depth 1) refers someone else (depth 2) and that person signs up, you earn 25 credits. It doesn't go deeper than 2 levels.</p>
+        </details>
+        <details>
+            <summary>Can I combine credits + commission?</summary>
+            <p>Yes. As a student you earn credits. If you also refer institutions or employers, you earn commission separately. Both stack — see the dashboard for both.</p>
+        </details>
+    </div>
+
+    <div class="rs-cta-final">
+        <h2>Ready to start earning?</h2>
+        <p>Get your unique link in 5 seconds. Every signup is tracked automatically.</p>
+        <a href="/referral-dashboard">Go to dashboard</a>
+        <a href="/referral" style="background:transparent;border:2px solid rgba(255,255,255,0.4);">See all programs</a>
+    </div>
+</div>
+{% endblock %}
