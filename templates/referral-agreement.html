@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+{% block title %}Referral Program Agreement — Charvak{% endblock %}
+{% block description %}Terms and conditions for the Charvak referral and affiliate program. Version 1.0, effective Oct 29, 2026.{% endblock %}
+
+{% block content %}
+<style>
+.ra-wrap { max-width: 860px; margin: 0 auto; padding: 32px 20px; }
+.ra-hero { background: #1a1a2e; color: #fff; padding: 36px 32px; border-radius: 14px; margin-bottom: 32px; }
+.ra-hero h1 { font-size: 1.9rem; font-weight: 800; margin: 0 0 8px; }
+.ra-hero .ra-version { display: inline-block; background: rgba(255,255,255,0.18); padding: 4px 12px; border-radius: 12px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-top: 8px; }
+.ra-hero p { margin: 12px 0 0; opacity: 0.85; font-size: 0.95rem; }
+
+.ra-body { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 40px; }
+.ra-body h2 { font-size: 1.15rem; font-weight: 800; color: #1a1a2e; margin: 32px 0 12px; padding-top: 16px; border-top: 1px solid #f1f5f9; }
+.ra-body h2:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+.ra-body p { color: #374151; line-height: 1.7; margin: 0 0 14px; font-size: 0.95rem; }
+.ra-body ul { color: #374151; line-height: 1.7; margin: 0 0 14px; padding-left: 24px; font-size: 0.95rem; }
+.ra-body li { margin-bottom: 6px; }
+.ra-body strong { color: #1a1a2e; }
+.ra-body code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 0.88rem; color: #1a1a2e; }
+.ra-toc { background: #f8fafc; border-radius: 10px; padding: 20px 24px; margin-bottom: 24px; }
+.ra-toc h3 { font-size: 0.85rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #6b7280; margin: 0 0 12px; }
+.ra-toc ol { margin: 0; padding-left: 20px; }
+.ra-toc li { padding: 3px 0; font-size: 0.9rem; }
+.ra-toc a { color: #3ba591; text-decoration: none; font-weight: 600; }
+.ra-toc a:hover { text-decoration: underline; }
+
+.ra-accept { background: #f0fdf4; border: 2px solid #86efac; border-radius: 12px; padding: 28px; margin-top: 32px; }
+.ra-accept h3 { font-size: 1.2rem; color: #166534; margin: 0 0 8px; }
+.ra-accept p { color: #4b5563; margin: 0 0 20px; font-size: 0.92rem; }
+.ra-accept label { display: flex; align-items: flex-start; gap: 10px; padding: 12px 16px; background: #fff; border: 1px solid #86efac; border-radius: 8px; cursor: pointer; margin-bottom: 16px; }
+.ra-accept input[type="checkbox"] { margin-top: 4px; cursor: pointer; }
+.ra-accept .ra-label-text { font-size: 0.92rem; color: #1a1a2e; font-weight: 600; }
+.ra-accept button { padding: 12px 32px; background: #3ba591; color: #fff; border: none; border-radius: 8px; font-size: 0.95rem; font-weight: 700; cursor: pointer; }
+.ra-accept button:hover { background: #2a8070; }
+.ra-accept button:disabled { opacity: 0.4; cursor: not-allowed; }
+.ra-accept .ra-msg { margin-top: 14px; padding: 12px 16px; border-radius: 8px; font-size: 0.9rem; display: none; }
+.ra-accept .ra-msg.success { background: #d1fae5; color: #065f46; display: block; }
+.ra-accept .ra-msg.error { background: #fee2e2; color: #991b1b; display: block; }
+
+.ra-footer { text-align: center; color: #6b7280; font-size: 0.85rem; margin-top: 32px; }
+.ra-footer a { color: #3ba591; font-weight: 600; }
+
+@media (max-width: 640px) {
+    .ra-hero h1 { font-size: 1.4rem; }
+    .ra-body { padding: 24px 20px; }
+}
+</style>
+
+<div class="ra-wrap">
+    <div class="ra-hero">
+        <h1>Referral Program Agreement</h1>
+        <span class="ra-version">Version 1.0 · Effective Oct 29, 2026</span>
+        <p>Plain-English terms for the Charvak referral and affiliate program. No hidden clauses. No fine print.</p>
+    </div>
+
+    <div class="ra-body">
+        <div class="ra-toc">
+            <h3>Contents</h3>
+            <ol>
+                <li><a href="#eligibility">Eligibility</a></li>
+                <li><a href="#attribution">Attribution</a></li>
+                <li><a href="#commission">Commission &amp; Rates</a></li>
+                <li><a href="#fraud">Fraud Policy</a></li>
+                <li><a href="#payout">Payout Terms</a></li>
+                <li><a href="#tax">Tax Obligations</a></li>
+                <li><a href="#rights">Company Rights</a></li>
+                <li><a href="#relationship">No Employment Relationship</a></li>
+                <li><a href="#warranty">No Warranty</a></li>
+                <li><a href="#law">Governing Law</a></li>
+            </ol>
+        </div>
+
+        <h2 id="eligibility">1. Eligibility</h2>
+        <p>You may participate in the Charvak referral program if you are:</p>
+        <ul>
+            <li>At least 18 years old</li>
+            <li>Able to enter into a binding agreement under the laws of your country of residence</li>
+            <li>Not currently under suspension from any Charvak program</li>
+        </ul>
+        <p>You may refer institutions, employers, and other individuals to Charvak. You may <strong>not</strong> refer yourself, your immediate family members, or companies in which you hold a material ownership interest without prior disclosure and written approval from Charvak.</p>
+        <p>Referrals must be <strong>new to Charvak</strong>. Existing customers do not qualify as referrals, even if they later upgrade their plan.</p>
+
+        <h2 id="attribution">2. Attribution</h2>
+        <p>Attribution is <strong>first-touch</strong>, with a <strong>90-day window</strong>. When someone clicks your unique referral link, a cookie is set on their browser. If they sign up and complete a qualifying transaction within 90 days of that first click, you receive credit for the referral.</p>
+        <p>Attribution rules:</p>
+        <ul>
+            <li>Only the <strong>first</strong> referrer whose link was clicked gets credit. Multi-touch attribution is not supported.</li>
+            <li>If the referred party uses a different email than the one they signed up with, you must notify Charvak within 30 days for the commission to be adjusted.</li>
+            <li>If a referred party's browser blocks cookies, attribution may fail. Use our manual attribution form at <code>/referral-dashboard</code> if you have a written record of the referral.</li>
+            <li>Attribution disputes must be raised within 90 days of the original click. After 90 days, the attribution is final.</li>
+        </ul>
+
+        <h2 id="commission">3. Commission &amp; Rates</h2>
+        <p>Commission rates depend on your <strong>tier</strong> and the <strong>type</strong> of referral:</p>
+        <ul>
+            <li><strong>Student referrals:</strong> 50 credits on signup, 100 credits on paid cert, 25 credits for depth-2 referrals, plus milestone bonuses.</li>
+            <li><strong>Institution referrals:</strong> 10-20% of first-year contract value (tiered: Starter 10% → Elite 20%).</li>
+            <li><strong>Employer referrals:</strong> 15-25% of first-year subscription (tiered), plus 10-22% recurring for as long as the customer stays.</li>
+            <li><strong>Affiliate referrals:</strong> 20-30% first-year, 15-22% recurring (tiered).</li>
+        </ul>
+        <p>Tier upgrades are automatic based on your trailing 12-month performance and apply to <strong>future</strong> commissions only, not retroactively. Charvak may modify commission rates with 30 days' written notice via email. Your acceptance of Version 1.0 does not lock any rate permanently.</p>
+
+        <h2 id="fraud">4. Fraud Policy</h2>
+        <p>Charvak actively monitors for abuse. The following constitute fraud and result in immediate account suspension, forfeiture of pending commissions, and permanent ban:</p>
+        <ul>
+            <li><strong>Self-referral:</strong> using your own link, a friend's link, or any account you control to generate commission on your own activity</li>
+            <li><strong>Fake referrals:</strong> creating fake accounts or fabricating customer relationships</li>
+            <li><strong>Attribution manipulation:</strong> using multiple links, redirects, or cookie manipulation to hijack another referrer's attribution</li>
+            <li><strong>Volume anomalies:</strong> generating more than 20 referrals per day or 5 per hour triggers manual review</li>
+            <li><strong>Refund abuse:</strong> referring customers who then request a refund within 30 days of purchase is monitored; if the refund rate exceeds 30%, your account is reviewed</li>
+        </ul>
+        <p><strong>Refund clawback:</strong> if a referred customer is refunded within 30 days of the commission being paid, the commission is clawed back from your next payout or invoiced directly.</p>
+        <p>Charvak uses hashed IP address matching and email pattern analysis for fraud detection. If you believe your account was flagged in error, contact <a href="mailto:hr@charvakit.com">hr@charvakit.com</a> with evidence and we will review within 10 business days.</p>
+
+        <h2 id="payout">5. Payout Terms</h2>
+        <p>Commission is paid according to the following schedule:</p>
+        <ul>
+            <li><strong>30-day fraud hold:</strong> all commission is held for 30 days from the conversion date before becoming payable</li>
+            <li><strong>Minimum payout:</strong> ₹1,000 (or equivalent) per payout request</li>
+            <li><strong>Request process:</strong> request via <code>/referral-dashboard</code>, admin reviews, transfers manually, marks paid with reference</li>
+            <li><strong>Processing time:</strong> manual review within 2 business days of request; actual transfer within 5 business days of approval</li>
+            <li><strong>Payout method:</strong> Razorpay (INR), PayPal (multi-currency), or wire transfer (min ₹10,000) — chosen by you at request time</li>
+            <li><strong>Rejection:</strong> Charvak may reject a payout request if it fails fraud review, if the account is suspended, or if there is an unresolved dispute</li>
+        </ul>
+        <p>Charvak is not responsible for payout failures due to incorrect bank details, closed accounts, or international transfer restrictions in your country.</p>
+
+        <h2 id="tax">6. Tax Obligations</h2>
+        <p><strong>You are responsible for all taxes on your commission.</strong> Charvak does not provide tax advice.</p>
+        <p><strong>India-based referrers:</strong> Tax Deducted at Source (TDS) applies at 10% on commissions exceeding ₹30,000 per financial year, per Section 194H of the Indian Income Tax Act. TDS is deducted at payout and a certificate (Form 16A) is provided by the end of the quarter. You must provide a valid PAN; if not, TDS is deducted at 20% per Section 206AA.</p>
+        <p><strong>US-based referrers:</strong> A W-9 form is required before any payout exceeding $600 per calendar year. Charvak will issue a 1099-NEC form by January 31 of the following year for US-based referrers who earn $600 or more. If W-9 is not on file, 24% backup withholding applies.</p>
+        <p><strong>EU-based referrers:</strong> VAT applies on B2B referral services. A reverse-charge mechanism applies if you have a valid VAT number. Otherwise, standard VAT is applied at the payout currency equivalent.</p>
+        <p><strong>Other jurisdictions:</strong> Withholding tax may apply depending on your country's tax treaty with India. Charvak will withhold at the required rate; you must claim the benefit at tax time via a tax credit for foreign taxes paid.</p>
+
+        <h2 id="rights">7. Company Rights</h2>
+        <p>Charvak reserves the right to:</p>
+        <ul>
+            <li><strong>Suspend the program</strong> in any jurisdiction with 30 days' notice (except for fraud, which is immediate)</li>
+            <li><strong>Modify commission rates</strong> with 30 days' written notice via email. Continued participation is acceptance of the new rates.</li>
+            <li><strong>Terminate your account</strong> for breach of this agreement, with cause, without notice</li>
+            <li><strong>Reject any referral</strong> that violates the eligibility rules in Section 1</li>
+            <li><strong>Audit your referral activity</strong> at any time, with reasonable notice</li>
+        </ul>
+        <p>If Charvak terminates the program in your jurisdiction with 30 days' notice, all accrued but unpaid commissions are still paid out according to the normal schedule.</p>
+
+        <h2 id="relationship">8. No Employment Relationship</h2>
+        <p>This agreement does not create an employment, agency, partnership, joint venture, or franchise relationship. You are an <strong>independent contractor</strong> acting on your own behalf. You are not authorized to speak on Charvak's behalf, sign contracts, or make binding commitments.</p>
+        <p>You may not use Charvak's trademarks, logos, or brand assets without explicit written permission, except in the standard referral link and pre-approved marketing materials that Charvak provides on <code>/referral</code> and <code>/affiliate</code>.</p>
+        <p>You are solely responsible for your own equipment, internet access, marketing materials, and any expenses incurred in promoting Charvak referrals.</p>
+
+        <h2 id="warranty">9. No Warranty</h2>
+        <p>Charvak provides the referral program "as is" without warranty of any kind. Charvak does not guarantee:</p>
+        <ul>
+            <li>Any specific number of referrals or conversions</li>
+            <li>Any specific commission amount</li>
+            <li>Uptime or availability of the tracking system</li>
+            <li>Continued availability of the program in any specific jurisdiction</li>
+        </ul>
+        <p>Charvak makes reasonable efforts to track referrals accurately and pay commissions on time, but does not warrant the tracking is error-free. If you identify a tracking error, notify Charvak within 90 days for correction.</p>
+
+        <h2 id="law">10. Governing Law</h2>
+        <p>This agreement is governed by the laws of India. Any dispute arising from this agreement is subject to the exclusive jurisdiction of the courts of Guntur, Andhra Pradesh, India.</p>
+        <p>If any provision of this agreement is held to be unenforceable, the remaining provisions remain in full force and effect. This is the entire agreement between you and Charvak regarding the referral program; it supersedes all prior agreements and representations.</p>
+        <p>Questions? Contact <a href="mailto:hr@charvakit.com">hr@charvakit.com</a>.</p>
+
+        <div class="ra-accept" id="raAcceptBox" style="display:none;">
+            <h3>Accept the agreement</h3>
+            <p>Check the box below and click "Accept" to activate your referral account.</p>
+            <label>
+                <input type="checkbox" id="raCheckbox">
+                <span class="ra-label-text">I have read and agree to the Charvak Referral Program Agreement, Version 1.0, effective Oct 29, 2026.</span>
+            </label>
+            <button type="button" id="raAcceptBtn" onclick="acceptAgreement()" disabled>Accept Agreement</button>
+            <div class="ra-msg" id="raMsg"></div>
+        </div>
+
+        <div class="ra-footer">
+            Version 1.0 · Effective Oct 29, 2026 · <a href="/referral">Back to referral program</a>
+        </div>
+    </div>
+</div>
+
+<script>
+var AGREEMENT_VERSION = '1.0';
+
+function _token() {
+    return localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    var cb = document.getElementById('raCheckbox');
+    var btn = document.getElementById('raAcceptBtn');
+    if (cb && btn) {
+        cb.addEventListener('change', function() {
+            btn.disabled = !cb.checked;
+        });
+    }
+    
+    // Show the accept box if user is logged in
+    var token = _token();
+    if (token && document.getElementById('raAcceptBox')) {
+        document.getElementById('raAcceptBox').style.display = 'block';
+    }
+});
+
+async function acceptAgreement() {
+    var token = _token();
+    if (!token) {
+        alert('Please sign in first.');
+        window.location.href = '/login?next=/referral/agreement';
+        return;
+    }
+    var btn = document.getElementById('raAcceptBtn');
+    var msg = document.getElementById('raMsg');
+    btn.disabled = true;
+    btn.textContent = 'Accepting...';
+    
+    try {
+        var r = await fetch('/api/referral/accept-agreement', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ version: AGREEMENT_VERSION })
+        });
+        var d = await r.json();
+        if (d.status === 'success') {
+            msg.className = 'ra-msg success';
+            msg.textContent = '✓ Agreement accepted. Redirecting to your dashboard...';
+            setTimeout(function() {
+                window.location.href = '/referral-dashboard';
+            }, 1500);
+        } else {
+            msg.className = 'ra-msg error';
+            msg.textContent = 'Failed: ' + (d.message || 'unknown error');
+            btn.disabled = false;
+            btn.textContent = 'Accept Agreement';
+        }
+    } catch(e) {
+        msg.className = 'ra-msg error';
+        msg.textContent = 'Network error: ' + e.message;
+        btn.disabled = false;
+        btn.textContent = 'Accept Agreement';
+    }
+}
+</script>
+{% endblock %}

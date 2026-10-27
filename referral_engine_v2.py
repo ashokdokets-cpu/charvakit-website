@@ -713,4 +713,86 @@ class ReferralEngine:
             return {"status": "error", "message": str(e)}
 
 
+
+    # ---------- Session 98: Agreement acceptance ----------
+    def accept_agreement(self, referrer_id: str, version: str, ip: str = None) -> dict:
+        """Record agreement acceptance for a referrer."""
+        if not referrer_id or not version:
+            return {"status": "error", "message": "referrer_id and version required"}
+        try:
+            conn = self._conn()
+            cur = conn.cursor()
+            ip_hash = self._hash_ip(ip or "")
+            cur.execute("""
+                UPDATE charvak_referrer_accounts
+                SET agreement_version = %s,
+                    agreement_accepted_at = NOW(),
+                    agreement_ip_hash = %s,
+                    updated_at = NOW()
+                WHERE referrer_id = %s
+                RETURNING referrer_id, agreement_version, agreement_accepted_at
+            """, (version, ip_hash, referrer_id))
+            row = cur.fetchone()
+            conn.commit()
+            cur.close()
+            conn.close()
+            if not row:
+                return {"status": "error", "message": "referrer not found"}
+            return {
+                "status": "success",
+                "referrer_id": row[0],
+                "version": row[1],
+                "accepted_at": row[2].isoformat() if row[2] else None,
+            }
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+    def get_agreement_status(self, referrer_id: str) -> dict:
+        """Check if a referrer has accepted the current agreement version."""
+        CURRENT_VERSION = "1.0"
+        try:
+            conn = self._conn()
+            cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute("""
+                SELECT agreement_version, agreement_accepted_at
+                FROM charvak_referrer_accounts
+                WHERE referrer_id = %s
+            """, (referrer_id,))
+            row = cur.fetchone()
+            cur.close()
+            conn.close()
+            if not row:
+                return {"status": "error", "message": "referrer not found"}
+            
+            accepted_version = row["agreement_version"]
+            accepted_at = row["agreement_accepted_at"]
+            return {
+                "status": "success",
+                "current_version": CURRENT_VERSION,
+                "accepted_version": accepted_version,
+                "accepted_at": accepted_at.isoformat() if accepted_at else None,
+                "is_accepted": accepted_version == CURRENT_VERSION,
+                "needs_reacceptance": accepted_version is not None and accepted_version != CURRENT_VERSION,
+                "terms_url": "/referral/agreement",
+            }
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+    def require_agreement(self, referrer_id: str) -> dict:
+        """Raise-style check: returns success if accepted, error if not."""
+        result = self.get_agreement_status(referrer_id)
+        if result.get("status") != "success":
+            return result
+        if not result.get("is_accepted"):
+            return {
+                "status": "error",
+                "code": "AGREEMENT_NOT_ACCEPTED",
+                "message": "You must accept the Referral Program Agreement before requesting payout.",
+                "terms_url": "/referral/agreement",
+                "current_version": result.get("current_version"),
+                "accepted_version": result.get("accepted_version"),
+            }
+        return {"status": "success", "accepted": True}
+
+
 referral_engine = ReferralEngine()
