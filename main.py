@@ -4883,6 +4883,122 @@ async def api_admin_payout_reject(request: Request, payout_id: str):
 # Affiliate Program Routes (Session 95b)
 # ============================================================
 
+
+# ============================================================
+# Admin Commission Report + CSV Export (Session 97)
+# ============================================================
+
+@app.get("/admin/referrals", response_class=HTMLResponse)
+async def admin_referrals_page(request: Request):
+    """Admin commission report dashboard."""
+    return template_response("admin-referrals.html", request,
+                             "Referral Commissions - Charvak Admin")
+
+
+@app.get("/api/admin/referral/report-summary")
+async def api_admin_referral_summary(request: Request, period: int = 30):
+    """Admin: aggregated KPIs across all referrers."""
+    try:
+        require_admin(request)
+    except HTTPException:
+        raise
+    from referral_engine_v2 import referral_engine
+    return JSONResponse(referral_engine.admin_get_report_summary(period_days=period))
+
+
+@app.get("/api/admin/referral/by-referrer")
+async def api_admin_referral_by_referrer(request: Request, period: int = 30, limit: int = 100):
+    """Admin: commission totals grouped by referrer."""
+    try:
+        require_admin(request)
+    except HTTPException:
+        raise
+    from referral_engine_v2 import referral_engine
+    return JSONResponse(referral_engine.admin_get_commissions_by_referrer(
+        period_days=period, limit=limit))
+
+
+@app.get("/api/admin/referral/by-month")
+async def api_admin_referral_by_month(request: Request, months: int = 12):
+    """Admin: monthly commission trend."""
+    try:
+        require_admin(request)
+    except HTTPException:
+        raise
+    from referral_engine_v2 import referral_engine
+    return JSONResponse(referral_engine.admin_get_commissions_by_month(months_back=months))
+
+
+@app.get("/api/admin/referral/export/commissions.csv")
+async def api_admin_export_commissions_csv(request: Request, period: int = 30):
+    """Admin: download all commission rows as CSV."""
+    try:
+        require_admin(request)
+    except HTTPException:
+        raise
+    from referral_engine_v2 import referral_engine
+    result = referral_engine.admin_export_commissions_csv(period_days=period)
+    if result.get("status") != "success":
+        return JSONResponse(result, status_code=500)
+    
+    import csv
+    import io
+    output = io.StringIO()
+    fieldnames = [
+        "conversion_id", "created_at", "referrer_email", "referrer_name",
+        "referrer_tier", "referred_email", "conversion_type",
+        "conversion_value_inr", "commission_rate", "commission_amount_inr",
+        "status", "hold_until", "paid_at", "payment_reference"
+    ]
+    writer = csv.DictWriter(output, fieldnames=fieldnames, extrasaction="ignore")
+    writer.writeheader()
+    for row in result["rows"]:
+        writer.writerow(row)
+    
+    from fastapi.responses import Response
+    timestamp = datetime.now().strftime("%Y%m%d")
+    return Response(
+        content=output.getvalue(),
+        media_type="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="charvak_commissions_{timestamp}.csv"'}
+    )
+
+
+@app.get("/api/admin/referral/export/payouts.csv")
+async def api_admin_export_payouts_csv(request: Request, period: int = 90):
+    """Admin: download all payout rows as CSV."""
+    try:
+        require_admin(request)
+    except HTTPException:
+        raise
+    from referral_engine_v2 import referral_engine
+    result = referral_engine.admin_export_payouts_csv(period_days=period)
+    if result.get("status") != "success":
+        return JSONResponse(result, status_code=500)
+    
+    import csv
+    import io
+    output = io.StringIO()
+    fieldnames = [
+        "payout_id", "requested_at", "paid_at", "referrer_email",
+        "referrer_name", "referrer_tier", "amount_inr", "currency",
+        "payout_method", "status", "payment_reference", "approved_by",
+        "admin_notes", "rejection_reason"
+    ]
+    writer = csv.DictWriter(output, fieldnames=fieldnames, extrasaction="ignore")
+    writer.writeheader()
+    for row in result["rows"]:
+        writer.writerow(row)
+    
+    from fastapi.responses import Response
+    timestamp = datetime.now().strftime("%Y%m%d")
+    return Response(
+        content=output.getvalue(),
+        media_type="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="charvak_payouts_{timestamp}.csv"'}
+    )
+
+
 @app.get("/affiliate", response_class=HTMLResponse)
 async def affiliate_landing_page(request: Request):
     """Public affiliate program landing page."""

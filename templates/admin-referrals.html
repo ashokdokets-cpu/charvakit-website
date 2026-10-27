@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+{% block title %}Referral Commissions — Charvak Admin{% endblock %}
+{% block content %}
+<style>
+.ar-wrap { max-width: 1300px; margin: 0 auto; padding: 24px 20px; }
+.ar-hero { background: #1a1a2e; color: #fff; padding: 28px 32px; border-radius: 12px; margin-bottom: 24px; }
+.ar-hero h1 { font-size: 1.6rem; font-weight: 800; margin: 0 0 6px; }
+.ar-hero p { margin: 0; opacity: 0.8; font-size: 0.9rem; }
+.ar-hero .ar-actions { margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap; }
+.ar-hero button { padding: 8px 16px; border: none; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; }
+.ar-hero .ar-btn-primary { background: #3ba591; color: #fff; }
+.ar-hero .ar-btn-primary:hover { background: #2a8070; }
+.ar-hero .ar-btn-secondary { background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.3); }
+.ar-hero .ar-btn-secondary:hover { background: rgba(255,255,255,0.25); }
+.ar-period { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+.ar-period button { padding: 8px 16px; background: #fff; border: 1px solid #e2e8f0; border-radius: 20px; font-size: 0.85rem; font-weight: 600; color: #4b5563; cursor: pointer; }
+.ar-period button.active { background: #3ba591; color: #fff; border-color: #3ba591; }
+.ar-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.ar-kpi { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; }
+.ar-kpi .label { font-size: 0.75rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.ar-kpi .value { font-size: 1.8rem; font-weight: 800; color: #1a1a2e; line-height: 1; }
+.ar-kpi .value.green { color: #3ba591; }
+.ar-kpi .value.amber { color: #d97706; }
+.ar-kpi .sub { font-size: 0.8rem; color: #6b7280; margin-top: 4px; }
+.ar-section { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; margin-bottom: 24px; }
+.ar-section h2 { font-size: 1.15rem; font-weight: 800; color: #1a1a2e; margin: 0 0 16px; }
+.ar-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.ar-table th { text-align: left; padding: 10px 12px; background: #f8fafc; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; color: #6b7280; border-bottom: 1px solid #e2e8f0; }
+.ar-table td { padding: 12px; border-bottom: 1px solid #f1f5f9; color: #4b5563; }
+.ar-table td:first-child { font-weight: 600; color: #1a1a2e; }
+.ar-table td.amount { font-weight: 700; color: #3ba591; }
+.ar-empty { padding: 40px; text-align: center; color: #94a3b8; font-size: 0.9rem; }
+@media (max-width: 640px) {
+    .ar-hero h1 { font-size: 1.3rem; }
+    .ar-kpi .value { font-size: 1.4rem; }
+}
+</style>
+
+<div class="ar-wrap">
+    <div class="ar-hero">
+        <h1>Referral Commissions</h1>
+        <p>Track referrer performance, commission totals, and payout flow — all in one place.</p>
+        <div class="ar-actions">
+            <button class="ar-btn-primary" onclick="exportCommissionsCsv()">📥 Export Commissions CSV</button>
+            <button class="ar-btn-secondary" onclick="exportPayoutsCsv()">📥 Export Payouts CSV</button>
+            <button class="ar-btn-secondary" onclick="loadAll()">🔄 Refresh</button>
+        </div>
+    </div>
+
+    <div class="ar-period" id="arPeriod">
+        <button data-days="7">Last 7 days</button>
+        <button data-days="30" class="active">Last 30 days</button>
+        <button data-days="90">Last 90 days</button>
+        <button data-days="365">Last 12 months</button>
+        <button data-days="0">All time</button>
+    </div>
+
+    <div id="arKpis" class="ar-kpis">
+        <div class="ar-empty" style="grid-column: 1 / -1;">Loading KPIs...</div>
+    </div>
+
+    <div class="ar-section">
+        <h2>Commission by referrer</h2>
+        <div id="arByReferrer"><div class="ar-empty">Loading...</div></div>
+    </div>
+
+    <div class="ar-section">
+        <h2>Monthly trend</h2>
+        <div id="arByMonth"><div class="ar-empty">Loading...</div></div>
+    </div>
+</div>
+
+<script>
+var _currentPeriod = 30;
+
+function _token() {
+    return localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+}
+
+function _fmtINR(paise) {
+    var rupees = (paise || 0) / 100;
+    return '\u20B9' + rupees.toLocaleString('en-IN', {maximumFractionDigits: 2});
+}
+
+async function loadSummary() {
+    try {
+        var r = await fetch('/api/admin/referral/report-summary?period=' + _currentPeriod, {
+            headers: {'Authorization': 'Bearer ' + _token()}
+        });
+        var d = await r.json();
+        if (d.status !== 'success') return;
+        var conv = d.conversions || {};
+        var pay = d.payouts || {};
+        var kpis = [
+            {label: 'Total referrers', value: d.total_referrers || 0, sub: 'Active accounts'},
+            {label: 'Conversions', value: conv.total_conversions || 0, sub: (conv.active_referrers || 0) + ' active referrers'},
+            {label: 'Revenue referred', value: _fmtINR(conv.total_revenue_inr), sub: 'From referrals', green: true},
+            {label: 'Commission earned', value: _fmtINR(conv.total_commission_inr), sub: 'Pending + paid', green: true},
+            {label: 'Paid out', value: _fmtINR(pay.total_paid_inr), sub: 'Completed payouts'},
+            {label: 'Pending payout', value: _fmtINR(pay.total_pending_payout_inr), sub: (pay.pending_payout_count || 0) + ' requests', amber: true}
+        ];
+        var html = '';
+        for (var i = 0; i < kpis.length; i++) {
+            var k = kpis[i];
+            var cls = k.green ? ' green' : (k.amber ? ' amber' : '');
+            html += '<div class="ar-kpi"><div class="label">' + k.label + '</div><div class="value' + cls + '">' + k.value + '</div><div class="sub">' + k.sub + '</div></div>';
+        }
+        document.getElementById('arKpis').innerHTML = html;
+    } catch(e) {
+        console.error(e);
+    }
+}
+
+async function loadByReferrer() {
+    try {
+        var r = await fetch('/api/admin/referral/by-referrer?period=' + _currentPeriod + '&limit=100', {
+            headers: {'Authorization': 'Bearer ' + _token()}
+        });
+        var d = await r.json();
+        if (d.status !== 'success' || !d.referrers || d.referrers.length === 0) {
+            document.getElementById('arByReferrer').innerHTML = '<div class="ar-empty">No commissions in this period</div>';
+            return;
+        }
+        var html = '<table class="ar-table"><thead><tr><th>Referrer</th><th>Tier</th><th>Conversions</th><th>Revenue</th><th>Commission</th><th>Paid</th><th>Pending</th></tr></thead><tbody>';
+        for (var i = 0; i < d.referrers.length; i++) {
+            var x = d.referrers[i];
+            html += '<tr><td>' + (x.email || '') + '</td><td>' + (x.tier || 'starter') + '</td><td>' + (x.conversion_count || 0) + '</td><td>' + _fmtINR(x.revenue_inr) + '</td><td class="amount">' + _fmtINR(x.commission_inr) + '</td><td>' + _fmtINR(x.paid_inr) + '</td><td>' + _fmtINR(x.pending_inr) + '</td></tr>';
+        }
+        html += '</tbody></table>';
+        document.getElementById('arByReferrer').innerHTML = html;
+    } catch(e) {
+        console.error(e);
+    }
+}
+
+async function loadByMonth() {
+    try {
+        var r = await fetch('/api/admin/referral/by-month?months=12', {
+            headers: {'Authorization': 'Bearer ' + _token()}
+        });
+        var d = await r.json();
+        if (d.status !== 'success' || !d.months || d.months.length === 0) {
+            document.getElementById('arByMonth').innerHTML = '<div class="ar-empty">No monthly data yet</div>';
+            return;
+        }
+        var html = '<table class="ar-table"><thead><tr><th>Month</th><th>Conversions</th><th>Revenue</th><th>Commission</th></tr></thead><tbody>';
+        for (var i = 0; i < d.months.length; i++) {
+            var m = d.months[i];
+            html += '<tr><td>' + (m.month || '') + '</td><td>' + (m.conversion_count || 0) + '</td><td>' + _fmtINR(m.revenue_inr) + '</td><td class="amount">' + _fmtINR(m.commission_inr) + '</td></tr>';
+        }
+        html += '</tbody></table>';
+        document.getElementById('arByMonth').innerHTML = html;
+    } catch(e) {
+        console.error(e);
+    }
+}
+
+async function exportCommissionsCsv() {
+    try {
+        var r = await fetch('/api/admin/referral/export/commissions.csv?period=' + _currentPeriod, {
+            headers: {'Authorization': 'Bearer ' + _token()}
+        });
+        if (!r.ok) { alert('Export failed: ' + r.status); return; }
+        var blob = await r.blob();
+        var url = window.URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'charvak_commissions_' + new Date().toISOString().slice(0, 10) + '.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+    } catch(e) {
+        alert('Export failed: ' + e.message);
+    }
+}
+
+async function exportPayoutsCsv() {
+    try {
+        var r = await fetch('/api/admin/referral/export/payouts.csv?period=90', {
+            headers: {'Authorization': 'Bearer ' + _token()}
+        });
+        if (!r.ok) { alert('Export failed: ' + r.status); return; }
+        var blob = await r.blob();
+        var url = window.URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'charvak_payouts_' + new Date().toISOString().slice(0, 10) + '.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+    } catch(e) {
+        alert('Export failed: ' + e.message);
+    }
+}
+
+function loadAll() {
+    loadSummary();
+    loadByReferrer();
+    loadByMonth();
+}
+
+document.querySelectorAll('#arPeriod button').forEach(function(b) {
+    b.addEventListener('click', function() {
+        document.querySelectorAll('#arPeriod button').forEach(function(x) { x.classList.remove('active'); });
+        b.classList.add('active');
+        _currentPeriod = parseInt(b.dataset.days) || 0;
+        loadAll();
+    });
+});
+
+loadAll();
+</script>
+{% endblock %}
