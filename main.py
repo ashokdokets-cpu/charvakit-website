@@ -4878,6 +4878,145 @@ async def api_admin_payout_reject(request: Request, payout_id: str):
     return JSONResponse(payout_engine.reject_payout(payout_id, reason, admin_email))
 
 
+
+# ============================================================
+# Affiliate Program Routes (Session 95b)
+# ============================================================
+
+@app.get("/affiliate", response_class=HTMLResponse)
+async def affiliate_landing_page(request: Request):
+    """Public affiliate program landing page."""
+    return template_response("affiliate.html", request,
+                             "Affiliate Program - Charvak")
+
+
+@app.get("/affiliate/apply", response_class=HTMLResponse)
+async def affiliate_apply_page(request: Request):
+    """Affiliate application form."""
+    return template_response("affiliate-apply.html", request,
+                             "Apply - Charvak Affiliate")
+
+
+@app.post("/api/affiliate/apply")
+async def api_affiliate_apply(request: Request):
+    """Submit affiliate application."""
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse({"status": "error", "message": "invalid json"}, status_code=400)
+    
+    from affiliate_engine import affiliate_engine
+    
+    # Extract IP
+    ip = request.client.host if request.client else ""
+    cf_ip = request.headers.get("CF-Connecting-IP")
+    if cf_ip:
+        ip = cf_ip
+    
+    result = affiliate_engine.apply(
+        email=data.get("email", ""),
+        name=data.get("name", ""),
+        company_name=data.get("company_name", ""),
+        website=data.get("website", ""),
+        country=data.get("country", "IN"),
+        affiliate_type=data.get("affiliate_type", "individual"),
+        expected_monthly_referrals=int(data.get("expected_monthly_referrals", 0) or 0),
+        expected_deal_size_inr=int(data.get("expected_deal_size_inr", 0) or 0),
+        why_interested=data.get("why_interested", ""),
+        tax_id_type=data.get("tax_id_type", "none"),
+        tax_id=data.get("tax_id", ""),
+        tier_requested=data.get("tier_requested", "bronze"),
+        ip=ip,
+    )
+    return JSONResponse(result)
+
+
+@app.get("/api/affiliate/my-status")
+async def api_affiliate_my_status(request: Request):
+    """Get current user's affiliate status."""
+    try:
+        user = require_auth(request)
+    except HTTPException:
+        raise
+    email = (user or {}).get("email", "") if isinstance(user, dict) else (user or "")
+    if not email:
+        return JSONResponse({"status": "error", "message": "unauthenticated"}, status_code=401)
+    
+    from affiliate_engine import affiliate_engine
+    return JSONResponse(affiliate_engine.get_my_status(email))
+
+
+# ============================================================
+# Admin affiliate approval queue
+# ============================================================
+
+@app.get("/admin/affiliates", response_class=HTMLResponse)
+async def admin_affiliates_page(request: Request):
+    """Admin affiliate approval queue."""
+    return template_response("admin-affiliates.html", request,
+                             "Affiliates - Charvak Admin")
+
+
+@app.get("/api/admin/affiliates/list")
+async def api_admin_affiliates_list(request: Request, status: str = None):
+    """Admin: list applications."""
+    try:
+        require_admin(request)
+    except HTTPException:
+        raise
+    from affiliate_engine import affiliate_engine
+    return JSONResponse(affiliate_engine.list_applications(status_filter=status))
+
+
+@app.get("/api/admin/affiliates/{application_id}")
+async def api_admin_affiliates_get(request: Request, application_id: str):
+    """Admin: get one application."""
+    try:
+        require_admin(request)
+    except HTTPException:
+        raise
+    from affiliate_engine import affiliate_engine
+    return JSONResponse(affiliate_engine.get_application(application_id))
+
+
+@app.post("/api/admin/affiliates/{application_id}/approve")
+async def api_admin_affiliates_approve(request: Request, application_id: str):
+    """Admin: approve application."""
+    try:
+        user = require_admin(request)
+    except HTTPException:
+        raise
+    admin_email = (user or {}).get("email", "") if isinstance(user, dict) else ""
+    try:
+        data = await request.json()
+    except Exception:
+        data = {}
+    
+    from affiliate_engine import affiliate_engine
+    return JSONResponse(affiliate_engine.approve(
+        application_id, admin_email, data.get("tier_granted")
+    ))
+
+
+@app.post("/api/admin/affiliates/{application_id}/reject")
+async def api_admin_affiliates_reject(request: Request, application_id: str):
+    """Admin: reject application."""
+    try:
+        user = require_admin(request)
+    except HTTPException:
+        raise
+    admin_email = (user or {}).get("email", "") if isinstance(user, dict) else ""
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse({"status": "error", "message": "invalid json"}, status_code=400)
+    
+    from affiliate_engine import affiliate_engine
+    return JSONResponse(affiliate_engine.reject(
+        application_id, data.get("reason", ""), admin_email
+    ))
+
+
 @app.get("/api/passport/public/list")
 @limiter.limit("60/minute")
 async def api_passport_public_list(

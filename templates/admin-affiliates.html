@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+{% block title %}Affiliates — Charvak Admin{% endblock %}
+{% block content %}
+<style>
+.aad-wrap { max-width: 1200px; margin: 0 auto; padding: 24px 20px; }
+.aad-hero { background: #1a1a2e; color: #fff; padding: 28px 32px; border-radius: 12px; margin-bottom: 24px; }
+.aad-hero h1 { font-size: 1.6rem; font-weight: 800; margin: 0 0 6px; }
+.aad-hero p { margin: 0; opacity: 0.8; font-size: 0.9rem; }
+
+.aad-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+.aad-tab { padding: 8px 16px; background: #fff; border: 1px solid #e2e8f0; border-radius: 20px; font-size: 0.85rem; font-weight: 600; color: #4b5563; cursor: pointer; }
+.aad-tab.active { background: #3ba591; color: #fff; border-color: #3ba591; }
+
+.aad-table-wrap { background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; }
+.aad-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.aad-table th { text-align: left; padding: 12px; background: #f8fafc; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; color: #6b7280; border-bottom: 1px solid #e2e8f0; }
+.aad-table td { padding: 12px; border-bottom: 1px solid #f1f5f9; }
+.aad-status { display: inline-block; padding: 2px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; }
+.aad-status-pending { background: #fef3c7; color: #92400e; }
+.aad-status-auto_approved { background: #d1fae5; color: #065f46; }
+.aad-status-approved { background: #dbeafe; color: #1e40af; }
+.aad-status-rejected { background: #fee2e2; color: #991b1b; }
+.aad-btn { padding: 6px 14px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; cursor: pointer; border: none; }
+.aad-btn-approve { background: #3ba591; color: #fff; }
+.aad-btn-reject { background: #ef4444; color: #fff; }
+.aad-empty { padding: 40px; text-align: center; color: #94a3b8; }
+.aad-modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 99999; align-items: center; justify-content: center; }
+.aad-modal.show { display: flex; }
+.aad-modal-box { background: #fff; border-radius: 12px; padding: 28px; max-width: 500px; width: 90%; }
+.aad-modal-box h3 { margin: 0 0 12px; }
+.aad-modal-box label { display: block; font-size: 0.85rem; font-weight: 600; margin: 12px 0 6px; }
+.aad-modal-box select, .aad-modal-box textarea { width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; }
+.aad-modal-actions { margin-top: 20px; display: flex; gap: 8px; justify-content: flex-end; }
+</style>
+
+<div class="aad-wrap">
+    <div class="aad-hero">
+        <h1>Affiliate Applications</h1>
+        <p>Review pending Silver+ applications. Bronze auto-approves and won't show here.</p>
+    </div>
+
+    <div class="aad-tabs" id="aadTabs">
+        <button class="aad-tab" data-status="">All</button>
+        <button class="aad-tab active" data-status="pending">Pending (need review)</button>
+        <button class="aad-tab" data-status="auto_approved">Auto-approved (Bronze)</button>
+        <button class="aad-tab" data-status="approved">Approved (Silver+)</button>
+        <button class="aad-tab" data-status="rejected">Rejected</button>
+    </div>
+
+    <div class="aad-table-wrap">
+        <table class="aad-table">
+            <thead>
+                <tr>
+                    <th>Application</th>
+                    <th>Applicant</th>
+                    <th>Company</th>
+                    <th>Tier Requested</th>
+                    <th>Status</th>
+                    <th>Expected</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="aadBody">
+                <tr><td colspan="7" class="aad-empty">Loading...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="aad-modal" id="approveModal">
+    <div class="aad-modal-box">
+        <h3>Approve application</h3>
+        <p id="apInfo" style="font-size:0.9rem;color:#6b7280;"></p>
+        <label>Grant tier</label>
+        <select id="apTier">
+            <option value="silver">Silver (25% / 18% recurring)</option>
+            <option value="gold">Gold (28% / 20% recurring)</option>
+            <option value="platinum">Platinum (30% / 22% recurring)</option>
+            <option value="bronze">Bronze (20% / 15% recurring)</option>
+        </select>
+        <div class="aad-modal-actions">
+            <button class="aad-btn aad-btn-reject" onclick="closeApprove()">Cancel</button>
+            <button class="aad-btn aad-btn-approve" id="apSubmit" onclick="submitApprove()">Approve</button>
+        </div>
+    </div>
+</div>
+
+<script>
+var _approveAppId = null;
+
+function _token() {
+    return localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+}
+
+async function loadApplications(status) {
+    var url = '/api/admin/affiliates/list' + (status ? '?status=' + status : '');
+    try {
+        var r = await fetch(url, {
+            headers: {'Authorization': 'Bearer ' + _token()}
+        });
+        var d = await r.json();
+        var body = document.getElementById('aadBody');
+        
+        if (d.status !== 'success' || !d.applications || d.applications.length === 0) {
+            body.innerHTML = '<tr><td colspan="7" class="aad-empty">No applications in this category</td></tr>';
+            return;
+        }
+        
+        body.innerHTML = d.applications.map(function(a) {
+            var tierLabel = (a.tier_requested || '').toUpperCase();
+            var granted = a.tier_granted ? ' → ' + a.tier_granted.toUpperCase() : '';
+            var statusClass = 'aad-status-' + a.status;
+            var actions = '';
+            
+            if (a.status === 'pending') {
+                actions = '<button class="aad-btn aad-btn-approve" onclick="openApprove(\'' + a.application_id + '\', \'' + (a.applicant_name || '').replace(/\x27/g, '') + '\', \'' + (a.tier_requested || '') + '\')">Review & Approve</button>' +
+                         ' <button class="aad-btn aad-btn-reject" onclick="rejectApp(\'' + a.application_id + '\')">Reject</button>';
+            } else if (a.status === 'auto_approved') {
+                actions = '<span style="font-size:0.8rem;color:#065f46;font-weight:600;">✓ Auto (Bronze)</span>';
+            } else if (a.status === 'approved') {
+                actions = '<span style="font-size:0.8rem;color:#1e40af;font-weight:600;">✓ Approved</span>';
+            } else {
+                actions = '<span style="font-size:0.8rem;color:#991b1b;">Rejected</span>';
+            }
+            
+            return '<tr>' +
+                '<td style="font-family:monospace;font-size:0.8rem;">' + a.application_id + '</td>' +
+                '<td><strong>' + (a.applicant_name || '') + '</strong><br><small style="color:#6b7280;">' + (a.applicant_email || '') + '</small></td>' +
+                '<td>' + (a.company_name || '—') + '</td>' +
+                '<td>' + tierLabel + granted + '</td>' +
+                '<td><span class="aad-status ' + statusClass + '">' + a.status + '</span></td>' +
+                '<td>' + (a.expected_monthly_referrals || 0) + '/mo<br><small style="color:#6b7280;">₹' + Math.round((a.expected_deal_size_inr || 0) / 100).toLocaleString() + '</small></td>' +
+                '<td>' + actions + '</td>' +
+                '</tr>';
+        }).join('');
+    } catch(e) {
+        console.error(e);
+    }
+}
+
+function openApprove(appId, name, tier) {
+    _approveAppId = appId;
+    document.getElementById('apInfo').textContent = 'Approve ' + name + ' (requested: ' + tier + ')';
+    document.getElementById('apTier').value = tier === 'bronze' ? 'silver' : tier;
+    document.getElementById('approveModal').classList.add('show');
+}
+
+function closeApprove() {
+    document.getElementById('approveModal').classList.remove('show');
+    _approveAppId = null;
+}
+
+async function submitApprove() {
+    var tier = document.getElementById('apTier').value;
+    document.getElementById('apSubmit').disabled = true;
+    try {
+        var r = await fetch('/api/admin/affiliates/' + _approveAppId + '/approve', {
+            method: 'POST',
+            headers: {'Authorization': 'Bearer ' + _token(), 'Content-Type': 'application/json'},
+            body: JSON.stringify({tier_granted: tier})
+        });
+        var d = await r.json();
+        if (d.status === 'success') {
+            alert('✓ Approved as ' + tier);
+            closeApprove();
+            loadApplications(document.querySelector('.aad-tab.active').dataset.status);
+        } else {
+            alert('Failed: ' + (d.message || 'unknown'));
+        }
+    } catch(e) {
+        alert('Network error: ' + e.message);
+    } finally {
+        document.getElementById('apSubmit').disabled = false;
+    }
+}
+
+async function rejectApp(appId) {
+    var reason = prompt('Rejection reason:');
+    if (!reason) return;
+    try {
+        var r = await fetch('/api/admin/affiliates/' + appId + '/reject', {
+            method: 'POST',
+            headers: {'Authorization': 'Bearer ' + _token(), 'Content-Type': 'application/json'},
+            body: JSON.stringify({reason: reason})
+        });
+        var d = await r.json();
+        if (d.status === 'success') {
+            alert('✓ Rejected');
+            loadApplications(document.querySelector('.aad-tab.active').dataset.status);
+        } else {
+            alert('Failed: ' + (d.message || 'unknown'));
+        }
+    } catch(e) {
+        alert('Network error: ' + e.message);
+    }
+}
+
+document.querySelectorAll('.aad-tab').forEach(function(tab) {
+    tab.addEventListener('click', function() {
+        document.querySelectorAll('.aad-tab').forEach(function(t) { t.classList.remove('active'); });
+        tab.classList.add('active');
+        loadApplications(tab.dataset.status);
+    });
+});
+
+loadApplications('pending');
+</script>
+{% endblock %}

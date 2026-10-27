@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+{% block title %}Apply — Charvak Affiliate{% endblock %}
+{% block description %}Apply to the Charvak affiliate program. Bronze auto-approves in 30 seconds. Silver+ requires 1-2 day review.{% endblock %}
+
+{% block content %}
+<style>
+.aa-wrap { max-width: 720px; margin: 0 auto; padding: 32px 20px; }
+.aa-hero { text-align: center; margin-bottom: 32px; }
+.aa-hero h1 { font-size: 2rem; font-weight: 800; margin: 0 0 12px; color: #1a1a2e; }
+.aa-hero p { color: #6b7280; font-size: 1.05rem; max-width: 560px; margin: 0 auto; }
+.aa-form { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 32px; }
+.aa-field { margin-bottom: 20px; }
+.aa-field label { display: block; font-weight: 600; color: #1a1a2e; font-size: 0.9rem; margin-bottom: 6px; }
+.aa-field input, .aa-field select, .aa-field textarea { width: 100%; padding: 10px 14px; border: 1px solid #cbd5e0; border-radius: 8px; font-size: 0.95rem; font-family: inherit; }
+.aa-field input:focus, .aa-field select:focus, .aa-field textarea:focus { outline: none; border-color: #3ba591; box-shadow: 0 0 0 3px rgba(59,165,145,0.15); }
+.aa-field textarea { min-height: 100px; resize: vertical; }
+.aa-field .hint { font-size: 0.8rem; color: #6b7280; margin-top: 4px; }
+.aa-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.aa-tier-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-top: 8px; }
+.aa-tier-radio { cursor: pointer; }
+.aa-tier-radio input { display: none; }
+.aa-tier-radio-content { padding: 16px; border: 2px solid #e2e8f0; border-radius: 8px; text-align: center; transition: all 0.15s; }
+.aa-tier-radio input:checked + .aa-tier-radio-content { border-color: #3ba591; background: #f0fdf4; }
+.aa-tier-radio-name { font-size: 0.85rem; font-weight: 700; color: #1a1a2e; text-transform: uppercase; }
+.aa-tier-radio-comm { font-size: 1.3rem; font-weight: 800; color: #3ba591; margin: 4px 0 0; }
+.aa-tier-radio-note { font-size: 0.72rem; color: #6b7280; margin-top: 4px; }
+.aa-submit { background: #3ba591; color: #fff; padding: 14px 32px; border: none; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer; width: 100%; margin-top: 8px; }
+.aa-submit:hover { background: #2a8070; }
+.aa-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+.aa-error { background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 12px 16px; color: #991b1b; font-size: 0.9rem; margin-bottom: 20px; display: none; }
+.aa-success { background: #f0fdf4; border: 2px solid #86efac; border-radius: 12px; padding: 32px; text-align: center; margin-bottom: 20px; display: none; }
+.aa-success h2 { color: #065f46; margin: 0 0 12px; }
+.aa-success p { color: #166534; margin: 0; }
+.aa-req { color: #dc2626; }
+@media (max-width: 600px) {
+    .aa-row { grid-template-columns: 1fr; }
+    .aa-hero h1 { font-size: 1.6rem; }
+}
+</style>
+
+<div class="aa-wrap">
+    <div class="aa-hero">
+        <h1>Apply to the Charvak Affiliate Program</h1>
+        <p>Bronze tier auto-approves in 30 seconds. Silver+ requires 1-2 day review.</p>
+    </div>
+
+    <div id="aaSuccess" class="aa-success">
+        <h2>✓ Application submitted</h2>
+        <p id="aaSuccessMsg"></p>
+        <p style="margin-top:16px;"><a href="/referral-dashboard" style="color:#065f46;font-weight:700;">Go to dashboard →</a></p>
+    </div>
+
+    <div id="aaError" class="aa-error"></div>
+
+    <form id="aaForm" class="aa-form" onsubmit="submitAffiliate(event)">
+        <div class="aa-field">
+            <label>Your name <span class="aa-req">*</span></label>
+            <input type="text" name="name" required placeholder="Jane Doe">
+        </div>
+
+        <div class="aa-field">
+            <label>Email <span class="aa-req">*</span></label>
+            <input type="email" name="email" required placeholder="jane@example.com">
+            <div class="hint">We'll send approval status and dashboard access to this email.</div>
+        </div>
+
+        <div class="aa-row">
+            <div class="aa-field">
+                <label>Company / brand (optional)</label>
+                <input type="text" name="company_name" placeholder="Acme Marketing">
+            </div>
+            <div class="aa-field">
+                <label>Country</label>
+                <select name="country">
+                    <option value="IN" selected>India</option>
+                    <option value="US">United States</option>
+                    <option value="GB">United Kingdom</option>
+                    <option value="AE">UAE</option>
+                    <option value="SG">Singapore</option>
+                    <option value="AU">Australia</option>
+                    <option value="CA">Canada</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="aa-field">
+            <label>Website (optional)</label>
+            <input type="url" name="website" placeholder="https://yourcompany.com">
+        </div>
+
+        <div class="aa-field">
+            <label>Affiliate type</label>
+            <select name="affiliate_type">
+                <option value="individual" selected>Individual</option>
+                <option value="agency">Marketing agency</option>
+                <option value="consultant">Independent consultant</option>
+                <option value="recruiter">Recruiter / staffing</option>
+                <option value="coach">Career coach</option>
+                <option value="other">Other</option>
+            </select>
+        </div>
+
+        <div class="aa-field">
+            <label>Choose your tier</label>
+            <div class="aa-tier-cards">
+                <label class="aa-tier-radio">
+                    <input type="radio" name="tier_requested" value="bronze" checked onchange="updateTierFields()">
+                    <div class="aa-tier-radio-content">
+                        <div class="aa-tier-radio-name">Bronze</div>
+                        <div class="aa-tier-radio-comm">20%</div>
+                        <div class="aa-tier-radio-note">Auto-approve</div>
+                    </div>
+                </label>
+                <label class="aa-tier-radio">
+                    <input type="radio" name="tier_requested" value="silver" onchange="updateTierFields()">
+                    <div class="aa-tier-radio-content">
+                        <div class="aa-tier-radio-name">Silver</div>
+                        <div class="aa-tier-radio-comm">25%</div>
+                        <div class="aa-tier-radio-note">1-2 day review</div>
+                    </div>
+                </label>
+                <label class="aa-tier-radio">
+                    <input type="radio" name="tier_requested" value="gold" onchange="updateTierFields()">
+                    <div class="aa-tier-radio-content">
+                        <div class="aa-tier-radio-name">Gold</div>
+                        <div class="aa-tier-radio-comm">28%</div>
+                        <div class="aa-tier-radio-note">1-2 day review</div>
+                    </div>
+                </label>
+                <label class="aa-tier-radio">
+                    <input type="radio" name="tier_requested" value="platinum" onchange="updateTierFields()">
+                    <div class="aa-tier-radio-content">
+                        <div class="aa-tier-radio-name">Platinum</div>
+                        <div class="aa-tier-radio-comm">30%</div>
+                        <div class="aa-tier-radio-note">By invite</div>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <div class="aa-row">
+            <div class="aa-field">
+                <label>Expected referrals/month</label>
+                <input type="number" name="expected_monthly_referrals" min="0" value="0" id="aaRefs">
+                <div class="hint" id="aaRefsHint">Optional for Bronze</div>
+            </div>
+            <div class="aa-field">
+                <label>Expected deal size (INR)</label>
+                <input type="number" name="expected_deal_size_inr" min="0" value="0" placeholder="50000">
+                <div class="hint">Average ₹ value of a deal you refer</div>
+            </div>
+        </div>
+
+        <div class="aa-field" id="aaTaxField" style="display:none;">
+            <label>Tax ID type</label>
+            <select name="tax_id_type">
+                <option value="none" selected>None</option>
+                <option value="pan">PAN (India)</option>
+                <option value="gst">GST (India)</option>
+                <option value="w9">W-9 (US)</option>
+                <option value="other">Other</option>
+            </select>
+            <label style="margin-top:12px;">Tax ID number <span class="aa-req">*</span></label>
+            <input type="text" name="tax_id" placeholder="Enter your tax ID">
+            <div class="hint">Required for Silver, Gold, Platinum tiers.</div>
+        </div>
+
+        <div class="aa-field">
+            <label>Why are you interested?</label>
+            <textarea name="why_interested" placeholder="I work with 10 tier-2 colleges in South India..."></textarea>
+        </div>
+
+        <button type="submit" class="aa-submit" id="aaSubmitBtn">Submit application</button>
+    </form>
+</div>
+
+<script>
+function updateTierFields() {
+    var tier = document.querySelector('input[name="tier_requested"]:checked').value;
+    var taxField = document.getElementById('aaTaxField');
+    var refsInput = document.getElementById('aaRefs');
+    var refsHint = document.getElementById('aaRefsHint');
+    
+    if (tier === 'bronze') {
+        taxField.style.display = 'none';
+        refsInput.required = false;
+        refsHint.textContent = 'Optional for Bronze';
+    } else {
+        taxField.style.display = 'block';
+        refsInput.required = true;
+        refsHint.textContent = tier.charAt(0).toUpperCase() + tier.slice(1) + ' requires at least ' + 
+            (tier === 'silver' ? '3' : tier === 'gold' ? '10' : '25') + ' referrals/month';
+    }
+}
+
+async function submitAffiliate(e) {
+    e.preventDefault();
+    var form = e.target;
+    var btn = document.getElementById('aaSubmitBtn');
+    var errorEl = document.getElementById('aaError');
+    btn.disabled = true;
+    btn.textContent = 'Submitting...';
+    errorEl.style.display = 'none';
+    
+    var formData = new FormData(form);
+    var data = {};
+    formData.forEach(function(v, k) { data[k] = v; });
+    data.expected_monthly_referrals = parseInt(data.expected_monthly_referrals) || 0;
+    data.expected_deal_size_inr = (parseFloat(data.expected_deal_size_inr) || 0) * 100; // convert INR to paise
+    
+    try {
+        var r = await fetch('/api/affiliate/apply', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        var d = await r.json();
+        
+        if (d.status === 'success') {
+            form.style.display = 'none';
+            var successEl = document.getElementById('aaSuccess');
+            successEl.style.display = 'block';
+            document.getElementById('aaSuccessMsg').textContent = d.next_step || 'Your application is under review.';
+        } else {
+            errorEl.textContent = d.message || 'Submission failed';
+            errorEl.style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = 'Submit application';
+        }
+    } catch(err) {
+        errorEl.textContent = 'Network error: ' + err.message;
+        errorEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Submit application';
+    }
+}
+
+updateTierFields();
+</script>
+{% endblock %}

@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+{% block title %}Affiliate Program — Charvak{% endblock %}
+{% block description %}Earn 20-30% commission referring colleges and employers to Charvak. Open globally. Auto-approved for Bronze tier.{% endblock %}
+
+{% block content %}
+<style>
+.aff-wrap { max-width: 1100px; margin: 0 auto; padding: 32px 20px; }
+.aff-hero { background: linear-gradient(135deg, #3ba591 0%, #2a8070 100%); color: #fff; padding: 64px 32px; border-radius: 16px; margin-bottom: 40px; text-align: center; }
+.aff-hero h1 { font-size: 2.5rem; font-weight: 800; margin: 0 0 16px; }
+.aff-hero p { font-size: 1.15rem; opacity: 0.92; max-width: 720px; margin: 0 auto 32px; }
+.aff-hero .cta-row { margin-top: 24px; }
+.aff-hero a.btn-primary { display: inline-block; background: #fff; color: #2a8070; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 1.05rem; margin: 4px; }
+.aff-hero a.btn-primary:hover { background: #f0fdf4; }
+.aff-hero a.btn-outline { display: inline-block; background: transparent; color: #fff; border: 2px solid rgba(255,255,255,0.6); padding: 12px 30px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 1.05rem; margin: 4px; }
+.aff-hero a.btn-outline:hover { background: rgba(255,255,255,0.15); }
+
+.aff-stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 48px; }
+.aff-stat { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; text-align: center; }
+.aff-stat .value { font-size: 2.2rem; font-weight: 800; color: #3ba591; line-height: 1; }
+.aff-stat .label { font-size: 0.85rem; color: #6b7280; margin-top: 8px; }
+
+.aff-section { margin-bottom: 48px; }
+.aff-section h2 { font-size: 1.6rem; font-weight: 800; color: #1a1a2e; margin-bottom: 12px; }
+.aff-section p.section-intro { color: #6b7280; font-size: 1rem; margin-bottom: 24px; max-width: 720px; }
+
+.aff-tiers { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
+.aff-tier { background: #fff; border: 2px solid #e2e8f0; border-radius: 12px; padding: 28px; }
+.aff-tier.bronze { border-color: #d97706; }
+.aff-tier.silver { border-color: #94a3b8; }
+.aff-tier.gold { border-color: #eab308; }
+.aff-tier.platinum { border-color: #3ba591; }
+.aff-tier .tier-name { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #6b7280; margin-bottom: 8px; }
+.aff-tier.bronze .tier-name { color: #d97706; }
+.aff-tier.silver .tier-name { color: #64748b; }
+.aff-tier.gold .tier-name { color: #a16207; }
+.aff-tier.platinum .tier-name { color: #3ba591; }
+.aff-tier .tier-commission { font-size: 2rem; font-weight: 800; color: #1a1a2e; margin-bottom: 4px; }
+.aff-tier .tier-recurring { font-size: 0.85rem; color: #6b7280; margin-bottom: 16px; }
+.aff-tier .tier-requirements { list-style: none; padding: 0; margin: 16px 0 0; font-size: 0.9rem; color: #4b5563; }
+.aff-tier .tier-requirements li { padding: 6px 0; border-bottom: 1px solid #f1f5f9; }
+.aff-tier .tier-requirements li:last-child { border-bottom: none; }
+.aff-tier .tier-badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; margin-top: 16px; }
+.aff-tier.bronze .tier-badge { background: #fef3c7; color: #92400e; }
+.aff-tier.silver .tier-badge { background: #f1f5f9; color: #475569; }
+.aff-tier.gold .tier-badge { background: #fef9c3; color: #854d0e; }
+.aff-tier.platinum .tier-badge { background: #d1fae5; color: #065f46; }
+
+.aff-how { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px; }
+.aff-step { text-align: center; padding: 24px; }
+.aff-step-num { display: inline-block; width: 48px; height: 48px; line-height: 48px; background: #3ba591; color: #fff; border-radius: 50%; font-weight: 800; font-size: 1.2rem; margin-bottom: 16px; }
+.aff-step h3 { font-size: 1.1rem; font-weight: 700; color: #1a1a2e; margin: 0 0 8px; }
+.aff-step p { color: #6b7280; font-size: 0.9rem; margin: 0; }
+
+.aff-cta { background: #f0fdf4; border: 1px solid #86efac; border-radius: 12px; padding: 40px 32px; text-align: center; margin-top: 40px; }
+.aff-cta h3 { font-size: 1.5rem; color: #1a1a2e; margin: 0 0 12px; }
+.aff-cta p { color: #4b5563; margin: 0 0 24px; font-size: 1.05rem; }
+.aff-cta a.btn-primary { display: inline-block; background: #3ba591; color: #fff; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 1rem; margin: 4px; }
+.aff-cta a.btn-primary:hover { background: #2a8070; }
+
+@media (max-width: 640px) {
+    .aff-hero h1 { font-size: 1.7rem; }
+    .aff-hero p { font-size: 1rem; }
+    .aff-section h2 { font-size: 1.3rem; }
+}
+</style>
+
+<div class="aff-wrap">
+    <div class="aff-hero">
+        <h1>Earn 20-30% commission referring Charvak</h1>
+        <p>Open to anyone, anywhere. Refer a college, employer, or individual — earn a cut of every deal they close. Bronze tier auto-approves in 30 seconds.</p>
+        <div class="cta-row">
+            <a href="/affiliate/apply" class="btn-primary">Apply now →</a>
+            <a href="/referral" class="btn-outline">See referral program</a>
+        </div>
+    </div>
+
+    <div class="aff-stat-row">
+        <div class="aff-stat">
+            <div class="value">20-30%</div>
+            <div class="label">First-year commission</div>
+        </div>
+        <div class="aff-stat">
+            <div class="value">15-22%</div>
+            <div class="label">Recurring commission</div>
+        </div>
+        <div class="aff-stat">
+            <div class="value">8 currencies</div>
+            <div class="label">INR · USD · GBP · EUR · AED · SGD · AUD · JPY</div>
+        </div>
+        <div class="aff-stat">
+            <div class="value">Global</div>
+            <div class="label">No geographic restrictions</div>
+        </div>
+    </div>
+
+    <div class="aff-section">
+        <h2>Choose your tier</h2>
+        <p class="section-intro">Start at Bronze (auto-approved). Move up as you refer more — higher tiers earn higher commissions on every deal, forever.</p>
+
+        <div class="aff-tiers">
+            <div class="aff-tier bronze">
+                <div class="tier-name">Bronze</div>
+                <div class="tier-commission">20%</div>
+                <div class="tier-recurring">15% recurring</div>
+                <ul class="tier-requirements">
+                    <li>✓ No minimum referrals</li>
+                    <li>✓ No tax ID required</li>
+                    <li>✓ Instant approval</li>
+                    <li>✓ Standard dashboard</li>
+                </ul>
+                <span class="tier-badge">AUTO-APPROVED</span>
+            </div>
+
+            <div class="aff-tier silver">
+                <div class="tier-name">Silver</div>
+                <div class="tier-commission">25%</div>
+                <div class="tier-recurring">18% recurring</div>
+                <ul class="tier-requirements">
+                    <li>3+ referrals/month</li>
+                    <li>Tax ID required (PAN/GST/W-9)</li>
+                    <li>Manual approval (1-2 days)</li>
+                    <li>Co-branded one-pager</li>
+                </ul>
+                <span class="tier-badge">REVIEWED</span>
+            </div>
+
+            <div class="aff-tier gold">
+                <div class="tier-name">Gold</div>
+                <div class="tier-commission">28%</div>
+                <div class="tier-recurring">20% recurring</div>
+                <ul class="tier-requirements">
+                    <li>10+ referrals/month</li>
+                    <li>Tax ID + MSA signed</li>
+                    <li>Custom landing page</li>
+                    <li>Quarterly co-marketing</li>
+                </ul>
+                <span class="tier-badge">REVIEWED</span>
+            </div>
+
+            <div class="aff-tier platinum">
+                <div class="tier-name">Platinum</div>
+                <div class="tier-commission">30%</div>
+                <div class="tier-recurring">22% recurring</div>
+                <ul class="tier-requirements">
+                    <li>25+ referrals/month</li>
+                    <li>By invitation</li>
+                    <li>White-label option</li>
+                    <li>Joint case study + press</li>
+                </ul>
+                <span class="tier-badge">INVITATION</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="aff-section">
+        <h2>How it works</h2>
+        <div class="aff-how">
+            <div class="aff-step">
+                <div class="aff-step-num">1</div>
+                <h3>Apply in 30 seconds</h3>
+                <p>Name, email, company, why interested. Bronze auto-approves instantly.</p>
+            </div>
+            <div class="aff-step">
+                <div class="aff-step-num">2</div>
+                <h3>Get your link</h3>
+                <p>Share your unique referral link with colleges, employers, or individuals.</p>
+            </div>
+            <div class="aff-step">
+                <div class="aff-step-num">3</div>
+                <h3>Earn commission</h3>
+                <p>Every deal they close, you get 20-30%. Recurring every year they stay.</p>
+            </div>
+            <div class="aff-step">
+                <div class="aff-step-num">4</div>
+                <h3>Get paid</h3>
+                <p>Payouts via UPI/bank/PayPal. Weekly (net 15). 30-day fraud hold applies.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="aff-cta">
+        <h3>Ready to start earning?</h3>
+        <p>Bronze tier is instant. Silver+ requires 1-2 day review. Both work globally.</p>
+        <a href="/affiliate/apply" class="btn-primary">Apply now →</a>
+    </div>
+</div>
+{% endblock %}

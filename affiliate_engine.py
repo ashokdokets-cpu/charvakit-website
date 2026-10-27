@@ -207,7 +207,15 @@ class AffiliateEngine:
             else:
                 query += " ORDER BY created_at DESC LIMIT %s"
                 cur.execute(query, (limit,))
-            rows = [dict(r) for r in cur.fetchall()]
+            rows = []
+            for r in cur.fetchall():
+                d = dict(r)
+                for k, v in d.items():
+                    if hasattr(v, "isoformat"):
+                        d[k] = v.isoformat()
+                    elif not isinstance(v, (int, float, str, bool, type(None))):
+                        d[k] = float(v) if hasattr(v, "__float__") else str(v)
+                rows.append(d)
             cur.close()
             conn.close()
             return {"status": "success", "applications": rows, "total": len(rows)}
@@ -230,7 +238,13 @@ class AffiliateEngine:
             conn.close()
             if not row:
                 return {"status": "error", "message": "not found"}
-            return {"status": "success", "application": dict(row)}
+            d = dict(row)
+            for k, v in d.items():
+                if hasattr(v, "isoformat"):
+                    d[k] = v.isoformat()
+                elif not isinstance(v, (int, float, str, bool, type(None))):
+                    d[k] = float(v) if hasattr(v, "__float__") else str(v)
+            return {"status": "success", "application": d}
         except Exception as e:
             return {"status": "error", "message": str(e)}
 
@@ -336,10 +350,21 @@ class AffiliateEngine:
             cur.close()
             conn.close()
             
+            def _serialize(d):
+                if not d:
+                    return None
+                out = dict(d)
+                for k, v in out.items():
+                    if hasattr(v, "isoformat"):
+                        out[k] = v.isoformat()
+                    elif not isinstance(v, (int, float, str, bool, type(None))):
+                        out[k] = float(v) if hasattr(v, "__float__") else str(v)
+                return out
+            
             return {
                 "status": "success",
-                "application": dict(app) if app else None,
-                "account": dict(acc) if acc else None,
+                "application": _serialize(app),
+                "account": _serialize(acc),
             }
         except Exception as e:
             return {"status": "error", "message": str(e)}

@@ -230,7 +230,15 @@ class PayoutEngine:
                 ORDER BY requested_at DESC
                 LIMIT %s
             """, (referrer_id, limit))
-            rows = [dict(r) for r in cur.fetchall()]
+            rows = []
+            for r in cur.fetchall():
+                d = dict(r)
+                for k, v in d.items():
+                    if hasattr(v, "isoformat"):
+                        d[k] = v.isoformat()
+                    elif not isinstance(v, (int, float, str, bool, type(None))):
+                        d[k] = float(v) if hasattr(v, "__float__") else str(v)
+                rows.append(d)
             cur.close()
             conn.close()
             return {"status": "success", "payouts": rows, "total": len(rows)}
@@ -284,7 +292,13 @@ class PayoutEngine:
             conn.close()
             if not row:
                 return {"status": "error", "message": "payout not found"}
-            return {"status": "success", "payout": dict(row)}
+            d = dict(row)
+            for k, v in d.items():
+                if hasattr(v, "isoformat"):
+                    d[k] = v.isoformat()
+                elif not isinstance(v, (int, float, str, bool, type(None))):
+                    d[k] = float(v) if hasattr(v, "__float__") else str(v)
+            return {"status": "success", "payout": d}
         except Exception as e:
             return {"status": "error", "message": str(e)}
 
