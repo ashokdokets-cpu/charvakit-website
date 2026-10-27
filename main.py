@@ -1204,8 +1204,8 @@ async def referral_redirect(referral_code: str, request: Request):
 
 @app.get("/referral-dashboard", response_class=HTMLResponse)
 async def referral_dashboard(request: Request):
-    """User's referral dashboard."""
-    return template_response("referral-dashboard.html", request, "Referral Dashboard - Charvak")
+    """User's referral dashboard (v2 — tier progress, conversions, referral link)."""
+    return template_response("referral-dashboard-v2.html", request, "Referral Dashboard - Charvak")
 
 
 @app.get("/submit-referral", response_class=HTMLResponse)
@@ -4616,6 +4616,93 @@ async def api_jd_parse(request: Request):
         raise
     except Exception as e:
         return handle_error(e, "jd parse")
+
+
+# ============================================================
+# Referral Program v2 (Session 93)
+# ============================================================
+
+@app.post("/api/referral/me")
+async def api_referral_me(request: Request):
+    """Create or get the caller's referrer account + return dashboard stats."""
+    try:
+        user = require_auth(request)
+    except HTTPException:
+        raise
+    email = (user or {}).get("email", "") if isinstance(user, dict) else (user or "")
+    if not email:
+        return JSONResponse({"status": "error", "message": "unauthenticated"}, status_code=401)
+    
+    from referral_engine_v2 import referral_engine
+    # Create or get
+    result = referral_engine.create_or_get_referrer(
+        email=email,
+        name=(user or {}).get("name") if isinstance(user, dict) else None,
+        program_type="student",
+    )
+    if result.get("status") != "success":
+        return JSONResponse(result, status_code=500)
+    
+    # Get stats
+    stats = referral_engine.get_referrer_stats(result["referrer"]["referrer_id"])
+    return JSONResponse({
+        "status": "success",
+        "referrer": result["referrer"],
+        "stats": stats if stats.get("status") == "success" else {},
+    })
+
+
+@app.post("/api/referral/track-click")
+async def api_referral_track_click(request: Request):
+    """Record a click on a referral link. Called from any page's ?ref= handler."""
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse({"status": "error", "message": "invalid json"}, status_code=400)
+    
+    code = data.get("code") or data.get("ref") or ""
+    if not code:
+        return JSONResponse({"status": "error", "message": "code required"}, status_code=400)
+    
+    from referral_engine_v2 import referral_engine
+    
+    # Extract IP from request
+    ip = request.client.host if request.client else ""
+    cf_ip = request.headers.get("CF-Connecting-IP")
+    if cf_ip:
+        ip = cf_ip
+    
+    ua = request.headers.get("User-Agent", "")
+    landing = data.get("landing_page", "")
+    country = request.headers.get("CF-IPCountry")
+    
+    result = referral_engine.record_click(code, ip, ua, landing, country)
+    return JSONResponse(result)
+
+
+@app.get("/api/referral/conversions")
+async def api_referral_conversions(request: Request, limit: int = 20):
+    """List current user's referral conversions (paginated)."""
+    try:
+        user = require_auth(request)
+    except HTTPException:
+        raise
+    email = (user or {}).get("email", "") if isinstance(user, dict) else (user or "")
+    if not email:
+        return JSONResponse({"status": "error", "message": "unauthenticated"}, status_code=401)
+    
+    from referral_engine_v2 import referral_engine
+    acc = referral_engine.create_or_get_referrer(email=email, program_type="student")
+    if acc.get("status") != "success":
+        return JSONResponse(acc, status_code=500)
+    
+    stats = referral_engine.get_referrer_stats(acc["referrer"]["referrer_id"])
+    if stats.get("status") != "success":
+        return JSONResponse(stats, status_code=500)
+    
+    conversions = stats.get("recent_conversions", [])[:limit]
+    return JSONResponse({"status": "success", "conversions": conversions})
+
 
 @app.get("/api/passport/public/list")
 @limiter.limit("60/minute")
