@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+{% block title %}Employer Referral Program — Charvak{% endblock %}
+{% block description %}Refer a hiring manager to Charvak, earn 15-25% of their subscription recurring, forever. The highest-ROI referral program for anyone with employer contacts.{% endblock %}
+
+{% block content %}
+<style>
+.re-wrap { max-width: 960px; margin: 0 auto; padding: 32px 20px; }
+.re-hero { background: linear-gradient(135deg, #3ba591 0%, #1a1a2e 100%); color: #fff; padding: 56px 32px; border-radius: 16px; margin-bottom: 32px; text-align: center; }
+.re-hero h1 { font-size: 2.3rem; font-weight: 800; margin: 0 0 14px; line-height: 1.15; }
+.re-hero p { font-size: 1.1rem; opacity: 0.94; max-width: 620px; margin: 0 auto 24px; }
+.re-hero .re-cta { display: inline-block; background: #fff; color: #1a1a2e; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 1.05rem; margin: 4px; }
+.re-hero .re-cta:hover { background: #f0fdf4; }
+.re-hero .re-hero-badge { display: inline-block; background: rgba(255,255,255,0.18); padding: 6px 16px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
+
+.re-example { background: #fffbeb; border: 2px solid #fcd34d; border-radius: 14px; padding: 28px; margin-bottom: 32px; }
+.re-example h3 { font-size: 1.1rem; color: #92400e; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+.re-example .re-ex-math { font-size: 1.5rem; font-weight: 800; color: #1a1a2e; margin: 12px 0; line-height: 1.4; }
+.re-example .re-ex-math strong { color: #3ba591; }
+.re-example p { color: #4b5563; margin: 0; font-size: 0.92rem; line-height: 1.6; }
+
+.re-tiers { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 40px; }
+.re-tier { background: #fff; border: 2px solid #e2e8f0; border-radius: 12px; padding: 24px; }
+.re-tier.starter { border-color: #94a3b8; }
+.re-tier.pro { border-color: #3b82f6; }
+.re-tier.partner { border-color: #3ba591; }
+.re-tier.elite { border-color: #f59e0b; }
+.re-tier .tier-name { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #6b7280; margin-bottom: 6px; }
+.re-tier.starter .tier-name { color: #64748b; }
+.re-tier.pro .tier-name { color: #2563eb; }
+.re-tier.partner .tier-name { color: #3ba591; }
+.re-tier.elite .tier-name { color: #d97706; }
+.re-tier .tier-rate { font-size: 1.6rem; font-weight: 800; color: #1a1a2e; line-height: 1; margin-bottom: 4px; }
+.re-tier .tier-rate small { font-size: 0.75rem; font-weight: 600; color: #6b7280; }
+.re-tier .tier-refs { font-size: 0.8rem; color: #6b7280; margin-bottom: 12px; }
+.re-tier .tier-perks { list-style: none; padding: 0; margin: 0; font-size: 0.85rem; color: #4b5563; }
+.re-tier .tier-perks li { padding: 4px 0; }
+.re-tier .tier-perks li:before { content: "✓ "; color: #3ba591; font-weight: 700; margin-right: 4px; }
+
+.re-section { margin-bottom: 40px; }
+.re-section h2 { font-size: 1.5rem; font-weight: 800; color: #1a1a2e; margin: 0 0 16px; }
+.re-section > p { color: #6b7280; line-height: 1.6; margin-bottom: 20px; font-size: 0.95rem; }
+
+.re-how { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+.re-step { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; }
+.re-step-num { display: inline-block; width: 40px; height: 40px; line-height: 40px; background: #1a1a2e; color: #fff; border-radius: 50%; font-weight: 800; font-size: 1rem; text-align: center; margin-bottom: 12px; }
+.re-step h3 { font-size: 1rem; font-weight: 700; color: #1a1a2e; margin: 0 0 8px; }
+.re-step p { color: #6b7280; font-size: 0.88rem; margin: 0; line-height: 1.5; }
+
+.re-faq { background: #f8fafc; border-radius: 12px; padding: 32px; margin-bottom: 32px; }
+.re-faq h2 { font-size: 1.25rem; font-weight: 800; color: #1a1a2e; margin: 0 0 20px; }
+.re-faq details { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; margin-bottom: 8px; }
+.re-faq summary { cursor: pointer; font-weight: 600; color: #1a1a2e; font-size: 0.9rem; }
+.re-faq details p { margin: 8px 0 0; color: #4b5563; font-size: 0.88rem; line-height: 1.55; }
+
+.re-cta-final { background: #1a1a2e; color: #fff; border-radius: 14px; padding: 36px 32px; text-align: center; }
+.re-cta-final h2 { font-size: 1.5rem; margin: 0 0 8px; }
+.re-cta-final p { opacity: 0.85; margin: 0 0 20px; }
+.re-cta-final a { display: inline-block; background: #3ba591; color: #fff; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: 700; margin: 4px; }
+.re-cta-final a:hover { background: #2a8070; }
+
+@media (max-width: 640px) {
+    .re-hero h1 { font-size: 1.6rem; }
+    .re-example .re-ex-math { font-size: 1.1rem; }
+}
+</style>
+
+<div class="re-wrap">
+    <div class="re-hero">
+        <span class="re-hero-badge">The recurring play</span>
+        <h1>Refer an employer. Earn recurring commission.</h1>
+        <p>Know a hiring manager or HR director? Earn 15-25% of their subscription, every year they stay. One referral = a decade of passive income.</p>
+        <a href="/referral-dashboard" class="re-cta">Get my referral link →</a>
+    </div>
+
+    <div class="re-example">
+        <h3>What one referral is worth</h3>
+        <div class="re-ex-math">
+            Refer one <strong>Growth tier ($199/mo)</strong> employer:
+            <br>→ <strong>$358 year 1</strong> + <strong>$239 every year after</strong>
+        </div>
+        <p>If they stay for 5 years, one referral = <strong>$1,314 in passive income</strong>. Five employers = <strong>$6,570 over 5 years</strong> for a single afternoon of introductions.</p>
+    </div>
+
+    <div class="re-section">
+        <h2>Commission tiers</h2>
+        <p>Higher tiers earn more on both first-year and recurring commissions.</p>
+        <div class="re-tiers">
+            <div class="re-tier starter">
+                <div class="tier-name">Starter</div>
+                <div class="tier-rate">15% <small>yr1</small></div>
+                <div class="tier-refs">10% recurring · 1-2 referrals</div>
+                <ul class="tier-perks">
+                    <li>Standard dashboard</li>
+                    <li>Monthly payout</li>
+                </ul>
+            </div>
+            <div class="re-tier pro">
+                <div class="tier-name">Pro</div>
+                <div class="tier-rate">18% <small>yr1</small></div>
+                <div class="tier-refs">12% recurring · 3-5 referrals</div>
+                <ul class="tier-perks">
+                    <li>Bi-weekly payout</li>
+                    <li>Co-branded one-pager</li>
+                </ul>
+            </div>
+            <div class="re-tier partner">
+                <div class="tier-name">Partner</div>
+                <div class="tier-rate">22% <small>yr1</small></div>
+                <div class="tier-refs">15% recurring · 6-10 referrals</div>
+                <ul class="tier-perks">
+                    <li>Weekly payout</li>
+                    <li>Custom landing page</li>
+                    <li>Case study bonus</li>
+                </ul>
+            </div>
+            <div class="re-tier elite">
+                <div class="tier-name">Elite</div>
+                <div class="tier-rate">25% <small>yr1</small></div>
+                <div class="tier-refs">18% recurring · 11+ referrals</div>
+                <ul class="tier-perks">
+                    <li>Same-day payout</li>
+                    <li>White-label option</li>
+                    <li>Direct founder access</li>
+                    <li>Joint case study</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="re-section">
+        <h2>How it works</h2>
+        <div class="re-how">
+            <div class="re-step">
+                <div class="re-step-num">1</div>
+                <h3>Get your link</h3>
+                <p>Unique code from your dashboard.</p>
+            </div>
+            <div class="re-step">
+                <div class="re-step-num">2</div>
+                <h3>Share with a hiring manager</h3>
+                <p>Any HR director, TA lead, or recruiter who makes hiring decisions.</p>
+            </div>
+            <div class="re-step">
+                <div class="re-step-num">3</div>
+                <h3>They subscribe</h3>
+                <p>Employer picks Starter ($49/mo), Growth ($199/mo), or Enterprise ($999/mo).</p>
+            </div>
+            <div class="re-step">
+                <div class="re-step-num">4</div>
+                <h3>You earn, forever</h3>
+                <p>Every month they stay active, you get paid. Automatically.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="re-faq">
+        <h2>Employer referral FAQ</h2>
+        <details>
+            <summary>What counts as an "employer referral"?</summary>
+            <p>Any company that subscribes to a Charvak employer plan (Starter at $49/mo, Growth at $199/mo, or Enterprise at $999/mo). The referral must be new to Charvak — existing employer customers don't count.</p>
+        </details>
+        <details>
+            <summary>How does the recurring commission work?</summary>
+            <p>You earn a percentage of every invoice the employer pays. Year 1 at your tier's first-year rate. Year 2 onwards at your tier's recurring rate — for as long as they stay. If they upgrade from Starter to Growth, your commission scales with the higher subscription.</p>
+        </details>
+        <details>
+            <summary>What if the employer cancels or refunds?</summary>
+            <p>Commission is paid monthly, in arrears. If they cancel mid-month, you're paid for the days they were active. If they request a refund, the commission for that period is clawed back. This is standard for all recurring commissions.</p>
+        </details>
+        <details>
+            <summary>How does tier escalation work?</summary>
+            <p>Tier is based on total referrals over the last 12 months. Refer 3 employers → Pro tier (18% yr1 / 12% recurring). Refer 6 → Partner (22% yr1 / 15% recurring). Refer 11+ → Elite (25% yr1 / 18% recurring). Tier upgrades apply to all future commissions on all referrals — not retroactively.</p>
+        </details>
+        <details>
+            <summary>Can I refer both employers and institutions?</summary>
+            <p>Yes. The two programs stack. Your tier counts aggregate (refer 3 institutions + 3 employers = 6 referrals = Partner tier on both programs). But commissions are separate: institution = one-time (50% + 50%), employer = recurring forever.</p>
+        </details>
+        <details>
+            <summary>What if I'm a staffing agency or recruiter?</summary>
+            <p>You're eligible for the <a href="/affiliate" style="color:#3ba591;font-weight:600;">affiliate program</a> which offers higher commission (20-30% first-year, 15-22% recurring) and co-marketing support. The employer referral program is designed for anyone with a warm introduction, not requiring an agency structure.</p>
+        </details>
+        <details>
+            <summary>Is this open globally?</summary>
+            <p>Yes. Payout via Razorpay (INR) or PayPal (USD, GBP, EUR, AED, SGD, AUD). Employer billing currencies include INR, USD, GBP, EUR, AED, SGD, AUD, JPY — your commission is calculated in INR then paid in your local currency.</p>
+        </details>
+    </div>
+
+    <div class="re-cta-final">
+        <h2>Know a hiring manager?</h2>
+        <p>One introduction could be worth $1,300+ over 5 years. Three introductions put you at Pro tier.</p>
+        <a href="/referral-dashboard">Get my referral link</a>
+        <a href="/referral" style="background:transparent;border:2px solid rgba(255,255,255,0.4);">See all programs</a>
+    </div>
+</div>
+{% endblock %}
