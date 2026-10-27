@@ -797,6 +797,12 @@ async def integrity(request: Request):
     return template_response("integrity.html", request, "Assessment Integrity - Charvak")
 
 
+@app.get("/why-charvak", response_class=HTMLResponse)
+async def why_charvak_page(request: Request):
+    """Comparison vs HackerRank, TestGorilla, VIVA360."""
+    return template_response("why-charvak.html", request, "Why Charvak - Comparison")
+
+
 @app.get("/faq", response_class=HTMLResponse)
 async def faq_page(request: Request):
     """Master FAQ — 30 answers across 4 audiences."""
