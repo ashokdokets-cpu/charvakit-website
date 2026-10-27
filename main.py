@@ -797,6 +797,18 @@ async def integrity(request: Request):
     return template_response("integrity.html", request, "Assessment Integrity - Charvak")
 
 
+@app.get("/changelog", response_class=HTMLResponse)
+async def changelog_page(request: Request):
+    """Public changelog — every feature shipped, reverse chronological."""
+    try:
+        from changelog_data import CHANGELOG_DATA
+        changelog_data = CHANGELOG_DATA
+    except Exception as e:
+        print(f"Changelog data load failed: {e}")
+        changelog_data = {}
+    return template_response("changelog.html", request, "Changelog - Charvak",
+                             changelog_data=changelog_data)
+
 @app.get("/compliance", response_class=HTMLResponse)
 async def compliance_page(request: Request):
     """Public compliance & trust page. Enterprise procurement."""

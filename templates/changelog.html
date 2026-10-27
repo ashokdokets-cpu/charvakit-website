@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Changelog — Charvak{% endblock %}
+{% block description %}Every feature shipped to Charvak, in reverse chronological order. Public transparency on our product evolution.{% endblock %}
+
+{% block content %}
+<style>
+.ck-changelog-wrap { max-width: 900px; margin: 0 auto; padding: 32px 20px; }
+.ck-changelog-hero { background: linear-gradient(135deg, #3ba591 0%, #2a8070 100%); color: #fff; padding: 40px; border-radius: 16px; margin-bottom: 40px; text-align: center; }
+.ck-changelog-hero h1 { font-size: 2rem; font-weight: 800; margin: 0 0 8px; }
+.ck-changelog-hero p { margin: 0; opacity: 0.92; font-size: 1.05rem; }
+.ck-changelog-stats { display: flex; gap: 12px; justify-content: center; margin-top: 24px; flex-wrap: wrap; }
+.ck-stat-pill { background: rgba(255,255,255,0.2); padding: 6px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
+
+.ck-month-header { font-size: 1.4rem; font-weight: 800; color: #1a1a2e; margin: 40px 0 20px; padding-bottom: 8px; border-bottom: 2px solid #3ba591; }
+.ck-month-header:first-of-type { margin-top: 0; }
+
+.ck-entry { display: flex; gap: 16px; padding: 16px 0; border-bottom: 1px solid #f1f5f9; }
+.ck-entry:last-child { border-bottom: none; }
+.ck-entry-icon { font-size: 1.2rem; min-width: 32px; text-align: center; padding-top: 2px; }
+.ck-entry-body { flex: 1; }
+.ck-entry-meta { display: flex; gap: 10px; align-items: baseline; margin-bottom: 4px; flex-wrap: wrap; }
+.ck-entry-type { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; padding: 2px 8px; border-radius: 4px; }
+.ck-type-feat { background: #d1fae5; color: #065f46; }
+.ck-type-fix  { background: #fef3c7; color: #92400e; }
+.ck-type-improvement { background: #dbeafe; color: #1e40af; }
+.ck-type-security { background: #fee2e2; color: #991b1b; }
+.ck-entry-date { font-size: 0.8rem; color: #94a3b8; }
+.ck-entry-title { font-size: 1.05rem; font-weight: 700; color: #1a1a2e; margin: 0 0 4px; }
+.ck-entry-desc { font-size: 0.95rem; color: #475569; margin: 0; line-height: 1.5; }
+.ck-entry-link { font-size: 0.85rem; color: #3ba591; text-decoration: none; font-weight: 600; }
+.ck-entry-link:hover { text-decoration: underline; }
+
+.ck-changelog-cta { background: #f0fdf4; border: 1px solid #86efac; border-radius: 12px; padding: 32px; margin-top: 60px; text-align: center; }
+.ck-changelog-cta h3 { margin: 0 0 12px; color: #1a1a2e; }
+.ck-changelog-cta a { display: inline-block; background: #3ba591; color: #fff; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; margin-top: 8px; }
+.ck-changelog-cta a:hover { background: #2a8070; color: #fff; }
+
+@media (max-width: 600px) {
+    .ck-changelog-hero h1 { font-size: 1.5rem; }
+    .ck-entry { flex-direction: column; gap: 8px; }
+}
+</style>
+
+<div class="ck-changelog-wrap">
+    <div class="ck-changelog-hero">
+        <h1>Changelog</h1>
+        <p>Every feature shipped. Public transparency. Compounding trust.</p>
+        <div class="ck-changelog-stats">
+            <span class="ck-stat-pill">🚀 50+ shipped features</span>
+            <span class="ck-stat-pill">📅 Last 90 days</span>
+            <span class="ck-stat-pill">✅ 100% live on prod</span>
+        </div>
+    </div>
+
+    {% for month, entries in changelog_data.items() %}
+    <h2 class="ck-month-header">{{ month }}</h2>
+    {% for entry in entries %}
+    <div class="ck-entry">
+        <div class="ck-entry-icon">{{ entry.icon }}</div>
+        <div class="ck-entry-body">
+            <div class="ck-entry-meta">
+                <span class="ck-entry-type ck-type-{{ entry.type }}">{{ entry.type_label }}</span>
+                <span class="ck-entry-date">{{ entry.date }}</span>
+            </div>
+            <h3 class="ck-entry-title">{{ entry.title }}</h3>
+            <p class="ck-entry-desc">{{ entry.description }}</p>
+            {% if entry.url %}
+            <a href="{{ entry.url }}" class="ck-entry-link">View →</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+    {% endfor %}
+
+    <div class="ck-changelog-cta">
+        <h3>See it live</h3>
+        <p style="color:#4b5563;margin:0 0 12px;">Every feature here is live on production. Try it yourself — no login required for most.</p>
+        <a href="/demo">Open the demo →</a>
+    </div>
+</div>
+{% endblock %}
