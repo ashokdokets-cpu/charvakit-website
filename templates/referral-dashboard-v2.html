@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+{% block title %}Referral Dashboard — Charvak{% endblock %}
+{% block description %}Track your Charvak referral earnings, conversions, and tier progress.{% endblock %}
+
+{% block content %}
+<style>
+.rd-wrap { max-width: 1100px; margin: 0 auto; padding: 32px 20px; }
+.rd-hero { background: linear-gradient(135deg, #3ba591 0%, #2a8070 100%); color: #fff; padding: 40px 32px; border-radius: 16px; margin-bottom: 32px; }
+.rd-hero h1 { font-size: 2rem; font-weight: 800; margin: 0 0 8px; }
+.rd-hero p { margin: 0; opacity: 0.92; font-size: 1rem; }
+.rd-hero .rd-tier-badge { display: inline-block; background: rgba(255,255,255,0.2); padding: 6px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: 700; margin-top: 16px; }
+
+.rd-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 32px; }
+.rd-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; }
+.rd-card .label { font-size: 0.8rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+.rd-card .value { font-size: 2rem; font-weight: 800; color: #1a1a2e; }
+.rd-card .value.green { color: #3ba591; }
+.rd-card .sub { font-size: 0.85rem; color: #6b7280; margin-top: 4px; }
+
+.rd-link-box { background: #f0fdf4; border: 1px solid #86efac; border-radius: 12px; padding: 24px; margin-bottom: 32px; }
+.rd-link-box h3 { margin: 0 0 8px; font-size: 1.1rem; color: #166534; }
+.rd-link-box p { margin: 0 0 16px; color: #4b5563; font-size: 0.95rem; }
+.rd-link-input { display: flex; gap: 8px; }
+.rd-link-input input { flex: 1; padding: 12px 16px; border: 1px solid #cbd5e0; border-radius: 8px; font-family: monospace; font-size: 0.9rem; }
+.rd-link-input button { padding: 12px 24px; background: #3ba591; color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+.rd-link-input button:hover { background: #2a8070; }
+
+.rd-section { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; margin-bottom: 24px; }
+.rd-section h2 { font-size: 1.25rem; font-weight: 700; margin: 0 0 16px; color: #1a1a2e; }
+
+.rd-tier-progress { margin-bottom: 24px; }
+.rd-tier-track { height: 12px; background: #e5e7eb; border-radius: 6px; overflow: hidden; margin: 8px 0; }
+.rd-tier-fill { height: 100%; background: linear-gradient(90deg, #3ba591, #2a8070); border-radius: 6px; transition: width 0.3s; }
+.rd-tier-labels { display: flex; justify-content: space-between; font-size: 0.8rem; color: #6b7280; }
+
+.rd-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.rd-table th { text-align: left; padding: 12px 10px; background: #f8fafc; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: #4b5563; border-bottom: 1px solid #e2e8f0; }
+.rd-table td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; color: #4b5563; }
+.rd-status { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+.rd-status-pending { background: #fef3c7; color: #92400e; }
+.rd-status-approved { background: #dbeafe; color: #1e40af; }
+.rd-status-paid { background: #d1fae5; color: #065f46; }
+.rd-status-fraud { background: #fee2e2; color: #991b1b; }
+
+.rd-empty { text-align: center; padding: 40px 20px; color: #94a3b8; }
+.rd-empty-icon { font-size: 2.5rem; margin-bottom: 12px; }
+
+.rd-cta { text-align: center; margin-top: 32px; }
+.rd-cta a { display: inline-block; padding: 12px 28px; background: #3ba591; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600; margin: 4px; }
+.rd-cta a.secondary { background: transparent; color: #3ba591; border: 2px solid #3ba591; }
+.rd-cta a:hover { opacity: 0.9; }
+
+@media (max-width: 640px) {
+    .rd-hero h1 { font-size: 1.5rem; }
+    .rd-cards { grid-template-columns: 1fr; }
+}
+</style>
+
+<div class="rd-wrap">
+    <div id="loading" class="rd-empty">
+        <div class="rd-empty-icon">⏳</div>
+        <p>Loading your referral dashboard...</p>
+    </div>
+
+    <div id="dashContent" style="display:none;">
+        <div class="rd-hero">
+            <h1>Your Referral Dashboard</h1>
+            <p>Every signup, every conversion, every commission — tracked in real time.</p>
+            <span class="rd-tier-badge" id="tierBadge">STARTER</span>
+        </div>
+
+        <div class="rd-cards">
+            <div class="rd-card">
+                <div class="label">Total Referrals</div>
+                <div class="value" id="statReferrals">0</div>
+                <div class="sub">People you've referred</div>
+            </div>
+            <div class="rd-card">
+                <div class="label">Revenue Referred</div>
+                <div class="value" id="statRevenue">₹0</div>
+                <div class="sub">Total value of deals</div>
+            </div>
+            <div class="rd-card">
+                <div class="label">Commission Earned</div>
+                <div class="value green" id="statEarned">₹0</div>
+                <div class="sub">Lifetime earnings</div>
+            </div>
+            <div class="rd-card">
+                <div class="label">Commission Paid</div>
+                <div class="value green" id="statPaid">₹0</div>
+                <div class="sub">Already paid out</div>
+            </div>
+        </div>
+
+        <div class="rd-link-box">
+            <h3>Your referral link</h3>
+            <p>Share this link anywhere. Every signup through this link counts as your referral.</p>
+            <div class="rd-link-input">
+                <input type="text" id="refLink" readonly>
+                <button onclick="copyRefLink()">Copy</button>
+            </div>
+            <p style="margin-top:12px;font-size:0.85rem;color:#6b7280;">
+                💡 Tip: Add <code>?ref=YOUR_CODE</code> to any Charvak URL — /pricing, /ai-assessment, /demo, /career-certification.
+            </p>
+        </div>
+
+        <div class="rd-section">
+            <h2>Tier Progress</h2>
+            <div class="rd-tier-progress">
+                <div class="rd-tier-track">
+                    <div class="rd-tier-fill" id="tierFill" style="width:0%"></div>
+                </div>
+                <div class="rd-tier-labels">
+                    <span>Starter</span>
+                    <span>Pro (3 referrals)</span>
+                    <span>Partner (10)</span>
+                    <span>Elite (20)</span>
+                </div>
+                <p style="font-size:0.85rem;color:#6b7280;margin-top:8px;" id="tierHint">
+                    Refer 3 people to unlock Pro tier (12% institution, 18% employer commissions)
+                </p>
+            </div>
+        </div>
+
+        <div class="rd-section">
+            <h2>Recent Conversions</h2>
+            <div id="conversionsList">
+                <div class="rd-empty">
+                    <div class="rd-empty-icon">📋</div>
+                    <p>No conversions yet. Share your link to start earning.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="rd-section">
+            <h2>Payout Method</h2>
+            <div id="payoutMethod">
+                <div class="rd-empty">
+                    <div class="rd-empty-icon">💳</div>
+                    <p>Add a payout method to receive commissions.</p>
+                </div>
+            </div>
+            <p style="font-size:0.85rem;color:#6b7280;margin-top:12px;">
+                Payouts are processed weekly (net 15). Minimum payout: ₹1,000 or $15. 30-day fraud hold applies to all conversions.
+            </p>
+        </div>
+
+        <div class="rd-cta">
+            <a href="/referral">Referral Program Details</a>
+            <a href="/faq" class="secondary">FAQ</a>
+        </div>
+    </div>
+</div>
+
+<script>
+function _token() {
+    return localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+}
+function _email() {
+    return localStorage.getItem('userEmail') || '';
+}
+
+async function loadDashboard() {
+    var email = _email();
+    var token = _token();
+    if (!email || !token) {
+        window.location = '/login?next=/referral-dashboard';
+        return;
+    }
+
+    try {
+        // Create or get referrer
+        var r = await fetch('/api/referral/me', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json'
+            },
+            body: '{}'
+        });
+        var data = await r.json();
+        
+        if (data.status !== 'success') {
+            alert('Failed to load dashboard: ' + (data.message || 'unknown error'));
+            return;
+        }
+
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('dashContent').style.display = 'block';
+
+        var acc = data.referrer;
+        var stats = data.stats || {};
+
+        // Tier badge
+        document.getElementById('tierBadge').textContent = (acc.tier || 'starter').toUpperCase();
+
+        // Stats
+        document.getElementById('statReferrals').textContent = acc.total_referrals || 0;
+        document.getElementById('statRevenue').textContent = '₹' + Math.round((acc.total_revenue_referred_inr || 0) / 100).toLocaleString();
+        document.getElementById('statEarned').textContent = '₹' + Math.round((acc.total_commissions_earned_inr || 0) / 100).toLocaleString();
+        document.getElementById('statPaid').textContent = '₹' + Math.round((acc.total_commissions_paid_inr || 0) / 100).toLocaleString();
+
+        // Referral link
+        var code = acc.referral_code || '';
+        var link = window.location.origin + '/?ref=' + code;
+        document.getElementById('refLink').value = link;
+
+        // Tier progress
+        var totalRefs = acc.total_referrals || 0;
+        var tier = acc.tier || 'starter';
+        var pct = 0;
+        var hint = '';
+        if (tier === 'starter') {
+            pct = Math.min((totalRefs / 3) * 100, 100);
+            hint = (3 - totalRefs) + ' more to Pro tier (12% institution, 18% employer)';
+        } else if (tier === 'pro') {
+            pct = Math.min(((totalRefs - 3) / 7) * 100, 100);
+            hint = (10 - totalRefs) + ' more to Partner tier (15% institution, 22% employer)';
+        } else if (tier === 'partner') {
+            pct = Math.min(((totalRefs - 10) / 10) * 100, 100);
+            hint = (20 - totalRefs) + ' more to Elite tier (20% institution, 25% employer)';
+        } else {
+            pct = 100;
+            hint = 'Elite tier — maximum commission rates unlocked';
+        }
+        document.getElementById('tierFill').style.width = pct + '%';
+        document.getElementById('tierHint').textContent = hint;
+
+        // Conversions
+        var conversions = stats.recent_conversions || [];
+        if (conversions.length > 0) {
+            var html = '<table class="rd-table"><thead><tr>' +
+                '<th>Date</th><th>Referred</th><th>Type</th><th>Value</th><th>Commission</th><th>Status</th>' +
+                '</tr></thead><tbody>';
+            conversions.forEach(function(c) {
+                var status = c.status || 'pending';
+                var statusClass = 'rd-status-' + status.replace('fraud_blocked', 'fraud');
+                var statusLabel = status.replace('_', ' ');
+                var date = (c.created_at || '').slice(0, 10);
+                var valueStr = c.conversion_value_inr ? '₹' + Math.round(c.conversion_value_inr / 100).toLocaleString() : '—';
+                var commStr = c.commission_amount_inr ? '₹' + Math.round(c.commission_amount_inr / 100).toLocaleString() : '—';
+                html += '<tr>' +
+                    '<td>' + date + '</td>' +
+                    '<td>' + (c.referred_email || '').replace(/(.{3}).*(@.*)/, '$1***$2') + '</td>' +
+                    '<td>' + (c.conversion_type || '').replace('_', ' ') + '</td>' +
+                    '<td>' + valueStr + '</td>' +
+                    '<td>' + commStr + '</td>' +
+                    '<td><span class="rd-status ' + statusClass + '">' + statusLabel + '</span></td>' +
+                    '</tr>';
+            });
+            html += '</tbody></table>';
+            document.getElementById('conversionsList').innerHTML = html;
+        }
+
+    } catch (e) {
+        console.error(e);
+        alert('Network error. Please refresh.');
+    }
+}
+
+function copyRefLink() {
+    var input = document.getElementById('refLink');
+    input.select();
+    document.execCommand('copy');
+    var btn = event.target;
+    var original = btn.textContent;
+    btn.textContent = '✓ Copied';
+    setTimeout(function() { btn.textContent = original; }, 2000);
+}
+
+loadDashboard();
+</script>
+{% endblock %}
