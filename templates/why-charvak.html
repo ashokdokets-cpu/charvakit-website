@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+{% block title %}Why Charvak — Comparison vs HackerRank, TestGorilla, VIVA360{% endblock %}
+{% block description %}Compare Charvak vs HackerRank, TestGorilla, and VIVA360 on real code execution, HMAC certificates, AI screening, hire tracking, compliance jurisdictions, and multi-currency payments.{% endblock %}
+
+{% block content %}
+<style>
+.wc-wrap { max-width: 1000px; margin: 0 auto; padding: 32px 20px; }
+.wc-hero { background: linear-gradient(135deg, #3ba591 0%, #2a8070 100%); color: #fff; padding: 56px 24px; border-radius: 16px; margin-bottom: 40px; text-align: center; }
+.wc-hero h1 { font-size: 2.3rem; font-weight: 800; margin: 0 0 16px; }
+.wc-hero p { font-size: 1.15rem; opacity: 0.92; margin: 0 auto; max-width: 700px; line-height: 1.6; }
+.wc-hero .cta-row { margin-top: 24px; }
+.wc-hero a.btn-primary { display: inline-block; background: #fff; color: #2a8070; padding: 12px 28px; border-radius: 8px; font-weight: 700; text-decoration: none; margin: 4px; }
+.wc-hero a.btn-primary:hover { background: #f0fdf4; }
+.wc-hero a.btn-outline { display: inline-block; background: transparent; color: #fff; border: 2px solid rgba(255,255,255,0.6); padding: 10px 26px; border-radius: 8px; font-weight: 700; text-decoration: none; margin: 4px; }
+.wc-hero a.btn-outline:hover { background: rgba(255,255,255,0.15); }
+
+.wc-section { margin-bottom: 56px; }
+.wc-section h2 { font-size: 1.7rem; font-weight: 800; color: #1a1a2e; margin-bottom: 8px; }
+.wc-section .section-intro { color: #6b7280; font-size: 1rem; margin-bottom: 24px; max-width: 720px; }
+
+.wc-table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid #e2e8f0; background: #fff; }
+.wc-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; min-width: 700px; }
+.wc-table th { background: #f8fafc; padding: 14px 12px; text-align: left; font-weight: 700; color: #4b5563; border-bottom: 2px solid #e2e8f0; }
+.wc-table th.wc-charvak { background: #ecfdf5; color: #065f46; }
+.wc-table td { padding: 12px; border-bottom: 1px solid #f1f5f9; color: #4b5563; }
+.wc-table td.wc-charvak { background: #f0fdf4; color: #166534; font-weight: 700; text-align: center; }
+.wc-table td.wc-center { text-align: center; }
+.wc-table tr:hover td { background: #f8fafc; }
+.wc-table tr:hover td.wc-charvak { background: #dcfce7; }
+.wc-check { color: #16a34a; font-weight: 700; }
+.wc-cross { color: #dc2626; }
+.wc-partial { color: #d97706; }
+
+.wc-deep-dive { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 32px; margin-bottom: 24px; }
+.wc-deep-dive h3 { font-size: 1.3rem; font-weight: 800; color: #1a1a2e; margin: 0 0 8px; }
+.wc-deep-dive p.tagline { color: #6b7280; font-size: 0.95rem; margin: 0 0 20px; }
+.wc-deep-dive p, .wc-deep-dive li { color: #4b5563; font-size: 0.95rem; line-height: 1.65; }
+.wc-deep-dive ul { padding-left: 20px; }
+.wc-deep-dive li { margin-bottom: 8px; }
+.wc-deep-dive .highlight-box { background: #f0fdf4; border-left: 4px solid #3ba591; padding: 16px 20px; margin-top: 16px; border-radius: 0 8px 8px 0; }
+.wc-deep-dive .highlight-box strong { color: #166534; }
+.wc-deep-dive a.proof-link { display: inline-block; color: #3ba591; font-weight: 700; text-decoration: none; margin-top: 12px; }
+.wc-deep-dive a.proof-link:hover { text-decoration: underline; }
+
+.wc-cta { background: #f0fdf4; border: 1px solid #86efac; border-radius: 12px; padding: 40px 32px; text-align: center; }
+.wc-cta h3 { font-size: 1.5rem; color: #1a1a2e; margin: 0 0 12px; }
+.wc-cta p { color: #4b5563; margin: 0 0 24px; font-size: 1.05rem; }
+.wc-cta a.btn-primary { display: inline-block; background: #3ba591; color: #fff; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 700; margin: 4px; font-size: 1rem; }
+.wc-cta a.btn-primary:hover { background: #2a8070; }
+.wc-cta a.btn-outline { display: inline-block; background: transparent; color: #3ba591; border: 2px solid #3ba591; padding: 12px 30px; border-radius: 8px; text-decoration: none; font-weight: 700; margin: 4px; font-size: 1rem; }
+.wc-cta a.btn-outline:hover { background: #3ba591; color: #fff; }
+
+@media (max-width: 640px) {
+    .wc-hero h1 { font-size: 1.7rem; }
+    .wc-hero p { font-size: 1rem; }
+    .wc-section h2 { font-size: 1.3rem; }
+    .wc-deep-dive { padding: 20px; }
+}
+</style>
+
+<div class="wc-wrap">
+    <!-- Hero -->
+    <div class="wc-hero">
+        <h1>Why teams choose Charvak</h1>
+        <p>The only placement OS with HMAC-verifiable proof, real code execution in 4 languages, 6 compliance jurisdictions, and a unified recruiter dashboard — all in one platform.</p>
+        <div class="cta-row">
+            <a href="/demo" class="btn-primary">🎬 See it live →</a>
+            <a href="/pricing" class="btn-outline">See pricing</a>
+        </div>
+    </div>
+
+    <!-- Comparison table -->
+    <div class="wc-section">
+        <h2>Charvak vs the alternatives</h2>
+        <p class="section-intro">Every competitor does one thing well. Charvak connects all of them into one verifiable pipeline — from assessment to placement, with cryptographic proof at every step.</p>
+
+        <div class="wc-table-wrap">
+            <table class="wc-table">
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th class="wc-charvak">Charvak</th>
+                        <th>HackerRank</th>
+                        <th>TestGorilla</th>
+                        <th>VIVA360</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Real code execution</strong> (deterministic test cases)</td>
+                        <td class="wc-charvak">✅</td>
+                        <td class="wc-center wc-check">✅</td>
+                        <td class="wc-center wc-cross">❌ AI only</td>
+                        <td class="wc-center wc-cross">❌</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Languages supported</strong></td>
+                        <td class="wc-charvak">5 (Py, JS, Java, TS, SQL)</td>
+                        <td class="wc-center">Python, JS, Java</td>
+                        <td class="wc-center">Text-only</td>
+                        <td class="wc-center">None</td>
+                    </tr>
+                    <tr>
+                        <td><strong>HMAC-verifiable certificates</strong></td>
+                        <td class="wc-charvak">✅</td>
+                        <td class="wc-center wc-cross">❌</td>
+                        <td class="wc-center wc-cross">❌</td>
+                        <td class="wc-center wc-cross">❌</td>
+                    </tr>
+                    <tr>
+                        <td><strong>AI screen agent</strong> (2-phase chat)</td>
+                        <td class="wc-charvak">✅</td>
+                        <td class="wc-center wc-cross">❌</td>
+                        <td class="wc-center wc-cross">❌</td>
+                        <td class="wc-center wc-partial">Text only</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Recruiter dashboard + hire tracking</strong></td>
+                        <td class="wc-charvak">✅</td>
+                        <td class="wc-center wc-cross">❌</td>
+                        <td class="wc-center wc-cross">❌</td>
+                        <td class="wc-center wc-cross">❌</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Dean-ready placement reports</strong></td>
+                        <td class="wc-charvak">✅</td>
+                        <td class="wc-center wc-cross">❌</td>
+                        <td class="wc-center wc-cross">❌</td>
+                        <td class="wc-center wc-cross">❌</td>
+                    </tr>
+                    <tr>
+                        <td><strong>India-DPDP compliance</strong></td>
+                        <td class="wc-charvak">✅</td>
+                        <td class="wc-center wc-cross">❌</td>
+                        <td class="wc-center wc-cross">❌</td>
+                        <td class="wc-center wc-cross">❌</td>
+                    </tr>
+                    <tr>
+                        <td><strong>6 compliance jurisdictions</strong></td>
+                        <td class="wc-charvak">✅ (DPDP, GDPR, NYC, EU AI, PIPL, PDPA)</td>
+                        <td class="wc-center wc-partial">GDPR only</td>
+                        <td class="wc-center wc-partial">GDPR only</td>
+                        <td class="wc-center wc-cross">❌</td>
+                    </tr>
+                    <tr>
+                        <td><strong>4 data residency regions</strong></td>
+                        <td class="wc-charvak">✅</td>
+                        <td class="wc-center wc-cross">❌</td>
+                        <td class="wc-center wc-cross">❌</td>
+                        <td class="wc-center wc-cross">❌</td>
+                    </tr>
+                    <tr>
+                        <td><strong>8 payment currencies</strong></td>
+                        <td class="wc-charvak">INR, USD, GBP, EUR, AED, SGD, AUD, JPY</td>
+                        <td class="wc-center">US-centric</td>
+                        <td class="wc-center wc-check">✅</td>
+                        <td class="wc-center wc-cross">❌</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Free tier (candidate-facing)</strong></td>
+                        <td class="wc-charvak">✅ No login for most</td>
+                        <td class="wc-center wc-partial">Limited</td>
+                        <td class="wc-center wc-partial">Limited</td>
+                        <td class="wc-center wc-cross">❌</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Batch/cohort leaderboards</strong></td>
+                        <td class="wc-charvak">✅</td>
+                        <td class="wc-center wc-cross">❌</td>
+                        <td class="wc-center wc-cross">❌</td>
+                        <td class="wc-center wc-cross">❌</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Deep dive 1 -->
+    <div class="wc-section">
+        <h2>The 3 differentiators that matter</h2>
+        <p class="section-intro">Why teams pick Charvak over the alternatives — with proof, not promises.</p>
+
+        <div class="wc-deep-dive">
+            <h3>1. Real code execution, not AI opinions</h3>
+            <p class="tagline">The difference between "AI gave them 85" and "85% of test cases passed."</p>
+            <p>Every coding assessment on Charvak is tested against <strong>deterministic test cases</strong> — real stdin and expected stdout, executed via Judge0 CE. A candidate's score of 85 means 85% of test cases passed. Not an AI guess, not a rubric interpretation, not a hunch.</p>
+            <ul>
+                <li>Every coding problem has 3 test cases (input + expected output)</li>
+                <li>Code is executed in a sandboxed environment — no hidden libraries, no AI scoring</li>
+                <li>Result is reproducible: rerun the same code, get the same score</li>
+                <li>Every certificate names the exact task classes tested (Arrays, Recursion, Strings, etc.)</li>
+                <li>The score can be defended to a hiring committee in under 30 seconds</li>
+            </ul>
+            <div class="highlight-box">
+                <strong>What competitors do:</strong> AI-only scoring (TestGorilla, VIVA360) or partial execution (HackerRank). AI scoring fails on edge cases — a candidate can pass by writing plausible-looking code that doesn't actually work.
+            </div>
+            <a href="/career-certification/CCERT-D580C393BDAF" class="proof-link">See a real coding cert (TypeScript, 11 task classes) →</a>
+        </div>
+
+        <!-- Deep dive 2 -->
+        <div class="wc-deep-dive">
+            <h3>2. HMAC-verifiable proof, not vendor gatekeeping</h3>
+            <p class="tagline">Your hiring manager verifies a candidate in 5 seconds — no login, no phone call, no email thread.</p>
+            <p>Every Charvak certificate has a <strong>cryptographic HMAC-SHA256 hash</strong>. That hash is the entire certificate — score, task classes, issue date, candidate identity — signed into a single verifiable string. Employers check it at a public URL with no vendor involvement.</p>
+            <ul>
+                <li>Public verify URL: <code>charvakit.com/api/career-certification/verify/{hash}</code></li>
+                <li>Any change to the cert invalidates the hash — tampering is detectable</li>
+                <li>Hiring manager verifies the score in 5 seconds without a Charvak account</li>
+                <li>The certificate survives the candidate's career — no expiry, no renewal</li>
+                <li>Every verifier sees the exact task classes tested, not just the score</li>
+            </ul>
+            <div class="highlight-box">
+                <strong>What competitors do:</strong> Vendor-managed certificates that require an API key, a login, or a phone call. Recruiters skip verification entirely because it's too much friction.
+            </div>
+            <a href="/scorecard/SC-2780FC46D5E0" class="proof-link">See a real candidate scorecard (87/100, Senior Backend Engineer) →</a>
+        </div>
+
+        <!-- Deep dive 3 -->
+        <div class="wc-deep-dive">
+            <h3>3. Built in India, ready for the world</h3>
+            <p class="tagline">The only placement OS that plugs into both Indian DPDP and global enterprise compliance from day one.</p>
+            <p>Most assessment platforms are built for the US market and bolt on GDPR as an afterthought. Charvak is <strong>India-DPDP native</strong> from day one, with compliance coverage for 6 jurisdictions and data residency in 4 regions — all live, not roadmap.</p>
+            <ul>
+                <li>6 compliance jurisdictions: India DPDP, GDPR, NYC Local Law 144, EU AI Act, PIPL (China), PDPA (Singapore)</li>
+                <li>4 data residency regions on request: Singapore (default), US-East, EU-West, UK</li>
+                <li>8 payment currencies: INR, USD, GBP, EUR, AED, SGD, AUD, JPY</li>
+                <li>SOC 2 Type II roadmap published (Q3 2027)</li>
+                <li>Subprocessors list, DPA template, security questionnaire — all on request</li>
+            </ul>
+            <div class="highlight-box">
+                <strong>What competitors do:</strong> GDPR-only or US-centric compliance. Data lives in one region. Multi-currency payments are a paid feature, not default.
+            </div>
+            <a href="/compliance" class="proof-link">See the full compliance page (6 jurisdictions + 4 regions) →</a>
+        </div>
+    </div>
+
+    <!-- Final CTA -->
+    <div class="wc-cta">
+        <h3>See Charvak in action in 30 seconds</h3>
+        <p>5 live demos, no login required. Scorecard, coding cert, compliance, AI screen agent, session detail.</p>
+        <a href="/demo" class="btn-primary">🎬 Open the demo</a>
+        <a href="/pricing" class="btn-outline">See pricing</a>
+    </div>
+</div>
+{% endblock %}
