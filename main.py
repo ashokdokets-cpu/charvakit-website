@@ -4797,6 +4797,87 @@ async def api_payout_status(request: Request):
     })
 
 
+
+# ============================================================
+# Admin Payout Queue (Session 94c)
+# ============================================================
+
+@app.get("/admin/payouts", response_class=HTMLResponse)
+async def admin_payouts_page(request: Request):
+    """Admin payout approval queue."""
+    return template_response("admin-payouts.html", request, "Payouts - Charvak Admin")
+
+
+@app.get("/api/admin/payouts/list")
+async def api_admin_payouts_list(request: Request, status: str = None):
+    """Admin: list all payout requests."""
+    try:
+        require_admin(request)
+    except HTTPException:
+        raise
+    from payout_engine import payout_engine
+    return JSONResponse(payout_engine.list_all_payouts(status_filter=status))
+
+
+@app.get("/api/admin/payouts/{payout_id}")
+async def api_admin_payout_get(request: Request, payout_id: str):
+    """Admin: get payout detail."""
+    try:
+        require_admin(request)
+    except HTTPException:
+        raise
+    from payout_engine import payout_engine
+    return JSONResponse(payout_engine.get_payout(payout_id))
+
+
+@app.post("/api/admin/payouts/{payout_id}/approve")
+async def api_admin_payout_approve(request: Request, payout_id: str):
+    """Admin: approve payout (ready for manual transfer)."""
+    try:
+        user = require_admin(request)
+    except HTTPException:
+        raise
+    admin_email = (user or {}).get("email", "") if isinstance(user, dict) else ""
+    from payout_engine import payout_engine
+    return JSONResponse(payout_engine.approve_payout(payout_id, admin_email))
+
+
+@app.post("/api/admin/payouts/{payout_id}/mark-paid")
+async def api_admin_payout_mark_paid(request: Request, payout_id: str):
+    """Admin: mark payout as paid with UTR reference."""
+    try:
+        require_admin(request)
+    except HTTPException:
+        raise
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse({"status": "error", "message": "invalid json"}, status_code=400)
+    
+    ref = data.get("payment_reference", "").strip()
+    notes = data.get("admin_notes", "").strip() or None
+    from payout_engine import payout_engine
+    return JSONResponse(payout_engine.mark_paid(payout_id, ref, notes))
+
+
+@app.post("/api/admin/payouts/{payout_id}/reject")
+async def api_admin_payout_reject(request: Request, payout_id: str):
+    """Admin: reject payout with reason."""
+    try:
+        user = require_admin(request)
+    except HTTPException:
+        raise
+    admin_email = (user or {}).get("email", "") if isinstance(user, dict) else ""
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse({"status": "error", "message": "invalid json"}, status_code=400)
+    
+    reason = data.get("reason", "").strip()
+    from payout_engine import payout_engine
+    return JSONResponse(payout_engine.reject_payout(payout_id, reason, admin_email))
+
+
 @app.get("/api/passport/public/list")
 @limiter.limit("60/minute")
 async def api_passport_public_list(
