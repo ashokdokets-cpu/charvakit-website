@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% block title %}Institution Referral Program — Charvak{% endblock %}
+{% block description %}Refer a college to Charvak, earn 10-20% of the annual contract value. Tiered commission as you refer more institutions.{% endblock %}
+
+{% block content %}
+<style>
+.ri-wrap { max-width: 960px; margin: 0 auto; padding: 32px 20px; }
+.ri-hero { background: linear-gradient(135deg, #1a1a2e 0%, #2a2a4e 100%); color: #fff; padding: 56px 32px; border-radius: 16px; margin-bottom: 32px; text-align: center; }
+.ri-hero h1 { font-size: 2.3rem; font-weight: 800; margin: 0 0 14px; line-height: 1.15; }
+.ri-hero p { font-size: 1.1rem; opacity: 0.94; max-width: 620px; margin: 0 auto 24px; }
+.ri-hero .ri-cta { display: inline-block; background: #3ba591; color: #fff; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 1.05rem; margin: 4px; }
+.ri-hero .ri-cta:hover { background: #2a8070; }
+
+.ri-example { background: #f0fdf4; border: 2px solid #86efac; border-radius: 14px; padding: 28px; margin-bottom: 32px; text-align: center; }
+.ri-example h3 { font-size: 1.1rem; color: #166534; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+.ri-example .ri-ex-math { font-size: 1.8rem; font-weight: 800; color: #065f46; margin: 8px 0; }
+.ri-example p { color: #4b5563; margin: 0; font-size: 0.92rem; }
+
+.ri-tiers { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 40px; }
+.ri-tier { background: #fff; border: 2px solid #e2e8f0; border-radius: 12px; padding: 24px; }
+.ri-tier.starter { border-color: #94a3b8; }
+.ri-tier.pro { border-color: #3b82f6; }
+.ri-tier.partner { border-color: #3ba591; }
+.ri-tier.elite { border-color: #f59e0b; }
+.ri-tier .tier-name { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #6b7280; margin-bottom: 6px; }
+.ri-tier.starter .tier-name { color: #64748b; }
+.ri-tier.pro .tier-name { color: #2563eb; }
+.ri-tier.partner .tier-name { color: #3ba591; }
+.ri-tier.elite .tier-name { color: #d97706; }
+.ri-tier .tier-rate { font-size: 2.2rem; font-weight: 800; color: #1a1a2e; line-height: 1; margin-bottom: 6px; }
+.ri-tier .tier-refs { font-size: 0.8rem; color: #6b7280; margin-bottom: 12px; }
+.ri-tier .tier-perks { list-style: none; padding: 0; margin: 0; font-size: 0.85rem; color: #4b5563; }
+.ri-tier .tier-perks li { padding: 4px 0; }
+.ri-tier .tier-perks li:before { content: "✓ "; color: #3ba591; font-weight: 700; margin-right: 4px; }
+
+.ri-section { margin-bottom: 40px; }
+.ri-section h2 { font-size: 1.5rem; font-weight: 800; color: #1a1a2e; margin: 0 0 16px; }
+
+.ri-how { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+.ri-step { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; }
+.ri-step-num { display: inline-block; width: 40px; height: 40px; line-height: 40px; background: #1a1a2e; color: #fff; border-radius: 50%; font-weight: 800; font-size: 1rem; text-align: center; margin-bottom: 12px; }
+.ri-step h3 { font-size: 1rem; font-weight: 700; color: #1a1a2e; margin: 0 0 8px; }
+.ri-step p { color: #6b7280; font-size: 0.88rem; margin: 0; line-height: 1.5; }
+
+.ri-faq { background: #f8fafc; border-radius: 12px; padding: 32px; margin-bottom: 32px; }
+.ri-faq h2 { font-size: 1.25rem; font-weight: 800; color: #1a1a2e; margin: 0 0 20px; }
+.ri-faq details { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; margin-bottom: 8px; }
+.ri-faq summary { cursor: pointer; font-weight: 600; color: #1a1a2e; font-size: 0.9rem; }
+.ri-faq details p { margin: 8px 0 0; color: #4b5563; font-size: 0.88rem; line-height: 1.55; }
+
+.ri-cta-final { background: #1a1a2e; color: #fff; border-radius: 14px; padding: 36px 32px; text-align: center; }
+.ri-cta-final h2 { font-size: 1.5rem; margin: 0 0 8px; }
+.ri-cta-final p { opacity: 0.85; margin: 0 0 20px; }
+.ri-cta-final a { display: inline-block; background: #3ba591; color: #fff; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: 700; margin: 4px; }
+.ri-cta-final a:hover { background: #2a8070; }
+
+@media (max-width: 640px) {
+    .ri-hero h1 { font-size: 1.6rem; }
+    .ri-example .ri-ex-math { font-size: 1.3rem; }
+}
+</style>
+
+<div class="ri-wrap">
+    <div class="ri-hero">
+        <h1>Refer a college. Earn 10-20% commission.</h1>
+        <p>Any TPO, Dean, or placement officer you know is a referral. Commission tiered by how many institutions you refer — up to 20% of first-year contract value.</p>
+        <a href="/referral-dashboard" class="ri-cta">Get my referral link →</a>
+    </div>
+
+    <div class="ri-example">
+        <h3>Real example</h3>
+        <div class="ri-ex-math">₹49,999 deal → you earn ₹4,999</div>
+        <p>Starter tier: 10% of a Department-tier annual contract. Higher tiers earn up to ₹10,000 per deal.</p>
+    </div>
+
+    <div class="ri-section">
+        <h2>Commission tiers</h2>
+        <div class="ri-tiers">
+            <div class="ri-tier starter">
+                <div class="tier-name">Starter</div>
+                <div class="tier-rate">10%</div>
+                <div class="tier-refs">1-2 referrals</div>
+                <ul class="tier-perks">
+                    <li>Standard dashboard</li>
+                    <li>Email support</li>
+                </ul>
+            </div>
+            <div class="ri-tier pro">
+                <div class="tier-name">Pro</div>
+                <div class="tier-rate">12%</div>
+                <div class="tier-refs">3-5 referrals</div>
+                <ul class="tier-perks">
+                    <li>Priority payout</li>
+                    <li>Quarterly bonus</li>
+                </ul>
+            </div>
+            <div class="ri-tier partner">
+                <div class="tier-name">Partner</div>
+                <div class="tier-rate">15%</div>
+                <div class="tier-refs">6-10 referrals</div>
+                <ul class="tier-perks">
+                    <li>Weekly payout</li>
+                    <li>Co-branded one-pager</li>
+                    <li>Case study bonus</li>
+                </ul>
+            </div>
+            <div class="ri-tier elite">
+                <div class="tier-name">Elite</div>
+                <div class="tier-rate">20%</div>
+                <div class="tier-refs">11+ referrals</div>
+                <ul class="tier-perks">
+                    <li>Same-day payout</li>
+                    <li>Custom landing page</li>
+                    <li>Direct founder access</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="ri-section">
+        <h2>How it works</h2>
+        <div class="ri-how">
+            <div class="ri-step">
+                <div class="ri-step-num">1</div>
+                <h3>Get your link</h3>
+                <p>Unique referral code in your dashboard.</p>
+            </div>
+            <div class="ri-step">
+                <div class="ri-step-num">2</div>
+                <h3>Share with a TPO</h3>
+                <p>Send link to any college decision-maker you know.</p>
+            </div>
+            <div class="ri-step">
+                <div class="ri-step-num">3</div>
+                <h3>They sign</h3>
+                <p>4-week free pilot converts to paid. Contract signed.</p>
+            </div>
+            <div class="ri-step">
+                <div class="ri-step-num">4</div>
+                <h3>You get paid</h3>
+                <p>50% on signing, 50% after 30-day retention. Weekly payouts.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="ri-faq">
+        <h2>Institution referral FAQ</h2>
+        <details>
+            <summary>Who can I refer?</summary>
+            <p>Any college or university decision-maker: TPO (Training & Placement Officer), CDC director, Dean, Principal, or a placement coordinator. If they're the person who can approve a Charvak pilot, they're a referral.</p>
+        </details>
+        <details>
+            <summary>What counts as a "converted referral"?</summary>
+            <p>The institution must sign a paid Charvak contract (Department at ₹49,999/yr, Campus at ₹1,99,999/yr, or University at ₹4,99,999/yr). Free pilot alone doesn't count — but pilot conversion usually happens within 4 weeks.</p>
+        </details>
+        <details>
+            <summary>How is commission calculated?</summary>
+            <p>Percentage of Year 1 contract value only. If they renew in Year 2, no additional commission on renewals for institution deals (unlike employer referrals which are recurring). The commission is paid 50% at signing, 50% after 30-day retention.</p>
+        </details>
+        <details>
+            <summary>Do you offer a co-branded one-pager?</summary>
+            <p>Yes, at Partner tier (6+ referrals). We create a co-branded PDF with your logo + Charvak's for you to send directly to TPOs. Includes your contact info so they know exactly who referred them.</p>
+        </details>
+        <details>
+            <summary>What about TPOs referring other TPOs?</summary>
+            <p>TPOs who refer other TPOs get 10% commission + free pilot for their own college (8 weeks instead of 4) + featured case study with both logos.</p>
+        </details>
+        <details>
+            <summary>Is this open globally?</summary>
+            <p>Yes. The US, UK, EU, UAE, Singapore, Australia, and India are all eligible. Payout via Razorpay (INR) or PayPal (USD, GBP, EUR, AED, SGD, AUD).</p>
+        </details>
+    </div>
+
+    <div class="ri-cta-final">
+        <h2>Know a college that could use this?</h2>
+        <p>One TPO introduction could be worth ₹5,000-10,000. Three referrals put you at Pro tier (12% commission).</p>
+        <a href="/referral-dashboard">Get my referral link</a>
+        <a href="/referral" style="background:transparent;border:2px solid rgba(255,255,255,0.4);">See all programs</a>
+    </div>
+</div>
+{% endblock %}
