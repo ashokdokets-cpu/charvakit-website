@@ -82,6 +82,11 @@ scripts/*
 !scripts/run_migrations.py
 !scripts/pdf_reports/
 !scripts/pdf_reports/*.py
+
+# One-pager PDF generators (Asset 3 + 4 - production scripts)
+!scripts/_pdf_helpers.py
+!scripts/generate_employer_onepager.py
+!scripts/generate_institution_onepager.py
 requirements.txt.bak
 runtime.txt.bak
 
