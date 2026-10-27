@@ -7020,3 +7020,35 @@ Homepage hero globally framed. Zero India-only signals remaining on any leading 
 2. Amrita follow-up #1
 3. 10 warm emails with /demo URL
 4. Optional LinkedIn post
+---
+
+## FLAGGED — Homepage Demo Video (2026-10-27)
+
+**Asset #2 from the 10-Asset Compounding Playbook.** Deferred to a session with 1+ hr uninterrupted.
+
+**What it is:** 30-60 second screen recording of /demo walking through 5 features.
+
+**Requirements:**
+- Screen recording tool: Loom (free, cloud-hosted) or OBS (free, local)
+- Screen: /demo page walking through 5 demos
+- Voiceover: optional (your voice, or ElevenLabs synthetic)
+- Length: 30-60 seconds max (attention economy)
+
+**Where it ships:**
+- Homepage hero (muted autoplay + click to play with sound)
+- Thumbnail on /demo page
+- YouTube upload (SEO — links back to charvakit.com/demo)
+
+**Script outline (30 sec):**
+    '0-5s:  Hero — Every job posting asks for proven skills. Almost none can verify it.'
+    '5-10s: scorecard demo — 'Here is a verified scorecard with cryptographic proof.'
+    '10-15s: cert demo — 'Here is a coding certificate with the exact task classes tested.'
+    '15-20s: screen demo — 'Here is a live AI screen agent. Chat with it right now.'
+    '20-25s: dashboard demo — 'Here is the recruiter dashboard with hire tracking.'
+    '25-30s: CTA — 'Charvakit.com/demo. Free, no login. Built in India, ready for the world.'
+
+**Trigger to build:** Any Wednesday morning block of 2 hrs uninterrupted.
+
+**Effort:** ~1 hr recording + ~1 hr editing = 2 hrs
+
+**Verdict:** FLAGGED — build when 2 hrs uninterrupted available.
