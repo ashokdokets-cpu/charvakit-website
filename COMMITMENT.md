@@ -7052,3 +7052,34 @@ Homepage hero globally framed. Zero India-only signals remaining on any leading 
 **Effort:** ~1 hr recording + ~1 hr editing = 2 hrs
 
 **Verdict:** FLAGGED — build when 2 hrs uninterrupted available.
+---
+
+## FLAGGED — Razorpay X + PayPal Payouts Applications (2026-10-28)
+
+**Status: DEFERRED until first referral revenue is generated.**
+
+**Why deferred:**
+- Razorpay X (Payouts) is a separate product from Razorpay Payments
+- Requires business KYC + bank proof + approval (3-7 business days)
+- Adding it before there's payout volume is premature
+- Manual transfer mode (UPI/bank/PayPal web UI) works for first 10-50 payouts
+
+**Trigger to apply (any one):**
+- First referrer requests a payout
+- OR total pending commission across all referrers exceeds Rs 25,000
+- OR 5+ payout requests in a single month
+
+**When triggered, apply at:**
+- Razorpay X: https://razorpay.com/x/ (5 min form + 3-7 day approval)
+- PayPal Payouts: paypal.com/businessmanage → Settings → Payouts (5 min + 1-3 day approval)
+
+**Once approved:** Session 94b upgrades manual flow to API mode.
+**Migration effort:** ~1 hr (swap process_payout() body).
+**Zero wasted work:** Manual flow's DB schema and eligibility logic transfer 100%.
+
+**Fees when API mode is enabled:**
+- Razorpay X: ~Rs 2-5 per payout
+- PayPal Payouts: 2% of payout, capped at \
+
+**Interim solution:** Manual transfer via UPI/bank/PayPal web UI.
+5 min per payout, works today, no approval needed.
