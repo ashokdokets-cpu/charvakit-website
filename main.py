@@ -4922,6 +4922,13 @@ async def referral_institution_page(request: Request):
     return template_response("referral-institution.html", request,
                              "Institution Referral Program - Charvak")
 
+
+@app.get("/referral/employer", response_class=HTMLResponse)
+async def referral_employer_page(request: Request):
+    """Employer referral program — recurring commission."""
+    return template_response("referral-employer.html", request,
+                             "Employer Referral Program - Charvak")
+
 @app.post("/api/affiliate/apply")
 async def api_affiliate_apply(request: Request):
     """Submit affiliate application."""
