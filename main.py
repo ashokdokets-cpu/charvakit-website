@@ -4643,6 +4643,20 @@ async def api_referral_me(request: Request):
     if result.get("status") != "success":
         return JSONResponse(result, status_code=500)
     
+    # Check agreement acceptance
+    agreement = referral_engine.get_agreement_status(result["referrer"]["referrer_id"])
+    
+    # If not accepted, return gate (no referral code exposed)
+    if not agreement.get("is_accepted"):
+        return JSONResponse({
+            "status": "agreement_required",
+            "next_step": "accept_agreement",
+            "terms_url": "/referral/agreement",
+            "message": "Accept the Referral Program Agreement to activate your referral link.",
+            "referrer": result["referrer"],
+            "agreement_status": agreement,
+        })
+    
     # Get stats
     stats = referral_engine.get_referrer_stats(result["referrer"]["referrer_id"])
     return JSONResponse({
