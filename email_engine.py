@@ -11,10 +11,11 @@ load_dotenv()
 logger = logging.getLogger("charvakit.email")
 
 SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY", "")
+BREVO_API_KEY = os.getenv("BREVO_API_KEY", "")
 ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "charvakit@gmail.com")
 FROM_EMAIL = "charvakit@gmail.com"
 
-EMAIL_ENABLED = bool(SENDGRID_API_KEY)
+EMAIL_ENABLED = bool(BREVO_API_KEY or SENDGRID_API_KEY)
 
 
 class EmailEngine:
@@ -24,19 +25,99 @@ class EmailEngine:
         self.enabled = EMAIL_ENABLED
         self.sent_count = 0
         if self.enabled:
-            logger.info("Email Engine: ENABLED (SendGrid)")
+            provider = "Brevo" if BREVO_API_KEY else "SendGrid"
+            logger.info(f"Email Engine: ENABLED ({provider})")
         else:
-            logger.warning("Email Engine: DISABLED (set SENDGRID_API_KEY)")
+            logger.warning("Email Engine: DISABLED (set BREVO_API_KEY or SENDGRID_API_KEY)")
 
     def send_email(self, to_email: str, subject: str, body: str, is_html: bool = True, attachment_bytes=None, attachment_filename=None) -> Dict:
-        """Send email via SendGrid with reply-to set to GoDaddy email."""
+        """Send email via Brevo (primary) or SendGrid (fallback).
+        
+        Provider resolution:
+        - If BREVO_API_KEY is set, use Brevo
+        - Otherwise, if SENDGRID_API_KEY is set, use SendGrid
+        - Otherwise, disabled
+        """
         if not self.enabled:
             logger.warning(f"Email disabled - would send to {to_email}: {subject}")
             return {"status": "disabled", "message": "Email not configured"}
 
+        # Prefer Brevo if configured
+        if BREVO_API_KEY:
+            return self._send_via_brevo(to_email, subject, body, is_html, attachment_bytes, attachment_filename)
+        else:
+            return self._send_via_sendgrid(to_email, subject, body, is_html, attachment_bytes, attachment_filename)
+
+    def _send_via_brevo(self, to_email, subject, body, is_html, attachment_bytes, attachment_filename) -> Dict:
+        """Send email via Brevo REST API (v3)."""
         try:
             import requests
             import json
+            import base64
+
+            payload = {
+                "sender": {
+                    "email": "hr@charvakit.com",
+                    "name": "Charvak IT Consulting"
+                },
+                "to": [{"email": to_email}],
+                "replyTo": {
+                    "email": "hr@charvakit.com",
+                    "name": "Charvak IT Consulting"
+                },
+                "subject": subject,
+                "htmlContent": body if is_html else f"<pre>{body}</pre>"
+            }
+
+            # Optional PDF attachment — Brevo expects base64 content
+            if attachment_bytes and attachment_filename:
+                payload["attachment"] = [
+                    {
+                        "content": base64.b64encode(attachment_bytes).decode("ascii"),
+                        "name": attachment_filename,
+                    }
+                ]
+
+            response = requests.post(
+                "https://api.brevo.com/v3/smtp/email",
+                headers={
+                    "accept": "application/json",
+                    "api-key": BREVO_API_KEY,
+                    "content-type": "application/json"
+                },
+                data=json.dumps(payload),
+                timeout=15
+            )
+
+            if response.status_code in (201, 202):
+                self.sent_count += 1
+                try:
+                    message_id = response.json().get("messageId", "")
+                except Exception:
+                    message_id = ""
+                logger.info(f"Email sent via Brevo to {to_email}: {subject} (msg_id={message_id[:20]})")
+                return {"status": "success", "message": "Email sent via Brevo", "to": to_email, "provider": "brevo"}
+            else:
+                logger.error(f"Brevo error: {response.status_code} - {response.text[:200]}")
+                # Fall back to SendGrid on Brevo failure
+                if SENDGRID_API_KEY:
+                    logger.info("Falling back to SendGrid")
+                    return self._send_via_sendgrid(to_email, subject, body, is_html, attachment_bytes, attachment_filename)
+                return {"status": "error", "message": f"Brevo error: {response.status_code}", "provider": "brevo"}
+
+        except Exception as e:
+            logger.error(f"Brevo send failed: {e}")
+            if SENDGRID_API_KEY:
+                logger.info("Falling back to SendGrid")
+                return self._send_via_sendgrid(to_email, subject, body, is_html, attachment_bytes, attachment_filename)
+            return {"status": "error", "message": str(e), "provider": "brevo"}
+
+    def _send_via_sendgrid(self, to_email, subject, body, is_html, attachment_bytes, attachment_filename) -> Dict:
+        """Send email via SendGrid v3 (fallback provider)."""
+        try:
+            import requests
+            import json
+            import base64
 
             payload = {
                 "personalizations": [
@@ -61,9 +142,7 @@ class EmailEngine:
                 ]
             }
 
-            # Session 16: optional PDF attachment
             if attachment_bytes and attachment_filename:
-                import base64
                 payload["attachments"] = [
                     {
                         "content": base64.b64encode(attachment_bytes).decode("ascii"),
@@ -85,15 +164,15 @@ class EmailEngine:
 
             if response.status_code == 202:
                 self.sent_count += 1
-                logger.info(f"Email sent to {to_email}: {subject}")
-                return {"status": "success", "message": "Email sent successfully", "to": to_email}
+                logger.info(f"Email sent via SendGrid to {to_email}: {subject}")
+                return {"status": "success", "message": "Email sent via SendGrid", "to": to_email, "provider": "sendgrid"}
             else:
-                logger.error(f"SendGrid error: {response.status_code} - {response.text}")
-                return {"status": "error", "message": f"SendGrid error: {response.status_code}"}
+                logger.error(f"SendGrid error: {response.status_code} - {response.text[:200]}")
+                return {"status": "error", "message": f"SendGrid error: {response.status_code}", "provider": "sendgrid"}
 
         except Exception as e:
-            logger.error(f"Email send failed: {e}")
-            return {"status": "error", "message": str(e)}
+            logger.error(f"SendGrid send failed: {e}")
+            return {"status": "error", "message": str(e), "provider": "sendgrid"}
 
 
     def notify_admin(self, subject: str, message: str) -> Dict:
@@ -113,7 +192,7 @@ class EmailEngine:
         return {
             "status": "success",
             "enabled": self.enabled,
-            "provider": "SendGrid",
+            "provider": "Brevo" if BREVO_API_KEY else "SendGrid",
             "sender": FROM_EMAIL,
             "total_sent": self.sent_count
         }
