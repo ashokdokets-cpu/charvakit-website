@@ -187,6 +187,27 @@ async function loadDashboard() {
         });
         var data = await r.json();
         
+        if (data.status === 'agreement_required') {
+            document.getElementById('loading').style.display = 'none';
+            var gate = document.getElementById('dashContent');
+            gate.style.display = 'block';
+            gate.innerHTML = '<div class="rd-hero" style="background: linear-gradient(135deg, #1a1a2e 0%, #2a2a4e 100%);">' +
+                '<h1>Accept the agreement to activate your referral link</h1>' +
+                '<p>Read the terms, check the box, and your link is live in 5 seconds.</p>' +
+                '</div>' +
+                '<div style="text-align:center; padding: 40px 20px;">' +
+                '<div style="max-width: 600px; margin: 0 auto; background: #f0fdf4; border: 2px solid #86efac; border-radius: 12px; padding: 32px;">' +
+                '<div style="font-size: 2.5rem; margin-bottom: 16px;">📋</div>' +
+                '<h2 style="font-size: 1.3rem; color: #166534; margin: 0 0 12px;">One step before you earn</h2>' +
+                '<p style="color: #4b5563; margin: 0 0 24px; font-size: 0.95rem;">' +
+                'Before you can generate your referral link, you need to accept the Charvak Referral Program Agreement. It takes 30 seconds to read and covers attribution, commission, fraud policy, and payout terms.' +
+                '</p>' +
+                '<a href="/referral/agreement" style="display: inline-block; padding: 14px 32px; background: #3ba591; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 1rem;">Read &amp; accept the agreement →</a>' +
+                '<p style="margin-top: 20px; font-size: 0.85rem; color: #6b7280;">Once accepted, your referral link appears on this page instantly.</p>' +
+                '</div></div>';
+            return;
+        }
+        
         if (data.status !== 'success') {
             alert('Failed to load dashboard: ' + (data.message || 'unknown error'));
             return;

@@ -134,12 +134,27 @@ class ReferralEngine:
             conn = self._conn()
             cur = conn.cursor()
             
-            # Verify code exists
-            cur.execute("SELECT referrer_id FROM charvak_referrer_accounts WHERE referral_code = %s", (referral_code,))
-            if not cur.fetchone():
+            # Verify code exists AND is activated
+            cur.execute("""
+                SELECT referrer_id, code_activated
+                FROM charvak_referrer_accounts
+                WHERE referral_code = %s
+            """, (referral_code,))
+            row = cur.fetchone()
+            if not row:
                 cur.close()
                 conn.close()
                 return {"status": "error", "message": "invalid code"}
+            # Plain cursor returns tuple: row[0]=referrer_id, row[1]=code_activated
+            activated = row[1] if isinstance(row, tuple) else row.get("code_activated")
+            if not activated:
+                cur.close()
+                conn.close()
+                return {
+                    "status": "error",
+                    "code": "REFERRER_NOT_ACTIVATED",
+                    "message": "This referrer has not yet accepted the agreement. Referral link is inactive.",
+                }
             
             # Record click
             cur.execute("""
@@ -728,9 +743,10 @@ class ReferralEngine:
                 SET agreement_version = %s,
                     agreement_accepted_at = NOW(),
                     agreement_ip_hash = %s,
+                    code_activated = TRUE,
                     updated_at = NOW()
                 WHERE referrer_id = %s
-                RETURNING referrer_id, agreement_version, agreement_accepted_at
+                RETURNING referrer_id, agreement_version, agreement_accepted_at, referral_code
             """, (version, ip_hash, referrer_id))
             row = cur.fetchone()
             conn.commit()
