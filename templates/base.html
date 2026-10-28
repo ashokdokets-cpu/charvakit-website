@@ -217,6 +217,132 @@ window.addEventListener('charvak:mainready', function() {
                 top: 60px !important;
             }
         }
+
+/* ══════════════════════════════════════════════════════════════
+   Session 100 — TOP AUTH DROPDOWN FIX
+   The dropdown was at z-index: 1000, hidden behind the nav (9999).
+   This overrides Bootstrap's default with maximum specificity.
+   ══════════════════════════════════════════════════════════════ */
+
+/* Ensure the dropdown opens above the nav (9999) */
+.dropdown-menu.dropdown-menu-end {
+    z-index: 10500 !important;
+}
+
+/* Force the parent chain to allow the dropdown to escape */
+.global-bar .dropdown {
+    z-index: 10500 !important;
+    position: static !important;
+}
+
+/* Ensure the top auth container is positioned and above the nav */
+#topAuthIn {
+    z-index: 10500 !important;
+    position: relative !important;
+}
+
+/* The dropdown menu itself needs position: absolute to layer correctly */
+#topAuthIn .dropdown-menu {
+    z-index: 10500 !important;
+    position: absolute !important;
+}
+
+/* If the dropdown is inside .global-bar (which has z-index: 1040),
+   bump the whole bar so the child can escape */
+.global-bar {
+    z-index: 1041 !important;
+}
+
+/* Fallback: if Bootstrap tries to use its own .dropdown-menu stacking,
+   this rule with high specificity wins */
+body .dropdown-menu.dropdown-menu-end.show,
+body .dropdown-menu.dropdown-menu-end {
+    z-index: 10500 !important;
+    position: absolute !important;
+    inset: auto 0 auto auto !important;
+    transform: translateY(0) !important;
+}
+/* end-top-auth-dropdown-fix */
+
+/* Session 100 fix v2: #topAuthIn moved out of .global-bar (fixed stacking context) */
+/* The dropdown now renders as a direct child of a fixed-position wrapper at z-index 10500 */
+#topAuthInWrapper {
+    z-index: 10500 !important;
+}
+#topAuthInWrapper #topAuthIn {
+    z-index: 10500 !important;
+    position: static !important;
+}
+#topAuthInWrapper .dropdown-menu {
+    z-index: 10501 !important;
+    position: absolute !important;
+    right: 0 !important;
+    top: 100% !important;
+}
+/* end-session-100-fix-v2 */
+
+/* top-auth-v4: ensure dropdown displays when parent has .show */
+#topAuthIn.show > .dropdown-menu,
+#topAuthIn .dropdown-menu.show {
+    display: block !important;
+}
+#topAuthIn:not(.show) > .dropdown-menu {
+    display: none !important;
+}
+/* /top-auth-v4 */
+
+/* top-auth-v6: DEFINITIVE DROPDOWN FIX — position from top, no viewport tricks */
+#topAuthInWrapper {
+    position: fixed !important;
+    top: 8px !important;
+    right: 20px !important;
+    z-index: 10500 !important;
+    max-height: 100vh !important;
+    overflow: visible !important;
+}
+
+#topAuthIn {
+    position: relative !important;
+    z-index: 10500 !important;
+}
+
+/* Force the dropdown to appear right below the avatar, not at top:100% */
+#topAuthIn .dropdown-menu {
+    position: absolute !important;
+    top: 40px !important;          /* 40px below the toggle — avatar is ~32px tall */
+    right: 0 !important;
+    z-index: 10501 !important;
+    display: none !important;
+    min-width: 280px !important;
+    max-height: calc(100vh - 100px) !important;
+    overflow-y: auto !important;
+}
+
+/* When parent has .show, display the menu */
+#topAuthIn.show .dropdown-menu {
+    display: block !important;
+}
+
+/* Hidden state for the menu (when not shown) */
+#topAuthIn .dropdown-menu:not(.show) {
+    /* Only hide if parent doesn't have .show */
+}
+
+/* Hide auth out container when logged in (via body class approach) */
+body.logged-in #topAuthOut,
+body.logged-in #topAuthOut * {
+    display: none !important;
+}
+body.logged-in #topAuthIn {
+    display: block !important;
+}
+
+/* Ensure the dropdown items display correctly */
+#topAuthIn.show .dropdown-menu #loggedInMenu {
+    display: block !important;
+}
+
+/* /top-auth-v6 */
 </style>
         
     <!-- Google Analytics -->
@@ -275,8 +401,7 @@ window.addEventListener('charvak:mainready', function() {
             <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
                 <!-- LEFT: Language + Currency pickers -->
                 <div class="d-flex align-items-center gap-2">
-                    <small class="d-none d-lg-inline-block me-2"><i class="bi bi-globe me-1"></i><span data-i18n="topbar.global_platform">Global Platform</span></small>
-                    <select class="form-select form-select-sm d-inline-block w-auto bg-dark text-white border-secondary" id="langSelector" onchange="changeLanguage(this.value)" aria-label="Select language" style="max-width:140px;">
+                    <select class="form-select form-select-sm d-inline-block w-auto bg-dark text-white border-secondary" id="langSelector" onchange="changeLanguage(this.value)" aria-label="Select language" style="max-width:90px; font-size:0.8rem;">
                                                         <option value="en">English</option>
                             <option value="hi">हिन्दी</option>
                             <option value="te">తెలుగు</option>
@@ -311,7 +436,7 @@ window.addEventListener('charvak:mainready', function() {
                             <option value="ig">Igbo</option>
                             <option value="zu">isiZulu</option>
                             <option value="so">Soomaali</option></select>
-                    <select class="form-select form-select-sm d-inline-block w-auto bg-dark text-white border-secondary" id="currencySelector" onchange="changeCurrency(this.value)" aria-label="Select currency" style="max-width:100px;">
+                    <select class="form-select form-select-sm d-inline-block w-auto bg-dark text-white border-secondary" id="currencySelector" onchange="changeCurrency(this.value)" aria-label="Select currency" style="max-width:80px; font-size:0.8rem;">
                                                         <option value="INR" selected>₹ INR</option>
                             <option value="USD">$ USD</option>
                             <option value="EUR">€ EUR</option>
@@ -335,27 +460,7 @@ window.addEventListener('charvak:mainready', function() {
                         <a href="/register" class="btn btn-sm" style="background:#3ba591; color:#fff; font-weight:600; padding:4px 14px; border-radius:6px; white-space:nowrap;">Get Started →</a>
                     </div>
                     <!-- Logged in: auth dropdown (hidden by default, shown by JS) -->
-                    <div class="dropdown d-none" id="topAuthIn">
-                        <button class="btn btn-outline-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" id="userMenuButton" aria-label="User account menu">
-                            <i class="bi bi-person-circle me-1"></i><span id="userMenuLabel">Login</span>
-                        </button>
-                        <div class="dropdown-menu dropdown-menu-end p-3" style="width:280px;">
-                            <div id="loggedInMenu" style="display:none;">
-                                <h3 class="text-white h6">My Account</h3>
-                                <p class="text-white-50 small mb-2" id="loggedInEmail"></p>
-                                <a href="/passport/me" class="btn btn-outline-warning btn-sm w-100 mb-2" style="border-color:#ffc107;color:#ffc107;font-weight:600;">🏛️ My Passport</a>
-                                <a href="/credit-dashboard" class="btn btn-outline-success btn-sm w-100 mb-2" data-i18n="nav.dashboard">Dashboard</a>
-                                <a href="/profile" class="btn btn-outline-info btn-sm w-100 mb-2">My Profile</a>
-                                <a href="/my-applications" class="btn btn-outline-info btn-sm w-100 mb-2">My Applications</a>
-                                <a href="/my-results" class="btn btn-outline-warning btn-sm w-100 mb-2">My Results</a>
-                                <a href="/my-reports" class="btn btn-outline-info btn-sm w-100 mb-2">My Reports</a>
-                                <a href="/readiness-check" class="btn btn-outline-info btn-sm w-100 mb-2">My Certificates</a>
-                                <a href="/exam-prep" class="btn btn-outline-primary btn-sm w-100 mb-2" data-i18n="nav.exam_prep_short">Exam Prep</a>
-                                <a href="/ai-internship" class="btn btn-outline-info btn-sm w-100 mb-2" data-i18n="nav.ai_internship_short">AI Internship</a>
-                                <button class="btn btn-danger btn-sm w-100" onclick="logoutUser()">Logout</button>
-                            </div>
-                        </div>
-                    </div>
+                    
                 </div>
             </div>
         </div>
@@ -1056,5 +1161,195 @@ window.addEventListener('charvak:401', function(e) {
     window.location.href = d.login_url ? d.login_url : ('/login?next=' + next);
 });
 </script>
+
+<!-- top-auth-moved-flag: Session 100 fix — #topAuthIn moved out of .global-bar fixed stacking context -->
+<div id="topAuthInWrapper" style="position: fixed; top: 8px; right: 20px; z-index: 10500;">
+<div class="dropdown d-none" id="topAuthIn">
+                        <button class="btn btn-outline-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" id="userMenuButton" aria-label="User account menu">
+                            <i class="bi bi-person-circle me-1"></i><span id="userMenuLabel">Login</span>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end p-3" style="width:280px;">
+                            <div id="loggedInMenu" style="display:none;">
+                                <h3 class="text-white h6">My Account</h3>
+                                <p class="text-white-50 small mb-2" id="loggedInEmail"></p>
+                                <a href="/passport/me" class="btn btn-outline-warning btn-sm w-100 mb-2" style="border-color:#ffc107;color:#ffc107;font-weight:600;">🏛️ My Passport</a>
+                                <a href="/credit-dashboard" class="btn btn-outline-success btn-sm w-100 mb-2" data-i18n="nav.dashboard">Dashboard</a>
+                                <a href="/profile" class="btn btn-outline-info btn-sm w-100 mb-2">My Profile</a>
+                                <a href="/my-applications" class="btn btn-outline-info btn-sm w-100 mb-2">My Applications</a>
+                                <a href="/my-results" class="btn btn-outline-warning btn-sm w-100 mb-2">My Results</a>
+                                <a href="/my-reports" class="btn btn-outline-info btn-sm w-100 mb-2">My Reports</a>
+                                <a href="/readiness-check" class="btn btn-outline-info btn-sm w-100 mb-2">My Certificates</a>
+                                <a href="/exam-prep" class="btn btn-outline-primary btn-sm w-100 mb-2" data-i18n="nav.exam_prep_short">Exam Prep</a>
+                                <a href="/ai-internship" class="btn btn-outline-info btn-sm w-100 mb-2" data-i18n="nav.ai_internship_short">AI Internship</a>
+                                <a href="/referral-dashboard" class="btn btn-outline-warning btn-sm w-100 mb-2">🎁 Refer &amp; Earn</a>
+                                <button class="btn btn-danger btn-sm w-100" onclick="logoutUser()">Logout</button>
+                            </div>
+                        </div>
+                    </div>
+</div>
+<!-- /top-auth-moved-flag -->
+
+
+
+
+
+
+
+
+<!-- top-auth-v4: definitive dropdown + login state fix -->
+<script>
+(function() {
+    console.log('[top-auth-v4] loaded');
+
+    // ═══════════════════════════════════════════════════════════════
+    // PART A: DROPDOWN TOGGLE — use Bootstrap's .show class on parent
+    // ═══════════════════════════════════════════════════════════════
+    function bindDropdown() {
+        var topIn = document.getElementById('topAuthIn');
+        if (!topIn) { setTimeout(bindDropdown, 100); return; }
+
+        var toggle = topIn.querySelector('[data-bs-toggle="dropdown"]');
+        if (!toggle) { setTimeout(bindDropdown, 100); return; }
+
+        if (toggle.dataset.v4bound === '1') return;
+        toggle.dataset.v4bound = '1';
+
+        toggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            // Toggle the .show class on the parent — THIS is what Bootstrap CSS watches
+            var wasShown = topIn.classList.contains('show');
+            if (wasShown) {
+                topIn.classList.remove('show');
+            } else {
+                topIn.classList.add('show');
+            }
+            console.log('[top-auth-v4] toggled, wasShown =', wasShown, '→ now =', !wasShown);
+        });
+
+        // Close on outside click
+        if (!window.__v4OutsideClick) {
+            window.__v4OutsideClick = true;
+            document.addEventListener('click', function(e) {
+                var t = document.getElementById('topAuthIn');
+                if (t && !t.contains(e.target)) {
+                    t.classList.remove('show');
+                }
+            });
+        }
+
+        // Close on Escape
+        if (!window.__v4Esc) {
+            window.__v4Esc = true;
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    var t = document.getElementById('topAuthIn');
+                    if (t) t.classList.remove('show');
+                }
+            });
+        }
+
+        console.log('[top-auth-v4] dropdown bound');
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // PART B: LOGIN STATE — hide #topAuthOut when logged in
+    // ═══════════════════════════════════════════════════════════════
+    function fixLoginState() {
+        var token = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token');
+        var email = localStorage.getItem('userEmail');
+        var isLoggedIn = !!(token && email);
+
+        var topOut = document.getElementById('topAuthOut');
+        var topIn = document.getElementById('topAuthIn');
+
+        // Toggle body class — this drives the CSS rule (body.logged-in)
+        if (isLoggedIn) {
+            document.body.classList.add('logged-in');
+            document.body.classList.remove('logged-out');
+        } else {
+            document.body.classList.add('logged-out');
+            document.body.classList.remove('logged-in');
+        }
+
+        if (isLoggedIn) {
+            // Hide each auth-out element with d-none (nuclear)
+            if (topOut) {
+                topOut.classList.add('d-none');
+                topOut.style.setProperty('display', 'none', 'important');
+                topOut.querySelectorAll('a, button').forEach(function(el) {
+                    el.classList.add('d-none');
+                    el.style.setProperty('display', 'none', 'important');
+                });
+            }
+            if (topIn) topIn.classList.remove('d-none');
+            console.log('[v6] logged in: hid #topAuthOut, showed #topAuthIn');
+        } else {
+            if (topOut) {
+                topOut.classList.remove('d-none');
+                topOut.style.removeProperty('display');
+                topOut.querySelectorAll('a, button').forEach(function(el) {
+                    el.classList.remove('d-none');
+                    el.style.removeProperty('display');
+                });
+            }
+            if (topIn) topIn.classList.add('d-none');
+            console.log('[v6] logged out: showed #topAuthOut, hid #topAuthIn');
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // PART B2: HIDE stray "See Demo" / "Sign In" / "Get Started"
+    // These may be OUTSIDE #topAuthOut in some template versions
+    // ═══════════════════════════════════════════════════════════════
+    function hideStrayAuthLinks() {
+        var token = localStorage.getItem('auth_token') || localStorage.getItem('charvak_token');
+        var email = localStorage.getItem('userEmail');
+        if (!token || !email) return;
+
+        // Find all links to /demo, /login, /register that are in the global bar
+        var globalBar = document.querySelector('.global-bar');
+        if (!globalBar) return;
+
+        globalBar.querySelectorAll('a[href="/demo"], a[href="/login"], a[href="/register"]').forEach(function(link) {
+            // Skip if it's inside #topAuthIn (which shouldn't exist)
+            if (link.closest('#topAuthIn')) return;
+            link.style.setProperty('display', 'none', 'important');
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // PART C: RUN EVERYTHING ON MULTIPLE CHECKPOINTS
+    // ═══════════════════════════════════════════════════════════════
+    function runAll() {
+        bindDropdown();
+        fixLoginState();
+        hideStrayAuthLinks();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', runAll);
+    } else {
+        runAll();
+    }
+    // Multiple retries — login state may be set by checkLoginState() at various times
+    setTimeout(runAll, 100);
+    setTimeout(runAll, 500);
+    setTimeout(runAll, 1500);
+    setTimeout(runAll, 3000);
+
+    // Also re-run when main.js fires ready (that's when checkLoginState runs)
+    window.addEventListener('charvak:mainready', function() {
+        console.log('[top-auth-v4] mainready event — re-running');
+        setTimeout(runAll, 50);
+        setTimeout(runAll, 500);
+    });
+
+    // Watch for localStorage changes (login/logout)
+    window.addEventListener('storage', runAll);
+})();
+</script>
+<!-- /top-auth-v4 -->
+
 </body>
 </html>
