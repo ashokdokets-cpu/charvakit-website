@@ -297,12 +297,53 @@ class ExamPrepEngine:
         }
 
     def get_all_categories(self) -> Dict:
-        """Get all categories with exam counts."""
+        """Get all categories with exam counts and clean display names."""
         categories = []
         total_exams = 0
+        
+        # Display names + icons for categories (fixes raw DB keys)
+        CATEGORY_DISPLAY = {
+            # Indian exams
+            "central_govt":    {"name": "Central Government",   "icon": "🏛️"},
+            "banking":         {"name": "Banking & Finance",    "icon": "🏦"},
+            "engineering":     {"name": "Engineering",          "icon": "⚙️"},
+            "medical":         {"name": "Medical",              "icon": "🏥"},
+            "university":      {"name": "University",           "icon": "🎓"},
+            "management":      {"name": "Management",           "icon": "📊"},
+            "state_exams":     {"name": "State Exams",          "icon": "📍"},
+            "state_pcs":       {"name": "State PCS",            "icon": "🏛️"},
+            "state_police":    {"name": "State Police",         "icon": "👮"},
+            "state_tet":       {"name": "State TET",            "icon": "📚"},
+            "defense":         {"name": "Defense",              "icon": "🛡️"},
+            "international":   {"name": "International",        "icon": "🌍"},
+            # Global exams
+            "higher_education":     {"name": "Higher Education",     "icon": "🎓"},
+            "english_proficiency":  {"name": "English Proficiency",  "icon": "🗣️"},
+            "finance":              {"name": "Finance & Accounting", "icon": "💰"},
+            "it_cloud":             {"name": "IT & Cloud",           "icon": "💻"},
+            "project_management":   {"name": "Project Management",   "icon": "📋"},
+            "medical_licensing":    {"name": "Medical Licensing",    "icon": "⚕️"},
+        }
+        
         for cat_id, cat_data in self.exams.items():
-            categories.append({"id": cat_id, "name": cat_data["name"], "icon": cat_data["icon"], "exam_count": len(cat_data["exams"])})
+            display = CATEGORY_DISPLAY.get(cat_id)
+            
+            if display:
+                clean_name = display["name"]
+                clean_icon = display["icon"]
+            else:
+                # Fallback: capitalize the raw key
+                clean_name = cat_data.get("name") or cat_id.replace("_", " ").title()
+                clean_icon = cat_data.get("icon") or "📚"
+            
+            categories.append({
+                "id": cat_id,
+                "name": clean_name,
+                "icon": clean_icon,
+                "exam_count": len(cat_data["exams"])
+            })
             total_exams += len(cat_data["exams"])
+            
         return {"status": "success", "total_categories": len(categories), "total_exams": total_exams, "categories": categories}
 
     def _acquire_lazy_lock(self, exam_id: str, ttl: int = 180) -> bool:
