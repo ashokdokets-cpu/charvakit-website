@@ -1,5 +1,76 @@
 # Charvak - Commitment Tracker
 
+## Session 101 - COMPLETE (2026-10-30) - Privacy-First Recruiter Visibility
+
+**Commit:** a859b21
+
+### Shipped
+
+BREAKING BEHAVIOR CHANGE: New passports now default to is_public=FALSE.
+Prior default was TRUE - every new user was publicly searchable by
+recruiters without their knowledge. That was a privacy liability.
+
+### Changes
+
+Backend:
+- migrations/20261030_passport_privacy.sql
+  - NULL -> FALSE cleanup
+  - NOT NULL constraint added
+  - Column default: TRUE -> FALSE
+  - Existing public profiles preserved (no UPDATE without WHERE)
+
+- passport_engine.py
+  - set_visibility(email, is_public) - toggle + persist
+  - get_visibility(email) - read current state + metadata
+  - get_passport_by_handle(handle, viewer_email='') - new param
+    with owner bypass: owner can view own private passport
+  - create_or_get_passport() return payload - cosmetic fix
+
+- main.py
+  - POST /api/passport/visibility (auth + email-match)
+  - GET /api/passport/visibility/<email> (auth + email-match)
+  - Routes placed BEFORE /api/passport/<handle> catch-all
+  - /passport/<handle> page passes viewer_email for owner bypass
+
+- templates/passport.html
+  - Recruiter Visibility card with toggle switch
+  - Owner-only display (checks userEmail === passport.email)
+  - Loads current state on page load
+  - POSTs on toggle with confirmation message
+
+### Verification
+
+Local DB:
+- Migration applied: default=false, nullable=NO
+- @hr-c97e preserved is_public=TRUE
+- @charvak-admin-0b61 created is_public=FALSE
+
+Browser tests (all passing):
+- Owner viewing own passport: card visible, toggle works
+- Stranger viewing public passport: card hidden, no 404
+- Stranger viewing private passport: 404 Passport not found
+- Anonymous viewing public passport: page loads, no card
+
+Prod tests (all passing):
+- /api/passport/public/list -> 200, total=21 (data preserved)
+- /api/passport/visibility/<email> -> 401 (auth gate works)
+- /passport/hr-c97e -> 200 (no regressions)
+
+### Inverted Marketplace - FLAGGED (NOT BUILT)
+
+Created INVERTED-MARKETPLACE-FLAG.md documenting the 3-session
+inverted marketplace plan. Deferred until a paying customer exists.
+
+Trigger to unfreeze: Amrita signs OR 1 paid employer OR 5+ active
+university pilots OR a client explicitly requests the demo.
+
+Do NOT build speculatively. The single biggest failure mode for
+marketplaces is building supply before demand exists.
+
+---
+
+
+
 **Last updated:** 2026-10-24 (Sessions 79-80 closed)
 
 ## Sessions 79-80 — COMPLETE (2026-10-24)

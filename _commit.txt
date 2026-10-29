@@ -1,0 +1,13 @@
+docs: session 101 close-out - privacy fix + marketplace flag
+
+- COMMITMENT.md: Session 101 entry
+- KNOWN-ISSUES.md: 3 resolutions (privacy, staff aug, exam-prep)
+- MASTER-REFERENCE.md: HEAD a859b21, version v3.12
+- STATUS.md: session 101 summary
+- NEXT-SESSION-PLAN.md: refreshed queue
+- ARCHITECTURE.md: privacy section
+- PAGES-INVENTORY.md: session 101 additions
+- INVERTED-MARKETPLACE-FLAG.md: created (do not build until paying customer)
+- SCHEMA.md: is_public default TRUE -> FALSE
+
+Session 101 complete.
