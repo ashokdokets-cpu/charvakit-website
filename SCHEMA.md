@@ -1,5 +1,10 @@
 # Charvak Database Schema
 
+
+> **Session 101 update (2026-10-30):** charvak_passports.is_public now
+> defaults to FALSE (was TRUE). Migration 20261030_passport_privacy.sql
+> flips the default. Existing public rows preserved.
+
 **Generated:** 2026-10-19
 **Total tables:** 192
 
@@ -3475,7 +3480,7 @@ Re-generate with: `python scripts/regenerate_schema.py`
 | charvak_score | integer | YES | 0 |
 | score_tier | text | YES | 'foundation'::text |
 | score_updated_at | timestamp without time zone | YES |  |
-| is_public | boolean | YES | true |
+| is_public | boolean | NO | false |
 | created_at | timestamp without time zone | YES | CURRENT_TIMESTAMP |
 | updated_at | timestamp without time zone | YES | CURRENT_TIMESTAMP |
 

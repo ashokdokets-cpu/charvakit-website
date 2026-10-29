@@ -1,5 +1,44 @@
 # Charvak Architecture
 
+## Passport Privacy Controls (Session 101, 2026-10-30)
+
+Privacy-first default: new passports are is_public=FALSE. Users opt in
+to recruiter visibility, not out.
+
+### Table change
+
+    charvak_passports.is_public  BOOLEAN NOT NULL DEFAULT FALSE
+
+Prior default was TRUE. Migration 20261030_passport_privacy.sql
+flips the default without touching existing rows.
+
+### API
+
+- POST /api/passport/visibility - toggle (auth + email-match)
+  - Body: email, is_public
+  - Returns: status, is_public, message
+- GET /api/passport/visibility/<email> - read (auth + email-match)
+
+### Owner bypass
+
+get_passport_by_handle(handle, viewer_email='') - private passports
+are visible to their owner via direct URL. Strangers get 404.
+
+### UI
+
+templates/passport.html shows a Recruiter Visibility toggle card
+to the passport owner only. Stranger visits and logged-out visits
+do not render the card.
+
+### Route order
+
+POST/GET /api/passport/visibility routes MUST be placed BEFORE
+the /api/passport/<handle> catch-all - otherwise they get shadowed.
+
+---
+
+
+
 **Last updated:** 2026-10-19
 **Version:** v3.5-session-54-20261019
 

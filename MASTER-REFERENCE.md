@@ -2,10 +2,10 @@
 
 ## Charvak IT Consulting Pvt Ltd
 
-### Last updated: October 25, 2026 (Session 82 extended - G6 + W1 + 401 fix)
+### Last updated: 2026-10-30 (Session 101 - privacy fix)
 
 
-**HEAD:** aadb13d
+**HEAD:** a859b21
 
 **Live:** https://www.charvakit.com
 
@@ -13,7 +13,7 @@
 
 **Backlog:** see `OUTSTANDING-WORK-INVENTORY.md` (master list of remaining work)
 
-**Version:** v3.11-session-82-extended-20261025
+**Version:** v3.12-session-101-20261030
 
 
 

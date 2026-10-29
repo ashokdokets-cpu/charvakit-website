@@ -1,5 +1,39 @@
 # Charvak IT Consulting - Project Status
 
+# Charvak IT Consulting - Project Status
+
+**Last updated:** 2026-10-30 (Session 101 - privacy fix shipped)
+**Version:** v3.12-session-101-20261030
+**Live:** https://www.charvakit.com
+**HEAD:** a859b21
+
+## Session 101 - COMPLETE (2026-10-30)
+
+### Privacy-first recruiter visibility
+
+BREAKING BEHAVIOR CHANGE: New passports default to is_public=FALSE.
+
+- Migration: migrations/20261030_passport_privacy.sql
+- Engine: set_visibility() + get_visibility() + owner bypass
+- Routes: POST/GET /api/passport/visibility
+- UI: toggle card on /passport/handle (owner-only)
+- Verified on prod: 21 public profiles preserved, routes live, no regressions
+
+### Flagged - Inverted Marketplace (Sessions 102-104)
+
+See INVERTED-MARKETPLACE-FLAG.md. Deferred until paying customer exists.
+
+### What is queued
+
+- Amrita email -> Monday
+- Render Postgres password -> Weekend
+- One-pagers to 5 universities -> Monday
+- Email Mismatch Auto-Link Flow -> ~2 hrs, deferred
+
+---
+
+
+
 **Last updated:** 2026-10-24 (Sessions 79-81 — 3 Phase A products shipped)
 **Version:** v3.10-session-81-20261024
 **Live:** https://www.charvakit.com

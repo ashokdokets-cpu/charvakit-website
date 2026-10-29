@@ -1,5 +1,61 @@
 # Charvak - Known Issues Registry
 
+### RESOLVED - Passport is_public defaults to TRUE (2026-10-30, a859b21)
+
+Every new passport was created with is_public=TRUE by DB default.
+Users who took a readiness check had no UI to control visibility -
+their score + cert count + display name appeared in recruiter search
+without their knowledge.
+
+Fix (Session 101):
+- Migration flips DB default TRUE -> FALSE
+- POST /api/passport/visibility toggle endpoint (auth-gated)
+- templates/passport.html shows toggle to passport owner only
+- Owner bypass: private passports visible to owner via direct URL
+- Strangers get 404 on private passport (correct privacy behavior)
+
+Verification:
+- Local: default=false, nullable=NO
+- Existing public @hr-c97e preserved is_public=TRUE
+- New @charvak-admin-0b61 created is_public=FALSE
+- Prod API health check: 200/401/200 (all passing)
+
+Verdict: RESOLVED.
+
+---
+
+### RESOLVED - Staff Augmentation card shown with hardcoded $4,000 (2026-10-30)
+
+The Staff Augmentation card on the homepage showed From $4,000/month
+hardcoded - wrong currency for Indian viewers, wrong price for the
+product (Rs 4,000 is intern rate, not staff aug rate).
+
+Fix:
+- Removed hardcoded price
+- Replaced with 3 value claims: Shortlist in 48 hours. Verified by
+  real code execution. See pricing.
+- Removed nested <a> tag that was breaking layout
+
+Verdict: RESOLVED.
+
+---
+
+### RESOLVED - Exam-prep categories shown as raw DB keys (2026-10-30)
+
+/exam-prep categories rendered as central_govt, manage ment,
+state_exams with mid-word wrapping. Frontend fetched API returning
+raw keys, not display names.
+
+Fix: Backend get_all_categories() now returns display names + icons
+via CATEGORY_DISPLAY dict. Frontend uses API values directly.
+
+Verdict: RESOLVED. All 18 categories (12 Indian + 6 global) render
+with clean names + icons. 138 + 55 = 193 exams all visible.
+
+---
+
+
+
 **Last updated:** 2026-10-24 (Sessions 79-80 closed)
 
 ### RESOLVED - Homepage positioning was exam-prep-only (2026-10-24, 707996c)
