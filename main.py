@@ -3667,6 +3667,52 @@ async def api_passport_create(request: Request):
         return handle_error(e, "passport create")
 
 
+@app.post("/api/passport/visibility")
+async def api_passport_visibility_toggle(request: Request):
+    """Toggle recruiter visibility for the caller's passport.
+    
+    Auth required. Caller must own the email.
+    """
+    try:
+        data = await request.json()
+        email = (data.get("email") or "").strip().lower()
+        is_public = bool(data.get("is_public"))
+
+        if not email:
+            return JSONResponse(
+                status_code=400,
+                content={"status": "error", "message": "Email required"},
+            )
+
+        require_auth_for_email(request, email)
+
+        import passport_engine as pe
+        result = pe.set_visibility(email, is_public)
+        status_code = 200 if result.get("status") == "success" else 404
+        return JSONResponse(status_code=status_code, content=result)
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "passport visibility toggle")
+
+
+@app.get("/api/passport/visibility/{email}")
+async def api_passport_visibility_get(request: Request, email: str):
+    """Get current passport visibility status. Auth required."""
+    try:
+        email = (email or "").strip().lower()
+        require_auth_for_email(request, email)
+
+        import passport_engine as pe
+        result = pe.get_visibility(email)
+        status_code = 200 if result.get("status") == "success" else 404
+        return JSONResponse(status_code=status_code, content=result)
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "passport visibility get")
+
+
 @app.get("/api/passport/{handle}")
 @limiter.limit("120/minute")
 async def api_passport_get(request: Request, handle: str):
@@ -3832,10 +3878,18 @@ def _passport_badge_svg_render(score: int, tier: str, handle: str) -> str:
 @app.get("/passport/{handle}", response_class=HTMLResponse)
 @limiter.limit("120/minute")
 async def passport_page(request: Request, handle: str):
-    """Public passport page. No auth required."""
+    """Public passport page. Owner can view their own private passport."""
     try:
+        # Detect caller (optional — anonymous viewers still allowed)
+        caller_email = ""
+        try:
+            caller = require_auth(request)
+            caller_email = (caller.get("email") or "").strip().lower()
+        except HTTPException:
+            pass  # Anonymous viewer
+
         import passport_engine as pe
-        result = pe.get_passport_by_handle(handle)
+        result = pe.get_passport_by_handle(handle, viewer_email=caller_email)
         if result.get("status") != "success":
             return template_response(
                 "passport.html", request,

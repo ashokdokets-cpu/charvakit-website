@@ -382,7 +382,7 @@ def create_or_get_passport(email: str, display_name: str = "",
                 "headline": headline or None,
                 "charvak_score": 0,
                 "score_tier": "foundation",
-                "is_public": True,
+                "is_public": False,  # Session 101: DB default now FALSE
             },
         }
     except Exception as e:
@@ -493,7 +493,7 @@ def get_public_verification(handle: str) -> Dict:
             try: conn.close()
             except Exception: pass
 
-def get_passport_by_handle(handle: str, include_score: bool = True) -> Dict:
+def get_passport_by_handle(handle: str, include_score: bool = True, viewer_email: str = "") -> Dict:
     """Full passport payload: identity + score + all aggregate data."""
     handle = (handle or "").strip().lower()
     if not handle:
@@ -535,7 +535,11 @@ def get_passport_by_handle(handle: str, include_score: bool = True) -> Dict:
     }
 
     if not passport["is_public"]:
-        return {"status": "error", "message": "This passport is private"}
+        # Owner bypass: allow the passport owner to view their own private passport
+        viewer_email = (viewer_email or "").strip().lower()
+        owner_email = (passport["email"] or "").strip().lower()
+        if not viewer_email or viewer_email != owner_email:
+            return {"status": "error", "message": "This passport is private"}
 
     data = _get_aggregate_data(passport["email"])
     passport["certificates"] = data["certificates"]
@@ -701,3 +705,105 @@ def list_public_passports(tier: str = "", limit: int = 20, offset: int = 0,
         if conn:
             try: conn.close()
             except Exception: pass
+
+# ═══════════════════════════════════════════════════════════════
+# Session 101: Privacy controls — recruiter visibility toggle
+# ═══════════════════════════════════════════════════════════════
+
+def set_visibility(email: str, is_public: bool) -> Dict:
+    """Toggle recruiter visibility for a user's passport.
+    
+    Args:
+        email: The passport owner's email
+        is_public: True = visible in recruiter search, False = hidden
+    
+    Returns:
+        {status: success|error, is_public: bool, message: str}
+    """
+    email = (email or "").strip().lower()
+    if not email:
+        return {"status": "error", "message": "Email required"}
+    
+    conn = None
+    try:
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            UPDATE charvak_passports
+            SET is_public = %s, updated_at = NOW()
+            WHERE email = %s
+        """, (bool(is_public), email))
+        rows = cur.rowcount
+        conn.commit()
+        cur.close()
+        conn.close()
+        conn = None
+        
+        if rows == 0:
+            return {
+                "status": "error",
+                "message": "Passport not found for this email"
+            }
+        
+        return {
+            "status": "success",
+            "is_public": bool(is_public),
+            "message": (
+                "Visible to recruiters" if is_public
+                else "Hidden from recruiter search"
+            )
+        }
+    except Exception as e:
+        logger.exception("set_visibility failed")
+        return {"status": "error", "message": str(e)}
+    finally:
+        if conn:
+            try:
+                conn.close()
+            except Exception:
+                pass
+
+
+def get_visibility(email: str) -> Dict:
+    """Get current passport visibility status and metadata."""
+    email = (email or "").strip().lower()
+    if not email:
+        return {"status": "error", "message": "Email required"}
+    
+    conn = None
+    try:
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT is_public, handle, charvak_score, score_tier,
+                   display_name, score_updated_at
+            FROM charvak_passports
+            WHERE email = %s
+        """, (email,))
+        row = cur.fetchone()
+        cur.close()
+        conn.close()
+        conn = None
+        
+        if not row:
+            return {"status": "error", "message": "Passport not found"}
+        
+        return {
+            "status": "success",
+            "is_public": bool(row[0]),
+            "handle": row[1],
+            "score": row[2],
+            "score_tier": row[3],
+            "display_name": row[4],
+            "score_updated_at": row[5].isoformat() if row[5] else None,
+        }
+    except Exception as e:
+        logger.exception("get_visibility failed")
+        return {"status": "error", "message": str(e)}
+    finally:
+        if conn:
+            try:
+                conn.close()
+            except Exception:
+                pass
+
