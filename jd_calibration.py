@@ -5,42 +5,152 @@
 from typing import Dict, List
 from calibrated_skills import canonicalize, is_calibrated
 import json
+import re
+
+# Session 106 follow-up: suffix-stripping for skill name normalization.
+# Parser returns phrases like "Kubernetes deployment" or "HIPAA compliance";
+# the catalog has base skills. Strip decorative suffixes before lookup.
+_SUFFIXES = [
+    " deployment", " deployments", " deployment experience",
+    " compliance", " compliance experience",
+    " architecture",
+    " experience", " experience required",
+    " knowledge", " knowledge required",
+    " skills", " skills required",
+    " proficiency", " proficiency required",
+    " development", " development experience",
+    " engineer", " engineer experience", " engineering",
+    " specialist", " specialist experience",
+    " design", " design skills", " design experience",
+    " optimization", " optimization skills", " optimization experience",
+    " frameworks", " framework", " framework experience",
+    " libraries", " library",
+    " integration", " integration experience",
+    " databases", " database", " database experience",
+    " analytics", " analytics database", " analytics database experience",
+    " tools", " tool", " tooling",
+    " orchestration", " pipeline", " pipelines",
+    " (or similar)", " (or equivalent)", " or similar", " or equivalent",
+]
+
+def _strip_suffixes(skill_name: str) -> str:
+    """Return a list of candidate names by progressively stripping suffixes."""
+    if not skill_name:
+        return ""
+    s = skill_name.strip().lower()
+    # Strip leading "experience in" / "expert in" / "strong" / "deep"
+    for prefix in ["experience in ", "expert in ", "expert ", "strong ", "deep ", "advanced ", "senior "]:
+        if s.startswith(prefix):
+            s = s[len(prefix):]
+    return s
+
+# Session 106 follow-up: connector words to split on when looking for sub-skills.
+_CONNECTORS = [
+    " api ", " api integration", " api ", " or similar", " or equivalent",
+    " with ", " for ", " and ", " using ", " via ", " through ",
+    " (", " vs ", " versus ", " over ", " in ", " on ",
+]
+
+def _split_on_connectors(phrase: str) -> list:
+    """Split a compound phrase into sub-phrases on connector words.
+    E.g. 'GPT-4o API integration' -> ['gpt-4o', 'api integration']
+    Returns list of stripped lowercase chunks."""
+    if not phrase:
+        return []
+    s = phrase.lower()
+    # Split on each connector, keep unique non-empty chunks
+    chunks = {s}
+    for conn in _CONNECTORS:
+        parts = s.split(conn)
+        for p in parts:
+            p = p.strip()
+            if p and len(p) > 1:
+                chunks.add(p)
+    # Strip suffixes from each chunk too
+    expanded = set()
+    for chunk in chunks:
+        expanded.add(chunk)
+        current = chunk
+        for suffix in _SUFFIXES:
+            if current.endswith(suffix):
+                stripped = current[: -len(suffix)].strip()
+                if stripped:
+                    expanded.add(stripped)
+                current = stripped
+    return list(expanded)
+
+def _skill_variants(skill_name: str) -> list:
+    """Return a list of variants to try (from most-specific to base name)."""
+    if not skill_name:
+        return []
+    base = _strip_suffixes(skill_name)
+    variants = [skill_name.strip(), base]
+    # Strip parentheticals: "Pinecone (vector database)" -> "Pinecone"
+    paren = re.sub(r"\s*\([^)]*\)", "", base).strip()
+    if paren and paren != base:
+        variants.append(paren)
+    # Strip suffixes progressively
+    current = base
+    for suffix in _SUFFIXES:
+        if current.endswith(suffix):
+            stripped = current[: -len(suffix)].strip()
+            if stripped and stripped not in variants:
+                variants.append(stripped)
+            current = stripped
+    # Try each variant with suffix stripping (some prefixes may not match cleanly)
+    for v in list(variants):
+        cleaned = re.sub(r"\s+(or similar|or equivalent).*$", "", v).strip()
+        if cleaned and cleaned not in variants:
+            variants.append(cleaned)
+    # NEW: Add connector-split chunks as last resort
+    for chunk in _split_on_connectors(skill_name):
+        if chunk not in variants:
+            variants.append(chunk)
+    return variants
 
 def _is_calibrated_including_db(skill_name: str) -> bool:
     """Check built-in catalog (BOTH modules), then DB extensions."""
     if not skill_name:
         return False
 
-    # NEW: Check skill_catalog (518-skill catalog) FIRST
+    # NEW: Check skill_catalog (518-skill catalog) with suffix-stripping variants
+    variants = _skill_variants(skill_name)
     try:
         from skill_catalog import is_known as _catalog_is_known
-        if _catalog_is_known(skill_name):
-            return True
+        for variant in variants:
+            if _catalog_is_known(variant):
+                return True
     except Exception:
         pass
 
     # Then check calibrated_skills (legacy 142-skill catalog, backward compat)
     try:
-        if is_calibrated(skill_name):
-            return True
+        for variant in variants:
+            if is_calibrated(variant):
+                return True
     except Exception:
         pass
 
-    # Then check DB extensions (auto-calibrated skills)
+    # Then check DB extensions (auto-calibrated skills) — try each variant
     try:
         from database import db
         conn = db.get_connection()
         cur = conn.cursor()
-        cur.execute("""
-            SELECT 1 FROM charvak_skill_extensions
-            WHERE LOWER(canonical_name) = %s
-               OR aliases::text ILIKE %s
-            LIMIT 1
-        """, (skill_name.strip().lower(), f'%"{skill_name.strip().lower()}"%'))
-        row = cur.fetchone()
+        for variant in variants:
+            cur.execute("""
+                SELECT 1 FROM charvak_skill_extensions
+                WHERE LOWER(canonical_name) = %s
+                   OR aliases::text ILIKE %s
+                LIMIT 1
+            """, (variant.strip().lower(), f'%"{variant.strip().lower()}"%'))
+            row = cur.fetchone()
+            if row is not None:
+                cur.close()
+                conn.close()
+                return True
         cur.close()
         conn.close()
-        return row is not None
+        return False
     except Exception:
         # Table might not exist, or DB down -> fall back
         return False
