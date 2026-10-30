@@ -2609,13 +2609,13 @@ class CareerAssessmentEngine:
                 INSERT INTO charvak_career_certifications
                     (cert_id, email, assessment_id, role, industry, level, score,
                      passed, badge_tier, certification_hash, credits_charged,
-                     integrity_summary, issued_at,
+                     integrity_summary, issued_at, expires_at,
                      format, language, database_name, task_classes, runtime_info,
                      candidate_name, candidate_email_masked,
                      candidate_email_fingerprint, attempt_number, attempt_max,
                      identity_signature)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                        %s::jsonb, CURRENT_TIMESTAMP,
+                        %s::jsonb, CURRENT_TIMESTAMP, NOW() + INTERVAL '365 days',
                         %s, %s, %s, %s::jsonb, %s,
                         %s, %s, %s, %s, %s, %s)
             """, (cert_id, email, assessment_id, role, industry, level, score,
@@ -2672,7 +2672,7 @@ class CareerAssessmentEngine:
                        format, language, database_name, task_classes, runtime_info,
                        candidate_name, candidate_email_masked,
                        candidate_email_fingerprint, attempt_number, attempt_max,
-                       identity_signature
+                       identity_signature, expires_at
                 FROM charvak_career_certifications
                 WHERE cert_id = %s
             """, (cert_id,))
@@ -2719,6 +2719,11 @@ class CareerAssessmentEngine:
                         "identity_signature": row[23],
                         "first_attempt": (row[21] == 1) if row[21] is not None else None,
                     },
+                    # NEW (Session 104b): Expiration
+                    "expires_at": row[24].isoformat() if len(row) > 24 and row[24] else None,
+                    "is_expired": (
+                        (row[24] < datetime.utcnow()) if len(row) > 24 and row[24] else False
+                    ),
                 },
             }
         except Exception as e:
