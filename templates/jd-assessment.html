@@ -200,7 +200,7 @@
         // Session 63: CTA carries prefill params for /ai-assessment
         const ctaUrl = '/ai-assessment?role=' + encodeURIComponent(title || '') +
                        '&industry=' + encodeURIComponent((p && p.domain) || '') +
-                       '&level=' + encodeURIComponent(seniority || ''));
+                       '&level=' + encodeURIComponent(seniority || '');
 
         document.getElementById('jdResult').innerHTML = `
             <div class="jd-result">
