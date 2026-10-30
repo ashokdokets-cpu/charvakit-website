@@ -974,6 +974,7 @@ class CareerAssessmentEngine:
             level_blurb=level_blurb, num_questions=num_questions,
             difficulty_hint=difficulty_hint,
             language=language_in,
+            email=email,
         )
         if not questions:
             return {"status": "error", "message": "Could not generate questions. Please try again."}
@@ -1467,7 +1468,8 @@ class CareerAssessmentEngine:
     def _generate_questions(
         self, format_key: str, role: str, industry: str, level_key: str,
         level_label: str, level_blurb: str, num_questions: int,
-        difficulty_hint: str = "baseline", language: str = "python"
+        difficulty_hint: str = "baseline", language: str = "python",
+        email: str = ""
     ) -> List[Dict]:
         """
         Generate questions for the given format via OpenAI.
@@ -1477,6 +1479,17 @@ class CareerAssessmentEngine:
         api_key = _os.getenv("OPENAI_API_KEY", "")
         if not api_key:
             return []
+
+        # NEW (Session 103b): Fetch prior question hashes for rotation
+        prior_hashes = set()
+        if email:
+            try:
+                from question_rotator import get_prior_question_hashes
+                prior_hashes = get_prior_question_hashes(email, role, industry, level_key, format_key)
+                if prior_hashes:
+                    logger.info(f"Rotation: excluding {len(prior_hashes)} prior questions for {email}")
+            except Exception as e:
+                logger.warning(f"Rotation fetch failed (non-fatal): {e}")
 
         # SJT: best+worst per item, keep count as-is
         batches = []
@@ -1495,6 +1508,7 @@ class CareerAssessmentEngine:
                 level_blurb=level_blurb, count=batch_size,
                 difficulty_hint=difficulty_hint,
                 language=language,
+                prior_hashes=prior_hashes,
             )
             if not batch:
                 return []
@@ -1513,7 +1527,8 @@ class CareerAssessmentEngine:
     def _generate_one_batch(
         self, format_key: str, role: str, industry: str,
         level_key: str, level_label: str, level_blurb: str, count: int,
-        difficulty_hint: str = "baseline", language: str = "python"
+        difficulty_hint: str = "baseline", language: str = "python",
+        prior_hashes: set = None
     ) -> List[Dict]:
         """Single OpenAI call for a batch of questions in the given format."""
         import os as _os
@@ -1529,6 +1544,16 @@ class CareerAssessmentEngine:
             difficulty_hint=difficulty_hint,
             language=language,
         )
+
+        # NEW (Session 103b): Inject prior-question exclusion hint
+        if prior_hashes:
+            try:
+                from question_rotator import build_exclude_prompt_snippet
+                exclude_snippet = build_exclude_prompt_snippet(prior_hashes)
+                if exclude_snippet:
+                    prompt = prompt + "\n\n" + exclude_snippet
+            except Exception as e:
+                logger.warning(f"Rotation prompt build failed: {e}")
 
         try:
             response = requests.post(
@@ -1551,9 +1576,20 @@ class CareerAssessmentEngine:
                 content = content.strip()
             parsed = json.loads(content)
             questions = parsed.get("questions", [])
-            if questions and isinstance(questions, list):
-                return questions
-            return []
+            if not questions or not isinstance(questions, list):
+                return []
+
+            # NEW (Session 103b): Filter out duplicates of prior questions
+            if prior_hashes:
+                try:
+                    from question_rotator import remove_duplicates
+                    questions, removed = remove_duplicates(questions, prior_hashes)
+                    if removed > 0:
+                        logger.info(f"Rotation: removed {removed} duplicate questions in {format_key}")
+                except Exception as e:
+                    logger.warning(f"Rotation duplicate filter failed: {e}")
+
+            return questions
         except Exception as e:
             logger.error(f"AI batch failed for {format_key}: {e}")
             return []
