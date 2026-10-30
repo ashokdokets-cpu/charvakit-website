@@ -4522,6 +4522,90 @@ async def admin_cas_keys_page(request: Request):
     )
 
 
+@app.get("/api/admin/multi-account-review")
+async def api_admin_multi_account_review(request: Request):
+    """Session 104a: List accounts flagged for multi-account abuse."""
+    try:
+        require_admin(request)
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+
+        # Ensure table exists (may not if no signups recorded yet)
+        cur.execute("""
+            SELECT 1 FROM information_schema.tables
+            WHERE table_name = 'charvak_account_signals'
+        """)
+        if not cur.fetchone():
+            cur.close()
+            conn.close()
+            return {"status": "success", "flagged": [], "total": 0}
+
+        # Find IPs with 3+ accounts
+        cur.execute("""
+            SELECT ip_hash, COUNT(DISTINCT email) as account_count
+            FROM charvak_account_signals
+            WHERE ip_hash IS NOT NULL AND ip_hash != ''
+            GROUP BY ip_hash
+            HAVING COUNT(DISTINCT email) >= 3
+            ORDER BY account_count DESC
+            LIMIT 50
+        """)
+        ip_groups = cur.fetchall()
+
+        flagged = []
+        for ip_hash, count in ip_groups:
+            cur.execute("""
+                SELECT DISTINCT email, MIN(recorded_at) as first_seen
+                FROM charvak_account_signals
+                WHERE ip_hash = %s
+                GROUP BY email
+            """, (ip_hash,))
+            emails = [{"email": r[0], "first_seen": r[1].isoformat() if r[1] else None}
+                      for r in cur.fetchall()]
+            flagged.append({
+                "ip_hash": ip_hash,
+                "account_count": count,
+                "emails": emails,
+            })
+
+        cur.close()
+        conn.close()
+        return {
+            "status": "success",
+            "flagged_ip_groups": flagged,
+            "total_groups": len(flagged),
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "multi account review")
+
+
+@app.post("/api/admin/multi-account-review/{email}/clear")
+async def api_admin_multi_account_clear(request: Request, email: str):
+    """Session 104a: Clear signals for an email (manual override)."""
+    try:
+        require_admin(request)
+        email = (email or "").strip().lower()
+        if not email:
+            return JSONResponse(status_code=400, content={"status": "error", "message": "email required"})
+
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM charvak_account_signals WHERE LOWER(email) = %s", (email,))
+        deleted = cur.rowcount
+        conn.commit()
+        cur.close()
+        conn.close()
+        return {"status": "success", "deleted": deleted, "email": email}
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "multi account clear")
+
+
 @app.get("/api/admin/cas-keys/list")
 async def admin_cas_keys_list(request: Request, search: str = "", sort: str = "created_desc"):
     """Session 53 + 64: List all CAS API keys with search + sort."""
