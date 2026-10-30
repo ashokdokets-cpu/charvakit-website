@@ -109,7 +109,23 @@
       <a href="/screen/dashboard" class="rd-hero-outline">Screen-only view</a>
       <a href="#" id="rdExportAllBtn" class="rd-hero-outline">⬇ Export CSV</a>
       <a href="#" id="rdExportPdfBtn" class="rd-hero-outline">📄 Export PDF</a>
+      <button type="button" id="rdCoverageBtn" class="rd-hero-outline" onclick="toggleCoveragePanel()" style="cursor:pointer;border:2px solid rgba(255,255,255,0.6);font-family:inherit;font-size:inherit;">🔍 Check JD Coverage</button>
     </div>
+  </div>
+
+  <!-- Session 105: JD Coverage Pre-Flight Panel -->
+  <div id="jdCoveragePanel" style="display:none; margin-bottom:24px;">
+    <div class="rd-filters" style="grid-template-columns: 1fr;">
+      <div>
+        <label for="jdCoverageText">Paste a JD to check coverage</label>
+        <textarea id="jdCoverageText" rows="4" style="width:100%;padding:10px;border:1px solid #cbd5e0;border-radius:6px;font-family:inherit;font-size:0.9rem;" placeholder="Paste the job description here..."></textarea>
+        <div style="display:flex;gap:8px;margin-top:10px;">
+          <button type="button" onclick="checkJdCoverage()">Check Coverage →</button>
+          <button type="button" class="rd-clear" onclick="toggleCoveragePanel()">Cancel</button>
+        </div>
+      </div>
+    </div>
+    <div id="jdCoverageResult" style="margin-top:12px;"></div>
   </div>
 
   <div class="rd-kpis" id="rdKpis">
@@ -873,5 +889,54 @@
     loadHires();
   })();
 })();
+
+function toggleCoveragePanel() {
+  var p = document.getElementById('jdCoveragePanel');
+  if (!p) return;
+  p.style.display = p.style.display === 'none' ? 'block' : 'none';
+  if (p.style.display === 'block') {
+    document.getElementById('jdCoverageText').focus();
+  }
+}
+
+async function checkJdCoverage() {
+  var text = (document.getElementById('jdCoverageText').value || '').trim();
+  var result = document.getElementById('jdCoverageResult');
+  if (!text) {
+    result.innerHTML = '<div style="padding:12px;background:#fef3c7;border-radius:8px;color:#92400e;">Please paste a JD first.</div>';
+    return;
+  }
+  result.innerHTML = '<div style="padding:12px;color:#6b7280;">Analyzing coverage...</div>';
+  try {
+    var resp = await fetch('/api/jd/coverage-check', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jd_text: text }),
+    });
+    var data = await resp.json();
+    if (data.status !== 'success') {
+      result.innerHTML = '<div style="padding:12px;background:#fee2e2;border-radius:8px;color:#991b1b;">' + (data.message || 'Error') + '</div>';
+      return;
+    }
+    var cov = data.coverage || {};
+    var color = cov.status === 'calibrated' ? '#10b981' : (cov.status === 'partial' ? '#f59e0b' : '#ef4444');
+    var bgColor = cov.status === 'calibrated' ? '#d1fae5' : (cov.status === 'partial' ? '#fef3c7' : '#fee2e2');
+    var textColor = cov.status === 'calibrated' ? '#065f46' : (cov.status === 'partial' ? '#92400e' : '#991b1b');
+    var label = cov.status === 'calibrated' ? '\u2705 Ready to screen' : (cov.status === 'partial' ? '\u26a0\ufe0f Partial coverage' : '\u274c Not calibrated');
+    var html = '<div style="padding:16px;background:' + bgColor + ';border-radius:8px;color:' + textColor + ';border-left:4px solid ' + color + ';">';
+    html += '<div style="font-weight:800;font-size:1.1rem;margin-bottom:8px;">' + label + ' \u00b7 ' + cov.coverage + '% coverage</div>';
+    html += '<div style="font-size:0.9rem;margin-bottom:12px;">' + (cov.message || '') + '</div>';
+    if (cov.covered && cov.covered.length) {
+      html += '<div style="margin-bottom:8px;"><strong>Can verify (' + cov.covered.length + '):</strong> ' + cov.covered.map(function(s) { return '<span style="display:inline-block;padding:2px 8px;background:#fff;border-radius:12px;margin:2px;font-size:0.85rem;">' + s + '</span>'; }).join('') + '</div>';
+    }
+    if (cov.not_covered && cov.not_covered.length) {
+      html += '<div><strong>Cannot verify (' + cov.not_covered.length + '):</strong> ' + cov.not_covered.map(function(s) { return '<span style="display:inline-block;padding:2px 8px;background:#fff;border-radius:12px;margin:2px;font-size:0.85rem;opacity:0.75;">' + s + '</span>'; }).join('') + '</div>';
+    }
+    html += '</div>';
+    result.innerHTML = html;
+  } catch (e) {
+    result.innerHTML = '<div style="padding:12px;background:#fee2e2;border-radius:8px;color:#991b1b;">Network error: ' + e.message + '</div>';
+  }
+}
 </script>
 {% endblock %}
