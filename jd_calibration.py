@@ -4,6 +4,33 @@
 
 from typing import Dict, List
 from calibrated_skills import canonicalize, is_calibrated
+import json
+
+def _is_calibrated_including_db(skill_name: str) -> bool:
+    """Check built-in catalog first, then charvak_skill_extensions DB."""
+    if not skill_name:
+        return False
+    # Check built-in (fast path)
+    if is_calibrated(skill_name):
+        return True
+    # Check DB extensions
+    try:
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT 1 FROM charvak_skill_extensions
+            WHERE LOWER(canonical_name) = %s
+               OR aliases::text ILIKE %s
+            LIMIT 1
+        """, (skill_name.strip().lower(), f'%"{skill_name.strip().lower()}"%'))
+        row = cur.fetchone()
+        cur.close()
+        conn.close()
+        return row is not None
+    except Exception:
+        # Table might not exist, or DB down -> fall back to catalog-only
+        return False
 
 
 def check_jd_coverage(jd_parsed: Dict) -> Dict:
@@ -47,7 +74,7 @@ def check_jd_coverage(jd_parsed: Dict) -> Dict:
             continue
         seen.add(skill_lower)
 
-        if is_calibrated(skill):
+        if _is_calibrated_including_db(skill):
             covered.append(skill)
         else:
             not_covered.append(skill)

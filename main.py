@@ -4738,6 +4738,65 @@ async def employer_cas_page(request: Request):
     )
 
 
+@app.post("/api/skills/auto-calibrate")
+@limiter.limit("10/minute")
+async def api_skills_auto_calibrate(request: Request):
+    """
+    Session 106: Auto-calibrate unknown skills.
+
+    Body:
+        {
+            "skill": "Hibernate"          # single skill
+        }
+        OR
+        {
+            "skills": ["Hibernate", "DRF"]  # batch
+        }
+
+    Returns:
+        {
+            "status": "success",
+            "results": [
+                {"requested_name": "Hibernate", "status": "success", "canonical": "Hibernate", "task_classes": [...], "test_type": "mcq", "judge0_id": null},
+                ...
+            ],
+            "total": N,
+            "succeeded": M,
+            "failed": K
+        }
+    """
+    try:
+        data = await request.json()
+        skill_single = (data.get("skill") or "").strip()
+        skills_list = data.get("skills") or []
+
+        # Normalize to batch
+        if skill_single and not skills_list:
+            skills_list = [skill_single]
+
+        if not skills_list or not isinstance(skills_list, list):
+            return JSONResponse(status_code=400, content={
+                "status": "error",
+                "message": "Provide 'skill' (string) or 'skills' (list of strings)",
+            })
+
+        # Cap at 20 skills per request (rate-limit friendly)
+        if len(skills_list) > 20:
+            return JSONResponse(status_code=400, content={
+                "status": "error",
+                "message": "Max 20 skills per request",
+            })
+
+        from skill_auto_calibrator import batch_auto_calibrate
+        result = batch_auto_calibrate(skills_list)
+        return result
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "skills auto-calibrate")
+
+
 @app.post("/api/jd/coverage-check")
 @limiter.limit("30/minute")
 async def api_jd_coverage_check(request: Request):
