@@ -33,11 +33,24 @@ _SUFFIXES = [
     " (or similar)", " (or equivalent)", " or similar", " or equivalent",
 ]
 
+def _strip_year_decorators(s: str) -> str:
+    """Strip year decorations: '5+ years', '5-10 years', ', 3 years', '- 5 yrs', etc."""
+    if not s:
+        return s
+    # Remove patterns: number(+/-dash/space)years/yrs, optional +/-
+    s = re.sub(r"\s*[,;\-]?\s*\d+\s*\+?\s*(?:-\s*\d+\s*)?\s*(?:years?|yrs?)\b", "", s, flags=re.IGNORECASE)
+    # Remove leading "5+ years" (already handled by above) — also leading digits+years
+    s = re.sub(r"^\s*\d+\s*\+?\s*(?:-\s*\d+\s*)?\s*(?:years?|yrs?)\s*", "", s, flags=re.IGNORECASE)
+    # Collapse multiple spaces and strip
+    return re.sub(r"\s+", " ", s).strip()
+
 def _strip_suffixes(skill_name: str) -> str:
     """Return a list of candidate names by progressively stripping suffixes."""
     if not skill_name:
         return ""
     s = skill_name.strip().lower()
+    # Strip year decorations FIRST
+    s = _strip_year_decorators(s)
     # Strip leading "experience in" / "expert in" / "strong" / "deep"
     for prefix in ["experience in ", "expert in ", "expert ", "strong ", "deep ", "advanced ", "senior "]:
         if s.startswith(prefix):
@@ -106,6 +119,20 @@ def _skill_variants(skill_name: str) -> list:
     for chunk in _split_on_connectors(skill_name):
         if chunk not in variants:
             variants.append(chunk)
+    # NEW: Add dot<->space variants: "React JS" <-> "React.js", "Node.js backend" <-> "Node.js"
+    for v in list(variants):
+        if " " in v:
+            dotted = v.replace(" ", ".")
+            if dotted not in variants:
+                variants.append(dotted)
+            # Also try first word only (e.g. "Node.js backend" -> "node")
+            first = v.split()[0].strip(".,;:-")
+            if first and len(first) > 1 and first not in variants:
+                variants.append(first)
+        if "." in v:
+            spaced = v.replace(".", " ")
+            if spaced not in variants:
+                variants.append(spaced)
     return variants
 
 def _is_calibrated_including_db(skill_name: str) -> bool:
