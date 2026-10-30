@@ -7214,3 +7214,62 @@ Private-passport E2E: 3/3 pass. Public list: 21 preserved. New passport: is_publ
 
 ---
 
+
+## Session 106 — COMPLETE (2026-10-31) — 518-Skill Catalog + Auto-Calibrator
+
+**Commits:** `2e1096e` (catalog), `118e533` (retrigger), `b355258` (integration), `9eca9c0` (suffix), `<next>` (this)
+
+### Shipped
+
+**Session 106 Parts 1-7 — Complete auto-calibration system:**
+- `skill_catalog.py` — 518 pre-calibrated skills (was 142)
+- `skill_auto_calibrator.py` — auto-calibrate unknown skills in ~5s via OpenAI
+- `jd_calibration.py` — DB-aware + suffix-stripping + connector-splitting
+- `/api/skills/auto-calibrate` HTTP route
+- UI: coverage banner + auto-calibrate button on `/ai-assessment`
+- DB: `charvak_skill_extensions` table for auto-added skills
+
+**Production verified:**
+- AI Engineer JD: 40% → 91% coverage
+- Full-Stack JD: 88% coverage (up from ~60%)
+- 13/13 skill-normalization spot checks pass
+
+### Coverage Breakdown
+
+| Category | Skills |
+|---|---|
+| framework | 75 |
+| ml | 70 |
+| devops | 67 |
+| cloud | 65 |
+| data | 41 |
+| database | 37 |
+| testing | 33 |
+| domain | 30 |
+| security | 26 |
+| language | 23 |
+| streaming | 19 |
+| concept | 11 |
+| orm | 8 |
+| behavioral | 6 |
+| mobile | 4 |
+| blockchain | 3 |
+| **Total** | **518** |
+
+### Session 106 chain
+
+| Commit | What |
+|---|---|
+| `1483318` → `12f762e` | Coverage UI + route (amended to include deps) |
+| `2e1096e` | 518-skill catalog |
+| `118e533` | Force redeploy retrigger |
+| `b355258` | Fix: jd_calibration used wrong module |
+| `9eca9c0` | Suffix + connector-splitting |
+| `<next>` | Years + dot/space variants, docs sync |
+
+### Still pending
+
+- Render auto-deploy occasionally needs empty-commit retrigger (documented)
+- Pre-push IELTS hook now skips gracefully when OPENAI_API_KEY unset
+
+---
