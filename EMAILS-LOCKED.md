@@ -27,7 +27,7 @@
 
 Hi [Name],
 
-Every CDC director I have spoken to this quarter has the same problem: when their Dean asks "did readiness improve this year?", there is no number to give.
+Every CDC director I have spoken to - including Amrita - has the same problem: when their Dean asks "did readiness improve this year?", there is no number to give.
 
 The AICTE report is 3 weeks late. The placement % is 6 months old. Student readiness is not tracked at all.
 
@@ -35,12 +35,14 @@ Amrita CDC ran a 4-week pilot with us to fix this. Here is the report their Dean
 
 https://www.charvakit.com/api/proof-dashboard/UNI-AMRITA-001/pdf
 
-But here is the real thing: every student in that report carries a cryptographic skill certificate any recruiter can verify in 5 seconds at a public URL. No phone call to the college. No trust required.
+Every student in that report carries a cryptographic skill certificate any recruiter can verify in 5 seconds at a public URL. No phone call to the college. No trust required.
 
-Read the report, then click any student certificate. You will see what I mean.
+Here is what a certificate looks like - click it and you will see
+what a recruiter sees:
+
+https://www.charvakit.com/readiness/RDC-112D60571D41
 
 If it looks useful, I will build the same for [College]. Free. Reply "build it" and I will have it in your inbox by Friday.
-
 Bhavya
 Charvak
 
@@ -57,13 +59,15 @@ Here is your readiness report for [College] engineering batch:
 
 https://www.charvakit.com/api/proof-dashboard/[COLLEGE-ID]/pdf
 
-Inside: cohort readiness vs Tier-2 benchmark, department heatmap, 10 students you could push to recruiters tomorrow, 90-day trend.
+Inside: cohort readiness vs Tier-2 benchmark, department heatmap,
+10 students you could push to recruiters tomorrow, 90-day trend.
 
-Each student has a live certificate URL - recruiters can click through and verify any skill claim in 5 seconds without calling your office. That is the difference from a training company report: the proof travels with the student.
+Each student has a live certificate URL - recruiters can verify any skill claim in 5 seconds without calling your office. That is the difference from a training company report: the proof travels with the student.
 
 100% free. No signup. No data retained.
 
-If useful, I will send a 3-minute Loom showing the live version. If not, no problem. I have learned something by building it.
+If useful, I will send a 3-minute Loom showing the live version.
+If not, no problem. I have learned something by building it.
 
 Bhavya
 
