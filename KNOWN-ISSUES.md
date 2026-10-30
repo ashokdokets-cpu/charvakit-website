@@ -2236,3 +2236,45 @@ Verdict: RESOLVED.
 Homepage now positions Charvak as 'The Placement Operating System for Indian Colleges' via a green strip above the existing hero. Full product suite has a home in the More from Charvak section below the 3 pillars.
 
 Closes W1 from GAPS_AND_WEAKNESSES_MASTER.md.
+---
+
+### FLAGGED - Pre-push IELTS test fails without OPENAI_API_KEY (2026-10-30)
+
+Pre-push hook runs scripts/test_ielts_relevance.py. Needs OPENAI_API_KEY in .env.local. Without it, 11 of 14 checks fail (band=None, topical=None).
+
+Fix (10 min): add OPENAI_API_KEY to .env.local OR modify hook to sys.exit(0) with SKIP when key missing.
+
+Workaround: git push --no-verify origin main
+
+Priority: Low. Fix this weekend.
+
+---
+
+### FLAGGED - Email 12 [link] placeholder (2026-10-30)
+
+Email 12 in EMAILS-LOCKED.md uses [link] placeholder. Verify enhanced_email.send_readiness_email() substitutes actual cert URL.
+
+Fix: pass cert_url=cert["certificate_url"] to email builder. Effort: 5 min.
+
+Priority: Low. Verify this weekend.
+
+---
+
+### RESOLVED - Passport is_public defaults to TRUE (2026-10-30, a859b21)
+
+Migration flips default TRUE to FALSE. Owner-only toggle UI. Owner bypass. Verified: 21 existing preserved, new default FALSE.
+
+---
+
+### RESOLVED - Exam-prep raw DB keys (2026-10-30, fa4d5f1)
+
+CATEGORY_DISPLAY dict added. 18 categories clean, 193 exams visible.
+
+---
+
+### RESOLVED - Staff Aug card hardcoded 4000 USD (2026-10-30, f2c7e5a)
+
+Replaced with 3 value claims. Fixed nested a tag.
+
+---
+
