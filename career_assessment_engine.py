@@ -928,6 +928,16 @@ class CareerAssessmentEngine:
             except Exception as e:
                 logger.warning(f"attempt_tracker check failed (non-fatal): {e}")
 
+        # NEW (Session 104a): Record signup signal for multi-account detection
+        if email:
+            try:
+                from multi_account_detector import record_signup
+                _ip = (data.get("_ip") or "").strip()
+                _ua = (data.get("_user_agent") or "").strip()
+                record_signup(email, _ip, _ua)
+            except Exception as e:
+                logger.warning(f"multi_account_detector record failed (non-fatal): {e}")
+
         if not email:
             return {"status": "error", "message": "email required"}
         if not role:
@@ -2443,6 +2453,23 @@ class CareerAssessmentEngine:
         assessment_id = data.get("assessment_id")
         if not email or not assessment_id:
             return {"status": "error", "message": "email and assessment_id required"}
+
+        # NEW (Session 104a): Multi-account abuse check
+        try:
+            from multi_account_detector import detect_abuse
+            _ip = (data.get("_ip") or "").strip()
+            abuse = detect_abuse(email, _ip)
+            if abuse.get("severity") == "high":
+                logger.warning(f"Cert blocked (multi-account high severity): {email} - {abuse.get('signals')}")
+                return {
+                    "status": "error",
+                    "code": "abuse_detected",
+                    "message": "Certificate issuance is temporarily blocked for review. "
+                               "Please contact support at hr@charvakit.com.",
+                    "reason": abuse.get("signals", []),
+                }
+        except Exception as e:
+            logger.warning(f"multi_account_detector check failed (non-fatal): {e}")
 
         try:
             from database import db
