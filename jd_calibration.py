@@ -7,13 +7,26 @@ from calibrated_skills import canonicalize, is_calibrated
 import json
 
 def _is_calibrated_including_db(skill_name: str) -> bool:
-    """Check built-in catalog first, then charvak_skill_extensions DB."""
+    """Check built-in catalog (BOTH modules), then DB extensions."""
     if not skill_name:
         return False
-    # Check built-in (fast path)
-    if is_calibrated(skill_name):
-        return True
-    # Check DB extensions
+
+    # NEW: Check skill_catalog (518-skill catalog) FIRST
+    try:
+        from skill_catalog import is_known as _catalog_is_known
+        if _catalog_is_known(skill_name):
+            return True
+    except Exception:
+        pass
+
+    # Then check calibrated_skills (legacy 142-skill catalog, backward compat)
+    try:
+        if is_calibrated(skill_name):
+            return True
+    except Exception:
+        pass
+
+    # Then check DB extensions (auto-calibrated skills)
     try:
         from database import db
         conn = db.get_connection()
@@ -29,7 +42,7 @@ def _is_calibrated_including_db(skill_name: str) -> bool:
         conn.close()
         return row is not None
     except Exception:
-        # Table might not exist, or DB down -> fall back to catalog-only
+        # Table might not exist, or DB down -> fall back
         return False
 
 
