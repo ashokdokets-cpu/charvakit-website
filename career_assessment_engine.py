@@ -912,6 +912,22 @@ class CareerAssessmentEngine:
         if not language_in:
             language_in = "python" if fmt == "coding" else ("sqlite" if fmt == "sql" else "")
 
+        # NEW (Session 103a): Attempt limit check
+        if email:
+            try:
+                from attempt_tracker import count_attempts
+                attempt_info = count_attempts(email, role, industry, level_key, fmt)
+                if not attempt_info.get("can_retake", True):
+                    return {
+                        "status": "error",
+                        "code": "attempts_exhausted",
+                        "message": attempt_info.get("reason", "Maximum attempts reached"),
+                        "attempts_used": attempt_info.get("attempts_used", 0),
+                        "attempts_max": attempt_info.get("attempts_max", 3),
+                    }
+            except Exception as e:
+                logger.warning(f"attempt_tracker check failed (non-fatal): {e}")
+
         if not email:
             return {"status": "error", "message": "email required"}
         if not role:
@@ -2502,20 +2518,54 @@ class CareerAssessmentEngine:
                 _task_classes_list = []
                 _runtime_info = None
 
+            # NEW (Session 103a): Bind identity + attempt info to certificate
+            from identity_binder import build_identity_block, sign_identity_block
+            from attempt_tracker import count_attempts
+
+            # Get attempt info
+            _attempt_info = count_attempts(email, role, industry, level, assessment_format)
+            _attempt_num = max(1, _attempt_info.get("attempts_used", 0) + 1)
+            _attempt_max = _attempt_info.get("attempts_max", 3)
+
+            # Extract candidate name
+            _candidate_name = (
+                data.get("candidate_name")
+                or data.get("display_name")
+                or (email.split("@")[0] if email else "")
+            )
+
+            _identity = build_identity_block(
+                candidate_name=_candidate_name,
+                candidate_email=email,
+                attempt_num=_attempt_num,
+                attempt_max=_attempt_max,
+            )
+            _identity_sig = sign_identity_block(_identity)
+
             cur.execute("""
                 INSERT INTO charvak_career_certifications
                     (cert_id, email, assessment_id, role, industry, level, score,
                      passed, badge_tier, certification_hash, credits_charged,
                      integrity_summary, issued_at,
-                     format, language, database_name, task_classes, runtime_info)
+                     format, language, database_name, task_classes, runtime_info,
+                     candidate_name, candidate_email_masked,
+                     candidate_email_fingerprint, attempt_number, attempt_max,
+                     identity_signature)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                         %s::jsonb, CURRENT_TIMESTAMP,
-                        %s, %s, %s, %s::jsonb, %s)
+                        %s, %s, %s, %s::jsonb, %s,
+                        %s, %s, %s, %s, %s, %s)
             """, (cert_id, email, assessment_id, role, industry, level, score,
                   passed, tier["key"], cert_hash, credits_needed,
                   integrity_json,
                   assessment_format, language, database_name,
-                  _json.dumps(_task_classes_list), _runtime_info))
+                  _json.dumps(_task_classes_list), _runtime_info,
+                  _identity.get("candidate_name"),
+                  _identity.get("candidate_email_masked"),
+                  _identity.get("candidate_email_fingerprint"),
+                  _attempt_num,
+                  _attempt_max,
+                  _identity_sig))
 
             conn.commit()
             cur.close()
@@ -2535,6 +2585,12 @@ class CareerAssessmentEngine:
                 "credits_charged": credits_needed,
                 "cert_url": f"/career-certification/{cert_id}",
                 "verify_url": f"/api/career-certification/verify/{cert_hash}",
+                "candidate_name": _identity.get("candidate_name"),
+                "candidate_email_masked": _identity.get("candidate_email_masked"),
+                "attempt_number": _attempt_num,
+                "attempt_max": _attempt_max,
+                "first_attempt": _attempt_num == 1,
+                "identity_signature": _identity_sig,
             }
         except Exception as e:
             logger.error(f"issue_certification failed: {e}")
@@ -2550,7 +2606,10 @@ class CareerAssessmentEngine:
                 SELECT cert_id, email, assessment_id, role, industry, level,
                        score, badge_tier, certification_hash, credits_charged,
                        integrity_summary, issued_at, revoked_at,
-                       format, language, database_name, task_classes, runtime_info
+                       format, language, database_name, task_classes, runtime_info,
+                       candidate_name, candidate_email_masked,
+                       candidate_email_fingerprint, attempt_number, attempt_max,
+                       identity_signature
                 FROM charvak_career_certifications
                 WHERE cert_id = %s
             """, (cert_id,))
@@ -2587,6 +2646,16 @@ class CareerAssessmentEngine:
                     "issued_at": row[11].isoformat() if row[11] else None,
                     "revoked_at": row[12].isoformat() if row[12] else None,
                     "is_valid": row[12] is None,
+                    # NEW (Session 103a): Identity + attempt metadata
+                    "identity": {
+                        "candidate_name": row[18],
+                        "candidate_email_masked": row[19],
+                        "candidate_email_fingerprint": row[20],
+                        "attempt_number": row[21],
+                        "attempt_max": row[22],
+                        "identity_signature": row[23],
+                        "first_attempt": (row[21] == 1) if row[21] is not None else None,
+                    },
                 },
             }
         except Exception as e:

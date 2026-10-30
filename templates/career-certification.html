@@ -139,7 +139,45 @@ async function loadCert() {
         document.getElementById('certArea').style.display = 'block';
 
         // Populate
-        document.getElementById('candidateDisplay').textContent = certData.email_masked || 'Anonymous';
+        // NEW (Session 103a): Identity display
+        var identity = certData.identity || {};
+        var candidateName = identity.candidate_name || certData.email_masked || 'Anonymous';
+        var candidateEmailMasked = identity.candidate_email_masked || certData.email_masked || '';
+        document.getElementById('candidateDisplay').textContent = candidateName;
+        
+        var emailEl = document.getElementById('candidateEmailMasked');
+        if (emailEl) {
+            emailEl.textContent = candidateEmailMasked ? ('Verified email: ' + candidateEmailMasked) : '';
+        }
+        
+        var badgesEl = document.getElementById('identityBadges');
+        if (badgesEl) {
+            badgesEl.innerHTML = '';
+            var attemptNum = identity.attempt_number;
+            var attemptMax = identity.attempt_max;
+            var firstAttempt = identity.first_attempt;
+            var sig = identity.identity_signature;
+            
+            if (firstAttempt === true) {
+                var firstBadge = document.createElement('span');
+                firstBadge.className = 'badge bg-success me-2';
+                firstBadge.textContent = '\u2713 First attempt';
+                badgesEl.appendChild(firstBadge);
+            } else if (attemptNum && attemptMax) {
+                var attemptBadge = document.createElement('span');
+                attemptBadge.className = 'badge bg-warning text-dark me-2';
+                attemptBadge.textContent = 'Attempt ' + attemptNum + ' of ' + attemptMax;
+                badgesEl.appendChild(attemptBadge);
+            }
+            
+            if (sig) {
+                var hmacBadge = document.createElement('span');
+                hmacBadge.className = 'badge bg-primary';
+                hmacBadge.textContent = '\ud83d\udd12 HMAC: ' + sig.substring(0, 8) + '...';
+                hmacBadge.title = 'Identity HMAC signature: ' + sig;
+                badgesEl.appendChild(hmacBadge);
+            }
+        }
         document.getElementById('certRole').textContent = certData.role || '—';
         document.getElementById('certLevel').textContent = (certData.level || '').toUpperCase() + ' · ' + (certData.industry || '');
         document.getElementById('certScore').innerHTML = (certData.score || 0) + '<span class="fs-6 text-muted">/100</span>';
