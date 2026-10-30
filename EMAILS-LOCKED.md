@@ -142,25 +142,29 @@ Bhavya
 ## EMPLOYER FORMAT
 
 ### 7. Signal Email
-**Subject:** 3 candidates who can actually code - for your next open role
-**Word count:** 140
+**Subject:** 3 candidates who can actually code - for one open role
+**Word count:** 97
 **Ask:** Reply with role title + 2 must-have skills
 
 Hi [Name],
 
-Every TA lead I have spoken to this quarter has the same story:
+You know the problem: 30 shortlisted, 23 could not code, 3 weeks of
+interview slots wasted.
 
-"We shortlisted 30. 23 could not code. We wasted 3 weeks of interview slots."
+Here is what I can do this week:
 
-If you are seeing the same thing, here is what I can do this week:
+Send me one open role. I will source and verify 3 candidates against
+it. Real code execution, real test cases.
 
-Send me ONE of your open roles. I will source and verify 3 candidates against that exact role - real code execution, real test cases, real scores.
+Each candidate has a certificate URL like this - click it and see what
+a recruiter sees in 5 seconds:
 
-Each candidate comes with a certificate URL any of your engineers can verify in 5 seconds - no login, no call to us. Just click, see the code they executed, and decide.
+https://www.charvakit.com/readiness/RDC-112D60571D41
 
-Free. No demo call. No fee until you hire.
+No login. No call to us. HMAC-verified, tamper-proof.
 
-Reply with the role title + 2 must-have skills. 3 profiles back in 5 business days.
+Reply with the role title + 2 must-have skills. 3 profiles back in 5
+days. Free - no fee until you hire.
 
 Bhavya
 Charvak
