@@ -4738,6 +4738,50 @@ async def employer_cas_page(request: Request):
     )
 
 
+@app.post("/api/jd/coverage-check")
+@limiter.limit("30/minute")
+async def api_jd_coverage_check(request: Request):
+    """
+    Session 105: Check if a JD is within Charvak's calibrated skill range.
+
+    Returns:
+        status: calibrated | partial | not_calibrated
+        coverage: 0-100
+        covered / not_covered: skill lists
+        action: proceed | partial_assessment | decline
+        message: human-readable guidance
+    """
+    try:
+        data = await request.json()
+        jd_text = (data.get("jd_text") or "").strip()
+        if not jd_text:
+            return JSONResponse(status_code=400, content={
+                "status": "error", "message": "jd_text required"
+            })
+
+        # Parse the JD
+        from jd_parser_engine import parse_jd
+        parsed = parse_jd(jd_text)
+        if parsed.get("status") != "success":
+            return JSONResponse(status_code=400, content={
+                "status": "error", "message": "Could not parse JD"
+            })
+
+        # Run coverage check
+        from jd_calibration import check_jd_coverage
+        coverage = check_jd_coverage(parsed.get("parsed", {}))
+
+        return {
+            "status": "success",
+            "parsed": parsed.get("parsed", {}),
+            "coverage": coverage,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "jd coverage check")
+
+
 @app.post("/api/jd/parse")
 @limiter.limit("5/minute")
 async def api_jd_parse(request: Request):
