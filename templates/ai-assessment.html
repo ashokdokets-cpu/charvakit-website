@@ -45,6 +45,61 @@
                         <textarea id="carJdText" class="as-select" rows="6" placeholder="Paste any JD here. We will extract the role, industry, and level automatically."></textarea>
                         <button type="button" class="as-btn as-btn-outline as-btn-sm mt-2" id="carJdAnalyzeBtn" onclick="carAnalyzeJd()">Analyze JD</button>
                         <div id="carJdResult" class="mt-2"></div>
+<div id="carJdCoverage" class="mt-3" style="display:none;">
+  <!-- Session 106: Coverage banner + auto-calibrate button injected here -->
+</div>
+
+<style>
+/* Session 106: Coverage banner styles */
+.as-cov-banner {
+  padding: 14px 16px;
+  border-radius: 8px;
+  border-left: 4px solid #9ca3af;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+.as-cov-banner.is-calibrated { background: #d1fae5; border-left-color: #10b981; color: #065f46; }
+.as-cov-banner.is-partial    { background: #fef3c7; border-left-color: #f59e0b; color: #92400e; }
+.as-cov-banner.is-missing    { background: #fee2e2; border-left-color: #ef4444; color: #991b1b; }
+.as-cov-banner h4 { font-size: 0.95rem; font-weight: 800; margin: 0 0 6px 0; }
+.as-cov-banner .as-cov-chips { margin-top: 8px; }
+.as-cov-chip {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin: 2px 3px 2px 0;
+  font-size: 0.82rem;
+  background: rgba(255,255,255,0.85);
+  border: 1px solid rgba(0,0,0,0.08);
+}
+.as-cov-chip.is-covered { font-weight: 600; }
+.as-cov-chip.is-missing { opacity: 0.85; text-decoration: line-through; }
+.as-cov-actions { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
+.as-cov-btn {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid #0b7f74;
+  background: #0b7f74;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.as-cov-btn:hover { background: #0a6c63; }
+.as-cov-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.as-cov-btn-outline {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e0;
+  background: #fff;
+  color: #374151;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+.as-cov-btn-outline:hover { background: #f3f4f6; }
+.as-cov-status { font-size: 0.82rem; margin-top: 6px; color: #374151; }
+</style>
                     </div>
 
                     <div class="as-field">
@@ -417,6 +472,8 @@ async function carAnalyzeJd() {
         } else {
             result.innerHTML = '<div class="alert alert-info py-2 px-3 mb-0 small">JD parsed (title: <strong>' + (p.title || '?') + '</strong>) but no catalog match. Please select manually below.</div>';
         }
+        // Session 106: trigger coverage check after successful parse
+        try { showJdCoverageAndCalibrate(text); } catch (covErr) { console.warn('[coverage] failed', covErr); }
     } catch (e) {
         result.innerHTML = '<div class="alert alert-danger py-2 px-3 mb-0 small">Network error: ' + e.message + '</div>';
     }
@@ -1691,6 +1748,164 @@ if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', _carInitIntegrity);
 } else {
     _carInitIntegrity();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Session 106: JD Coverage + Auto-Calibrate
+// Called from carAnalyzeJd() success handler
+// ═══════════════════════════════════════════════════════════════
+async function showJdCoverageAndCalibrate(jdText) {
+  var container = document.getElementById('carJdCoverage');
+  if (!container) return;
+  container.style.display = 'block';
+  container.innerHTML = '<div class="as-cov-banner" style="background:#f3f4f6;color:#6b7280;">Checking skill coverage...</div>';
+
+  try {
+    var r = await fetch('/api/jd/coverage-check', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({jd_text: jdText}),
+    });
+    var data = await r.json();
+    if (data.status !== 'success') {
+      container.innerHTML = '<div class="as-cov-banner is-missing"><h4>⚠ Could not check coverage</h4>' + (data.message || 'Unknown error') + '</div>';
+      return;
+    }
+    _renderCoverage(data.coverage || {}, jdText);
+  } catch (err) {
+    container.innerHTML = '<div class="as-cov-banner is-missing"><h4>⚠ Coverage check failed</h4>' + (err.message || 'Network error') + '</div>';
+  }
+}
+
+function _renderCoverage(cov, jdText) {
+  var container = document.getElementById('carJdCoverage');
+  if (!container) return;
+
+  var status = cov.status || 'missing';
+  var cls = status === 'calibrated' ? 'is-calibrated' : (status === 'partial' ? 'is-partial' : 'is-missing');
+  var emoji = status === 'calibrated' ? '✅' : (status === 'partial' ? '⚠️' : '❌');
+  var label = status === 'calibrated' ? 'Ready to assess' : (status === 'partial' ? 'Partial coverage' : 'Limited coverage');
+
+  var html = '<div class="as-cov-banner ' + cls + '">';
+  html += '<h4>' + emoji + ' ' + label + ' · ' + (cov.coverage || 0) + '%</h4>';
+  html += '<div>' + (cov.message || '') + '</div>';
+
+  if (cov.covered && cov.covered.length) {
+    html += '<div class="as-cov-chips"><strong>Can verify:</strong> ';
+    html += cov.covered.slice(0, 15).map(function(s) {
+      return '<span class="as-cov-chip is-covered">' + _escCov(s) + '</span>';
+    }).join('');
+    if (cov.covered.length > 15) html += ' <em>+' + (cov.covered.length - 15) + ' more</em>';
+    html += '</div>';
+  }
+
+  if (cov.not_covered && cov.not_covered.length) {
+    html += '<div class="as-cov-chips" style="margin-top:6px;"><strong>Cannot verify:</strong> ';
+    html += cov.not_covered.map(function(s) {
+      return '<span class="as-cov-chip is-missing">' + _escCov(s) + '</span>';
+    }).join('');
+    html += '</div>';
+  }
+
+  // Auto-calibrate button (only if there are missing skills)
+  if (cov.not_covered && cov.not_covered.length > 0) {
+    html += '<div class="as-cov-actions">';
+    html += '<button type="button" class="as-cov-btn" id="carAutoCalBtn" onclick="carAutoCalibrate()">🔧 Auto-calibrate ' + cov.not_covered.length + ' skill' + (cov.not_covered.length === 1 ? '' : 's') + '</button>';
+    html += '<button type="button" class="as-cov-btn-outline" onclick="document.getElementById(\'carJdCoverage\').style.display=\'none\'">Skip and continue</button>';
+    html += '</div>';
+  }
+
+  html += '</div>';
+  container.innerHTML = html;
+
+  // Save JD text for the auto-calibrate call
+  container.setAttribute('data-jd-text', jdText || '');
+}
+
+async function carAutoCalibrate() {
+  var container = document.getElementById('carJdCoverage');
+  if (!container) return;
+  var jdText = container.getAttribute('data-jd-text') || '';
+  var btn = document.getElementById('carAutoCalBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Calibrating...'; }
+
+  try {
+    // Re-check coverage to get fresh not_covered list
+    var r1 = await fetch('/api/jd/coverage-check', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({jd_text: jdText}),
+    });
+    var d1 = await r1.json();
+    var missing = (d1.coverage && d1.coverage.not_covered) || [];
+    if (missing.length === 0) {
+      _renderCoverage(d1.coverage || {}, jdText);
+      return;
+    }
+
+    // Call auto-calibrate endpoint
+    var r2 = await fetch('/api/skills/auto-calibrate', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({skills: missing}),
+    });
+    var d2 = await r2.json();
+
+    // Show progress status
+    var status = document.createElement('div');
+    status.className = 'as-cov-status';
+    var okCount = d2.succeeded || 0;
+    var failCount = d2.failed || 0;
+    status.innerHTML = '<strong>Calibration complete:</strong> ' + okCount + ' added, ' + failCount + ' could not be calibrated.';
+    container.appendChild(status);
+
+    // If any skill failed, show which ones and their reasons
+    if (failCount > 0) {
+      var failedList = (d2.results || []).filter(function(x) { return x.status === 'cannot_calibrate'; });
+      if (failedList.length) {
+        var failHtml = '<div class="as-cov-banner is-missing" style="margin-top:10px;"><h4>⚠ ' + failedList.length + ' skill(s) could not be calibrated</h4>';
+        failHtml += '<ul style="margin:6px 0 0 18px;padding:0;">';
+        failedList.forEach(function(f) {
+          failHtml += '<li><strong>' + _escCov(f.requested_name) + '</strong> — ' + _escCov(f.reason || 'Not verifiable') + '</li>';
+        });
+        failHtml += '</ul>';
+        failHtml += '<div style="margin-top:8px;font-size:0.85rem;">These skills will be excluded from the assessment. For these, we recommend a manual technical screen by your team.</div>';
+        failHtml += '</div>';
+        var failDiv = document.createElement('div');
+        failDiv.innerHTML = failHtml;
+        container.appendChild(failDiv);
+      }
+    }
+
+    // Re-check coverage — should now show more covered
+    var r3 = await fetch('/api/jd/coverage-check', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({jd_text: jdText}),
+    });
+    var d3 = await r3.json();
+
+    // Render updated coverage (replaces old banner)
+    setTimeout(function() {
+      _renderCoverage(d3.coverage || {}, jdText);
+    }, 800);
+  } catch (err) {
+    var container2 = document.getElementById('carJdCoverage');
+    if (container2) {
+      var errDiv = document.createElement('div');
+      errDiv.className = 'as-cov-banner is-missing';
+      errDiv.style.marginTop = '10px';
+      errDiv.innerHTML = '<h4>⚠ Auto-calibration failed</h4>' + _escCov(err.message || 'Network error');
+      container2.appendChild(errDiv);
+    }
+    if (btn) { btn.disabled = false; btn.textContent = '🔧 Retry auto-calibrate'; }
+  }
+}
+
+function _escCov(s) {
+  return String(s || '').replace(/[&<>"']/g, function(c) {
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
 }
 </script>
 {% endblock %}
