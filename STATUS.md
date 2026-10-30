@@ -1,34 +1,41 @@
 # Charvak IT Consulting - Project Status
 
-# Charvak IT Consulting - Project Status
-
-**Last updated:** 2026-10-30 (Session 101 - privacy fix shipped)
-**Version:** v3.12-session-101-20261030
-**Live:** https://www.charvakit.com
-**HEAD:** a859b21
+**Last updated:** 2026-10-30 (Session 101)
+**Version:** v3.12-session-101
+**HEAD:** b82fe2c
 
 ## Session 101 - COMPLETE (2026-10-30)
 
-### Privacy-first recruiter visibility
+### Shipped (9 commits)
 
-BREAKING BEHAVIOR CHANGE: New passports default to is_public=FALSE.
+- Privacy-first passport visibility (BREAKING: default TRUE to FALSE)
+- Nav cleanup (Resources 28 to 20)
+- Exam-prep category names fixed (18 categories clean, 193 exams)
+- Staff Aug card fixed (removed 4000 USD hardcode)
+- Email templates locked (EMAILS-LOCKED.md, 12 emails)
+- Email truth fix
+- Doc sync (8 files)
+- Inverted marketplace flagged
 
-- Migration: migrations/20261030_passport_privacy.sql
-- Engine: set_visibility() + get_visibility() + owner bypass
-- Routes: POST/GET /api/passport/visibility
-- UI: toggle card on /passport/handle (owner-only)
-- Verified on prod: 21 public profiles preserved, routes live, no regressions
+### Flags
 
-### Flagged - Inverted Marketplace (Sessions 102-104)
+- INVERTED-MARKETPLACE-FLAG.md (trigger: paying customer)
+- Pre-push hook fails without OPENAI_API_KEY (10-min fix weekend)
+- Email 12 [link] placeholder (5-min fix weekend)
 
-See INVERTED-MARKETPLACE-FLAG.md. Deferred until paying customer exists.
+### Queued
 
-### What is queued
+- Monday: 3 Signal Emails (VIT, NIT Trichy, BITS) + 5 one-pagers + Prof. Raj intro
+- Weekend: Rotate Render password + fix pre-push hook
+- When triggered: Inverted marketplace, Dean report clickable certs
 
-- Amrita email -> Monday
-- Render Postgres password -> Weekend
-- One-pagers to 5 universities -> Monday
-- Email Mismatch Auto-Link Flow -> ~2 hrs, deferred
+### Positioning
+
+Charvak is the proof layer for talent. Report is the demo. Certificate is the product.
+
+### Site Health
+
+All private-passport E2E passed. 21 public preserved. 18 categories clean. Prod API: 200/401/200. Zero open bugs.
 
 ---
 
