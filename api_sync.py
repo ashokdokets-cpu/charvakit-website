@@ -480,6 +480,10 @@ async def handle_pull(user_id: str, request: Request = None):
     if result["errors"]:
         result["status"] = "partial" if result["profile_synced"] or result["applications_synced"] > 0 else "error"
 
+    # Session 107: add last_pulled_at for DoketsRB UI display
+    from datetime import datetime as _dt_pull, timezone as _tz_pull
+    result["last_pulled_at"] = _dt_pull.now(_tz_pull.utc).isoformat().replace("+00:00", "Z")
+
     return JSONResponse(result)
 
 
