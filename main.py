@@ -1489,9 +1489,29 @@ async def sync_get_jobs(request: Request, auth=Depends(verify_api_key)):
 async def sync_skills(data: SkillGapSync, request: Request, auth=Depends(verify_api_key)):
     return await handle_skill_sync(data, request)
 
+# Session 107: Server-side 30s rate limit per user_id on pull
+# Matches DoketsRB's client-side cooldown
+_sync_pull_throttle = {}
+
 @app.post("/api/sync/pull/{user_id}")
 async def sync_pull(user_id: str, request: Request, auth=Depends(verify_api_key)):
     'User-triggered: pull latest profile + applications from DoketsRB.'
+    # Session 107: 30s cooldown per user_id
+    import time as _time
+    _now = _time.time()
+    _last = _sync_pull_throttle.get(user_id, 0)
+    if _now - _last < 30:
+        _retry_after = int(30 - (_now - _last)) + 1
+        return JSONResponse(
+            status_code=429,
+            content={
+                "status": "error",
+                "message": f"Rate limited. Retry in {_retry_after}s.",
+                "retry_after": _retry_after,
+            },
+            headers={"Retry-After": str(_retry_after)},
+        )
+    _sync_pull_throttle[user_id] = _now
     return await handle_pull(user_id, request)
 
 @app.get("/api/sync/status/{user_id}")
