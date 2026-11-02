@@ -316,6 +316,19 @@ function renderList() {
     html += '<div class="mr-card-score">';
     html += '<div class="mr-score-value ' + (pass ? 'pass' : 'fail') + '">' + escapeHtml(scoreDisplay) + '</div>';
     html += '<span class="mr-score-badge ' + (pass ? 'pass' : 'fail') + '">' + (pass ? 'Passed' : 'Needs Practice') + '</span>';
+    // cert-threshold-msg: show certification status for career assessments
+    var _scoreForThreshold = (r.score != null) ? Number(r.score) : null;
+    if (r.assessment_type !== 'career_certification' && r.assessment_type !== 'readiness_certificate' && r.assessment_type !== 'company_mock' && r.assessment_type !== 'mock_drive' && _scoreForThreshold !== null && _scoreForThreshold > 0) {
+      if (_scoreForThreshold >= 70) {
+        // Eligible for cert
+        html += '<div style="margin-top:6px;"><a class="btn btn-sm btn-primary" href="/ai-assessment">Get Certified</a> <span style="font-size:0.72rem;color:#065f46;font-weight:600;">Eligible</span></div>';
+      } else {
+        // Below cert threshold
+        var _gapForThreshold = 70 - _scoreForThreshold;
+        html += '<div style="margin-top:6px;font-size:0.75rem;color:#92400e;font-weight:600;">Need ' + _gapForThreshold + ' more to certify</div>';
+        html += '<div style="margin-top:4px;"><a class="btn btn-sm btn-outline-primary" href="/ai-assessment">Retake</a></div>';
+      }
+    }
     html += '<div style="margin-top:8px;"><button class="btn btn-sm btn-outline-primary" onclick="showDetails(' + i + ')">View Details</button></div>';
     html += '</div>';
     html += '</div>';
