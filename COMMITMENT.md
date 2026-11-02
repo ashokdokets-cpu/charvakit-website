@@ -7273,3 +7273,37 @@ Private-passport E2E: 3/3 pass. Public list: 21 preserved. New passport: is_publ
 - Pre-push IELTS hook now skips gracefully when OPENAI_API_KEY unset
 
 ---
+
+---
+
+## BYTEXL COMPETITIVE ANALYSIS — FLAGGED (2026-11-03)
+
+Deep analysis of byteXL (B2B college skilling suite, 200K+ students,
+45+ institutions) complete. All findings in `BYTEXL-COMPETITIVE-ANALYSIS-FLAG.md`.
+
+**Verdict:** Do NOT build anything tonight. Every gap is demand-triggered.
+The moat is depth (HMAC certs, honest JD calibration, micro-internships,
+FYP assistant, 5-layer abuse protection) not breadth (byteXL's LMS,
+labs, IDE, hackathons).
+
+**7 gaps identified, ranked by ROI:**
+1. LMS Bridge (5 sessions) — build only if institution asks
+2. CEFR English Assessment (3 sessions) — build only if tier-2/3 asks
+3. Coding Practice Curriculum (4 sessions) — build only if candidate asks
+4. Voice Screen Agent (2 sessions) — build only if employer asks
+5. Microsoft Learn Integration (1 session) — build only if institution asks
+6. Browser IDE (6-8 sessions) — PARTNER with Replit, do not build
+7. Virtual Labs — SKIP ENTIRELY, partner with PhET if asked
+
+**Total if ALL built:** ~14 sessions.
+**Total likely to be built:** 3-5 sessions (LMS Bridge + CEFR + Voice).
+
+**What's actually left:** Ship candidate emails + Amrita follow-up +
+Rotate Render password. Nothing code-related.
+
+**Category-of-one positioning:**
+"Keep your LMS. Add Charvak as the proof layer."
+
+See `BYTEXL-COMPETITIVE-ANALYSIS-FLAG.md` for full analysis.
+
+---
