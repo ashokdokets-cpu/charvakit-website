@@ -7307,3 +7307,43 @@ Rotate Render password. Nothing code-related.
 See `BYTEXL-COMPETITIVE-ANALYSIS-FLAG.md` for full analysis.
 
 ---
+
+---
+
+## ZERAVIA COMPETITIVE ANALYSIS — FLAGGED (2026-11-03)
+
+Deep analysis of Zeravia (B2B/B2C career navigation platform, MSME +
+Startup India + SSC NASSCOM aligned, 25 programs, Intercom-backed).
+All findings in `ZERAVIA-COMPETITIVE-ANALYSIS-FLAG.md`.
+
+**Verdict:** Do NOT build anything tonight. Every gap is demand-triggered.
+Charvak wins on 16 of 25 feature categories. Zeravia wins on 7 (marketing
+scale, partnerships, government credentials, pricing clarity, training
+breadth). 2 ties.
+
+**8 gaps identified, ranked by ROI:**
+1. Public Trust Infrastructure (MSME + Startup India + NSQF) — 30 min
+2. Partnership Credibility Page — 1 session
+3. Pricing Clarity Page — 1-2 sessions
+4. Free 3-Day Charvak Challenge — 1 session
+5. Role Intelligence Page (extend JD Scanner) — 1 session
+6. Certification Partner Links (free Microsoft/AWS/GCP) — 1 session
+7. Surface the Moat (homepage copywriting) — 30 min
+8. Testimonial Depth (real pilot students) — 1 session
+
+**Total if ALL built:** ~7 sessions.
+**Total likely to be built:** 3-4 sessions (items 1, 2, 3, 7).
+
+**3 strategic moves to beat Zeravia:**
+1. "The verification layer they don't have"
+2. "The proof is honest. The JD check is honest."
+3. "Personalized path. Not fixed programs."
+
+**What's actually left:**
+- Rotate Render Postgres password (overdue since Session 19)
+- Send Amrita follow-up #1 (overdue since Oct 28)
+- Send candidate/user emails (drafted, ready)
+
+See `ZERAVIA-COMPETITIVE-ANALYSIS-FLAG.md` for full analysis.
+
+---

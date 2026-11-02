@@ -48,3 +48,36 @@ Full analysis in `BYTEXL-COMPETITIVE-ANALYSIS-FLAG.md`.
 "Keep your LMS. Add Charvak as the proof layer."
 
 ---
+
+---
+
+## FLAGGED (2026-11-03) — Zeravia Competitive Analysis
+
+Full analysis in `ZERAVIA-COMPETITIVE-ANALYSIS-FLAG.md`.
+
+**8 gaps identified, all demand-triggered:**
+1. Public Trust Infrastructure (MSME + Startup India + NSQF) — 30 min
+2. Partnership Credibility Page — 1 session
+3. Pricing Clarity Page — 1-2 sessions
+4. Free 3-Day Charvak Challenge — 1 session
+5. Role Intelligence Page — 1 session
+6. Certification Partner Links — 1 session
+7. Surface the Moat (homepage) — 30 min
+8. Testimonial Depth — 1 session
+
+**Do NOT build speculatively.** No trigger has fired.
+
+**3 strategic moves:**
+1. "The verification layer they don't have"
+2. "The proof is honest. The JD check is honest."
+3. "Personalized path. Not fixed programs."
+
+**What's actually left:**
+- Rotate Render Postgres password (overdue)
+- Send Amrita follow-up #1 (overdue)
+- Send candidate/user emails (drafted)
+
+**Category-of-one positioning:**
+"Zeravia gives you a certificate. Charvak gives you proof."
+
+---
