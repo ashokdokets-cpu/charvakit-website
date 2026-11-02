@@ -637,6 +637,29 @@
       canvas.parentElement.innerHTML = '<p class="text-muted text-center my-4">No skill breakdown available for this certificate.</p>';
       return;
     }
+
+    // Session 108: handle all-zero scores with a clear text list (chart bars would be invisible)
+    var allScoresZero = skillGap.every(function(s) { return (s.score || 0) === 0; });
+    if (allScoresZero) {
+      var textHtml = '<div style="padding: 8px 0;">';
+      textHtml += '<p class="text-muted small" style="margin-bottom:12px;"><strong>All ' + skillGap.length + ' topics scored 0.</strong> Here\'s what to focus on:</p>';
+      var sortedZero = skillGap.slice().sort(function(a,b) { return (b.score || 0) - (a.score || 0); });
+      sortedZero.forEach(function(s) {
+        var statusIcon = s.status === 'strong' ? '✅' : (s.status === 'mixed' ? '⚠️' : '❌');
+        var statusColor = s.status === 'strong' ? '#10b981' : (s.status === 'mixed' ? '#f59e0b' : '#ef4444');
+        textHtml += '<div style="padding:10px 14px; background:#fef2f2; border-left:3px solid ' + statusColor + '; border-radius:6px; margin-bottom:6px;">';
+        textHtml += '<span style="font-size:1.1rem; margin-right:6px;">' + statusIcon + '</span>';
+        textHtml += '<strong>' + (s.topic || 'Topic') + '</strong>';
+        textHtml += '<span style="color:' + statusColor + '; font-weight:700; margin-left:8px;">0/100</span>';
+        textHtml += '<span class="text-muted" style="margin-left:8px; font-size:0.85rem;">— needs work</span>';
+        textHtml += '</div>';
+      });
+      textHtml += '<p class="text-muted small" style="margin-top:12px;">Take a Standard check for a deeper per-topic breakdown, or start with a free mock drive to build fundamentals.</p>';
+      textHtml += '</div>';
+      canvas.parentElement.innerHTML = textHtml;
+      return;
+    }
+
     var sorted = skillGap.slice().sort(function(a,b) { return a.score - b.score; });
     var labels = sorted.map(function(s) { return s.topic; });
     var scores = sorted.map(function(s) { return s.score; });
