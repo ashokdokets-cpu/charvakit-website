@@ -701,3 +701,47 @@ colleges) has at least ONE paying customer. Expanding to 4 audiences
 without one paying customer dilutes focus and burns runway.
 
 Order: Amrita -> BSc/BA -> coaching -> junior colleges -> K-12
+
+---
+
+## FLAGGED — byteXL Competitive Analysis (2026-11-03)
+
+Full analysis in `BYTEXL-COMPETITIVE-ANALYSIS-FLAG.md`.
+
+**7 gaps identified, all demand-triggered:**
+
+| # | Gap | Effort | Trigger |
+|---|---|---|---|
+| 1 | LMS Bridge (not full LMS) | 5 sessions | Institution asks |
+| 2 | CEFR English Assessment | 3 sessions | Tier-2/3 college asks |
+| 3 | Coding Practice Curriculum | 4 sessions | Candidate/college asks |
+| 4 | Voice Screen Agent | 2 sessions | Employer asks |
+| 5 | Microsoft Learn Integration | 1 session | Institution asks |
+| 6 | Browser IDE | PARTNER | Employer asks (partner with Replit) |
+| 7 | Virtual Labs | SKIP | Never build |
+
+**Do NOT build speculatively.** No trigger has fired.
+
+---
+
+## FLAGGED — Zeravia Competitive Analysis (2026-11-03)
+
+Full analysis in `ZERAVIA-COMPETITIVE-ANALYSIS-FLAG.md`.
+
+**8 gaps, all demand-triggered:**
+
+| # | Gap | Effort | Trigger |
+|---|---|---|---|
+| 1 | Public Trust Infrastructure (MSME + Startup India + NSQF) | 30 min | NOW |
+| 2 | Partnership Credibility Page | 1 session | Before next outreach |
+| 3 | Pricing Clarity Page | 1-2 sessions | Before next B2C email |
+| 4 | Free 3-Day Charvak Challenge | 1 session | Next week |
+| 5 | Role Intelligence Page | 1 session | After pricing ships |
+| 6 | Certification Partner Links | 1 session | After pricing ships |
+| 7 | Surface the Moat (homepage) | 30 min | NOW |
+| 8 | Testimonial Depth | 1 session | After pilot Week 2 |
+
+**Category-of-one positioning:**
+"Zeravia gives you a certificate. Charvak gives you proof."
+
+---
