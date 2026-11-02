@@ -188,10 +188,13 @@ function render() {
   // Session 17d: add Readiness filter if certs exist
   if (certCount > 0) {
     filtersHtml += '<button class="mr-filter" data-filter="readiness_certificate" onclick="setFilter(\'readiness_certificate\')">Readiness (' + certCount + ')</button>';
-        // Session 108: career cert filter
-        if (MR.careerCerts && MR.careerCerts.length > 0) {
-            filtersHtml += '<button class="mr-filter" data-filter="career_certification" onclick="setFilter(\'career_certification\')">Career Certs (' + MR.careerCerts.length + ')</button>';
-        }
+  }
+  // Session 108: career cert filter (independent of readiness)
+  if (MR.careerCerts && MR.careerCerts.length > 0) {
+    filtersHtml += '<button class="mr-filter" data-filter="career_certification" onclick="setFilter(\'career_certification\')">Career Certs (' + MR.careerCerts.length + ')</button>';
+  }
+  // Show "latest only" toggle if ANY certs exist
+  if (certCount > 0 || (MR.careerCerts && MR.careerCerts.length > 0)) {
     var _chk = MR.certsLatestOnly ? ' checked' : '';
     filtersHtml += '<label class="mr-filter" style="cursor:pointer; user-select:none; display:inline-flex; align-items:center; gap:6px;"><input type="checkbox" id="mrLatestOnly" onchange="MR.certsLatestOnly = this.checked; renderList();"' + _chk + '> Show only latest per role</label>';
   }
