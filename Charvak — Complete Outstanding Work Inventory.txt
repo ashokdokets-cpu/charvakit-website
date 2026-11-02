@@ -1,0 +1,29 @@
+﻿
+---
+
+## FLAGGED — byteXL Competitive Analysis (2026-11-03)
+
+Full analysis in `BYTEXL-COMPETITIVE-ANALYSIS-FLAG.md`.
+
+**7 gaps identified, all demand-triggered:**
+
+| # | Gap | Effort | Trigger |
+|---|---|---|---|
+| 1 | LMS Bridge (not full LMS) | 5 sessions | Institution asks |
+| 2 | CEFR English Assessment | 3 sessions | Tier-2/3 college asks |
+| 3 | Coding Practice Curriculum | 4 sessions | Candidate/college asks |
+| 4 | Voice Screen Agent | 2 sessions | Employer asks |
+| 5 | Microsoft Learn Integration | 1 session | Institution asks |
+| 6 | Browser IDE | PARTNER | Employer asks (partner with Replit) |
+| 7 | Virtual Labs | SKIP | Never build |
+
+**Total if ALL built:** ~14 sessions.
+**Total likely to be built:** 3-5 sessions.
+
+**Do NOT build speculatively.** The moat is depth (HMAC certs, honest
+JD calibration, micro-internships, FYP assistant) not breadth.
+
+**Category-of-one positioning:**
+"Keep your LMS. Add Charvak as the proof layer."
+
+---
