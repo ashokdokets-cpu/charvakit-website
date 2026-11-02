@@ -960,6 +960,18 @@ function renderResult(j) {
       + '<button class="btn btn-outline-primary ms-2" onclick="createScorecard(' + JSON.stringify(_carAid) + ', this)">Create Shareable Scorecard →</button>'
                 + '</div>';
             document.getElementById("carResultBadge").innerHTML = badge + _ctaHtml;
+        } else if (_carScore !== null && _carScore !== undefined && _carScore < 70 && _carAid) {
+            // below-cert-threshold: user scored <70, explain how to certify
+            var _gapToCert = 70 - _carScore;
+            var _yellowHtml = '<div class="alert alert-warning mt-3" style="border-left:4px solid #f59e0b;background:#fef3c7;padding:16px;">'
+                + '<div style="font-weight:800;color:#92400e;font-size:1rem;margin-bottom:8px;">⚠️ Below Certification Threshold</div>'
+                + '<div style="color:#78350f;font-size:0.9rem;margin-bottom:12px;">Your score: <strong>' + _carScore + '/100</strong>. Certification requires 70+. You are <strong>' + _gapToCert + ' points away</strong>.</div>'
+                + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+                + '<a class="btn btn-primary btn-sm" href="/ai-assessment">Retake Assessment</a>'
+                + '<a class="btn btn-outline-primary btn-sm" href="#carResultContent">View Skill Gaps</a>'
+                + '</div>'
+                + '</div>';
+            document.getElementById("carResultBadge").innerHTML = badge + _yellowHtml;
         }
     } catch (e) { console.warn("cert CTA render failed", e); }
 
