@@ -7347,3 +7347,47 @@ breadth). 2 ties.
 See `ZERAVIA-COMPETITIVE-ANALYSIS-FLAG.md` for full analysis.
 
 ---
+
+---
+
+## KAMPHIRE COMPETITIVE ANALYSIS — FLAGGED (2026-11-03)
+
+Deep analysis of KampHire (B2B campus recruitment automation + assessment
+platform by Assiduous Infotech Private Limited, Ahmedabad).
+All findings in `KAMPHIRE-COMPETITIVE-ANALYSIS-FLAG.md`.
+
+**Verdict:** Closest competitor so far. Charvak wins 12 of 28, KampHire
+wins 12, 4 ties. But fundamentally different buyer — KampHire sells to
+corporate HR at scale (200+ hires/year), Charvak sells to CDC + students
++ employers. Different products serving different problems.
+
+**6 gaps identified, ranked by ROI:**
+1. Campus hiring workflow automation — 3 sessions (INVERTED-MARKETPLACE 102-104)
+2. CEFR English assessment — 2-3 sessions
+3. AI video interview — 3-4 sessions
+4. Ready-to-use assessment templates (20-30) — 1-2 sessions
+5. Bulk registration + shortlisting — 1-2 sessions
+6. Branded registration page — 2 sessions
+
+**Total if ALL built:** ~14-18 sessions.
+**Total likely to be built:** 3-6 sessions (items 4, 5, 6).
+
+**5 Charvak moats:**
+1. Candidate owns their HMAC certificate
+2. Assessment depth (10 formats vs 3)
+3. College-side relationship (CDC is customer, not supplier)
+4. Micro-internships with escrow (screening + trial)
+5. Zero-cost B2C funnel feeds employers verified candidates
+
+**Strategic positioning:**
+"KampHire replaces your recruitment workflow. Charvak plugs into it.
+We're the proof layer — HMAC-signed, candidate-owned, verifiable anywhere."
+
+**What's actually left:**
+- Rotate Render Postgres password (overdue since Session 19)
+- Send Amrita follow-up #1 (overdue since Oct 28)
+- Send candidate/user emails (drafted, ready)
+
+See `KAMPHIRE-COMPETITIVE-ANALYSIS-FLAG.md` for full analysis.
+
+---
