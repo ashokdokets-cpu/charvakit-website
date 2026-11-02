@@ -218,21 +218,6 @@ function renderList() {
     _certs.sort(function(a, b) {
       return new Date(b.created_at || 0) - new Date(a.created_at || 0);
     });
-
-        // Session 108: merge career certifications into rows
-        (MR.careerCerts || []).forEach(function(cc) {
-            rows.push({
-                assessment_type: 'career_certification',
-                assessment_name: (cc.role || 'Career') + ' - ' + (cc.badge_label || 'Certified'),
-                score: cc.score,
-                pass: true,
-                result_id: cc.cert_id,
-                cert_id: cc.cert_id,
-                cert_tier: cc.badge_tier || 'certified',
-                cert_hash: cc.certification_hash,
-                is_career_cert: true
-            });
-        });
     _certs = _certs.filter(function(c) {
       var key = (c.role || '') + '|' + (c.industry || '') + '|' + (c.level || '');
       if (_seen[key]) return false;
@@ -252,7 +237,23 @@ function renderList() {
       result_id: c.certificate_id
     };
   });
-  var rows = (MR.data.results || []).concat(certRows).filter(function(r){
+  // Session 108: career certification rows
+  var careerCertRows = (MR.careerCerts || []).map(function(cc) {
+    return {
+      _is_career_cert: true,
+      _career_cert: cc,
+      assessment_type: 'career_certification',
+      assessment_name: (cc.role || 'Career') + ' - ' + (cc.badge_label || 'Certified'),
+      score: cc.score,
+      pass: true,
+      completed_at: cc.issued_at,
+      result_id: cc.cert_id,
+      cert_id: cc.cert_id,
+      cert_tier: cc.badge_tier || 'certified',
+      cert_hash: cc.certification_hash
+    };
+  });
+  var rows = (MR.data.results || []).concat(certRows).concat(careerCertRows).filter(function(r){
     return MR.activeFilter === 'all' || r.assessment_type === MR.activeFilter;
   });
   MR.filteredRows = rows;
@@ -278,6 +279,26 @@ function renderList() {
       html += '<div class="mr-score-value ' + (passed ? 'pass' : 'fail') + '">' + escapeHtml(c.readiness_score) + '<span style="font-size:0.9rem;color:#9ca3af;">/100</span></div>';
       html += '<span class="mr-score-badge ' + (passed ? 'pass' : 'fail') + '">' + (passed ? 'Above Benchmark' : 'Below Benchmark') + '</span>';
       html += '<div style="margin-top:8px;"><a class="btn btn-sm btn-outline-primary" href="/readiness/' + encodeURIComponent(c.certificate_id) + '">View Certificate</a></div>';
+      html += '</div>';
+      html += '</div>';
+      return;
+    }
+    if (r._is_career_cert) {
+      // Session 108: career certification card with View + Download PDF
+      var cc = r._career_cert;
+      html += '<div class="mr-card">';
+      html += '<div>';
+      html += '<div class="mr-card-name">' + escapeHtml(r.assessment_name || 'Career Certification') + ' <span style="background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:999px;font-size:0.7rem;font-weight:600;text-transform:uppercase;margin-left:6px;">Career Cert</span></div>';
+      html += '<div class="mr-card-meta">' + escapeHtml(formatDate(r.completed_at || '')) + '</div>';
+      html += '<div class="mr-card-meta" style="font-family:monospace;font-size:0.75rem;margin-top:2px;">' + escapeHtml(r.cert_id || '') + '</div>';
+      html += '</div>';
+      html += '<div class="mr-card-score">';
+      html += '<div class="mr-score-value pass">' + escapeHtml(r.score) + '<span style="font-size:0.9rem;color:#9ca3af;">/100</span></div>';
+      html += '<span class="mr-score-badge pass">' + escapeHtml(r.cert_tier || 'Certified') + '</span>';
+      html += '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">';
+      html += '<a class="btn btn-sm btn-outline-primary" href="/career-certification/' + encodeURIComponent(r.cert_id) + '">View</a>';
+      html += '<a class="btn btn-sm btn-primary" href="/api/career-certification/' + encodeURIComponent(r.cert_id) + '/pdf" download>Download PDF</a>';
+      html += '</div>';
       html += '</div>';
       html += '</div>';
       return;
@@ -332,26 +353,7 @@ function flattenDetails(obj, prefix) {
     var label = prefix ? (prefix + ' ' + k) : k;
     if (v && typeof v === 'object' && !Array.isArray(v)) {
       Object.assign(out, flattenDetails(v, label));
-    
-
-        } else if (r.assessment_type === 'career_certification') {
-            // Session 108: career certification card with download + verify buttons
-            html += '<div class="mr-card" data-type="career_certification">';
-            html += '<div class="mr-card-main">';
-            html += '<div class="mr-card-name">' + escapeHtml(r.assessment_name || 'Career Certification') + '</div>';
-            html += '<div class="mr-card-meta">Career Certification - <strong style="color:#10b981;">Verified</strong></div>';
-            html += '<div class="mr-card-meta" style="font-family:monospace;font-size:0.75rem;margin-top:2px;">' + escapeHtml(r.cert_id || '') + '</div>';
-            html += '</div>';
-            html += '<div class="mr-card-score">';
-            html += '<div class="mr-score-value pass">' + escapeHtml(r.score) + '<span style="font-size:0.9rem;color:#9ca3af;">/100</span></div>';
-            html += '<span class="mr-score-badge pass">' + escapeHtml(r.cert_tier || 'Certified') + '</span>';
-            html += '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">';
-            html += '<a class="btn btn-sm btn-outline-primary" href="/career-certification/' + encodeURIComponent(r.cert_id) + '">View</a>';
-            html += '<a class="btn btn-sm btn-primary" href="/api/career-certification/' + encodeURIComponent(r.cert_id) + '/pdf" download>Download PDF</a>';
-            html += '</div>';
-            html += '</div>';
-            html += '</div>';
-            return;} else {
+    } else {
       out[label] = Array.isArray(v) ? v.join(', ') : v;
     }
   });
