@@ -81,3 +81,31 @@ Full analysis in `ZERAVIA-COMPETITIVE-ANALYSIS-FLAG.md`.
 "Zeravia gives you a certificate. Charvak gives you proof."
 
 ---
+
+---
+
+## FLAGGED (2026-11-03) — KampHire Competitive Analysis
+
+Full analysis in `KAMPHIRE-COMPETITIVE-ANALYSIS-FLAG.md`.
+
+**6 gaps, all demand-triggered:**
+1. Campus hiring workflow automation — 3 sessions
+2. CEFR English assessment — 2-3 sessions
+3. AI video interview — 3-4 sessions
+4. Ready-to-use assessment templates — 1-2 sessions
+5. Bulk registration + shortlisting — 1-2 sessions
+6. Branded registration page — 2 sessions
+
+**Do NOT build speculatively.** Closest competitor so far (Charvak 12/28,
+KampHire 12/28, 4 ties) but different buyer and product.
+
+**Strategic positioning:**
+"KampHire replaces your recruitment workflow. Charvak plugs into it as
+the proof layer."
+
+**What's actually left:**
+- Rotate Render Postgres password (overdue)
+- Send Amrita follow-up #1 (overdue)
+- Send candidate/user emails (drafted)
+
+---

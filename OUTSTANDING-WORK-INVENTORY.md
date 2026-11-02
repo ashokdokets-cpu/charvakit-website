@@ -745,3 +745,40 @@ Full analysis in `ZERAVIA-COMPETITIVE-ANALYSIS-FLAG.md`.
 "Zeravia gives you a certificate. Charvak gives you proof."
 
 ---
+---
+
+## FLAGGED — KampHire Competitive Analysis (2026-11-03)
+
+Full analysis in `KAMPHIRE-COMPETITIVE-ANALYSIS-FLAG.md`.
+
+**6 gaps, all demand-triggered:**
+
+| # | Gap | Effort | Trigger |
+|---|---|---|---|
+| 1 | Campus hiring workflow automation | 3 sessions | First enterprise/CDC asks |
+| 2 | CEFR English assessment | 2-3 sessions | First BPO/customer support asks |
+| 3 | AI video interview | 3-4 sessions | First employer asks for video |
+| 4 | Ready-to-use assessment templates (20-30) | 1-2 sessions | First user asks for standard test |
+| 5 | Bulk registration + shortlisting | 1-2 sessions | First CDC requests bulk ops |
+| 6 | Branded registration page | 2 sessions | First employer asks for branding |
+
+**Total if ALL built:** ~14-18 sessions.
+**Total likely to be built:** 3-6 sessions.
+
+**Do NOT build speculatively.** Closest competitor so far — Charvak wins
+12 of 28, KampHire wins 12 of 28, 4 ties. But different buyer:
+KampHire sells to corporate HR at scale, Charvak sells to CDC + students
++ employers.
+
+**5 Charvak moats:**
+1. Candidate owns their HMAC certificate (KampHire results stay with recruiter)
+2. Assessment depth (10 formats vs 3)
+3. College-side relationship (CDC is customer, not supplier)
+4. Micro-internships with escrow (screening + trial, not just screening)
+5. Zero-cost B2C funnel feeds employers verified candidates
+
+**Strategic positioning:**
+"KampHire replaces your recruitment workflow. Charvak plugs into it as
+the proof layer — HMAC-signed, candidate-owned, verifiable anywhere."
+
+---
