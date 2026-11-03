@@ -210,4 +210,37 @@ What's actually left:
 - Send batch 2 from hr@charvakit.com
 - Log every reply
 
+------
+
+## FLAGGED (2026-11-04) — Revenue Stream Extensions
+
+Full analysis in REVENUE-STREAM-EXTENSIONS-FLAG.md.
+
+3 blueprint docs, 11 concepts analyzed. 4 worth building, 2 DO NOT BUILD.
+
+4 BUILDS:
+1. Pay-on-Placement Escrow (2 sessions) — HIGHEST ROI, 85% built
+2. Skill-Swap Bounties (2-3 sessions) — 80% built
+3. Inversed ATS (3-4 sessions) — 50% built
+4. Proof-of-Output Badging (3-4 sessions) — 60% built
+
+3 DO NOT BUILD:
+- Shadow-Track (surveillance, illegal)
+- Career Proof-of-Stake (gambling)
+- US pricing narrative (India reality is ₹5-15K/mo)
+
+HONEST SEQUENCE:
+- This week: SMTP fix, Render password, batch 2 (20 min)
+- After 1-3 replies: Build Placement Escrow
+- After 1 employer uses it: Build Skill-Swap
+- After 3 employers: Build Inversed ATS
+- After 5 employers: Build Proof-of-Output
+
+Do NOT build all 4 at once. Each triggered by 1 paying customer's ask.
+
+What is actually left:
+- Fix SMTP (10 min)
+- Rotate Render password (2 min)
+- Send batch 2 from hr@charvakit.com
+
 ---

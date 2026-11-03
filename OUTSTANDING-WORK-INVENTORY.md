@@ -925,4 +925,43 @@ What's actually left:
 - Send batch 2 from hr@charvakit.com
 - Log every reply
 
+------
+
+## FLAGGED — Revenue Stream Extensions (2026-11-04)
+
+Full analysis in REVENUE-STREAM-EXTENSIONS-FLAG.md.
+
+3 docs, 11 concepts. 4 worth building, 2 DO NOT BUILD.
+
+4 BUILDS (10-13 sessions total):
+
+| # | Build | Effort | Trigger |
+|---|---|---|---|
+| 1 | Pay-on-Placement Escrow | 2 sessions | Employer asks about risk |
+| 2 | Skill-Swap Bounties | 2-3 sessions | Startup wants faster test |
+| 3 | Inversed ATS | 3-4 sessions | Recruiter wants capability search |
+| 4 | Proof-of-Output Badging | 3-4 sessions | Employer asks about AI cheating |
+
+3 DO NOT BUILD:
+- Shadow-Track — GDPR/DPDP/IT Act violation
+- Career Proof-of-Stake — gambling under Public Gambling Act 1867
+- US pricing — Indian ATS spend is ₹5-15K/mo, not \
+
+REVENUE MAP (12-month): ₹1-3L/month recurring
+REVENUE MAP (18-month): ₹5-10L/month
+
+HONEST SEQUENCE:
+- This week: SMTP fix, Render password, batch 2
+- After 1-3 replies: Build Placement Escrow
+- After 1 employer: Skill-Swap
+- After 3 employers: Inversed ATS
+- After 5 employers: Proof-of-Output
+
+Do NOT build all 4 at once.
+
+What is actually left:
+- Fix SMTP (10 min)
+- Rotate Render password (2 min)
+- Send batch 2 from hr@charvakit.com
+
 ---
