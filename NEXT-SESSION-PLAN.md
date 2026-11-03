@@ -109,3 +109,34 @@ the proof layer."
 - Send candidate/user emails (drafted)
 
 ---
+---
+
+## FLAGGED (2026-11-03) — TSPL Opportunity
+
+Full analysis in `TSPL-OPPORTUNITY-FLAG.md`.
+
+TSPL Group is a potential CUSTOMER (not competitor): 40K workers/year,
+470+ partner companies, 6 govt apprenticeship schemes.
+
+**Charvak can serve today:** NATS/AEDP degree apprentices.
+**Cannot serve today:** NAPS/MAPS/FLEXI ITI blue-collar (needs trade
+roles + reading-level-aware prompts + mobile UI).
+
+**Scoped plan:**
+1. Send NATS-only pilot email (not full 40K)
+2. Collect TSPL cohort data (program mix, roles, reading levels)
+3. Build blue-collar support ONLY after pilot committed
+
+**When triggered (TSPL pilot committed):**
+- Blue-collar role catalog (24-30 roles) — 2 sessions
+- Reading-level-aware prompts — 1 session
+- Multilingual question verification — 30 min to 1 session
+- Mobile-first UI — 1 session
+- Total: 4-5 sessions minimum
+
+**What's actually left:**
+- Rotate Render Postgres password (overdue)
+- Send Amrita follow-up #1 (overdue)
+- Send candidate/user emails (drafted)
+
+---

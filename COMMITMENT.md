@@ -7391,3 +7391,77 @@ We're the proof layer — HMAC-signed, candidate-owned, verifiable anywhere."
 See `KAMPHIRE-COMPETITIVE-ANALYSIS-FLAG.md` for full analysis.
 
 ---
+---
+
+## TSPL OPPORTUNITY — FLAGGED (2026-11-03)
+
+TSPL Group (TalentCorp Solutions Pvt Ltd) is a potential CUSTOMER,
+not a competitor. Government-authorized apprenticeship + staffing
+company: 40K workers/year, 470+ partner companies, 6 govt schemes
+(NAPS, NATS, MAPS, WILP, AEDP, FLEXI ITI), 1st rank TPA in NATS 2025.
+
+Full analysis in `TSPL-OPPORTUNITY-FLAG.md`.
+
+**The gap TSPL has that Charvak fills:**
+- Workers get government "Certificate of Proficiency" (completed)
+- But no portable HMAC-verified skill certificate
+- No assessment data on training center quality
+- No retention tracking
+- No upskilling path after placement
+
+**Revenue potential:** ₹4L-20L/year (scoped NATS pilot) to ₹10L-40L/year
+(NAPS + NATS) to ₹1.6Cr/year (multi-client).
+
+**CRITICAL — Charvak CANNOT serve TSPL's core worker population today:**
+
+| Worker type | Status |
+|---|---|
+| NATS apprentice (BE/B.Tech, Diploma) | ✅ Can serve |
+| AEDP students (degree-level) | ✅ Can serve |
+| NAPS apprentice (10th/12th/ITI) | ❌ Needs trade roles + reading-level |
+| MAPS apprentice (10th+) | ❌ Same |
+| FLEXI ITI student (8th pass) | ❌ Reading level far too high |
+| Contractual labour (welder, cutter) | ❌ No role catalog + practical assessment |
+
+**Missing ~24 trade roles:** Welder, fitter, electrician, plumber,
+turner, machinist, wireman, carpenter, painter, AC mechanic, motor
+mechanic, auto electrician, forklift operator, CNC operator, assembly
+line worker, quality inspector, store keeper, warehouse picker,
+delivery associate, production supervisor, fabricator, sheet metal
+worker, pipe fitter, rigging worker.
+
+**The reading level problem:** Charvak's current MCQ prompt assumes
+class 12+ English. TSPL workers read at class 8-10 Hindi/Marathi.
+
+**What to do now:**
+1. Do NOT send the full-scope "40,000 workers" email (would overcommit)
+2. Send the SCOPED email: NATS/AEDP apprentices only
+3. Collect TSPL cohort data: program mix, role mix, reading levels,
+   language mix, device mix, client demand
+4. Build blue-collar support ONLY after TSPL commits to pilot
+
+**Build plan when triggered:**
+
+Minimum viable (4-5 sessions):
+1. Blue-collar role catalog (24-30 roles) — 2 sessions
+2. Reading-level-aware prompts — 1 session
+3. Multilingual question verification — 30 min or 1 session
+4. Mobile-first UI — 1 session
+
+Full TSPL-ready (8-10 sessions): + practical assessment (3-4),
++ WhatsApp delivery (1-2).
+
+Scoped NATS-only pilot (0-1 session): CSV upload + co-branded cert +
+TSPL dashboard.
+
+**Trigger to build:** TSPL cohort data + TSPL pilot commitment + 1
+paying customer already signed.
+
+**What's actually left:**
+- Rotate Render Postgres password (overdue)
+- Send Amrita follow-up #1 (overdue)
+- Send candidate/user emails (drafted)
+
+See `TSPL-OPPORTUNITY-FLAG.md` for full analysis.
+
+---

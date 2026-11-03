@@ -782,3 +782,47 @@ KampHire sells to corporate HR at scale, Charvak sells to CDC + students
 the proof layer — HMAC-signed, candidate-owned, verifiable anywhere."
 
 ---
+---
+
+## FLAGGED — TSPL Opportunity (2026-11-03)
+
+Full analysis in `TSPL-OPPORTUNITY-FLAG.md`.
+
+TSPL Group is a potential CUSTOMER. 40K workers/year, 470+ partner
+companies (Haier, LG, Hyundai, ITC, JCB, etc.), 6 govt apprenticeship
+schemes. Revenue potential: ₹4L-20L/year (scoped) to ₹10L-40L/year
+(NAPS + NATS).
+
+**Critical honesty:** Charvak CANNOT serve TSPL's core workers today.
+
+| Worker type | Can serve? |
+|---|---|
+| NATS apprentice (BE/B.Tech, Diploma) | ✅ Yes |
+| AEDP students (degree-level) | ✅ Yes |
+| NAPS apprentice (10th/12th/ITI) | ❌ No |
+| MAPS apprentice (10th+) | ❌ No |
+| FLEXI ITI student (8th pass) | ❌ No |
+| Contractual labour (welder, cutter) | ❌ No |
+
+**Missing 24 trade roles + reading-level-aware prompts + multilingual
+question generation + mobile-first UI + practical assessment.**
+
+**Scoped plan (do this first):**
+1. Send NATS-only pilot email (not full 40K)
+2. Collect TSPL cohort data
+3. Build blue-collar support only after pilot committed
+
+**Build effort when triggered:**
+- Scoped NATS pilot: 0-1 session (CSV + co-brand + dashboard)
+- Minimum viable blue-collar: 4-5 sessions
+- Full TSPL-ready: 8-10 sessions
+
+**Trigger to build:** TSPL cohort data + TSPL pilot commitment +
+1 paying customer already signed.
+
+**What's actually left:**
+- Rotate Render Postgres password (overdue)
+- Send Amrita follow-up #1 (overdue)
+- Send candidate/user emails (drafted)
+
+---
