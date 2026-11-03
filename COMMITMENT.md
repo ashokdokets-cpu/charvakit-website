@@ -7581,4 +7581,62 @@ What's actually left:
 
 See POWN-VIABILITY-FLAG.md for full analysis.
 
+------
+
+## REVENUE STREAM EXTENSIONS — FLAGGED (2026-11-04)
+
+3 new blueprint docs analyzed (11 concepts total). 4 worth building,
+2 DO NOT BUILD (legal risk), 1 pricing adjustment needed.
+
+Full analysis in REVENUE-STREAM-EXTENSIONS-FLAG.md.
+
+4 BUILDS WORTH DOING:
+
+1. Pay-on-Placement Escrow (2 sessions) — HIGHEST ROI, 85% built
+   - Employer deposits 1 month salary; released Day 30
+   - 10% platform fee per placement
+   - Trigger: employer asks about hire risk
+
+2. Skill-Swap Bounties (2-3 sessions) — 80% built
+   - 1-hour micro-bounties vs 4-week internships
+   - ₹149-499 per bounty
+   - Trigger: startup wants faster test
+
+3. Inversed ATS (3-4 sessions) — 50% built
+   - Vector-based search (execution velocity, analytical rigor, etc.)
+   - ₹999-4,999/mo per recruiter
+   - Trigger: recruiter wants capability search
+
+4. Proof-of-Output Badging (3-4 sessions) — 60% built
+   - 30-second playback of cert
+   - ₹49/cert premium
+   - Trigger: employer asks about AI cheating
+
+3 DO NOT BUILD:
+- Shadow-Track (passive monitoring) — GDPR/DPDP/IT Act violation
+- Career Proof-of-Stake — gambling under Public Gambling Act 1867
+- US pricing narrative — Indian ATS spend is ₹5-15K/mo, not \
+
+REVENUE MAP (12-month potential): ₹1-3L/month recurring
+REVENUE MAP (18-month realistic): ₹5-10L/month
+
+THE HONEST SEQUENCE:
+- This week: SMTP fix, Render password, batch 2 (20 min total)
+- After 1-3 replies: Build Placement Escrow (2 sessions)
+- After 1 employer uses it: Build Skill-Swap (2-3 sessions)
+- After 3 employers: Build Inversed ATS (3-4 sessions)
+- After 5 employers: Build Proof-of-Output (3-4 sessions)
+
+Do NOT build all 4 at once. Each triggered by 1 paying customer's ask.
+
+THE PATTERN: Strategic documentation is a form of avoidance. Feels
+productive. Doesn't pay rent. Commit flag, then fix SMTP. Not reverse.
+
+What is actually left:
+- Fix SMTP (10 min) — blocks batch 2
+- Rotate Render password (2 min) — 90 sessions overdue
+- Send batch 2 from hr@charvakit.com (30 min)
+
+See REVENUE-STREAM-EXTENSIONS-FLAG.md for full analysis.
+
 ---
