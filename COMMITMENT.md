@@ -7464,4 +7464,66 @@ paying customer already signed.
 
 See `TSPL-OPPORTUNITY-FLAG.md` for full analysis.
 
+------
+
+## END-TO-END PIPELINE EXTENSIONS — FLAGGED (2026-11-03)
+
+Charvak is not a Saral AI competitor. Charvak is the full pipeline from
+fresher to placed hire. Saral is a sourcing slice.
+
+Full analysis in END-TO-END-PIPELINE-EXTENSION-FLAG.md.
+
+The 8-stage pipeline (current status):
+1. Discover — Partial (needs /discover)
+2. Assess — Complete (106 roles, 8 formats)
+3. Upskill — Complete (AI courses, tutor, FYP)
+4. Prove — Complete (HMAC certs, verify URL)
+5. Match — Partial (needs fit %)
+6. Reach — Missing (needs outreach)
+7. Place — Complete (employer portal)
+8. Measure — Complete (Dean PDF)
+
+Current: 5 of 8 fully built. After extensions: 8 of 8.
+
+3 extensions, 6-9 sessions:
+
+1. Discover page (2 sessions) — Freshers type natural language
+   (data in Bangalore) and get 3-5 fit careers, one-click to assessment
+
+2. Fit % on jobs and candidates (1-2 sessions) — Every job card shows
+   "Your fit: 72%". Every candidate shows "match %". Uses existing
+   candidate skill data + role requirements.
+
+3. Reach layer (3-5 sessions) — Email sequences (1), GitHub public
+   signal reader (1-2), WhatsApp template (1-2, after Meta approval)
+
+Do NOT build what Saral has that requires scraping or vendors:
+- LinkedIn scraper
+- Waterfall contact enrichment (Rs 50K-2L/year)
+- LinkedIn automation (permanent bans)
+- X/Twitter scraping
+
+What makes Charvak end-to-end: Saral covers 1 and 6. HackerRank
+covers 2 and 4. Naukri covers 5. Charvak after extensions covers all 8.
+
+Build order when triggered:
+1. Fit % (smallest, highest value)
+2. Discover page
+3. Email sequences
+4. GitHub signals
+5. WhatsApp
+
+Triggers:
+- Fit % and Discover: after Amrita OR TSPL commits
+- Email sequences: after 1st employer asks
+- GitHub signals: after 1st technical hire
+- WhatsApp: after 3rd employer asks
+
+What is actually left:
+- Rotate Render Postgres password (overdue)
+- Send Amrita follow-up #1 (overdue)
+- Send candidate/user emails (drafted)
+
+See END-TO-END-PIPELINE-EXTENSION-FLAG.md for full analysis.
+
 ---
