@@ -139,4 +139,37 @@ roles + reading-level-aware prompts + mobile UI).
 - Send Amrita follow-up #1 (overdue)
 - Send candidate/user emails (drafted)
 
+------
+
+## FLAGGED (2026-11-03) — End-to-End Pipeline Extensions
+
+Full analysis in END-TO-END-PIPELINE-EXTENSION-FLAG.md.
+
+Charvak is the full pipeline (8 stages), Saral is a slice (2 stages).
+Currently 5 of 8 stages complete. 3 extensions close the gap.
+
+The 3 extensions:
+
+1. Discover page (2 sessions) — Freshers find the right career
+2. Fit % on jobs and candidates (1-2 sessions) — Ready-vs-stretch ranking
+3. Reach layer (3-5 sessions) — Email sequences + GitHub + WhatsApp
+
+Total: 6-9 sessions.
+
+Do NOT build scraping-based features (LinkedIn, X, waterfall
+enrichment). Build only what uses public APIs (GitHub) and existing
+Charvak signals.
+
+Build order when triggered:
+1. Fit % (smallest, highest value) — after Amrita/TSPL commits
+2. Discover page — after Amrita/TSPL commits
+3. Email sequences — after 1st employer asks
+4. GitHub signals — after 1st technical hire
+5. WhatsApp — after 3rd employer asks
+
+What is actually left:
+- Rotate Render Postgres password (overdue)
+- Send Amrita follow-up #1 (overdue)
+- Send candidate/user emails (drafted)
+
 ---

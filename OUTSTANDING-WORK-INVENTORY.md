@@ -825,4 +825,59 @@ question generation + mobile-first UI + practical assessment.**
 - Send Amrita follow-up #1 (overdue)
 - Send candidate/user emails (drafted)
 
+------
+
+## FLAGGED — End-to-End Pipeline Extensions (2026-11-03)
+
+Full analysis in END-TO-END-PIPELINE-EXTENSION-FLAG.md.
+
+Charvak is the full pipeline from fresher to placed hire. Saral AI
+covers 2 stages (Discover, Reach). Charvak covers 5 of 8. Extensions
+close the gap to 8 of 8.
+
+Current pipeline status:
+1. Discover — Partial
+2. Assess — Complete
+3. Upskill — Complete
+4. Prove — Complete
+5. Match — Partial
+6. Reach — Missing
+7. Place — Complete
+8. Measure — Complete
+
+3 extensions:
+
+| # | Extension | Effort | Trigger |
+|---|---|---|---|
+| 1 | Fit % on jobs and candidates | 1-2 sessions | Amrita/TSPL commits |
+| 2 | Discover page | 2 sessions | Amrita/TSPL commits |
+| 3 | Reach layer (3 sub-features) | 3-5 sessions | Various (see flag) |
+
+Do NOT build:
+- 150M profile scraper (LinkedIn ToS, DPDP)
+- Waterfall contact enrichment (Rs 50K-2L/year vendors)
+- LinkedIn automation (permanent account bans)
+- X/Twitter scraping (100-500 USD/mo API)
+
+The competitive framing:
+- Saral covers stages 1 and 6
+- HackerRank covers stages 2 and 4
+- Naukri covers stage 5
+- Charvak after extensions covers all 8
+
+The end-to-end pitch (once built):
+Charvak is the only end-to-end talent pipeline for Indian colleges.
+
+Build order when triggered:
+1. Fit % (smallest, highest value)
+2. Discover page
+3. Email sequences
+4. GitHub signals
+5. WhatsApp
+
+What is actually left:
+- Rotate Render Postgres password (overdue)
+- Send Amrita follow-up #1 (overdue)
+- Send candidate/user emails (drafted)
+
 ---
