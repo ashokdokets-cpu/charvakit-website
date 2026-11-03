@@ -254,3 +254,174 @@ All demand-triggered. None built until a paying customer asks.
 **Last updated:** 2026-11-03
 **Next review:** 2026-12-03 (30 days) OR when TSPL cohort data arrives
 **Owner:** Bhavya M
+
+---
+
+## EXACT ROLE MATRIX — FROM TSPL'S LIVE PAGES (2026-11-03)
+
+Captured from TSPL Labour Staffing + 5 vertical pages. These are the
+actual roles TSPL deploys today. Every one of these needs a Charvak
+assessment role when the TSPL pilot is committed.
+
+### Staffing Vertical 1 — Security Guards
+
+| Role | Skills to assess | Reading level |
+|---|---|---|
+| Office Security Guard | Threat detection, visitor management, access control | Class 10 |
+| Factory / Industrial Guard | Perimeter security, incident reporting, emergency protocols | Class 10 |
+| Residential Guard | Society protocols, visitor logging, emergency response | Class 8 |
+| Event Security | Crowd management, coordination, emergency evacuation | Class 10 |
+| Armed Guard | Firearms handling, escalation protocols, threat response | Class 12 + license |
+
+### Staffing Vertical 2 — Skilled & Technical (ITI / Diploma / Cert)
+
+| Role | Skills to assess | Reading level |
+|---|---|---|
+| Arc Welder | Electrode selection, bead pattern, joint types, safety | Class 10 |
+| MIG Welder | Wire feed, gas flow, penetration, spatter control | Class 10 |
+| TIG Welder | Torch control, filler selection, clean weld, back purge | Class 10 |
+| Gas Welder | Flame adjustment, brazing, cutting, safety | Class 8 |
+| Fitter (Assembly) | Tolerance reading, blueprint, hand tools, torque specs | Class 10 |
+| Fitter (Maintenance) | Machine disassembly, bearing replacement, alignment | Class 10 |
+| Industrial Electrician | Panel wiring, motor control, safety codes, fault finding | Class 10 |
+| Residential Electrician | House wiring, earthing, MCB, load calculation | Class 8 |
+| CNC Operator | G-code basics, tool offset, part inspection, safety | Class 12 |
+| Lathe Operator | Cutting speed, feed rate, tolerance, threading | Class 10 |
+| VMC Operator | Tool magazine, fixture setup, program loading | Class 12 |
+| Quality Inspector | GD&T, measurement tools, sampling plans, report writing | Class 12 |
+| Production Supervisor | Line balancing, shift planning, quality control, reporting | Class 12 + Diploma |
+
+### Staffing Vertical 3 — Housekeeping
+
+| Role | Skills to assess | Reading level |
+|---|---|---|
+| Commercial Cleaner | Surface types, chemical dilution, equipment, safety | Class 8 |
+| Industrial Housekeeping | Floor scrubbing, waste segregation, machine cleaning | Class 8 |
+| Hospital Sanitization Staff | Disinfection protocols, PPE, blood-borne pathogens, waste | Class 10 |
+| Pantry / Cafeteria Staff | Hygiene, food handling, sanitation, customer interaction | Class 8 |
+| Facility Upkeep Staff | Building maintenance basics, tools, safety | Class 8 |
+
+### Staffing Vertical 4 — General Manpower
+
+| Role | Skills to assess | Reading level |
+|---|---|---|
+| Assembly Worker | Fastening, alignment, quality check, safety | Class 8 |
+| Warehouse Helper | Sorting, packing, labeling, material handling | Class 8 |
+| Loader / Unloader | Weight limits, stacking, safety | Class 8 |
+| Picker / Packer | Order accuracy, scanning, packing, dispatch | Class 8 |
+| Forklift Operator | License, load limits, safety, maneuvering | Class 10 + license |
+| Scanner / Dispatch Helper | Barcode, dispatch flow, documentation | Class 8 |
+| Construction Helper | Material handling, safety, tool familiarity | Class 8 |
+| Mason | Mortar mix, brick alignment, plastering, curing | Class 8 |
+| Painter | Surface prep, paint mix, coats, safety | Class 8 |
+
+### Staffing Vertical 5 — Contract / Flexible Staffing
+
+Contract roles overlap with the above. Add-on is:
+- Multi-shift availability
+- Location flexibility
+- Quick onboarding readiness
+
+---
+
+## INDUSTRIES TSPL SERVES (from live pages)
+
+8 sectors, each with specific role demand:
+
+1. **Manufacturing** — Production lines, helpers, shop-floor
+2. **Automobile** — Assembly operators, CNC machinists, welders
+3. **Pharma & Chemicals** — QC inspectors, packing staff, cleanroom
+4. **FMCG** — Warehouse crew, packaging helpers, loaders
+5. **Engineering** — Technicians, fitters, safety supervisors
+6. **Infrastructure** — Masons, electricians, general labor
+7. **Logistics & Warehousing** — Forklift operators, scanners, dispatch
+8. **IT Parks & Commercial** — Corporate guards, facility housekeepers
+
+**Each sector has reading-level-aware variations** — a warehouse helper at FMCG needs class 8 comprehension; a quality inspector at Pharma needs class 12.
+
+---
+
+## SKILLS-BY-VERTICAL TAXONOMY
+
+When building the role catalog, each role needs these skill dimensions:
+
+### Security (5 roles)
+- Physical: patrol, access control, response
+- Communication: reporting, escalation, coordination
+- Legal: private security regulations, use of force
+- Emergency: fire, evacuation, medical first response
+- Integrity: background check, police verification
+
+### Skilled & Technical (13 roles)
+- Trade-specific: welding types, wiring types, machine operation
+- Blueprint reading: symbols, GD&T, measurement
+- Safety: PPE, LOTO, fire, hazard identification
+- Quality: tolerance, inspection, defect classification
+- Tools: hand tools, power tools, precision instruments
+
+### Housekeeping (5 roles)
+- Cleaning methods: surface-specific, equipment-specific
+- Chemistry: dilution ratios, chemical safety, PPE
+- Sanitation: hospital protocols, food safety, hygiene
+- Equipment: scrubbers, wet vac, pressure washer, mops
+
+### General Manpower (9 roles)
+- Material handling: weight limits, stacking, safety
+- Accuracy: order accuracy, scanning, labeling
+- Equipment: forklift, pallet jack, scanner, hand truck
+- Safety: warehouse safety, PPE, emergency
+
+---
+
+## TSPL'S ADDITIONAL SERVICES (from live pages)
+
+TSPL also sells (beyond staffing):
+
+1. **Compliance Management** — PF, ESI, Labor Law, Factory Act
+   - 500+ companies, 50K+ workers, 0 penalty cases
+   - Opportunity: bundle Charvak skill verification into compliance package
+
+2. **Payroll Staffing** — End-to-end payroll + PF + ESI + TDS
+   - 500+ partners, 15+ years, 100% compliant
+   - Opportunity: payroll + skill cert = "verified payroll staff"
+
+3. **ISO 9001:2015 certified** — they care about quality
+   - HMAC-verified skill certs fit their quality positioning
+   - Pitch: "your ISO certification × our HMAC skill certificate = end-to-end quality"
+
+---
+
+## UPDATED BUILD CHECKLIST (WHEN TSPL COMMITS)
+
+Based on actual TSPL role mix (5 verticals, 32 specific roles):
+
+| Build Item | Roles Covered | Effort |
+|---|---|---|
+| Security vertical (5 roles) | Guards only | 30 min |
+| Skilled & Technical (13 roles) | Welders, fitters, electricians, CNC, inspectors | 1 session |
+| Housekeeping (5 roles) | All housekeeping variants | 30 min |
+| General Manpower (9 roles) | Warehouse, construction, delivery | 1 session |
+| Reading-level prompt param | All 32 roles | 1 session |
+| Mobile UI polish | All 32 roles | 1 session |
+| Multilingual verification | Hindi, Marathi priority | 30 min |
+| **TOTAL** | **32 roles** | **~4.5 sessions** |
+
+**Prioritized build order (when triggered):**
+
+1. **Phase 1 (Week 1-2)** — Skilled & Technical (13 roles)
+   Highest margin, best clients (Haier, Hyundai, TATA AutoComp). Class 10-12 reading works with minor prompt tweaks.
+
+2. **Phase 2 (Week 3-4)** — Security (5 roles)
+   Bulk volume (TSPL does security for many clients). Simpler skills to assess. 24-48h deployment requires fast assessment.
+
+3. **Phase 3 (Week 5-6)** — General Manpower (9 roles)
+   Volume driver. Reading level class 8. Mobile-first mandatory.
+
+4. **Phase 4 (Week 7-8)** — Housekeeping (5 roles)
+   Lowest skill complexity, lowest priority.
+
+---
+
+**Last updated:** 2026-11-03
+**Source:** TSPL Labour Staffing + 5 vertical pages + Compliance + Payroll (7 pages)
+**Next review:** When TSPL pilot is committed OR 2026-12-03
