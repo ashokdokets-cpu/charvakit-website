@@ -172,4 +172,42 @@ What is actually left:
 - Send Amrita follow-up #1 (overdue)
 - Send candidate/user emails (drafted)
 
+------
+
+## FLAGGED (2026-11-04) — POWN Viability Analysis
+
+Full analysis in POWN-VIABILITY-FLAG.md.
+
+POWN pitch is 45% built in Charvak already. 3 features worth building,
+2 features would create legal risk, 4 features are nice-to-have.
+
+5 builds (10-12 sessions total if all done):
+1. Domain-agnostic sandbox (3-4) — HIGHEST, unlocks 10x market
+2. Career pivot engine (2)
+3. Reverse bidding marketplace (2-3)
+4. Proof Pass subscription (2)
+5. API billing (1)
+
+DO NOT BUILD:
+- Shadow Benchmark (passive PR/SOP ingestion) — legal risk
+- Binding auto-offers — unenforceable
+- \ ARR India pitch — unrealistic pricing
+
+POSITIONING PLAY (no build needed):
+"Charvak is the Proof of Work Network. Saral finds candidates.
+HackerRank scores them. Naukri lists them. Charvak proves them."
+
+Use this pitch in demos today.
+
+BUILD GATE:
+- After 1-3 replies from Amrita OR candidate emails
+- After SMTP fix (batch 2 waiting)
+- After Render password rotation
+
+What's actually left:
+- Fix SMTP (10 min)
+- Rotate Render password (2 min)
+- Send batch 2 from hr@charvakit.com
+- Log every reply
+
 ---
