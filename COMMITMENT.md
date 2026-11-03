@@ -7526,4 +7526,59 @@ What is actually left:
 
 See END-TO-END-PIPELINE-EXTENSION-FLAG.md for full analysis.
 
+------
+
+## POWN VIABILITY ANALYSIS — FLAGGED (2026-11-04)
+
+Analyzed POWN (Proof of Work Network) pitch. 45% already built in
+Charvak, 30% extendable, 25% speculative or legally risky.
+
+Full analysis in POWN-VIABILITY-FLAG.md.
+
+THE HONEST SCORE:
+- HMAC certs, verify URL, 5-layer abuse, zero-bias skill verification: ALL COMPLETE
+- Domain-agnostic sandbox (non-coding): PARTIAL — biggest gap
+- Career pivot translation: PARTIAL
+- Reverse bidding marketplace: PARTIAL
+- Enterprise 8% placement fee, B2B search SaaS, Proof Pass subscription,
+  API billing: NONE — pricing not built
+
+5 BUILDS WORTH DOING (10-12 sessions if all):
+1. Domain-agnostic sandbox (3-4) — HIGHEST ROI, unlocks 10x market
+2. Career pivot engine (2) — new segment
+3. Reverse bidding marketplace (2-3) — new employer value
+4. Proof Pass subscription (2) — recurring revenue
+5. API billing (1) — B2B sticky
+
+3 DO NOT BUILD (legal / reputation risk):
+- Shadow Benchmark (passive PR/SOP ingestion) — employer IP violation
+- Binding auto-offers — unenforceable + abuse vector
+- \ ARR India pitch — Indian ATS spend is Rs 5-15K/mo, not \
+
+THE POSITIONING PLAY (NO BUILD NEEDED):
+"Charvak is the Proof of Work Network. Saral finds candidates.
+HackerRank scores them. Naukri lists them. Charvak proves them."
+
+Use this pitch in demos TODAY. Everything is live.
+
+WHEN TO BUILD:
+- After 1-3 replies from Amrita OR candidate emails
+- After SMTP fix (batch 2 not yet sent)
+- After Render password rotation
+- Every build gated on real customer request
+
+SEQUENCING:
+- Phase 0 (this week): SMTP fix, wait for replies, password rotation
+- Phase 1 (after 1-3 replies): Build 1 (sandbox)
+- Phase 2 (after 1 paying customer): Builds 2+3
+- Phase 3 (after 3+ paying customers): Builds 4+5
+
+What's actually left:
+- Fix SMTP (10 min)
+- Rotate Render password (2 min)
+- Send batch 2 from hr@charvakit.com
+- Log every reply
+
+See POWN-VIABILITY-FLAG.md for full analysis.
+
 ---

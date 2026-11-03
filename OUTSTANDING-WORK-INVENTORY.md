@@ -880,4 +880,49 @@ What is actually left:
 - Send Amrita follow-up #1 (overdue)
 - Send candidate/user emails (drafted)
 
+------
+
+## FLAGGED — POWN Viability Analysis (2026-11-04)
+
+Full analysis in POWN-VIABILITY-FLAG.md.
+
+POWN (Proof of Work Network) pitch analyzed. 45% already built,
+30% extendable, 25% risky. 3 features worth building.
+
+5 BUILDS WORTH DOING:
+
+| # | Build | Effort | Trigger |
+|---|---|---|---|
+| 1 | Domain-agnostic sandbox | 3-4 sessions | Non-tech candidate asks |
+| 2 | Career pivot engine | 2 sessions | Pivot candidate asks |
+| 3 | Reverse bidding marketplace | 2-3 sessions | Employer wants auto-match |
+| 4 | Proof Pass subscription | 2 sessions | User wants subscription |
+| 5 | API billing (APaaS) | 1 session | Partner wants bulk pricing |
+
+3 DO NOT BUILD:
+- Shadow Benchmark (passive PR/SOP ingestion) — employer IP violation
+- Binding auto-offers — unenforceable + abuse vector
+- \ ARR India pitch — Indian ATS spend is Rs 5-15K/month
+
+POSITIONING PLAY (ready for demos today, no build):
+"Charvak is the Proof of Work Network. Saral finds candidates.
+HackerRank scores them. Naukri lists them. Charvak proves them."
+
+BUILD GATE:
+- After 1-3 replies from Amrita OR candidate emails
+- After SMTP fix
+- After Render password rotation
+
+SEQUENCING:
+- Phase 0 (this week): SMTP fix, wait for replies, password rotation
+- Phase 1 (after 1-3 replies): Build 1
+- Phase 2 (after 1 paying customer): Builds 2+3
+- Phase 3 (after 3+ paying customers): Builds 4+5
+
+What's actually left:
+- Fix SMTP (10 min)
+- Rotate Render password (2 min)
+- Send batch 2 from hr@charvakit.com
+- Log every reply
+
 ---
