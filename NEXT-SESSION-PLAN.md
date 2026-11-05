@@ -243,4 +243,56 @@ What is actually left:
 - Rotate Render password (2 min)
 - Send batch 2 from hr@charvakit.com
 
+------
+
+## FLAGGED (2026-11-05) — Two Agent Products
+
+Two separate products, two separate builds:
+
+### 1. Bench-Placement Agent — BUILD NOW (4 sessions)
+
+**File:** BENCH-PLACEMENT-AGENT-FLAG.md
+
+**What:** Internal sales tool for US staffing. Finds US contract roles matching H1B/OPT bench, surfaces daily, one-click submission to vendors.
+
+**Why now:** Zero legal risk (own inbox + own bench + own vendor emails). Immediate value. Funds the auto-apply agent build.
+
+**Sessions:**
+1. Vendor JD Inbox Parser (~6-8h)
+2. Bench Candidate Profile (~6-8h)
+3. Matching Engine (~6-8h)
+4. Daily Digest + Submission (~6-8h)
+
+**Start:** This week. Session 1 begins after this commit.
+
+### 2. Auto-Apply Agent — BUILD LATER (5 sessions)
+
+**File:** AUTO-APPLY-AGENT-FLAG.md
+
+**What:** Candidate-facing agent. Finds roles, matches to Charvak US candidates, notifies candidate, handles approval, submits to direct clients.
+
+**Trigger:** 10+ bench placements AND 100+ US candidates AND 5-10 direct clients.
+
+**Sessions:**
+5. Direct Client Role Pipeline
+6. Candidate-Facing Matching
+7. Candidate Approval Flow
+8. Client Submission
+9. Auto-Apply Dashboard
+
+**Do NOT build until trigger fires.**
+
+---
+
+**What's actually left:**
+- Build Bench Agent Session 1
+- Rotate Render Postgres password (still pending)
+- Avenoir email (India staffing, vendor registration)
+- India startups/direct clients
+
+**Order:**
+1. Flag both agents (this commit)
+2. Start Session 1 of Bench Agent
+3. In parallel: Avenoir + India outreach
+
 ---
