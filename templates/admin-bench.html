@@ -1,0 +1,458 @@
+{% extends "base.html" %}
+{% block title %}Bench Candidates{% endblock %}
+
+{% block content %}
+<div class="container" style="margin-top: 120px;">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1>Bench Candidates</h1>
+            <p class="text-muted mb-0">H1B / OPT candidates available for contract placement</p>
+        </div>
+        <div>
+            <button class="btn btn-primary" onclick="openAddModal()">+ Add Candidate</button>
+            <button class="btn btn-outline-secondary" onclick="openImportModal()">Import CSV</button>
+            <button class="btn btn-outline-success" onclick="exportCsv()">Export CSV</button>
+        </div>
+    </div>
+
+    <!-- Stats Strip -->
+    <div id="statsStrip" class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card"><div class="card-body">
+                <div class="text-muted small">Total Bench</div>
+                <h2 id="statTotal" class="mb-0">0</h2>
+            </div></div>
+        </div>
+        <div class="col-md-3">
+            <div class="card"><div class="card-body">
+                <div class="text-muted small">H1B</div>
+                <h2 id="statH1b" class="mb-0">0</h2>
+            </div></div>
+        </div>
+        <div class="col-md-3">
+            <div class="card"><div class="card-body">
+                <div class="text-muted small">OPT</div>
+                <h2 id="statOpt" class="mb-0">0</h2>
+            </div></div>
+        </div>
+        <div class="col-md-3">
+            <div class="card"><div class="card-body">
+                <div class="text-muted small">GC + USC</div>
+                <h2 id="statGcUsc" class="mb-0">0</h2>
+            </div></div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label small">Search</label>
+                    <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="Name, email, skills...">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">Work Auth</label>
+                    <select id="workAuthSelect" class="form-select form-select-sm">
+                        <option value="">Any</option>
+                        <option value="H1B">H1B</option>
+                        <option value="OPT">OPT</option>
+                        <option value="GC">GC</option>
+                        <option value="USC">USC</option>
+                        <option value="TN">TN</option>
+                        <option value="H4-EAD">H4-EAD</option>
+                        <option value="L2-EAD">L2-EAD</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">Availability</label>
+                    <select id="availabilitySelect" class="form-select form-select-sm">
+                        <option value="">Any</option>
+                        <option value="immediate">Immediate</option>
+                        <option value="2 weeks">2 weeks</option>
+                        <option value="1 month">1 month</option>
+                        <option value="on project">On project</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">Skills</label>
+                    <input type="text" id="skillsInput" class="form-control form-control-sm" placeholder="K8s, AWS...">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">Max Rate ($/hr)</label>
+                    <input type="number" id="rateMaxInput" class="form-control form-control-sm" placeholder="90">
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button class="btn btn-primary btn-sm w-100" onclick="loadBench()">Filter</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results -->
+    <div id="benchResults"></div>
+</div>
+
+<!-- Add/Edit Candidate Modal -->
+<div id="addModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:99999; overflow-y:auto;">
+    <div style="position:relative; margin:60px auto; background:white; padding:24px; border-radius:8px; width:640px; max-width:calc(100% - 40px); box-shadow:0 4px 20px rgba(0,0,0,0.3);">
+        <h3 id="modalTitle" class="mb-3">Add Bench Candidate</h3>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Candidate Name *</label>
+                <input type="text" id="fName" class="form-control">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Candidate Email</label>
+                <input type="email" id="fEmail" class="form-control" placeholder="Leave blank to auto-generate">
+                <small class="text-muted d-block">Auto-generated if blank. Employer email is used for vendor comms.</small>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Candidate Phone</label>
+                <input type="text" id="fPhone" class="form-control">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Location</label>
+                <input type="text" id="fLocation" class="form-control" placeholder="Seattle WA">
+            </div>
+            <div class="col-md-12">
+                <label class="form-label">Skills (comma-separated)</label>
+                <input type="text" id="fSkills" class="form-control" placeholder="Python, AWS, Kubernetes">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Work Auth *</label>
+                <select id="fWorkAuth" class="form-select">
+                    <option value="">Select...</option>
+                    <option value="H1B">H1B</option>
+                    <option value="OPT">OPT</option>
+                    <option value="GC">GC</option>
+                    <option value="USC">USC</option>
+                    <option value="TN">TN</option>
+                    <option value="H4-EAD">H4-EAD</option>
+                    <option value="L2-EAD">L2-EAD</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Availability</label>
+                <select id="fAvailability" class="form-select">
+                    <option value="">Select...</option>
+                    <option value="immediate">Immediate</option>
+                    <option value="2 weeks">2 weeks</option>
+                    <option value="1 month">1 month</option>
+                    <option value="on project">On project</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Experience (years)</label>
+                <input type="number" id="fExperience" class="form-control">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Rate Min ($/hr)</label>
+                <input type="number" id="fRateMin" class="form-control">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Rate Max ($/hr)</label>
+                <input type="number" id="fRateMax" class="form-control">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Visa Expiry</label>
+                <input type="date" id="fVisaExpiry" class="form-control">
+            </div>
+        </div>
+        <div class="mt-4 d-flex gap-2">
+            <button class="btn btn-primary" onclick="saveCandidate()">Save</button>
+            <button class="btn btn-outline-secondary" onclick="closeModal('addModal')">Cancel</button>
+        </div>
+        <div id="saveResult" class="mt-2"></div>
+    </div>
+</div>
+
+<!-- Import CSV Modal -->
+<div id="importModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:99999; overflow-y:auto;">
+    <div style="position:relative; margin:60px auto; background:white; padding:24px; border-radius:8px; width:500px; max-width:calc(100% - 40px); box-shadow:0 4px 20px rgba(0,0,0,0.3);">
+        <h3>Import CSV</h3>
+        <p class="text-muted small">CSV columns: name,email,phone,location,skills,experience_years,work_auth_status,visa_expiry,availability,rate_min,rate_max</p>
+        <input type="file" id="csvFile" class="form-control" accept=".csv">
+        <div class="mt-4 d-flex gap-2">
+            <button class="btn btn-primary" onclick="importCsv()">Import</button>
+            <button class="btn btn-outline-secondary" onclick="closeModal('importModal')">Cancel</button>
+        </div>
+        <div id="importResult" class="mt-2"></div>
+    </div>
+</div>
+
+<script>
+function getToken() {
+    return localStorage.getItem('authToken') || localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+}
+
+function esc(s) {
+    if (!s) return '';
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function loadBench() {
+    const params = new URLSearchParams();
+    const search = document.getElementById('searchInput').value;
+    const workAuth = document.getElementById('workAuthSelect').value;
+    const availability = document.getElementById('availabilitySelect').value;
+    const skills = document.getElementById('skillsInput').value;
+    const rateMax = document.getElementById('rateMaxInput').value;
+
+    if (search) params.append('search', search);
+    if (workAuth) params.append('work_auth', workAuth);
+    if (availability) params.append('availability', availability);
+    if (skills) params.append('skills', skills);
+    if (rateMax) params.append('rate_max', rateMax);
+
+    try {
+        const r = await fetch(`/api/bench/list?${params}`, {
+            headers: {'Authorization': `Bearer ${getToken()}`},
+            credentials: 'include'
+        });
+        const data = await r.json();
+
+        if (data.status !== 'success') {
+            document.getElementById('benchResults').innerHTML = `<div class="alert alert-danger">${data.message || 'Error'}</div>`;
+            return;
+        }
+        renderBench(data.candidates);
+    } catch (e) {
+        document.getElementById('benchResults').innerHTML = `<div class="alert alert-danger">${e.message}</div>`;
+    }
+}
+
+async function loadStats() {
+    try {
+        const r = await fetch('/api/bench/stats', {
+            headers: {'Authorization': `Bearer ${getToken()}`},
+            credentials: 'include'
+        });
+        const data = await r.json();
+        if (data.status !== 'success') return;
+        document.getElementById('statTotal').textContent = data.total || 0;
+        document.getElementById('statH1b').textContent = (data.by_work_auth?.H1B) || 0;
+        document.getElementById('statOpt').textContent = (data.by_work_auth?.OPT) || 0;
+        document.getElementById('statGcUsc').textContent = ((data.by_work_auth?.GC||0) + (data.by_work_auth?.USC||0));
+    } catch (e) { console.error(e); }
+}
+
+function renderBench(candidates) {
+    if (!candidates || candidates.length === 0) {
+        document.getElementById('benchResults').innerHTML = '<div class="alert alert-info">No bench candidates match your filters.</div>';
+        return;
+    }
+    const rows = candidates.map(c => `
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5 class="mb-1">${esc(c.name)}</h5>
+                        <div class="text-muted small mb-2">
+    ${esc(c.email)} · ${esc(c.location||'')} · ${c.experience_years||0}y exp
+</div>
+<div class="text-muted small mb-2">
+    <strong>Employer contact:</strong> ${esc(c.employer_email||'—')} · ${esc(c.employer_phone||'—')}
+</div>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge bg-primary">${esc(c.work_auth_status)}</span>
+                        ${c.rate_min && c.rate_max ? `<div class="mt-1"><strong>$${c.rate_min}-$${c.rate_max}/hr</strong></div>` : ''}
+                    </div>
+                </div>
+                <div class="mb-2">
+                    ${(Array.isArray(c.skills)? c.skills : []).slice(0,10).map(s => `<span class="badge bg-secondary me-1">${esc(s)}</span>`).join('')}
+                </div>
+                <div class="d-flex gap-3 small text-muted">
+                    <span><strong>Availability:</strong> ${esc(c.availability||'—')}</span>
+                    ${c.visa_expiry ? `<span><strong>Visa:</strong> ${esc(c.visa_expiry)}</span>` : ''}
+                    <span><strong>Bench since:</strong> ${esc(c.bench_since ? c.bench_since.split('T')[0] : '—')}</span>
+                </div>
+                <div class="mt-3 d-flex gap-2">
+                    <button class="btn btn-sm btn-outline-primary" onclick='editCandidate(${JSON.stringify(c).replace(/'/g, "&apos;")})'>Edit</button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="removeCandidate('${esc(c.email)}')">Remove</button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    document.getElementById('benchResults').innerHTML = rows;
+}
+
+function openAddModal() {
+    const modalTitle = document.getElementById('modalTitle');
+    if (modalTitle) modalTitle.textContent = 'Add Bench Candidate';
+
+    ['fName','fEmail','fPhone','fLocation','fSkills','fExperience','fRateMin','fRateMax','fVisaExpiry'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+    const wa = document.getElementById('fWorkAuth');
+    if (wa) wa.value = '';
+    const av = document.getElementById('fAvailability');
+    if (av) av.value = '';
+    const em = document.getElementById('fEmail');
+    if (em) em.readOnly = false;
+
+    const sr = document.getElementById('saveResult');
+    if (sr) sr.innerHTML = '';
+
+    const mod = document.getElementById('addModal');
+    if (mod) mod.style.display = 'block';
+}
+
+function editCandidate(c) {
+    const modalTitle = document.getElementById('modalTitle');
+    if (modalTitle) modalTitle.textContent = 'Edit Candidate';
+    const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+    setVal('fName', c.name || '');
+    setVal('fEmail', c.email || '');
+    const em = document.getElementById('fEmail');
+    if (em) em.readOnly = true;
+    setVal('fPhone', c.phone || '');
+    setVal('fLocation', c.location || '');
+    setVal('fSkills', (c.skills || []).join(', '));
+    setVal('fWorkAuth', c.work_auth_status || '');
+    setVal('fAvailability', c.availability || '');
+    setVal('fExperience', c.experience_years || '');
+    setVal('fRateMin', c.rate_min || '');
+    setVal('fRateMax', c.rate_max || '');
+    setVal('fVisaExpiry', c.visa_expiry || '');
+    const sr = document.getElementById('saveResult');
+    if (sr) sr.innerHTML = '';
+    const mod = document.getElementById('addModal');
+    if (mod) mod.style.display = 'block';
+}
+
+async function saveCandidate() {
+    const getVal = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
+    const em = document.getElementById('fEmail');
+    const email = getVal('fEmail').trim();
+    const isEdit = em ? em.readOnly : false;
+
+    const data = {
+        name: getVal('fName').trim(),
+        email: email || null,
+        phone: getVal('fPhone').trim() || null,
+        location: getVal('fLocation').trim() || null,
+        skills: getVal('fSkills').split(',').map(s => s.trim()).filter(s => s),
+        work_auth_status: getVal('fWorkAuth'),
+        availability: getVal('fAvailability') || null,
+        experience_years: parseInt(getVal('fExperience')) || null,
+        rate_min: parseFloat(getVal('fRateMin')) || null,
+        rate_max: parseFloat(getVal('fRateMax')) || null,
+        visa_expiry: getVal('fVisaExpiry') || null,
+        employer_email: 'ashokcquent@gmail.com',
+        employer_phone: '847-262-4000'
+    };
+
+    const url = isEdit ? `/api/bench/${encodeURIComponent(email)}/update` : '/api/bench/add';
+    try {
+        const r = await fetch(url, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}`},
+            credentials: 'include',
+            body: JSON.stringify(data)
+        });
+        const result = await r.json();
+        if (result.status === 'success') {
+            const sr = document.getElementById('saveResult');
+            if (sr) sr.innerHTML = '<div class="alert alert-success">Saved!</div>';
+            setTimeout(() => closeModal('addModal'), 600);
+            loadBench();
+            loadStats();
+        } else {
+            const sr = document.getElementById('saveResult');
+            if (sr) sr.innerHTML = `<div class="alert alert-danger">${result.message}</div>`;
+        }
+    } catch (e) {
+        const sr = document.getElementById('saveResult');
+        if (sr) sr.innerHTML = `<div class="alert alert-danger">${e.message}</div>`;
+    }
+}
+
+async function removeCandidate(email) {
+    if (!confirm(`Remove ${email} from bench?`)) return;
+    try {
+        const r = await fetch(`/api/bench/${encodeURIComponent(email)}/remove`, {
+            method: 'POST',
+            headers: {'Authorization': `Bearer ${getToken()}`},
+            credentials: 'include'
+        });
+        const result = await r.json();
+        if (result.status === 'success') { loadBench(); loadStats(); }
+        else { alert('Failed: ' + result.message); }
+    } catch (e) { alert(e.message); }
+}
+
+function closeModal(id) {
+    document.getElementById(id).style.display = 'none';
+}
+
+function openImportModal() {
+    document.getElementById('csvFile').value = '';
+    document.getElementById('importResult').innerHTML = '';
+    document.getElementById('importModal').style.display = 'block';
+}
+
+async function importCsv() {
+    const file = document.getElementById('csvFile').files[0];
+    if (!file) { alert('Choose a file first'); return; }
+
+    const form = new FormData();
+    form.append('file', file);
+
+    try {
+        const r = await fetch('/api/bench/import-csv', {
+            method: 'POST',
+            headers: {'Authorization': `Bearer ${getToken()}`},
+            credentials: 'include',
+            body: form
+        });
+        const result = await r.json();
+        if (result.status === 'success') {
+            const res = result.results || {};
+            document.getElementById('importResult').innerHTML = `<div class="alert alert-success">Created: ${res.created||0}, Updated: ${res.updated||0}, Errors: ${(res.errors||[]).length}</div>`;
+            setTimeout(() => closeModal('importModal'), 1500);
+            loadBench();
+            loadStats();
+        } else {
+            document.getElementById('importResult').innerHTML = `<div class="alert alert-danger">${result.message}</div>`;
+        }
+    } catch (e) {
+        document.getElementById('importResult').innerHTML = `<div class="alert alert-danger">${e.message}</div>`;
+    }
+}
+
+async function exportCsv() {
+    try {
+        const r = await fetch('/api/bench/list?limit=10000', {
+            headers: {'Authorization': `Bearer ${getToken()}`},
+            credentials: 'include'
+        });
+        const data = await r.json();
+        if (data.status !== 'success' || !data.candidates) {
+            alert('Export failed');
+            return;
+        }
+        const headers = ['name','email','phone','location','skills','experience_years','work_auth_status','visa_expiry','availability','rate_min','rate_max'];
+        const rows = [headers.join(',')];
+        data.candidates.forEach(c => {
+            const skills = Array.isArray(c.skills) ? c.skills.join(';') : '';
+            rows.push([c.name, c.email, c.phone||'', c.location||'', `"${skills}"`, c.experience_years||'', c.work_auth_status||'', c.visa_expiry||'', c.availability||'', c.rate_min||'', c.rate_max||''].join(','));
+        });
+        const blob = new Blob([rows.join('\n')], {type: 'text/csv'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `bench_export_${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+    } catch (e) { alert(e.message); }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadBench();
+    loadStats();
+});
+</script>
+{% endblock %}
