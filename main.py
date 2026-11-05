@@ -105,6 +105,7 @@ from global_exams_engine import global_exams_engine
 from ai_question_generator import ai_question_generator
 from exam_analytics_engine import exam_analytics_engine
 from ai_internship_engine import ai_internship_engine
+from vendor_jd_engine import vendor_jd_engine
 
 # Fix (2026-10-15): multi_pattern was referenced but never imported/instantiated
 import multi_pattern_company
@@ -18735,6 +18736,95 @@ async def admin_client_role_detail_page(request: Request, role_id: str):
 @app.get("/admin/integrity-events", response_class=HTMLResponse)
 async def admin_integrity_events_page(request: Request):
     return template_response("admin-integrity-events.html", request, "Integrity Events - Admin")
+
+# ============================================
+# VENDOR JD INBOX — Session 1
+# ============================================
+
+@app.post("/api/vendor-jds/ingest")
+async def vendor_jd_ingest(request: Request):
+    """Webhook for email forwarder. Accepts SendGrid Inbound Parse format."""
+    try:
+        # API key auth
+        api_key = request.headers.get("X-API-Key", "")
+        expected_key = os.getenv("VENDOR_JD_INGEST_KEY", "")
+        if expected_key and api_key != expected_key:
+            return JSONResponse({"status": "error", "message": "unauthorized"}, status_code=401)
+
+        content_type = request.headers.get("content-type", "")
+
+        if "application/json" in content_type:
+            raw_email = await request.json()
+        else:
+            form = await request.form()
+            raw_email = {
+                "from": form.get("from", ""),
+                "from_name": form.get("from_name", ""),
+                "subject": form.get("subject", ""),
+                "text": form.get("text", ""),
+                "html": form.get("html", ""),
+            }
+
+        result = vendor_jd_engine.parse_incoming_email(raw_email)
+        return JSONResponse(result)
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, request)
+
+
+@app.get("/admin/vendor-jds")
+async def admin_vendor_jds_page(request: Request):
+    """Admin page for vendor JD inbox."""
+    require_admin(request)
+    return templates.TemplateResponse("admin-vendor-jds.html", {
+        "request": request,
+        "page_title": "Vendor JD Inbox"
+    })
+
+
+@app.get("/api/vendor-jds")
+async def api_list_vendor_jds(
+    request: Request,
+    status: str = "active",
+    work_auth: str = None,
+    rate_min: float = None,
+    rate_max: float = None,
+    skills: str = None,
+    search: str = None,
+    limit: int = 100,
+    offset: int = 0,
+):
+    """List vendor JDs with filters."""
+    require_admin(request)
+    try:
+        result = vendor_jd_engine.list_jds(
+            status=status,
+            work_auth=work_auth,
+            rate_min=rate_min,
+            rate_max=rate_max,
+            skills=skills,
+            search=search,
+            limit=limit,
+            offset=offset,
+        )
+        return JSONResponse(result)
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, request)
+
+
+@app.post("/api/vendor-jds/{jd_id}/archive")
+async def api_archive_vendor_jd(request: Request, jd_id: str):
+    """Archive a JD."""
+    require_admin(request)
+    try:
+        return JSONResponse(vendor_jd_engine.archive_jd(jd_id))
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, request)
 
 @app.get("/admin/integrity-events/{assessment_id}", response_class=HTMLResponse)
 async def admin_integrity_detail_page(request: Request, assessment_id: str):
