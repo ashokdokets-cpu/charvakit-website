@@ -106,6 +106,7 @@ from ai_question_generator import ai_question_generator
 from exam_analytics_engine import exam_analytics_engine
 from ai_internship_engine import ai_internship_engine
 from vendor_jd_engine import vendor_jd_engine
+from bench_engine import bench_engine
 
 # Fix (2026-10-15): multi_pattern was referenced but never imported/instantiated
 import multi_pattern_company
@@ -18821,6 +18822,108 @@ async def api_archive_vendor_jd(request: Request, jd_id: str):
     require_admin(request)
     try:
         return JSONResponse(vendor_jd_engine.archive_jd(jd_id))
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, request)
+
+
+
+# ============================================
+# BENCH CANDIDATES — Session 2
+# ============================================
+
+@app.get("/admin/bench")
+async def admin_bench_page(request: Request):
+    """Bench candidate management page."""
+    require_admin(request)
+    return templates.TemplateResponse("admin-bench.html", {
+        "request": request,
+        "page_title": "Bench Candidates"
+    })
+
+
+@app.get("/api/bench/list")
+async def api_list_bench(
+    request: Request,
+    work_auth: str = None,
+    availability: str = None,
+    skills: str = None,
+    rate_max: float = None,
+    search: str = None,
+    limit: int = 100,
+    offset: int = 0,
+):
+    require_admin(request)
+    try:
+        result = bench_engine.list_bench(
+            work_auth=work_auth, availability=availability,
+            skills=skills, rate_max=rate_max, search=search,
+            limit=limit, offset=offset
+        )
+        return JSONResponse(result)
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, request)
+
+
+@app.post("/api/bench/add")
+async def api_add_bench(request: Request):
+    require_admin(request)
+    try:
+        data = await request.json()
+        return JSONResponse(bench_engine.add_to_bench(data))
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, request)
+
+
+@app.post("/api/bench/{email}/update")
+async def api_update_bench(request: Request, email: str):
+    require_admin(request)
+    try:
+        data = await request.json()
+        return JSONResponse(bench_engine.update_bench_candidate(email, data))
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, request)
+
+
+@app.post("/api/bench/{email}/remove")
+async def api_remove_bench(request: Request, email: str):
+    require_admin(request)
+    try:
+        return JSONResponse(bench_engine.remove_from_bench(email))
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, request)
+
+
+@app.post("/api/bench/import-csv")
+async def api_import_bench_csv(request: Request):
+    require_admin(request)
+    try:
+        form = await request.form()
+        file = form.get("file")
+        if not file:
+            return JSONResponse({"status": "error", "message": "no file uploaded"}, status_code=400)
+        content = (await file.read()).decode("utf-8")
+        return JSONResponse(bench_engine.import_from_csv(content))
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, request)
+
+
+@app.get("/api/bench/stats")
+async def api_bench_stats(request: Request):
+    require_admin(request)
+    try:
+        return JSONResponse(bench_engine.get_bench_stats())
     except HTTPException:
         raise
     except Exception as e:
