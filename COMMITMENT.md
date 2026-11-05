@@ -7639,4 +7639,42 @@ What is actually left:
 
 See REVENUE-STREAM-EXTENSIONS-FLAG.md for full analysis.
 
+------
+
+## TWO AGENT PRODUCTS — FLAGGED (2026-11-05)
+
+Two distinct AI agent products for Charvak, both end-to-end (not MVPs):
+
+### Bench-Placement Agent (BUILD NOW)
+
+Internal sales tool for Bhavya's US staffing business. Finds US contract roles matching H1B/OPT bench, surfaces daily, one-click submission.
+
+- 4 sessions (~30-35h)
+- Zero legal risk
+- First placement expected in 4-8 weeks
+- Full spec: BENCH-PLACEMENT-AGENT-FLAG.md
+
+### Auto-Apply Agent (BUILD LATER)
+
+Candidate-facing agent that auto-matches Charvak US candidates to roles, notifies candidates, handles approval, submits to direct clients.
+
+- 5 sessions (~35-40h)
+- Medium legal risk (requires per-application consent)
+- Build only after: 10+ bench placements, 100+ US candidates, 5-10 direct clients
+- Full spec: AUTO-APPLY-AGENT-FLAG.md
+
+### Build sequence
+
+1. Bench Agent Session 1-4 (next 4-6 weeks)
+2. Run bench agent, get 10+ placements (next 2-3 months)
+3. Auto-Apply Agent Session 5-9 (after trigger)
+
+### Why both
+
+Bench Agent = legal, immediate revenue, funds the auto-apply build.
+Auto-Apply Agent = scale, B2C funnel, requires pipeline that bench agent creates.
+
+**Total build: 9 sessions over 6 months.**
+**Combined revenue potential: -.25M annualized by month 12.**
+
 ---
