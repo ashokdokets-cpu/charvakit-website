@@ -416,6 +416,28 @@ class BenchMatchingEngine:
             return {"status": "success", "matches": matches, "total": len(matches)}
         except Exception as e:
             return {"status": "error", "message": str(e)}
-
+    
+    def mark_submitted(self, match_id: str, vendor_email_sent_id: str = None) -> Dict:
+        """Mark a match as submitted. Records timestamp + email tracking ID."""
+        try:
+            conn = psycopg2.connect(os.getenv("DATABASE_URL"))
+            cur = conn.cursor()
+            cur.execute("""
+                UPDATE charvak_bench_matches
+                SET status = 'submitted',
+                    submitted_at = NOW(),
+                    vendor_email_sent_id = %s
+                WHERE match_id = %s
+            """, (vendor_email_sent_id, match_id))
+            rows = cur.rowcount
+            conn.commit()
+            cur.close()
+            conn.close()
+            if rows == 0:
+                return {"status": "error", "message": "Match not found"}
+            return {"status": "success", "match_id": match_id}
+        except Exception as e:
+            logger.error(f"mark_submitted failed: {e}")
+            return {"status": "error", "message": str(e)}
 
 bench_matching_engine = BenchMatchingEngine()

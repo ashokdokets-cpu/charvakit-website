@@ -1,11 +1,12 @@
 """
 Charvak Email Engine
-Uses SendGrid API for reliable email delivery
+Uses Brevo (primary) or SendGrid (fallback) for reliable email delivery
 """
 import os
 import logging
 from typing import Dict
 from dotenv import load_dotenv
+
 load_dotenv()
 
 logger = logging.getLogger("charvakit.email")
@@ -19,7 +20,7 @@ EMAIL_ENABLED = bool(BREVO_API_KEY or SENDGRID_API_KEY)
 
 
 class EmailEngine:
-    """Email notifications via SendGrid."""
+    """Email notifications via Brevo / SendGrid."""
 
     def __init__(self):
         self.enabled = EMAIL_ENABLED
@@ -30,46 +31,60 @@ class EmailEngine:
         else:
             logger.warning("Email Engine: DISABLED (set BREVO_API_KEY or SENDGRID_API_KEY)")
 
-    def send_email(self, to_email: str, subject: str, body: str, is_html: bool = True, attachment_bytes=None, attachment_filename=None) -> Dict:
-        """Send email via Brevo (primary) or SendGrid (fallback).
-        
-        Provider resolution:
-        - If BREVO_API_KEY is set, use Brevo
-        - Otherwise, if SENDGRID_API_KEY is set, use SendGrid
-        - Otherwise, disabled
+    def send_email(self, to_email: str, subject: str, body: str, is_html: bool = True,
+                   attachment_bytes=None, attachment_filename=None,
+                   from_email: str = None, from_name: str = None,
+                   reply_to: str = None) -> Dict:
+        """
+        Send email via Brevo (primary) or SendGrid (fallback).
+
+        Optional from_email/from_name/reply_to override the default sender.
+        When None, defaults to hr@charvakit.com / Charvak IT Consulting.
         """
         if not self.enabled:
             logger.warning(f"Email disabled - would send to {to_email}: {subject}")
             return {"status": "disabled", "message": "Email not configured"}
 
-        # Prefer Brevo if configured
         if BREVO_API_KEY:
-            return self._send_via_brevo(to_email, subject, body, is_html, attachment_bytes, attachment_filename)
+            return self._send_via_brevo(
+                to_email, subject, body, is_html, attachment_bytes, attachment_filename,
+                from_email=from_email, from_name=from_name, reply_to=reply_to
+            )
         else:
-            return self._send_via_sendgrid(to_email, subject, body, is_html, attachment_bytes, attachment_filename)
+            return self._send_via_sendgrid(
+                to_email, subject, body, is_html, attachment_bytes, attachment_filename,
+                from_email=from_email, from_name=from_name, reply_to=reply_to
+            )
 
-    def _send_via_brevo(self, to_email, subject, body, is_html, attachment_bytes, attachment_filename) -> Dict:
+    def _send_via_brevo(self, to_email, subject, body, is_html,
+                        attachment_bytes, attachment_filename,
+                        from_email=None, from_name=None, reply_to=None) -> Dict:
         """Send email via Brevo REST API (v3)."""
         try:
             import requests
             import json
             import base64
 
+            # Resolve sender — explicit override wins, otherwise defaults
+            _sender_email = from_email or "hr@charvakit.com"
+            _sender_name = from_name or "Charvak IT Consulting"
+            _reply_email = reply_to or _sender_email
+            _reply_name = from_name if (reply_to and from_name) else _sender_name
+
             payload = {
                 "sender": {
-                    "email": "hr@charvakit.com",
-                    "name": "Charvak IT Consulting"
+                    "email": _sender_email,
+                    "name": _sender_name
                 },
                 "to": [{"email": to_email}],
                 "replyTo": {
-                    "email": "hr@charvakit.com",
-                    "name": "Charvak IT Consulting"
+                    "email": _reply_email,
+                    "name": _reply_name
                 },
                 "subject": subject,
                 "htmlContent": body if is_html else f"<pre>{body}</pre>"
             }
 
-            # Optional PDF attachment — Brevo expects base64 content
             if attachment_bytes and attachment_filename:
                 payload["attachment"] = [
                     {
@@ -99,25 +114,36 @@ class EmailEngine:
                 return {"status": "success", "message": "Email sent via Brevo", "to": to_email, "provider": "brevo"}
             else:
                 logger.error(f"Brevo error: {response.status_code} - {response.text[:200]}")
-                # Fall back to SendGrid on Brevo failure
                 if SENDGRID_API_KEY:
                     logger.info("Falling back to SendGrid")
-                    return self._send_via_sendgrid(to_email, subject, body, is_html, attachment_bytes, attachment_filename)
+                    return self._send_via_sendgrid(
+                        to_email, subject, body, is_html, attachment_bytes, attachment_filename,
+                        from_email=from_email, from_name=from_name, reply_to=reply_to
+                    )
                 return {"status": "error", "message": f"Brevo error: {response.status_code}", "provider": "brevo"}
 
         except Exception as e:
             logger.error(f"Brevo send failed: {e}")
             if SENDGRID_API_KEY:
                 logger.info("Falling back to SendGrid")
-                return self._send_via_sendgrid(to_email, subject, body, is_html, attachment_bytes, attachment_filename)
+                return self._send_via_sendgrid(
+                    to_email, subject, body, is_html, attachment_bytes, attachment_filename,
+                    from_email=from_email, from_name=from_name, reply_to=reply_to
+                )
             return {"status": "error", "message": str(e), "provider": "brevo"}
 
-    def _send_via_sendgrid(self, to_email, subject, body, is_html, attachment_bytes, attachment_filename) -> Dict:
+    def _send_via_sendgrid(self, to_email, subject, body, is_html,
+                           attachment_bytes, attachment_filename,
+                           from_email=None, from_name=None, reply_to=None) -> Dict:
         """Send email via SendGrid v3 (fallback provider)."""
         try:
             import requests
             import json
             import base64
+
+            _sender_email = from_email or "charvakit@gmail.com"
+            _sender_name = from_name or "Charvak IT Consulting"
+            _reply_email = reply_to or _sender_email
 
             payload = {
                 "personalizations": [
@@ -127,12 +153,12 @@ class EmailEngine:
                     }
                 ],
                 "from": {
-                    "email": "charvakit@gmail.com",
-                    "name": "Charvak IT Consulting"
+                    "email": _sender_email,
+                    "name": _sender_name
                 },
                 "reply_to": {
-                    "email": "hr@charvakit.com",
-                    "name": "Charvak IT Consulting"
+                    "email": _reply_email,
+                    "name": _sender_name
                 },
                 "content": [
                     {
@@ -174,16 +200,17 @@ class EmailEngine:
             logger.error(f"SendGrid send failed: {e}")
             return {"status": "error", "message": str(e), "provider": "sendgrid"}
 
-
     def notify_admin(self, subject: str, message: str) -> Dict:
         return self.send_email(ADMIN_EMAIL, subject, message)
 
-    def notify_new_message(self, recipient_email: str, recipient_name: str, sender_name: str, message_preview: str) -> Dict:
+    def notify_new_message(self, recipient_email: str, recipient_name: str,
+                           sender_name: str, message_preview: str) -> Dict:
         subject = f"New Message from {sender_name} on Charvak"
         body = f"Hi {recipient_name},\n\n{sender_name} sent you a message on Charvak.\n\n{message_preview[:200]}\n\nLogin: https://charvakit.com"
         return self.send_email(recipient_email, subject, body)
 
-    def notify_application_received(self, candidate_email: str, candidate_name: str, job_title: str, company: str) -> Dict:
+    def notify_application_received(self, candidate_email: str, candidate_name: str,
+                                    job_title: str, company: str) -> Dict:
         subject = f"Application Received - {job_title} at {company}"
         body = f"Hi {candidate_name},\n\nYour application for {job_title} at {company} has been received."
         return self.send_email(candidate_email, subject, body)
@@ -204,4 +231,3 @@ email_engine = EmailEngine()
 def send_engagement_nudge(to_email: str, subject: str, html_body: str) -> dict:
     """Send engagement-related email (nudges, milestones, weekly summaries)."""
     return email_engine.send_email(to_email, subject, html_body, is_html=True)
-
