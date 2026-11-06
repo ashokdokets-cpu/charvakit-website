@@ -323,7 +323,6 @@ class EnhancedEmailSystem:
                    if cert_url else "")
                 + f"</table>"
                 f"<p>Full resume attached. The candidate's verified certificate can be checked at the URL above.</p>"
-                f"<p><strong>Fee terms:</strong> 15% of first-year base on hire, 90-day replacement guarantee.</p>"
                 f"<p>Let me know if you'd like to interview.</p>"
                 f"<p>Best regards,<br>"
                 f"{signature_name}<br>"
