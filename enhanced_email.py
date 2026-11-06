@@ -322,7 +322,6 @@ class EnhancedEmailSystem:
                    f"<td style='padding: 8px; border: 1px solid #ddd;'><a href='{cert_url}'>{cert_url}</a></td></tr>"
                    if cert_url else "")
                 + f"</table>"
-                f"<p>Full resume attached. The candidate's verified certificate can be checked at the URL above.</p>"
                 f"<p>Let me know if you'd like to interview.</p>"
                 f"<p>Best regards,<br>"
                 f"{signature_name}<br>"
