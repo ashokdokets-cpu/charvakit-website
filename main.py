@@ -19156,6 +19156,7 @@ async def api_bench_match_submit(request: Request, match_id: str):
             return JSONResponse({"status": "error", "message": "Match not found"}, status_code=404)
 
         candidate_name = row[0]
+        candidate_email = row[1]
         matched_skills = row[2] if isinstance(row[2], list) else (json.loads(row[2]) if row[2] else [])
         role_title = row[3] or ""
         vendor_name = row[4] or ""
@@ -19170,6 +19171,47 @@ async def api_bench_match_submit(request: Request, match_id: str):
 
         if send_email_flag and to_email:
             from enhanced_email import enhanced_email
+            from resume_pdf_engine import generate_candidate_resume_pdf
+
+            # Generate resume PDF from candidate profile
+            resume_bytes = None
+            resume_filename = None
+            try:
+                conn2 = _pg.connect(os.getenv("DATABASE_URL"))
+                cur2 = conn2.cursor()
+                cur2.execute("""
+                    SELECT candidate_id, name, email, phone, location, skills,
+                           experience_years, work_auth_status, availability,
+                           rate_min, rate_max, visa_expiry
+                    FROM charvak_candidates
+                    WHERE email = %s
+                """, (candidate_email,))
+                cand_row = cur2.fetchone()
+                cur2.close()
+                conn2.close()
+
+                if cand_row:
+                    candidate_full = {
+                        "candidate_id": cand_row[0],
+                        "name": cand_row[1],
+                        "email": cand_row[2],
+                        "phone": cand_row[3],
+                        "location": cand_row[4],
+                        "skills": cand_row[5] if isinstance(cand_row[5], list) else (json.loads(cand_row[5]) if cand_row[5] else []),
+                        "experience_years": cand_row[6],
+                        "work_auth_status": cand_row[7],
+                        "availability": cand_row[8],
+                        "rate_min": float(cand_row[9]) if cand_row[9] else None,
+                        "rate_max": float(cand_row[10]) if cand_row[10] else None,
+                        "visa_expiry": str(cand_row[11]) if cand_row[11] else None,
+                    }
+                    resume_bytes = generate_candidate_resume_pdf(candidate_full)
+                    safe_name = candidate_name.replace(" ", "_")
+                    resume_filename = f"{safe_name}_Resume.pdf"
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).warning(f"Resume PDF gen failed: {e}")
+
             send_result = enhanced_email.send_vendor_submission(
                 to_email=to_email,
                 candidate_name=candidate_name,
@@ -19181,6 +19223,8 @@ async def api_bench_match_submit(request: Request, match_id: str):
                 rate_max=rate_max,
                 availability=availability,
                 client_name=client_name,
+                resume_bytes=resume_bytes,
+                resume_filename=resume_filename,
             )
             if send_result.get("status") == "success":
                 sent_id = send_result.get("message", "")[:50] or "sent"
