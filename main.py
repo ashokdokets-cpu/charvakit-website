@@ -19061,6 +19061,7 @@ async def api_bench_match_vendor_email(request: Request, match_id: str):
             return JSONResponse({"status": "error", "message": "Match not found"}, status_code=404)
 
         candidate_name = row[0]
+        candidate_email = row[1]
         match_score = row[2]
         matched_skills = row[3] if isinstance(row[3], list) else (json.loads(row[3]) if row[3] else [])
         current_status = row[4]
@@ -19244,23 +19245,29 @@ async def api_bench_match_submit(request: Request, match_id: str):
             except Exception as e:
                 import logging
                 logging.getLogger(__name__).warning(f"Resume PDF gen failed: {e}")
-            # Session 4 Feature 6B: Look up cert for HTML email
+
+                                    # Session 4 Feature 6B: Cert Lookup (direct via email column)
             cert_url_for_email = ""
             try:
                 conn3 = _pg.connect(os.getenv("DATABASE_URL"))
                 cur3 = conn3.cursor()
                 cur3.execute("""
-                    SELECT certificate_id FROM charvak_readiness_certificates
-                    WHERE email = %s ORDER BY created_at DESC LIMIT 1
+                    SELECT certificate_id
+                    FROM charvak_readiness_certificates
+                    WHERE email = %s
+                    ORDER BY created_at DESC
+                    LIMIT 1
                 """, (candidate_email,))
                 cert_row = cur3.fetchone()
-                cur3.close()
-                conn3.close()
                 if cert_row:
                     cert_url_for_email = f"https://www.charvakit.com/readiness/{cert_row[0]}"
             except Exception as e:
                 import logging
-                logging.getLogger(__name__).warning(f"Cert lookup failed for submit: {e}")
+                logging.getLogger(__name__).warning(f"Cert lookup for email failed: {e}")
+            finally:
+                if 'cur3' in locals() and cur3: cur3.close()
+                if 'conn3' in locals() and conn3: conn3.close()
+
             send_result = enhanced_email.send_vendor_submission(
                 to_email=to_email,
                 candidate_name=candidate_name,
