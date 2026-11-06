@@ -290,13 +290,18 @@ class BenchEngine:
             cur = conn.cursor()
 
             allowed = ['name', 'phone', 'location', 'availability', 'rate_min',
-                       'rate_max', 'visa_expiry', 'work_auth_status', 'experience_years']
+                       'rate_max', 'visa_expiry', 'work_auth_status', 'experience_years',
+                       'skills', 'employer_email', 'employer_phone']
             sets = []
             params = []
             for k in allowed:
                 if k in updates:
                     sets.append(f"{k} = %s")
-                    params.append(updates[k])
+                    val = updates[k]
+                    # Convert Python list to JSON string for JSONB columns
+                    if k == 'skills' and isinstance(val, list):
+                        val = json.dumps(val)
+                    params.append(val)
 
             if not sets:
                 return {"status": "error", "message": "no valid fields to update"}
