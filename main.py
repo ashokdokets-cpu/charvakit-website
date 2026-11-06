@@ -19031,7 +19031,6 @@ async def api_bench_match_stats(request: Request):
         return handle_error(e, request)
 
 
-
 @app.get("/api/bench/match/{match_id}/vendor-email")
 async def api_bench_match_vendor_email(request: Request, match_id: str):
     """Return pre-filled vendor email data for preview/edit."""
@@ -19081,12 +19080,45 @@ async def api_bench_match_vendor_email(request: Request, match_id: str):
 
         email_match = re.search(r'<([^>]+)>', vendor_contact)
         vendor_email = email_match.group(1) if email_match else vendor_contact
+        # Session 4 Feature 6B: Look up candidate's readiness certificate (graceful fallback)
+        cert_url = ""
+        cert_score = None
+        try:
+            conn3 = _pg.connect(os.getenv("DATABASE_URL"))
+            cur3 = conn3.cursor()
+            cur3.execute("""
+                SELECT certificate_id, readiness_score
+                FROM charvak_readiness_certificates
+                WHERE email = %s
+                ORDER BY created_at DESC
+                LIMIT 1
+            """, (candidate_email,))
+            cert_row = cur3.fetchone()
+            cur3.close()
+            conn3.close()
+            if cert_row:
+                cert_url = f"https://www.charvakit.com/readiness/{cert_row[0]}"
+                cert_score = cert_row[1]
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning(f"Cert lookup failed: {e}")
 
         rate_min = cand_rate_min or jd_rate_min
         rate_max = cand_rate_max or jd_rate_max
         rate_str = f"${rate_min:.0f}-${rate_max:.0f}/hr" if rate_min and rate_max else "Competitive"
 
         subject = f"{role_title} - verified {candidate_work_auth} candidate ({candidate_name})"
+
+        # Build cert section — only if candidate has a cert
+        cert_section = ""
+        if cert_url:
+            cert_section = (
+                f"\n\nVerified Skill Certificate ({cert_score}/100):\n"
+                f"{cert_url}\n"
+                f"\nCandidates with a verified Charvak certificate are typically "
+                f"shortlisted faster, since their skills have already been assessed "
+                f"through deterministic test-case execution."
+            )
 
         body = (
             f"Hi {vendor_name or 'there'},\n\n"
@@ -19098,7 +19130,8 @@ async def api_bench_match_vendor_email(request: Request, match_id: str):
             f"Availability: {candidate_availability or 'Immediate'}\n"
             f"Rate: {rate_str}\n"
             f"Match Score: {match_score}/100\n\n"
-            f"Contact: {employer_email} · {employer_phone}\n\n"
+            f"Contact: {employer_email} · {employer_phone}"
+            f"{cert_section}\n\n"
             f"Let me know if you'd like to interview.\n\n"
             f"Best regards,\n"
             f"Ashok M\n"
@@ -19211,7 +19244,23 @@ async def api_bench_match_submit(request: Request, match_id: str):
             except Exception as e:
                 import logging
                 logging.getLogger(__name__).warning(f"Resume PDF gen failed: {e}")
-
+            # Session 4 Feature 6B: Look up cert for HTML email
+            cert_url_for_email = ""
+            try:
+                conn3 = _pg.connect(os.getenv("DATABASE_URL"))
+                cur3 = conn3.cursor()
+                cur3.execute("""
+                    SELECT certificate_id FROM charvak_readiness_certificates
+                    WHERE email = %s ORDER BY created_at DESC LIMIT 1
+                """, (candidate_email,))
+                cert_row = cur3.fetchone()
+                cur3.close()
+                conn3.close()
+                if cert_row:
+                    cert_url_for_email = f"https://www.charvakit.com/readiness/{cert_row[0]}"
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).warning(f"Cert lookup failed for submit: {e}")
             send_result = enhanced_email.send_vendor_submission(
                 to_email=to_email,
                 candidate_name=candidate_name,
@@ -19223,6 +19272,7 @@ async def api_bench_match_submit(request: Request, match_id: str):
                 rate_max=rate_max,
                 availability=availability,
                 client_name=client_name,
+                cert_url=cert_url_for_email,
                 resume_bytes=resume_bytes,
                 resume_filename=resume_filename,
             )
