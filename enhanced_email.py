@@ -281,6 +281,76 @@ class EnhancedEmailSystem:
 
         return sent > 0
 
+    def send_vendor_submission(self, to_email: str, candidate_name: str,
+                               role_title: str, vendor_name: str,
+                               work_auth: str, skills: list,
+                               rate_min: float, rate_max: float,
+                               availability: str, cert_url: str = "",
+                               client_name: str = "",
+                               from_email: str = "ashokcquent@gmail.com",
+                               from_name: str = "Ashok M",
+                               reply_to: str = "ashokcquent@gmail.com",
+                               signature_name: str = "Ashok M",
+                               signature_email: str = "ashokcquent@gmail.com",
+                               signature_phone: str = "847-262-4000") -> dict:
+        """Send a candidate submission email to a vendor."""
+        try:
+            skills_str = ", ".join(skills) if skills else "(not specified)"
+            rate_str = (f"${rate_min:.0f}-${rate_max:.0f}/hr"
+                        if rate_min and rate_max else "Competitive")
+
+            subject = f"{role_title} - verified {work_auth} candidate ({candidate_name})"
+
+            html_body = (
+                f"<html><body style='font-family: Arial, sans-serif; max-width: 700px; margin: 0 auto;'>"
+                f"<h2>Candidate Submission: {role_title}</h2>"
+                f"<p>Hi {vendor_name or 'there'},</p>"
+                f"<p>I have a verified candidate for your <strong>{role_title}</strong> role"
+                f"{(' at ' + client_name) if client_name else ''}.</p>"
+                f"<table style='border-collapse: collapse; width: 100%; margin: 20px 0;'>"
+                f"<tr><td style='padding: 8px; border: 1px solid #ddd; background: #f5f5f5; font-weight: bold;'>Candidate</td>"
+                f"<td style='padding: 8px; border: 1px solid #ddd;'>{candidate_name}</td></tr>"
+                f"<tr><td style='padding: 8px; border: 1px solid #ddd; background: #f5f5f5; font-weight: bold;'>Work Auth</td>"
+                f"<td style='padding: 8px; border: 1px solid #ddd;'>{work_auth}</td></tr>"
+                f"<tr><td style='padding: 8px; border: 1px solid #ddd; background: #f5f5f5; font-weight: bold;'>Verified Skills</td>"
+                f"<td style='padding: 8px; border: 1px solid #ddd;'>{skills_str}</td></tr>"
+                f"<tr><td style='padding: 8px; border: 1px solid #ddd; background: #f5f5f5; font-weight: bold;'>Availability</td>"
+                f"<td style='padding: 8px; border: 1px solid #ddd;'>{availability or 'Immediate'}</td></tr>"
+                f"<tr><td style='padding: 8px; border: 1px solid #ddd; background: #f5f5f5; font-weight: bold;'>Rate</td>"
+                f"<td style='padding: 8px; border: 1px solid #ddd;'>{rate_str}</td></tr>"
+                + (f"<tr><td style='padding: 8px; border: 1px solid #ddd; background: #f5f5f5; font-weight: bold;'>Certificate</td>"
+                   f"<td style='padding: 8px; border: 1px solid #ddd;'><a href='{cert_url}'>{cert_url}</a></td></tr>"
+                   if cert_url else "")
+                + f"</table>"
+                f"<p>Full resume attached. The candidate's verified certificate can be checked at the URL above.</p>"
+                f"<p><strong>Fee terms:</strong> 15% of first-year base on hire, 90-day replacement guarantee.</p>"
+                f"<p>Let me know if you'd like to interview.</p>"
+                f"<p>Best regards,<br>"
+                f"{signature_name}<br>"
+                f"{signature_email}<br>"
+                f"{signature_phone}</p>"
+                f"</body></html>"
+            )
+
+            result = self.email_engine.send_email(
+                to_email=to_email,
+                subject=subject,
+                body=html_body,
+                is_html=True,
+                from_email=from_email,
+                from_name=from_name,
+                reply_to=reply_to,
+            )
+            self.sent_emails.append({
+                "type": "vendor_submission",
+                "email": to_email,
+                "candidate_name": candidate_name,
+                "role_title": role_title
+            })
+            return result
+        except Exception as e:
+            logger.error(f"send_vendor_submission failed: {e}")
+            return {"status": "error", "message": str(e)}
     # ============================================================
     # Session 43-A1.7: IELTS Deep Report email + PDF attachment
     # ============================================================

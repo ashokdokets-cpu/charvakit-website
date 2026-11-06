@@ -19021,17 +19021,372 @@ async def api_bench_match_stats(request: Request):
     except Exception as e:
         return handle_error(e, request)
 
+
+
+@app.get("/api/bench/match/{match_id}/vendor-email")
+async def api_bench_match_vendor_email(request: Request, match_id: str):
+    """Return pre-filled vendor email data for preview/edit."""
+    require_admin(request)
+    try:
+        import psycopg2 as _pg
+        import re
+        conn = _pg.connect(os.getenv("DATABASE_URL"))
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT m.candidate_name, m.candidate_email, m.match_score,
+                   m.matched_skills, m.status,
+                   j.role_title, j.vendor_name, j.vendor_contact,
+                   j.rate_min, j.rate_max, j.client_name, j.location,
+                   c.work_auth_status, c.availability,
+                   c.rate_min AS cand_rate_min, c.rate_max AS cand_rate_max,
+                   c.employer_email, c.employer_phone
+            FROM charvak_bench_matches m
+            LEFT JOIN charvak_vendor_jds j ON m.jd_id = j.jd_id
+            LEFT JOIN charvak_candidates c ON m.candidate_email = c.email
+            WHERE m.match_id = %s
+        """, (match_id,))
+        row = cur.fetchone()
+        cur.close()
+        conn.close()
+
+        if not row:
+            return JSONResponse({"status": "error", "message": "Match not found"}, status_code=404)
+
+        candidate_name = row[0]
+        match_score = row[2]
+        matched_skills = row[3] if isinstance(row[3], list) else (json.loads(row[3]) if row[3] else [])
+        current_status = row[4]
+        role_title = row[5] or ""
+        vendor_name = row[6] or ""
+        vendor_contact = row[7] or ""
+        jd_rate_min = float(row[8]) if row[8] else None
+        jd_rate_max = float(row[9]) if row[9] else None
+        client_name = row[10] or ""
+        jd_location = row[11] or ""
+        candidate_work_auth = row[12] or ""
+        candidate_availability = row[13] or ""
+        cand_rate_min = float(row[14]) if row[14] else None
+        cand_rate_max = float(row[15]) if row[15] else None
+        employer_email = row[16] or os.getenv("EMPLOYER_EMAIL", "ashokcquent@gmail.com")
+        employer_phone = row[17] or os.getenv("EMPLOYER_PHONE", "847-262-4000")
+
+        email_match = re.search(r'<([^>]+)>', vendor_contact)
+        vendor_email = email_match.group(1) if email_match else vendor_contact
+
+        rate_min = cand_rate_min or jd_rate_min
+        rate_max = cand_rate_max or jd_rate_max
+        rate_str = f"${rate_min:.0f}-${rate_max:.0f}/hr" if rate_min and rate_max else "Competitive"
+
+        subject = f"{role_title} - verified {candidate_work_auth} candidate ({candidate_name})"
+
+        body = (
+            f"Hi {vendor_name or 'there'},\n\n"
+            f"I have a verified candidate for your {role_title} role"
+            f"{(' at ' + client_name) if client_name else ''}.\n\n"
+            f"Candidate: {candidate_name}\n"
+            f"Work Auth: {candidate_work_auth}\n"
+            f"Verified Skills: {', '.join(matched_skills) if matched_skills else 'Not specified'}\n"
+            f"Availability: {candidate_availability or 'Immediate'}\n"
+            f"Rate: {rate_str}\n"
+            f"Match Score: {match_score}/100\n\n"
+            f"Contact: {employer_email} · {employer_phone}\n\n"
+            f"Fee: 15% of first-year base on hire, 90-day replacement guarantee.\n\n"
+            f"Let me know if you'd like to interview.\n\n"
+            f"Best regards,\n"
+            f"Ashok M\n"
+            f"{employer_email}\n"
+            f"{employer_phone}"
+        )
+
+        return JSONResponse({
+            "status": "success",
+            "match_id": match_id,
+            "to": vendor_email,
+            "to_name": vendor_name,
+            "subject": subject,
+            "body": body,
+            "current_status": current_status,
+            "candidate_name": candidate_name,
+            "role_title": role_title,
+            "vendor_contact_raw": vendor_contact,
+        })
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, request)
+
+
+@app.post("/api/bench/match/{match_id}/submit")
+async def api_bench_match_submit(request: Request, match_id: str):
+    """Send vendor submission email + mark match as submitted."""
+    require_admin(request)
+    try:
+        data = await request.json()
+        send_email_flag = data.get("send_email", False)
+        to_email = data.get("to")
+        subject = data.get("subject")
+        body = data.get("body")
+
+        import psycopg2 as _pg
+        conn = _pg.connect(os.getenv("DATABASE_URL"))
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT m.candidate_name, m.candidate_email, m.matched_skills,
+                   j.role_title, j.vendor_name, j.client_name,
+                   c.work_auth_status, c.availability,
+                   c.rate_min, c.rate_max
+            FROM charvak_bench_matches m
+            LEFT JOIN charvak_vendor_jds j ON m.jd_id = j.jd_id
+            LEFT JOIN charvak_candidates c ON m.candidate_email = c.email
+            WHERE m.match_id = %s
+        """, (match_id,))
+        row = cur.fetchone()
+        cur.close()
+        conn.close()
+
+        if not row:
+            return JSONResponse({"status": "error", "message": "Match not found"}, status_code=404)
+
+        candidate_name = row[0]
+        matched_skills = row[2] if isinstance(row[2], list) else (json.loads(row[2]) if row[2] else [])
+        role_title = row[3] or ""
+        vendor_name = row[4] or ""
+        client_name = row[5] or ""
+        work_auth = row[6] or ""
+        availability = row[7] or ""
+        rate_min = float(row[8]) if row[8] else None
+        rate_max = float(row[9]) if row[9] else None
+
+        sent_id = None
+        send_result = {"status": "skipped", "message": "send_email=False"}
+
+        if send_email_flag and to_email:
+            from enhanced_email import enhanced_email
+            send_result = enhanced_email.send_vendor_submission(
+                to_email=to_email,
+                candidate_name=candidate_name,
+                role_title=role_title,
+                vendor_name=vendor_name or "",
+                work_auth=work_auth,
+                skills=matched_skills,
+                rate_min=rate_min,
+                rate_max=rate_max,
+                availability=availability,
+                client_name=client_name,
+            )
+            if send_result.get("status") == "success":
+                sent_id = send_result.get("message", "")[:50] or "sent"
+
+        from bench_matching_engine import bench_matching_engine
+        status_update = bench_matching_engine.mark_submitted(match_id, sent_id)
+
+        return JSONResponse({
+            "status": "success",
+            "match_id": match_id,
+            "email_result": send_result,
+            "status_update": status_update,
+        })
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, request)
+
+@app.post("/api/bench/match/{match_id}/status")
+async def api_bench_match_status(request: Request, match_id: str):
+    """Update match status: interested, interview, placed, rejected."""
+    require_admin(request)
+    try:
+        data = await request.json()
+        new_status = data.get("status", "").lower()
+        fee_amount = data.get("fee_amount_inr")
+        notes = data.get("notes")
+
+        valid_statuses = ["pending", "submitted", "interested", "interview", "placed", "rejected"]
+        if new_status not in valid_statuses:
+            return JSONResponse(
+                {"status": "error", "message": f"status must be one of: {', '.join(valid_statuses)}"},
+                status_code=400
+            )
+
+        import psycopg2 as _pg
+        conn = _pg.connect(os.getenv("DATABASE_URL"))
+        cur = conn.cursor()
+
+        if new_status == "interview":
+            cur.execute(
+                "UPDATE charvak_bench_matches SET status=%s, interviewed_at=NOW(), notes=COALESCE(%s, notes) WHERE match_id=%s",
+                (new_status, notes, match_id)
+            )
+        elif new_status == "placed":
+            cur.execute(
+                "UPDATE charvak_bench_matches SET status=%s, placed_at=NOW(), fee_amount_inr=COALESCE(%s, fee_amount_inr), notes=COALESCE(%s, notes) WHERE match_id=%s",
+                (new_status, fee_amount, notes, match_id)
+            )
+        else:
+            cur.execute(
+                "UPDATE charvak_bench_matches SET status=%s, notes=COALESCE(%s, notes) WHERE match_id=%s",
+                (new_status, notes, match_id)
+            )
+
+        rows = cur.rowcount
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        if rows == 0:
+            return JSONResponse({"status": "error", "message": "Match not found"}, status_code=404)
+
+        return JSONResponse({"status": "success", "match_id": match_id, "new_status": new_status})
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, request)
+
+
+@app.post("/api/cron/send-bench-digest")
+async def api_cron_send_bench_digest(request: Request):
+    """Daily 8 AM IST cron — refresh matches + send digest email."""
+    secret = request.headers.get("X-Cron-Secret", "")
+    expected_secret = os.getenv("CRON_SECRET", "")
+    if not secret or not expected_secret or secret != expected_secret:
+        return JSONResponse({"status": "error", "message": "unauthorized"}, status_code=401)
+
+    try:
+        from bench_matching_engine import bench_matching_engine
+        from enhanced_email import enhanced_email
+
+        try:
+            bench_matching_engine.run_matching_for_all_jds()
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning(f"Digest: match refresh failed: {e}")
+
+        result = bench_matching_engine.get_top_matches(limit=5, min_score=60)
+        if result.get("status") != "success" or not result.get("matches"):
+            return JSONResponse({
+                "status": "success",
+                "sent": False,
+                "reason": "no matches above 60"
+            })
+
+        matches = result["matches"]
+        employer_email = os.getenv("EMPLOYER_EMAIL", "ashokcquent@gmail.com")
+
+        rows_html = ""
+        for m in matches:
+            matched = m.get("matched_skills") or []
+            skills_str = ", ".join(matched[:4]) if matched else "—"
+            rate_lo = m.get("candidate_rate_min") or m.get("jd_rate_min")
+            rate_hi = m.get("candidate_rate_max") or m.get("jd_rate_max")
+            rate_str = f"${rate_lo:.0f}-${rate_hi:.0f}/hr" if (rate_lo and rate_hi) else "Competitive"
+            rows_html += (
+                f"<div style='border:1px solid #ddd; padding:14px; margin:10px 0; border-radius:6px;'>"
+                f"<h3 style='margin:0 0 6px 0; color:#1a73e8;'>{m['candidate_name']} → {m['role_title']}</h3>"
+                f"<p style='margin:4px 0; font-size:14px; color:#555;'><strong>Match:</strong> {m['match_score']}/100 · <strong>Work Auth:</strong> {m.get('candidate_work_auth') or '—'} · <strong>Rate:</strong> {rate_str}</p>"
+                f"<p style='margin:4px 0; font-size:13px;'><strong>Skills:</strong> {skills_str}</p>"
+                f"<p style='margin:4px 0; font-size:13px;'><strong>Vendor:</strong> {m.get('vendor_name') or '—'} ({m.get('vendor_contact') or '—'})</p>"
+                f"<a href='https://www.charvakit.com/admin/bench-matches' style='display:inline-block; padding:8px 16px; background:#1a73e8; color:white; text-decoration:none; border-radius:4px; margin-top:8px; font-size:13px;'>Submit to Vendor →</a>"
+                f"</div>"
+            )
+
+        html = (
+            f"<html><body style='font-family: Arial, sans-serif; max-width: 700px; margin: 0 auto;'>"
+            f"<h2 style='color:#1a73e8;'>🔥 {len(matches)} top bench matches today</h2>"
+            f"<p style='color:#666;'>Ranked by score. Click any to review and submit to vendor.</p>"
+            f"{rows_html}"
+            f"<p style='margin-top:30px; font-size:12px; color:#999;'>Sent daily at 8 AM IST. "
+            f"<a href='https://www.charvakit.com/admin/bench-matches'>View all matches</a></p>"
+            f"</body></html>"
+        )
+
+        send_result = enhanced_email.email_engine.send_email(
+            to_email=employer_email,
+            subject=f"🔥 {len(matches)} bench matches ready for submission",
+            body=html,
+            is_html=True,
+            from_email=os.getenv("EMPLOYER_EMAIL", "ashokcquent@gmail.com"),
+            from_name="Ashok M",
+            reply_to=os.getenv("EMPLOYER_EMAIL", "ashokcquent@gmail.com"),
+        )
+
+        return JSONResponse({
+            "status": "success",
+            "matches_count": len(matches),
+            "email_sent": send_result.get("status") == "success",
+            "sent_to": employer_email,
+            "email_result": send_result,
+        })
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, request)
+
+
+
+@app.get("/api/bench/agent/stats")
+async def api_bench_agent_stats(request: Request):
+    """Weekly KPI stats for the bench agent."""
+    require_admin(request)
+    try:
+        import psycopg2 as _pg
+        conn = _pg.connect(os.getenv("DATABASE_URL"))
+        cur = conn.cursor()
+
+        cur.execute("SELECT COUNT(*) FROM charvak_bench_matches WHERE computed_at >= NOW() - INTERVAL '24 hours'")
+        today = cur.fetchone()[0]
+
+        cur.execute("SELECT COUNT(*) FROM charvak_bench_matches WHERE status IN ('submitted', 'interested', 'interview', 'placed') AND submitted_at >= NOW() - INTERVAL '7 days'")
+        submitted_week = cur.fetchone()[0]
+
+        cur.execute("SELECT COUNT(*) FROM charvak_bench_matches WHERE status = 'submitted'")
+        pending = cur.fetchone()[0]
+
+        cur.execute("SELECT COUNT(*) FROM charvak_bench_matches WHERE status = 'interview'")
+        interviews = cur.fetchone()[0]
+
+        cur.execute("SELECT COUNT(*) FROM charvak_bench_matches WHERE status = 'placed'")
+        placements = cur.fetchone()[0]
+
+        cur.execute("SELECT COALESCE(SUM(fee_amount_inr), 0) FROM charvak_bench_matches WHERE status = 'placed'")
+        revenue = cur.fetchone()[0] or 0
+
+        cur.execute("""
+            SELECT
+                DATE_TRUNC('week', submitted_at) as week,
+                COUNT(*) FILTER (WHERE status IN ('submitted', 'interested', 'interview', 'placed')),
+                COUNT(*) FILTER (WHERE status = 'placed')
+            FROM charvak_bench_matches
+            WHERE submitted_at >= NOW() - INTERVAL '8 weeks'
+            GROUP BY week ORDER BY week
+        """)
+        trend = [{"week": str(r[0].date()) if r[0] else None, "submitted": r[1], "placed": r[2]} for r in cur.fetchall()]
+
+        cur.close()
+        conn.close()
+
+        return JSONResponse({
+            "status": "success",
+            "today_matches": today,
+            "submitted_this_week": submitted_week,
+            "pending_response": pending,
+            "interviews": interviews,
+            "placements": placements,
+            "revenue_inr": int(revenue),
+            "trend": trend
+        })
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, request)
+
 @app.get("/admin/integrity-events/{assessment_id}", response_class=HTMLResponse)
 async def admin_integrity_detail_page(request: Request, assessment_id: str):
     return template_response("admin-integrity-detail.html", request, f"Integrity - {assessment_id}")
-
 
 @app.get("/api/admin/cleanup-users")
 async def admin_cleanup_users_api():
     """API endpoint returning cleanup/user data as JSON."""
     return cleanup_suspicious_users()
-
-
 
 from email_verification import email_verification
 
