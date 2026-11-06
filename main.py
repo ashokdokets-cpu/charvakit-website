@@ -18768,6 +18768,15 @@ async def vendor_jd_ingest(request: Request):
             }
 
         result = vendor_jd_engine.parse_incoming_email(raw_email)
+        # Session 4 Feature 5: Auto-match new JD against bench immediately
+        if result.get("status") == "success" and result.get("jd_id"):
+            try:
+                from bench_matching_engine import bench_matching_engine
+                match_res = bench_matching_engine.run_matching_for_jd(result["jd_id"])
+                result["auto_matches"] = match_res.get("matches_computed", 0)
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).warning(f"Auto-match failed for {result['jd_id']}: {e}")
         return JSONResponse(result)
     except HTTPException:
         raise
@@ -19090,7 +19099,6 @@ async def api_bench_match_vendor_email(request: Request, match_id: str):
             f"Rate: {rate_str}\n"
             f"Match Score: {match_score}/100\n\n"
             f"Contact: {employer_email} · {employer_phone}\n\n"
-            f"Fee: 15% of first-year base on hire, 90-day replacement guarantee.\n\n"
             f"Let me know if you'd like to interview.\n\n"
             f"Best regards,\n"
             f"Ashok M\n"
