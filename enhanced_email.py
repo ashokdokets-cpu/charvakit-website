@@ -282,17 +282,19 @@ class EnhancedEmailSystem:
         return sent > 0
 
     def send_vendor_submission(self, to_email: str, candidate_name: str,
-                               role_title: str, vendor_name: str,
-                               work_auth: str, skills: list,
-                               rate_min: float, rate_max: float,
-                               availability: str, cert_url: str = "",
-                               client_name: str = "",
-                               from_email: str = "ashokcquent@gmail.com",
-                               from_name: str = "Ashok M",
-                               reply_to: str = "ashokcquent@gmail.com",
-                               signature_name: str = "Ashok M",
-                               signature_email: str = "ashokcquent@gmail.com",
-                               signature_phone: str = "847-262-4000") -> dict:
+                           role_title: str, vendor_name: str,
+                           work_auth: str, skills: list,
+                           rate_min: float, rate_max: float,
+                           availability: str, cert_url: str = "",
+                           client_name: str = "",
+                           from_email: str = "ashokcquent@gmail.com",
+                           from_name: str = "Ashok M",
+                           reply_to: str = "ashokcquent@gmail.com",
+                           signature_name: str = "Ashok M",
+                           signature_email: str = "ashokcquent@gmail.com",
+                           signature_phone: str = "847-262-4000",
+                           resume_bytes=None,
+                           resume_filename=None) -> dict:
         """Send a candidate submission email to a vendor."""
         try:
             skills_str = ", ".join(skills) if skills else "(not specified)"
@@ -322,7 +324,15 @@ class EnhancedEmailSystem:
                    f"<td style='padding: 8px; border: 1px solid #ddd;'><a href='{cert_url}'>{cert_url}</a></td></tr>"
                    if cert_url else "")
                 + f"</table>"
-                f"<p>Let me know if you'd like to interview.</p>"
+                + (
+                    f"<p style='color: #555; font-size: 13px; background: #f0f8f5; padding: 12px; border-left: 3px solid #3ba591;'>"
+                    f"<strong>Verified Skill Certificate:</strong> "
+                    f"Candidates with a verified Charvak certificate are typically shortlisted faster, "
+                    f"since their skills have already been assessed through deterministic test-case execution."
+                    f"</p>"
+                    if cert_url else ""
+                )
+                + f"<p>Let me know if you'd like to interview.</p>"
                 f"<p>Best regards,<br>"
                 f"{signature_name}<br>"
                 f"{signature_email}<br>"
@@ -338,6 +348,8 @@ class EnhancedEmailSystem:
                 from_email=from_email,
                 from_name=from_name,
                 reply_to=reply_to,
+                attachment_bytes=resume_bytes,
+                attachment_filename=resume_filename,
             )
             self.sent_emails.append({
                 "type": "vendor_submission",
