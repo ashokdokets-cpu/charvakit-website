@@ -19432,6 +19432,45 @@ async def api_cron_send_bench_digest(request: Request):
 
 
 
+# =============================================================================
+# Session 107 — Job Ingest Routes
+# =============================================================================
+
+@app.get("/api/admin/job-sources")
+async def api_list_job_sources(request: Request):
+    """List all job ingest sources with status + counts."""
+    require_admin(request)
+    try:
+        from job_ingest_engine import job_ingest_engine
+        return JSONResponse(job_ingest_engine.list_sources())
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, request)
+
+
+@app.post("/api/admin/job-sources/sync")
+async def api_sync_job_sources(request: Request):
+    """Trigger a sync on one or all sources."""
+    require_admin(request)
+    try:
+        body = await request.json() if await request.body() else {}
+        source = body.get("source", "all")
+        from job_ingest_engine import job_ingest_engine
+        if source == "all":
+            return JSONResponse(job_ingest_engine.ingest_all())
+        return JSONResponse(job_ingest_engine.sync_one(source))
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, request)
+
+
+@app.get("/admin/job-sources", response_class=HTMLResponse)
+async def admin_job_sources_page(request: Request):
+    """Admin UI for job board ingestion."""
+    return template_response("admin-job-sources.html", request, "Job Sources - Charvak")
+
 @app.get("/api/bench/agent/stats")
 async def api_bench_agent_stats(request: Request):
     """Weekly KPI stats for the bench agent."""

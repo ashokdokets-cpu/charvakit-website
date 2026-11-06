@@ -1,0 +1,179 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Job Sources - Admin{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 1000px; margin: 40px auto; padding: 0 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <div>
+            <h1 style="margin: 0; color: #1a1a2e;">Job Board Sources</h1>
+            <p style="margin: 4px 0 0 0; color: #666; font-size: 14px;">
+                Automated job ingestion from worldwide boards. Filtered to US-eligible (H1B/OPT/H4 EAD).
+            </p>
+        </div>
+        <a href="/admin/bench-matches" style="padding: 8px 16px; background: #3ba591; color: white; text-decoration: none; border-radius: 6px; font-weight: 500;">
+            ← Back to Bench Matches
+        </a>
+    </div>
+
+    <div id="status-bar" style="margin-bottom: 20px; min-height: 24px; font-size: 14px;"></div>
+
+    <div style="display: flex; gap: 12px; margin-bottom: 20px;">
+        <button id="sync-all-btn" onclick="syncAll()" style="padding: 10px 20px; background: #3ba591; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+            🔄 Sync All Sources
+        </button>
+    </div>
+
+    <table id="sources-table" style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+        <thead style="background: #f5f5f7;">
+            <tr>
+                <th style="padding: 12px; text-align: left; font-size: 13px; color: #333; font-weight: 600; border-bottom: 2px solid #e0e0e0;">Source</th>
+                <th style="padding: 12px; text-align: center; font-size: 13px; color: #333; font-weight: 600; border-bottom: 2px solid #e0e0e0;">Status</th>
+                <th style="padding: 12px; text-align: center; font-size: 13px; color: #333; font-weight: 600; border-bottom: 2px solid #e0e0e0;">Last Sync</th>
+                <th style="padding: 12px; text-align: center; font-size: 13px; color: #333; font-weight: 600; border-bottom: 2px solid #e0e0e0;">Total Jobs</th>
+                <th style="padding: 12px; text-align: center; font-size: 13px; color: #333; font-weight: 600; border-bottom: 2px solid #e0e0e0;">US-Eligible</th>
+                <th style="padding: 12px; text-align: center; font-size: 13px; color: #333; font-weight: 600; border-bottom: 2px solid #e0e0e0;">Actions</th>
+            </tr>
+        </thead>
+        <tbody id="sources-tbody">
+            <tr><td colspan="6" style="padding: 40px; text-align: center; color: #999;">Loading sources…</td></tr>
+        </tbody>
+    </table>
+
+    <div style="margin-top: 40px; padding: 16px; background: #f9f9fa; border-radius: 8px; border: 1px solid #e8e8e8; font-size: 13px; color: #555;">
+        <strong>Attribution:</strong>
+        <span id="attribution-text">Job data from public APIs. See individual source columns.</span>
+        <br>
+        <strong>US-eligibility filter:</strong> Jobs are only matched to US H1B/OPT/H4 EAD bench candidates when the source location is US, worldwide, or unmarked. EU/UK/region-only jobs are excluded.
+        <br>
+        <strong>Ingestion runs:</strong> Manually via "Sync Now" buttons below, or automatically via daily cron (once enabled in Session 108).
+    </div>
+</div>
+
+<script>
+const _token = () => localStorage.getItem('auth_token') || localStorage.getItem('token') || '';
+const _headers = () => ({
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer ' + _token(),
+});
+
+function fmtTime(iso) {
+    if (!iso) return '—';
+    try {
+        const d = new Date(iso);
+        const now = new Date();
+        const diff = Math.floor((now - d) / 1000);
+        if (diff < 60) return diff + 's ago';
+        if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+        if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+        return Math.floor(diff / 86400) + 'd ago';
+    } catch (e) { return iso; }
+}
+
+function esc(s) {
+    return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+async function loadSources() {
+    const tbody = document.getElementById('sources-tbody');
+    try {
+        const resp = await fetch('/api/admin/job-sources', { headers: _headers() });
+        const data = await resp.json();
+        if (data.status !== 'success') {
+            tbody.innerHTML = `<tr><td colspan="6" style="padding: 40px; text-align: center; color: #c33;">Error: ${esc(data.error || 'unknown')}</td></tr>`;
+            return;
+        }
+        const sources = data.sources || [];
+        if (sources.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="padding: 40px; text-align: center; color: #999;">No sources configured.</td></tr>`;
+            return;
+        }
+        const attributions = [];
+        tbody.innerHTML = sources.map(s => {
+            if (s.attribution_text) attributions.push(s.attribution_text);
+            const statusColor = s.last_sync_status === 'success' ? '#3ba591' : (s.last_sync_status === 'error' ? '#c33' : '#999');
+            const statusText = s.last_sync_status === 'success' ? '✅ Success' : (s.last_sync_status === 'error' ? '❌ Error' : '⏳ Never');
+            const activeColor = s.active ? '#3ba591' : '#999';
+            return `
+                <tr style="border-bottom: 1px solid #f0f0f0;">
+                    <td style="padding: 14px;">
+                        <div style="font-weight: 600; color: #1a1a2e;">${esc(s.display_name)}</div>
+                        <div style="font-size: 11px; color: #999; margin-top: 2px;">${esc(s.api_url || '')}</div>
+                    </td>
+                    <td style="padding: 14px; text-align: center; color: ${statusColor}; font-size: 13px;">
+                        ${statusText}
+                        ${s.last_sync_error ? `<div style="font-size: 10px; color: #c33; margin-top: 4px;">${esc(s.last_sync_error.slice(0, 60))}</div>` : ''}
+                    </td>
+                    <td style="padding: 14px; text-align: center; font-size: 13px; color: #666;">
+                        ${fmtTime(s.last_sync_at)}
+                    </td>
+                    <td style="padding: 14px; text-align: center; font-size: 15px; font-weight: 600; color: #1a1a2e;">
+                        ${s.actual_jobs_total || 0}
+                    </td>
+                    <td style="padding: 14px; text-align: center; font-size: 15px; font-weight: 600; color: #3ba591;">
+                        ${s.actual_jobs_us_eligible || 0}
+                    </td>
+                    <td style="padding: 14px; text-align: center;">
+                        <button onclick="syncOne('${esc(s.source_name)}')" style="padding: 6px 14px; background: #3ba591; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 500;">
+                            🔄 Sync Now
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+        document.getElementById('attribution-text').innerText = attributions.join(' | ') || 'Job data from public APIs.';
+    } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="6" style="padding: 40px; text-align: center; color: #c33;">Failed: ${esc(e.message)}</td></tr>`;
+    }
+}
+
+async function syncOne(sourceName) {
+    const bar = document.getElementById('status-bar');
+    bar.innerHTML = `<span style="color: #3ba591;">⏳ Syncing ${sourceName}… (this takes 5-15 seconds)</span>`;
+    try {
+        const resp = await fetch('/api/admin/job-sources/sync', {
+            method: 'POST',
+            headers: _headers(),
+            body: JSON.stringify({ source: sourceName }),
+        });
+        const data = await resp.json();
+        if (data.status === 'success') {
+            bar.innerHTML = `<span style="color: #3ba591;">✅ ${sourceName} synced: ${data.fetched} fetched, ${data.inserted} inserted, ${data.skipped} skipped, ${data.errors} errors</span>`;
+        } else {
+            bar.innerHTML = `<span style="color: #c33;">❌ ${sourceName} failed: ${esc(data.error || 'unknown')}</span>`;
+        }
+        await loadSources();
+    } catch (e) {
+        bar.innerHTML = `<span style="color: #c33;">❌ Failed: ${esc(e.message)}</span>`;
+    }
+}
+
+async function syncAll() {
+    const bar = document.getElementById('status-bar');
+    const btn = document.getElementById('sync-all-btn');
+    btn.disabled = true;
+    btn.style.opacity = '0.6';
+    bar.innerHTML = `<span style="color: #3ba591;">⏳ Syncing all sources… (this takes 15-30 seconds)</span>`;
+    try {
+        const resp = await fetch('/api/admin/job-sources/sync', {
+            method: 'POST',
+            headers: _headers(),
+            body: JSON.stringify({ source: 'all' }),
+        });
+        const data = await resp.json();
+        let totalFetched = 0, totalInserted = 0;
+        if (data.remotive) { totalFetched += data.remotive.fetched || 0; totalInserted += data.remotive.inserted || 0; }
+        if (data.arbeitnow) { totalFetched += data.arbeitnow.fetched || 0; totalInserted += data.arbeitnow.inserted || 0; }
+        bar.innerHTML = `<span style="color: #3ba591;">✅ All synced: ${totalFetched} fetched, ${totalInserted} inserted</span>`;
+        await loadSources();
+    } catch (e) {
+        bar.innerHTML = `<span style="color: #c33;">❌ Failed: ${esc(e.message)}</span>`;
+    } finally {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', loadSources);
+</script>
+{% endblock %}
