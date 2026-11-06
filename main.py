@@ -107,6 +107,7 @@ from exam_analytics_engine import exam_analytics_engine
 from ai_internship_engine import ai_internship_engine
 from vendor_jd_engine import vendor_jd_engine
 from bench_engine import bench_engine
+from bench_matching_engine import bench_matching_engine
 
 # Fix (2026-10-15): multi_pattern was referenced but never imported/instantiated
 import multi_pattern_company
@@ -18924,6 +18925,97 @@ async def api_bench_stats(request: Request):
     require_admin(request)
     try:
         return JSONResponse(bench_engine.get_bench_stats())
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, request)
+
+
+# ============================================
+# BENCH MATCHES — Session 3
+# ============================================
+
+@app.get("/admin/bench-matches")
+async def admin_bench_matches_page(request: Request):
+    """Bench matches admin page."""
+    require_admin(request)
+    return templates.TemplateResponse("admin-bench-matches.html", {
+        "request": request,
+        "page_title": "Bench Matches"
+    })
+
+
+@app.get("/api/bench/matches")
+async def api_bench_matches(
+    request: Request,
+    limit: int = 20,
+    min_score: int = 60,
+    work_auth: str = None,
+    jd_id: str = None,
+):
+    """Return top matches sorted by score."""
+    require_admin(request)
+    try:
+        result = bench_matching_engine.get_top_matches(
+            limit=limit, min_score=min_score,
+            work_auth=work_auth, jd_id=jd_id
+        )
+        return JSONResponse(result)
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, request)
+
+
+@app.post("/api/bench/match/{jd_id}")
+async def api_bench_match_jd(request: Request, jd_id: str):
+    """Score all candidates against one JD."""
+    require_admin(request)
+    try:
+        return JSONResponse(bench_matching_engine.run_matching_for_jd(jd_id))
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, request)
+
+
+@app.post("/api/bench/match-all")
+async def api_bench_match_all(request: Request):
+    """Score all candidates against all active JDs."""
+    require_admin(request)
+    try:
+        return JSONResponse(bench_matching_engine.run_matching_for_all_jds())
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, request)
+
+@app.get("/api/bench/matches/stats")
+async def api_bench_match_stats(request: Request):
+    """Match stats for the admin dashboard."""
+    require_admin(request)
+    try:
+        import psycopg2 as _pg  # Local import — main.py doesn't import it globally
+        conn = _pg.connect(os.getenv("DATABASE_URL"))
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT 
+                COUNT(*) FILTER (WHERE match_score >= 80) as high_matches,
+                COUNT(*) FILTER (WHERE match_score >= 60 AND match_score < 80) as mid_matches,
+                COUNT(*) FILTER (WHERE match_score < 60) as low_matches,
+                COUNT(*) as total
+            FROM charvak_bench_matches
+        """)
+        r = cur.fetchone()
+        cur.close()
+        conn.close()
+        return JSONResponse({
+            "status": "success",
+            "high_matches": r[0],
+            "mid_matches": r[1],
+            "low_matches": r[2],
+            "total": r[3]
+        })
     except HTTPException:
         raise
     except Exception as e:

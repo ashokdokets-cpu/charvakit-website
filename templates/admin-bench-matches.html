@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+{% block title %}Bench Matches{% endblock %}
+
+{% block content %}
+<div class="container" style="margin-top: 120px;">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1>Bench Matches</h1>
+            <p class="text-muted mb-0">Ranked matches between vendor JDs and your bench</p>
+        </div>
+        <div>
+            <button class="btn btn-outline-primary" onclick="runMatchAll()">🔄 Recompute All Matches</button>
+        </div>
+    </div>
+
+    <!-- Stats Strip -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card"><div class="card-body">
+                <div class="text-muted small">🔥 High (80+)</div>
+                <h2 id="statHigh" class="mb-0 text-success">0</h2>
+            </div></div>
+        </div>
+        <div class="col-md-3">
+            <div class="card"><div class="card-body">
+                <div class="text-muted small">⚡ Mid (60-79)</div>
+                <h2 id="statMid" class="mb-0 text-warning">0</h2>
+            </div></div>
+        </div>
+        <div class="col-md-3">
+            <div class="card"><div class="card-body">
+                <div class="text-muted small">💤 Low (&lt;60)</div>
+                <h2 id="statLow" class="mb-0 text-muted">0</h2>
+            </div></div>
+        </div>
+        <div class="col-md-3">
+            <div class="card"><div class="card-body">
+                <div class="text-muted small">Total</div>
+                <h2 id="statTotal" class="mb-0">0</h2>
+            </div></div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label small">Min Score</label>
+                    <input type="number" id="minScoreInput" class="form-control form-control-sm" value="60" min="0" max="100">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small">Work Auth</label>
+                    <select id="workAuthSelect" class="form-select form-select-sm">
+                        <option value="">Any</option>
+                        <option value="H1B">H1B</option>
+                        <option value="OPT">OPT</option>
+                        <option value="GC">GC</option>
+                        <option value="USC">USC</option>
+                        <option value="H4-EAD">H4-EAD</option>
+                        <option value="L2-EAD">L2-EAD</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small">Search JD</label>
+                    <select id="jdSelect" class="form-select form-select-sm">
+                        <option value="">All JDs</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button class="btn btn-primary btn-sm w-100" onclick="loadMatches()">Filter</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results -->
+    <div id="matchesResults"></div>
+</div>
+
+<script>
+function getToken() {
+    return localStorage.getItem('authToken') || localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+}
+
+function esc(s) {
+    if (!s) return '';
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function loadMatches() {
+    const params = new URLSearchParams();
+    const minScore = document.getElementById('minScoreInput').value;
+    const workAuth = document.getElementById('workAuthSelect').value;
+    const jdId = document.getElementById('jdSelect').value;
+    if (minScore) params.append('min_score', minScore);
+    if (workAuth) params.append('work_auth', workAuth);
+    if (jdId) params.append('jd_id', jdId);
+    params.append('limit', '50');
+
+    try {
+        const r = await fetch(`/api/bench/matches?${params}`, {
+            headers: {'Authorization': `Bearer ${getToken()}`},
+            credentials: 'include'
+        });
+        const data = await r.json();
+        if (data.status !== 'success') {
+            document.getElementById('matchesResults').innerHTML = 
+                `<div class="alert alert-danger">${data.message || 'Error'}</div>`;
+            return;
+        }
+        renderMatches(data.matches);
+    } catch (e) {
+        document.getElementById('matchesResults').innerHTML = 
+            `<div class="alert alert-danger">${e.message}</div>`;
+    }
+}
+
+async function loadStats() {
+    try {
+        const r = await fetch('/api/bench/matches/stats', {
+            headers: {'Authorization': `Bearer ${getToken()}`},
+            credentials: 'include'
+        });
+        const data = await r.json();
+        if (data.status !== 'success') return;
+        document.getElementById('statHigh').textContent = data.high_matches || 0;
+        document.getElementById('statMid').textContent = data.mid_matches || 0;
+        document.getElementById('statLow').textContent = data.low_matches || 0;
+        document.getElementById('statTotal').textContent = data.total || 0;
+    } catch (e) { console.error(e); }
+}
+
+async function loadJdOptions() {
+    try {
+        const r = await fetch('/api/vendor-jds?status=active&limit=100', {
+            headers: {'Authorization': `Bearer ${getToken()}`},
+            credentials: 'include'
+        });
+        const data = await r.json();
+        if (data.status !== 'success') return;
+        const select = document.getElementById('jdSelect');
+        (data.jds || []).forEach(jd => {
+            const opt = document.createElement('option');
+            opt.value = jd.jd_id;
+            opt.textContent = `${jd.role_title} — ${jd.vendor_name || 'Unknown'}`;
+            select.appendChild(opt);
+        });
+    } catch (e) { console.error(e); }
+}
+
+function renderMatches(matches) {
+    if (!matches || matches.length === 0) {
+        document.getElementById('matchesResults').innerHTML = 
+            '<div class="alert alert-info">No matches above threshold. Try lowering Min Score or click Recompute All Matches.</div>';
+        return;
+    }
+    const cards = matches.map(m => {
+        const scoreColor = m.match_score >= 80 ? 'success' : (m.match_score >= 60 ? 'warning' : 'secondary');
+        const matched = (Array.isArray(m.matched_skills) ? m.matched_skills : []);
+        const missing = (Array.isArray(m.missing_skills) ? m.missing_skills : []);
+        return `
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div style="flex: 1;">
+                            <h5 class="mb-1">
+                                ${esc(m.candidate_name)} → ${esc(m.role_title || 'JD')}
+                            </h5>
+                            <div class="text-muted small mb-2">
+                                ${esc(m.vendor_name || 'Vendor')} · ${esc(m.client_name || '')} · ${esc(m.jd_location || '')}
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-${scoreColor}" style="font-size: 1.5rem; padding: 10px 20px;">
+                                ${m.match_score}/100
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3 small">
+                        <div class="col-md-3">
+                            <strong>Skills:</strong> ${m.skill_score}/60
+                            ${matched.length ? `<br><span class="text-success">✓ ${matched.slice(0,5).map(esc).join(', ')}</span>` : ''}
+                            ${missing.length ? `<br><span class="text-danger">✗ ${missing.slice(0,5).map(esc).join(', ')}</span>` : ''}
+                        </div>
+                        <div class="col-md-2">
+                            <strong>Auth:</strong> ${m.auth_score}/20<br>
+                            <span class="text-muted">${esc(m.candidate_work_auth || '')}</span>
+                        </div>
+                        <div class="col-md-2">
+                            <strong>Rate:</strong> ${m.rate_score}/10<br>
+                            <span class="text-muted">$${m.jd_rate_min || '?'}-$${m.jd_rate_max || '?'}/hr</span>
+                        </div>
+                        <div class="col-md-2">
+                            <strong>Avail:</strong> ${m.availability_score}/10<br>
+                            <span class="text-muted">${esc(m.candidate_availability || '')}</span>
+                        </div>
+                        <div class="col-md-3 text-end">
+                            <span class="badge bg-${m.status === 'pending' ? 'secondary' : 'primary'}">
+                                ${esc(m.status)}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 d-flex gap-2">
+                        <button class="btn btn-sm btn-primary" onclick="submitMatch('${esc(m.match_id)}')">
+                            📧 Submit to Vendor
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="markSkipped('${esc(m.match_id)}')">
+                            Skip
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+    document.getElementById('matchesResults').innerHTML = cards;
+}
+
+async function runMatchAll() {
+    if (!confirm('Recompute matches for ALL active JDs? This may take 10-30 seconds.')) return;
+    const btn = event.target;
+    btn.disabled = true;
+    btn.textContent = '⏳ Matching...';
+    try {
+        const r = await fetch('/api/bench/match-all', {
+            method: 'POST',
+            headers: {'Authorization': `Bearer ${getToken()}`},
+            credentials: 'include'
+        });
+        const data = await r.json();
+        if (data.status === 'success') {
+            alert(`✅ Matched ${data.jds_processed} JDs. Total matches: ${data.total_matches_computed}`);
+            loadMatches();
+            loadStats();
+        } else {
+            alert('Error: ' + (data.message || 'unknown'));
+        }
+    } catch (e) {
+        alert('Error: ' + e.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '🔄 Recompute All Matches';
+    }
+}
+
+async function submitMatch(matchId) {
+    alert('Submission workflow coming in Session 4.\n\nFor now, use /admin/vendor-jds to view the JD and manually email the vendor.');
+}
+
+async function markSkipped(matchId) {
+    if (!confirm('Mark this match as skipped?')) return;
+    // Will be added in Session 4
+    alert('Skip workflow coming in Session 4.');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadMatches();
+    loadStats();
+    loadJdOptions();
+});
+</script>
+{% endblock %}
