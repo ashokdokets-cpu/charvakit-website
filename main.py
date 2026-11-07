@@ -108,6 +108,9 @@ from ai_internship_engine import ai_internship_engine
 from vendor_jd_engine import vendor_jd_engine
 from bench_engine import bench_engine
 from bench_matching_engine import bench_matching_engine
+from data_retention_engine import get_retention_engine
+
+
 
 # Fix (2026-10-15): multi_pattern was referenced but never imported/instantiated
 import multi_pattern_company
@@ -19526,6 +19529,86 @@ async def api_rejected_jds_stats(request: Request, days: int = 7):
     except Exception as e:
         return handle_error(e, request)
 
+# ============================================================
+# RETENTION ENGINE ROUTES (Session 108C)
+# ============================================================
+
+
+@app.get("/admin/retention", response_class=HTMLResponse)
+async def admin_retention_page(request: Request):
+    """Admin dashboard for the retention engine."""
+    require_admin(request)
+    return templates.TemplateResponse(
+        "admin-retention.html",
+        {"request": request}
+    )
+
+
+@app.get("/api/admin/retention/config")
+async def get_retention_config_api(request: Request):
+    require_admin(request)
+    engine = get_retention_engine()
+    return {"status": "success", "config": engine.get_config()}
+
+
+@app.post("/api/admin/retention/config")
+async def update_retention_config_api(request: Request):
+    require_admin(request)
+    data = await request.json()
+    key = data.get("config_key")
+    if not key:
+        raise HTTPException(status_code=400, detail="config_key required")
+    engine = get_retention_engine()
+    result = engine.update_config(
+        key=key,
+        retention_days=int(data.get("retention_days", 30)),
+        enabled=bool(data.get("enabled", True)),
+        min_rows_to_keep=int(data.get("min_rows_to_keep", 0)),
+    )
+    return result
+
+
+@app.post("/api/admin/retention/dry-run")
+async def retention_dry_run_api(request: Request):
+    require_admin(request)
+    engine = get_retention_engine()
+    result = engine.run_retention(dry_run=True, triggered_by="admin-dry-run")
+    return result
+
+
+@app.post("/api/admin/retention/run")
+async def retention_run_api(request: Request):
+    """Execute retention. Requires {confirm: 'DELETE'} in body."""
+    require_admin(request)
+    data = await request.json()
+    if data.get("confirm") != "DELETE":
+        raise HTTPException(
+            status_code=400,
+            detail="Must pass {confirm: 'DELETE'} to execute"
+        )
+    engine = get_retention_engine()
+    result = engine.run_retention(dry_run=False, triggered_by="admin-run")
+    return result
+
+
+@app.get("/api/admin/retention/runs")
+async def retention_runs_api(request: Request, limit: int = 20):
+    require_admin(request)
+    engine = get_retention_engine()
+    return {"status": "success", "runs": engine.list_runs(limit=limit)}
+
+
+@app.post("/api/cron/retention")
+async def retention_cron_api(request: Request):
+    """Cron-triggered retention. Secured by X-Cron-Secret header."""
+    secret = request.headers.get("X-Cron-Secret", "")
+    expected = os.getenv("CRON_SECRET", "")
+    if not expected or secret != expected:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    engine = get_retention_engine()
+    result = engine.run_retention(dry_run=False, triggered_by="cron")
+    return result
+
 
 @app.get("/admin/relevance-config", response_class=HTMLResponse)
 async def admin_relevance_config_page(request: Request):
@@ -19537,6 +19620,85 @@ async def admin_relevance_config_page(request: Request):
 async def admin_rejected_jds_page(request: Request):
     """Admin UI for rejected JDs audit trail."""
     return template_response("admin-rejected-jds.html", request, "Rejected JDs - Charvak")
+
+# ============================================================
+# RETENTION ENGINE ROUTES (Session 108C)
+# ============================================================
+
+@app.get("/admin/retention", response_class=HTMLResponse)
+async def admin_retention_page(request: Request):
+    """Admin dashboard for the retention engine."""
+    require_admin(request)
+    return templates.TemplateResponse(
+        "admin-retention.html",
+        {"request": request}
+    )
+
+
+@app.get("/api/admin/retention/config")
+async def get_retention_config_api(request: Request):
+    require_admin(request)
+    engine = get_retention_engine()
+    return {"status": "success", "config": engine.get_config()}
+
+
+@app.post("/api/admin/retention/config")
+async def update_retention_config_api(request: Request):
+    require_admin(request)
+    data = await request.json()
+    key = data.get("config_key")
+    if not key:
+        raise HTTPException(status_code=400, detail="config_key required")
+    engine = get_retention_engine()
+    result = engine.update_config(
+        key=key,
+        retention_days=int(data.get("retention_days", 30)),
+        enabled=bool(data.get("enabled", True)),
+        min_rows_to_keep=int(data.get("min_rows_to_keep", 0)),
+    )
+    return result
+
+
+@app.post("/api/admin/retention/dry-run")
+async def retention_dry_run_api(request: Request):
+    require_admin(request)
+    engine = get_retention_engine()
+    result = engine.run_retention(dry_run=True, triggered_by="admin-dry-run")
+    return result
+
+
+@app.post("/api/admin/retention/run")
+async def retention_run_api(request: Request):
+    """Execute retention. Requires {confirm: 'DELETE'} in body."""
+    require_admin(request)
+    data = await request.json()
+    if data.get("confirm") != "DELETE":
+        raise HTTPException(
+            status_code=400,
+            detail="Must pass {confirm: 'DELETE'} to execute"
+        )
+    engine = get_retention_engine()
+    result = engine.run_retention(dry_run=False, triggered_by="admin-run")
+    return result
+
+
+@app.get("/api/admin/retention/runs")
+async def retention_runs_api(request: Request, limit: int = 20):
+    require_admin(request)
+    engine = get_retention_engine()
+    return {"status": "success", "runs": engine.list_runs(limit=limit)}
+
+
+@app.post("/api/cron/retention")
+async def retention_cron_api(request: Request):
+    """Cron-triggered retention. Secured by X-Cron-Secret header."""
+    secret = request.headers.get("X-Cron-Secret", "")
+    expected = os.getenv("CRON_SECRET", "")
+    if not expected or secret != expected:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    engine = get_retention_engine()
+    result = engine.run_retention(dry_run=False, triggered_by="cron")
+    return result
 
 
 @app.get("/api/admin/job-sources")
@@ -19592,6 +19754,86 @@ async def api_match_candidates_to_jobs(request: Request):
         raise
     except Exception as e:
         return handle_error(e, request)
+
+# ============================================================
+# RETENTION ENGINE ROUTES (Session 108C)
+# ============================================================
+
+
+@app.get("/admin/retention")
+async def admin_retention_page(request: Request):
+    """Admin dashboard for the retention engine."""
+    require_admin(request)
+    return templates.TemplateResponse(
+        "admin-retention.html",
+        {"request": request}
+    )
+
+
+@app.get("/api/admin/retention/config")
+async def get_retention_config_api(request: Request):
+    require_admin(request)
+    engine = get_retention_engine()
+    return {"status": "success", "config": engine.get_config()}
+
+
+@app.post("/api/admin/retention/config")
+async def update_retention_config_api(request: Request):
+    require_admin(request)
+    data = await request.json()
+    key = data.get("config_key")
+    if not key:
+        raise HTTPException(status_code=400, detail="config_key required")
+    engine = get_retention_engine()
+    result = engine.update_config(
+        key=key,
+        retention_days=int(data.get("retention_days", 30)),
+        enabled=bool(data.get("enabled", True)),
+        min_rows_to_keep=int(data.get("min_rows_to_keep", 0)),
+    )
+    return result
+
+
+@app.post("/api/admin/retention/dry-run")
+async def retention_dry_run_api(request: Request):
+    require_admin(request)
+    engine = get_retention_engine()
+    result = engine.run_retention(dry_run=True, triggered_by="admin-dry-run")
+    return result
+
+
+@app.post("/api/admin/retention/run")
+async def retention_run_api(request: Request):
+    """Execute retention. Requires {confirm: 'DELETE'} in body."""
+    require_admin(request)
+    data = await request.json()
+    if data.get("confirm") != "DELETE":
+        raise HTTPException(
+            status_code=400,
+            detail="Must pass {confirm: 'DELETE'} to execute"
+        )
+    engine = get_retention_engine()
+    result = engine.run_retention(dry_run=False, triggered_by="admin-run")
+    return result
+
+
+@app.get("/api/admin/retention/runs")
+async def retention_runs_api(request: Request, limit: int = 20):
+    require_admin(request)
+    engine = get_retention_engine()
+    return {"status": "success", "runs": engine.list_runs(limit=limit)}
+
+
+@app.post("/api/cron/retention")
+async def retention_cron_api(request: Request):
+    """Cron-triggered retention. Secured by X-Cron-Secret."""
+    secret = request.headers.get("X-Cron-Secret", "")
+    expected = os.getenv("CRON_SECRET", "")
+    if not expected or secret != expected:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    engine = get_retention_engine()
+    result = engine.run_retention(dry_run=False, triggered_by="cron")
+    return result
 
 @app.get("/api/bench/agent/stats")
 async def api_bench_agent_stats(request: Request):

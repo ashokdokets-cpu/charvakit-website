@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+{% block title %}Retention Engine - Admin{% endblock %}
+{% block content %}
+<div class="container" style="max-width: 1100px; margin: 40px auto; padding: 0 20px;">
+  <h1 style="margin-bottom: 8px;">Data Retention Engine</h1>
+  <p style="color: #666; margin-bottom: 30px;">
+    Automatic purge of stale job-pipeline data. Dry-run first, then execute.
+  </p>
+
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
+    <div style="padding: 20px; border: 1px solid #ddd; border-radius: 8px; background: #f9f9f9;">
+      <h3 style="margin-top: 0;">Step 1: Dry Run</h3>
+      <p style="color: #666; font-size: 14px;">Counts what WOULD be deleted. Nothing is deleted.</p>
+      <button onclick="dryRun()" id="dryBtn"
+              style="background: #2563eb; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">
+        Run Dry-Run
+      </button>
+    </div>
+    <div style="padding: 20px; border: 1px solid #fca5a5; border-radius: 8px; background: #fef2f2;">
+      <h3 style="margin-top: 0; color: #991b1b;">Step 2: Execute</h3>
+      <p style="color: #991b1b; font-size: 14px;">Permanently deletes rows past retention threshold.</p>
+      <button onclick="executeRun()" id="runBtn"
+              style="background: #dc2626; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">
+        Execute Deletion
+      </button>
+    </div>
+  </div>
+
+  <div id="resultBox" style="display: none; padding: 20px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 30px; background: white;">
+    <h3 style="margin-top: 0;">Result</h3>
+    <pre id="resultPre" style="background: #f5f5f5; padding: 15px; border-radius: 4px; overflow-x: auto; font-size: 13px;"></pre>
+  </div>
+
+  <h2 style="margin-top: 40px;">Retention Config</h2>
+  <table id="configTable" style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+    <thead>
+      <tr style="background: #f5f5f5; text-align: left;">
+        <th style="padding: 12px; border-bottom: 2px solid #ddd;">Key</th>
+        <th style="padding: 12px; border-bottom: 2px solid #ddd;">Retention (days)</th>
+        <th style="padding: 12px; border-bottom: 2px solid #ddd;">Min to Keep</th>
+        <th style="padding: 12px; border-bottom: 2px solid #ddd;">Enabled</th>
+        <th style="padding: 12px; border-bottom: 2px solid #ddd;">Description</th>
+        <th style="padding: 12px; border-bottom: 2px solid #ddd;">Action</th>
+      </tr>
+    </thead>
+    <tbody id="configBody"></tbody>
+  </table>
+
+  <h2 style="margin-top: 40px;">Recent Runs</h2>
+  <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+    <thead>
+      <tr style="background: #f5f5f5; text-align: left;">
+        <th style="padding: 12px; border-bottom: 2px solid #ddd;">Run ID</th>
+        <th style="padding: 12px; border-bottom: 2px solid #ddd;">Started</th>
+        <th style="padding: 12px; border-bottom: 2px solid #ddd;">Dry Run</th>
+        <th style="padding: 12px; border-bottom: 2px solid #ddd;">Status</th>
+        <th style="padding: 12px; border-bottom: 2px solid #ddd;">Deleted</th>
+      </tr>
+    </thead>
+    <tbody id="runsBody"><tr><td colspan="5" style="padding: 12px; color: #666;">Loading...</td></tr></tbody>
+  </table>
+</div>
+
+<script>
+function authHeaders() {
+  const t = localStorage.getItem('authToken') || '';
+  return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + t };
+}
+
+function showResult(obj) {
+  const box = document.getElementById('resultBox');
+  const pre = document.getElementById('resultPre');
+  pre.textContent = JSON.stringify(obj, null, 2);
+  box.style.display = 'block';
+  box.scrollIntoView({ behavior: 'smooth' });
+}
+
+async function dryRun() {
+  const btn = document.getElementById('dryBtn');
+  btn.disabled = true;
+  btn.textContent = 'Running...';
+  try {
+    const res = await fetch('/api/admin/retention/dry-run', {
+      method: 'POST', headers: authHeaders()
+    });
+    const data = await res.json();
+    showResult(data);
+  } catch (e) {
+    showResult({ status: 'error', message: String(e) });
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Run Dry-Run';
+  }
+}
+
+async function executeRun() {
+  const typed = prompt("This will PERMANENTLY delete rows. Type DELETE to confirm:");
+  if (typed !== 'DELETE') {
+    alert('Cancelled — you must type DELETE exactly.');
+    return;
+  }
+  const btn = document.getElementById('runBtn');
+  btn.disabled = true;
+  btn.textContent = 'Deleting...';
+  try {
+    const res = await fetch('/api/admin/retention/run', {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ confirm: 'DELETE' })
+    });
+    const data = await res.json();
+    showResult(data);
+    loadRuns();
+  } catch (e) {
+    showResult({ status: 'error', message: String(e) });
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Execute Deletion';
+  }
+}
+
+async function loadConfig() {
+  try {
+    const res = await fetch('/api/admin/retention/config', { headers: authHeaders() });
+    const data = await res.json();
+    const cfg = data.config || {};
+    const body = document.getElementById('configBody');
+    body.innerHTML = '';
+    for (const key of Object.keys(cfg)) {
+      const c = cfg[key];
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="padding: 12px; border-bottom: 1px solid #eee;"><code>${key}</code></td>
+        <td style="padding: 12px; border-bottom: 1px solid #eee;">
+          <input type="number" value="${c.retention_days}" min="1" data-key="${key}" data-field="days"
+                 style="width: 80px; padding: 4px; border: 1px solid #ccc; border-radius: 4px;">
+        </td>
+        <td style="padding: 12px; border-bottom: 1px solid #eee;">
+          <input type="number" value="${c.min_rows_to_keep}" min="0" data-key="${key}" data-field="min"
+                 style="width: 80px; padding: 4px; border: 1px solid #ccc; border-radius: 4px;">
+        </td>
+        <td style="padding: 12px; border-bottom: 1px solid #eee;">
+          <input type="checkbox" ${c.enabled ? 'checked' : ''} data-key="${key}" data-field="enabled">
+        </td>
+        <td style="padding: 12px; border-bottom: 1px solid #eee; color: #666; font-size: 13px;">${c.description || ''}</td>
+        <td style="padding: 12px; border-bottom: 1px solid #eee;">
+          <button onclick="saveConfig('${key}')"
+                  style="background: #10b981; color: white; padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+            Save
+          </button>
+        </td>
+      `;
+      body.appendChild(tr);
+    }
+  } catch (e) {
+    console.error('loadConfig failed', e);
+  }
+}
+
+async function saveConfig(key) {
+  const daysInput = document.querySelector(`input[data-key="${key}"][data-field="days"]`);
+  const minInput = document.querySelector(`input[data-key="${key}"][data-field="min"]`);
+  const enabledInput = document.querySelector(`input[data-key="${key}"][data-field="enabled"]`);
+  try {
+    const res = await fetch('/api/admin/retention/config', {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({
+        config_key: key,
+        retention_days: parseInt(daysInput.value, 10),
+        min_rows_to_keep: parseInt(minInput.value, 10),
+        enabled: enabledInput.checked
+      })
+    });
+    const data = await res.json();
+    if (data.status === 'success') {
+      alert('Saved: ' + key);
+    } else {
+      alert('Error: ' + (data.message || 'unknown'));
+    }
+  } catch (e) {
+    alert('Save failed: ' + e);
+  }
+}
+
+async function loadRuns() {
+  try {
+    const res = await fetch('/api/admin/retention/runs?limit=20', { headers: authHeaders() });
+    const data = await res.json();
+    const runs = data.runs || [];
+    const body = document.getElementById('runsBody');
+    if (!runs.length) {
+      body.innerHTML = '<tr><td colspan="5" style="padding: 12px; color: #666;">No runs yet.</td></tr>';
+      return;
+    }
+    body.innerHTML = runs.map(r => `
+      <tr>
+        <td style="padding: 12px; border-bottom: 1px solid #eee; font-family: monospace; font-size: 12px;">${r.run_id}</td>
+        <td style="padding: 12px; border-bottom: 1px solid #eee; font-size: 13px;">${r.started_at || '—'}</td>
+        <td style="padding: 12px; border-bottom: 1px solid #eee;">${r.dry_run ? 'Yes' : 'No'}</td>
+        <td style="padding: 12px; border-bottom: 1px solid #eee;">${r.status}</td>
+        <td style="padding: 12px; border-bottom: 1px solid #eee;">${r.total_rows_deleted ?? 0}</td>
+      </tr>
+    `).join('');
+  } catch (e) {
+    console.error('loadRuns failed', e);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadConfig();
+  loadRuns();
+});
+</script>
+{% endblock %}
