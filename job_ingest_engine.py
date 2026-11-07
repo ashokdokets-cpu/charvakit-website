@@ -18,6 +18,7 @@ Design:
 
 import os
 import json
+import hashlib
 import logging
 import requests
 from datetime import datetime, timezone
@@ -102,23 +103,48 @@ class JobIngestEngine:
     # ---------------------------------------------------------------
 
     def _is_us_eligible(self, location_text):
-        """Return True if a US H1B/OPT/H4 EAD candidate can apply."""
+        """
+        US/Canada-only filter. Returns True only if location is US, Canada,
+        remote/worldwide, or unmarked. All other regions rejected.
+        """
         if not location_text:
-            return True  # benefit of the doubt
+            return True
 
         loc = location_text.lower().strip()
 
-        # Reject if it names a non-US region ONLY (unless US also mentioned)
-        has_us = any(kw in loc for kw in US_LOCATION_KEYWORDS)
-        has_eu = any(kw in loc for kw in EU_LOCATION_KEYWORDS)
-        has_non_us = any(kw in loc for kw in NON_US_REGIONS)
+        # 1. Reject explicit non-US/CA signals (unless worldwide/remote)
+        GLOBAL = ["worldwide", "anywhere", "global", "remote"]
+        has_global = any(kw in loc for kw in GLOBAL)
 
-        if has_us:
-            return True  # US explicitly mentioned -> allow
-        if has_eu or has_non_us:
-            return False  # Region-restricted without US -> reject
+        NON_US_CA = [
+            "germany", "deutschland", "berlin", "munich", "münchen", "hamburg",
+            "frankfurt", "cologne", "köln", "düsseldorf", "stuttgart", "leipzig",
+            "uk", "united kingdom", "london", "manchester", "edinburgh",
+            "france", "paris", "lyon", "netherlands", "amsterdam", "rotterdam",
+            "spain", "madrid", "barcelona", "italy", "milan", "rome",
+            "poland", "warsaw", "krakow", "portugal", "lisbon", "porto",
+            "ireland", "dublin", "sweden", "stockholm", "norway", "oslo",
+            "denmark", "copenhagen", "finland", "helsinki", "austria", "vienna",
+            "belgium", "brussels", "switzerland", "zurich", "zürich",
+            "czech", "prague", "greece", "athens", "hungary", "budapest",
+            "europe", "eu only", "emea",
+            "india", "bangalore", "bengaluru", "mumbai", "delhi", "pune",
+            "japan", "tokyo", "china", "shanghai", "beijing",
+            "singapore", "hong kong", "uae", "dubai", "abu dhabi",
+            "israel", "tel aviv", "asia", "apac",
+            "australia", "sydney", "melbourne", "new zealand",
+            "brazil", "são paulo", "south america", "latin america", "latam",
+            "south africa", "johannesburg", "africa",
+            "mexico", "mexico city", "argentina", "buenos aires",
+            "russia", "moscow", "ukraine", "kyiv", "middle east",
+        ]
+        has_non_us_ca = any(kw in loc for kw in NON_US_CA)
 
-        # No keyword hit -> default to allow (many jobs say "Remote" only)
+        # 2. If clearly non-US/CA and no "worldwide/remote" escape → reject
+        if has_non_us_ca and not has_global:
+            return False
+
+        # 3. Otherwise allow (US, Canada, remote, worldwide, or ambiguous)
         return True
 
     # ---------------------------------------------------------------
@@ -150,7 +176,7 @@ class JobIngestEngine:
                      %s, %s, %s, %s, NOW())
                 ON CONFLICT (source, external_job_id) WHERE external_job_id IS NOT NULL DO NOTHING
             """, (
-                f"JOB-{source[:3].upper()}-{external_id[:20]}",
+                f"JOB-{source[:3].upper()}-{hashlib.md5(str(external_id).encode()).hexdigest()[:12]}",
                 job_data.get("title", "")[:200],
                 job_data.get("company", "")[:150],
                 job_data.get("job_type", "Permanent")[:50],
