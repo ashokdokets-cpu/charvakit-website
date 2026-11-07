@@ -461,35 +461,45 @@ class BenchMatchingEngine:
 
                         match_id = f"MATCH-{uuid.uuid4().hex[:12].upper()}"
 
-                        cur.execute("""
-                            INSERT INTO charvak_bench_matches (
-                                match_id, jd_id, job_id, candidate_email, candidate_id, candidate_name,
-                                match_score, skill_score, auth_score, rate_score, availability_score,
-                                matched_skills, missing_skills, source
-                            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'job_board')
-                            ON CONFLICT (jd_id, candidate_email) DO UPDATE SET
-                                match_score = EXCLUDED.match_score,
-                                skill_score = EXCLUDED.skill_score,
-                                auth_score = EXCLUDED.auth_score,
-                                rate_score = EXCLUDED.rate_score,
-                                availability_score = EXCLUDED.availability_score,
-                                matched_skills = EXCLUDED.matched_skills,
-                                missing_skills = EXCLUDED.missing_skills,
-                                computed_at = NOW()
-                        """, (
-                            match_id, jd["jd_id"], jd["jd_id"], cand["email"], cand["candidate_id"], cand["name"],
-                            scores["match_score"], scores["skill_score"], scores["auth_score"],
-                            scores["rate_score"], scores["availability_score"],
-                            json.dumps(scores["matched_skills"]),
-                            json.dumps(scores["missing_skills"]),
-                        ))
-                        if cur.rowcount == 1:
-                            result["matches_created"] += 1
-                        else:
-                            result["matches_updated"] += 1
+                        # SAVEPOINT: isolate each insert so one failure doesn't kill all
+                        cur.execute("SAVEPOINT match_insert")
+                        try:
+                            cur.execute("""
+                                INSERT INTO charvak_bench_matches (
+                                    match_id, jd_id, job_id, candidate_email, candidate_id, candidate_name,
+                                    match_score, skill_score, auth_score, rate_score, availability_score,
+                                    matched_skills, missing_skills, source
+                                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'job_board')
+                                ON CONFLICT (jd_id, candidate_email) DO UPDATE SET
+                                    match_score = EXCLUDED.match_score,
+                                    skill_score = EXCLUDED.skill_score,
+                                    auth_score = EXCLUDED.auth_score,
+                                    rate_score = EXCLUDED.rate_score,
+                                    availability_score = EXCLUDED.availability_score,
+                                    matched_skills = EXCLUDED.matched_skills,
+                                    missing_skills = EXCLUDED.missing_skills,
+                                    computed_at = NOW()
+                            """, (
+                                match_id, jd["jd_id"], jd["jd_id"], cand["email"], cand["candidate_id"], cand["name"],
+                                scores["match_score"], scores["skill_score"], scores["auth_score"],
+                                scores["rate_score"], scores["availability_score"],
+                                json.dumps(scores["matched_skills"]),
+                                json.dumps(scores["missing_skills"]),
+                            ))
+                            if cur.rowcount == 1:
+                                result["matches_created"] += 1
+                            else:
+                                result["matches_updated"] += 1
+                            cur.execute("RELEASE SAVEPOINT match_insert")
+                        except Exception as row_err:
+                            cur.execute("ROLLBACK TO SAVEPOINT match_insert")
+                            result["errors"] += 1
+                            if result["errors"] <= 3:
+                                logger.warning(f"match row error (job {jd['jd_id']}, cand {cand['email']}): {row_err}")
                     except Exception as e:
-                        logger.warning(f"match_candidates_to_jobs inner error (job {jd['jd_id']}, cand {cand['email']}): {e}")
                         result["errors"] += 1
+                        if result["errors"] <= 3:
+                            logger.warning(f"match_candidates_to_jobs inner error (job {jd['jd_id']}, cand {cand['email']}): {e}")
 
             conn.commit()
             cur.close()
