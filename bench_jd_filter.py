@@ -1,0 +1,393 @@
+"""
+Bench JD Filter - Session 108G
+
+Gates incoming JDs by 3 criteria before they enter the pipeline:
+  1. Visa compatibility (H1B / OPT / H4-EAD)
+  2. Location (US or remote-US only)
+  3. Skill overlap (>=30% of JD skills match a bench candidate)
+
+Rate is NOT a gate - used only for scoring, never rejection.
+
+Rejected JDs are logged to charvak_rejected_jds for audit.
+"""
+
+import os
+import re
+import json
+import logging
+import uuid
+from datetime import datetime
+
+logger = logging.getLogger(__name__)
+
+
+class BenchJDFilter:
+    """Filter incoming JDs by bench relevance."""
+
+    VISA_COMPAT = {
+        "H1B":    ["H1B", "Any", "Not specified", ""],
+        "OPT":    ["OPT", "H1B", "Any", "Not specified", ""],
+        "H4-EAD": ["H4-EAD", "H1B", "Any", "Not specified", ""],
+        "GC":     ["GC", "Any", "Not specified", ""],
+        "USC":    ["USC", "Any", "Not specified", ""],
+    }
+
+    NON_US = [
+        "germany", "deutschland", "berlin", "munich", "münchen", "hamburg",
+        "frankfurt", "cologne", "köln", "düsseldorf", "stuttgart", "leipzig",
+        "homeoffice", "augsburg", "dortmund", "essen", "bremen", "dresden",
+        "hanover", "nuremberg", "bonn", "karlsruhe", "mannheim", "wiesbaden",
+        "uk", "united kingdom", "london", "manchester", "edinburgh",
+        "france", "paris", "lyon", "netherlands", "amsterdam", "rotterdam",
+        "spain", "madrid", "barcelona", "italy", "milan", "rome",
+        "poland", "warsaw", "krakow", "portugal", "lisbon", "porto",
+        "ireland", "dublin", "sweden", "stockholm", "norway", "oslo",
+        "denmark", "copenhagen", "finland", "helsinki", "austria", "vienna",
+        "belgium", "brussels", "switzerland", "zurich", "zürich",
+        "india", "bangalore", "bengaluru", "mumbai", "delhi", "pune",
+        "japan", "tokyo", "china", "shanghai", "beijing",
+        "singapore", "hong kong", "uae", "dubai", "abu dhabi",
+        "israel", "tel aviv", "australia", "sydney", "melbourne",
+        "brazil", "são paulo", "mexico", "mexico city",
+        "south africa", "johannesburg", "russia", "moscow",
+    ]
+
+    US_SIGNALS = [
+        "usa", "united states", "u.s.", "us only", "us remote", "us-based",
+        "united states of america", "us-remote",
+        "canada", "ontario", "quebec", "toronto", "vancouver", "montreal",
+        "north america", "worldwide", "anywhere", "global",
+    ]
+
+    def __init__(self):
+        self._config_cache = None
+
+    def _get_config(self):
+        """Load config from DB (cached per instantiation)."""
+        if self._config_cache:
+            return self._config_cache
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT skill_overlap_min, log_rejected_jds, retention_days, rate_weight
+                FROM charvak_bench_relevance_config
+                WHERE config_id = %s
+            """, ("default",))
+            row = cur.fetchone()
+            cur.close()
+            conn.close()
+            if row:
+                self._config_cache = {
+                    "skill_overlap_min": float(row[0]),
+                    "log_rejected_jds": bool(row[1]),
+                    "retention_days": int(row[2]),
+                    "rate_weight": float(row[3]),
+                }
+            else:
+                self._config_cache = {
+                    "skill_overlap_min": 0.30,
+                    "log_rejected_jds": True,
+                    "retention_days": 30,
+                    "rate_weight": 0.10,
+                }
+        except Exception as e:
+            logger.warning(f"config load failed, using defaults: {e}")
+            self._config_cache = {
+                "skill_overlap_min": 0.30,
+                "log_rejected_jds": True,
+                "retention_days": 30,
+                "rate_weight": 0.10,
+            }
+        return self._config_cache
+
+    def set_config(self, skill_overlap_min=None, log_rejected_jds=None,
+                   retention_days=None, rate_weight=None):
+        """Update config in DB. Clears cache."""
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            updates = []
+            params = []
+            if skill_overlap_min is not None:
+                updates.append("skill_overlap_min = %s")
+                params.append(float(skill_overlap_min))
+            if log_rejected_jds is not None:
+                updates.append("log_rejected_jds = %s")
+                params.append(bool(log_rejected_jds))
+            if retention_days is not None:
+                updates.append("retention_days = %s")
+                params.append(int(retention_days))
+            if rate_weight is not None:
+                updates.append("rate_weight = %s")
+                params.append(float(rate_weight))
+            if not updates:
+                return {"status": "error", "message": "No updates provided"}
+            updates.append("updated_at = NOW()")
+            set_clause = ", ".join(updates)
+            sql = "UPDATE charvak_bench_relevance_config SET " + set_clause + " WHERE config_id = %s"
+            params.append("default")
+            cur.execute(sql, params)
+            conn.commit()
+            cur.close()
+            conn.close()
+            self._config_cache = None
+            return {"status": "success"}
+        except Exception as e:
+            logger.error(f"set_config failed: {e}")
+            return {"status": "error", "message": str(e)}
+
+    def _get_bench_candidates(self):
+        """Load all bench candidates with skills + visa + rate."""
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT candidate_id, name, email, skills, work_auth_status,
+                       rate_min, rate_max, availability
+                FROM charvak_candidates
+                WHERE bench_since IS NOT NULL
+            """)
+            rows = cur.fetchall()
+            cur.close()
+            conn.close()
+            candidates = []
+            for r in rows:
+                skills = r[3] if isinstance(r[3], list) else (json.loads(r[3]) if r[3] else [])
+                candidates.append({
+                    "candidate_id": r[0],
+                    "name": r[1],
+                    "email": r[2],
+                    "skills": skills,
+                    "work_auth_status": r[4] or "",
+                    "rate_min": float(r[5]) if r[5] else None,
+                    "rate_max": float(r[6]) if r[6] else None,
+                    "availability": r[7] or "",
+                })
+            return candidates
+        except Exception as e:
+            logger.error(f"_get_bench_candidates failed: {e}")
+            return []
+
+    def _normalize_skill(self, s):
+        """Lowercase + strip + basic synonym map."""
+        if not s:
+            return ""
+        s = str(s).lower().strip()
+        synonyms = {
+            "kubernetes": "k8s",
+            "k8s": "k8s",
+            "amazon web services": "aws",
+            "google cloud": "gcp",
+            "google cloud platform": "gcp",
+            "microsoft azure": "azure",
+            "ci/cd": "cicd",
+            "continuous integration": "cicd",
+            "continuous deployment": "cicd",
+            "javascript": "js",
+        }
+        return synonyms.get(s, s)
+
+    def _is_us_or_remote(self, location, raw_text=None):
+        """
+        Return True if location is US, Canada, or remote/worldwide.
+
+        Checks both the parsed location AND the raw text (belt-and-suspenders).
+        If parsed location is empty/ambiguous but raw text mentions a non-US
+        city/country, reject.
+        """
+        loc = (location or "").lower().strip()
+        text = (raw_text or "").lower()
+
+        # Combined search across location + raw text
+        combined = loc + " " + text
+
+        # US/global signal wins (explicit US mention)
+        if any(sig in loc for sig in self.US_SIGNALS):
+            return True
+
+        # Non-US signal in PARSED location -> reject
+        if any(kw in loc for kw in self.NON_US):
+            return False
+
+        # If location is empty or generic ("Remote", ""), check raw text
+        # but be careful: many US jobs mention "Berlin office" in boilerplate
+        # Only reject if non-US signal appears in the SUBJECT-like portion of text
+        # (first 500 chars) AND no US signal exists in text
+        if not loc or loc in ("remote", "anywhere", ""):
+            text_head = text[:500]
+            has_us_in_text = any(sig in text for sig in self.US_SIGNALS)
+            has_non_us_in_text = any(kw in text_head for kw in self.NON_US)
+            if has_non_us_in_text and not has_us_in_text:
+                return False
+
+        return True
+
+    def _extract_jd_visa(self, jd):
+        """Extract visa requirement from JD work_auth field or description."""
+        work_auth = (jd.get("work_auth_required") or "").strip()
+        if work_auth and work_auth.lower() not in ("any", "not specified", ""):
+            return work_auth
+        text = ((jd.get("raw_text") or "") + " " + (jd.get("description") or "")).lower()
+        if "no sponsorship" in text or "no h1b" in text or "us citizen only" in text:
+            return "USC"
+        if "h1b" in text or "h-1b" in text or "sponsorship available" in text:
+            return "H1B"
+        if "opt" in text:
+            return "OPT"
+        if "h4-ead" in text or "h4 ead" in text or "ead" in text:
+            return "H4-EAD"
+        return "Any"
+
+    def _is_visa_compatible(self, jd_visa, candidate_visa):
+        """
+        Check if candidate can apply to this JD.
+
+        Logic:
+        - If JD says "Any" or unspecified -> any candidate can apply
+        - Otherwise JD visa must be in candidate's allowed list
+        """
+        jd_visa = (jd_visa or "Any").strip()
+        candidate_visa = (candidate_visa or "").strip()
+        if not candidate_visa:
+            return True  # candidate visa unknown -> allow (benefit of doubt)
+        # If JD is open to any visa -> allow
+        if jd_visa.lower() in ("any", "not specified", ""):
+            return True
+        # Otherwise check exact match against candidate's allowed list
+        allowed = self.VISA_COMPAT.get(candidate_visa, ["Any", "Not specified", ""])
+        return jd_visa in allowed
+
+    def _skill_overlap_pct(self, jd_skills, candidate_skills):
+        """Percentage of JD skills candidate has."""
+        if not jd_skills:
+            return 1.0
+        jd_norm = set(self._normalize_skill(s) for s in jd_skills if s)
+        cand_norm = set(self._normalize_skill(s) for s in candidate_skills if s)
+        if not jd_norm:
+            return 1.0
+        matched = jd_norm & cand_norm
+        return len(matched) / len(jd_norm)
+
+    def is_relevant(self, jd):
+        """
+        Returns (is_relevant: bool, reason: str, best_candidate_name: str | None,
+                 best_candidate_email: str | None, best_overlap: float).
+        """
+        candidates = self._get_bench_candidates()
+        if not candidates:
+            return (True, "no_bench_candidates", None, None, 0.0)
+
+        config = self._get_config()
+        min_overlap = config["skill_overlap_min"]
+
+        # Gate 1: Location (checks both parsed location AND raw text)
+        location = jd.get("location") or jd.get("jd_location") or ""
+        raw_text = jd.get("raw_text") or jd.get("description") or ""
+        if not self._is_us_or_remote(location, raw_text):
+            self._log_rejection(jd, "non_us_location", None, 0.0)
+            return (False, "non_us_location", None, None, 0.0)
+
+        # Gate 2: Visa
+        jd_visa = self._extract_jd_visa(jd)
+        compatible_candidates = [
+            c for c in candidates
+            if self._is_visa_compatible(jd_visa, c["work_auth_status"])
+        ]
+        if not compatible_candidates:
+            self._log_rejection(jd, "visa_incompatible", None, 0.0)
+            return (False, "visa_incompatible", None, None, 0.0)
+
+        # Gate 3: Skill overlap
+        jd_skills = jd.get("skills_required") or jd.get("skills") or []
+        if isinstance(jd_skills, str):
+            jd_skills = [s.strip() for s in jd_skills.split(",") if s.strip()]
+
+        best_overlap = 0.0
+        best_cand = None
+        for c in compatible_candidates:
+            overlap = self._skill_overlap_pct(jd_skills, c["skills"])
+            if overlap > best_overlap:
+                best_overlap = overlap
+                best_cand = c
+
+        if best_overlap < min_overlap:
+            reason = f"low_skill_overlap_{best_overlap:.0%}"
+            self._log_rejection(jd, reason, best_cand["name"] if best_cand else None, best_overlap)
+            return (False, reason, best_cand["name"] if best_cand else None,
+                    best_cand["email"] if best_cand else None, best_overlap)
+
+        return (True, f"relevant_{best_overlap:.0%}",
+                best_cand["name"] if best_cand else None,
+                best_cand["email"] if best_cand else None, best_overlap)
+
+    def _log_rejection(self, jd, reason, best_candidate_hint, overlap_pct):
+        """Log rejected JD to charvak_rejected_jds for audit."""
+        config = self._get_config()
+        if not config.get("log_rejected_jds", True):
+            return
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            skills = jd.get("skills_required") or jd.get("skills") or []
+            if isinstance(skills, list):
+                skills_str = ", ".join(str(s) for s in skills[:15])
+            else:
+                skills_str = str(skills)[:500]
+            cur.execute("""
+                INSERT INTO charvak_rejected_jds
+                (rejected_id, source, raw_email_subject, raw_email_from,
+                 role_title, company, location, skills_required,
+                 work_auth_required, rate_min, rate_max, raw_json,
+                 reject_reason, best_candidate_hint, skills_overlap_pct)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                f"REJ-{uuid.uuid4().hex[:12].upper()}",
+                jd.get("source") or "unknown",
+                jd.get("raw_email_subject"),
+                jd.get("raw_email_from"),
+                jd.get("role_title") or jd.get("title"),
+                jd.get("company"),
+                jd.get("location") or jd.get("jd_location"),
+                skills_str,
+                jd.get("work_auth_required"),
+                jd.get("rate_min"),
+                jd.get("rate_max"),
+                json.dumps(jd.get("raw_json") or {}),
+                reason,
+                best_candidate_hint,
+                float(overlap_pct) if overlap_pct else 0.0,
+            ))
+            conn.commit()
+            cur.close()
+            conn.close()
+        except Exception as e:
+            logger.warning(f"_log_rejection failed: {e}")
+
+    def get_rejection_stats(self, days=7):
+        """Stats on rejected JDs in last N days."""
+        try:
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT reject_reason, COUNT(*)
+                FROM charvak_rejected_jds
+                WHERE rejected_at > NOW() - INTERVAL '%s days'
+                GROUP BY reject_reason
+                ORDER BY COUNT(*) DESC
+            """, (days,))
+            rows = cur.fetchall()
+            cur.close()
+            conn.close()
+            return {"status": "success", "stats": [{"reason": r[0], "count": r[1]} for r in rows]}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+
+# Singleton
+bench_jd_filter = BenchJDFilter()

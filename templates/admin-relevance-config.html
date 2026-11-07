@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}Relevance Config - Admin{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 900px; margin: 40px auto; padding: 0 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <div>
+            <h1 style="margin: 0; color: #1a1a2e;">Bench Relevance Filter</h1>
+            <p style="margin: 4px 0 0 0; color: #666; font-size: 14px;">
+                Controls which incoming JDs reach your dashboard. Tune here without code changes.
+            </p>
+        </div>
+        <div style="display: flex; gap: 8px;">
+            <a href="/admin/rejected-jds" style="padding: 8px 16px; background: #6c757d; color: white; text-decoration: none; border-radius: 6px; font-weight: 500; font-size: 14px;">
+                📋 View Rejected
+            </a>
+            <a href="/admin/bench-matches" style="padding: 8px 16px; background: #3ba591; color: white; text-decoration: none; border-radius: 6px; font-weight: 500; font-size: 14px;">
+                ← Bench Matches
+            </a>
+        </div>
+    </div>
+
+    <div id="status-bar" style="margin-bottom: 20px; min-height: 24px; font-size: 14px;"></div>
+
+    <div style="background: white; border-radius: 8px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+        <h3 style="margin-top: 0; color: #1a1a2e;">Skill Overlap Threshold</h3>
+        <p style="color: #666; font-size: 13px; margin-top: -8px;">
+            Minimum % of JD-required skills that must match a bench candidate.
+            Lower = more jobs pass (more noise). Higher = fewer jobs pass (more precise).
+        </p>
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <input type="range" id="skill-overlap-slider" min="0" max="100" step="5" value="30"
+                   oninput="document.getElementById('skill-overlap-value').innerText = this.value + '%'"
+                   style="flex: 1; height: 24px;">
+            <span id="skill-overlap-value" style="min-width: 60px; font-weight: 600; font-size: 18px; color: #3ba591;">30%</span>
+        </div>
+        <p style="color: #888; font-size: 12px; margin-top: 8px;">
+            <strong>Recommended:</strong> 30% (default). Lower to 20% if too many jobs rejected. Higher to 50% if too many irrelevant jobs pass.
+        </p>
+
+        <hr style="margin: 24px 0; border: none; border-top: 1px solid #eee;">
+
+        <h3 style="margin-top: 0; color: #1a1a2e;">Log Rejected JDs</h3>
+        <p style="color: #666; font-size: 13px; margin-top: -8px;">
+            When enabled, every rejected JD is written to <code>charvak_rejected_jds</code> for audit.
+            Disable to reduce DB writes (loses visibility into what was filtered).
+        </p>
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <input type="checkbox" id="log-rejected-toggle" checked style="width: 18px; height: 18px;">
+            <span>Log rejected JDs to audit table</span>
+        </label>
+
+        <hr style="margin: 24px 0; border: none; border-top: 1px solid #eee;">
+
+        <h3 style="margin-top: 0; color: #1a1a2e;">Audit Retention</h3>
+        <p style="color: #666; font-size: 13px; margin-top: -8px;">
+            How many days to keep rejected JDs in the audit table before auto-purge.
+            Session 108C (retention engine) will use this value.
+        </p>
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <input type="number" id="retention-days" min="1" max="365" value="30"
+                   style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; width: 100px;">
+            <span style="color: #666; font-size: 14px;">days</span>
+        </div>
+
+        <div style="margin-top: 32px; display: flex; gap: 12px;">
+            <button onclick="saveConfig()" style="padding: 10px 24px; background: #3ba591; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px;">
+                💾 Save Config
+            </button>
+            <button onclick="loadConfig()" style="padding: 10px 24px; background: #f5f5f7; color: #333; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 14px;">
+                ↺ Reset
+            </button>
+        </div>
+    </div>
+
+    <div style="margin-top: 32px; padding: 16px; background: #f9f9fa; border-radius: 8px; border: 1px solid #e8e8e8; font-size: 13px; color: #555;">
+        <strong>How this works:</strong>
+        <br>• Every incoming JD (email or API) passes through the filter.
+        <br>• <strong>Gate 1:</strong> Must be US, Canada, or remote/worldwide location.
+        <br>• <strong>Gate 2:</strong> Visa must be compatible with at least one bench candidate (H1B/OPT/H4-EAD).
+        <br>• <strong>Gate 3:</strong> Skill overlap must be ≥ threshold above.
+        <br>• <strong>Rate is NOT a gate</strong> — it's used only for scoring, never rejection.
+        <br>• Rejected JDs go to <a href="/admin/rejected-jds" style="color: #3ba591;">/admin/rejected-jds</a> for audit.
+    </div>
+</div>
+
+<script>
+const _token = () => localStorage.getItem('auth_token') || localStorage.getItem('token') || '';
+const _headers = () => ({
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer ' + _token(),
+});
+
+function esc(s) {
+    return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+async function loadConfig() {
+    const bar = document.getElementById('status-bar');
+    bar.innerHTML = '<span style="color: #999;">Loading…</span>';
+    try {
+        const resp = await fetch('/api/admin/relevance-config', { headers: _headers() });
+        const data = await resp.json();
+        if (data.status !== 'success') {
+            bar.innerHTML = `<span style="color: #c33;">❌ ${esc(data.message || data.error || 'unknown')}</span>`;
+            return;
+        }
+        const cfg = data.config;
+        const pct = Math.round((cfg.skill_overlap_min || 0.30) * 100);
+        document.getElementById('skill-overlap-slider').value = pct;
+        document.getElementById('skill-overlap-value').innerText = pct + '%';
+        document.getElementById('log-rejected-toggle').checked = cfg.log_rejected_jds !== false;
+        document.getElementById('retention-days').value = cfg.retention_days || 30;
+        bar.innerHTML = '<span style="color: #3ba591;">✅ Config loaded</span>';
+    } catch (e) {
+        bar.innerHTML = `<span style="color: #c33;">❌ ${esc(e.message)}</span>`;
+    }
+}
+
+async function saveConfig() {
+    const bar = document.getElementById('status-bar');
+    const overlapPct = parseInt(document.getElementById('skill-overlap-slider').value);
+    const logRejected = document.getElementById('log-rejected-toggle').checked;
+    const retentionDays = parseInt(document.getElementById('retention-days').value);
+
+    const payload = {
+        skill_overlap_min: overlapPct / 100.0,
+        log_rejected_jds: logRejected,
+        retention_days: retentionDays,
+    };
+
+    bar.innerHTML = '<span style="color: #999;">Saving…</span>';
+    try {
+        const resp = await fetch('/api/admin/relevance-config', {
+            method: 'POST',
+            headers: _headers(),
+            body: JSON.stringify(payload),
+        });
+        const data = await resp.json();
+        if (data.status === 'success') {
+            bar.innerHTML = '<span style="color: #3ba591;">✅ Config saved</span>';
+        } else {
+            bar.innerHTML = `<span style="color: #c33;">❌ ${esc(data.message || 'save failed')}</span>`;
+        }
+    } catch (e) {
+        bar.innerHTML = `<span style="color: #c33;">❌ ${esc(e.message)}</span>`;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', loadConfig);
+</script>
+{% endblock %}

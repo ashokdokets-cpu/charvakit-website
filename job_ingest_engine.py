@@ -164,6 +164,31 @@ class JobIngestEngine:
         if not external_id:
             return "error"
 
+
+        # ---- Session 108G: Bench-relevance filter ----
+        from bench_jd_filter import bench_jd_filter
+        raw_skills = job_data.get("skills", "")
+        if isinstance(raw_skills, str):
+            jd_skills = [s.strip() for s in raw_skills.split(",") if s.strip()]
+        else:
+            jd_skills = raw_skills or []
+        jd_for_filter = {
+            "role_title": job_data.get("title", ""),
+            "title": job_data.get("title", ""),
+            "company": job_data.get("company", ""),
+            "location": job_data.get("location", ""),
+            "skills_required": jd_skills,
+            "work_auth_required": job_data.get("work_auth_required", "Any"),
+            "rate_min": None,
+            "rate_max": None,
+            "raw_text": job_data.get("description", ""),
+            "source": source,
+        }
+        is_relevant, reason, best_cand, _, overlap = bench_jd_filter.is_relevant(jd_for_filter)
+        if not is_relevant:
+            return "skipped_relevance"
+        # ---- End filter ----
+
         try:
             cur.execute("""
                 INSERT INTO charvak_jobs
@@ -208,7 +233,7 @@ class JobIngestEngine:
 
         Returns: {status, fetched, inserted, skipped, errors}
         """
-        result = {"status": "success", "fetched": 0, "inserted": 0, "skipped": 0, "errors": 0}
+        result = {"status": "success", "fetched": 0, "inserted": 0, "skipped": 0, "skipped_relevance": 0, "errors": 0}
         try:
             resp = requests.get(
                 "https://remotive.com/api/remote-jobs",
@@ -254,6 +279,8 @@ class JobIngestEngine:
                     result["inserted"] += 1
                 elif r == "skipped":
                     result["skipped"] += 1
+                elif r == "skipped_relevance":
+                    result["skipped_relevance"] += 1
                 else:
                     result["errors"] += 1
 
@@ -282,7 +309,7 @@ class JobIngestEngine:
 
         Returns: {status, fetched, inserted, skipped, errors}
         """
-        result = {"status": "success", "fetched": 0, "inserted": 0, "skipped": 0, "errors": 0}
+        result = {"status": "success", "fetched": 0, "inserted": 0, "skipped": 0, "skipped_relevance": 0, "errors": 0}
         try:
             resp = requests.get(
                 "https://www.arbeitnow.com/api/job-board-api",
@@ -327,6 +354,8 @@ class JobIngestEngine:
                     result["inserted"] += 1
                 elif r == "skipped":
                     result["skipped"] += 1
+                elif r == "skipped_relevance":
+                    result["skipped_relevance"] += 1
                 else:
                     result["errors"] += 1
 

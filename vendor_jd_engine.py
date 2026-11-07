@@ -99,6 +99,36 @@ class VendorJDEngine:
             # Extract duration
             duration = self._extract_duration(jd_text)
             
+            
+            # ---- Session 108G: Bench-relevance filter ----
+            from bench_jd_filter import bench_jd_filter
+            jd_for_filter = {
+                "role_title": jd.get("title", subject[:100]),
+                "title": jd.get("title", subject[:100]),
+                "company": jd.get("company", ""),
+                "location": jd.get("location", ""),
+                "skills_required": jd.get("skills_required", []),
+                "work_auth_required": work_auth,
+                "rate_min": rate_min,
+                "rate_max": rate_max,
+                "raw_email_subject": subject,
+                "raw_email_from": from_email,
+                "raw_text": jd_text,
+                "source": "email",
+            }
+            is_relevant, reason, best_cand, best_email, overlap = bench_jd_filter.is_relevant(jd_for_filter)
+            if not is_relevant:
+                logger.info(f"JD rejected by bench filter: {reason} (role={jd_for_filter['role_title']}, best={best_cand})")
+                return {
+                    "status": "rejected_by_filter",
+                    "reason": reason,
+                    "best_candidate_hint": best_cand,
+                    "skills_overlap_pct": overlap,
+                    "role_title": jd_for_filter["role_title"],
+                }
+            logger.info(f"JD accepted by filter: {reason} (best match: {best_cand} at {overlap:.0%})")
+            # ---- End filter ----
+            
             # Store
             jd_id = self.store_jd(
                 role_title=jd.get("title", subject[:100]),
