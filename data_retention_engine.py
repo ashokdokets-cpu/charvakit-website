@@ -191,18 +191,78 @@ class RetentionEngine:
         counts = {}
         now = datetime.now(timezone.utc)
 
-        # 1) Rejected JDs
-        cfg = config.get("rejected_jds")
-        if cfg and cfg["enabled"] and self._table_exists(cur, "charvak_rejected_jds"):
-            cutoff = now - timedelta(days=cfg["retention_days"])
-            counts["rejected_jds"] = self._safe_count(
-                cur,
-                "SELECT COUNT(*) FROM charvak_rejected_jds WHERE rejected_at < %s",
-                (cutoff,),
-                "rejected_jds",
-            )
+        # 1) Rejected JDs — tiered by reason
+        if self._table_exists(cur, "charvak_rejected_jds"):
+            # Tier 1: 0% overlap — useless after 2 days
+            cfg1 = config.get("rejected_low_skill_0") or {"enabled": True, "retention_days": 2}
+            if cfg1 and cfg1.get("enabled"):
+                cutoff1 = now - timedelta(days=cfg1["retention_days"])
+                counts["rejected_low_skill_0"] = self._safe_count(
+                    cur,
+                    "SELECT COUNT(*) FROM charvak_rejected_jds WHERE rejected_at < %s AND reject_reason = 'low_skill_overlap_0%%'",
+                    (cutoff1,),
+                    "rejected_low_skill_0",
+                )
+            else:
+                counts["rejected_low_skill_0"] = 0
+
+            # Tier 2: non-US location — stable filter, purge after 3 days
+            cfg2 = config.get("rejected_non_us_location") or {"enabled": True, "retention_days": 3}
+            if cfg2 and cfg2.get("enabled"):
+                cutoff2 = now - timedelta(days=cfg2["retention_days"])
+                counts["rejected_non_us_location"] = self._safe_count(
+                    cur,
+                    "SELECT COUNT(*) FROM charvak_rejected_jds WHERE rejected_at < %s AND reject_reason = 'non_us_location'",
+                    (cutoff2,),
+                    "rejected_non_us_location",
+                )
+            else:
+                counts["rejected_non_us_location"] = 0
+
+            # Tier 3: visa mismatch — worth tuning, keep 7 days
+            cfg3 = config.get("rejected_visa_mismatch") or {"enabled": True, "retention_days": 7}
+            if cfg3 and cfg3.get("enabled"):
+                cutoff3 = now - timedelta(days=cfg3["retention_days"])
+                counts["rejected_visa_mismatch"] = self._safe_count(
+                    cur,
+                    "SELECT COUNT(*) FROM charvak_rejected_jds WHERE rejected_at < %s AND reject_reason = 'visa_incompatible'",
+                    (cutoff3,),
+                    "rejected_visa_mismatch",
+                )
+            else:
+                counts["rejected_visa_mismatch"] = 0
+
+            # Tier 4: partial overlap (1-29%) — tuning value, keep 14 days
+            cfg4 = config.get("rejected_partial_overlap") or {"enabled": True, "retention_days": 14}
+            if cfg4 and cfg4.get("enabled"):
+                cutoff4 = now - timedelta(days=cfg4["retention_days"])
+                counts["rejected_partial_overlap"] = self._safe_count(
+                    cur,
+                    "SELECT COUNT(*) FROM charvak_rejected_jds WHERE rejected_at < %s AND reject_reason LIKE 'low_skill_overlap_%%' AND reject_reason != 'low_skill_overlap_0%%'",
+                    (cutoff4,),
+                    "rejected_partial_overlap",
+                )
+            else:
+                counts["rejected_partial_overlap"] = 0
+
+            # Safety net: absolute max age
+            cfg5 = config.get("rejected_old_cutoff") or {"enabled": True, "retention_days": 30}
+            if cfg5 and cfg5.get("enabled"):
+                cutoff5 = now - timedelta(days=cfg5["retention_days"])
+                counts["rejected_old_cutoff"] = self._safe_count(
+                    cur,
+                    "SELECT COUNT(*) FROM charvak_rejected_jds WHERE rejected_at < %s",
+                    (cutoff5,),
+                    "rejected_old_cutoff",
+                )
+            else:
+                counts["rejected_old_cutoff"] = 0
         else:
-            counts["rejected_jds"] = 0
+            counts["rejected_low_skill_0"] = 0
+            counts["rejected_non_us_location"] = 0
+            counts["rejected_visa_mismatch"] = 0
+            counts["rejected_partial_overlap"] = 0
+            counts["rejected_old_cutoff"] = 0
 
         # 2) Closed/expired jobs
         cfg = config.get("jobs_closed")
@@ -323,28 +383,118 @@ class RetentionEngine:
             deleted = {}
             errors = []
 
-            # 4a) Rejected JDs
-            cfg = config.get("rejected_jds")
-            if (cfg and cfg["enabled"]
-                    and counts.get("rejected_jds", 0) > 0
-                    and self._table_exists(cur, "charvak_rejected_jds")):
-                try:
-                    cutoff = started_at - timedelta(days=cfg["retention_days"])
-                    cur.execute(
-                        "DELETE FROM charvak_rejected_jds WHERE rejected_at < %s",
-                        (cutoff,)
-                    )
-                    deleted["rejected_jds"] = cur.rowcount
-                    conn.commit()
-                except Exception as e:
-                    errors.append(f"rejected_jds: {e}")
+            # 4a) Rejected JDs — tiered by reason
+            if self._table_exists(cur, "charvak_rejected_jds"):
+                # Tier 1: 0% overlap — 2 days
+                cfg1 = config.get("rejected_low_skill_0") or {"enabled": True, "retention_days": 2}
+                if cfg1 and cfg1.get("enabled") and counts.get("rejected_low_skill_0", 0) > 0:
                     try:
-                        conn.rollback()
-                    except Exception:
-                        pass
-                    deleted["rejected_jds"] = 0
+                        cutoff1 = started_at - timedelta(days=cfg1["retention_days"])
+                        cur.execute(
+                            "DELETE FROM charvak_rejected_jds WHERE rejected_at < %s AND reject_reason = 'low_skill_overlap_0%%'",
+                            (cutoff1,)
+                        )
+                        deleted["rejected_low_skill_0"] = cur.rowcount
+                        conn.commit()
+                    except Exception as e:
+                        errors.append(f"rejected_low_skill_0: {e}")
+                        try:
+                            conn.rollback()
+                        except Exception:
+                            pass
+                        deleted["rejected_low_skill_0"] = 0
+                else:
+                    deleted["rejected_low_skill_0"] = 0
+
+                # Tier 2: non-US location — 3 days
+                cfg2 = config.get("rejected_non_us_location") or {"enabled": True, "retention_days": 3}
+                if cfg2 and cfg2.get("enabled") and counts.get("rejected_non_us_location", 0) > 0:
+                    try:
+                        cutoff2 = started_at - timedelta(days=cfg2["retention_days"])
+                        cur.execute(
+                            "DELETE FROM charvak_rejected_jds WHERE rejected_at < %s AND reject_reason = 'non_us_location'",
+                            (cutoff2,)
+                        )
+                        deleted["rejected_non_us_location"] = cur.rowcount
+                        conn.commit()
+                    except Exception as e:
+                        errors.append(f"rejected_non_us_location: {e}")
+                        try:
+                            conn.rollback()
+                        except Exception:
+                            pass
+                        deleted["rejected_non_us_location"] = 0
+                else:
+                    deleted["rejected_non_us_location"] = 0
+
+                # Tier 3: visa mismatch — 7 days
+                cfg3 = config.get("rejected_visa_mismatch") or {"enabled": True, "retention_days": 7}
+                if cfg3 and cfg3.get("enabled") and counts.get("rejected_visa_mismatch", 0) > 0:
+                    try:
+                        cutoff3 = started_at - timedelta(days=cfg3["retention_days"])
+                        cur.execute(
+                            "DELETE FROM charvak_rejected_jds WHERE rejected_at < %s AND reject_reason = 'visa_incompatible'",
+                            (cutoff3,)
+                        )
+                        deleted["rejected_visa_mismatch"] = cur.rowcount
+                        conn.commit()
+                    except Exception as e:
+                        errors.append(f"rejected_visa_mismatch: {e}")
+                        try:
+                            conn.rollback()
+                        except Exception:
+                            pass
+                        deleted["rejected_visa_mismatch"] = 0
+                else:
+                    deleted["rejected_visa_mismatch"] = 0
+
+                # Tier 4: partial overlap (1-29%) — 14 days
+                cfg4 = config.get("rejected_partial_overlap") or {"enabled": True, "retention_days": 14}
+                if cfg4 and cfg4.get("enabled") and counts.get("rejected_partial_overlap", 0) > 0:
+                    try:
+                        cutoff4 = started_at - timedelta(days=cfg4["retention_days"])
+                        cur.execute(
+                            "DELETE FROM charvak_rejected_jds WHERE rejected_at < %s AND reject_reason LIKE 'low_skill_overlap_%%' AND reject_reason != 'low_skill_overlap_0%%'",
+                            (cutoff4,)
+                        )
+                        deleted["rejected_partial_overlap"] = cur.rowcount
+                        conn.commit()
+                    except Exception as e:
+                        errors.append(f"rejected_partial_overlap: {e}")
+                        try:
+                            conn.rollback()
+                        except Exception:
+                            pass
+                        deleted["rejected_partial_overlap"] = 0
+                else:
+                    deleted["rejected_partial_overlap"] = 0
+
+                # Safety: absolute max age — 30 days
+                cfg5 = config.get("rejected_old_cutoff") or {"enabled": True, "retention_days": 30}
+                if cfg5 and cfg5.get("enabled") and counts.get("rejected_old_cutoff", 0) > 0:
+                    try:
+                        cutoff5 = started_at - timedelta(days=cfg5["retention_days"])
+                        cur.execute(
+                            "DELETE FROM charvak_rejected_jds WHERE rejected_at < %s",
+                            (cutoff5,)
+                        )
+                        deleted["rejected_old_cutoff"] = cur.rowcount
+                        conn.commit()
+                    except Exception as e:
+                        errors.append(f"rejected_old_cutoff: {e}")
+                        try:
+                            conn.rollback()
+                        except Exception:
+                            pass
+                        deleted["rejected_old_cutoff"] = 0
+                else:
+                    deleted["rejected_old_cutoff"] = 0
             else:
-                deleted["rejected_jds"] = 0
+                deleted["rejected_low_skill_0"] = 0
+                deleted["rejected_non_us_location"] = 0
+                deleted["rejected_visa_mismatch"] = 0
+                deleted["rejected_partial_overlap"] = 0
+                deleted["rejected_old_cutoff"] = 0
 
             # 4b) Closed jobs
             cfg = config.get("jobs_closed")
