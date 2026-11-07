@@ -18,9 +18,12 @@
 
     <div id="status-bar" style="margin-bottom: 20px; min-height: 24px; font-size: 14px;"></div>
 
-    <div style="display: flex; gap: 12px; margin-bottom: 20px;">
+        <div style="display: flex; gap: 12px; margin-bottom: 20px;">
         <button id="sync-all-btn" onclick="syncAll()" style="padding: 10px 20px; background: #3ba591; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
             🔄 Sync All Sources
+        </button>
+        <button id="match-all-btn" onclick="matchAll()" style="padding: 10px 20px; background: #1a73e8; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+            🎯 Match All Candidates
         </button>
     </div>
 
@@ -166,6 +169,32 @@ async function syncAll() {
         if (data.arbeitnow) { totalFetched += data.arbeitnow.fetched || 0; totalInserted += data.arbeitnow.inserted || 0; }
         bar.innerHTML = `<span style="color: #3ba591;">✅ All synced: ${totalFetched} fetched, ${totalInserted} inserted</span>`;
         await loadSources();
+    } catch (e) {
+        bar.innerHTML = `<span style="color: #c33;">❌ Failed: ${esc(e.message)}</span>`;
+    } finally {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+    }
+}
+
+async function matchAll() {
+    const bar = document.getElementById('status-bar');
+    const btn = document.getElementById('match-all-btn');
+    btn.disabled = true;
+    btn.style.opacity = '0.6';
+    bar.innerHTML = `<span style="color: #1a73e8;">⏳ Matching all candidates against all jobs… (10-30 seconds)</span>`;
+    try {
+        const resp = await fetch('/api/admin/job-sources/match-all', {
+            method: 'POST',
+            headers: _headers(),
+            body: JSON.stringify({ min_score: 0 }),
+        });
+        const data = await resp.json();
+        if (data.status === 'success') {
+            bar.innerHTML = `<span style="color: #1a73e8;">🎯 Matched: ${data.jobs_processed} jobs × candidates → ${data.matches_created} created, ${data.matches_updated} updated, ${data.errors} errors</span>`;
+        } else {
+            bar.innerHTML = `<span style="color: #c33;">❌ Match failed: ${esc(data.error || 'unknown')}</span>`;
+        }
     } catch (e) {
         bar.innerHTML = `<span style="color: #c33;">❌ Failed: ${esc(e.message)}</span>`;
     } finally {
