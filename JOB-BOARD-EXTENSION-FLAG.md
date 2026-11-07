@@ -264,3 +264,46 @@ All reversible. Zero risk to existing pipeline.
 **Created:** 2026-11-07
 **Status:** ACTIVE BUILD
 **Review:** After C1 ships (target: 2026-11-08)
+
+---
+
+## FILTER EDGE CASES — Flagged 2026-11-07 (Session 108)
+
+**Discovered during Session 107 prod verification.**
+
+The strict US/Canada filter has edge cases that let through German jobs:
+
+1. **Berlin / Remote** -> has_non_us=True (berlin), has_global=True (remote) -> allowed (WRONG)
+   A German job with remote option slips through.
+   Fix: reject if has_non_us regardless of has_global
+
+2. **Homeoffice** (German word) -> not in NON_US_CA list -> allowed (WRONG)
+   Fix: add 'homeoffice' to NON_US_CA list
+
+3. **Augsburg** -> not in NON_US_CA list -> allowed (WRONG)
+   Fix: add 20+ German cities to NON_US_CA list
+
+4. **(m/w/d) title suffix** -> German-market indicator
+   Fix: reject if title contains (m/w/d), (w/m/d), (m/f/d), (w/m/x)
+
+### Fix Plan (30 min, Session 108)
+
+In `job_ingest_engine.py::_is_us_eligible()`:
+Change logic — non-US always rejected, no 'remote' escape:
+    if has_non_us_signal:
+        return False
+
+Add to NON_US_CA: homeoffice, augsburg, dortmund, essen, bremen, dresden, hanover, nuremberg, nürnberg, bonn, münster, karlsruhe, mannheim, wiesbaden, mainz, kiel, freiburg, erfurt, rostock, kassel, potsdam, saarbrücken, trier
+
+Add title-level check in ingest_remotive / ingest_arbeitnow:
+    import re
+    if re.search(r'\(m/w/d\)|\(w/m/d\)|\(m/f/d\)|\(w/m/x\)', title, re.IGNORECASE):
+        return False  # German-market role
+
+### Impact
+Current state (2026-11-07): 90 job_board matches, ~3-5 German jobs slipped through, all score below 54 (below min_score=60 filter), not user-visible.
+After filter fix: those rows would be rejected at sync time. Cleaner data.
+Why not critical: 60 min_score filter hides these already. Fix is polish, not blocker.
+
+---
+

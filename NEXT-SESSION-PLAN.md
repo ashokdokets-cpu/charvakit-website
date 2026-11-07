@@ -339,3 +339,153 @@ Two separate products, two separate builds:
 3. In parallel: Avenoir + India outreach
 
 ---
+
+---
+
+## Session 108 — NEXT (planned 2026-11-08 or later)
+
+**Purpose:** Add Dice.com + TechFetch adapters. Fix filter edge cases.
+
+### Why
+
+Remotive + Arbeitnow are generalist global boards. Zero K8s/DevOps H1B contract density.
+PREM (K8s, AWS, Terraform, Docker) scores 25-54 on those jobs. Needs real US contract sources.
+
+Dice: 500+ Senior K8s Engineer contracts, H1B-friendly, US-only remote.
+TechFetch: bench-sales-focused board, direct fit for H1B/OPT bench.
+
+### Scope (MVP: 1 session, full: 2-3 sessions)
+
+| # | Task | Effort | Priority |
+|---|---|---|---|
+| 1 | Dice.com adapter | 4 hrs | P1 |
+| 2 | TechFetch adapter | 3 hrs | P1 |
+| 3 | Filter edge case fix | 30 min | P2 |
+| 4 | Cron automation (daily 8 AM) | 2 hrs | P2 |
+| 5 | Auto-migration hook | 1 hr | P3 |
+
+### Rules (learned from Session 107)
+
+1. Migrations MUST be applied to prod, not just committed
+2. Batch DB inserts MUST use savepoint isolation
+3. Filters MUST be stricter than expected — test with 20 sample locations
+4. API quirks need testing (Remotive uses numeric IDs, Arbeitnow uses slugs)
+
+### Do NOT build yet
+
+- Bulk CSV candidate import (Session 109)
+- Better resume with work history (Session 109)
+- Bulk submit (Session 110)
+- More sources beyond Dice + TechFetch until those prove out
+
+### Success metrics
+
+After Dice + TechFetch deployment:
+- 500+ jobs from Dice
+- 100+ US-eligible after filter
+- 20+ matches at 70+ for PREM
+- 5+ matches at 80+ for PREM
+
+If those hit: the tool becomes genuinely useful.
+If not: revisit sources or matching algorithm.
+
+---
+
+---
+
+## Session 108 — NEXT (planned 2026-11-08 or later)
+
+**Purpose:** Add Dice.com + TechFetch adapters. Fix filter edge cases.
+
+### Why
+
+Remotive + Arbeitnow are generalist global boards. Zero K8s/DevOps H1B contract density.
+PREM (K8s, AWS, Terraform, Docker) scores 25-54 on those jobs. Needs real US contract sources.
+
+Dice: 500+ Senior K8s Engineer contracts, H1B-friendly, US-only remote.
+TechFetch: bench-sales-focused board, direct fit for H1B/OPT bench.
+
+### Scope (MVP: 1 session, full: 2-3 sessions)
+
+| # | Task | Effort | Priority |
+|---|---|---|---|
+| 1 | Dice.com adapter | 4 hrs | P1 |
+| 2 | TechFetch adapter | 3 hrs | P1 |
+| 3 | Filter edge case fix | 30 min | P2 |
+| 4 | Cron automation (daily 8 AM) | 2 hrs | P2 |
+| 5 | Auto-migration hook | 1 hr | P3 |
+
+### Rules (learned from Session 107)
+
+1. Migrations MUST be applied to prod, not just committed
+2. Batch DB inserts MUST use savepoint isolation
+3. Filters MUST be stricter than expected — test with 20 sample locations
+4. API quirks need testing (Remotive uses numeric IDs, Arbeitnow uses slugs)
+
+### Do NOT build yet
+
+- Bulk CSV candidate import (Session 109)
+- Better resume with work history (Session 109)
+- Bulk submit (Session 110)
+- More sources beyond Dice + TechFetch until those prove out
+
+### Success metrics
+
+After Dice + TechFetch deployment:
+- 500+ jobs from Dice
+- 100+ US-eligible after filter
+- 20+ matches at 70+ for PREM
+- 5+ matches at 80+ for PREM
+
+If those hit: the tool becomes genuinely useful.
+If not: revisit sources or matching algorithm.
+
+---
+
+---
+
+## Session 108 — NEXT (planned 2026-11-08 or later)
+
+**Purpose:** Add Dice.com + TechFetch adapters. Fix filter edge cases.
+
+### Why
+
+Remotive + Arbeitnow are generalist global boards. Zero K8s/DevOps H1B contract density.
+PREM (K8s, AWS, Terraform, Docker) scores 25-54 on those jobs. Needs real US contract sources.
+
+Dice: 500+ Senior K8s Engineer contracts, H1B-friendly, US-only remote.
+TechFetch: bench-sales-focused board, direct fit for H1B/OPT bench.
+
+### Scope
+
+| # | Task | Effort | Priority |
+|---|---|---|---|
+| 1 | Dice.com adapter | 4 hrs | P1 |
+| 2 | TechFetch adapter | 3 hrs | P1 |
+| 3 | Filter edge case fix | 30 min | P2 |
+| 4 | Cron automation (daily 8 AM) | 2 hrs | P2 |
+| 5 | Auto-migration hook | 1 hr | P3 |
+
+### Rules (learned from Session 107)
+
+1. Migrations MUST be applied to prod, not just committed
+2. Batch DB inserts MUST use savepoint isolation
+3. Filters MUST be stricter than expected — test with 20 sample locations
+4. API quirks need testing (Remotive uses numeric IDs, Arbeitnow uses slugs)
+
+### Do NOT build yet
+
+- Bulk CSV candidate import (Session 109)
+- Better resume with work history (Session 109)
+- Bulk submit (Session 110)
+- More sources beyond Dice + TechFetch until those prove out
+
+### Success metrics
+
+After Dice + TechFetch deployment:
+- 500+ jobs from Dice
+- 100+ US-eligible after filter
+- 20+ matches at 70+ for PREM
+- 5+ matches at 80+ for PREM
+
+---
