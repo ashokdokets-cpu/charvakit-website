@@ -19436,6 +19436,109 @@ async def api_cron_send_bench_digest(request: Request):
 # Session 107 — Job Ingest Routes
 # =============================================================================
 
+# =============================================================================
+# Session 108G — Bench Relevance Filter Routes
+# =============================================================================
+
+@app.get("/api/admin/relevance-config")
+async def api_get_relevance_config(request: Request):
+    """Get current relevance filter config."""
+    require_admin(request)
+    try:
+        from bench_jd_filter import bench_jd_filter
+        config = bench_jd_filter._get_config()
+        return JSONResponse({"status": "success", "config": config})
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, request)
+
+
+@app.post("/api/admin/relevance-config")
+async def api_update_relevance_config(request: Request):
+    """Update relevance filter config."""
+    require_admin(request)
+    try:
+        data = await request.json()
+        from bench_jd_filter import bench_jd_filter
+        result = bench_jd_filter.set_config(
+            skill_overlap_min=data.get("skill_overlap_min"),
+            log_rejected_jds=data.get("log_rejected_jds"),
+            retention_days=data.get("retention_days"),
+            rate_weight=data.get("rate_weight"),
+        )
+        return JSONResponse(result)
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, request)
+
+
+@app.get("/api/admin/rejected-jds")
+async def api_list_rejected_jds(request: Request, days: int = 7, limit: int = 100):
+    """List rejected JDs for audit."""
+    require_admin(request)
+    try:
+        import psycopg2 as _pg
+        conn = _pg.connect(os.getenv("DATABASE_URL"))
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT rejected_id, source, role_title, company, location,
+                   reject_reason, best_candidate_hint, skills_overlap_pct,
+                   rejected_at
+            FROM charvak_rejected_jds
+            WHERE rejected_at > NOW() - (%s * INTERVAL '1 day')
+            ORDER BY rejected_at DESC
+            LIMIT %s
+        """, (days, limit))
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        rejected = []
+        for r in rows:
+            rejected.append({
+                "rejected_id": r[0],
+                "source": r[1],
+                "role_title": r[2],
+                "company": r[3],
+                "location": r[4],
+                "reject_reason": r[5],
+                "best_candidate_hint": r[6],
+                "skills_overlap_pct": float(r[7]) if r[7] else 0.0,
+                "rejected_at": r[8].isoformat() if r[8] else None,
+            })
+        return JSONResponse({"status": "success", "count": len(rejected), "rejected": rejected})
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, request)
+
+
+@app.get("/api/admin/rejected-jds/stats")
+async def api_rejected_jds_stats(request: Request, days: int = 7):
+    """Stats by reject reason."""
+    require_admin(request)
+    try:
+        from bench_jd_filter import bench_jd_filter
+        return JSONResponse(bench_jd_filter.get_rejection_stats(days))
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, request)
+
+
+@app.get("/admin/relevance-config", response_class=HTMLResponse)
+async def admin_relevance_config_page(request: Request):
+    """Admin UI for relevance filter config."""
+    return template_response("admin-relevance-config.html", request, "Relevance Config - Charvak")
+
+
+@app.get("/admin/rejected-jds", response_class=HTMLResponse)
+async def admin_rejected_jds_page(request: Request):
+    """Admin UI for rejected JDs audit trail."""
+    return template_response("admin-rejected-jds.html", request, "Rejected JDs - Charvak")
+
+
 @app.get("/api/admin/job-sources")
 async def api_list_job_sources(request: Request):
     """List all job ingest sources with status + counts."""
@@ -20333,6 +20436,5 @@ async def f3_export_candidate(request: Request, candidate_screen_id: str):
         return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
 
 # === END F3 ROUTES ===
-
 
 
