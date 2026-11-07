@@ -17784,3 +17784,33 @@
 | 108G | Bench-relevance filter (skills + visa + location) | ✅ Complete | 2-3 hrs | bench_jd_filter.py + /admin/relevance-config |
 | 108A | Vendor email inflow setup guide | ✅ Complete | 30 min | VENDOR-INFLOW-SETUP.md |
 | 108G | Bench-relevance filter (skills + visa + location) | ✅ Complete | 2-3 hrs | bench_jd_filter.py + /admin/relevance-config |
+---
+
+## 108H - FLAGGED (2026-11-08) - COMMITMENT.md Size Cleanup
+
+Discovered: Push of session 108A+108G commit showed warning:
+File COMMITMENT.md is 69.98 MB; larger than GitHub 50 MB recommended max
+
+Problem:
+- COMMITMENT.md has grown to ~70 MB over 108 sessions
+- Every Add-Content append accumulated content
+- No archival, no splitting, no pruning
+- Every git add COMMITMENT.md adds 70 MB to git history
+- Git clone is slow
+- Will hit GitHub 100 MB hard limit
+
+Fix plan (Session 109, ~30-45 min):
+1. Split existing COMMITMENT.md by month using session date headers
+2. Keep last 30 days in main COMMITMENT.md
+3. Move older content to _archive/COMMITMENT-YYYY-MM.md
+4. Add _archive/ to .gitignore OR use git-lfs
+5. Do NOT rewrite git history (existing 70MB blob stays in history)
+6. Future appends go to current month file only
+
+Do NOT attempt git filter-repo - rewriting history on a public repo is risky.
+
+Follow-up: Same pattern may apply to NEXT-SESSION-PLAN.md
+and other large trackers if they grow > 10 MB.
+
+---
+
