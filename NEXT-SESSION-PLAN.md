@@ -1,4 +1,4 @@
-# NEXT SESSION PLAN - Charvak
+﻿# NEXT SESSION PLAN - Charvak
 
 **Created:** 2026-10-30 (Session 101 close)
 **HEAD at creation:** a859b21
@@ -9,6 +9,49 @@
 
 | # | Task | Effort | When |
 |---|---|---|---|
+
+## Session 107 — ACTIVE BUILD (2026-11-07)
+
+**Purpose:** Job board ingestion for Bench-Placement Agent
+**Full spec:** `JOB-BOARD-EXTENSION-FLAG.md`
+
+### In-flight (this session)
+
+- C1: Remotive + Arbeitnow adapters (`job_ingest_engine.py`)
+- Migration: `charvak_jobs.source`, `external_job_id`, `raw_json` columns
+- Routes: `POST /api/admin/job-sources/sync`, `GET /api/admin/job-sources`
+- Admin UI: `templates/admin-job-sources.html`
+
+### Queued (after C1)
+
+- C2: Dice manual paste adapter (Session 108)
+- C3: TechFetch manual paste adapter (Session 109)
+- C4: Admin UI polish + cron (Session 110)
+
+### Do NOT build
+
+- LinkedIn, Indeed, Glassdoor scrapers (ToS violation)
+- Browser automation for job board scraping
+- Any feature that requires mass-scraping
+
+### Real-world testing continues (parallel track)
+
+While we build C1, user continues:
+
+- Forwarding real JDs to `jd-parser@charvakit.com`
+- Watching `/admin/bench-matches`
+- Submitting PREM/ABHINAYA/Haritha
+- Tracking replies in Gmail
+
+Real-world testing = independent track from build work.
+
+### Recently closed flags (2026-11-07)
+
+- ✅ OpenAI GPT-4o-mini retirement — env vars verified on Render (`gpt-5.4-nano` + `gpt-5.4-mini`)
+- ✅ Amrita CDC pilot — closed by user (not interested)
+- ⏳ Render Postgres password rotation — user doing Monday 2026-11-09
+
+---
 | 1 | Send Amrita email to Prof. Raj | 5 min | Monday |
 | 2 | Send 5 university one-pagers | 30 min | Monday |
 | 3 | Rotate Render Postgres password | 2 min | Weekend |

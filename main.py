@@ -19471,6 +19471,25 @@ async def admin_job_sources_page(request: Request):
     """Admin UI for job board ingestion."""
     return template_response("admin-job-sources.html", request, "Job Sources - Charvak")
 
+@app.post("/api/admin/job-sources/match-all")
+async def api_match_candidates_to_jobs(request: Request):
+    """Trigger candidate ↔ job matching for all ingested jobs."""
+    require_admin(request)
+    try:
+        from bench_matching_engine import bench_matching_engine
+        body = await request.json() if await request.body() else {}
+        min_score = int(body.get("min_score", 0))
+        limit_jobs = body.get("limit_jobs")
+        result = bench_matching_engine.match_candidates_to_jobs(
+            min_score=min_score,
+            limit_jobs=limit_jobs,
+        )
+        return JSONResponse(result)
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, request)
+
 @app.get("/api/bench/agent/stats")
 async def api_bench_agent_stats(request: Request):
     """Weekly KPI stats for the bench agent."""

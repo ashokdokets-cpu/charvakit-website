@@ -343,9 +343,174 @@ class BenchMatchingEngine:
         except Exception as e:
             return {"status": "error", "message": str(e)}
 
+    def _parse_salary_to_rate(self, salary_text: str) -> tuple:
+        """Parse '$70-85/hr' or '70000-85000' to (min, max). Never raises."""
+        if not salary_text:
+            return (None, None)
+        try:
+            import re
+            # Match two numbers separated by dash or "to"
+            nums = re.findall(r'\d+(?:,\d{3})*(?:\.\d+)?', str(salary_text))
+            if len(nums) >= 2:
+                lo = float(nums[0].replace(",", ""))
+                hi = float(nums[1].replace(",", ""))
+                # If numbers look like annual (>= 1000), divide by ~2000 for hourly
+                if lo >= 1000:
+                    lo = lo / 2000
+                    hi = hi / 2000
+                return (lo, hi)
+            elif len(nums) == 1:
+                v = float(nums[0].replace(",", ""))
+                if v >= 1000:
+                    v = v / 2000
+                return (v, v)
+        except Exception:
+            pass
+        return (None, None)
+
+    def match_candidates_to_jobs(self, min_score: int = 0, limit_jobs: int = None) -> Dict:
+        """
+        Match every bench candidate to every active US-eligible job.
+        Jobs come from charvak_jobs (Remotive, Arbeitnow, manual, etc.).
+        Results go into charvak_bench_matches with source='job_board'.
+
+        Idempotent: ON CONFLICT (jd_id, candidate_email) upserts scores.
+        Reuses score_match() — same scoring logic as vendor-JD matching.
+
+        Args:
+          min_score: Only insert matches >= this score (default 0 = insert all)
+          limit_jobs: Optional cap for testing (None = all)
+
+        Returns: {status, jobs_processed, matches_created, matches_updated, errors}
+        """
+        result = {
+            "status": "success",
+            "jobs_processed": 0,
+            "matches_created": 0,
+            "matches_updated": 0,
+            "errors": 0,
+        }
+        try:
+            conn = psycopg2.connect(os.getenv("DATABASE_URL"))
+            cur = conn.cursor()
+
+            # Fetch bench candidates once
+            cur.execute("""
+                SELECT candidate_id, name, email, skills, work_auth_status,
+                       availability, rate_min, rate_max
+                FROM charvak_candidates
+                WHERE bench_since IS NOT NULL
+            """)
+            cand_rows = cur.fetchall()
+            if not cand_rows:
+                cur.close()
+                conn.close()
+                return {"status": "success", "message": "No bench candidates", **result}
+
+            candidates = []
+            for r in cand_rows:
+                try:
+                    skills = r[3] if isinstance(r[3], list) else (json.loads(r[3]) if r[3] else [])
+                except Exception:
+                    skills = []
+                candidates.append({
+                    "candidate_id": r[0],
+                    "name": r[1],
+                    "email": r[2],
+                    "skills": skills,
+                    "work_auth_status": r[4],
+                    "availability": r[5],
+                    "rate_min": float(r[6]) if r[6] else None,
+                    "rate_max": float(r[7]) if r[7] else None,
+                })
+
+            # Fetch active US-eligible jobs
+            query = """
+                SELECT job_id, title, skills, salary, location
+                FROM charvak_jobs
+                WHERE is_us_eligible = TRUE AND status = 'active'
+                ORDER BY created_at DESC
+            """
+            if limit_jobs:
+                query += f" LIMIT {int(limit_jobs)}"
+            cur.execute(query)
+            job_rows = cur.fetchall()
+
+            for jr in job_rows:
+                result["jobs_processed"] += 1
+                # Normalize job to score_match() shape
+                raw_skills = jr[2] or ""
+                jd_skills = [s.strip().lower() for s in raw_skills.split(",") if s.strip()]
+                rate_lo, rate_hi = self._parse_salary_to_rate(jr[3])
+
+                jd = {
+                    "jd_id": jr[0],                # job_id used as jd_id for dedupe
+                    "role_title": jr[1],
+                    "skills_required": jd_skills,
+                    "rate_min": rate_lo,
+                    "rate_max": rate_hi,
+                    "work_auth_required": "H1B",   # all bench candidates are US-auth
+                    "location": jr[4] or "",
+                }
+
+                for cand in candidates:
+                    try:
+                        scores = self.score_match(jd, cand)
+                        if scores["match_score"] < min_score:
+                            continue
+
+                        match_id = f"MATCH-{uuid.uuid4().hex[:12].upper()}"
+
+                        cur.execute("""
+                            INSERT INTO charvak_bench_matches (
+                                match_id, jd_id, job_id, candidate_email, candidate_id, candidate_name,
+                                match_score, skill_score, auth_score, rate_score, availability_score,
+                                matched_skills, missing_skills, source
+                            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'job_board')
+                            ON CONFLICT (jd_id, candidate_email) DO UPDATE SET
+                                match_score = EXCLUDED.match_score,
+                                skill_score = EXCLUDED.skill_score,
+                                auth_score = EXCLUDED.auth_score,
+                                rate_score = EXCLUDED.rate_score,
+                                availability_score = EXCLUDED.availability_score,
+                                matched_skills = EXCLUDED.matched_skills,
+                                missing_skills = EXCLUDED.missing_skills,
+                                computed_at = NOW()
+                        """, (
+                            match_id, jd["jd_id"], jd["jd_id"], cand["email"], cand["candidate_id"], cand["name"],
+                            scores["match_score"], scores["skill_score"], scores["auth_score"],
+                            scores["rate_score"], scores["availability_score"],
+                            json.dumps(scores["matched_skills"]),
+                            json.dumps(scores["missing_skills"]),
+                        ))
+                        if cur.rowcount == 1:
+                            result["matches_created"] += 1
+                        else:
+                            result["matches_updated"] += 1
+                    except Exception as e:
+                        logger.warning(f"match_candidates_to_jobs inner error (job {jd['jd_id']}, cand {cand['email']}): {e}")
+                        result["errors"] += 1
+
+            conn.commit()
+            cur.close()
+            conn.close()
+        except Exception as e:
+            logger.error(f"match_candidates_to_jobs failed: {e}")
+            result["status"] = "error"
+            result["error"] = str(e)[:200]
+
+        return result
+
     def get_top_matches(self, limit: int = 20, min_score: int = 60,
-                        work_auth: str = None, jd_id: str = None) -> Dict:
-        """Return top matches sorted by score."""
+                    work_auth: str = None, jd_id: str = None) -> Dict:
+        """Return top matches sorted by score.
+
+        Handles both match sources:
+          - m.source='vendor_jd'  → joins charvak_vendor_jds (original behavior)
+          - m.source='job_board'  → joins charvak_jobs via m.job_id (new)
+        COALESCE ensures role_title, vendor_name, client_name, jd_rate_*
+        are populated regardless of source.
+        """
         try:
             conn = psycopg2.connect(os.getenv("DATABASE_URL"))
             cur = conn.cursor()
@@ -368,11 +533,20 @@ class BenchMatchingEngine:
                        m.candidate_name, m.match_score, m.skill_score, m.auth_score,
                        m.rate_score, m.availability_score, m.matched_skills,
                        m.missing_skills, m.computed_at, m.status, m.notes,
-                       j.role_title, j.vendor_name, j.vendor_contact, j.rate_min,
-                       j.rate_max, j.work_auth_required, j.client_name, j.location,
-                       c.work_auth_status, c.availability
+                       COALESCE(j.role_title, jj.title, 'Untitled Role') AS role_title,
+                       COALESCE(j.vendor_name, 'via ' || jj.source, '') AS vendor_name,
+                       COALESCE(j.vendor_contact, '') AS vendor_contact,
+                       COALESCE(j.rate_min, NULL) AS jd_rate_min,
+                       COALESCE(j.rate_max, NULL) AS jd_rate_max,
+                       COALESCE(j.work_auth_required, '') AS jd_work_auth,
+                       COALESCE(j.client_name, '') AS client_name,
+                       COALESCE(j.location, jj.location, '') AS jd_location,
+                       c.work_auth_status, c.availability,
+                       COALESCE(m.source, 'vendor_jd') AS source,
+                       m.job_id
                 FROM charvak_bench_matches m
                 LEFT JOIN charvak_vendor_jds j ON m.jd_id = j.jd_id
+                LEFT JOIN charvak_jobs jj ON m.job_id = jj.job_id
                 LEFT JOIN charvak_candidates c ON m.candidate_email = c.email
                 WHERE {where_clause}
                 ORDER BY m.match_score DESC
@@ -411,6 +585,8 @@ class BenchMatchingEngine:
                     "jd_location": r[22],
                     "candidate_work_auth": r[23],
                     "candidate_availability": r[24],
+                    "match_source": r[25],      # 'vendor_jd' or 'job_board'
+                    "job_id": r[26],            # NULL for vendor_jd, JOB-XXX for job_board
                 })
 
             return {"status": "success", "matches": matches, "total": len(matches)}

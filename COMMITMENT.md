@@ -1,3 +1,53 @@
+﻿
+## Session 107 — IN BUILD (2026-11-07) — Bench Agent Job Board Extension
+
+**Status:** ACTIVE BUILD — started 2026-11-07
+**Purpose:** Extend Bench-Placement Agent to ingest jobs from worldwide job boards (not just forwarded email)
+**Target candidates:** US H1B/OPT/H4 EAD contract-based tech professionals
+**Full spec:** See `JOB-BOARD-EXTENSION-FLAG.md`
+
+### Decisions Locked
+
+1. **Candidate focus:** US H1B/OPT/H4 EAD contract-only. Engine filters to US-eligible jobs only.
+2. **Build order:** Legal free APIs first (Remotive, Arbeitnow), then TechFetch/Dice (manual + careful).
+3. **Never build:** LinkedIn, Indeed, Glassdoor scrapers (ToS violation, IP bans).
+4. **Ingestion model:** Pull-based cron (daily). Adapter pattern per source.
+5. **Matching reuse:** Same scoring logic as vendor-JD matches; different input source.
+
+### Build Plan (4 sessions across 2 weeks)
+
+| # | Feature | Session | Effort | Status |
+|---|---|---|---|---|
+| C1 | Remotive + Arbeitnow ingestion | 107 | 3 hrs | 🔵 Building now |
+| C2 | Dice.com adapter (manual paste + scrape) | 108 | 4 hrs | ⏳ Pending |
+| C3 | TechFetch adapter | 109 | 3 hrs | ⏳ Pending |
+| C4 | Admin UI + daily cron | 110 | 3 hrs | ⏳ Pending |
+
+### Files to Create
+
+- `job_ingest_engine.py` (new, ~300 lines)
+- `migrations/20261107_job_sources.sql` (new)
+- `templates/admin-job-sources.html` (new, ~150 lines)
+
+### Files to Modify
+
+- `main.py` — 2 new routes (`/api/admin/job-sources`, `/api/admin/job-sources/sync`)
+- `bench_matching_engine.py` — new method `match_candidates_to_jobs()`
+- `charvak_jobs` table — add columns `source`, `external_job_id`, `raw_json`, `is_us_eligible`, `location`
+
+### Legal Position
+
+**Legal to build:** Remotive, Arbeitnow, Himalayas (free public APIs, attribution required)
+**Legal with care:** TechFetch, Dice (manual paste + user-initiated fetch; no bulk scraping)
+**Never build:** LinkedIn, Indeed, Glassdoor (ToS violation, IP bans)
+
+### Rollback
+
+- All schema changes use `IF NOT EXISTS` — safe to run on prod
+- New engine is standalone — `main.py` route wiring can be reverted independently
+- Zero changes to existing vendor-JD pipeline; new track runs in parallel
+
+---
 # Charvak - Commitment Tracker
 
 ## Session 101 - COMPLETE (2026-10-30) - Privacy-First Recruiter Visibility
