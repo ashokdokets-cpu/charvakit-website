@@ -19609,6 +19609,91 @@ async def retention_cron_api(request: Request):
     result = engine.run_retention(dry_run=False, triggered_by="cron")
     return result
 
+@app.post("/api/cron/ingest-all")
+async def cron_ingest_all(request: Request):
+    """Daily cron: sync all 8 job sources + run retention cleanup.
+
+    Called by Render Cron Job daily. Secured by X-Cron-Secret header.
+    Runs all 8 source adapters (RemoteOK, WWR, Jobicy, Himalayas,
+    TheMuse, HN Hiring, Remotive, Arbeitnow), each routed through
+    the 108G bench-relevance filter, then purges stale rejections.
+    """
+    secret = request.headers.get("X-Cron-Secret", "")
+    expected = os.getenv("CRON_SECRET", "")
+    if not expected or secret != expected:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    started_at = __import__("datetime").datetime.now(__import__("datetime").timezone.utc)
+
+    # Step 1: Sync all sources
+    try:
+        from job_ingest_engine import job_ingest_engine
+        ingest_result = job_ingest_engine.ingest_all()
+    except Exception as e:
+        logger.error(f"[cron ingest-all] ingest failed: {e}")
+        ingest_result = {"status": "error", "error": str(e)[:300]}
+
+    # Step 2: Retention cleanup (purges stale rejections + jobs)
+    try:
+        engine = get_retention_engine()
+        retention_result = engine.run_retention(
+            dry_run=False,
+            triggered_by="cron-after-ingest"
+        )
+    except Exception as e:
+        logger.error(f"[cron ingest-all] retention failed: {e}")
+        retention_result = {"status": "error", "error": str(e)[:300]}
+
+    # Step 3: Build summary
+    finished_at = __import__("datetime").datetime.now(__import__("datetime").timezone.utc)
+    duration_sec = round((finished_at - started_at).total_seconds(), 1)
+
+    # Sum inserts/skips across all sources
+    total_fetched = 0
+    total_inserted = 0
+    total_skipped = 0
+    total_non_tech = 0
+    total_relevance = 0
+    total_errors = 0
+    per_source = {}
+    if isinstance(ingest_result, dict):
+        for k, v in ingest_result.items():
+            if k == "status":
+                continue
+            if isinstance(v, dict):
+                per_source[k] = {
+                    "fetched": v.get("fetched", 0),
+                    "inserted": v.get("inserted", 0),
+                    "skipped": v.get("skipped", 0),
+                    "skipped_non_tech": v.get("skipped_non_tech", 0),
+                    "skipped_relevance": v.get("skipped_relevance", 0),
+                    "errors": v.get("errors", 0),
+                    "status": v.get("status", "unknown"),
+                }
+                total_fetched += v.get("fetched", 0)
+                total_inserted += v.get("inserted", 0)
+                total_skipped += v.get("skipped", 0)
+                total_non_tech += v.get("skipped_non_tech", 0)
+                total_relevance += v.get("skipped_relevance", 0)
+                total_errors += v.get("errors", 0)
+
+    return {
+        "status": "success",
+        "started_at": started_at.isoformat(),
+        "finished_at": finished_at.isoformat(),
+        "duration_sec": duration_sec,
+        "ingest": {
+            "total_fetched": total_fetched,
+            "total_inserted": total_inserted,
+            "total_skipped": total_skipped,
+            "total_skipped_non_tech": total_non_tech,
+            "total_skipped_relevance": total_relevance,
+            "total_errors": total_errors,
+            "per_source": per_source,
+        },
+        "retention": retention_result,
+    }
+
 
 @app.get("/admin/relevance-config", response_class=HTMLResponse)
 async def admin_relevance_config_page(request: Request):
