@@ -19694,6 +19694,56 @@ async def cron_ingest_all(request: Request):
         "retention": retention_result,
     }
 
+# ============================================================
+# MIGRATION STATUS ROUTES (Session 108F)
+# ============================================================
+
+@app.get("/admin/migrations", response_class=HTMLResponse)
+async def admin_migrations_page(request: Request):
+    """Admin dashboard for schema migrations."""
+    return template_response("admin-migrations.html", request, "Migrations - Charvak")
+
+
+@app.get("/api/admin/migrations/status")
+async def api_migrations_status(request: Request):
+    require_admin(request)
+    try:
+        from migration_status_engine import migration_status_engine
+        return migration_status_engine.list_migrations()
+    except Exception as e:
+        return {"status": "error", "message": str(e)[:300]}
+
+
+@app.post("/api/admin/migrations/apply")
+async def api_migrations_apply(request: Request):
+    """Apply a specific migration. Requires confirm: 'YES_APPLY'."""
+    require_admin(request)
+    try:
+        data = await request.json()
+        name = data.get("migration_name", "").strip()
+        confirm = data.get("confirm", "").strip()
+
+        if confirm != "YES_APPLY":
+            raise HTTPException(status_code=400, detail="Must pass {confirm: 'YES_APPLY'}")
+
+        if not name or "/" in name or "\\" in name or ".." in name:
+            raise HTTPException(status_code=400, detail="Invalid migration name")
+
+        from migration_status_engine import migration_status_engine
+
+        # Get caller email for audit
+        try:
+            user = require_admin(request)
+            applied_by = user.get("email", "admin") if isinstance(user, dict) else "admin"
+        except Exception:
+            applied_by = "admin"
+
+        result = migration_status_engine.apply_migration(name, applied_by=applied_by)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        return {"status": "error", "message": str(e)[:300]}
 
 @app.get("/admin/relevance-config", response_class=HTMLResponse)
 async def admin_relevance_config_page(request: Request):
