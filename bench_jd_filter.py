@@ -173,24 +173,170 @@ class BenchJDFilter:
             return []
 
     def _normalize_skill(self, s):
-        """Lowercase + strip + basic synonym map."""
+        """
+        Lowercase + strip + comprehensive synonym map (Session 108E).
+
+        Expanded to handle common tech-skill variations that caused
+        false-negative 0% rejections:
+        - AI/ML: 'artificial intelligence' -> 'ai', 'machine learning' -> 'ml'
+        - JS/TS: 'js' -> 'javascript', 'nodejs' -> 'node', 'reactjs' -> 'react'
+        - Cloud: 'amazon web services' -> 'aws', 'google cloud' -> 'gcp'
+        - Backend: 'golang' -> 'go', 'c#' -> 'csharp', '.net' -> 'dotnet'
+        - Databases: 'postgresql' -> 'postgres', 'mongo' -> 'mongodb'
+        - DevOps: 'ci/cd' -> 'cicd', 'continuous integration' -> 'cicd'
+        """
         if not s:
             return ""
         s = str(s).lower().strip()
+        # Collapse whitespace and strip punctuation
+        s = re.sub(r"\s+", " ", s)
+        s = s.strip(".,;:()[]{}")
+
         synonyms = {
+            # Container orchestration
             "kubernetes": "k8s",
             "k8s": "k8s",
-            "amazon web services": "aws",
-            "google cloud": "gcp",
-            "google cloud platform": "gcp",
-            "microsoft azure": "azure",
-            "ci/cd": "cicd",
-            "continuous integration": "cicd",
-            "continuous deployment": "cicd",
-            "javascript": "js",
-        }
-        return synonyms.get(s, s)
+            "kube": "k8s",
 
+            # ML / AI family
+            "machine learning": "ml",
+            "ml": "ml",
+            "artificial intelligence": "ai",
+            "ai": "ai",
+            "artificial intelligence / machine learning": "ml",
+            "ai/ml": "ml",
+            "ml/ai": "ml",
+            "deep learning": "ml",
+            "generative ai": "ai",
+            "genai": "ai",
+            "gen ai": "ai",
+            "llm": "llm",
+            "large language model": "llm",
+            "large language models": "llm",
+            "nlp": "nlp",
+            "natural language processing": "nlp",
+            "computer vision": "cv",
+
+            # Data science
+            "data science": "data-science",
+            "data scientist": "data-science",
+            "data engineering": "data-engineering",
+            "data engineer": "data-engineering",
+
+            # Databases
+            "postgresql": "postgres",
+            "postgres": "postgres",
+            "postgres sql": "postgres",
+            "mongo": "mongodb",
+            "mongodb": "mongodb",
+            "ms sql server": "sqlserver",
+            "microsoft sql server": "sqlserver",
+            "sql server": "sqlserver",
+            "sqlserver": "sqlserver",
+
+            # JavaScript / TypeScript
+            "javascript": "javascript",
+            "js": "javascript",
+            "ecmascript": "javascript",
+            "typescript": "typescript",
+            "ts": "typescript",
+            "nodejs": "node",
+            "node.js": "node",
+            "node js": "node",
+            "node": "node",
+
+            # Frontend
+            "reactjs": "react",
+            "react.js": "react",
+            "react js": "react",
+            "react": "react",
+            "vuejs": "vue",
+            "vue.js": "vue",
+            "vue": "vue",
+            "angularjs": "angular",
+            "angular.js": "angular",
+            "angular": "angular",
+            "nextjs": "next",
+            "next.js": "next",
+            "next": "next",
+
+            # Backend
+            "golang": "go",
+            "go": "go",
+            "go lang": "go",
+            "python3": "python",
+            "python 3": "python",
+            "python": "python",
+            "java": "java",
+            "java 8": "java",
+            "java 11": "java",
+            "java 17": "java",
+            ".net": "dotnet",
+            "dotnet": "dotnet",
+            "asp.net": "aspnet",
+            "aspnet": "aspnet",
+            "c#": "csharp",
+            "csharp": "csharp",
+            "c sharp": "csharp",
+
+            # Cloud
+            "amazon web services": "aws",
+            "aws": "aws",
+            "google cloud platform": "gcp",
+            "google cloud": "gcp",
+            "gcp": "gcp",
+            "microsoft azure": "azure",
+            "azure": "azure",
+
+            # DevOps / CI-CD
+            "docker": "docker",
+            "terraform": "terraform",
+            "ansible": "ansible",
+            "jenkins": "jenkins",
+            "ci/cd": "cicd",
+            "cicd": "cicd",
+            "ci cd": "cicd",
+            "continuous integration": "cicd",
+            "continuous delivery": "cicd",
+            "continuous deployment": "cicd",
+            "devops": "devops",
+
+            # Other
+            "graphql": "graphql",
+            "rest": "rest",
+            "rest api": "rest",
+            "restful": "rest",
+            "microservices": "microservices",
+            "micro services": "microservices",
+            "agile": "agile",
+            "scrum": "agile",
+            "kanban": "agile",
+
+            # ML/AI libraries (map to ml/ai so ML jobs match)
+            "tensorflow": "ml",
+            "pytorch": "ml",
+            "hugging face": "ml",
+            "huggingface": "ml",
+            "scikit-learn": "ml",
+            "sklearn": "ml",
+            "keras": "ml",
+            "scipy": "ml",
+            "pandas": "data-science",
+            "numpy": "data-science",
+            "jupyter": "data-science",
+            "llm engineering": "llm",
+            "prompt engineering": "llm",
+            "rag": "llm",
+            "fine-tuning": "ml",
+            "fine tuning": "ml",
+
+            # Generic dev tools often on resumes
+            "git": "git",
+            "github": "git",
+            "gitlab": "git",
+        }
+
+        return synonyms.get(s, s)
     def _is_us_or_remote(self, location, raw_text=None):
         """
         Return True if location is US, Canada, or remote/worldwide.
@@ -301,18 +447,73 @@ class BenchJDFilter:
             self._log_rejection(jd, "visa_incompatible", None, 0.0)
             return (False, "visa_incompatible", None, None, 0.0)
 
-        # Gate 3: Skill overlap
+        # Gate 3: Skill overlap (Session 108E: concentration bonus + title fallback)
         jd_skills = jd.get("skills_required") or jd.get("skills") or []
         if isinstance(jd_skills, str):
             jd_skills = [s.strip() for s in jd_skills.split(",") if s.strip()]
 
+        # Normalize JD skills once for concentration calculation
+        jd_norm = [self._normalize_skill(s) for s in jd_skills if s]
+        jd_norm_set = set(jd_norm)
+
+        # Extract role title for title-fallback check
+        jd_title = (jd.get("role_title") or jd.get("title") or "").lower().strip()
+
         best_overlap = 0.0
         best_cand = None
+        best_concentration = 0.0
+        best_title_match = False
+
         for c in compatible_candidates:
+            # 1. Base overlap
             overlap = self._skill_overlap_pct(jd_skills, c["skills"])
+
+            # 2. Concentration bonus: if top-3 JD skills are all in candidate skills,
+            #    that's a real signal even if overall % is low (e.g. Python+SQL in a
+            #    10-skill JD = 20% but those are the core skills)
+            cand_norm_set = set(self._normalize_skill(s) for s in (c.get("skills") or []) if s)
+            top_3 = list(jd_norm_set)[:3]
+            if top_3:
+                top_3_hits = sum(1 for s in top_3 if s in cand_norm_set)
+                concentration = top_3_hits / len(top_3)
+            else:
+                concentration = 0.0
+
+            # 3. Title fallback: does the JD title contain any of the candidate's skills?
+            title_match = False
+            if jd_title:
+                for cs in cand_norm_set:
+                    # Only count non-generic skills (length >= 3)
+                    if len(cs) >= 3 and cs in jd_title:
+                        title_match = True
+                        break
+                # Also check if the candidate's job_title is in JD title
+                cand_role = (c.get("job_title") or "").lower().strip()
+                if cand_role and len(cand_role) >= 4 and cand_role in jd_title:
+                    title_match = True
+
+            # Track best candidate by overlap (first pass)
             if overlap > best_overlap:
                 best_overlap = overlap
                 best_cand = c
+                best_concentration = concentration
+                best_title_match = title_match
+
+        # Augment best_overlap with bonuses for the winning candidate
+        if best_cand:
+            # Concentration bonus: if >=2/3 of top JD skills match, +15%
+            if best_concentration >= 0.66 and best_overlap < min_overlap:
+                boosted = min(best_overlap + 0.15, 1.0)
+                if boosted >= min_overlap:
+                    best_overlap = boosted
+
+            # Title fallback: if title literally contains a candidate skill
+            # AND they have at least 1 skill match, allow (this catches "ML Engineer"
+            # where candidate has PyTorch/TensorFlow but no literal 'ai' skill)
+            if best_title_match and best_overlap >= 0.10 and best_overlap < min_overlap:
+                boosted = min(best_overlap + 0.20, 1.0)
+                if boosted >= min_overlap:
+                    best_overlap = boosted
 
         if best_overlap < min_overlap:
             reason = f"low_skill_overlap_{best_overlap:.0%}"
@@ -320,7 +521,17 @@ class BenchJDFilter:
             return (False, reason, best_cand["name"] if best_cand else None,
                     best_cand["email"] if best_cand else None, best_overlap)
 
-        return (True, f"relevant_{best_overlap:.0%}",
+        # Tag the reason so we know which path allowed it
+        if best_title_match and best_concentration >= 0.66:
+            reason = f"relevant_title+conc_{best_overlap:.0%}"
+        elif best_concentration >= 0.66:
+            reason = f"relevant_conc_{best_overlap:.0%}"
+        elif best_title_match:
+            reason = f"relevant_title_{best_overlap:.0%}"
+        else:
+            reason = f"relevant_{best_overlap:.0%}"
+
+        return (True, reason,
                 best_cand["name"] if best_cand else None,
                 best_cand["email"] if best_cand else None, best_overlap)
 
