@@ -60,7 +60,8 @@ async function loginUser(e) {
     document.getElementById('loginMsg').textContent = data.status === 'success' ? '✅ Redirecting...' : '❌ ' + data.message;
     if (data.status === 'success') { 
     localStorage.setItem('charvak_token', data.token); 
-    localStorage.setItem('auth_token', data.token); 
+    localStorage.setItem('auth_token', data.token);
+    localStorage.setItem('authToken', data.token); 
      const _u = data.user || {}; const _email = (_u.email || document.getElementById('email')?.value || '').trim(); localStorage.setItem('userEmail', _email); localStorage.setItem('userName', (_u.name || (_email ? _email.split('@')[0] : '')));
       // Session 42-5c: honor ?next= (preferred) or ?redirect= (legacy).
       // Sanitize to a same-origin path — reject anything not starting with "/"
@@ -68,8 +69,7 @@ async function loginUser(e) {
       var _qp = new URLSearchParams(window.location.search);
       var _raw = _qp.get("next") || _qp.get("redirect") || "/";
       var _redirect = (_raw && _raw.charAt(0) === "/" && _raw.charAt(1) !== "/") ? _raw : "/";
-      setTimeout(() => window.location = _redirect, 500);
-setTimeout(() => window.location = redirect, 500); 
+      setTimeout(() => window.location = _redirect, 500); 
 }
 }
 async function initiateSSO(provider) {
