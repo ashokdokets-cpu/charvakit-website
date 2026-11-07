@@ -225,10 +225,10 @@ function renderMatches(matches) {
                     <div class="d-flex justify-content-between align-items-start">
                         <div style="flex: 1;">
                             <h5 class="mb-1">
-                                ${esc(m.candidate_name)} → ${esc(m.role_title || 'JD')}
+                                ${esc(m.candidate_name)} → ${esc(m.role_title || 'JD')}${m.match_source === 'job_board' ? ' <span style="display:inline-block;padding:2px 8px;background:#e3f2fd;color:#1976d2;font-size:11px;font-weight:600;border-radius:4px;margin-left:8px;vertical-align:middle;">🌐 Job Board</span>' : ''}
                             </h5>
                             <div class="text-muted small mb-2">
-                                ${esc(m.vendor_name || 'Vendor')} · ${esc(m.client_name || '')} · ${esc(m.jd_location || '')}
+                                ${esc(m.vendor_name || 'Vendor')} · ${esc(m.client_name || '')} · ${esc(m.jd_location || '')} · ${((m.jd_rate_min && m.jd_rate_max) ? '$' + m.jd_rate_min + '-$' + m.jd_rate_max + '/hr' : 'Rate: n/a')}
                             </div>
                         </div>
                         <div class="text-end">
@@ -250,7 +250,7 @@ function renderMatches(matches) {
                         </div>
                         <div class="col-md-2">
                             <strong>Rate:</strong> ${m.rate_score}/10<br>
-                            <span class="text-muted">$${m.jd_rate_min || '?'}-$${m.jd_rate_max || '?'}/hr</span>
+                            <span class="text-muted">${m.jd_rate_min && m.jd_rate_max ? ('$' + m.jd_rate_min + '-$' + m.jd_rate_max + '/hr') : (m.candidate_rate_min && m.candidate_rate_max ? ('$' + m.candidate_rate_min + '-$' + m.candidate_rate_max + '/hr (candidate)') : 'Rate: not specified')}</span>
                         </div>
                         <div class="col-md-2">
                             <strong>Avail:</strong> ${m.availability_score}/10<br>
