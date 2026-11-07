@@ -102,6 +102,69 @@ class JobIngestEngine:
     # US eligibility filter
     # ---------------------------------------------------------------
 
+    def _is_tech_role(self, title, skills):
+        """
+        Return True if this job looks like a tech role.
+        Drops nurses, accountants, wedding coordinators, etc. before
+        they hit the expensive 108G bench-relevance filter.
+
+        Matches on title keywords first (primary signal), then falls back
+        to skill tags if title is ambiguous.
+        """
+        t = (title or "").lower()
+
+        # Primary: title keywords
+        TITLE_KEYWORDS = [
+            "engineer", "developer", "programmer", "architect",
+            "devops", "sre", "site reliability", "platform",
+            "data scien", "data engineer", "data analyst",
+            "machine learning", "ml engineer", "ai engineer",
+            "artificial intelligence",
+            "backend", "frontend", "full-stack", "fullstack", "full stack",
+            "software", "web dev", "mobile dev",
+            "ios engineer", "android engineer",
+            "python", "java engineer", "javascript",
+            "golang", "go engineer", "rust engineer",
+            "react engineer", "node engineer",
+            "qa engineer", "test engineer", "sdet",
+            "systems engineer", "security engineer",
+            "cloud engineer", "infrastructure engineer",
+            "tech lead", "technical lead", "engineering manager",
+            "cto", "vp engineering", "head of engineering",
+            "computer vision", "nlp engineer", "llm",
+            "blockchain engineer", "smart contract",
+            "site reliability engineer",
+        ]
+        if any(kw in t for kw in TITLE_KEYWORDS):
+            return True
+
+        # Secondary: check skills if we got an array of tags
+        if skills:
+            if isinstance(skills, str):
+                skill_list = [s.strip().lower() for s in skills.split(",")]
+            else:
+                skill_list = [str(s).strip().lower() for s in skills]
+
+            TECH_SKILLS = {
+                "python", "java", "javascript", "typescript", "golang", "go",
+                "rust", "ruby", "php", "c++", "c#", "kotlin", "swift", "scala",
+                "react", "vue", "angular", "node", "django", "flask", "fastapi",
+                "rails", "spring", "express",
+                "aws", "gcp", "azure", "kubernetes", "docker", "terraform",
+                "ansible", "jenkins", "ci/cd",
+                "sql", "postgres", "postgresql", "mysql", "mongodb", "redis",
+                "elasticsearch", "kafka",
+                "machine learning", "ml", "ai", "deep learning",
+                "tensorflow", "pytorch", "pandas", "numpy",
+                "devops", "sre", "microservices",
+                "graphql", "rest api", "api",
+            }
+            # Need at least 2 tech-skill hits to count as tech (avoid false positives)
+            hits = sum(1 for s in skill_list if s in TECH_SKILLS)
+            if hits >= 2:
+                return True
+
+        return False
     def _is_us_eligible(self, location_text):
         """
         US/Canada-only filter. Returns True only if location is US, Canada,
@@ -378,24 +441,35 @@ class JobIngestEngine:
     # ---------------------------------------------------------------
 
     def ingest_all(self):
-        """Run all enabled sources."""
+        """Run all enabled sources (Session 108B: 8 total)."""
         return {
             "status": "success",
             "remotive": self.ingest_remotive(),
             "arbeitnow": self.ingest_arbeitnow(),
+            "remoteok": self.ingest_remoteok(),
+            "weworkremotely": self.ingest_weworkremotely(),
+            "jobicy": self.ingest_jobicy(),
+            "himalayas": self.ingest_himalayas(),
+            "themuse": self.ingest_themuse(),
+            "hn_hiring": self.ingest_hn_hiring(),
         }
 
     def sync_one(self, source_name):
-        """Trigger a single source by name."""
-        if source_name == "remotive":
-            return self.ingest_remotive()
-        elif source_name == "arbeitnow":
-            return self.ingest_arbeitnow()
-        return {"status": "error", "error": f"Unknown source: {source_name}"}
-
-    # ---------------------------------------------------------------
-    # Source registry
-    # ---------------------------------------------------------------
+        """Trigger a single source by name (Session 108B: 8 total)."""
+        dispatch = {
+            "remotive": self.ingest_remotive,
+            "arbeitnow": self.ingest_arbeitnow,
+            "remoteok": self.ingest_remoteok,
+            "weworkremotely": self.ingest_weworkremotely,
+            "jobicy": self.ingest_jobicy,
+            "himalayas": self.ingest_himalayas,
+            "themuse": self.ingest_themuse,
+            "hn_hiring": self.ingest_hn_hiring,
+        }
+        fn = dispatch.get(source_name)
+        if not fn:
+            return {"status": "error", "error": f"Unknown source: {source_name}"}
+        return fn()
 
     def list_sources(self):
         """Return all sources with their status + counts."""
@@ -470,5 +544,645 @@ class JobIngestEngine:
             logger.warning(f"_update_source_status failed: {e}")
 
 
+    # ---------------------------------------------------------------
+    # RemoteOK adapter (Session 108B)
+    # ---------------------------------------------------------------
+    # API: https://remoteok.com/api
+    # Returns JSON array; first element is legal metadata, skip it.
+    # Rate limit: be polite, 1 sync/day is plenty.
+
+    def ingest_remoteok(self, limit=100):
+        """Fetch jobs from RemoteOK. Free, no auth. Attribution required."""
+        result = {"status": "success", "fetched": 0, "inserted": 0, "skipped": 0, "skipped_relevance": 0, "errors": 0}
+        try:
+            resp = requests.get(
+                "https://remoteok.com/api",
+                headers={"User-Agent": "Charvak/1.0 (job aggregation; +https://charvakit.com)"},
+                timeout=30,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            # First element is metadata: {legal: "...", last_updated: "..."}
+            jobs = data[1:] if isinstance(data, list) and len(data) > 0 else []
+            jobs = jobs[:limit]
+            result["fetched"] = len(jobs)
+
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+
+            for raw in jobs:
+                location = raw.get("location", "") or "Remote"
+                is_eligible = self._is_us_eligible(location)
+
+                tags = raw.get("tags", []) or []
+                skills_str = ", ".join(tags[:15]) if tags else ""
+
+                # RemoteOK salary: salary_min/salary_max (sometimes strings)
+                salary_min = raw.get("salary_min")
+                salary_max = raw.get("salary_max")
+                salary_str = ""
+                if salary_min and salary_max:
+                    try:
+                        salary_str = f"${int(float(salary_min)):,} - ${int(float(salary_max)):,}"
+                    except (ValueError, TypeError):
+                        salary_str = f"{salary_min} - {salary_max}"
+                elif salary_min:
+                    salary_str = f"${salary_min}+"
+
+                job_data = {
+                    "external_job_id": str(raw.get("id", raw.get("slug", "")))[:100],
+                    "title": raw.get("position", raw.get("role", "")),
+                    "company": raw.get("company", ""),
+                    "location": location,
+                    "description": raw.get("description", ""),
+                    "job_type": "Contract",
+                    "salary": salary_str[:100],
+                    "skills": skills_str[:500],
+                    "is_us_eligible": is_eligible,
+                    "raw_json": {
+                        "url": raw.get("url", ""),
+                        "apply_url": raw.get("apply_url", ""),
+                        "date": raw.get("date", ""),
+                        "tags": tags,
+                        "logo": raw.get("company_logo", ""),
+                    },
+                }
+                # Pre-filter: skip non-tech roles before 108G runs
+                if not self._is_tech_role(raw.get("position", raw.get("role", "")), tags):
+                    result.setdefault("skipped_non_tech", 0)
+                    result["skipped_non_tech"] += 1
+                    result["fetched"] -= 1  # don't count as fetched
+                    continue
+                r = self._insert_job(conn, cur, "remoteok", job_data)
+                if r == "inserted":
+                    result["inserted"] += 1
+                elif r == "skipped":
+                    result["skipped"] += 1
+                elif r == "skipped_relevance":
+                    result["skipped_relevance"] += 1
+                else:
+                    result["errors"] += 1
+
+            conn.commit()
+            cur.close()
+            conn.close()
+            self._update_source_status("remoteok", "success", None,
+                                       result["fetched"], result["inserted"])
+        except Exception as e:
+            logger.error(f"ingest_remoteok failed: {e}")
+            result["status"] = "error"
+            result["error"] = str(e)[:200]
+            self._update_source_status("remoteok", "error", str(e)[:200], 0, 0)
+
+        return result
+
+    # ---------------------------------------------------------------
+    # We Work Remotely adapter (Session 108B)
+    # ---------------------------------------------------------------
+    # RSS feeds per category. XML parsing via xml.etree.
+    # Attribution required.
+
+    def ingest_weworkremotely(self, limit=100):
+        """Fetch jobs from WWR RSS feeds. Free, no auth. Attribution required."""
+        result = {"status": "success", "fetched": 0, "inserted": 0, "skipped": 0, "skipped_relevance": 0, "errors": 0}
+        try:
+            import xml.etree.ElementTree as ET
+
+            FEEDS = [
+                "https://weworkremotely.com/categories/remote-programming-jobs.rss",
+                "https://weworkremotely.com/categories/remote-devops-sysadmin-jobs.rss",
+                "https://weworkremotely.com/categories/remote-design-jobs.rss",
+            ]
+
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+            seen_ids = set()
+
+            for feed_url in FEEDS:
+                if result["fetched"] >= limit:
+                    break
+                try:
+                    resp = requests.get(
+                        feed_url,
+                        headers={"User-Agent": "Charvak/1.0 (job aggregation; +https://charvakit.com)"},
+                        timeout=30,
+                    )
+                    resp.raise_for_status()
+                    root = ET.fromstring(resp.content)
+                    items = root.findall(".//item")
+
+                    for item in items:
+                        if result["fetched"] >= limit:
+                            break
+                        title_raw = (item.findtext("title") or "").strip()
+                        link = (item.findtext("link") or "").strip()
+                        desc = (item.findtext("description") or "").strip()
+                        region = (item.findtext("{http://www.weworkremotely.com}region") or "").strip()
+
+                        if not title_raw or not link:
+                            continue
+
+                        # WWR title format: "Company: Job Title"
+                        if ":" in title_raw:
+                            company, title = title_raw.split(":", 1)
+                            company = company.strip()
+                            title = title.strip()
+                        else:
+                            company = ""
+                            title = title_raw
+
+                        # Use link slug as stable external id
+                        ext_id = link.rstrip("/").split("/")[-1][:100]
+                        if ext_id in seen_ids:
+                            continue
+                        seen_ids.add(ext_id)
+
+                        # Region hint for US filter
+                        location = "Remote"
+                        if region:
+                            location = f"Remote - {region}"
+
+                        is_eligible = self._is_us_eligible(location)
+                        result["fetched"] += 1
+
+                        # Strip HTML from description
+                        import re as _re
+                        desc_clean = _re.sub(r"<[^>]+>", " ", desc)[:8000]
+
+                        job_data = {
+                            "external_job_id": ext_id,
+                            "title": title[:200],
+                            "company": company[:150],
+                            "location": location[:200],
+                            "description": desc_clean,
+                            "job_type": "Contract",
+                            "salary": "",
+                            "skills": "",
+                            "is_us_eligible": is_eligible,
+                            "raw_json": {
+                                "url": link,
+                                "feed": feed_url,
+                                "region": region,
+                            },
+                        }
+                        # Pre-filter: skip non-tech roles
+                        if not self._is_tech_role(title, None):
+                            result.setdefault("skipped_non_tech", 0)
+                            result["skipped_non_tech"] += 1
+                            result["fetched"] -= 1
+                            continue
+                        r = self._insert_job(conn, cur, "weworkremotely", job_data)
+                        if r == "inserted":
+                            result["inserted"] += 1
+                        elif r == "skipped":
+                            result["skipped"] += 1
+                        elif r == "skipped_relevance":
+                            result["skipped_relevance"] += 1
+                        else:
+                            result["errors"] += 1
+                except Exception as feed_err:
+                    logger.warning(f"WWR feed failed ({feed_url}): {feed_err}")
+                    continue
+
+            conn.commit()
+            cur.close()
+            conn.close()
+            self._update_source_status("weworkremotely", "success", None,
+                                       result["fetched"], result["inserted"])
+        except Exception as e:
+            logger.error(f"ingest_weworkremotely failed: {e}")
+            result["status"] = "error"
+            result["error"] = str(e)[:200]
+            self._update_source_status("weworkremotely", "error", str(e)[:200], 0, 0)
+
+        return result
+
+    # ---------------------------------------------------------------
+    # Jobicy adapter (Session 108B)
+    # ---------------------------------------------------------------
+    # API: https://jobicy.com/api/v2/remote-jobs
+    # JSON: {jobs: [...]}, paginated via count + page. Attribution required.
+
+    def ingest_jobicy(self, limit=100):
+        """Fetch jobs from Jobicy. Free, no auth. Attribution required."""
+        result = {"status": "success", "fetched": 0, "inserted": 0, "skipped": 0, "skipped_relevance": 0, "errors": 0}
+        try:
+            # Jobicy: /api/v2/remote-jobs?count=X&geo=usa
+            resp = requests.get(
+                "https://jobicy.com/api/v2/remote-jobs",
+                params={"count": min(limit, 50), "geo": "usa"},
+                headers={"User-Agent": "Charvak/1.0 (job aggregation; +https://charvakit.com)"},
+                timeout=30,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            jobs = data.get("jobs", [])
+            result["fetched"] = len(jobs)
+
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+
+            for raw in jobs:
+                location = raw.get("jobGeo", "") or "Remote"
+                is_eligible = self._is_us_eligible(location)
+
+                # Jobicy returns jobIndustry and jobType as arrays
+                industries = raw.get("jobIndustry", []) or []
+                types = raw.get("jobType", []) or []
+                skills_str = ", ".join(industries[:10]) if industries else ""
+
+                salary_min = raw.get("annualSalaryMin")
+                salary_max = raw.get("annualSalaryMax")
+                currency = raw.get("salaryCurrency", "USD")
+                salary_str = ""
+                if salary_min and salary_max:
+                    salary_str = f"{currency} {salary_min} - {salary_max}"
+
+                job_data = {
+                    "external_job_id": str(raw.get("id", ""))[:100],
+                    "title": raw.get("jobTitle", ""),
+                    "company": raw.get("companyName", ""),
+                    "location": location,
+                    "description": raw.get("jobDescription", ""),
+                    "job_type": (types[0] if types else "Contract")[:50],
+                    "salary": salary_str[:100],
+                    "skills": skills_str[:500],
+                    "is_us_eligible": is_eligible,
+                    "raw_json": {
+                        "url": raw.get("url", ""),
+                        "jobLevel": raw.get("jobLevel", ""),
+                        "jobExcerpt": raw.get("jobExcerpt", ""),
+                        "pubDate": raw.get("pubDate", ""),
+                        "companyLogo": raw.get("companyLogo", ""),
+                    },
+                }
+                # Pre-filter: skip non-tech roles
+                if not self._is_tech_role(raw.get("jobTitle", ""), industries):
+                    result.setdefault("skipped_non_tech", 0)
+                    result["skipped_non_tech"] += 1
+                    result["fetched"] -= 1
+                    continue
+                r = self._insert_job(conn, cur, "jobicy", job_data)
+                if r == "inserted":
+                    result["inserted"] += 1
+                elif r == "skipped":
+                    result["skipped"] += 1
+                elif r == "skipped_relevance":
+                    result["skipped_relevance"] += 1
+                else:
+                    result["errors"] += 1
+
+            conn.commit()
+            cur.close()
+            conn.close()
+            self._update_source_status("jobicy", "success", None,
+                                       result["fetched"], result["inserted"])
+        except Exception as e:
+            logger.error(f"ingest_jobicy failed: {e}")
+            result["status"] = "error"
+            result["error"] = str(e)[:200]
+            self._update_source_status("jobicy", "error", str(e)[:200], 0, 0)
+
+        return result
+
+    # ---------------------------------------------------------------
+    # Himalayas adapter (Session 108B)
+    # ---------------------------------------------------------------
+    # API: https://himalayas.app/jobs/api
+    # JSON: {jobs: [...]}. Free, no auth. Attribution required.
+
+    def ingest_himalayas(self, limit=100):
+        """Fetch jobs from Himalayas. Free, no auth. Attribution required."""
+        result = {"status": "success", "fetched": 0, "inserted": 0, "skipped": 0, "skipped_relevance": 0, "errors": 0}
+        try:
+            resp = requests.get(
+                "https://himalayas.app/jobs/api",
+                params={"limit": min(limit, 100)},
+                headers={"User-Agent": "Charvak/1.0 (job aggregation; +https://charvakit.com)"},
+                timeout=30,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            jobs = data.get("jobs", [])
+            result["fetched"] = len(jobs)
+
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+
+            for raw in jobs:
+                location = raw.get("locationRestrictions", [{}])
+                if isinstance(location, list) and location:
+                    loc_str = ", ".join(str(x) for x in location if x)
+                else:
+                    loc_str = "Remote"
+                is_eligible = self._is_us_eligible(loc_str)
+
+                categories = raw.get("categories", []) or []
+                skills_str = ", ".join(categories[:10]) if categories else ""
+
+                min_sal = raw.get("minSalary")
+                max_sal = raw.get("maxSalary")
+                salary_str = ""
+                if min_sal and max_sal:
+                    salary_str = f"${min_sal:,} - ${max_sal:,}"
+
+                job_data = {
+                    "external_job_id": str(raw.get("guid", raw.get("id", "")))[:100],
+                    "title": raw.get("title", ""),
+                    "company": raw.get("companyName", ""),
+                    "location": loc_str[:200],
+                    "description": raw.get("description", ""),
+                    "job_type": raw.get("employmentType", "Contract")[:50],
+                    "salary": salary_str[:100],
+                    "skills": skills_str[:500],
+                    "is_us_eligible": is_eligible,
+                    "raw_json": {
+                        "url": raw.get("applicationLink", raw.get("guid", "")),
+                        "companyLogo": raw.get("companyLogo", ""),
+                        "pubDate": raw.get("pubDate", ""),
+                        "categories": categories,
+                    },
+                }
+                # Pre-filter: skip non-tech roles
+                if not self._is_tech_role(raw.get("title", ""), categories):
+                    result.setdefault("skipped_non_tech", 0)
+                    result["skipped_non_tech"] += 1
+                    result["fetched"] -= 1
+                    continue
+                r = self._insert_job(conn, cur, "himalayas", job_data)
+                if r == "inserted":
+                    result["inserted"] += 1
+                elif r == "skipped":
+                    result["skipped"] += 1
+                elif r == "skipped_relevance":
+                    result["skipped_relevance"] += 1
+                else:
+                    result["errors"] += 1
+
+            conn.commit()
+            cur.close()
+            conn.close()
+            self._update_source_status("himalayas", "success", None,
+                                       result["fetched"], result["inserted"])
+        except Exception as e:
+            logger.error(f"ingest_himalayas failed: {e}")
+            result["status"] = "error"
+            result["error"] = str(e)[:200]
+            self._update_source_status("himalayas", "error", str(e)[:200], 0, 0)
+
+        return result
+
+    # ---------------------------------------------------------------
+    # The Muse adapter (Session 108B)
+    # ---------------------------------------------------------------
+    # API: https://www.themuse.com/api/public/jobs
+    # JSON: {results: [...], page_count: N}. Free, no auth needed for
+    # public search. Attribution required.
+
+    def ingest_themuse(self, limit=100):
+        """Fetch jobs from The Muse. Free, no auth. Attribution required."""
+        result = {"status": "success", "fetched": 0, "inserted": 0, "skipped": 0, "skipped_relevance": 0, "errors": 0}
+        try:
+            resp = requests.get(
+                "https://www.themuse.com/api/public/jobs",
+                params={"page": 1, "category": "Software Engineering", "level": "Mid Level"},
+                headers={"User-Agent": "Charvak/1.0 (job aggregation; +https://charvakit.com)"},
+                timeout=30,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            jobs = data.get("results", [])
+            result["fetched"] = len(jobs)
+
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+
+            for raw in jobs:
+                locations = raw.get("locations", [])
+                # The Muse locations: [{name: "Remote"}, {name: "New York, NY"}]
+                loc_names = [l.get("name", "") for l in locations if l.get("name")] if locations else []
+                loc_str = ", ".join(loc_names) if loc_names else "Remote"
+                is_eligible = self._is_us_eligible(loc_str)
+
+                categories = raw.get("categories", []) or []
+                skills_str = ", ".join(c.get("name", "") for c in categories[:10] if c.get("name"))
+
+                company = (raw.get("company") or {}).get("name", "")
+                levels = raw.get("levels", []) or []
+                job_type = "Contract"
+                if levels:
+                    job_type = (levels[0].get("name") or "Contract")[:50]
+
+                # Description is HTML; strip tags
+                import re as _re
+                desc_html = raw.get("contents", "")
+                desc_clean = _re.sub(r"<[^>]+>", " ", desc_html)[:8000]
+
+                job_data = {
+                    "external_job_id": str(raw.get("id", ""))[:100],
+                    "title": raw.get("name", ""),
+                    "company": company,
+                    "location": loc_str[:200],
+                    "description": desc_clean,
+                    "job_type": job_type,
+                    "salary": "",
+                    "skills": skills_str[:500],
+                    "is_us_eligible": is_eligible,
+                    "raw_json": {
+                        "url": (raw.get("refs") or {}).get("landing_page", ""),
+                        "publication_date": raw.get("publication_date", ""),
+                        "company_logo": (raw.get("company") or {}).get("logo", ""),
+                        "categories": [c.get("name", "") for c in categories],
+                        "levels": [l.get("name", "") for l in levels],
+                    },
+                }
+                # Pre-filter: skip non-tech roles
+                if not self._is_tech_role(raw.get("name", ""), [c.get("name", "") for c in categories]):
+                    result.setdefault("skipped_non_tech", 0)
+                    result["skipped_non_tech"] += 1
+                    result["fetched"] -= 1
+                    continue
+                r = self._insert_job(conn, cur, "themuse", job_data)
+                if r == "inserted":
+                    result["inserted"] += 1
+                elif r == "skipped":
+                    result["skipped"] += 1
+                elif r == "skipped_relevance":
+                    result["skipped_relevance"] += 1
+                else:
+                    result["errors"] += 1
+
+            conn.commit()
+            cur.close()
+            conn.close()
+            self._update_source_status("themuse", "success", None,
+                                       result["fetched"], result["inserted"])
+        except Exception as e:
+            logger.error(f"ingest_themuse failed: {e}")
+            result["status"] = "error"
+            result["error"] = str(e)[:200]
+            self._update_source_status("themuse", "error", str(e)[:200], 0, 0)
+
+        return result
+
+    # ---------------------------------------------------------------
+    # HN Who is Hiring adapter (Session 108B)
+    # ---------------------------------------------------------------
+    # Uses Algolia HN API to fetch the latest "Ask HN: Who is hiring?"
+    # thread, then parses top-level comments as JDs.
+    # No auth. Attribution required (link back to HN comment).
+
+    def ingest_hn_hiring(self, limit=100):
+        """Fetch comments from the latest 'Ask HN: Who is hiring?' thread."""
+        result = {"status": "success", "fetched": 0, "inserted": 0, "skipped": 0, "skipped_relevance": 0, "errors": 0}
+        try:
+            import re as _re
+
+            # Step 1: Find the latest "Ask HN: Who is hiring?" story by author whoishiring
+            search_resp = requests.get(
+                "https://hn.algolia.com/api/v1/search_by_date",
+                params={"query": "Ask HN: Who is hiring?", "tags": "story", "hitsPerPage": 5},
+                timeout=30,
+            )
+            search_resp.raise_for_status()
+            search_data = search_resp.json()
+            hits = search_data.get("hits", [])
+            # Filter to entries actually authored by "whoishiring" and titled correctly
+            candidates = [h for h in hits if h.get("author") == "whoishiring"]
+            if not candidates:
+                raise ValueError("No 'whoishiring' thread found in recent stories")
+            latest = candidates[0]
+            story_id = latest.get("objectID")
+
+            # Step 2: Fetch the story's top-level comments
+            story_resp = requests.get(
+                f"https://hn.algolia.com/api/v1/items/{story_id}",
+                timeout=30,
+            )
+            story_resp.raise_for_status()
+            story_data = story_resp.json()
+            comments = story_data.get("children", [])
+
+            # Limit and filter deleted/dead
+            comments = [c for c in comments if c.get("text") and not c.get("deleted")][:limit]
+            result["fetched"] = len(comments)
+
+            from database import db
+            conn = db.get_connection()
+            cur = conn.cursor()
+
+            for idx, comment in enumerate(comments):
+                text_html = comment.get("text", "")
+                # Strip HTML tags
+                text_clean = _re.sub(r"<[^>]+>", " ", text_html)
+                text_clean = _re.sub(r"\s+", " ", text_clean).strip()
+
+                if not text_clean:
+                    continue
+
+                # HN whoishiring posts have a common format:
+                # "Company | Role | Location | ..."  or a paragraph.
+                # Heuristic: parse the first line for company/title/location
+                first_line = text_clean.split("\n")[0][:300]
+                parts = [p.strip() for p in first_line.split("|")]
+
+                company = ""
+                title = ""
+                location = ""
+
+                if len(parts) >= 2:
+                    company = parts[0][:150]
+                    title = parts[1][:200]
+                    # Find a location-like part
+                    for p in parts[2:5]:
+                        p_lower = p.lower()
+                        if any(k in p_lower for k in ["remote", "usa", "us", "united states", "new york", "san francisco", "seattle", "austin", "boston", "anywhere", "worldwide", "global"]):
+                            location = p[:200]
+                            break
+                    if not location:
+                        location = "Remote"
+
+                # If we couldn't parse company/title, skip — no useful JD
+                if not title or len(title) < 3:
+                    # Try to salvage first 100 chars as title
+                    if len(text_clean) > 20:
+                        title = text_clean[:200]
+                        company = "HN Who is Hiring"
+                        location = "Remote"
+                    else:
+                        result["errors"] += 1
+                        continue
+
+                is_eligible = self._is_us_eligible(location)
+
+                # Extract skills heuristically: common tech keywords in the text
+                tech_keywords = [
+                    "python", "java", "javascript", "typescript", "go", "rust",
+                    "ruby", "php", "c++", "c#", "kotlin", "swift", "scala",
+                    "react", "vue", "angular", "node", "django", "flask",
+                    "aws", "gcp", "azure", "kubernetes", "docker", "terraform",
+                    "sql", "postgres", "mysql", "mongodb", "redis",
+                    "machine learning", "ml", "ai", "data science",
+                ]
+                found_skills = []
+                lower_text = text_clean.lower()
+                for kw in tech_keywords:
+                    if kw in lower_text:
+                        found_skills.append(kw)
+                skills_str = ", ".join(found_skills[:15])
+
+                ext_id = f"hn-{comment.get('id', idx)}"
+
+                job_data = {
+                    "external_job_id": ext_id[:100],
+                    "title": title[:200],
+                    "company": company[:150],
+                    "location": location[:200],
+                    "description": text_clean[:8000],
+                    "job_type": "Contract",
+                    "salary": "",
+                    "skills": skills_str[:500],
+                    "is_us_eligible": is_eligible,
+                    "raw_json": {
+                        "hn_comment_id": comment.get("id"),
+                        "hn_url": f"https://news.ycombinator.com/item?id={comment.get('id')}",
+                        "author": comment.get("author", ""),
+                        "created_at": comment.get("created_at", ""),
+                        "thread_id": story_id,
+                    },
+                }
+                # Pre-filter: skip non-tech roles
+                if not self._is_tech_role(title, found_skills):
+                    result.setdefault("skipped_non_tech", 0)
+                    result["skipped_non_tech"] += 1
+                    result["fetched"] -= 1
+                    continue
+                r = self._insert_job(conn, cur, "hn_hiring", job_data)
+                if r == "inserted":
+                    result["inserted"] += 1
+                elif r == "skipped":
+                    result["skipped"] += 1
+                elif r == "skipped_relevance":
+                    result["skipped_relevance"] += 1
+                else:
+                    result["errors"] += 1
+
+            conn.commit()
+            cur.close()
+            conn.close()
+            self._update_source_status("hn_hiring", "success", None,
+                                       result["fetched"], result["inserted"])
+        except Exception as e:
+            logger.error(f"ingest_hn_hiring failed: {e}")
+            result["status"] = "error"
+            result["error"] = str(e)[:200]
+            self._update_source_status("hn_hiring", "error", str(e)[:200], 0, 0)
+
+        return result
 # Singleton
 job_ingest_engine = JobIngestEngine()
