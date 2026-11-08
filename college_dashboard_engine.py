@@ -92,15 +92,15 @@ class CollegeDashboardEngine:
             cur = conn.cursor()
             query = """
                 SELECT 
-                    COALESCE(ci.student_name, c.name) as name,
+                    ci.student_name as name,
                     ci.student_email as email,
                     cc.score,
                     COALESCE(cc.role_title, ci.target_role) as role,
                     cc.cert_id,
                     ci.status
                 FROM charvak_college_invites ci
-                LEFT JOIN charvak_candidates c ON ci.student_email = c.email
-                LEFT JOIN charvak_career_certifications cc ON ci.student_email = cc.email
+                LEFT JOIN charvak_career_certifications cc 
+                    ON ci.student_email = cc.email
                 WHERE ci.institution_name = %s
                 ORDER BY cc.score DESC NULLS LAST, ci.student_name ASC
                 LIMIT %s
