@@ -188,8 +188,7 @@ class CollegeDashboardEngine:
         try:
             cur = conn.cursor()
             # Find students who haven't been sent an invite yet
-            cur.execute("""
-                SELECT student_email, student_name, target_role 
+            cur.execute("""                SELECT student_email, student_name, target_role, target_industry, target_level 
                 FROM charvak_college_invites 
                 WHERE institution_name = %s AND last_email_sent_at IS NULL
             """, (institution_name,))
@@ -205,8 +204,33 @@ class CollegeDashboardEngine:
                 # Generate a secure magic token
                 token = secrets.token_urlsafe(32)
                 
-                role_param = urllib.parse.quote(role)
-                magic_link = f"{base_url}/student/magic-login?token={token}&role={role_param}"
+                industry = s[3] or ""
+                level = s[4] or ""
+                
+                # Map CSV inputs to exact catalog keys
+                industry_map = {
+                    "technology": "IT / Tech (general)",
+                    "tech": "IT / Tech (general)",
+                    "it": "IT / Tech (general)",
+                    "software": "IT / Tech (general)",
+                }
+                catalog_industry = industry_map.get(industry.lower().strip(), "IT / Tech (general)")
+
+                level_map = {
+                    "mid": "Mid-level",
+                    "mid level": "Mid-level",
+                    "mid-level": "Mid-level",
+                    "junior": "Junior",
+                    "senior": "Senior",
+                }
+                catalog_level = level_map.get(level.lower().strip(), "Mid-level")
+
+                params = [
+                    f"role={urllib.parse.quote(role)}",
+                    f"industry={urllib.parse.quote(catalog_industry)}",
+                    f"level={urllib.parse.quote(catalog_level)}"
+                ]
+                magic_link = f"{base_url}/student/magic-login?token={token}&" + "&".join(params)
                 
                 # Update DB first so we don't double-send
                 cur.execute("""
@@ -257,10 +281,10 @@ class CollegeDashboardEngine:
                 try:
                     cur.execute("""
                         INSERT INTO charvak_college_invites 
-                        (invite_id, institution_name, student_email, student_name, target_role, status)
-                        VALUES (%s, %s, %s, %s, %s, 'pending')
+                        (invite_id, institution_name, student_email, student_name, target_role, target_industry, target_level, status)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, 'pending')
                         ON CONFLICT (institution_name, student_email) DO NOTHING
-                    """, (invite_id, institution_name, email, s.get("name", ""), s.get("role", "")))
+                    """, (invite_id, institution_name, email, s.get("name", ""), s.get("role", ""), s.get("industry", ""), s.get("level", "")))
                     if cur.rowcount > 0:
                         inserted += 1
                     else:
