@@ -92,10 +92,10 @@ class CollegeDashboardEngine:
             cur = conn.cursor()
             query = """
                 SELECT 
-                    COALESCE(c.name, ci.student_name) as name,
-                    COALESCE(c.email, ci.student_email) as email,
+                    COALESCE(ci.student_name, c.name) as name,
+                    ci.student_email as email,
                     cc.score,
-                    cc.role_title as role,
+                    COALESCE(cc.role_title, ci.target_role) as role,
                     cc.cert_id,
                     ci.status
                 FROM charvak_college_invites ci
