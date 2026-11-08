@@ -213,20 +213,9 @@ class CollegeDashboardEngine:
                 """, (token, institution_name, email))
                 conn.commit()
                 
-                # Send the email
-                subject = f"Action Required: Verify your skills for {institution_name}"
-                html_content = f"""
-                <h3>Hi {name},</h3>
-                <p>Your college ({institution_name}) has partnered with Charvak to help you get placed.</p>
-                <p>Click the link below to take your 20-minute technical assessment for the role of <b>{role}</b>. 
-                Once you pass, you get a cryptographically verified certificate to share with recruiters.</p>
-                <p><a href="{magic_link}" style="padding: 10px 20px; background: #0d9488; color: white; text-decoration: none; border-radius: 5px;">Start My Assessment</a></p>
-                <p>This link logs you in automatically. No password needed.</p>
-                """
-                
+                # Send the email using the new wrapper method
                 try:
-                    # Assuming enhanced_email.send_email(to, subject, body) is your method
-                    enhanced_email.send_email(email, subject, html_content)
+                    enhanced_email.send_bulk_invite(email, name, institution_name, role, magic_link)
                     sent_count += 1
                 except Exception as email_err:
                     logger.error(f"[bulk_invite] Email failed for {email}: {email_err}")

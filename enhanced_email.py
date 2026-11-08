@@ -412,6 +412,30 @@ class EnhancedEmailSystem:
             return {"status": "success"}
         except Exception as e:
             return {"status": "error", "message": str(e)}
+    def send_bulk_invite(self, email, name, institution, role, magic_link):
+        """Send a magic-link invite to a student for a college assessment."""
+        subject = f"Action Required: Verify your skills for {institution}"
+        body_html = f"""
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #0d9488;">Hi {name},</h2>
+            <p>Your college (<strong>{institution}</strong>) has partnered with Charvak to help you get placed.</p>
+            <p>Click the button below to take your 20-minute technical assessment for the role of <strong>{role}</strong>.</p>
+            <p>Once you pass, you will receive a cryptographically verified certificate to share with recruiters.</p>
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{magic_link}" style="background-color: #0d9488; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Start My Assessment</a>
+            </div>
+            <p style="color: #666; font-size: 14px;">This link logs you in automatically. No password needed.</p>
+            <p style="color: #666; font-size: 14px;">If you did not expect this email, you can safely ignore it.</p>
+            <p>- Charvak IT Consulting</p>
+        </div>
+        """
+        try:
+            result = self.email_engine.send_email(email, subject, body_html, is_html=True)
+            self.sent_emails.append({"type": "bulk_invite", "email": email, "institution": institution})
+            return result
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
 
 
 enhanced_email = EnhancedEmailSystem()

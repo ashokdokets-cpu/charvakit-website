@@ -42,6 +42,7 @@
   <div style="display: flex; gap: 12px; margin-bottom: 20px; align-items: center; flex-wrap: wrap;">
     <button onclick="showUpload()" style="padding: 10px 20px; background: #3ba591; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">+ Upload Student CSV</button>
     <button onclick="exportCSV()" style="padding: 10px 20px; background: white; color: #3ba591; border: 1px solid #3ba591; border-radius: 6px; cursor: pointer; font-weight: 600;">⬇ Export Verified Shortlist</button>
+    <button onclick="sendInvites()" style="padding: 10px 20px; background: #f59e0b; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">✉ Send Invite Emails</button>
     <span id="actionMsg" style="font-size: 14px; color: #666;"></span>
   </div>
 
@@ -176,6 +177,27 @@ async function uploadCSV() {
     }
   };
   reader.readAsText(file);
+}
+
+async function sendInvites() {
+  const inst = _getInstitution();
+  const msg = document.getElementById('actionMsg');
+  msg.textContent = 'Sending invites... (this may take a minute)';
+  
+  try {
+    const res = await fetch('/api/college/send-invites', {
+      method: 'POST', headers: _headers(),
+      body: JSON.stringify({ institution: inst })
+    });
+    const data = await res.json();
+    if (data.status === 'success') {
+      msg.textContent = `Success: ${data.sent} emails sent, ${data.failed} failed.`;
+    } else {
+      msg.textContent = 'Error: ' + (data.message || 'Unknown');
+    }
+  } catch (e) {
+    msg.textContent = 'Network error.';
+  }
 }
 
 function exportCSV() {
