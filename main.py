@@ -19745,6 +19745,64 @@ async def api_migrations_apply(request: Request):
     except Exception as e:
         return {"status": "error", "message": str(e)[:300]}
 
+# ============================================================
+# COLLEGE / TPO DASHBOARD ROUTES (Session 109)
+# ============================================================
+
+from college_dashboard_engine import college_dashboard_engine
+
+@app.get("/college/dashboard", response_class=HTMLResponse)
+async def college_dashboard_page(request: Request):
+    """TPO Placement Readiness Dashboard."""
+    # require_admin(request)  # Uncomment if you want to restrict access during testing
+    return template_response("college-dashboard.html", request, "College Placement Dashboard - Charvak")
+
+@app.get("/api/college/stats")
+async def api_college_stats(request: Request, institution: str):
+    try:
+        stats = college_dashboard_engine.get_batch_stats(institution)
+        rankings = college_dashboard_engine.get_student_rankings(institution)
+        return {
+            "status": "success",
+            "stats": stats.get("stats", {}),
+            "students": rankings.get("students", [])
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)[:200]}
+
+@app.post("/api/college/upload")
+async def api_college_upload(request: Request):
+    try:
+        data = await request.json()
+        inst = data.get("institution", "Unknown")
+        students = data.get("students", [])
+        return college_dashboard_engine.bulk_invite(inst, students)
+    except Exception as e:
+        return {"status": "error", "message": str(e)[:200]}
+
+@app.get("/api/college/export")
+async def api_college_export(request: Request, institution: str):
+    """Export a CSV of verified students."""
+    rankings = college_dashboard_engine.get_student_rankings(institution, limit=1000)
+    students = rankings.get("students", [])
+    
+    import io
+    import csv
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Name", "Email", "Role", "Score (%)", "Readiness Status", "Certificate URL"])
+    
+    for s in students:
+        if s.get("readiness") in ["Ready", "Upskill"]:
+            cert_url = f"https://www.charvakit.com/readiness/{s['cert_id']}" if s.get('cert_id') else ""
+            writer.writerow([s['name'], s['email'], s.get('role', ''), s.get('score', ''), s['readiness'], cert_url])
+            
+    return Response(
+        content=output.getvalue(),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename=Verified_{institution.replace(' ', '_')}.csv"}
+    )
+
 @app.get("/admin/relevance-config", response_class=HTMLResponse)
 async def admin_relevance_config_page(request: Request):
     """Admin UI for relevance filter config."""
