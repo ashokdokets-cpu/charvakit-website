@@ -129,7 +129,8 @@ class CollegeDashboardEngine:
                     try:
                         cur.execute("""
                             SELECT score FROM charvak_career_assessments
-                            WHERE email = %s ORDER BY assessment_date DESC LIMIT 1
+                            WHERE email = %s AND status = 'completed'
+                            ORDER BY started_at DESC LIMIT 1
                         """, (email,))
                         res = cur.fetchone()
                         if res and res[0] is not None:
