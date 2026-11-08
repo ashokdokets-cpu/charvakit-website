@@ -85,51 +85,72 @@ class CollegeDashboardEngine:
             return {"status": "error", "message": str(e)}
 
     def get_student_rankings(self, institution_name, limit=100):
-        """Get ranked list of students."""
+        """Get ranked list of students. Safely falls back to invites only."""
         conn = db.get_pooled_connection()
         if not conn: return {"status": "error"}
         try:
             cur = conn.cursor()
-            query = """
-                SELECT 
-                    ci.student_name as name,
-                    ci.student_email as email,
-                    cc.score,
-                    COALESCE(cc.role_title, ci.target_role) as role,
-                    cc.cert_id,
-                    ci.status
-                FROM charvak_college_invites ci
-                LEFT JOIN charvak_career_certifications cc 
-                    ON ci.student_email = cc.email
-                WHERE ci.institution_name = %s
-                ORDER BY cc.score DESC NULLS LAST, ci.student_name ASC
+            
+            # Step 1: Get all invites for this institution
+            cur.execute("""
+                SELECT student_name, student_email, target_role, status
+                FROM charvak_college_invites
+                WHERE institution_name = %s
+                ORDER BY student_name ASC
                 LIMIT %s
-            """
-            cur.execute(query, (institution_name, limit))
-            rows = cur.fetchall()
+            """, (institution_name, limit))
+            invites = cur.fetchall()
             
             students = []
-            for r in rows:
-                score = float(r[2]) if r[2] else None
-                status = "Ready" if score and score >= 80 else "Upskill" if score and score >= 60 else "Not Ready" if score else "Pending"
+            for inv in invites:
+                name = inv[0]
+                email = inv[1]
+                role = inv[2]
+                status = inv[3]
+                
+                # Step 2: Try to find a certificate for this email (safely)
+                score = None
+                cert_id = None
+                try:
+                    cur.execute("""
+                        SELECT score, cert_id FROM charvak_career_certifications
+                        WHERE email = %s ORDER BY created_at DESC LIMIT 1
+                    """, (email,))
+                    cert = cur.fetchone()
+                    if cert:
+                        score = float(cert[0]) if cert[0] is not None else None
+                        cert_id = cert[1]
+                except Exception as cert_err:
+                    # Ignore cert lookup errors, just leave them as null
+                    pass
+                
+                readiness = "Pending"
+                if score is not None:
+                    if score >= 80: readiness = "Ready"
+                    elif score >= 60: readiness = "Upskill"
+                    else: readiness = "Not Ready"
+                
                 students.append({
-                    "name": r[0],
-                    "email": r[1],
+                    "name": name,
+                    "email": email,
                     "score": round(score, 1) if score else None,
-                    "role": r[3],
-                    "cert_id": r[4],
-                    "invite_status": r[5],
-                    "readiness": status
+                    "role": role,
+                    "cert_id": cert_id,
+                    "invite_status": status,
+                    "readiness": readiness
                 })
+            
+            # Sort: highest scores first, then pending
+            students.sort(key=lambda x: (x["score"] is None, -(x["score"] or 0)))
             
             cur.close()
             db.release_pooled_connection(conn)
             return {"status": "success", "students": students}
         except Exception as e:
             logger.error(f"[college_dashboard] get_student_rankings failed: {e}")
-            db.release_pooled_connection(conn)
+            try: db.release_pooled_connection(conn)
+            except: pass
             return {"status": "error", "message": str(e)}
-
     def bulk_invite(self, institution_name, students):
         """Insert bulk invites. Students is a list of dicts: {name, email, role}"""
         conn = db.get_pooled_connection()
