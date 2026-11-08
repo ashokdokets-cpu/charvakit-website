@@ -16,11 +16,11 @@
 |---|---|---|---|---|
 | 108A | Vendor email inflow setup guide | Complete | 30 min | VENDOR-INFLOW-SETUP.md |
 | 108G | Bench-relevance filter (skills + visa + location) | Complete | 2-3 hrs | bench_jd_filter.py + /admin/relevance-config |
-| 108B | Add 5-6 API sources | Pending | 4-6 hrs | Extended job_ingest_engine.py |
-| 108C | Retention engine + purge logic | Pending | 2-3 hrs | data_retention_engine.py |
-| 108D | Cron automation (daily sync + cleanup) | Pending | 2 hrs | Render cron + endpoints |
-| 108E | Filter edge case fix | Pending | 30 min | job_ingest_engine.py patch |
-| 108F | Auto-migration hook | Pending | 1 hr | main.py startup hook |
+| 108B | Add 5-6 API sources | Complete | 4-6 hrs | Extended job_ingest_engine.py |
+| 108C | Retention engine + purge logic | Complete | 2-3 hrs | data_retention_engine.py |
+| 108D | Cron automation (daily sync + cleanup) | Complete | 2 hrs | Render cron + endpoints |
+| 108E | Filter edge case fix | Complete | 30 min | job_ingest_engine.py patch |
+| 108F | Auto-migration hook | Complete | 1 hr | main.py startup hook |
 
 ### Session 108 Shipped
 
@@ -83,4 +83,4 @@ Sessions 1-107 are preserved in git commit messages. Highlights:
 
 ---
 
-**Session 108 next:** 108B, 108C, 108D, 108E, 108F
+**Session 108: COMPLETE (7/7 buildable tasks shipped)**
