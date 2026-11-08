@@ -7877,7 +7877,7 @@ async def client_dashboard_page(request: Request):
     return template_response("client-dashboard.html", request, "Client Dashboard - Charvak Micro-Internships")
 
 @app.get("/student/magic-login")
-async def student_magic_login(request: Request, token: str, role: str = ""):
+async def student_magic_login(request: Request, token: str, role: str = "", industry: str = "", level: str = ""):
     """Auto-login a student via a secure magic link from a college invite."""
     from database import db
     import secrets
@@ -7923,11 +7923,16 @@ async def student_magic_login(request: Request, token: str, role: str = ""):
         """, (auth_token, email, expires_at))
         conn.commit()
         
-        # 5. Set the cookie and redirect to the assessment page (with role pre-fill)
+        # 5. Set the cookie and redirect to the assessment page (with role, industry, level pre-fill)
+        import urllib.parse
         redirect_url = "/ai-assessment"
-        if role:
-            import urllib.parse
-            redirect_url += f"?role={urllib.parse.quote(role)}"
+        params = []
+        if role: params.append(f"role={urllib.parse.quote(role)}")
+        if industry: params.append(f"industry={urllib.parse.quote(industry)}")
+        if level: params.append(f"level={urllib.parse.quote(level)}")
+        
+        if params:
+            redirect_url += "?" + "&".join(params)
         
         redirect = RedirectResponse(url=redirect_url, status_code=302)
         redirect.set_cookie(
