@@ -30,14 +30,14 @@
 - Files: templates/ai-assessment.html, templates/jd-assessment.html
 - No external blockers
 
-**Option B - 108E follow-up (~30 min)**
-- Add "hugging face" -> ai alias
-- Lower title-match length threshold from 3 to 2
-- Improves ML Inference job pass rate (edge case)
+**Option B - 108E follow-up (~30 min)** ✅ COMPLETE (commit 98f4245)
+- ✅ Add "hugging face" -> ai alias
+- ✅ Lower title-match length threshold from 3 to 2
+- ✅ Improves ML Inference job pass rate (edge case)
 
-**Option C - Migration backfill (~5 min)**
-- Mark all 129 old migrations as applied in tracker
-- Cosmetic only — dashboard works without it
+**Option C - Migration backfill (~5 min)** ⚠️ DEFERRED (cosmetic, not urgent)
+- Defer: mark all 129 old migrations as applied in tracker
+- Cosmetic only — dashboard works without it, verify UI loads
 
 ---
 
