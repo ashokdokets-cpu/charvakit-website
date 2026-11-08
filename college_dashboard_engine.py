@@ -85,7 +85,7 @@ class CollegeDashboardEngine:
             return {"status": "error", "message": str(e)}
 
     def get_student_rankings(self, institution_name, limit=100):
-        """Get ranked list of students. Safely falls back to invites only."""
+        """Get ranked list of students. Pulls from assessments if no cert exists."""
         conn = db.get_pooled_connection()
         if not conn: return {"status": "error"}
         try:
@@ -108,9 +108,10 @@ class CollegeDashboardEngine:
                 role = inv[2]
                 status = inv[3]
                 
-                # Step 2: Try to find a certificate for this email (safely)
                 score = None
                 cert_id = None
+                
+                # Step 2: Try to find a CERTIFICATE first
                 try:
                     cur.execute("""
                         SELECT score, cert_id FROM charvak_career_certifications
@@ -120,9 +121,21 @@ class CollegeDashboardEngine:
                     if cert:
                         score = float(cert[0]) if cert[0] is not None else None
                         cert_id = cert[1]
-                except Exception as cert_err:
-                    # Ignore cert lookup errors, just leave them as null
+                except Exception:
                     pass
+                
+                # Step 3: If no cert, check raw assessment results (like the 20% score)
+                if score is None:
+                    try:
+                        cur.execute("""
+                            SELECT score FROM charvak_assessment_results
+                            WHERE email = %s ORDER BY created_at DESC LIMIT 1
+                        """, (email,))
+                        res = cur.fetchone()
+                        if res and res[0] is not None:
+                            score = float(res[0])
+                    except Exception:
+                        pass
                 
                 readiness = "Pending"
                 if score is not None:
@@ -133,7 +146,7 @@ class CollegeDashboardEngine:
                 students.append({
                     "name": name,
                     "email": email,
-                    "score": round(score, 1) if score else None,
+                    "score": round(score, 1) if score is not None else None,
                     "role": role,
                     "cert_id": cert_id,
                     "invite_status": status,
