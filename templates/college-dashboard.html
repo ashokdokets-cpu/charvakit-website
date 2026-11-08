@@ -98,6 +98,10 @@ async function loadDashboard() {
     document.getElementById('statReady').textContent = data.stats.ready;
 
     const students = data.students || [];
+    
+    // Debugging log
+    console.log("Data received from backend:", data);
+
     if (students.length === 0) {
       body.innerHTML = '<tr><td colspan="5" style="padding: 30px; text-align: center; color: #999;">No students uploaded yet. Click "Upload Student CSV" to start.</td></tr>';
       return;
