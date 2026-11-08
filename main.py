@@ -7877,7 +7877,7 @@ async def client_dashboard_page(request: Request):
     return template_response("client-dashboard.html", request, "Client Dashboard - Charvak Micro-Internships")
 
 @app.get("/student/magic-login")
-async def student_magic_login(request: Request, token: str):
+async def student_magic_login(request: Request, token: str, role: str = ""):
     """Auto-login a student via a secure magic link from a college invite."""
     from database import db
     import secrets
@@ -7916,15 +7916,20 @@ async def student_magic_login(request: Request, token: str):
         auth_token = secrets.token_hex(32)
         expires_at = datetime.now() + timedelta(days=30)
         
-        # 4. Save to the auth_tokens table (so require_auth works)
+                # 4. Save to the auth_tokens table
         cur.execute("""
             INSERT INTO charvak_auth_tokens (token, email, expires_at) 
             VALUES (%s, %s, %s)
         """, (auth_token, email, expires_at))
         conn.commit()
         
-        # 5. Set the cookie and redirect to the assessment page
-        redirect = RedirectResponse(url="/ai-assessment", status_code=302)
+        # 5. Set the cookie and redirect to the assessment page (with role pre-fill)
+        redirect_url = "/ai-assessment"
+        if role:
+            import urllib.parse
+            redirect_url += f"?role={urllib.parse.quote(role)}"
+        
+        redirect = RedirectResponse(url=redirect_url, status_code=302)
         redirect.set_cookie(
             key="charvak_auth_token", 
             value=auth_token, 

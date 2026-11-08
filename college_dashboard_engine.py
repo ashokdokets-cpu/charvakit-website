@@ -6,6 +6,7 @@ Session 109
 import uuid
 import logging
 import secrets
+import urllib.parse
 from datetime import datetime, timezone
 from database import db
 
@@ -203,7 +204,9 @@ class CollegeDashboardEngine:
                 
                 # Generate a secure magic token
                 token = secrets.token_urlsafe(32)
-                magic_link = f"{base_url}/student/magic-login?token={token}"
+                
+                role_param = urllib.parse.quote(role)
+                magic_link = f"{base_url}/student/magic-login?token={token}&role={role_param}"
                 
                 # Update DB first so we don't double-send
                 cur.execute("""
