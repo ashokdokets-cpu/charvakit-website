@@ -315,12 +315,20 @@ class BenchJDFilter:
             # ML/AI libraries (map to ml/ai so ML jobs match)
             "tensorflow": "ml",
             "pytorch": "ml",
-            "hugging face": "ml",
-            "huggingface": "ml",
+            "hugging face": "ai",
+            "huggingface": "ai",
             "scikit-learn": "ml",
             "sklearn": "ml",
             "keras": "ml",
             "scipy": "ml",
+            "graphics processing unit": "ml",
+            "graphics processing units": "ml",
+            "gpu": "ml",
+            "gpus": "ml",
+            "cuda": "ml",
+            "tensorrt": "ml",
+            "vllm": "ml",
+            "sglang": "ml",
             "pandas": "data-science",
             "numpy": "data-science",
             "jupyter": "data-science",
@@ -484,7 +492,7 @@ class BenchJDFilter:
             if jd_title:
                 for cs in cand_norm_set:
                     # Only count non-generic skills (length >= 3)
-                    if len(cs) >= 3 and cs in jd_title:
+                    if len(cs) >= 2 and cs in jd_title:
                         title_match = True
                         break
                 # Also check if the candidate's job_title is in JD title
