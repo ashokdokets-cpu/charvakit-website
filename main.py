@@ -19845,6 +19845,16 @@ async def api_college_stats(request: Request, institution: str):
     except Exception as e:
         return {"status": "error", "message": str(e)[:200]}
 
+@app.post("/api/college/send-invites")
+async def api_college_send_invites(request: Request):
+    try:
+        data = await request.json()
+        inst = data.get("institution", "Unknown")
+        # Call the engine method we just built
+        return college_dashboard_engine.send_bulk_invites(inst)
+    except Exception as e:
+        return {"status": "error", "message": str(e)[:200]}
+
 @app.post("/api/college/upload")
 async def api_college_upload(request: Request):
     try:
