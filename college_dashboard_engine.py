@@ -40,56 +40,46 @@ class CollegeDashboardEngine:
             logger.warning(f"[college_dashboard] init failed: {e}")
 
     def get_batch_stats(self, institution_name):
-        """Get aggregated stats for a college."""
-        conn = db.get_pooled_connection()
-        if not conn: return {"status": "error", "message": "DB unavailable"}
+        """Get aggregated stats by reusing the rankings logic to avoid SQL bugs."""
         try:
-            cur = conn.cursor()
-            
-            # 1. Invited count
-            cur.execute("SELECT COUNT(*) FROM charvak_college_invites WHERE institution_name = %s", (institution_name,))
-            invited = cur.fetchone()[0]
+            # We fetch the rankings first (which we know works perfectly)
+            rankings = self.get_student_rankings(institution_name, limit=5000)
+            if rankings.get("status") != "success":
+                return {"status": "error", "message": "Failed to fetch rankings"}
 
-            # 2. Assessed count & average score (pull from invites + assessments)
-            query = """
-                WITH student_scores AS (
-                    SELECT 
-                        ci.student_email,
-                        COALESCE(
-                            (SELECT score FROM charvak_career_certifications WHERE email = ci.student_email LIMIT 1),
-                            (SELECT score FROM charvak_career_assessments WHERE email = ci.student_email AND status = 'completed' ORDER BY started_at DESC LIMIT 1),
-                            (SELECT score FROM charvak_assessment_results WHERE email = ci.student_email ORDER BY id DESC LIMIT 1)
-                        ) as score
-                    FROM charvak_college_invites ci
-                    WHERE ci.institution_name = %s
-                )
-                SELECT 
-                    COUNT(*) FILTER (WHERE score IS NOT NULL) as assessed_count,
-                    COALESCE(AVG(score), 0) as avg_score,
-                    COUNT(*) FILTER (WHERE score >= 80) as ready_count,
-                    COUNT(*) FILTER (WHERE score >= 60 AND score < 80) as upskill_count,
-                    COUNT(*) FILTER (WHERE score < 60) as not_ready_count
-                FROM student_scores
-            """
-            cur.execute(query, (institution_name,))
-            row = cur.fetchone()
+            students = rankings.get("students", [])
             
-            stats = {
-                "invited": invited,
-                "assessed": row[0] or 0,
-                "avg_score": round(float(row[1]), 1) if row[1] else 0,
-                "ready": row[2] or 0,
-                "upskill": row[3] or 0,
-                "not_ready": row[4] or 0
+            invited = len(students)
+            assessed = 0
+            total_score = 0
+            ready = 0
+            upskill = 0
+            not_ready = 0
+
+            for s in students:
+                if s.get("score") is not None:
+                    assessed += 1
+                    total_score += s["score"]
+                    if s["readiness"] == "Ready": ready += 1
+                    elif s["readiness"] == "Upskill": upskill += 1
+                    elif s["readiness"] == "Not Ready": not_ready += 1
+
+            avg_score = round(total_score / assessed, 1) if assessed > 0 else 0
+
+            return {
+                "status": "success",
+                "stats": {
+                    "invited": invited,
+                    "assessed": assessed,
+                    "avg_score": avg_score,
+                    "ready": ready,
+                    "upskill": upskill,
+                    "not_ready": not_ready
+                }
             }
-            cur.close()
-            db.release_pooled_connection(conn)
-            return {"status": "success", "stats": stats}
         except Exception as e:
             logger.error(f"[college_dashboard] get_batch_stats failed: {e}")
-            db.release_pooled_connection(conn)
             return {"status": "error", "message": str(e)}
-
     def get_student_rankings(self, institution_name, limit=100):
         """Get ranked list of students. Safely pulls from multiple assessment tables."""
         conn = db.get_pooled_connection()
