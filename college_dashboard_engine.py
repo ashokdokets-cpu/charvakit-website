@@ -5,6 +5,7 @@ Session 109
 
 import uuid
 import logging
+import secrets
 from datetime import datetime, timezone
 from database import db
 
@@ -171,6 +172,78 @@ class CollegeDashboardEngine:
             return {"status": "success", "students": students}
         except Exception as e:
             logger.error(f"[college_dashboard] get_student_rankings failed: {e}")
+            try: db.release_pooled_connection(conn)
+            except: pass
+            return {"status": "error", "message": str(e)}
+
+
+    def send_bulk_invites(self, institution_name, base_url="https://www.charvakit.com"):
+        """Generate magic links and send emails via SendGrid."""
+        conn = db.get_pooled_connection()
+        if not conn: return {"status": "error", "message": "DB unavailable"}
+        
+        sent_count = 0
+        failed_count = 0
+        try:
+            cur = conn.cursor()
+            # Find students who haven't been sent an invite yet
+            cur.execute("""
+                SELECT student_email, student_name, target_role 
+                FROM charvak_college_invites 
+                WHERE institution_name = %s AND last_email_sent_at IS NULL
+            """, (institution_name,))
+            students = cur.fetchall()
+            
+            from enhanced_email import enhanced_email
+            
+            for s in students:
+                email = s[0]
+                name = s[1] or "Student"
+                role = s[2] or "Target Role"
+                
+                # Generate a secure magic token
+                token = secrets.token_urlsafe(32)
+                magic_link = f"{base_url}/student/magic-login?token={token}"
+                
+                # Update DB first so we don't double-send
+                cur.execute("""
+                    UPDATE charvak_college_invites 
+                    SET last_email_sent_at = NOW(), magic_token = %s 
+                    WHERE institution_name = %s AND student_email = %s
+                """, (token, institution_name, email))
+                conn.commit()
+                
+                # Send the email
+                subject = f"Action Required: Verify your skills for {institution_name}"
+                html_content = f"""
+                <h3>Hi {name},</h3>
+                <p>Your college ({institution_name}) has partnered with Charvak to help you get placed.</p>
+                <p>Click the link below to take your 20-minute technical assessment for the role of <b>{role}</b>. 
+                Once you pass, you get a cryptographically verified certificate to share with recruiters.</p>
+                <p><a href="{magic_link}" style="padding: 10px 20px; background: #0d9488; color: white; text-decoration: none; border-radius: 5px;">Start My Assessment</a></p>
+                <p>This link logs you in automatically. No password needed.</p>
+                """
+                
+                try:
+                    # Assuming enhanced_email.send_email(to, subject, body) is your method
+                    enhanced_email.send_email(email, subject, html_content)
+                    sent_count += 1
+                except Exception as email_err:
+                    logger.error(f"[bulk_invite] Email failed for {email}: {email_err}")
+                    failed_count += 1
+                    # Rollback the timestamp so we can retry later
+                    cur.execute("""
+                        UPDATE charvak_college_invites 
+                        SET last_email_sent_at = NULL, magic_token = NULL 
+                        WHERE institution_name = %s AND student_email = %s
+                    """, (institution_name, email))
+                    conn.commit()
+            
+            cur.close()
+            db.release_pooled_connection(conn)
+            return {"status": "success", "sent": sent_count, "failed": failed_count}
+        except Exception as e:
+            logger.error(f"[college_dashboard] send_bulk_invites failed: {e}")
             try: db.release_pooled_connection(conn)
             except: pass
             return {"status": "error", "message": str(e)}

@@ -7876,6 +7876,76 @@ async def client_dashboard_page(request: Request):
     """Client dashboard for micro-internships."""
     return template_response("client-dashboard.html", request, "Client Dashboard - Charvak Micro-Internships")
 
+@app.get("/student/magic-login")
+async def student_magic_login(request: Request, token: str):
+    """Auto-login a student via a secure magic link from a college invite."""
+    from database import db
+    import secrets
+    from datetime import datetime, timedelta
+    
+    conn = db.get_pooled_connection()
+    if not conn:
+        raise HTTPException(500, "Database error")
+    
+    try:
+        cur = conn.cursor()
+        # 1. Find the invite by token
+        cur.execute("""
+            SELECT student_email FROM charvak_college_invites 
+            WHERE magic_token = %s LIMIT 1
+        """, (token,))
+        row = cur.fetchone()
+        if not row:
+            raise HTTPException(401, "Invalid or expired magic link")
+        
+        email = row[0]
+        
+        # 2. Check if the user exists, or create a lightweight account
+        cur.execute("SELECT id, role FROM users WHERE email = %s", (email,))
+        user = cur.fetchone()
+        
+        if not user:
+            cur.execute("""
+                INSERT INTO users (email, name, password_hash, role, verified) 
+                VALUES (%s, %s, 'magic_link_auth', 'candidate', TRUE)
+                RETURNING id
+            """, (email, email.split('@')[0]))
+            conn.commit()
+        
+        # 3. Generate the real auth token (same logic as auth.py login_user)
+        auth_token = secrets.token_hex(32)
+        expires_at = datetime.now() + timedelta(days=30)
+        
+        # 4. Save to the auth_tokens table (so require_auth works)
+        cur.execute("""
+            INSERT INTO charvak_auth_tokens (token, email, expires_at) 
+            VALUES (%s, %s, %s)
+        """, (auth_token, email, expires_at))
+        conn.commit()
+        
+        # 5. Set the cookie and redirect to the assessment page
+        redirect = RedirectResponse(url="/ai-assessment", status_code=302)
+        redirect.set_cookie(
+            key="charvak_auth_token", 
+            value=auth_token, 
+            httponly=True, 
+            secure=True, 
+            samesite="lax", 
+            max_age=30*24*3600
+        )
+        return redirect
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Magic login failed: {e}")
+        raise HTTPException(500, f"Login failed: {str(e)}")
+    finally:
+        try:
+            db.release_pooled_connection(conn)
+        except:
+            pass
+
 # ============================================================
 # TRAINING ENGINE API ENDPOINTS
 # ============================================================
@@ -19762,6 +19832,11 @@ async def api_college_stats(request: Request, institution: str):
     try:
         stats = college_dashboard_engine.get_batch_stats(institution)
         rankings = college_dashboard_engine.get_student_rankings(institution)
+        
+        # DEBUGGING PRINT
+        print(f"[DEBUG] Stats: {stats}")
+        print(f"[DEBUG] Rankings: {rankings}")
+        
         return {
             "status": "success",
             "stats": stats.get("stats", {}),
