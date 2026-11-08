@@ -50,22 +50,28 @@ class CollegeDashboardEngine:
             cur.execute("SELECT COUNT(*) FROM charvak_college_invites WHERE institution_name = %s", (institution_name,))
             invited = cur.fetchone()[0]
 
-            # 2. Assessed count & average score (join candidates to certs)
-            # We assume candidates are linked via email
+            # 2. Assessed count & average score (pull from invites + assessments)
             query = """
-                SELECT 
-                    COUNT(DISTINCT c.candidate_id) as assessed_count,
-                    COALESCE(AVG(cc.score), 0) as avg_score,
-                    COUNT(DISTINCT cc.cert_id) FILTER (WHERE cc.score >= 80) as ready_count,
-                    COUNT(DISTINCT cc.cert_id) FILTER (WHERE cc.score >= 60 AND cc.score < 80) as upskill_count,
-                    COUNT(DISTINCT cc.cert_id) FILTER (WHERE cc.score < 60) as not_ready_count
-                FROM charvak_candidates c
-                LEFT JOIN charvak_career_certifications cc ON c.email = cc.email
-                WHERE c.institution_name = %s OR c.email IN (
-                    SELECT student_email FROM charvak_college_invites WHERE institution_name = %s
+                WITH student_scores AS (
+                    SELECT 
+                        ci.student_email,
+                        COALESCE(
+                            (SELECT score FROM charvak_career_certifications WHERE email = ci.student_email LIMIT 1),
+                            (SELECT score FROM charvak_career_assessments WHERE email = ci.student_email AND status = 'completed' ORDER BY started_at DESC LIMIT 1),
+                            (SELECT score FROM charvak_assessment_results WHERE email = ci.student_email ORDER BY id DESC LIMIT 1)
+                        ) as score
+                    FROM charvak_college_invites ci
+                    WHERE ci.institution_name = %s
                 )
+                SELECT 
+                    COUNT(*) FILTER (WHERE score IS NOT NULL) as assessed_count,
+                    COALESCE(AVG(score), 0) as avg_score,
+                    COUNT(*) FILTER (WHERE score >= 80) as ready_count,
+                    COUNT(*) FILTER (WHERE score >= 60 AND score < 80) as upskill_count,
+                    COUNT(*) FILTER (WHERE score < 60) as not_ready_count
+                FROM student_scores
             """
-            cur.execute(query, (institution_name, institution_name))
+            cur.execute(query, (institution_name,))
             row = cur.fetchone()
             
             stats = {
