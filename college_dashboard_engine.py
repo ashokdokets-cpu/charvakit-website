@@ -85,7 +85,7 @@ class CollegeDashboardEngine:
             return {"status": "error", "message": str(e)}
 
     def get_student_rankings(self, institution_name, limit=100):
-        """Get ranked list of students. Pulls from assessments if no cert exists."""
+        """Get ranked list of students. Safely pulls from multiple assessment tables."""
         conn = db.get_pooled_connection()
         if not conn: return {"status": "error"}
         try:
@@ -111,11 +111,11 @@ class CollegeDashboardEngine:
                 score = None
                 cert_id = None
                 
-                # Step 2: Try to find a CERTIFICATE first
+                # Step 2: Try to find a CERTIFICATE
                 try:
                     cur.execute("""
                         SELECT score, cert_id FROM charvak_career_certifications
-                        WHERE email = %s ORDER BY created_at DESC LIMIT 1
+                        WHERE email = %s LIMIT 1
                     """, (email,))
                     cert = cur.fetchone()
                     if cert:
@@ -124,12 +124,25 @@ class CollegeDashboardEngine:
                 except Exception:
                     pass
                 
-                # Step 3: If no cert, check raw assessment results (like the 20% score)
+                # Step 3: Fallback to raw career assessment
+                if score is None:
+                    try:
+                        cur.execute("""
+                            SELECT score FROM charvak_career_assessments
+                            WHERE email = %s ORDER BY assessment_date DESC LIMIT 1
+                        """, (email,))
+                        res = cur.fetchone()
+                        if res and res[0] is not None:
+                            score = float(res[0])
+                    except Exception:
+                        pass
+                
+                # Step 4: Fallback to generic assessment_results
                 if score is None:
                     try:
                         cur.execute("""
                             SELECT score FROM charvak_assessment_results
-                            WHERE email = %s ORDER BY created_at DESC LIMIT 1
+                            WHERE email = %s ORDER BY id DESC LIMIT 1
                         """, (email,))
                         res = cur.fetchone()
                         if res and res[0] is not None:
