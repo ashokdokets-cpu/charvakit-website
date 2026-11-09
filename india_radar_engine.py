@@ -110,22 +110,26 @@ class IndiaRadarEngine:
                 return {"status": "no_candidates", "matched": 0, "message": "No Indian candidates found in DB."}
 
             for job in raw_jobs:
-                # 1. SAFETY FILTER: Ensure it's actually India
-                if not self._is_truly_india(job):
-                    continue
+                job_title = str(job.get("title", ""))
+                job_company = str(job.get("company", ""))
+                
+                # Handle missing locations (Techmap API often returns None for location)
+                job_loc = str(job.get("location", "") or "")
+                job_salary = str(job.get("salary", "") or "")
+                job_skills = job.get("skills", []) or []
+                job_desc = str(job.get("description", "") or "")
 
-                job_title = job.get("title", "")
-                job_company = job.get("company", "")
-                job_loc = job.get("location", "")
-                job_salary = job.get("salary", "")
-                job_skills = job.get("skills", [])
-                job_desc = job.get("description", "")
+                # For India Radar, if location is blank, we allow it.
+                # We only apply the strict filter if a location WAS provided.
+                if job_loc and not self._is_truly_india(job):
+                    continue
 
                 jd_data = {
                     "role_title": job_title, "title": job_title, "company": job_company,
-                    "location": job_loc, "skills_required": job_skills,
+                    "location": job_loc or "India", # Default to India if blank
+                    "skills_required": job_skills,
                     "work_auth_required": "Any", "rate_min": None, "rate_max": None,
-                    "raw_text": job_desc, "source": "ncs"
+                    "raw_text": job_desc, "source": "naukri"
                 }
                 
                 # 2. Match using existing filter
