@@ -35,9 +35,15 @@ class IndiaRadarEngine:
         }
         
         # We request NCS data and India location
+        # Use Naukri (large Indian volume) instead of NCS which can be empty.
+        # dateCreated ensures we get jobs from the current month.
+        from datetime import datetime
+        current_month = datetime.now().strftime("%Y-%m")
+        
         params = {
-            "portal": "ncs",
+            "portal": "naukri",
             "countryCode": "in",
+            "dateCreated": current_month,
             "limit": limit
         }
 
