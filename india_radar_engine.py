@@ -35,18 +35,11 @@ class IndiaRadarEngine:
         }
         
         # We request NCS data and India location
-        # Use a 7-day rolling window to ensure we get jobs.
-        # Techmap works best with explicit date ranges.
-        from datetime import datetime, timedelta
-        today = datetime.now()
-        week_ago = today - timedelta(days=7)
-        
+        # Let the API use its default date (most recent complete day).
+        # Naukri is the largest Indian source on Techmap.
         params = {
             "portal": "naukri",
             "countryCode": "in",
-            "dateCreatedMin": week_ago.strftime("%Y-%m-%d"),
-            "dateCreatedMax": today.strftime("%Y-%m-%d"),
-            "sort": "newest",
             "limit": limit
         }
 
