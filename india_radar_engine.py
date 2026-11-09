@@ -11,42 +11,74 @@ logger = logging.getLogger(__name__)
 
 class IndiaRadarEngine:
     def __init__(self):
-        # Using Techmap API as a legal aggregator for NCS and Indian job boards
         self.api_key = os.getenv("TECHMAP_API_KEY", "")
         self.base_url = "https://daily-international-job-postings.p.rapidapi.com/api/v2/jobs/search"
+        
+        # Strict list of Indian cities/states to double-check results
+        self.india_keywords = [
+            "india", "bangalore", "bengaluru", "mumbai", "delhi", "new delhi", 
+            "hyderabad", "chennai", "kolkata", "pune", "ahmedabad", "jaipur", 
+            "surat", "lucknow", "kanpur", "nagpur", "indore", "thane", 
+            "bhopal", "visakhapatnam", "patna", "vadodara", "guntur", "vijayawada",
+            "telangana", "andhra pradesh", "karnataka", "maharashtra", "tamil nadu"
+        ]
 
     def fetch_india_jobs(self, limit=50):
         """Fetch real Indian jobs from a legal API."""
         if not self.api_key:
-            logger.warning("[india_radar] No TECHMAP_API_KEY set. Using demo mode.")
-            # DEMO MODE: Return fake data if no API key is set, so you can test the UI
-            return [
-                {"title": "Junior Accountant", "company": "Guntur Textiles", "location": "Guntur, AP", "salary": "15k-20k", "skills": ["Tally", "Excel"], "description": "Need immediate joiner."},
-                {"title": "React Developer", "company": "Tech Mahindra", "location": "Hyderabad, TS", "salary": "4L-6L", "skills": ["React", "JavaScript", "HTML"], "description": "Looking for 2 years exp."},
-                {"title": "Data Entry Operator", "company": "AP Govt", "location": "Vijayawada, AP", "salary": "12k", "skills": ["Typing", "MS Office"], "description": "Contractual role."}
-            ]
+            logger.warning("[india_radar] No TECHMAP_API_KEY set. Cannot fetch jobs.")
+            return []
 
         headers = {
             "X-RapidAPI-Key": self.api_key,
             "X-RapidAPI-Host": "daily-international-job-postings.p.rapidapi.com"
         }
-        params = {"portal": "ncs", "countryCode": "in", "limit": limit}
+        
+        # We request NCS data and India location
+        params = {
+            "portal": "ncs",
+            "countryCode": "in",
+            "limit": limit
+        }
 
         try:
             resp = requests.get(self.base_url, headers=headers, params=params, timeout=30)
-            resp.raise_for_status()
-            return resp.json().get("data", []) or resp.json().get("jobs", [])
+            if resp.status_code != 200:
+                logger.error(f"[india_radar] API Error {resp.status_code}: {resp.text}")
+                return []
+                
+            data = resp.json()
+            jobs = data.get("data", []) or data.get("jobs", [])
+            logger.info(f"[india_radar] Fetched {len(jobs)} raw jobs from API.")
+            return jobs
         except Exception as e:
             logger.error(f"[india_radar] API fetch failed: {e}")
             return []
 
+    def _is_truly_india(self, job):
+        """Safety filter to ensure no US/EU jobs slip through."""
+        loc = str(job.get("location", "")).lower()
+        title = str(job.get("title", "")).lower()
+        desc = str(job.get("description", "")).lower()
+        combined = f"{loc} {title} {desc}"
+        
+        # If it contains any Indian keyword, it's valid
+        if any(kw in combined for kw in self.india_keywords):
+            return True
+            
+        # If it contains these explicit non-India keywords, reject it
+        if any(kw in loc for kw in ["usa", "united states", "uk", "canada", "europe", "germany"]):
+            return False
+            
+        return False
+
     def run_radar(self):
         """Fetch, Match, and Alert."""
         logger.info("[india_radar] Starting India Radar scan...")
-        raw_jobs = self.fetch_india_jobs(limit=20)
+        raw_jobs = self.fetch_india_jobs(limit=50)
         
         if not raw_jobs:
-            return {"status": "empty", "matched": 0}
+            return {"status": "empty", "matched": 0, "message": "No jobs fetched from API."}
 
         conn = db.get_pooled_connection()
         if not conn: return {"status": "error", "message": "DB unavailable"}
@@ -54,6 +86,7 @@ class IndiaRadarEngine:
         matched_count = 0
         try:
             cur = conn.cursor()
+            
             # Get Indian candidates (we assume they have 'India' in location)
             cur.execute("""
                 SELECT candidate_id, name, email, skills, location
@@ -67,9 +100,13 @@ class IndiaRadarEngine:
             candidates = cur.fetchall()
             
             if not candidates:
-                return {"status": "no_candidates", "matched": 0}
+                return {"status": "no_candidates", "matched": 0, "message": "No Indian candidates found in DB."}
 
             for job in raw_jobs:
+                # 1. SAFETY FILTER: Ensure it's actually India
+                if not self._is_truly_india(job):
+                    continue
+
                 job_title = job.get("title", "")
                 job_company = job.get("company", "")
                 job_loc = job.get("location", "")
@@ -84,12 +121,12 @@ class IndiaRadarEngine:
                     "raw_text": job_desc, "source": "ncs"
                 }
                 
+                # 2. Match using existing filter
                 is_relevant, reason, best_cand, best_email, overlap = bench_jd_filter.is_relevant(jd_data)
                 
                 if is_relevant and overlap >= 0.20: # 20% threshold for Indian market
                     matched_count += 1
                     
-                    # Insert alert with UNLOCKED status to start (candidates see it, but must pay to get the email)
                     cur.execute("""
                         INSERT INTO charvak_radar_alerts 
                         (job_title, company, location, salary, matched_candidate, candidate_email, overlap_pct, status)
@@ -97,7 +134,7 @@ class IndiaRadarEngine:
                     """, (job_title, job_company, job_loc, job_salary, best_cand, best_email, round(overlap*100, 1)))
             
             conn.commit()
-            return {"status": "success", "matched": matched_count}
+            return {"status": "success", "matched": matched_count, "raw_fetched": len(raw_jobs)}
             
         except Exception as e:
             logger.error(f"[india_radar] run_radar failed: {e}")

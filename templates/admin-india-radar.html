@@ -69,8 +69,14 @@ async function runRadar() {
   try {
     const res = await fetch('/api/admin/india-radar/run', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } });
     const data = await res.json();
-    alert(`Radar scan complete! Matched ${data.matched || 0} jobs.`);
-    loadRadar();
+    if (data.status === 'error' || data.status === 'empty') {
+        alert(`Scan issue: ${data.message || 'No jobs returned from API. Check Render Logs.'}`);
+    } else if (data.status === 'no_candidates') {
+        alert(`Scan issue: ${data.message}`);
+    } else {
+        alert(`Radar scan complete! Fetched ${data.raw_fetched || 0} jobs. Matched ${data.matched || 0} jobs.`);
+        loadRadar();
+    }
   } catch(e) { alert('Error: ' + e); }
   btn.disabled = false; btn.textContent = '🔄 Run Radar Scan';
 }
