@@ -35,11 +35,14 @@ class IndiaRadarEngine:
         }
         
         # We request NCS data and India location
-        # Let the API use its default date (most recent complete day).
-        # Naukri is the largest Indian source on Techmap.
+        # Explicitly request the current month to guarantee volume.
+        # Removed 'portal' filter to pull from ALL Indian sources (NCS, Naukri, etc.)
+        from datetime import datetime
+        current_month = datetime.now().strftime("%Y-%m")
+        
         params = {
-            "portal": "naukri",
             "countryCode": "in",
+            "dateCreated": current_month,
             "limit": limit
         }
 
