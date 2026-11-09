@@ -118,6 +118,9 @@ class IndiaRadarEngine:
                 job_salary = str(job.get("salary", "") or "")
                 job_skills = job.get("skills", []) or []
                 job_desc = str(job.get("description", "") or "")
+                
+                # Extract job ID (Techmap uses 'id')
+                external_job_id = str(job.get("id") or "NCS-" + str(hash(job_title))[:8])
 
                 # For India Radar, if location is blank, we allow it.
                 # We only apply the strict filter if a location WAS provided.
@@ -143,9 +146,9 @@ class IndiaRadarEngine:
                     
                     cur.execute("""
                         INSERT INTO charvak_radar_alerts 
-                        (job_title, company, location, salary, matched_candidate, candidate_email, overlap_pct, status)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, 'pending_alert')
-                    """, (job_title, job_company, job_loc, job_salary, best_cand, best_email, round(overlap*100, 1)))
+                        (job_id, job_title, company, location, salary, matched_candidate, candidate_email, overlap_pct, status)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'pending_alert')
+                    """, (external_job_id, job_title, job_company, job_loc, job_salary, best_cand, best_email, round(overlap*100, 1)))
             
             conn.commit()
             return {"status": "success", "matched": matched_count, "raw_fetched": len(raw_jobs)}
