@@ -2,6 +2,7 @@ cd C:\projects\charvakit-new
 
 $html = @'
 {% extends "base.html" %}
+{# BUILD_HASH: 20261109162241 #}
 {% block title %}Bench Jobs (Internal) - Charvak{% endblock %}
 {% block content %}
 <div class="container py-4" style="max-width: 1200px;">
@@ -83,7 +84,7 @@ async function loadBenchJobs() {
   const location = document.getElementById('locationFilter').value;
 
   try {
-    const res = await fetch('/api/jobs/unified?limit=200', {
+    const res = await fetch('/api/admin/bench-jobs?limit=200', {
       headers: { 'Authorization': 'Bearer ' + token }
     });
     const data = await res.json();
