@@ -1398,7 +1398,7 @@ async def api_admin_bench_submit(request: Request):
             
             best_candidate_id = None
             if is_relevant and best_cand:
-                cur.execute("SELECT candidate_id FROM charvak_candidates WHERE name = %s AND is_active = TRUE LIMIT 1", (best_cand,))
+                cur.execute("SELECT candidate_id FROM charvak_candidates WHERE name = %s AND status = 'registered' LIMIT 1", (best_cand,))
                 cr = cur.fetchone()
                 if cr: best_candidate_id = cr[0]
             
