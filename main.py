@@ -1234,6 +1234,57 @@ async def background_verification(request: Request):
 async def job_board_page(request: Request):
     return template_response("job-board.html", request, "Job Board - Charvak Career Engine")
 
+@app.get("/job-board/{job_id}")
+async def job_board_detail_redirect(request: Request, job_id: str):
+    """Redirect /job-board/{job_id} to the original source URL."""
+    from database import db
+    conn = db.get_pooled_connection()
+    if not conn:
+        raise HTTPException(500, "Database error")
+    
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT raw_json FROM charvak_jobs 
+            WHERE job_id = %s LIMIT 1
+        """, (job_id,))
+        row = cur.fetchone()
+        
+        if not row or not row[0]:
+            raise HTTPException(404, "Job not found")
+        
+        # raw_json is a dict; try common URL fields
+        import json as _json
+        try:
+            raw = row[0] if isinstance(row[0], dict) else _json.loads(row[0])
+        except Exception:
+            raise HTTPException(404, "Job data unavailable")
+        
+        # Try common URL keys
+        source_url = (
+            raw.get("url") or 
+            raw.get("apply_url") or 
+            raw.get("link") or 
+            raw.get("job_url") or
+            raw.get("application_link")
+        )
+        
+        if not source_url or not source_url.startswith("http"):
+            # Fallback: go back to job board with a message
+            return RedirectResponse(url="/job-board?msg=job_no_url", status_code=302)
+        
+        return RedirectResponse(url=source_url, status_code=302)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Job detail redirect failed for {job_id}: {e}")
+        raise HTTPException(500, "Error fetching job")
+    finally:
+        try:
+            db.release_pooled_connection(conn)
+        except:
+            pass
+
 @app.get("/application-dashboard", response_class=HTMLResponse)
 async def application_dashboard(request: Request):
     return template_response("application-dashboard.html", request, "Application Dashboard - Charvak")
