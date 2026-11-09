@@ -5,7 +5,8 @@ import json
 import logging
 from database import db
 from bench_jd_filter import bench_jd_filter
-from openai_compat import create_completion
+from openai_compat import build_payload, translate_kwargs
+import httpx
 
 logger = logging.getLogger(__name__)
 
@@ -112,11 +113,24 @@ class CandidateMarketingEngine:
             Focus on their strongest technical skills and their availability. Do not use fluff words. Be direct.
             """
             
-            response = create_completion(
+            payload = build_payload(
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=150
             )
-            return response.choices[0].message.content.strip()
+            
+            api_key = os.getenv("OPENAI_API_KEY")
+            if not api_key:
+                return "AI Blurb unavailable: Missing OPENAI_API_KEY."
+
+            with httpx.Client(timeout=30) as client:
+                resp = client.post(
+                    "https://api.openai.com/v1/chat/completions",
+                    headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+                    json=payload
+                )
+                resp.raise_for_status()
+                data = resp.json()
+                return data["choices"][0]["message"]["content"].strip()
         finally:
             cur.close()
             db.release_pooled_connection(conn)
