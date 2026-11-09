@@ -149,6 +149,20 @@ class IndiaRadarEngine:
                 if is_relevant and overlap >= 0.20: # 20% threshold for Indian market
                     matched_count += 1
                     
+                    # 1. Save the job into charvak_jobs so the detail page can find it
+                    import json
+                    cur.execute("""
+                        INSERT INTO charvak_jobs 
+                        (job_id, title, company, location, description, skills, status, source, raw_json)
+                        VALUES (%s, %s, %s, %s, %s, %s, 'active', %s, %s)
+                        ON CONFLICT (job_id) DO NOTHING
+                    """, (
+                        external_job_id, job_title, job_company, job_loc or 'India', 
+                        job_desc, ", ".join(job_skills) if isinstance(job_skills, list) else str(job_skills),
+                        "naukri", json.dumps(job)
+                    ))
+
+                    # 2. Save the alert
                     cur.execute("""
                         INSERT INTO charvak_radar_alerts 
                         (job_id, job_title, company, location, salary, matched_candidate, candidate_email, overlap_pct, status)
