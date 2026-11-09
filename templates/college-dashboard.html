@@ -4,7 +4,7 @@
 <div class="container" style="max-width: 1100px; margin: 40px auto; padding: 0 20px;">
   <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
     <div>
-      <h1 style="margin: 0; color: #1a1a2e;">Placement Readiness Dashboard</h1>
+      <h1 style="margin: 0; color: #1a1a2e;">Placement Readiness Dashboard <span style="display: inline-block; background: #10b981; color: white; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; margin-left: 8px; vertical-align: middle;">● LIVE</span></h1>
       <p style="margin: 4px 0 0 0; color: #666; font-size: 14px;">Track your batch's technical readiness. Upload students, monitor progress, export shortlists.</p>
     </div>
     <div>
@@ -215,6 +215,15 @@ function exportCSV() {
     .catch(e => alert('Export failed: ' + e));
 }
 
-document.addEventListener('DOMContentLoaded', loadDashboard);
+document.addEventListener('DOMContentLoaded', function() {
+    loadDashboard();
+    // Auto-refresh every 30 seconds (live demo feel)
+    setInterval(function() {
+        // Only refresh if the tab is visible (avoid waste)
+        if (!document.hidden) {
+            loadDashboard();
+        }
+    }, 30000);
+});
 </script>
 {% endblock %}
