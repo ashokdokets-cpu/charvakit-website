@@ -15,14 +15,26 @@
     </div>
 
     <h5 class="border-bottom pb-2 mb-3">Job Description</h5>
-    <div class="mb-4" style="white-space: pre-wrap; font-size: 1.05rem;">{{ job.description }}</div>
+    <div class="mb-4" style="white-space: pre-wrap; font-size: 1.05rem;">
+      {% if job.description %}
+        {{ job.description }}
+      {% else %}
+        <em class="text-muted">Detailed job description is available on the original portal. Please proceed to the assessment to verify your skills for this role.</em>
+      {% endif %}
+    </div>
 
     {% if job.skills %}
     <h5 class="border-bottom pb-2 mb-3">Skills Required</h5>
     <div class="mb-4">
-      {% for s in job.skills %}
-        <span class="badge bg-secondary me-1 mb-1">{{ s }}</span>
-      {% endfor %}
+      {% if job.skills is string %}
+        {% for s in job.skills.split(',') %}
+          <span class="badge bg-secondary me-1 mb-1">{{ s.strip() }}</span>
+        {% endfor %}
+      {% else %}
+        {% for s in job.skills %}
+          <span class="badge bg-secondary me-1 mb-1">{{ s }}</span>
+        {% endfor %}
+      {% endif %}
     </div>
     {% endif %}
 
