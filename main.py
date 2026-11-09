@@ -1285,6 +1285,62 @@ async def job_board_detail_redirect(request: Request, job_id: str):
         except:
             pass
 
+@app.get("/job-board/{job_id}")
+async def job_board_detail_redirect(request: Request, job_id: str):
+    """For Charvak-posted jobs: render detail page. For ingested jobs: redirect to source."""
+    from database import db
+    conn = db.get_pooled_connection()
+    if not conn:
+        raise HTTPException(500, "Database error")
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT source, raw_json FROM charvak_jobs WHERE job_id = %s LIMIT 1", (job_id,))
+        row = cur.fetchone()
+        if not row:
+            raise HTTPException(404, "Job not found")
+        source, raw_json = row
+        
+        # For Charvak/employer jobs → redirect to job board with highlight
+        if source in ('charvak', 'manual', 'via_charvak', 'employer'):
+            return RedirectResponse(url=f"/job-board?highlight={job_id}", status_code=302)
+        
+        # For ingested jobs → redirect to source URL
+        import json as _json
+        try:
+            raw = raw_json if isinstance(raw_json, dict) else _json.loads(raw_json or "{}")
+        except Exception:
+            raw = {}
+        source_url = raw.get("url") or raw.get("apply_url") or raw.get("link") or raw.get("hn_url")
+        if source_url and source_url.startswith("http"):
+            return RedirectResponse(url=source_url, status_code=302)
+        
+        return RedirectResponse(url="/job-board", status_code=302)
+    finally:
+        try: db.release_pooled_connection(conn)
+        except: pass
+
+@app.get("/admin/bench-jobs", response_class=HTMLResponse)
+async def admin_bench_jobs_page(request: Request):
+    """Bench pipeline: internal view of all ingested jobs for H1B/OPT/H4-EAD sourcing."""
+    try:
+        require_admin(request)
+    except HTTPException:
+        return RedirectResponse(url="/admin-login?next=/admin/bench-jobs", status_code=302)
+    return template_response("admin-bench-jobs.html", request, "Bench Jobs - Charvak")
+
+
+@app.get("/api/admin/bench-jobs")
+async def api_admin_bench_jobs(request: Request):
+    """Admin-only endpoint: returns ALL jobs regardless of source."""
+    require_admin(request)
+    try:
+        from jobs_unified_engine import jobs_unified_engine
+        result = jobs_unified_engine.get_unified_jobs(limit=200)
+        # Override the source filter to return all jobs
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e)[:200]}
+
 @app.get("/application-dashboard", response_class=HTMLResponse)
 async def application_dashboard(request: Request):
     return template_response("application-dashboard.html", request, "Application Dashboard - Charvak")
