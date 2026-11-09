@@ -60,7 +60,7 @@ async function loadSubmissions() {
         <td><span class="badge bg-${s.status === 'pending_review' ? 'warning' : 'success'}">${s.status}</span></td>
         <td style="font-size: 0.85rem;">${(s.submitted_at || '').split('T')[0]}</td>
         <td>
-          <button onclick="emailCandidate('${s.candidate_email}', '${s.job_title}', '${s.company}', '${s.job_id}')" class="btn btn-sm btn-primary">✉ Email Candidate</button>
+          <button onclick="emailCandidate('${s.candidate_email}', '${(s.job_title || '').replace(/'/g, "\\'")}', '${(s.company || '').replace(/'/g, "\\'")}', '${s.job_id}')" class="btn btn-sm btn-primary" style="white-space: nowrap;">✉ Email Candidate</button>
         </td>
       </tr>
     `).join('');
