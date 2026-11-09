@@ -19756,6 +19756,43 @@ async def api_cron_send_bench_digest(request: Request):
     except Exception as e:
         return handle_error(e, request)
 
+from candidate_marketing_engine import candidate_marketing_engine
+
+@app.get("/admin/candidates", response_class=HTMLResponse)
+async def admin_candidates_page(request: Request):
+    """Candidate Marketing Dashboard (US Market)."""
+    try:
+        require_admin(request)
+    except HTTPException:
+        return RedirectResponse(url="/admin-login?next=/admin/candidates", status_code=302)
+    return template_response("admin-candidates.html", request, "Candidate Marketing - Charvak")
+
+@app.get("/api/admin/candidates")
+async def api_admin_candidates(request: Request):
+    require_admin(request)
+    try:
+        candidates = candidate_marketing_engine.get_bench_candidates()
+        return {"status": "success", "candidates": candidates}
+    except Exception as e:
+        return {"status": "error", "message": str(e)[:200]}
+
+@app.get("/api/admin/candidates/{candidate_id}/matches")
+async def api_candidate_matches(request: Request, candidate_id: str):
+    require_admin(request)
+    try:
+        jobs = candidate_marketing_engine.get_matched_jobs(candidate_id)
+        return {"status": "success", "jobs": jobs}
+    except Exception as e:
+        return {"status": "error", "message": str(e)[:200]}
+
+@app.post("/api/admin/candidates/{candidate_id}/blurb")
+async def api_candidate_blurb(request: Request, candidate_id: str):
+    require_admin(request)
+    try:
+        blurb = candidate_marketing_engine.generate_marketing_blurb(candidate_id)
+        return {"status": "success", "blurb": blurb}
+    except Exception as e:
+        return {"status": "error", "message": str(e)[:200]}
 
 
 # =============================================================================
