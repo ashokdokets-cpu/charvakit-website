@@ -19909,6 +19909,11 @@ async def admin_rejected_jds_page(request: Request):
     """Admin UI for rejected JDs audit trail."""
     return template_response("admin-rejected-jds.html", request, "Rejected JDs - Charvak")
 
+@app.get("/employer/dashboard", response_class=HTMLResponse)
+async def employer_dashboard_page(request: Request):
+    """Employer Assessment Dashboard (same engine as TPO, different UX)."""
+    return template_response("employer-dashboard.html", request, "Employer Dashboard - Charvak")
+
 # ============================================================
 # RETENTION ENGINE ROUTES (Session 108C)
 # ============================================================
