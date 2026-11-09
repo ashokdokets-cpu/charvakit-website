@@ -1236,8 +1236,10 @@ async def job_board_page(request: Request):
 
 @app.get("/job-board/{job_id}", response_class=HTMLResponse)
 async def job_board_detail_page(request: Request, job_id: str):
-    """Render a job detail page. If it's a scraped job, show the scraped description."""
+    """Render a job detail page. Safely handles raw_json."""
     from database import db
+    import json
+    
     conn = db.get_pooled_connection()
     if not conn:
         raise HTTPException(500, "Database error")
@@ -1251,19 +1253,40 @@ async def job_board_detail_page(request: Request, job_id: str):
         if not row:
             raise HTTPException(404, "Job not found")
         
+        raw_json_data = row[8]
+        safe_raw_json = {}
+        if raw_json_data:
+            if isinstance(raw_json_data, dict):
+                safe_raw_json = raw_json_data
+            elif isinstance(raw_json_data, str):
+                try:
+                    safe_raw_json = json.loads(raw_json_data)
+                except Exception:
+                    safe_raw_json = {"raw_string": raw_json_data}
+            else:
+                safe_raw_json = {"type": str(type(raw_json_data))}
+
         job = {
             "job_id": row[0], "title": row[1], "company": row[2], "location": row[3],
             "description": row[4] or "", "skills": row[5] or "", "salary": row[6],
-            "source": row[7], "raw_json": row[8] or {}
+            "source": row[7], "raw_json": safe_raw_json
         }
         
-        # For Charvak jobs, render the detail template
-        if job["source"] in ('charvak', 'manual', 'via_charvak', 'employer'):
-            return template_response("job-detail.html", request, f"{job['title']} - Charvak", {"job": job})
-        
-        # For scraped jobs (HN, RemoteOK, etc), we render the same detail template
-        # so the user sees the scraped description and an apply button (if available)
-        return template_response("job-detail-scraped.html", request, f"{job['title']} - Charvak", {"job": job})
+        if isinstance(job["skills"], str):
+            job["skills_list"] = [s.strip() for s in job["skills"].split(",") if s.strip()]
+        elif isinstance(job["skills"], list):
+            job["skills_list"] = job["skills"]
+        else:
+            job["skills_list"] = []
+
+        # Use the standard Jinja2 template renderer directly to pass context
+        return templates.TemplateResponse(
+            "job-detail-scraped.html", 
+            {"request": request, "job": job, "title": f"{job['title']} - Charvak"}
+        )
+    except Exception as e:
+        logger.error(f"Job detail error: {e}")
+        return RedirectResponse(url="/job-board?msg=job_error", status_code=302)
     finally:
         cur.close()
         db.release_pooled_connection(conn)
