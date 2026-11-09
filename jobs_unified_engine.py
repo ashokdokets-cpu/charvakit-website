@@ -132,7 +132,7 @@ class JobsUnifiedEngine:
             if show_all:
                 cur.execute("""
                     SELECT job_id, title, company, job_type, location, salary,
-                           description, skills, posted_date, status, created_at
+                           description, skills, posted_date, status, created_at, source
                     FROM charvak_jobs
                     WHERE (status IS NULL OR LOWER(status) IN ('active', 'open'))
                     ORDER BY created_at DESC NULLS LAST
@@ -165,6 +165,7 @@ class JobsUnifiedEngine:
                     "compensation_max_inr": None,
                     "posted_at": self._to_iso(r[10], r[8]),
                     "detail_url": f"/job-board/{r[0]}",
+                    "db_source": (r[11] if len(r) > 11 else "job_board"),
                 }))
             return items
         finally:
