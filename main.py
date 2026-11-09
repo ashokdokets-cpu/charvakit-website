@@ -3776,6 +3776,10 @@ async def api_passport_verify(request: Request, handle: str):
 @limiter.limit("60/minute")
 async def employer_dashboard_page(request: Request):
     """Session 51: Employer Portal - browse and verify public passports."""
+    try:
+        require_admin(request)
+    except HTTPException:
+        return RedirectResponse(url="/admin-login?next=/employer/dashboard", status_code=302)
     return template_response(
         "employer-dashboard.html", request,
         "Employer Portal - Charvak",
@@ -19834,10 +19838,10 @@ from college_dashboard_engine import college_dashboard_engine
 @app.get("/college/assessment", response_class=HTMLResponse)
 async def college_assessment_page(request: Request):
     """TPO Assessment Dashboard (Session 109)."""
-    require_admin(request)
-    return template_response("college-dashboard.html", request, "College Placement Dashboard - Charvak")
-    """TPO Placement Readiness Dashboard."""
-    # require_admin(request)  # Uncomment if you want to restrict access during testing
+    try:
+        require_admin(request)
+    except HTTPException:
+        return RedirectResponse(url="/admin-login?next=/college/assessment", status_code=302)
     return template_response("college-dashboard.html", request, "College Placement Dashboard - Charvak")
 
 @app.get("/api/college/stats")
@@ -19915,7 +19919,10 @@ async def admin_rejected_jds_page(request: Request):
 @app.get("/employer/assessment", response_class=HTMLResponse)
 async def employer_assessment_page(request: Request):
     """Employer Assessment Dashboard (Session 109)."""
-    require_admin(request)
+    try:
+        require_admin(request)
+    except HTTPException:
+        return RedirectResponse(url="/admin-login?next=/employer/assessment", status_code=302)
     return template_response("employer-assessment.html", request, "Employer Assessment Dashboard - Charvak")
 
 # ============================================================
@@ -20550,6 +20557,10 @@ async def f3_close(request: Request, session_id: str):
 @app.get("/recruiter/dashboard", response_class=HTMLResponse)
 async def recruiter_dashboard_page(request: Request):
     """F4: unified recruiter pipeline dashboard."""
+    try:
+        require_admin(request)
+    except HTTPException:
+        return RedirectResponse(url="/admin-login?next=/recruiter/dashboard", status_code=302)
     return template_response("recruiter-dashboard.html", request,
                              "Recruiter Pipeline - Charvak")
 
