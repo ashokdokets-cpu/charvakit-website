@@ -52,17 +52,18 @@ $html = @'
       <table class="table table-sm table-hover mb-0">
         <thead style="background: #f9fafb;">
           <tr>
-            <th>Title</th>
-            <th>Company</th>
-            <th>Location</th>
-            <th>Source</th>
-            <th>Skills</th>
-            <th>Posted</th>
-            <th>Actions</th>
+<th>Title</th>
+<th>Company</th>
+<th>Location</th>
+<th>Source</th>
+<th>Skills</th>
+<th>Posted</th>
+<th>Bench Status</th>
+<th>Actions</th>
           </tr>
         </thead>
         <tbody id="benchJobsBody">
-          <tr><td colspan="7" style="padding: 30px; text-align: center;">Loading...</td></tr>
+          <tr><td colspan="8" style="padding: 30px; text-align: center;">Loading...</td></tr>
         </tbody>
       </table>
     </div>
@@ -76,7 +77,7 @@ $html = @'
 <script>
 async function loadBenchJobs() {
   const body = document.getElementById('benchJobsBody');
-  body.innerHTML = '<tr><td colspan="7" style="padding: 30px; text-align: center;">Loading...</td></tr>';
+  body.innerHTML = '<tr><td colspan="8" style="padding: 30px; text-align: center;">Loading...</td></tr>';
 
   const token = localStorage.getItem('authToken') || localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
   const q = document.getElementById('searchInput').value.trim();
@@ -89,7 +90,7 @@ async function loadBenchJobs() {
     });
     const data = await res.json();
     if (data.status !== 'success') {
-      body.innerHTML = '<tr><td colspan="7" style="padding: 30px; color: red;">Error loading jobs.</td></tr>';
+      body.innerHTML = '<tr><td colspan="8" style="padding: 30px; color: red;">Error loading jobs.</td></tr>';
       return;
     }
 
@@ -99,7 +100,7 @@ async function loadBenchJobs() {
     if (location) items = items.filter(i => (i.location || '').toLowerCase().includes(location));
 
     if (items.length === 0) {
-      body.innerHTML = '<tr><td colspan="7" style="padding: 30px; text-align: center; color: #999;">No jobs match these filters.</td></tr>';
+      body.innerHTML = '<tr><td colspan="8" style="padding: 30px; text-align: center; color: #999;">No jobs match these filters.</td></tr>';
       return;
     }
 
@@ -111,16 +112,49 @@ async function loadBenchJobs() {
         <td><span class="badge bg-secondary">${j.db_source || j.source || '—'}</span></td>
         <td style="font-size: 0.8rem;">${(j.skills || []).slice(0, 3).join(', ')}${(j.skills || []).length > 3 ? ' +' + (j.skills.length - 3) : ''}</td>
         <td style="font-size: 0.85rem;">${(j.posted_at || '').split('T')[0] || '—'}</td>
+        <td>${j.bench_status ? `<span class="badge bg-${j.bench_status === 'pending_review' ? 'warning' : 'success'}">${j.bench_status}</span>` : '<span class="text-muted" style="font-size:0.8rem;">Not submitted</span>'}</td>
         <td>
           <a href="/job-board/${j.id}" target="_blank" class="btn btn-xs btn-outline-primary" style="font-size: 0.75rem; padding: 2px 8px;">View</a>
+          <button onclick="submitToBench('${j.id}', '${(j.title || '').replace(/'/g, "\\'")}')" class="btn btn-xs btn-success" style="font-size: 0.75rem; padding: 2px 8px; margin-left: 4px;">Submit</button>
         </td>
       </tr>
     `).join('');
   } catch (e) {
-    body.innerHTML = `<tr><td colspan="7" style="padding: 30px; color: red;">Error: ${e.message}</td></tr>`;
+    body.innerHTML = `<tr><td colspan="8" style="padding: 30px; color: red;">Error: ${e.message}</td></tr>`;
   }
 }
 
+async function submitToBench(jobId, title) {
+  if (!confirm(`Run the 108G filter against "${title}" and submit to the best-matched bench candidate?`)) return;
+  
+  const token = localStorage.getItem('authToken') || localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+  
+  try {
+    const res = await fetch('/api/admin/bench/submit', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token,
+      },
+      body: JSON.stringify({ job_id: jobId }),
+    });
+    
+    const data = await res.json();
+    
+    if (data.status === 'success') {
+      if (data.is_relevant) {
+        alert(`✅ SUBMITTED\n\nJob: ${data.job_title}\nMatched to: ${data.best_candidate}\nEmail: ${data.best_candidate_email}\nOverlap: ${data.overlap_pct}%\nReason: ${data.reason}\n\nSubmission ID: ${data.submission_id}`);
+      } else {
+        alert(`❌ REJECTED BY FILTER\n\nJob: ${data.job_title}\nReason: ${data.reason}\n\nThis job was filtered out as not matching your bench candidates.`);
+      }
+      loadBenchJobs(); // Refresh the table to show updated status
+    } else {
+      alert(`Error: ${data.message || 'Unknown error'}`);
+    }
+  } catch (e) {
+    alert(`Network error: ${e.message}`);
+  }
+}
 document.addEventListener('DOMContentLoaded', loadBenchJobs);
 </script>
 {% endblock %}

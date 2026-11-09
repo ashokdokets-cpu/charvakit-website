@@ -1331,15 +1331,104 @@ async def admin_bench_jobs_page(request: Request):
 
 @app.get("/api/admin/bench-jobs")
 async def api_admin_bench_jobs(request: Request):
-    """Admin-only endpoint: returns ALL jobs regardless of source."""
+    """Admin-only: ALL jobs + bench submission status."""
     require_admin(request)
     try:
         from jobs_unified_engine import jobs_unified_engine
         result = jobs_unified_engine.get_unified_jobs(limit=200, show_all=True)
-        # Override the source filter to return all jobs
+        
+        # Enrich with bench submission status
+        from database import db
+        conn = db.get_pooled_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT job_id, status FROM charvak_bench_submissions")
+            status_map = {r[0]: r[1] for r in cur.fetchall()}
+        finally:
+            cur.close()
+            db.release_pooled_connection(conn)
+        
+        for item in result.get("items", []):
+            item["bench_status"] = status_map.get(item["id"], None)
+        
         return result
     except Exception as e:
         return {"status": "error", "message": str(e)[:200]}
+@app.post("/api/admin/bench/submit")
+async def api_admin_bench_submit(request: Request):
+    """Run 108G filter against a job, find best bench candidate, save submission."""
+    require_admin(request)
+    try:
+        data = await request.json()
+        job_id = data.get("job_id")
+        if not job_id:
+            raise HTTPException(400, "job_id required")
+        
+        from database import db
+        from bench_jd_filter import bench_jd_filter
+        import uuid
+        
+        conn = db.get_pooled_connection()
+        if not conn:
+            raise HTTPException(500, "DB error")
+        
+        try:
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT job_id, title, company, location, skills, description, source
+                FROM charvak_jobs WHERE job_id = %s LIMIT 1
+            """, (job_id,))
+            row = cur.fetchone()
+            if not row:
+                raise HTTPException(404, "Job not found")
+            
+            job_title, job_company, job_location = row[1], row[2], row[3]
+            job_skills = row[4] or []
+            job_description = row[5] or ""
+            job_source = row[6] or "unknown"
+            
+            jd_data = {
+                "role_title": job_title, "title": job_title,
+                "company": job_company, "location": job_location,
+                "skills_required": job_skills if isinstance(job_skills, list) else [s.strip() for s in str(job_skills).split(",") if s.strip()],
+                "work_auth_required": "Any", "rate_min": None, "rate_max": None,
+                "raw_text": job_description, "source": job_source,
+            }
+            is_relevant, reason, best_cand, best_email, overlap = bench_jd_filter.is_relevant(jd_data)
+            
+            best_candidate_id = None
+            if is_relevant and best_cand:
+                cur.execute("SELECT candidate_id FROM charvak_candidates WHERE name = %s AND is_active = TRUE LIMIT 1", (best_cand,))
+                cr = cur.fetchone()
+                if cr: best_candidate_id = cr[0]
+            
+            submission_id = f"SUB-{uuid.uuid4().hex[:12].upper()}"
+            cur.execute("""
+                INSERT INTO charvak_bench_submissions
+                (submission_id, job_id, candidate_id, candidate_name, candidate_email, overlap_pct, reason, status)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (job_id, candidate_id) DO UPDATE SET
+                    overlap_pct = EXCLUDED.overlap_pct, reason = EXCLUDED.reason
+            """, (submission_id, job_id, best_candidate_id, best_cand, best_email,
+                  round(float(overlap) * 100, 1) if overlap else 0,
+                  reason, "pending_review" if is_relevant else "rejected"))
+            conn.commit()
+            
+            return {
+                "status": "success", "submission_id": submission_id,
+                "job_id": job_id, "job_title": job_title,
+                "is_relevant": is_relevant, "reason": reason,
+                "best_candidate": best_cand, "best_candidate_email": best_email,
+                "overlap_pct": round(float(overlap) * 100, 1) if overlap else 0,
+            }
+        finally:
+            cur.close()
+            db.release_pooled_connection(conn)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[bench/submit] failed: {e}")
+        return {"status": "error", "message": str(e)[:300]}
 
 @app.get("/application-dashboard", response_class=HTMLResponse)
 async def application_dashboard(request: Request):
