@@ -2427,6 +2427,45 @@ async def api_get_applications_list(job_id: str = None):
         logger.error(f"Failed to get applications list: {str(e)}")
         return {"applications": [], "count": 0}
 
+@app.get("/api/jobs/{job_id}/prefill")
+async def api_jobs_prefill(request: Request, job_id: str):
+    """Uses AI to parse the job description and return Role, Industry, Level."""
+    from database import db
+    from jd_parser_engine import jd_parser_engine
+    import json
+    
+    conn = db.get_pooled_connection()
+    if not conn:
+        raise HTTPException(500, "Database unavailable")
+        
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT title, description FROM charvak_jobs WHERE job_id = %s LIMIT 1", (job_id,))
+        row = cur.fetchone()
+        if not row:
+            raise HTTPException(404, "Job not found")
+            
+        title = row[0]
+        description = row[1] or title
+        
+        # Run the AI parser
+        parsed_result = jd_parser_engine.parse_jd(description)
+        
+        if parsed_result.get("status") == "success":
+            p = parsed_result.get("parsed", {})
+            return {
+                "status": "success",
+                "role": p.get("title") or title,
+                "industry": p.get("domain") or "IT / Tech (general)",
+                "level": p.get("seniority") or "mid"
+            }
+        else:
+            return {"status": "error", "message": "AI parse failed"}
+            
+    finally:
+        cur.close()
+        db.release_pooled_connection(conn)
+
 
 # ============================================================
 # AI API ENDPOINTS (WITH RATE LIMITING + INPUT VALIDATION)
