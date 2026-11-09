@@ -393,6 +393,36 @@ body.logged-in #topAuthIn {
     };
     </script>
     {% block head %}{% endblock %}
+<style id="charvak-global-responsive">
+  /* Global Mobile Responsiveness Fixes */
+  @media (max-width: 768px) {
+    /* Make all tables horizontally scrollable instead of breaking layout */
+    table:not(.no-scroll) {
+      display: block;
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Prevent long strings (emails, URLs) from overflowing */
+    .container, .container-fluid {
+      overflow-x: hidden;
+      padding-left: 12px;
+      padding-right: 12px;
+    }
+    
+    /* Make sure images never overflow */
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+    
+    /* Stack buttons gracefully */
+    .btn-group, .d-flex.gap-2 {
+      flex-wrap: wrap;
+    }
+  }
+</style>
 </head>
 <body>
     <!-- Global Bar -->

@@ -1,37 +1,37 @@
 # Charvak - Commitment Tracker
 
-**Last updated:** 2026-11-09 (Session 109 - TPO Dashboard complete)
+**Last updated:** 2026-11-09 (Session 109 complete + Responsive UI polish)
 
 ---
 
 ## Session 109 - COMPLETE (2026-11-09)
 
-### Shipped
+### Shipped & Verified End-to-End
 
-**TPO / College Placement Readiness Dashboard**
-- Backend: college_dashboard_engine.py
-- Migrations: 20261109_college_dashboard.sql + 20261110_bulk_invites.sql
-- Template: templates/college-dashboard.html
-- Magic login: /student/magic-login with auto-account-creation
+**1. College (TPO) Placement Dashboard**
+- Route: \/college/dashboard\
+- Engine: \college_dashboard_engine.py\
+- Features: CSV upload, Brevo bulk emails, magic links, pre-filled assessments, live score aggregation, verified shortlist export, cohort analytics.
 
-**Features verified end-to-end:**
-- CSV upload (name, email, role, industry, level)
-- Bulk invite emails via Brevo with magic links
-- Auto-login via magic link (no password)
-- Pre-filled assessment (role + industry + level from CSV)
-- Live score aggregation (from certifications + assessments + results tables)
-- Readiness badges (Ready 80, Upskill 60-79, Not Ready <60, Pending)
-- Verified shortlist export (CSV with certificate URLs)
-- Cohort comparison chart
+**2. Employer Assessment Dashboard**
+- Route: \/employer/dashboard\
+- Uses the exact same engine as the TPO dashboard, but with employer-specific UX.
+- Features: Same as TPO (CSV upload, bulk email, live scoring, export).
 
-**Live demo data:** 8 students in VIT batch, 1 assessed (20% Not Ready)
+**3. Auto-Refresh & Live Indicators**
+- Both dashboards auto-refresh every 30 seconds.
+- \● LIVE\ badges added to headers.
+
+**4. Mobile Responsive**
+- Dashboards use CSS Grid/Flexbox + media queries.
+- Tables scroll horizontally on phones.
+- Buttons stack vertically on small screens.
 
 ---
 
 ## Session 108 - COMPLETE (2026-11-08)
-
 All 7 buildable tasks shipped (108A-G).
 
 ---
 
-**Next session:** College sales push.
+**Next session:** College & Employer sales push.
