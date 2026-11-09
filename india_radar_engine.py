@@ -35,14 +35,15 @@ class IndiaRadarEngine:
         }
         
         # We request NCS data and India location
-        # Explicitly request the current month to guarantee volume.
-        # Removed 'portal' filter to pull from ALL Indian sources (NCS, Naukri, etc.)
-        from datetime import datetime
-        current_month = datetime.now().strftime("%Y-%m")
+        # Use a 7-day rolling range to guarantee volume. Remove portal filter to pull from all Indian sources.
+        from datetime import datetime, timedelta
+        today = datetime.now()
+        week_ago = today - timedelta(days=7)
         
         params = {
             "countryCode": "in",
-            "dateCreated": current_month,
+            "dateCreatedMin": week_ago.strftime("%Y-%m-%d"),
+            "dateCreatedMax": today.strftime("%Y-%m-%d"),
             "limit": limit
         }
 
@@ -53,7 +54,8 @@ class IndiaRadarEngine:
                 return []
                 
             data = resp.json()
-            jobs = data.get("data", []) or data.get("jobs", [])
+            # Techmap returns the array in the 'result' key
+            jobs = data.get("result", [])
             logger.info(f"[india_radar] Fetched {len(jobs)} raw jobs from API.")
             return jobs
         except Exception as e:
