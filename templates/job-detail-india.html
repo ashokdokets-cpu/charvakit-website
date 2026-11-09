@@ -41,7 +41,37 @@
     <div class="alert alert-success mt-4">
       <h5>🎯 Ready to Apply?</h5>
       <p>To apply for this role and get verified, take a quick 10-minute assessment tailored to this job.</p>
-      <a href="/ai-assessment?role={{ job.title | urlencode }}&industry=Technology&level=mid" class="btn btn-primary btn-lg w-100 mt-2">Take Assessment & Apply</a>
+      <button onclick="startAssessment()" id="applyBtn" class="btn btn-primary btn-lg w-100 mt-2">Take Assessment & Apply</button>
+
+<script>
+async function startAssessment() {
+    const btn = document.getElementById('applyBtn');
+    btn.disabled = true;
+    btn.textContent = 'AI is analyzing this job...';
+
+    try {
+        // Call our new AI parser route
+        const res = await fetch('/api/jobs/{{ job.job_id }}/prefill');
+        const data = await res.json();
+
+        if (data.status === 'success') {
+            // Build the URL with the AI-extracted data
+            const params = new URLSearchParams({
+                role: data.role,
+                industry: data.industry,
+                level: data.level
+            });
+            window.location.href = `/ai-assessment?${params.toString()}`;
+        } else {
+            // Fallback if AI fails
+            window.location.href = `/ai-assessment?role={{ job.title | urlencode }}`;
+        }
+    } catch (e) {
+        // Fallback on network error
+        window.location.href = `/ai-assessment?role={{ job.title | urlencode }}`;
+    }
+}
+</script>
     </div>
   </div>
 </div>
