@@ -19757,6 +19757,7 @@ async def api_cron_send_bench_digest(request: Request):
         return handle_error(e, request)
 
 from candidate_marketing_engine import candidate_marketing_engine
+from india_radar_engine import india_radar_engine
 
 @app.get("/admin/candidates", response_class=HTMLResponse)
 async def admin_candidates_page(request: Request):
@@ -20652,6 +20653,88 @@ async def api_reset_password(request: Request):
             {"status": "error", "message": f"Reset failed: {str(e)[:100]}"},
             status_code=500
         )
+
+
+# ============================================================
+# INDIA RADAR ROUTES (Session 110)
+# ============================================================
+
+@app.get("/admin/india-radar", response_class=HTMLResponse)
+async def admin_india_radar_page(request: Request):
+    try:
+        require_admin(request)
+    except HTTPException:
+        return RedirectResponse(url="/admin-login?next=/admin/india-radar", status_code=302)
+    return template_response("admin-india-radar.html", request, "India Radar - Charvak")
+
+@app.post("/api/admin/india-radar/run")
+async def api_run_india_radar(request: Request):
+    require_admin(request)
+    result = india_radar_engine.run_radar()
+    return result
+
+@app.get("/api/admin/india-radar/alerts")
+async def api_get_radar_alerts(request: Request):
+    require_admin(request)
+    from database import db
+    conn = db.get_pooled_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT alert_id, job_title, company, location, salary, matched_candidate, 
+                   candidate_email, overlap_pct, status 
+            FROM charvak_radar_alerts 
+            ORDER BY created_at DESC LIMIT 50
+        """)
+        rows = cur.fetchall()
+        return {"status": "success", "alerts": [
+            {"alert_id": r[0], "job_title": r[1], "company": r[2], "location": r[3],
+             "salary": r[4], "matched_candidate": r[5], "candidate_email": r[6], 
+             "overlap_pct": float(r[7]) if r[7] else 0, "status": r[8]}
+            for r in rows
+        ]}
+    finally:
+        cur.close()
+        db.release_pooled_connection(conn)
+
+@app.post("/api/admin/india-radar/push/{alert_id}")
+async def api_push_radar_alert(request: Request, alert_id: int):
+    require_admin(request)
+    from database import db
+    from enhanced_email import enhanced_email
+    conn = db.get_pooled_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT job_title, company, location, salary, candidate_email FROM charvak_radar_alerts WHERE alert_id = %s", (alert_id,))
+        row = cur.fetchone()
+        if not row:
+            raise HTTPException(404, "Alert not found")
+        
+        title, company, loc, salary, email = row
+        
+        subject = f"🔥 New Job Match: {title} at {company}"
+        body_html = f"""
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+            <h3>Good news!</h3>
+            <p>We found an Indian requirement that matches your verified skills:</p>
+            <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                <h2 style="margin: 0; color: #0d9488;">{title}</h2>
+                <p style="margin: 5px 0;"><strong>{company}</strong> • {loc}</p>
+                <p style="margin: 5px 0;">💰 {salary if salary else 'Not disclosed'}</p>
+            </div>
+            <p>Click below to view the details and apply with your Charvak profile:</p>
+            <p><a href="https://www.charvakit.com/job-board" style="padding: 10px 20px; background: #0d9488; color: white; text-decoration: none; border-radius: 5px;">View Job & Apply</a></p>
+        </div>
+        """
+        
+        enhanced_email.email_engine.send_email(email, subject, body_html, is_html=True)
+        
+        cur.execute("UPDATE charvak_radar_alerts SET status = 'alerted', alerted_at = NOW() WHERE alert_id = %s", (alert_id,))
+        conn.commit()
+        return {"status": "success"}
+    finally:
+        cur.close()
+        db.release_pooled_connection(conn)
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
