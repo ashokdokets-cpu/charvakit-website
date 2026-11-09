@@ -1335,7 +1335,7 @@ async def api_admin_bench_jobs(request: Request):
     require_admin(request)
     try:
         from jobs_unified_engine import jobs_unified_engine
-        result = jobs_unified_engine.get_unified_jobs(limit=200)
+        result = jobs_unified_engine.get_unified_jobs(limit=200, show_all=True)
         # Override the source filter to return all jobs
         return result
     except Exception as e:
