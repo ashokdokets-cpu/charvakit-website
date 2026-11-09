@@ -1354,6 +1354,77 @@ async def api_admin_bench_jobs(request: Request):
         return result
     except Exception as e:
         return {"status": "error", "message": str(e)[:200]}
+
+@app.get("/admin/bench-submissions", response_class=HTMLResponse)
+async def admin_bench_submissions_page(request: Request):
+    """Internal dashboard to review bench submissions and email candidates."""
+    try:
+        require_admin(request)
+    except HTTPException:
+        return RedirectResponse(url="/admin-login?next=/admin/bench-submissions", status_code=302)
+    return template_response("admin-bench-submissions.html", request, "Bench Submissions - Charvak")
+
+@app.get("/api/admin/bench-submissions")
+async def api_admin_bench_submissions(request: Request):
+    require_admin(request)
+    from database import db
+    conn = db.get_pooled_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT s.submission_id, s.job_id, s.candidate_name, s.candidate_email, 
+                   s.overlap_pct, s.status, s.submitted_at,
+                   j.title, j.company
+            FROM charvak_bench_submissions s
+            JOIN charvak_jobs j ON s.job_id = j.job_id
+            ORDER BY s.submitted_at DESC
+        """)
+        rows = cur.fetchall()
+        return {"status": "success", "submissions": [
+            {
+                "submission_id": r[0], "job_id": r[1], "candidate_name": r[2],
+                "candidate_email": r[3], "overlap_pct": float(r[4]) if r[4] else 0,
+                "status": r[5], "submitted_at": r[6].isoformat() if r[6] else None,
+                "job_title": r[7], "company": r[8]
+            } for r in rows
+        ]}
+    finally:
+        cur.close()
+        db.release_pooled_connection(conn)
+
+@app.post("/api/admin/bench/email-candidate")
+async def api_admin_bench_email(request: Request):
+    require_admin(request)
+    try:
+        data = await request.json()
+        email = data.get("email")
+        title = data.get("title")
+        company = data.get("company")
+        job_id = data.get("jobId")
+        
+        if not email:
+            raise HTTPException(400, "Candidate email required")
+            
+        from enhanced_email import enhanced_email
+        
+        subject = f"Job Opportunity: {title} at {company}"
+        body_html = f"""
+        <h3>Hi,</h3>
+        <p>We found a contract role that matches your verified skills: <strong>{title}</strong> at <strong>{company}</strong>.</p>
+        <p>Click below to view the full description and apply:</p>
+        <p><a href="https://www.charvakit.com/job-board/{job_id}" style="padding: 10px 20px; background: #0d9488; color: white; text-decoration: none; border-radius: 5px;">View Job & Apply</a></p>
+        <p>Best,<br>Charvak Bench Team</p>
+        """
+        
+        result = enhanced_email.email_engine.send_email(email, subject, body_html, is_html=True)
+        
+        if result.get("status") == "error":
+             return {"status": "error", "message": result.get("message")}
+             
+        return {"status": "success", "message": "Email sent"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)[:200]}
+
 @app.post("/api/admin/bench/submit")
 async def api_admin_bench_submit(request: Request):
     """Run 108G filter against a job, find best bench candidate, save submission."""

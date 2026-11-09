@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Bench Submissions - Internal{% endblock %}
+{% block content %}
+<div class="container py-4" style="max-width: 1200px;">
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+      <h2 style="margin: 0;">Bench Submissions</h2>
+      <p style="color: #666; margin: 4px 0 0 0; font-size: 0.9rem;">Jobs matched to bench candidates. Review and send to candidates.</p>
+    </div>
+    <a href="/admin/bench-jobs" class="btn btn-outline-secondary btn-sm">← Back to Bench Jobs</a>
+  </div>
+
+  <div class="card" style="border: 1px solid #e5e7eb;">
+    <div class="table-responsive">
+      <table class="table table-sm table-hover mb-0">
+        <thead style="background: #f9fafb;">
+          <tr>
+            <th>Job Title</th>
+            <th>Company</th>
+            <th>Matched Candidate</th>
+            <th>Overlap</th>
+            <th>Status</th>
+            <th>Submitted At</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="submissionsBody">
+          <tr><td colspan="7" style="padding: 30px; text-align: center;">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+async function loadSubmissions() {
+  const body = document.getElementById('submissionsBody');
+  const token = localStorage.getItem('authToken') || localStorage.getItem('auth_token') || '';
+
+  try {
+    const res = await fetch('/api/admin/bench-submissions', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    const data = await res.json();
+    
+    if (data.status !== 'success' || !data.submissions.length) {
+      body.innerHTML = '<tr><td colspan="7" style="padding: 30px; text-align: center; color: #999;">No submissions yet.</td></tr>';
+      return;
+    }
+
+    body.innerHTML = data.submissions.map(s => `
+      <tr>
+        <td style="font-weight: 600;">${s.job_title}</td>
+        <td>${s.company}</td>
+        <td>
+          <div style="font-weight: 600;">${s.candidate_name || 'Unknown'}</div>
+          <div style="font-size: 0.8rem; color: #666;">${s.candidate_email || '—'}</div>
+        </td>
+        <td><span class="badge bg-info">${s.overlap_pct}%</span></td>
+        <td><span class="badge bg-${s.status === 'pending_review' ? 'warning' : 'success'}">${s.status}</span></td>
+        <td style="font-size: 0.85rem;">${(s.submitted_at || '').split('T')[0]}</td>
+        <td>
+          <button onclick="emailCandidate('${s.candidate_email}', '${s.job_title}', '${s.company}', '${s.job_id}')" class="btn btn-sm btn-primary">✉ Email Candidate</button>
+        </td>
+      </tr>
+    `).join('');
+  } catch (e) {
+    body.innerHTML = `<tr><td colspan="7" style="padding: 30px; color: red;">Error: ${e.message}</td></tr>`;
+  }
+}
+
+async function emailCandidate(email, title, company, jobId) {
+  if (!email) { alert('No email address for this candidate.'); return; }
+  if (!confirm(`Send job details to ${email}?`)) return;
+  
+  const token = localStorage.getItem('authToken') || localStorage.getItem('auth_token') || '';
+  try {
+    const res = await fetch('/api/admin/bench/email-candidate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ email, title, company, jobId })
+    });
+    const data = await res.json();
+    if (data.status === 'success') {
+      alert('✅ Email sent to candidate!');
+    } else {
+      alert('Error: ' + data.message);
+    }
+  } catch (e) {
+    alert('Network error: ' + e.message);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', loadSubmissions);
+</script>
+{% endblock %}
