@@ -1272,12 +1272,15 @@ async def job_board_detail_page(request: Request, job_id: str):
             "source": row[7], "raw_json": safe_raw_json
         }
         
+        # Ensure skills are a clean list for the template
         if isinstance(job["skills"], str):
-            job["skills_list"] = [s.strip() for s in job["skills"].split(",") if s.strip()]
-        elif isinstance(job["skills"], list):
-            job["skills_list"] = job["skills"]
-        else:
-            job["skills_list"] = []
+            if job["skills"].startswith("["):
+                try:
+                    job["skills"] = json.loads(job["skills"])
+                except:
+                    job["skills"] = [s.strip() for s in job["skills"].split(",") if s.strip()]
+            else:
+                job["skills"] = [s.strip() for s in job["skills"].split(",") if s.strip()]
 
         # Route to the correct template based on the source
         if job["source"] in ('charvak', 'manual', 'via_charvak', 'employer'):
