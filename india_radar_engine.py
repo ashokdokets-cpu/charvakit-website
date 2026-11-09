@@ -119,8 +119,13 @@ class IndiaRadarEngine:
                 job_skills = job.get("skills", []) or []
                 job_desc = str(job.get("description", "") or "")
                 
-                # Extract job ID (Techmap uses 'id')
-                external_job_id = str(job.get("id") or "NCS-" + str(hash(job_title))[:8])
+                # Extract job ID. If missing, generate a consistent hash from the title & company.
+                ext_id = job.get("id")
+                if not ext_id:
+                    import hashlib
+                    raw_string = f"{job_title}-{job_company}".encode('utf-8')
+                    ext_id = "IND-" + hashlib.md5(raw_string).hexdigest()[:10].upper()
+                external_job_id = str(ext_id)
 
                 # For India Radar, if location is blank, we allow it.
                 # We only apply the strict filter if a location WAS provided.
