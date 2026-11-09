@@ -35,15 +35,18 @@ class IndiaRadarEngine:
         }
         
         # We request NCS data and India location
-        # Use Naukri (large Indian volume) instead of NCS which can be empty.
-        # dateCreated ensures we get jobs from the current month.
-        from datetime import datetime
-        current_month = datetime.now().strftime("%Y-%m")
+        # Use a 7-day rolling window to ensure we get jobs.
+        # Techmap works best with explicit date ranges.
+        from datetime import datetime, timedelta
+        today = datetime.now()
+        week_ago = today - timedelta(days=7)
         
         params = {
             "portal": "naukri",
             "countryCode": "in",
-            "dateCreated": current_month,
+            "dateCreatedMin": week_ago.strftime("%Y-%m-%d"),
+            "dateCreatedMax": today.strftime("%Y-%m-%d"),
+            "sort": "newest",
             "limit": limit
         }
 
