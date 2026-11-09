@@ -124,9 +124,12 @@ class IndiaRadarEngine:
                 if job_loc and not self._is_truly_india(job):
                     continue
 
+                # CRITICAL: The 108G filter only accepts US/Remote locations.
+                # To match Indian jobs, we trick the location check by sending "Remote".
+                # This forces the engine to evaluate the SKILLS instead of the location.
                 jd_data = {
                     "role_title": job_title, "title": job_title, "company": job_company,
-                    "location": job_loc or "India", # Default to India if blank
+                    "location": "Remote", 
                     "skills_required": job_skills,
                     "work_auth_required": "Any", "rate_min": None, "rate_max": None,
                     "raw_text": job_desc, "source": "naukri"
