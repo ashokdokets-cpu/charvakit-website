@@ -1383,8 +1383,8 @@ async def api_admin_bench_email(request: Request):
         body_html = f"""
         <h3>Hi,</h3>
         <p>We found a contract role that matches your verified skills: <strong>{title}</strong> at <strong>{company}</strong>.</p>
-        <p>Click below to view the full description and apply:</p>
-        <p><a href="https://www.charvakit.com/job-board/{job_id}" style="padding: 10px 20px; background: #0d9488; color: white; text-decoration: none; border-radius: 5px;">View Job & Apply</a></p>
+        <p>Click below to view the full job description on your Charvak dashboard:</p>
+        <p><a href="https://www.charvakit.com/job-board/{job_id}" style="padding: 10px 20px; background: #0d9488; color: white; text-decoration: none; border-radius: 5px;">View Job Details</a></p>
         <p>Best,<br>Charvak Bench Team</p>
         """
         
