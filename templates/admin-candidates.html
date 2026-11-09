@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% block title %}Candidate Marketing - Charvak{% endblock %}
+{% block content %}
+<div class="container py-4" style="max-width: 1200px;">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 style="margin: 0;">Candidate Marketing Engine (US)</h2>
+      <p style="color: #666; margin: 4px 0 0 0; font-size: 0.9rem;">Market your bench candidates to generate US requirements.</p>
+    </div>
+    <a href="/admin/bench-jobs" class="btn btn-outline-secondary btn-sm">Job Requirements →</a>
+  </div>
+
+  <div class="row">
+    <!-- Left: Candidate List -->
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-white fw-bold">Bench Candidates</div>
+        <div class="list-group list-group-flush" id="candidateList">
+          <div class="p-3 text-muted text-center">Loading...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Candidate Details & Actions -->
+    <div class="col-md-8">
+      <div id="candidateDetail" class="card shadow-sm border-0 d-none">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+              <h3 class="mb-1" id="candName"></h3>
+              <p class="text-muted mb-0" id="candMeta"></p>
+            </div>
+            <span class="badge bg-success" id="candRate"></span>
+          </div>
+          
+          <div class="mb-4">
+            <h6 class="text-uppercase text-muted small fw-bold">Skills</h6>
+            <div id="candSkills"></div>
+          </div>
+
+          <div class="mb-4">
+            <h6 class="text-uppercase text-muted small fw-bold d-flex justify-content-between">
+              Vendor Marketing Blurb
+              <button class="btn btn-sm btn-primary" onclick="generateBlurb()" id="btnBlurb">✨ Generate Blurb</button>
+            </h6>
+            <div class="p-3 bg-light rounded" id="candBlurb" style="font-style: italic; min-height: 80px;">
+              Click "Generate Blurb" to create a vendor-ready pitch.
+            </div>
+          </div>
+
+          <div>
+            <h6 class="text-uppercase text-muted small fw-bold">Top Matched Requirements (Reverse Match)</h6>
+            <div class="table-responsive">
+              <table class="table table-sm table-hover">
+                <thead>
+                  <tr>
+                    <th>Job Title</th>
+                    <th>Company</th>
+                    <th>Overlap</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="candMatches">
+                  <tr><td colspan="4" class="text-muted text-center">Loading matches...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="emptyState" class="text-center p-5 text-muted">
+        <h4>Select a candidate to view their profile</h4>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentCandidateId = null;
+
+function _headers() {
+  const t = localStorage.getItem('authToken') || localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+  return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + t };
+}
+
+async function loadCandidates() {
+  const res = await fetch('/api/admin/candidates', { headers: _headers() });
+  const data = await res.json();
+  const list = document.getElementById('candidateList');
+  
+  if (data.status !== 'success' || !data.candidates.length) {
+    list.innerHTML = '<div class="p-3 text-muted text-center">No bench candidates found.</div>';
+    return;
+  }
+
+  list.innerHTML = data.candidates.map(c => `
+    <a href="#" class="list-group-item list-group-item-action" onclick="selectCandidate('${c.candidate_id}'); return false;" id="list-${c.candidate_id}">
+      <div class="d-flex w-100 justify-content-between">
+        <h6 class="mb-1">${c.name}</h6>
+      </div>
+      <small class="text-muted">${c.visa_status || c.work_auth_status || 'Auth N/A'} • ${c.experience_years || '?'} yrs</small>
+    </a>
+  `).join('');
+}
+
+async function selectCandidate(id) {
+  currentCandidateId = id;
+  
+  document.querySelectorAll('.list-group-item').forEach(el => el.classList.remove('active'));
+  const activeEl = document.getElementById('list-' + id);
+  if (activeEl) activeEl.classList.add('active');
+  
+  document.getElementById('emptyState').classList.add('d-none');
+  document.getElementById('candidateDetail').classList.remove('d-none');
+  
+  // Reset UI
+  document.getElementById('candBlurb').textContent = 'Click "Generate Blurb" to create a vendor-ready pitch.';
+  document.getElementById('candMatches').innerHTML = '<tr><td colspan="4" class="text-muted text-center">Loading matches...</td></tr>';
+
+  // Fetch candidate details from the cached list
+  const res = await fetch('/api/admin/candidates', { headers: _headers() });
+  const data = await res.json();
+  const c = data.candidates.find(x => x.candidate_id === id);
+  if (!c) return;
+
+  document.getElementById('candName').textContent = c.name;
+  document.getElementById('candMeta').textContent = `${c.location || 'US'} • ${c.visa_status || c.work_auth_status || 'Visa N/A'}`;
+  document.getElementById('candRate').textContent = c.rate_min ? `$${c.rate_min}-${c.rate_max}/hr` : 'Rate Negotiable';
+  
+  const skillsArr = Array.isArray(c.skills) ? c.skills : (c.skills || '').split(',');
+  document.getElementById('candSkills').innerHTML = skillsArr.map(s => `<span class="badge bg-secondary me-1 mb-1">${s.trim()}</span>`).join('');
+
+  // Load matches
+  const matchRes = await fetch(`/api/admin/candidates/${id}/matches`, { headers: _headers() });
+  const matchData = await matchRes.json();
+  const tbody = document.getElementById('candMatches');
+  
+  if (matchData.status === 'success' && matchData.jobs.length > 0) {
+    tbody.innerHTML = matchData.jobs.map(j => `
+      <tr>
+        <td class="fw-bold">${j.title}</td>
+        <td>${j.company}</td>
+        <td><span class="badge bg-success">${j.overlap_pct}%</span></td>
+        <td><a href="/job-board/${j.job_id}" target="_blank" class="btn btn-sm btn-outline-primary">View</a></td>
+      </tr>
+    `).join('');
+  } else {
+    tbody.innerHTML = '<tr><td colspan="4" class="text-muted text-center">No high-confidence matches found in recent jobs.</td></tr>';
+  }
+}
+
+async function generateBlurb() {
+  if (!currentCandidateId) return;
+  const btn = document.getElementById('btnBlurb');
+  const blurbBox = document.getElementById('candBlurb');
+  
+  btn.disabled = true;
+  btn.textContent = 'Generating...';
+  blurbBox.textContent = 'AI is analyzing the candidate profile...';
+  
+  try {
+    const res = await fetch(`/api/admin/candidates/${currentCandidateId}/blurb`, {
+      method: 'POST', headers: _headers()
+    });
+    const data = await res.json();
+    
+    if (data.status === 'success') {
+      blurbBox.textContent = data.blurb;
+    } else {
+      blurbBox.textContent = 'Error: ' + data.message;
+    }
+  } catch (e) {
+    blurbBox.textContent = 'Network error.';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '✨ Regenerate';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', loadCandidates);
+</script>
+{% endblock %}
