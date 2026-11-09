@@ -215,7 +215,7 @@ function renderJobs(items) {
             }
         }
 
-        html += '<div class="mt-3"><a href="' + _jbEsc(it.detail_url || '#') + '" class="btn btn-outline-primary btn-sm">View & Apply →</a></div>';
+        html += '<div class="mt-3"><a href="' + _jbEsc(it.detail_url || '#') + '" target="_blank" rel="noopener" class="btn btn-outline-primary btn-sm">View & Apply →</a></div>';
         html += '</div></div>';
     }
     list.innerHTML = html;
