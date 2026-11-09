@@ -1,269 +1,266 @@
-{% extends "base.html" %}
-{% block title %}Employer Assessment Dashboard - Charvak{% endblock %}
+﻿{% extends "base.html" %}
+{% block title %}Employer Portal - Charvak{% endblock %}
+
 {% block content %}
 <style>
-  .emp-container { max-width: 1100px; margin: 0 auto; padding: 0 15px; }
-  .emp-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; flex-wrap: wrap; gap: 15px; }
-  .emp-title h1 { margin: 0; color: #1a1a2e; font-size: 1.8rem; }
-  .emp-title p { margin: 4px 0 0 0; color: #666; font-size: 0.95rem; }
-  
-  /* Responsive KPI Grid */
-  .emp-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 30px; }
-  .emp-kpi { background: white; padding: 20px; border-radius: 8px; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-  .emp-kpi-title { font-size: 0.75rem; color: #666; text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em; }
-  .emp-kpi-value { font-size: 1.8rem; font-weight: 700; color: #111; margin-top: 5px; }
-  .emp-kpi.kpi-blue { border-left: 4px solid #1a73e8; }
-  .emp-kpi.kpi-green { border-left: 4px solid #10b981; }
-  .emp-kpi.kpi-yellow { border-left: 4px solid #f59e0b; }
-  .emp-kpi.kpi-purple { border-left: 4px solid #7c3aed; }
+.emp-hero { background: linear-gradient(135deg, #0f766e 0%, #0d9488 100%);
+    color: white; padding: 3rem 1.5rem; border-radius: 12px; margin-bottom: 2rem; }
+.emp-hero h1 { font-size: 2.2rem; margin-bottom: .75rem; font-weight: 700; }
+.emp-hero p { font-size: 1.1rem; opacity: .95; max-width: 720px; margin: 0; }
+.verify-box { background: white; border: 2px solid #0d9488; border-radius: 12px;
+    padding: 1.5rem; margin-bottom: 2rem; }
+.verify-box label { font-weight: 600; margin-bottom: .5rem; display: block; }
+.verify-input-group { display: flex; gap: .75rem; }
+.verify-input-group input { flex: 1; font-size: 1.05rem; padding: .75rem; }
+.tier-filter { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+.tier-filter button { padding: .5rem 1rem; border: 1px solid #d1d5db; background: white;
+    border-radius: 20px; font-size: .9rem; cursor: pointer; transition: all .15s; }
+.tier-filter button:hover { border-color: #0d9488; color: #0d9488; }
+.tier-filter button.active { background: #0d9488; color: white; border-color: #0d9488; }
+.passport-card { background: white; border: 1px solid #e5e7eb; border-radius: 10px;
+    padding: 1.25rem; margin-bottom: 1rem; transition: all .15s; cursor: pointer; }
+.passport-card:hover { border-color: #0d9488; box-shadow: 0 4px 12px rgba(13,148,136,.15); }
+.passport-card-header { display: flex; justify-content: space-between; align-items: start; }
+.passport-handle { font-family: monospace; font-size: 1.1rem; font-weight: 600; color: #111827; }
+.passport-display-name { color: #6b7280; font-size: .9rem; margin-top: .25rem; }
+.score-badge { font-size: 1.75rem; font-weight: 700; color: #0d9488; text-align: right; }
+.score-label { font-size: .75rem; color: #6b7280; text-transform: uppercase; letter-spacing: .05em; }
+.tier-badge { display: inline-block; padding: .2rem .6rem; border-radius: 12px;
+    font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
+.tier-foundation { background: #fee2e2; color: #991b1b; }
+.tier-developing { background: #fed7aa; color: #9a3412; }
+.tier-solid { background: #fef3c7; color: #92400e; }
+.tier-strong { background: #d1fae5; color: #065f46; }
+.tier-elite { background: #ddd6fe; color: #5b21b6; }
+.empty-state { text-align: center; padding: 3rem 1rem; color: #6b7280; }
+.empty-state .icon { font-size: 4rem; opacity: .4; }
+.pagination { display: flex; justify-content: center; align-items: center; gap: .5rem;
+    margin-top: 2rem; }
+.pagination button { padding: .5rem 1rem; border: 1px solid #d1d5db; background: white;
+    border-radius: 6px; cursor: pointer; }
+.pagination button:hover:not(:disabled) { border-color: #0d9488; color: #0d9488; }
+.pagination button:disabled { opacity: .4; cursor: not-allowed; }
+.pagination .page-info { padding: .5rem 1rem; color: #6b7280; font-size: .9rem; }
 
-  /* Responsive Actions */
-  .emp-actions { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
-  .emp-btn { padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; border: none; display: flex; align-items: center; justify-content: center; gap: 8px; }
-  .emp-btn-primary { background: #1a73e8; color: white; }
-  .emp-btn-outline { background: white; color: #1a73e8; border: 1px solid #1a73e8; }
-  .emp-btn-warning { background: #f59e0b; color: white; }
-
-  /* Responsive Table */
-  .emp-table-wrap { overflow-x: auto; background: white; border-radius: 8px; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-  .emp-table { width: 100%; border-collapse: collapse; text-align: left; min-width: 700px; }
-  .emp-table th { background: #f9fafb; padding: 12px; font-size: 0.8rem; color: #666; text-transform: uppercase; font-weight: 600; border-bottom: 1px solid #e5e7eb; }
-  .emp-table td { padding: 12px; border-bottom: 1px solid #e5e7eb; font-size: 0.9rem; }
-  .emp-table tr:hover { background: #f9fafb; }
-  
-  .badge-ready { background: #d1fae5; color: #065f46; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; white-space: nowrap; }
-  .badge-upskill { background: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; white-space: nowrap; }
-  .badge-notready { background: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; white-space: nowrap; }
-  .badge-pending { background: #e5e7eb; color: #4b5563; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; white-space: nowrap; }
-
-  @media (max-width: 600px) {
-    .emp-title h1 { font-size: 1.4rem; }
-    .emp-kpi-value { font-size: 1.5rem; }
-    .emp-btn { width: 100%; justify-content: center; }
+  /* Session 81: Universal mobile fixes */
+  @media (max-width: 640px) {
+    table { display: block; overflow-x: auto; font-size: 0.85rem; }
+    .container { padding-left: 12px !important; padding-right: 12px !important; }
+    h1 { font-size: 1.5rem !important; }
+    h2 { font-size: 1.3rem !important; }
   }
 </style>
 
-<div class="emp-container">
-  <div class="emp-header">
-    <div class="emp-title">
-      <h1>Employer Assessment Dashboard <span style="display: inline-block; background: #10b981; color: white; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; margin-left: 8px; vertical-align: middle;">● LIVE</span></h1>
-      <p>Run verified technical assessments for your open roles. Screen freshers or lateral hires before the first interview.</p>
+<div class="container py-4">
+    <div class="emp-hero">
+        <h1>🏢 Employer Portal</h1>
+        <p>Verify candidate credentials in seconds. Search by passport handle, or browse our public talent pool. Every score is cryptographically signed and independently verifiable.</p>
+        <div class="mt-3">
+            <a href="/employer/cas" class="btn btn-light btn-sm" style="font-weight:600;">🎓 Are you a university? Get bulk verification →</a>
+        </div>
     </div>
-    <div>
-      <select id="companySelect" class="form-select" onchange="loadDashboard()" style="min-width: 220px; padding: 8px; border-radius: 6px; border: 1px solid #ccc;">
-        <option value="Acme Corp">Acme Corp</option>
-        <option value="Tech Mahindra">Tech Mahindra</option>
-        <option value="Infosys">Infosys</option>
-        <option value="Startup XYZ">Startup XYZ</option>
-      </select>
-    </div>
-  </div>
 
-  <!-- KPI Cards -->
-  <div class="emp-kpis">
-    <div class="emp-kpi kpi-blue">
-      <div class="emp-kpi-title">Total Candidates Invited</div>
-      <div class="emp-kpi-value" id="statInvited">0</div>
+    <!-- Quick Verify -->
+    <div class="verify-box">
+        <label for="verifyHandle">Verify a candidate passport</label>
+        <div class="verify-input-group">
+            <input type="text" id="verifyHandle" class="form-control" placeholder="Enter passport handle, e.g. hr-6201" autocomplete="off">
+            <button class="btn btn-success" onclick="goVerify()">🔍 Verify</button>
+        </div>
+        <small class="text-muted d-block mt-2">The handle is on every Charvak certificate and passport link.</small>
     </div>
-    <div class="emp-kpi kpi-purple">
-      <div class="emp-kpi-title">Assessments Completed</div>
-      <div class="emp-kpi-value" id="statAssessed">0</div>
-    </div>
-    <div class="emp-kpi kpi-yellow">
-      <div class="emp-kpi-title">Average Score</div>
-      <div class="emp-kpi-value" id="statAvg">0%</div>
-    </div>
-    <div class="emp-kpi kpi-green">
-      <div class="emp-kpi-title">Ready to Interview</div>
-      <div class="emp-kpi-value" id="statReady">0</div>
-    </div>
-  </div>
 
-  <!-- Actions -->
-  <div class="emp-actions">
-    <button onclick="showUpload()" class="emp-btn emp-btn-primary">+ Upload Candidate CSV</button>
-    <button onclick="sendInvites()" class="emp-btn emp-btn-warning">✉ Send Assessment Links</button>
-    <button onclick="exportCSV()" class="emp-btn emp-btn-outline">⬇ Export Verified Shortlist</button>
-    <span id="actionMsg" style="font-size: 0.85rem; color: #666; align-self: center;"></span>
-  </div>
-
-  <!-- Upload Modal -->
-  <div id="uploadModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; overflow-y: auto;">
-    <div style="background: white; max-width: 500px; margin: 50px auto; padding: 24px; border-radius: 8px; width: 90%;">
-      <h3 style="margin-top: 0;">Upload Candidates</h3>
-      <p style="font-size: 0.85rem; color: #666;">CSV format: <code>Name, Email, Target Role, Industry, Level</code></p>
-      <input type="file" id="csvFile" accept=".csv" style="margin-bottom: 16px; width: 100%;">
-      <div style="display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap;">
-        <button onclick="hideUpload()" style="padding: 8px 16px; background: #e5e7eb; border: none; border-radius: 6px; cursor: pointer;">Cancel</button>
-        <button onclick="uploadCSV()" style="padding: 8px 16px; background: #1a73e8; color: white; border: none; border-radius: 6px; cursor: pointer;">Upload & Invite</button>
-      </div>
+    <!-- Tier Filter + Sort + CSV -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
+        <h4 class="mb-0">Public Talent Pool</h4>
+        <small class="text-muted" id="poolStats"></small>
     </div>
-  </div>
+    <div class="d-flex align-items-center gap-2 flex-wrap mb-3">
+        <div class="tier-filter" id="tierFilter" style="margin-bottom:0;">
+            <button data-tier="" class="active">All</button>
+            <button data-tier="foundation">Foundation</button>
+            <button data-tier="developing">Developing</button>
+            <button data-tier="solid">Solid</button>
+            <button data-tier="strong">Strong</button>
+            <button data-tier="elite">Elite</button>
+        </div>
+        <div class="ms-auto d-flex align-items-center gap-2">
+            <label for="sortSelect" class="text-muted small mb-0">Sort:</label>
+            <select id="sortSelect" class="form-select form-select-sm" style="width:auto;">
+                <option value="score">Score (high to low)</option>
+                <option value="recent">Recently updated</option>
+                <option value="handle">Handle (A-Z)</option>
+            </select>
+            <a href="#" id="csvExportBtn" class="btn btn-sm btn-outline-success" title="Download filtered results as CSV">
+                📥 Export CSV
+            </a>
+        </div>
+    </div>
 
-  <!-- Table -->
-  <div class="emp-table-wrap">
-    <table class="emp-table">
-      <thead>
-        <tr>
-          <th>Candidate</th>
-          <th>Role</th>
-          <th>Score</th>
-          <th>Status</th>
-          <th>Certificate</th>
-        </tr>
-      </thead>
-      <tbody id="candidateTableBody">
-        <tr><td colspan="5" style="padding: 30px; text-align: center; color: #999;">Loading...</td></tr>
-      </tbody>
-    </table>
-  </div>
+    <!-- Passports Grid -->
+    <div id="passportList">
+        <div class="text-center py-5">
+            <div class="spinner-border text-success" role="status"></div>
+            <p class="mt-3 text-muted">Loading talent pool...</p>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" id="pagination" style="display:none;">
+        <button id="prevBtn" onclick="prevPage()">← Previous</button>
+        <span class="page-info" id="pageInfo"></span>
+        <button id="nextBtn" onclick="nextPage()">Next →</button>
+    </div>
 </div>
+{% endblock %}
 
+{% block scripts %}
 <script>
-function _getCompany() { return document.getElementById('companySelect').value; }
-function _headers() {
-  const t = localStorage.getItem('authToken') || localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
-  return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + t };
-}
+(function() {
+    let currentTier = '';
+    let currentPage = 1;
+    let currentSort = 'score';
+    const pageSize = 20;
+    let totalPages = 0;
 
-async function loadDashboard() {
-  const company = _getCompany();
-  const body = document.getElementById('candidateTableBody');
-  body.innerHTML = '<tr><td colspan="5" style="padding: 30px; text-align: center; color: #999;">Loading...</td></tr>';
-  
-  try {
-    const res = await fetch(`/api/college/stats?institution=${encodeURIComponent(company)}`, { headers: _headers() });
-    const data = await res.json();
-    if (data.status !== 'success') { body.innerHTML = '<tr><td colspan="5" style="padding: 20px; color: red;">Failed to load stats.</td></tr>'; return; }
-    
-    document.getElementById('statInvited').textContent = data.stats.invited;
-    document.getElementById('statAssessed').textContent = data.stats.assessed;
-    document.getElementById('statAvg').textContent = data.stats.avg_score + '%';
-    document.getElementById('statReady').textContent = data.stats.ready;
-
-    const students = data.students || [];
-    if (students.length === 0) {
-      body.innerHTML = '<tr><td colspan="5" style="padding: 30px; text-align: center; color: #999;">No candidates yet. Click "Upload Candidate CSV" to start.</td></tr>';
-      return;
+    function escapeHtml(s) {
+        if (!s) return '';
+        return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     }
 
-    body.innerHTML = students.map(s => {
-      let badge = '<span class="badge-pending">Pending</span>';
-      if (s.readiness === 'Ready') badge = '<span class="badge-ready">Ready</span>';
-      else if (s.readiness === 'Upskill') badge = '<span class="badge-upskill">Upskill</span>';
-      else if (s.readiness === 'Not Ready') badge = '<span class="badge-notready">Not Ready</span>';
-      
-      const certLink = s.cert_id ? `<a href="/readiness/${s.cert_id}" target="_blank" style="color:#1a73e8; text-decoration:none; font-size:0.85rem; font-weight:600;">View Cert ↗</a>` : '—';
-      const scoreText = s.score ? `<strong>${s.score}%</strong>` : '—';
-      
-      return `<tr>
-        <td>
-          <div style="font-weight: 600;">${s.name || 'Unknown'}</div>
-          <div style="font-size: 0.8rem; color: #666;">${s.email}</div>
-        </td>
-        <td style="font-size: 0.85rem;">${s.role || '—'}</td>
-        <td>${scoreText}</td>
-        <td>${badge}</td>
-        <td>${certLink}</td>
-      </tr>`;
-    }).join('');
-  } catch (e) {
-    body.innerHTML = `<tr><td colspan="5" style="padding: 20px; color: red;">Error: ${e}</td></tr>`;
-  }
-}
-
-function showUpload() { document.getElementById('uploadModal').style.display = 'block'; }
-function hideUpload() { document.getElementById('uploadModal').style.display = 'none'; }
-
-async function uploadCSV() {
-  const fileInput = document.getElementById('csvFile');
-  if (!fileInput.files.length) { alert('Select a CSV file first.'); return; }
-  
-  const file = fileInput.files[0];
-  const reader = new FileReader();
-  reader.onload = async (e) => {
-    const text = e.target.result;
-    const lines = text.split('\n').map(l => l.trim()).filter(l => l);
-    if (lines.length < 2) { alert('CSV appears empty.'); return; }
-    
-    const students = [];
-    for (let i = 1; i < lines.length; i++) {
-      const parts = lines[i].split(',').map(p => p.trim());
-      if (parts.length >= 2 && parts[1].includes('@')) {
-        students.push({ name: parts[0], email: parts[1], role: parts[2] || '', industry: parts[3] || '', level: parts[4] || '' });
-      }
-    }
-    
-    const company = _getCompany();
-    const msg = document.getElementById('actionMsg');
-    msg.textContent = 'Uploading...';
-    
-    try {
-      const res = await fetch('/api/college/upload', {
-        method: 'POST', headers: _headers(),
-        body: JSON.stringify({ institution: company, students: students })
-      });
-      const data = await res.json();
-      if (data.status === 'success') {
-        msg.textContent = `Success: ${data.inserted} added, ${data.skipped} skipped. Now sending invites...`;
-        hideUpload();
-        // Automatically trigger email invites
-        await sendInvites();
-      } else {
-        msg.textContent = 'Upload failed: ' + (data.message || 'Unknown error');
-      }
-    } catch (err) {
-      msg.textContent = 'Network error during upload.';
-    }
-  };
-  reader.readAsText(file);
-}
-
-async function sendInvites() {
-  const company = _getCompany();
-  const msg = document.getElementById('actionMsg');
-  msg.textContent = 'Sending invites... (this may take a minute)';
-  
-  try {
-    const res = await fetch('/api/college/send-invites', {
-      method: 'POST', headers: _headers(),
-      body: JSON.stringify({ institution: company })
-    });
-    const data = await res.json();
-    if (data.status === 'success') {
-      msg.textContent = `Success: ${data.sent} emails sent, ${data.failed} failed.`;
-      loadDashboard();
-    } else {
-      msg.textContent = 'Error: ' + (data.message || 'Unknown');
-    }
-  } catch (e) {
-    msg.textContent = 'Network error.';
-  }
-}
-
-function exportCSV() {
-  const company = _getCompany();
-  fetch(`/api/college/export?institution=${encodeURIComponent(company)}`, { headers: _headers() })
-    .then(r => r.blob())
-    .then(blob => {
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Verified_Shortlist_${company.replace(/\s+/g, '_')}.csv`;
-      a.click();
-      window.URL.revokeObjectURL(url);
-    })
-    .catch(e => alert('Export failed: ' + e));
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    loadDashboard();
-    // Auto-refresh every 30 seconds
-    setInterval(function() {
-        if (!document.hidden) {
-            loadDashboard();
+    window.goVerify = function() {
+        const h = (document.getElementById('verifyHandle').value || '').trim().toLowerCase();
+        if (!h) {
+            alert('Enter a passport handle first');
+            return;
         }
-    }, 30000);
-});
+        window.location.href = '/employer/verify/' + encodeURIComponent(h);
+    };
+
+    // Allow Enter key in input
+    document.getElementById('verifyHandle').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') window.goVerify();
+    });
+
+    function renderPassports(data) {
+        const container = document.getElementById('passportList');
+        const passports = data.passports || [];
+
+        if (!passports.length) {
+            const tierMsg = currentTier ? ' for tier "' + escapeHtml(currentTier) + '"' : '';
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="icon">🔍</div>
+                    <p class="mb-2">No public passports found${tierMsg}.</p>
+                    <p class="text-muted small mb-3">Candidates can create a public passport at Readiness Check — it's free and takes 5 minutes.</p>
+                    <a href="/readiness-check" class="btn btn-success btn-sm">Try the free readiness check →</a>
+                </div>
+            `;
+            document.getElementById('pagination').style.display = 'none';
+            document.getElementById('poolStats').textContent = '0 candidates';
+            return;
+        }
+
+        container.innerHTML = passports.map(p => `
+            <div class="passport-card" onclick="window.location.href='/employer/verify/${encodeURIComponent(p.handle)}'">
+                <div class="passport-card-header">
+                    <div>
+                        <div class="passport-handle">@${escapeHtml(p.handle)}</div>
+                        <div class="passport-display-name">${escapeHtml(p.display_name || '')}</div>
+                        <div class="mt-2">
+                            <span class="tier-badge tier-${escapeHtml(p.score_tier)}">${escapeHtml(p.score_tier)}</span>
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <div class="score-label">Charvak Score</div>
+                        <div class="score-badge">${p.charvak_score}</div>
+                        <small class="text-muted">out of 1000</small>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        document.getElementById('poolStats').textContent = data.total + ' candidate' + (data.total === 1 ? '' : 's');
+
+        // Pagination
+        totalPages = data.pages || 0;
+        if (totalPages > 1) {
+            document.getElementById('pagination').style.display = 'flex';
+            document.getElementById('pageInfo').textContent = 'Page ' + data.page + ' of ' + totalPages;
+            document.getElementById('prevBtn').disabled = (currentPage <= 1);
+            document.getElementById('nextBtn').disabled = (currentPage >= totalPages);
+        } else {
+            document.getElementById('pagination').style.display = 'none';
+        }
+    }
+
+    async function loadPassports() {
+        const container = document.getElementById('passportList');
+        container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-success" role="status"></div><p class="mt-3 text-muted">Loading talent pool...</p></div>';
+
+        const params = new URLSearchParams();
+        if (currentTier) params.set('tier', currentTier);
+        params.set('limit', pageSize);
+        params.set('offset', (currentPage - 1) * pageSize);
+        params.set('sort', currentSort);
+
+        try {
+            const r = await fetch('/api/passport/public/list?' + params.toString());
+            const data = await r.json();
+            if (data.status !== 'success') {
+                container.innerHTML = '<div class="alert alert-danger">Failed to load talent pool</div>';
+                return;
+            }
+            renderPassports(data);
+        } catch (e) {
+            container.innerHTML = '<div class="alert alert-danger">Network error loading talent pool</div>';
+        }
+    }
+
+    window.prevPage = function() {
+        if (currentPage > 1) {
+            currentPage--;
+            loadPassports();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    };
+
+    window.nextPage = function() {
+        if (currentPage < totalPages) {
+            currentPage++;
+            loadPassports();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    };
+
+    // Tier filter buttons
+    document.querySelectorAll('#tierFilter button').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('#tierFilter button').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            currentTier = this.dataset.tier || '';
+            currentPage = 1;
+            loadPassports();
+        });
+    });
+
+    // Sort dropdown
+    document.getElementById('sortSelect').addEventListener('change', function() {
+        currentSort = this.value;
+        currentPage = 1;
+        loadPassports();
+    });
+
+    // CSV export — downloads filtered results
+    document.getElementById('csvExportBtn').addEventListener('click', function(e) {
+        e.preventDefault();
+        const params = new URLSearchParams();
+        if (currentTier) params.set('tier', currentTier);
+        params.set('sort', currentSort);
+        window.location.href = '/api/passport/public/list.csv?' + params.toString();
+    });
+
+    loadPassports();
+})();
 </script>
 {% endblock %}
