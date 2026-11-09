@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}{{ job.title }} at {{ job.company }} - Charvak{% endblock %}
+{% block content %}
+<div class="container py-5" style="max-width: 800px;">
+  <a href="/job-board" class="text-decoration-none mb-4 d-inline-block">← Back to Job Board</a>
+  
+  <div class="card shadow-sm border-0 p-4 mb-4">
+    <h1 class="h2 mb-2">{{ job.title }}</h1>
+    <h4 class="text-muted mb-3">{{ job.company }}</h4>
+    
+    <div class="d-flex gap-3 mb-4 flex-wrap">
+      <span class="badge bg-light text-dark border"><i class="bi bi-geo-alt"></i> {{ job.location or 'India' }}</span>
+      <span class="badge bg-light text-dark border">Source: {{ job.source }}</span>
+      {% if job.salary %}<span class="badge bg-light text-dark border">{{ job.salary }}</span>{% endif %}
+    </div>
+
+    <h5 class="border-bottom pb-2 mb-3">Job Description</h5>
+    <div class="mb-4" style="white-space: pre-wrap; font-size: 1.05rem;">{{ job.description }}</div>
+
+    {% if job.skills %}
+    <h5 class="border-bottom pb-2 mb-3">Skills Required</h5>
+    <div class="mb-4">
+      {% for s in job.skills %}
+        <span class="badge bg-secondary me-1 mb-1">{{ s }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="alert alert-success mt-4">
+      <h5>🎯 Ready to Apply?</h5>
+      <p>To apply for this role and get verified, take a quick 10-minute assessment tailored to this job.</p>
+      <a href="/ai-assessment?role={{ job.title | urlencode }}" class="btn btn-primary btn-lg w-100 mt-2">Take Assessment & Apply</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

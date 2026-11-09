@@ -1279,16 +1279,27 @@ async def job_board_detail_page(request: Request, job_id: str):
         else:
             job["skills_list"] = []
 
-        # Use the standard Jinja2 template renderer directly to pass context
-        return templates.TemplateResponse(
-            "job-detail-scraped.html", 
-            {"request": request, "job": job, "title": f"{job['title']} - Charvak"}
-        )
+        # Route to the correct template based on the source
+        if job["source"] in ('charvak', 'manual', 'via_charvak', 'employer'):
+            return templates.TemplateResponse(
+                "job-detail.html", 
+                {"request": request, "job": job, "title": f"{job['title']} - Charvak"}
+            )
+        elif job["source"] in ('naukri', 'ncs'):
+            return templates.TemplateResponse(
+                "job-detail-india.html", 
+                {"request": request, "job": job, "title": f"{job['title']} - Charvak"}
+            )
+        else:
+            return templates.TemplateResponse(
+                "job-detail-scraped.html", 
+                {"request": request, "job": job, "title": f"{job['title']} - Charvak"}
+            )
     except Exception as e:
         logger.error(f"Job detail error: {e}")
         return RedirectResponse(url="/job-board?msg=job_error", status_code=302)
     finally:
-        cur.close()
+        if cur: cur.close()
         db.release_pooled_connection(conn)
 
 @app.get("/admin/bench-jobs", response_class=HTMLResponse)
@@ -20702,16 +20713,24 @@ async def api_push_radar_alert(request: Request, alert_id: int):
     require_admin(request)
     from database import db
     from enhanced_email import enhanced_email
+    
     conn = db.get_pooled_connection()
+    if not conn:
+        raise HTTPException(500, "DB unavailable")
+        
+    cur = None
     try:
         cur = conn.cursor()
-        cur.execute("SELECT job_title, company, location, salary, candidate_email FROM charvak_radar_alerts WHERE alert_id = %s", (alert_id,))
+        cur.execute("SELECT job_title, company, location, salary, candidate_email, job_id FROM charvak_radar_alerts WHERE alert_id = %s", (alert_id,))
         row = cur.fetchone()
         if not row:
             raise HTTPException(404, "Alert not found")
         
-        title, company, loc, salary, email = row
-        
+        title, company, loc, salary, email, job_id = row
+
+        # Use the job_id for the link, fallback to generic board if missing
+        apply_link = f"https://www.charvakit.com/job-board/{job_id}" if job_id else "https://www.charvakit.com/job-board"
+
         subject = f"🔥 New Job Match: {title} at {company}"
         body_html = f"""
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
@@ -20723,7 +20742,7 @@ async def api_push_radar_alert(request: Request, alert_id: int):
                 <p style="margin: 5px 0;">💰 {salary if salary else 'Not disclosed'}</p>
             </div>
             <p>Click below to view the details and apply with your Charvak profile:</p>
-            <p><a href="https://www.charvakit.com/job-board" style="padding: 10px 20px; background: #0d9488; color: white; text-decoration: none; border-radius: 5px;">View Job & Apply</a></p>
+            <p><a href="{apply_link}" style="padding: 10px 20px; background: #0d9488; color: white; text-decoration: none; border-radius: 5px;">View Job & Apply</a></p>
         </div>
         """
         
@@ -20732,8 +20751,13 @@ async def api_push_radar_alert(request: Request, alert_id: int):
         cur.execute("UPDATE charvak_radar_alerts SET status = 'alerted', alerted_at = NOW() WHERE alert_id = %s", (alert_id,))
         conn.commit()
         return {"status": "success"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Radar push error: {e}")
+        return {"status": "error", "message": str(e)[:200]}
     finally:
-        cur.close()
+        if cur: cur.close()
         db.release_pooled_connection(conn)
 
 if __name__ == "__main__":
