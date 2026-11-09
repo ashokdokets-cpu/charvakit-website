@@ -5,62 +5,34 @@
 ---
 
 ## Session 109 - COMPLETE
-- TPO Dashboard (live, responsive, auto-refresh)
-- Employer Dashboard (live, responsive, auto-refresh)
-- Brevo bulk invites + Magic Link login
-- Pre-filled assessments
+- Bench Placement Agent (Scrape -> Filter -> Match -> Email)
+- Public vs Private Job Board split
+- TPO and Employer Assessment Portals (Magic Links + Auto-fill)
+- Job Detail Page for scraped jobs
+
+---
+
+## Immediate Action (Tonight)
+- [ ] **Rotate Render DB Password** (vouchai_v2) and update Web Service + Cron Job.
 
 ---
 
 ## Session 110 - NEXT
 
-### Priority 1 - Sales Push
-- Demo TPO dashboard at 5+ colleges.
-- Demo Employer dashboard at 3+ employers.
-- Sales hook: "Upload candidates → They test → You see verified scores live."
+### Priority 1 - Bench Outreach
+- Use /admin/bench-jobs to review the 197 jobs.
+- Submit the top 10 matches.
+- Go to /admin/bench-submissions and send emails to the candidates.
+- Track responses/replies manually.
 
-### Priority 2 - Verify Mobile Experience
-- Open \/college/dashboard\ and \/employer/dashboard\ on your phone.
-- Ensure the table scrolls horizontally and buttons stack.
-- Confirm \● LIVE\ badge and 30s auto-refresh work on mobile.
+### Priority 2 - College & Employer Demos
+- Use the /college/assessment and /employer/assessment dashboards for demos.
+- Upload dummy candidates to show the live scoring.
 
-### Priority 3 - Optional Builds
-- Add job-board to the responsive polish.
-- Clean up test data in VIT/Acme batches.
-
----
-
-**Next action:** Schedule 5 college demos + 3 employer demos.
----
-
-## FLAGGED - Multi-Tenant Isolation (Session 112+, after 5+ paying TPOs/employers)
-
-**Problem:** The 4 business portals now require admin auth. This works for demos but does not scale.
-
-When you have 5+ paying TPOs or employers, each one needs:
-- Their own login (not a shared admin password)
-- Their own data visibility (VIT sees only VIT students; NIT sees only NIT)
-- Self-service password reset
-- Audit log per user (who uploaded what, when)
-
-**Current state:**
-- All TPO/employer data is in charvak_college_invites, keyed by institution_name
-- No auth restricts which institution a user sees
-- Admin can see all institutions (via dropdown)
-
-**Fix plan (~2-3 sessions):**
-1. Migration: Add charvak_tenant_users table mapping email -> institution_name -> role
-2. Auth: Add require_tenant_auth(request) that reads the tenant from the token
-3. Dashboard: Remove the institution dropdown; single-institution view based on caller
-4. Email: Self-service password reset for tenant users
-5. Admin: Super-admin view to impersonate any tenant (for support)
-
-**Trigger to build:** When you sign the 3rd paying customer, OR when a customer asks "how do my team members get their own login?"
-
-**Estimated effort:** 2-3 sessions, 4-6 hours each.
-
-**Session 51 + 84 gaps fixed in this session:** /employer/dashboard and /recruiter/dashboard now require admin login.
+### Priority 3 - Optional Polish
+- Fix TheMuse (403 error), Jobicy (0 results), Himalayas (0 results) ingestion sources.
+- Add payment gate to the "Post a Job" form (currently static).
 
 ---
 
-**Next action:** Test all 4 portals after deploy. Then schedule 5 college demos + 3 employer demos.
+**Next action:** Rotate DB password. Then manual Bench outreach.
