@@ -1,0 +1,52 @@
+cd C:\projects\charvakit-new
+
+$html = @'
+{% extends "base.html" %}
+{% block title %}{{ job.title }} at {{ job.company }} - Charvak{% endblock %}
+{% block content %}
+<div class="container py-5" style="max-width: 800px;">
+  <a href="/job-board" class="text-decoration-none mb-4 d-inline-block">← Back to Job Board</a>
+  
+  <div class="card shadow-sm border-0 p-4 mb-4">
+    <h1 class="h2 mb-2">{{ job.title }}</h1>
+    <h4 class="text-muted mb-3">{{ job.company }}</h4>
+    
+    <div class="d-flex gap-3 mb-4 flex-wrap">
+      <span class="badge bg-light text-dark border"><i class="bi bi-geo-alt"></i> {{ job.location }}</span>
+      <span class="badge bg-light text-dark border"><i class="bi bi-briefcase"></i> Contract</span>
+      {% if job.salary %}
+      <span class="badge bg-light text-dark border"><i class="bi bi-cash"></i> {{ job.salary }}</span>
+      {% endif %}
+      <span class="badge bg-light text-dark border">Source: {{ job.source }}</span>
+    </div>
+
+    <h5 class="border-bottom pb-2 mb-3">Job Description</h5>
+    <div class="mb-4" style="white-space: pre-wrap; font-size: 1.05rem; line-height: 1.6;">{{ job.description }}</div>
+
+    {% if job.skills %}
+    <h5 class="border-bottom pb-2 mb-3">Skills Required</h5>
+    <div class="mb-4">
+      {% if job.skills is string %}
+        {% for s in job.skills.split(',') %}
+          <span class="badge bg-secondary me-1 mb-1">{{ s.strip() }}</span>
+        {% endfor %}
+      {% else %}
+        {% for s in job.skills %}
+          <span class="badge bg-secondary me-1 mb-1">{{ s }}</span>
+        {% endfor %}
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="alert alert-info mt-4">
+      <strong>How to apply:</strong> This job was sourced from <strong>{{ job.source }}</strong>. 
+      Please check the original posting for specific application instructions.
+    </div>
+  </div>
+</div>
+{% endblock %}
+'@
+
+$utf8NoBom = New-Object System.Text.UTF8Encoding $false
+[System.IO.File]::WriteAllText("$PWD\templates\job-detail-scraped.html", $html, $utf8NoBom)
+Write-Host "Created job-detail-scraped.html"

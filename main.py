@@ -1234,6 +1234,40 @@ async def background_verification(request: Request):
 async def job_board_page(request: Request):
     return template_response("job-board.html", request, "Job Board - Charvak Career Engine")
 
+@app.get("/job-board/{job_id}", response_class=HTMLResponse)
+async def job_board_detail_page(request: Request, job_id: str):
+    """Render a job detail page. If it's a scraped job, show the scraped description."""
+    from database import db
+    conn = db.get_pooled_connection()
+    if not conn:
+        raise HTTPException(500, "Database error")
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT job_id, title, company, location, description, skills, salary, source, raw_json
+            FROM charvak_jobs WHERE job_id = %s LIMIT 1
+        """, (job_id,))
+        row = cur.fetchone()
+        if not row:
+            raise HTTPException(404, "Job not found")
+        
+        job = {
+            "job_id": row[0], "title": row[1], "company": row[2], "location": row[3],
+            "description": row[4] or "", "skills": row[5] or "", "salary": row[6],
+            "source": row[7], "raw_json": row[8] or {}
+        }
+        
+        # For Charvak jobs, render the detail template
+        if job["source"] in ('charvak', 'manual', 'via_charvak', 'employer'):
+            return template_response("job-detail.html", request, f"{job['title']} - Charvak", {"job": job})
+        
+        # For scraped jobs (HN, RemoteOK, etc), we render the same detail template
+        # so the user sees the scraped description and an apply button (if available)
+        return template_response("job-detail-scraped.html", request, f"{job['title']} - Charvak", {"job": job})
+    finally:
+        cur.close()
+        db.release_pooled_connection(conn)
+
 @app.get("/job-board/{job_id}")
 async def job_board_detail_redirect(request: Request, job_id: str):
     """Redirect /job-board/{job_id} to the original source URL."""
