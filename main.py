@@ -19831,8 +19831,11 @@ async def api_migrations_apply(request: Request):
 
 from college_dashboard_engine import college_dashboard_engine
 
-@app.get("/college/dashboard", response_class=HTMLResponse)
-async def college_dashboard_page(request: Request):
+@app.get("/college/assessment", response_class=HTMLResponse)
+async def college_assessment_page(request: Request):
+    """TPO Assessment Dashboard (Session 109)."""
+    require_admin(request)
+    return template_response("college-dashboard.html", request, "College Placement Dashboard - Charvak")
     """TPO Placement Readiness Dashboard."""
     # require_admin(request)  # Uncomment if you want to restrict access during testing
     return template_response("college-dashboard.html", request, "College Placement Dashboard - Charvak")
@@ -19909,10 +19912,11 @@ async def admin_rejected_jds_page(request: Request):
     """Admin UI for rejected JDs audit trail."""
     return template_response("admin-rejected-jds.html", request, "Rejected JDs - Charvak")
 
-@app.get("/employer/dashboard", response_class=HTMLResponse)
-async def employer_dashboard_page(request: Request):
-    """Employer Assessment Dashboard (same engine as TPO, different UX)."""
-    return template_response("employer-dashboard.html", request, "Employer Dashboard - Charvak")
+@app.get("/employer/assessment", response_class=HTMLResponse)
+async def employer_assessment_page(request: Request):
+    """Employer Assessment Dashboard (Session 109)."""
+    require_admin(request)
+    return template_response("employer-assessment.html", request, "Employer Assessment Dashboard - Charvak")
 
 # ============================================================
 # RETENTION ENGINE ROUTES (Session 108C)

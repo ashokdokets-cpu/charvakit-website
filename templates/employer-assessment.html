@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+{% block title %}Employer Assessment Dashboard - Charvak{% endblock %}
+{% block content %}
+<style>
+  .emp-container { max-width: 1100px; margin: 0 auto; padding: 0 15px; }
+  .emp-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; flex-wrap: wrap; gap: 15px; }
+  .emp-title h1 { margin: 0; color: #1a1a2e; font-size: 1.8rem; }
+  .emp-title p { margin: 4px 0 0 0; color: #666; font-size: 0.95rem; }
+  
+  /* Responsive KPI Grid */
+  .emp-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 30px; }
+  .emp-kpi { background: white; padding: 20px; border-radius: 8px; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+  .emp-kpi-title { font-size: 0.75rem; color: #666; text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em; }
+  .emp-kpi-value { font-size: 1.8rem; font-weight: 700; color: #111; margin-top: 5px; }
+  .emp-kpi.kpi-blue { border-left: 4px solid #1a73e8; }
+  .emp-kpi.kpi-green { border-left: 4px solid #10b981; }
+  .emp-kpi.kpi-yellow { border-left: 4px solid #f59e0b; }
+  .emp-kpi.kpi-purple { border-left: 4px solid #7c3aed; }
+
+  /* Responsive Actions */
+  .emp-actions { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+  .emp-btn { padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; border: none; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .emp-btn-primary { background: #1a73e8; color: white; }
+  .emp-btn-outline { background: white; color: #1a73e8; border: 1px solid #1a73e8; }
+  .emp-btn-warning { background: #f59e0b; color: white; }
+
+  /* Responsive Table */
+  .emp-table-wrap { overflow-x: auto; background: white; border-radius: 8px; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+  .emp-table { width: 100%; border-collapse: collapse; text-align: left; min-width: 700px; }
+  .emp-table th { background: #f9fafb; padding: 12px; font-size: 0.8rem; color: #666; text-transform: uppercase; font-weight: 600; border-bottom: 1px solid #e5e7eb; }
+  .emp-table td { padding: 12px; border-bottom: 1px solid #e5e7eb; font-size: 0.9rem; }
+  .emp-table tr:hover { background: #f9fafb; }
+  
+  .badge-ready { background: #d1fae5; color: #065f46; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; white-space: nowrap; }
+  .badge-upskill { background: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; white-space: nowrap; }
+  .badge-notready { background: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; white-space: nowrap; }
+  .badge-pending { background: #e5e7eb; color: #4b5563; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; white-space: nowrap; }
+
+  @media (max-width: 600px) {
+    .emp-title h1 { font-size: 1.4rem; }
+    .emp-kpi-value { font-size: 1.5rem; }
+    .emp-btn { width: 100%; justify-content: center; }
+  }
+</style>
+
+<div class="emp-container">
+  <div class="emp-header">
+    <div class="emp-title">
+      <h1>Employer Assessment Dashboard <span style="display: inline-block; background: #10b981; color: white; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; margin-left: 8px; vertical-align: middle;">● LIVE</span></h1>
+      <p>Run verified technical assessments for your open roles. Screen freshers or lateral hires before the first interview.</p>
+    </div>
+    <div>
+      <select id="companySelect" class="form-select" onchange="loadDashboard()" style="min-width: 220px; padding: 8px; border-radius: 6px; border: 1px solid #ccc;">
+        <option value="Acme Corp">Acme Corp</option>
+        <option value="Tech Mahindra">Tech Mahindra</option>
+        <option value="Infosys">Infosys</option>
+        <option value="Startup XYZ">Startup XYZ</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="emp-kpis">
+    <div class="emp-kpi kpi-blue">
+      <div class="emp-kpi-title">Total Candidates Invited</div>
+      <div class="emp-kpi-value" id="statInvited">0</div>
+    </div>
+    <div class="emp-kpi kpi-purple">
+      <div class="emp-kpi-title">Assessments Completed</div>
+      <div class="emp-kpi-value" id="statAssessed">0</div>
+    </div>
+    <div class="emp-kpi kpi-yellow">
+      <div class="emp-kpi-title">Average Score</div>
+      <div class="emp-kpi-value" id="statAvg">0%</div>
+    </div>
+    <div class="emp-kpi kpi-green">
+      <div class="emp-kpi-title">Ready to Interview</div>
+      <div class="emp-kpi-value" id="statReady">0</div>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="emp-actions">
+    <button onclick="showUpload()" class="emp-btn emp-btn-primary">+ Upload Candidate CSV</button>
+    <button onclick="sendInvites()" class="emp-btn emp-btn-warning">✉ Send Assessment Links</button>
+    <button onclick="exportCSV()" class="emp-btn emp-btn-outline">⬇ Export Verified Shortlist</button>
+    <span id="actionMsg" style="font-size: 0.85rem; color: #666; align-self: center;"></span>
+  </div>
+
+  <!-- Upload Modal -->
+  <div id="uploadModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; overflow-y: auto;">
+    <div style="background: white; max-width: 500px; margin: 50px auto; padding: 24px; border-radius: 8px; width: 90%;">
+      <h3 style="margin-top: 0;">Upload Candidates</h3>
+      <p style="font-size: 0.85rem; color: #666;">CSV format: <code>Name, Email, Target Role, Industry, Level</code></p>
+      <input type="file" id="csvFile" accept=".csv" style="margin-bottom: 16px; width: 100%;">
+      <div style="display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap;">
+        <button onclick="hideUpload()" style="padding: 8px 16px; background: #e5e7eb; border: none; border-radius: 6px; cursor: pointer;">Cancel</button>
+        <button onclick="uploadCSV()" style="padding: 8px 16px; background: #1a73e8; color: white; border: none; border-radius: 6px; cursor: pointer;">Upload & Invite</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="emp-table-wrap">
+    <table class="emp-table">
+      <thead>
+        <tr>
+          <th>Candidate</th>
+          <th>Role</th>
+          <th>Score</th>
+          <th>Status</th>
+          <th>Certificate</th>
+        </tr>
+      </thead>
+      <tbody id="candidateTableBody">
+        <tr><td colspan="5" style="padding: 30px; text-align: center; color: #999;">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+function _getCompany() { return document.getElementById('companySelect').value; }
+function _headers() {
+  const t = localStorage.getItem('authToken') || localStorage.getItem('auth_token') || localStorage.getItem('charvak_token') || '';
+  return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + t };
+}
+
+async function loadDashboard() {
+  const company = _getCompany();
+  const body = document.getElementById('candidateTableBody');
+  body.innerHTML = '<tr><td colspan="5" style="padding: 30px; text-align: center; color: #999;">Loading...</td></tr>';
+  
+  try {
+    const res = await fetch(`/api/college/stats?institution=${encodeURIComponent(company)}`, { headers: _headers() });
+    const data = await res.json();
+    if (data.status !== 'success') { body.innerHTML = '<tr><td colspan="5" style="padding: 20px; color: red;">Failed to load stats.</td></tr>'; return; }
+    
+    document.getElementById('statInvited').textContent = data.stats.invited;
+    document.getElementById('statAssessed').textContent = data.stats.assessed;
+    document.getElementById('statAvg').textContent = data.stats.avg_score + '%';
+    document.getElementById('statReady').textContent = data.stats.ready;
+
+    const students = data.students || [];
+    if (students.length === 0) {
+      body.innerHTML = '<tr><td colspan="5" style="padding: 30px; text-align: center; color: #999;">No candidates yet. Click "Upload Candidate CSV" to start.</td></tr>';
+      return;
+    }
+
+    body.innerHTML = students.map(s => {
+      let badge = '<span class="badge-pending">Pending</span>';
+      if (s.readiness === 'Ready') badge = '<span class="badge-ready">Ready</span>';
+      else if (s.readiness === 'Upskill') badge = '<span class="badge-upskill">Upskill</span>';
+      else if (s.readiness === 'Not Ready') badge = '<span class="badge-notready">Not Ready</span>';
+      
+      const certLink = s.cert_id ? `<a href="/readiness/${s.cert_id}" target="_blank" style="color:#1a73e8; text-decoration:none; font-size:0.85rem; font-weight:600;">View Cert ↗</a>` : '—';
+      const scoreText = s.score ? `<strong>${s.score}%</strong>` : '—';
+      
+      return `<tr>
+        <td>
+          <div style="font-weight: 600;">${s.name || 'Unknown'}</div>
+          <div style="font-size: 0.8rem; color: #666;">${s.email}</div>
+        </td>
+        <td style="font-size: 0.85rem;">${s.role || '—'}</td>
+        <td>${scoreText}</td>
+        <td>${badge}</td>
+        <td>${certLink}</td>
+      </tr>`;
+    }).join('');
+  } catch (e) {
+    body.innerHTML = `<tr><td colspan="5" style="padding: 20px; color: red;">Error: ${e}</td></tr>`;
+  }
+}
+
+function showUpload() { document.getElementById('uploadModal').style.display = 'block'; }
+function hideUpload() { document.getElementById('uploadModal').style.display = 'none'; }
+
+async function uploadCSV() {
+  const fileInput = document.getElementById('csvFile');
+  if (!fileInput.files.length) { alert('Select a CSV file first.'); return; }
+  
+  const file = fileInput.files[0];
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const text = e.target.result;
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+    if (lines.length < 2) { alert('CSV appears empty.'); return; }
+    
+    const students = [];
+    for (let i = 1; i < lines.length; i++) {
+      const parts = lines[i].split(',').map(p => p.trim());
+      if (parts.length >= 2 && parts[1].includes('@')) {
+        students.push({ name: parts[0], email: parts[1], role: parts[2] || '', industry: parts[3] || '', level: parts[4] || '' });
+      }
+    }
+    
+    const company = _getCompany();
+    const msg = document.getElementById('actionMsg');
+    msg.textContent = 'Uploading...';
+    
+    try {
+      const res = await fetch('/api/college/upload', {
+        method: 'POST', headers: _headers(),
+        body: JSON.stringify({ institution: company, students: students })
+      });
+      const data = await res.json();
+      if (data.status === 'success') {
+        msg.textContent = `Success: ${data.inserted} added, ${data.skipped} skipped. Now sending invites...`;
+        hideUpload();
+        // Automatically trigger email invites
+        await sendInvites();
+      } else {
+        msg.textContent = 'Upload failed: ' + (data.message || 'Unknown error');
+      }
+    } catch (err) {
+      msg.textContent = 'Network error during upload.';
+    }
+  };
+  reader.readAsText(file);
+}
+
+async function sendInvites() {
+  const company = _getCompany();
+  const msg = document.getElementById('actionMsg');
+  msg.textContent = 'Sending invites... (this may take a minute)';
+  
+  try {
+    const res = await fetch('/api/college/send-invites', {
+      method: 'POST', headers: _headers(),
+      body: JSON.stringify({ institution: company })
+    });
+    const data = await res.json();
+    if (data.status === 'success') {
+      msg.textContent = `Success: ${data.sent} emails sent, ${data.failed} failed.`;
+      loadDashboard();
+    } else {
+      msg.textContent = 'Error: ' + (data.message || 'Unknown');
+    }
+  } catch (e) {
+    msg.textContent = 'Network error.';
+  }
+}
+
+function exportCSV() {
+  const company = _getCompany();
+  fetch(`/api/college/export?institution=${encodeURIComponent(company)}`, { headers: _headers() })
+    .then(r => r.blob())
+    .then(blob => {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Verified_Shortlist_${company.replace(/\s+/g, '_')}.csv`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    })
+    .catch(e => alert('Export failed: ' + e));
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadDashboard();
+    // Auto-refresh every 30 seconds
+    setInterval(function() {
+        if (!document.hidden) {
+            loadDashboard();
+        }
+    }, 30000);
+});
+</script>
+{% endblock %}
