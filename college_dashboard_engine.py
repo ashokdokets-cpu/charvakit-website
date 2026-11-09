@@ -83,13 +83,13 @@ class CollegeDashboardEngine:
             logger.error(f"[college_dashboard] get_batch_stats failed: {e}")
             return {"status": "error", "message": str(e)}
     def get_student_rankings(self, institution_name, limit=100):
-        """Get ranked list of students. Safely pulls from multiple assessment tables."""
+        """Get ranked list of students. Uses simple separate queries to avoid SQL join bugs."""
         conn = db.get_pooled_connection()
         if not conn: return {"status": "error"}
         try:
             cur = conn.cursor()
             
-            # Step 1: Get all invites for this institution
+            # Step 1: Get all invites
             cur.execute("""
                 SELECT student_name, student_email, target_role, status
                 FROM charvak_college_invites
@@ -109,46 +109,49 @@ class CollegeDashboardEngine:
                 score = None
                 cert_id = None
                 
-                # Step 2: Try to find a CERTIFICATE
+                # Step 2: Try CERTIFICATE first
                 try:
-                    cur.execute("""
-                        SELECT score, cert_id FROM charvak_career_certifications
-                        WHERE email = %s LIMIT 1
-                    """, (email,))
+                    cur.execute(
+                        "SELECT score, cert_id FROM charvak_career_certifications WHERE email = %s LIMIT 1",
+                        (email,)
+                    )
                     cert = cur.fetchone()
                     if cert:
                         score = float(cert[0]) if cert[0] is not None else None
                         cert_id = cert[1]
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.warning(f"[college_dashboard] cert lookup failed for {email}: {e}")
+                    conn.rollback()  # Reset transaction if this query failed
                 
-                # Step 3: Fallback to raw career assessment
+                # Step 3: Fallback to career assessment (NO status filter, case-insensitive)
                 if score is None:
                     try:
-                        cur.execute("""
-                            SELECT score FROM charvak_career_assessments
-                            WHERE email = %s AND status = 'completed'
-                            ORDER BY started_at DESC LIMIT 1
-                        """, (email,))
+                        cur.execute(
+                            "SELECT score FROM charvak_career_assessments WHERE LOWER(email) = LOWER(%s) ORDER BY started_at DESC LIMIT 1",
+                            (email,)
+                        )
                         res = cur.fetchone()
                         if res and res[0] is not None:
                             score = float(res[0])
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.warning(f"[college_dashboard] assessment lookup failed for {email}: {e}")
+                        conn.rollback()
                 
                 # Step 4: Fallback to generic assessment_results
                 if score is None:
                     try:
-                        cur.execute("""
-                            SELECT score FROM charvak_assessment_results
-                            WHERE email = %s ORDER BY id DESC LIMIT 1
-                        """, (email,))
+                        cur.execute(
+                            "SELECT score FROM charvak_assessment_results WHERE LOWER(email) = LOWER(%s) ORDER BY id DESC LIMIT 1",
+                            (email,)
+                        )
                         res = cur.fetchone()
                         if res and res[0] is not None:
                             score = float(res[0])
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.warning(f"[college_dashboard] results lookup failed for {email}: {e}")
+                        conn.rollback()
                 
+                # Step 5: Determine readiness
                 readiness = "Pending"
                 if score is not None:
                     if score >= 80: readiness = "Ready"
@@ -176,8 +179,6 @@ class CollegeDashboardEngine:
             try: db.release_pooled_connection(conn)
             except: pass
             return {"status": "error", "message": str(e)}
-
-
     def send_bulk_invites(self, institution_name, base_url="https://www.charvakit.com"):
         """Generate magic links and send emails via SendGrid."""
         conn = db.get_pooled_connection()
