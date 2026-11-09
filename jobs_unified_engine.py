@@ -44,6 +44,7 @@ class JobsUnifiedEngine:
         source: Optional[str] = None,
         q: Optional[str] = None,
         limit: int = DEFAULT_LIMIT,
+        show_all: bool = False,
     ) -> Dict:
         """
         Return a unified feed of jobs from all three sources.
@@ -77,7 +78,7 @@ class JobsUnifiedEngine:
         source_counts = {"job_board": 0, "staffing": 0, "micro_project": 0}
 
         sections = [
-            ("job_board", self._job_board),
+            ("job_board", lambda: self._job_board(show_all=show_all)),
             ("staffing", self._staffing),
             ("micro_project", self._micro_projects),
         ]
@@ -123,19 +124,30 @@ class JobsUnifiedEngine:
 
     # -------------------------------------------------------- source: job_board
 
-    def _job_board(self) -> List[Dict]:
+    def _job_board(self, show_all: bool = False) -> List[Dict]:
         from database import db
-        conn = db.get_connection(); cur = conn.cursor()
+        conn = db.get_connection()
+        cur = conn.cursor()
         try:
-            cur.execute("""
-                SELECT job_id, title, company, job_type, location, salary,
-                       description, skills, posted_date, status, created_at
-                FROM charvak_jobs
-                WHERE (status IS NULL OR LOWER(status) IN ('active', 'open'))
-                  AND source IN ('charvak', 'manual', 'via_charvak', 'employer')
-                ORDER BY created_at DESC NULLS LAST
-                LIMIT 200
-            """)
+            if show_all:
+                cur.execute("""
+                    SELECT job_id, title, company, job_type, location, salary,
+                           description, skills, posted_date, status, created_at
+                    FROM charvak_jobs
+                    WHERE (status IS NULL OR LOWER(status) IN ('active', 'open'))
+                    ORDER BY created_at DESC NULLS LAST
+                    LIMIT 200
+                """)
+            else:
+                cur.execute("""
+                    SELECT job_id, title, company, job_type, location, salary,
+                           description, skills, posted_date, status, created_at
+                    FROM charvak_jobs
+                    WHERE (status IS NULL OR LOWER(status) IN ('active', 'open'))
+                      AND source IN ('charvak', 'manual', 'via_charvak', 'employer')
+                    ORDER BY created_at DESC NULLS LAST
+                    LIMIT 200
+                """)
             items = []
             for r in cur.fetchall():
                 skills = self._split_skills(r[7])
@@ -156,7 +168,8 @@ class JobsUnifiedEngine:
                 }))
             return items
         finally:
-            cur.close(); conn.close()
+            cur.close()
+            conn.close()
 
     # --------------------------------------------------------- source: staffing
 
