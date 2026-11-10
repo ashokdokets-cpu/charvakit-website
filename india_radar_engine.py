@@ -109,6 +109,9 @@ class IndiaRadarEngine:
             if not candidates:
                 return {"status": "no_candidates", "matched": 0, "message": "No Indian candidates found in DB."}
 
+            # Clear old fetched jobs so we only see the latest scan
+            cur.execute("TRUNCATE TABLE charvak_radar_fetched")
+
             for job in raw_jobs:
                 job_title = str(job.get("title", ""))
                 job_company = str(job.get("company", ""))
@@ -119,6 +122,17 @@ class IndiaRadarEngine:
                 job_skills = job.get("skills", []) or []
                 job_desc = str(job.get("description", "") or "")
                 
+                # SAVE TO FETCHED TABLE FOR UI VISIBILITY
+                try:
+                    cur.execute("""
+                        INSERT INTO charvak_radar_fetched (job_id, title, company, location, skills)
+                        VALUES (%s, %s, %s, %s, %s)
+                        ON CONFLICT (job_id) DO NOTHING
+                    """, (str(job.get("id", "unknown")), job_title, job_company, job_loc, str(job_skills)))
+                    conn.commit() # Force save so UI can see it immediately
+                except Exception as e:
+                    logger.warning(f"Failed to save fetched job: {e}")
+
                 # Extract job ID. If missing, generate a consistent hash from the title & company.
                 ext_id = job.get("id")
                 if not ext_id:
