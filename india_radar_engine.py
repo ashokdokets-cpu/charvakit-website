@@ -136,23 +136,30 @@ class IndiaRadarEngine:
                 job_skills = job.get("skills", []) or []
                 job_desc = str(job.get("description", "") or "")
                 
+                # Compute a stable unique job ID (used by both fetched table and alerts)
+                ext_id = job.get("id") or job.get("job_id")
+                if not ext_id:
+                    import hashlib
+                    raw_string = f"{job_title}|{job_company}".encode("utf-8")
+                    ext_id = "IND-" + hashlib.md5(raw_string).hexdigest()[:10].upper()
+                external_job_id = str(ext_id)
+
                 # SAVE TO FETCHED TABLE FOR UI VISIBILITY
                 try:
                     cur.execute("""
                         INSERT INTO charvak_radar_fetched (job_id, title, company, location, skills)
                         VALUES (%s, %s, %s, %s, %s)
-                        ON CONFLICT (job_id) DO NOTHING
-                    """, (str(job.get("id", "unknown")), job_title, job_company, job_loc, str(job_skills)))
+                    """, (external_job_id, job_title, job_company, job_loc, str(job_skills)))
                 except Exception as e:
                     logger.warning(f"Failed to save fetched job: {e}")
 
-                # Extract job ID. If missing, generate a consistent hash from the title & company.
-                ext_id = job.get("id")
-                if not ext_id:
-                    import hashlib
-                    raw_string = f"{job_title}-{job_company}".encode('utf-8')
-                    ext_id = "IND-" + hashlib.md5(raw_string).hexdigest()[:10].upper()
-                external_job_id = str(ext_id)
+                try:
+                    cur.execute("""
+                        INSERT INTO charvak_radar_fetched (job_id, title, company, location, skills)
+                        VALUES (%s, %s, %s, %s, %s)
+                    """, (str(job.get("id") or job.get("job_id") or ("IND-" + __import__("hashlib").md5((job_title + "|" + job_company).encode("utf-8")).hexdigest()[:10].upper())), job_title, job_company, job_loc, str(job_skills)))
+                except Exception as e:
+                    logger.warning(f"Failed to save fetched job: {e}")
 
                 # For India Radar, if location is blank, we allow it.
                 # We only apply the strict filter if a location WAS provided.
