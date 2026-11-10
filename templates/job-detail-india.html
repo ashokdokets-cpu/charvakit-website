@@ -1,8 +1,15 @@
 {% extends "base.html" %}
 {% block title %}{{ job.title }} at {{ job.company }} - Charvak{% endblock %}
 {% block content %}
+<style>
+  /* Add some basic mobile responsiveness */
+  @media (max-width: 768px) {
+    .card { padding: 15px !important; }
+    .h2 { font-size: 1.5rem !important; }
+  }
+</style>
 <div class="container py-5" style="max-width: 800px;">
-  <a href="/job-board" class="text-decoration-none mb-4 d-inline-block">← Back to Job Board</a>
+  <a href="/verified-jobs" class="text-decoration-none mb-4 d-inline-block">← Back to Verified Jobs</a>
   
   <div class="card shadow-sm border-0 p-4 mb-4">
     <h1 class="h2 mb-2">{{ job.title }}</h1>
@@ -40,39 +47,97 @@
 
     <div class="alert alert-success mt-4">
       <h5>🎯 Ready to Apply?</h5>
-      <p>To apply for this role and get verified, take a quick 10-minute assessment tailored to this job.</p>
-      <button onclick="startAssessment()" id="applyBtn" class="btn btn-primary btn-lg w-100 mt-2">Take Assessment & Apply</button>
-
-<script>
-async function startAssessment() {
-    const btn = document.getElementById('applyBtn');
-    btn.disabled = true;
-    btn.textContent = 'AI is analyzing this job...';
-
-    try {
-        // Call our new AI parser route
-        const res = await fetch('/api/jobs/{{ job.job_id }}/prefill');
-        const data = await res.json();
-
-        if (data.status === 'success') {
-            // Build the URL with the AI-extracted data
-            const params = new URLSearchParams({
-                role: data.role,
-                industry: data.industry,
-                level: data.level
-            });
-            window.location.href = `/ai-assessment?${params.toString()}`;
-        } else {
-            // Fallback if AI fails
-            window.location.href = `/ai-assessment?role={{ job.title | urlencode }}`;
-        }
-    } catch (e) {
-        // Fallback on network error
-        window.location.href = `/ai-assessment?role={{ job.title | urlencode }}`;
-    }
-}
-</script>
+      <p>To apply for this role and send your verified certificate to the employer, unlock the assessment below.</p>
+      <button id="applyBtn" onclick="initiateUnlock()" class="btn btn-warning btn-lg w-100 mt-2 fw-bold">Unlock & Apply (₹99)</button>
     </div>
   </div>
 </div>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+  const jobId = "{{ job.job_id }}";
+  const userEmail = localStorage.getItem('userEmail');
+  const authToken = localStorage.getItem('authToken') || localStorage.getItem('auth_token');
+
+  async function initiateUnlock() {
+    if (!authToken || !userEmail) {
+      window.location.href = `/login?next=/job-board/${jobId}`;
+      return;
+    }
+
+    const btn = document.getElementById('applyBtn');
+    btn.disabled = true;
+    btn.textContent = 'Checking status...';
+
+    try {
+      // 1. Check if already unlocked
+      const checkRes = await fetch(`/api/india-jobs/check-unlock?job_id=${jobId}&email=${encodeURIComponent(userEmail)}`);
+      const checkData = await checkRes.json();
+      
+      if (checkData.unlocked) {
+        window.location.href = `/ai-assessment?role={{ job.title | urlencode }}`;
+        return;
+      }
+
+      // 2. Not unlocked, create order
+      btn.textContent = 'Opening payment...';
+      const orderRes = await fetch('/api/india-jobs/create-unlock-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ job_id: jobId, email: userEmail })
+      });
+      const orderData = await orderRes.json();
+
+      if (orderData.status !== 'success') {
+        alert("Error: " + orderData.message);
+        btn.disabled = false;
+        btn.textContent = 'Unlock & Apply (₹99)';
+        return;
+      }
+
+      // 3. Open Razorpay
+      const options = {
+        key: orderData.order.key_id,
+        amount: orderData.order.amount,
+        currency: "INR",
+        name: "Charvak IT Consulting",
+        description: "Verified Job Application",
+        order_id: orderData.order.order_id,
+        prefill: { email: userEmail },
+        theme: { color: "#0d9488" },
+        handler: async function (response) {
+          btn.textContent = 'Verifying payment...';
+          const verifyRes = await fetch('/api/india-jobs/verify-unlock', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_signature: response.razorpay_signature,
+              job_id: jobId,
+              email: userEmail
+            })
+          });
+          const verifyData = await verifyRes.json();
+          
+          if (verifyData.status === 'success') {
+            window.location.href = `/ai-assessment?role={{ job.title | urlencode }}`;
+          } else {
+            alert("Payment verification failed. Please contact support.");
+            btn.disabled = false;
+            btn.textContent = 'Unlock & Apply (₹99)';
+          }
+        }
+      };
+
+      const rzp = new Razorpay(options);
+      rzp.open();
+
+    } catch (e) {
+      alert("Network error: " + e.message);
+      btn.disabled = false;
+      btn.textContent = 'Unlock & Apply (₹99)';
+    }
+  }
+</script>
 {% endblock %}

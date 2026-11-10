@@ -21564,3 +21564,87 @@ async def f3_export_candidate(request: Request, candidate_screen_id: str):
 # === END F3 ROUTES ===
 
 
+
+# ============================================================
+# INDIA JOB APPLICATION PAYWALL (₹99)
+# ============================================================
+
+class ApplyUnlockRequest(BaseModel):
+    job_id: str
+    email: str
+
+@app.post("/api/india-jobs/create-unlock-order")
+async def api_create_unlock_order(request: Request, data: ApplyUnlockRequest):
+    """Create a Razorpay order for ₹99 to unlock the application."""
+    try:
+        from payment_engine import payment_engine
+        # Create order for 9900 paise (₹99)
+        order = payment_engine.create_razorpay_order(
+            amount=9900, 
+            notes={"job_id": data.job_id, "email": data.email, "type": "india_job_unlock"}
+        )
+        if order.get("status") == "success":
+            return {"status": "success", "order": order}
+        return {"status": "error", "message": order.get("message", "Payment setup failed")}
+    except Exception as e:
+        logger.error(f"Unlock order error: {e}")
+        return {"status": "error", "message": str(e)[:200]}
+
+@app.post("/api/india-jobs/verify-unlock")
+async def api_verify_unlock(request: Request):
+    """Verify the Razorpay payment and unlock the job."""
+    try:
+        data = await request.json()
+        payment_id = data.get("razorpay_payment_id")
+        order_id = data.get("razorpay_order_id")
+        signature = data.get("razorpay_signature")
+        job_id = data.get("job_id")
+        email = data.get("email")
+        
+        from payment_engine import payment_engine
+        verify = payment_engine.verify_razorpay_payment(payment_id, order_id, signature)
+        
+        if not verify.get("verified"):
+            return {"status": "error", "message": "Payment verification failed"}
+            
+        # Save the unlock in a table
+        from database import db
+        conn = db.get_pooled_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS charvak_india_job_unlocks (
+                    id SERIAL PRIMARY KEY,
+                    email TEXT,
+                    job_id TEXT,
+                    payment_id TEXT UNIQUE,
+                    unlocked_at TIMESTAMPTZ DEFAULT NOW()
+                )
+            """)
+            cur.execute("""
+                INSERT INTO charvak_india_job_unlocks (email, job_id, payment_id)
+                VALUES (%s, %s, %s) ON CONFLICT (payment_id) DO NOTHING
+            """, (email, job_id, payment_id))
+            conn.commit()
+        finally:
+            cur.close()
+            db.release_pooled_connection(conn)
+            
+        return {"status": "success", "message": "Payment successful"}
+    except Exception as e:
+        logger.error(f"Unlock verify error: {e}")
+        return {"status": "error", "message": str(e)[:200]}
+
+@app.get("/api/india-jobs/check-unlock")
+async def api_check_unlock(job_id: str, email: str):
+    """Check if the user already paid for this job."""
+    from database import db
+    conn = db.get_pooled_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT id FROM charvak_india_job_unlocks WHERE job_id = %s AND email = %s LIMIT 1", (job_id, email))
+        row = cur.fetchone()
+        return {"status": "success", "unlocked": bool(row)}
+    finally:
+        cur.close()
+        db.release_pooled_connection(conn)
