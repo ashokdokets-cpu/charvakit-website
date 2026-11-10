@@ -153,14 +153,6 @@ class IndiaRadarEngine:
                 except Exception as e:
                     logger.warning(f"Failed to save fetched job: {e}")
 
-                try:
-                    cur.execute("""
-                        INSERT INTO charvak_radar_fetched (job_id, title, company, location, skills)
-                        VALUES (%s, %s, %s, %s, %s)
-                    """, (str(job.get("id") or job.get("job_id") or ("IND-" + __import__("hashlib").md5((job_title + "|" + job_company).encode("utf-8")).hexdigest()[:10].upper())), job_title, job_company, job_loc, str(job_skills)))
-                except Exception as e:
-                    logger.warning(f"Failed to save fetched job: {e}")
-
                 # For India Radar, if location is blank, we allow it.
                 # We only apply the strict filter if a location WAS provided.
                 if job_loc and not self._is_truly_india(job):
