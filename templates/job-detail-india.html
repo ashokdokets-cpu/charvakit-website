@@ -91,7 +91,7 @@
       if (orderData.status !== 'success') {
         alert("Error: " + orderData.message);
         btn.disabled = false;
-        btn.textContent = 'Unlock & Apply (₹99)';
+        btn.textContent = 'Unlock All Verified Jobs (₹99) — 7-Day Access';
         return;
       }
 
@@ -125,7 +125,7 @@
           } else {
             alert("Payment verification failed. Please contact support.");
             btn.disabled = false;
-            btn.textContent = 'Unlock & Apply (₹99)';
+            btn.textContent = 'Unlock All Verified Jobs (₹99) — 7-Day Access';
           }
         }
       };
@@ -136,7 +136,7 @@
     } catch (e) {
       alert("Network error: " + e.message);
       btn.disabled = false;
-      btn.textContent = 'Unlock & Apply (₹99)';
+      btn.textContent = 'Unlock All Verified Jobs (₹99) — 7-Day Access';
     }
   }
 </script>
