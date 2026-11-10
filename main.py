@@ -21637,14 +21637,30 @@ async def api_verify_unlock(request: Request):
 
 @app.get("/api/india-jobs/check-unlock")
 async def api_check_unlock(job_id: str, email: str):
-    """Check if the user already paid for this job."""
+    """Check if user has a valid unlock (specific job OR a recent 7-day pass)."""
     from database import db
     conn = db.get_pooled_connection()
     try:
         cur = conn.cursor()
-        cur.execute("SELECT id FROM charvak_india_job_unlocks WHERE job_id = %s AND email = %s LIMIT 1", (job_id, email))
-        row = cur.fetchone()
-        return {"status": "success", "unlocked": bool(row)}
+        
+        # 1. Check if they paid for this specific job
+        cur.execute("""
+            SELECT id FROM charvak_india_job_unlocks 
+            WHERE job_id = %s AND email = %s LIMIT 1
+        """, (job_id, email))
+        if cur.fetchone():
+            return {"status": "success", "unlocked": True, "reason": "specific_job"}
+
+        # 2. Check if they have an active 7-day pass (any job unlocked in the last 7 days)
+        cur.execute("""
+            SELECT id FROM charvak_india_job_unlocks 
+            WHERE email = %s AND unlocked_at > NOW() - INTERVAL '7 days' 
+            LIMIT 1
+        """, (email,))
+        if cur.fetchone():
+            return {"status": "success", "unlocked": True, "reason": "7_day_pass"}
+
+        return {"status": "success", "unlocked": False}
     finally:
         cur.close()
         db.release_pooled_connection(conn)
