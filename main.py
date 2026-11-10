@@ -1686,6 +1686,10 @@ async def view_site(site_id: str):
         headers={"Cache-Control": "public, max-age=3600"},
     )
 
+@app.get("/find-jobs", response_class=HTMLResponse)
+async def find_jobs_funnel(request: Request):
+    """Public Resume Funnel to match with Radar jobs."""
+    return template_response("resume-match-funnel.html", request, "Find Verified Jobs - Charvak")
 
 # ============================================================
 # API SYNC ENDPOINTS (DoketsRB Integration)

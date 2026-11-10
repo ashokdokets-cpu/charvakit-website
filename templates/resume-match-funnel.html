@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Find Your Verified Jobs - Charvak{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8 text-center mb-5">
+      <h1 class="fw-bold mb-3">Paste Your Resume. Unlock Verified Jobs.</h1>
+      <p class="lead text-muted">Our AI will scan your resume, verify your skills, and match you with open jobs in India where the employer actually wants your profile.</p>
+    </div>
+  </div>
+
+  <div class="row justify-content-center" id="inputSection">
+    <div class="col-lg-8">
+      <div class="card shadow-sm border-0 p-4">
+        <textarea id="resumeText" class="form-control mb-3" rows="8" placeholder="Paste your resume text here (or copy/paste from your PDF)..." style="font-family: monospace; font-size: 0.9rem;"></textarea>
+        <button onclick="scanResume()" id="scanBtn" class="btn btn-primary btn-lg w-100">✨ Scan Resume & Find Jobs</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="row justify-content-center d-none" id="loadingSection">
+    <div class="col-lg-8 text-center py-5">
+      <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status"></div>
+      <h4 class="mt-4">AI is analyzing your skills...</h4>
+      <p class="text-muted">Scanning our database for verified matches.</p>
+    </div>
+  </div>
+
+  <div class="row justify-content-center d-none" id="resultSection">
+    <div class="col-lg-10">
+      <div class="card shadow-sm border-0 p-4 mb-4">
+        <h3 class="mb-3">🎉 We found verified jobs for you!</h3>
+        <p class="text-muted mb-4">Based on your resume, you match the following open requirements. Click to view and apply.</p>
+        <div id="matchesList"></div>
+        
+        <div class="text-center mt-5">
+          <p class="fw-bold">Want to apply and get your verified certificate?</p>
+          <a href="/register" class="btn btn-success btn-lg px-5">Create Free Account</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+async function scanResume() {
+  const text = document.getElementById('resumeText').value;
+  if (text.length < 50) {
+    alert("Please paste a longer resume (at least 50 characters).");
+    return;
+  }
+
+  document.getElementById('inputSection').classList.add('d-none');
+  document.getElementById('loadingSection').classList.remove('d-none');
+
+  try {
+    const res = await fetch('/api/public/resume-match', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ resume_text: text })
+    });
+    const data = await res.json();
+
+    if (data.status === 'success') {
+      const list = document.getElementById('matchesList');
+      if (data.matches.length === 0) {
+        list.innerHTML = '<div class="alert alert-info">No direct matches found right now. Create an account to get notified when new jobs arrive.</div>';
+      } else {
+        list.innerHTML = data.matches.map(m => `
+          <div class="d-flex justify-content-between align-items-center border-bottom py-3">
+            <div>
+              <h5 class="mb-1 text-primary">${m.title}</h5>
+              <p class="mb-0 text-muted">${m.company} • ${m.location || 'India'}</p>
+            </div>
+            <div class="text-end">
+              <span class="badge bg-success mb-2">${m.overlap_pct}% Match</span>
+              <br>
+              <a href="/job-board/${m.job_id}" class="btn btn-sm btn-outline-primary">View Job</a>
+            </div>
+          </div>
+        `).join('');
+      }
+      
+      document.getElementById('loadingSection').classList.add('d-none');
+      document.getElementById('resultSection').classList.remove('d-none');
+    } else {
+      alert("Error: " + data.message);
+      window.location.reload();
+    }
+  } catch (e) {
+    alert("Network error.");
+    window.location.reload();
+  }
+}
+</script>
+{% endblock %}
