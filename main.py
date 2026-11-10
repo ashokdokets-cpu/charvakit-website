@@ -20796,6 +20796,34 @@ async def api_run_india_radar(request: Request):
     result = india_radar_engine.run_radar()
     return result
 
+@app.get("/api/admin/india-radar/fetched")
+async def api_get_fetched_jobs(request: Request):
+    """Fetch the raw jobs returned by the API (before matching)."""
+    require_admin(request)
+    from database import db
+    conn = db.get_pooled_connection()
+    if not conn:
+        raise HTTPException(500, "DB unavailable")
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT job_id, title, company, location, skills 
+            FROM charvak_radar_fetched 
+            ORDER BY fetched_at DESC 
+            LIMIT 20
+        """)
+        rows = cur.fetchall()
+        return {
+            "status": "success", 
+            "jobs": [
+                {"job_id": r[0], "title": r[1], "company": r[2], "location": r[3], "skills": r[4]}
+                for r in rows
+            ]
+        }
+    finally:
+        cur.close()
+        db.release_pooled_connection(conn)
+
 @app.get("/api/admin/india-radar/alerts")
 async def api_get_radar_alerts(request: Request):
     require_admin(request)
@@ -20870,6 +20898,23 @@ async def api_push_radar_alert(request: Request, alert_id: int):
         return {"status": "error", "message": str(e)[:200]}
     finally:
         if cur: cur.close()
+        db.release_pooled_connection(conn)
+
+@app.get("/api/admin/india-radar/fetched")
+async def api_get_fetched_jobs(request: Request):
+    require_admin(request)
+    from database import db
+    conn = db.get_pooled_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT job_id, title, company, location, skills FROM charvak_radar_fetched ORDER BY fetched_at DESC LIMIT 20")
+        rows = cur.fetchall()
+        return {"status": "success", "jobs": [
+            {"job_id": r[0], "title": r[1], "company": r[2], "location": r[3], "skills": r[4]}
+            for r in rows
+        ]}
+    finally:
+        cur.close()
         db.release_pooled_connection(conn)
 
 # ============================================================
