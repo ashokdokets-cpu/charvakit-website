@@ -38,10 +38,11 @@ class IndiaRadarEngine:
         # Use a 7-day rolling range to guarantee volume. Remove portal filter to pull from all Indian sources.
         from datetime import datetime, timedelta
         today = datetime.now()
-        week_ago = today - timedelta(days=7)
+        week_ago = today - timedelta(days=30)
         
         params = {
             "countryCode": "in",
+            "careerLevel": "junior",
             "dateCreatedMin": week_ago.strftime("%Y-%m-%d"),
             "dateCreatedMax": today.strftime("%Y-%m-%d"),
             "limit": limit
@@ -63,21 +64,34 @@ class IndiaRadarEngine:
             return []
 
     def _is_truly_india(self, job):
-        """Safety filter to ensure no US/EU jobs slip through."""
-        loc = str(job.get("location", "")).lower()
-        title = str(job.get("title", "")).lower()
-        desc = str(job.get("description", "")).lower()
-        combined = f"{loc} {title} {desc}"
+        """Safety filter to ensure no US/EU jobs slip through.
         
-        # If it contains any Indian keyword, it's valid
+        Rules:
+        1. If location is blank/None, ALLOW (countryCode=in already guarantees India)
+        2. If location contains non-India country, REJECT
+        3. If location/title/desc contains India keyword, ALLOW
+        4. Otherwise, ALLOW (benefit of the doubt - API filter is India-only)
+        """
+        loc = str(job.get("location", "") or "").lower().strip()
+        title = str(job.get("title", "") or "").lower()
+        desc = str(job.get("description", "") or "").lower()
+        combined = f"{loc} {title} {desc}"
+
+        # Rule 1: Blank location → allow (India default)
+        if not loc or loc == "none":
+            return True
+
+        # Rule 2: Explicit non-India country → reject
+        non_india = ["usa", "united states", "uk", "canada", "europe", "germany", "australia", "singapore", "japan", "china"]
+        if any(kw in loc for kw in non_india):
+            return False
+
+        # Rule 3: Explicit India keyword → allow
         if any(kw in combined for kw in self.india_keywords):
             return True
-            
-        # If it contains these explicit non-India keywords, reject it
-        if any(kw in loc for kw in ["usa", "united states", "uk", "canada", "europe", "germany"]):
-            return False
-            
-        return False
+
+        # Rule 4: Default to allow (API is already filtered by countryCode=in)
+        return True
 
     def run_radar(self):
         """Fetch, Match, and Alert."""
