@@ -21578,9 +21578,15 @@ async def api_create_unlock_order(request: Request, data: ApplyUnlockRequest):
     """Create a Razorpay order for ₹99 to unlock the application."""
     try:
         from payment_engine import payment_engine
-        # Create order for 9900 paise (₹99)
+        import uuid
+        
+        # Generate a receipt ID
+        receipt_id = f"rcpt_{uuid.uuid4().hex[:8]}"
+        
+        # Amount is 9900 PAISE (which equals ₹99)
         order = payment_engine.create_razorpay_order(
-            amount=9900, 
+            amount_inr=9900, 
+            receipt=receipt_id,
             notes={"job_id": data.job_id, "email": data.email, "type": "india_job_unlock"}
         )
         if order.get("status") == "success":
