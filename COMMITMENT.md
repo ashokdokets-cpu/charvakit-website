@@ -1,28 +1,23 @@
 # Charvak - Commitment Tracker
 
-**Last updated:** 2026-11-09 (Session 109 Complete)
+**Last updated:** 2026-11-10 (Session 109 Complete)
 
 ---
 
-## Session 109 - COMPLETE (2026-11-09)
+## Session 109 - COMPLETE (2026-11-10)
 
-### 1. Bench Placement Agent (End-to-End Pipeline)
-- **Ingestion:** 8 sources pulling ~197 jobs daily.
-- **Private Bench Board:** /admin/bench-jobs (auth-gated, shows all scraped jobs with real source labels).
-- **Public Job Board:** /job-board (now cleanly filtered to only show 'via Charvak' + staff-posted jobs).
-- **Submit to Bench:** One-click button runs the 108G filter, matches the job to the best candidate, and saves to charvak_bench_submissions.
-- **Outreach Dashboard:** /admin/bench-submissions shows matched jobs and sends Brevo emails to candidates.
-- **Job Detail Page:** /job-board/{job_id} renders full scraped descriptions for HN/RemoteOK jobs (no more dead links).
+### India Requirement Engine (Naukri / Techmap)
+- /admin/india-radar: Pulls legal Indian jobs via Techmap API, filters out US jobs, and matches to Indian candidates.
+- /job-board/{job_id}: Beautiful job detail page for Indian jobs.
+- **AI Pre-fill:** When a candidate clicks "Take Assessment", the AI parses the JD and pre-fills the Role, Industry, and Experience Level automatically.
+- **Monetization:** Sends Brevo email alerts to candidates when a job matches their skills.
 
-### 2. B2B Assessment Dashboards
-- **TPO (College) Dashboard:** /college/assessment (auth-gated).
-- **Employer Dashboard:** /employer/assessment (auth-gated).
-- **Magic Links:** Students/Candidates auto-login via email links and land on pre-filled assessment wizards.
+### Candidate Marketing Engine (US)
+- /admin/candidates: View bench candidates, generate AI marketing blurbs, and see reverse-matched US jobs.
 
-### 3. Security & Routing
-- Auth-gated all 4 business portals (College, Employer, Bench Jobs, Recruiter).
-- Restored Session 51 Employer Portal (/employer/dashboard).
-- Updated Base Nav with new Assessment Portals.
+### Mobile & UI Polish
+- Added 	able-responsive to all new admin dashboards.
+- Global mobile CSS ensures all pages work on phone, tablet, and desktop.
 
 ---
 
@@ -31,4 +26,4 @@ All 7 buildable tasks shipped (108A-G).
 
 ---
 
-**Next session:** Rotate Render DB password. Start Bench candidate outreach.
+**Next session:** Demo at Eswar Engineering College (Nov 13). Set up daily Cron for India Radar.
