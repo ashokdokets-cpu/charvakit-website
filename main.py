@@ -1319,10 +1319,16 @@ async def api_public_verified_jobs():
         cur = conn.cursor()
         # Fetch distinct jobs from radar alerts
         cur.execute("""
-            SELECT DISTINCT j.job_id, j.title, j.company, j.location, j.skills
-            FROM charvak_jobs j
-            INNER JOIN charvak_radar_alerts a ON j.job_id = a.job_id
-            ORDER BY j.created_at DESC LIMIT 20
+            SELECT DISTINCT ON (a.job_title, a.company)
+                COALESCE(j.job_id, a.job_id, 'A-' || a.alert_id::text) AS job_id,
+                a.job_title,
+                a.company,
+                COALESCE(NULLIF(a.location, ''), 'India') AS location,
+                COALESCE(j.skills, '') AS skills
+            FROM charvak_radar_alerts a
+            LEFT JOIN charvak_jobs j ON j.job_id = a.job_id
+            ORDER BY a.job_title, a.company, a.created_at DESC
+            LIMIT 30
         """)
         rows = cur.fetchall()
         jobs = []
