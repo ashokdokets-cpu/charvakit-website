@@ -27,3 +27,4 @@ All 7 buildable tasks shipped (108A-G).
 ---
 
 **Next session:** Demo at Eswar Engineering College (Nov 13). Set up daily Cron for India Radar.
+- **Session 110:** Built Resume Funnel (/find-jobs) + ?99 Razorpay Paywall for India Jobs (7-day pass).
