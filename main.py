@@ -20866,6 +20866,93 @@ async def api_push_radar_alert(request: Request, alert_id: int):
         if cur: cur.close()
         db.release_pooled_connection(conn)
 
+# ============================================================
+# RESUME ROAST FUNNEL (Session 110)
+# ============================================================
+
+class ResumeMatchRequest(BaseModel):
+    resume_text: str
+
+@app.post("/api/public/resume-match")
+async def api_public_resume_match(request: Request, data: ResumeMatchRequest):
+    """Public endpoint: takes resume text, extracts skills, returns matching jobs."""
+    try:
+        from database import db
+        
+        text_lower = data.resume_text.lower()
+        
+        COMMON_SKILLS = [
+            "python", "java", "javascript", "typescript", "c++", "c#", "php", "ruby", "go", "rust",
+            "react", "angular", "vue", "node", "django", "flask", "spring", "express",
+            "sql", "mysql", "postgres", "mongodb", "oracle", "redis",
+            "aws", "azure", "gcp", "docker", "kubernetes", "terraform", "jenkins", "git",
+            "machine learning", "ml", "ai", "data science", "pandas", "numpy", "tensorflow", "pytorch",
+            "html", "css", "sass", "tailwind", "bootstrap",
+            "agile", "scrum", "jira", "excel", "tally", "six sigma", "lean", "supply chain",
+            "sales", "marketing", "seo", "content", "hr", "recruiting", "accounting", "finance"
+        ]
+        
+        user_skills_lower = [skill for skill in COMMON_SKILLS if skill in text_lower]
+        user_title = "Professional"
+        
+        if not user_skills_lower:
+            user_skills_lower = text_lower.split()[:5]
+        
+        conn = db.get_pooled_connection()
+        if not conn:
+            return {"status": "error", "message": "DB unavailable"}
+            
+        try:
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT j.job_id, j.title, j.company, j.location, j.skills
+                FROM charvak_jobs j
+                JOIN charvak_radar_alerts a ON j.job_id = a.job_id
+                LIMIT 50
+            """)
+            jobs = cur.fetchall()
+            
+            matches = []
+            for j in jobs:
+                job_id, j_title, j_company, j_loc, j_skills = j
+                
+                if isinstance(j_skills, str):
+                    j_skills = [s.strip().lower() for s in j_skills.split(",") if s.strip()]
+                elif isinstance(j_skills, list):
+                    j_skills = [s.lower() for s in j_skills]
+                else:
+                    j_skills = []
+                    
+                if not j_skills:
+                    continue
+                    
+                hits = sum(1 for s in user_skills_lower if any(s in js for js in j_skills))
+                overlap = hits / len(j_skills)
+                
+                if overlap >= 0.10: # 10% threshold for resume
+                    matches.append({
+                        "job_id": job_id,
+                        "title": j_title,
+                        "company": j_company,
+                        "location": j_loc,
+                        "overlap_pct": round(overlap * 100, 1)
+                    })
+            
+            matches.sort(key=lambda x: x["overlap_pct"], reverse=True)
+            
+            return {
+                "status": "success",
+                "extracted_title": user_title,
+                "matches": matches[:5]
+            }
+        finally:
+            cur.close()
+            db.release_pooled_connection(conn)
+            
+    except Exception as e:
+        logger.error(f"Resume match error: {e}")
+        return {"status": "error", "message": str(e)[:200]}
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
