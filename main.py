@@ -1305,6 +1305,40 @@ async def job_board_detail_page(request: Request, job_id: str):
         if cur: cur.close()
         db.release_pooled_connection(conn)
 
+@app.get("/verified-jobs", response_class=HTMLResponse)
+async def verified_jobs_page(request: Request):
+    """Public page showing verified jobs."""
+    return template_response("verified-jobs.html", request, "Verified Jobs - Charvak")
+
+@app.get("/api/public/verified-jobs")
+async def api_public_verified_jobs():
+    """Return jobs that are currently in the radar alerts."""
+    from database import db
+    conn = db.get_pooled_connection()
+    try:
+        cur = conn.cursor()
+        # Fetch distinct jobs from radar alerts
+        cur.execute("""
+            SELECT DISTINCT j.job_id, j.title, j.company, j.location, j.skills
+            FROM charvak_jobs j
+            JOIN charvak_radar_alerts a ON j.job_id = a.job_id
+            ORDER BY j.created_at DESC LIMIT 20
+        """)
+        rows = cur.fetchall()
+        jobs = []
+        for r in rows:
+            skills = r[4] or []
+            if isinstance(skills, str):
+                skills = [s.strip() for s in skills.split(",") if s.strip()]
+            jobs.append({
+                "job_id": r[0], "title": r[1], "company": r[2],
+                "location": r[3], "skills": skills
+            })
+        return {"status": "success", "jobs": jobs}
+    finally:
+        cur.close()
+        db.release_pooled_connection(conn)
+
 @app.get("/admin/bench-jobs", response_class=HTMLResponse)
 async def admin_bench_jobs_page(request: Request):
     """Bench pipeline: internal view of all ingested jobs for H1B/OPT/H4-EAD sourcing."""
