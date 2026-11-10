@@ -21692,3 +21692,101 @@ async def api_check_unlock(job_id: str, email: str):
     finally:
         cur.close()
         db.release_pooled_connection(conn)
+
+# ============================================================
+# FUNNEL TRACKING (Session 111)
+# ============================================================
+
+class FunnelEvent(BaseModel):
+    session_id: Optional[str] = None
+    email: Optional[str] = None
+    event_type: str
+    job_id: Optional[str] = None
+    metadata: Optional[dict] = None
+
+@app.post("/api/funnel/track")
+async def api_funnel_track(request: Request, data: FunnelEvent):
+    """Log a funnel event (no auth - anonymous tracking)."""
+    from database import db
+    conn = db.get_pooled_connection()
+    if not conn:
+        return {"status": "error", "message": "DB unavailable"}
+    cur = None
+    try:
+        cur = conn.cursor()
+        import json as _json
+        cur.execute("""
+            INSERT INTO charvak_funnel_events 
+            (session_id, email, event_type, job_id, metadata)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (
+            data.session_id or "",
+            data.email,
+            data.event_type,
+            data.job_id,
+            _json.dumps(data.metadata or {})
+        ))
+        conn.commit()
+        return {"status": "success"}
+    except Exception as e:
+        logger.warning(f"Funnel track error: {e}")
+        return {"status": "error", "message": str(e)[:100]}
+    finally:
+        if cur: cur.close()
+        db.release_pooled_connection(conn)
+
+@app.get("/api/admin/funnel/stats")
+async def api_funnel_stats(request: Request):
+    """Admin view: funnel conversion stats."""
+    require_admin(request)
+    from database import db
+    conn = db.get_pooled_connection()
+    if not conn:
+        raise HTTPException(500, "DB unavailable")
+    cur = None
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT event_type, COUNT(*) 
+            FROM charvak_funnel_events 
+            WHERE created_at > NOW() - INTERVAL '7 days'
+            GROUP BY event_type
+        """)
+        last7d = {r[0]: r[1] for r in cur.fetchall()}
+
+        cur.execute("""
+            SELECT event_type, COUNT(*) 
+            FROM charvak_funnel_events 
+            WHERE created_at > NOW() - INTERVAL '24 hours'
+            GROUP BY event_type
+        """)
+        last24h = {r[0]: r[1] for r in cur.fetchall()}
+
+        cur.execute("""
+            SELECT event_id, event_type, email, job_id, created_at 
+            FROM charvak_funnel_events 
+            ORDER BY created_at DESC LIMIT 20
+        """)
+        recent = [
+            {"event_id": r[0], "type": r[1], "email": r[2], 
+             "job_id": r[3], "at": r[4].isoformat() if r[4] else None}
+            for r in cur.fetchall()
+        ]
+
+        return {
+            "status": "success",
+            "last_24h": last24h,
+            "last_7d": last7d,
+            "recent": recent
+        }
+    finally:
+        if cur: cur.close()
+        db.release_pooled_connection(conn)
+
+@app.get("/admin/funnel", response_class=HTMLResponse)
+async def admin_funnel_page(request: Request):
+    try:
+        require_admin(request)
+    except HTTPException:
+        return RedirectResponse(url="/admin-login?next=/admin/funnel", status_code=302)
+    return template_response("admin-funnel.html", request, "Funnel Analytics - Charvak")

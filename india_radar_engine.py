@@ -129,7 +129,6 @@ class IndiaRadarEngine:
                         VALUES (%s, %s, %s, %s, %s)
                         ON CONFLICT (job_id) DO NOTHING
                     """, (str(job.get("id", "unknown")), job_title, job_company, job_loc, str(job_skills)))
-                    conn.commit() # Force save so UI can see it immediately
                 except Exception as e:
                     logger.warning(f"Failed to save fetched job: {e}")
 
@@ -158,6 +157,7 @@ class IndiaRadarEngine:
                 }
                 
                 # 2. Match using existing filter
+                conn.commit()  # Flush all fetched jobs to DB before matching
                 is_relevant, reason, best_cand, best_email, overlap = bench_jd_filter.is_relevant(jd_data)
                 
                 if is_relevant and overlap >= 0.20: # 20% threshold for Indian market
@@ -176,11 +176,12 @@ class IndiaRadarEngine:
                         "naukri", json.dumps(job)
                     ))
 
-                    # 2. Save the alert
+                    # 2. Save the alert (dedupe via unique index)
                     cur.execute("""
                         INSERT INTO charvak_radar_alerts 
                         (job_id, job_title, company, location, salary, matched_candidate, candidate_email, overlap_pct, status)
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'pending_alert')
+                        ON CONFLICT (job_title, candidate_email) DO NOTHING
                     """, (external_job_id, job_title, job_company, job_loc, job_salary, best_cand, best_email, round(overlap*100, 1)))
             
             conn.commit()

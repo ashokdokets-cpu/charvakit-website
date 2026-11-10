@@ -45,7 +45,26 @@
 </div>
 
 <script>
-async function scanResume() {
+const _funnelSid = (() => {
+    let sid = sessionStorage.getItem('funnel_sid');
+    if (!sid) { sid = 'FS-' + Math.random().toString(36).slice(2, 10); sessionStorage.setItem('funnel_sid', sid); }
+    return sid;
+})();
+window._trackFunnel = function(type, extra) {
+    fetch('/api/funnel/track', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            session_id: _funnelSid,
+            email: localStorage.getItem('userEmail') || null,
+            event_type: type,
+            ...(extra || {})
+        })
+    }).catch(() => {});
+};
+
+async function scanResume()
+ {
   const text = document.getElementById('resumeText').value;
   if (text.length < 50) {
     alert("Please paste a longer resume (at least 50 characters).");
@@ -77,12 +96,13 @@ async function scanResume() {
             <div class="text-md-end text-start">
               <span class="badge bg-success mb-2">${m.overlap_pct}% Match</span>
               <br>
-              <a href="/job-board/${m.job_id}" class="btn btn-outline-primary">View Job & Verify</a>
+              <a href="/job-board/${m.job_id}" class="btn btn-outline-primary" onclick="window._trackFunnel('job_view', {job_id: '${m.job_id}'})">View Job & Verify</a>
             </div>
           </div>
         `).join('');
       }
       
+      window._trackFunnel('resume_scan', {metadata: {matches: (data.matches || []).length}});
       document.getElementById('loadingSection').classList.add('d-none');
       document.getElementById('resultSection').classList.remove('d-none');
     } else {

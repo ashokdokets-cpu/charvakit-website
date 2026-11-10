@@ -55,6 +55,20 @@
 
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
+  const _funnelSid = sessionStorage.getItem('funnel_sid') || 'FS-anon';
+  function _trackFunnel(type, extra) {
+    fetch('/api/funnel/track', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        session_id: _funnelSid,
+        email: typeof userEmail !== 'undefined' ? userEmail : null,
+        event_type: type,
+        job_id: typeof jobId !== 'undefined' ? jobId : null,
+        ...(extra || {})
+      })
+    }).catch(() => {});
+  }
   const jobId = "{{ job.job_id }}";
   const userEmail = localStorage.getItem('userEmail');
   const authToken = localStorage.getItem('authToken') || localStorage.getItem('auth_token');
@@ -80,6 +94,7 @@
       }
 
       // 2. Not unlocked, create order
+      _trackFunnel('paywall_shown');
       btn.textContent = 'Opening payment...';
       const orderRes = await fetch('/api/india-jobs/create-unlock-order', {
         method: 'POST',
@@ -121,6 +136,7 @@
           const verifyData = await verifyRes.json();
           
           if (verifyData.status === 'success') {
+            _trackFunnel('payment_success', {metadata: {payment_id: response.razorpay_payment_id}});
             window.location.href = `/ai-assessment?role={{ job.title | urlencode }}`;
           } else {
             alert("Payment verification failed. Please contact support.");
