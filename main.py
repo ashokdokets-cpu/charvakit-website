@@ -20900,24 +20900,6 @@ async def api_push_radar_alert(request: Request, alert_id: int):
         if cur: cur.close()
         db.release_pooled_connection(conn)
 
-@app.get("/api/admin/india-radar/fetched")
-async def api_get_fetched_jobs(request: Request):
-    require_admin(request)
-    from database import db
-    conn = db.get_pooled_connection()
-    try:
-        cur = conn.cursor()
-        cur.execute("SELECT job_id, title, company, location, skills FROM charvak_radar_fetched ORDER BY fetched_at DESC LIMIT 20")
-        rows = cur.fetchall()
-        return {"status": "success", "jobs": [
-            {"job_id": r[0], "title": r[1], "company": r[2], "location": r[3], "skills": r[4]}
-            for r in rows
-        ]}
-    finally:
-        cur.close()
-        db.release_pooled_connection(conn)
-
-# ============================================================
 # RESUME ROAST FUNNEL (Session 110)
 # ============================================================
 
