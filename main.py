@@ -1321,7 +1321,7 @@ async def api_public_verified_jobs():
         cur.execute("""
             SELECT DISTINCT j.job_id, j.title, j.company, j.location, j.skills
             FROM charvak_jobs j
-            JOIN charvak_radar_alerts a ON j.job_id = a.job_id
+            INNER JOIN charvak_radar_alerts a ON j.job_id = a.job_id
             ORDER BY j.created_at DESC LIMIT 20
         """)
         rows = cur.fetchall()
@@ -1331,10 +1331,16 @@ async def api_public_verified_jobs():
             if isinstance(skills, str):
                 skills = [s.strip() for s in skills.split(",") if s.strip()]
             jobs.append({
-                "job_id": r[0], "title": r[1], "company": r[2],
-                "location": r[3], "skills": skills
+                "job_id": r[0], 
+                "title": r[1], 
+                "company": r[2],
+                "location": r[3], 
+                "skills": skills
             })
         return {"status": "success", "jobs": jobs}
+    except Exception as e:
+        logger.error(f"Verified jobs API error: {e}")
+        return {"status": "error", "message": str(e)[:200]}
     finally:
         cur.close()
         db.release_pooled_connection(conn)
