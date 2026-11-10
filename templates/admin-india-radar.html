@@ -56,7 +56,6 @@
 </div> <!-- Close the main container here -->
 
 <script>
-<script>
 async function loadRadar() {
   const token = localStorage.getItem('authToken') || '';
   const res = await fetch('/api/admin/india-radar/alerts', { headers: { 'Authorization': 'Bearer ' + token } });
@@ -90,6 +89,7 @@ async function loadRadar() {
 
 async function loadFetchedJobs() {
   const tbody = document.getElementById('fetchedTable');
+  if (!tbody) return;
   const token = localStorage.getItem('authToken') || '';
   try {
     const res = await fetch('/api/admin/india-radar/fetched', { headers: { 'Authorization': 'Bearer ' + token } });
@@ -116,15 +116,9 @@ async function runRadar() {
   try {
     const res = await fetch('/api/admin/india-radar/run', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } });
     const data = await res.json();
-    if (data.status === 'error' || data.status === 'empty') {
-        alert(`Scan issue: ${data.message || 'No jobs returned from API. Check Render Logs.'}`);
-    } else if (data.status === 'no_candidates') {
-        alert(`Scan issue: ${data.message}`);
-    } else {
-        alert(`Radar scan complete! Fetched ${data.raw_fetched || 0} jobs. Matched ${data.matched || 0} jobs.`);
-            loadRadar();
+    alert(`Radar scan complete! Fetched ${data.raw_fetched || 0} jobs. Matched ${data.matched || 0} jobs.`);
+    loadRadar();
     loadFetchedJobs();
-    }
   } catch(e) { alert('Error: ' + e); }
   btn.disabled = false; btn.textContent = '🔄 Run Radar Scan';
 }
