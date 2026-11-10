@@ -208,3 +208,11 @@ backups/
 *.delete-bak
 _apply_*.ps1
 bench_prod_seed.csv
+
+# Session temp/debug files
+_fix_invites.ps1
+_patch_auth.ps1
+_patch_magic_link.ps1
+diag_radar.py
+insert_cand.sql
+main.py.bak_*
