@@ -2429,11 +2429,8 @@ async def api_get_applications_list(job_id: str = None):
 
 @app.get("/api/jobs/{job_id}/prefill")
 async def api_jobs_prefill(request: Request, job_id: str):
-    """Uses AI to parse the job description and return Role, Industry, Level."""
+    """Auto-fill assessment wizard based on job title/desc. Uses AI, falls back to rules."""
     from database import db
-    from jd_parser_engine import jd_parser_engine
-    import json
-    
     conn = db.get_pooled_connection()
     if not conn:
         raise HTTPException(500, "Database unavailable")
@@ -2445,31 +2442,60 @@ async def api_jobs_prefill(request: Request, job_id: str):
         if not row:
             raise HTTPException(404, "Job not found")
             
-        title = row[0]
+        title = row[0] or ""
         description = row[1] or title
-        
-        # Run the AI parser
-        parsed_result = jd_parser_engine.parse_jd(description)
-        
-        if parsed_result.get("status") == "success":
-            p = parsed_result.get("parsed", {})
-            return {
-                "status": "success",
-                "role": p.get("title") or title,
-                "industry": p.get("domain") or "IT / Tech (general)",
-                "level": p.get("seniority") or "mid"
-            }
-        else:
-            return {"status": "error", "message": "AI parse failed"}
+
+        # --- ATTEMPT 1: AI PARSER ---
+        try:
+            # CORRECT IMPORT: parse_jd is a standalone function
+            from jd_parser_engine import parse_jd
+            parsed_result = parse_jd(description)
+            
+            if parsed_result.get("status") == "success":
+                p = parsed_result.get("parsed", {})
+                return {
+                    "status": "success",
+                    "role": p.get("title") or title,
+                    "industry": p.get("domain") or "IT / Tech (general)",
+                    "level": p.get("seniority") or "mid"
+                }
+        except Exception as ai_err:
+            logger.warning(f"[prefill] AI parse failed: {ai_err}")
+
+        # --- ATTEMPT 2: SMART RULE-BASED FALLBACK ---
+        # If AI fails, we guess based on keywords to ensure it never 500s.
+        t_lower = title.lower()
+        d_lower = description.lower()
+
+        # Guess Industry
+        industry = "IT / Tech (general)" # Default
+        if any(k in t_lower for k in ["engineer", "supply chain", "manufactur", "mechanical", "industrial"]):
+            industry = "Engineering"
+        elif any(k in t_lower for k in ["sales", "business development", "account manager"]):
+            industry = "Sales"
+        elif any(k in t_lower for k in ["marketing", "content", "seo"]):
+            industry = "Marketing"
+        elif any(k in t_lower for k in ["hr", "recruit", "talent"]):
+            industry = "Human Resources"
+
+        # Guess Level
+        level = "mid" # Default
+        if any(k in t_lower or k in d_lower for k in ["senior", "lead", "sr.", "principal", "manager"]):
+            level = "senior"
+        elif any(k in t_lower or k in d_lower for k in ["junior", "fresher", "intern", "entry"]):
+            level = "junior"
+
+        return {
+            "status": "success",
+            "role": title,
+            "industry": industry,
+            "level": level,
+            "note": "Used smart fallback (AI unavailable)"
+        }
             
     finally:
         cur.close()
         db.release_pooled_connection(conn)
-
-
-# ============================================================
-# AI API ENDPOINTS (WITH RATE LIMITING + INPUT VALIDATION)
-# ============================================================
 
 @app.get("/api/health/ai")
 async def ai_health_check():
