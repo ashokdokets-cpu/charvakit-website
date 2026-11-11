@@ -278,7 +278,7 @@ _ADMIN_PUBLIC_PATHS = {
 async def admin_auth_guard(request: Request, call_next):
     """Block unauthenticated access to admin routes."""
     path = request.url.path
-    is_admin_area = path.startswith("/admin") or path.startswith("/api/admin")
+    is_admin_area = (path.startswith("/admin") or path.startswith("/api/admin")) and not path.startswith("/employer")
     if not is_admin_area or path in _ADMIN_PUBLIC_PATHS:
         return await call_next(request)
 
