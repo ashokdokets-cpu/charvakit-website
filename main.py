@@ -278,7 +278,7 @@ _ADMIN_PUBLIC_PATHS = {
 async def admin_auth_guard(request: Request, call_next):
     """Block unauthenticated access to admin routes."""
     path = request.url.path
-    is_admin_area = (path.startswith("/admin") or path.startswith("/api/admin")) and not path.startswith("/employer")
+    is_admin_area = (path.startswith("/admin") or path.startswith("/api/admin")) and not (path.startswith("/employer") or path.startswith("/api/employer"))
     if not is_admin_area or path in _ADMIN_PUBLIC_PATHS:
         return await call_next(request)
 
@@ -4140,9 +4140,9 @@ async def api_passport_verify(request: Request, handle: str):
         return handle_error(e, "passport verify")
 
 
-@app.get("/employer/dashboard", response_class=HTMLResponse)
+@app.get("/admin/employer-portal", response_class=HTMLResponse)
 @limiter.limit("60/minute")
-async def employer_dashboard_page(request: Request):
+async def admin_employer_portal_page(request: Request):
     """Session 51: Employer Portal - browse and verify public passports."""
     try:
         require_admin(request)
