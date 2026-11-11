@@ -423,6 +423,16 @@ body.logged-in #topAuthIn {
     }
   }
 </style>
+<style>
+  /* Fix for tall dropdowns going off-screen */
+  @media (min-width: 992px) {
+    .dropdown-menu {
+      max-height: calc(100vh - 120px); /* Leave space for nav bar */
+      overflow-y: auto; /* Add scrollbar if content is taller */
+      overflow-x: hidden;
+    }
+  }
+</style>
 </head>
 <body>
     <!-- Global Bar -->
