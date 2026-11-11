@@ -21871,15 +21871,21 @@ async def admin_send_employer_login_link(request: Request, account_id: str):
         db.release_pooled_connection(conn)
 
 @app.get("/employer/login", response_class=HTMLResponse)
+@app.get("/employer/login", response_class=HTMLResponse)
 async def employer_magic_login(request: Request, token: str = ""):
     """Magic link login — validates token, sets session cookie, redirects to dashboard."""
     from database import db
+    
+    def _fail_response(message: str):
+        return template_response("employer-login-failed.html", request, "Login Failed - Charvak", reason=message)
+    
     if not token:
-        return template_response("employer-login-failed.html", request, "Login Link Invalid - Charvak", {"reason": "No token provided"})
+        return _fail_response("No token provided. Please use the link from your welcome email.")
     
     conn = db.get_pooled_connection()
     if not conn:
-        return template_response("employer-login-failed.html", request, "Login Failed - Charvak", {"reason": "Database unavailable"})
+        return _fail_response("Database temporarily unavailable. Please try again in a minute.")
+    
     cur = None
     try:
         cur = conn.cursor()
@@ -21891,14 +21897,14 @@ async def employer_magic_login(request: Request, token: str = ""):
         """, (token,))
         row = cur.fetchone()
         if not row:
-            return template_response("employer-login-failed.html", request, "Login Link Expired - Charvak", {"reason": "This login link is invalid or has expired. Contact hr@charvakit.com for a new link."})
+            return _fail_response("This login link is invalid or has expired. Contact hr@charvakit.com for a new link.")
         
         account_id, company, email, contact_name, status = row
         
         if status != "approved":
-            return template_response("employer-login-failed.html", request, "Login Failed - Charvak", {"reason": f"Your account status is '{status}'. Contact hr@charvakit.com."})
+            return _fail_response("Your account status is '" + str(status) + "'. Contact hr@charvakit.com.")
         
-        # Rotate token for security (single-use)
+        # Rotate token (single-use for security)
         import secrets as _sec
         new_token = _sec.token_urlsafe(32)
         cur.execute("""
@@ -21923,11 +21929,10 @@ async def employer_magic_login(request: Request, token: str = ""):
         return response
     except Exception as e:
         logger.error(f"Employer magic login error: {e}")
-        return template_response("employer-login-failed.html", request, "Login Failed - Charvak", {"reason": "Unexpected error. Contact hr@charvakit.com"})
+        return _fail_response("Unexpected error. Please contact hr@charvakit.com")
     finally:
         if cur: cur.close()
         db.release_pooled_connection(conn)
-
 @app.get("/employer/dashboard", response_class=HTMLResponse)
 async def employer_dashboard(request: Request):
     """Employer dashboard — shows account, posted jobs, matched candidates."""
@@ -21963,7 +21968,7 @@ async def employer_dashboard(request: Request):
             "company_size": row[6],
             "hiring_roles": row[7],
         }
-        return templates.TemplateResponse("employer-dashboard.html", {"request": request, "title": f"{employer['company_name']} - Dashboard", "employer": employer})
+        return template_response("employer-dashboard.html", request, f"{employer['company_name']} - Dashboard", employer=employer)
     finally:
         if cur: cur.close()
         db.release_pooled_connection(conn)
