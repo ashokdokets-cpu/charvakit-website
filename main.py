@@ -21800,3 +21800,177 @@ async def admin_funnel_page(request: Request):
 async def pricing_b2b_page(request: Request):
     """B2B pricing page for colleges and employers."""
     return template_response("pricing-b2b.html", request, "B2B Pricing - Charvak")
+# ============================================================
+# EMPLOYER MAGIC LINK LOGIN + DASHBOARD (Session 112B)
+# ============================================================
+
+@app.post("/api/admin/employer-accounts/{account_id}/send-login-link")
+async def admin_send_employer_login_link(request: Request, account_id: str):
+    """Admin triggers magic link email to approved employer."""
+    require_admin(request)
+    import secrets
+    from database import db
+    conn = db.get_pooled_connection()
+    if not conn:
+        return {"status": "error", "message": "DB unavailable"}
+    cur = None
+    try:
+        cur = conn.cursor()
+        # Fetch account + verify approved
+        cur.execute("""
+            SELECT account_id, company_name, contact_name, contact_email, status
+            FROM charvak_employer_accounts WHERE account_id = %s
+        """, (account_id,))
+        row = cur.fetchone()
+        if not row:
+            return {"status": "error", "message": "Employer not found"}
+        
+        eid, company, contact_name, email, status = row
+        if status != "approved":
+            return {"status": "error", "message": f"Employer status is '{status}' — must be 'approved' first"}
+        
+        # Generate magic link token (valid 7 days)
+        token = secrets.token_urlsafe(32)
+        cur.execute("""
+            UPDATE charvak_employer_accounts 
+            SET login_token = %s, 
+                login_token_expires = NOW() + INTERVAL '7 days',
+                updated_at = NOW()
+            WHERE account_id = %s
+        """, (token, account_id))
+        conn.commit()
+        
+        login_url = f"https://www.charvakit.com/employer/login?token={token}"
+        
+        # Send email
+        try:
+            from email_engine import email_engine as _ee
+            html = f"""
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h2 style="color: #0d9488;">Welcome to Charvak, {contact_name}!</h2>
+                <p>Your company <strong>{company}</strong> has been approved to hire verified talent on Charvak.</p>
+                <p>Click the button below to access your employer dashboard:</p>
+                <p style="margin: 30px 0;">
+                    <a href="{login_url}" style="background: #0d9488; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;">Access Your Dashboard</a>
+                </p>
+                <p style="color: #6b7280; font-size: 14px;">This link is valid for 7 days. If you need a new link, contact hr@charvakit.com.</p>
+                <hr style="border: 1px solid #e5e7eb; margin: 30px 0;">
+                <p style="color: #6b7280; font-size: 13px;">Charvak IT Consulting Pvt Ltd<br>#301, Sri Padmavati Towers, Guntur 522001<br>+91 799 7871 701</p>
+            </div>
+            """
+            _ee.send_email(email, f"Welcome to Charvak — Access Your Dashboard", html)
+        except Exception as e:
+            logger.warning(f"Magic link email failed: {e}")
+        
+        return {"status": "success", "login_url": login_url, "sent_to": email}
+    except Exception as e:
+        logger.error(f"send-login-link error: {e}")
+        return {"status": "error", "message": str(e)[:200]}
+    finally:
+        if cur: cur.close()
+        db.release_pooled_connection(conn)
+
+@app.get("/employer/login", response_class=HTMLResponse)
+async def employer_magic_login(request: Request, token: str = ""):
+    """Magic link login — validates token, sets session cookie, redirects to dashboard."""
+    from database import db
+    if not token:
+        return template_response("employer-login-failed.html", request, "Login Link Invalid - Charvak", {"reason": "No token provided"})
+    
+    conn = db.get_pooled_connection()
+    if not conn:
+        return template_response("employer-login-failed.html", request, "Login Failed - Charvak", {"reason": "Database unavailable"})
+    cur = None
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT account_id, company_name, contact_email, contact_name, status
+            FROM charvak_employer_accounts 
+            WHERE login_token = %s AND login_token_expires > NOW()
+            LIMIT 1
+        """, (token,))
+        row = cur.fetchone()
+        if not row:
+            return template_response("employer-login-failed.html", request, "Login Link Expired - Charvak", {"reason": "This login link is invalid or has expired. Contact hr@charvakit.com for a new link."})
+        
+        account_id, company, email, contact_name, status = row
+        
+        if status != "approved":
+            return template_response("employer-login-failed.html", request, "Login Failed - Charvak", {"reason": f"Your account status is '{status}'. Contact hr@charvakit.com."})
+        
+        # Rotate token for security (single-use)
+        import secrets as _sec
+        new_token = _sec.token_urlsafe(32)
+        cur.execute("""
+            UPDATE charvak_employer_accounts 
+            SET login_token = %s, 
+                login_token_expires = NOW() + INTERVAL '30 days',
+                updated_at = NOW()
+            WHERE account_id = %s
+        """, (new_token, account_id))
+        conn.commit()
+        
+        # Set cookie + redirect
+        response = RedirectResponse(url="/employer/dashboard", status_code=302)
+        response.set_cookie(
+            key="charvak_employer_token",
+            value=new_token,
+            max_age=60*60*24*30,
+            httponly=True,
+            secure=True,
+            samesite="lax"
+        )
+        return response
+    except Exception as e:
+        logger.error(f"Employer magic login error: {e}")
+        return template_response("employer-login-failed.html", request, "Login Failed - Charvak", {"reason": "Unexpected error. Contact hr@charvakit.com"})
+    finally:
+        if cur: cur.close()
+        db.release_pooled_connection(conn)
+
+@app.get("/employer/dashboard", response_class=HTMLResponse)
+async def employer_dashboard(request: Request):
+    """Employer dashboard — shows account, posted jobs, matched candidates."""
+    from database import db
+    employer_token = request.cookies.get("charvak_employer_token")
+    if not employer_token:
+        return RedirectResponse(url="/employer/signup", status_code=302)
+    
+    conn = db.get_pooled_connection()
+    if not conn:
+        return RedirectResponse(url="/", status_code=302)
+    cur = None
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT account_id, company_name, contact_email, contact_name, status, 
+                   industry, company_size, hiring_roles
+            FROM charvak_employer_accounts 
+            WHERE login_token = %s AND login_token_expires > NOW() AND status = 'approved'
+            LIMIT 1
+        """, (employer_token,))
+        row = cur.fetchone()
+        if not row:
+            return RedirectResponse(url="/employer/signup", status_code=302)
+        
+        employer = {
+            "account_id": row[0],
+            "company_name": row[1],
+            "contact_email": row[2],
+            "contact_name": row[3],
+            "status": row[4],
+            "industry": row[5],
+            "company_size": row[6],
+            "hiring_roles": row[7],
+        }
+        return template_response("employer-dashboard.html", request, f"{employer['company_name']} - Dashboard", {"employer": employer})
+    finally:
+        if cur: cur.close()
+        db.release_pooled_connection(conn)
+
+@app.post("/api/employer/logout")
+async def employer_logout(request: Request):
+    """Clear employer session."""
+    response = JSONResponse(content={"status": "success"})
+    response.delete_cookie("charvak_employer_token")
+    return response
