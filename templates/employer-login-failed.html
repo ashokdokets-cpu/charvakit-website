@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="container py-5" style="max-width: 600px;">
+  <div class="card shadow-sm border-0 p-5 text-center">
+    <div style="font-size: 4rem; margin-bottom: 20px;">🔒</div>
+    <h2 class="fw-bold mb-3">Login Link Invalid</h2>
+    <p class="text-muted mb-4">{{ reason }}</p>
+    <a href="mailto:hr@charvakit.com?subject=Employer Login Link Request" class="btn btn-primary" style="background:#0d9488; border:none;">
+      Request New Link
+    </a>
+    <p class="text-muted mt-4 small">Or contact us at hr@charvakit.com · +91 799 7871 701</p>
+  </div>
+</div>
+{% endblock %}
