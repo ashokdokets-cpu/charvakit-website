@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}B2B Pricing - Charvak{% endblock %}
+{% block content %}
+<style>
+  .pricing-hero { background: #1a1a2e; color: white; padding: 60px 0; text-align: center; }
+  .pricing-card { background: white; border-radius: 12px; border: 1px solid #e5e7eb; padding: 30px; height: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: transform 0.2s; }
+  .pricing-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px rgba(0,0,0,0.1); }
+  .pricing-card.featured { border: 2px solid #0d9488; position: relative; }
+  .featured-badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: #0d9488; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; }
+  .price-tag { font-size: 2.5rem; font-weight: 800; color: #111827; margin: 15px 0; }
+  .price-tag span { font-size: 1rem; color: #6b7280; font-weight: normal; }
+  .feature-list { list-style: none; padding: 0; margin-top: 20px; }
+  .feature-list li { padding: 8px 0; border-bottom: 1px solid #f3f4f6; color: #374151; }
+  .feature-list li:before { content: "✓"; color: #0d9488; font-weight: bold; margin-right: 10px; }
+</style>
+
+<div class="pricing-hero">
+  <div class="container">
+    <h1 class="fw-bold mb-3">Outcome-Based Pricing</h1>
+    <p class="lead" style="max-width: 600px; margin: 0 auto;">Whether you are a College proving placement readiness, or an Employer looking for verified talent — you only pay for results.</p>
+  </div>
+</div>
+
+<div class="container py-5">
+  <div class="row g-4 justify-content-center">
+    
+    <!-- For Colleges -->
+    <div class="col-lg-5">
+      <div class="pricing-card">
+        <h3 class="fw-bold text-center">For Colleges & Universities</h3>
+        <p class="text-center text-muted">Prove placement readiness to your Dean.</p>
+        <div class="price-tag text-center">₹49,999<span> / year</span></div>
+        <p class="text-center text-muted small mb-4">Up to 5,000 student assessments</p>
+        <ul class="feature-list">
+          <li><strong>Unlimited</strong> AI Assessments (106 roles)</li>
+          <li><strong>HMAC-signed Certificates</strong> for every student</li>
+          <li><strong>Dean's ROI Dashboard</strong> (PDF reports)</li>
+          <li>Bulk student roster upload (CSV)</li>
+          <li>Dedicated TPO support</li>
+          <li>Employer network visibility</li>
+        </ul>
+        <div class="d-grid mt-4">
+          <a href="mailto:hr@charvakit.com?subject=College Pricing Inquiry" class="btn btn-outline-primary btn-lg">Contact Sales</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- For Employers -->
+    <div class="col-lg-5">
+      <div class="pricing-card featured">
+        <div class="featured-badge">Pay Only on Hire</div>
+        <h3 class="fw-bold text-center mt-2">For Employers</h3>
+        <p class="text-center text-muted">Hire verified talent with zero risk.</p>
+        <div class="price-tag text-center">8%<span> of first-year CTC</span></div>
+        <p class="text-center text-muted small mb-4">Invoiced Net-30 after the candidate joins</p>
+        <ul class="feature-list">
+          <li><strong>Zero upfront cost</strong> to post jobs</li>
+          <li>Access to <strong>cryptographically verified</strong> candidates</li>
+          <li>Pre-screened technical & aptitude scores</li>
+          <li>Automated interview scheduling</li>
+          <li><strong>90-day replacement guarantee</strong></li>
+          <li>No retainers, no subscriptions</li>
+        </ul>
+        <div class="d-grid mt-4">
+          <a href="/employer/signup" class="btn btn-primary btn-lg" style="background:#0d9488; border:none;">Post a Job Free</a>
+          <div class="text-center mt-2 small text-muted">Already have an account? <a href="/login">Log in</a></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
