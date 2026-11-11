@@ -21796,3 +21796,7 @@ async def admin_funnel_page(request: Request):
     except HTTPException:
         return RedirectResponse(url="/admin-login?next=/admin/funnel", status_code=302)
     return template_response("admin-funnel.html", request, "Funnel Analytics - Charvak")
+@app.get("/pricing-b2b", response_class=HTMLResponse)
+async def pricing_b2b_page(request: Request):
+    """B2B pricing page for colleges and employers."""
+    return template_response("pricing-b2b.html", request, "B2B Pricing - Charvak")
