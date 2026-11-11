@@ -21963,7 +21963,7 @@ async def employer_dashboard(request: Request):
             "company_size": row[6],
             "hiring_roles": row[7],
         }
-        return template_response("employer-dashboard.html", request, f"{employer['company_name']} - Dashboard", {"employer": employer})
+        return templates.TemplateResponse("employer-dashboard.html", {"request": request, "title": f"{employer['company_name']} - Dashboard", "employer": employer})
     finally:
         if cur: cur.close()
         db.release_pooled_connection(conn)
