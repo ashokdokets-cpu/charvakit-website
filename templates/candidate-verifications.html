@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% block title %}Verify Your Documents - Charvak{% endblock %}
+{% block content %}
+<style>
+  .doc-card { background: white; border: 2px dashed #d1d5db; border-radius: 12px; padding: 20px; margin-bottom: 15px; transition: all 0.2s; }
+  .doc-card.uploaded { border-color: #10b981; border-style: solid; }
+  .doc-card.verified { border-color: #10b981; border-style: solid; background: #f0fdf4; }
+  .doc-card.rejected { border-color: #ef4444; border-style: solid; background: #fef2f2; }
+  .doc-icon { font-size: 2rem; margin-right: 15px; }
+  .doc-status { font-size: 0.75rem; padding: 4px 10px; border-radius: 12px; font-weight: 700; text-transform: uppercase; }
+  .doc-status.pending { background: #fef3c7; color: #92400e; }
+  .doc-status.verified { background: #d1fae5; color: #065f46; }
+  .doc-status.rejected { background: #fee2e2; color: #991b1b; }
+</style>
+
+<div class="container py-5" style="max-width: 800px;">
+  <div class="mb-4">
+    <h1 class="fw-bold">🔐 Verify Your Documents</h1>
+    <p class="text-muted">Verified documents appear as trust badges on your Charvak passport. Employers trust verified candidates 10x more.</p>
+  </div>
+
+  <div id="emailGate" class="card shadow-sm border-0 p-4">
+    <h5 class="fw-bold mb-3">Enter your email to begin</h5>
+    <div class="row g-2">
+      <div class="col-md-8">
+        <input type="email" id="emailInput" class="form-control" placeholder="you@example.com">
+      </div>
+      <div class="col-md-4">
+        <button onclick="loadDocs()" class="btn btn-primary w-100" style="background:#0d9488;border:none;">Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="docsArea" class="d-none">
+    <div class="card shadow-sm border-0 p-4 mb-3">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0">Your Documents</h5>
+        <small class="text-muted" id="emailDisplay"></small>
+      </div>
+
+      <div id="docsList"></div>
+    </div>
+
+    <div class="alert alert-info">
+      <strong>🔒 Privacy:</strong> Documents are stored securely and only visible to Charvak admins for verification. They are <strong>never</strong> shown to employers or recruiters — only a "Verified" badge appears on your passport.
+    </div>
+  </div>
+</div>
+
+<script>
+let currentEmail = '';
+
+function loadDocs() {
+  const email = document.getElementById('emailInput').value.trim().toLowerCase();
+  if (!email || !email.includes('@')) {
+    alert('Please enter a valid email');
+    return;
+  }
+  currentEmail = email;
+  document.getElementById('emailDisplay').textContent = email;
+  document.getElementById('emailGate').classList.add('d-none');
+  document.getElementById('docsArea').classList.remove('d-none');
+  renderDocsList();
+  fetchDocs(email);
+}
+
+const DOC_TYPES = [
+  { key: 'aadhaar', icon: '🆔', label: 'Aadhaar Card', desc: 'Government ID proof' },
+  { key: 'pan', icon: '💳', label: 'PAN Card', desc: 'Tax identity' },
+  { key: 'degree', icon: '🎓', label: 'Degree Certificate', desc: 'Highest education proof' },
+  { key: 'experience_letter', icon: '📄', label: 'Experience Letter', desc: 'Previous employment proof' },
+];
+
+let currentDocs = {};
+
+function renderDocsList() {
+  const container = document.getElementById('docsList');
+  container.innerHTML = DOC_TYPES.map(doc => {
+    const existing = currentDocs[doc.key];
+    const status = existing ? existing.verification_status : 'not_uploaded';
+    const cardClass = status === 'verified' ? 'verified' : status === 'rejected' ? 'rejected' : status === 'pending' ? 'uploaded' : '';
+    const badge = existing ? `<span class="doc-status ${status}">${status}</span>` : '<span class="doc-status" style="background:#e5e7eb;color:#6b7280;">not uploaded</span>';
+    
+    return `
+      <div class="doc-card ${cardClass}">
+        <div class="d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center flex-grow-1">
+            <span class="doc-icon">${doc.icon}</span>
+            <div>
+              <div class="fw-bold">${doc.label}</div>
+              <small class="text-muted">${doc.desc}</small>
+              ${existing ? `<div class="small text-muted mt-1">Uploaded: ${new Date(existing.uploaded_at).toLocaleDateString()}</div>` : ''}
+            </div>
+          </div>
+          <div class="text-end">
+            ${badge}
+            <div class="mt-2">
+              <input type="file" id="file-${doc.key}" accept=".pdf,.jpg,.jpeg,.png" style="display:none;" onchange="uploadDoc('${doc.key}', this)">
+              <button onclick="document.getElementById('file-${doc.key}').click()" class="btn btn-sm btn-outline-primary">
+                ${existing ? '🔄 Re-upload' : '📤 Upload'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function fetchDocs(email) {
+  try {
+    const res = await fetch('/api/candidate/documents/list?email=' + encodeURIComponent(email));
+    const data = await res.json();
+    if (data.status === 'success' && data.docs) {
+      currentDocs = {};
+      data.docs.forEach(d => { currentDocs[d.document_type] = d; });
+      renderDocsList();
+    }
+  } catch(e) { console.error(e); }
+}
+
+async function uploadDoc(docType, fileInput) {
+  const file = fileInput.files[0];
+  if (!file) return;
+  
+  if (file.size > 5 * 1024 * 1024) {
+    alert('File too large. Max 5 MB.');
+    return;
+  }
+  
+  // Read as base64
+  const reader = new FileReader();
+  reader.onload = async function(e) {
+    const base64 = e.target.result.split(',')[1];
+    
+    const payload = {
+      email: currentEmail,
+      document_type: docType,
+      filename: file.name,
+      content_type: file.type,
+      content_base64: base64,
+      size_bytes: file.size
+    };
+    
+    try {
+      const res = await fetch('/api/candidate/documents/upload', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.status === 'success') {
+        alert('✅ Uploaded! Admin will review within 24 hours.');
+        fetchDocs(currentEmail);
+      } else {
+        alert('Error: ' + (data.message || 'Upload failed'));
+      }
+    } catch(err) {
+      alert('Network error. Please try again.');
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+// Auto-load if ?email= present
+document.addEventListener('DOMContentLoaded', function() {
+  const params = new URLSearchParams(window.location.search);
+  const emailParam = params.get('email');
+  if (emailParam) {
+    document.getElementById('emailInput').value = emailParam;
+    loadDocs();
+  }
+});
+</script>
+{% endblock %}
