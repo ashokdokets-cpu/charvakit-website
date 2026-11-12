@@ -1363,29 +1363,37 @@ async def admin_bench_jobs_page(request: Request):
 
 @app.get("/api/admin/bench-jobs")
 async def api_admin_bench_jobs(request: Request):
-    """Admin-only: ALL jobs + bench submission status."""
+    """Admin-only: ONLY US jobs for bench candidates."""
     require_admin(request)
     try:
-        from jobs_unified_engine import jobs_unified_engine
-        result = jobs_unified_engine.get_unified_jobs(limit=200, show_all=True)
+        from database import db
+        conn = db.get_pooled_connection()
+        cur = conn.cursor()
         
-        # Strict Filter: Only keep US scrapers and client roles
-        us_allowed = ('weworkremotely', 'remoteok', 'remotive', 'hn_hiring', 'arbeitnow', 'staffing')
-        if result.get("jobs"):
-            filtered = []
-            for j in result["jobs"]:
-                source = j.get("source", "")
-                loc = (j.get("location", "") or "").lower()
-                # Keep only if it is a US source, OR if it is staffing but NOT in India
-                if source in us_allowed:
-                    if source == 'staffing' and 'india' in loc:
-                        continue  # Skip Indian staffing roles
-                    filtered.append(j)
-            result["jobs"] = filtered
-        return result
+        # Hardcoded strict filter: ONLY US scrapers and US-based staffing
+        cur.execute("""
+            SELECT job_id, title, company, location, skills, source, created_at 
+            FROM charvak_jobs 
+            WHERE source IN ('weworkremotely', 'remoteok', 'remotive', 'hn_hiring', 'arbeitnow')
+            ORDER BY created_at DESC LIMIT 200
+        """)
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        
+        jobs = []
+        for r in rows:
+            jobs.append({
+                "job_id": r[0], "title": r[1], "company": r[2],
+                "location": r[3], "skills": r[4], "source": r[5],
+                "created_at": r[6].isoformat() if r[6] else None,
+                "bench_status": "Not submitted"
+            })
+            
+        return {"status": "success", "jobs": jobs}
     except Exception as e:
-        return {"status": "error", "message": str(e)[:200]}
-
+        logger.error(f"Bench jobs API error: {e}")
+        return {"status": "error", "message": str(e)}
 @app.get("/admin/bench-submissions", response_class=HTMLResponse)
 async def admin_bench_submissions_page(request: Request):
     """Internal dashboard to review bench submissions and email candidates."""
