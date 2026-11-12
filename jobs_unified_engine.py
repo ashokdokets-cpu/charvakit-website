@@ -134,7 +134,7 @@ class JobsUnifiedEngine:
                     SELECT job_id, title, company, job_type, location, salary,
                            description, skills, posted_date, status, created_at, source
                     FROM charvak_jobs
-                    WHERE (status IS NULL OR LOWER(status) IN ('active', 'open'))
+                    WHERE (status IS NULL OR LOWER(status) IN ('active', 'open')) AND source IN ('charvak', 'manual', 'via_charvak', 'employer', 'naukri', 'ncs', 'client_direct')
                     ORDER BY created_at DESC NULLS LAST
                     LIMIT 200
                 """)
