@@ -4288,15 +4288,18 @@ async def passport_page(request: Request, handle: str):
 
         import passport_engine as pe
         result = pe.get_passport_by_handle(handle, viewer_email=caller_email)
-        if result.get("status") != "success":
+        
+        if result.get("status") != "success" or not result.get("passport"):
             return template_response(
                 "passport.html", request,
                 "Passport Not Found - Charvak",
                 passport=None, handle=handle, error=result.get("message", "Not found"),
             )
+        
         passport = result["passport"]
-        display = passport.get("display_name") or passport["email"].split("@")[0]
+        display = passport.get("display_name") or passport.get("email", "").split("@")[0] if passport.get("email") else "Passport"
         title = f"{display} - Charvak Passport (Score {passport.get('charvak_score', 0)}/1000)"
+        
         return template_response(
             "passport.html", request, title,
             passport=passport, handle=handle, error=None,
@@ -4304,13 +4307,17 @@ async def passport_page(request: Request, handle: str):
     except HTTPException:
         raise
     except Exception as e:
-        return handle_error(e, "passport page")
-
-
-# ============================================================
-# Session 46-B: Skill Twin Challenges (viral loop)
-# ============================================================
-
+        logger.error(f"Passport page error: {e}")
+        # Never return a dict from an HTML route — always render something
+        try:
+            return template_response(
+                "passport.html", request,
+                "Passport - Charvak",
+                passport=None, handle=handle, error="Could not load passport. Please try again.",
+            )
+        except Exception:
+            # Final fallback: plain HTML response
+            return HTMLResponse(content="<h1>Passport temporarily unavailable</h1><p>Please try again.</p>", status_code=200)
 @app.post("/api/skill-twin/create")
 @limiter.limit("10/minute")
 async def api_skill_twin_create(request: Request):
