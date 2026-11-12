@@ -86,3 +86,19 @@ Signup ? Admin approval ? Magic link email ? Passwordless login ? Dashboard load
 - **Data Engineer Role:** Posted to charvak_client_roles and live on /open-roles.
 
 ### Next: Session 114 (Automated India Radar Cron)
+
+---
+
+## Session 113B Complete (2026-11-13)
+
+### Bench Jobs Page Fully Fixed
+- **Backend:** Strict SQL query for US sources (weworkremotely, remoteok, remotive, hn_hiring)
+- **Frontend:** Fixed 3 bugs: data.items ? data.jobs, posted_at ? created_at, skills string vs array
+- **Result:** /admin/bench-jobs shows 80+ real US/Canada jobs for H1B/OPT/EAD bench placement.
+- **Commits:** e508a91, 880c00f, f881b86, 90d3f2c, e592b9b
+
+### Verified Architecture
+- /job-board: India jobs only (naukri + charvak)
+- /open-roles: Direct client roles
+- /verified-jobs: Paywalled Naukri jobs
+- /admin/bench-jobs: US/Canada only
