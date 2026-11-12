@@ -1363,20 +1363,23 @@ async def admin_bench_jobs_page(request: Request):
 
 @app.get("/api/admin/bench-jobs")
 async def api_admin_bench_jobs(request: Request):
-    """Admin-only: ONLY US jobs for bench candidates."""
+    """Admin-only: ONLY US/Canada jobs for bench candidates."""
     require_admin(request)
     try:
         from database import db
         conn = db.get_pooled_connection()
         cur = conn.cursor()
         
-        # Hardcoded strict filter: ONLY US scrapers and US-based staffing
+        # Strict US sources
+        us_sources = ('weworkremotely', 'remoteok', 'remotive', 'hn_hiring', 'arbeitnow')
+        
         cur.execute("""
             SELECT job_id, title, company, location, skills, source, created_at 
             FROM charvak_jobs 
-            WHERE source IN ('weworkremotely', 'remoteok', 'remotive', 'hn_hiring', 'arbeitnow')
+            WHERE source = ANY(%s)
             ORDER BY created_at DESC LIMIT 200
-        """)
+        """, (list(us_sources),))
+        
         rows = cur.fetchall()
         cur.close()
         conn.close()
@@ -1385,8 +1388,8 @@ async def api_admin_bench_jobs(request: Request):
         for r in rows:
             jobs.append({
                 "job_id": r[0], "title": r[1], "company": r[2],
-                "location": r[3], "skills": r[4], "source": r[5],
-                "created_at": r[6].isoformat() if r[6] else None,
+                "location": r[3] or "Remote (US/Global)", "skills": r[4],
+                "source": r[5], "created_at": r[6].isoformat() if r[6] else None,
                 "bench_status": "Not submitted"
             })
             
