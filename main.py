@@ -1246,7 +1246,7 @@ async def job_board_detail_page(request: Request, job_id: str):
     try:
         cur = conn.cursor()
         cur.execute("""
-            SELECT job_id, title, company, location, description, skills, salary, source, raw_json
+            SELECT job_id, title, company, location, description, skills, salary, source, raw_json, job_type
             FROM charvak_jobs WHERE job_id = %s LIMIT 1
         """, (job_id,))
         row = cur.fetchone()
@@ -1269,7 +1269,7 @@ async def job_board_detail_page(request: Request, job_id: str):
         job = {
             "job_id": row[0], "title": row[1], "company": row[2], "location": row[3],
             "description": row[4] or "", "skills": row[5] or "", "salary": row[6],
-            "source": row[7], "raw_json": safe_raw_json
+            "source": row[7], "raw_json": safe_raw_json, "job_type": row[9] or "permanent"
         }
         
         # Ensure skills are a clean list for the template
