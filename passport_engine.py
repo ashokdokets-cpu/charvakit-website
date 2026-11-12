@@ -573,6 +573,20 @@ def get_passport_by_handle(handle: str, include_score: bool = True, viewer_email
         except Exception as e:
             logger.warning(f"score compute failed: {e}")
 
+    # --- Session 113A: Fetch Verified Documents ---
+    try:
+        cur.execute("""
+            SELECT document_type, verified_at 
+            FROM charvak_candidate_documents 
+            WHERE email = %s AND verification_status = 'verified'
+        """, (passport["email"],))
+        verified_docs = [{"document_type": r[0], "verified_at": r[1].isoformat() if r[1] else None} for r in cur.fetchall()]
+        passport["verified_documents"] = verified_docs
+    except Exception as e:
+        logger.warning(f"Could not fetch verified docs for passport: {e}")
+        passport["verified_documents"] = []
+    # -----------------------------------------------
+
     return {"status": "success", "passport": passport}
 
 
@@ -806,4 +820,3 @@ def get_visibility(email: str) -> Dict:
                 conn.close()
             except Exception:
                 pass
-
