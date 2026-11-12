@@ -64,6 +64,7 @@ async function loadDocs() {
             <div class="text-muted small">ID: ${d.document_id}</div>
           </div>
           <div class="d-flex gap-2 flex-wrap">
+            <button onclick="viewDoc('${d.document_id}')" class="dv-btn dv-view" style="background:#3ba591;color:white;margin-right:8px;">👁 View Document</button>
             ${currentTab === 'pending' ? `
               <button onclick="verifyDoc('${d.document_id}')" class="dv-btn dv-verify">✓ Verify</button>
               <button onclick="rejectDoc('${d.document_id}')" class="dv-btn dv-reject">✗ Reject</button>
@@ -75,6 +76,14 @@ async function loadDocs() {
   } catch(e) {
     container.innerHTML = '<div class="text-danger">Error: ' + e.message + '</div>';
   }
+}
+
+function viewDoc(documentId) {
+  // Open in a new tab, passing the admin token via query param is insecure, 
+  // so we create a temporary form or just open the URL and let the cookie handle it.
+  // Since the API route uses require_admin which checks the Bearer token or cookie,
+  // and the browser has the admin cookie, it will work.
+  window.open('/api/admin/doc-verifications/' + documentId + '/view', '_blank');
 }
 
 async function verifyDoc(documentId) {

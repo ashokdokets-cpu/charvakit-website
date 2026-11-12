@@ -22185,3 +22185,32 @@ async def admin_doc_verifications_page(request: Request):
     except HTTPException:
         return RedirectResponse(url="/admin-login?next=/admin/doc-verifications", status_code=302)
     return template_response("admin-doc-verifications.html", request, "Document Verifications - Charvak")
+
+@app.get("/api/admin/doc-verifications/{document_id}/view")
+async def api_admin_view_doc(request: Request, document_id: str):
+    """Admin: view the uploaded document file."""
+    require_admin(request)
+    from database import db
+    from fastapi.responses import Response
+    import base64
+    
+    conn = db.get_pooled_connection()
+    cur = None
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT content_base64, content_type, filename FROM charvak_candidate_documents WHERE document_id = %s", (document_id,))
+        row = cur.fetchone()
+        if not row or not row[0]:
+            return JSONResponse({"status": "error", "message": "Document file not found"}, status_code=404)
+            
+        content_b64, content_type, filename = row
+        file_bytes = base64.b64decode(content_b64)
+        
+        # Force inline display for PDFs/images
+        headers = {
+            "Content-Disposition": f'inline; filename="{filename}"'
+        }
+        return Response(content=file_bytes, media_type=content_type or "application/octet-stream", headers=headers)
+    finally:
+        if cur: cur.close()
+        db.release_pooled_connection(conn)
