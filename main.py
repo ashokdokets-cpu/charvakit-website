@@ -1363,7 +1363,7 @@ async def admin_bench_jobs_page(request: Request):
 
 @app.get("/api/admin/bench-jobs")
 async def api_admin_bench_jobs(request: Request):
-    """Admin-only: ONLY US/Canada jobs for bench candidates."""
+    """Admin-only: ONLY US/Canada jobs for bench candidates (Filtered for H1B/OPT/EAD)."""
     require_admin(request)
     try:
         from database import db
@@ -1374,7 +1374,7 @@ async def api_admin_bench_jobs(request: Request):
         us_sources = ('weworkremotely', 'remoteok', 'remotive', 'hn_hiring', 'arbeitnow')
         
         cur.execute("""
-            SELECT job_id, title, company, location, skills, source, created_at 
+            SELECT job_id, title, company, location, skills, source, created_at, description 
             FROM charvak_jobs 
             WHERE source = ANY(%s)
             ORDER BY created_at DESC LIMIT 200
@@ -1384,14 +1384,32 @@ async def api_admin_bench_jobs(request: Request):
         cur.close()
         conn.close()
         
+        # --- STRICT FILTERING FOR BENCH ---
+        # 1. Must be US/Canada/Remote
+        # 2. MUST mention Contract, C2C, W2, H1B, OPT, EAD, Visa, or 1099
+        visa_keywords = ('contract', 'c2c', 'w2', 'h1b', 'opt', 'ead', 'visa', '1099', 'corp to corp', 'sponsorship')
+        location_keywords = ('us', 'usa', 'united states', 'canada', 'north america', 'remote')
+        
         jobs = []
         for r in rows:
-            jobs.append({
-                "job_id": r[0], "title": r[1], "company": r[2],
-                "location": r[3] or "Remote (US/Global)", "skills": r[4],
-                "source": r[5], "created_at": r[6].isoformat() if r[6] else None,
-                "bench_status": "Not submitted"
-            })
+            loc = (r[3] or "").lower()
+            title = (r[1] or "").lower()
+            desc = (r[7] or "").lower()
+            combined_text = f"{title} {desc}"
+            
+            # Location check: Keep if US/Canada/Remote/Blank
+            is_valid_location = any(kw in loc for kw in location_keywords) or not loc or loc == 'none'
+            
+            # Visa/Contract check: Only keep if it mentions contract/visa terms
+            is_visa_friendly = any(kw in combined_text for kw in visa_keywords)
+            
+            if is_valid_location and is_visa_friendly:
+                jobs.append({
+                    "job_id": r[0], "title": r[1], "company": r[2],
+                    "location": r[3] or "Remote (US/Global)", "skills": r[4],
+                    "source": r[5], "created_at": r[6].isoformat() if r[6] else None,
+                    "bench_status": "Not submitted"
+                })
             
         return {"status": "success", "jobs": jobs}
     except Exception as e:
