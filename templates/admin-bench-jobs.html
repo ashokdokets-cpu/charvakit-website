@@ -94,7 +94,7 @@ async function loadBenchJobs() {
       return;
     }
 
-    let items = data.items || [];
+    let items = data.jobs || data.items || [];
     if (q) items = items.filter(i => (i.title || '').toLowerCase().includes(q.toLowerCase()) || (i.company || '').toLowerCase().includes(q.toLowerCase()));
     if (source) items = items.filter(i => (i.db_source || i.source || '').toLowerCase().includes(source));
     if (location) items = items.filter(i => (i.location || '').toLowerCase().includes(location));
@@ -109,13 +109,13 @@ async function loadBenchJobs() {
         <td style="font-weight: 600;">${j.title || 'Untitled'}</td>
         <td>${j.company || '—'}</td>
         <td style="font-size: 0.85rem;">${j.location || '—'}</td>
-        <td><span class="badge bg-secondary">${j.db_source || j.source || '—'}</span></td>
+        <td><span class="badge bg-secondary">${j.source || '—'}</span></td>
         <td style="font-size: 0.8rem;">${(j.skills || []).slice(0, 3).join(', ')}${(j.skills || []).length > 3 ? ' +' + (j.skills.length - 3) : ''}</td>
         <td style="font-size: 0.85rem;">${(j.posted_at || '').split('T')[0] || '—'}</td>
         <td>${j.bench_status ? `<span class="badge bg-${j.bench_status === 'pending_review' ? 'warning' : 'success'}">${j.bench_status}</span>` : '<span class="text-muted" style="font-size:0.8rem;">Not submitted</span>'}</td>
         <td>
-          <a href="/job-board/${j.id}" target="_blank" class="btn btn-xs btn-outline-primary" style="font-size: 0.75rem; padding: 2px 8px;">View</a>
-          <button onclick="submitToBench('${j.id}', '${(j.title || '').replace(/'/g, "\\'")}')" class="btn btn-xs btn-success" style="font-size: 0.75rem; padding: 2px 8px; margin-left: 4px;">Submit</button>
+          <a href="/job-board/${j.job_id || j.id}" target="_blank" class="btn btn-xs btn-outline-primary" style="font-size: 0.75rem; padding: 2px 8px;">View</a>
+          <button onclick="submitToBench('${j.job_id || j.id}', '${(j.title || '').replace(/'/g, "\\'")}')" class="btn btn-xs btn-success" style="font-size: 0.75rem; padding: 2px 8px; margin-left: 4px;">Submit</button>
         </td>
       </tr>
     `).join('');
