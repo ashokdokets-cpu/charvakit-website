@@ -2278,3 +2278,12 @@ Replaced with 3 value claims. Fixed nested a tag.
 
 ---
 
+
+---
+
+### RESOLVED - Passport Page 500 Error (2026-11-13)
+The /passport/{handle} route was returning a 500 error due to a Jinja template syntax error (missing endblock) and a broken except block that returned a dict for an HTML route.
+**Fix:** Restored template structure, added safe fallback redirects, and injected verified docs via JS fetch.
+
+### FLAGGED - Session 112 & 113 Complete
+All features deployed and verified. See COMMITMENT.md for details.

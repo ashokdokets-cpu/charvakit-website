@@ -61,3 +61,28 @@ Signup ? Admin approval ? Magic link email ? Passwordless login ? Dashboard load
 - Magic link token rotation on 500 error
 
 ### Next session: Session 113 — DigiLocker document verification
+
+---
+
+## Session 113 Complete (2026-11-13)
+
+### B2B Employer Engine (Session 112) - COMPLETE
+- **Pricing:** Created /pricing-b2b (?49,999 colleges / 8% pay-on-hire employers).
+- **Signup:** Dual-mode form at /employer/signup (handles both Employers and Institutions).
+- **Admin:** Approval queue at /admin/employer-accounts with email notifications.
+- **Login:** Magic link system (passwordless) at /employer/login.
+- **Dashboard:** Employer portal at /employer/dashboard with session cookies.
+- **Verified:** End-to-end test passed with "Eswar Test 2".
+
+### Document Verification (Session 113A) - COMPLETE
+- **Candidate Upload:** /profile/verifications (Aadhaar, PAN, Degree, Experience).
+- **Admin Review:** /admin/doc-verifications (view, verify, reject).
+- **Passport Badge:** Verified documents show up as green badges on /passport/{handle}.
+- **Security:** Private document storage, admin-only viewing.
+
+### Job Board Cleanup & Client Roles - COMPLETE
+- **DB Cleanup:** Deleted 100+ scraped German/EU jobs and fake test gigs.
+- **Public Filter:** /job-board restricted to India/Charvak sources only.
+- **Data Engineer Role:** Posted to charvak_client_roles and live on /open-roles.
+
+### Next: Session 114 (Automated India Radar Cron)
