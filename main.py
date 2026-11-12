@@ -1369,6 +1369,14 @@ async def api_admin_bench_jobs(request: Request):
         from jobs_unified_engine import jobs_unified_engine
         result = jobs_unified_engine.get_unified_jobs(limit=200, show_all=True)
         
+        # Strict Filter: Bench Jobs should ONLY show US/Global scraped jobs, never Naukri/India
+        us_sources = ('weworkremotely', 'remoteok', 'remotive', 'hn_hiring', 'arbeitnow')
+        if result.get("jobs"):
+            result["jobs"] = [
+                j for j in result["jobs"] 
+                if j.get("source") in us_sources
+            ]
+        
         # Enrich with bench submission status
         from database import db
         conn = db.get_pooled_connection()
