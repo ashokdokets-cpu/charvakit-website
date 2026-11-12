@@ -627,3 +627,61 @@ async function ppCreatePassport(ev) {
 }
 </script>
 {% endblock %}
+
+<script>
+// Session 113A: Verified Documents (Observer Version)
+(function() {
+    const handleMatch = window.location.pathname.match(/^\/passport\/([^\/]+)/);
+    if (!handleMatch) return;
+    const handle = handleMatch[1];
+
+    fetch('/api/passport/' + handle)
+        .then(r => r.json())
+        .then(data => {
+            const email = data.passport ? data.passport.email : null;
+            if (!email) return;
+            return fetch('/api/candidate/documents/list?email=' + encodeURIComponent(email));
+        })
+        .then(r => r ? r.json() : null)
+        .then(docData => {
+            if (!docData || docData.status !== 'success' || !docData.docs) return;
+            const verifiedDocs = docData.docs.filter(d => d.verification_status === 'verified');
+            if (verifiedDocs.length === 0) return;
+
+            const icons = { aadhaar: '🆔', pan: '💳', degree: '🎓', experience_letter: '📄' };
+            const labels = { aadhaar: 'Aadhaar', pan: 'PAN', degree: 'Degree', experience_letter: 'Experience' };
+            
+            const badges = verifiedDocs.map(d => `
+                <span class="badge bg-light text-success border border-success ms-1 mb-1" style="font-size: 0.85rem;">
+                    ✅ ${icons[d.document_type] || '📄'} ${labels[d.document_type] || d.document_type} Verified
+                </span>
+            `).join('');
+
+            // Use a MutationObserver to wait for the main passport container to render
+            const observer = new MutationObserver((mutations, obs) => {
+                const container = document.querySelector('.container');
+                if (container) {
+                    // Check if we already injected
+                    if (document.getElementById('injected-verify-badge')) return;
+                    
+                    const badgeContainer = document.createElement('div');
+                    badgeContainer.id = 'injected-verify-badge';
+                    badgeContainer.className = 'alert alert-success mt-4';
+                    badgeContainer.innerHTML = `<strong>✅ Verified Documents</strong><br>${badges}`;
+                    
+                    // Insert at the very top of the main container
+                    container.insertBefore(badgeContainer, container.firstChild);
+                    console.log('✅ Verified badge injected at the top of the container!');
+                    obs.disconnect();
+                }
+            });
+            
+            // Start observing the body
+            observer.observe(document.body, { childList: true, subtree: true });
+            
+            // Stop observing after 5 seconds
+            setTimeout(() => observer.disconnect(), 5000);
+        })
+        .catch(e => console.warn('Passport docs fetch failed', e));
+})();
+</script>
