@@ -110,7 +110,7 @@ async function loadBenchJobs() {
         <td>${j.company || '—'}</td>
         <td style="font-size: 0.85rem;">${j.location || '—'}</td>
         <td><span class="badge bg-secondary">${j.source || '—'}</span></td>
-        <td style="font-size: 0.8rem;">${(j.skills || []).slice(0, 3).join(', ')}${(j.skills || []).length > 3 ? ' +' + (j.skills.length - 3) : ''}</td>
+        <td style="font-size: 0.8rem;">${(Array.isArray(j.skills) ? j.skills : (j.skills || '').split(',')).slice(0,3).join(', ')}</td>
         <td style="font-size: 0.85rem;">${(j.posted_at || '').split('T')[0] || '—'}</td>
         <td>${j.bench_status ? `<span class="badge bg-${j.bench_status === 'pending_review' ? 'warning' : 'success'}">${j.bench_status}</span>` : '<span class="text-muted" style="font-size:0.8rem;">Not submitted</span>'}</td>
         <td>
