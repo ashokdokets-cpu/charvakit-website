@@ -629,9 +629,9 @@ async function ppCreatePassport(ev) {
 {% endblock %}
 <script>
 
-{% block scripts %}
+{% endblock %}
 <script>
-// Session 113A: Verified Documents
+// Session 113A: Verified Documents (Global Injection)
 document.addEventListener('DOMContentLoaded', function() {
     const handleMatch = window.location.pathname.match(/^\/passport\/([^\/]+)/);
     if (!handleMatch) return;
@@ -672,13 +672,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `;
 
-            // Since this fires on DOMContentLoaded, the card should already exist
-            const firstCard = document.querySelector('.card');
-            if (firstCard) {
-                firstCard.insertAdjacentHTML('afterend', cardHTML);
-            }
+            // Wait 1 second for the page's own JS to render the main card
+            setTimeout(() => {
+                const firstCard = document.querySelector('.card');
+                if (firstCard && !document.getElementById('verifiedDocsCard')) {
+                    firstCard.insertAdjacentHTML('afterend', cardHTML);
+                    console.log('✅ Verified Documents card injected!');
+                }
+            }, 1000);
         })
         .catch(e => console.warn('Passport docs fetch failed', e));
 });
 </script>
-{% endblock %}
