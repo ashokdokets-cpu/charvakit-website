@@ -11,7 +11,6 @@
 <meta property="og:url" content="https://www.charvakit.com/passport/{{ passport.handle }}">
 <meta property="og:image" content="https://www.charvakit.com/passport/{{ passport.handle }}/badge.svg">
 {% endif %}
-{% endblock %}
 
 {% block content %}
 
@@ -628,8 +627,6 @@ async function ppCreatePassport(ev) {
 </script>
 {% endblock %}
 <script>
-
-<script>
 // Session 113A: Verified Documents
 document.addEventListener('DOMContentLoaded', function() {
     const handleMatch = window.location.pathname.match(/^\/passport\/([^\/]+)/);
@@ -677,9 +674,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     firstCard.insertAdjacentHTML('afterend', cardHTML);
                 }
             }, 1000);
-        });
+        })
+        .catch(e => console.warn('Passport docs fetch failed', e));
 });
-</script>
-{% endblock %}
-<script>
 </script>
