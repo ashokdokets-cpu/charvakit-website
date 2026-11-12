@@ -1369,28 +1369,19 @@ async def api_admin_bench_jobs(request: Request):
         from jobs_unified_engine import jobs_unified_engine
         result = jobs_unified_engine.get_unified_jobs(limit=200, show_all=True)
         
-        # Strict Filter: Bench Jobs should ONLY show US/Global scraped jobs, never Naukri/India
-        us_sources = ('weworkremotely', 'remoteok', 'remotive', 'hn_hiring', 'arbeitnow')
+        # Strict Filter: Only keep US scrapers and client roles
+        us_allowed = ('weworkremotely', 'remoteok', 'remotive', 'hn_hiring', 'arbeitnow', 'staffing')
         if result.get("jobs"):
-            result["jobs"] = [
-                j for j in result["jobs"] 
-                if j.get("source") in us_sources
-            ]
-        
-        # Enrich with bench submission status
-        from database import db
-        conn = db.get_pooled_connection()
-        try:
-            cur = conn.cursor()
-            cur.execute("SELECT job_id, status FROM charvak_bench_submissions")
-            status_map = {r[0]: r[1] for r in cur.fetchall()}
-        finally:
-            cur.close()
-            db.release_pooled_connection(conn)
-        
-        for item in result.get("items", []):
-            item["bench_status"] = status_map.get(item["id"], None)
-        
+            filtered = []
+            for j in result["jobs"]:
+                source = j.get("source", "")
+                loc = (j.get("location", "") or "").lower()
+                # Keep only if it is a US source, OR if it is staffing but NOT in India
+                if source in us_allowed:
+                    if source == 'staffing' and 'india' in loc:
+                        continue  # Skip Indian staffing roles
+                    filtered.append(j)
+            result["jobs"] = filtered
         return result
     except Exception as e:
         return {"status": "error", "message": str(e)[:200]}
