@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Document Verifications - Charvak{% endblock %}
+{% block content %}
+<style>
+  .dv-tabs { display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 2px solid #e5e7eb; }
+  .dv-tab { padding: 10px 20px; cursor: pointer; border-bottom: 3px solid transparent; font-weight: 600; color: #6b7280; }
+  .dv-tab.active { border-bottom-color: #0d9488; color: #0d9488; }
+  .dv-card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  .dv-btn { padding: 6px 14px; border-radius: 6px; font-weight: 600; cursor: pointer; border: none; font-size: 0.85rem; }
+  .dv-verify { background: #10b981; color: white; }
+  .dv-reject { background: #ef4444; color: white; }
+  .dv-view { background: #3ba591; color: white; }
+</style>
+
+<div class="container py-5">
+  <h1 class="fw-bold mb-2">📄 Document Verifications</h1>
+  <p class="text-muted mb-4">Review candidate uploads and mark them verified or rejected.</p>
+
+  <div class="dv-tabs">
+    <div class="dv-tab active" data-status="pending" onclick="loadTab('pending')">Pending</div>
+    <div class="dv-tab" data-status="verified" onclick="loadTab('verified')">Verified</div>
+    <div class="dv-tab" data-status="rejected" onclick="loadTab('rejected')">Rejected</div>
+  </div>
+
+  <div id="docsList">
+    <div class="text-center text-muted py-5">Loading...</div>
+  </div>
+</div>
+
+<script>
+let currentTab = 'pending';
+
+function loadTab(status) {
+  currentTab = status;
+  document.querySelectorAll('.dv-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.status === status);
+  });
+  loadDocs();
+}
+
+async function loadDocs() {
+  const container = document.getElementById('docsList');
+  container.innerHTML = '<div class="text-center py-5 text-muted">Loading...</div>';
+  try {
+    const token = localStorage.getItem('authToken') || '';
+    const res = await fetch('/api/admin/doc-verifications/list?status=' + currentTab, {
+      headers: {'Authorization': 'Bearer ' + token}
+    });
+    const data = await res.json();
+    if (data.status !== 'success') throw new Error(data.message);
+    
+    if (!data.docs || data.docs.length === 0) {
+      container.innerHTML = '<div class="text-center py-5 text-muted">No documents in this category.</div>';
+      return;
+    }
+    
+    container.innerHTML = data.docs.map(d => `
+      <div class="dv-card">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <h5 class="mb-1">${d.document_type.toUpperCase()} — ${d.email}</h5>
+            <div class="text-muted small">File: ${d.filename} (${Math.round(d.size_bytes/1024)} KB)</div>
+            <div class="text-muted small">Uploaded: ${new Date(d.uploaded_at).toLocaleString()}</div>
+            <div class="text-muted small">ID: ${d.document_id}</div>
+          </div>
+          <div class="d-flex gap-2 flex-wrap">
+            ${currentTab === 'pending' ? `
+              <button onclick="verifyDoc('${d.document_id}')" class="dv-btn dv-verify">✓ Verify</button>
+              <button onclick="rejectDoc('${d.document_id}')" class="dv-btn dv-reject">✗ Reject</button>
+            ` : ''}
+          </div>
+        </div>
+      </div>
+    `).join('');
+  } catch(e) {
+    container.innerHTML = '<div class="text-danger">Error: ' + e.message + '</div>';
+  }
+}
+
+async function verifyDoc(documentId) {
+  if (!confirm('Mark this document as VERIFIED?')) return;
+  const token = localStorage.getItem('authToken') || '';
+  const res = await fetch('/api/admin/doc-verifications/' + documentId + '/verify', {
+    method: 'POST',
+    headers: {'Authorization': 'Bearer ' + token}
+  });
+  const data = await res.json();
+  if (data.status === 'success') {
+    alert('✅ Verified');
+    loadDocs();
+  } else {
+    alert('Error: ' + data.message);
+  }
+}
+
+async function rejectDoc(documentId) {
+  const reason = prompt('Rejection reason:');
+  if (!reason) return;
+  const token = localStorage.getItem('authToken') || '';
+  const res = await fetch('/api/admin/doc-verifications/' + documentId + '/reject', {
+    method: 'POST',
+    headers: {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'},
+    body: JSON.stringify({reason: reason})
+  });
+  const data = await res.json();
+  if (data.status === 'success') {
+    alert('❌ Rejected');
+    loadDocs();
+  } else {
+    alert('Error: ' + data.message);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', loadDocs);
+</script>
+{% endblock %}

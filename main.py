@@ -21979,3 +21979,209 @@ async def employer_logout(request: Request):
     response = JSONResponse(content={"status": "success"})
     response.delete_cookie("charvak_employer_token")
     return response
+# ============================================================
+# CANDIDATE DOCUMENT VERIFICATION (Session 113A)
+# ============================================================
+
+@app.get("/profile/verifications", response_class=HTMLResponse)
+async def candidate_verifications_page(request: Request):
+    """Public page where candidates upload documents for verification."""
+    return template_response("candidate-verifications.html", request, "Verify Your Documents - Charvak")
+
+@app.get("/api/candidate/documents/list")
+async def api_list_candidate_docs(email: str = ""):
+    """List all documents uploaded by a candidate."""
+    from database import db
+    if not email:
+        return {"status": "error", "message": "Email required"}
+    conn = db.get_pooled_connection()
+    if not conn:
+        return {"status": "error", "message": "DB unavailable"}
+    cur = None
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT document_id, document_type, filename, verification_status, 
+                   uploaded_at, verified_at, rejection_reason
+            FROM charvak_candidate_documents
+            WHERE email = %s
+            ORDER BY uploaded_at DESC
+        """, (email.lower(),))
+        rows = cur.fetchall()
+        docs = []
+        for r in rows:
+            docs.append({
+                "document_id": r[0],
+                "document_type": r[1],
+                "filename": r[2],
+                "verification_status": r[3] or "pending",
+                "uploaded_at": r[4].isoformat() if r[4] else None,
+                "verified_at": r[5].isoformat() if r[5] else None,
+                "rejection_reason": r[6]
+            })
+        return {"status": "success", "docs": docs}
+    finally:
+        if cur: cur.close()
+        db.release_pooled_connection(conn)
+
+class DocUploadData(BaseModel):
+    email: str
+    document_type: str
+    filename: str
+    content_type: Optional[str] = "application/octet-stream"
+    content_base64: str
+    size_bytes: Optional[int] = 0
+
+@app.post("/api/candidate/documents/upload")
+async def api_upload_candidate_doc(data: DocUploadData):
+    """Candidate uploads a document for verification."""
+    from database import db
+    import secrets
+    import base64 as _b64
+    
+    # Validate
+    if data.document_type not in ('aadhaar', 'pan', 'degree', 'experience_letter'):
+        return {"status": "error", "message": "Invalid document type"}
+    if data.size_bytes and data.size_bytes > 5 * 1024 * 1024:
+        return {"status": "error", "message": "File too large (max 5MB)"}
+    
+    conn = db.get_pooled_connection()
+    if not conn:
+        return {"status": "error", "message": "DB unavailable"}
+    cur = None
+    try:
+        cur = conn.cursor()
+        doc_id = "DOC-" + secrets.token_hex(6).upper()
+        
+        # Delete any prior upload of same type (allow re-upload)
+        cur.execute("""
+            DELETE FROM charvak_candidate_documents 
+            WHERE email = %s AND document_type = %s
+        """, (data.email.lower(), data.document_type))
+        
+        cur.execute("""
+            INSERT INTO charvak_candidate_documents
+            (document_id, candidate_id, email, document_type, filename, 
+             content_type, size_bytes, content_base64, uploaded_at, verification_status)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW(), 'pending')
+        """, (
+            doc_id, "CANDIDATE-" + data.email.lower(), data.email.lower(),
+            data.document_type, data.filename, data.content_type or "application/octet-stream",
+            data.size_bytes or 0, data.content_base64
+        ))
+        conn.commit()
+        
+        # Notify admin
+        try:
+            from email_engine import email_engine as _ee
+            html = f"""
+            <h3>📄 New Document Upload</h3>
+            <p><strong>{data.email}</strong> uploaded a <strong>{data.document_type}</strong> for verification.</p>
+            <p><a href="https://www.charvakit.com/admin/doc-verifications">Review in Admin</a></p>
+            """
+            _ee.send_email("hr@charvakit.com", f"New {data.document_type} to verify", html)
+        except Exception as e:
+            logger.warning(f"Admin doc notification failed: {e}")
+        
+        return {"status": "success", "document_id": doc_id}
+    except Exception as e:
+        logger.error(f"Doc upload error: {e}")
+        conn.rollback()
+        return {"status": "error", "message": str(e)[:200]}
+    finally:
+        if cur: cur.close()
+        db.release_pooled_connection(conn)
+
+@app.get("/api/admin/doc-verifications/list")
+async def api_admin_doc_list(request: Request, status: str = "pending"):
+    """Admin: list documents awaiting verification."""
+    require_admin(request)
+    from database import db
+    conn = db.get_pooled_connection()
+    if not conn:
+        return {"status": "error", "message": "DB unavailable"}
+    cur = None
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT document_id, email, document_type, filename, 
+                   verification_status, uploaded_at, size_bytes
+            FROM charvak_candidate_documents
+            WHERE verification_status = %s
+            ORDER BY uploaded_at ASC
+        """, (status,))
+        rows = cur.fetchall()
+        docs = [
+            {"document_id": r[0], "email": r[1], "document_type": r[2],
+             "filename": r[3], "verification_status": r[4],
+             "uploaded_at": r[5].isoformat() if r[5] else None,
+             "size_bytes": r[6] or 0}
+            for r in rows
+        ]
+        return {"status": "success", "docs": docs}
+    finally:
+        if cur: cur.close()
+        db.release_pooled_connection(conn)
+
+@app.post("/api/admin/doc-verifications/{document_id}/verify")
+async def api_admin_verify_doc(request: Request, document_id: str):
+    """Admin: mark a document as verified."""
+    require_admin(request)
+    from database import db
+    conn = db.get_pooled_connection()
+    cur = None
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            UPDATE charvak_candidate_documents
+            SET verification_status = 'verified',
+                verified_by = 'hr@charvakit.com',
+                verified_at = NOW()
+            WHERE document_id = %s
+            RETURNING email
+        """, (document_id,))
+        row = cur.fetchone()
+        conn.commit()
+        if not row:
+            return {"status": "error", "message": "Document not found"}
+        return {"status": "success", "email": row[0]}
+    finally:
+        if cur: cur.close()
+        db.release_pooled_connection(conn)
+
+@app.post("/api/admin/doc-verifications/{document_id}/reject")
+async def api_admin_reject_doc(request: Request, document_id: str):
+    """Admin: reject a document with reason."""
+    require_admin(request)
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    reason = (body.get("reason") or "Document unclear or invalid")[:500]
+    from database import db
+    conn = db.get_pooled_connection()
+    cur = None
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            UPDATE charvak_candidate_documents
+            SET verification_status = 'rejected',
+                verified_by = 'hr@charvakit.com',
+                verified_at = NOW(),
+                rejection_reason = %s
+            WHERE document_id = %s
+        """, (reason, document_id))
+        conn.commit()
+        return {"status": "success"}
+    finally:
+        if cur: cur.close()
+        db.release_pooled_connection(conn)
+
+@app.get("/admin/doc-verifications", response_class=HTMLResponse)
+async def admin_doc_verifications_page(request: Request):
+    """Admin review queue for candidate documents."""
+    try:
+        require_admin(request)
+    except HTTPException:
+        return RedirectResponse(url="/admin-login?next=/admin/doc-verifications", status_code=302)
+    return template_response("admin-doc-verifications.html", request, "Document Verifications - Charvak")
