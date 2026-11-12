@@ -627,3 +627,58 @@ async function ppCreatePassport(ev) {
 }
 </script>
 {% endblock %}
+<script>
+
+{% block scripts %}
+<script>
+// Session 113A: Verified Documents
+document.addEventListener('DOMContentLoaded', function() {
+    const handleMatch = window.location.pathname.match(/^\/passport\/([^\/]+)/);
+    if (!handleMatch) return;
+    const handle = handleMatch[1];
+
+    fetch('/api/passport/' + handle)
+        .then(r => r.json())
+        .then(data => {
+            const email = data.passport ? data.passport.email : null;
+            if (!email) return;
+            return fetch('/api/candidate/documents/list?email=' + encodeURIComponent(email));
+        })
+        .then(r => r ? r.json() : null)
+        .then(docData => {
+            if (!docData || docData.status !== 'success' || !docData.docs) return;
+            const verifiedDocs = docData.docs.filter(d => d.verification_status === 'verified');
+            if (verifiedDocs.length === 0) return;
+
+            const icons = { aadhaar: '🆔', pan: '💳', degree: '🎓', experience_letter: '📄' };
+            const labels = { aadhaar: 'Aadhaar Verified', pan: 'PAN Verified', degree: 'Degree Verified', experience_letter: 'Experience Verified' };
+            
+            const badgeHTML = verifiedDocs.map(d => `
+                <span class="badge bg-success fs-6 p-2 m-1" style="font-size: 0.9rem !important;">
+                    ${icons[d.document_type] || '📄'} ${labels[d.document_type] || d.document_type}
+                </span>
+            `).join('');
+            
+            const cardHTML = `
+                <div id="verifiedDocsCard" class="card shadow-sm border-0 mt-4" style="border-left: 4px solid #10b981;">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="fw-bold mb-0 text-success">✅ Verified Documents</h5>
+                            <small class="text-muted">Verified by Charvak Admin</small>
+                        </div>
+                        <p class="text-muted small mb-3">The following documents have been manually reviewed and verified. Only the badge is public — actual document files remain private.</p>
+                        <div>${badgeHTML}</div>
+                    </div>
+                </div>
+            `;
+
+            // Since this fires on DOMContentLoaded, the card should already exist
+            const firstCard = document.querySelector('.card');
+            if (firstCard) {
+                firstCard.insertAdjacentHTML('afterend', cardHTML);
+            }
+        })
+        .catch(e => console.warn('Passport docs fetch failed', e));
+});
+</script>
+{% endblock %}
