@@ -34,35 +34,29 @@ class IndiaRadarEngine:
             "X-RapidAPI-Host": "daily-international-job-postings.p.rapidapi.com"
         }
         
-        # We request NCS data and India location
-        # Use a 7-day rolling range to guarantee volume. Remove portal filter to pull from all Indian sources.
-        from datetime import datetime, timedelta
-        today = datetime.now()
-        week_ago = today - timedelta(days=30)
+        from datetime import datetime
+        current_month = datetime.now().strftime("%Y-%m")
         
         params = {
             "countryCode": "in",
-            "careerLevel": "junior",
-            "dateCreatedMin": week_ago.strftime("%Y-%m-%d"),
-            "dateCreatedMax": today.strftime("%Y-%m-%d"),
+            "dateCreated": current_month,
             "limit": limit
         }
 
         try:
             resp = requests.get(self.base_url, headers=headers, params=params, timeout=30)
             if resp.status_code != 200:
+                # Log the EXACT error from the API
                 logger.error(f"[india_radar] API Error {resp.status_code}: {resp.text}")
                 return []
                 
             data = resp.json()
-            # Techmap returns the array in the 'result' key
             jobs = data.get("result", [])
             logger.info(f"[india_radar] Fetched {len(jobs)} raw jobs from API.")
             return jobs
         except Exception as e:
             logger.error(f"[india_radar] API fetch failed: {e}")
             return []
-
     def _is_truly_india(self, job):
         """Safety filter to ensure no US/EU jobs slip through.
         
@@ -124,7 +118,7 @@ class IndiaRadarEngine:
                 return {"status": "no_candidates", "matched": 0, "message": "No Indian candidates found in DB."}
 
             # Clear old fetched jobs so we only see the latest scan
-            cur.execute("TRUNCATE TABLE charvak_radar_fetched")
+            # REMOVED TRUNCATE: Jobs accumulate. Old jobs are archived, not deleted.
 
             for job in raw_jobs:
                 job_title = str(job.get("title", ""))
