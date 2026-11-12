@@ -629,9 +629,8 @@ async function ppCreatePassport(ev) {
 {% endblock %}
 <script>
 
-{% endblock %}
 <script>
-// Session 113A: Verified Documents (Global Injection)
+// Session 113A: Verified Documents
 document.addEventListener('DOMContentLoaded', function() {
     const handleMatch = window.location.pathname.match(/^\/passport\/([^\/]+)/);
     if (!handleMatch) return;
@@ -672,15 +671,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `;
 
-            // Wait 1 second for the page's own JS to render the main card
             setTimeout(() => {
                 const firstCard = document.querySelector('.card');
                 if (firstCard && !document.getElementById('verifiedDocsCard')) {
                     firstCard.insertAdjacentHTML('afterend', cardHTML);
-                    console.log('✅ Verified Documents card injected!');
                 }
             }, 1000);
-        })
-        .catch(e => console.warn('Passport docs fetch failed', e));
+        });
 });
+</script>
+{% endblock %}
+<script>
 </script>
