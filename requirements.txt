@@ -1,4 +1,4 @@
-﻿# Web framework
+# Web framework
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
 starlette
@@ -33,3 +33,5 @@ fpdf2>=2.8.0
 
 # QR codes for certificate verification (Session 43-A2.1)
 qrcode[pil]>=7.4.2
+
+anyio>=4.10.0
