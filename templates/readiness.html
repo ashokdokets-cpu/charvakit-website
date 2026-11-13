@@ -593,7 +593,14 @@
         }
       }
     }
-    renderSkillChart(_gap);
+    if (_gap && _gap.length > 0) {
+      renderSkillChart(_gap);
+    } else {
+      // No per-topic data for this certificate (pre-engine-fix assessment).
+      // Hide the entire Skill Breakdown section rather than showing an empty message.
+      var _rdSkillSection = document.querySelector(".rd-section");
+      if (_rdSkillSection) _rdSkillSection.style.display = "none";
+    }
 
     // Session 19: upgrade CTA when the score is below the benchmark
     var _upCard = document.getElementById("rdUpgradeCard");
