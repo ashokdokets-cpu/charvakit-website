@@ -681,7 +681,10 @@ def render_readiness_certificate_pdf(cert: Dict, report_type: str = "readiness")
         ca = cert.get("created_at")
         if ca:
             from datetime import datetime as _dt
-            issued = _dt.fromisoformat(ca.replace("Z", "+00:00")).strftime("%B %d, %Y")
+            if isinstance(ca, str) and any(m in ca for m in ("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec")):
+                issued = ca
+            else:
+                issued = _dt.fromisoformat(str(ca).replace("Z", "+00:00")).strftime("%B %d, %Y")
     except Exception:
         issued = str(cert.get("created_at") or "")
 
