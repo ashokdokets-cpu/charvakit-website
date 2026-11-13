@@ -13744,6 +13744,7 @@ async def api_readiness_download(request: Request, certificate_id: str,
 
     try:
         from pdf_engine import render_readiness_certificate_pdf
+        logger.info(f"[PDF DEBUG] cert dict: {cert}")
         pdf_bytes = render_readiness_certificate_pdf(cert)
     except Exception as e:
         logger.error(f"readiness PDF render failed: {e}")
