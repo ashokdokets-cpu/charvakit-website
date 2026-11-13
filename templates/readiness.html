@@ -565,9 +565,9 @@
       });
     }
 
-    renderSkillChart(c.payload && c.payload.skill_gap ? c.payload.skill_gap : []);
-
-    // Session 19: upgrade CTA when the score is below the benchmark
+    var _payload = c.payload_json || c.payload || {};
+    var _gap = _payload.skill_breakdown || _payload.skill_gap || [];
+    renderSkillChart(_gap);
     var _upCard = document.getElementById("rdUpgradeCard");
     if (_upCard) {
       _upCard.style.display = (score < (c.benchmark || 0)) ? "block" : "none";
