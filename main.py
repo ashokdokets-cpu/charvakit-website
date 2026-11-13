@@ -278,7 +278,7 @@ _ADMIN_PUBLIC_PATHS = {
 async def admin_auth_guard(request: Request, call_next):
     """Block unauthenticated access to admin routes."""
     path = request.url.path
-    is_admin_area = (path.startswith("/admin") or path.startswith("/api/admin")) and not (path.startswith("/employer") or path.startswith("/api/employer"))
+    is_admin_area = path.startswith("/admin") or path.startswith("/api/admin")
     if not is_admin_area or path in _ADMIN_PUBLIC_PATHS:
         return await call_next(request)
 
@@ -1246,7 +1246,7 @@ async def job_board_detail_page(request: Request, job_id: str):
     try:
         cur = conn.cursor()
         cur.execute("""
-            SELECT job_id, title, company, location, description, skills, salary, source, raw_json, job_type
+            SELECT job_id, title, company, location, description, skills, salary, source, raw_json
             FROM charvak_jobs WHERE job_id = %s LIMIT 1
         """, (job_id,))
         row = cur.fetchone()
@@ -1269,7 +1269,7 @@ async def job_board_detail_page(request: Request, job_id: str):
         job = {
             "job_id": row[0], "title": row[1], "company": row[2], "location": row[3],
             "description": row[4] or "", "skills": row[5] or "", "salary": row[6],
-            "source": row[7], "raw_json": safe_raw_json, "job_type": row[9] or "permanent"
+            "source": row[7], "raw_json": safe_raw_json
         }
         
         # Ensure skills are a clean list for the template
@@ -1363,58 +1363,30 @@ async def admin_bench_jobs_page(request: Request):
 
 @app.get("/api/admin/bench-jobs")
 async def api_admin_bench_jobs(request: Request):
-    """Admin-only: US/Canada/Remote tech jobs for bench candidates."""
+    """Admin-only: ALL jobs + bench submission status."""
     require_admin(request)
     try:
+        from jobs_unified_engine import jobs_unified_engine
+        result = jobs_unified_engine.get_unified_jobs(limit=200, show_all=True)
+        
+        # Enrich with bench submission status
         from database import db
         conn = db.get_pooled_connection()
-        cur = conn.cursor()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT job_id, status FROM charvak_bench_submissions")
+            status_map = {r[0]: r[1] for r in cur.fetchall()}
+        finally:
+            cur.close()
+            db.release_pooled_connection(conn)
         
-        # Strict US sources
-        us_sources = ('weworkremotely', 'remoteok', 'remotive', 'hn_hiring', 'arbeitnow')
+        for item in result.get("items", []):
+            item["bench_status"] = status_map.get(item["id"], None)
         
-        cur.execute("""
-            SELECT job_id, title, company, location, skills, source, created_at, description 
-            FROM charvak_jobs 
-            WHERE source = ANY(%s)
-            ORDER BY created_at DESC LIMIT 200
-        """, (list(us_sources),))
-        
-        rows = cur.fetchall()
-        cur.close()
-        conn.close()
-        
-        # Relaxed Filter: Must be in US/Canada/Remote, exclude explicit non-US
-        us_keywords = ('us', 'usa', 'united states', 'canada', 'north america', 'remote', 'anywhere', 'worldwide', 'global')
-        exclude_keywords = ('germany', 'berlin', 'munich', 'uk', 'london', 'europe', 'france', 'australia', 'singapore', 'india')
-        
-        jobs = []
-        for r in rows:
-            loc = (r[3] or "").lower()
-            
-            # Default to allow if blank (usually means remote/unspecified)
-            if not loc or loc == 'none':
-                is_valid = True
-            else:
-                # If location contains non-US keyword, exclude it
-                if any(kw in loc for kw in exclude_keywords):
-                    is_valid = False
-                # Otherwise, include it (it's US/Remote/Global)
-                else:
-                    is_valid = True
-            
-            if is_valid:
-                jobs.append({
-                    "job_id": r[0], "title": r[1], "company": r[2],
-                    "location": r[3] or "Remote", "skills": r[4],
-                    "source": r[5], "created_at": r[6].isoformat() if r[6] else None,
-                    "bench_status": "Not submitted"
-                })
-            
-        return {"status": "success", "jobs": jobs}
+        return result
     except Exception as e:
-        logger.error(f"Bench jobs API error: {e}")
-        return {"status": "error", "message": str(e)}
+        return {"status": "error", "message": str(e)[:200]}
+
 @app.get("/admin/bench-submissions", response_class=HTMLResponse)
 async def admin_bench_submissions_page(request: Request):
     """Internal dashboard to review bench submissions and email candidates."""
@@ -4168,9 +4140,9 @@ async def api_passport_verify(request: Request, handle: str):
         return handle_error(e, "passport verify")
 
 
-@app.get("/admin/employer-portal", response_class=HTMLResponse)
+@app.get("/employer/dashboard", response_class=HTMLResponse)
 @limiter.limit("60/minute")
-async def admin_employer_portal_page(request: Request):
+async def employer_dashboard_page(request: Request):
     """Session 51: Employer Portal - browse and verify public passports."""
     try:
         require_admin(request)
@@ -4316,18 +4288,15 @@ async def passport_page(request: Request, handle: str):
 
         import passport_engine as pe
         result = pe.get_passport_by_handle(handle, viewer_email=caller_email)
-        
-        if result.get("status") != "success" or not result.get("passport"):
+        if result.get("status") != "success":
             return template_response(
                 "passport.html", request,
                 "Passport Not Found - Charvak",
                 passport=None, handle=handle, error=result.get("message", "Not found"),
             )
-        
         passport = result["passport"]
-        display = passport.get("display_name") or passport.get("email", "").split("@")[0] if passport.get("email") else "Passport"
+        display = passport.get("display_name") or passport["email"].split("@")[0]
         title = f"{display} - Charvak Passport (Score {passport.get('charvak_score', 0)}/1000)"
-        
         return template_response(
             "passport.html", request, title,
             passport=passport, handle=handle, error=None,
@@ -4335,17 +4304,13 @@ async def passport_page(request: Request, handle: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Passport page error: {e}")
-        # Never return a dict from an HTML route — always render something
-        try:
-            return template_response(
-                "passport.html", request,
-                "Passport - Charvak",
-                passport=None, handle=handle, error="Could not load passport. Please try again.",
-            )
-        except Exception:
-            # Final fallback: plain HTML response
-            return HTMLResponse(content="<h1>Passport temporarily unavailable</h1><p>Please try again.</p>", status_code=200)
+        return handle_error(e, "passport page")
+
+
+# ============================================================
+# Session 46-B: Skill Twin Challenges (viral loop)
+# ============================================================
+
 @app.post("/api/skill-twin/create")
 @limiter.limit("10/minute")
 async def api_skill_twin_create(request: Request):
@@ -13598,9 +13563,7 @@ async def api_readiness_verify(request: Request, certificate_hash: str):
         "readiness_score": row[4],
         "percentile": row[5],
         "benchmark": row[6],
-        "candidate_display": row[10] or "Verified Candidate",
-        "display_name": row[10] or "",
-        "issued_at": row[11].isoformat() if row[11] else None,
+        "candidate_display": display,
         "issued_at": row[8].isoformat() if row[8] else None,
     }
 
@@ -13650,62 +13613,6 @@ async def api_readiness_list(request: Request, email: str):
     } for r in rows]
     return {"status": "success", "certificates": certs, "count": len(certs)}
 
-
-@app.get("/api/readiness/{certificate_id}/download-pdf")
-async def download_readiness_pdf_fixed(request: Request, certificate_id: str):
-    """Fixed PDF download route that passes full name, date, and hash."""
-    from database import db
-    from pdf_engine import render_readiness_certificate_pdf
-    from fastapi.responses import Response
-    
-    conn = db.get_pooled_connection()
-    if not conn:
-        raise HTTPException(500, "DB unavailable")
-    cur = None
-    try:
-        cur = conn.cursor()
-        cur.execute("""
-            SELECT certificate_id, email, role, industry, level, readiness_score,
-                   percentile, benchmark_score, verdict, certificate_hash,
-                   display_name, created_at, source
-            FROM charvak_readiness_certificates
-            WHERE certificate_id = %s
-        """, (certificate_id,))
-        row = cur.fetchone()
-        if not row:
-            raise HTTPException(404, "Certificate not found")
-        
-        # Build the cert dict with ALL required fields
-        cert = {
-            "certificate_id": row[0],
-            "email": row[1],
-            "role": row[2],
-            "industry": row[3],
-            "level": row[4],
-            "readiness_score": row[5],
-            "percentile": row[6],
-            "benchmark_score": row[7],
-            "verdict": row[8],
-            "certificate_hash": row[9],
-            "candidate_display": row[10] or "Verified Candidate",
-            "display_name": row[10] or "Verified Candidate",
-            "created_at": row[11].strftime("%d %b %Y") if row[11] else "N/A",
-            "issued_at": row[11].strftime("%d %b %Y") if row[11] else "N/A",
-            "verify_url_path": "/api/readiness/verify/",
-            "source": row[12] or "written",
-        }
-        
-        pdf_bytes = render_readiness_certificate_pdf(cert)
-        
-        return Response(content=pdf_bytes, media_type="application/pdf", headers={
-            "Content-Disposition": f'attachment; filename="Charvak_Certificate_{certificate_id}.pdf"'
-        })
-    except Exception as e:
-        logger.error(f"PDF generation failed for {certificate_id}: {e}")
-        raise HTTPException(500, f"PDF generation error: {str(e)[:100]}")
-    finally:
-        if cur: cur.close()
-        db.release_pooled_connection(conn)
 
 @app.get("/api/readiness/{certificate_id}/download")
 @limiter.limit("30/minute")
@@ -13790,17 +13697,13 @@ async def api_readiness_download(request: Request, certificate_id: str,
         "benchmark_score": row[7],
         "verdict": row[8],
         "certificate_hash": row[9],
-        "candidate_display": row[10] or "Verified Candidate",
-        "display_name": row[10] or "Verified Candidate",
-        "created_at": row[11].strftime("%d %b %Y") if row[11] else "N/A",
-        "issued_at": row[11].strftime("%d %b %Y") if row[11] else "N/A",
-        "verify_url_path": "/api/readiness/verify/",
+        "candidate_display": display,
+        "created_at": row[11].isoformat() if row[11] else None,
         "source": row[12] or "written",
     }
 
     try:
         from pdf_engine import render_readiness_certificate_pdf
-        logger.info(f"[PDF DEBUG] cert dict: {cert}")
         pdf_bytes = render_readiness_certificate_pdf(cert)
     except Exception as e:
         logger.error(f"readiness PDF render failed: {e}")
@@ -14030,58 +13933,13 @@ async def api_readiness_get(request: Request, certificate_id: str):
             "payload": row[8],
             "certificate_hash": row[9],
             "candidate_display": display,
-        "created_at": row[11].strftime("%d %b %Y") if row[11] else "N/A",
+            "created_at": row[11].isoformat() if row[11] else None,
             "source": row[12] or "written",
             "supersedes": row[13],
             "superseded_by": row[14],
         }
     }
 
-
-
-async def download_readiness_pdf_fixed(request: Request, certificate_id: str):
-    """Fixed PDF download route that bypasses route-ordering issues."""
-    from database import db
-    from pdf_engine import render_readiness_certificate_pdf
-    from fastapi.responses import Response
-    import json
-    
-    conn = db.get_pooled_connection()
-    if not conn:
-        raise HTTPException(500, "DB unavailable")
-    cur = None
-    try:
-        cur = conn.cursor()
-        cur.execute("SELECT * FROM charvak_readiness_certificates WHERE certificate_id = %s", (certificate_id,))
-        row = cur.fetchone()
-        if not row:
-            raise HTTPException(404, "Certificate not found")
-        
-        # Map row to dict (adjust column indices based on your schema)
-        # This is a simplified mapping; you may need to adjust indices
-        cert_data = {
-            "certificate_id": row[0],
-            "email": row[2],
-            "display_name": row[3] or "Candidate", # Fallback if name is missing
-            "role": row[4],
-            "industry": row[5],
-            "level": row[6],
-            "readiness_score": row[7],
-            "certificate_hash": row[10],
-            "issued_at": row[13].isoformat() if hasattr(row[13], "isoformat") else str(row[13] or ""),
-        }
-        
-        pdf_bytes = render_readiness_certificate_pdf(cert_data, report_type="readiness")
-        
-        return Response(content=pdf_bytes, media_type="application/pdf", headers={
-            "Content-Disposition": f'attachment; filename="Charvak_Certificate_{certificate_id}.pdf"'
-        })
-    except Exception as e:
-        logger.error(f"PDF generation failed for {certificate_id}: {e}")
-        raise HTTPException(500, f"PDF generation error: {str(e)[:100]}")
-    finally:
-        if cur: cur.close()
-        db.release_pooled_connection(conn)
 
 @app.get("/readiness/{certificate_id}", response_class=HTMLResponse)
 async def readiness_page(request: Request, certificate_id: str):
@@ -21938,450 +21796,3 @@ async def admin_funnel_page(request: Request):
     except HTTPException:
         return RedirectResponse(url="/admin-login?next=/admin/funnel", status_code=302)
     return template_response("admin-funnel.html", request, "Funnel Analytics - Charvak")
-@app.get("/pricing-b2b", response_class=HTMLResponse)
-async def pricing_b2b_page(request: Request):
-    """B2B pricing page for colleges and employers."""
-    return template_response("pricing-b2b.html", request, "B2B Pricing - Charvak")
-# ============================================================
-# EMPLOYER MAGIC LINK LOGIN + DASHBOARD (Session 112B)
-# ============================================================
-
-@app.post("/api/admin/employer-accounts/{account_id}/send-login-link")
-async def admin_send_employer_login_link(request: Request, account_id: str):
-    """Admin triggers magic link email to approved employer."""
-    require_admin(request)
-    import secrets
-    from database import db
-    conn = db.get_pooled_connection()
-    if not conn:
-        return {"status": "error", "message": "DB unavailable"}
-    cur = None
-    try:
-        cur = conn.cursor()
-        # Fetch account + verify approved
-        cur.execute("""
-            SELECT account_id, company_name, contact_name, contact_email, status
-            FROM charvak_employer_accounts WHERE account_id = %s
-        """, (account_id,))
-        row = cur.fetchone()
-        if not row:
-            return {"status": "error", "message": "Employer not found"}
-        
-        eid, company, contact_name, email, status = row
-        if status != "approved":
-            return {"status": "error", "message": f"Employer status is '{status}' — must be 'approved' first"}
-        
-        # Generate magic link token (valid 7 days)
-        token = secrets.token_urlsafe(32)
-        cur.execute("""
-            UPDATE charvak_employer_accounts 
-            SET login_token = %s, 
-                login_token_expires = NOW() + INTERVAL '7 days',
-                updated_at = NOW()
-            WHERE account_id = %s
-        """, (token, account_id))
-        conn.commit()
-        
-        login_url = f"https://www.charvakit.com/employer/login?token={token}"
-        
-        # Send email
-        try:
-            from email_engine import email_engine as _ee
-            html = f"""
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                <h2 style="color: #0d9488;">Welcome to Charvak, {contact_name}!</h2>
-                <p>Your company <strong>{company}</strong> has been approved to hire verified talent on Charvak.</p>
-                <p>Click the button below to access your employer dashboard:</p>
-                <p style="margin: 30px 0;">
-                    <a href="{login_url}" style="background: #0d9488; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;">Access Your Dashboard</a>
-                </p>
-                <p style="color: #6b7280; font-size: 14px;">This link is valid for 7 days. If you need a new link, contact hr@charvakit.com.</p>
-                <hr style="border: 1px solid #e5e7eb; margin: 30px 0;">
-                <p style="color: #6b7280; font-size: 13px;">Charvak IT Consulting Pvt Ltd<br>#301, Sri Padmavati Towers, Guntur 522001<br>+91 799 7871 701</p>
-            </div>
-            """
-            _ee.send_email(email, f"Welcome to Charvak — Access Your Dashboard", html)
-        except Exception as e:
-            logger.warning(f"Magic link email failed: {e}")
-        
-        return {"status": "success", "login_url": login_url, "sent_to": email}
-    except Exception as e:
-        logger.error(f"send-login-link error: {e}")
-        return {"status": "error", "message": str(e)[:200]}
-    finally:
-        if cur: cur.close()
-        db.release_pooled_connection(conn)
-
-@app.get("/employer/login", response_class=HTMLResponse)
-@app.get("/employer/login", response_class=HTMLResponse)
-async def employer_magic_login(request: Request, token: str = ""):
-    """Magic link login — validates token, sets session cookie, redirects to dashboard."""
-    from database import db
-    
-    def _fail_response(message: str):
-        return template_response("employer-login-failed.html", request, "Login Failed - Charvak", reason=message)
-    
-    if not token:
-        return _fail_response("No token provided. Please use the link from your welcome email.")
-    
-    conn = db.get_pooled_connection()
-    if not conn:
-        return _fail_response("Database temporarily unavailable. Please try again in a minute.")
-    
-    cur = None
-    try:
-        cur = conn.cursor()
-        cur.execute("""
-            SELECT account_id, company_name, contact_email, contact_name, status
-            FROM charvak_employer_accounts 
-            WHERE login_token = %s AND login_token_expires > NOW()
-            LIMIT 1
-        """, (token,))
-        row = cur.fetchone()
-        if not row:
-            return _fail_response("This login link is invalid or has expired. Contact hr@charvakit.com for a new link.")
-        
-        account_id, company, email, contact_name, status = row
-        
-        if status != "approved":
-            return _fail_response("Your account status is '" + str(status) + "'. Contact hr@charvakit.com.")
-        
-        # Rotate token (single-use for security)
-        import secrets as _sec
-        new_token = _sec.token_urlsafe(32)
-        cur.execute("""
-            UPDATE charvak_employer_accounts 
-            SET login_token = %s, 
-                login_token_expires = NOW() + INTERVAL '30 days',
-                updated_at = NOW()
-            WHERE account_id = %s
-        """, (new_token, account_id))
-        conn.commit()
-        
-        # Set cookie + redirect
-        response = RedirectResponse(url="/employer/dashboard", status_code=302)
-        response.set_cookie(
-            key="charvak_employer_token",
-            value=new_token,
-            max_age=60*60*24*30,
-            httponly=True,
-            secure=True,
-            samesite="lax"
-        )
-        return response
-    except Exception as e:
-        logger.error(f"Employer magic login error: {e}")
-        return _fail_response("Unexpected error. Please contact hr@charvakit.com")
-    finally:
-        if cur: cur.close()
-        db.release_pooled_connection(conn)
-@app.get("/employer/dashboard", response_class=HTMLResponse)
-async def employer_dashboard(request: Request):
-    """Employer dashboard — shows account, posted jobs, matched candidates."""
-    from database import db
-    employer_token = request.cookies.get("charvak_employer_token")
-    if not employer_token:
-        return RedirectResponse(url="/employer/signup", status_code=302)
-    
-    conn = db.get_pooled_connection()
-    if not conn:
-        return RedirectResponse(url="/", status_code=302)
-    cur = None
-    try:
-        cur = conn.cursor()
-        cur.execute("""
-            SELECT account_id, company_name, contact_email, contact_name, status, 
-                   industry, company_size, hiring_roles
-            FROM charvak_employer_accounts 
-            WHERE login_token = %s AND login_token_expires > NOW() AND status = 'approved'
-            LIMIT 1
-        """, (employer_token,))
-        row = cur.fetchone()
-        if not row:
-            return RedirectResponse(url="/employer/signup", status_code=302)
-        
-        employer = {
-            "account_id": row[0],
-            "company_name": row[1],
-            "contact_email": row[2],
-            "contact_name": row[3],
-            "status": row[4],
-            "industry": row[5],
-            "company_size": row[6],
-            "hiring_roles": row[7],
-        }
-        return template_response("employer-dashboard.html", request, f"{employer['company_name']} - Dashboard", employer=employer)
-    finally:
-        if cur: cur.close()
-        db.release_pooled_connection(conn)
-
-@app.post("/api/employer/logout")
-async def employer_logout(request: Request):
-    """Clear employer session."""
-    response = JSONResponse(content={"status": "success"})
-    response.delete_cookie("charvak_employer_token")
-    return response
-# ============================================================
-# CANDIDATE DOCUMENT VERIFICATION (Session 113A)
-# ============================================================
-
-@app.get("/profile/verifications", response_class=HTMLResponse)
-async def candidate_verifications_page(request: Request):
-    """Public page where candidates upload documents for verification."""
-    return template_response("candidate-verifications.html", request, "Verify Your Documents - Charvak")
-
-@app.get("/api/candidate/documents/list")
-async def api_list_candidate_docs(email: str = ""):
-    """List all documents uploaded by a candidate."""
-    from database import db
-    if not email:
-        return {"status": "error", "message": "Email required"}
-    conn = db.get_pooled_connection()
-    if not conn:
-        return {"status": "error", "message": "DB unavailable"}
-    cur = None
-    try:
-        cur = conn.cursor()
-        cur.execute("""
-            SELECT document_id, document_type, filename, verification_status, 
-                   uploaded_at, verified_at, rejection_reason
-            FROM charvak_candidate_documents
-            WHERE email = %s
-            ORDER BY uploaded_at DESC
-        """, (email.lower(),))
-        rows = cur.fetchall()
-        docs = []
-        for r in rows:
-            docs.append({
-                "document_id": r[0],
-                "document_type": r[1],
-                "filename": r[2],
-                "verification_status": r[3] or "pending",
-                "uploaded_at": r[4].isoformat() if r[4] else None,
-                "verified_at": r[5].isoformat() if r[5] else None,
-                "rejection_reason": r[6]
-            })
-        return {"status": "success", "docs": docs}
-    finally:
-        if cur: cur.close()
-        db.release_pooled_connection(conn)
-
-class DocUploadData(BaseModel):
-    email: str
-    document_type: str
-    filename: str
-    content_type: Optional[str] = "application/octet-stream"
-    content_base64: str
-    size_bytes: Optional[int] = 0
-
-@app.post("/api/candidate/documents/upload")
-async def api_upload_candidate_doc(data: DocUploadData):
-    """Candidate uploads a document for verification."""
-    from database import db
-    import secrets
-    import base64 as _b64
-    
-    # Validate
-    if data.document_type not in ('aadhaar', 'pan', 'degree', 'experience_letter'):
-        return {"status": "error", "message": "Invalid document type"}
-    if data.size_bytes and data.size_bytes > 5 * 1024 * 1024:
-        return {"status": "error", "message": "File too large (max 5MB)"}
-    
-    conn = db.get_pooled_connection()
-    if not conn:
-        return {"status": "error", "message": "DB unavailable"}
-    cur = None
-    try:
-        cur = conn.cursor()
-        doc_id = "DOC-" + secrets.token_hex(6).upper()
-        
-        # Delete any prior upload of same type (allow re-upload)
-        cur.execute("""
-            DELETE FROM charvak_candidate_documents 
-            WHERE email = %s AND document_type = %s
-        """, (data.email.lower(), data.document_type))
-        
-        cur.execute("""
-            INSERT INTO charvak_candidate_documents
-            (document_id, candidate_id, email, document_type, filename, 
-             content_type, size_bytes, content_base64, uploaded_at, verification_status)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW(), 'pending')
-        """, (
-            doc_id, "CANDIDATE-" + data.email.lower(), data.email.lower(),
-            data.document_type, data.filename, data.content_type or "application/octet-stream",
-            data.size_bytes or 0, data.content_base64
-        ))
-        conn.commit()
-        
-        # Notify admin
-        try:
-            from email_engine import email_engine as _ee
-            html = f"""
-            <h3>📄 New Document Upload</h3>
-            <p><strong>{data.email}</strong> uploaded a <strong>{data.document_type}</strong> for verification.</p>
-            <p><a href="https://www.charvakit.com/admin/doc-verifications">Review in Admin</a></p>
-            """
-            _ee.send_email("hr@charvakit.com", f"New {data.document_type} to verify", html)
-        except Exception as e:
-            logger.warning(f"Admin doc notification failed: {e}")
-        
-        return {"status": "success", "document_id": doc_id}
-    except Exception as e:
-        logger.error(f"Doc upload error: {e}")
-        conn.rollback()
-        return {"status": "error", "message": str(e)[:200]}
-    finally:
-        if cur: cur.close()
-        db.release_pooled_connection(conn)
-
-@app.get("/api/admin/doc-verifications/list")
-async def api_admin_doc_list(request: Request, status: str = "pending"):
-    """Admin: list documents awaiting verification."""
-    require_admin(request)
-    from database import db
-    conn = db.get_pooled_connection()
-    if not conn:
-        return {"status": "error", "message": "DB unavailable"}
-    cur = None
-    try:
-        cur = conn.cursor()
-        cur.execute("""
-            SELECT document_id, email, document_type, filename, 
-                   verification_status, uploaded_at, size_bytes
-            FROM charvak_candidate_documents
-            WHERE verification_status = %s
-            ORDER BY uploaded_at ASC
-        """, (status,))
-        rows = cur.fetchall()
-        docs = [
-            {"document_id": r[0], "email": r[1], "document_type": r[2],
-             "filename": r[3], "verification_status": r[4],
-             "uploaded_at": r[5].isoformat() if r[5] else None,
-             "size_bytes": r[6] or 0}
-            for r in rows
-        ]
-        return {"status": "success", "docs": docs}
-    finally:
-        if cur: cur.close()
-        db.release_pooled_connection(conn)
-
-@app.post("/api/admin/doc-verifications/{document_id}/verify")
-async def api_admin_verify_doc(request: Request, document_id: str):
-    """Admin: mark a document as verified."""
-    require_admin(request)
-    from database import db
-    conn = db.get_pooled_connection()
-    cur = None
-    try:
-        cur = conn.cursor()
-        cur.execute("""
-            UPDATE charvak_candidate_documents
-            SET verification_status = 'verified',
-                verified_by = 'hr@charvakit.com',
-                verified_at = NOW()
-            WHERE document_id = %s
-            RETURNING email
-        """, (document_id,))
-        row = cur.fetchone()
-        conn.commit()
-        if not row:
-            return {"status": "error", "message": "Document not found"}
-        return {"status": "success", "email": row[0]}
-    finally:
-        if cur: cur.close()
-        db.release_pooled_connection(conn)
-
-@app.post("/api/admin/doc-verifications/{document_id}/reject")
-async def api_admin_reject_doc(request: Request, document_id: str):
-    """Admin: reject a document with reason."""
-    require_admin(request)
-    try:
-        body = await request.json()
-    except Exception:
-        body = {}
-    reason = (body.get("reason") or "Document unclear or invalid")[:500]
-    from database import db
-    conn = db.get_pooled_connection()
-    cur = None
-    try:
-        cur = conn.cursor()
-        cur.execute("""
-            UPDATE charvak_candidate_documents
-            SET verification_status = 'rejected',
-                verified_by = 'hr@charvakit.com',
-                verified_at = NOW(),
-                rejection_reason = %s
-            WHERE document_id = %s
-        """, (reason, document_id))
-        conn.commit()
-        return {"status": "success"}
-    finally:
-        if cur: cur.close()
-        db.release_pooled_connection(conn)
-
-@app.get("/admin/doc-verifications", response_class=HTMLResponse)
-async def admin_doc_verifications_page(request: Request):
-    """Admin review queue for candidate documents."""
-    try:
-        require_admin(request)
-    except HTTPException:
-        return RedirectResponse(url="/admin-login?next=/admin/doc-verifications", status_code=302)
-    return template_response("admin-doc-verifications.html", request, "Document Verifications - Charvak")
-
-@app.get("/api/admin/doc-verifications/{document_id}/view")
-async def api_admin_view_doc(request: Request, document_id: str):
-    """Admin: view the uploaded document file."""
-    require_admin(request)
-    from database import db
-    from fastapi.responses import Response
-    import base64
-    
-    conn = db.get_pooled_connection()
-    cur = None
-    try:
-        cur = conn.cursor()
-        cur.execute("SELECT content_base64, content_type, filename FROM charvak_candidate_documents WHERE document_id = %s", (document_id,))
-        row = cur.fetchone()
-        if not row or not row[0]:
-            return JSONResponse({"status": "error", "message": "Document file not found"}, status_code=404)
-            
-        content_b64, content_type, filename = row
-        file_bytes = base64.b64decode(content_b64)
-        
-        # Force inline display for PDFs/images
-        headers = {
-            "Content-Disposition": f'inline; filename="{filename}"'
-        }
-        return Response(content=file_bytes, media_type=content_type or "application/octet-stream", headers=headers)
-    finally:
-        if cur: cur.close()
-        db.release_pooled_connection(conn)
-@app.delete("/api/admin/india-radar/alerts/{alert_id}")
-async def api_delete_radar_alert(request: Request, alert_id: int):
-    """Delete a single matched alert."""
-    require_admin(request)
-    from database import db
-    conn = db.get_pooled_connection()
-    try:
-        cur = conn.cursor()
-        cur.execute("DELETE FROM charvak_radar_alerts WHERE alert_id = %s", (alert_id,))
-        conn.commit()
-        return {"status": "success"}
-    finally:
-        cur.close()
-        db.release_pooled_connection(conn)
-
-@app.delete("/api/admin/india-radar/fetched/{job_id}")
-async def api_delete_radar_fetched(request: Request, job_id: str):
-    """Delete a single raw fetched job."""
-    require_admin(request)
-    from database import db
-    conn = db.get_pooled_connection()
-    try:
-        cur = conn.cursor()
-        cur.execute("DELETE FROM charvak_radar_fetched WHERE job_id = %s", (job_id,))
-        conn.commit()
-        return {"status": "success"}
-    finally:
-        cur.close()
-        db.release_pooled_connection(conn)
