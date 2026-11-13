@@ -12336,7 +12336,32 @@ async def api_career_assessment_complete(request: Request):
             content={"status": "error", "message": "Login or anonymous_token required.", "login_url": "/login"},
         )
 
-    return career_assessment_engine.complete_assessment(data)
+    result = career_assessment_engine.complete_assessment(data)
+
+    # Session 114: auto-issue Career Certification on score >= 70 (non-anonymous, authenticated)
+    # Wrapped in try/except so a cert failure never breaks assessment scoring.
+    if (
+        isinstance(result, dict)
+        and result.get("status") == "success"
+        and (result.get("score") or 0) >= 70
+        and email
+        and not data.get("_anonymous")
+    ):
+        try:
+            cert_result = career_assessment_engine.issue_certification({
+                "email": email,
+                "assessment_id": result.get("assessment_id") or data.get("assessment_id"),
+                "_ip": request.client.host if request.client else "",
+            })
+            if isinstance(cert_result, dict) and cert_result.get("status") == "success":
+                result["certificate_id"] = cert_result.get("cert_id") or cert_result.get("certificate_id")
+                logger.info(f"[auto-cert] Issued {result['certificate_id']} for {email}")
+            else:
+                logger.warning(f"[auto-cert] Not issued for {email}: {cert_result.get('message', 'unknown')}")
+        except Exception as _e:
+            logger.error(f"[auto-cert] Exception for {email}: {_e}")
+
+    return result
 
 @app.get("/api/career-assessment/history/{email}")
 @limiter.limit("120/minute")
