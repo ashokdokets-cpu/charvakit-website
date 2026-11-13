@@ -14007,7 +14007,7 @@ async def download_readiness_pdf_fixed(request: Request, certificate_id: str):
             "level": row[6],
             "readiness_score": row[7],
             "certificate_hash": row[10],
-            "issued_at": row[13].isoformat() if row[13] else None,
+            "issued_at": row[13].isoformat() if hasattr(row[13], "isoformat") else str(row[13] or ""),
         }
         
         pdf_bytes = render_readiness_certificate_pdf(cert_data, report_type="readiness")
