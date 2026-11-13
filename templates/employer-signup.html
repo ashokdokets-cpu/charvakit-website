@@ -1,189 +1,163 @@
 {% extends "base.html" %}
-{% block title %}Partner with Charvak{% endblock %}
-{% block content %}
-<div class="container py-5" style="max-width: 700px;">
-  <div class="card shadow-sm border-0 p-4">
-    <div class="text-center mb-4">
-      <h2 class="fw-bold" id="formTitle">Post a Job. Hire Verified Talent.</h2>
-      <p class="text-muted" id="formSubtitle">Zero upfront cost. Pay 8% only when you hire.</p>
-    </div>
+{% block title %}Sign Up - For Employers - Charvak{% endblock %}
 
-    <form id="employerSignupForm">
+{% block content %}
+<style>
+  .signup-hero { background: linear-gradient(135deg, #3ba591 0%, #1a1a2e 100%); color: white; padding: 60px 0 50px; }
+  .signup-hero h1 { font-size: 2.4rem; font-weight: 800; margin-bottom: 8px; }
+  .signup-hero p { font-size: 1.1rem; opacity: 0.9; }
+  .signup-card { background: white; border-radius: 16px; padding: 40px; box-shadow: 0 8px 32px rgba(0,0,0,0.1); margin: -40px auto 40px; max-width: 720px; position: relative; z-index: 10; }
+  .form-label { font-weight: 600; }
+  .form-control:focus, .form-select:focus { border-color: #3ba591; box-shadow: 0 0 0 3px rgba(59,165,145,0.15); }
+  .toast-success { position: fixed; top: 100px; right: 20px; background: #3ba591; color: white; padding: 16px 24px; border-radius: 10px; font-weight: 600; z-index: 9999; box-shadow: 0 8px 24px rgba(0,0,0,0.2); animation: slideIn 0.3s; }
+  @keyframes slideIn { from { transform: translateX(400px); } to { transform: translateX(0); } }
+
+  /* Session 81 A1: Mobile responsive fixes */
+  @media (max-width: 640px) {
+    .signup-hero { padding: 40px 0 30px !important; }
+    .signup-hero h1 { font-size: 1.6rem !important; }
+    .signup-hero p { font-size: 0.95rem !important; }
+    .signup-card { padding: 24px 16px !important; margin-top: -20px !important; border-radius: 12px !important; }
+    .signup-card h3 { font-size: 1.15rem !important; }
+    .toast-success { top: 80px !important; right: 10px !important; left: 10px !important; }
+  }
+
+</style>
+
+<div class="signup-hero">
+  <div class="container text-center">
+    <h1>Sign up to hire from Charvak</h1>
+    <p>Free to list your first 3 roles. Verified candidates. 48-hour shortlists.</p>
+  </div>
+</div>
+
+<div class="container">
+  <div class="signup-card">
+    <h3 style="margin-bottom: 24px;">Tell us about your company</h3>
+
+    <form id="signupForm" onsubmit="submitSignup(event)">
+      <!-- Honeypot -->
+      <div style="position: absolute; left: -9999px;" aria-hidden="true">
+        <input type="text" name="website_url" id="hpField" tabindex="-1" autocomplete="off" />
+      </div>
+
       <div class="row g-3">
-        <div class="col-12">
-          <label class="form-label fw-bold" id="companyLabel">Company Name *</label>
-          <input type="text" class="form-control" id="companyName" required placeholder="e.g., Acme Corp">
+        <div class="col-md-6">
+          <label class="form-label">Company name *</label>
+          <input type="text" id="companyName" class="form-control" required />
         </div>
         <div class="col-md-6">
-          <label class="form-label fw-bold">Contact Person *</label>
-          <input type="text" class="form-control" id="contactName" required placeholder="Your name">
+          <label class="form-label">Your name *</label>
+          <input type="text" id="contactName" class="form-control" required />
         </div>
         <div class="col-md-6">
-          <label class="form-label fw-bold">Work Email *</label>
-          <input type="email" class="form-control" id="contactEmail" required placeholder="you@company.com">
+          <label class="form-label">Work email *</label>
+          <input type="email" id="contactEmail" class="form-control" required />
         </div>
         <div class="col-md-6">
-          <label class="form-label fw-bold">Phone *</label>
-          <input type="tel" class="form-control" id="contactPhone" required placeholder="+91 99999 99999">
+          <label class="form-label">Phone</label>
+          <input type="tel" id="contactPhone" class="form-control" />
         </div>
         <div class="col-md-6">
-          <label class="form-label fw-bold">Website</label>
-          <input type="url" class="form-control" id="website" placeholder="https://company.com">
+          <label class="form-label">Website</label>
+          <input type="url" id="website" class="form-control" placeholder="https://" />
         </div>
-        
-        <!-- Industry/Size for both -->
         <div class="col-md-6">
-          <label class="form-label fw-bold">Industry</label>
-          <select class="form-select" id="industry">
+          <label class="form-label">Industry</label>
+          <select id="industry" class="form-select">
             <option value="">Select...</option>
             <option>IT / Tech</option>
+            <option>SaaS / B2B Software</option>
             <option>FinTech / Payments</option>
             <option>HealthTech</option>
-            <option>EdTech</option>
             <option>Manufacturing</option>
-            <option>Logistics / Supply Chain</option>
-            <option>Banking / BFSI</option>
+            <option>Industrial Automation</option>
             <option>Consulting</option>
-            <option>Retail / E-commerce</option>
             <option>Other</option>
           </select>
         </div>
         <div class="col-md-6">
-          <label class="form-label fw-bold" id="sizeLabel">Company Size</label>
-          <select class="form-select" id="companySize">
+          <label class="form-label">Company size</label>
+          <select id="companySize" class="form-select">
             <option value="">Select...</option>
             <option>1-10</option>
             <option>11-50</option>
             <option>51-200</option>
             <option>201-500</option>
-            <option>501-1000</option>
-            <option>1000+</option>
-            <!-- Institution options added via JS -->
+            <option>500+</option>
           </select>
         </div>
-
-        <!-- Dynamic Fields -->
-        <div class="col-12" id="hiringRolesField">
-          <label class="form-label fw-bold">Hiring Roles (brief)</label>
-          <textarea class="form-control" id="hiringRoles" rows="2" placeholder="e.g., 5 Software Engineers, 2 Data Analysts"></textarea>
-        </div>
-        <div class="col-12 d-none" id="studentCountField">
-          <label class="form-label fw-bold">Expected Student Volume</label>
-          <input type="number" class="form-control" id="studentCount" placeholder="e.g., 1500">
-        </div>
-
         <div class="col-12">
-          <label class="form-label fw-bold">Anything else? (optional)</label>
-          <textarea class="form-control" id="message" rows="2" placeholder="Additional context"></textarea>
+          <label class="form-label">Roles you're hiring for</label>
+          <textarea id="hiringRoles" class="form-control" rows="2" placeholder="e.g. 2 Software Engineers, 1 Data Analyst"></textarea>
         </div>
-        <div class="d-none">
-          <input type="text" id="hp_field" name="hp_field" tabindex="-1" autocomplete="off">
+        <div class="col-12">
+          <label class="form-label">Anything else? (optional)</label>
+          <textarea id="message" class="form-control" rows="3" placeholder="Timeline, specific requirements, etc."></textarea>
         </div>
       </div>
 
-      <div class="alert alert-info mt-4 small" id="nextStepsBox">
-        <strong>What happens next?</strong><br>
-        1. We review your application (usually within 24 hours).<br>
-        2. You receive login credentials.<br>
-        3. We match verified candidates. You interview and hire.<br>
-        4. We invoice 8% of first-year CTC, Net-30.
-      </div>
-
-      <button type="submit" class="btn btn-primary w-100 btn-lg mt-3" style="background:#0d9488; border:none;" id="submitBtn">
-        Submit Application
+      <button type="submit" id="submitBtn" class="btn btn-success btn-lg w-100 mt-4 fw-semibold">
+        Submit application →
       </button>
-    </form>
 
-    <div id="successMessage" class="alert alert-success mt-3 d-none">
-      <strong>✅ Application received!</strong><br>
-      We'll review your application and email you within 24 hours.
-    </div>
-    <div id="errorMessage" class="alert alert-danger mt-3 d-none"></div>
+      <p style="text-align: center; color: #6b7280; font-size: 0.85rem; margin-top: 16px;">
+        We review every application manually. Expect a response within 24 hours.
+      </p>
+    </form>
   </div>
 </div>
 
 <script>
-// Detect mode from URL
-const urlParams = new URLSearchParams(window.location.search);
-const mode = urlParams.get('type') === 'institution' ? 'institution' : 'employer';
-
-// Adjust UI based on mode
-if (mode === 'institution') {
-  document.getElementById('formTitle').textContent = 'Empower Your Students. Prove Placement Readiness.';
-  document.getElementById('formSubtitle').textContent = 'Join the Charvak network of institutions.';
-  document.getElementById('companyLabel').textContent = 'Institution Name *';
-  document.getElementById('sizeLabel').textContent = 'Institution Size';
-  document.getElementById('hiringRolesField').classList.add('d-none');
-  document.getElementById('studentCountField').classList.remove('d-none');
-  
-  // Update size options for colleges
-  const sizeSelect = document.getElementById('companySize');
-  sizeSelect.innerHTML = `
-    <option value="">Select...</option>
-    <option>Under 500 students</option>
-    <option>500 - 2,000 students</option>
-    <option>2,000 - 5,000 students</option>
-    <option>5,000+ students</option>
-  `;
-  
-  document.getElementById('nextStepsBox').innerHTML = `
-    <strong>What happens next?</strong><br>
-    1. We review your application (within 24 hours).<br>
-    2. You receive login credentials for the College Readiness Portal.<br>
-    3. Upload your student roster and run assessments.<br>
-    4. Get cryptographic certificates for your students.
-  `;
-}
-
-document.getElementById('employerSignupForm').addEventListener('submit', async function(e) {
-  e.preventDefault();
-  const btn = document.getElementById('submitBtn');
+function submitSignup(ev) {
+  ev.preventDefault();
+  var btn = document.getElementById('submitBtn');
   btn.disabled = true;
   btn.textContent = 'Submitting...';
 
-  // Build payload - use hiring_roles field to store student count for institutions
-  const rolesOrCount = mode === 'institution' 
-    ? `Institution - ~${document.getElementById('studentCount').value || 'Unknown'} students`
-    : document.getElementById('hiringRoles').value.trim();
-
-  const payload = {
+  var data = {
     company_name: document.getElementById('companyName').value.trim(),
     contact_name: document.getElementById('contactName').value.trim(),
-    contact_email: document.getElementById('contactEmail').value.trim().toLowerCase(),
+    contact_email: document.getElementById('contactEmail').value.trim(),
     contact_phone: document.getElementById('contactPhone').value.trim(),
     website: document.getElementById('website').value.trim(),
     industry: document.getElementById('industry').value,
     company_size: document.getElementById('companySize').value,
-    hiring_roles: rolesOrCount,
+    hiring_roles: document.getElementById('hiringRoles').value.trim(),
     message: document.getElementById('message').value.trim(),
-    hp_field: document.getElementById('hp_field').value
+    website_url: document.getElementById('hpField').value  // honeypot
   };
 
-  try {
-    const res = await fetch('/api/employer/signup', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(payload)
-    });
-    const data = await res.json();
-
-    if (data.status === 'success') {
-      document.getElementById('employerSignupForm').classList.add('d-none');
-      document.getElementById('successMessage').classList.remove('d-none');
+  fetch('/api/employer/signup', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    if (d.status === 'success') {
+      showToast('✓ Application received! Check your email.');
+      setTimeout(function() { window.location.href = '/employers'; }, 3000);
     } else {
-      const err = document.getElementById('errorMessage');
-      err.textContent = 'Error: ' + (data.message || 'Something went wrong');
-      err.classList.remove('d-none');
+      showToast('Error: ' + (d.message || 'Submission failed'), true);
       btn.disabled = false;
-      btn.textContent = 'Submit Application';
+      btn.textContent = 'Submit application →';
     }
-  } catch (err) {
-    const errEl = document.getElementById('errorMessage');
-    errEl.textContent = 'Network error. Please try again.';
-    errEl.classList.remove('d-none');
+  })
+  .catch(function(e) {
+    showToast('Network error: ' + e.message, true);
     btn.disabled = false;
-    btn.textContent = 'Submit Application';
-  }
-});
+    btn.textContent = 'Submit application →';
+  });
+}
+
+function showToast(msg, isError) {
+  var t = document.createElement('div');
+  t.className = 'toast-success';
+  if (isError) t.style.background = '#dc2626';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(function() { if (t.parentNode) t.parentNode.removeChild(t); }, 5000);
+}
 </script>
 {% endblock %}
