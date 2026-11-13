@@ -806,7 +806,7 @@
     // Session 75: Public download — no email/token in URL.
     // Email capture (rdEmailModal) is for retargeting only, not authorization.
     // Sending a mismatched email would 403 and block public certificate downloads.
-    var url = '/api/readiness/' + encodeURIComponent(c.certificate_id) + '/download';
+    var url = '/readiness/' + encodeURIComponent(c.certificate_id) + '/download-pdf';
     window.location.href = url;
   }
 
