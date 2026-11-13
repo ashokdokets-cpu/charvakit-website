@@ -13598,7 +13598,9 @@ async def api_readiness_verify(request: Request, certificate_hash: str):
         "readiness_score": row[4],
         "percentile": row[5],
         "benchmark": row[6],
-        "candidate_display": display,
+        "candidate_display": row[10] or "Verified Candidate",
+        "display_name": row[10] or "",
+        "issued_at": row[11].isoformat() if row[11] else None,
         "issued_at": row[8].isoformat() if row[8] else None,
     }
 
@@ -13732,8 +13734,11 @@ async def api_readiness_download(request: Request, certificate_id: str,
         "benchmark_score": row[7],
         "verdict": row[8],
         "certificate_hash": row[9],
-        "candidate_display": display,
-        "created_at": row[11].isoformat() if row[11] else None,
+        "candidate_display": row[10] or "Verified Candidate",
+        "display_name": row[10] or "Verified Candidate",
+        "created_at": row[11].strftime("%d %b %Y") if row[11] else "N/A",
+        "issued_at": row[11].strftime("%d %b %Y") if row[11] else "N/A",
+        "verify_url_path": "/api/readiness/verify/",
         "source": row[12] or "written",
     }
 
@@ -13968,7 +13973,7 @@ async def api_readiness_get(request: Request, certificate_id: str):
             "payload": row[8],
             "certificate_hash": row[9],
             "candidate_display": display,
-            "created_at": row[11].isoformat() if row[11] else None,
+        "created_at": row[11].strftime("%d %b %Y") if row[11] else "N/A",
             "source": row[12] or "written",
             "supersedes": row[13],
             "superseded_by": row[14],
