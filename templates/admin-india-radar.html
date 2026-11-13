@@ -44,7 +44,7 @@
             <th>Title</th>
             <th>Company</th>
             <th>Location</th>
-            <th>Skills</th>
+            <th>Skills</th><th>Action</th>
           </tr>
         </thead>
         <tbody id="fetchedTable">
@@ -77,7 +77,7 @@ async function loadRadar() {
         <td><span class="badge bg-${a.status === 'alerted' ? 'primary' : 'warning'}">${a.status}</span></td>
         <td>
           ${a.status === 'pending_alert' 
-            ? `<button onclick="pushAlert(${a.alert_id})" class="btn btn-sm btn-primary">✉ Send Alert</button>`
+            ? `<button onclick="pushAlert(${a.alert_id})" class="btn btn-sm btn-primary">✉ Send Alert</button> <button onclick="deleteAlert(${a.alert_id}, '${a.job_id}')" class="btn btn-sm btn-outline-danger ms-1">🗑</button>`
             : `<span class="text-success"><i class="bi bi-check-circle"></i> Sent</span>`}
         </td>
       </tr>
@@ -100,7 +100,7 @@ async function loadFetchedJobs() {
           <td class="fw-bold">${j.title}</td>
           <td>${j.company}</td>
           <td>${j.location}</td>
-          <td class="small text-muted">${j.skills}</td>
+          <td class="small text-muted">${j.skills}</td><td><button onclick="deleteFetched('${j.job_id}')" class="btn btn-sm btn-outline-danger">🗑</button></td>
         </tr>
       `).join('');
     } else {
@@ -130,6 +130,26 @@ async function pushAlert(id) {
     alert('Alert email sent to candidate!');
     loadRadar();
   } catch(e) { alert('Error sending email.'); }
+}
+
+async function deleteAlert(alertId, jobId) {
+    if (!confirm('Remove this job from the matched list?')) return;
+    const token = localStorage.getItem('authToken') || '';
+    await fetch(`/api/admin/india-radar/alerts/${alertId}`, {
+        method: 'DELETE',
+        headers: {'Authorization': 'Bearer ' + token}
+    });
+    loadRadar(); // Refresh table
+}
+
+async function deleteFetched(jobId) {
+    if (!confirm('Remove this job from the raw fetched list?')) return;
+    const token = localStorage.getItem('authToken') || '';
+    await fetch(`/api/admin/india-radar/fetched/${jobId}`, {
+        method: 'DELETE',
+        headers: {'Authorization': 'Bearer ' + token}
+    });
+    loadFetchedJobs(); // Refresh table
 }
 
 document.addEventListener('DOMContentLoaded', function() {

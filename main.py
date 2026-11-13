@@ -22249,3 +22249,32 @@ async def api_admin_view_doc(request: Request, document_id: str):
     finally:
         if cur: cur.close()
         db.release_pooled_connection(conn)
+@app.delete("/api/admin/india-radar/alerts/{alert_id}")
+async def api_delete_radar_alert(request: Request, alert_id: int):
+    """Delete a single matched alert."""
+    require_admin(request)
+    from database import db
+    conn = db.get_pooled_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("DELETE FROM charvak_radar_alerts WHERE alert_id = %s", (alert_id,))
+        conn.commit()
+        return {"status": "success"}
+    finally:
+        cur.close()
+        db.release_pooled_connection(conn)
+
+@app.delete("/api/admin/india-radar/fetched/{job_id}")
+async def api_delete_radar_fetched(request: Request, job_id: str):
+    """Delete a single raw fetched job."""
+    require_admin(request)
+    from database import db
+    conn = db.get_pooled_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("DELETE FROM charvak_radar_fetched WHERE job_id = %s", (job_id,))
+        conn.commit()
+        return {"status": "success"}
+    finally:
+        cur.close()
+        db.release_pooled_connection(conn)
