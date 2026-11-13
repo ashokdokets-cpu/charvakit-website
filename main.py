@@ -14039,7 +14039,6 @@ async def api_readiness_get(request: Request, certificate_id: str):
 
 
 
-@app.get("/readiness/{certificate_id}/download-pdf")
 async def download_readiness_pdf_fixed(request: Request, certificate_id: str):
     """Fixed PDF download route that bypasses route-ordering issues."""
     from database import db
