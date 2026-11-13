@@ -11,8 +11,8 @@
 <meta property="og:url" content="https://www.charvakit.com/passport/{{ passport.handle }}">
 <meta property="og:image" content="https://www.charvakit.com/passport/{{ passport.handle }}/badge.svg">
 {% endif %}
-
 {% endblock %}
+
 {% block content %}
 
   <!-- Session 101: Privacy — Recruiter Visibility Toggle -->
@@ -193,43 +193,6 @@
   <div class="pp-hero">
     <div class="pp-hero-content">
       <h1 class="pp-name">{{ passport.display_name or passport.email.split("@")[0] }}</h1>
-      <div class="mt-2 mb-3" id="verifiedDocsContainer"></div>
-<script>
-// Session 113A: Permanent JS Fetch
-document.addEventListener('DOMContentLoaded', function() {
-    const handleMatch = window.location.pathname.match(/^\/passport\/([^\/]+)/);
-    if (!handleMatch) return;
-    const handle = handleMatch[1];
-
-    fetch('/api/passport/' + handle)
-        .then(r => r.json())
-        .then(data => {
-            const email = data.passport ? data.passport.email : null;
-            if (!email) return;
-            return fetch('/api/candidate/documents/list?email=' + encodeURIComponent(email));
-        })
-        .then(r => r ? r.json() : null)
-        .then(docData => {
-            if (!docData || docData.status !== 'success' || !docData.docs) return;
-            const verifiedDocs = docData.docs.filter(d => d.verification_status === 'verified');
-            if (verifiedDocs.length === 0) return;
-
-            const icons = { aadhaar: '🆔', pan: '💳', degree: '🎓', experience_letter: '📄' };
-            const labels = { aadhaar: 'Aadhaar', pan: 'PAN', degree: 'Degree', experience_letter: 'Experience' };
-            
-            const badges = verifiedDocs.map(d => `
-                <span class="badge bg-light text-success border border-success ms-1 mb-1" style="font-size: 0.85rem;">
-                    ✅ ${icons[d.document_type] || '📄'} ${labels[d.document_type] || d.document_type} Verified
-                </span>
-            `).join('');
-
-            const container = document.getElementById('verifiedDocsContainer');
-            if (container) {
-                container.innerHTML = badges;
-            }
-        });
-});
-</script>
       {% if passport.headline %}
         <p class="pp-headline">{{ passport.headline }}</p>
       {% endif %}
@@ -664,4 +627,3 @@ async function ppCreatePassport(ev) {
 }
 </script>
 {% endblock %}
-

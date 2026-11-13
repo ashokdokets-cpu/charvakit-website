@@ -565,22 +565,9 @@
       });
     }
 
-    var _payload = c.payload_json || c.payload || {};
-    var _rawGap = _payload.skill_breakdown || _payload.skill_gap || [];
-    var _gap = [];
-    if (Array.isArray(_rawGap)) {
-      _gap = _rawGap;
-    } else if (typeof _rawGap === "object" && _rawGap !== null) {
-      // Convert Dictionary {"Python": 90} to Array [{"topic": "Python", "score": 90}]
-      for (var key in _rawGap) {
-        if (_rawGap.hasOwnProperty(key)) {
-          var val = _rawGap[key];
-          var score = (typeof val === "object" && val !== null) ? (val.score || 0) : val;
-          _gap.push({"topic": key, "score": score});
-        }
-      }
-    }
-    renderSkillChart(_gap);
+    renderSkillChart(c.payload && c.payload.skill_gap ? c.payload.skill_gap : []);
+
+    // Session 19: upgrade CTA when the score is below the benchmark
     var _upCard = document.getElementById("rdUpgradeCard");
     if (_upCard) {
       _upCard.style.display = (score < (c.benchmark || 0)) ? "block" : "none";
@@ -819,7 +806,7 @@
     // Session 75: Public download — no email/token in URL.
     // Email capture (rdEmailModal) is for retargeting only, not authorization.
     // Sending a mismatched email would 403 and block public certificate downloads.
-    var url = '/api/readiness/' + encodeURIComponent(c.certificate_id) + '/download-pdf';
+    var url = '/api/readiness/' + encodeURIComponent(c.certificate_id) + '/download';
     window.location.href = url;
   }
 
