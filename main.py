@@ -13651,6 +13651,62 @@ async def api_readiness_list(request: Request, email: str):
     return {"status": "success", "certificates": certs, "count": len(certs)}
 
 
+@app.get("/api/readiness/{certificate_id}/download-pdf")
+async def download_readiness_pdf_fixed(request: Request, certificate_id: str):
+    """Fixed PDF download route that passes full name, date, and hash."""
+    from database import db
+    from pdf_engine import render_readiness_certificate_pdf
+    from fastapi.responses import Response
+    
+    conn = db.get_pooled_connection()
+    if not conn:
+        raise HTTPException(500, "DB unavailable")
+    cur = None
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT certificate_id, email, role, industry, level, readiness_score,
+                   percentile, benchmark_score, verdict, certificate_hash,
+                   display_name, created_at, source
+            FROM charvak_readiness_certificates
+            WHERE certificate_id = %s
+        """, (certificate_id,))
+        row = cur.fetchone()
+        if not row:
+            raise HTTPException(404, "Certificate not found")
+        
+        # Build the cert dict with ALL required fields
+        cert = {
+            "certificate_id": row[0],
+            "email": row[1],
+            "role": row[2],
+            "industry": row[3],
+            "level": row[4],
+            "readiness_score": row[5],
+            "percentile": row[6],
+            "benchmark_score": row[7],
+            "verdict": row[8],
+            "certificate_hash": row[9],
+            "candidate_display": row[10] or "Verified Candidate",
+            "display_name": row[10] or "Verified Candidate",
+            "created_at": row[11].strftime("%d %b %Y") if row[11] else "N/A",
+            "issued_at": row[11].strftime("%d %b %Y") if row[11] else "N/A",
+            "verify_url_path": "/api/readiness/verify/",
+            "source": row[12] or "written",
+        }
+        
+        pdf_bytes = render_readiness_certificate_pdf(cert)
+        
+        return Response(content=pdf_bytes, media_type="application/pdf", headers={
+            "Content-Disposition": f'attachment; filename="Charvak_Certificate_{certificate_id}.pdf"'
+        })
+    except Exception as e:
+        logger.error(f"PDF generation failed for {certificate_id}: {e}")
+        raise HTTPException(500, f"PDF generation error: {str(e)[:100]}")
+    finally:
+        if cur: cur.close()
+        db.release_pooled_connection(conn)
+
 @app.get("/api/readiness/{certificate_id}/download")
 @limiter.limit("30/minute")
 async def api_readiness_download(request: Request, certificate_id: str,
