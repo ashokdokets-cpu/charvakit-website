@@ -216,3 +216,10 @@ _patch_magic_link.ps1
 diag_radar.py
 insert_cand.sql
 main.py.bak_*
+
+# Session test scripts
+add_indian_candidate.py
+force_prod_candidate.py
+generate_cert.py
+run_bench_match.py
+run_india_scan.py
