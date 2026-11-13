@@ -34,58 +34,50 @@ class IndiaRadarEngine:
             "X-RapidAPI-Host": "daily-international-job-postings.p.rapidapi.com"
         }
         
-        from datetime import datetime
-        current_month = datetime.now().strftime("%Y-%m")
+        # We request NCS data and India location
+        # Use a 7-day rolling range to guarantee volume. Remove portal filter to pull from all Indian sources.
+        from datetime import datetime, timedelta
+        today = datetime.now()
+        week_ago = today - timedelta(days=7)
         
         params = {
             "countryCode": "in",
-            "dateCreated": current_month,
+            "dateCreatedMin": week_ago.strftime("%Y-%m-%d"),
+            "dateCreatedMax": today.strftime("%Y-%m-%d"),
             "limit": limit
         }
 
         try:
             resp = requests.get(self.base_url, headers=headers, params=params, timeout=30)
             if resp.status_code != 200:
-                # Log the EXACT error from the API
                 logger.error(f"[india_radar] API Error {resp.status_code}: {resp.text}")
                 return []
                 
             data = resp.json()
+            # Techmap returns the array in the 'result' key
             jobs = data.get("result", [])
             logger.info(f"[india_radar] Fetched {len(jobs)} raw jobs from API.")
             return jobs
         except Exception as e:
             logger.error(f"[india_radar] API fetch failed: {e}")
             return []
+
     def _is_truly_india(self, job):
-        """Safety filter to ensure no US/EU jobs slip through.
-        
-        Rules:
-        1. If location is blank/None, ALLOW (countryCode=in already guarantees India)
-        2. If location contains non-India country, REJECT
-        3. If location/title/desc contains India keyword, ALLOW
-        4. Otherwise, ALLOW (benefit of the doubt - API filter is India-only)
-        """
-        loc = str(job.get("location", "") or "").lower().strip()
-        title = str(job.get("title", "") or "").lower()
-        desc = str(job.get("description", "") or "").lower()
+        """Safety filter to ensure no US/EU jobs slip through."""
+        loc = str(job.get("location", "")).lower()
+        title = str(job.get("title", "")).lower()
+        desc = str(job.get("description", "")).lower()
         combined = f"{loc} {title} {desc}"
-
-        # Rule 1: Blank location → allow (India default)
-        if not loc or loc == "none":
-            return True
-
-        # Rule 2: Explicit non-India country → reject
-        non_india = ["usa", "united states", "uk", "canada", "europe", "germany", "australia", "singapore", "japan", "china"]
-        if any(kw in loc for kw in non_india):
-            return False
-
-        # Rule 3: Explicit India keyword → allow
+        
+        # If it contains any Indian keyword, it's valid
         if any(kw in combined for kw in self.india_keywords):
             return True
-
-        # Rule 4: Default to allow (API is already filtered by countryCode=in)
-        return True
+            
+        # If it contains these explicit non-India keywords, reject it
+        if any(kw in loc for kw in ["usa", "united states", "uk", "canada", "europe", "germany"]):
+            return False
+            
+        return False
 
     def run_radar(self):
         """Fetch, Match, and Alert."""
@@ -118,7 +110,7 @@ class IndiaRadarEngine:
                 return {"status": "no_candidates", "matched": 0, "message": "No Indian candidates found in DB."}
 
             # Clear old fetched jobs so we only see the latest scan
-            # REMOVED TRUNCATE: Jobs accumulate. Old jobs are archived, not deleted.
+            cur.execute("TRUNCATE TABLE charvak_radar_fetched")
 
             for job in raw_jobs:
                 job_title = str(job.get("title", ""))
@@ -130,22 +122,23 @@ class IndiaRadarEngine:
                 job_skills = job.get("skills", []) or []
                 job_desc = str(job.get("description", "") or "")
                 
-                # Compute a stable unique job ID (used by both fetched table and alerts)
-                ext_id = job.get("id") or job.get("job_id")
-                if not ext_id:
-                    import hashlib
-                    raw_string = f"{job_title}|{job_company}".encode("utf-8")
-                    ext_id = "IND-" + hashlib.md5(raw_string).hexdigest()[:10].upper()
-                external_job_id = str(ext_id)
-
                 # SAVE TO FETCHED TABLE FOR UI VISIBILITY
                 try:
                     cur.execute("""
                         INSERT INTO charvak_radar_fetched (job_id, title, company, location, skills)
                         VALUES (%s, %s, %s, %s, %s)
-                    """, (external_job_id, job_title, job_company, job_loc, str(job_skills)))
+                        ON CONFLICT (job_id) DO NOTHING
+                    """, (str(job.get("id", "unknown")), job_title, job_company, job_loc, str(job_skills)))
                 except Exception as e:
                     logger.warning(f"Failed to save fetched job: {e}")
+
+                # Extract job ID. If missing, generate a consistent hash from the title & company.
+                ext_id = job.get("id")
+                if not ext_id:
+                    import hashlib
+                    raw_string = f"{job_title}-{job_company}".encode('utf-8')
+                    ext_id = "IND-" + hashlib.md5(raw_string).hexdigest()[:10].upper()
+                external_job_id = str(ext_id)
 
                 # For India Radar, if location is blank, we allow it.
                 # We only apply the strict filter if a location WAS provided.

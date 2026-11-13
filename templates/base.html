@@ -423,16 +423,6 @@ body.logged-in #topAuthIn {
     }
   }
 </style>
-<style>
-  /* Fix for tall dropdowns going off-screen */
-  @media (min-width: 992px) {
-    .dropdown-menu {
-      max-height: calc(100vh - 120px); /* Leave space for nav bar */
-      overflow-y: auto; /* Add scrollbar if content is taller */
-      overflow-x: hidden;
-    }
-  }
-</style>
 </head>
 <body>
     <!-- Global Bar -->
@@ -588,8 +578,7 @@ body.logged-in #topAuthIn {
                         <li><a class="dropdown-item" href="/career-center" data-i18n="nav_services.career_center">My Career Center</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><h6 class="dropdown-header">For Employers</h6></li>
-                        <li><a class="dropdown-item" style="color:#0d9488;font-weight:700;" href="/for-employers">💰 How It Works (Pay on Hire)</a></li>
-                        <li><a class="dropdown-item" style="color:#3ba591;font-weight:600;" href="/employers">🏢 Browse Open Roles</a></li>
+                        <li><a class="dropdown-item" style="color:#3ba591;font-weight:600;" href="/employers">🏢 Hire Talent (Public)</a></li>
                         <li><a class="dropdown-item" href="/employer/dashboard">Employer Dashboard (Internal)</a></li>
                         <li><a class="dropdown-item" href="/recruiter/dashboard"><strong>Recruiter Pipeline</strong> (all sources)</a></li>
                         <li><a class="dropdown-item" href="/screen/dashboard">AI Screen Dashboard</a></li>
@@ -606,9 +595,6 @@ body.logged-in #topAuthIn {
                         <i class="bi bi-building me-1"></i>For Business
                     </a>
                     <ul class="dropdown-menu">
-                        <li><h6 class="dropdown-header">For Business</h6></li>
-                        <li><a class="dropdown-item" style="color:#0d9488;font-weight:700;" href="/pricing-b2b">💰 B2B Pricing & Plans</a></li>
-                        <li><hr class="dropdown-divider"></li>
                         <li><h6 class="dropdown-header">Services</h6></li>
                         <li><a class="dropdown-item" href="/services/web-design" data-i18n="nav_services.web_design">Web Designing</a></li>
                         <li><a class="dropdown-item" href="/services/staff-augmentation" data-i18n="nav_services.staff_augmentation">Staff Augmentation</a></li>
@@ -627,10 +613,6 @@ body.logged-in #topAuthIn {
                         <li><h6 class="dropdown-header">Education</h6></li>
                         <li><a class="dropdown-item" href="/university" data-i18n="nav_resources.university_portal">University Portal</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><h6 class="dropdown-header">Self-Serve Portals</h6></li>
-                        <li><a class="dropdown-item" style="color:#0d9488;font-weight:600;" href="/college/assessment">🎓 College Readiness Portal</a></li>
-                        <li><a class="dropdown-item" style="color:#0d9488;font-weight:600;" href="/employer/assessment">🏢 Employer Hiring Portal</a></li>
-                        <li><hr class="dropdown-divider"></li>
                         <li><h6 class="dropdown-header">Tools</h6></li>
                         <li><a class="dropdown-item" href="/ats" data-i18n="nav_resources.ats_integration">ATS Integration</a></li>
                         <li><a class="dropdown-item" href="/team-dashboard" data-i18n="nav_resources.team_dashboard">Team Dashboard</a></li>
@@ -639,6 +621,10 @@ body.logged-in #topAuthIn {
                         <li><a class="dropdown-item" href="/about" data-i18n="nav_resources.about">About</a></li>
                         <li><a class="dropdown-item" href="/team" data-i18n="nav_resources.our_team">Our Team</a></li>
                         <li><a class="dropdown-item" href="/contact" data-i18n="nav_resources.contact">Contact</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><h6 class="dropdown-header">Assessment Portals</h6></li>
+                        <li><a class="dropdown-item" href="/college/assessment">College Readiness Portal</a></li>
+                        <li><a class="dropdown-item" href="/employer/assessment">Employer Hiring Portal</a></li>
                     </ul>
                 </li>
 
@@ -707,7 +693,7 @@ body.logged-in #topAuthIn {
         <span class="badge bg-success me-2">✅ AI-Verified Talent</span>
         <span class="badge bg-success me-2">🔒 Escrow Protected</span>
         <span class="badge bg-success me-2"> GDPR/CCPA Compliant</span>
-        <span class="badge bg-success">⚡ 48-Hour Shortlist</span>
+        <span class="badge bg-success">⚡ 48-Hour Placement</span>
     </div>
 </div>
                 <div class="col-lg-2 col-md-6 mb-4">

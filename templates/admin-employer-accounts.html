@@ -123,8 +123,6 @@ function renderAccounts(accounts) {
         '<button class="ea-btn ea-btn-approve" onclick="approveAccount(\'' + esc(a.account_id) + '\')">✓ Approve</button>' +
         '<button class="ea-btn ea-btn-reject" onclick="rejectAccount(\'' + esc(a.account_id) + '\')">✗ Reject</button>' +
         '</div>';
-    } else if (a.status === 'approved') {
-      actions = '<button class="ea-btn" style="background:#0d9488;color:white;padding:6px 14px;border-radius:6px;font-weight:600;cursor:pointer;" onclick="sendLoginLink(\'' + esc(a.account_id) + '\', this)">📧 Send Login Link</button>';
     }
 
     return '<div class="ea-card">' +
@@ -149,31 +147,6 @@ function renderAccounts(accounts) {
       '</div>' +
     '</div>';
   }).join('');
-}
-
-function sendLoginLink(accountId, btn) {
-  btn.disabled = true;
-  btn.textContent = 'Sending...';
-  fetch('/api/admin/employer-accounts/' + accountId + '/send-login-link', {
-    method: 'POST',
-    headers: authHeaders()
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(d) {
-    if (d.status === 'success') {
-      btn.textContent = '✅ Sent to ' + d.sent_to;
-      btn.style.background = '#10b981';
-    } else {
-      alert('Error: ' + (d.message || 'Failed'));
-      btn.disabled = false;
-      btn.textContent = '📧 Send Login Link';
-    }
-  })
-  .catch(function() {
-    alert('Network error');
-    btn.disabled = false;
-    btn.textContent = '📧 Send Login Link';
-  });
 }
 
 function approveAccount(accountId) {
