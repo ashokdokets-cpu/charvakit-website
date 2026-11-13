@@ -565,7 +565,21 @@
       });
     }
 
-    renderSkillChart(c.payload && c.payload.skill_gap ? c.payload.skill_gap : []);
+    var _payload = c.payload_json || c.payload || {};
+    var _rawGap = _payload.skill_breakdown || _payload.skill_gap || [];
+    var _gap = [];
+    if (Array.isArray(_rawGap)) {
+      _gap = _rawGap;
+    } else if (typeof _rawGap === "object" && _rawGap !== null) {
+      for (var key in _rawGap) {
+        if (_rawGap.hasOwnProperty(key)) {
+          var val = _rawGap[key];
+          var score = (typeof val === "object" && val !== null) ? (val.score || 0) : val;
+          _gap.push({"topic": key, "score": score});
+        }
+      }
+    }
+    renderSkillChart(_gap);
 
     // Session 19: upgrade CTA when the score is below the benchmark
     var _upCard = document.getElementById("rdUpgradeCard");
