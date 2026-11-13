@@ -13976,6 +13976,52 @@ async def api_readiness_get(request: Request, certificate_id: str):
     }
 
 
+
+@app.get("/readiness/{certificate_id}/download-pdf")
+async def download_readiness_pdf_fixed(request: Request, certificate_id: str):
+    """Fixed PDF download route that bypasses route-ordering issues."""
+    from database import db
+    from pdf_engine import render_readiness_certificate_pdf
+    from fastapi.responses import Response
+    import json
+    
+    conn = db.get_pooled_connection()
+    if not conn:
+        raise HTTPException(500, "DB unavailable")
+    cur = None
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM charvak_readiness_certificates WHERE certificate_id = %s", (certificate_id,))
+        row = cur.fetchone()
+        if not row:
+            raise HTTPException(404, "Certificate not found")
+        
+        # Map row to dict (adjust column indices based on your schema)
+        # This is a simplified mapping; you may need to adjust indices
+        cert_data = {
+            "certificate_id": row[0],
+            "email": row[2],
+            "display_name": row[3] or "Candidate", # Fallback if name is missing
+            "role": row[4],
+            "industry": row[5],
+            "level": row[6],
+            "readiness_score": row[7],
+            "certificate_hash": row[10],
+            "issued_at": row[13].isoformat() if row[13] else None,
+        }
+        
+        pdf_bytes = render_readiness_certificate_pdf(cert_data, report_type="readiness")
+        
+        return Response(content=pdf_bytes, media_type="application/pdf", headers={
+            "Content-Disposition": f'attachment; filename="Charvak_Certificate_{certificate_id}.pdf"'
+        })
+    except Exception as e:
+        logger.error(f"PDF generation failed for {certificate_id}: {e}")
+        raise HTTPException(500, f"PDF generation error: {str(e)[:100]}")
+    finally:
+        if cur: cur.close()
+        db.release_pooled_connection(conn)
+
 @app.get("/readiness/{certificate_id}", response_class=HTMLResponse)
 async def readiness_page(request: Request, certificate_id: str):
     """Public shareable certificate page. Renders readiness.html.
