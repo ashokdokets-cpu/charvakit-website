@@ -15,6 +15,7 @@ logger = logging.getLogger("charvakit.email_queue")
 class EmailQueue:
     def __init__(self):
         logger.info("Email Queue ready")
+        self._ensure_table()  # Session 115: ensure queue table exists
 
     def _ensure_table(self):
         try:
@@ -153,6 +154,14 @@ class EmailQueue:
                   </p>
                 </div>
                 """
+                return email_engine.send_email(email, subject, body).get("status") == "success"
+            elif template == "cert_career_issued":
+                from cert_email_helpers import build_cert_career_email
+                subject, body = build_cert_career_email(payload or {})
+                return email_engine.send_email(email, subject, body).get("status") == "success"
+            elif template == "cert_career_admin_notify":
+                from cert_email_helpers import build_cert_admin_email
+                subject, body = build_cert_admin_email(payload or {})
                 return email_engine.send_email(email, subject, body).get("status") == "success"
             else:
                 logger.warning(f"Unknown template: {template}")
