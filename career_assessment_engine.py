@@ -2995,15 +2995,24 @@ class CareerAssessmentEngine:
             correct_count = sum(1 for s in scored if s.get("is_correct"))
             passed = overall >= PASSING_SCORE
 
+            # Session 116: Compute skill_breakdown_json for this assessment (non-fatal)
+            _skill_breakdown = []
+            try:
+                _skill_breakdown = self._skill_gap_from_answers(questions, scored) or []
+            except Exception as _sb_err:
+                logger.warning(f"skill_breakdown computation failed for {assessment_id} (non-fatal): {_sb_err}")
+            _skill_breakdown_json = json.dumps(_skill_breakdown)
+
             cur.execute("""
                 UPDATE charvak_career_assessments
                 SET status = 'completed',
                     score = %s,
                     passed = %s,
                     correct_count = %s,
+                    skill_breakdown_json = %s::jsonb,
                     completed_at = CURRENT_TIMESTAMP
                 WHERE assessment_id = %s
-            """, (overall, passed, correct_count, assessment_id))
+            """, (overall, passed, correct_count, _skill_breakdown_json, assessment_id))
             conn.commit()
             cur.close(); conn.close()
         except Exception as e:
