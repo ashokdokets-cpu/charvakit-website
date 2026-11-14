@@ -1769,6 +1769,9 @@ if (document.readyState === 'loading') {
 async function showJdCoverageAndCalibrate(jdText) {
   var container = document.getElementById('carJdCoverage');
   if (!container) return;
+  // Session 115.1b: Clear stale auto-calibrate button from previous JD analysis
+  var staleBtn = document.getElementById('carAutoCalBtn');
+  if (staleBtn) staleBtn.remove();
   container.style.display = 'block';
   container.innerHTML = '<div class="as-cov-banner" style="background:#f3f4f6;color:#6b7280;">Checking skill coverage...</div>';
 

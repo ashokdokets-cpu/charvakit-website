@@ -5172,6 +5172,17 @@ async def api_skills_auto_calibrate(request: Request):
         if skill_single and not skills_list:
             skills_list = [skill_single]
 
+        # Session 115.1b: empty skills list is a valid no-op (nothing to calibrate)
+        if isinstance(skills_list, list) and len(skills_list) == 0 and not skill_single:
+            return {
+                "status": "success",
+                "results": [],
+                "total": 0,
+                "succeeded": 0,
+                "failed": 0,
+                "message": "No skills to calibrate",
+            }
+
         if not skills_list or not isinstance(skills_list, list):
             return JSONResponse(status_code=400, content={
                 "status": "error",
