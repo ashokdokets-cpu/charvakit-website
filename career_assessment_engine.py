@@ -2721,6 +2721,30 @@ class CareerAssessmentEngine:
             tier_label = tier["label"] if tier else row[7].title()
             tier_color = tier["color"] if tier else "#6b7280"
 
+            # Session 116: Fetch skill_breakdown_json from source assessment for "Skills Measured" display
+            _skill_breakdown = []
+            try:
+                _assess_id = row[2]
+                if _assess_id:
+                    _conn2 = db.get_connection()
+                    _cur2 = _conn2.cursor()
+                    _cur2.execute("SELECT skill_breakdown_json FROM charvak_career_assessments WHERE assessment_id = %s", (_assess_id,))
+                    _sb_row = _cur2.fetchone()
+                    _cur2.close()
+                    _conn2.close()
+                    if _sb_row and _sb_row[0]:
+                        _sb = _sb_row[0]
+                        if isinstance(_sb, dict):
+                            _sb = [{"topic": k, "score": (v if isinstance(v, (int, float)) else (v or {}).get("score", 0))} for k, v in _sb.items()]
+                        if isinstance(_sb, list):
+                            _skill_breakdown = [
+                                {"topic": s.get("topic"), "score": s.get("score", 0), "status": s.get("status", "")}
+                                for s in _sb if isinstance(s, dict) and s.get("topic")
+                            ]
+            except Exception as _sb_err:
+                logger.warning(f"skill_breakdown lookup failed for {cert_id} (non-fatal): {_sb_err}")
+
+
             return {
                 "status": "success",
                 "certification": {
@@ -2759,6 +2783,7 @@ class CareerAssessmentEngine:
                     "is_expired": (
                         (row[24] < datetime.utcnow()) if len(row) > 24 and row[24] else False
                     ),
+                    "skill_breakdown": _skill_breakdown,
                 },
             }
         except Exception as e:
