@@ -1858,13 +1858,25 @@ async function carAutoCalibrate() {
       return;
     }
 
-    // Call auto-calibrate endpoint
-    var r2 = await fetch('/api/skills/auto-calibrate', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({skills: missing}),
-    });
-    var d2 = await r2.json();
+    // Call auto-calibrate endpoint (chunked — backend caps at 20 skills/request)
+    var d2 = { succeeded: 0, failed: 0, results: [] };
+    var _CHUNK = 20;
+    for (var _i = 0; _i < missing.length; _i += _CHUNK) {
+      var _batch = missing.slice(_i, _i + _CHUNK);
+      try {
+        var r2 = await fetch('/api/skills/auto-calibrate', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({skills: _batch}),
+        });
+        var _dj = await r2.json();
+        d2.succeeded += (_dj.succeeded || 0);
+        d2.failed += (_dj.failed || 0);
+        if (Array.isArray(_dj.results)) d2.results = d2.results.concat(_dj.results);
+      } catch (_e) {
+        d2.failed += _batch.length;
+      }
+    }
 
     // Show progress status
     var status = document.createElement('div');
