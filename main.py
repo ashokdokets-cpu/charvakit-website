@@ -13347,6 +13347,96 @@ async def api_career_cert_verify(cert_hash: str):
 
 
 
+
+@app.get("/verify/{cert_hash}", response_class=HTMLResponse)
+async def api_verify_cert_html(request: Request, cert_hash: str):
+    """User-friendly certificate verification page (career + readiness)."""
+    try:
+        # 1. Try career certification first
+        from career_assessment_engine import career_assessment_engine
+        career_result = career_assessment_engine.verify_certification(cert_hash)
+        if career_result.get("valid"):
+            issued_raw = career_result.get("issued_at") or ""
+            issued_str = issued_raw[:10] if issued_raw else "N/A"
+            cert_id = career_result.get("cert_id") or ""
+            return template_response(
+                "verify.html", request, "Certificate Verification - Charvak",
+                valid=True,
+                cert_type_label="Career Certification",
+                cert_id=cert_id,
+                candidate_display=career_result.get("candidate_display") or "Anonymous",
+                role=career_result.get("role") or "",
+                industry=career_result.get("industry") or "",
+                level=career_result.get("level") or "",
+                score=career_result.get("score") or 0,
+                badge_label=career_result.get("badge_label") or "Certified",
+                badge_color=career_result.get("badge_color") or "#3ba591",
+                issued_at=issued_str,
+                expires_at="",
+                revoked_at="",
+                hash_checked=cert_hash,
+                view_cert_url=f"/career-certification/{cert_id}",
+                pdf_url=f"/api/career-certification/{cert_id}/pdf",
+            )
+
+        # 2. Try readiness certificate
+        from database import db
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT certificate_id, email, role, industry, level,
+                   readiness_score, created_at, revoked_at
+            FROM charvak_readiness_certificates
+            WHERE certificate_hash = %s
+        """, (cert_hash,))
+        row = cur.fetchone()
+        cur.close()
+        conn.close()
+
+        if row:
+            cert_id = row[0]
+            email = row[1] or ""
+            masked = ""
+            if "@" in email:
+                local, domain = email.split("@", 1)
+                masked = (local[0] + "***@" + domain) if local else "***@" + domain
+            issued_raw = row[6]
+            issued_str = issued_raw.strftime("%Y-%m-%d") if issued_raw else "N/A"
+            revoked_str = row[7].strftime("%Y-%m-%d") if row[7] else ""
+            return template_response(
+                "verify.html", request, "Certificate Verification - Charvak",
+                valid=not bool(row[7]),
+                revoked=bool(row[7]),
+                cert_type_label="Role Readiness Certificate",
+                cert_id=cert_id,
+                candidate_display=masked,
+                role=row[2] or "",
+                industry=row[3] or "",
+                level=row[4] or "",
+                score=row[5] or 0,
+                badge_label="Verified",
+                badge_color="#3ba591",
+                issued_at=issued_str,
+                expires_at="",
+                revoked_at=revoked_str,
+                hash_checked=cert_hash,
+                view_cert_url=f"/readiness/{cert_id}",
+                pdf_url=f"/api/readiness/{cert_id}/download",
+            )
+
+        # 3. Not found — 404 status
+        return templates.TemplateResponse(
+            "verify.html",
+            {"request": request, "title": "Certificate Not Found - Charvak",
+             "not_found": True, "hash_checked": cert_hash},
+            status_code=404
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        return handle_error(e, "verify cert html")
+
+
 # =============================================================================
 # Session 82+ -- F1: Public Scorecard Routes
 # =============================================================================
