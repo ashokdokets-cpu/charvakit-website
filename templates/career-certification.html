@@ -35,6 +35,7 @@
                         <div class="text-center mb-4">
                             <p class="text-muted mb-1 small text-uppercase fw-bold">This certifies that</p>
                             <h2 class="as-h3 mb-2" id="candidateDisplay">—</h2>
+                            <div id="identityBadges" class="mb-2" style="display:flex;justify-content:center;flex-wrap:wrap;gap:6px;"></div>
                             <p class="text-muted mb-3">has demonstrated proven expertise in</p>
                             <h1 class="display-6 fw-bold" id="certRole">—</h1>
                             <p class="text-muted" id="certLevel">—</p>
@@ -55,19 +56,38 @@
                         </div>
 
                         <div class="row text-center g-3 my-4">
-                            <div class="col-6">
+                            <div class="col-4">
                                 <div class="p-3 bg-light rounded">
                                     <div class="text-muted small text-uppercase mb-1">Score</div>
                                     <div class="fs-3 fw-bold" id="certScore">—<span class="fs-6 text-muted">/100</span></div>
                                 </div>
                             </div>
-                            <div class="col-6">
+                            <div class="col-4">
                                 <div class="p-3 bg-light rounded">
                                     <div class="text-muted small text-uppercase mb-1">Issued</div>
                                     <div class="fs-5 fw-semibold" id="certIssued">—</div>
                                 </div>
                             </div>
+                            <div class="col-4">
+                                <div class="p-3 bg-light rounded">
+                                    <div class="text-muted small text-uppercase mb-1">Expires</div>
+                                    <div class="fs-5 fw-semibold" id="certExpires">—</div>
+                                </div>
+                            </div>
                         </div>
+                        <!-- Session 116: Skills Measured section (MCQ + Coding) -->
+                        <div id="skillsSection" class="mt-4" style="display:none;">
+                            <div class="p-4 rounded" style="background:#f9fafb;border:1px solid #e5e7eb;">
+                                <h4 class="fw-bold mb-3" style="font-size:1.05rem;color:#111827;">
+                                    📊 Skills Measured
+                                </h4>
+                                <div id="skillsGrid" class="d-flex flex-wrap gap-2 mb-3"></div>
+                                <div class="mt-2">
+                                    <span class="badge bg-secondary" id="certFormatBadge">Format: —</span>
+                                </div>
+                            </div>
+                        </div>
+
 
                         <div class="text-center mt-4 pt-3 border-top">
                             <p class="text-muted small mb-1">Certification ID</p>
@@ -247,6 +267,39 @@ async function loadCert() {
         if (certData.certification_hash) {
             document.getElementById('verifyLink').href = '/api/career-certification/verify/' + certData.certification_hash;
             document.getElementById('verifyLink').textContent = '/api/career-certification/verify/' + certData.certification_hash;
+        }
+
+        // Session 116: Expiration date display
+        if (certData.expires_at) {
+            const expDate = new Date(certData.expires_at);
+            const expEl = document.getElementById('certExpires');
+            if (expEl) expEl.textContent = expDate.toLocaleDateString('en-US', {year: 'numeric', month: 'short', day: 'numeric'});
+        }
+
+        // Session 116: Skills Measured section
+        const skillSection = document.getElementById('skillsSection');
+        const skillGrid = document.getElementById('skillsGrid');
+        const skillData = certData.skill_breakdown || [];
+        if (skillSection && skillGrid && Array.isArray(skillData) && skillData.length > 0) {
+            skillSection.style.display = 'block';
+            skillGrid.innerHTML = "";
+            skillData.forEach(function(item) {
+                const topic = item.topic || "General";
+                const score = item.score || 0;
+                const status = item.status || "mixed";
+                const color = status === "strong" ? "#10b981" : (status === "mixed" ? "#f59e0b" : "#ef4444");
+                const chip = document.createElement("div");
+                chip.style.cssText = "display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;background:#fff;border:2px solid " + color + ";font-size:0.9rem;";
+                chip.innerHTML = "<strong>" + topic + "</strong><span style=\"color:" + color + ";font-weight:700;\">" + score + "%</span>";
+                skillGrid.appendChild(chip);
+            });
+        }
+
+        // Session 116: Format badge
+        const formatBadge = document.getElementById('certFormatBadge');
+        if (formatBadge) {
+            const fmt = (certData.format || "mcq").toUpperCase();
+            formatBadge.textContent = "Format: " + fmt;
         }
 
         // Integrity
