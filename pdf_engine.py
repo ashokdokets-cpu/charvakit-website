@@ -756,7 +756,8 @@ def render_readiness_certificate_pdf(cert: Dict, report_type: str = "readiness")
     try:
         _hash = cert.get("certificate_hash") or ""
         if _hash:
-            _verify_url = f"{site}/api/readiness/verify/{_hash}"
+            _verify_path = cert.get("verify_url_path") or "/api/readiness/verify/"
+            _verify_url = f"{site}{_verify_path}{_hash}"
             _qr_bytes = _generate_qr_png(_verify_url, box_size=5, border=1)
             if _qr_bytes:
                 from io import BytesIO as _BytesIO
@@ -1254,4 +1255,3 @@ def render_dean_report_pdf(data: dict) -> bytes:
     if isinstance(_out, (bytes, bytearray)):
         return bytes(_out)
     return _out.encode("latin-1")
-
