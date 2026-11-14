@@ -2501,7 +2501,7 @@ class CareerAssessmentEngine:
 
             # Load the assessment (with format + language for coding/sql extension)
             cur.execute("""
-                SELECT email, role, industry, level, score, passed, status, integrity_summary, format, language
+                SELECT email, role, industry, level, score, passed, status, integrity_summary, format, language, skill_breakdown_json
                 FROM charvak_career_assessments
                 WHERE assessment_id = %s
             """, (assessment_id,))
@@ -2511,7 +2511,7 @@ class CareerAssessmentEngine:
                 conn.close()
                 return {"status": "error", "message": "Assessment not found"}
 
-            a_email, role, industry, level, score, passed, status, integrity, assessment_format, assessment_language = a_row
+            a_email, role, industry, level, score, passed, status, integrity, assessment_format, assessment_language, skill_breakdown = a_row
             assessment_format = assessment_format or "mcq"
             assessment_language = (assessment_language or "").strip().lower()
 
@@ -2636,6 +2636,41 @@ class CareerAssessmentEngine:
 
             tier_key = tier["key"]
             logger.info(f"Career cert issued: {cert_id} for {email} ({role}, {level}, score={score}, tier={tier_key})")
+
+            # Session 115.1 (Option B): enqueue candidate + admin emails on NEW cert issuance
+            try:
+                from email_queue import email_queue
+
+                # Compute top 3 + bottom 3 topics from skill_breakdown (may be list or dict)
+                _top_topics = []
+                _top_weak = []
+                _sb = skill_breakdown
+                if isinstance(_sb, dict):
+                    _sb = [{"topic": k, "score": (v if isinstance(v, (int, float)) else (v or {}).get("score", 0))} for k, v in _sb.items()]
+                if isinstance(_sb, list) and _sb:
+                    _scored = [s for s in _sb if isinstance(s, dict) and s.get("topic")]
+                    _sorted_desc = sorted(_scored, key=lambda x: x.get("score", 0), reverse=True)
+                    _top_topics = [[s["topic"], s.get("score", 0)] for s in _sorted_desc[:3]]
+                    _top_weak = [[s["topic"], s.get("score", 0)] for s in _sorted_desc[-3:]]
+
+                _notify_payload = {
+                    "candidate_name": _candidate_name,
+                    "candidate_email": email,
+                    "cert_id": cert_id,
+                    "role": role,
+                    "industry": industry,
+                    "score": score,
+                    "badge_tier": tier["key"],
+                    "cert_url": f"https://www.charvakit.com/career-certification/{cert_id}",
+                    "verify_url": f"https://www.charvakit.com/api/career-certification/verify/{cert_hash}",
+                    "top_topics": _top_topics,
+                    "top_weak": _top_weak,
+                }
+                email_queue.enqueue(email, "cert_career_issued", when_hours=0, payload=_notify_payload)
+                email_queue.enqueue("charvakit@gmail.com", "cert_career_admin_notify", when_hours=0, payload=_notify_payload)
+                logger.info(f"Cert emails queued for {cert_id}: candidate={email}, admin=charvakit@gmail.com, top={len(_top_topics)}, weak={len(_top_weak)}")
+            except Exception as _e:
+                logger.error(f"cert email enqueue failed for {cert_id}: {_e}")
 
             return {
                 "status": "success",
