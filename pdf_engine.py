@@ -688,7 +688,7 @@ def render_readiness_certificate_pdf(cert: Dict, report_type: str = "readiness")
     pdf.set_xy(0, 234)
     pdf.cell(W, 5, "Issued:  " + (issued or "N/A"), align="C")
 
-    verify_path = cert.get("verify_url_path") or "/api/readiness/verify/"
+    verify_path = cert.get("verify_url_path") or "/verify/"
     verify_url = site + verify_path + str(cert.get("certificate_hash") or "")
     pdf.set_xy(0, 240)
     pdf.set_font("DejaVu", size=7)
@@ -756,7 +756,7 @@ def render_readiness_certificate_pdf(cert: Dict, report_type: str = "readiness")
     try:
         _hash = cert.get("certificate_hash") or ""
         if _hash:
-            _verify_path = cert.get("verify_url_path") or "/api/readiness/verify/"
+            _verify_path = cert.get("verify_url_path") or "/verify/"
             _verify_url = f"{site}{_verify_path}{_hash}"
             _qr_bytes = _generate_qr_png(_verify_url, box_size=5, border=1)
             if _qr_bytes:

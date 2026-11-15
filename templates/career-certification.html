@@ -265,8 +265,8 @@ async function loadCert() {
 
         // Verify link
         if (certData.certification_hash) {
-            document.getElementById('verifyLink').href = '/api/career-certification/verify/' + certData.certification_hash;
-            document.getElementById('verifyLink').textContent = '/api/career-certification/verify/' + certData.certification_hash;
+            document.getElementById('verifyLink').href = '/verify/' + certData.certification_hash;
+            document.getElementById('verifyLink').textContent = '/verify/' + certData.certification_hash;
         }
 
         // Session 116: Expiration date display

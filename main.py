@@ -13307,7 +13307,7 @@ async def api_career_cert_pdf(cert_id: str):
             "display_name": display,
             "verdict": badge_label + " — Career Assessment",
             "issued": (cert_data.get("issued_at") or "")[:10],  # YYYY-MM-DD
-            "verify_url_path": "/api/career-certification/verify/",
+            "verify_url_path": "/verify/",
             "issued_at": cert_data.get("issued_at"),
             "created_at": cert_data.get("issued_at"),  # renderer looks for this
             # Coding/SQL extension (Session 73 / Batch A8)
@@ -13434,7 +13434,13 @@ async def api_verify_cert_html(request: Request, cert_hash: str):
     except HTTPException:
         raise
     except Exception as e:
-        return handle_error(e, "verify cert html")
+        logger.error(f"verify cert html error: {e}", exc_info=True)
+        return templates.TemplateResponse(
+            "verify.html",
+            {"request": request, "title": "Verification Error - Charvak",
+             "not_found": True, "hash_checked": cert_hash},
+            status_code=500
+        )
 
 
 # =============================================================================

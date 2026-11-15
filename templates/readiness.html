@@ -523,7 +523,7 @@
     document.getElementById("rdHash").textContent = c.certificate_hash || "--";
     document.getElementById("rdIssued").textContent =
       c.created_at ? new Date(c.created_at).toLocaleDateString("en-IN", { year: "numeric", month: "short", day: "numeric" }) : "--";
-    var verifyUrl = window.location.origin + "/api/readiness/verify/" + (c.certificate_hash || "");
+    var verifyUrl = window.location.origin + "/verify/" + (c.certificate_hash || "");
     document.getElementById("rdVerifyUrl").textContent = verifyUrl.replace(/^https?:[/][/]/, "");
 
     renderQR(verifyUrl);
