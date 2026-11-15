@@ -317,7 +317,23 @@ async function loadCert() {
                 riskHtml = '<div class="alert alert-warning py-2"><strong>⚠️ Elevated signals</strong> — ' + totalEvents + ' event(s) recorded. Employers may want to verify in interview.</div>';
             }
 
-            document.getElementById('integrityContent').innerHTML = riskHtml +
+            // Session 116: Add expandable detailed integrity signals
+            var _detailHtml = '';
+            var _counts = intg.counts || {};
+            var _hasAny = false;
+            var _sigList = '';
+            Object.keys(_counts).forEach(function(_k) {
+                if (_counts[_k] > 0) {
+                    _hasAny = true;
+                    var _lbl = _k.replace(/_/g, ' ').replace(/\b\w/g, function(l) { return l.toUpperCase(); });
+                    _sigList += '<li>' + _lbl + ': <strong>' + _counts[_k] + '</strong></li>';
+                }
+            });
+            if (_hasAny) {
+                _detailHtml = '<details class="mt-2"><summary class="small text-primary" style="cursor:pointer;user-select:none;">▸ Show detailed signals</summary><ul class="small mt-2 mb-0" style="padding-left:20px;">' + _sigList + '</ul></details>';
+            }
+
+            document.getElementById('integrityContent').innerHTML = riskHtml + _detailHtml +
                 '<p class="text-muted small mt-2 mb-0">Assessment integrity signals are recorded automatically to protect the credibility of every credential.</p>';
             document.getElementById('integrityPanel').style.display = 'block';
         }
