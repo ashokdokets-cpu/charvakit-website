@@ -307,6 +307,69 @@ async def admin_auth_guard(request: Request, call_next):
     return await call_next(request)
 
 
+# ============================================================
+# College Portal Middleware (Day 2 - Session 116)
+# Detects college subdomain from Host header.
+# Purely additive - existing routes unchanged.
+# Fails gracefully: if detection errors, routes work as normal.
+# ============================================================
+@app.middleware("http")
+async def college_portal_middleware(request: Request, call_next):
+    host = request.headers.get("host", "").lower()
+    request.state.college = None  # default: main site
+    try:
+        from college_config import get_reserved_subdomains, get_college
+        host_no_port = host.split(":")[0]
+        parts = host_no_port.split(".")
+        if len(parts) >= 3:
+            subdomain = parts[0]
+        elif len(parts) == 2 and parts[1] == "localhost":
+            subdomain = parts[0]
+        else:
+            subdomain = "www"
+        if subdomain and subdomain not in get_reserved_subdomains():
+            college = get_college(subdomain)
+            if college:
+                request.state.college = college
+    except Exception as _college_err:
+        import logging
+        logging.getLogger("charvakit.college_portal").warning(
+            f"College detection error: {_college_err}"
+        )
+    return await call_next(request)
+
+
+@app.get("/college/test", response_class=HTMLResponse)
+async def college_test_route(request: Request):
+    """Day 2 test route - confirms college detection works."""
+    college = getattr(request.state, "college", None)
+    host = request.headers.get("host", "")
+    if college:
+        feat_items = "".join(
+            f"<li>{k}: {chr(9989) if v else chr(10060)}</li>"
+            for k, v in college["features"].items()
+        )
+        html = (
+            "<html><body style='font-family:system-ui;padding:40px;'>"
+            f"<h1>College Portal Detected: {college['name']}</h1>"
+            f"<p><strong>Slug:</strong> {college['slug']}</p>"
+            f"<p><strong>Plan:</strong> {college['plan']}</p>"
+            f"<p><strong>Enrolled:</strong> {len(college['students'])}</p>"
+            f"<p><strong>Host:</strong> {host}</p>"
+            f"<h3>Features:</h3><ul>{feat_items}</ul>"
+            "</body></html>"
+        )
+    else:
+        html = (
+            "<html><body style='font-family:system-ui;padding:40px;'>"
+            "<h1>Main Charvak Site (no college detected)</h1>"
+            f"<p><strong>Host:</strong> {host}</p>"
+            "<p>Try: http://gec.localhost:8000/college/test</p>"
+            "</body></html>"
+        )
+    return HTMLResponse(html)
+
+
 
 
 # ============================================================
