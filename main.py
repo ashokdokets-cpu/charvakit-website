@@ -380,6 +380,98 @@ templates = Jinja2Templates(directory="templates")
 
 
 # ============================================================
+# College Portal Routes (Day 3 - Session 116)
+# Branded login + placement dashboard per college.
+# Purely additive - existing routes unchanged.
+# ============================================================
+
+@app.get("/college/login", response_class=HTMLResponse)
+async def college_login_page(request: Request):
+    """College-branded login page."""
+    college = getattr(request.state, "college", None)
+    if not college:
+        return HTMLResponse(
+            "<html><body style='font-family:system-ui;padding:40px;'>"
+            "<h1>College portal not found</h1>"
+            "<p>Please use your college's specific URL.</p>"
+            "</body></html>",
+            status_code=404
+        )
+    return templates.TemplateResponse(
+        "college-login.html",
+        {"request": request, "college": college}
+    )
+
+
+@app.get("/college/dashboard", response_class=HTMLResponse)
+async def college_dashboard_page(request: Request):
+    """College placement cell dashboard."""
+    college = getattr(request.state, "college", None)
+    if not college:
+        return RedirectResponse(url="/college/login", status_code=302)
+    from database import db
+    conn = db.get_connection()
+    cur = conn.cursor()
+    student_list = []
+    stats = {
+        "total_students": 0,
+        "assessments_completed": 0,
+        "certificates_issued": 0,
+        "placement_matches": 0,
+    }
+    try:
+        students = college.get("students", []) or []
+        stats["total_students"] = len(students)
+        if students:
+            placeholders = ",".join(["%s"] * len(students))
+            students_tuple = tuple(students)
+            cur.execute(
+                f"SELECT COUNT(*) FROM charvak_career_assessments WHERE email IN ({placeholders}) AND score IS NOT NULL",
+                students_tuple
+            )
+            stats["assessments_completed"] = cur.fetchone()[0] or 0
+            cur.execute(
+                f"SELECT COUNT(*) FROM charvak_career_certifications WHERE email IN ({placeholders})",
+                students_tuple
+            )
+            stats["certificates_issued"] = cur.fetchone()[0] or 0
+            cur.execute(
+                f"SELECT email, COUNT(*) as cnt, AVG(score) as avg_score FROM charvak_career_assessments WHERE email IN ({placeholders}) AND score IS NOT NULL GROUP BY email",
+                students_tuple
+            )
+            per_student = {}
+            for row in cur.fetchall():
+                per_student[row[0]] = {"count": row[1], "avg": round(float(row[2])) if row[2] is not None else None}
+            for email in students:
+                cur.execute("SELECT COUNT(*) FROM charvak_career_certifications WHERE email = %s", (email,))
+                cert_count = cur.fetchone()[0] or 0
+                info = per_student.get(email, {"count": 0, "avg": None})
+                student_list.append({
+                    "email": email,
+                    "assessment_count": info["count"],
+                    "avg_score": info["avg"],
+                    "certificate_count": cert_count,
+                })
+    except Exception as _dash_err:
+        logger.error(f"College dashboard stats failed: {_dash_err}")
+    finally:
+        cur.close()
+        db.release_pooled_connection(conn)
+    return templates.TemplateResponse(
+        "college-dashboard.html",
+        {"request": request, "college": college, "stats": stats, "students": student_list}
+    )
+
+
+@app.get("/college/logout")
+async def college_logout(request: Request):
+    """Clear college session and redirect to college login."""
+    response = RedirectResponse(url="/college/login", status_code=302)
+    response.delete_cookie("charvak_auth_token")
+    return response
+
+
+# ============================================================
 # PYDANTIC MODELS FOR INPUT VALIDATION
 # ============================================================
 

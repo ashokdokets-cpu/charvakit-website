@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ college.name }} — Placement Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { height: 100%; }
+        body {
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, {{ college.primary_color }} 0%, {{ college.primary_color }}dd 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            min-height: 100vh;
+        }
+        .login-wrap { max-width: 440px; width: 100%; }
+        .login-card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 48px 40px 40px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.25);
+        }
+        .college-logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            display: block;
+            object-fit: contain;
+            border-radius: 12px;
+            background: #f9fafb;
+            padding: 12px;
+        }
+        .college-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            background: {{ college.primary_color }}15;
+            color: {{ college.primary_color }};
+            border-radius: 999px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+        .college-name {
+            font-size: 1.65rem;
+            font-weight: 800;
+            color: #0f172a;
+            text-align: center;
+            margin-bottom: 6px;
+            line-height: 1.2;
+            letter-spacing: -0.5px;
+        }
+        .portal-title {
+            text-align: center;
+            color: #6b7280;
+            font-size: 0.95rem;
+            margin-bottom: 32px;
+        }
+        .form-group { margin-bottom: 18px; }
+        .form-label {
+            display: block;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #374151;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: border-color 0.15s;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: {{ college.primary_color }};
+            box-shadow: 0 0 0 3px {{ college.primary_color }}20;
+        }
+        .btn-login {
+            width: 100%;
+            padding: 14px;
+            background: {{ college.primary_color }};
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 8px;
+            font-family: inherit;
+            transition: transform 0.1s, box-shadow 0.15s;
+        }
+        .btn-login:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px {{ college.primary_color }}40;
+        }
+        .btn-login:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .error-msg {
+            background: #fef2f2;
+            border-left: 3px solid #ef4444;
+            color: #991b1b;
+            padding: 10px 14px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            margin-bottom: 16px;
+            display: none;
+        }
+        .error-msg.show { display: block; }
+        .footer {
+            text-align: center;
+            color: #9ca3af;
+            font-size: 0.78rem;
+            margin-top: 28px;
+            line-height: 1.6;
+        }
+        .footer a { color: {{ college.primary_color }}; text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+        .powered-by {
+            text-align: center;
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid #f3f4f6;
+            font-size: 0.72rem;
+            color: #9ca3af;
+        }
+        .powered-by strong { color: #3ba591; font-weight: 700; }
+        @media (max-width: 520px) {
+            .login-card { padding: 36px 24px 32px; }
+            .college-name { font-size: 1.4rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-wrap">
+        <div class="login-card">
+            <div style="text-align:center;">
+                <span class="college-badge">Placement Portal</span>
+            </div>
+            {% if college.logo_url %}
+            <img src="{{ college.logo_url }}" alt="{{ college.name }}" class="college-logo">
+            {% endif %}
+            <h1 class="college-name">{{ college.name }}</h1>
+            <p class="portal-title">Sign in to access assessments, certificates, and placement tools</p>
+
+            <div id="errorBox" class="error-msg"></div>
+
+            <form id="loginForm" onsubmit="return handleLogin(event)">
+                <div class="form-group">
+                    <label class="form-label" for="email">Email Address</label>
+                    <input type="email" id="email" class="form-input" placeholder="you@{{ college.slug }}.ac.in" required autocomplete="email">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="password">Password</label>
+                    <input type="password" id="password" class="form-input" placeholder="Enter your password" required autocomplete="current-password">
+                </div>
+                <button type="submit" class="btn-login" id="loginBtn">Sign In</button>
+            </form>
+
+            <p class="footer">
+                Don't have an account? Contact the placement cell at<br>
+                <a href="mailto:{{ college.contact_email }}">{{ college.contact_email }}</a>
+            </p>
+
+            <div class="powered-by">
+                Powered by <strong>Charvak IT Consulting</strong>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function handleLogin(e) {
+            e.preventDefault();
+            const btn = document.getElementById('loginBtn');
+            const errBox = document.getElementById('errorBox');
+            const email = document.getElementById('email').value.trim().toLowerCase();
+            const password = document.getElementById('password').value;
+
+            btn.disabled = true;
+            btn.textContent = 'Signing in...';
+            errBox.classList.remove('show');
+
+            try {
+                const r = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    credentials: 'include',
+                    body: JSON.stringify({email: email, password: password})
+                });
+                const d = await r.json();
+                if (d.status === 'success' || d.token) {
+                    if (d.token) localStorage.setItem('auth_token', d.token);
+                    localStorage.setItem('userEmail', email);
+                    window.location.href = '/college/dashboard';
+                } else {
+                    errBox.textContent = d.message || 'Invalid email or password';
+                    errBox.classList.add('show');
+                    btn.disabled = false;
+                    btn.textContent = 'Sign In';
+                }
+            } catch (err) {
+                errBox.textContent = 'Network error. Please try again.';
+                errBox.classList.add('show');
+                btn.disabled = false;
+                btn.textContent = 'Sign In';
+            }
+            return false;
+        }
+    </script>
+</body>
+</html>

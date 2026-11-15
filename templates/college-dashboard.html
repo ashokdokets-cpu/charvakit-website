@@ -1,229 +1,192 @@
 {% extends "base.html" %}
-{% block title %}College Placement Dashboard - Charvak{% endblock %}
+{% block title %}{{ college.name }} — Placement Dashboard{% endblock %}
 {% block content %}
-<div class="container" style="max-width: 1100px; margin: 40px auto; padding: 0 20px;">
-  <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
-    <div>
-      <h1 style="margin: 0; color: #1a1a2e;">Placement Readiness Dashboard <span style="display: inline-block; background: #10b981; color: white; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; margin-left: 8px; vertical-align: middle;">● LIVE</span></h1>
-      <p style="margin: 4px 0 0 0; color: #666; font-size: 14px;">Track your batch's technical readiness. Upload students, monitor progress, export shortlists.</p>
+<div class="container py-5" style="max-width: 1200px;">
+
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div class="d-flex align-items-center gap-3">
+      {% if college.logo_url %}
+      <img src="{{ college.logo_url }}" alt="{{ college.name }}" style="width:56px;height:56px;object-fit:contain;border-radius:10px;background:#f9fafb;padding:6px;">
+      {% endif %}
+      <div>
+        <h1 class="h3 mb-1" style="color:{{ college.primary_color }};font-weight:800;">{{ college.name }}</h1>
+        <p class="text-muted mb-0 small">Placement Cell Dashboard</p>
+      </div>
     </div>
-    <div>
-      <select id="instSelect" class="form-select" onchange="loadDashboard()" style="min-width: 250px; padding: 8px; border-radius: 6px; border: 1px solid #ccc;">
-        <option value="VIT University">VIT University</option>
-        <option value="NIT Trichy">NIT Trichy</option>
-        <option value="BITS Pilani">BITS Pilani</option>
-        <option value="Amrita Vishwa Vidyapeetham">Amrita Vishwa Vidyapeetham</option>
-        <option value="SRM Institute">SRM Institute</option>
-      </select>
+    <div class="d-flex gap-2">
+      <span class="badge" style="background:{{ college.primary_color }}15;color:{{ college.primary_color }};padding:8px 16px;font-size:0.85rem;font-weight:700;">
+        {{ college.plan|upper }} PLAN
+      </span>
+      <a href="/college/logout" class="btn btn-sm btn-outline-secondary">Sign Out</a>
     </div>
   </div>
 
-  <!-- KPI Cards -->
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 30px;">
-    <div style="background: white; padding: 20px; border-radius: 8px; border: 1px solid #e5e7eb; border-left: 4px solid #3ba591;">
-      <div style="font-size: 12px; color: #666; text-transform: uppercase; font-weight: 600;">Total Students</div>
-      <div style="font-size: 28px; font-weight: 700; color: #111;" id="statInvited">0</div>
-    </div>
-    <div style="background: white; padding: 20px; border-radius: 8px; border: 1px solid #e5e7eb; border-left: 4px solid #1a73e8;">
-      <div style="font-size: 12px; color: #666; text-transform: uppercase; font-weight: 600;">Assessed</div>
-      <div style="font-size: 28px; font-weight: 700; color: #111;" id="statAssessed">0</div>
-    </div>
-    <div style="background: white; padding: 20px; border-radius: 8px; border: 1px solid #e5e7eb; border-left: 4px solid #7c3aed;">
-      <div style="font-size: 12px; color: #666; text-transform: uppercase; font-weight: 600;">Avg Score</div>
-      <div style="font-size: 28px; font-weight: 700; color: #111;" id="statAvg">0%</div>
-    </div>
-    <div style="background: white; padding: 20px; border-radius: 8px; border: 1px solid #e5e7eb; border-left: 4px solid #10b981;">
-      <div style="font-size: 12px; color: #666; text-transform: uppercase; font-weight: 600;">Ready to Place</div>
-      <div style="font-size: 28px; font-weight: 700; color: #111;" id="statReady">0</div>
-    </div>
+  <!-- Alert: Portal access notice -->
+  <div class="alert alert-info py-2 px-3 mb-4 small">
+    <strong>🔒 Private Portal:</strong> You are viewing your college's private portal. Your students and data are visible only to your staff and are not part of the main Charvak site.
   </div>
 
-  <!-- Actions -->
-  <div style="display: flex; gap: 12px; margin-bottom: 20px; align-items: center; flex-wrap: wrap;">
-    <button onclick="showUpload()" style="padding: 10px 20px; background: #3ba591; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">+ Upload Student CSV</button>
-    <button onclick="exportCSV()" style="padding: 10px 20px; background: white; color: #3ba591; border: 1px solid #3ba591; border-radius: 6px; cursor: pointer; font-weight: 600;">⬇ Export Verified Shortlist</button>
-    <button onclick="sendInvites()" style="padding: 10px 20px; background: #f59e0b; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">✉ Send Invite Emails</button>
-    <span id="actionMsg" style="font-size: 14px; color: #666;"></span>
-  </div>
-
-  <!-- Upload Modal -->
-  <div id="uploadModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999;">
-    <div style="background: white; max-width: 500px; margin: 100px auto; padding: 24px; border-radius: 8px;">
-      <h3 style="margin-top: 0;">Upload Students</h3>
-      <p style="font-size: 13px; color: #666;">CSV format: <code>Name, Email, Target Role</code></p>
-      <input type="file" id="csvFile" accept=".csv" style="margin-bottom: 16px;">
-      <div style="display: flex; gap: 8px; justify-content: flex-end;">
-        <button onclick="hideUpload()" style="padding: 8px 16px; background: #e5e7eb; border: none; border-radius: 6px; cursor: pointer;">Cancel</button>
-        <button onclick="uploadCSV()" style="padding: 8px 16px; background: #3ba591; color: white; border: none; border-radius: 6px; cursor: pointer;">Upload</button>
+  <!-- Stats cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="text-muted small text-uppercase mb-1">Enrolled Students</div>
+          <div class="display-6 fw-bold" style="color:{{ college.primary_color }};">{{ stats.total_students }}</div>
+          <div class="text-muted small">of {{ college.student_limit }} limit</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="text-muted small text-uppercase mb-1">Assessments Completed</div>
+          <div class="display-6 fw-bold" style="color:#3ba591;">{{ stats.assessments_completed }}</div>
+          <div class="text-muted small">across all students</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="text-muted small text-uppercase mb-1">Certificates Issued</div>
+          <div class="display-6 fw-bold" style="color:#10b981;">{{ stats.certificates_issued }}</div>
+          <div class="text-muted small">verified credentials</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="text-muted small text-uppercase mb-1">Placement Matches</div>
+          <div class="display-6 fw-bold" style="color:#f59e0b;">{{ stats.placement_matches }}</div>
+          <div class="text-muted small">candidate-job matches</div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Table -->
-  <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-    <thead style="background: #f9fafb; text-align: left;">
-      <tr>
-        <th style="padding: 12px; font-size: 13px; color: #666;">Student</th>
-        <th style="padding: 12px; font-size: 13px; color: #666;">Role</th>
-        <th style="padding: 12px; font-size: 13px; color: #666;">Score</th>
-        <th style="padding: 12px; font-size: 13px; color: #666;">Status</th>
-        <th style="padding: 12px; font-size: 13px; color: #666;">Certificate</th>
-      </tr>
-    </thead>
-    <tbody id="studentTableBody">
-      <tr><td colspan="5" style="padding: 30px; text-align: center; color: #999;">Loading...</td></tr>
-    </tbody>
-  </table>
+  <!-- Actions -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <a href="/ai-assessment" class="card border-0 shadow-sm h-100 text-decoration-none" style="transition: transform 0.15s;">
+        <div class="card-body">
+          <div style="font-size:2rem;">📝</div>
+          <h3 class="h6 fw-bold mt-2 mb-1" style="color:#111827;">Start an Assessment</h3>
+          <p class="text-muted small mb-0">Launch an AI-powered role assessment for your students</p>
+        </div>
+      </a>
+    </div>
+    <div class="col-md-4">
+      <a href="/college/students" class="card border-0 shadow-sm h-100 text-decoration-none" style="transition: transform 0.15s;">
+        <div class="card-body">
+          <div style="font-size:2rem;">👥</div>
+          <h3 class="h6 fw-bold mt-2 mb-1" style="color:#111827;">View Students</h3>
+          <p class="text-muted small mb-0">See all enrolled students, their scores, and certificates</p>
+        </div>
+      </a>
+    </div>
+    <div class="col-md-4">
+      <a href="/college/certificates" class="card border-0 shadow-sm h-100 text-decoration-none" style="transition: transform 0.15s;">
+        <div class="card-body">
+          <div style="font-size:2rem;">🏆</div>
+          <h3 class="h6 fw-bold mt-2 mb-1" style="color:#111827;">Certificates</h3>
+          <p class="text-muted small mb-0">View all certificates issued to your students</p>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <!-- Students list -->
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-white border-0 pt-4 pb-2">
+      <h2 class="h6 fw-bold mb-0" style="color:#111827;">Enrolled Students</h2>
+    </div>
+    <div class="card-body p-0">
+      {% if students %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead style="background:#f9fafb;">
+            <tr>
+              <th class="px-4 py-3 small text-uppercase text-muted fw-bold">Student Email</th>
+              <th class="px-4 py-3 small text-uppercase text-muted fw-bold">Assessments</th>
+              <th class="px-4 py-3 small text-uppercase text-muted fw-bold">Avg. Score</th>
+              <th class="px-4 py-3 small text-uppercase text-muted fw-bold">Certificates</th>
+              <th class="px-4 py-3 small text-uppercase text-muted fw-bold">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in students %}
+            <tr>
+              <td class="px-4 py-3 small">{{ s.email }}</td>
+              <td class="px-4 py-3 small">{{ s.assessment_count }}</td>
+              <td class="px-4 py-3 small">
+                {% if s.avg_score %}
+                <strong style="color:{{ '#10b981' if s.avg_score >= 70 else '#f59e0b' }};">{{ s.avg_score }}/100</strong>
+                {% else %}
+                <span class="text-muted">—</span>
+                {% endif %}
+              </td>
+              <td class="px-4 py-3 small">{{ s.certificate_count }}</td>
+              <td class="px-4 py-3 small">
+                {% if s.assessment_count > 0 %}
+                <span class="badge bg-success">Active</span>
+                {% else %}
+                <span class="badge bg-secondary">Not Started</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center py-5 text-muted">
+        <div style="font-size:3rem;">👥</div>
+        <p class="mt-3 mb-0">No students enrolled yet</p>
+        <p class="small">Contact Charvak to invite students to your portal</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Features -->
+  <div class="card border-0 shadow-sm mt-4">
+    <div class="card-header bg-white border-0 pt-4 pb-2">
+      <h2 class="h6 fw-bold mb-0" style="color:#111827;">Portal Features</h2>
+    </div>
+    <div class="card-body">
+      <div class="d-flex flex-wrap gap-3">
+        {% for k, v in college.features.items() %}
+        <div class="d-flex align-items-center gap-2">
+          <span style="font-size:1.2rem;">{{ '✅' if v else '❌' }}</span>
+          <span class="small {% if not v %}text-muted{% endif %}">
+            {% if k == 'assessments' %}Assessments
+            {% elif k == 'certificates' %}Verified Certificates
+            {% elif k == 'cohort_analytics' %}Cohort Analytics
+            {% elif k == 'placement_api' %}Placement API
+            {% elif k == 'faculty_dashboard' %}Faculty Dashboard
+            {% elif k == 'on_campus_training' %}On-Campus Training
+            {% elif k == 'ai_tutor' %}AI Tutor
+            {% else %}{{ k }}{% endif %}
+          </span>
+        </div>
+        {% endfor %}
+      </div>
+      {% if college.plan == 'pilot' %}
+      <div class="alert alert-warning mt-3 mb-0 small">
+        <strong>Upgrade to Enterprise</strong> to unlock cohort analytics, placement API, and more. Contact <a href="mailto:hr@charvakit.com">hr@charvakit.com</a>.
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="text-center text-muted small mt-5">
+    <p class="mb-1">Private portal for {{ college.name }} · Powered by Charvak IT Consulting</p>
+    <p class="mb-0">For portal support, contact <a href="mailto:hr@charvakit.com" style="color:{{ college.primary_color }};">hr@charvakit.com</a></p>
+  </div>
+
 </div>
-
-<script>
-function _getInstitution() { return document.getElementById('instSelect').value; }
-function _headers() {
-  const t = localStorage.getItem('authToken') || localStorage.getItem('auth_token') || '';
-  return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + t };
-}
-
-async function loadDashboard() {
-  const inst = _getInstitution();
-  const body = document.getElementById('studentTableBody');
-  body.innerHTML = '<tr><td colspan="5" style="padding: 30px; text-align: center; color: #999;">Loading...</td></tr>';
-  
-  try {
-    const res = await fetch(`/api/college/stats?institution=${encodeURIComponent(inst)}`, { headers: _headers() });
-    const data = await res.json();
-    if (data.status !== 'success') { body.innerHTML = '<tr><td colspan="5" style="padding: 20px; color: red;">Failed to load stats.</td></tr>'; return; }
-    
-    document.getElementById('statInvited').textContent = data.stats.invited;
-    document.getElementById('statAssessed').textContent = data.stats.assessed;
-    document.getElementById('statAvg').textContent = data.stats.avg_score + '%';
-    document.getElementById('statReady').textContent = data.stats.ready;
-
-    const students = data.students || [];
-    
-    // Debugging log
-    console.log("Data received from backend:", data);
-
-    if (students.length === 0) {
-      body.innerHTML = '<tr><td colspan="5" style="padding: 30px; text-align: center; color: #999;">No students uploaded yet. Click "Upload Student CSV" to start.</td></tr>';
-      return;
-    }
-
-    body.innerHTML = students.map(s => {
-      let badge = '<span style="color:#999;">Pending</span>';
-      if (s.readiness === 'Ready') badge = '<span style="background:#d1fae5; color:#065f46; padding:2px 8px; border-radius:12px; font-size:12px; font-weight:600;">Ready</span>';
-      else if (s.readiness === 'Upskill') badge = '<span style="background:#fef3c7; color:#92400e; padding:2px 8px; border-radius:12px; font-size:12px; font-weight:600;">Upskill</span>';
-      else if (s.readiness === 'Not Ready') badge = '<span style="background:#fee2e2; color:#991b1b; padding:2px 8px; border-radius:12px; font-size:12px; font-weight:600;">Not Ready</span>';
-      
-      const certLink = s.cert_id ? `<a href="/readiness/${s.cert_id}" target="_blank" style="color:#1a73e8; text-decoration:none; font-size:13px;">View Cert ↗</a>` : '—';
-      const scoreText = s.score ? `<strong>${s.score}%</strong>` : '—';
-      
-      return `<tr>
-        <td style="padding: 12px; border-bottom: 1px solid #eee;">
-          <div style="font-weight: 600;">${s.name || 'Unknown'}</div>
-          <div style="font-size: 12px; color: #666;">${s.email}</div>
-        </td>
-        <td style="padding: 12px; border-bottom: 1px solid #eee; font-size: 13px;">${s.role || '—'}</td>
-        <td style="padding: 12px; border-bottom: 1px solid #eee; font-size: 14px;">${scoreText}</td>
-        <td style="padding: 12px; border-bottom: 1px solid #eee;">${badge}</td>
-        <td style="padding: 12px; border-bottom: 1px solid #eee;">${certLink}</td>
-      </tr>`;
-    }).join('');
-  } catch (e) {
-    body.innerHTML = `<tr><td colspan="5" style="padding: 20px; color: red;">Error: ${e}</td></tr>`;
-  }
-}
-
-function showUpload() { document.getElementById('uploadModal').style.display = 'block'; }
-function hideUpload() { document.getElementById('uploadModal').style.display = 'none'; }
-
-async function uploadCSV() {
-  const fileInput = document.getElementById('csvFile');
-  if (!fileInput.files.length) { alert('Select a CSV file first.'); return; }
-  
-  const file = fileInput.files[0];
-  const reader = new FileReader();
-  reader.onload = async (e) => {
-    const text = e.target.result;
-    const lines = text.split('\n').map(l => l.trim()).filter(l => l);
-    if (lines.length < 2) { alert('CSV appears empty.'); return; }
-    
-    const students = [];
-    for (let i = 1; i < lines.length; i++) { // Skip header
-      const parts = lines[i].split(',').map(p => p.trim());
-      if (parts.length >= 2 && parts[1].includes('@')) {
-        students.push({ name: parts[0], email: parts[1], role: parts[2] || '', industry: parts[3] || '', level: parts[4] || '' });
-      }
-    }
-    
-    const inst = _getInstitution();
-    const msg = document.getElementById('actionMsg');
-    msg.textContent = 'Uploading...';
-    
-    try {
-      const res = await fetch('/api/college/upload', {
-        method: 'POST', headers: _headers(),
-        body: JSON.stringify({ institution: inst, students: students })
-      });
-      const data = await res.json();
-      if (data.status === 'success') {
-        msg.textContent = `Success: ${data.inserted} students added, ${data.skipped} skipped.`;
-        hideUpload();
-        loadDashboard();
-      } else {
-        msg.textContent = 'Upload failed: ' + (data.message || 'Unknown error');
-      }
-    } catch (err) {
-      msg.textContent = 'Network error during upload.';
-    }
-  };
-  reader.readAsText(file);
-}
-
-async function sendInvites() {
-  const inst = _getInstitution();
-  const msg = document.getElementById('actionMsg');
-  msg.textContent = 'Sending invites... (this may take a minute)';
-  
-  try {
-    const res = await fetch('/api/college/send-invites', {
-      method: 'POST', headers: _headers(),
-      body: JSON.stringify({ institution: inst })
-    });
-    const data = await res.json();
-    if (data.status === 'success') {
-      msg.textContent = `Success: ${data.sent} emails sent, ${data.failed} failed.`;
-    } else {
-      msg.textContent = 'Error: ' + (data.message || 'Unknown');
-    }
-  } catch (e) {
-    msg.textContent = 'Network error.';
-  }
-}
-
-function exportCSV() {
-  const inst = _getInstitution();
-  fetch(`/api/college/export?institution=${encodeURIComponent(inst)}`, { headers: _headers() })
-    .then(r => r.blob())
-    .then(blob => {
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Verified_Shortlist_${inst.replace(/\s+/g, '_')}.csv`;
-      a.click();
-      window.URL.revokeObjectURL(url);
-    })
-    .catch(e => alert('Export failed: ' + e));
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    loadDashboard();
-    // Auto-refresh every 30 seconds (live demo feel)
-    setInterval(function() {
-        // Only refresh if the tab is visible (avoid waste)
-        if (!document.hidden) {
-            loadDashboard();
-        }
-    }, 30000);
-});
-</script>
 {% endblock %}
