@@ -1,0 +1,32 @@
+{
+  "slug": "gec",
+  "name": "Guntur Engineering College",
+  "logo_url": "/static/images/logo.png",
+  "primary_color": "#003366",
+  "contact_email": "placements@gec.ac.in",
+  "plan": "pilot",
+  "student_limit": 100,
+  "semester_start": "2026-01-15",
+  "semester_end": "2026-05-15",
+  "students": [
+    "hr@charvakit.com",
+    "test-student-1@gec.ac.in",
+    "test-student-2@gec.ac.in"
+  ],
+  "features": {
+    "assessments": true,
+    "certificates": true,
+    "cohort_analytics": true,
+    "placement_api": false,
+    "faculty_dashboard": false,
+    "on_campus_training": false,
+    "ai_tutor": false
+  },
+  "placement_officers": [
+    {
+      "name": "Placement Cell Officer",
+      "email": "hr@charvakit.com",
+      "role": "Placement Head"
+    }
+  ]
+}

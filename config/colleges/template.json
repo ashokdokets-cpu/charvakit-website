@@ -1,0 +1,31 @@
+{
+  "slug": "template",
+  "name": "Sample College Name",
+  "logo_url": "/static/images/logo.png",
+  "primary_color": "#3ba591",
+  "contact_email": "placements@example.edu.in",
+  "plan": "pilot",
+  "student_limit": 100,
+  "semester_start": "2026-01-15",
+  "semester_end": "2026-05-15",
+  "students": [
+    "student1@example.edu.in",
+    "student2@example.edu.in"
+  ],
+  "features": {
+    "assessments": true,
+    "certificates": true,
+    "cohort_analytics": false,
+    "placement_api": false,
+    "faculty_dashboard": false,
+    "on_campus_training": false,
+    "ai_tutor": false
+  },
+  "placement_officers": [
+    {
+      "name": "Dr. Rao",
+      "email": "rao@example.edu.in",
+      "role": "Placement Head"
+    }
+  ]
+}
