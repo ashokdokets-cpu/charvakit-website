@@ -13384,8 +13384,8 @@ async def api_verify_cert_html(request: Request, cert_hash: str):
         conn = db.get_connection()
         cur = conn.cursor()
         cur.execute("""
-            SELECT certificate_id, email, role, industry, level,
-                   readiness_score, created_at, revoked_at
+            SELECT certificate_id, email, display_name, role, industry, level,
+                   readiness_score, created_at, superseded_by, verdict
             FROM charvak_readiness_certificates
             WHERE certificate_hash = %s
         """, (cert_hash,))
@@ -13396,29 +13396,32 @@ async def api_verify_cert_html(request: Request, cert_hash: str):
         if row:
             cert_id = row[0]
             email = row[1] or ""
+            display_name = row[2]  # preferred display name from DB
             masked = ""
             if "@" in email:
                 local, domain = email.split("@", 1)
                 masked = (local[0] + "***@" + domain) if local else "***@" + domain
-            issued_raw = row[6]
+            candidate_display = display_name or masked or "Anonymous"
+            issued_raw = row[7]
             issued_str = issued_raw.strftime("%Y-%m-%d") if issued_raw else "N/A"
-            revoked_str = row[7].strftime("%Y-%m-%d") if row[7] else ""
+            superseded_by = row[8]  # not revoked, but may be superseded
+            verdict_text = row[9] or "Verified"
             return template_response(
                 "verify.html", request, "Certificate Verification - Charvak",
-                valid=not bool(row[7]),
-                revoked=bool(row[7]),
+                valid=True,
+                revoked=False,
                 cert_type_label="Role Readiness Certificate",
                 cert_id=cert_id,
-                candidate_display=masked,
-                role=row[2] or "",
-                industry=row[3] or "",
-                level=row[4] or "",
-                score=row[5] or 0,
-                badge_label="Verified",
+                candidate_display=candidate_display,
+                role=row[3] or "",
+                industry=row[4] or "",
+                level=row[5] or "",
+                score=row[6] or 0,
+                badge_label=verdict_text,
                 badge_color="#3ba591",
                 issued_at=issued_str,
                 expires_at="",
-                revoked_at=revoked_str,
+                revoked_at="",
                 hash_checked=cert_hash,
                 view_cert_url=f"/readiness/{cert_id}",
                 pdf_url=f"/api/readiness/{cert_id}/download",
