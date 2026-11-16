@@ -35,3 +35,4 @@ fpdf2>=2.8.0
 qrcode[pil]>=7.4.2
 
 anyio>=4.10.0
+pyjwt==2.15.1
