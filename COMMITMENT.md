@@ -31,7 +31,7 @@ All 7 buildable tasks shipped (108A-G).
 
 ---
 
-## Session 112 — COMPLETE (2026-11-12)
+## Session 112 ï¿½ COMPLETE (2026-11-12)
 
 ### B2B Employer Engine (Pay-on-Hire)
 
@@ -60,7 +60,7 @@ Signup ? Admin approval ? Magic link email ? Passwordless login ? Dashboard load
 - template_response signature ({"employer": x} vs employer=x)
 - Magic link token rotation on 500 error
 
-### Next session: Session 113 — DigiLocker document verification
+### Next session: Session 113 ï¿½ DigiLocker document verification
 
 ---
 
@@ -102,3 +102,46 @@ Signup ? Admin approval ? Magic link email ? Passwordless login ? Dashboard load
 - /open-roles: Direct client roles
 - /verified-jobs: Paywalled Naukri jobs
 - /admin/bench-jobs: US/Canada only
+
+## Day 4 -- Student Auth Isolation (Session 116, 2026-11-16)
+
+### Shipped
+- `charvak_students` table (college_slug, email, name, status, last_login_at)
+- `charvak_student_auth_tokens` (magic-link tokens, 15 min TTL, dedicated table)
+- `student_id` FK added to `charvak_career_certifications` and `charvak_readiness_certificates` (nullable)
+- `POST /college/login/request` -- student requests magic link
+- `GET /college/auth/{token}` -- verify token, set JWT session cookie
+- `GET /student/dashboard` -- student's own certs/readiness/badges only
+- `GET /college/students` -- college admin roster with cert counts
+- `auth_utils.py` -- JWT helpers, session decode, ownership guards
+- 2 new templates: `student-dashboard.html`, `college-students.html`
+
+### Security Boundaries
+- Every student query: `WHERE student_id = session.student_id`
+- Every college query: `WHERE college_slug = session.college_slug`
+- Cross-college access blocked by JWT payload check + query filter
+- Cookie: HttpOnly, Secure, SameSite=Lax, 7-day TTL
+- Existing `charvak_auth_tokens` (employer/main-site) untouched
+
+### Commits
+- `7d65735` feat(day4): student auth isolation
+- `a55c339` fix(deps): add pyjwt to requirements.txt
+
+### Deploy
+- Manual Render deploy -- live and verified
+- `/student/dashboard` â†’ 302 to /college/login (correct)
+- `/college/students` â†’ 302 to /college/login (correct)
+- All 4 existing production routes still 200 (zero regression)
+
+### Testing Notes
+- Local smoke test passed (7/7 checks)
+- Production deployment verified via curl.exe
+- Full browser flow to be tested when first college with real students signs on
+
+### Pending (Session 117)
+- Backfill `student_id` on existing certs (link email â†’ student record)
+- Wire cert issuance to write `student_id` when student is logged in
+- College admin login flow (currently only students can log in via magic link)
+- Bulk student invite from CSV
+- Cloudflare cache purge automation for 404s (learned from this session)
+

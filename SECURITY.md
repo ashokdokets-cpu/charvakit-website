@@ -63,3 +63,9 @@ See `.env.example` for the full list. Required in production:
 ---
 
 *Last updated: 2026-11-16*
+### 2026-11-16 (post-Day4) -- pyjwt missing from requirements.txt (Resolved)
+- **What:** New student-auth routes imported `auth_utils`, which imports `jwt`. `pyjwt` was installed locally but missing from `requirements.txt`. Render build did not install it, causing HTTP 500 on `/student/dashboard` and `/college/students`.
+- **Detection:** Post-deploy smoke test.
+- **Response:** Added `pyjwt==2.15.1` to `requirements.txt`. Redeployed with cache clear. All routes healthy.
+- **Prevention:** For any new feature: (a) `pip install` locally, (b) add to `requirements.txt` in same commit, (c) `pip install --dry-run -r requirements.txt` before pushing.
+
