@@ -223,3 +223,9 @@ force_prod_candidate.py
 generate_cert.py
 run_bench_match.py
 run_india_scan.py
+
+# Security: files with hardcoded DB credentials (Session 116)
+cleanup_radar_jobs.py
+*_credentials.py
+*_secrets.py
+
