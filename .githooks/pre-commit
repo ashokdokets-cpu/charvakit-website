@@ -1,0 +1,62 @@
+#!/bin/sh
+# Charvak pre-commit hook — portable shim.
+# Finds Python robustly on Windows/macOS/Linux, runs pre_commit_scanner.py.
+# Exits 0 (with warning) if Python is missing, so commits aren't blocked for the wrong reason.
+# Exits non-zero if secrets are found — blocks the commit as intended.
+
+HOOK_DIR="$(cd "$(dirname "$0")" && pwd)"
+SCANNER="$HOOK_DIR/pre_commit_scanner.py"
+
+# Find Python: prefer venv, then python3, then python, then py launcher
+PY=""
+
+# 1. Try project venv (Windows + Unix paths)
+for candidate in \
+    "$HOOK_DIR/../venv/Scripts/python.exe" \
+    "$HOOK_DIR/../venv/bin/python" \
+    "$HOOK_DIR/../.venv/Scripts/python.exe" \
+    "$HOOK_DIR/../.venv/bin/python"
+do
+    if [ -x "$candidate" ]; then
+        PY="$candidate"
+        break
+    fi
+done
+
+# 2. Fall back to PATH lookups
+if [ -z "$PY" ]; then
+    for candidate in python3 python py; do
+        if command -v "$candidate" >/dev/null 2>&1; then
+            # Reject the Microsoft Store stub (WindowsApps)
+            resolved=$(command -v "$candidate")
+            case "$resolved" in
+                *WindowsApps*)
+                    # Store stub — skip
+                    ;;
+                *)
+                    PY="$resolved"
+                    break
+                    ;;
+            esac
+        fi
+    done
+fi
+
+# 3. If still nothing, warn and exit 0 (don't block commits)
+if [ -z "$PY" ]; then
+    echo ""
+    echo "WARNING: Python not found — secret scan SKIPPED."
+    echo "  Install Python or activate the venv, then re-run: git commit"
+    echo ""
+    exit 0
+fi
+
+# 4. Verify scanner exists
+if [ ! -f "$SCANNER" ]; then
+    echo "WARNING: Scanner not found at $SCANNER — skipping scan."
+    exit 0
+fi
+
+# 5. Run the scanner. Its exit code becomes the hook's exit code.
+"$PY" "$SCANNER"
+exit $?
