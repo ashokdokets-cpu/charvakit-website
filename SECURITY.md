@@ -17,7 +17,7 @@ We aim to respond within 48 hours.
 1. **Never commit secrets.** All API keys, DB passwords, and tokens live in environment variables only.
 2. **Never paste secrets in chat, tickets, or docs.** Use `<REDACTED>` in any transcript.
 3. **`.env` is gitignored.** Use `.env.example` as the template for required variables.
-4. **Pre-commit hook is mandatory.** Every commit is scanned for secrets by `.git/hooks/pre_commit_scanner.py`.
+4. **Pre-commit hook is mandatory.** Every commit is scanned for secrets by `.githooks/pre_commit_scanner.py`.
 
 ## What the Pre-Commit Hook Catches
 

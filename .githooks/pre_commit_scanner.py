@@ -166,7 +166,7 @@ def main():
     print("  5. Try commit again")
     print()
     print("If this is a false positive (e.g., test fixture):")
-    print("  • Add 'sk-XXX' to SKIP_FILES in .git/hooks/pre_commit_scanner.py")
+    print("  • Add 'sk-XXX' to SKIP_FILES in .githooks/pre_commit_scanner.py")
     print("  • OR bypass this one time: git commit --no-verify")
     print()
     print("Learn more: see SECURITY.md in project root")
