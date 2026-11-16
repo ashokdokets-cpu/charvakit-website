@@ -228,5 +228,5 @@ run_india_scan.py
 cleanup_radar_jobs.py
 *_credentials.py
 *_secrets.py
-
-
+# Day 4 work artifacts (migration staging, smoke tests, uvicorn logs)
+day4_work/

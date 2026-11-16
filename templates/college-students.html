@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}{{ college.name }} — Students{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="mb-4 d-flex justify-content-between align-items-center">
+    <div>
+      <h1 class="h3 mb-1" style="color:{{ college.primary_color }};font-weight:800;">Students</h1>
+      <p class="text-muted mb-0">{{ college.name }} · {{ students|length }} enrolled</p>
+    </div>
+    <a href="/college/dashboard" class="btn btn-outline-secondary btn-sm">← Back to Dashboard</a>
+  </div>
+
+  <div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Year</th>
+              <th>Status</th>
+              <th class="text-end">Certs</th>
+              <th class="text-end">Best Score</th>
+              <th>Last Login</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for s in students %}
+            <tr>
+              <td>{{ s[1] or "—" }}</td>
+              <td class="text-muted small">{{ s[2] }}</td>
+              <td>{{ s[3] or "—" }}</td>
+              <td><span class="badge bg-light text-dark">{{ s[4] or "active" }}</span></td>
+              <td class="text-end">{{ s[5] }}</td>
+              <td class="text-end">{{ s[6] or "—" }}</td>
+              <td class="text-muted small">{{ s[7].strftime("%b %d, %Y") if s[7] else "never" }}</td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="7" class="text-center text-muted py-4">
+                No students enrolled yet. Invite students from the dashboard.
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

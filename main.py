@@ -22086,3 +22086,219 @@ async def admin_funnel_page(request: Request):
     except HTTPException:
         return RedirectResponse(url="/admin-login?next=/admin/funnel", status_code=302)
     return template_response("admin-funnel.html", request, "Funnel Analytics - Charvak")
+
+
+# ============================================================
+# STUDENT AUTHENTICATION (Day 4 - Session 116)
+# Uses charvak_student_auth_tokens (dedicated table).
+# Does not affect existing college admin login or main-site login.
+# NOTE: function names suffixed where they collide with pre-existing
+#       functions of the same name (e.g., student_dashboard at line ~8547).
+# ============================================================
+
+@app.post("/college/login/request")
+async def college_login_request(request: Request):
+    from fastapi.responses import RedirectResponse
+    from database import db
+    import auth_utils
+    import logging
+    from datetime import datetime, timedelta, timezone
+    logger = logging.getLogger("charvakit.student_auth")
+
+    college = getattr(request.state, "college", None)
+    if not college:
+        return RedirectResponse("/college/login?error=no_college", 302)
+
+    form = await request.form()
+    email = (form.get("email") or "").strip().lower()
+    if not email or "@" not in email:
+        return RedirectResponse("/college/login?error=invalid_email", 302)
+
+    conn = db.get_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            SELECT student_id, name FROM charvak_students
+            WHERE college_slug = %s AND LOWER(email) = %s AND status = 'active'
+        """, (college["slug"], email))
+        row = cur.fetchone()
+        if not row:
+            return RedirectResponse("/college/login?sent=1", 302)
+
+        raw_token = auth_utils.create_student_magic_token()
+        token_hash = auth_utils.hash_token(raw_token)
+        expires = datetime.now(timezone.utc) + timedelta(minutes=auth_utils.STUDENT_TOKEN_TTL_MIN)
+
+        cur.execute("""
+            INSERT INTO charvak_student_auth_tokens (token_hash, email, expires_at)
+            VALUES (%s, %s, %s)
+        """, (token_hash, email, expires))
+        conn.commit()
+
+        magic_url = f"https://{college['slug']}.charvakit.com/college/auth/{raw_token}"
+        try:
+            from email_engine import send_email
+            send_email(
+                to=email,
+                subject=f"Your {college['name']} login link",
+                body=f"Click to log in: {magic_url}\n\nLink expires in {auth_utils.STUDENT_TOKEN_TTL_MIN} minutes.",
+            )
+        except Exception as e:
+            logger.warning(f"Student magic-link email failed: {e}")
+            logger.info(f"[MAGIC LINK] {email} -> {magic_url}")
+
+        return RedirectResponse("/college/login?sent=1", 302)
+    finally:
+        cur.close()
+        conn.close()
+
+
+@app.get("/college/auth/{token}")
+async def college_auth_verify(request: Request, token: str):
+    from fastapi.responses import RedirectResponse
+    from database import db
+    import auth_utils
+    from datetime import datetime, timezone
+
+    college = getattr(request.state, "college", None)
+    if not college:
+        return RedirectResponse("/college/login?error=no_college", 302)
+
+    token_hash = auth_utils.hash_token(token)
+    conn = db.get_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            SELECT email, expires_at, used_at
+            FROM charvak_student_auth_tokens
+            WHERE token_hash = %s
+        """, (token_hash,))
+        row = cur.fetchone()
+        if not row or row[2] is not None or row[1] < datetime.now(timezone.utc):
+            return RedirectResponse("/college/login?error=invalid_token", 302)
+
+        email = row[0].lower()
+        cur.execute("""
+            SELECT student_id, name FROM charvak_students
+            WHERE college_slug = %s AND LOWER(email) = %s AND status = 'active'
+        """, (college["slug"], email))
+        srow = cur.fetchone()
+        if not srow:
+            return RedirectResponse("/college/login?error=not_enrolled", 302)
+
+        student_id, name = srow
+        cur.execute(
+            "UPDATE charvak_student_auth_tokens SET used_at = NOW() WHERE token_hash = %s",
+            (token_hash,),
+        )
+        cur.execute(
+            "UPDATE charvak_students SET last_login_at = NOW() WHERE student_id = %s",
+            (student_id,),
+        )
+        conn.commit()
+
+        session_token = auth_utils.create_student_session_token(student_id, email, college["slug"])
+        response = RedirectResponse("/student/dashboard", 302)
+        response.set_cookie(
+            auth_utils.STUDENT_COOKIE, session_token,
+            httponly=True, secure=True, samesite="lax",
+            max_age=auth_utils.STUDENT_SESSION_TTL_DAYS * 24 * 3600,
+        )
+        return response
+    finally:
+        cur.close()
+        conn.close()
+
+
+@app.get("/student/dashboard", response_class=HTMLResponse)
+async def student_dashboard_isolated(request: Request):
+    from fastapi.responses import RedirectResponse
+    from database import db
+    import auth_utils
+
+    college = getattr(request.state, "college", None)
+    if not college:
+        return RedirectResponse("/college/login", 302)
+
+    student = auth_utils.get_student_from_session(request)
+    if not student or student["college_slug"] != college["slug"]:
+        return RedirectResponse("/college/login", 302)
+
+    conn = db.get_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            SELECT cert_id, role, score, badge_tier, issued_at, certification_hash
+            FROM charvak_career_certifications
+            WHERE student_id = %s
+            ORDER BY issued_at DESC
+        """, (student["student_id"],))
+        certs = cur.fetchall()
+
+        cur.execute("""
+            SELECT cert_id, role, score, issued_at
+            FROM charvak_readiness_certificates
+            WHERE student_id = %s
+            ORDER BY issued_at DESC
+        """, (student["student_id"],))
+        readiness = cur.fetchall()
+
+        cur.execute("""
+            SELECT badge_key, badge_name, badge_icon, awarded_at
+            FROM charvak_student_badges
+            WHERE LOWER(email) = %s
+            ORDER BY awarded_at DESC
+        """, (student["email"].lower(),))
+        badges = cur.fetchall()
+    finally:
+        cur.close()
+        conn.close()
+
+    return templates.TemplateResponse("student-dashboard.html", {
+        "request": request,
+        "college": college,
+        "student": student,
+        "certs": certs,
+        "readiness": readiness,
+        "badges": badges,
+    })
+
+
+@app.get("/college/students", response_class=HTMLResponse)
+async def college_students_list(request: Request):
+    from fastapi.responses import RedirectResponse
+    from database import db
+    import auth_utils
+
+    college = getattr(request.state, "college", None)
+    if not college:
+        return RedirectResponse("/college/login", 302)
+
+    student = auth_utils.get_student_from_session(request)
+    if student and student.get("role") == "student":
+        return RedirectResponse("/student/dashboard", 302)
+
+    conn = db.get_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            SELECT s.student_id, s.name, s.email, s.enrollment_year, s.status,
+                   COUNT(DISTINCT c.cert_id) AS cert_count,
+                   MAX(c.score) AS best_score,
+                   s.last_login_at
+            FROM charvak_students s
+            LEFT JOIN charvak_career_certifications c ON c.student_id = s.student_id
+            WHERE s.college_slug = %s
+            GROUP BY s.student_id, s.name, s.email, s.enrollment_year, s.status, s.last_login_at
+            ORDER BY s.name
+        """, (college["slug"],))
+        students = cur.fetchall()
+    finally:
+        cur.close()
+        conn.close()
+
+    return templates.TemplateResponse("college-students.html", {
+        "request": request,
+        "college": college,
+        "students": students,
+    })

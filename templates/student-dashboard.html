@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}My Dashboard — {{ college.name }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="mb-4">
+    <h1 class="h3 mb-1" style="color:{{ college.primary_color }};font-weight:800;">
+      Welcome back{% if student.email %}, {{ student.email.split("@")[0] }}{% endif %}
+    </h1>
+    <p class="text-muted mb-0">{{ college.name }} · My Placement Dashboard</p>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm p-4">
+        <div class="text-muted small text-uppercase mb-1">My Certificates</div>
+        <div class="display-6 fw-bold" style="color:{{ college.primary_color }};">{{ certs|length }}</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm p-4">
+        <div class="text-muted small text-uppercase mb-1">Readiness Reports</div>
+        <div class="display-6 fw-bold" style="color:#3ba591;">{{ readiness|length }}</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm p-4">
+        <div class="text-muted small text-uppercase mb-1">Badges Earned</div>
+        <div class="display-6 fw-bold" style="color:#f59e0b;">{{ badges|length }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4">
+      <h2 class="h5 fw-bold mb-3">My Certificates</h2>
+      {% if certs %}
+      <div class="list-group list-group-flush">
+        {% for c in certs %}
+        <a href="/career-certification/{{ c[0] }}" class="list-group-item list-group-item-action">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <strong>{{ c[1] or "Assessment" }}</strong>
+              <div class="text-muted small">{{ c[0] }} · {{ c[2] }}/100 · {{ c[3] or "certified" }}</div>
+            </div>
+            <div class="text-muted small">{{ c[4].strftime("%b %d, %Y") if c[4] else "" }}</div>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="text-muted mb-0">No certificates yet. <a href="/ai-assessment">Take your first assessment →</a></p>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if readiness %}
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4">
+      <h2 class="h5 fw-bold mb-3">Readiness Reports</h2>
+      <div class="list-group list-group-flush">
+        {% for r in readiness %}
+        <a href="/readiness/{{ r[0] }}" class="list-group-item list-group-item-action">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <strong>{{ r[1] or "Readiness" }}</strong>
+              <div class="text-muted small">{{ r[0] }} · {{ r[2] }}/100</div>
+            </div>
+            <div class="text-muted small">{{ r[3].strftime("%b %d, %Y") if r[3] else "" }}</div>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if badges %}
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4">
+      <h2 class="h5 fw-bold mb-3">Badges</h2>
+      <div class="d-flex flex-wrap gap-2">
+        {% for b in badges %}
+        <span class="badge bg-light text-dark p-2">{{ b[2] or "🏅" }} {{ b[1] }}</span>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="text-center mt-4">
+    <a href="/ai-assessment" class="btn btn-lg" style="background:{{ college.primary_color }};color:white;font-weight:700;">
+      Take a New Assessment →
+    </a>
+  </div>
+</div>
+{% endblock %}
