@@ -145,3 +145,31 @@ Signup ? Admin approval ? Magic link email ? Passwordless login ? Dashboard load
 - Bulk student invite from CSV
 - Cloudflare cache purge automation for 404s (learned from this session)
 
+---
+
+## Session 116 -- CLOSED (2026-11-16)
+
+### Delivered
+- Security incident response complete (credential invalidated, history rewritten, hook installed)
+- Day 4 student auth isolation shipped (2 tables, 4 routes, 2 templates, deployed, verified)
+- pyjwt dependency fix
+- All pushed to GitHub, docs updated
+
+### Carried forward to Session 117
+- P0: Rotate 5 credentials (CRON_SECRET, BREVO_API_KEY, SENDGRID_API_KEY, TECHMAP_API_KEY, vouchai_v13 DB password)
+- P1: is_test flag on cert tables
+- P1: autocommit pattern audit
+- P2: ai-assessment inline SyntaxError
+- P2: Passport verified docs badge restore
+- P2: Auto-Deploy re-enable on Render
+- P2: Full-featured PDF route for readiness certs
+
+### Session 117 agenda (proposed)
+1. Credential rotation (P0, first)
+2. Day 5: College admin login flow
+3. Day 5: Bulk student invite from CSV
+4. Day 5: Wire cert issuance to write student_id
+5. Optional: Backfill existing certs to students
+
+Session 116 is closed. The platform is stable, secure, and one feature richer.
+
