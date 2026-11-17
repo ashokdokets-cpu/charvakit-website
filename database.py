@@ -19,6 +19,17 @@ load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL", "")
 
+# ── Session 117: log which DB is in use, prevent localhost/Render confusion
+if DATABASE_URL:
+    if "localhost" in DATABASE_URL or "127.0.0.1" in DATABASE_URL:
+        logger.warning("DATABASE = LOCALHOST (from .env.local). Schema changes here will NOT affect production.")
+    else:
+        _host = DATABASE_URL.split("@")[-1].split("/")[0] if "@" in DATABASE_URL else "unknown"
+        logger.info("DATABASE = REMOTE (" + _host + ")")
+else:
+    logger.error("DATABASE_URL is empty — app will not work")
+
+
 class Database:
     def __init__(self):
         self.db_url = DATABASE_URL
