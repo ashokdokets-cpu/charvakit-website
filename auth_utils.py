@@ -100,3 +100,37 @@ def require_cert_ownership(request: Request, cert_id: str) -> Dict:
         cur.close()
         conn.close()
     return student
+# ============================================================
+# DAY 5: COLLEGE ADMIN AUTHENTICATION
+# ============================================================
+
+def create_admin_magic_token() -> str:
+    return secrets.token_urlsafe(32)
+
+def create_admin_session_token(admin_id: str, email: str, college_slug: str) -> str:
+    payload = {
+        "sub": admin_id,
+        "email": email,
+        "college_slug": college_slug,
+        "role": "college_admin",
+        "exp": datetime.now(timezone.utc) + timedelta(days=7),
+        "iat": datetime.now(timezone.utc),
+    }
+    return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
+
+def get_admin_from_session(request: Request) -> Optional[Dict]:
+    token = request.cookies.get(STUDENT_COOKIE) # Reuse the same cookie name for simplicity
+    if not token:
+        return None
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        if payload.get("role") != "college_admin":
+            return None
+        return {
+            "admin_id": payload["sub"],
+            "email": payload["email"],
+            "college_slug": payload["college_slug"],
+            "role": "college_admin"
+        }
+    except Exception:
+        return None

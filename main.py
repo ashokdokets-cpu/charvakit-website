@@ -22135,7 +22135,7 @@ async def college_login_request(request: Request):
         """, (token_hash, email, expires))
         conn.commit()
 
-        magic_url = f"https://{college['slug']}.charvakit.com/college/auth/{raw_token}"
+        host = request.headers.get("host", f"{college['slug']}.charvakit.com"); scheme = request.url.scheme; magic_url = f"{scheme}://{host}/college/auth/{raw_token}"
         try:
             from email_engine import send_email
             send_email(
@@ -22302,3 +22302,216 @@ async def college_students_list(request: Request):
         "college": college,
         "students": students,
     })
+
+
+# ============================================================
+# DAY 5: COLLEGE ADMIN LOGIN & CSV UPLOAD
+# ============================================================
+
+@app.post("/college/admin/login")
+async def college_admin_login_request(request: Request):
+    from fastapi.responses import RedirectResponse
+    from database import db
+    import auth_utils
+    import logging
+    from datetime import datetime, timedelta, timezone
+    logger = logging.getLogger("charvakit.admin_auth")
+
+    college = getattr(request.state, "college", None)
+    if not college:
+        return RedirectResponse("/college/login?error=no_college", 302)
+
+    form = await request.form()
+    email = (form.get("email") or "").strip().lower()
+    if not email or "@" not in email:
+        return RedirectResponse("/college/login?error=invalid_email", 302)
+
+    conn = db.get_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            SELECT admin_id, name FROM charvak_college_admins
+            WHERE college_slug = %s AND LOWER(email) = %s AND status = 'active'
+        """, (college["slug"], email))
+        row = cur.fetchone()
+        
+        if not row:
+            # Do not leak existence
+            return RedirectResponse("/college/login?sent=1", 302)
+
+        raw_token = auth_utils.create_admin_magic_token()
+        token_hash = auth_utils.hash_token(raw_token)
+        expires = datetime.now(timezone.utc) + timedelta(minutes=15)
+
+        cur.execute("""
+            INSERT INTO charvak_student_auth_tokens (token_hash, email, expires_at)
+            VALUES (%s, %s, %s)
+        """, (token_hash, email, expires))
+        conn.commit()
+
+        host = request.headers.get("host", f"{college['slug']}.charvakit.com"); scheme = request.url.scheme; magic_url = f"{scheme}://{host}/college/admin/auth/{raw_token}"
+        try:
+            from email_engine import send_email
+            send_email(
+                to=email,
+                subject=f"Admin Login: {college['name']}",
+                body=f"Click to access your admin dashboard: {magic_url}\n\nExpires in 15 minutes.",
+            )
+        except Exception as e:
+            logger.warning(f"Admin magic-link email failed: {e}")
+            logger.info(f"[ADMIN MAGIC LINK] {email} -> {magic_url}")
+
+        return RedirectResponse("/college/login?sent=1", 302)
+    finally:
+        cur.close()
+        conn.close()
+
+
+@app.get("/college/admin/auth/{token}")
+async def college_admin_auth_verify(request: Request, token: str):
+    from fastapi.responses import RedirectResponse
+    from database import db
+    import auth_utils
+    from datetime import datetime, timezone
+
+    college = getattr(request.state, "college", None)
+    if not college:
+        return RedirectResponse("/college/login?error=no_college", 302)
+
+    token_hash = auth_utils.hash_token(token)
+    conn = db.get_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            SELECT email, expires_at, used_at
+            FROM charvak_student_auth_tokens WHERE token_hash = %s
+        """, (token_hash,))
+        row = cur.fetchone()
+        if not row or row[2] is not None or row[1] < datetime.now(timezone.utc):
+            return RedirectResponse("/college/login?error=invalid_token", 302)
+
+        email = row[0].lower()
+        cur.execute("""
+            SELECT admin_id, name FROM charvak_college_admins
+            WHERE college_slug = %s AND LOWER(email) = %s AND status = 'active'
+        """, (college["slug"], email))
+        arow = cur.fetchone()
+        if not arow:
+            return RedirectResponse("/college/login?error=not_admin", 302)
+
+        admin_id, name = arow
+        cur.execute("UPDATE charvak_student_auth_tokens SET used_at = NOW() WHERE token_hash = %s", (token_hash,))
+        cur.execute("UPDATE charvak_college_admins SET last_login_at = NOW() WHERE admin_id = %s", (admin_id,))
+        conn.commit()
+
+        session_token = auth_utils.create_admin_session_token(admin_id, email, college["slug"])
+        response = RedirectResponse("/college/admin/dashboard", 302)
+        response.set_cookie(
+            auth_utils.STUDENT_COOKIE, session_token,
+            httponly=True, secure=True, samesite="lax",
+            max_age=auth_utils.STUDENT_SESSION_TTL_DAYS * 24 * 3600,
+        )
+        return response
+    finally:
+        cur.close()
+        conn.close()
+
+
+@app.get("/college/admin/dashboard", response_class=HTMLResponse)
+async def college_admin_dashboard(request: Request):
+    from fastapi.responses import RedirectResponse
+    from database import db
+    import auth_utils
+
+    college = getattr(request.state, "college", None)
+    if not college:
+        return RedirectResponse("/college/login", 302)
+
+    admin = auth_utils.get_admin_from_session(request)
+    if not admin or admin["college_slug"] != college["slug"]:
+        return RedirectResponse("/college/login", 302)
+
+    conn = db.get_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("SELECT COUNT(*) FROM charvak_students WHERE college_slug = %s", (college["slug"],))
+        student_count = cur.fetchone()[0]
+    finally:
+        cur.close()
+        conn.close()
+
+    # For now, render a simple inline HTML dashboard
+    html = f"""
+    <html><body style='font-family:system-ui;padding:40px;'>
+        <h1>{college['name']} — Admin Dashboard</h1>
+        <p>Welcome, {admin['email']}</p>
+        <p>Total Enrolled Students: <strong>{student_count}</strong></p>
+        <hr>
+        <h3>Bulk Upload Students</h3>
+        <form action="/college/admin/csv-upload" method="post" enctype="multipart/form-data">
+            <p>Upload a CSV with columns: <code>name, email, enrollment_year</code></p>
+            <input type="file" name="file" accept=".csv" required>
+            <button type="submit">Upload CSV</button>
+        </form>
+    </body></html>
+    """
+    return HTMLResponse(html)
+
+
+@app.post("/college/admin/csv-upload")
+async def college_admin_csv_upload(request: Request):
+    from fastapi.responses import RedirectResponse
+    from database import db
+    import auth_utils
+    import csv
+    import io
+    import secrets
+
+    college = getattr(request.state, "college", None)
+    if not college:
+        return RedirectResponse("/college/login", 302)
+
+    admin = auth_utils.get_admin_from_session(request)
+    if not admin or admin["college_slug"] != college["slug"]:
+        return RedirectResponse("/college/login", 302)
+
+    form = await request.form()
+    file = form.get("file")
+    if not file:
+        return HTMLResponse("<h1>Error: No file uploaded</h1>", status_code=400)
+
+    content = await file.read()
+    decoded = content.decode('utf-8')
+    reader = csv.DictReader(io.StringIO(decoded))
+    
+    conn = db.get_connection()
+    cur = conn.cursor()
+    added = 0
+    try:
+        for row in reader:
+            email = (row.get("email") or "").strip().lower()
+            name = (row.get("name") or "").strip()
+            year_str = (row.get("enrollment_year") or "").strip()
+            
+            if not email or "@" not in email:
+                continue
+                
+            year = int(year_str) if year_str.isdigit() else None
+            student_id = f"STU-{secrets.token_hex(4).upper()}"
+
+            # Upsert logic
+            cur.execute("""
+                INSERT INTO charvak_students (student_id, college_slug, email, name, enrollment_year, status)
+                VALUES (%s, %s, %s, %s, %s, 'active')
+                ON CONFLICT (college_slug, (LOWER(email))) DO NOTHING
+            """, (student_id, college["slug"], email, name, year))
+            
+            if cur.rowcount > 0:
+                added += 1
+                
+        conn.commit()
+    finally:
+        cur.close()
+        conn.close()
+
+    return HTMLResponse(f"<html><body style='font-family:system-ui;padding:40px;'><h1>✅ Upload Successful</h1><p>Added {added} new students.</p><a href='/college/admin/dashboard'>Back to Dashboard</a></body></html>")

@@ -157,17 +157,14 @@
 
             <div id="errorBox" class="error-msg"></div>
 
-            <form id="loginForm" onsubmit="return handleLogin(event)">
+            <form id="loginForm" action="/college/admin/login" method="post">
                 <div class="form-group">
                     <label class="form-label" for="email">Email Address</label>
-                    <input type="email" id="email" class="form-input" placeholder="you@{{ college.slug }}.ac.in" required autocomplete="email">
+                    <input type="email" id="email" class="form-input" placeholder="you@{{ college.slug }}.ac.in" name="email" required autocomplete="email">
                 </div>
-                <div class="form-group">
-                    <label class="form-label" for="password">Password</label>
-                    <input type="password" id="password" class="form-input" placeholder="Enter your password" required autocomplete="current-password">
-                </div>
-                <button type="submit" class="btn-login" id="loginBtn">Sign In</button>
-            </form>
+
+                <button type="submit" class="btn-login" id="loginBtn">Send Magic Link</button>
+            <p class="text-muted small mt-2">We will email you a secure login link.</p></form>
 
             <p class="footer">
                 Don't have an account? Contact the placement cell at<br>
@@ -180,44 +177,6 @@
         </div>
     </div>
 
-    <script>
-        async function handleLogin(e) {
-            e.preventDefault();
-            const btn = document.getElementById('loginBtn');
-            const errBox = document.getElementById('errorBox');
-            const email = document.getElementById('email').value.trim().toLowerCase();
-            const password = document.getElementById('password').value;
-
-            btn.disabled = true;
-            btn.textContent = 'Signing in...';
-            errBox.classList.remove('show');
-
-            try {
-                const r = await fetch('/api/auth/login', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    credentials: 'include',
-                    body: JSON.stringify({email: email, password: password})
-                });
-                const d = await r.json();
-                if (d.status === 'success' || d.token) {
-                    if (d.token) localStorage.setItem('auth_token', d.token);
-                    localStorage.setItem('userEmail', email);
-                    window.location.href = '/college/dashboard';
-                } else {
-                    errBox.textContent = d.message || 'Invalid email or password';
-                    errBox.classList.add('show');
-                    btn.disabled = false;
-                    btn.textContent = 'Sign In';
-                }
-            } catch (err) {
-                errBox.textContent = 'Network error. Please try again.';
-                errBox.classList.add('show');
-                btn.disabled = false;
-                btn.textContent = 'Sign In';
-            }
-            return false;
-        }
-    </script>
+    
 </body>
 </html>
