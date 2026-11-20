@@ -1038,6 +1038,13 @@ function checkLoginState() {
     fetch('/api/auth/me', { credentials: 'include' })
         .then(function(r) {
             if (r.status !== 200) return null;
+            // Force the UI to show logged in state
+            document.body.classList.add('logged-in');
+            var out = document.getElementById('topAuthOut');
+            var inn = document.getElementById('topAuthIn');
+            if (out) out.style.display = 'none';
+            if (inn) inn.classList.remove('d-none');
+            console.log('[v6-fix] Forced login state via /api/auth/me');
             return r.json();
         })
         .then(function(d) {

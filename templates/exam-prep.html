@@ -131,10 +131,12 @@ function resetDailyCounters() {
         localStorage.setItem('daily_questions_used', '0');
         localStorage.setItem('weekly_mock_tests_used', '0');
         localStorage.setItem('last_reset_date', today);
-        dailyQuestionsUsed = 0;
-        weeklyMockTestsUsed = 0;
     }
 }
+
+// ── CRITICAL FIX: Declare these variables properly at top of script ──
+window.dailyQuestionsUsed = parseInt(localStorage.getItem('daily_questions_used') || '0', 10);
+window.weeklyMockTestsUsed = parseInt(localStorage.getItem('weekly_mock_tests_used') || '0', 10);
 
 let userEmail = localStorage.getItem('userEmail') || '';
 let currentExam = null;
