@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Practice Dashboard — {{ college.name }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="mb-4">
+    <h1 class="h3 mb-1" style="color:{{ college.primary_color }};font-weight:800;">
+      Practice Gym 🏋️
+    </h1>
+    <div class="d-flex justify-content-between align-items-center">
+      <p class="text-muted mb-0">Welcome, {{ student.email.split("@")[0] }}. Keep your streak alive!</p>
+      <a href="/college/logout" class="btn btn-sm btn-outline-danger">Log Out</a>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm p-4 text-center">
+        <div class="text-muted small text-uppercase mb-1">Questions Practiced</div>
+        <div class="display-6 fw-bold" style="color:{{ college.primary_color }};">{{ stats.total_questions }}</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm p-4 text-center">
+        <div class="text-muted small text-uppercase mb-1">Overall Accuracy</div>
+        <div class="display-6 fw-bold" style="color:#10b981;">{{ stats.accuracy }}%</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm p-4 text-center">
+        <div class="text-muted small text-uppercase mb-1">Current Streak</div>
+        <div class="display-6 fw-bold" style="color:#f59e0b;">1 Day 🔥</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm">
+    <div class="card-body p-4">
+      <h2 class="h5 fw-bold mb-3">Today's Daily Drill</h2>
+      <p class="text-muted">5 questions generated based on your target role.</p>
+      
+      {% if request.query_params.get('success') %}
+      <div class="alert alert-success">✅ Practice session recorded! Your accuracy has been updated.</div>
+      {% endif %}
+
+      <form action="/practice/submit" method="post">
+          <!-- Mock questions for UI testing -->
+          <div class="mb-3">
+              <p><strong>1. What is the primary function of a Data Pipeline?</strong></p>
+              <div class="form-check"><input class="form-check-input" type="radio" name="q1" checked> A. Extract, Transform, Load</div>
+              <div class="form-check"><input class="form-check-input" type="radio" name="q1"> B. Display data on a dashboard</div>
+          </div>
+          <button type="submit" class="btn btn-lg text-white w-100" style="background:{{ college.primary_color }};font-weight:700;">
+            Submit Answers
+          </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

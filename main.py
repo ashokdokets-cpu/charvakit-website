@@ -22096,6 +22096,7 @@ async def admin_funnel_page(request: Request):
 #       functions of the same name (e.g., student_dashboard at line ~8547).
 # ============================================================
 
+
 @app.post("/college/login/request")
 async def college_login_request(request: Request):
     from fastapi.responses import RedirectResponse
@@ -22117,42 +22118,61 @@ async def college_login_request(request: Request):
     conn = db.get_connection()
     cur = conn.cursor()
     try:
-        cur.execute("""
+        # 1. Check if Admin
+        cur.execute('''
+            SELECT admin_id, name FROM charvak_college_admins
+            WHERE college_slug = %s AND LOWER(email) = %s AND status = 'active'
+        ''', (college["slug"], email))
+        admin_row = cur.fetchone()
+
+        # 2. Check if Student
+        cur.execute('''
             SELECT student_id, name FROM charvak_students
             WHERE college_slug = %s AND LOWER(email) = %s AND status = 'active'
-        """, (college["slug"], email))
-        row = cur.fetchone()
-        if not row:
+        ''', (college["slug"], email))
+        student_row = cur.fetchone()
+
+        if not admin_row and not student_row:
             return RedirectResponse("/college/login?sent=1", 302)
 
         raw_token = auth_utils.create_student_magic_token()
         token_hash = auth_utils.hash_token(raw_token)
-        expires = datetime.now(timezone.utc) + timedelta(minutes=auth_utils.STUDENT_TOKEN_TTL_MIN)
+        expires = datetime.now(timezone.utc) + timedelta(minutes=15)
 
-        cur.execute("""
+        cur.execute('''
             INSERT INTO charvak_student_auth_tokens (token_hash, email, expires_at)
             VALUES (%s, %s, %s)
-        """, (token_hash, email, expires))
+        ''', (token_hash, email, expires))
         conn.commit()
 
-        host = request.headers.get("host", f"{college['slug']}.charvakit.com"); scheme = request.url.scheme; magic_url = f"{scheme}://{host}/college/auth/{raw_token}"
+        host = request.headers.get("host", f"{college['slug']}.charvakit.com")
+        scheme = request.url.scheme
+        
+        # Determine path based on role
+        path = "admin/auth" if admin_row else "auth"
+        magic_url = f"{scheme}://{host}/college/{path}/{raw_token}"
+        
+        # ALWAYS LOG THE LINK
+        logger.info(f"[MAGIC LINK] {email} -> {magic_url}")
+
+        # Send email using EmailEngine class
         try:
-            from email_engine import send_email
-            send_email(
-                to=email,
-                subject=f"Your {college['name']} login link",
-                body=f"Click to log in: {magic_url}\n\nLink expires in {auth_utils.STUDENT_TOKEN_TTL_MIN} minutes.",
+            from email_engine import EmailEngine
+            engine = EmailEngine()
+            engine.send_email(
+                to_email=email, 
+                subject=f"Login: {college['name']}", 
+                body=f"<p>Click to log in: <a href='{magic_url}'>{magic_url}</a></p>"
             )
         except Exception as e:
-            logger.warning(f"Student magic-link email failed: {e}")
-            logger.info(f"[MAGIC LINK] {email} -> {magic_url}")
+            logger.warning(f"Email failed: {e}")
 
         return RedirectResponse("/college/login?sent=1", 302)
     finally:
         cur.close()
         conn.close()
 
-
+@app.get("/college/auth/")
 @app.get("/college/auth/{token}")
 async def college_auth_verify(request: Request, token: str):
     from fastapi.responses import RedirectResponse
@@ -22236,10 +22256,8 @@ async def student_dashboard_isolated(request: Request):
         certs = cur.fetchall()
 
         cur.execute("""
-            SELECT cert_id, role, score, issued_at
-            FROM charvak_readiness_certificates
+            SELECT * FROM charvak_readiness_certificates
             WHERE student_id = %s
-            ORDER BY issued_at DESC
         """, (student["student_id"],))
         readiness = cur.fetchall()
 
@@ -22515,3 +22533,73 @@ async def college_admin_csv_upload(request: Request):
         conn.close()
 
     return HTMLResponse(f"<html><body style='font-family:system-ui;padding:40px;'><h1>✅ Upload Successful</h1><p>Added {added} new students.</p><a href='/college/admin/dashboard'>Back to Dashboard</a></body></html>")
+
+
+# ============================================================
+# SESSION 118: PRACTICE MODE ENGINE
+# ============================================================
+
+@app.get("/practice/dashboard", response_class=HTMLResponse)
+async def practice_dashboard(request: Request):
+    from fastapi.responses import RedirectResponse
+    import auth_utils
+    from practice_engine import practice_engine
+
+    college = getattr(request.state, "college", None)
+    if not college:
+        return RedirectResponse("/college/login", 302)
+
+    student = auth_utils.get_student_from_session(request)
+    if not student or student["college_slug"] != college["slug"]:
+        return RedirectResponse("/college/login", 302)
+
+    stats = practice_engine.get_student_stats(student["student_id"])
+
+    return templates.TemplateResponse("practice-dashboard.html", {
+        "request": request,
+        "college": college,
+        "student": student,
+        "stats": stats
+    })
+
+
+@app.post("/practice/start")
+async def practice_start(request: Request):
+    """In a real app, this would generate questions and save them in session."""
+    # For now, we redirect to a mock test page.
+    return RedirectResponse("/practice/session?topic=General", 302)
+
+
+@app.post("/practice/submit")
+async def practice_submit(request: Request):
+    """Receives answers, scores them, and updates stats."""
+    from fastapi.responses import RedirectResponse
+    import auth_utils
+    from practice_engine import practice_engine
+
+    college = getattr(request.state, "college", None)
+    if not college:
+        return RedirectResponse("/college/login", 302)
+
+    student = auth_utils.get_student_from_session(request)
+    if not student:
+        return RedirectResponse("/college/login", 302)
+
+    form = await request.form()
+    
+    # Mocking the scoring logic for the prototype
+    total = 5
+    correct = 4 # Pretend they got 4/5 right
+    time_spent = 120 # 2 minutes
+
+    practice_engine.record_attempt(student["student_id"], "General", "Daily Drill", total, correct, time_spent)
+
+    return RedirectResponse("/practice/dashboard?success=1", 302)
+
+
+@app.get("/college/logout")
+async def college_logout(request: Request):
+    from fastapi.responses import RedirectResponse
+    response = RedirectResponse("/college/login", status_code=302)
+    response.delete_cookie("charvakit_auth_token")
+    return response

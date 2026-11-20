@@ -6,7 +6,10 @@
     <h1 class="h3 mb-1" style="color:{{ college.primary_color }};font-weight:800;">
       Welcome back{% if student.email %}, {{ student.email.split("@")[0] }}{% endif %}
     </h1>
-    <p class="text-muted mb-0">{{ college.name }} · My Placement Dashboard</p>
+    <div class="d-flex justify-content-between align-items-center">
+      <p class="text-muted mb-0">{{ college.name }} · My Placement Dashboard</p>
+      <a href="/college/logout" class="btn btn-sm btn-outline-danger">Log Out</a>
+    </div>
   </div>
 
   <div class="row g-3 mb-4">
