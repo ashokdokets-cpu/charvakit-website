@@ -63,19 +63,30 @@ class IndiaRadarEngine:
             return []
 
     def _is_truly_india(self, job):
-        """Safety filter to ensure no US/EU jobs slip through."""
-        loc = str(job.get("location", "")).lower()
+        """Safety filter to ensure no US/EU jobs slip through.
+        
+        Session 119 fix: Techmap often returns empty location for valid India jobs.
+        When location is empty, trust the API's countryCode=in filter.
+        """
+        loc = str(job.get("location", "")).lower().strip()
+
+        # CRITICAL FIX: If location is empty, trust the API's countryCode=in filter
+        if not loc:
+            return True
+
         title = str(job.get("title", "")).lower()
         desc = str(job.get("description", "")).lower()
         combined = f"{loc} {title} {desc}"
-        
+
         # If it contains any Indian keyword, it's valid
         if any(kw in combined for kw in self.india_keywords):
             return True
-            
+
         # If it contains these explicit non-India keywords, reject it
         if any(kw in loc for kw in ["usa", "united states", "uk", "canada", "europe", "germany"]):
             return False
+
+        return False
             
         return False
 

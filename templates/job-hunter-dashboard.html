@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Job Hunter — {{ college.name }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="h3 mb-1" style="color:{{ college.primary_color }};font-weight:800;">Job Hunter 🎯</h1>
+      <p class="text-muted mb-0">Welcome, {{ student.email.split("@")[0] }}. Verified Indian jobs ranked by your Charvak-verified skills.</p>
+    </div>
+    <a href="/college/logout" class="btn btn-sm btn-outline-danger">Log Out</a>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm p-4 text-center">
+        <div class="text-muted small text-uppercase mb-1">Jobs Matched</div>
+        <div class="display-6 fw-bold" style="color:{{ college.primary_color }};">{{ jobs|length }}</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm p-4 text-center">
+        <div class="text-muted small text-uppercase mb-1">Top Match</div>
+        <div class="display-6 fw-bold" style="color:#10b981;">{{ jobs[0].match_score if jobs else 0 }}%</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm p-4 text-center">
+        <div class="text-muted small text-uppercase mb-1">Source</div>
+        <div class="display-6 fw-bold" style="color:#f59e0b;">Charvak Radar</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Match</th>
+              <th>Role</th>
+              <th>Company</th>
+              <th>Location</th>
+              <th>Salary</th>
+              <th>Source</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for j in jobs %}
+            <tr>
+              <td>
+                <span class="badge {% if j.match_score >= 80 %}bg-success{% elif j.match_score >= 60 %}bg-warning{% else %}bg-secondary{% endif %}">
+                  {{ j.match_score }}%
+                </span>
+              </td>
+              <td><strong>{{ j.title }}</strong></td>
+              <td>{{ j.company }}</td>
+              <td><span class="text-muted small">{{ j.location }}</span></td>
+              <td>{{ j.salary }}</td>
+              <td>
+                <span class="badge {% if j.source in ('techmap', 'naukri', 'charvak') %}bg-success text-white{% else %}bg-light text-dark{% endif %}">
+                  {% if j.source in ('techmap', 'naukri', 'charvak') %}✅ Charvak Verified{% else %}{{ j.source|title }}{% endif %}
+                </span>
+              </td>
+              <td>
+                <a href="/job-hunter/kit/{{ j.job_id }}" class="btn btn-sm btn-outline-primary">View Job</a>
+              </td>
+            </tr>
+          {% else %}
+            <tr><td colspan="7" class="text-center text-muted py-4">No matching jobs found yet. Keep practicing!</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

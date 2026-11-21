@@ -22603,3 +22603,59 @@ async def college_logout(request: Request):
     response = RedirectResponse("/college/login", status_code=302)
     response.delete_cookie("charvakit_auth_token")
     return response
+
+
+# ============================================================
+# SESSION 119: JOB HUNTER ROUTE
+# ============================================================
+
+@app.get("/job-hunter", response_class=HTMLResponse)
+async def job_hunter_dashboard(request: Request):
+    from fastapi.responses import RedirectResponse
+    import auth_utils
+    from job_hunter_engine import job_hunter_engine
+
+    college = getattr(request.state, "college", None)
+    if not college:
+        return RedirectResponse("/college/login", 302)
+
+    student = auth_utils.get_student_from_session(request)
+    if not student or student["college_slug"] != college["slug"]:
+        return RedirectResponse("/college/login", 302)
+
+    jobs = job_hunter_engine.get_ranked_jobs(student["student_id"], india_only=True)
+
+    return templates.TemplateResponse("job-hunter-dashboard.html", {
+        "request": request,
+        "college": college,
+        "student": student,
+        "jobs": jobs
+    })
+
+
+# ============================================================
+# SESSION 119: JOB HUNTER ROUTE
+# ============================================================
+
+@app.get("/job-hunter", response_class=HTMLResponse)
+async def job_hunter_dashboard(request: Request):
+    from fastapi.responses import RedirectResponse
+    import auth_utils
+    from job_hunter_engine import job_hunter_engine
+
+    college = getattr(request.state, "college", None)
+    if not college:
+        return RedirectResponse("/college/login", 302)
+
+    student = auth_utils.get_student_from_session(request)
+    if not student or student["college_slug"] != college["slug"]:
+        return RedirectResponse("/college/login", 302)
+
+    jobs = job_hunter_engine.get_ranked_jobs(student["student_id"], india_only=True)
+
+    return templates.TemplateResponse("job-hunter-dashboard.html", {
+        "request": request,
+        "college": college,
+        "student": student,
+        "jobs": jobs
+    })
