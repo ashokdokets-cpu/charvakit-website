@@ -22697,18 +22697,27 @@ async def job_hunter_kit(request: Request, job_id: str):
     source_label = '✅ Charvak Verified' if job['source'] in ('techmap', 'naukri', 'charvak') else job['source'].title()
     
     if kit["status"] == "success":
+        refine_links = kit.get("refine_links", {})
         kit_html = f"""
         <div style="background:#f0f9ff;padding:20px;border-radius:8px;margin-top:20px;">
             <h2>📄 Tailored Cover Letter</h2>
             <p style="white-space:pre-wrap;background:white;padding:15px;border-radius:5px;">{kit['cover_letter']}</p>
+            <a href="{refine_links.get('cover_letter', 'https://www.doketsrb.com/#cover-letter')}" target="_blank" 
+               style="display:inline-block;padding:8px 16px;background:#0a3d62;color:white;text-decoration:none;border-radius:5px;font-size:13px;margin-top:8px;">
+               ✨ Refine in Dokets Resume Builder &rarr;
+            </a>
             
-            <h2>📝 Optimized Resume Bullets</h2>
+            <h2 style="margin-top:24px;">📝 Optimized Resume Bullets</h2>
             <p style="white-space:pre-wrap;background:white;padding:15px;border-radius:5px;">{kit['resume_bullets']}</p>
+            <a href="{refine_links.get('resume_builder', 'https://www.doketsrb.com/#builder')}" target="_blank"
+               style="display:inline-block;padding:8px 16px;background:#0a3d62;color:white;text-decoration:none;border-radius:5px;font-size:13px;margin-top:8px;">
+               ✨ Build Full Resume in Dokets &rarr;
+            </a>
             
-            <h2>🎤 STAR Interview Prep</h2>
+            <h2 style="margin-top:24px;">🎤 STAR Interview Prep</h2>
             <p style="white-space:pre-wrap;background:white;padding:15px;border-radius:5px;">{kit['interview_prep']}</p>
             
-            <h2>✉️ Cold Email</h2>
+            <h2 style="margin-top:24px;">✉️ Cold Email</h2>
             <p style="white-space:pre-wrap;background:white;padding:15px;border-radius:5px;">{kit['cold_email']}</p>
         </div>
         """

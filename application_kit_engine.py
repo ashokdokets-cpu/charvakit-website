@@ -81,7 +81,13 @@ class ApplicationKitEngine:
                 "cover_letter": cover,
                 "resume_bullets": resume,
                 "interview_prep": interview,
-                "cold_email": email
+                "cold_email": email,
+                # Refinement links to Dokets Resume Builder
+                "refine_links": {
+                    "cover_letter": "https://www.doketsrb.com/#cover-letter",
+                    "resume_builder": "https://www.doketsrb.com/#builder",
+                    "linkedin": "https://www.doketsrb.com/#linkedin",
+                }
             }
         except Exception as e:
             logger.error(f"Failed to generate kit: {e}")
