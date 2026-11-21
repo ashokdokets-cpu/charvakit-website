@@ -86,7 +86,7 @@ class ApplicationKitEngine:
                 "refine_links": {
                     "cover_letter": "https://www.doketsrb.com/#cover-letter",
                     "resume_builder": "https://www.doketsrb.com/#builder",
-                    "linkedin": "https://www.doketsrb.com/#linkedin",
+                    "linkedin": "https://www.doketsrb.com/#dashboard",
                 }
             }
         except Exception as e:
