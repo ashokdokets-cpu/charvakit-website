@@ -22609,30 +22609,6 @@ async def college_logout(request: Request):
 # SESSION 119: JOB HUNTER ROUTE
 # ============================================================
 
-@app.get("/job-hunter", response_class=HTMLResponse)
-async def job_hunter_dashboard(request: Request):
-    from fastapi.responses import RedirectResponse
-    import auth_utils
-    from job_hunter_engine import job_hunter_engine
-
-    college = getattr(request.state, "college", None)
-    if not college:
-        return RedirectResponse("/college/login", 302)
-
-    student = auth_utils.get_student_from_session(request)
-    if not student or student["college_slug"] != college["slug"]:
-        return RedirectResponse("/college/login", 302)
-
-    jobs = job_hunter_engine.get_ranked_jobs(student["student_id"], india_only=True)
-
-    return templates.TemplateResponse("job-hunter-dashboard.html", {
-        "request": request,
-        "college": college,
-        "student": student,
-        "jobs": jobs
-    })
-
-
 # ============================================================
 # SESSION 119: JOB HUNTER ROUTE
 # ============================================================
@@ -22659,3 +22635,82 @@ async def job_hunter_dashboard(request: Request):
         "student": student,
         "jobs": jobs
     })
+
+
+# ============================================================
+# SESSION 119.2 (placeholder): Application Kit Viewer
+# ============================================================
+
+@app.get("/job-hunter/kit/{job_id}", response_class=HTMLResponse)
+async def job_hunter_kit(request: Request, job_id: str):
+    from fastapi.responses import RedirectResponse
+    from database import db
+    import auth_utils
+
+    college = getattr(request.state, "college", None)
+    if not college:
+        return RedirectResponse("/college/login", 302)
+
+    student = auth_utils.get_student_from_session(request)
+    if not student or student["college_slug"] != college["slug"]:
+        return RedirectResponse("/college/login", 302)
+
+    # Get the job details
+    conn = db.get_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            SELECT job_id, title, company, location, salary, description, source, posted_date
+            FROM charvak_jobs WHERE job_id = %s
+        """, (job_id,))
+        row = cur.fetchone()
+        if not row:
+            return RedirectResponse("/job-hunter", 302)
+        
+        job = {
+            "job_id": row[0], "title": row[1], "company": row[2],
+            "location": row[3], "salary": row[4], "description": row[5],
+            "source": row[6], "posted_date": row[7]
+        }
+    finally:
+        cur.close()
+        conn.close()
+
+    # Build a simple HTML page
+    desc_preview = (job["description"] or "")[:1500]
+    
+    html = f"""
+    <html><body style='font-family:system-ui;padding:40px;max-width:900px;margin:auto;'>
+        <a href="/job-hunter" style='color:#0a3d62;'>&larr; Back to Job Hunter</a>
+        <br><br>
+        <h1 style='color:#0a3d62;'>{job['title']}</h1>
+        <h3 style='color:#666;'>{job['company']} &middot; {job['location']}</h3>
+        <p><strong>Salary:</strong> {job['salary'] or 'Not disclosed'}</p>
+        <p><strong>Posted:</strong> {job['posted_date'] or 'Recent'}</p>
+        <p><strong>Source:</strong> {'✅ Charvak Verified' if job['source'] in ('techmap', 'naukri', 'charvak') else job['source'].title()}</p>
+        <hr>
+        <h3>Job Description</h3>
+        <p style='white-space:pre-wrap;'>{desc_preview}...</p>
+        <hr>
+        <div style='padding:20px;background:#f0f9ff;border-radius:8px;border-left:4px solid #0a3d62;'>
+            <h3>🚧 Tailored Application Kit — Coming Soon</h3>
+            <p>In the next update, clicking this page will generate:</p>
+            <ul>
+                <li>AI-tailored cover letter (4 sentences)</li>
+                <li>Resume optimized for this specific job</li>
+                <li>3 STAR-format interview answers</li>
+                <li>Cold email template for the hiring manager</li>
+            </ul>
+            <p><strong>For now:</strong> Visit the original listing using the link below.</p>
+        </div>
+        <br>
+        <a href="{job['description'][-200:] if job['description'] else '#'}" 
+           style='padding:12px 24px;background:#0a3d62;color:white;text-decoration:none;border-radius:6px;font-weight:bold;'
+           target="_blank">
+            Apply on Original Site &rarr;
+        </a>
+        <br><br>
+        <a href="/college/logout" style='color:#c0392b;font-size:14px;'>Log Out</a>
+    </body></html>
+    """
+    return HTMLResponse(html)
