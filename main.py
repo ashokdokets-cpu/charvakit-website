@@ -22641,11 +22641,13 @@ async def job_hunter_dashboard(request: Request):
 # SESSION 119.2 (placeholder): Application Kit Viewer
 # ============================================================
 
+
 @app.get("/job-hunter/kit/{job_id}", response_class=HTMLResponse)
 async def job_hunter_kit(request: Request, job_id: str):
     from fastapi.responses import RedirectResponse
     from database import db
     import auth_utils
+    from application_kit_engine import application_kit_engine
 
     college = getattr(request.state, "college", None)
     if not college:
@@ -22655,7 +22657,7 @@ async def job_hunter_kit(request: Request, job_id: str):
     if not student or student["college_slug"] != college["slug"]:
         return RedirectResponse("/college/login", 302)
 
-    # Get the job details
+    # 1. Fetch job details
     conn = db.get_connection()
     cur = conn.cursor()
     try:
@@ -22669,16 +22671,55 @@ async def job_hunter_kit(request: Request, job_id: str):
         
         job = {
             "job_id": row[0], "title": row[1], "company": row[2],
-            "location": row[3], "salary": row[4], "description": row[5],
+            "location": row[3], "salary": row[4], "description": row[5] or "",
             "source": row[6], "posted_date": row[7]
         }
+
+        # 2. Fetch student skills (certs + practice)
+        cur.execute("SELECT role FROM charvak_career_certifications WHERE student_id = %s", (student["student_id"],))
+        certs = [r[0] for r in cur.fetchall()]
+        student_skills = ", ".join(certs) if certs else "General aptitude, problem-solving"
+
     finally:
         cur.close()
         conn.close()
 
-    # Build a simple HTML page
-    desc_preview = (job["description"] or "")[:1500]
+    # 3. Generate Kit (Mocked slightly for speed - in real prod, you would cache this)
+    kit = application_kit_engine.generate_kit(
+        job_title=job["title"],
+        company=job["company"],
+        job_description=job["description"],
+        student_name=student["email"].split("@")[0],
+        student_skills=student_skills
+    )
+
+    # 4. Render the HTML
+    source_label = '✅ Charvak Verified' if job['source'] in ('techmap', 'naukri', 'charvak') else job['source'].title()
     
+    if kit["status"] == "success":
+        kit_html = f"""
+        <div style="background:#f0f9ff;padding:20px;border-radius:8px;margin-top:20px;">
+            <h2>📄 Tailored Cover Letter</h2>
+            <p style="white-space:pre-wrap;background:white;padding:15px;border-radius:5px;">{kit['cover_letter']}</p>
+            
+            <h2>📝 Optimized Resume Bullets</h2>
+            <p style="white-space:pre-wrap;background:white;padding:15px;border-radius:5px;">{kit['resume_bullets']}</p>
+            
+            <h2>🎤 STAR Interview Prep</h2>
+            <p style="white-space:pre-wrap;background:white;padding:15px;border-radius:5px;">{kit['interview_prep']}</p>
+            
+            <h2>✉️ Cold Email</h2>
+            <p style="white-space:pre-wrap;background:white;padding:15px;border-radius:5px;">{kit['cold_email']}</p>
+        </div>
+        """
+    else:
+        kit_html = f"""
+        <div style="background:#fee2e2;padding:20px;border-radius:8px;margin-top:20px;">
+            <h3>⚠️ Could not generate kit</h3>
+            <p>Error: {kit.get('message')}</p>
+        </div>
+        """
+
     html = f"""
     <html><body style='font-family:system-ui;padding:40px;max-width:900px;margin:auto;'>
         <a href="/job-hunter" style='color:#0a3d62;'>&larr; Back to Job Hunter</a>
@@ -22686,30 +22727,10 @@ async def job_hunter_kit(request: Request, job_id: str):
         <h1 style='color:#0a3d62;'>{job['title']}</h1>
         <h3 style='color:#666;'>{job['company']} &middot; {job['location']}</h3>
         <p><strong>Salary:</strong> {job['salary'] or 'Not disclosed'}</p>
-        <p><strong>Posted:</strong> {job['posted_date'] or 'Recent'}</p>
-        <p><strong>Source:</strong> {'✅ Charvak Verified' if job['source'] in ('techmap', 'naukri', 'charvak') else job['source'].title()}</p>
+        <p><strong>Source:</strong> {source_label}</p>
         <hr>
-        <h3>Job Description</h3>
-        <p style='white-space:pre-wrap;'>{desc_preview}...</p>
-        <hr>
-        <div style='padding:20px;background:#f0f9ff;border-radius:8px;border-left:4px solid #0a3d62;'>
-            <h3>🚧 Tailored Application Kit — Coming Soon</h3>
-            <p>In the next update, clicking this page will generate:</p>
-            <ul>
-                <li>AI-tailored cover letter (4 sentences)</li>
-                <li>Resume optimized for this specific job</li>
-                <li>3 STAR-format interview answers</li>
-                <li>Cold email template for the hiring manager</li>
-            </ul>
-            <p><strong>For now:</strong> Visit the original listing using the link below.</p>
-        </div>
+        {kit_html}
         <br>
-        <a href="{job['description'][-200:] if job['description'] else '#'}" 
-           style='padding:12px 24px;background:#0a3d62;color:white;text-decoration:none;border-radius:6px;font-weight:bold;'
-           target="_blank">
-            Apply on Original Site &rarr;
-        </a>
-        <br><br>
         <a href="/college/logout" style='color:#c0392b;font-size:14px;'>Log Out</a>
     </body></html>
     """
