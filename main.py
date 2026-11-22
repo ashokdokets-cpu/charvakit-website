@@ -22694,7 +22694,7 @@ async def job_hunter_kit(request: Request, job_id: str):
     )
 
     # 4. Render the HTML
-    source_label = '✅ Charvak Verified' if job['source'] in ('techmap', 'naukri', 'charvak') else job['source'].title()
+    source_label = '✅ Charvak Verified' if job['source'] in ('techmap', 'naukri', 'charvak', 'adzuna') else job['source'].title()
     
     if kit["status"] == "success":
         refine_links = kit.get("refine_links", {})

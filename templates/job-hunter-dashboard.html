@@ -59,8 +59,8 @@
               <td><span class="text-muted small">{{ j.location }}</span></td>
               <td>{{ j.salary }}</td>
               <td>
-                <span class="badge {% if j.source in ('techmap', 'naukri', 'charvak') %}bg-success text-white{% else %}bg-light text-dark{% endif %}">
-                  {% if j.source in ('techmap', 'naukri', 'charvak') %}✅ Charvak Verified{% else %}{{ j.source|title }}{% endif %}
+                <span class="badge {% if j.source in ('techmap', 'naukri', 'charvak', 'adzuna') %}bg-success text-white{% else %}bg-light text-dark{% endif %}">
+                  {% if j.source in ('techmap', 'naukri', 'charvak', 'adzuna') %}✅ Charvak Verified{% else %}{{ j.source|title }}{% endif %}
                 </span>
               </td>
               <td>
