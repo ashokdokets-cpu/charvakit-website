@@ -22627,20 +22627,22 @@ async def job_hunter_dashboard(request: Request):
     if not student or student["college_slug"] != college["slug"]:
         return RedirectResponse("/college/login", 302)
 
-    jobs = job_hunter_engine.get_ranked_jobs(student["student_id"], india_only=True)
+    category = request.query_params.get("category", "all")
+    valid = ["all", "tech", "sales_marketing", "finance", "healthcare", "hospitality", "campus", "admin_ops", "other"]
+    if category not in valid:
+        category = "all"
+
+    jobs = job_hunter_engine.get_ranked_jobs(
+        student["student_id"], india_only=True, category=category
+    )
 
     return templates.TemplateResponse("job-hunter-dashboard.html", {
         "request": request,
         "college": college,
         "student": student,
-        "jobs": jobs
+        "jobs": jobs,
+        "selected_category": category
     })
-
-
-# ============================================================
-# SESSION 119.2 (placeholder): Application Kit Viewer
-# ============================================================
-
 
 @app.get("/job-hunter/kit/{job_id}", response_class=HTMLResponse)
 async def job_hunter_kit(request: Request, job_id: str):

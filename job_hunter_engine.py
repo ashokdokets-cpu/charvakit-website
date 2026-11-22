@@ -10,8 +10,8 @@ from database import db
 logger = logging.getLogger("charvakit.job_hunter")
 
 class JobHunterEngine:
-    def get_ranked_jobs(self, student_id: str, india_only: bool = True) -> list:
-        """Fetch active jobs and rank them by match score."""
+    def get_ranked_jobs(self, student_id: str, india_only: bool = True, category: str = "all") -> list:
+        """Fetch active jobs and rank them by match score. Optionally filter by role category."""
         conn = db.get_connection()
         cur = conn.cursor()
         try:
@@ -58,9 +58,10 @@ class JobHunterEngine:
                         OR LOWER(location) LIKE '%%vijayawada%%'
                         OR LOWER(location) LIKE '%%visakhapatnam%%'
                       )
+                      AND (%s = 'all' OR role_category = %s)
                     ORDER BY created_at DESC
                     LIMIT 100
-                """)
+                """, (category, category))
             else:
                 cur.execute("""
                     SELECT job_id, title, company, location, salary, source, posted_date, description
