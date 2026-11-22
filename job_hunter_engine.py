@@ -33,15 +33,33 @@ class JobHunterEngine:
             correct, total = cur.fetchone()
             practice_acc = (correct / total * 100) if total > 0 else 0
 
-            # 3. Get jobs (India filter optional)
+            # 3. Get jobs — STRICT India filter
             if india_only:
                 cur.execute("""
                     SELECT job_id, title, company, location, salary, source, posted_date, description
                     FROM charvak_jobs
                     WHERE status = 'active'
-                      AND (source IN ('techmap', 'naukri') OR LOWER(location) LIKE '%%india%%')
+                      AND (
+                        source IN ('techmap', 'naukri', 'adzuna')
+                        OR LOWER(location) LIKE '%%india%%'
+                        OR LOWER(location) LIKE '%%bangalore%%'
+                        OR LOWER(location) LIKE '%%bengaluru%%'
+                        OR LOWER(location) LIKE '%%mumbai%%'
+                        OR LOWER(location) LIKE '%%delhi%%'
+                        OR LOWER(location) LIKE '%%hyderabad%%'
+                        OR LOWER(location) LIKE '%%chennai%%'
+                        OR LOWER(location) LIKE '%%pune%%'
+                        OR LOWER(location) LIKE '%%kolkata%%'
+                        OR LOWER(location) LIKE '%%ahmedabad%%'
+                        OR LOWER(location) LIKE '%%jaipur%%'
+                        OR LOWER(location) LIKE '%%gurgaon%%'
+                        OR LOWER(location) LIKE '%%noida%%'
+                        OR LOWER(location) LIKE '%%guntur%%'
+                        OR LOWER(location) LIKE '%%vijayawada%%'
+                        OR LOWER(location) LIKE '%%visakhapatnam%%'
+                      )
                     ORDER BY created_at DESC
-                    LIMIT 50
+                    LIMIT 100
                 """)
             else:
                 cur.execute("""
