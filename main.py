@@ -22812,3 +22812,47 @@ async def job_hunter_applications(request: Request):
         "request": request, "college": college, "student": student,
         "jobs": saved_jobs, "stats": stats,
     })
+
+
+# ============================================================
+# SESSION 123 Option A: Follow-Up Reminder Cron
+# ============================================================
+
+@app.post("/api/cron/followup-reminders")
+async def cron_followup_reminders(request: Request):
+    """Daily cron job: send follow-up reminders for applied jobs."""
+    import os
+    from followup_engine import followup_engine
+
+    # Verify cron secret
+    provided_secret = request.headers.get("X-Cron-Secret", "")
+    expected_secret = os.getenv("CRON_SECRET", "")
+    if expected_secret and provided_secret != expected_secret:
+        return JSONResponse({"status": "error", "message": "unauthorized"}, status_code=401)
+
+    result = followup_engine.process_due_reminders()
+    return result
+
+
+@app.get("/api/cron/followup-reminders/status")
+async def cron_followup_status(request: Request):
+    """Dry-run: shows how many reminders would be sent without sending them."""
+    from followup_engine import followup_engine
+
+    try:
+        due = followup_engine.get_due_reminders()
+        return {
+            "status": "success",
+            "due_count": len(due),
+            "sample": [
+                {
+                    "email": r["email"][:3] + "***",
+                    "company": r["company"],
+                    "title": r["title"],
+                    "reminder_type": r["reminder_type"],
+                }
+                for r in due[:5]
+            ]
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
