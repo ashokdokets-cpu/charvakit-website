@@ -111,4 +111,267 @@ class JobHunterEngine:
             cur.close()
             conn.close()
 
+    def save_job(self, student_id: str, job_id: str) -> dict:
+        """Save a job for a student. Returns status dict."""
+        import secrets
+        conn = db.get_connection()
+        cur = conn.cursor()
+        try:
+            save_id = f"SAVE-{secrets.token_hex(4).upper()}"
+            cur.execute("""
+                INSERT INTO charvak_saved_jobs (save_id, student_id, job_id, status)
+                VALUES (%s, %s, %s, 'saved')
+                ON CONFLICT (student_id, job_id) DO NOTHING
+            """, (save_id, student_id, job_id))
+            conn.commit()
+            return {"status": "success", "action": "saved", "job_id": job_id}
+        except Exception as e:
+            conn.rollback()
+            return {"status": "error", "message": str(e)}
+        finally:
+            cur.close()
+            conn.close()
+
+    def unsave_job(self, student_id: str, job_id: str) -> dict:
+        """Remove a saved job."""
+        conn = db.get_connection()
+        cur = conn.cursor()
+        try:
+            cur.execute("""
+                DELETE FROM charvak_saved_jobs
+                WHERE student_id = %s AND job_id = %s
+            """, (student_id, job_id))
+            conn.commit()
+            return {"status": "success", "action": "unsaved", "job_id": job_id}
+        except Exception as e:
+            conn.rollback()
+            return {"status": "error", "message": str(e)}
+        finally:
+            cur.close()
+            conn.close()
+
+    def update_application_status(self, student_id: str, job_id: str, new_status: str, notes: str = None) -> dict:
+        """Update application status: applied | interviewing | offer | rejected."""
+        valid = ["saved", "applied", "interviewing", "offer", "rejected"]
+        if new_status not in valid:
+            return {"status": "error", "message": f"Invalid status. Use: {valid}"}
+
+        conn = db.get_connection()
+        cur = conn.cursor()
+        try:
+            # Build update dynamically
+            if new_status == "applied":
+                cur.execute("""
+                    UPDATE charvak_saved_jobs
+                    SET status = %s,
+                        applied_at = NOW(),
+                        followup_3day_at = NOW() + INTERVAL '3 days',
+                        followup_7day_at = NOW() + INTERVAL '7 days',
+                        followup_14day_at = NOW() + INTERVAL '14 days',
+                        notes = COALESCE(%s, notes),
+                        updated_at = NOW()
+                    WHERE student_id = %s AND job_id = %s
+                """, (new_status, notes, student_id, job_id))
+            else:
+                cur.execute("""
+                    UPDATE charvak_saved_jobs
+                    SET status = %s,
+                        notes = COALESCE(%s, notes),
+                        updated_at = NOW()
+                    WHERE student_id = %s AND job_id = %s
+                """, (new_status, notes, student_id, job_id))
+            conn.commit()
+            return {"status": "success", "new_status": new_status, "rowcount": cur.rowcount}
+        except Exception as e:
+            conn.rollback()
+            return {"status": "error", "message": str(e)}
+        finally:
+            cur.close()
+            conn.close()
+
+    def get_saved_jobs(self, student_id: str) -> list:
+        """Get all saved jobs with full job details."""
+        conn = db.get_connection()
+        cur = conn.cursor()
+        try:
+            cur.execute("""
+                SELECT sj.save_id, sj.job_id, sj.status, sj.applied_at, sj.notes,
+                       sj.created_at, sj.updated_at,
+                       j.title, j.company, j.location, j.salary, j.source
+                FROM charvak_saved_jobs sj
+                JOIN charvak_jobs j ON j.job_id = sj.job_id
+                WHERE sj.student_id = %s
+                ORDER BY sj.updated_at DESC
+            """, (student_id,))
+            rows = cur.fetchall()
+            results = []
+            for r in rows:
+                results.append({
+                    "save_id": r[0], "job_id": r[1], "status": r[2],
+                    "applied_at": r[3], "notes": r[4],
+                    "created_at": r[5], "updated_at": r[6],
+                    "title": r[7], "company": r[8], "location": r[9],
+                    "salary": r[10], "source": r[11],
+                })
+            return results
+        finally:
+            cur.close()
+            conn.close()
+
+    def get_saved_job_ids(self, student_id: str) -> set:
+        """Return a set of job_ids the student has saved (for quick lookup in templates)."""
+        conn = db.get_connection()
+        cur = conn.cursor()
+        try:
+            cur.execute("SELECT job_id FROM charvak_saved_jobs WHERE student_id = %s", (student_id,))
+            return {r[0] for r in cur.fetchall()}
+        finally:
+            cur.close()
+            conn.close()
+
+    def get_application_stats(self, student_id: str) -> dict:
+        """Summary counts for the tracker dashboard."""
+        conn = db.get_connection()
+        cur = conn.cursor()
+        try:
+            cur.execute("""
+                SELECT status, COUNT(*) FROM charvak_saved_jobs
+                WHERE student_id = %s GROUP BY status
+            """, (student_id,))
+            counts = {r[0]: r[1] for r in cur.fetchall()}
+            return {
+                "saved": counts.get("saved", 0),
+                "applied": counts.get("applied", 0),
+                "interviewing": counts.get("interviewing", 0),
+                "offer": counts.get("offer", 0),
+                "rejected": counts.get("rejected", 0),
+                "total": sum(counts.values()),
+            }
+        finally:
+            cur.close()
+            conn.close()
+
+
+    def save_job(self, student_id: str, job_id: str) -> dict:
+        import secrets
+        conn = db.get_connection()
+        cur = conn.cursor()
+        try:
+            save_id = f"SAVE-{secrets.token_hex(4).upper()}"
+            cur.execute("""
+                INSERT INTO charvak_saved_jobs (save_id, student_id, job_id, status)
+                VALUES (%s, %s, %s, 'saved')
+                ON CONFLICT (student_id, job_id) DO NOTHING
+            """, (save_id, student_id, job_id))
+            conn.commit()
+            return {"status": "success", "action": "saved"}
+        except Exception as e:
+            conn.rollback()
+            return {"status": "error", "message": str(e)}
+        finally:
+            cur.close()
+            conn.close()
+
+    def unsave_job(self, student_id: str, job_id: str) -> dict:
+        conn = db.get_connection()
+        cur = conn.cursor()
+        try:
+            cur.execute("DELETE FROM charvak_saved_jobs WHERE student_id = %s AND job_id = %s", (student_id, job_id))
+            conn.commit()
+            return {"status": "success", "action": "unsaved"}
+        except Exception as e:
+            conn.rollback()
+            return {"status": "error", "message": str(e)}
+        finally:
+            cur.close()
+            conn.close()
+
+    def update_application_status(self, student_id: str, job_id: str, new_status: str, notes: str = None) -> dict:
+        valid = ["saved", "applied", "interviewing", "offer", "rejected"]
+        if new_status not in valid:
+            return {"status": "error", "message": f"Invalid status. Use: {valid}"}
+        conn = db.get_connection()
+        cur = conn.cursor()
+        try:
+            if new_status == "applied":
+                cur.execute("""
+                    UPDATE charvak_saved_jobs
+                    SET status = %s, applied_at = NOW(),
+                        followup_3day_at = NOW() + INTERVAL '3 days',
+                        followup_7day_at = NOW() + INTERVAL '7 days',
+                        followup_14day_at = NOW() + INTERVAL '14 days',
+                        notes = COALESCE(%s, notes), updated_at = NOW()
+                    WHERE student_id = %s AND job_id = %s
+                """, (new_status, notes, student_id, job_id))
+            else:
+                cur.execute("""
+                    UPDATE charvak_saved_jobs
+                    SET status = %s, notes = COALESCE(%s, notes), updated_at = NOW()
+                    WHERE student_id = %s AND job_id = %s
+                """, (new_status, notes, student_id, job_id))
+            conn.commit()
+            return {"status": "success", "new_status": new_status, "rowcount": cur.rowcount}
+        except Exception as e:
+            conn.rollback()
+            return {"status": "error", "message": str(e)}
+        finally:
+            cur.close()
+            conn.close()
+
+    def get_saved_jobs(self, student_id: str) -> list:
+        conn = db.get_connection()
+        cur = conn.cursor()
+        try:
+            cur.execute("""
+                SELECT sj.save_id, sj.job_id, sj.status, sj.applied_at, sj.notes,
+                       sj.created_at, sj.updated_at,
+                       j.title, j.company, j.location, j.salary, j.source
+                FROM charvak_saved_jobs sj
+                JOIN charvak_jobs j ON j.job_id = sj.job_id
+                WHERE sj.student_id = %s
+                ORDER BY sj.updated_at DESC
+            """, (student_id,))
+            results = []
+            for r in cur.fetchall():
+                results.append({
+                    "save_id": r[0], "job_id": r[1], "status": r[2],
+                    "applied_at": r[3], "notes": r[4],
+                    "created_at": r[5], "updated_at": r[6],
+                    "title": r[7], "company": r[8], "location": r[9],
+                    "salary": r[10], "source": r[11],
+                })
+            return results
+        finally:
+            cur.close()
+            conn.close()
+
+    def get_saved_job_ids(self, student_id: str) -> set:
+        conn = db.get_connection()
+        cur = conn.cursor()
+        try:
+            cur.execute("SELECT job_id FROM charvak_saved_jobs WHERE student_id = %s", (student_id,))
+            return {r[0] for r in cur.fetchall()}
+        finally:
+            cur.close()
+            conn.close()
+
+    def get_application_stats(self, student_id: str) -> dict:
+        conn = db.get_connection()
+        cur = conn.cursor()
+        try:
+            cur.execute("SELECT status, COUNT(*) FROM charvak_saved_jobs WHERE student_id = %s GROUP BY status", (student_id,))
+            counts = {r[0]: r[1] for r in cur.fetchall()}
+            return {
+                "saved": counts.get("saved", 0),
+                "applied": counts.get("applied", 0),
+                "interviewing": counts.get("interviewing", 0),
+                "offer": counts.get("offer", 0),
+                "rejected": counts.get("rejected", 0),
+                "total": sum(counts.values()),
+            }
+        finally:
+            cur.close()
+            conn.close()
+
+
 job_hunter_engine = JobHunterEngine()

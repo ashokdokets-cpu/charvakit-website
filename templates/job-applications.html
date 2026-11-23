@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}My Applications — {{ college.name }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="h3 mb-1" style="color:{{ college.primary_color }};font-weight:800;">My Applications 📋</h1>
+      <p class="text-muted mb-0">Track every job you've saved and applied to.</p>
+    </div>
+    <div>
+      <a href="/job-hunter" class="btn btn-sm btn-outline-primary me-2">← Back to Job Hunter</a>
+      <a href="/college/logout" class="btn btn-sm btn-outline-danger">Log Out</a>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-2">
+      <div class="card border-0 shadow-sm p-3 text-center">
+        <div class="text-muted small text-uppercase mb-1">Saved</div>
+        <div class="h3 fw-bold" style="color:#6c757d;">{{ stats.saved }}</div>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <div class="card border-0 shadow-sm p-3 text-center">
+        <div class="text-muted small text-uppercase mb-1">Applied</div>
+        <div class="h3 fw-bold" style="color:#0d6efd;">{{ stats.applied }}</div>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <div class="card border-0 shadow-sm p-3 text-center">
+        <div class="text-muted small text-uppercase mb-1">Interviewing</div>
+        <div class="h3 fw-bold" style="color:#fd7e14;">{{ stats.interviewing }}</div>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <div class="card border-0 shadow-sm p-3 text-center">
+        <div class="text-muted small text-uppercase mb-1">Offers</div>
+        <div class="h3 fw-bold" style="color:#198754;">{{ stats.offer }}</div>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <div class="card border-0 shadow-sm p-3 text-center">
+        <div class="text-muted small text-uppercase mb-1">Rejected</div>
+        <div class="h3 fw-bold" style="color:#dc3545;">{{ stats.rejected }}</div>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <div class="card border-0 shadow-sm p-3 text-center">
+        <div class="text-muted small text-uppercase mb-1">Total</div>
+        <div class="h3 fw-bold" style="color:{{ college.primary_color }};">{{ stats.total }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Status</th>
+              <th>Role</th>
+              <th>Company</th>
+              <th>Location</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for j in jobs %}
+            <tr>
+              <td>
+                {% if j.status == 'saved' %}<span class="badge bg-secondary">📌 Saved</span>
+                {% elif j.status == 'applied' %}<span class="badge bg-primary">✉️ Applied</span>
+                {% elif j.status == 'interviewing' %}<span class="badge bg-warning text-dark">🎤 Interviewing</span>
+                {% elif j.status == 'offer' %}<span class="badge bg-success">🎉 Offer</span>
+                {% elif j.status == 'rejected' %}<span class="badge bg-danger">❌ Rejected</span>
+                {% endif %}
+              </td>
+              <td><strong>{{ j.title }}</strong></td>
+              <td>{{ j.company }}</td>
+              <td><span class="text-muted small">{{ j.location }}</span></td>
+              <td>
+                <form method="post" action="/job-hunter/status/{{ j.job_id }}" style="display:inline;">
+                  <select name="status" class="form-select form-select-sm" style="width:auto; display:inline-block;" onchange="this.form.submit()">
+                    <option value="saved" {% if j.status == 'saved' %}selected{% endif %}>Saved</option>
+                    <option value="applied" {% if j.status == 'applied' %}selected{% endif %}>Applied</option>
+                    <option value="interviewing" {% if j.status == 'interviewing' %}selected{% endif %}>Interviewing</option>
+                    <option value="offer" {% if j.status == 'offer' %}selected{% endif %}>Offer</option>
+                    <option value="rejected" {% if j.status == 'rejected' %}selected{% endif %}>Rejected</option>
+                  </select>
+                </form>
+                <a href="/job-hunter/kit/{{ j.job_id }}" class="btn btn-sm btn-outline-primary ms-1">View Kit</a>
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="5" class="text-center text-muted py-5">
+                <h5>No saved jobs yet</h5>
+                <p>Head to <a href="/job-hunter">Job Hunter</a> and click the ☆ button on any job to save it.</p>
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

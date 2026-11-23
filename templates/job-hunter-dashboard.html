@@ -7,6 +7,10 @@
       <h1 class="h3 mb-1" style="color:{{ college.primary_color }};font-weight:800;">Job Hunter 🎯</h1>
       <p class="text-muted mb-0">Welcome, {{ student.email.split("@")[0] }}. Verified Indian jobs ranked by your Charvak-verified skills.</p>
     </div>
+    <div class="d-flex gap-2">
+      <a href="/job-hunter/applications" class="btn btn-sm btn-outline-primary">📋 My Applications</a>
+      <a href="/college/logout" class="btn btn-sm btn-outline-danger">Log Out</a>
+    </div>
   </div>
 
   <div class="mb-4 d-flex align-items-center gap-3">
@@ -25,16 +29,13 @@
     </form>
   </div>
   
-  <div class="row g-3 mb-4">
-    <a href="/college/logout" class="btn btn-sm btn-outline-danger">Log Out</a>
-  </div>
 
   <div class="row g-3 mb-4">
     <div class="col-md-4">
       <div class="card border-0 shadow-sm p-4 text-center">
         <div class="text-muted small text-uppercase mb-1">Jobs Matched</div>
         <div class="display-6 fw-bold" style="color:{{ college.primary_color }};">{{ jobs|length }}</div>
-      </div>
+    </div>
     </div>
     <div class="col-md-4">
       <div class="card border-0 shadow-sm p-4 text-center">
@@ -83,7 +84,18 @@
                 </span>
               </td>
               <td>
-                <a href="/job-hunter/kit/{{ j.job_id }}" class="btn btn-sm btn-outline-primary">View Job</a>
+                <div class="d-flex gap-1">
+                  <a href="/job-hunter/kit/{{ j.job_id }}" class="btn btn-sm btn-outline-primary">View</a>
+                  {% if j.job_id in saved_job_ids %}
+                    <form action="/job-hunter/unsave/{{ j.job_id }}" method="post" style="display:inline;">
+                      <button type="submit" class="btn btn-sm btn-warning" title="Saved">★</button>
+                    </form>
+                  {% else %}
+                    <form action="/job-hunter/save/{{ j.job_id }}" method="post" style="display:inline;">
+                      <button type="submit" class="btn btn-sm btn-outline-secondary" title="Save">☆</button>
+                    </form>
+                  {% endif %}
+                </div>
               </td>
             </tr>
           {% else %}

@@ -22636,12 +22636,15 @@ async def job_hunter_dashboard(request: Request):
         student["student_id"], india_only=True, category=category
     )
 
+    saved_job_ids = job_hunter_engine.get_saved_job_ids(student["student_id"])
+
     return templates.TemplateResponse("job-hunter-dashboard.html", {
         "request": request,
         "college": college,
         "student": student,
         "jobs": jobs,
-        "selected_category": category
+        "selected_category": category,
+        "saved_job_ids": saved_job_ids
     })
 
 @app.get("/job-hunter/kit/{job_id}", response_class=HTMLResponse)
@@ -22746,3 +22749,66 @@ async def job_hunter_kit(request: Request, job_id: str):
     </body></html>
     """
     return HTMLResponse(html)
+
+
+# ============================================================
+# SESSION 122: SAVED JOBS + APPLICATION TRACKER
+# ============================================================
+
+@app.post("/job-hunter/save/{job_id}")
+async def job_hunter_save(request: Request, job_id: str):
+    from fastapi.responses import RedirectResponse
+    import auth_utils
+    from job_hunter_engine import job_hunter_engine
+    college = getattr(request.state, "college", None)
+    if not college: return RedirectResponse("/college/login", 302)
+    student = auth_utils.get_student_from_session(request)
+    if not student: return RedirectResponse("/college/login", 302)
+    job_hunter_engine.save_job(student["student_id"], job_id)
+    return RedirectResponse(request.headers.get("referer", "/job-hunter"), 302)
+
+
+@app.post("/job-hunter/unsave/{job_id}")
+async def job_hunter_unsave(request: Request, job_id: str):
+    from fastapi.responses import RedirectResponse
+    import auth_utils
+    from job_hunter_engine import job_hunter_engine
+    college = getattr(request.state, "college", None)
+    if not college: return RedirectResponse("/college/login", 302)
+    student = auth_utils.get_student_from_session(request)
+    if not student: return RedirectResponse("/college/login", 302)
+    job_hunter_engine.unsave_job(student["student_id"], job_id)
+    return RedirectResponse(request.headers.get("referer", "/job-hunter"), 302)
+
+
+@app.post("/job-hunter/status/{job_id}")
+async def job_hunter_update_status(request: Request, job_id: str):
+    from fastapi.responses import RedirectResponse
+    import auth_utils
+    from job_hunter_engine import job_hunter_engine
+    college = getattr(request.state, "college", None)
+    if not college: return RedirectResponse("/college/login", 302)
+    student = auth_utils.get_student_from_session(request)
+    if not student: return RedirectResponse("/college/login", 302)
+    form = await request.form()
+    new_status = form.get("status", "applied")
+    job_hunter_engine.update_application_status(student["student_id"], job_id, new_status)
+    return RedirectResponse("/job-hunter/applications", 302)
+
+
+@app.get("/job-hunter/applications", response_class=HTMLResponse)
+async def job_hunter_applications(request: Request):
+    from fastapi.responses import RedirectResponse
+    import auth_utils
+    from job_hunter_engine import job_hunter_engine
+    college = getattr(request.state, "college", None)
+    if not college: return RedirectResponse("/college/login", 302)
+    student = auth_utils.get_student_from_session(request)
+    if not student or student["college_slug"] != college["slug"]:
+        return RedirectResponse("/college/login", 302)
+    saved_jobs = job_hunter_engine.get_saved_jobs(student["student_id"])
+    stats = job_hunter_engine.get_application_stats(student["student_id"])
+    return templates.TemplateResponse("job-applications.html", {
+        "request": request, "college": college, "student": student,
+        "jobs": saved_jobs, "stats": stats,
+    })
