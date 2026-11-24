@@ -22458,22 +22458,24 @@ async def college_admin_dashboard(request: Request):
         cur.close()
         conn.close()
 
-    # For now, render a simple inline HTML dashboard
-    html = f"""
-    <html><body style='font-family:system-ui;padding:40px;'>
-        <h1>{college['name']} — Admin Dashboard</h1>
-        <p>Welcome, {admin['email']}</p>
-        <p>Total Enrolled Students: <strong>{student_count}</strong></p>
-        <hr>
-        <h3>Bulk Upload Students</h3>
-        <form action="/college/admin/csv-upload" method="post" enctype="multipart/form-data">
-            <p>Upload a CSV with columns: <code>name, email, enrollment_year</code></p>
-            <input type="file" name="file" accept=".csv" required>
-            <button type="submit">Upload CSV</button>
-        </form>
-    </body></html>
-    """
-    return HTMLResponse(html)
+        # SESSION 123-B: Use the polished college-dashboard.html template
+    stats = {
+        "total_students": student_count,
+        "assessments_completed": 0,
+        "certificates_issued": 0,
+        "placement_matches": 0,
+    }
+
+    # Ensure college dict has student_limit (fallback to 100 for pilot)
+    if "student_limit" not in college:
+        college["student_limit"] = college.get("max_students", 100)
+
+    return templates.TemplateResponse("college-dashboard.html", {
+        "request": request,
+        "college": college,
+        "admin": admin,
+        "stats": stats,
+    })
 
 
 @app.post("/college/admin/csv-upload")
@@ -22856,3 +22858,31 @@ async def cron_followup_status(request: Request):
         }
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+
+# ============================================================
+# SESSION 123 Option B: College Admin Analytics
+# ============================================================
+
+@app.get("/college/admin/analytics", response_class=HTMLResponse)
+async def college_admin_analytics(request: Request):
+    from fastapi.responses import RedirectResponse
+    import auth_utils
+    from college_analytics_engine import college_analytics
+
+    college = getattr(request.state, "college", None)
+    if not college:
+        return RedirectResponse("/college/login", 302)
+
+    admin = auth_utils.get_admin_from_session(request)
+    if not admin or admin["college_slug"] != college["slug"]:
+        return RedirectResponse("/college/login", 302)
+
+    data = college_analytics.get_full_dashboard(college["slug"])
+
+    return templates.TemplateResponse("college-analytics.html", {
+        "request": request,
+        "college": college,
+        "admin": admin,
+        "data": data,
+    })
