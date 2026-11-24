@@ -22368,15 +22368,20 @@ async def college_admin_login_request(request: Request):
         conn.commit()
 
         host = request.headers.get("host", f"{college['slug']}.charvakit.com"); scheme = request.url.scheme; magic_url = f"{scheme}://{host}/college/admin/auth/{raw_token}"
+        # CRITICAL: Always log the magic link (fallback + debugging)
+        logger.info(f"[ADMIN MAGIC LINK] {email} -> {magic_url}")
+
+        # Try to send email via EmailEngine class
         try:
-            from email_engine import send_email
-            send_email(
-                to=email,
+            from email_engine import EmailEngine
+            engine = EmailEngine()
+            engine.send_email(
+                to_email=email,
                 subject=f"Admin Login: {college['name']}",
-                body=f"Click to access your admin dashboard: {magic_url}\n\nExpires in 15 minutes.",
+                body=f"<p>Click to access your admin dashboard:</p><p><a href=\"{magic_url}\">{magic_url}</a></p><p>Expires in 15 minutes.</p>",
             )
         except Exception as e:
-            logger.warning(f"Admin magic-link email failed: {e}")
+            logger.warning(f"Admin magic-link email failed (fallback: use log URL): {e}")
             logger.info(f"[ADMIN MAGIC LINK] {email} -> {magic_url}")
 
         return RedirectResponse("/college/login?sent=1", 302)
