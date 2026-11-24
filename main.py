@@ -22154,6 +22154,7 @@ async def college_login_request(request: Request):
         
         # ALWAYS LOG THE LINK
         logger.info(f"[MAGIC LINK] {email} -> {magic_url}")
+        print(f"[MAGIC LINK] {email} -> {magic_url}", flush=True)
 
         # Send email using EmailEngine class
         try:
@@ -22370,6 +22371,7 @@ async def college_admin_login_request(request: Request):
         host = request.headers.get("host", f"{college['slug']}.charvakit.com"); scheme = request.url.scheme; magic_url = f"{scheme}://{host}/college/admin/auth/{raw_token}"
         # CRITICAL: Always log the magic link (fallback + debugging)
         logger.info(f"[ADMIN MAGIC LINK] {email} -> {magic_url}")
+        print(f"[ADMIN MAGIC LINK] {email} -> {magic_url}", flush=True)
 
         # Try to send email via EmailEngine class
         try:
@@ -22382,6 +22384,7 @@ async def college_admin_login_request(request: Request):
             )
         except Exception as e:
             logger.warning(f"Admin magic-link email failed (fallback: use log URL): {e}")
+            print(f"[EMAIL FAILED] Admin: {e}", flush=True)
             logger.info(f"[ADMIN MAGIC LINK] {email} -> {magic_url}")
 
         return RedirectResponse("/college/login?sent=1", 302)
