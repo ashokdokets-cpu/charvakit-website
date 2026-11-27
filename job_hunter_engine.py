@@ -10,7 +10,7 @@ from database import db
 logger = logging.getLogger("charvakit.job_hunter")
 
 class JobHunterEngine:
-    def get_ranked_jobs(self, student_id: str, india_only: bool = True, category: str = "all") -> list:
+    def get_ranked_jobs(self, student_id: str, india_only: bool = True, category: str = "all", page: int = 1, per_page: int = 20) -> dict:
         """Fetch active jobs and rank them by match score. Optionally filter by role category."""
         conn = db.get_connection()
         cur = conn.cursor()
@@ -60,17 +60,48 @@ class JobHunterEngine:
                       )
                       AND (%s = 'all' OR role_category = %s)
                     ORDER BY created_at DESC
-                    LIMIT 100
-                """, (category, category))
+                    LIMIT %s OFFSET %s
+                """, (category, category, per_page, (page - 1) * per_page))
             else:
                 cur.execute("""
                     SELECT job_id, title, company, location, salary, source, posted_date, description
                     FROM charvak_jobs
                     WHERE status = 'active'
                     ORDER BY created_at DESC
-                    LIMIT 50
-                """)
+                    LIMIT %s OFFSET %s
+                """, (per_page, (page - 1) * per_page))
             jobs = cur.fetchall()
+
+            # Get total count for pagination
+            if india_only:
+                cur.execute("""
+                    SELECT COUNT(*) FROM charvak_jobs
+                    WHERE status = 'active'
+                      AND (
+                        source IN ('techmap', 'naukri', 'adzuna')
+                        OR LOWER(location) LIKE '%%india%%'
+                        OR LOWER(location) LIKE '%%bangalore%%'
+                        OR LOWER(location) LIKE '%%bengaluru%%'
+                        OR LOWER(location) LIKE '%%mumbai%%'
+                        OR LOWER(location) LIKE '%%delhi%%'
+                        OR LOWER(location) LIKE '%%hyderabad%%'
+                        OR LOWER(location) LIKE '%%chennai%%'
+                        OR LOWER(location) LIKE '%%pune%%'
+                        OR LOWER(location) LIKE '%%kolkata%%'
+                        OR LOWER(location) LIKE '%%ahmedabad%%'
+                        OR LOWER(location) LIKE '%%jaipur%%'
+                        OR LOWER(location) LIKE '%%gurgaon%%'
+                        OR LOWER(location) LIKE '%%noida%%'
+                        OR LOWER(location) LIKE '%%guntur%%'
+                        OR LOWER(location) LIKE '%%vijayawada%%'
+                        OR LOWER(location) LIKE '%%visakhapatnam%%'
+                      )
+                      AND (%s = 'all' OR role_category = %s)
+                """, (category, category))
+            else:
+                cur.execute("SELECT COUNT(*) FROM charvak_jobs WHERE status = 'active'")
+            
+            total_count = cur.fetchone()[0]
 
             ranked = []
             for j in jobs:
@@ -105,8 +136,20 @@ class JobHunterEngine:
                         "match_score": match_score,
                     })
 
+            # Sort by match score
             ranked.sort(key=lambda x: x["match_score"], reverse=True)
-            return ranked
+            
+            total_pages = max(1, (total_count + per_page - 1) // per_page)
+            
+            return {
+                "jobs": ranked,
+                "total": total_count,
+                "page": page,
+                "per_page": per_page,
+                "total_pages": total_pages,
+                "has_prev": page > 1,
+                "has_next": page < total_pages,
+            }
         finally:
             cur.close()
             conn.close()

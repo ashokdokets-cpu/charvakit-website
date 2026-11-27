@@ -22637,13 +22637,26 @@ async def job_hunter_dashboard(request: Request):
     if not student or student["college_slug"] != college["slug"]:
         return RedirectResponse("/college/login", 302)
 
+    # Parse category
     category = request.query_params.get("category", "all")
     valid = ["all", "tech", "sales_marketing", "finance", "healthcare", "hospitality", "campus", "admin_ops", "other"]
     if category not in valid:
         category = "all"
 
-    jobs = job_hunter_engine.get_ranked_jobs(
-        student["student_id"], india_only=True, category=category
+    # Parse pagination
+    try:
+        page = max(1, int(request.query_params.get("page", "1")))
+    except (ValueError, TypeError):
+        page = 1
+    try:
+        per_page = int(request.query_params.get("per_page", "20"))
+        if per_page not in [20, 50, 100]:
+            per_page = 20
+    except (ValueError, TypeError):
+        per_page = 20
+
+    result = job_hunter_engine.get_ranked_jobs(
+        student["student_id"], india_only=True, category=category, page=page, per_page=per_page
     )
 
     saved_job_ids = job_hunter_engine.get_saved_job_ids(student["student_id"])
@@ -22653,7 +22666,13 @@ async def job_hunter_dashboard(request: Request):
         "request": request,
         "college": college,
         "student": student,
-        "jobs": jobs,
+        "jobs": result["jobs"],
+        "total": result["total"],
+        "page": result["page"],
+        "per_page": result["per_page"],
+        "total_pages": result["total_pages"],
+        "has_prev": result["has_prev"],
+        "has_next": result["has_next"],
         "selected_category": category,
         "saved_job_ids": saved_job_ids,
         "cert_summary": cert_summary
