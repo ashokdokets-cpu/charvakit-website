@@ -374,4 +374,27 @@ class JobHunterEngine:
             conn.close()
 
 
+    def get_student_cert_summary(self, student_id: str) -> dict:
+        """Return summary of student's certs for display."""
+        conn = db.get_connection()
+        cur = conn.cursor()
+        try:
+            cur.execute("""
+                SELECT role, score FROM charvak_career_certifications
+                WHERE student_id = %s AND passed = TRUE AND revoked_at IS NULL
+                AND (expires_at IS NULL OR expires_at > NOW())
+                ORDER BY score DESC
+            """, (student_id,))
+            certs = [{"role": r[0], "score": r[1]} for r in cur.fetchall()]
+            return {
+                "count": len(certs),
+                "top_role": certs[0]["role"] if certs else None,
+                "top_score": certs[0]["score"] if certs else 0,
+                "certs": certs,
+            }
+        finally:
+            cur.close()
+            conn.close()
+
+
 job_hunter_engine = JobHunterEngine()

@@ -22647,6 +22647,7 @@ async def job_hunter_dashboard(request: Request):
     )
 
     saved_job_ids = job_hunter_engine.get_saved_job_ids(student["student_id"])
+    cert_summary = job_hunter_engine.get_student_cert_summary(student["student_id"])
 
     return templates.TemplateResponse("job-hunter-dashboard.html", {
         "request": request,
@@ -22654,7 +22655,8 @@ async def job_hunter_dashboard(request: Request):
         "student": student,
         "jobs": jobs,
         "selected_category": category,
-        "saved_job_ids": saved_job_ids
+        "saved_job_ids": saved_job_ids,
+        "cert_summary": cert_summary
     })
 
 @app.get("/job-hunter/kit/{job_id}", response_class=HTMLResponse)

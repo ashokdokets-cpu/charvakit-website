@@ -6,6 +6,24 @@
     <div>
       <h1 class="h3 mb-1" style="color:{{ college.primary_color }};font-weight:800;">Job Hunter 🎯</h1>
       <p class="text-muted mb-0">Welcome, {{ student.email.split("@")[0] }}. Verified Indian jobs ranked by your Charvak-verified skills.</p>
+      {% if cert_summary and cert_summary.count > 0 %}
+      <div class="mt-2">
+        <span class="badge bg-success" style="font-size:0.8rem;padding:6px 12px;">
+          ✅ Verified: {{ cert_summary.top_role }} ({{ cert_summary.top_score }}/100)
+        </span>
+        {% if cert_summary.count > 1 %}
+        <span class="badge bg-light text-dark" style="font-size:0.8rem;padding:6px 12px;">
+          +{{ cert_summary.count - 1 }} more certs
+        </span>
+        {% endif %}
+      </div>
+      {% else %}
+      <div class="mt-2">
+        <span class="badge bg-warning text-dark" style="font-size:0.8rem;padding:6px 12px;">
+          ⚠️ No verified certs yet — <a href="/ai-assessment" class="text-dark fw-bold">take an assessment →</a>
+        </span>
+      </div>
+      {% endif %}
     </div>
     <div class="d-flex gap-2">
       <a href="/job-hunter/applications" class="btn btn-sm btn-outline-primary">📋 My Applications</a>
