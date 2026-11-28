@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Billing — {{ college.name }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="h3 mb-1" style="color:{{ college.primary_color }};font-weight:800;">Billing & Subscription</h1>
+      <p class="text-muted mb-0">Manage your Charvak Pro subscription</p>
+    </div>
+    <div>
+      <a href="/student/upgrade" class="btn btn-sm btn-outline-primary me-2">Upgrade / Plans</a>
+      <a href="/job-hunter" class="btn btn-sm btn-outline-secondary me-2">Job Hunter</a>
+      <a href="/college/logout" class="btn btn-sm btn-outline-danger">Log Out</a>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4">
+      <h5 class="fw-bold mb-3">Current Subscription</h5>
+      {% if pro_status.is_pro %}
+      <div class="alert alert-success mb-0">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <strong>✅ Charvak Pro</strong> — {{ pro_status.plan }}<br>
+            <span class="small">Started {{ pro_status.started_at.strftime('%b %d, %Y') if pro_status.started_at else '' }}
+              · Renews {{ pro_status.expires_at.strftime('%b %d, %Y') if pro_status.expires_at else '' }}
+              {% if not pro_status.auto_renew %}· <span class="text-warning">Cancelled (ends at expiry)</span>{% endif %}
+            </span>
+          </div>
+          {% if pro_status.auto_renew %}
+          <form method="post" action="/api/subscription/pro/cancel" onsubmit="return confirm('Cancel auto-renewal? You\'ll keep Pro until expiry.')">
+            <button type="submit" class="btn btn-sm btn-outline-danger">Cancel Auto-Renew</button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+      {% else %}
+      <div class="alert alert-secondary mb-0">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <strong>Free Plan</strong><br>
+            <span class="small">3 application kits per month</span>
+          </div>
+          <a href="/student/upgrade" class="btn btn-sm btn-primary">Upgrade to Pro</a>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm">
+    <div class="card-body p-4">
+      <h5 class="fw-bold mb-3">Invoice History</h5>
+      {% if invoices %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Invoice</th>
+              <th>Date</th>
+              <th>Description</th>
+              <th class="text-end">Amount</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for inv in invoices %}
+            <tr>
+              <td><code class="small">{{ inv.invoice_id }}</code></td>
+              <td class="small">{{ inv.invoice_date.strftime('%b %d, %Y') if inv.invoice_date else '' }}</td>
+              <td>{{ inv.description }}</td>
+              <td class="text-end">₹{{ "%.2f"|format(inv.amount_paise / 100) }}</td>
+              <td><span class="badge bg-success">{{ inv.status }}</span></td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <p class="text-muted mb-0">No invoices yet. Upgrade to Pro to start using Charvak's premium features.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

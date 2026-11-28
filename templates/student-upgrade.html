@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block title %}Upgrade to Pro — {{ college.name }}{% endblock %}
+{% block content %}
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="h3 mb-1" style="color:{{ college.primary_color }};font-weight:800;">Upgrade to Charvak Pro ⚡</h1>
+      <p class="text-muted mb-0">Unlock unlimited application kits, priority job alerts, and advanced analytics.</p>
+    </div>
+    <div>
+      <a href="/job-hunter" class="btn btn-sm btn-outline-primary me-2">← Back to Job Hunter</a>
+      <a href="/student/billing" class="btn btn-sm btn-outline-secondary me-2">Billing</a>
+      <a href="/college/logout" class="btn btn-sm btn-outline-danger">Log Out</a>
+    </div>
+  </div>
+
+  {% if pro_status.is_pro %}
+  <div class="alert alert-success mb-4">
+    <strong>✅ You're already Pro!</strong>
+    Your subscription is active until {{ pro_status.expires_at.strftime('%B %d, %Y') if pro_status.expires_at else 'N/A' }}.
+  </div>
+  {% else %}
+  {% if request.query_params.get('success') %}
+  <div class="alert alert-success mb-4">
+    <strong>🎉 Welcome to Charvak Pro!</strong>
+    You now have unlimited access to all features.
+  </div>
+  {% endif %}
+  {% if request.query_params.get('error') %}
+  <div class="alert alert-danger mb-4">
+    <strong>❌ Payment failed.</strong>
+    Please try again or contact support.
+  </div>
+  {% endif %}
+  {% endif %}
+
+  <div class="row g-4">
+    <!-- Free Tier -->
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm h-100 p-4">
+        <h3 class="h5 fw-bold mb-3">Free</h3>
+        <div class="display-5 fw-bold mb-3" style="color:{{ college.primary_color }};">₹0</div>
+        <p class="text-muted mb-4">Perfect for exploring</p>
+        <ul class="list-unstyled mb-4">
+          <li class="mb-2">✅ Browse 579+ verified India jobs</li>
+          <li class="mb-2">✅ 7 category filters</li>
+          <li class="mb-2">✅ Save jobs + application tracker</li>
+          <li class="mb-2">✅ {{ free_tier_limit }} application kits per month</li>
+          <li class="mb-2">❌ Unlimited application kits</li>
+          <li class="mb-2">❌ Advanced match analytics</li>
+          <li class="mb-2">❌ Priority job alerts</li>
+        </ul>
+        <div class="mt-auto">
+          {% if pro_status.is_pro %}
+          <button class="btn btn-outline-secondary w-100" disabled>You're on Pro</button>
+          {% else %}
+          <button class="btn btn-outline-secondary w-100" disabled>Current Plan</button>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Pro Tier -->
+    <div class="col-md-6">
+      <div class="card border-0 shadow-lg h-100 p-4" style="background:{{ college.primary_color }};color:white;">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <h3 class="h5 fw-bold mb-3">Charvak Pro ⚡</h3>
+          <span class="badge bg-warning text-dark">RECOMMENDED</span>
+        </div>
+        <div class="display-5 fw-bold mb-1">₹{{ pro_price_rupees }}</div>
+        <p class="mb-4" style="opacity:0.9;">per month · cancel anytime</p>
+        <ul class="list-unstyled mb-4">
+          <li class="mb-2">✅ Everything in Free</li>
+          <li class="mb-2">✅ <strong>Unlimited application kits</strong></li>
+          <li class="mb-2">✅ <strong>Advanced match analytics</strong> (skill breakdown)</li>
+          <li class="mb-2">✅ <strong>Priority job alerts</strong> via email</li>
+          <li class="mb-2">✅ <strong>Certificate PDF downloads</strong></li>
+          <li class="mb-2">✅ Priority support</li>
+        </ul>
+        <div class="mt-auto">
+          {% if pro_status.is_pro %}
+          <button class="btn btn-light w-100 fw-bold" disabled>✅ Active Subscription</button>
+          {% else %}
+          <button id="upgradeBtn" class="btn btn-light w-100 fw-bold" onclick="startProCheckout()" style="color:{{ college.primary_color }};">
+            Upgrade to Pro — ₹{{ pro_price_rupees }}/month
+          </button>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-4 text-muted small text-center">
+    Secure payments via Razorpay. Your card details are never stored on Charvak servers.
+  </div>
+</div>
+
+<script>
+async function startProCheckout() {
+  const btn = document.getElementById('upgradeBtn');
+  btn.disabled = true;
+  btn.textContent = 'Creating order...';
+
+  try {
+    // 1. Create order
+    const orderRes = await fetch('/api/subscription/pro/create-order', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+    });
+    const orderData = await orderRes.json();
+
+    if (orderData.status !== 'success') {
+      throw new Error(orderData.message || 'Order creation failed');
+    }
+
+    // 2. Open Razorpay checkout
+    const options = {
+      key: orderData.key_id,
+      amount: orderData.amount,
+      currency: orderData.currency,
+      name: 'Charvak IT Consulting',
+      description: 'Charvak Pro — Monthly Subscription',
+      order_id: orderData.order_id,
+      handler: async function (response) {
+        // 3. Verify payment
+        btn.textContent = 'Verifying...';
+        const verifyRes = await fetch('/api/subscription/pro/verify', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature,
+          }),
+        });
+        const verifyData = await verifyRes.json();
+
+        if (verifyData.status === 'success') {
+          window.location.href = '/student/upgrade?success=1';
+        } else {
+          window.location.href = '/student/upgrade?error=verify_failed';
+        }
+      },
+      prefill: {
+        email: "{{ student.email }}",
+      },
+      theme: {
+        color: "{{ college.primary_color }}",
+      },
+      modal: {
+        ondismiss: function() {
+          btn.disabled = false;
+          btn.textContent = 'Upgrade to Pro — ₹{{ pro_price_rupees }}/month';
+        }
+      }
+    };
+
+    const rzp = new Razorpay(options);
+    rzp.open();
+  } catch (err) {
+    console.error('Checkout error:', err);
+    alert('Failed to start checkout: ' + err.message);
+    btn.disabled = false;
+    btn.textContent = 'Upgrade to Pro — ₹{{ pro_price_rupees }}/month';
+  }
+}
+</script>
+{% endblock %}

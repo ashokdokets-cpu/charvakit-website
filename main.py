@@ -22662,6 +22662,16 @@ async def job_hunter_dashboard(request: Request):
     saved_job_ids = job_hunter_engine.get_saved_job_ids(student["student_id"])
     cert_summary = job_hunter_engine.get_student_cert_summary(student["student_id"])
 
+    # SESSION 124.1: Pass Pro/Free tier status to template
+    from subscription_engine import subscription_engine
+    pro_status = subscription_engine.get_pro_status(student["student_id"])
+    kit_limit = subscription_engine.check_kit_limit(student["student_id"])
+    kit_limit_info = {
+        "is_pro": pro_status["is_pro"],
+        "remaining": kit_limit.get("remaining", 0),
+        "limit": kit_limit.get("limit", 0),
+    }
+
     return templates.TemplateResponse("job-hunter-dashboard.html", {
         "request": request,
         "college": college,
@@ -22675,7 +22685,8 @@ async def job_hunter_dashboard(request: Request):
         "has_next": result["has_next"],
         "selected_category": category,
         "saved_job_ids": saved_job_ids,
-        "cert_summary": cert_summary
+        "cert_summary": cert_summary,
+        "kit_limit_info": kit_limit_info,
     })
 
 @app.get("/job-hunter/kit/{job_id}", response_class=HTMLResponse)
@@ -22692,6 +22703,13 @@ async def job_hunter_kit(request: Request, job_id: str):
     student = auth_utils.get_student_from_session(request)
     if not student or student["college_slug"] != college["slug"]:
         return RedirectResponse("/college/login", 302)
+
+    # SESSION 124.1: Check free-tier limit BEFORE generating kit
+    from subscription_engine import subscription_engine
+    kit_limit = subscription_engine.check_kit_limit(student["student_id"])
+    if not kit_limit["allowed"]:
+        # Free user has used all 3 kits this month
+        return RedirectResponse("/student/upgrade?limit_hit=1", 302)
 
     # 1. Fetch job details
     conn = db.get_connection()
@@ -22719,6 +22737,9 @@ async def job_hunter_kit(request: Request, job_id: str):
     finally:
         cur.close()
         conn.close()
+
+    # SESSION 124.1: Track usage (free users count toward limit)
+    subscription_engine.increment_kit_usage(student["student_id"])
 
     # 3. Generate Kit (Mocked slightly for speed - in real prod, you would cache this)
     kit = application_kit_engine.generate_kit(
@@ -22915,3 +22936,179 @@ async def college_admin_analytics(request: Request):
         "admin": admin,
         "data": data,
     })
+
+
+# ============================================================
+# SESSION 124.1: STUDENT PRO SUBSCRIPTION ROUTES
+# ============================================================
+
+@app.get("/student/upgrade", response_class=HTMLResponse)
+async def student_upgrade_page(request: Request):
+    from fastapi.responses import RedirectResponse
+    import auth_utils
+    from subscription_engine import subscription_engine, PRO_MONTHLY_PRICE_PAISE, FREE_TIER_KIT_LIMIT
+
+    college = getattr(request.state, "college", None)
+    if not college:
+        return RedirectResponse("/college/login", 302)
+
+    student = auth_utils.get_student_from_session(request)
+    if not student or student["college_slug"] != college["slug"]:
+        return RedirectResponse("/college/login", 302)
+
+    pro_status = subscription_engine.get_pro_status(student["student_id"])
+    kit_limit = subscription_engine.check_kit_limit(student["student_id"])
+
+    return templates.TemplateResponse("student-upgrade.html", {
+        "request": request,
+        "college": college,
+        "student": student,
+        "pro_status": pro_status,
+        "kit_limit": kit_limit,
+        "pro_price_rupees": PRO_MONTHLY_PRICE_PAISE // 100,
+        "free_tier_limit": FREE_TIER_KIT_LIMIT,
+    })
+
+
+@app.post("/api/subscription/pro/create-order")
+async def api_create_pro_order(request: Request):
+    from fastapi.responses import JSONResponse
+    import auth_utils
+    from subscription_engine import subscription_engine
+
+    college = getattr(request.state, "college", None)
+    if not college:
+        return JSONResponse({"status": "error", "message": "no_college"}, status_code=400)
+
+    student = auth_utils.get_student_from_session(request)
+    if not student:
+        return JSONResponse({"status": "error", "message": "not_logged_in"}, status_code=401)
+
+    result = subscription_engine.create_pro_order(
+        student_id=student["student_id"],
+        email=student.get("email", ""),
+    )
+    return JSONResponse(result)
+
+
+@app.post("/api/subscription/pro/verify")
+async def api_verify_pro_payment(request: Request):
+    from fastapi.responses import JSONResponse
+    import auth_utils
+    from subscription_engine import subscription_engine
+
+    college = getattr(request.state, "college", None)
+    if not college:
+        return JSONResponse({"status": "error", "message": "no_college"}, status_code=400)
+
+    student = auth_utils.get_student_from_session(request)
+    if not student:
+        return JSONResponse({"status": "error", "message": "not_logged_in"}, status_code=401)
+
+    # Parse JSON body
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse({"status": "error", "message": "invalid_body"}, status_code=400)
+
+    order_id = data.get("razorpay_order_id", "")
+    payment_id = data.get("razorpay_payment_id", "")
+    signature = data.get("razorpay_signature", "")
+
+    if not all([order_id, payment_id, signature]):
+        return JSONResponse({"status": "error", "message": "missing_fields"}, status_code=400)
+
+    # Verify signature
+    verify = subscription_engine.verify_payment(order_id, payment_id, signature)
+    if verify.get("status") != "success":
+        return JSONResponse({"status": "error", "message": "invalid_signature"}, status_code=400)
+
+    # Activate subscription
+    result = subscription_engine.activate_pro(
+        student_id=student["student_id"],
+        razorpay_order_id=order_id,
+        razorpay_payment_id=payment_id,
+        email=student.get("email", ""),
+    )
+    return JSONResponse(result)
+
+
+@app.get("/student/billing", response_class=HTMLResponse)
+async def student_billing_page(request: Request):
+    from fastapi.responses import RedirectResponse
+    import auth_utils
+    from subscription_engine import subscription_engine
+
+    college = getattr(request.state, "college", None)
+    if not college:
+        return RedirectResponse("/college/login", 302)
+
+    student = auth_utils.get_student_from_session(request)
+    if not student or student["college_slug"] != college["slug"]:
+        return RedirectResponse("/college/login", 302)
+
+    pro_status = subscription_engine.get_pro_status(student["student_id"])
+    invoices = subscription_engine.get_invoices(student["student_id"])
+
+    return templates.TemplateResponse("student-billing.html", {
+        "request": request,
+        "college": college,
+        "student": student,
+        "pro_status": pro_status,
+        "invoices": invoices,
+    })
+
+
+@app.post("/api/subscription/pro/cancel")
+async def api_cancel_pro(request: Request):
+    from fastapi.responses import JSONResponse
+    import auth_utils
+    from subscription_engine import subscription_engine
+
+    student = auth_utils.get_student_from_session(request)
+    if not student:
+        return JSONResponse({"status": "error", "message": "not_logged_in"}, status_code=401)
+
+    result = subscription_engine.cancel_pro(student["student_id"])
+    return JSONResponse(result)
+
+
+@app.post("/api/webhooks/razorpay")
+async def razorpay_webhook(request: Request):
+    """Razorpay webhook handler — for renewals, cancellations, failures."""
+    from fastapi.responses import JSONResponse
+    import hmac
+    import hashlib
+    import logging
+    logger = logging.getLogger("charvakit.razorpay_webhook")
+
+    # Get webhook secret
+    import os as _os
+    webhook_secret = _os.getenv("RAZORPAY_WEBHOOK_SECRET", "")
+    if not webhook_secret or webhook_secret == "REPLACE_ME":
+        logger.warning("RAZORPAY_WEBHOOK_SECRET not set — skipping verification")
+    else:
+        # Verify signature
+        signature = request.headers.get("X-Razorpay-Signature", "")
+        body_bytes = await request.body()
+        expected = hmac.new(
+            webhook_secret.encode(),
+            body_bytes,
+            hashlib.sha256
+        ).hexdigest()
+        if not hmac.compare_digest(expected, signature):
+            logger.warning("Invalid webhook signature — rejecting")
+            return JSONResponse({"status": "error", "message": "invalid_signature"}, status_code=400)
+
+    # Parse event
+    try:
+        event = await request.json()
+    except Exception:
+        return JSONResponse({"status": "error", "message": "invalid_json"}, status_code=400)
+
+    event_type = event.get("event", "")
+    logger.info(f"Razorpay webhook: {event_type}")
+
+    # For now, log only. Future: handle subscription.charged, subscription.cancelled
+    # to auto-renew or auto-expire Pro.
+    return JSONResponse({"status": "success", "event": event_type})

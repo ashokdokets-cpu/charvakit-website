@@ -31,6 +31,31 @@
     </div>
   </div>
 
+  {# SESSION 124.1: Pro / Free tier banner #}
+  {% if kit_limit_info %}
+  <div class="mb-3">
+    {% if kit_limit_info.is_pro %}
+      <div class="alert alert-success py-2 px-3 mb-0 small d-flex align-items-center">
+        <strong>⚡ Charvak Pro</strong>
+        <span class="ms-2 text-muted">Unlimited application kits · Priority support</span>
+        <a href="/student/billing" class="ms-auto btn btn-sm btn-outline-success">Manage</a>
+      </div>
+    {% elif kit_limit_info.remaining == 0 %}
+      <div class="alert alert-warning py-2 px-3 mb-0 small d-flex align-items-center">
+        <strong>⚠️ Free tier limit reached</strong>
+        <span class="ms-2">You've used all 3 application kits this month.</span>
+        <a href="/student/upgrade" class="ms-auto btn btn-sm btn-warning text-dark fw-bold">Upgrade to Pro →</a>
+      </div>
+    {% else %}
+      <div class="alert alert-info py-2 px-3 mb-0 small d-flex align-items-center">
+        <strong>📊 Free Plan</strong>
+        <span class="ms-2">{{ kit_limit_info.remaining }} of {{ kit_limit_info.limit }} application kits remaining this month</span>
+        <a href="/student/upgrade" class="ms-auto btn btn-sm btn-primary">Upgrade to Pro →</a>
+      </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
   <div class="mb-4 d-flex align-items-center gap-3">
     <form method="get" action="/job-hunter" class="d-flex align-items-center gap-2">
       <label class="fw-bold text-muted small text-uppercase">Filter by Category:</label>
